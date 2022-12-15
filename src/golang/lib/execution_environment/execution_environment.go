@@ -27,7 +27,7 @@ var pythonVersions = [...]string{
 
 type ExecutionEnvironment struct {
 	// TODO: Double check if the json tags can be removed.
-	Id            uuid.UUID `json:"id"`
+	ID            uuid.UUID `json:"id"`
 	PythonVersion string    `json:"python_version"`
 	Dependencies  []string  `json:"dependencies"`
 	CondaPath     string    `json:"-"`
@@ -56,7 +56,7 @@ func (e *ExecutionEnvironment) CreateDBRecord(
 		return err
 	}
 
-	e.Id = dbEnv.ID
+	e.ID = dbEnv.ID
 	return nil
 }
 
@@ -65,7 +65,7 @@ func (e *ExecutionEnvironment) DeleteDBRecord(
 	execEnvRepo repos.ExecutionEnvironment,
 	db database.Database,
 ) error {
-	return execEnvRepo.Delete(ctx, e.Id, db)
+	return execEnvRepo.Delete(ctx, e.ID, db)
 }
 
 // Hash generates a hash based on the environment's
@@ -86,7 +86,7 @@ func (e *ExecutionEnvironment) Hash() (uuid.UUID, error) {
 }
 
 func (e *ExecutionEnvironment) Name() string {
-	return fmt.Sprintf("aqueduct_%s", e.Id.String())
+	return fmt.Sprintf("aqueduct_%s", e.ID.String())
 }
 
 func (e *ExecutionEnvironment) CreateEnv() error {
@@ -225,7 +225,7 @@ func deleteEnvs(envs []ExecutionEnvironment) {
 	for _, env := range envs {
 		err := env.DeleteEnv()
 		if err != nil {
-			log.Errorf("Failed to delete env %s: %v", env.Id.String(), err)
+			log.Errorf("Failed to delete env %s: %v", env.ID.String(), err)
 		}
 	}
 }
@@ -234,7 +234,7 @@ func newFromDBExecutionEnvironment(
 	dbExecEnv *models.ExecutionEnvironment,
 ) *ExecutionEnvironment {
 	return &ExecutionEnvironment{
-		Id:            dbExecEnv.ID,
+		ID:            dbExecEnv.ID,
 		PythonVersion: dbExecEnv.Spec.PythonVersion,
 		Dependencies:  dbExecEnv.Spec.Dependencies,
 	}
