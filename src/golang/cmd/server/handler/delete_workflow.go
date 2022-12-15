@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -81,13 +80,10 @@ type DeleteWorkflowHandler struct {
 	JobManager job.JobManager
 	Vault      vault.Vault
 
-	ExecutionEnvironmentReader db_exec_env.Reader
-
-	ExecutionEnvironmentWriter db_exec_env.Writer
-
-	IntegrationRepo repos.Integration
-	OperatorRepo    repos.Operator
-	WorkflowRepo    repos.Workflow
+	ExecutionEnvironmentRepo repos.ExecutionEnvironment
+	IntegrationRepo          repos.Integration
+	OperatorRepo             repos.Operator
+	WorkflowRepo             repos.Workflow
 }
 
 func (*DeleteWorkflowHandler) Name() string {
@@ -231,8 +227,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 
 		err = exec_env.CleanupUnusedEnvironments(
 			context.Background(),
-			h.ExecutionEnvironmentReader,
-			h.ExecutionEnvironmentWriter,
+			h.ExecutionEnvironmentRepo,
 			db,
 		)
 		if err != nil {

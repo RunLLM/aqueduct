@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
-	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
@@ -45,17 +44,14 @@ type RegisterWorkflowHandler struct {
 	Vault         vault.Vault
 	Engine        engine.Engine
 
-	ExecutionEnvironmentReader db_exec_env.Reader
-
-	ExecutionEnvironmentWriter db_exec_env.Writer
-
-	ArtifactRepo    repos.Artifact
-	DAGRepo         repos.DAG
-	DAGEdgeRepo     repos.DAGEdge
-	IntegrationRepo repos.Integration
-	OperatorRepo    repos.Operator
-	WatcherRepo     repos.Watcher
-	WorkflowRepo    repos.Workflow
+	ArtifactRepo             repos.Artifact
+	DAGRepo                  repos.DAG
+	DAGEdgeRepo              repos.DAGEdge
+	ExecutionEnvironmentRepo repos.ExecutionEnvironment
+	IntegrationRepo          repos.Integration
+	OperatorRepo             repos.Operator
+	WatcherRepo              repos.Watcher
+	WorkflowRepo             repos.Workflow
 }
 
 type registerWorkflowArgs struct {
@@ -165,8 +161,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		args.ID,
 		args.dagSummary,
 		h.IntegrationRepo,
-		h.ExecutionEnvironmentReader,
-		h.ExecutionEnvironmentWriter,
+		h.ExecutionEnvironmentRepo,
 		h.Database,
 	)
 	if err != nil {
@@ -286,8 +281,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 
 		err = exec_env.CleanupUnusedEnvironments(
 			context.Background(),
-			h.ExecutionEnvironmentReader,
-			h.ExecutionEnvironmentWriter,
+			h.ExecutionEnvironmentRepo,
 			db,
 		)
 		if err != nil {
