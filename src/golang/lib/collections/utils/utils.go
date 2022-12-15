@@ -9,8 +9,6 @@ import (
 	"github.com/google/uuid"
 )
 
-var ErrNoopDbInterface = errors.New("The no-op database interface is being used, which should not happen.")
-
 // CountResult is useful when querying for `COUNT(*)`
 type CountResult struct {
 	Count int `db:"count"`
@@ -73,12 +71,9 @@ func UpdateRecord(
 func NoopInterfaceErrorHandling(throwError bool) error {
 	var err errors.DropboxError
 	if throwError {
-		err = ErrNoopDbInterface
-	} else {
-		err = nil
+		return errors.New("The noop database interface is being used, which should not happen.")
 	}
-
-	return err
+	return nil
 }
 
 // Checks if the given UUID exists in the given table

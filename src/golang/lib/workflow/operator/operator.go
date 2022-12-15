@@ -19,8 +19,6 @@ import (
 	"github.com/google/uuid"
 )
 
-var ErrInvalidStatusToLaunch = errors.New("Cannot launch operator. The operator is in an invalid status.")
-
 // Operator is an interface for managing and inspecting the lifecycle of an operator
 // used by a workflow run.
 type Operator interface {

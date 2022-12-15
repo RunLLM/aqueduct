@@ -22,8 +22,7 @@ import (
 )
 
 var (
-	ErrInvalidJobSpec           = errors.New("Invalid job spec.")
-	ErrInvalidSerializationType = errors.New("Invalid serialization type.")
+	ErrInvalidJobSpec = errors.New("Invalid job spec.")
 )
 
 type JobType string
@@ -547,7 +546,7 @@ func EncodeSpec(spec Spec, serializationType SerializationType) (string, error) 
 		return base64.StdEncoding.EncodeToString(buf.Bytes()), nil
 	}
 
-	return "", ErrInvalidSerializationType
+	return "", errors.Newf("Unsupported serialization type %s.", serializationType)
 }
 
 func DecodeSpec(specData string, serializationType SerializationType) (Spec, error) {
@@ -599,5 +598,5 @@ func DecodeSpec(specData string, serializationType SerializationType) (Spec, err
 		return spec, nil
 	}
 
-	return nil, ErrInvalidSerializationType
+	return nil, errors.Newf("Unsupported serialization type %s.", serializationType)
 }
