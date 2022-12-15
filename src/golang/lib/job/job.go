@@ -7,8 +7,6 @@ import (
 	"github.com/dropbox/godropbox/errors"
 )
 
-var ErrAsyncExecution = errors.New("Unknown job status due to asynchronous execution.")
-
 type JobManager interface {
 	Config() Config
 	Launch(ctx context.Context, name string, spec Spec) JobError

@@ -266,7 +266,7 @@ func (bo *baseOperator) Poll(ctx context.Context) (*shared.ExecutionState, error
 			)
 			return bo.ExecState(), nil
 		} else {
-			return nil, errors.Newf("Unsupposed Job Error code %v", err.Code())
+			return nil, errors.Newf("Unexpected JobErrorCode: %v", err.Code())
 		}
 	} else {
 		// The job just completed, so we know we can fetch the results (succeeded/failed).
