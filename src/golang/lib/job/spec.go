@@ -21,9 +21,7 @@ import (
 	"github.com/google/uuid"
 )
 
-var (
-	ErrInvalidJobSpec = errors.New("Invalid job spec.")
-)
+var ErrInvalidJobSpec = errors.New("Invalid job spec.")
 
 type JobType string
 

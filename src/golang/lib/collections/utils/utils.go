@@ -69,7 +69,6 @@ func UpdateRecord(
 }
 
 func NoopInterfaceErrorHandling(throwError bool) error {
-	var err errors.DropboxError
 	if throwError {
 		return errors.New("The noop database interface is being used, which should not happen.")
 	}
