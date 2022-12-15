@@ -192,6 +192,27 @@ func requireDeepEqualOperators(t *testing.T, expected, actual []models.Operator)
 	}
 }
 
+// requireDeepEqualExecutionEnvironment asserts that the expected and actual lists of
+// ExecutionEnvironment contain the same elements.
+func requireDeepEqualExecutionEnvironment(t *testing.T, expected, actual []models.ExecutionEnvironment) {
+	require.Equal(t, len(expected), len(actual))
+
+	for _, expectedExecutionEnvironment := range expected {
+		found := false
+		var foundExecutionEnvironment models.ExecutionEnvironment
+
+		for _, actualExecutionEnvironment := range actual {
+			if expectedExecutionEnvironment.ID == actualExecutionEnvironment.ID {
+				found = true
+				foundExecutionEnvironment = actualExecutionEnvironment
+				break
+			}
+		}
+		require.True(t, found, "Unable to find ExecutionEnvironment: %v", expectedExecutionEnvironment)
+		requireDeepEqual(t, expectedExecutionEnvironment, foundExecutionEnvironment)
+	}
+}
+
 // requireDeepEqualLoadOperators asserts that the expected and actual lists of
 // LoadOperators contain the same elements.
 func requireDeepEqualLoadOperators(t *testing.T, expected, actual []views.LoadOperator) {
