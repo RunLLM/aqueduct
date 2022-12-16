@@ -88,7 +88,7 @@ class DAG(BaseModel):
             op_engine_config = dag_engine_config
             if op.spec.engine_config is not None:
                 # DAG's that are expected to execute on Airflow cannot have any custom Operator specs.
-                if dag_engine_config.type != RuntimeType.AIRFLOW:
+                if dag_engine_config.type == RuntimeType.AIRFLOW:
                     raise InvalidUserActionException(
                         "All operators must run on Airflow. Operator %s is designated to run on custom engine `%s`."
                         % (op.name, op.spec.engine_config.name),
