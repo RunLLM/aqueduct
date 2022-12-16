@@ -5,7 +5,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections"
-	"github.com/aqueducthq/aqueduct/lib/collections/schema_version"
+	"github.com/aqueducthq/aqueduct/lib/repos/sqlite"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/models"

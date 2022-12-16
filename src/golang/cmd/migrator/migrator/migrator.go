@@ -4,7 +4,8 @@ import (
 	"context"
 	"math"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/schema_version"
+	"github.com/aqueducthq/aqueduct/lib/repos/sqlite"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/dropbox/godropbox/errors"
 	log "github.com/sirupsen/logrus"
@@ -161,12 +162,7 @@ func executeDown(ctx context.Context, db database.Database, step *migrationStep)
 func createSchemaVersionRecord(ctx context.Context, version int64, name string, db database.Database) error {
 	schemaVersionRepo := sqlite.NewSchemaVersionRepo()
 
-	writer, err := schema_version.NewWriter(db.Config())
-	if err != nil {
-		return err
-	}
-
-	_, err = schemaVersionRepo.Get(ctx, version, db)
+	_, err := schemaVersionRepo.Get(ctx, version, db)
 	if err == nil {
 		// The schema version record already exists from a previous migration, so we just set dirty to true.
 		return setSchemaVersionRecordDirty(ctx, version, true /* dirty */, db)
@@ -178,16 +174,13 @@ func createSchemaVersionRecord(ctx context.Context, version int64, name string, 
 
 // setSchemaVersionRecordDirty updates the dirty column in the database for the schema version.
 func setSchemaVersionRecordDirty(ctx context.Context, version int64, dirty bool, db database.Database) error {
-	writer, err := schema_version.NewWriter(db.Config())
-	if err != nil {
-		return err
-	}
+	schemaVersionRepo := sqlite.NewSchemaVersionRepo()
 
-	_, err = writer.UpdateSchemaVersion(
+	_, err := schemaVersionRepo.Update(
 		ctx,
 		version,
 		map[string]interface{}{
-			schema_version.DirtyColumn: dirty,
+			models.SchemaVersionDirty: dirty,
 		},
 		db,
 	)
@@ -196,10 +189,7 @@ func setSchemaVersionRecordDirty(ctx context.Context, version int64, dirty bool,
 
 // deleteSchemaVersionRecord deletes the record for the schema version from the database.
 func deleteSchemaVersionRecord(ctx context.Context, version int64, db database.Database) error {
-	writer, err := schema_version.NewWriter(db.Config())
-	if err != nil {
-		return err
-	}
+	schemaVersionRepo := sqlite.NewSchemaVersionRepo()
 
-	return writer.DeleteSchemaVersion(ctx, version, db)
+	return schemaVersionRepo.Delete(ctx, version, db)
 }

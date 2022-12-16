@@ -3,7 +3,7 @@ package migrator
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/schema_version"
+	"github.com/aqueducthq/aqueduct/lib/repos/sqlite"
 	"github.com/aqueducthq/aqueduct/lib/database"
 )
 
@@ -11,7 +11,7 @@ import (
 // and whether the schema version is dirty.
 // It also returns an error, if any.
 func Version(ctx context.Context, db database.Database) (int64, bool, error) {
-	schemaVersion, err := sqlite.NewSchemaVersionRepo().GetCurrentSchema(ctx, db)
+	schemaVersion, err := sqlite.NewSchemaVersionRepo().GetCurrent(ctx, db)
 	if err != nil {
 		return -1, false, err
 	}

@@ -1,8 +1,6 @@
 package server
 
 import (
-	"github.com/aqueducthq/aqueduct/lib/collections/schema_version"
-	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/repos/sqlite"
