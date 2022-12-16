@@ -9,8 +9,6 @@ import (
 	"github.com/google/uuid"
 )
 
-var ErrGithubNotImplemented = errors.New("Github features are not implemented yet.")
-
 type UnimplementedManager struct{}
 
 func NewUnimplementedManager() *UnimplementedManager {
@@ -28,9 +26,9 @@ func (*UnimplementedManager) GetClient(ctx context.Context, userId uuid.UUID) (C
 type UnimplementedClient struct{}
 
 func (*UnimplementedClient) PullAndUpdateFunction(ctx context.Context, spec *function.Function, alwaysExtract bool) (bool, []byte, error) {
-	return false, nil, ErrGithubNotImplemented
+	return false, nil, errors.New("Github features are not implemented yet.")
 }
 
 func (*UnimplementedClient) PullExtract(ctx context.Context, spec *connector.Extract) (bool, error) {
-	return false, ErrGithubNotImplemented
+	return false, errors.New("Github features are not implemented yet.")
 }

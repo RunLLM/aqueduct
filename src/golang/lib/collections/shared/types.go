@@ -16,8 +16,6 @@ const (
 	TipUnknownInternalError = "Sorry, we've run into an unexpected error! " + TipCreateBugReport
 )
 
-var ErrInvalidStorageConfig = errors.New("Invalid Storage Config")
-
 type ExecutionStatus string
 
 const (

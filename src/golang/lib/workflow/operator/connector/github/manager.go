@@ -7,8 +7,6 @@ import (
 	"github.com/google/uuid"
 )
 
-var ErrInvalidManagerConfig = errors.New("Invalid github manager config.")
-
 type Manager interface {
 	Config() ManagerConfig
 	GetClient(ctx context.Context, userId uuid.UUID) (Client, error)
@@ -19,5 +17,5 @@ func NewManager(config ManagerConfig) (Manager, error) {
 		return NewUnimplementedManager(), nil
 	}
 
-	return nil, ErrInvalidManagerConfig
+	return nil, errors.New("Invalid github manager config.")
 }
