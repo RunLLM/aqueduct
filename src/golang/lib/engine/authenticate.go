@@ -2,7 +2,6 @@ package engine
 
 import (
 	"context"
-	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
@@ -30,8 +29,6 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 		return errors.Wrap(err, "Unable to parse configuration.")
 	}
 
-	errGroup := new(errgroup.Group)
-
 	functionsToShip := [10]lambda_utils.LambdaFunctionType{
 		lambda_utils.FunctionExecutor37Type,
 		lambda_utils.FunctionExecutor38Type,
@@ -45,12 +42,18 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 		lambda_utils.SnowflakeConnectorType,
 	}
 
+	errGroup, _ := errgroup.WithContext(ctx)
+	lambda_utils.AuthenticateDockerToECR()
+
+	for _, functionType := range functionsToShip {
+		lambda_utils.PullImageFromECR(functionType)
+	}
+
 	for _, functionType := range functionsToShip {
 		lambdaFunctionType := functionType
 		errGroup.Go(func() error {
 			return lambda_utils.CreateLambdaFunction(lambdaFunctionType, lambdaConf.RoleArn)
 		})
-		time.Sleep(3 * time.Second)
 	}
 
 	if err := errGroup.Wait(); err != nil {

@@ -23,15 +23,49 @@ type EcrAuth struct {
 	ProxyEndpoint string
 }
 
-func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error {
-	// For each lambda function we create, we take the following steps:
-	// 1. Pull the image from the public ECR repository.
-	// 2. Create the private ECR repo if it doesn't exist
-	// 3. Get the ECR auth token and log in the docker client.
-	// 4. Push the image to the private ECR repo
-	// 5. Create the lambda function using the private ECR repo as the code.
+func AuthenticateDockerToECR() error {
+	//Authenticate ECR client
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
 
-	lambdaImageUri, userRepoName, err := mapFunctionType(functionType)
+	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+	}))
+	ecrSvc := ecr.New(sess)
+
+	token, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
+	if err != nil {
+		return errors.Wrap(err, "Unable to get authorization token.")
+	}
+	auth, err := extractToken(*token.AuthorizationData[0].AuthorizationToken, *token.AuthorizationData[0].ProxyEndpoint)
+	if err != nil {
+		return errors.Wrap(err, "Unable to extract username and password.")
+	}
+
+	cmd := exec.Command(
+		"docker",
+		"login",
+		"--username",
+		auth.Username,
+		"--password",
+		auth.Password,
+		auth.ProxyEndpoint,
+	)
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+
+	err = cmd.Run()
+	if err != nil {
+		log.Info(stdout.String())
+		log.Info(stderr.String())
+		return errors.Wrap(err, "Unable to authenticate docker client to ECR.")
+	}
+	return nil
+}
+
+func PullImageFromECR(functionType LambdaFunctionType) error {
+	//Pull the Image from public ECR Library
+	lambdaImageUri, _, err := mapFunctionType(functionType)
 	if err != nil {
 		return errors.Wrap(err, "Unable to map function type to image.")
 	}
@@ -49,6 +83,25 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 		log.Info(stderr.String())
 		return errors.Wrap(err, "Unable to pull docker image from dockerhub.")
 	}
+	return nil
+}
+
+func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error {
+	// For each lambda function we create, we take the following steps:
+	// 1. Pull the image from the public ECR repository.
+	// 2. Create the private ECR repo if it doesn't exist
+	// 3. Get the ECR auth token and log in the docker client.
+	// 4. Push the image to the private ECR repo
+	// 5. Create the lambda function using the private ECR repo as the code.
+
+	lambdaImageUri, userRepoName, err := mapFunctionType(functionType)
+	if err != nil {
+		return errors.Wrap(err, "Unable to map function type to image.")
+	}
+	versionedLambdaImageUri := fmt.Sprintf("%s:%s", lambdaImageUri, lib.ServerVersionNumber)
+
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
 
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
@@ -81,38 +134,12 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 
 	repositoryUri := fmt.Sprintf("%s:%s", *result.Repository.RepositoryUri, lib.ServerVersionNumber)
 
-	cmd = exec.Command("docker", "tag", versionedLambdaImageUri, repositoryUri)
+	cmd := exec.Command("docker", "tag", versionedLambdaImageUri, repositoryUri)
 	err = cmd.Run()
 	if err != nil {
 		log.Info(stdout.String())
 		log.Info(stderr.String())
 		return errors.Wrap(err, "Unable to tag docker image from ECR.")
-	}
-
-	token, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
-	if err != nil {
-		return errors.Wrap(err, "Unable to get authorization token.")
-	}
-	auth, err := extractToken(*token.AuthorizationData[0].AuthorizationToken, *token.AuthorizationData[0].ProxyEndpoint)
-	if err != nil {
-		return errors.Wrap(err, "Unable to extract username and password.")
-	}
-
-	cmd = exec.Command(
-		"docker",
-		"login",
-		"--username",
-		auth.Username,
-		"--password",
-		auth.Password,
-		auth.ProxyEndpoint,
-	)
-
-	err = cmd.Run()
-	if err != nil {
-		log.Info(stdout.String())
-		log.Info(stderr.String())
-		return errors.Wrap(err, "Unable to authenticate docker client to ECR.")
 	}
 
 	cmd = exec.Command("docker", "push", repositoryUri)
