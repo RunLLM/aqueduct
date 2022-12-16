@@ -3,12 +3,8 @@ package repos
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/views"
-	"github.com/google/uuid"
 )
 
 // SchemaVersion defines all of the database operations that can be performed for an SchemaVersion.

@@ -4,17 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
-	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/google/uuid"
 )
 
 type schemaVersionRepo struct {
@@ -74,7 +68,12 @@ func (*schemaVersionWriter) Create(
 }
 
 func (*schemaVersionWriter) Delete(ctx context.Context, version int64, DB database.Database) error { 
-	return deleteSchemaVersions(ctx, DB, []int64{version})
+	query := fmt.Sprintf(
+		`DELETE FROM schema_version WHERE version = $1`,
+	)
+	args := []interface{}{version}
+
+	return DB.Execute(ctx, query, args...)
 }
 
 func (*schemaVersionWriter) Update(ctx context.Context, version int64, changes map[string]interface{}, DB database.Database) (*models.SchemaVersion, error) {
@@ -90,20 +89,6 @@ func (*schemaVersionWriter) Update(ctx context.Context, version int64, changes m
 		DB,
 	)
 	return &schemaVersion, err
-}
-
-func deleteSchemaVersions(ctx context.Context, DB database.Database, versions []int64) error {
-	if len(versions) == 0 {
-		return nil
-	}
-
-	query := fmt.Sprintf(
-		`DELETE FROM schema_version WHERE version IN (%s)`,
-		stmt_preparers.GenerateArgsList(len(versions), 1),
-	)
-	args := stmt_preparers.CastIdsListToInterfaceList(versions)
-
-	return DB.Execute(ctx, query, args...)
 }
 
 func getSchemaVersions(ctx context.Context, DB database.Database, query string, args ...interface{}) ([]models.SchemaVersion, error) {

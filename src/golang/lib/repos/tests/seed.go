@@ -597,6 +597,21 @@ func (ts *TestSuite) seedArtifactResult(count int) ([]models.ArtifactResult, mod
 	return artifactResults, artifact, dag, workflow
 }
 
+// seedSchemaVersion creates count schema versions versioned from CurrentSchemaVersion + 1  to CurrentSchemaVersion + count.
+func (ts *TestSuite) seedSchemaVersion(count int) []models.SchemaVersion {
+	schemaVersions := make([]models.SchemaVersion, 0, count)
+
+	for i := 1; i <= count; i++ {
+		name := randString(10)
+		schemaVersion, err := ts.schemaVersion.Create(ts.ctx, int64(models.CurrentSchemaVersion + i), name, ts.DB)
+		require.Nil(ts.T(), err)
+
+		schemaVersions = append(schemaVersions, *schemaVersion)
+	}
+
+	return schemaVersions
+}
+
 // seedUnusedExecutionEnvironment creates `count` unused execution environments in execution_environment.
 func (ts *TestSuite) seedUnusedExecutionEnvironment(count int) []models.ExecutionEnvironment {
 	executionEnvironments := make([]models.ExecutionEnvironment, 0, count)

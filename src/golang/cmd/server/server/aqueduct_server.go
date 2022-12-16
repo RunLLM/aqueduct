@@ -83,7 +83,7 @@ func NewAqServer() *AqServer {
 
 	if err := collections.RequireSchemaVersion(
 		context.Background(),
-		models.SchemaVersion,
+		models.CurrentSchemaVersion,
 		readers.SchemaVersionReader,
 		db,
 	); err != nil {

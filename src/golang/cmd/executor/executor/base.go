@@ -41,7 +41,7 @@ func NewBaseExecutor(conf *job.ExecutorConfiguration) (*BaseExecutor, error) {
 
 	if err := collections.RequireSchemaVersion(
 		context.Background(),
-		models.SchemaVersion,
+		models.CurrentSchemaVersion,
 		schemaVersionReader,
 		db,
 	); err != nil {
