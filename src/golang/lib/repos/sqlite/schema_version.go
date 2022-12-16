@@ -67,10 +67,8 @@ func (*schemaVersionWriter) Create(
 	return getSchemaVersion(ctx, DB, query, args...)
 }
 
-func (*schemaVersionWriter) Delete(ctx context.Context, version int64, DB database.Database) error { 
-	query := fmt.Sprintf(
-		`DELETE FROM schema_version WHERE version = $1`,
-	)
+func (*schemaVersionWriter) Delete(ctx context.Context, version int64, DB database.Database) error {
+	query := `DELETE FROM schema_version WHERE version = $1;`
 	args := []interface{}{version}
 
 	return DB.Execute(ctx, query, args...)

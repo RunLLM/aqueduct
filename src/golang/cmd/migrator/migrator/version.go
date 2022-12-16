@@ -3,8 +3,8 @@ package migrator
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/repos/sqlite"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/repos/sqlite"
 )
 
 // Version returns the current schema version of the database db
