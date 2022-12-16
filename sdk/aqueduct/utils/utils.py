@@ -6,6 +6,7 @@ from aqueduct.constants.enums import ArtifactType, RuntimeType, ServiceType, Tri
 from aqueduct.error import *
 from aqueduct.models.config import (
     AirflowEngineConfig,
+    DatabricksEngineConfig,
     EngineConfig,
     K8sEngineConfig,
     LambdaEngineConfig,
@@ -147,6 +148,13 @@ def generate_engine_config(
         return EngineConfig(
             type=RuntimeType.LAMBDA,
             lambda_config=LambdaEngineConfig(
+                integration_id=integration.id,
+            ),
+        )
+    elif integration.service == ServiceType.DATABRICKS:
+        return EngineConfig(
+            type=RuntimeType.DATABRICKS,
+            databricks_config=DatabricksEngineConfig(
                 integration_id=integration.id,
             ),
         )
