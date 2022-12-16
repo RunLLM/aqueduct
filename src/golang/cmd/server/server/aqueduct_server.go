@@ -75,16 +75,10 @@ func NewAqServer() *AqServer {
 		log.Fatalf("Unable to initialize database: %v", err)
 	}
 
-	readers, err := CreateReaders(db.Config())
-	if err != nil {
-		db.Close()
-		log.Fatalf("Unable to create database readers: %v", err)
-	}
-
 	if err := collections.RequireSchemaVersion(
 		context.Background(),
 		models.CurrentSchemaVersion,
-		readers.SchemaVersionReader,
+		sqlite.NewSchemaVersionRepo(),
 		db,
 	); err != nil {
 		db.Close()

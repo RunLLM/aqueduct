@@ -159,23 +159,20 @@ func executeDown(ctx context.Context, db database.Database, step *migrationStep)
 // If the schema version record already exists (due to a previous dirty run), then the
 // schema version is simply set to dirty.
 func createSchemaVersionRecord(ctx context.Context, version int64, name string, db database.Database) error {
-	reader, err := schema_version.NewReader(db.Config())
-	if err != nil {
-		return err
-	}
+	schemaVersionRepo := sqlite.NewSchemaVersionRepo()
 
 	writer, err := schema_version.NewWriter(db.Config())
 	if err != nil {
 		return err
 	}
 
-	_, err = reader.GetSchemaVersion(ctx, version, db)
+	_, err = schemaVersionRepo.Get(ctx, version, db)
 	if err == nil {
 		// The schema version record already exists from a previous migration, so we just set dirty to true.
 		return setSchemaVersionRecordDirty(ctx, version, true /* dirty */, db)
 	}
 
-	_, err = writer.CreateSchemaVersion(ctx, version, name, db)
+	_, err = schemaVersionRepo.Create(ctx, version, name, db)
 	return err
 }
 
