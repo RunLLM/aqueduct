@@ -251,7 +251,7 @@ func (s *AqServer) AddHandler(route string, handlerObj handler.Handler) {
 			authentication.RequireApiKey(s.UserRepo, s.Database),
 		)
 	} else {
-		panic(handler.ErrUnsupportedAuthMethod)
+		panic(errors.New("Auth method is not supported."))
 	}
 
 	s.Router.Method(
