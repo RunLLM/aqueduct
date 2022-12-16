@@ -7,9 +7,10 @@ import (
 type ManagerType string
 
 const (
-	ProcessType ManagerType = "process"
-	K8sType     ManagerType = "k8s"
-	LambdaType  ManagerType = "lambda"
+	ProcessType    ManagerType = "process"
+	K8sType        ManagerType = "k8s"
+	LambdaType     ManagerType = "lambda"
+	DatabricksType ManagerType = "databricks"
 )
 
 type Config interface {
@@ -40,6 +41,14 @@ type LambdaJobManagerConfig struct {
 	AwsSecretAccessKey string `yaml:"awsSecretAccessKey" json:"aws_secret_access_key"`
 }
 
+type DatabricksJobManagerConfig struct {
+	WorkspaceUrl         string `yaml:"workspaceUrl" json:"workspace_url"`
+	AccessToken          string `yaml:"accessToken" json:"access_token"`
+	S3InstanceProfileArn string `yaml:"s3InstanceProfileArn" json:"s3_instance_profile_arn"`
+	AwsAccessKeyId       string `yaml:"awsAccessKeyId" json:"aws_access_key_id"`
+	AwsSecretAccessKey   string `yaml:"awsSecretAccessKey" json:"aws_secret_access_key"`
+}
+
 func (*ProcessConfig) Type() ManagerType {
 	return ProcessType
 }
@@ -50,6 +59,10 @@ func (*K8sJobManagerConfig) Type() ManagerType {
 
 func (*LambdaJobManagerConfig) Type() ManagerType {
 	return LambdaType
+}
+
+func (*DatabricksJobManagerConfig) Type() ManagerType {
+	return DatabricksType
 }
 
 func RegisterGobTypes() {

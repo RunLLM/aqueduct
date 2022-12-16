@@ -45,6 +45,12 @@ type LambdaIntegrationConfig struct {
 	RoleArn string `json:"role_arn" yaml:"roleArn"`
 }
 
+type DatabricksIntegrationConfig struct {
+	WorkspaceUrl         string `json:"workspace_url" yaml:"workspaceUrl"`
+	AccessToken          string `json:"access_token" yaml:"accessToken"`
+	S3InstanceProfileArn string `json:"s3_instance_profile_arn" yaml:"s3InstanceProfileArn"`
+}
+
 type ConfigBool bool
 
 func (scb *ConfigBool) UnmarshalJSON(data []byte) error {
