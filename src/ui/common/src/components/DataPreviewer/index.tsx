@@ -20,6 +20,9 @@ type Props = {
   dataTableHeight?: string;
 };
 
+/**
+ * Shows a preview for an artifact depending on it's serialization type.
+ */
 export const DataPreviewer: React.FC<Props> = ({
   previewData,
   error,

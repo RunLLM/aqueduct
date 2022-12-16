@@ -33,9 +33,15 @@ const InfoCard = styled(Box)({
 });
 
 type GettingStartedTutorialProps = {
+  /**
+   * User to be rendered in greeting message on Getting Started tutorial card.
+   */
   user: UserProfile;
 };
 
+/**
+ * Card to be shown on the home page when the user first enters the web application.
+ */
 const GettingStartedTutorial: React.FC<GettingStartedTutorialProps> = ({
   user,
 }) => {
@@ -44,6 +50,9 @@ const GettingStartedTutorial: React.FC<GettingStartedTutorialProps> = ({
     greeting = 'Welcome to Aqueduct!';
   }
 
+  /**
+   * Animation effect to make hand emoji wave when user first loads the page.
+   */
   const waveEmoji = () => {
     const emojiElement = document.getElementById('greet-emoji');
     emojiElement.style.transitionDuration = '.4s';
@@ -82,6 +91,7 @@ const GettingStartedTutorial: React.FC<GettingStartedTutorialProps> = ({
         flexDirection: 'column',
       }}
     >
+      {/* TODO: Move this image to a constant somewhere. Might be a good idea to put all logos together  */}
       <img
         src="https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/aqueduct-logo-two-tone/1x/aqueduct-logo-two-tone-1x.png"
         width="300px"
