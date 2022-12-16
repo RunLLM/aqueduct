@@ -34,15 +34,12 @@ func NewBaseExecutor(conf *job.ExecutorConfiguration) (*BaseExecutor, error) {
 		}
 	}()
 
-	schemaVersionReader, err := schema_version.NewReader(db.Config())
-	if err != nil {
-		return nil, err
-	}
+	schemaVersionRepo := sqlite.NewSchemaVersionRepo()
 
 	if err := collections.RequireSchemaVersion(
 		context.Background(),
 		models.CurrentSchemaVersion,
-		schemaVersionReader,
+		schemaVersionRepo,
 		db,
 	); err != nil {
 		return nil, errors.Wrap(err, "Found incompatible database schema version.")
