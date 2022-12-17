@@ -33,7 +33,9 @@ def test_invalid_destination_integration(client, data_integration):
 
 
 def test_sql_today_tag(client, data_integration):
-    sql_artifact_today = data_integration.sql(query="select * from hotel_reviews where review_date = {{today}}")
+    sql_artifact_today = data_integration.sql(
+        query="select * from hotel_reviews where review_date = {{today}}"
+    )
     assert sql_artifact_today.get().empty
     sql_artifact_not_today = data_integration.sql(
         query="select * from hotel_reviews where review_date < {{today}}"
@@ -101,12 +103,16 @@ def test_sql_query_with_multiple_parameters(client, flow_name, data_integration,
 
 def test_sql_query_user_vs_builtin_precedence(client, data_integration):
     """If a user defines an expansion that collides with a built-in one, the user-defined one should take precedence."""
-    sql_artifact = data_integration.sql(query="select * from hotel_reviews where review_date > {{today}}")
+    sql_artifact = data_integration.sql(
+        query="select * from hotel_reviews where review_date > {{today}}"
+    )
     builtin_result = sql_artifact.get()
 
     datestring = "'2016-01-01'"
     _ = client.create_param("today", datestring)
-    sql_artifact = data_integration.sql(query="select * from hotel_reviews where review_date > {{today}}")
+    sql_artifact = data_integration.sql(
+        query="select * from hotel_reviews where review_date > {{today}}"
+    )
     user_param_result = sql_artifact.get()
     assert not builtin_result.equals(user_param_result)
 
