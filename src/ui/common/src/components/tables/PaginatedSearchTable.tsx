@@ -48,7 +48,8 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
   const [searchQuery, setSearchQuery] = React.useState('');
   // TODO: Add dropdown to select which column to search the table on.
-  const [searchColumn, setSearchColumn] = React.useState('name');
+  // TODO: add setSearchColumn to the array below.
+  const [searchColumn] = React.useState('name');
 
   let rows = data.data;
   const columns = data.schema.fields;
@@ -115,7 +116,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
   };
 
   if (searchQuery.length > 0) {
-    filteredRows = data.data.filter((rowItem, index) => {
+    filteredRows = data.data.filter((rowItem) => {
       return shouldInclude(rowItem, searchQuery, searchColumn);
     });
 

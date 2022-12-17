@@ -15,7 +15,6 @@ import { useDispatch } from 'react-redux';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 
 import { AppDispatch } from '../../stores/store';
-import UserProfile from '../../utils/auth';
 import { getPathPrefix } from '../../utils/getPathPrefix';
 import {
   menuSidebar,
@@ -113,9 +112,8 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
  * quick links to core abstractions in our system (workflows, integrations, etc).
  */
 const MenuSidebar: React.FC<{
-  user: UserProfile;
   onSidebarItemClicked?: (name: string) => void;
-}> = ({ user, onSidebarItemClicked }) => {
+}> = ({ onSidebarItemClicked }) => {
   const dispatch: AppDispatch = useDispatch();
   const [currentPage, setCurrentPage] = useState(undefined);
   const location = useLocation();
