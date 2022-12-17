@@ -71,16 +71,16 @@ export type DataPreview = {
 };
 
 export function inferSchema(rows: TableRow[]): DataSchema {
-  const columnNames = new Set<string>();
-  const columns: DataColumn[] = [];
-  rows.forEach((r) =>
-    Object.keys(r).forEach((col) => {
-      if (!(col in columnNames)) {
-        columns.push({ name: col, displayName: col, type: 'object' });
-        columnNames.add(col);
-      }
-    })
-  );
+  if (!rows) {
+    return { fields: [], pandas_version: '' };
+  }
 
-  return { fields: columns, pandas_version: '' };
+  return {
+    fields: Object.keys(rows[0]).map((col) => ({
+      name: col,
+      displayName: col,
+      type: 'object',
+    })),
+    pandas_version: '',
+  };
 }

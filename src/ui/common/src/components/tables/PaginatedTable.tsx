@@ -91,12 +91,23 @@ export const PaginatedTable: React.FC<PaginatedTableProps> = ({ data }) => {
                   >
                     {columns.map((column, columnIndex) => {
                       const value = row[column.name];
+                      let displayedValue = '';
+                      if (!!value) {
+                        if (
+                          column.type === 'json' ||
+                          column.type === 'object'
+                        ) {
+                          displayedValue = JSON.stringify(value);
+                        } else {
+                          displayedValue = value.toString();
+                        }
+                      }
                       return (
                         <TableCell
                           key={`table-col-${columnIndex}`}
                           align={'left'}
                         >
-                          {value ? value.toString() : ''}
+                          {displayedValue}
                         </TableCell>
                       );
                     })}
