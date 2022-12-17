@@ -2,7 +2,7 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import { RootState } from '../stores/store';
-import { Data } from '../utils/data';
+import { Data, inferSchema, TableRow } from '../utils/data';
 import { IntegrationConfig, Service } from '../utils/integrations';
 import { Operator } from '../utils/operators';
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
@@ -154,7 +154,17 @@ export const handleLoadIntegrationObject = createAsyncThunk<
       return thunkAPI.rejectWithValue(objectResponseBody.error);
     } else {
       const serialized = (objectResponseBody as ObjectPreviewResponse).data;
-      return JSON.parse(serialized) as Data;
+      const rawData = JSON.parse(serialized);
+      if ('schema' in rawData) {
+        return rawData as Data;
+      }
+
+      // this is a bson_table
+      const rows = rawData as TableRow[];
+      return {
+        schema: inferSchema(rows),
+        data: rows,
+      };
     }
   }
 );
