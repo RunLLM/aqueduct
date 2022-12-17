@@ -15,8 +15,8 @@ def test_extract_with_default_name_collision(client, data_integration):
     sql_artifact_1 = data_integration.sql(query=SENTIMENT_SQL_QUERY)
     sql_artifact_2 = data_integration.sql(query=SENTIMENT_SQL_QUERY)
 
-    assert sql_artifact_1.name() == "%s query 1 artifact" % data_integration
-    assert sql_artifact_2.name() == "%s query 2 artifact" % data_integration
+    assert sql_artifact_1.name() == "%s query 1 artifact" % data_integration._metadata.name
+    assert sql_artifact_2.name() == "%s query 2 artifact" % data_integration._metadata.name
 
     fn_artifact = dummy_sentiment_model_multiple_input(sql_artifact_1, sql_artifact_2)
     fn_df = fn_artifact.get()
