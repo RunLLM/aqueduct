@@ -84,13 +84,13 @@ func RunNow(
 	ctx context.Context,
 	databricksClient *databricks.WorkspaceClient,
 	jobId int64,
-	params map[string]string,
+	specStr string,
 ) (int64, error) {
 	runResp, err := databricksClient.Jobs.RunNow(
 		ctx,
 		jobs.RunNow{
-			JobId:             jobId,
-			PythonNamedParams: params,
+			JobId:        jobId,
+			PythonParams: []string{"--spec", specStr},
 		},
 	)
 	if err != nil {

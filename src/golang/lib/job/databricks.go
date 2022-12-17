@@ -121,8 +121,7 @@ func (j *DatabricksJobManager) Launch(
 	}
 	log.Info("SPEC:")
 	log.Info(specStr)
-	params := map[string]string{"--spec": specStr}
-	runId, err := databricks_lib.RunNow(ctx, j.databricksClient, jobId, params)
+	runId, err := databricks_lib.RunNow(ctx, j.databricksClient, jobId, specStr)
 	if err != nil {
 		return errors.Wrap(err, "Error runnning job in Databricks.")
 	}
