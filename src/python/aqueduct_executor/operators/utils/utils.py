@@ -146,10 +146,10 @@ def write_artifact(
     ).value
 
     if output_path is not None:
-        serialized_val = serialize_val_wrapper(content, serialization_type.value)
+        serialized_val = serialize_val_wrapper(content, serialization_type)
         storage.put(output_path, serialized_val)
 
-    output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = serialization_type.value
+    output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = serialization_type
     output_metadata[_METADATA_PYTHON_TYPE_KEY] = type(content).__name__
     storage.put(output_metadata_path, json.dumps(output_metadata).encode(DEFAULT_ENCODING))
 
