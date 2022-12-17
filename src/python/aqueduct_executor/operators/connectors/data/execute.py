@@ -1,7 +1,7 @@
 import sys
 from typing import Any
 
-from aqueduct.constants.enums import SerializationType
+from aqueduct.constants.enums import ArtifactType, ExecutionStatus, FailureType, SerializationType
 from aqueduct_executor.operators.connectors.data import common, config, connector, extract
 from aqueduct_executor.operators.connectors.data.spec import (
     AQUEDUCT_DEMO_NAME,
@@ -12,7 +12,8 @@ from aqueduct_executor.operators.connectors.data.spec import (
     LoadTableSpec,
     Spec,
 )
-from aqueduct_executor.operators.utils import enums, utils
+from aqueduct_executor.operators.utils import utils
+from aqueduct_executor.operators.utils.enums import JobType
 from aqueduct_executor.operators.utils.exceptions import MissingConnectorDependencyException
 from aqueduct_executor.operators.utils.execution import (
     TIP_DEMO_CONNECTION,
@@ -52,12 +53,12 @@ def run(spec: Spec) -> None:
         # Write operator execution metadata
         # Each decorator may set exec_state.status to FAILED, but if none of them did, then we are
         # certain that the operator succeeded.
-        if exec_state.status == enums.ExecutionStatus.FAILED:
+        if exec_state.status == ExecutionStatus.FAILED:
             print(f"Failed with error. Full Logs:\n{exec_state.json()}")
             utils.write_exec_state(storage, spec.metadata_path, exec_state)
             sys.exit(1)
 
-        exec_state.status = enums.ExecutionStatus.SUCCEEDED
+        exec_state.status = ExecutionStatus.SUCCEEDED
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
     except ExecFailureException as e:
         # We must reconcile the user logs here, since those logs are not captured on the exception.
@@ -68,13 +69,13 @@ def run(spec: Spec) -> None:
         sys.exit(1)
     except MissingConnectorDependencyException as e:
         exec_state.mark_as_failure(
-            enums.FailureType.USER_FATAL, tip=str(e), context=exception_traceback(e)
+            FailureType.USER_FATAL, tip=str(e), context=exception_traceback(e)
         )
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
         sys.exit(1)
     except Exception as e:
         exec_state.mark_as_failure(
-            enums.FailureType.SYSTEM, tip=TIP_UNKNOWN_ERROR, context=exception_traceback(e)
+            FailureType.SYSTEM, tip=TIP_UNKNOWN_ERROR, context=exception_traceback(e)
         )
         print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
 
@@ -89,18 +90,18 @@ def _execute(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
     else:
         # Because constructing certain connectors (eg. Postgres) can also involve authentication,
         # we do both in `run_authenticate()`, and give a more helpful error message on failure.
-        if spec.type == enums.JobType.AUTHENTICATE:
+        if spec.type == JobType.AUTHENTICATE:
             run_authenticate(spec, exec_state, is_demo=(spec.name == AQUEDUCT_DEMO_NAME))
             return
 
         op = setup_connector(spec.connector_name, spec.connector_config)
-        if spec.type == enums.JobType.EXTRACT:
+        if spec.type == JobType.EXTRACT:
             run_extract(spec, op, storage, exec_state)
-        elif spec.type == enums.JobType.LOADTABLE:
+        elif spec.type == JobType.LOADTABLE:
             run_load_table(spec, op, storage)
-        elif spec.type == enums.JobType.LOAD:
+        elif spec.type == JobType.LOAD:
             run_load(spec, op, storage, exec_state)
-        elif spec.type == enums.JobType.DISCOVER:
+        elif spec.type == JobType.DISCOVER:
             run_discover(spec, op, storage)
         else:
             raise Exception("Unknown job: %s" % spec.type)
@@ -150,16 +151,16 @@ def run_extract(
 
     output = _extract()
 
-    output_artifact_type = enums.ArtifactType.TABLE
+    output_artifact_type = ArtifactType.TABLE
     derived_from_bson = isinstance(extract_params, extract.MongoDBParams)
     if isinstance(extract_params, extract.S3Params):
         output_artifact_type = extract_params.artifact_type
         # If the type of the output is tuple, then it could be a multi-file S3 request so we
         # overwrite the output type to tuple.
         if isinstance(output, tuple):
-            output_artifact_type = enums.ArtifactType.TUPLE
+            output_artifact_type = ArtifactType.TUPLE
 
-    if exec_state.status != enums.ExecutionStatus.FAILED:
+    if exec_state.status != ExecutionStatus.FAILED:
         utils.write_artifact(
             storage,
             output_artifact_type,
@@ -200,7 +201,7 @@ def run_load(
 
 def run_load_table(spec: LoadTableSpec, op: connector.DataConnector, storage: Storage) -> None:
     df = utils._read_csv(storage.get(spec.csv))
-    op.load(spec.load_parameters.parameters, df, enums.ArtifactType.TABLE)
+    op.load(spec.load_parameters.parameters, df, ArtifactType.TABLE)
 
 
 def run_discover(spec: DiscoverSpec, op: connector.DataConnector, storage: Storage) -> None:
