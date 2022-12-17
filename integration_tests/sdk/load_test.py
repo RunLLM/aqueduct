@@ -7,14 +7,12 @@ from aqueduct import op
 
 
 def test_list_saved_objects(client, flow_name, data_integration, engine, validator):
-    integration = client.integration(name=data_integration)
-
     table_1_save_name = generate_table_name()
     table_2_save_name = generate_table_name()
 
-    table = integration.sql(query=SHORT_SENTIMENT_SQL_QUERY)
+    table = data_integration.sql(query=SHORT_SENTIMENT_SQL_QUERY)
     extracted_table_data = table.get()
-    save(integration, table, name=table_1_save_name, update_mode=LoadUpdateMode.REPLACE)
+    save(data_integration, table, name=table_1_save_name, update_mode=LoadUpdateMode.REPLACE)
 
     # This will create the table.
     flow = publish_flow_test(
@@ -26,7 +24,7 @@ def test_list_saved_objects(client, flow_name, data_integration, engine, validat
     validator.check_saved_artifact(flow, table.id(), expected_data=extracted_table_data)
 
     # Change to append mode.
-    save(integration, table, name=table_1_save_name, update_mode=LoadUpdateMode.APPEND)
+    save(data_integration, table, name=table_1_save_name, update_mode=LoadUpdateMode.APPEND)
     publish_flow_test(
         client,
         existing_flow=flow,
@@ -40,7 +38,7 @@ def test_list_saved_objects(client, flow_name, data_integration, engine, validat
     )
 
     # Redundant append mode change
-    save(integration, table, name=table_1_save_name, update_mode=LoadUpdateMode.APPEND)
+    save(data_integration, table, name=table_1_save_name, update_mode=LoadUpdateMode.APPEND)
     publish_flow_test(
         client,
         existing_flow=flow,
@@ -56,7 +54,7 @@ def test_list_saved_objects(client, flow_name, data_integration, engine, validat
     )
 
     # Create a different table from the same artifact.
-    save(integration, table, name=table_2_save_name, update_mode=LoadUpdateMode.REPLACE)
+    save(data_integration, table, name=table_2_save_name, update_mode=LoadUpdateMode.REPLACE)
     publish_flow_test(
         client,
         existing_flow=flow,
@@ -82,14 +80,13 @@ def test_list_saved_objects(client, flow_name, data_integration, engine, validat
 def test_multiple_artifacts_saved_to_same_integration(
     client, flow_name, data_integration, engine, validator
 ):
-    integration = client.integration(name=data_integration)
     table_1_save_name = generate_table_name()
     table_2_save_name = generate_table_name()
 
-    table_1 = integration.sql(query=SHORT_SENTIMENT_SQL_QUERY)
-    save(integration, table_1, name=table_1_save_name, update_mode=LoadUpdateMode.REPLACE)
-    table_2 = integration.sql(query=SHORT_SENTIMENT_SQL_QUERY)
-    save(integration, table_2, name=table_2_save_name, update_mode=LoadUpdateMode.REPLACE)
+    table_1 = data_integration.sql(query=SHORT_SENTIMENT_SQL_QUERY)
+    save(data_integration, table_1, name=table_1_save_name, update_mode=LoadUpdateMode.REPLACE)
+    table_2 = data_integration.sql(query=SHORT_SENTIMENT_SQL_QUERY)
+    save(data_integration, table_2, name=table_2_save_name, update_mode=LoadUpdateMode.REPLACE)
 
     flow = publish_flow_test(
         client,
@@ -111,8 +108,7 @@ def test_multiple_artifacts_saved_to_same_integration(
 
 
 def test_lazy_artifact_with_save(client, flow_name, data_integration, engine, validator):
-    db = client.integration(data_integration)
-    reviews = db.sql(SHORT_SENTIMENT_SQL_QUERY)
+    reviews = data_integration.sql(SHORT_SENTIMENT_SQL_QUERY)
 
     @op()
     def copy_field(df):
@@ -120,7 +116,7 @@ def test_lazy_artifact_with_save(client, flow_name, data_integration, engine, va
         return df
 
     review_copied = copy_field.lazy(reviews)
-    save(db, review_copied, update_mode=LoadUpdateMode.REPLACE)
+    save(data_integration, review_copied, update_mode=LoadUpdateMode.REPLACE)
 
     flow = publish_flow_test(
         client,

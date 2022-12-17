@@ -8,9 +8,7 @@ from aqueduct import op
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S, ServiceType.LAMBDA)
 def test_flow_with_multiple_compute_using_op_spec(client, flow_name, data_integration, engine):
-    integration = client.integration(data_integration)
-
-    sql_artifact = integration.sql(query=SENTIMENT_SQL_QUERY)
+    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
 
     @op
     def noop(input):

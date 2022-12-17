@@ -8,8 +8,7 @@ from aqueduct import op
 
 
 def test_great_expectations_check(client, data_integration):
-    db = client.integration(data_integration)
-    table = db.sql(query=WINE_SQL_QUERY)
+    table = data_integration.sql(query=WINE_SQL_QUERY)
     ge_check = table.validate_with_expectation(
         "expect_column_values_to_be_unique", {"column": "fixed_acidity"}
     )
@@ -48,8 +47,7 @@ def mem_intensive_function(table: pd.DataFrame) -> pd.DataFrame:
 
 
 def test_system_runtime_metric(client, data_integration):
-    db = client.integration(data_integration)
-    table = db.sql(query=SENTIMENT_SQL_QUERY)
+    table = data_integration.sql(query=SENTIMENT_SQL_QUERY)
     timed_table = timed_function(table)
 
     runtime_metric = timed_table.system_metric("runtime")
@@ -58,8 +56,7 @@ def test_system_runtime_metric(client, data_integration):
 
 
 def test_system_max_memory_metric(client, data_integration):
-    db = client.integration(data_integration)
-    table = db.sql(query=SENTIMENT_SQL_QUERY)
+    table = data_integration.sql(query=SENTIMENT_SQL_QUERY)
     timed_table = mem_intensive_function(table)
 
     max_mem_metric = timed_table.system_metric("max_memory")
@@ -68,8 +65,7 @@ def test_system_max_memory_metric(client, data_integration):
 
 
 def test_number_of_missing_values(client, data_integration):
-    db = client.integration(data_integration)
-    table = db.sql(query=SENTIMENT_SQL_QUERY)
+    table = data_integration.sql(query=SENTIMENT_SQL_QUERY)
     missing_metric = table.number_of_missing_values(column_id="hotel_name")
     assert missing_metric.get() == 0
 
@@ -82,8 +78,7 @@ def test_number_of_missing_values(client, data_integration):
 
 
 def test_number_of_rows(client, data_integration):
-    db = client.integration(data_integration)
-    table = db.sql(query=SENTIMENT_SQL_QUERY)
+    table = data_integration.sql(query=SENTIMENT_SQL_QUERY)
     missing_metric = table.number_of_rows()
     assert missing_metric.get() == 100
 
@@ -93,8 +88,7 @@ def test_number_of_rows(client, data_integration):
 
 
 def test_max(client, data_integration):
-    db = client.integration(data_integration)
-    table = db.sql(query=WINE_SQL_QUERY)
+    table = data_integration.sql(query=WINE_SQL_QUERY)
     missing_metric = table.max(column_id="fixed_acidity")
     assert math.isclose(missing_metric.get(), 15.8999, rel_tol=1e-3)
 
@@ -103,8 +97,7 @@ def test_max(client, data_integration):
 
 
 def test_min(client, data_integration):
-    db = client.integration(data_integration)
-    table = db.sql(query=WINE_SQL_QUERY)
+    table = data_integration.sql(query=WINE_SQL_QUERY)
     missing_metric = table.min(column_id="fixed_acidity")
     assert math.isclose(missing_metric.get(), 3.7999, rel_tol=1e-3)
 
@@ -113,8 +106,7 @@ def test_min(client, data_integration):
 
 
 def test_mean(client, data_integration):
-    db = client.integration(data_integration)
-    table = db.sql(query=WINE_SQL_QUERY)
+    table = data_integration.sql(query=WINE_SQL_QUERY)
     missing_metric = table.mean(column_id="fixed_acidity")
     assert math.isclose(missing_metric.get(), 7.2153, rel_tol=1e-3)
 
@@ -123,8 +115,7 @@ def test_mean(client, data_integration):
 
 
 def test_std(client, data_integration):
-    db = client.integration(data_integration)
-    table = db.sql(query=WINE_SQL_QUERY)
+    table = data_integration.sql(query=WINE_SQL_QUERY)
     missing_metric = table.std(column_id="fixed_acidity")
     assert math.isclose(missing_metric.get(), 1.2964, rel_tol=1e-3)
 
@@ -133,8 +124,7 @@ def test_std(client, data_integration):
 
 
 def test_head_standard(client, data_integration):
-    db = client.integration(data_integration)
-    table = db.sql(query=SENTIMENT_SQL_QUERY)
+    table = data_integration.sql(query=SENTIMENT_SQL_QUERY)
     assert table.get().shape[0] == 100
 
     table_head = table.head()

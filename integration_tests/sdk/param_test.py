@@ -109,8 +109,7 @@ def append_row_to_df(df, row):
 
 
 def test_parameter_in_basic_flow(client, data_integration):
-    db = client.integration(data_integration)
-    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
     row_to_add = ["new hotel", "09-28-1996", "US", "It was new."]
     new_row_param = client.create_param(name="new row", default=row_to_add)
     output = append_row_to_df(sql_artifact, new_row_param)
@@ -123,8 +122,7 @@ def test_parameter_in_basic_flow(client, data_integration):
 
 
 def test_edit_param_for_flow(client, flow_name, data_integration, engine):
-    db = client.integration(data_integration)
-    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
     row_to_add = ["new hotel", "09-28-1996", "US", "It was new."]
     new_row_param = client.create_param(name="new row", default=row_to_add)
     output = append_row_to_df(sql_artifact, new_row_param)
@@ -171,8 +169,7 @@ def add_numbers(sql, num1, num2):
 
 
 def test_trigger_flow_with_different_param(client, flow_name, data_integration, engine):
-    db = client.integration(data_integration)
-    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
 
     num1 = client.create_param(name="num1", default=5)
     num2 = client.create_param(name="num2", default=5)
@@ -213,10 +210,8 @@ def test_trigger_flow_with_different_param(client, flow_name, data_integration, 
 
 
 def test_trigger_flow_with_different_sql_param(client, flow_name, data_integration, engine):
-    db = client.integration(data_integration)
-
     _ = client.create_param("table_name", default="hotel_reviews")
-    sql_artifact = db.sql(query="select * from {{ table_name}}")
+    sql_artifact = data_integration.sql(query="select * from {{ table_name}}")
 
     flow = publish_flow_test(
         client,

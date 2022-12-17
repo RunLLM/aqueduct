@@ -31,21 +31,6 @@ API_KEY_ENV_NAME = "API_KEY"
 SERVER_ADDR_ENV_NAME = "SERVER_ADDRESS"
 
 
-@pytest.fixture(scope="session")
-def data_integration(pytestconfig):
-    return pytestconfig.getoption("data")
-
-
-@pytest.fixture(scope="session")
-def engine(pytestconfig):
-    return pytestconfig.getoption("engine")
-
-
-@pytest.fixture(autouse=True, scope="session")
-def use_deprecated(pytestconfig):
-    utils.use_deprecated_code_paths = pytestconfig.getoption("deprecated")
-
-
 @pytest.fixture(scope="function")
 def client(pytestconfig):
     # Reset the global dag variable, in case it was dirtied by a previous test,
@@ -60,6 +45,21 @@ def client(pytestconfig):
         )
 
     return aqueduct.Client(api_key, server_address)
+
+
+@pytest.fixture(scope="function")
+def data_integration(pytestconfig, client):
+    return client.integration(pytestconfig.getoption("data"))
+
+
+@pytest.fixture(scope="session")
+def engine(pytestconfig):
+    return pytestconfig.getoption("engine")
+
+
+@pytest.fixture(autouse=True, scope="session")
+def use_deprecated(pytestconfig):
+    utils.use_deprecated_code_paths = pytestconfig.getoption("deprecated")
 
 
 # Pulled from: https://stackoverflow.com/questions/28179026/how-to-skip-a-pytest-using-an-external-fixture
