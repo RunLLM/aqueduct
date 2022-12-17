@@ -1,4 +1,4 @@
-from aqueduct_executor.operators.utils.enums import FailureType
+from aqueduct.constants.enums import FailureType
 
 
 class MissingConnectorDependencyException(Exception):

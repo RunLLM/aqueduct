@@ -1,8 +1,8 @@
 from typing import Any, Callable, Dict, List, Optional
 
 import pandas as pd
+from aqueduct.constants.enums import ArtifactType
 from aqueduct_executor.operators.connectors.data import connector, extract, load
-from aqueduct_executor.operators.utils.enums import ArtifactType
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 from aqueduct_executor.operators.utils.utils import delete_object
 from sqlalchemy import MetaData, engine, inspect

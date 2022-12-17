@@ -10,7 +10,7 @@ from typing import Any, Callable, Dict, cast
 
 import cloudpickle as pickle
 import pandas as pd
-from aqueduct_executor.operators.utils.enums import ArtifactType, SerializationType
+from aqueduct.constants.enums import ArtifactType, SerializationType
 from PIL import Image
 
 _DEFAULT_ENCODING = "utf8"

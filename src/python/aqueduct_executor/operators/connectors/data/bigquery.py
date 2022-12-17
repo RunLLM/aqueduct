@@ -2,8 +2,8 @@ import json
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
+from aqueduct.constants.enums import ArtifactType
 from aqueduct_executor.operators.connectors.data import common, config, connector, extract, load
-from aqueduct_executor.operators.utils.enums import ArtifactType
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 from aqueduct_executor.operators.utils.utils import delete_object
 from google.cloud import bigquery

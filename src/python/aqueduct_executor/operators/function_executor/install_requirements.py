@@ -4,9 +4,9 @@ import subprocess
 import sys
 from typing import Optional
 
+from aqueduct.constants.enums import FailureType
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec, parse_spec
 from aqueduct_executor.operators.utils import utils
-from aqueduct_executor.operators.utils.enums import FailureType
 from aqueduct_executor.operators.utils.execution import ExecFailureException, ExecutionState, Logs
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 

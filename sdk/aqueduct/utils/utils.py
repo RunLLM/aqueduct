@@ -105,7 +105,12 @@ def parse_user_supplied_id(id: Union[str, uuid.UUID]) -> str:
 
 
 def construct_param_spec(val: Any, artifact_type: ArtifactType) -> ParamSpec:
-    serialization_type = artifact_type_to_serialization_type(artifact_type, val)
+    serialization_type = artifact_type_to_serialization_type(
+        artifact_type,
+        # not derived from bson. This is irrelevant for now as we don't support table parameters.
+        False,
+        val,
+    )
     assert serialization_type in serialization_function_mapping
 
     # We must base64 encode the resulting bytes, since we can't be sure

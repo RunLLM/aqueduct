@@ -5,10 +5,10 @@ from typing import Any, Dict, List, Optional
 import cloudpickle as pickle
 import numpy as np
 import pandas as pd
+from aqueduct.constants.enums import ArtifactType
 from aqueduct_executor.operators.connectors.data import common, connector, extract, load
 from aqueduct_executor.operators.connectors.data.config import S3Config
 from aqueduct_executor.operators.connectors.data.utils import construct_boto_session
-from aqueduct_executor.operators.utils.enums import ArtifactType
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 from aqueduct_executor.operators.utils.utils import delete_object
 from PIL import Image

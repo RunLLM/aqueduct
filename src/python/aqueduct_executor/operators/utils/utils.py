@@ -3,17 +3,12 @@ import json
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
+from aqueduct.constants.enums import ArtifactType, ExecutionStatus, FailureType, SerializationType
 from aqueduct.utils.serialization import (
     DEFAULT_ENCODING,
     artifact_type_to_serialization_type,
     deserialize,
     serialize_val,
-)
-from aqueduct_executor.operators.utils.enums import (
-    ArtifactType,
-    ExecutionStatus,
-    FailureType,
-    SerializationType,
 )
 from aqueduct_executor.operators.utils.exceptions import MissingInputPathsException
 from aqueduct_executor.operators.utils.execution import (
@@ -52,7 +47,7 @@ def read_artifacts(
     storage: Storage,
     input_paths: List[str],
     input_metadata_paths: List[str],
-) -> Tuple[List[Any], List[ArtifactType]]:
+) -> Tuple[List[Any], List[ArtifactType], List[SerializationType]]:
     if len(input_paths) != len(input_metadata_paths):
         raise Exception(
             "Found inconsistent number of input paths (%d) and input metadata paths (%d)"
@@ -63,7 +58,8 @@ def read_artifacts(
         )
 
     inputs: List[Any] = []
-    input_types: List[ArtifactType] = []
+    artifact_types: List[ArtifactType] = []
+    serialization_types: List[SerializationType] = []
 
     for (input_path, input_metadata_path) in zip(input_paths, input_metadata_paths):
         # Make sure that the input paths exist.
@@ -78,12 +74,14 @@ def read_artifacts(
 
         artifact_metadata = json.loads(storage.get(input_metadata_path).decode(DEFAULT_ENCODING))
         artifact_type = artifact_metadata[_METADATA_ARTIFACT_TYPE_KEY]
-        input_types.append(artifact_type)
+        artifact_types.append(artifact_type)
 
         serialization_type = artifact_metadata[_METADATA_SERIALIZATION_TYPE_KEY]
+        serialization_types.append(serialization_type)
+
         inputs.append(deserialize(serialization_type, artifact_type, storage.get(input_path)))
 
-    return inputs, input_types
+    return inputs, artifact_types, serialization_types
 
 
 def read_system_metadata(
@@ -124,6 +122,10 @@ def serialize_val_wrapper(val: Any, serialization_type: SerializationType) -> by
 def write_artifact(
     storage: Storage,
     artifact_type: ArtifactType,
+    # derived_from_bson specifies if the artifact is derived from a bson object
+    # and thus requires bson encoding.
+    # For now, it only applies to data frames extracted / transformed from Mongo.
+    derived_from_bson: bool,
     output_path: Optional[str],
     output_metadata_path: str,
     content: Any,
@@ -139,13 +141,15 @@ def write_artifact(
     if artifact_type == ArtifactType.TABLE:
         output_metadata[_METADATA_SCHEMA_KEY] = [{col: str(content[col].dtype)} for col in content]
 
-    serialization_type = artifact_type_to_serialization_type(artifact_type, content).value
+    serialization_type = artifact_type_to_serialization_type(
+        artifact_type, derived_from_bson, content
+    ).value
 
     if output_path is not None:
-        serialized_val = serialize_val_wrapper(content, serialization_type)
+        serialized_val = serialize_val_wrapper(content, serialization_type.value)
         storage.put(output_path, serialized_val)
 
-    output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = serialization_type
+    output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = serialization_type.value
     output_metadata[_METADATA_PYTHON_TYPE_KEY] = type(content).__name__
     storage.put(output_metadata_path, json.dumps(output_metadata).encode(DEFAULT_ENCODING))
 

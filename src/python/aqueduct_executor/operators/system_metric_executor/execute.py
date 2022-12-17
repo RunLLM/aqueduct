@@ -1,7 +1,8 @@
 import sys
 
+from aqueduct.constants.enums import ArtifactType, ExecutionStatus, FailureType
 from aqueduct_executor.operators.system_metric_executor.spec import SystemMetricSpec
-from aqueduct_executor.operators.utils import enums, utils
+from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.execution import (
     TIP_UNKNOWN_ERROR,
     Error,
@@ -28,13 +29,14 @@ def run(spec: SystemMetricSpec) -> None:
         system_metadata = utils.read_system_metadata(storage, spec.input_metadata_paths)
         utils.write_artifact(
             storage,
-            enums.ArtifactType.NUMERIC,
+            ArtifactType.NUMERIC,
+            False,  # derived_from_bson
             spec.output_content_path,
             spec.output_metadata_path,
             float(system_metadata[0][spec.metric_name]),
             system_metadata={},
         )
-        exec_state.status = enums.ExecutionStatus.SUCCEEDED
+        exec_state.status = ExecutionStatus.SUCCEEDED
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
     except ExecFailureException as e:
         from_exception_exec_state = ExecutionState.from_exception(e, user_logs=Logs())
@@ -42,8 +44,8 @@ def run(spec: SystemMetricSpec) -> None:
         utils.write_exec_state(storage, spec.metadata_path, from_exception_exec_state)
         sys.exit(1)
     except Exception as e:
-        exec_state.status = enums.ExecutionStatus.FAILED
-        exec_state.failure_type = enums.FailureType.SYSTEM
+        exec_state.status = ExecutionStatus.FAILED
+        exec_state.failure_type = FailureType.SYSTEM
         exec_state.error = Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR)
         print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
         utils.write_exec_state(storage, spec.metadata_path, exec_state)

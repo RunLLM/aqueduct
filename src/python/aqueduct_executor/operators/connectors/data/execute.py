@@ -1,6 +1,7 @@
 import sys
 from typing import Any
 
+from aqueduct.constants.enums import SerializationType
 from aqueduct_executor.operators.connectors.data import common, config, connector, extract
 from aqueduct_executor.operators.connectors.data.spec import (
     AQUEDUCT_DEMO_NAME,
@@ -150,6 +151,7 @@ def run_extract(
     output = _extract()
 
     output_artifact_type = enums.ArtifactType.TABLE
+    derived_from_bson = isinstance(extract_params, extract.MongoDBParams)
     if isinstance(extract_params, extract.S3Params):
         output_artifact_type = extract_params.artifact_type
         # If the type of the output is tuple, then it could be a multi-file S3 request so we
@@ -161,6 +163,7 @@ def run_extract(
         utils.write_artifact(
             storage,
             output_artifact_type,
+            derived_from_bson,
             spec.output_content_path,
             spec.output_metadata_path,
             output,

@@ -9,18 +9,19 @@ from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
+from aqueduct.constants.enums import (
+    ArtifactType,
+    CheckSeverity,
+    ExecutionStatus,
+    FailureType,
+    OperatorType,
+    SerializationType,
+)
 from aqueduct.utils.type_inference import infer_artifact_type
 from aqueduct_executor.operators.function_executor import extract_function, get_extract_path
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils import utils
-from aqueduct_executor.operators.utils.enums import (
-    ArtifactType,
-    CheckSeverityLevel,
-    ExecutionStatus,
-    FailureType,
-    OperatorType,
-)
 from aqueduct_executor.operators.utils.execution import (
     TIP_CHECK_DID_NOT_PASS,
     TIP_NOT_BOOL,
@@ -34,6 +35,8 @@ from aqueduct_executor.operators.utils.execution import (
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.timer import Timer
+from sqlalchemy import false
+from torch import serialization
 
 
 def _get_py_import_path(spec: FunctionSpec) -> str:
@@ -207,10 +210,11 @@ def run(spec: FunctionSpec) -> None:
         validate_spec(spec)
 
         # Read the input data from intermediate storage.
-        inputs, _ = utils.read_artifacts(
+        inputs, _, serialization_types = utils.read_artifacts(
             storage, spec.input_content_paths, spec.input_metadata_paths
         )
 
+        derived_from_bson = SerializationType.BSON_TABLE in serialization_types
         print("Invoking the function...")
         results, result_types, system_metadata = _execute_function(spec, inputs, exec_state)
         if exec_state.status == ExecutionStatus.FAILED:
@@ -263,6 +267,7 @@ def run(spec: FunctionSpec) -> None:
                 utils.write_artifact(
                     storage,
                     ArtifactType.BOOL,
+                    derived_from_bson,  # derived_from_bson doesn't apply to bool artifact
                     spec.output_content_paths[0],
                     spec.output_metadata_paths[0],
                     check_passed,
@@ -274,10 +279,10 @@ def run(spec: FunctionSpec) -> None:
                     print(
                         "Check operator has an unspecified severity on spec. Defaulting to ERROR."
                     )
-                    check_severity = CheckSeverityLevel.ERROR
+                    check_severity = CheckSeverity.ERROR
 
                 failure_type = FailureType.USER_FATAL
-                if check_severity == CheckSeverityLevel.WARNING:
+                if check_severity == CheckSeverity.WARNING:
                     failure_type = FailureType.USER_NON_FATAL
 
                 raise ExecFailureException(failure_type, tip=TIP_CHECK_DID_NOT_PASS)
@@ -310,6 +315,7 @@ def run(spec: FunctionSpec) -> None:
             utils.write_artifact(
                 storage,
                 result_types[i],
+                derived_from_bson,
                 spec.output_content_paths[i],
                 spec.output_metadata_paths[i],
                 result,

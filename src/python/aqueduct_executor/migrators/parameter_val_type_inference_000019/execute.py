@@ -1,9 +1,9 @@
 import base64
 import json
 
+from aqueduct.constants.enums import SerializationType
 from aqueduct.utils.type_inference import infer_artifact_type
 from aqueduct_executor.migrators.parameter_val_type_inference_000019 import serialize
-from aqueduct_executor.operators.utils.enums import SerializationType
 
 
 def run_type_inference_and_encode(json_val: str) -> None:

@@ -7,14 +7,15 @@ except ImportError:
     # Python 3.7 does not support typing.Literal
     from typing_extensions import Literal  # type: ignore
 
-from aqueduct_executor.operators.utils import enums
+from aqueduct.constants.enums import ArtifactType, CheckSeverity, OperatorType
+from aqueduct_executor.operators.utils.enums import JobType
 from aqueduct_executor.operators.utils.storage import config
 from pydantic import BaseModel, Extra, parse_obj_as
 
 
 class FunctionSpec(BaseModel):
     name: str
-    type: Literal[enums.JobType.FUNCTION]
+    type: Literal[JobType.FUNCTION]
     storage_config: config.StorageConfig
     metadata_path: str
     function_path: str
@@ -27,11 +28,11 @@ class FunctionSpec(BaseModel):
     input_metadata_paths: List[str]
     output_content_paths: List[str]
     output_metadata_paths: List[str]
-    expected_output_artifact_types: List[enums.ArtifactType]
-    operator_type: enums.OperatorType
+    expected_output_artifact_types: List[ArtifactType]
+    operator_type: OperatorType
 
     # This is specific to the check operator. This is left unset by any other function type.
-    check_severity: Optional[enums.CheckSeverityLevel]
+    check_severity: Optional[CheckSeverity]
 
     # This is always unset - it is only here because we forbid extra fields.
     resources: Optional[Any]
