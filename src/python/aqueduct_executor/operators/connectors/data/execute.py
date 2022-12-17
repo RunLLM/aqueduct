@@ -133,7 +133,7 @@ def run_extract(
         extract_params, extract.MongoDBParams
     ):
         assert len(spec.input_param_names) == len(spec.input_content_paths)
-        input_vals, _ = utils.read_artifacts(
+        input_vals, _, _ = utils.read_artifacts(
             storage,
             spec.input_content_paths,
             spec.input_metadata_paths,
@@ -184,7 +184,7 @@ def run_delete_saved_objects(spec: Spec, storage: Storage, exec_state: Execution
 def run_load(
     spec: LoadSpec, op: connector.DataConnector, storage: Storage, exec_state: ExecutionState
 ) -> None:
-    inputs, input_types = utils.read_artifacts(
+    inputs, input_types, _ = utils.read_artifacts(
         storage,
         [spec.input_content_path],
         [spec.input_metadata_path],
