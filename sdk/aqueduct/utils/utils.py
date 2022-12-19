@@ -107,7 +107,8 @@ def parse_user_supplied_id(id: Union[str, uuid.UUID]) -> str:
 def construct_param_spec(val: Any, artifact_type: ArtifactType) -> ParamSpec:
     serialization_type = artifact_type_to_serialization_type(
         artifact_type,
-        # not derived from bson. This is irrelevant for now as we don't support table parameters.
+        # Not derived from bson.
+        # For now, bson_table applies only to tables read from mongo.
         False,
         val,
     )

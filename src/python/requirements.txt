@@ -1,4 +1,5 @@
 boto3
+bson
 cloudpickle
 google-cloud-storage
 numpy

@@ -161,7 +161,7 @@ def artifact_type_to_serialization_type(
     artifact_type: ArtifactType,
     # derived_from_bson specifies if the artifact is derived from a bson object
     # and thus requires bson encoding.
-    # For now, it only applies to data frames extracted / transformed from Mongo.
+    # For now, it only applies to DataFrames extracted / transformed from Mongo.
     derived_from_bson: bool,
     content: Any,
 ) -> SerializationType:
