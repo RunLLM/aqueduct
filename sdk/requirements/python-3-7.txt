@@ -1,4 +1,4 @@
-bson
+bson>=0.5.10
 setuptools
 cloudpickle
 numpy<=1.21.6

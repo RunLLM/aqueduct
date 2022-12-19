@@ -24,7 +24,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          python3 -m pip install mypy pydantic
+          python3 -m pip install mypy pydantic bson>=0.5.10
 
       - name: Install Type Stub Libraries
         run : |
