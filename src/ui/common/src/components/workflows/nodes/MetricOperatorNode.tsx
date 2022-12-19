@@ -22,7 +22,10 @@ type Props = {
 
 export const metricOperatorNodeIcon = faTemperatureHalf;
 
-export const parseMetricResult = (metricValue: string, sigfigs: number) => {
+export const parseMetricResult = (
+  metricValue: string,
+  sigfigs: number
+): string => {
   return parseFloat(metricValue).toFixed(sigfigs);
 };
 

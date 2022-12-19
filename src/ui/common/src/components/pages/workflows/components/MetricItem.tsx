@@ -85,7 +85,9 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
               </Box>
             </Tooltip>
           ) : (
-            <Typography variant="body1">{parseMetricResult(metrics[i].value, 3)}</Typography>
+            <Typography variant="body1">
+              {parseMetricResult(metrics[i].value, 3)}
+            </Typography>
           )}
         </Box>
       );
