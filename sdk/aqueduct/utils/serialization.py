@@ -25,6 +25,7 @@ def _read_table_content(content: bytes) -> pd.DataFrame:
 
 def _read_bson_table_content(content: bytes) -> pd.DataFrame:
     from bson import json_util
+
     return pd.DataFrame.from_records(json_util.loads(content.decode(DEFAULT_ENCODING)))
 
 
@@ -103,6 +104,7 @@ def _write_table_output(output: pd.DataFrame) -> bytes:
 
 def _write_bson_table_output(output: pd.DataFrame) -> bytes:
     from bson import json_util
+
     return json_util.dumps(output.to_dict(orient="records")).encode(DEFAULT_ENCODING)
 
 

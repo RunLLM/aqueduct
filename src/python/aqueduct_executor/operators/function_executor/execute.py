@@ -35,8 +35,6 @@ from aqueduct_executor.operators.utils.execution import (
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.timer import Timer
-from sqlalchemy import false
-from torch import serialization
 
 
 def _get_py_import_path(spec: FunctionSpec) -> str:
