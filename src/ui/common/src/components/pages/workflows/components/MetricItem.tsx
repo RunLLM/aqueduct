@@ -6,6 +6,7 @@ import { useState } from 'react';
 
 import { theme } from '../../../../styles/theme/theme';
 import ExecutionStatus from '../../../../utils/shared';
+import { parseMetricResult } from '../../../workflows/nodes/MetricOperatorNode';
 
 interface ShowMoreProps {
   totalItems: number;
@@ -84,7 +85,7 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
               </Box>
             </Tooltip>
           ) : (
-            <Typography variant="body1">{metrics[i].value}</Typography>
+            <Typography variant="body1">{parseMetricResult(metrics[i].value, 3)}</Typography>
           )}
         </Box>
       );

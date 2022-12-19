@@ -22,6 +22,10 @@ type Props = {
 
 export const metricOperatorNodeIcon = faTemperatureHalf;
 
+export const parseMetricResult = (metricValue: string, sigfigs: number) => {
+  return parseFloat(metricValue).toFixed(sigfigs);
+};
+
 const MetricOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
   const defaultLabel = 'Metric';
   const label = data.label ? data.label : defaultLabel;
@@ -112,7 +116,7 @@ const MetricOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
       >
         {data.result && (
           <Typography variant="h5">
-            {parseFloat(data.result).toFixed(3)}
+            {parseMetricResult(data.result, 3)}
           </Typography>
         )}
       </Box>
