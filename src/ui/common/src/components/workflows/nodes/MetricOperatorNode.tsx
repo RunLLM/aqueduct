@@ -26,7 +26,13 @@ export const parseMetricResult = (
   metricValue: string,
   sigfigs: number
 ): string => {
-  return parseFloat(metricValue).toFixed(sigfigs);
+  // Check if the number passed in is a whole number, return that if so.
+  const parsedFloat = parseFloat(metricValue);
+  if (parsedFloat % 1 === 0) {
+    return metricValue;
+  }
+  // Only show three decimal points.
+  return parsedFloat.toFixed(sigfigs);
 };
 
 const MetricOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
