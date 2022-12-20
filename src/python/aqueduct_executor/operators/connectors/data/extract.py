@@ -6,7 +6,7 @@ from typing import Any, Dict, List, Optional, Union
 
 from aqueduct.integrations.sql_integration import BUILT_IN_EXPANSIONS, PREV_TABLE_TAG, TAG_PATTERN
 from aqueduct_executor.operators.connectors.data import common, models
-from aqueduct_executor.operators.utils import enums
+from aqueduct_executor.operators.utils.enums import ArtifactType
 from pydantic import parse_obj_as
 
 
@@ -142,7 +142,7 @@ class RelationalParams(models.BaseParams):
 
 class S3Params(models.BaseParams):
     filepath: str
-    artifact_type: enums.ArtifactType
+    artifact_type: ArtifactType
     format: Optional[common.S3TableFormat]
     merge: Optional[bool]
 

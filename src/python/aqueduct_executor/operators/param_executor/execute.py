@@ -3,7 +3,8 @@ import sys
 from aqueduct.utils.serialization import deserialize
 from aqueduct.utils.type_inference import infer_artifact_type
 from aqueduct_executor.operators.param_executor.spec import ParamSpec
-from aqueduct_executor.operators.utils import enums, utils
+from aqueduct_executor.operators.utils import utils
+from aqueduct_executor.operators.utils.enums import ExecutionStatus, FailureType
 from aqueduct_executor.operators.utils.execution import (
     TIP_UNKNOWN_ERROR,
     Error,
@@ -43,6 +44,7 @@ def run(spec: ParamSpec) -> None:
         utils.write_artifact(
             storage,
             inferred_type,
+            False,  # derived_from_bson
             None,  # output_content_path
             spec.output_metadata_path,
             val,
@@ -51,7 +53,7 @@ def run(spec: ParamSpec) -> None:
 
         if inferred_type != spec.expected_type:
             raise ExecFailureException(
-                failure_type=enums.FailureType.USER_FATAL,
+                failure_type=FailureType.USER_FATAL,
                 tip="Supplied parameter expects type `%s`, but got `%s` instead."
                 % (spec.expected_type, inferred_type),
             )
@@ -59,7 +61,7 @@ def run(spec: ParamSpec) -> None:
         utils.write_exec_state(
             storage,
             spec.metadata_path,
-            ExecutionState(status=enums.ExecutionStatus.SUCCEEDED, user_logs=Logs()),
+            ExecutionState(status=ExecutionStatus.SUCCEEDED, user_logs=Logs()),
         )
 
     except ExecFailureException as e:
@@ -69,8 +71,8 @@ def run(spec: ParamSpec) -> None:
         sys.exit(1)
     except Exception as e:
         exec_state = ExecutionState(
-            status=enums.ExecutionStatus.FAILED,
-            failure_type=enums.FailureType.SYSTEM,
+            status=ExecutionStatus.FAILED,
+            failure_type=FailureType.SYSTEM,
             error=Error(context=exception_traceback(e), tip=TIP_UNKNOWN_ERROR),
             user_logs=Logs(),
         )

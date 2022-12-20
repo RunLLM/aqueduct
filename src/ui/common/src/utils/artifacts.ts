@@ -18,6 +18,7 @@ export enum ArtifactType {
 
 export enum SerializationType {
   String = 'string',
+  BsonTable = 'bson_table',
   Table = 'table',
   Json = 'json',
   Bytes = 'bytes',
