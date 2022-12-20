@@ -6,8 +6,7 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
-import { SupportedIntegrations, IntegrationCategories } from '../../../../utils/integrations';
- 
+
 import { DetailIntegrationCard } from '../../../../components/integrations/cards/detailCard';
 import AddTableDialog from '../../../../components/integrations/dialogs/addTableDialog';
 import DeleteIntegrationDialog from '../../../../components/integrations/dialogs/deleteIntegrationDialog';
@@ -27,6 +26,10 @@ import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import { handleFetchAllWorkflowSummaries } from '../../../../reducers/listWorkflowSummaries';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
+import {
+  IntegrationCategories,
+  SupportedIntegrations,
+} from '../../../../utils/integrations';
 import { isFailed, isLoading, isSucceeded } from '../../../../utils/shared';
 import IntegrationOptions from '../../../integrations/options';
 import { LayoutProps } from '../../types';
@@ -180,8 +183,14 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             .
           </Typography>
         )}
-        
-        {SupportedIntegrations[selectedIntegration.service].category !== IntegrationCategories.COMPUTE && <IntegrationObjectList user={user} integration={selectedIntegration} />}
+
+        {SupportedIntegrations[selectedIntegration.service].category !==
+          IntegrationCategories.COMPUTE && (
+          <IntegrationObjectList
+            user={user}
+            integration={selectedIntegration}
+          />
+        )}
 
         <Typography
           variant="h5"

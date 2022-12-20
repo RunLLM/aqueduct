@@ -6,7 +6,10 @@ import { useLocation } from 'react-router-dom';
 
 import { BreadcrumbLink } from '../../../components/layouts/NavBar';
 import UserProfile from '../../../utils/auth';
-import { SupportedIntegrations, IntegrationCategories } from '../../../utils/integrations';
+import {
+  IntegrationCategories,
+  SupportedIntegrations,
+} from '../../../utils/integrations';
 import { LoadingStatus, LoadingStatusEnum } from '../../../utils/shared';
 import AddIntegrations from '../../integrations/addIntegrations';
 import { ConnectedIntegrations } from '../../integrations/connectedIntegrations';
