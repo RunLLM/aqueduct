@@ -65,6 +65,7 @@ const ArtifactContent: React.FC<Props> = ({
           artifact.result.serialization_type === SerializationType.BsonTable
         ) {
           const rows = rawData as TableRow[];
+          // bson table does not include schema when serialized.
           const schema = inferSchema(rows);
           return <PaginatedTable data={{ schema: schema, data: rows }} />;
         }
