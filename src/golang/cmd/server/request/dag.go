@@ -71,16 +71,7 @@ func ParseDagSummaryFromRequest(
 	}
 
 	dag.StorageConfig = *storageConfig
-
 	dag.Metadata.UserID = userId
-
-	if dag.EngineConfig.Type == "" {
-		// The default engine config for now is Aqueduct
-		dag.EngineConfig = shared.EngineConfig{
-			Type:           shared.AqueductEngineType,
-			AqueductConfig: &shared.AqueductConfig{},
-		}
-	}
 
 	return &DagSummary{
 		Dag:                        &dag,

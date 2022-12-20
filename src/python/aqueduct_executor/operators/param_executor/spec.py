@@ -1,6 +1,6 @@
 import json
 
-from aqueduct.constants.enums import ArtifactType, SerializationType
+from aqueduct_executor.operators.utils.enums import ArtifactType, SerializationType
 from pydantic import BaseModel, parse_obj_as
 
 try:

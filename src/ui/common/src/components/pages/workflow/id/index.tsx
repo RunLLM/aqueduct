@@ -90,9 +90,9 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     }
   }, [workflow.selectedDag, dagName]);
 
-  const resetWorkflowState = () => {
+  const resetWorkflowState = useCallback(() => {
     dispatch(resetState());
-  };
+  }, [dispatch]);
 
   useEffect(() => {
     window.onpopstate = () => {
@@ -100,7 +100,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     };
 
     resetWorkflowState();
-  }, []);
+  }, [resetWorkflowState]);
 
   useEffect(() => {
     if (

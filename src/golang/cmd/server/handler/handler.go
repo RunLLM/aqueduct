@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/response"
-	"github.com/dropbox/godropbox/errors"
 )
 
 type RequestMethod string
@@ -20,8 +19,6 @@ type AuthMethod string
 const (
 	ApiKeyAuthMethod AuthMethod = "ApiKey"
 )
-
-var ErrUnsupportedAuthMethod = errors.New("Auth method is not supported.")
 
 type Handler interface {
 	Name() string

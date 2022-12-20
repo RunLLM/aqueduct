@@ -2,10 +2,10 @@ from typing import Any, Dict, List, Optional
 
 import awswrangler as wr
 import pandas as pd
-from aqueduct.constants.enums import ArtifactType
 from aqueduct_executor.operators.connectors.data import connector, extract, load
 from aqueduct_executor.operators.connectors.data.config import AthenaConfig
 from aqueduct_executor.operators.connectors.data.utils import construct_boto_session
+from aqueduct_executor.operators.utils.enums import ArtifactType
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 
 DEFAULT_CATALOG = "AwsDataCatalog"

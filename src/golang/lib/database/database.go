@@ -14,7 +14,6 @@ const (
 
 var (
 	ErrNoRows            = errors.New("Query returned no rows.")
-	ErrInvalidConfig     = errors.New("Invalid database ")
 	ErrUnsupportedDbType = errors.New("DB Type is not supported")
 )
 
@@ -69,7 +68,7 @@ func TxnRollbackIgnoreErr(ctx context.Context, txn Transaction) {
 func NewDatabase(conf *DatabaseConfig) (Database, error) {
 	if conf.Type == PostgresType {
 		if conf.Postgres == nil {
-			return nil, ErrInvalidConfig
+			return nil, errors.New("Invalid database config, expected `Postgres` field to be set.")
 		}
 
 		return NewPostgresDatabase(conf.Postgres)

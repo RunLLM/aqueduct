@@ -1,8 +1,8 @@
 import sys
 
-from aqueduct.constants.enums import ArtifactType, ExecutionStatus, FailureType
 from aqueduct_executor.operators.system_metric_executor.spec import SystemMetricSpec
 from aqueduct_executor.operators.utils import utils
+from aqueduct_executor.operators.utils.enums import ArtifactType, ExecutionStatus, FailureType
 from aqueduct_executor.operators.utils.execution import (
     TIP_UNKNOWN_ERROR,
     Error,

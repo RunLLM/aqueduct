@@ -1,7 +1,6 @@
 import sys
 from typing import Any
 
-from aqueduct.constants.enums import ArtifactType, ExecutionStatus, FailureType, SerializationType
 from aqueduct_executor.operators.connectors.data import common, config, connector, extract
 from aqueduct_executor.operators.connectors.data.spec import (
     AQUEDUCT_DEMO_NAME,
@@ -13,7 +12,13 @@ from aqueduct_executor.operators.connectors.data.spec import (
     Spec,
 )
 from aqueduct_executor.operators.utils import utils
-from aqueduct_executor.operators.utils.enums import JobType
+from aqueduct_executor.operators.utils.enums import (
+    ArtifactType,
+    ExecutionStatus,
+    FailureType,
+    JobType,
+    SerializationType,
+)
 from aqueduct_executor.operators.utils.exceptions import MissingConnectorDependencyException
 from aqueduct_executor.operators.utils.execution import (
     TIP_DEMO_CONNECTION,

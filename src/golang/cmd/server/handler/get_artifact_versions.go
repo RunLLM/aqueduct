@@ -6,6 +6,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
+	collect_shared "github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -53,9 +54,9 @@ type artifactVersion struct {
 }
 
 type CheckResult struct {
-	Name     string                 `json:"name"`
-	Status   shared.ExecutionStatus `json:"status"`
-	Metadata *shared.ExecutionState `json:"metadata"`
+	Name     string                         `json:"name"`
+	Status   collect_shared.ExecutionStatus `json:"status"`
+	Metadata *collect_shared.ExecutionState `json:"metadata"`
 }
 
 type GetArtifactVersionsHandler struct {
