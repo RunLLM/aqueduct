@@ -3,12 +3,17 @@ import json
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
-from aqueduct.constants.enums import ArtifactType, ExecutionStatus, FailureType, SerializationType
 from aqueduct.utils.serialization import (
     DEFAULT_ENCODING,
     artifact_type_to_serialization_type,
     deserialize,
     serialize_val,
+)
+from aqueduct_executor.operators.utils.enums import (
+    ArtifactType,
+    ExecutionStatus,
+    FailureType,
+    SerializationType,
 )
 from aqueduct_executor.operators.utils.exceptions import MissingInputPathsException
 from aqueduct_executor.operators.utils.execution import (

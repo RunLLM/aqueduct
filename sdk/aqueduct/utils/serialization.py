@@ -7,6 +7,7 @@ from typing import Any, Callable, Dict, cast
 import cloudpickle as pickle
 import pandas as pd
 from aqueduct.constants.enums import ArtifactType, SerializationType
+from bson import json_util as bson_json_util
 from PIL import Image
 
 from .function_packaging import _make_temp_dir
@@ -24,9 +25,7 @@ def _read_table_content(content: bytes) -> pd.DataFrame:
 
 
 def _read_bson_table_content(content: bytes) -> pd.DataFrame:
-    from bson import json_util
-
-    return pd.DataFrame.from_records(json_util.loads(content.decode(DEFAULT_ENCODING)))
+    return pd.DataFrame.from_records(bson_json_util.loads(content.decode(DEFAULT_ENCODING)))
 
 
 def _read_json_content(content: bytes) -> Any:
@@ -103,9 +102,7 @@ def _write_table_output(output: pd.DataFrame) -> bytes:
 
 
 def _write_bson_table_output(output: pd.DataFrame) -> bytes:
-    from bson import json_util
-
-    return json_util.dumps(output.to_dict(orient="records")).encode(DEFAULT_ENCODING)
+    return bson_json_util.dumps(output.to_dict(orient="records")).encode(DEFAULT_ENCODING)
 
 
 def _write_image_output(output: Image.Image) -> bytes:

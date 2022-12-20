@@ -7,8 +7,12 @@ except ImportError:
     # Python 3.7 does not support typing.Literal
     from typing_extensions import Literal  # type: ignore
 
-from aqueduct.constants.enums import ArtifactType, CheckSeverity, OperatorType
-from aqueduct_executor.operators.utils.enums import JobType
+from aqueduct_executor.operators.utils.enums import (
+    ArtifactType,
+    CheckSeverity,
+    JobType,
+    OperatorType,
+)
 from aqueduct_executor.operators.utils.storage import config
 from pydantic import BaseModel, Extra, parse_obj_as
 

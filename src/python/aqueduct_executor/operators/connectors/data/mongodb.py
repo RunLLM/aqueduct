@@ -1,9 +1,9 @@
 from typing import Any, List, Optional
 
 import pandas as pd
-from aqueduct.constants.enums import ArtifactType
 from aqueduct_executor.operators.connectors.data import common, connector, extract, load
 from aqueduct_executor.operators.connectors.data.config import MongoDBConfig
+from aqueduct_executor.operators.utils.enums import ArtifactType
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 from aqueduct_executor.operators.utils.utils import delete_object
 from pymongo import MongoClient

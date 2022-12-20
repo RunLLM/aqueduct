@@ -1,9 +1,9 @@
 import json
 from typing import Any, List
 
-from aqueduct.constants.enums import ArtifactType
 from aqueduct_executor.operators.connectors.data import connector
 from aqueduct_executor.operators.connectors.data.config import GCSConfig
+from aqueduct_executor.operators.utils.enums import ArtifactType
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 from google.cloud import storage
 from google.oauth2 import service_account

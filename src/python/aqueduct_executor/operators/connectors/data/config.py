@@ -1,8 +1,8 @@
 from enum import Enum
 from typing import Optional, Union
 
-from aqueduct.constants.enums import MetaEnum
 from aqueduct_executor.operators.connectors.data import models
+from aqueduct_executor.operators.utils.enums import MetaEnum
 from pydantic import Field
 
 

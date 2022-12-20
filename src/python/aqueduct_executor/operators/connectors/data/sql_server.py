@@ -1,6 +1,6 @@
 import pandas as pd
-from aqueduct.constants.enums import ArtifactType
 from aqueduct_executor.operators.connectors.data import config, load, relational, utils
+from aqueduct_executor.operators.utils.enums import ArtifactType
 from sqlalchemy import create_engine, engine
 
 
