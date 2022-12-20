@@ -119,7 +119,7 @@ def test_preview_response_loading():
     )
 
 
-def test_excluded_fields_can_be_compared():
+def test_excluded_fields_cannot_be_compared():
     op_id = generate_uuid()
     artifact_id = generate_uuid()
 
@@ -134,14 +134,13 @@ def test_excluded_fields_can_be_compared():
         operators=[op],
         artifacts=[],
     )
-    # Constructed DAG is missing the excluded field 'operator_by_name`
-    assert dag != DAG(
+
+    # It doesn't matter what we put as `operator_by_name`.
+    assert dag == DAG(
         operators={**{str(op.id): op}},
         artifacts={},
         metadata=Metadata(),
     )
-
-    # This is the correct comparison.
     assert dag == DAG(
         operators={**{str(op.id): op}},
         operator_by_name={**{op.name: op}},

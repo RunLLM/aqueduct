@@ -100,6 +100,12 @@ func ScheduleWorkflow(
 	// into an Airflow task.
 	for _, op := range dag.Operators {
 
+		// An Airflow DAG cannot have any custom operator engine specs, the entire DAG
+		// must be executed all on Airflow.
+		if op.Spec.EngineConfig() != nil {
+			return nil, errors.Newf("Custom engine set on operator, which is disallowed for Airflow.")
+		}
+
 		// Prepare `op`'s input artifacts
 		inputArtifacts := make([]artifact.Artifact, 0, len(op.Inputs))
 		inputExecPaths := make([]*utils.ExecPaths, 0, len(op.Inputs))
@@ -162,12 +168,13 @@ func ScheduleWorkflow(
 			inputExecPaths,
 			outputExecPaths,
 			nil,
-			jobManager,
+			dag.EngineConfig,
 			vault,
 			&airflowStorageConfig,
 			nil,              /* previewCacheManager */
 			operator.Publish, // airflow operator will never run in preview mode
 			nil,              /* ExecEnv */
+			"",               /* aqPath */
 			DB,
 		)
 		if err != nil {

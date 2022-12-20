@@ -124,7 +124,7 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
 
       let metrics = [];
       if (latestVersion?.metrics?.length > 0) {
-        metrics = latestVersion.metrics.map((metric, index) => {
+        metrics = latestVersion.metrics.map((metric) => {
           return {
             metricId: metric.id,
             name: metric.name,

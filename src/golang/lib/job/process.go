@@ -291,18 +291,18 @@ func (j *ProcessJobManager) Config() Config {
 }
 
 func (j *ProcessJobManager) Launch(
-	ctx context.Context,
+	_ context.Context,
 	name string,
 	spec Spec,
-) error {
+) JobError {
 	log.Infof("Running %s job %s.", spec.Type(), name)
 	if _, ok := j.getCmd(name); ok {
-		return ErrJobAlreadyExists
+		return systemError(errors.Newf("Reached timeout waiting for the job %s to finish.", name))
 	}
 
 	cmd, err := j.mapJobTypeToCmd(name, spec)
 	if err != nil {
-		return err
+		return systemError(err)
 	}
 	cmd.Env = os.Environ()
 
@@ -316,23 +316,27 @@ func (j *ProcessJobManager) Launch(
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 
-	return cmd.Start()
+	err = cmd.Start()
+	if err != nil {
+		return systemError(err)
+	}
+	return nil
 }
 
-func (j *ProcessJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, error) {
+func (j *ProcessJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, JobError) {
 	command, ok := j.getCmd(name)
 	if !ok {
-		return shared.UnknownExecutionStatus, ErrJobNotExist
+		return shared.UnknownExecutionStatus, jobMissingError(errors.Newf("Job %s does not exist.", name))
 	}
 
 	proc, err := process.NewProcess(int32(command.cmd.Process.Pid))
 	if err != nil {
-		return shared.UnknownExecutionStatus, err
+		return shared.UnknownExecutionStatus, systemError(err)
 	}
 
 	status, err := proc.Status()
 	if err != nil {
-		return shared.UnknownExecutionStatus, err
+		return shared.UnknownExecutionStatus, systemError(err)
 	}
 
 	if status == processRunningStatus {
@@ -366,9 +370,9 @@ func (j *ProcessJobManager) DeployCronJob(
 	name string,
 	period string,
 	spec Spec,
-) error {
+) JobError {
 	if _, ok := j.getCronMap(name); ok {
-		return errors.Newf("Cron job with name %s already exists", name)
+		return systemError(errors.Newf("Cron job with name %s already exists", name))
 	}
 
 	cron := &cronMetadata{
@@ -381,7 +385,7 @@ func (j *ProcessJobManager) DeployCronJob(
 	if period != "" {
 		cronJob, err := j.cronScheduler.Cron(period).Do(j.generateCronFunction(name, spec))
 		if err != nil {
-			return err
+			return systemError(err)
 		}
 
 		cron.cronJob = cronJob
@@ -395,20 +399,20 @@ func (j *ProcessJobManager) CronJobExists(ctx context.Context, name string) bool
 	return ok
 }
 
-func (j *ProcessJobManager) EditCronJob(ctx context.Context, name string, cronString string) error {
+func (j *ProcessJobManager) EditCronJob(ctx context.Context, name string, cronString string) JobError {
 	cronMetadata, ok := j.getCronMap(name)
 	if !ok {
-		return errors.New("Cron job not found")
+		return systemError(errors.New("Cron job not found"))
 	} else {
 		if cronMetadata.cronJob == nil {
 			// This means the current cron job is paused.
 			if cronString == "" {
-				return errors.Newf("Attempting to pause an already paused cron job %s", name)
+				return systemError(errors.Newf("Attempting to pause an already paused cron job %s", name))
 			}
 
 			cronJob, err := j.cronScheduler.Cron(cronString).Do(j.generateCronFunction(name, cronMetadata.jobSpec))
 			if err != nil {
-				return err
+				return systemError(err)
 			}
 
 			cronMetadata.cronJob = cronJob
@@ -420,7 +424,7 @@ func (j *ProcessJobManager) EditCronJob(ctx context.Context, name string, cronSt
 			} else {
 				_, err := j.cronScheduler.Job(cronMetadata.cronJob).Cron(cronString).Update()
 				if err != nil {
-					return err
+					return systemError(err)
 				}
 			}
 		}
@@ -428,7 +432,7 @@ func (j *ProcessJobManager) EditCronJob(ctx context.Context, name string, cronSt
 	}
 }
 
-func (j *ProcessJobManager) DeleteCronJob(ctx context.Context, name string) error {
+func (j *ProcessJobManager) DeleteCronJob(ctx context.Context, name string) JobError {
 	cronMetadata, ok := j.getCronMap(name)
 	if ok {
 		j.cronScheduler.RemoveByReference(cronMetadata.cronJob)

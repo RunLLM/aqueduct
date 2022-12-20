@@ -9,7 +9,6 @@ import (
 
 	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
@@ -44,22 +43,19 @@ type AqueductTimeConfig struct {
 	CleanupTimeout time.Duration
 }
 
-type EngineReaders struct {
-	ExecutionEnvironmentReader db_exec_env.Reader
-}
-
 // Repos contains the repos needed by the Engine
 type Repos struct {
-	ArtifactRepo       repos.Artifact
-	ArtifactResultRepo repos.ArtifactResult
-	DAGRepo            repos.DAG
-	DAGEdgeRepo        repos.DAGEdge
-	DAGResultRepo      repos.DAGResult
-	NotificationRepo   repos.Notification
-	OperatorRepo       repos.Operator
-	OperatorResultRepo repos.OperatorResult
-	WatcherRepo        repos.Watcher
-	WorkflowRepo       repos.Workflow
+	ArtifactRepo             repos.Artifact
+	ArtifactResultRepo       repos.ArtifactResult
+	DAGRepo                  repos.DAG
+	DAGEdgeRepo              repos.DAGEdge
+	DAGResultRepo            repos.DAGResult
+	ExecutionEnvironmentRepo repos.ExecutionEnvironment
+	NotificationRepo         repos.Notification
+	OperatorRepo             repos.Operator
+	OperatorResultRepo       repos.OperatorResult
+	WatcherRepo              repos.Watcher
+	WorkflowRepo             repos.Workflow
 }
 
 type aqEngine struct {
@@ -72,8 +68,6 @@ type aqEngine struct {
 	// Only used for previews.
 	PreviewCacheManager preview_cache.CacheManager
 
-	// Readers and Writers needed for workflow management
-	*EngineReaders
 	*Repos
 }
 
@@ -105,7 +99,6 @@ func NewAqEngine(
 	previewCacheManager preview_cache.CacheManager,
 	vault vault.Vault,
 	aqPath string,
-	engineReaders *EngineReaders,
 	repos *Repos,
 ) (*aqEngine, error) {
 	cronjobManager := cronjob.NewProcessCronjobManager()
@@ -117,7 +110,6 @@ func NewAqEngine(
 		Vault:               vault,
 		CronjobManager:      cronjobManager,
 		AqPath:              aqPath,
-		EngineReaders:       engineReaders,
 		Repos:               repos,
 	}, nil
 }
@@ -253,15 +245,6 @@ func (eng *aqEngine) ExecuteWorkflow(
 		dbDAG.Operators[op.ID].Spec.Param().Val = param.Val
 		dbDAG.Operators[op.ID].Spec.Param().SerializationType = param.SerializationType
 	}
-	engineConfig, err := generateJobManagerConfig(ctx, dbDAG, eng.AqPath, eng.Vault)
-	if err != nil {
-		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to generate JobManagerConfig.")
-	}
-
-	engineJobManager, err := job.NewJobManager(engineConfig)
-	if err != nil {
-		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create JobManager.")
-	}
 
 	opIds := make([]uuid.UUID, 0, len(dbDAG.Operators))
 	for _, op := range dbDAG.Operators {
@@ -271,7 +254,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 	execEnvsByOpId, err := exec_env.GetActiveExecutionEnvironmentsByOperatorIDs(
 		ctx,
 		opIds,
-		eng.ExecutionEnvironmentReader,
+		eng.ExecutionEnvironmentRepo,
 		eng.Database,
 	)
 	if err != nil {
@@ -285,11 +268,11 @@ func (eng *aqEngine) ExecuteWorkflow(
 		eng.OperatorResultRepo,
 		eng.ArtifactRepo,
 		eng.ArtifactResultRepo,
-		engineJobManager,
 		eng.Vault,
 		nil, /* artifactCacheManager */
 		execEnvsByOpId,
 		operator.Publish,
+		eng.AqPath,
 		eng.Database,
 	)
 	if err != nil {
@@ -346,23 +329,6 @@ func (eng *aqEngine) PreviewWorkflow(
 	execEnvByOperatorId map[uuid.UUID]exec_env.ExecutionEnvironment,
 	timeConfig *AqueductTimeConfig,
 ) (*WorkflowPreviewResult, error) {
-	jobManagerConfig, err := generateJobManagerConfig(
-		ctx,
-		dbDAG,
-		eng.AqPath,
-		eng.Vault,
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to generate JobManagerConfig from WorkflowDag.")
-	}
-
-	jobManager, err := job.NewJobManager(
-		jobManagerConfig,
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to create JobManager.")
-	}
-
 	dag, err := dag_utils.NewWorkflowDag(
 		ctx,
 		uuid.Nil, /* workflowDagResultID */
@@ -370,11 +336,11 @@ func (eng *aqEngine) PreviewWorkflow(
 		eng.OperatorResultRepo,
 		eng.ArtifactRepo,
 		eng.ArtifactResultRepo,
-		jobManager,
 		eng.Vault,
 		eng.PreviewCacheManager,
 		execEnvByOperatorId,
 		operator.Preview,
+		eng.AqPath,
 		eng.Database,
 	)
 	if err != nil {

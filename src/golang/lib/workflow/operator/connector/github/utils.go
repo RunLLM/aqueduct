@@ -78,7 +78,7 @@ func PullOperator(
 	}
 
 	if storageConfig == nil {
-		return true, shared.ErrInvalidStorageConfig
+		return true, errors.New("Invalid Storage Config")
 	}
 
 	storagePath := uuid.New().String()

@@ -15,11 +15,6 @@ const (
 	PythonVersionFileName = "python_version"
 )
 
-var (
-	ErrPythonVersionMissing    = errors.New("Python version file is missing.")
-	ErrRequirementsFileMissing = errors.New("Requirement file is missing.")
-)
-
 func ExtractDependenciesFromZipFile(zipball []byte) (*ExecutionEnvironment, error) {
 	zipReader, err := zip.NewReader(bytes.NewReader(zipball), int64(len(zipball)))
 	if err != nil {
@@ -70,11 +65,11 @@ func ExtractDependenciesFromZipFile(zipball []byte) (*ExecutionEnvironment, erro
 	}
 
 	if !hasReqFile {
-		return nil, ErrRequirementsFileMissing
+		return nil, errors.New("Requirements file is missing.")
 	}
 
 	if !hasVersionFile {
-		return nil, ErrPythonVersionMissing
+		return nil, errors.New("Python version file is missing.")
 	}
 
 	return env, nil

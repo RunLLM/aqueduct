@@ -8,9 +8,11 @@ import (
 	"sort"
 
 	"github.com/aqueducthq/aqueduct/lib"
-	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -25,7 +27,7 @@ var pythonVersions = [...]string{
 
 type ExecutionEnvironment struct {
 	// TODO: Double check if the json tags can be removed.
-	Id            uuid.UUID `json:"id"`
+	ID            uuid.UUID `json:"id"`
 	PythonVersion string    `json:"python_version"`
 	Dependencies  []string  `json:"dependencies"`
 	CondaPath     string    `json:"-"`
@@ -33,7 +35,7 @@ type ExecutionEnvironment struct {
 
 func (e *ExecutionEnvironment) CreateDBRecord(
 	ctx context.Context,
-	execEnvWriter db_exec_env.Writer,
+	execEnvRepo repos.ExecutionEnvironment,
 	db database.Database,
 ) error {
 	hash, err := e.Hash()
@@ -41,9 +43,9 @@ func (e *ExecutionEnvironment) CreateDBRecord(
 		return err
 	}
 
-	dbEnv, err := execEnvWriter.CreateExecutionEnvironment(
+	dbEnv, err := execEnvRepo.Create(
 		ctx,
-		&db_exec_env.Spec{
+		&shared.ExecutionEnvironmentSpec{
 			PythonVersion: e.PythonVersion,
 			Dependencies:  e.Dependencies,
 		},
@@ -54,16 +56,16 @@ func (e *ExecutionEnvironment) CreateDBRecord(
 		return err
 	}
 
-	e.Id = dbEnv.Id
+	e.ID = dbEnv.ID
 	return nil
 }
 
 func (e *ExecutionEnvironment) DeleteDBRecord(
 	ctx context.Context,
-	execEnvWriter db_exec_env.Writer,
+	execEnvRepo repos.ExecutionEnvironment,
 	db database.Database,
 ) error {
-	return execEnvWriter.DeleteExecutionEnvironment(ctx, e.Id, db)
+	return execEnvRepo.Delete(ctx, e.ID, db)
 }
 
 // Hash generates a hash based on the environment's
@@ -84,7 +86,7 @@ func (e *ExecutionEnvironment) Hash() (uuid.UUID, error) {
 }
 
 func (e *ExecutionEnvironment) Name() string {
-	return fmt.Sprintf("aqueduct_%s", e.Id.String())
+	return fmt.Sprintf("aqueduct_%s", e.ID.String())
 }
 
 func (e *ExecutionEnvironment) CreateEnv() error {
@@ -159,10 +161,10 @@ func (e *ExecutionEnvironment) DeleteEnv() error {
 func GetExecEnvFromDB(
 	ctx context.Context,
 	hash uuid.UUID,
-	execEnvReader db_exec_env.Reader,
+	execEnvRepo repos.ExecutionEnvironment,
 	db database.Database,
 ) (*ExecutionEnvironment, error) {
-	dbExecEnv, err := execEnvReader.GetActiveExecutionEnvironmentByHash(ctx, hash, db)
+	dbExecEnv, err := execEnvRepo.GetActiveByHash(ctx, hash, db)
 	if err != nil {
 		return nil, err
 	}
@@ -223,16 +225,16 @@ func deleteEnvs(envs []ExecutionEnvironment) {
 	for _, env := range envs {
 		err := env.DeleteEnv()
 		if err != nil {
-			log.Errorf("Failed to delete env %s: %v", env.Id.String(), err)
+			log.Errorf("Failed to delete env %s: %v", env.ID.String(), err)
 		}
 	}
 }
 
 func newFromDBExecutionEnvironment(
-	dbExecEnv *db_exec_env.DBExecutionEnvironment,
+	dbExecEnv *models.ExecutionEnvironment,
 ) *ExecutionEnvironment {
 	return &ExecutionEnvironment{
-		Id:            dbExecEnv.Id,
+		ID:            dbExecEnv.ID,
 		PythonVersion: dbExecEnv.Spec.PythonVersion,
 		Dependencies:  dbExecEnv.Spec.Dependencies,
 	}
@@ -241,10 +243,10 @@ func newFromDBExecutionEnvironment(
 func GetActiveExecutionEnvironmentsByOperatorIDs(
 	ctx context.Context,
 	opIDs []uuid.UUID,
-	envReader db_exec_env.Reader,
+	execEnvRepo repos.ExecutionEnvironment,
 	db database.Database,
 ) (map[uuid.UUID]ExecutionEnvironment, error) {
-	dbEnvMap, err := envReader.GetActiveExecutionEnvironmentsByOperatorID(
+	dbEnvMap, err := execEnvRepo.GetActiveByOperatorBatch(
 		ctx, opIDs, db,
 	)
 	if err != nil {
@@ -268,8 +270,7 @@ func GetActiveExecutionEnvironmentsByOperatorIDs(
 // env object from the DB rows.
 func CreateMissingAndSyncExistingEnvs(
 	ctx context.Context,
-	envReader db_exec_env.Reader,
-	envWriter db_exec_env.Writer,
+	execEnvRepo repos.ExecutionEnvironment,
 	envs map[uuid.UUID]ExecutionEnvironment,
 	db database.Database,
 ) (map[uuid.UUID]ExecutionEnvironment, error) {
@@ -307,13 +308,13 @@ func CreateMissingAndSyncExistingEnvs(
 		existingEnv, err := GetExecEnvFromDB(
 			ctx,
 			hash,
-			envReader,
+			execEnvRepo,
 			db,
 		)
 
 		// Env is missing
 		if err == database.ErrNoRows {
-			err = env.CreateDBRecord(ctx, envWriter, db)
+			err = env.CreateDBRecord(ctx, execEnvRepo, db)
 			if err != nil {
 				return nil, err
 			}
@@ -348,10 +349,10 @@ func CreateMissingAndSyncExistingEnvs(
 
 func GetUnusedExecutionEnvironmentIDs(
 	ctx context.Context,
-	envReader db_exec_env.Reader,
+	execEnvRepo repos.ExecutionEnvironment,
 	db database.Database,
 ) ([]uuid.UUID, error) {
-	dbEnvs, err := envReader.GetUnusedExecutionEnvironments(
+	dbEnvs, err := execEnvRepo.GetUnused(
 		ctx, db,
 	)
 	if err != nil {
@@ -360,7 +361,7 @@ func GetUnusedExecutionEnvironmentIDs(
 
 	results := make([]uuid.UUID, 0, len(dbEnvs))
 	for _, dbEnv := range dbEnvs {
-		results = append(results, dbEnv.Id)
+		results = append(results, dbEnv.ID)
 	}
 
 	return results, nil
@@ -370,11 +371,10 @@ func GetUnusedExecutionEnvironmentIDs(
 // the function and return an error object signaling whether there is at least one error occurred.
 func CleanupUnusedEnvironments(
 	ctx context.Context,
-	envReader db_exec_env.Reader,
-	envWriter db_exec_env.Writer,
+	execEnvRepo repos.ExecutionEnvironment,
 	db database.Database,
 ) error {
-	envIDs, err := GetUnusedExecutionEnvironmentIDs(ctx, envReader, db)
+	envIDs, err := GetUnusedExecutionEnvironmentIDs(ctx, execEnvRepo, db)
 	if err != nil {
 		log.Errorf("Error getting unused execution environments: %v", err)
 		return err
@@ -396,7 +396,7 @@ func CleanupUnusedEnvironments(
 			hasError = true
 			log.Errorf("Error garbage collecting conda environment %s: %v", envID, err)
 		} else {
-			_, err = envWriter.UpdateExecutionEnvironment(
+			_, err = execEnvRepo.Update(
 				ctx,
 				envID,
 				map[string]interface{}{

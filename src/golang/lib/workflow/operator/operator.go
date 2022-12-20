@@ -19,8 +19,6 @@ import (
 	"github.com/google/uuid"
 )
 
-var ErrInvalidStatusToLaunch = errors.New("Cannot launch operator. The operator is in an invalid status.")
-
 // Operator is an interface for managing and inspecting the lifecycle of an operator
 // used by a workflow run.
 type Operator interface {
@@ -85,12 +83,13 @@ func NewOperator(
 	inputExecPaths []*utils.ExecPaths,
 	outputExecPaths []*utils.ExecPaths,
 	opResultRepo repos.OperatorResult, // A nil value means the operator is run in preview mode.
-	jobManager job.JobManager,
+	opEngineConfig shared.EngineConfig,
 	vaultObject vault.Vault,
 	storageConfig *shared.StorageConfig,
 	previewCacheManager preview_cache.CacheManager,
 	execMode ExecutionMode,
 	execEnv *exec_env.ExecutionEnvironment,
+	aqPath string,
 	db database.Database,
 ) (Operator, error) {
 	if len(inputs) != len(inputExecPaths) {
@@ -106,6 +105,22 @@ func NewOperator(
 	metadataPath := uuid.New().String()
 	if len(outputExecPaths) > 0 {
 		metadataPath = outputExecPaths[0].OpMetadataPath
+	}
+
+	jobConfig, err := generateJobManagerConfig(
+		ctx,
+		opEngineConfig,
+		storageConfig,
+		aqPath,
+		vaultObject,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to generate JobManagerConfig.")
+	}
+
+	jobManager, err := job.NewJobManager(jobConfig)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to create JobManager.")
 	}
 
 	now := time.Now()
