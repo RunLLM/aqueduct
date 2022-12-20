@@ -167,6 +167,7 @@ export const handleGetArtifactResults = createAsyncThunk<
         if (
           artifactResult.serialization_type === SerializationType.String ||
           artifactResult.serialization_type === SerializationType.Table ||
+          artifactResult.serialization_type === SerializationType.BsonTable ||
           artifactResult.serialization_type === SerializationType.Json
         ) {
           artifactResult.data = await (formData.get('data') as File).text();

@@ -8,6 +8,7 @@ export const DataColumnTypeNames = [
   'boolean',
   'datetime',
   'json',
+  'object',
 ] as const;
 
 export type DataColumnType = typeof DataColumnTypeNames[number];
@@ -68,3 +69,18 @@ export type DataPreview = {
   historical_versions: Record<string, DataPreviewInfo>;
   latest_versions: Record<string, DataPreviewInfo>;
 };
+
+export function inferSchema(rows: TableRow[]): DataSchema {
+  if (!rows) {
+    return { fields: [], pandas_version: '' };
+  }
+
+  return {
+    fields: Object.keys(rows[0]).map((col) => ({
+      name: col,
+      displayName: col,
+      type: 'object',
+    })),
+    pandas_version: '',
+  };
+}

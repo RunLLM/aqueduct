@@ -91,12 +91,26 @@ export const PaginatedTable: React.FC<PaginatedTableProps> = ({ data }) => {
                   >
                     {columns.map((column, columnIndex) => {
                       const value = row[column.name];
+                      let displayedValue = '';
+                      if (!!value) {
+                        // when the column type is json or object,
+                        // the value parsed from backend API will be an arbitrary json object.
+                        // Here we need to serialize the object to render it properly.
+                        if (
+                          column.type === 'json' ||
+                          column.type === 'object'
+                        ) {
+                          displayedValue = JSON.stringify(value);
+                        } else {
+                          displayedValue = value.toString();
+                        }
+                      }
                       return (
                         <TableCell
                           key={`table-col-${columnIndex}`}
                           align={'left'}
                         >
-                          {value ? value.toString() : ''}
+                          {displayedValue}
                         </TableCell>
                       );
                     })}
