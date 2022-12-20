@@ -15,10 +15,8 @@ from utils import (
 
 def test_delete_workflow_invalid_saved_objects(client, flow_name, data_integration, engine):
     """Check the flow cannot delete an object it had not saved."""
-    integration = client.integration(data_integration)
-
-    table = integration.sql(query=SHORT_SENTIMENT_SQL_QUERY)
-    save(integration, table)
+    table = data_integration.sql(query=SHORT_SENTIMENT_SQL_QUERY)
+    save(data_integration, table)
 
     flow = publish_flow_test(
         client,
@@ -41,10 +39,9 @@ def test_delete_workflow_invalid_saved_objects(client, flow_name, data_integrati
 
 def test_delete_workflow_saved_objects(client, flow_name, data_integration, engine, validator):
     """Check the flow with object(s) saved with update_mode=APPEND can only be deleted if in force mode."""
-    integration = client.integration(data_integration)
     table_name = generate_table_name()
-    table = integration.sql(query=SHORT_SENTIMENT_SQL_QUERY)
-    save(integration, table, name=table_name, update_mode=LoadUpdateMode.REPLACE)
+    table = data_integration.sql(query=SHORT_SENTIMENT_SQL_QUERY)
+    save(data_integration, table, name=table_name, update_mode=LoadUpdateMode.REPLACE)
 
     flow = publish_flow_test(
         client,
@@ -53,7 +50,7 @@ def test_delete_workflow_saved_objects(client, flow_name, data_integration, engi
         engine=engine,
     )
 
-    save(integration, table, name=table_name, update_mode=LoadUpdateMode.APPEND)
+    save(data_integration, table, name=table_name, update_mode=LoadUpdateMode.APPEND)
     flow = publish_flow_test(
         client,
         table,
@@ -80,7 +77,7 @@ def test_delete_workflow_saved_objects(client, flow_name, data_integration, engi
     check_flow_doesnt_exist(client, flow.id())
 
     # Check table no longer exists
-    check_table_doesnt_exist(integration, table_name)
+    check_table_doesnt_exist(data_integration, table_name)
 
 
 def test_delete_workflow_saved_objects_twice(
@@ -91,11 +88,10 @@ def test_delete_workflow_saved_objects_twice(
     it is successful but when I delete it in the second workflow, it is unsuccessful because the table has already
     been deleted.
     """
-    integration = client.integration(data_integration)
     table_name = generate_table_name()
 
-    table = integration.sql(query=SHORT_SENTIMENT_SQL_QUERY)
-    save(integration, table, name=table_name, update_mode=LoadUpdateMode.REPLACE)
+    table = data_integration.sql(query=SHORT_SENTIMENT_SQL_QUERY)
+    save(data_integration, table, name=table_name, update_mode=LoadUpdateMode.REPLACE)
 
     # Workflow 1's name not specified, so given a random workflow name.
     flow1 = publish_flow_test(
@@ -106,7 +102,7 @@ def test_delete_workflow_saved_objects_twice(
     )
 
     # Workflow 2's name not specified, so given a random workflow name.
-    save(integration, table, name=table_name, update_mode=LoadUpdateMode.APPEND)
+    save(data_integration, table, name=table_name, update_mode=LoadUpdateMode.APPEND)
     flow2 = publish_flow_test(
         client,
         table,
@@ -123,7 +119,7 @@ def test_delete_workflow_saved_objects_twice(
 
     # Check table is properly created at the integration.
     # Need to poll initially in case still writing table.
-    check_table_exists(integration, table_name)
+    check_table_exists(data_integration, table_name)
 
     tables = client.flow(flow1.id()).list_saved_objects()
     tables_1 = set([item.object_name for item in tables[data_integration]])
@@ -138,7 +134,7 @@ def test_delete_workflow_saved_objects_twice(
 
     # Check flow indeed deleted and that the table no longer exists.
     check_flow_doesnt_exist(client, flow1.id())
-    check_table_doesnt_exist(integration, table_name)
+    check_table_doesnt_exist(data_integration, table_name)
 
     # Try to delete table deleted by other flow.
     with pytest.raises(Exception) as e_info:

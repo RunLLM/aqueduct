@@ -6,8 +6,7 @@ from aqueduct import op
 
 
 def test_to_operator_local_function(client, data_integration):
-    db = client.integration(data_integration)
-    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
 
     @op
     def dummy_sentiment_model(df):
@@ -27,8 +26,7 @@ def test_to_operator_local_function(client, data_integration):
 
 
 def test_to_operator_imported_function(client, data_integration):
-    db = client.integration(data_integration)
-    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
 
     @op(file_dependencies=["test_function.py"])
     def decorated_func(df):

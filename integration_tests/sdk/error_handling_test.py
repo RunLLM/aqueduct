@@ -20,17 +20,14 @@ TIP_OP_EXECUTION = "Error executing operator. Please refer to the stack trace fo
 
 
 def test_handle_relational_query_error(client, data_integration):
-    db = client.integration(data_integration)
-
     try:
-        sql_artifact = db.sql(query=BAD_QUERY)
+        sql_artifact = data_integration.sql(query=BAD_QUERY)
     except AqueductError as e:
         assert TIP_EXTRACT in e.message
 
 
 def test_handle_bad_op_error(client, data_integration):
-    db = client.integration(data_integration)
-    sql_artifact = db.sql(query=GOOD_QUERY)
+    sql_artifact = data_integration.sql(query=GOOD_QUERY)
 
     try:
         bad_op(sql_artifact)

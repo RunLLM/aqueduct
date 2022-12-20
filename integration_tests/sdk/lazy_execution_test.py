@@ -12,8 +12,7 @@ from aqueduct import check, global_config, metric, op
 
 
 def test_lazy_sql_extractor(client, data_integration):
-    db = client.integration(data_integration)
-    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY, lazy=True)
+    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY, lazy=True)
     assert sql_artifact._get_content() is None
     assert isinstance(sql_artifact.get(), pd.DataFrame)
     # After calling get(), artifact's content should be materialized.
@@ -72,8 +71,7 @@ def test_eager_operator_after_lazy(client):
 
 
 def test_table_artifact_lazy_syntax_sugar(client, data_integration):
-    db = client.integration(data_integration)
-    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY, lazy=True)
+    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY, lazy=True)
     num_rows_artifact = sql_artifact.number_of_rows(lazy=True)
     assert num_rows_artifact._get_content() is None
     assert isinstance(num_rows_artifact.get(), float)
@@ -117,15 +115,14 @@ def test_lazy_global_config(client, data_integration):
         global_config({"lazy": True})
 
         # Basic SQL artifact that was lazily computed.
-        db = client.integration(data_integration)
-        sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+        sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
         assert sql_artifact._get_content() is None
         assert isinstance(sql_artifact.get(), pd.DataFrame)
         # After calling get(), artifact's content should be materialized.
         assert sql_artifact._get_content() is not None
 
         # For a lazily-created metric used pre-defined functions.
-        sql_artifact = db.sql(query=WINE_SQL_QUERY)
+        sql_artifact = data_integration.sql(query=WINE_SQL_QUERY)
         max_metric = sql_artifact.max(column_id="fixed_acidity")
         assert max_metric._get_content() is None
         assert math.isclose(max_metric.get(), 15.899, rel_tol=1e-3)

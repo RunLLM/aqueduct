@@ -30,10 +30,9 @@ from aqueduct import check, metric, op
 
 
 def test_basic_flow(client, flow_name, data_integration, engine, validator):
-    db = client.integration(data_integration)
-    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
-    save(db, output_artifact)
+    save(data_integration, output_artifact)
 
     flow = publish_flow_test(
         client,
@@ -46,10 +45,9 @@ def test_basic_flow(client, flow_name, data_integration, engine, validator):
 
 def test_sentiment_flow(client, flow_name, data_integration, engine, validator):
     """Actually run the full sentiment model (with nltk dependency)."""
-    db = client.integration(data_integration)
-    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = sentiment_model(sql_artifact)
-    save(db, output_artifact)
+    save(data_integration, output_artifact)
 
     flow = publish_flow_test(
         client,
@@ -61,13 +59,12 @@ def test_sentiment_flow(client, flow_name, data_integration, engine, validator):
 
 
 def test_complex_flow(client, flow_name, data_integration, engine, validator):
-    db = client.integration(data_integration)
-    sql_artifact1 = db.sql(name="Query 1", query=SENTIMENT_SQL_QUERY)
-    sql_artifact2 = db.sql(name="Query 2", query=SENTIMENT_SQL_QUERY)
+    sql_artifact1 = data_integration.sql(name="Query 1", query=SENTIMENT_SQL_QUERY)
+    sql_artifact2 = data_integration.sql(name="Query 2", query=SENTIMENT_SQL_QUERY)
 
     fn_artifact = dummy_sentiment_model_multiple_input(sql_artifact1, sql_artifact2)
     output_artifact = dummy_model(fn_artifact)
-    save(db, output_artifact)
+    save(data_integration, output_artifact)
 
     @check()
     def successful_check(df):
@@ -118,14 +115,13 @@ def test_complex_flow(client, flow_name, data_integration, engine, validator):
 
 
 def test_multiple_output_artifacts(client, flow_name, data_integration, engine):
-    db = client.integration(data_integration)
-    sql_artifact1 = db.sql(name="Query 1", query=SENTIMENT_SQL_QUERY)
-    sql_artifact2 = db.sql(name="Query 2", query=SENTIMENT_SQL_QUERY)
+    sql_artifact1 = data_integration.sql(name="Query 1", query=SENTIMENT_SQL_QUERY)
+    sql_artifact2 = data_integration.sql(name="Query 2", query=SENTIMENT_SQL_QUERY)
 
     fn_artifact1 = dummy_sentiment_model(sql_artifact1)
     fn_artifact2 = dummy_model(sql_artifact2)
-    save(db, fn_artifact1)
-    save(db, fn_artifact2)
+    save(data_integration, fn_artifact1)
+    save(data_integration, fn_artifact2)
 
     publish_flow_test(
         client,
@@ -136,12 +132,9 @@ def test_multiple_output_artifacts(client, flow_name, data_integration, engine):
 
 
 def test_publish_with_schedule(client, flow_name, data_integration, engine):
-    db = client.integration(
-        data_integration,
-    )
-    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
-    save(db, output_artifact)
+    save(data_integration, output_artifact)
 
     # Execute the flow 1 minute from now.
     execute_at = datetime.now() + timedelta(minutes=1)
@@ -172,8 +165,7 @@ def test_invalid_flow(client):
 
 def test_publish_flow_with_same_name(client, flow_name, data_integration, engine):
     """Tests flow editing behavior."""
-    db = client.integration(data_integration)
-    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
 
     name = flow_name()
@@ -199,10 +191,9 @@ def test_publish_flow_with_same_name(client, flow_name, data_integration, engine
 
 
 def test_refresh_flow(client, flow_name, data_integration, engine):
-    db = client.integration(data_integration)
-    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
-    save(db, output_artifact)
+    save(data_integration, output_artifact)
 
     flow = publish_flow_test(
         client,
@@ -220,10 +211,9 @@ def test_refresh_flow(client, flow_name, data_integration, engine):
 
 
 def test_get_artifact_from_flow(client, flow_name, data_integration, engine):
-    db = client.integration(data_integration)
-    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
-    save(db, output_artifact)
+    save(data_integration, output_artifact)
 
     flow = publish_flow_test(
         client,
@@ -238,10 +228,9 @@ def test_get_artifact_from_flow(client, flow_name, data_integration, engine):
 
 
 def test_get_artifact_reuse_for_computation(client, flow_name, data_integration, engine):
-    db = client.integration(data_integration)
-    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
-    save(db, output_artifact)
+    save(data_integration, output_artifact)
 
     flow = publish_flow_test(
         client,
@@ -256,8 +245,7 @@ def test_get_artifact_reuse_for_computation(client, flow_name, data_integration,
 
 
 def test_multiple_flows_with_same_schedule(client, flow_name, data_integration, engine):
-    db = client.integration(data_integration)
-    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
     output_artifact_2 = dummy_model(sql_artifact)
 
@@ -292,8 +280,6 @@ def test_multiple_flows_with_same_schedule(client, flow_name, data_integration, 
 
 
 def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integration, engine):
-    db = client.integration(data_integration)
-
     # Write a new table into the demo db.
     initial_table = pd.DataFrame([1, 2, 3, 4, 5, 6], columns=["numbers"])
 
@@ -303,7 +289,7 @@ def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integra
 
     table = generate_initial_table()
     table_name = generate_table_name()
-    save(db, table, name=table_name)
+    save(data_integration, table, name=table_name)
 
     setup_flow = publish_flow_test(
         client,
@@ -317,7 +303,7 @@ def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integra
         return df
 
     # Create a new flow that extracts this data.
-    output = db.sql("SELECT * FROM %s" % table_name, name="Test Table Query")
+    output = data_integration.sql("SELECT * FROM %s" % table_name, name="Test Table Query")
     assert output.get().equals(initial_table)
 
     flow = publish_flow_test(
@@ -333,7 +319,7 @@ def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integra
         return pd.DataFrame([9, 9, 9, 9, 9, 9], columns=["numbers"])
 
     table = generate_new_table()
-    save(db, table, name=table_name)
+    save(data_integration, table, name=table_name)
     publish_flow_test(
         client,
         artifacts=table,
