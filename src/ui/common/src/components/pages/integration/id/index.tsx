@@ -6,7 +6,8 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
-
+import { SupportedIntegrations, IntegrationCategories } from '../../../../utils/integrations';
+ 
 import { DetailIntegrationCard } from '../../../../components/integrations/cards/detailCard';
 import AddTableDialog from '../../../../components/integrations/dialogs/addTableDialog';
 import DeleteIntegrationDialog from '../../../../components/integrations/dialogs/deleteIntegrationDialog';
@@ -179,8 +180,8 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             .
           </Typography>
         )}
-
-        <IntegrationObjectList user={user} integration={selectedIntegration} />
+        
+        {SupportedIntegrations[selectedIntegration.service].category !== IntegrationCategories.COMPUTE && <IntegrationObjectList user={user} integration={selectedIntegration} />}
 
         <Typography
           variant="h5"

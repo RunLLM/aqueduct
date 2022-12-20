@@ -247,7 +247,7 @@ const logoBucket =
 const integrationLogosBucket =
   'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations';
 
-const IntegrationCategories = {
+export const IntegrationCategories = {
   DATA: 'data',
   COMPUTE: 'compute',
 };
