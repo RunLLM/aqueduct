@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.8
+Released on December 20, 2022.
+
+### Enhancements
+* Allows user to set compute engine in the operator's decorator.
+* Reduces the number of significant figures for metrics on data list page and workflows list page to
+    improve readability.
+
+### Bugfixes
+* Fixes a bug where the UI shows data section for compute integrations.
+* Fixes a bug where previewing Mongo collection crashes.
+
 ## 0.1.7
 Released on December 14, 2022.
 
