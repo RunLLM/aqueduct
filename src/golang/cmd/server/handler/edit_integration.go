@@ -20,13 +20,6 @@ import (
 	"github.com/google/uuid"
 )
 
-var (
-	ErrNoEditPermission            = errors.New("You don't have permission to edit this integration")
-	ErrInvalidServiceType          = errors.New("Editing for this integration type is not currently supported.")
-	ErrEditDemoIntegration         = errors.New("You cannot edit demo DB credentials.")
-	ErrEditIntegrationWithDemoName = errors.New("aqueduct_demo is reserved for demo integration. Please use another name.")
-)
-
 // Route: /integration/{integrationId}/edit
 // Method: POST
 // Params: integrationId
@@ -174,7 +167,7 @@ func (h *EditIntegrationHandler) Prepare(r *http.Request) (interface{}, int, err
 	}
 
 	if !hasPermission {
-		return nil, http.StatusForbidden, ErrNoEditPermission
+		return nil, http.StatusForbidden, errors.New("You don't have permission to edit this integration")
 	}
 
 	name, configMap, err := request.ParseIntegrationConfigFromRequest(r)
@@ -183,7 +176,7 @@ func (h *EditIntegrationHandler) Prepare(r *http.Request) (interface{}, int, err
 	}
 
 	if name == integration.DemoDbIntegrationName {
-		return nil, http.StatusBadRequest, ErrEditIntegrationWithDemoName
+		return nil, http.StatusBadRequest, errors.New("`aqueduct_demo` is reserved for demo integration. Please use another name.")
 	}
 
 	return &EditIntegrationArgs{
@@ -210,7 +203,7 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 	}
 
 	if integrationObject.Name == integration.DemoDbIntegrationName {
-		return emptyResp, http.StatusBadRequest, ErrEditDemoIntegration
+		return emptyResp, http.StatusBadRequest, errors.New("You cannot edit demo DB credentials.")
 	}
 
 	config, err := auth.ReadConfigFromSecret(ctx, ID, h.Vault)
@@ -220,7 +213,7 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 
 	staticConfig, ok := config.(*auth.StaticConfig)
 	if !ok {
-		return emptyResp, http.StatusInternalServerError, ErrInvalidServiceType
+		return emptyResp, http.StatusInternalServerError, errors.New("Editing for this integration type is not currently supported.")
 	}
 
 	configUpdated, status, err := updateConfig(staticConfig.Conf, integrationObject.Service, args.UpdatedFields)

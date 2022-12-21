@@ -20,9 +20,8 @@ def test_basic_no_input_function(client):
     assert result.equals(expected)
 
 
-def test_flow_with_no_input_function(client):
-    warehouse = client.integration(name="aqueduct_demo")
-    customers_table = warehouse.sql(query="SELECT * FROM customers;")
+def test_flow_with_no_input_function(client, data_integration):
+    customers_table = data_integration.sql(query="SELECT * FROM customers;")
 
     result = join(no_input(), customers_table)
     expected = pd.DataFrame(data={"col1": [1, 2], "col2": [3, 4]})

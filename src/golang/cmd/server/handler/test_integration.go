@@ -16,8 +16,6 @@ import (
 	"github.com/google/uuid"
 )
 
-var ErrNoAccessPermission = errors.New("You don't have permission to access this integration.")
-
 // Route: /integration/{integrationId}/test
 // Method: POST
 // Params: integrationId
@@ -75,7 +73,7 @@ func (h *TestIntegrationHandler) Prepare(r *http.Request) (interface{}, int, err
 	}
 
 	if !hasPermission {
-		return nil, http.StatusForbidden, ErrNoAccessPermission
+		return nil, http.StatusForbidden, errors.New("You don't have permission to access this integration.")
 	}
 
 	return &TestIntegrationArgs{AqContext: aqContext, IntegrationId: integrationID}, http.StatusOK, nil

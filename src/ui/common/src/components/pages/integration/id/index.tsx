@@ -26,6 +26,10 @@ import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import { handleFetchAllWorkflowSummaries } from '../../../../reducers/listWorkflowSummaries';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
+import {
+  IntegrationCategories,
+  SupportedIntegrations,
+} from '../../../../utils/integrations';
 import { isFailed, isLoading, isSucceeded } from '../../../../utils/shared';
 import IntegrationOptions from '../../../integrations/options';
 import { LayoutProps } from '../../types';
@@ -180,7 +184,13 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           </Typography>
         )}
 
-        <IntegrationObjectList user={user} integration={selectedIntegration} />
+        {SupportedIntegrations[selectedIntegration.service].category !==
+          IntegrationCategories.COMPUTE && (
+          <IntegrationObjectList
+            user={user}
+            integration={selectedIntegration}
+          />
+        )}
 
         <Typography
           variant="h5"

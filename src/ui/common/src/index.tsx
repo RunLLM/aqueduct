@@ -59,7 +59,6 @@ import { Button } from './components/primitives/Button.styles';
 import { IconButton } from './components/primitives/IconButton.styles';
 import { LoadingButton } from './components/primitives/LoadingButton.styles';
 import { Tab, Tabs } from './components/primitives/Tabs.styles';
-import { filteredList, SearchBar } from './components/Search';
 import DataTable from './components/tables/DataTable';
 import { OperatorExecStateTableType } from './components/tables/OperatorExecStateTable';
 import PaginatedTable from './components/tables/PaginatedTable';
@@ -88,6 +87,7 @@ import VersionSelector from './components/workflows/version_selector';
 import WorkflowCard from './components/workflows/workflowCard';
 import WorkflowHeader from './components/workflows/workflowHeader';
 import WorkflowSettings from './components/workflows/WorkflowSettings';
+import { StatusChip } from './components/workflows/workflowStatus';
 import { handleGetArtifactResultContent } from './handlers/getArtifactResultContent';
 import { handleGetWorkflowDagResult } from './handlers/getWorkflowDagResult';
 import { handleListArtifactResults } from './handlers/listArtifactResults';
@@ -161,6 +161,7 @@ import fetchUser from './utils/fetchUser';
 import {
   addTable,
   formatService,
+  ServiceLogos,
   SupportedIntegrations,
 } from './utils/integrations';
 import { dateString } from './utils/metadata';
@@ -245,7 +246,6 @@ export {
   exportCsv,
   exportFunction,
   fetchUser,
-  filteredList,
   formatService,
   FunctionGranularity,
   FunctionOperatorNode,
@@ -342,9 +342,9 @@ export {
   resetTestConnectStatus,
   S3Card,
   S3Dialog,
-  SearchBar,
   selectNode,
   selectResultIdx,
+  ServiceLogos,
   ServiceType,
   // TODO: Refactor to remove sidesheet state
   setAllSideSheetState,
@@ -360,6 +360,7 @@ export {
   sideSheetSwitcher,
   SnowflakeCard,
   SnowflakeDialog,
+  StatusChip as Status,
   StatusBarHeaderHeightInPx,
   StatusBarWidthInPx,
   store,

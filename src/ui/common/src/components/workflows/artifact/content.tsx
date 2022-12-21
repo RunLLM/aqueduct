@@ -7,6 +7,7 @@ import React from 'react';
 import { ArtifactResultResponse } from '../../../handlers/responses/artifact';
 import { ContentWithLoadingStatus } from '../../../reducers/artifactResultContents';
 import { SerializationType } from '../../../utils/artifacts';
+import { Data, inferSchema, TableRow } from '../../../utils/data';
 import { isFailed, isInitial, isLoading } from '../../../utils/shared';
 import PaginatedTable from '../../tables/PaginatedTable';
 
@@ -57,9 +58,19 @@ const ArtifactContent: React.FC<Props> = ({
 
   switch (artifact.result.serialization_type) {
     case SerializationType.Table:
+    case SerializationType.BsonTable:
       try {
-        const data = JSON.parse(contentWithLoadingStatus.data);
-        return <PaginatedTable data={data} />;
+        const rawData = JSON.parse(contentWithLoadingStatus.data);
+        if (
+          artifact.result.serialization_type === SerializationType.BsonTable
+        ) {
+          const rows = rawData as TableRow[];
+          // bson table does not include schema when serialized.
+          const schema = inferSchema(rows);
+          return <PaginatedTable data={{ schema: schema, data: rows }} />;
+        }
+
+        return <PaginatedTable data={rawData as Data} />;
       } catch (err) {
         return (
           <Alert severity="error" title="Cannot parse table data.">

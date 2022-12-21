@@ -7,6 +7,7 @@ from typing import Any, Callable, Dict, cast
 import cloudpickle as pickle
 import pandas as pd
 from aqueduct.constants.enums import ArtifactType, SerializationType
+from bson import json_util as bson_json_util
 from PIL import Image
 
 from .function_packaging import _make_temp_dir
@@ -21,6 +22,10 @@ _TEMP_KERAS_MODEL_NAME = "keras_model"
 
 def _read_table_content(content: bytes) -> pd.DataFrame:
     return pd.read_json(io.BytesIO(content), orient="table")
+
+
+def _read_bson_table_content(content: bytes) -> pd.DataFrame:
+    return pd.DataFrame.from_records(bson_json_util.loads(content.decode(DEFAULT_ENCODING)))
 
 
 def _read_json_content(content: bytes) -> Any:
@@ -70,6 +75,7 @@ __deserialization_function_mapping: Dict[str, Callable[[bytes], Any]] = {
     SerializationType.STRING: _read_string_content,
     SerializationType.BYTES: _read_bytes_content,
     SerializationType.TF_KERAS: _read_tf_keras_model,
+    SerializationType.BSON_TABLE: _read_bson_table_content,
 }
 
 
@@ -93,6 +99,10 @@ def deserialize(
 def _write_table_output(output: pd.DataFrame) -> bytes:
     output_str = cast(str, output.to_json(orient="table", date_format="iso", index=False))
     return output_str.encode(DEFAULT_ENCODING)
+
+
+def _write_bson_table_output(output: pd.DataFrame) -> bytes:
+    return bson_json_util.dumps(output.to_dict(orient="records")).encode(DEFAULT_ENCODING)
 
 
 def _write_image_output(output: Image.Image) -> bytes:
@@ -138,6 +148,7 @@ serialization_function_mapping: Dict[str, Callable[..., bytes]] = {
     SerializationType.STRING: _write_string_output,
     SerializationType.BYTES: _write_bytes_output,
     SerializationType.TF_KERAS: _write_tf_keras_model,
+    SerializationType.BSON_TABLE: _write_bson_table_output,
 }
 
 
@@ -147,10 +158,17 @@ def serialize_val(val: Any, serialization_type: SerializationType) -> bytes:
 
 
 def artifact_type_to_serialization_type(
-    artifact_type: ArtifactType, content: Any
+    artifact_type: ArtifactType,
+    # derived_from_bson specifies if the artifact is derived from a bson object
+    # and thus requires bson encoding.
+    # For now, it only applies to DataFrames extracted / transformed from Mongo.
+    derived_from_bson: bool,
+    content: Any,
 ) -> SerializationType:
     if artifact_type == ArtifactType.TABLE:
-        serialization_type = SerializationType.TABLE
+        serialization_type = (
+            SerializationType.BSON_TABLE if derived_from_bson else SerializationType.TABLE
+        )
     elif artifact_type == ArtifactType.IMAGE:
         serialization_type = SerializationType.IMAGE
     elif artifact_type == ArtifactType.JSON or artifact_type == ArtifactType.STRING:

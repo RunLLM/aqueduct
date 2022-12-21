@@ -108,10 +108,10 @@ func (j *lambdaJobManager) updateFunctionMemory(
 	return prevMemoryMB, nil
 }
 
-func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) error {
+func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) JobError {
 	functionName, err := mapJobTypeToLambdaFunction(spec)
 	if err != nil {
-		return errors.Wrap(err, "Unable to launch job.")
+		return systemError(err)
 	}
 
 	// If set, we'll need to reset the function's memory back to this value after invocation.
@@ -120,7 +120,7 @@ func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) e
 	if spec.Type() == FunctionJobType {
 		functionSpec, ok := spec.(*FunctionSpec)
 		if !ok {
-			return ErrInvalidJobSpec
+			return systemError(errors.Newf("Expected FunctionSpec, got %v", spec))
 		}
 
 		functionSpec.FunctionExtractPath = defaultLambdaFunctionExtractPath
@@ -140,7 +140,7 @@ func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) e
 				newMemoryMBInt64 := int64(*functionSpec.Resources.MemoryMB)
 				previousMemoryMB, err = j.updateFunctionMemory(ctx, functionName, &newMemoryMBInt64)
 				if err != nil {
-					return err
+					return systemError(err)
 				}
 			}
 		}
@@ -148,7 +148,7 @@ func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) e
 
 	storageConfig, err := spec.GetStorageConfig()
 	if err != nil {
-		return errors.Wrap(err, "Spec unexpectedly has no storage config.")
+		return systemError(errors.Wrap(err, "Spec unexpectedly has no storage config."))
 	}
 	storageConfig.S3Config.AWSAccessKeyID = j.conf.AwsAccessKeyId
 	storageConfig.S3Config.AWSSecretAccessKey = j.conf.AwsSecretAccessKey
@@ -157,13 +157,13 @@ func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) e
 	serializationType := JsonSerializationType
 	encodedSpec, err := EncodeSpec(spec, serializationType)
 	if err != nil {
-		return err
+		return systemError(err)
 	}
 
 	lambdaFunctionRequest := map[string]string{"Spec": encodedSpec}
 	payload, err := json.Marshal(lambdaFunctionRequest)
 	if err != nil {
-		return errors.Wrap(err, "Unable to marshal request payload.")
+		return systemError(errors.Wrap(err, "Unable to marshal request payload."))
 	}
 
 	// Lambda functions with custom memory configurations should be executed synchronously.
@@ -185,16 +185,16 @@ func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) e
 
 	_, err = j.lambdaService.InvokeWithContext(ctx, invokeInput)
 	if err != nil {
-		return errors.Wrap(err, "Unable to invoke lambda function.")
+		return systemError(errors.Wrap(err, "Unable to invoke lambda function."))
 	}
 	return nil
 }
 
-func (j *lambdaJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, error) {
-	return shared.UnknownExecutionStatus, ErrAsyncExecution
+func (j *lambdaJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, JobError) {
+	return shared.UnknownExecutionStatus, noopError(errors.New("Cannot poll a lambda job manager."))
 }
 
-func (j *lambdaJobManager) DeployCronJob(ctx context.Context, name string, period string, spec Spec) error {
+func (j *lambdaJobManager) DeployCronJob(ctx context.Context, name string, period string, spec Spec) JobError {
 	return nil
 }
 
@@ -202,11 +202,11 @@ func (j *lambdaJobManager) CronJobExists(ctx context.Context, name string) bool 
 	return false
 }
 
-func (j *lambdaJobManager) EditCronJob(ctx context.Context, name string, cronString string) error {
+func (j *lambdaJobManager) EditCronJob(ctx context.Context, name string, cronString string) JobError {
 	return nil
 }
 
-func (j *lambdaJobManager) DeleteCronJob(ctx context.Context, name string) error {
+func (j *lambdaJobManager) DeleteCronJob(ctx context.Context, name string) JobError {
 	return nil
 }
 

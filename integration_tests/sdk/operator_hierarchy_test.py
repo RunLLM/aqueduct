@@ -32,8 +32,7 @@ def regular_function(args):
 
 def test_check_artifact_restriction(client, data_integration):
     """Test that an artifact produced by a check operator cannot be used as an argument to any operator types."""
-    db = client.integration(data_integration)
-    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
 
     check_artifact = produce_check_artifact(sql_artifact)
     with pytest.raises(InvalidUserActionException):
@@ -46,8 +45,7 @@ def test_check_artifact_restriction(client, data_integration):
 
 def test_metric_artifact_restriction(client, data_integration):
     """Test that an artifact produced by a metric operator cannot be used as an argument to function operator."""
-    db = client.integration(data_integration)
-    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
 
     metric_artifact = produce_metric_artifact(sql_artifact)
     with pytest.raises(InvalidUserActionException):

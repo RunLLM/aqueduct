@@ -26,6 +26,48 @@ export type RetentionPolicy = {
   k_latest_runs: number;
 };
 
+export type WorkflowMetrics = {
+  id: string;
+  description: string;
+  from: string;
+  name: string;
+  to: string;
+  result: {
+    content_path: string;
+    // This is the thing that we want to show in the table view.
+    content_serialized: string;
+    exec_state: ExecState;
+    serialization_type: string;
+  };
+};
+
+export type ExecutionResult = {
+  id: string;
+  exec_state: ExecState;
+};
+
+export type WorkflowChecks = {
+  id: string;
+  description: string;
+  // inputs: need to figure out what goes in there.
+  // outputs: need to figure this out too.
+  name: string;
+  result: ExecutionResult;
+  spec: {
+    check: {
+      level: string;
+      function: {
+        custom_args: string;
+        granularity: string;
+        language: string;
+        storage_path: string;
+        type: string;
+      };
+    };
+    type: string;
+  };
+};
+
 export type ListWorkflowSummary = {
   id: string;
   name: string;
@@ -34,6 +76,8 @@ export type ListWorkflowSummary = {
   last_run_at: number;
   status: ExecutionStatus;
   engine: string;
+  metrics: WorkflowMetrics[];
+  checks: WorkflowChecks[];
 };
 
 export type WorkflowDagResultSummary = {
@@ -58,6 +102,8 @@ export type WorkflowDag = {
   workflow_id: string;
   created_at: number;
   s3_config: S3Config;
+
+  // The default engine that this workflow was run with. Can be overriden by individual operator specs.
   engine_config: EngineConfig;
   storage_config: StorageConfig;
 

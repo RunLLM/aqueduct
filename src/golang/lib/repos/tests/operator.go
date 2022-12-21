@@ -1,7 +1,12 @@
 package tests
 
 import (
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
+	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -43,10 +48,12 @@ func (ts *TestSuite) TestOperator_GetBatch() {
 }
 
 func (ts *TestSuite) TestOperator_GetByDAG() {
-	dags := ts.seedDAG(1)
+	users := ts.seedUser(1)
+	user := users[0]
+	dags := ts.seedDAGWithUser(1, user)
 	dag := dags[0]
 
-	expectedOperators := ts.seedOperatorWithDAG(3, dag.ID, operator.FunctionType)
+	expectedOperators := ts.seedOperatorWithDAG(3, dag.ID, user.ID, operator.FunctionType)
 
 	actualOperators, err := ts.operator.GetByDAG(ts.ctx, dag.ID, ts.DB)
 	require.Nil(ts.T(), err)
@@ -54,33 +61,168 @@ func (ts *TestSuite) TestOperator_GetByDAG() {
 }
 
 func (ts *TestSuite) TestOperator_GetDistinctLoadOPsByWorkflow() {
-	// TODO: Requires integration tests to be implemented
+	users := ts.seedUser(1)
+	user := users[0]
+	dags := ts.seedDAGWithUser(1, user)
+	dag := dags[0]
+
+	expectedOperators := ts.seedOperatorWithDAG(3, dag.ID, user.ID, operator.LoadType)
+
+	expectedLoadOperators := make([]views.LoadOperator, 0, len(expectedOperators))
+	for _, expectedLoadOperator := range expectedOperators {
+		load := expectedLoadOperator.Spec.Load()
+		loadParams := load.Parameters
+		relationalLoad, ok := connector.CastToRelationalDBLoadParams(loadParams)
+		require.True(ts.T(), ok)
+		integration, err := ts.integration.Get(ts.ctx, load.IntegrationId, ts.DB)
+		require.Nil(ts.T(), err)
+					
+		expectedLoadOperators = append(expectedLoadOperators, views.LoadOperator{
+			OperatorName: expectedLoadOperator.Name,
+			ModifiedAt: dag.CreatedAt,
+			IntegrationName: integration.Name,
+			IntegrationID: integration.ID,
+			Service: testIntegrationService,
+			TableName: relationalLoad.Table,
+			UpdateMode: relationalLoad.UpdateMode,
+		})
+	}
+
+	actualOperators, err := ts.operator.GetDistinctLoadOPsByWorkflow(ts.ctx, dag.WorkflowID, ts.DB)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), 3, len(actualOperators))
+	requireDeepEqualLoadOperators(ts.T(), expectedLoadOperators, actualOperators)
 }
 
 func (ts *TestSuite) TestOperator_GetLoadOPsByWorkflowAndIntegration() {
-	//
+	users := ts.seedUser(1)
+	user := users[0]
+	dags := ts.seedDAGWithUser(1, user)
+	dag := dags[0]
+
+	operators := ts.seedOperatorWithDAG(3, dag.ID, user.ID, operator.LoadType)
+
+	load := operators[0].Spec.Load()
+	loadParams := load.Parameters
+	relationalLoad, ok := connector.CastToRelationalDBLoadParams(loadParams)
+	require.True(ts.T(), ok)
+	integration, err := ts.integration.Get(ts.ctx, load.IntegrationId, ts.DB)
+	require.Nil(ts.T(), err)
+
+	actualOperators, err := ts.operator.GetLoadOPsByWorkflowAndIntegration(ts.ctx, dag.WorkflowID, integration.ID, relationalLoad.Table, ts.DB)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), 1, len(actualOperators))
+	requireDeepEqualOperators(ts.T(), []models.Operator{operators[0]}, actualOperators)
 }
 
 func (ts *TestSuite) TestOperator_GetLoadOPsByIntegration() {
-	//
+	users := ts.seedUser(1)
+	user := users[0]
+	dags := ts.seedDAGWithUser(1, user)
+	dag := dags[0]
+
+	operators := ts.seedOperatorWithDAG(3, dag.ID, user.ID, operator.LoadType)
+
+	load := operators[0].Spec.Load()
+	loadParams := load.Parameters
+	relationalLoad, ok := connector.CastToRelationalDBLoadParams(loadParams)
+	require.True(ts.T(), ok)
+	integration, err := ts.integration.Get(ts.ctx, load.IntegrationId, ts.DB)
+	require.Nil(ts.T(), err)
+
+	actualOperators, err := ts.operator.GetLoadOPsByIntegration(ts.ctx, integration.ID, relationalLoad.Table, ts.DB)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), 1, len(actualOperators))
+	requireDeepEqualOperators(ts.T(), []models.Operator{operators[0]}, actualOperators)
 }
 
 func (ts *TestSuite) TestOperator_ValidateOrg() {
-	//
+	users := ts.seedUser(1)
+	user := users[0]
+	dags := ts.seedDAGWithUser(1, user)
+	dag := dags[0]
+
+	operators := ts.seedOperatorWithDAG(1, dag.ID, user.ID, operator.LoadType)
+	operator := operators[0]
+
+	valid, validErr := ts.operator.ValidateOrg(ts.ctx, operator.ID, testOrgID, ts.DB)
+	require.Nil(ts.T(), validErr)
+	require.True(ts.T(), valid)
+
+	invalid, invalidErr := ts.operator.ValidateOrg(ts.ctx, operator.ID, randString(10), ts.DB)
+	require.Nil(ts.T(), invalidErr)
+	require.False(ts.T(), invalid)
+
 }
 
 func (ts *TestSuite) TestOperator_Create() {
-	//
+	name := randString(10)
+	description := randString(10)
+	spec := operator.NewSpecFromFunction(
+		function.Function{},
+	)
+	expectedOperator := &models.Operator{
+		Name: name,
+		Description: description,
+		Spec: *spec,
+		ExecutionEnvironmentID: utils.NullUUID{
+			IsNull: true,
+		},
+	}
+	actualOperator, err := ts.operator.Create(ts.ctx, name, description, spec, nil, ts.DB)
+	expectedOperator.ID = actualOperator.ID
+	require.Nil(ts.T(), err)
+	requireDeepEqual(ts.T(), expectedOperator, actualOperator)
 }
 
 func (ts *TestSuite) TestOperator_Delete() {
-	//
+	users := ts.seedUser(1)
+	user := users[0]
+	dags := ts.seedDAGWithUser(1, user)
+	dag := dags[0]
+
+	operators := ts.seedOperatorWithDAG(1, dag.ID, user.ID, operator.LoadType)
+	operator := operators[0]
+
+	err := ts.operator.Delete(ts.ctx, operator.ID, ts.DB)
+	require.Nil(ts.T(), err)
 }
 
 func (ts *TestSuite) TestOperator_DeleteBatch() {
-	//
+	users := ts.seedUser(1)
+	user := users[0]
+	dags := ts.seedDAGWithUser(1, user)
+	dag := dags[0]
+
+	operators := ts.seedOperatorWithDAG(3, dag.ID, user.ID, operator.LoadType)
+	IDs := make([]uuid.UUID, 0, len(operators))
+	for _, operator := range operators {
+		IDs = append(IDs, operator.ID)
+	}
+
+	err := ts.operator.DeleteBatch(ts.ctx, IDs, ts.DB)
+	require.Nil(ts.T(), err)
 }
 
 func (ts *TestSuite) TestOperator_Update() {
-	//
+	users := ts.seedUser(1)
+	user := users[0]
+	dags := ts.seedDAGWithUser(1, user)
+	dag := dags[0]
+
+	operators := ts.seedOperatorWithDAG(1, dag.ID, user.ID, operator.LoadType)
+	name := randString(10)
+	spec := operator.NewSpecFromFunction(
+		function.Function{},
+	)
+	changes := map[string]interface{}{
+		models.OperatorName:        name,
+		models.OperatorSpec:        spec,
+	}
+
+	newOperator, err := ts.operator.Update(ts.ctx, operators[0].ID, changes, ts.DB)
+	require.Nil(ts.T(), err)
+
+	requireDeepEqual(ts.T(), name, newOperator.Name)
+	requireDeepEqual(ts.T(), spec, &newOperator.Spec)
 }

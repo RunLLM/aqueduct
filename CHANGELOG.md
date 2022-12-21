@@ -1,5 +1,57 @@
 # Changelog
 
+## 0.1.8
+Released on December 20, 2022.
+
+### Enhancements
+* Allows user to set compute engine in the operator's decorator.
+* Reduces the number of significant figures for metrics on data list page and workflows list page to
+    improve readability.
+
+### Bugfixes
+* Fixes a bug where the UI shows data section for compute integrations.
+* Fixes a bug where previewing Mongo collection crashes.
+
+## 0.1.7
+Released on December 14, 2022.
+
+### Bugfixes
+* Fixes a bug where the Aqueduct installation script fails if the user doesn't have conda installed.
+
+## 0.1.6
+Released on December 13, 2022.
+
+### Key Features
+* Introduces new table views on the workflows and data pages that show rich
+    metadata at a glance, including workflow and artifact status, data types,
+    and associated metrics and checks!
+* Adds support for integrating with conda. Once the user registers conda integration through the UI, 
+    Aqueduct will create conda environments to run any newly created workflows to provide better 
+    Python version and dependency management.
+
+### Enhancements
+* Introduces a new `save` API; now, to save an artifact, users can write the
+    following. The original `table.save()` syntax still works but will be
+    deprecated in a future release.
+```python
+db.save(table, 'my_new_table', update_mode='replace')
+```
+* Disallows creating multiple integrations with the same name.
+
+### Bugfixes
+* Fixes a bug where unused integration couldn't be deleted if historical
+    workflow runs were associated with it.
+* Fixes a bug where logs weren't being displayed on operator details page.
+* Fixes a bug where saving multiple pieces of data to the same database would
+    cause the workflow UI to crash.
+* Fixes a bug where calling a metric or check with no inputs didn't raise a
+    client-side error.
+* Fixes a bug where metric history & graph was not sorted by time.
+* Fixes a bug where where every click into a workflow DAG node reset the DAG
+    visualization.
+* Fixes a number of bugs that caused no notifications to be displayed on the
+    UI.
+
 ## 0.1.5
 Released on November 29, 2022.
 

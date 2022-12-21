@@ -23,7 +23,7 @@ class OperatorType(str, Enum, metaclass=MetaEnum):
     SYSTEM_METRIC = "system_metric"
 
 
-class CheckSeverityLevel(str, Enum, metaclass=MetaEnum):
+class CheckSeverity(str, Enum, metaclass=MetaEnum):
     ERROR = "error"
     WARNING = "warning"
 
@@ -74,6 +74,7 @@ class ArtifactType(str, Enum, metaclass=MetaEnum):
 
 class SerializationType(str, Enum, metaclass=MetaEnum):
     TABLE = "table"
+    BSON_TABLE = "bson_table"
     JSON = "json"
     PICKLE = "pickle"
     IMAGE = "image"

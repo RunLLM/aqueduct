@@ -55,7 +55,7 @@ func (j *k8sJobManager) Config() Config {
 	return j.conf
 }
 
-func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) error {
+func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobError {
 	launchGpu := false
 	resourceRequest := map[string]string{
 		k8s.PodResourceCPUKey:    k8s.DefaultCPURequest,
@@ -67,7 +67,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 	if spec.Type() == FunctionJobType {
 		functionSpec, ok := spec.(*FunctionSpec)
 		if !ok {
-			return ErrInvalidJobSpec
+			return systemError(errors.Newf("Function Spec is expected, but got %v", spec))
 		}
 
 		functionSpec.FunctionExtractPath = defaultFunctionExtractPath
@@ -94,7 +94,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 	serializationType := JsonSerializationType
 	encodedSpec, err := EncodeSpec(spec, serializationType)
 	if err != nil {
-		return err
+		return systemError(err)
 	}
 
 	environmentVariables[jobSpecEnvVarKey] = encodedSpec
@@ -105,7 +105,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 		// This job spec has a storage config that k8s needs access to
 		storageConfig, err := spec.GetStorageConfig()
 		if err != nil {
-			return err
+			return systemError(err)
 		}
 
 		if storageConfig.Type == shared.S3StorageType {
@@ -116,11 +116,11 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 
 	containerRepo, err := mapJobTypeToDockerImage(spec, launchGpu)
 	if err != nil {
-		return err
+		return systemError(err)
 	}
 	containerImage := fmt.Sprintf("%s:%s", containerRepo, lib.ServerVersionNumber)
 
-	return k8s.LaunchJob(
+	err = k8s.LaunchJob(
 		name,
 		containerImage,
 		&environmentVariables,
@@ -128,6 +128,10 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) erro
 		&resourceRequest,
 		j.k8sClient,
 	)
+	if err != nil {
+		return systemError(err)
+	}
+	return nil
 }
 
 func containerStatusFromPod(pod *corev1.Pod, name string) (*corev1.ContainerStatus, error) {
@@ -148,10 +152,10 @@ func containerStatusFromPod(pod *corev1.Pod, name string) (*corev1.ContainerStat
 	return &containerStatus, nil
 }
 
-func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, error) {
+func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, JobError) {
 	job, err := k8s.GetJob(ctx, name, j.k8sClient)
 	if err != nil {
-		return shared.UnknownExecutionStatus, ErrJobNotExist
+		return shared.UnknownExecutionStatus, jobMissingError(err)
 	}
 
 	var status shared.ExecutionStatus
@@ -164,28 +168,22 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 		// context we can surface to the user.
 		pod, err := k8s.GetPod(ctx, name, j.k8sClient)
 		if err != nil {
-			return status, wrapInJobError(System, err)
+			return status, systemError(err)
 		}
 
 		containerStatus, err := containerStatusFromPod(pod, name)
 		if err != nil {
-			return status, wrapInJobError(System, err)
+			return status, systemError(err)
 		}
 
 		if containerStatus.State.Terminated.Reason == "OOMKilled" {
-			return status, wrapInJobError(
-				User,
-				errors.New("Operator failed on Kubernetes due to Out-of-Memory exception."),
-			)
+			return status, userError(errors.New("Operator failed on Kubernetes due to Out-of-Memory exception."))
 		}
-		return status, wrapInJobError(
-			System,
-			errors.Newf("Kubernetes pod failed with reason: %s.", containerStatus.State.Terminated.Reason),
-		)
+		return status, systemError(errors.Newf("Kubernetes pod failed with reason: %s.", containerStatus.State.Terminated.Reason))
 	} else {
 		pod, err := k8s.GetPod(ctx, name, j.k8sClient)
 		if err != nil {
-			return shared.FailedExecutionStatus, wrapInJobError(System, err)
+			return shared.FailedExecutionStatus, systemError(err)
 		}
 
 		if pod.Status.Phase == corev1.PodPending {
@@ -194,8 +192,7 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 				if condition.Type == corev1.PodScheduled &&
 					condition.Status == corev1.ConditionFalse &&
 					condition.Reason == corev1.PodReasonUnschedulable {
-					return shared.FailedExecutionStatus, wrapInJobError(
-						User,
+					return shared.FailedExecutionStatus, userError(
 						errors.Newf("Pod could not be scheduled on Kubernetes. Reason: %s", condition.Message),
 					)
 				}
@@ -208,7 +205,7 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 	return status, nil
 }
 
-func (j *k8sJobManager) DeployCronJob(ctx context.Context, name string, period string, spec Spec) error {
+func (j *k8sJobManager) DeployCronJob(ctx context.Context, name string, period string, spec Spec) JobError {
 	return nil
 }
 
@@ -216,11 +213,11 @@ func (j *k8sJobManager) CronJobExists(ctx context.Context, name string) bool {
 	return false
 }
 
-func (j *k8sJobManager) EditCronJob(ctx context.Context, name string, cronString string) error {
+func (j *k8sJobManager) EditCronJob(ctx context.Context, name string, cronString string) JobError {
 	return nil
 }
 
-func (j *k8sJobManager) DeleteCronJob(ctx context.Context, name string) error {
+func (j *k8sJobManager) DeleteCronJob(ctx context.Context, name string) JobError {
 	return nil
 }
 

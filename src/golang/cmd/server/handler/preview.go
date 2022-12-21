@@ -10,7 +10,6 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	db_exec_env "github.com/aqueducthq/aqueduct/lib/collections/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -69,10 +68,8 @@ type PreviewHandler struct {
 	GithubManager github.Manager
 	AqEngine      engine.AqEngine
 
-	ExecutionEnvironmentReader db_exec_env.Reader
-	ExecutionEnvironmentWriter db_exec_env.Writer
-
-	IntegrationRepo repos.Integration
+	ExecutionEnvironmentRepo repos.ExecutionEnvironment
+	IntegrationRepo          repos.Integration
 }
 
 func (*PreviewHandler) Name() string {
@@ -193,8 +190,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		args.ID,
 		args.DagSummary,
 		h.IntegrationRepo,
-		h.ExecutionEnvironmentReader,
-		h.ExecutionEnvironmentWriter,
+		h.ExecutionEnvironmentRepo,
 		h.Database,
 	)
 	if err != nil {
@@ -247,8 +243,7 @@ func setupExecEnv(
 	userID uuid.UUID,
 	dagSummary *request.DagSummary,
 	integrationRepo repos.Integration,
-	execEnvReader db_exec_env.Reader,
-	execEnvWriter db_exec_env.Writer,
+	execEnvRepo repos.ExecutionEnvironment,
 	DB database.Database,
 ) (map[uuid.UUID]exec_env.ExecutionEnvironment, int, error) {
 	condaIntegration, err := exec_env.GetCondaIntegration(ctx, userID, integrationRepo, DB)
@@ -309,8 +304,7 @@ func setupExecEnv(
 
 	envByOperator, err := exec_env.CreateMissingAndSyncExistingEnvs(
 		ctx,
-		execEnvReader,
-		execEnvWriter,
+		execEnvRepo,
 		rawEnvByOperator,
 		txn,
 	)

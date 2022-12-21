@@ -8,8 +8,6 @@ import (
 	"github.com/dropbox/godropbox/errors"
 )
 
-var ErrInvalidVaultConfig = errors.New("Vault config is invalid.")
-
 type Vault interface {
 	Put(ctx context.Context, name string, secrets map[string]string) error
 	Get(ctx context.Context, name string) (map[string]string, error)

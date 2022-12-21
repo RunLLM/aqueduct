@@ -31,7 +31,7 @@ from aqueduct.models.operators import (
 from aqueduct.type_annotations import CheckFunction, MetricFunction, Number, UserFunction
 from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.function_packaging import serialize_function
-from aqueduct.utils.utils import artifact_name_from_op_name, generate_uuid
+from aqueduct.utils.utils import artifact_name_from_op_name, generate_engine_config, generate_uuid
 
 from aqueduct import globals
 
@@ -302,6 +302,7 @@ def _convert_memory_string_to_mbs(memory_str: str) -> int:
 def op(
     name: Optional[Union[str, UserFunction]] = None,
     description: Optional[str] = None,
+    engine: Optional[str] = None,
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
     num_outputs: int = 1,
@@ -320,6 +321,8 @@ def op(
             Operator name. Defaults to the function name if not provided (or is of a non-string type).
         description:
             A description for the operator.
+        engine:
+            The name of the compute integration this operator will run on. Defaults to the Aqueduct engine.
         file_dependencies:
             A list of relative paths to files that the function needs to access.
             Python classes/methods already imported within the function's file
@@ -375,6 +378,8 @@ def op(
         file_dependencies,
         requirements,
     )
+    if engine is not None and not isinstance(engine, str):
+        raise InvalidUserArgumentException("`engine` must be a string.")
     if not isinstance(num_outputs, int) or num_outputs < 1:
         raise InvalidUserArgumentException("`num_outputs` must be set to a positive integer.")
 
@@ -453,11 +458,25 @@ def op(
                 granularity=FunctionGranularity.TABLE,
                 file=zip_file,
             )
+
+            op_spec = OperatorSpec(
+                function=function_spec,
+                resources=resource_config,
+            )
+
+            if engine is not None:
+                if globals.__GLOBAL_API_CLIENT__ is None:
+                    raise InvalidUserActionException(
+                        "Aqueduct Client was not instantiated! Please create a client and retry."
+                    )
+
+                op_spec.engine_config = generate_engine_config(
+                    globals.__GLOBAL_API_CLIENT__.list_integrations(),
+                    engine,
+                )
+
             return wrap_spec(
-                OperatorSpec(
-                    function=function_spec,
-                    resources=resource_config,
-                ),
+                op_spec,
                 *artifacts,
                 op_name=name,
                 output_artifact_type_hints=[ArtifactType.UNTYPED for _ in range(num_outputs)],

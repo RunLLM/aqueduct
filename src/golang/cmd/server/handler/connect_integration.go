@@ -38,8 +38,6 @@ const (
 	pollAuthenticateTimeout  = 2 * time.Minute
 )
 
-var ErrNoIntegrationName = errors.New("Integration name is not provided")
-
 // Route: /integration/connect
 // Method: POST
 // Request:
@@ -108,7 +106,7 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 	}
 
 	if name == "" {
-		return nil, http.StatusBadRequest, ErrNoIntegrationName
+		return nil, http.StatusBadRequest, errors.New("Integration name is not provided")
 	}
 
 	if service == integration.Github || service == integration.GoogleSheets {

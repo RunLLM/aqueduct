@@ -2,12 +2,15 @@ package lib_utils
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -65,4 +68,34 @@ func RunCmd(command string, arg ...string) (string, string, error) {
 	}
 
 	return outb.String(), errb.String(), nil
+}
+
+// ParseK8sConfig takes in an auth.Config and parses into a K8s config.
+// It also returns an error, if any.
+func ParseK8sConfig(conf auth.Config) (*integration.K8sIntegrationConfig, error) {
+	data, err := conf.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	var c integration.K8sIntegrationConfig
+	if err := json.Unmarshal(data, &c); err != nil {
+		return nil, err
+	}
+
+	return &c, nil
+}
+
+func ParseLambdaConfig(conf auth.Config) (*integration.LambdaIntegrationConfig, error) {
+	data, err := conf.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	var c integration.LambdaIntegrationConfig
+	if err := json.Unmarshal(data, &c); err != nil {
+		return nil, err
+	}
+
+	return &c, nil
 }
