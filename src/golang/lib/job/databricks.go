@@ -6,7 +6,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	databricks_lib "github.com/aqueducthq/aqueduct/lib/databricks"
-	databricks_sdk "github.com/databricks/databricks-sdk-go"
+	"github.com/databricks/databricks-sdk-go"
 	"github.com/databricks/databricks-sdk-go/service/jobs"
 	"github.com/dropbox/godropbox/errors"
 	log "github.com/sirupsen/logrus"
@@ -20,14 +20,14 @@ const (
 )
 
 type DatabricksJobManager struct {
-	databricksClient *databricks_sdk.WorkspaceClient
+	databricksClient *databricks.WorkspaceClient
 	conf             *DatabricksJobManagerConfig
 	runMap           map[string]int64
 }
 
 func NewDatabricksJobManager(conf *DatabricksJobManagerConfig) (*DatabricksJobManager, error) {
 	databricksClient, err := databricks_lib.NewWorkspaceClient(
-		conf.WorkspaceUrl,
+		conf.WorkspaceURL,
 		conf.AccessToken,
 	)
 	if err != nil {
@@ -53,7 +53,7 @@ func (j *DatabricksJobManager) mapJobTypeToFile(spec Spec) (string, string, erro
 		if err != nil {
 			return "", "", errors.Wrap(err, "Spec unexpectedly has no storage config.")
 		}
-		storageConfig.S3Config.AWSAccessKeyID = j.conf.AwsAccessKeyId
+		storageConfig.S3Config.AWSAccessKeyID = j.conf.AwsAccessKeyID
 		storageConfig.S3Config.AWSSecretAccessKey = j.conf.AwsSecretAccessKey
 
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
@@ -115,17 +115,15 @@ func (j *DatabricksJobManager) Launch(
 	bucket := storageConfig.S3Config.Bucket
 	pythonFilePath := fmt.Sprintf("%s/%s", bucket, scriptFile)
 
-	jobId, err := databricks_lib.CreateJob(ctx, j.databricksClient, name, j.conf.S3InstanceProfileArn, pythonFilePath)
+	jobID, err := databricks_lib.CreateJob(ctx, j.databricksClient, name, j.conf.S3InstanceProfileARN, pythonFilePath)
 	if err != nil {
 		return errors.Wrap(err, "Error creating job in Databricks.")
 	}
-	log.Info("SPEC:")
-	log.Info(specStr)
-	runId, err := databricks_lib.RunNow(ctx, j.databricksClient, jobId, specStr)
+	runID, err := databricks_lib.RunNow(ctx, j.databricksClient, jobID, specStr)
 	if err != nil {
 		return errors.Wrap(err, "Error runnning job in Databricks.")
 	}
-	j.runMap[name] = runId
+	j.runMap[name] = runID
 	return nil
 }
 
@@ -143,28 +141,21 @@ func (j *DatabricksJobManager) Poll(ctx context.Context, name string) (shared.Ex
 		return shared.UnknownExecutionStatus, errors.Wrap(err, "Unable to get run from databricks.")
 	}
 
-	status := getRunResp.State.LifeCycleState
-	if status == jobs.RunLifeCycleStatePending ||
-		status == jobs.RunLifeCycleStateRunning ||
-		status == jobs.RunLifeCycleStateTerminating {
+	switch getRunResp.State.LifeCycleState {
+	case jobs.RunLifeCycleStatePending, jobs.RunLifeCycleStateRunning, jobs.RunLifeCycleStateTerminating:
 		return shared.RunningExecutionStatus, nil
-	} else if status == jobs.RunLifeCycleStateInternalError {
+	case jobs.RunLifeCycleStateInternalError:
 		return shared.FailedExecutionStatus, nil
-	} else if status == jobs.RunLifeCycleStateTerminated {
-		getTerminalRunResp, err := j.databricksClient.Jobs.GetRun(ctx, *getRunReq)
-		if err != nil {
-			return shared.UnknownExecutionStatus, errors.Wrap(err, "Unable to get run from databricks.")
-		}
-		resultStatus := getTerminalRunResp.State.ResultState
-		if resultStatus == jobs.RunResultStateSuccess {
+	case jobs.RunLifeCycleStateTerminated:
+		switch getRunResp.State.ResultState {
+		case jobs.RunResultStateSuccess:
 			return shared.SucceededExecutionStatus, nil
-		} else {
+		default:
 			return shared.FailedExecutionStatus, nil
 		}
-	} else {
+	default:
 		return shared.UnknownExecutionStatus, ErrAsyncExecution
 	}
-
 }
 
 func (j *DatabricksJobManager) DeployCronJob(
@@ -173,7 +164,7 @@ func (j *DatabricksJobManager) DeployCronJob(
 	period string,
 	spec Spec,
 ) error {
-	return nil
+	return errors.New("DatabricksJobManager does not support cronjobs.")
 }
 
 func (j *DatabricksJobManager) CronJobExists(ctx context.Context, name string) bool {
@@ -181,9 +172,9 @@ func (j *DatabricksJobManager) CronJobExists(ctx context.Context, name string) b
 }
 
 func (j *DatabricksJobManager) EditCronJob(ctx context.Context, name string, cronString string) error {
-	return nil
+	return errors.New("DatabricksJobManager does not support cronjobs.")
 }
 
 func (j *DatabricksJobManager) DeleteCronJob(ctx context.Context, name string) error {
-	return nil
+	return errors.New("DatabricksJobManager does not support cronjobs.")
 }

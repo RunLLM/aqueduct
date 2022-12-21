@@ -58,13 +58,13 @@ func AuthenticateDatabricksConfig(ctx context.Context, authConf auth.Config) err
 		return errors.Wrap(err, "Unable to parse configuration.")
 	}
 	databricksClient, err := databricks_lib.NewWorkspaceClient(
-		databricksConfig.WorkspaceUrl,
+		databricksConfig.WorkspaceURL,
 		databricksConfig.AccessToken,
 	)
 	if err != nil {
 		return errors.Wrap(err, "Unable to create Databricks Workspace Client.")
 	}
-	err = databricks_lib.ListJobs(
+	_, err = databricks_lib.ListJobs(
 		ctx,
 		databricksClient,
 	)

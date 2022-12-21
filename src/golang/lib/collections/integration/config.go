@@ -46,9 +46,16 @@ type LambdaIntegrationConfig struct {
 }
 
 type DatabricksIntegrationConfig struct {
-	WorkspaceUrl         string `json:"workspace_url" yaml:"workspaceUrl"`
-	AccessToken          string `json:"access_token" yaml:"accessToken"`
-	S3InstanceProfileArn string `json:"s3_instance_profile_arn" yaml:"s3InstanceProfileArn"`
+	// WorkspaceURL is the full url for the Databricks workspace that
+	// Aqueduct operators will run on.
+	WorkspaceURL string `json:"workspace_url" yaml:"workspaceUrl"`
+	// AccessToken is a Databricks AccessToken for a workspace. Information on how
+	// to create tokens can be found here: https://docs.databricks.com/dev-tools/auth.html#personal-access-tokens-for-users
+	AccessToken string `json:"access_token" yaml:"accessToken"`
+	// Databricks needs an Instance Profile with S3 permissions in order to access metadata
+	// storage in S3. Information on how to create this can be found here:
+	// https://docs.databricks.com/aws/iam/instance-profile-tutorial.html
+	S3InstanceProfileARN string `json:"s3_instance_profile_arn" yaml:"s3InstanceProfileArn"`
 }
 
 type ConfigBool bool

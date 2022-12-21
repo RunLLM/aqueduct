@@ -152,10 +152,10 @@ func generateJobManagerConfig(
 			awsSecretAccessKey = secretKey
 		}
 		return &job.DatabricksJobManagerConfig{
-			WorkspaceUrl:         databricksConfig.WorkspaceUrl,
+			WorkspaceURL:         databricksConfig.WorkspaceURL,
 			AccessToken:          databricksConfig.AccessToken,
-			S3InstanceProfileArn: databricksConfig.S3InstanceProfileArn,
-			AwsAccessKeyId:       awsAccessKeyId,
+			S3InstanceProfileARN: databricksConfig.S3InstanceProfileARN,
+			AwsAccessKeyID:       awsAccessKeyId,
 			AwsSecretAccessKey:   awsSecretAccessKey,
 		}, nil
 

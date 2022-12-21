@@ -2,7 +2,9 @@ package databricks
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/databricks/databricks-sdk-go"
 	"github.com/databricks/databricks-sdk-go/service/clusters"
 	"github.com/databricks/databricks-sdk-go/service/jobs"
@@ -28,16 +30,15 @@ func NewWorkspaceClient(
 func ListJobs(
 	ctx context.Context,
 	databricksClient *databricks.WorkspaceClient,
-) error {
-
-	_, err := databricksClient.Jobs.ListAll(
+) ([]jobs.Job, error) {
+	jobs, err := databricksClient.Jobs.ListAll(
 		ctx,
 		jobs.List{},
 	)
 	if err != nil {
-		errors.Wrap(err, "Error launching job in Databricks.")
+		return nil, errors.Wrap(err, "Error launching job in Databricks.")
 	}
-	return nil
+	return jobs, nil
 }
 
 func CreateJob(
@@ -50,12 +51,12 @@ func CreateJob(
 	createRequest := &jobs.CreateJob{
 		Name: name,
 		Tasks: []jobs.JobTaskSettings{
-			jobs.JobTaskSettings{
+			{
 				TaskKey: name,
 				NewCluster: &clusters.CreateCluster{
-					SparkVersion: "10.4.x-scala2.12",
-					NumWorkers:   1,
-					NodeTypeId:   "m5d.large",
+					SparkVersion: SparkVersion,
+					NumWorkers:   NumWorkers,
+					NodeTypeId:   NodeTypeId,
 					AwsAttributes: &clusters.AwsAttributes{
 						InstanceProfileArn: s3InstanceProfileArn,
 					},
@@ -64,9 +65,9 @@ func CreateJob(
 					PythonFile: pythonFilePath,
 				},
 				Libraries: []libraries.Library{
-					libraries.Library{
+					{
 						Pypi: &libraries.PythonPyPiLibrary{
-							Package: "aqueduct-ml==0.1.7",
+							Package: fmt.Sprintf("aqueduct-ml==%s", lib.ServerVersionNumber),
 						},
 					},
 				},
