@@ -7,8 +7,11 @@ import (
 	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
+
+const MaxConcurrentDownload = 3
 
 // Authenticates kubernetes configuration by trying to connect a client.
 func AuthenticateK8sConfig(ctx context.Context, authConf auth.Config) error {
@@ -45,8 +48,19 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 	errGroup, _ := errgroup.WithContext(ctx)
 	lambda_utils.AuthenticateDockerToECR()
 
-	for _, functionType := range functionsToShip {
-		lambda_utils.PullImageFromECR(functionType)
+	for i := 0; i < len(functionsToShip); i += MaxConcurrentDownload {
+		for j := 0; j < MaxConcurrentDownload; j++ {
+			if j+i < len(functionsToShip) {
+				log.Info(j)
+				lambdaFunctionType := functionsToShip[j+i]
+				errGroup.Go(func() error {
+					return lambda_utils.PullImageFromECR(lambdaFunctionType)
+				})
+			}
+		}
+		if err := errGroup.Wait(); err != nil {
+			return errors.Wrap(err, "Unable to Create Lambda Function.")
+		}
 	}
 
 	for _, functionType := range functionsToShip {
