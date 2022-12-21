@@ -70,7 +70,6 @@ export type WorkflowState = {
   savedObjectDeletion: SavedObjectDeletionResult;
   dags: { [id: string]: WorkflowDag };
   dagResults: WorkflowDagResultSummary[];
-  watcherAuthIds: string[];
 
   selectedResult?: WorkflowDagResultSummary;
   selectedDag?: WorkflowDag;
@@ -93,7 +92,8 @@ const initialState: WorkflowState = {
   dagResults: [],
   artifactResults: {},
   operatorResults: {},
-  watcherAuthIds: [],
+  selectedDag: undefined,
+  selectedResult: undefined,
   selectedDagPosition: {
     loadingStatus: { loading: LoadingStatusEnum.Initial, err: '' },
     result: { nodes: [], edges: [] },
@@ -167,6 +167,7 @@ export const handleGetArtifactResults = createAsyncThunk<
         if (
           artifactResult.serialization_type === SerializationType.String ||
           artifactResult.serialization_type === SerializationType.Table ||
+          artifactResult.serialization_type === SerializationType.BsonTable ||
           artifactResult.serialization_type === SerializationType.Json
         ) {
           artifactResult.data = await (formData.get('data') as File).text();
@@ -472,12 +473,17 @@ export const workflowSlice = createSlice({
   name: 'workflowReducer',
   initialState,
   reducers: {
+    resetState: () => initialState,
     selectResultIdx: (state, { payload }: PayloadAction<number>) => {
       state.artifactResults = {};
       state.operatorResults = {};
 
       state.selectedResult = state.dagResults[payload];
-      state.selectedDag = state.dags[state.selectedResult.workflow_dag_id];
+      // check if we have a currently selectedResult. If not, then set to a value like 0 so that we don't cause an error due to state.selectedResult being undefined.
+      const workflowDagId = state.selectedResult?.workflow_dag_id
+        ? state.selectedResult.workflow_dag_id
+        : 0;
+      state.selectedDag = state.dags[workflowDagId];
     },
   },
   extraReducers: (builder) => {
@@ -616,7 +622,6 @@ export const workflowSlice = createSlice({
       (state, { payload }: PayloadAction<GetWorkflowResponse>) => {
         state.dags = payload.workflow_dags;
         state.dagResults = payload.workflow_dag_results;
-        state.watcherAuthIds = payload.watcherAuthIds;
 
         state.artifactResults = {};
         state.operatorResults = {};
@@ -661,5 +666,5 @@ export const workflowSlice = createSlice({
   },
 });
 
-export const { selectResultIdx } = workflowSlice.actions;
+export const { resetState, selectResultIdx } = workflowSlice.actions;
 export default workflowSlice.reducer;

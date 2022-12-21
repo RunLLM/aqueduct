@@ -26,7 +26,8 @@ func NewNoopWriter(throwError bool) Writer {
 
 func (w *noopWriterImpl) CreateExecutionEnvironment(
 	ctx context.Context,
-	spec Spec, hash uuid.UUID,
+	spec *Spec,
+	hash uuid.UUID,
 	db database.Database,
 ) (*DBExecutionEnvironment, error) {
 	return nil, utils.NoopInterfaceErrorHandling(w.throwError)
@@ -48,11 +49,19 @@ func (r *noopReaderImpl) GetExecutionEnvironments(
 	return nil, utils.NoopInterfaceErrorHandling(r.throwError)
 }
 
-func (r *noopReaderImpl) GetExecutionEnvironmentByHash(
+func (r *noopReaderImpl) GetActiveExecutionEnvironmentByHash(
 	ctx context.Context,
 	hash uuid.UUID,
 	db database.Database,
 ) (*DBExecutionEnvironment, error) {
+	return nil, utils.NoopInterfaceErrorHandling(r.throwError)
+}
+
+func (r *noopReaderImpl) GetActiveExecutionEnvironmentsByOperatorID(
+	ctx context.Context,
+	opIDs []uuid.UUID,
+	db database.Database,
+) (map[uuid.UUID]DBExecutionEnvironment, error) {
 	return nil, utils.NoopInterfaceErrorHandling(r.throwError)
 }
 
@@ -79,4 +88,11 @@ func (w *noopWriterImpl) DeleteExecutionEnvironments(
 	db database.Database,
 ) error {
 	return utils.NoopInterfaceErrorHandling(w.throwError)
+}
+
+func (r *noopReaderImpl) GetUnusedExecutionEnvironments(
+	ctx context.Context,
+	db database.Database,
+) ([]DBExecutionEnvironment, error) {
+	return nil, utils.NoopInterfaceErrorHandling(r.throwError)
 }

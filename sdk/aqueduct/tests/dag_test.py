@@ -1,7 +1,7 @@
-from aqueduct.config import EngineConfig
-from aqueduct.enums import OperatorType, RuntimeType
+from aqueduct.constants.enums import OperatorType, RuntimeType
 from aqueduct.error import InvalidUserArgumentException
-from aqueduct.operators import ResourceConfig
+from aqueduct.models.config import EngineConfig
+from aqueduct.models.operators import ResourceConfig
 from aqueduct.tests.utils import (
     _construct_dag,
     _construct_operator,

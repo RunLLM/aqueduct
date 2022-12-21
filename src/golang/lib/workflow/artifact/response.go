@@ -1,17 +1,19 @@
 package artifact
 
 import (
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
 
 type Response struct {
-	Id          uuid.UUID     `json:"id"`
-	Name        string        `json:"name"`
-	Description string        `json:"description"`
-	Type        artifact.Type `json:"type"`
+	Id          uuid.UUID               `json:"id"`
+	Name        string                  `json:"name"`
+	Description string                  `json:"description"`
+	Type        mdl_shared.ArtifactType `json:"type"`
 	// Once we clean up DBArtifact we should include inputs / outputs fields here.
 
 	// upstream operator ID, must be unique.
@@ -44,11 +46,11 @@ type ResultResponse struct {
 }
 
 func NewRawResultResponseFromDbObject(
-	dbArtifactResult *artifact_result.ArtifactResult,
+	dbArtifactResult *models.ArtifactResult,
 	content *string,
 ) *RawResultResponse {
 	resultResp := &RawResultResponse{
-		Id:                dbArtifactResult.Id,
+		Id:                dbArtifactResult.ID,
 		SerializationType: dbArtifactResult.Metadata.SerializationType,
 		ContentPath:       dbArtifactResult.ContentPath,
 		ContentSerialized: content,
@@ -64,14 +66,14 @@ func NewRawResultResponseFromDbObject(
 }
 
 func NewResultResponseFromDbObjects(
-	dbArtifact *artifact.DBArtifact,
-	dbArtifactResult *artifact_result.ArtifactResult,
+	dbArtifact *models.Artifact,
+	dbArtifactResult *models.ArtifactResult,
 	content *string,
 	from uuid.UUID,
 	to []uuid.UUID,
 ) *ResultResponse {
 	metadata := Response{
-		Id:          dbArtifact.Id,
+		Id:          dbArtifact.ID,
 		Name:        dbArtifact.Name,
 		Description: dbArtifact.Description,
 		Type:        dbArtifact.Type,
@@ -87,4 +89,29 @@ func NewResultResponseFromDbObjects(
 		Response: metadata,
 		Result:   NewRawResultResponseFromDbObject(dbArtifactResult, content),
 	}
+}
+
+func NewResultResponseFromDBView(
+	dbViewArtfWithResult *views.ArtifactWithResult,
+	content *string,
+) *ResultResponse {
+	return NewResultResponseFromDbObjects(
+		&models.Artifact{
+			ID:          dbViewArtfWithResult.ID,
+			Name:        dbViewArtfWithResult.Name,
+			Description: dbViewArtfWithResult.Description,
+			Type:        dbViewArtfWithResult.Type,
+		},
+		&models.ArtifactResult{
+			ID:          dbViewArtfWithResult.ResultID,
+			DAGResultID: dbViewArtfWithResult.DAGResultID,
+			ArtifactID:  dbViewArtfWithResult.ID,
+			ContentPath: dbViewArtfWithResult.ContentPath,
+			ExecState:   dbViewArtfWithResult.ExecState,
+			Metadata:    dbViewArtfWithResult.Metadata,
+		},
+		content,
+		uuid.UUID{}, // from, we ignore this field for now
+		nil,         // to, we ignore this field for now
+	)
 }

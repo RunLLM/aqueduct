@@ -3,18 +3,11 @@ package dag
 import (
 	"context"
 
-	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/notification"
 	db_operator "github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	execEnv "github.com/aqueducthq/aqueduct/lib/execution_environment"
-	"github.com/aqueducthq/aqueduct/lib/job"
+	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
@@ -42,7 +35,7 @@ type WorkflowDag interface {
 
 	// FindMissingExecEnv returns `Environment` objects for all missing environments
 	// of all operators on this DAG.
-	FindMissingExecEnv(ctx context.Context) ([]execEnv.ExecutionEnvironment, error)
+	FindMissingExecEnv(ctx context.Context) ([]exec_env.ExecutionEnvironment, error)
 
 	// BindOperatorsToEnvs updates all operators such that each operator
 	// points to the environment object matching its dependencies.
@@ -56,7 +49,7 @@ type WorkflowDag interface {
 }
 
 type workflowDagImpl struct {
-	dbWorkflowDag *workflow_dag.DBWorkflowDag
+	dbDAG *models.DAG
 	// resultID corresponds to the WorkflowDagResult created for the current run of this dag
 	resultID uuid.UUID
 
@@ -65,12 +58,6 @@ type workflowDagImpl struct {
 	opToOutputArtifacts map[uuid.UUID][]uuid.UUID
 	opToInputArtifacts  map[uuid.UUID][]uuid.UUID
 	artifactToOps       map[uuid.UUID][]uuid.UUID
-
-	resultWriter       workflow_dag_result.Writer
-	workflowReader     workflow.Reader
-	notificationWriter notification.Writer
-	userReader         user.Reader
-	db                 database.Database
 }
 
 // Assumption: all dag's start with operators.
@@ -79,7 +66,7 @@ type workflowDagImpl struct {
 // by the artifact's original ID.
 // `opIDsByInputArtifact` does not contain entries for terminal artifacts.
 func computeArtifactSignatures(
-	dbOperators map[uuid.UUID]db_operator.DBOperator,
+	dbOperators map[uuid.UUID]models.Operator,
 	opIDsByInputArtifact map[uuid.UUID][]uuid.UUID,
 	numArtifacts int,
 ) (map[uuid.UUID]uuid.UUID, error) {
@@ -89,7 +76,7 @@ func computeArtifactSignatures(
 	q := make([]uuid.UUID, 0, 1)
 	for _, dbOperator := range dbOperators {
 		if len(dbOperator.Inputs) == 0 {
-			q = append(q, dbOperator.Id)
+			q = append(q, dbOperator.ID)
 		}
 	}
 
@@ -160,52 +147,49 @@ func computeArtifactSignatures(
 
 func NewWorkflowDag(
 	ctx context.Context,
-	workflowDagResultID uuid.UUID,
-	dbWorkflowDag *workflow_dag.DBWorkflowDag,
-	dagResultWriter workflow_dag_result.Writer,
-	opResultWriter operator_result.Writer,
-	artifactWriter db_artifact.Writer,
-	artifactResultWriter artifact_result.Writer,
-	workflowReader workflow.Reader,
-	notificationWriter notification.Writer,
-	userReader user.Reader,
-	jobManager job.JobManager,
+	dagResultID uuid.UUID,
+	dag *models.DAG,
+	opResultRepo repos.OperatorResult,
+	artifactRepo repos.Artifact,
+	artifactResultRepo repos.ArtifactResult,
 	vaultObject vault.Vault,
 	artifactCacheManager preview_cache.CacheManager,
+	execEnvs map[uuid.UUID]exec_env.ExecutionEnvironment,
 	opExecMode operator.ExecutionMode,
-	db database.Database,
+	aqPath string,
+	DB database.Database,
 ) (WorkflowDag, error) {
-	dbArtifacts := dbWorkflowDag.Artifacts
-	dbOperators := dbWorkflowDag.Operators
+	dbArtifacts := dag.Artifacts
+	dbOperators := dag.Operators
 
 	artifactIDToInputOpID := make(map[uuid.UUID]uuid.UUID, len(dbArtifacts))
 	opIDToMetadataPath := make(map[uuid.UUID]string, len(dbOperators))
 	opIDsByInputArtifact := make(map[uuid.UUID][]uuid.UUID, len(dbArtifacts))
 	for _, dbOperator := range dbOperators {
 		for _, outputArtifactID := range dbOperator.Outputs {
-			artifactIDToInputOpID[outputArtifactID] = dbOperator.Id
+			artifactIDToInputOpID[outputArtifactID] = dbOperator.ID
 		}
-		opIDToMetadataPath[dbOperator.Id] = utils.InitializePath(opExecMode == operator.Preview)
+		opIDToMetadataPath[dbOperator.ID] = utils.InitializePath(opExecMode == operator.Preview)
 
 		for _, inputArtifactID := range dbOperator.Inputs {
 			opIDs, ok := opIDsByInputArtifact[inputArtifactID]
 			if !ok {
 				opIDs = make([]uuid.UUID, 0, 1)
 			}
-			opIDsByInputArtifact[inputArtifactID] = append(opIDs, dbOperator.Id)
+			opIDsByInputArtifact[inputArtifactID] = append(opIDs, dbOperator.ID)
 		}
 	}
 
 	// Allocate all execution paths for the workflowlib/workflow/operator/base.go.
 	artifactIDToExecPaths := make(map[uuid.UUID]*utils.ExecPaths, len(dbArtifacts))
 	for _, dbArtifact := range dbArtifacts {
-		inputOpID := artifactIDToInputOpID[dbArtifact.Id]
+		inputOpID := artifactIDToInputOpID[dbArtifact.ID]
 		opMetadataPath, ok := opIDToMetadataPath[inputOpID]
 		if !ok {
 			return nil, errors.Newf("DAGs cannot currently start with an artifact.")
 		}
 
-		artifactIDToExecPaths[dbArtifact.Id] = utils.InitializeExecOutputPaths(
+		artifactIDToExecPaths[dbArtifact.ID] = utils.InitializeExecOutputPaths(
 			opExecMode == operator.Preview,
 			opMetadataPath,
 		)
@@ -219,18 +203,18 @@ func NewWorkflowDag(
 
 	// With all the initial database writes completed (if at all), we can now initialize
 	// the operator and artifact classes. As well as the connections between them.
-	operators := make(map[uuid.UUID]operator.Operator, len(dbWorkflowDag.Operators))
-	artifacts := make(map[uuid.UUID]artifact.Artifact, len(dbWorkflowDag.Artifacts))
-	for artifactID, dbArtifact := range dbWorkflowDag.Artifacts {
+	operators := make(map[uuid.UUID]operator.Operator, len(dag.Operators))
+	artifacts := make(map[uuid.UUID]artifact.Artifact, len(dag.Artifacts))
+	for artifactID, dbArtifact := range dag.Artifacts {
 		newArtifact, err := artifact.NewArtifact(
-			artifactIDToSignatures[dbArtifact.Id],
+			artifactIDToSignatures[dbArtifact.ID],
 			dbArtifact,
 			artifactIDToExecPaths[artifactID],
-			artifactWriter,
-			artifactResultWriter,
-			&dbWorkflowDag.StorageConfig,
+			artifactRepo,
+			artifactResultRepo,
+			&dag.StorageConfig,
 			artifactCacheManager,
-			db,
+			DB,
 		)
 		if err != nil {
 			return nil, err
@@ -241,7 +225,7 @@ func NewWorkflowDag(
 	// These artifact <-> operator maps help us remember all dag connections.
 	artifactIDToOpIDs := make(map[uuid.UUID][]uuid.UUID, len(dbArtifacts))
 	for _, dbArtifact := range dbArtifacts {
-		artifactIDToOpIDs[dbArtifact.Id] = make([]uuid.UUID, 0, 1)
+		artifactIDToOpIDs[dbArtifact.ID] = make([]uuid.UUID, 0, 1)
 	}
 	opToInputArtifactIDs := make(map[uuid.UUID][]uuid.UUID, len(dbOperators))
 	opToOutputArtifactIDs := make(map[uuid.UUID][]uuid.UUID, len(dbOperators))
@@ -268,6 +252,18 @@ func NewWorkflowDag(
 			opToOutputArtifactIDs[opID] = append(opToOutputArtifactIDs[opID], artifactID)
 		}
 
+		execEnv, ok := execEnvs[opID]
+		var execEnvPtr *exec_env.ExecutionEnvironment = nil
+		if ok {
+			execEnvPtr = &execEnv
+		}
+
+		// Operator's engine takes precedence over dag's engine.
+		opEngineConfig := dag.EngineConfig
+		if dbOperator.Spec.EngineConfig() != nil {
+			opEngineConfig = *dbOperator.Spec.EngineConfig()
+		}
+
 		newOp, err := operator.NewOperator(
 			ctx,
 			dbOperator,
@@ -275,13 +271,15 @@ func NewWorkflowDag(
 			outputArtifacts,
 			inputExecPaths,
 			outputExecPaths,
-			opResultWriter,
-			jobManager,
+			opResultRepo,
+			opEngineConfig,
 			vaultObject,
-			&dbWorkflowDag.StorageConfig,
+			&dag.StorageConfig,
 			artifactCacheManager,
 			opExecMode,
-			db,
+			execEnvPtr,
+			aqPath,
+			DB,
 		)
 		if err != nil {
 			return nil, err
@@ -290,19 +288,13 @@ func NewWorkflowDag(
 	}
 
 	return &workflowDagImpl{
-		dbWorkflowDag:       dbWorkflowDag,
-		resultID:            workflowDagResultID,
+		dbDAG:               dag,
+		resultID:            dagResultID,
 		operators:           operators,
 		artifacts:           artifacts,
 		opToOutputArtifacts: opToOutputArtifactIDs,
 		opToInputArtifacts:  opToInputArtifactIDs,
 		artifactToOps:       artifactIDToOpIDs,
-
-		resultWriter:       dagResultWriter,
-		workflowReader:     workflowReader,
-		notificationWriter: notificationWriter,
-		userReader:         userReader,
-		db:                 db,
 	}, nil
 }
 

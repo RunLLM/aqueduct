@@ -4,17 +4,18 @@ import uuid
 from collections import defaultdict
 from typing import DefaultDict, Dict, List, Union
 
-from aqueduct.dag import DAG
+from aqueduct.backend.response_models import (
+    GetWorkflowResponse,
+    SavedObjectUpdate,
+    WorkflowDagResponse,
+    WorkflowDagResultResponse,
+)
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
+from aqueduct.flow_run import FlowRun
+from aqueduct.models.dag import DAG
+from aqueduct.utils.utils import format_header_for_print, generate_ui_url, parse_user_supplied_id
 
 from aqueduct import globals
-
-from .enums import ArtifactType, OperatorType
-from .flow_run import FlowRun
-from .logger import logger
-from .operators import OperatorSpec, ParamSpec
-from .responses import SavedObjectUpdate, WorkflowDagResponse, WorkflowDagResultResponse
-from .utils import format_header_for_print, generate_ui_url, parse_user_supplied_id
 
 
 class Flow:
@@ -35,6 +36,20 @@ class Flow:
     def id(self) -> uuid.UUID:
         """Returns the id of the flow."""
         return uuid.UUID(self._id)
+
+    def _get_workflow_resp(self) -> GetWorkflowResponse:
+        resp = globals.__GLOBAL_API_CLIENT__.get_workflow(self._id)
+        if len(resp.workflow_dag_results) == 0:
+            raise InvalidUserActionException("This flow has not been run yet.")
+        return resp
+
+    def name(self) -> str:
+        """Returns the latest name of the flow."""
+        resp = self._get_workflow_resp()
+        latest_result = resp.workflow_dag_results[-1]
+        latest_workflow_dag = resp.workflow_dags[latest_result.workflow_dag_id]
+        assert latest_workflow_dag.metadata.name is not None
+        return latest_workflow_dag.metadata.name
 
     def list_runs(self, limit: int = 10) -> List[Dict[str, str]]:
         """Lists the historical runs associated with this flow, sorted chronologically from most to least recent.
@@ -78,10 +93,7 @@ class Flow:
         )
 
     def latest(self) -> FlowRun:
-        resp = globals.__GLOBAL_API_CLIENT__.get_workflow(self._id)
-        if len(resp.workflow_dag_results) == 0:
-            raise InvalidUserActionException("This flow has not been run yet.")
-
+        resp = self._get_workflow_resp()
         latest_result = resp.workflow_dag_results[-1]
         latest_workflow_dag = resp.workflow_dags[latest_result.workflow_dag_id]
         return self._construct_flow_run(latest_result, latest_workflow_dag)
@@ -89,10 +101,7 @@ class Flow:
     def fetch(self, run_id: Union[str, uuid.UUID]) -> FlowRun:
         run_id = parse_user_supplied_id(run_id)
 
-        resp = globals.__GLOBAL_API_CLIENT__.get_workflow(self._id)
-        assert (
-            len(resp.workflow_dag_results) > 0
-        ), "Every flow must have at least one run attached to it."
+        resp = self._get_workflow_resp()
 
         result = None
         for candidate_result in resp.workflow_dag_results:
@@ -122,7 +131,7 @@ class Flow:
 
     def describe(self) -> None:
         """Prints out a human-readable description of the flow."""
-        resp = globals.__GLOBAL_API_CLIENT__.get_workflow(self._id)
+        resp = self._get_workflow_resp()
         latest_result = resp.workflow_dag_results[-1]
         latest_workflow_dag = resp.workflow_dags[latest_result.workflow_dag_id]
 

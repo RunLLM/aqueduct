@@ -9,20 +9,21 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -51,7 +52,7 @@ type SavedObjectResult struct {
 // k8s resources, Postgres state, and output objects in the user's data warehouse.
 type deleteWorkflowArgs struct {
 	*aq_context.AqContext
-	WorkflowId     uuid.UUID
+	WorkflowID     uuid.UUID
 	ExternalDelete map[string][]string
 	Force          bool
 }
@@ -79,9 +80,10 @@ type DeleteWorkflowHandler struct {
 	JobManager job.JobManager
 	Vault      vault.Vault
 
-	IntegrationReader integration.Reader
-	OperatorReader    operator.Reader
-	WorkflowReader    workflow.Reader
+	ExecutionEnvironmentRepo repos.ExecutionEnvironment
+	IntegrationRepo          repos.Integration
+	OperatorRepo             repos.Operator
+	WorkflowRepo             repos.Workflow
 }
 
 func (*DeleteWorkflowHandler) Name() string {
@@ -94,16 +96,16 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 		return nil, statuscode, err
 	}
 
-	workflowIdStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
-	workflowId, err := uuid.Parse(workflowIdStr)
+	workflowIDStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
+	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
 	}
 
-	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
+	ok, err := h.WorkflowRepo.ValidateOrg(
 		r.Context(),
-		workflowId,
-		aqContext.OrganizationId,
+		workflowID,
+		aqContext.OrgID,
 		h.Database,
 	)
 	if err != nil {
@@ -121,7 +123,7 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 
 	return &deleteWorkflowArgs{
 		AqContext:      aqContext,
-		WorkflowId:     workflowId,
+		WorkflowID:     workflowID,
 		ExternalDelete: input.ExternalDelete,
 		Force:          input.Force,
 	}, http.StatusOK, nil
@@ -133,26 +135,32 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	resp := deleteWorkflowResponse{}
 	resp.SavedObjectDeletionResults = map[string][]SavedObjectResult{}
 
-	nameToId := make(map[string]uuid.UUID, len(args.ExternalDelete))
+	nameToID := make(map[string]uuid.UUID, len(args.ExternalDelete))
 	for integrationName := range args.ExternalDelete {
-		integrationObject, err := h.IntegrationReader.GetIntegrationByNameAndUser(
+		integrationObject, err := h.IntegrationRepo.GetByNameAndUser(
 			ctx,
 			integrationName,
-			args.AqContext.Id,
-			args.AqContext.OrganizationId,
+			args.AqContext.ID,
+			args.AqContext.OrgID,
 			h.Database,
 		)
 		if err != nil {
 			return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while getting integration.")
 		}
-		nameToId[integrationName] = integrationObject.Id
+		nameToID[integrationName] = integrationObject.ID
 	}
 
 	// Check objects in list are valid
 	objCount := 0
 	for integrationName, savedObjectList := range args.ExternalDelete {
 		for _, name := range savedObjectList {
-			touchedOperators, err := h.OperatorReader.GetLoadOperatorsForWorkflowAndIntegration(ctx, args.WorkflowId, nameToId[integrationName], name, h.Database)
+			touchedOperators, err := h.OperatorRepo.GetLoadOPsByWorkflowAndIntegration(
+				ctx,
+				args.WorkflowID,
+				nameToID[integrationName],
+				name,
+				h.Database,
+			)
 			if err != nil {
 				return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
 			}
@@ -188,45 +196,81 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 
 	// Delete associated objects.
 	if objCount > 0 {
-		savedObjectDeletionResults, httpResponse, err := DeleteSavedObject(ctx, args, nameToId, h.Vault, args.StorageConfig, h.JobManager, h.Database, h.IntegrationReader)
+		savedObjectDeletionResults, httpResponse, err := DeleteSavedObject(
+			ctx,
+			args,
+			nameToID,
+			h.Vault,
+			args.StorageConfig,
+			h.JobManager,
+			h.Database,
+			h.IntegrationRepo,
+		)
 		if httpResponse != http.StatusOK {
 			return resp, httpResponse, err
 		}
 		resp.SavedObjectDeletionResults = savedObjectDeletionResults
 	}
 
-	err := h.Engine.DeleteWorkflow(ctx, args.WorkflowId)
+	err := h.Engine.DeleteWorkflow(ctx, args.WorkflowID)
 	if err != nil {
 		return resp, http.StatusInternalServerError, errors.Wrap(err, "Unable to delete workflow.")
 	}
 
+	// Check unused conda environments and garbage collect them.
+	go func() {
+		db, err := database.NewDatabase(h.Database.Config())
+		if err != nil {
+			log.Errorf("Error creating DB in go routine: %v", err)
+			return
+		}
+
+		err = exec_env.CleanupUnusedEnvironments(
+			context.Background(),
+			h.ExecutionEnvironmentRepo,
+			db,
+		)
+		if err != nil {
+			log.Errorf("%v", err)
+		}
+	}()
+
 	return resp, http.StatusOK, nil
 }
 
-func DeleteSavedObject(ctx context.Context, args *deleteWorkflowArgs, integrationNameToId map[string]uuid.UUID, vaultObject vault.Vault, storageConfig *shared.StorageConfig, jobManager job.JobManager, db database.Database, intergrationReader integration.Reader) (map[string][]SavedObjectResult, int, error) {
+func DeleteSavedObject(
+	ctx context.Context,
+	args *deleteWorkflowArgs,
+	integrationNameToID map[string]uuid.UUID,
+	vaultObject vault.Vault,
+	storageConfig *shared.StorageConfig,
+	jobManager job.JobManager,
+	DB database.Database,
+	integrationRepo repos.Integration,
+) (map[string][]SavedObjectResult, int, error) {
 	emptySavedObjectDeletionResults := make(map[string][]SavedObjectResult, 0)
 
 	// Schedule delete written objects job
-	jobMetadataPath := fmt.Sprintf("delete-saved-objects-%s", args.RequestId)
+	jobMetadataPath := fmt.Sprintf("delete-saved-objects-%s", args.RequestID)
 
 	jobName := fmt.Sprintf("delete-saved-objects-%s", uuid.New().String())
-	contentPath := fmt.Sprintf("delete-saved-objects-content-%s", args.RequestId)
+	contentPath := fmt.Sprintf("delete-saved-objects-content-%s", args.RequestID)
 
 	defer func() {
 		// Delete storage files created for delete saved objects job metadata
 		go workflow_utils.CleanupStorageFiles(ctx, storageConfig, []string{jobMetadataPath, contentPath})
 	}()
 
-	integrationConfigs := make(map[string]auth.Config, len(integrationNameToId))
-	integrationNames := make(map[string]integration.Service, len(integrationNameToId))
+	integrationConfigs := make(map[string]auth.Config, len(integrationNameToID))
+	integrationNames := make(map[string]integration.Service, len(integrationNameToID))
 	for integrationName := range args.ExternalDelete {
-		integrationId := integrationNameToId[integrationName]
+		integrationId := integrationNameToID[integrationName]
 		config, err := auth.ReadConfigFromSecret(ctx, integrationId, vaultObject)
 		if err != nil {
 			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
 		}
 		integrationConfigs[integrationName] = config
-		integrationObjects, err := intergrationReader.GetIntegrations(ctx, []uuid.UUID{integrationId}, db)
+		integrationObjects, err := integrationRepo.GetBatch(ctx, []uuid.UUID{integrationId}, DB)
 		if err != nil {
 			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
 		}

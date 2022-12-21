@@ -1,12 +1,30 @@
 import time
 import uuid
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.enums import ExecutionStatus
+from aqueduct.constants.enums import ExecutionStatus, LoadUpdateMode, RelationalDBServices
 
 import aqueduct
 from aqueduct import Flow
+
+# TODO(ENG-1738): this global dictionary is only maintained because we don't have a way
+#  of deleting flows by name yet. The teardown code has the flow name, but not the flow id,
+#  since that is generated in the test by `publish_flow()`. Therefore, we must register every
+#  flow we publish in `publish_flow_test` in this dictionary.
+flow_name_to_id: Dict[str, uuid.UUID] = {}
+
+# Toggles whether we should test deprecated code paths. The is useful for ensuring both the new and
+# old code paths continue to work when the API changes, but we want to continue to ensure backwards
+# compatibility for a while.
+use_deprecated_code_paths = False
+
+# Global map tracking all the artifacts we've saved in the test suite and the path that they were saved to.
+artifact_id_to_saved_identifier: Dict[str, str] = {}
+
+
+def use_deprecated_code_path() -> bool:
+    return use_deprecated_code_paths
 
 
 def generate_new_flow_name() -> str:
@@ -17,92 +35,153 @@ def generate_table_name() -> str:
     return "test_table_" + uuid.uuid4().hex[:24]
 
 
-def run_flow_test(
+def publish_flow_test(
     client: aqueduct.Client,
-    artifacts: List[BaseArtifact],
+    artifacts: Union[BaseArtifact, List[BaseArtifact]],
     engine: Optional[str],
+    expected_statuses: Union[ExecutionStatus, List[ExecutionStatus]] = ExecutionStatus.SUCCEEDED,
+    name: Optional[str] = None,
+    existing_flow: Optional[Flow] = None,
     metrics: Optional[List[BaseArtifact]] = None,
     checks: Optional[List[BaseArtifact]] = None,
-    name: str = "",
     schedule: str = "",
-    num_runs: int = 1,
-    delete_flow_after: bool = True,
-    expect_success: bool = True,
-) -> Optional[Flow]:
-    """
-    Publishes the flow and waits until it has run at least `num_runs` times with the expected status.
-    The flow is always deleted before this method returns, unless `delete_flow_after = False`.
-    """
-    if len(name) == 0:
-        name = generate_new_flow_name()
+    should_block: bool = True,
+) -> Flow:
+    """Publishes a flow and waits for a specified number of runs with specified statuses to complete.
 
+    Args:
+        artifacts:
+            These are fed directly into client.publish_flow()
+        engine:
+            The engine to publish against.
+        expected_statuses:
+            The expected outcomes of the published flow's runs. This method will not return until these
+            are all satisfied or violated. It can be supplied as either a single status or a list of them.
+            When supplied as a list, the statuses are interpreted in chronologically ascending order. Eg.
+            [SUCCEEDED, FAILED} means I expect one successful run, followed by an unsuccessful one.
+
+            If publishing against a flow that already exists, previous runs will be disregarded. These
+            statuses are expectations about future runs of the flow.
+        name:
+            This is fed directly into client.publish_flow(). This is also registered with `flow_name_to_id`
+            for cleanup purposes.
+        existing_flow:
+            If we are publishing against a flow that already exists, that flow object must be provided.
+            Otherwise, `name` must be supplied.
+        metrics:
+        checks:
+        schedule:
+            These are fed directly into `publish_flow()`.
+        should_block:
+            When true (default), we return immediately after publishing, without waiting for the flows to complete.
+            Currently, the only reason this is ever false is if you need to spin up two flows at exactly the same
+            time, and then wait for both of them to complete afterwards.
+    """
+    assert (
+        name or existing_flow and not (name and existing_flow)
+    ), "Either `name` or `existing_flow` can be set, but not both."
+
+    if existing_flow is not None:
+        name = existing_flow.name()
+    assert isinstance(name, str), "Flow name must be string, not %s type." % type(name)
+
+    # Check that if a new flow name is provided, the flow really does not exist.
+    if existing_flow is None:
+        flow_dicts = client.list_flows()
+        assert all(
+            flow_dict["name"] != name for flow_dict in flow_dicts
+        ), "You are publishing with a flow name that has already been published, please supply `existing_flow` instead."
+
+    num_prev_runs = len(existing_flow.list_runs()) if existing_flow is not None else 0
     flow = client.publish_flow(
         name=name,
         artifacts=artifacts,
-        engine=engine,
         metrics=metrics,
         checks=checks,
         schedule=schedule,
+        engine=engine,
     )
     print("Workflow registration succeeded. Workflow ID %s. Name: %s" % (flow.id(), name))
 
-    try:
-        expect_status = ExecutionStatus.SUCCEEDED if expect_success else ExecutionStatus.FAILED
+    # Necessary so that the flow is cleaned up at the end of the test.
+    flow_name_to_id[name] = flow.id()
+
+    if should_block:
         wait_for_flow_runs(
             client,
             flow.id(),
-            expect_statuses=[expect_status] * num_runs,
+            num_prev_runs=num_prev_runs,
+            expected_statuses=[expected_statuses]
+            if isinstance(expected_statuses, ExecutionStatus)
+            else expected_statuses,
         )
-    finally:
-        if delete_flow_after:
-            delete_flow(client, flow.id())
     return flow
+
+
+def trigger_flow_test(
+    client: aqueduct.Client,
+    flow: Flow,
+    expected_status: Union[ExecutionStatus, List[ExecutionStatus]] = ExecutionStatus.SUCCEEDED,
+    parameters: Optional[Dict[str, Any]] = None,
+) -> None:
+    """Triggers the given flow, and waits for the expected runs to complete with expected statuses.
+
+    `expected_status` is interpreted the same way as in `publish_flow_test()` above.
+    """
+    num_prev_runs = len(flow.list_runs())
+    client.trigger(flow.id(), parameters=parameters)
+
+    wait_for_flow_runs(
+        client,
+        flow.id(),
+        num_prev_runs=num_prev_runs,
+        expected_statuses=[expected_status]
+        if isinstance(expected_status, ExecutionStatus)
+        else expected_status,
+    )
 
 
 def wait_for_flow_runs(
     client: aqueduct.Client,
     flow_id: uuid.UUID,
-    expect_statuses: List[ExecutionStatus],
-) -> int:
+    expected_statuses: List[ExecutionStatus],
+    num_prev_runs: int = 0,
+) -> None:
+    """Waits for a flow to complete len(expected_statuses) runs, with the expected statuses.
+
+    Statuses are sorted in chronologically ascending order. `num_prev_runs` denotes the number of
+    previous runs of the flow to ignore when checking new run statuses.
+
+    NOTE: This should only ever directly be used by a test when `publish_flow_test(..., should_block=True)`.
+          Otherwise, just use the publish and trigger helpers directly, instead of calling this.
     """
-    Returns only when the specified flow has run at least len(expect_statuses) times.
-    Each status expectation corresponds to a single flow run.
 
-    Returns:
-        The number of runs this flow has performed.
-    """
-    timeout = 500
-    poll_threshold = 1
-    begin = time.time()
-
-    while True:
-        time.sleep(poll_threshold)
-
-        assert time.time() - begin < timeout, "Timed out waiting for workflow run to complete."
-
+    def stop_condition(
+        client: aqueduct.Client,
+        flow_id: uuid.UUID,
+        expected_statuses: List[ExecutionStatus],
+        num_prev_runs: int,
+    ) -> bool:
         if all(str(flow_id) != flow_dict["flow_id"] for flow_dict in client.list_flows()):
-            continue
+            return False
 
-        # A flow has been successfully published if it makes at least one workflow run, and
-        # all its workflow runs have executed successfully.
         flow = client.flow(flow_id)
-        flow_runs = flow.list_runs()
-        if len(flow_runs) == 0:
-            continue
+
+        # Last run is prepended to this list. We need to reverse it in order to compare with expected statuses,
+        # which is sorted in chronologically ascending order.
+        flow_runs = list(reversed(flow.list_runs()))[num_prev_runs:]
+        if len(flow_runs) < len(expected_statuses):
+            return False
 
         statuses = [flow_run["status"] for flow_run in flow_runs]
 
         # Continue checking as long as there are still runs pending.
         if any(status == ExecutionStatus.PENDING for status in statuses):
-            continue
+            return False
 
-        if len(flow_runs) < len(expect_statuses):
-            continue
-
-        # Need to reverse one of the lists for comparison, because the last run is always prepended in the backend response.
-        expect_status_strs = [status.value for status in reversed(expect_statuses)]
+        expect_status_strs = [status.value for status in expected_statuses]
         assert statuses == expect_status_strs, (
-            "Unexpected workflow run status(es). In reverse chronological order, expected %s, got %s. "
+            "Unexpected workflow run status(es). In ascending chronological order (latest last), expected %s, got %s. "
             % (expect_status_strs, statuses)
         )
 
@@ -110,8 +189,39 @@ def wait_for_flow_runs(
             "Workflow %s was created and ran successfully at least %s times!"
             % (flow_id, len(flow_runs))
         )
-        return len(flow_runs)
-    return -1
+        return True
+
+    polling(
+        lambda: stop_condition(client, flow_id, expected_statuses, num_prev_runs),
+        timeout=300,
+        poll_threshold=1,
+        timeout_comment="Timed out waiting for workflow run to complete.",
+    )
+
+
+def save(
+    integration,
+    artifact: BaseArtifact,
+    name: Optional[str] = None,
+    update_mode: Optional[LoadUpdateMode] = None,
+):
+    """NOTE: if `name` is set, make sure that it is set to a globally unique value, since test cases can be run concurrently."""
+    assert (
+        integration._metadata.service in RelationalDBServices
+    ), "Currently, only relational data integrations are supported."
+
+    if name is None:
+        name = generate_table_name()
+    if update_mode is None:
+        update_mode = LoadUpdateMode.REPLACE
+
+    if use_deprecated_code_path():
+        artifact.save(integration.config(name, update_mode))
+    else:
+        integration.save(artifact, name, update_mode)
+
+    # Record exactly where the artifact was saved, so we can validate the data later, after the flow is published.
+    artifact_id_to_saved_identifier[str(artifact.id())] = name
 
 
 def delete_flow(client: aqueduct.Client, workflow_id: uuid.UUID) -> None:

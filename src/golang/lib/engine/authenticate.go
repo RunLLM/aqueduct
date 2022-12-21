@@ -7,17 +7,14 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
+	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
 )
 
-const (
-	TestFilePath = "src/"
-)
-
 // Authenticates kubernetes configuration by trying to connect a client.
 func AuthenticateK8sConfig(ctx context.Context, authConf auth.Config) error {
-	conf, err := ParseK8sConfig(authConf)
+	conf, err := lib_utils.ParseK8sConfig(authConf)
 	if err != nil {
 		return errors.Wrap(err, "Unable to parse configuration.")
 	}
@@ -29,7 +26,7 @@ func AuthenticateK8sConfig(ctx context.Context, authConf auth.Config) error {
 }
 
 func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
-	lambdaConf, err := ParseLambdaConfig(authConf)
+	lambdaConf, err := lib_utils.ParseLambdaConfig(authConf)
 	if err != nil {
 		return errors.Wrap(err, "Unable to parse configuration.")
 	}

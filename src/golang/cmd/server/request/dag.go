@@ -6,10 +6,10 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -18,7 +18,7 @@ import (
 const dagKey = "dag"
 
 type DagSummary struct {
-	Dag *workflow_dag.DBWorkflowDag
+	Dag *models.DAG
 
 	// Extract the operator contents from the request body
 	FileContentsByOperatorUUID map[uuid.UUID][]byte
@@ -40,8 +40,8 @@ func ParseDagSummaryFromRequest(
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Serialized dag object not available")
 	}
 
-	var workflowDag workflow_dag.DBWorkflowDag
-	err = json.Unmarshal(serializedDAGBytes, &workflowDag)
+	var dag models.DAG
+	err = json.Unmarshal(serializedDAGBytes, &dag)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Invalid dag specification.")
 	}
@@ -51,8 +51,11 @@ func ParseDagSummaryFromRequest(
 		return nil, http.StatusInternalServerError, err
 	}
 
-	fileContents := make(map[uuid.UUID][]byte, len(workflowDag.Operators))
-	for _, op := range workflowDag.Operators {
+	fileContents := make(map[uuid.UUID][]byte, len(dag.Operators))
+	for opId, op := range dag.Operators {
+		op.ExecutionEnvironmentID = utils.NullUUID{IsNull: true}
+		dag.Operators[opId] = op
+
 		program, status, err := extractOperatorContentsFromRequest(
 			r,
 			&op,
@@ -63,24 +66,15 @@ func ParseDagSummaryFromRequest(
 		}
 
 		if len(program) > 0 {
-			fileContents[op.Id] = program
+			fileContents[op.ID] = program
 		}
 	}
 
-	workflowDag.StorageConfig = *storageConfig
-
-	workflowDag.Metadata.UserId = userId
-
-	if workflowDag.EngineConfig.Type == "" {
-		// The default engine config for now is Aqueduct
-		workflowDag.EngineConfig = shared.EngineConfig{
-			Type:           shared.AqueductEngineType,
-			AqueductConfig: &shared.AqueductConfig{},
-		}
-	}
+	dag.StorageConfig = *storageConfig
+	dag.Metadata.UserID = userId
 
 	return &DagSummary{
-		Dag:                        &workflowDag,
+		Dag:                        &dag,
 		FileContentsByOperatorUUID: fileContents,
 	}, http.StatusOK, nil
 }
@@ -89,7 +83,7 @@ func ParseDagSummaryFromRequest(
 // For github contents, retrieve zipball for files and update string contents like sql queries.
 func extractOperatorContentsFromRequest(
 	r *http.Request,
-	op *operator.DBOperator,
+	op *models.Operator,
 	ghClient github.Client,
 ) ([]byte, int, error) {
 	if op.Spec.IsExtract() {
@@ -111,7 +105,7 @@ func extractOperatorContentsFromRequest(
 	if fn.Type == function.FileFunctionType {
 		program, err := ExtractHttpPayload(
 			r.Header.Get(routes.ContentTypeHeader),
-			op.Id.String(), // File name should match operator ID
+			op.ID.String(), // File name should match operator ID
 			true,
 			r,
 		)
@@ -120,7 +114,7 @@ func extractOperatorContentsFromRequest(
 				err,
 				fmt.Sprintf(
 					"Required operator file %s doesn't exist.",
-					op.Id.String(),
+					op.ID.String(),
 				),
 			)
 		}

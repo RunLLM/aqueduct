@@ -38,8 +38,7 @@ func NewWorkflowExecutor(spec *job.WorkflowSpec, base *BaseExecutor) (*WorkflowE
 		return nil, err
 	}
 
-	engineReaders := GetEngineReaders(base.Readers)
-	engineWriters := GetEngineWriters(base.Writers)
+	engineRepos := getEngineRepos(base.Repos)
 
 	eng, err := engine.NewAqEngine(
 		base.Database,
@@ -47,8 +46,7 @@ func NewWorkflowExecutor(spec *job.WorkflowSpec, base *BaseExecutor) (*WorkflowE
 		nil, /* PreviewCacheManager */
 		base.Vault,
 		spec.AqPath,
-		engineReaders,
-		engineWriters,
+		engineRepos,
 	)
 	if err != nil {
 		return nil, err

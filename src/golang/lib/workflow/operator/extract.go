@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -35,7 +35,7 @@ func newExtractOperator(
 	}
 
 	for _, inputArtifact := range inputs {
-		if inputArtifact.Type() != db_artifact.String {
+		if inputArtifact.Type() != shared.StringArtifact {
 			return nil, errors.New("Only strings can be used as inputs to extract operators.")
 		}
 	}

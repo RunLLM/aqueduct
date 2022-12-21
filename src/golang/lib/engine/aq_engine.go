@@ -9,23 +9,17 @@ import (
 
 	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/notification"
-	operator_db "github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	"github.com/aqueducthq/aqueduct/lib/cronjob"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/execution_environment"
+	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
@@ -49,30 +43,19 @@ type AqueductTimeConfig struct {
 	CleanupTimeout time.Duration
 }
 
-type EngineReaders struct {
-	WorkflowReader          workflow.Reader
-	WorkflowDagReader       workflow_dag.Reader
-	WorkflowDagEdgeReader   workflow_dag_edge.Reader
-	WorkflowDagResultReader workflow_dag_result.Reader
-	OperatorReader          operator_db.Reader
-	OperatorResultReader    operator_result.Reader
-	ArtifactReader          artifact_db.Reader
-	ArtifactResultReader    artifact_result.Reader
-	UserReader              user.Reader
-	IntegrationReader       integration.Reader
-}
-
-type EngineWriters struct {
-	WorkflowWriter          workflow.Writer
-	WorkflowDagWriter       workflow_dag.Writer
-	WorkflowDagEdgeWriter   workflow_dag_edge.Writer
-	WorkflowDagResultWriter workflow_dag_result.Writer
-	WorkflowWatcherWriter   workflow_watcher.Writer
-	OperatorWriter          operator_db.Writer
-	OperatorResultWriter    operator_result.Writer
-	ArtifactWriter          artifact_db.Writer
-	ArtifactResultWriter    artifact_result.Writer
-	NotificationWriter      notification.Writer
+// Repos contains the repos needed by the Engine
+type Repos struct {
+	ArtifactRepo             repos.Artifact
+	ArtifactResultRepo       repos.ArtifactResult
+	DAGRepo                  repos.DAG
+	DAGEdgeRepo              repos.DAGEdge
+	DAGResultRepo            repos.DAGResult
+	ExecutionEnvironmentRepo repos.ExecutionEnvironment
+	NotificationRepo         repos.Notification
+	OperatorRepo             repos.Operator
+	OperatorResultRepo       repos.OperatorResult
+	WatcherRepo              repos.Watcher
+	WorkflowRepo             repos.Workflow
 }
 
 type aqEngine struct {
@@ -85,9 +68,7 @@ type aqEngine struct {
 	// Only used for previews.
 	PreviewCacheManager preview_cache.CacheManager
 
-	// Readers and Writers needed for workflow management
-	*EngineReaders
-	*EngineWriters
+	*Repos
 }
 
 type workflowRunMetadata struct {
@@ -118,8 +99,7 @@ func NewAqEngine(
 	previewCacheManager preview_cache.CacheManager,
 	vault vault.Vault,
 	aqPath string,
-	engineReaders *EngineReaders,
-	engineWriters *EngineWriters,
+	repos *Repos,
 ) (*aqEngine, error) {
 	cronjobManager := cronjob.NewProcessCronjobManager()
 
@@ -130,8 +110,7 @@ func NewAqEngine(
 		Vault:               vault,
 		CronjobManager:      cronjobManager,
 		AqPath:              aqPath,
-		EngineReaders:       engineReaders,
-		EngineWriters:       engineWriters,
+		Repos:               repos,
 	}, nil
 }
 
@@ -168,18 +147,18 @@ func (eng *aqEngine) ScheduleWorkflow(
 
 func (eng *aqEngine) ExecuteWorkflow(
 	ctx context.Context,
-	workflowId uuid.UUID,
+	workflowID uuid.UUID,
 	timeConfig *AqueductTimeConfig,
 	parameters map[string]param.Param,
 ) (shared.ExecutionStatus, error) {
-	dbWorkflowDag, err := workflow_utils.ReadLatestWorkflowDagFromDatabase(
+	dbDAG, err := workflow_utils.ReadLatestDAGFromDatabase(
 		ctx,
-		workflowId,
-		eng.WorkflowReader,
-		eng.WorkflowDagReader,
-		eng.OperatorReader,
-		eng.ArtifactReader,
-		eng.WorkflowDagEdgeReader,
+		workflowID,
+		eng.WorkflowRepo,
+		eng.DAGRepo,
+		eng.OperatorRepo,
+		eng.ArtifactRepo,
+		eng.DAGEdgeRepo,
 		eng.Database,
 	)
 	if err != nil {
@@ -187,17 +166,17 @@ func (eng *aqEngine) ExecuteWorkflow(
 	}
 
 	pendingAt := time.Now()
-	execState := &shared.ExecutionState{
-		Status: shared.PendingExecutionStatus,
-		Timestamps: &shared.ExecutionTimestamps{
+	execState := &mdl_shared.ExecutionState{
+		Status: mdl_shared.PendingExecutionStatus,
+		Timestamps: &mdl_shared.ExecutionTimestamps{
 			PendingAt: &pendingAt,
 		},
 	}
-	dbWorkflowDagResult, err := workflow_utils.CreateWorkflowDagResult(
+
+	dagResult, err := eng.DAGResultRepo.Create(
 		ctx,
-		dbWorkflowDag.Id,
+		dbDAG.ID,
 		execState,
-		eng.WorkflowDagResultWriter,
 		eng.Database,
 	)
 	if err != nil {
@@ -208,42 +187,38 @@ func (eng *aqEngine) ExecuteWorkflow(
 	defer func() {
 		if err != nil {
 			// Mark the workflow dag result as failed
-			execState.Status = shared.FailedExecutionStatus
+			execState.Status = mdl_shared.FailedExecutionStatus
 			now := time.Now()
 			execState.Timestamps.FinishedAt = &now
 		}
 
-		workflow_utils.UpdateWorkflowDagResultMetadata(
+		if updateErr := workflow_utils.UpdateDAGResultMetadata(
 			ctx,
-			dbWorkflowDagResult.Id,
+			dagResult.ID,
 			execState,
-			eng.WorkflowDagResultWriter,
-			eng.WorkflowReader,
-			eng.NotificationWriter,
-			eng.UserReader,
+			eng.DAGResultRepo,
+			eng.WorkflowRepo,
+			eng.NotificationRepo,
 			eng.Database,
-		)
+		); updateErr != nil {
+			log.Errorf("Unable to update DAGResult metadata for %v", dagResult.ID)
+		}
 	}()
 
-	githubClient, err := eng.GithubManager.GetClient(ctx, dbWorkflowDag.Metadata.UserId)
+	githubClient, err := eng.GithubManager.GetClient(ctx, dbDAG.Metadata.UserID)
 	if err != nil {
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Error getting github client.")
 	}
 
-	dbWorkflowDag, err = workflow_utils.UpdateWorkflowDagToLatest(
+	dbDAG, err = workflow_utils.UpdateWorkflowDagToLatest(
 		ctx,
 		githubClient,
-		dbWorkflowDag,
-		eng.WorkflowReader,
-		eng.WorkflowWriter,
-		eng.WorkflowDagReader,
-		eng.WorkflowDagWriter,
-		eng.OperatorReader,
-		eng.OperatorWriter,
-		eng.WorkflowDagEdgeReader,
-		eng.WorkflowDagEdgeWriter,
-		eng.ArtifactReader,
-		eng.ArtifactWriter,
+		dbDAG,
+		eng.WorkflowRepo,
+		eng.DAGRepo,
+		eng.OperatorRepo,
+		eng.DAGEdgeRepo,
+		eng.ArtifactRepo,
 		eng.Database,
 	)
 	if err != nil {
@@ -252,41 +227,52 @@ func (eng *aqEngine) ExecuteWorkflow(
 
 	// Overwrite the parameter specs for all custom parameters defined by the user.
 	for name, param := range parameters {
-		op := dbWorkflowDag.GetOperatorByName(name)
+		var op *models.Operator
+		for _, dagOp := range dbDAG.Operators {
+			if dagOp.Name == name {
+				op = &dagOp
+				break
+			}
+		}
+
 		if op == nil {
 			continue
 		}
+
 		if !op.Spec.IsParam() {
 			return shared.FailedExecutionStatus, errors.Wrap(err, "Cannot set parameters on a non-parameter operator.")
 		}
-		dbWorkflowDag.Operators[op.Id].Spec.Param().Val = param.Val
-		dbWorkflowDag.Operators[op.Id].Spec.Param().SerializationType = param.SerializationType
-	}
-	engineConfig, err := generateJobManagerConfig(ctx, dbWorkflowDag, eng.AqPath, eng.Vault)
-	if err != nil {
-		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to generate JobManagerConfig.")
+		dbDAG.Operators[op.ID].Spec.Param().Val = param.Val
+		dbDAG.Operators[op.ID].Spec.Param().SerializationType = param.SerializationType
 	}
 
-	engineJobManager, err := job.NewJobManager(engineConfig)
+	opIds := make([]uuid.UUID, 0, len(dbDAG.Operators))
+	for _, op := range dbDAG.Operators {
+		opIds = append(opIds, op.ID)
+	}
+
+	execEnvsByOpId, err := exec_env.GetActiveExecutionEnvironmentsByOperatorIDs(
+		ctx,
+		opIds,
+		eng.ExecutionEnvironmentRepo,
+		eng.Database,
+	)
 	if err != nil {
-		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create JobManager.")
+		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to read operator environments.")
 	}
 
 	dag, err := dag_utils.NewWorkflowDag(
 		ctx,
-		dbWorkflowDagResult.Id,
-		dbWorkflowDag,
-		eng.WorkflowDagResultWriter,
-		eng.OperatorResultWriter,
-		eng.ArtifactWriter,
-		eng.ArtifactResultWriter,
-		eng.WorkflowReader,
-		eng.NotificationWriter,
-		eng.UserReader,
-		engineJobManager,
+		dagResult.ID,
+		dbDAG,
+		eng.OperatorResultRepo,
+		eng.ArtifactRepo,
+		eng.ArtifactResultRepo,
 		eng.Vault,
 		nil, /* artifactCacheManager */
+		execEnvsByOpId,
 		operator.Publish,
+		eng.AqPath,
 		eng.Database,
 	)
 	if err != nil {
@@ -313,7 +299,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to initialize dag results.")
 	}
 
-	execState.Status = shared.RunningExecutionStatus
+	execState.Status = mdl_shared.RunningExecutionStatus
 	runningAt := time.Now()
 	execState.Timestamps.RunningAt = &runningAt
 	err = eng.execute(
@@ -324,12 +310,12 @@ func (eng *aqEngine) ExecuteWorkflow(
 		operator.Publish,
 	)
 	if err != nil {
-		execState.Status = shared.FailedExecutionStatus
+		execState.Status = mdl_shared.FailedExecutionStatus
 		now := time.Now()
 		execState.Timestamps.FinishedAt = &now
 		return shared.FailedExecutionStatus, errors.Wrapf(err, "Error executing workflow")
 	} else {
-		execState.Status = shared.SucceededExecutionStatus
+		execState.Status = mdl_shared.SucceededExecutionStatus
 		now := time.Now()
 		execState.Timestamps.FinishedAt = &now
 	}
@@ -339,41 +325,22 @@ func (eng *aqEngine) ExecuteWorkflow(
 
 func (eng *aqEngine) PreviewWorkflow(
 	ctx context.Context,
-	dbWorkflowDag *workflow_dag.DBWorkflowDag,
+	dbDAG *models.DAG,
+	execEnvByOperatorId map[uuid.UUID]exec_env.ExecutionEnvironment,
 	timeConfig *AqueductTimeConfig,
 ) (*WorkflowPreviewResult, error) {
-	jobManagerConfig, err := generateJobManagerConfig(
-		ctx,
-		dbWorkflowDag,
-		eng.AqPath,
-		eng.Vault,
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to generate JobManagerConfig from WorkflowDag.")
-	}
-
-	jobManager, err := job.NewJobManager(
-		jobManagerConfig,
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to create JobManager.")
-	}
-
 	dag, err := dag_utils.NewWorkflowDag(
 		ctx,
 		uuid.Nil, /* workflowDagResultID */
-		dbWorkflowDag,
-		eng.WorkflowDagResultWriter,
-		eng.OperatorResultWriter,
-		eng.ArtifactWriter,
-		eng.ArtifactResultWriter,
-		eng.WorkflowReader,
-		eng.NotificationWriter,
-		eng.UserReader,
-		jobManager,
+		dbDAG,
+		eng.OperatorResultRepo,
+		eng.ArtifactRepo,
+		eng.ArtifactResultRepo,
 		eng.Vault,
 		eng.PreviewCacheManager,
+		execEnvByOperatorId,
 		operator.Preview,
+		eng.AqPath,
 		eng.Database,
 	)
 	if err != nil {
@@ -449,7 +416,7 @@ func (eng *aqEngine) PreviewWorkflow(
 
 func (eng *aqEngine) DeleteWorkflow(
 	ctx context.Context,
-	workflowId uuid.UUID,
+	workflowID uuid.UUID,
 ) error {
 	txn, err := eng.Database.BeginTx(ctx)
 	if err != nil {
@@ -458,140 +425,140 @@ func (eng *aqEngine) DeleteWorkflow(
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
 	// We first retrieve all relevant records from the database.
-	workflowObject, err := eng.WorkflowReader.GetWorkflow(ctx, workflowId, txn)
+	workflow, err := eng.WorkflowRepo.Get(ctx, workflowID, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving workflow.")
 	}
 
-	workflowDagsToDelete, err := eng.WorkflowDagReader.GetWorkflowDagsByWorkflowId(ctx, workflowObject.Id, txn)
-	if err != nil || len(workflowDagsToDelete) == 0 {
+	dagsToDelete, err := eng.DAGRepo.GetByWorkflow(ctx, workflow.ID, txn)
+	if err != nil || len(dagsToDelete) == 0 {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving workflow dags.")
 	}
 
-	workflowDagIds := make([]uuid.UUID, 0, len(workflowDagsToDelete))
-	for _, workflowDag := range workflowDagsToDelete {
-		workflowDagIds = append(workflowDagIds, workflowDag.Id)
+	dagIDs := make([]uuid.UUID, 0, len(dagsToDelete))
+	for _, dag := range dagsToDelete {
+		dagIDs = append(dagIDs, dag.ID)
 	}
 
-	workflowDagResultsToDelete, err := eng.WorkflowDagResultReader.GetWorkflowDagResultsByWorkflowId(ctx, workflowObject.Id, txn)
+	dagResultsToDelete, err := eng.DAGResultRepo.GetByWorkflow(ctx, workflow.ID, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving workflow dag results.")
 	}
 
-	workflowDagResultIds := make([]uuid.UUID, 0, len(workflowDagResultsToDelete))
-	for _, workflowDagResult := range workflowDagResultsToDelete {
-		workflowDagResultIds = append(workflowDagResultIds, workflowDagResult.Id)
+	dagResultIDs := make([]uuid.UUID, 0, len(dagResultsToDelete))
+	for _, dagResult := range dagResultsToDelete {
+		dagResultIDs = append(dagResultIDs, dagResult.ID)
 	}
 
-	workflowDagEdgesToDelete, err := eng.WorkflowDagEdgeReader.GetEdgesByWorkflowDagIds(ctx, workflowDagIds, txn)
+	dagEdgesToDelete, err := eng.DAGEdgeRepo.GetByDAGBatch(ctx, dagIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving workflow dag edges.")
 	}
 
-	operatorIds := make([]uuid.UUID, 0, len(workflowDagEdgesToDelete))
-	artifactIds := make([]uuid.UUID, 0, len(workflowDagEdgesToDelete))
+	operatorIDs := make([]uuid.UUID, 0, len(dagEdgesToDelete))
+	artifactIDs := make([]uuid.UUID, 0, len(dagEdgesToDelete))
 
 	operatorIdMap := make(map[uuid.UUID]bool)
-	artifactIdMap := make(map[uuid.UUID]bool)
+	artifactIDMap := make(map[uuid.UUID]bool)
 
-	for _, workflowDagEdge := range workflowDagEdgesToDelete {
+	for _, dagEdge := range dagEdgesToDelete {
 		var operatorId uuid.UUID
-		var artifactId uuid.UUID
+		var artifactID uuid.UUID
 
-		if workflowDagEdge.Type == workflow_dag_edge.OperatorToArtifactType {
-			operatorId = workflowDagEdge.FromId
-			artifactId = workflowDagEdge.ToId
+		if dagEdge.Type == mdl_shared.OperatorToArtifactDAGEdge {
+			operatorId = dagEdge.FromID
+			artifactID = dagEdge.ToID
 		} else {
-			operatorId = workflowDagEdge.ToId
-			artifactId = workflowDagEdge.FromId
+			operatorId = dagEdge.ToID
+			artifactID = dagEdge.FromID
 		}
 
 		if _, ok := operatorIdMap[operatorId]; !ok {
 			operatorIdMap[operatorId] = true
-			operatorIds = append(operatorIds, operatorId)
+			operatorIDs = append(operatorIDs, operatorId)
 		}
 
-		if _, ok := artifactIdMap[artifactId]; !ok {
-			artifactIdMap[artifactId] = true
-			artifactIds = append(artifactIds, artifactId)
+		if _, ok := artifactIDMap[artifactID]; !ok {
+			artifactIDMap[artifactID] = true
+			artifactIDs = append(artifactIDs, artifactID)
 		}
 	}
 
-	operatorsToDelete, err := eng.OperatorReader.GetOperators(ctx, operatorIds, txn)
+	operatorsToDelete, err := eng.OperatorRepo.GetBatch(ctx, operatorIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving operators.")
 	}
 
-	operatorResultsToDelete, err := eng.OperatorResultReader.GetOperatorResultsByWorkflowDagResultIds(
+	operatorResultsToDelete, err := eng.OperatorResultRepo.GetByDAGResultBatch(
 		ctx,
-		workflowDagResultIds,
+		dagResultIDs,
 		txn,
 	)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving operator results.")
 	}
 
-	operatorResultIds := make([]uuid.UUID, 0, len(operatorResultsToDelete))
+	operatorResultIDs := make([]uuid.UUID, 0, len(operatorResultsToDelete))
 	for _, operatorResult := range operatorResultsToDelete {
-		operatorResultIds = append(operatorResultIds, operatorResult.Id)
+		operatorResultIDs = append(operatorResultIDs, operatorResult.ID)
 	}
 
-	artifactResultsToDelete, err := eng.ArtifactResultReader.GetArtifactResultsByWorkflowDagResultIds(
+	artifactResultsToDelete, err := eng.ArtifactResultRepo.GetByDAGResults(
 		ctx,
-		workflowDagResultIds,
+		dagResultIDs,
 		txn,
 	)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving artifact results.")
 	}
 
-	artifactResultIds := make([]uuid.UUID, 0, len(artifactResultsToDelete))
+	artifactResultIDs := make([]uuid.UUID, 0, len(artifactResultsToDelete))
 	for _, artifactResult := range artifactResultsToDelete {
-		artifactResultIds = append(artifactResultIds, artifactResult.Id)
+		artifactResultIDs = append(artifactResultIDs, artifactResult.ID)
 	}
 
 	// Start deleting database records.
-	err = eng.WorkflowWatcherWriter.DeleteWorkflowWatcherByWorkflowId(ctx, workflowObject.Id, txn)
+	err = eng.WatcherRepo.DeleteByWorkflow(ctx, workflowID, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting workflow watchers.")
 	}
 
-	err = eng.OperatorResultWriter.DeleteOperatorResults(ctx, operatorResultIds, txn)
+	err = eng.OperatorResultRepo.DeleteBatch(ctx, operatorResultIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting operator results.")
 	}
 
-	err = eng.ArtifactResultWriter.DeleteArtifactResults(ctx, artifactResultIds, txn)
+	err = eng.ArtifactResultRepo.DeleteBatch(ctx, artifactResultIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting artifact results.")
 	}
 
-	err = eng.WorkflowDagResultWriter.DeleteWorkflowDagResults(ctx, workflowDagResultIds, txn)
+	err = eng.DAGResultRepo.DeleteBatch(ctx, dagResultIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting workflow dag results.")
 	}
 
-	err = eng.WorkflowDagEdgeWriter.DeleteEdgesByWorkflowDagIds(ctx, workflowDagIds, txn)
+	err = eng.DAGEdgeRepo.DeleteByDAGBatch(ctx, dagIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting workflow dag edges.")
 	}
 
-	err = eng.OperatorWriter.DeleteOperators(ctx, operatorIds, txn)
+	err = eng.OperatorRepo.DeleteBatch(ctx, operatorIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting operators.")
 	}
 
-	err = eng.ArtifactWriter.DeleteArtifacts(ctx, artifactIds, txn)
+	err = eng.ArtifactRepo.DeleteBatch(ctx, artifactIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting artifacts.")
 	}
 
-	err = eng.WorkflowDagWriter.DeleteWorkflowDags(ctx, workflowDagIds, txn)
+	err = eng.DAGRepo.DeleteBatch(ctx, dagIDs, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting workflow dags.")
 	}
 
-	err = eng.WorkflowWriter.DeleteWorkflow(ctx, workflowObject.Id, txn)
+	err = eng.WorkflowRepo.Delete(ctx, workflow.ID, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting workflow.")
 	}
@@ -601,7 +568,7 @@ func (eng *aqEngine) DeleteWorkflow(
 	}
 
 	// Delete storage files (artifact content and function files)
-	storagePaths := make([]string, 0, len(operatorIds)+len(artifactResultIds))
+	storagePaths := make([]string, 0, len(operatorIDs)+len(artifactResultIDs))
 	for _, op := range operatorsToDelete {
 		if op.Spec.IsFunction() || op.Spec.IsMetric() || op.Spec.IsCheck() {
 			storagePaths = append(storagePaths, op.Spec.Function().StoragePath)
@@ -614,8 +581,8 @@ func (eng *aqEngine) DeleteWorkflow(
 
 	// Note: for now we assume all workflow dags have the same storage config.
 	// This assumption will stay true until we allow users to configure custom storage config to store stuff.
-	storageConfig := workflowDagsToDelete[0].StorageConfig
-	for _, workflowDag := range workflowDagsToDelete {
+	storageConfig := dagsToDelete[0].StorageConfig
+	for _, workflowDag := range dagsToDelete {
 		if !reflect.DeepEqual(workflowDag.StorageConfig, storageConfig) {
 			return errors.New("Workflow Dags have mismatching storage config.")
 		}
@@ -624,8 +591,8 @@ func (eng *aqEngine) DeleteWorkflow(
 	workflow_utils.CleanupStorageFiles(ctx, &storageConfig, storagePaths)
 
 	// Delete the cron job if it had one.
-	if workflowObject.Schedule.CronSchedule != "" {
-		cronjobName := shared_utils.AppendPrefix(workflowObject.Id.String())
+	if workflow.Schedule.CronSchedule != "" {
+		cronjobName := shared_utils.AppendPrefix(workflow.ID.String())
 		err = eng.CronjobManager.DeleteCronJob(ctx, cronjobName)
 		if err != nil {
 			return errors.Wrap(err, "Failed to delete workflow's cronjob.")
@@ -637,7 +604,7 @@ func (eng *aqEngine) DeleteWorkflow(
 func (eng *aqEngine) EditWorkflow(
 	ctx context.Context,
 	txn database.Database,
-	workflowId uuid.UUID,
+	workflowID uuid.UUID,
 	workflowName string,
 	workflowDescription string,
 	schedule *workflow.Schedule,
@@ -645,27 +612,27 @@ func (eng *aqEngine) EditWorkflow(
 ) error {
 	changes := map[string]interface{}{}
 	if workflowName != "" {
-		changes["name"] = workflowName
+		changes[models.WorkflowName] = workflowName
 	}
 
 	if workflowDescription != "" {
-		changes["description"] = workflowDescription
+		changes[models.WorkflowDescription] = workflowDescription
 	}
 
 	if retentionPolicy != nil {
-		changes["retention_policy"] = retentionPolicy
+		changes[models.WorkflowRetentionPolicy] = retentionPolicy
 	}
 
 	if schedule.Trigger != "" {
-		cronjobName := shared_utils.AppendPrefix(workflowId.String())
-		err := eng.updateWorkflowSchedule(ctx, workflowId, cronjobName, schedule)
+		cronjobName := shared_utils.AppendPrefix(workflowID.String())
+		err := eng.updateWorkflowSchedule(ctx, workflowID, cronjobName, schedule)
 		if err != nil {
 			return errors.Wrap(err, "Unable to update workflow schedule.")
 		}
-		changes["schedule"] = schedule
+		changes[models.WorkflowSchedule] = schedule
 	}
 
-	_, err := eng.WorkflowWriter.UpdateWorkflow(ctx, workflowId, changes, txn)
+	_, err := eng.WorkflowRepo.Update(ctx, workflowID, changes, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unable to update workflow.")
 	}
@@ -951,7 +918,7 @@ func (eng *aqEngine) updateWorkflowSchedule(
 
 func (eng *aqEngine) InitEnv(
 	ctx context.Context,
-	env *execution_environment.ExecutionEnvironment,
+	env *exec_env.ExecutionEnvironment,
 ) error {
 	return env.CreateEnv()
 }

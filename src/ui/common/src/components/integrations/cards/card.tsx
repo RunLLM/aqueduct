@@ -7,7 +7,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { DataPreviewInfo } from '../../../utils/data';
 import { getPathPrefix } from '../../../utils/getPathPrefix';
 import { Integration } from '../../../utils/integrations';
-import WorkflowStatus from '../../workflows/workflowStatus';
+import ExecutionChip from '../../execution/chip';
 import IntegrationLogo from '../logo';
 import { AirflowCard } from './airflowCard';
 import { AqueductDemoCard } from './aqueductDemoCard';
@@ -32,12 +32,15 @@ export const DataCard: React.FC<DataProps> = ({ dataPreviewInfo }) => {
   const dataPreviewInfoVersions = Object.entries(dataPreviewInfo.versions);
   if (dataPreviewInfoVersions.length > 0) {
     let [latestDagResultId, latestVersion] = dataPreviewInfoVersions[0];
+    // Find the latest version
+    // note: could also sort the array and get things that way.
     dataPreviewInfoVersions.forEach(([dagResultId, version]) => {
-      if (latestVersion.timestamp < version.timestamp) {
+      if (version.timestamp > latestVersion.timestamp) {
         latestDagResultId = dagResultId;
         latestVersion = version;
       }
     });
+
     const workflowId = dataPreviewInfo.workflow_id;
     return (
       <Link
@@ -63,7 +66,7 @@ export const DataCard: React.FC<DataProps> = ({ dataPreviewInfo }) => {
               </Typography>
             </Box>
             <Box marginLeft={1}>
-              <WorkflowStatus status={latestVersion.status} />
+              <ExecutionChip status={latestVersion.status} />
             </Box>
           </Box>
           <Box sx={{ fontSize: 1, my: 1 }}>

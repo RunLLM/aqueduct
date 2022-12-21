@@ -19,8 +19,7 @@ type BaseExecutor struct {
 	JobManager job.JobManager
 	Vault      vault.Vault
 	Database   database.Database
-	*Readers
-	*Writers
+	*Repos
 }
 
 func NewBaseExecutor(conf *job.ExecutorConfiguration) (*BaseExecutor, error) {
@@ -61,22 +60,11 @@ func NewBaseExecutor(conf *job.ExecutorConfiguration) (*BaseExecutor, error) {
 		return nil, err
 	}
 
-	readers, err := CreateReaders(db.Config())
-	if err != nil {
-		return nil, err
-	}
-
-	writers, err := CreateWriters(db.Config())
-	if err != nil {
-		return nil, err
-	}
-
 	return &BaseExecutor{
 		JobManager: jobManager,
 		Vault:      vault,
 		Database:   db,
-		Readers:    readers,
-		Writers:    writers,
+		Repos:      createRepos(),
 	}, nil
 }
 

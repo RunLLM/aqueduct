@@ -28,8 +28,26 @@ type artifactReader interface {
 	// GetByDAG returns the Artifacts created by the workflow DAG with ID dagID.
 	GetByDAG(ctx context.Context, dagID uuid.UUID, DB database.Database) ([]models.Artifact, error)
 
+	// GetIDsByDAGAndDownstreamOPBatch returns a list of Artifact IDs belonging to a DAG
+	// in dagIDs if it is connected via a DAGEdge to an operator in operatorIDs.
+	GetIDsByDAGAndDownstreamOPBatch(
+		ctx context.Context,
+		dagIDs []uuid.UUID,
+		operatorIDs []uuid.UUID,
+		DB database.Database,
+	) ([]uuid.UUID, error)
+
+	// GetMetricsByUpstreamArtifactBatch returns a map of metrics Artifacts if they
+	// are direct downstream of any artifact whose ID belongs to the given artifactIDs.
+	// The returned map is keyed by the upstream artifact ID in the artifactIDs list.
+	GetMetricsByUpstreamArtifactBatch(
+		ctx context.Context,
+		artifactIDs []uuid.UUID,
+		DB database.Database,
+	) (map[uuid.UUID][]models.Artifact, error)
+
 	// ValidateOrg returns whether the Artifact was created by a user in orgID.
-	ValidateOrg(ctx context.Context, ID uuid.UUID, orgID uuid.UUID, DB database.Database) (bool, error)
+	ValidateOrg(ctx context.Context, ID uuid.UUID, orgID string, DB database.Database) (bool, error)
 }
 
 type artifactWriter interface {

@@ -8,11 +8,12 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	execEnv "github.com/aqueducthq/aqueduct/lib/execution_environment"
+	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
@@ -23,11 +24,11 @@ import (
 )
 
 type baseOperator struct {
-	dbOperator *operator.DBOperator
+	dbOperator *models.Operator
 
 	// These fields are set to nil in the preview case.
-	resultWriter operator_result.Writer
-	resultID     uuid.UUID
+	resultRepo repos.OperatorResult
+	resultID   uuid.UUID
 
 	metadataPath string
 	jobName      string
@@ -49,9 +50,10 @@ type baseOperator struct {
 	execMode         ExecutionMode
 	execState        shared.ExecutionState
 
-	// TODO: This is public to avoid compiling error.
-	// We should change this to private once this attribute is used.
-	ExecEnv *execEnv.ExecutionEnvironment
+	// If set to nil, the job manager will run this operator in the server's default Python environment.
+	// Otherwise, it will switch to the approppriate Conda environment before running the operator.
+	// This only applies to operators running with the Aqueduct engine.
+	execEnv *exec_env.ExecutionEnvironment
 }
 
 func (bo *baseOperator) Type() operator.Type {
@@ -63,7 +65,7 @@ func (bo *baseOperator) Name() string {
 }
 
 func (bo *baseOperator) ID() uuid.UUID {
-	return bo.dbOperator.Id
+	return bo.dbOperator.ID
 }
 
 // A catch-all for execution states that are the system's fault.
@@ -82,7 +84,7 @@ func unknownSystemFailureExecState(err error, logMsg string) *shared.ExecutionSt
 	}
 }
 
-func jobManagerUserFailureExecState(err *job.JobError, logMsg string) *shared.ExecutionState {
+func jobManagerUserFailureExecState(err job.JobError, logMsg string) *shared.ExecutionState {
 	log.Errorf("Job execution had a user-facing issue: %s %v", logMsg, err)
 
 	failureType := shared.UserFatalFailure
@@ -178,16 +180,16 @@ func (bo *baseOperator) updateExecState(execState *shared.ExecutionState) {
 func updateOperatorResultAfterComputation(
 	ctx context.Context,
 	execState *shared.ExecutionState,
-	opResultWriter operator_result.Writer,
+	opResultRepo repos.OperatorResult,
 	opResultID uuid.UUID,
 	db database.Database,
 ) {
 	changes := map[string]interface{}{
-		operator_result.StatusColumn:    execState.Status,
-		operator_result.ExecStateColumn: execState,
+		models.OperatorResultStatus:    execState.Status,
+		models.OperatorResultExecState: execState,
 	}
 
-	_, err := opResultWriter.UpdateOperatorResult(
+	_, err := opResultRepo.Update(
 		ctx,
 		opResultID,
 		changes,
@@ -203,11 +205,11 @@ func updateOperatorResultAfterComputation(
 }
 
 func (bo *baseOperator) InitializeResult(ctx context.Context, dagResultID uuid.UUID) error {
-	if bo.resultWriter == nil {
+	if bo.resultRepo == nil {
 		return errors.New("Operator's result writer cannot be nil.")
 	}
 
-	operatorResult, err := bo.resultWriter.CreateOperatorResult(
+	operatorResult, err := bo.resultRepo.Create(
 		ctx,
 		dagResultID,
 		bo.ID(),
@@ -218,7 +220,7 @@ func (bo *baseOperator) InitializeResult(ctx context.Context, dagResultID uuid.U
 		return errors.Wrap(err, "Failed to create operator result record.")
 	}
 
-	bo.resultID = operatorResult.Id
+	bo.resultID = operatorResult.ID
 
 	return nil
 }
@@ -240,7 +242,7 @@ func (bo *baseOperator) Poll(ctx context.Context) (*shared.ExecutionState, error
 		// 2) it has run already at sometime in the past, but has been garbage collected
 		// 3) it has run already at sometime in the past, but did not go through the job manager.
 		//    (this can happen when the output artifacts have already been cached).
-		if err == job.ErrJobNotExist || err == job.ErrAsyncExecution {
+		if err.Code() == job.JobMissing || err.Code() == job.Noop {
 			// Check whether the operator has actually completed.
 			if utils.ObjectExistsInStorage(ctx, bo.storageConfig, bo.metadataPath) {
 				execState := bo.fetchExecState(ctx)
@@ -250,18 +252,21 @@ func (bo *baseOperator) Poll(ctx context.Context) (*shared.ExecutionState, error
 
 			// Otherwise, return the current state of the operator (pending or running).
 			return bo.ExecState(), nil
-		} else {
-			var execState *shared.ExecutionState
 
 			// Catch any errors here that originate from within the JobManager, outside of the
 			// python execution context, and that need a better user-facing message (eg. OOM issues).
-			if jobErr := err.(*job.JobError); jobErr != nil && jobErr.Code == job.User {
-				execState = jobManagerUserFailureExecState(jobErr, "Job manager failed due to user error.")
-			} else {
-				execState = unknownSystemFailureExecState(err, "Unable to poll job manager.")
-			}
-			bo.updateExecState(execState)
+		} else if err.Code() == job.User {
+			bo.updateExecState(
+				jobManagerUserFailureExecState(err, "Job manager failed due to user error."),
+			)
 			return bo.ExecState(), nil
+		} else if err.Code() == job.System {
+			bo.updateExecState(
+				unknownSystemFailureExecState(err, "Unable to poll job manager."),
+			)
+			return bo.ExecState(), nil
+		} else {
+			return nil, errors.Newf("Unexpected JobErrorCode: %v", err.Code())
 		}
 	} else {
 		// The job just completed, so we know we can fetch the results (succeeded/failed).
@@ -303,7 +308,7 @@ func (bo *baseOperator) PersistResult(ctx context.Context) error {
 	updateOperatorResultAfterComputation(
 		ctx,
 		execState,
-		bo.resultWriter,
+		bo.resultRepo,
 		bo.resultID,
 		bo.db,
 	)
@@ -407,6 +412,7 @@ func (bfo *baseFunctionOperator) jobSpec(
 		ExpectedOutputArtifactTypes: expectedOutputTypes,
 		OperatorType:                bfo.Type(),
 		CheckSeverity:               checkSeverity,
+		ExecEnv:                     bfo.execEnv,
 		Resources:                   bfo.dbOperator.Spec.Resources(),
 	}
 }

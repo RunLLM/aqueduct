@@ -4,4 +4,4 @@ package models
 // This is the source of truth for the required schema version
 // for both the server and executor. This value MUST be updated
 // when a new schema change is added.
-const SchemaVersion = 19
+const SchemaVersion = 22

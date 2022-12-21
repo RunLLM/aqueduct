@@ -20,14 +20,14 @@ import yaml
 from packaging.version import parse as parse_version
 from tqdm import tqdm
 
-SCHEMA_VERSION = "20"
+SCHEMA_VERSION = "22"
 CHUNK_SIZE = 4096
 
 base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
 server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = os.path.join(os.environ["HOME"], ".aqueduct", "ui")
 
-package_version = "0.1.4"
+package_version = "0.1.8"
 aws_credentials_path = os.path.join(os.environ["HOME"], ".aws", "credentials")
 
 default_server_port = 8080
@@ -45,6 +45,8 @@ Your API Key: %s
 The Web UI and the backend server (v%s) are accessible at: http://%s:%d/login?apiKey=%s
 ***************************************************
 """
+
+conda_cmd_prefix = "conda"
 
 
 def update_config_yaml(file):
@@ -100,6 +102,49 @@ def update_executable_permissions():
     os.chmod(os.path.join(server_directory, "bin", "server"), 0o755)
     os.chmod(os.path.join(server_directory, "bin", "executor"), 0o755)
     os.chmod(os.path.join(server_directory, "bin", "migrator"), 0o755)
+
+
+def is_tool(name):
+    """Check whether `name` is on PATH and marked as executable."""
+    # from whichcraft import which
+    from shutil import which
+    return which(name) is not None
+
+
+# Retrive all conda environments. This does not need to be 100% accurate
+# as we only care about aqueduct-internal ones.
+#
+# It runs `conda env list` under the hood, and we ignore any error
+# when running the command.
+def get_conda_environments():
+    cmd_result = subprocess.run([conda_cmd_prefix, 'env', 'list'], stdout=subprocess.PIPE)
+    if cmd_result.returncode == 0:
+        results = set()
+        for line in cmd_result.stdout.decode().split("\n"):
+            # skip helper message lines like `# conda environments:`
+            if not line.startswith('#'):
+                results.add(line.split(' ')[0])
+        return results
+    # we ignore none-zero exit code and assuming it's due to the command not available.
+    return set()
+
+
+def update_base_conda_environments():
+    conda_envs = get_conda_environments()
+    for py_version in ["3.7", "3.8", "3.9", "3.10"]:
+        env_name = f"aqueduct_python{py_version}"
+        if env_name in conda_envs:
+            print(f"Updating conda environment {env_name}")
+            execute_command([
+                conda_cmd_prefix,
+                "run",
+                "-n",
+                env_name,
+                "pip3",
+                "install",
+                "-q", # hide most pip outputs, which is noisy
+                f"aqueduct-ml=={package_version}",
+            ])
 
 
 def _download_file(s3_url, f, prefix=None):
@@ -282,6 +327,8 @@ def update():
     if require_update(server_version_file):
         try:
             update_server_version()
+            if is_tool(conda_cmd_prefix):
+                update_base_conda_environments()
         except Exception as e:
             print(e)
             if os.path.isfile(server_version_file):

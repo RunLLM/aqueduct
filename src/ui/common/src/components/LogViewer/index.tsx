@@ -55,7 +55,7 @@ const LogViewer: React.FC<Props> = ({ logs, err }) => {
           <Box
             sx={{ backgroundColor: 'gray.100', p: 2, height: 'fit-content' }}
           >
-            <pre style={{ margin: '0px' }}>logs.stdout</pre>
+            <pre style={{ margin: '0px' }}>{logs.stdout}</pre>
           </Box>
         ) : (
           emptyElement
@@ -67,7 +67,7 @@ const LogViewer: React.FC<Props> = ({ logs, err }) => {
           <Box
             sx={{ backgroundColor: 'gray.100', p: 2, height: 'fit-content' }}
           >
-            <pre style={{ margin: '0px' }}>logs.stderr</pre>
+            <pre style={{ margin: '0px' }}>{logs.stderr}</pre>
           </Box>
         ) : (
           emptyElement

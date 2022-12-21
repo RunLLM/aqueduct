@@ -3,10 +3,12 @@ package artifact
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -20,7 +22,7 @@ import (
 type Artifact interface {
 	ID() uuid.UUID
 	Signature() uuid.UUID
-	Type() artifact.Type
+	Type() mdl_shared.ArtifactType
 	Name() string
 
 	// InitializeResult initializes the artifact in the database.
@@ -61,13 +63,13 @@ type ArtifactImpl struct {
 
 	name         string
 	description  string
-	artifactType artifact.Type
+	artifactType mdl_shared.ArtifactType
 
 	execPaths *utils.ExecPaths
 
-	writer       artifact.Writer
-	resultWriter artifact_result.Writer
-	resultID     uuid.UUID
+	repo       repos.Artifact
+	resultRepo repos.ArtifactResult
+	resultID   uuid.UUID
 
 	// If this is not nil, this artifact should be written to the cache.
 	// An artifact cannot be both cache-aware and persisted.
@@ -80,10 +82,10 @@ type ArtifactImpl struct {
 
 func NewArtifact(
 	signature uuid.UUID,
-	dbArtifact artifact.DBArtifact,
+	dbArtifact models.Artifact,
 	execPaths *utils.ExecPaths,
-	artifactWriter artifact.Writer,
-	artifactResultWriter artifact_result.Writer,
+	artifactRepo repos.Artifact,
+	artifactResultRepo repos.ArtifactResult,
 	storageConfig *shared.StorageConfig,
 	previewCacheManager preview_cache.CacheManager,
 	db database.Database,
@@ -93,14 +95,14 @@ func NewArtifact(
 	}
 
 	return &ArtifactImpl{
-		id:                  dbArtifact.Id,
+		id:                  dbArtifact.ID,
 		signature:           signature,
 		name:                dbArtifact.Name,
 		description:         dbArtifact.Description,
 		artifactType:        dbArtifact.Type,
 		execPaths:           execPaths,
-		writer:              artifactWriter,
-		resultWriter:        artifactResultWriter,
+		repo:                artifactRepo,
+		resultRepo:          artifactResultRepo,
 		resultID:            uuid.Nil,
 		previewCacheManager: previewCacheManager,
 		resultsPersisted:    false,
@@ -117,7 +119,7 @@ func (a *ArtifactImpl) Signature() uuid.UUID {
 	return a.signature
 }
 
-func (a *ArtifactImpl) Type() artifact.Type {
+func (a *ArtifactImpl) Type() mdl_shared.ArtifactType {
 	return a.artifactType
 }
 
@@ -136,11 +138,11 @@ func (a *ArtifactImpl) Computed(ctx context.Context) bool {
 }
 
 func (a *ArtifactImpl) InitializeResult(ctx context.Context, dagResultID uuid.UUID) error {
-	if a.resultWriter == nil {
+	if a.resultRepo == nil {
 		return errors.New("Artifact's result writer cannot be nil.")
 	}
 
-	artifactResult, err := a.resultWriter.CreateArtifactResult(
+	artifactResult, err := a.resultRepo.Create(
 		ctx,
 		dagResultID,
 		a.ID(),
@@ -151,7 +153,7 @@ func (a *ArtifactImpl) InitializeResult(ctx context.Context, dagResultID uuid.UU
 		return errors.Wrap(err, "Failed to create artifact result record.")
 	}
 
-	a.resultID = artifactResult.Id
+	a.resultID = artifactResult.ID
 	return nil
 }
 
@@ -160,9 +162,9 @@ func (a *ArtifactImpl) updateArtifactResultAfterComputation(
 	execState *shared.ExecutionState,
 ) {
 	changes := map[string]interface{}{
-		artifact_result.StatusColumn:    execState.Status,
-		artifact_result.ExecStateColumn: execState,
-		artifact_result.MetadataColumn:  nil,
+		models.ArtifactResultStatus:    execState.Status,
+		models.ArtifactResultExecState: execState,
+		models.ArtifactResultMetadata:  nil,
 	}
 
 	if a.Computed(ctx) {
@@ -177,10 +179,10 @@ func (a *ArtifactImpl) updateArtifactResultAfterComputation(
 			log.Errorf("Unable to read artifact result metadata from storage and unmarshal: %v", err)
 			return
 		}
-		changes[artifact_result.MetadataColumn] = &artifactResultMetadata
+		changes[models.ArtifactResultMetadata] = &artifactResultMetadata
 	}
 
-	_, err := a.resultWriter.UpdateArtifactResult(
+	_, err := a.resultRepo.Update(
 		ctx,
 		a.resultID,
 		changes,
@@ -201,7 +203,7 @@ func (a *ArtifactImpl) updateArtifactResultAfterComputation(
 func (a *ArtifactImpl) updateArtifactTypeAfterComputation(
 	ctx context.Context,
 ) {
-	if a.artifactType != artifact.Untyped {
+	if a.artifactType != mdl_shared.UntypedArtifact {
 		return
 	}
 
@@ -216,10 +218,10 @@ func (a *ArtifactImpl) updateArtifactTypeAfterComputation(
 	}
 
 	changes := map[string]interface{}{
-		artifact.TypeColumn: metadata.ArtifactType,
+		models.ArtifactType: mdl_shared.ArtifactType(metadata.ArtifactType),
 	}
 
-	_, err = a.writer.UpdateArtifact(ctx, a.ID(), changes, a.db)
+	_, err = a.repo.Update(ctx, a.ID(), changes, a.db)
 	if err != nil {
 		log.WithFields(
 			log.Fields{

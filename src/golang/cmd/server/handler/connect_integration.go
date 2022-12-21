@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -15,17 +14,17 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	postgres_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
+	col_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -38,8 +37,6 @@ const (
 	pollAuthenticateInterval = 500 * time.Millisecond
 	pollAuthenticateTimeout  = 2 * time.Minute
 )
-
-var ErrNoIntegrationName = errors.New("Integration name is not provided")
 
 // Route: /integration/connect
 // Method: POST
@@ -59,13 +56,11 @@ type ConnectIntegrationHandler struct {
 	Vault      vault.Vault
 	JobManager job.JobManager
 
-	WorkflowDagReader    workflow_dag.Reader
-	ArtifactReader       artifact.Reader
-	ArtifactResultReader artifact_result.Reader
-	OperatorReader       operator.Reader
-	IntegrationReader    integration.Reader
-	WorkflowDagWriter    workflow_dag.Writer
-	IntegrationWriter    integration.Writer
+	ArtifactRepo       repos.Artifact
+	ArtifactResultRepo repos.ArtifactResult
+	DAGRepo            repos.DAG
+	IntegrationRepo    repos.Integration
+	OperatorRepo       repos.Operator
 
 	PauseServer   func()
 	RestartServer func()
@@ -111,7 +106,7 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 	}
 
 	if name == "" {
-		return nil, http.StatusBadRequest, ErrNoIntegrationName
+		return nil, http.StatusBadRequest, errors.New("Integration name is not provided")
 	}
 
 	if service == integration.Github || service == integration.GoogleSheets {
@@ -141,10 +136,21 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 
 	emptyResp := ConnectIntegrationResponse{}
 
-	// Validate integration config
-	statusCode, err := ValidateConfig(
+	statusCode, err := ValidatePrerequisites(
 		ctx,
-		args.RequestId,
+		args.Service,
+		args.ID,
+		h.IntegrationRepo,
+		h.Database,
+	)
+	if err != nil {
+		return emptyResp, statusCode, err
+	}
+
+	// Validate integration config
+	statusCode, err = ValidateConfig(
+		ctx,
+		args.RequestID,
 		args.Config,
 		args.Service,
 		h.JobManager,
@@ -160,7 +166,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	if statusCode, err := ConnectIntegration(ctx, args, h.IntegrationWriter, txn, h.Vault); err != nil {
+	if statusCode, err := ConnectIntegration(ctx, args, h.IntegrationRepo, txn, h.Vault); err != nil {
 		return emptyResp, statusCode, err
 	}
 
@@ -197,13 +203,12 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 				context.Background(),
 				args.Service,
 				args.Config,
-				args.OrganizationId,
-				h.WorkflowDagReader,
-				h.WorkflowDagWriter,
-				h.ArtifactReader,
-				h.ArtifactResultReader,
-				h.OperatorReader,
-				h.IntegrationReader,
+				args.OrgID,
+				h.DAGRepo,
+				h.ArtifactRepo,
+				h.ArtifactResultRepo,
+				h.OperatorRepo,
+				h.IntegrationRepo,
 				h.Database,
 			); err != nil {
 				log.Errorf("Unexpected error when setting the new storage layer: %v", err)
@@ -219,36 +224,36 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 func ConnectIntegration(
 	ctx context.Context,
 	args *ConnectIntegrationArgs,
-	integrationWriter integration.Writer,
-	db database.Database,
+	integrationRepo repos.Integration,
+	DB database.Database,
 	vaultObject vault.Vault,
 ) (int, error) {
 	// Extract non-confidential config
 	publicConfig := args.Config.PublicConfig()
 
-	var integrationObject *integration.Integration
+	var integrationObject *models.Integration
 	var err error
 	if args.UserOnly {
 		// This is a user-specific integration
-		integrationObject, err = integrationWriter.CreateIntegrationForUser(
+		integrationObject, err = integrationRepo.CreateForUser(
 			ctx,
-			args.OrganizationId,
-			args.Id,
+			args.OrgID,
+			args.ID,
 			args.Service,
 			args.Name,
-			(*postgres_utils.Config)(&publicConfig),
+			(*col_utils.Config)(&publicConfig),
 			true,
-			db,
+			DB,
 		)
 	} else {
-		integrationObject, err = integrationWriter.CreateIntegration(
+		integrationObject, err = integrationRepo.Create(
 			ctx,
-			args.OrganizationId,
+			args.OrgID,
 			args.Service,
 			args.Name,
-			(*postgres_utils.Config)(&publicConfig),
+			(*col_utils.Config)(&publicConfig),
 			true,
-			db,
+			DB,
 		)
 	}
 	if err != nil {
@@ -258,11 +263,28 @@ func ConnectIntegration(
 	// Store config (including confidential information) in vault
 	if err := auth.WriteConfigToSecret(
 		ctx,
-		integrationObject.Id,
+		integrationObject.ID,
 		args.Config,
 		vaultObject,
 	); err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+	}
+
+	if args.Service == integration.Conda {
+		go func() {
+			DB, err = database.NewDatabase(DB.Config())
+			if err != nil {
+				log.Errorf("Error creating DB in go routine: %v", err)
+				return
+			}
+
+			exec_env.InitializeConda(
+				context.Background(),
+				integrationObject.ID,
+				integrationRepo,
+				DB,
+			)
+		}()
 	}
 
 	return http.StatusOK, nil
@@ -406,12 +428,11 @@ func setIntegrationAsStorage(
 	svc integration.Service,
 	conf auth.Config,
 	orgID string,
-	dagReader workflow_dag.Reader,
-	dagWriter workflow_dag.Writer,
-	artifactReader artifact.Reader,
-	artifactResultReader artifact_result.Reader,
-	operatorReader operator.Reader,
-	integrationReader integration.Reader,
+	dagRepo repos.DAG,
+	artifactRepo repos.Artifact,
+	artifactResultRepo repos.ArtifactResult,
+	operatorRepo repos.Operator,
+	integrationRepo repos.Integration,
 	db database.Database,
 ) error {
 	data, err := conf.Marshal()
@@ -451,12 +472,11 @@ func setIntegrationAsStorage(
 		&currentStorageConfig,
 		storageConfig,
 		orgID,
-		dagReader,
-		dagWriter,
-		artifactReader,
-		artifactResultReader,
-		operatorReader,
-		integrationReader,
+		dagRepo,
+		artifactRepo,
+		artifactResultRepo,
+		operatorRepo,
+		integrationRepo,
 		db,
 	); err != nil {
 		return err
@@ -573,9 +593,47 @@ func validateLambdaConfig(
 	return http.StatusOK, nil
 }
 
+// ValidatePrerequisites is currently only relevant to conda integration, but we can extend this to
+// validate other integrations in the future.
+func ValidatePrerequisites(
+	ctx context.Context,
+	svc integration.Service,
+	userID uuid.UUID,
+	integrationRepo repos.Integration,
+	db database.Database,
+) (int, error) {
+	if svc == integration.Conda {
+		condaIntegration, err := exec_env.GetCondaIntegration(
+			ctx, userID, integrationRepo, db,
+		)
+		if err != nil {
+			return http.StatusInternalServerError, errors.Wrap(err, "Unable to verify if conda is connected.")
+		}
+
+		if condaIntegration != nil {
+			return http.StatusBadRequest, errors.Newf(
+				"You already have conda integration %s connected.",
+				condaIntegration.Name,
+			)
+		}
+
+		if err = exec_env.ValidateCondaDevelop(); err != nil {
+			return http.StatusBadRequest, errors.Wrap(
+				err,
+				"You don't seem to have `conda develop` available. We use this to help set up conda environments. Please install the dependency before connecting Aqueduct to Conda. Typically, this can be done by running `conda install conda-build`.",
+			)
+		}
+
+		return http.StatusOK, nil
+	}
+
+	return http.StatusOK, nil
+}
+
 func validateConda() (int, error) {
 	errMsg := "Unable to validate conda installation. Do you have conda installed?"
-	if err := exec.Command("conda", "--version").Run(); err != nil {
+	_, _, err := lib_utils.RunCmd(exec_env.CondaCmdPrefix, "--version")
+	if err != nil {
 		return http.StatusBadRequest, errors.Wrap(err, errMsg)
 	}
 

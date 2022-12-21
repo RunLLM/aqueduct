@@ -5,9 +5,11 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	postgres_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -24,8 +26,9 @@ import (
 type ListIntegrationsHandler struct {
 	GetHandler
 
-	Database          database.Database
-	IntegrationReader integration.Reader
+	Database database.Database
+
+	IntegrationRepo repos.Integration
 }
 
 type listIntegrationsArgs struct {
@@ -35,12 +38,12 @@ type listIntegrationsArgs struct {
 type listIntegrationsResponse []integrationResponse
 
 type integrationResponse struct {
-	Id        uuid.UUID             `json:"id"`
-	Service   integration.Service   `json:"service"`
-	Name      string                `json:"name"`
-	Config    postgres_utils.Config `json:"config"`
-	CreatedAt int64                 `json:"createdAt"`
-	Validated bool                  `json:"validated"`
+	ID        uuid.UUID           `json:"id"`
+	Service   integration.Service `json:"service"`
+	Name      string              `json:"name"`
+	Config    utils.Config        `json:"config"`
+	CreatedAt int64               `json:"createdAt"`
+	Validated bool                `json:"validated"`
 }
 
 func (*ListIntegrationsHandler) Name() string {
@@ -63,10 +66,10 @@ func (h *ListIntegrationsHandler) Perform(ctx context.Context, interfaceArgs int
 
 	emptyResponse := listIntegrationsResponse{}
 
-	integrations, err := h.IntegrationReader.GetIntegrationsByUser(
+	integrations, err := h.IntegrationRepo.GetByUser(
 		ctx,
-		args.OrganizationId,
-		args.Id,
+		args.OrgID,
+		args.ID,
 		h.Database,
 	)
 	if err != nil {
@@ -83,9 +86,9 @@ func (h *ListIntegrationsHandler) Perform(ctx context.Context, interfaceArgs int
 }
 
 // Helper function to convert an Integration object into an integrationResponse
-func convertIntegrationObjectToResponse(integrationObject *integration.Integration) *integrationResponse {
+func convertIntegrationObjectToResponse(integrationObject *models.Integration) *integrationResponse {
 	return &integrationResponse{
-		Id:        integrationObject.Id,
+		ID:        integrationObject.ID,
 		Service:   integrationObject.Service,
 		Name:      integrationObject.Name,
 		Config:    integrationObject.Config,

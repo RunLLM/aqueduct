@@ -26,6 +26,7 @@ import {
   handleGetOperatorResults,
   handleGetSelectDagPosition,
   handleGetWorkflow,
+  resetState,
   selectResultIdx,
 } from '../../../../reducers/workflow';
 import { AppDispatch, RootState } from '../../../../stores/store';
@@ -69,7 +70,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const dispatch: AppDispatch = useDispatch();
   const workflowId = useParams().id;
   const urlSearchParams = parse(window.location.search);
-  const path = useLocation().pathname;
+  const location = useLocation();
+  const path = location.pathname;
 
   const currentNode = useSelector(
     (state: RootState) => state.nodeSelectionReducer.selected
@@ -80,11 +82,25 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     (state: RootState) => state.workflowReducer.artifactResults[currentNode.id]
   );
 
+  const dagName = workflow.selectedDag?.metadata?.name;
+
   useEffect(() => {
     if (workflow.selectedDag !== undefined) {
-      document.title = `${workflow.selectedDag.metadata.name} | Aqueduct`;
+      document.title = `${dagName} | Aqueduct`;
     }
-  }, [workflow.selectedDag]);
+  }, [workflow.selectedDag, dagName]);
+
+  const resetWorkflowState = useCallback(() => {
+    dispatch(resetState());
+  }, [dispatch]);
+
+  useEffect(() => {
+    window.onpopstate = () => {
+      resetWorkflowState();
+    };
+
+    resetWorkflowState();
+  }, [resetWorkflowState]);
 
   useEffect(() => {
     if (
@@ -114,6 +130,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       }
       if (workflowDagResultId !== workflow.selectedResult.id) {
         dispatch(setAllSideSheetState(false));
+        // this is where selectedDag gets set
         dispatch(selectResultIdx(workflowDagResultIndex));
       }
     }
@@ -427,9 +444,15 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       breadcrumbs={[
         BreadcrumbLink.HOME,
         BreadcrumbLink.WORKFLOWS,
-        new BreadcrumbLink(path, workflow.selectedDag.metadata.name),
+        new BreadcrumbLink(path, dagName),
       ]}
       user={user}
+      onBreadCrumbClicked={() => {
+        resetWorkflowState();
+      }}
+      onSidebarItemClicked={() => {
+        resetWorkflowState();
+      }}
     >
       <Box
         sx={{

@@ -6,7 +6,6 @@ import (
 	"encoding/gob"
 	"encoding/json"
 
-	db_artifact "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
@@ -14,16 +13,15 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 
-var (
-	ErrInvalidJobSpec           = errors.New("Invalid job spec.")
-	ErrInvalidSerializationType = errors.New("Invalid serialization type.")
-)
+var ErrInvalidJobSpec = errors.New("Invalid job spec.")
 
 type JobType string
 
@@ -143,16 +141,22 @@ type FunctionSpec struct {
 	OperatorType                operator.Type            `json:"operator_type" yaml:"operator_type"`
 	Resources                   *operator.ResourceConfig `json:"resources" yaml:"resources"`
 
+	// We use this field as an indication of whether we should switch to certain environment before
+	// running a function.
+	// This field is not used by the Python side, so we use - to omit it during JSON serialization.
+	// Otherwise, Pydantic will complain about this extra field. It's good for performance reason as well.
+	ExecEnv *exec_env.ExecutionEnvironment `json:"-" yaml:"-"`
+
 	// Specific to the check operator. This is left unset by any other function type.
 	CheckSeverity *check.Level `json:"check_severity" yaml:"check_severity"`
 }
 
 type ParamSpec struct {
 	BasePythonSpec
-	ExpectedType       db_artifact.Type `json:"expected_type" yaml:"expected_type"`
-	SerializationType  string           `json:"serialization_type" yaml:"serialization_type"`
-	OutputContentPath  string           `json:"output_content_path"  yaml:"output_content_path"`
-	OutputMetadataPath string           `json:"output_metadata_path"  yaml:"output_metadata_path"`
+	ExpectedType       mdl_shared.ArtifactType `json:"expected_type" yaml:"expected_type"`
+	SerializationType  string                  `json:"serialization_type" yaml:"serialization_type"`
+	OutputContentPath  string                  `json:"output_content_path"  yaml:"output_content_path"`
+	OutputMetadataPath string                  `json:"output_metadata_path"  yaml:"output_metadata_path"`
 }
 
 type SystemMetricSpec struct {
@@ -540,7 +544,7 @@ func EncodeSpec(spec Spec, serializationType SerializationType) (string, error) 
 		return base64.StdEncoding.EncodeToString(buf.Bytes()), nil
 	}
 
-	return "", ErrInvalidSerializationType
+	return "", errors.Newf("Unsupported serialization type %s.", serializationType)
 }
 
 func DecodeSpec(specData string, serializationType SerializationType) (Spec, error) {
@@ -592,5 +596,5 @@ func DecodeSpec(specData string, serializationType SerializationType) (Spec, err
 		return spec, nil
 	}
 
-	return nil, ErrInvalidSerializationType
+	return nil, errors.Newf("Unsupported serialization type %s.", serializationType)
 }

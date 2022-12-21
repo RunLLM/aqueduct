@@ -2,14 +2,13 @@ import pytest
 from aqueduct.error import InvalidIntegrationException, InvalidUserArgumentException
 from constants import SENTIMENT_SQL_QUERY
 from test_functions.simple.model import dummy_sentiment_model
-from utils import generate_table_name, run_flow_test
+from utils import publish_flow_test, save
 
-from aqueduct import LoadUpdateMode, metric
+from aqueduct import metric
 
 
 def test_sql_integration_load_table(client, data_integration):
-    db = client.integration(data_integration)
-    df = db.table(name="hotel_reviews")
+    df = data_integration.table(name="hotel_reviews")
     assert len(df) == 100
     assert list(df) == [
         "hotel_name",
@@ -25,45 +24,41 @@ def test_invalid_source_integration(client):
 
 
 def test_invalid_destination_integration(client, data_integration):
-    db = client.integration(data_integration)
-    sql_artifact = db.sql(query=SENTIMENT_SQL_QUERY)
+    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
     output_artifact = dummy_sentiment_model(sql_artifact)
 
     with pytest.raises(InvalidIntegrationException):
-        db._metadata.name = "bad name"
-        output_artifact.save(
-            config=db.config(table=generate_table_name(), update_mode=LoadUpdateMode.REPLACE)
-        )
+        data_integration._metadata.name = "bad name"
+        save(data_integration, output_artifact)
 
 
 def test_sql_today_tag(client, data_integration):
-    db = client.integration(data_integration)
-    sql_artifact_today = db.sql(query="select * from hotel_reviews where review_date = {{today}}")
+    sql_artifact_today = data_integration.sql(
+        query="select * from hotel_reviews where review_date = {{today}}"
+    )
     assert sql_artifact_today.get().empty
-    sql_artifact_not_today = db.sql(
+    sql_artifact_not_today = data_integration.sql(
         query="select * from hotel_reviews where review_date < {{today}}"
     )
     assert len(sql_artifact_not_today.get()) == 100
 
 
 def test_sql_query_with_parameter(client, data_integration):
-    db = client.integration(data_integration)
-
     # Missing parameters.
     with pytest.raises(InvalidUserArgumentException):
-        _ = db.sql(query="select * from {{missing_parameter}}")
+        _ = data_integration.sql(query="select * from {{missing_parameter}}")
 
     # The parameter is not a string type.
     _ = client.create_param("table_name", default=1234)
     with pytest.raises(InvalidUserArgumentException):
-        _ = db.sql(query="select * from {{ table_name }}")
+        _ = data_integration.sql(query="select * from {{ table_name }}")
 
     client.create_param("table_name", default="hotel_reviews")
-    sql_artifact = db.sql(query="select * from {{ table_name }}")
+    sql_artifact = data_integration.sql(query="select * from {{ table_name }}")
 
-    expected_sql_artifact = db.sql(query="select * from hotel_reviews")
+    expected_sql_artifact = data_integration.sql(query="select * from hotel_reviews")
     assert sql_artifact.get().equals(expected_sql_artifact.get())
-    expected_sql_artifact = db.sql(query="select * from customer_activity")
+    expected_sql_artifact = data_integration.sql(query="select * from customer_activity")
     assert sql_artifact.get(parameters={"table_name": "customer_activity"}).equals(
         expected_sql_artifact.get()
     )
@@ -75,21 +70,19 @@ def test_sql_query_with_parameter(client, data_integration):
         _ = sql_artifact.get(parameters={"non-existant parameter": "blah"})
 
 
-def test_sql_query_with_multiple_parameters(client, data_integration, engine):
-    db = client.integration(data_integration)
-
+def test_sql_query_with_multiple_parameters(client, flow_name, data_integration, engine):
     _ = client.create_param("table_name", default="hotel_reviews")
     nationality = client.create_param(
         "reviewer-nationality", default="United Kingdom"
     )  # check that dashes work.
-    sql_artifact = db.sql(
+    sql_artifact = data_integration.sql(
         query="select * from {{ table_name }} where reviewer_nationality='{{ reviewer-nationality }}' and review_date < {{ today}}"
     )
-    expected_sql_artifact = db.sql(
+    expected_sql_artifact = data_integration.sql(
         "select * from hotel_reviews where reviewer_nationality='United Kingdom' and review_date < {{today}}"
     )
     assert sql_artifact.get().equals(expected_sql_artifact.get())
-    expected_sql_artifact = db.sql(
+    expected_sql_artifact = data_integration.sql(
         "select * from hotel_reviews where reviewer_nationality='Australia' and review_date < {{today}}"
     )
     assert sql_artifact.get(parameters={"reviewer-nationality": "Australia"}).equals(
@@ -105,23 +98,25 @@ def test_sql_query_with_multiple_parameters(client, data_integration, engine):
     assert result.get() == len(nationality.get())
     assert result.get(parameters={"reviewer-nationality": "Australia"}) == len("Australia")
 
-    run_flow_test(client, artifacts=[result], engine=engine)
+    publish_flow_test(client, name=flow_name(), artifacts=[result], engine=engine)
 
 
 def test_sql_query_user_vs_builtin_precedence(client, data_integration):
     """If a user defines an expansion that collides with a built-in one, the user-defined one should take precedence."""
-    db = client.integration(data_integration)
-
-    sql_artifact = db.sql(query="select * from hotel_reviews where review_date > {{today}}")
+    sql_artifact = data_integration.sql(
+        query="select * from hotel_reviews where review_date > {{today}}"
+    )
     builtin_result = sql_artifact.get()
 
     datestring = "'2016-01-01'"
     _ = client.create_param("today", datestring)
-    sql_artifact = db.sql(query="select * from hotel_reviews where review_date > {{today}}")
+    sql_artifact = data_integration.sql(
+        query="select * from hotel_reviews where review_date > {{today}}"
+    )
     user_param_result = sql_artifact.get()
     assert not builtin_result.equals(user_param_result)
 
-    expected_sql_artifact = db.sql(
+    expected_sql_artifact = data_integration.sql(
         query="select * from hotel_reviews where review_date > %s" % datestring
     )
     assert user_param_result.equals(expected_sql_artifact.get())

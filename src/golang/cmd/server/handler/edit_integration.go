@@ -7,22 +7,17 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	postgres_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-)
-
-var (
-	ErrNoEditPermission            = errors.New("You don't have permission to edit this integration")
-	ErrInvalidServiceType          = errors.New("Editing for this integration type is not currently supported.")
-	ErrEditDemoIntegration         = errors.New("You cannot edit demo DB credentials.")
-	ErrEditIntegrationWithDemoName = errors.New("aqueduct_demo is reserved for demo integration. Please use another name.")
 )
 
 // Route: /integration/{integrationId}/edit
@@ -41,11 +36,11 @@ var (
 type EditIntegrationHandler struct {
 	PostHandler
 
-	Database          database.Database
-	IntegrationReader integration.Reader
-	IntegrationWriter integration.Writer
-	Vault             vault.Vault
-	JobManager        job.JobManager
+	Database   database.Database
+	Vault      vault.Vault
+	JobManager job.JobManager
+
+	IntegrationRepo repos.Integration
 }
 
 var serviceToReadOnlyFields = map[integration.Service]map[string]bool{
@@ -93,7 +88,7 @@ func (*EditIntegrationHandler) Headers() []string {
 type EditIntegrationArgs struct {
 	*aq_context.AqContext
 	Name          string
-	IntegrationId uuid.UUID
+	IntegrationID uuid.UUID
 	UpdatedFields map[string]string
 }
 
@@ -154,17 +149,17 @@ func (h *EditIntegrationHandler) Prepare(r *http.Request) (interface{}, int, err
 		return nil, statusCode, errors.Wrap(err, "Unable to edit integration.")
 	}
 
-	integrationIdStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
-	integrationId, err := uuid.Parse(integrationIdStr)
+	integrationIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
+	integrationID, err := uuid.Parse(integrationIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
 	}
 
-	hasPermission, err := h.IntegrationReader.ValidateIntegrationOwnership(
+	hasPermission, err := h.IntegrationRepo.ValidateOwnership(
 		r.Context(),
-		integrationId,
-		aqContext.OrganizationId,
-		aqContext.Id,
+		integrationID,
+		aqContext.OrgID,
+		aqContext.ID,
 		h.Database,
 	)
 	if err != nil {
@@ -172,7 +167,7 @@ func (h *EditIntegrationHandler) Prepare(r *http.Request) (interface{}, int, err
 	}
 
 	if !hasPermission {
-		return nil, http.StatusForbidden, ErrNoEditPermission
+		return nil, http.StatusForbidden, errors.New("You don't have permission to edit this integration")
 	}
 
 	name, configMap, err := request.ParseIntegrationConfigFromRequest(r)
@@ -181,12 +176,12 @@ func (h *EditIntegrationHandler) Prepare(r *http.Request) (interface{}, int, err
 	}
 
 	if name == integration.DemoDbIntegrationName {
-		return nil, http.StatusBadRequest, ErrEditIntegrationWithDemoName
+		return nil, http.StatusBadRequest, errors.New("`aqueduct_demo` is reserved for demo integration. Please use another name.")
 	}
 
 	return &EditIntegrationArgs{
 		AqContext:     aqContext,
-		IntegrationId: integrationId,
+		IntegrationID: integrationID,
 		Name:          name,
 		UpdatedFields: configMap,
 	}, http.StatusOK, nil
@@ -194,11 +189,11 @@ func (h *EditIntegrationHandler) Prepare(r *http.Request) (interface{}, int, err
 
 func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*EditIntegrationArgs)
-	id := args.IntegrationId
+	ID := args.IntegrationID
 
 	emptyResp := EditIntegrationResponse{}
 
-	integrationObject, err := h.IntegrationReader.GetIntegration(ctx, id, h.Database)
+	integrationObject, err := h.IntegrationRepo.Get(ctx, ID, h.Database)
 	if err == database.ErrNoRows {
 		return emptyResp, http.StatusBadRequest, err
 	}
@@ -208,17 +203,17 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 	}
 
 	if integrationObject.Name == integration.DemoDbIntegrationName {
-		return emptyResp, http.StatusBadRequest, ErrEditDemoIntegration
+		return emptyResp, http.StatusBadRequest, errors.New("You cannot edit demo DB credentials.")
 	}
 
-	config, err := auth.ReadConfigFromSecret(ctx, id, h.Vault)
+	config, err := auth.ReadConfigFromSecret(ctx, ID, h.Vault)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve secrets")
 	}
 
 	staticConfig, ok := config.(*auth.StaticConfig)
 	if !ok {
-		return emptyResp, http.StatusInternalServerError, ErrInvalidServiceType
+		return emptyResp, http.StatusInternalServerError, errors.New("Editing for this integration type is not currently supported.")
 	}
 
 	configUpdated, status, err := updateConfig(staticConfig.Conf, integrationObject.Service, args.UpdatedFields)
@@ -232,10 +227,10 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 		if args.Name != "" && args.Name != integrationObject.Name {
 			status, err = UpdateIntegration(
 				ctx,
-				integrationObject.Id,
+				integrationObject.ID,
 				args.Name,
 				nil,
-				h.IntegrationWriter,
+				h.IntegrationRepo,
 				h.Database,
 				h.Vault,
 			)
@@ -250,7 +245,7 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 	// Validate integration config
 	statusCode, err := ValidateConfig(
 		ctx,
-		args.RequestId,
+		args.RequestID,
 		staticConfig,
 		integrationObject.Service,
 		h.JobManager,
@@ -262,10 +257,10 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 
 	if statusCode, err := UpdateIntegration(
 		ctx,
-		integrationObject.Id,
+		integrationObject.ID,
 		args.Name,
 		staticConfig,
-		h.IntegrationWriter,
+		h.IntegrationRepo,
 		h.Database,
 		h.Vault,
 	); err != nil {
@@ -280,33 +275,33 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 
 func UpdateIntegration(
 	ctx context.Context,
-	integrationId uuid.UUID,
+	integrationID uuid.UUID,
 	newName string,
 	newConfig auth.Config,
-	integrationWriter integration.Writer,
-	db database.Database,
+	integrationRepo repos.Integration,
+	DB database.Database,
 	vaultObject vault.Vault,
 ) (int, error) {
 	changedFields := make(map[string]interface{}, 2)
 	if newName != "" {
-		changedFields[integration.NameColumn] = newName
+		changedFields[models.IntegrationName] = newName
 	}
 
 	if newConfig != nil {
 		// Extract non-confidential config
 		publicConfig := newConfig.PublicConfig()
-		changedFields[integration.ConfigColumn] = (*postgres_utils.Config)(&publicConfig)
+		changedFields[models.IntegrationConfig] = (*utils.Config)(&publicConfig)
 	}
 
-	txn, err := db.BeginTx(ctx)
+	txn, err := DB.BeginTx(ctx)
 	if err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to update integration.")
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	_, err = integrationWriter.UpdateIntegration(
+	_, err = integrationRepo.Update(
 		ctx,
-		integrationId,
+		integrationID,
 		changedFields,
 		txn,
 	)
@@ -318,7 +313,7 @@ func UpdateIntegration(
 	if newConfig != nil {
 		if err := auth.WriteConfigToSecret(
 			ctx,
-			integrationId,
+			integrationID,
 			newConfig,
 			vaultObject,
 		); err != nil {

@@ -7,9 +7,9 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/execution_environment"
+	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -65,7 +65,7 @@ type Engine interface {
 	// InitEnv initialize the given environment for this engine.
 	// This typically involves time-consuming steps that we want to avoid
 	// during execution time, like creating conda or docker img.
-	InitEnv(ctx context.Context, env *execution_environment.ExecutionEnvironment) error
+	InitEnv(ctx context.Context, env *exec_env.ExecutionEnvironment) error
 }
 
 // AqEngine should be implemented by aqEngine
@@ -75,7 +75,8 @@ type AqEngine interface {
 
 	PreviewWorkflow(
 		ctx context.Context,
-		dbWorkflowDag *workflow_dag.DBWorkflowDag,
+		dbDAG *models.DAG,
+		execEnvByOperatorId map[uuid.UUID]exec_env.ExecutionEnvironment,
 		timeConfig *AqueductTimeConfig,
 	) (*WorkflowPreviewResult, error)
 }
@@ -87,6 +88,6 @@ type SelfOrchestratedEngine interface {
 
 	SyncWorkflow(
 		ctx context.Context,
-		dbWorkflowDag *workflow_dag.DBWorkflowDag,
+		dag *models.DAG,
 	)
 }

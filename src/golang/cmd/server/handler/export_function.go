@@ -12,10 +12,9 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/response"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
@@ -30,7 +29,7 @@ const (
 
 type exportFunctionArgs struct {
 	*aq_context.AqContext
-	operatorId uuid.UUID
+	operatorID uuid.UUID
 	// Whether to export only the user-friendly function code
 	userFriendly bool
 }
@@ -52,9 +51,10 @@ type exportFunctionResponse struct {
 type ExportFunctionHandler struct {
 	GetHandler
 
-	Database          database.Database
-	OperatorReader    operator.Reader
-	WorkflowDagReader workflow_dag.Reader
+	Database database.Database
+
+	DAGRepo      repos.DAG
+	OperatorRepo repos.Operator
 }
 
 func (*ExportFunctionHandler) Name() string {
@@ -73,18 +73,18 @@ func (h *ExportFunctionHandler) Prepare(r *http.Request) (interface{}, int, erro
 		return nil, statusCode, errors.Wrap(err, "Error when parsing common args.")
 	}
 
-	operatorIdStr := chi.URLParam(r, routes.OperatorIdUrlParam)
-	operatorId, err := uuid.Parse(operatorIdStr)
+	operatorIDStr := chi.URLParam(r, routes.OperatorIdUrlParam)
+	operatorID, err := uuid.Parse(operatorIDStr)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Newf("Invalid function ID %s", operatorIdStr)
+		return nil, http.StatusBadRequest, errors.Newf("Invalid function ID %s", operatorIDStr)
 	}
 
 	userFriendly := request.ParseExportUserFriendlyFromRequest(r)
 
-	ok, err := h.OperatorReader.ValidateOperatorOwnership(
+	ok, err := h.OperatorRepo.ValidateOrg(
 		r.Context(),
-		aqContext.OrganizationId,
-		operatorId,
+		operatorID,
+		aqContext.OrgID,
 		h.Database,
 	)
 	if err != nil {
@@ -96,7 +96,7 @@ func (h *ExportFunctionHandler) Prepare(r *http.Request) (interface{}, int, erro
 
 	return &exportFunctionArgs{
 		AqContext:    aqContext,
-		operatorId:   operatorId,
+		operatorID:   operatorID,
 		userFriendly: userFriendly,
 	}, http.StatusOK, nil
 }
@@ -106,7 +106,7 @@ func (h *ExportFunctionHandler) Perform(ctx context.Context, interfaceArgs inter
 
 	emptyResp := exportFunctionResponse{}
 
-	operatorObject, err := h.OperatorReader.GetOperator(ctx, args.operatorId, h.Database)
+	operatorObject, err := h.OperatorRepo.Get(ctx, args.operatorID, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to get operator from the database.")
 	}
@@ -124,19 +124,19 @@ func (h *ExportFunctionHandler) Perform(ctx context.Context, interfaceArgs inter
 	}
 
 	// Retrieve the workflow dag id to get the storage config information.
-	workflowDags, err := h.WorkflowDagReader.GetWorkflowDagsByOperatorId(ctx, operatorObject.Id, h.Database)
+	dags, err := h.DAGRepo.GetByOperator(ctx, operatorObject.ID, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while retrieving workflow dags from the database.")
 	}
 
-	if len(workflowDags) == 0 {
+	if len(dags) == 0 {
 		return emptyResp, http.StatusInternalServerError, errors.New("Could not find workflow that contains this operator.")
 	}
 
 	// Note: for now we assume all workflow dags have the same storage config.
 	// This assumption will stay true until we allow users to configure custom storage config to store stuff.
-	storageConfig := workflowDags[0].StorageConfig
-	for _, workflowDag := range workflowDags {
+	storageConfig := dags[0].StorageConfig
+	for _, workflowDag := range dags {
 		if workflowDag.StorageConfig != storageConfig {
 			return emptyResp, http.StatusInternalServerError, errors.New("Workflow Dags have mismatching storage config.")
 		}

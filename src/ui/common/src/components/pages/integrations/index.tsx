@@ -6,7 +6,10 @@ import { useLocation } from 'react-router-dom';
 
 import { BreadcrumbLink } from '../../../components/layouts/NavBar';
 import UserProfile from '../../../utils/auth';
-import { SupportedIntegrations } from '../../../utils/integrations';
+import {
+  IntegrationCategories,
+  SupportedIntegrations,
+} from '../../../utils/integrations';
 import { LoadingStatus, LoadingStatusEnum } from '../../../utils/shared';
 import AddIntegrations from '../../integrations/addIntegrations';
 import { ConnectedIntegrations } from '../../integrations/connectedIntegrations';
@@ -69,7 +72,7 @@ const IntegrationsPage: React.FC<Props> = ({
           </Typography>
           <AddIntegrations
             user={user}
-            category="data"
+            category={IntegrationCategories.DATA}
             supportedIntegrations={SupportedIntegrations}
           />
           <Typography variant="h6" marginY={2}>
@@ -77,7 +80,7 @@ const IntegrationsPage: React.FC<Props> = ({
           </Typography>
           <AddIntegrations
             user={user}
-            category="compute"
+            category={IntegrationCategories.COMPUTE}
             supportedIntegrations={SupportedIntegrations}
           />
         </Box>

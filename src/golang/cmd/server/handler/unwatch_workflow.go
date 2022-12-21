@@ -6,10 +6,9 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/response"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -32,9 +31,10 @@ type unwatchWorkflowArgs struct {
 type UnwatchWorkflowHandler struct {
 	PostHandler
 
-	Database              database.Database
-	WorkflowReader        workflow.Reader
-	WorkflowWatcherWriter workflow_watcher.Writer
+	Database database.Database
+
+	WatcherRepo  repos.Watcher
+	WorkflowRepo repos.Workflow
 }
 
 func (*UnwatchWorkflowHandler) Name() string {
@@ -53,10 +53,10 @@ func (h *UnwatchWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
 	}
 
-	ok, err := h.WorkflowReader.ValidateWorkflowOwnership(
+	ok, err := h.WorkflowRepo.ValidateOrg(
 		r.Context(),
 		workflowId,
-		aqContext.OrganizationId,
+		aqContext.OrgID,
 		h.Database,
 	)
 	if err != nil {
@@ -77,7 +77,7 @@ func (h *UnwatchWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 
 	response := response.EmptyResponse{}
 
-	err := h.WorkflowWatcherWriter.DeleteWorkflowWatcher(ctx, args.workflowId, args.Id, h.Database)
+	err := h.WatcherRepo.Delete(ctx, args.workflowId, args.ID, h.Database)
 	if err != nil {
 		return response, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while updating the database.")
 	}

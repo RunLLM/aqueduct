@@ -1,248 +1,74 @@
 package server
 
 import (
-	"github.com/aqueducthq/aqueduct/cmd/server/queries"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/notification"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/schema_version"
-	"github.com/aqueducthq/aqueduct/lib/collections/user"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_watcher"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/repos/sqlite"
 )
 
-type Readers struct {
-	UserReader              user.Reader
-	IntegrationReader       integration.Reader
-	NotificationReader      notification.Reader
-	ArtifactReader          artifact.Reader
-	ArtifactResultReader    artifact_result.Reader
-	OperatorReader          operator.Reader
-	OperatorResultReader    operator_result.Reader
-	WorkflowReader          workflow.Reader
-	WorkflowDagReader       workflow_dag.Reader
-	WorkflowDagEdgeReader   workflow_dag_edge.Reader
-	WorkflowWatcherReader   workflow_watcher.Reader
-	WorkflowDagResultReader workflow_dag_result.Reader
-	SchemaVersionReader     schema_version.Reader
-	CustomReader            queries.Reader
+type Repos struct {
+	ArtifactRepo             repos.Artifact
+	ArtifactResultRepo       repos.ArtifactResult
+	DAGRepo                  repos.DAG
+	DAGEdgeRepo              repos.DAGEdge
+	DAGResultRepo            repos.DAGResult
+	ExecutionEnvironmentRepo repos.ExecutionEnvironment
+	IntegrationRepo          repos.Integration
+	NotificationRepo         repos.Notification
+	OperatorRepo             repos.Operator
+	OperatorResultRepo       repos.OperatorResult
+	UserRepo                 repos.User
+	WatcherRepo              repos.Watcher
+	WorkflowRepo             repos.Workflow
 }
 
-type Writers struct {
-	UserWriter              user.Writer
-	IntegrationWriter       integration.Writer
-	NotificationWriter      notification.Writer
-	ArtifactWriter          artifact.Writer
-	ArtifactResultWriter    artifact_result.Writer
-	OperatorWriter          operator.Writer
-	OperatorResultWriter    operator_result.Writer
-	WorkflowWriter          workflow.Writer
-	WorkflowDagWriter       workflow_dag.Writer
-	WorkflowDagEdgeWriter   workflow_dag_edge.Writer
-	WorkflowWatcherWriter   workflow_watcher.Writer
-	WorkflowDagResultWriter workflow_dag_result.Writer
+type Readers struct {
+	SchemaVersionReader schema_version.Reader
+}
+
+func CreateRepos() *Repos {
+	return &Repos{
+		ArtifactRepo:             sqlite.NewArtifactRepo(),
+		ArtifactResultRepo:       sqlite.NewArtifactResultRepo(),
+		DAGRepo:                  sqlite.NewDAGRepo(),
+		DAGEdgeRepo:              sqlite.NewDAGEdgeRepo(),
+		DAGResultRepo:            sqlite.NewDAGResultRepo(),
+		ExecutionEnvironmentRepo: sqlite.NewExecutionEnvironmentRepo(),
+		IntegrationRepo:          sqlite.NewIntegrationRepo(),
+		NotificationRepo:         sqlite.NewNotificationRepo(),
+		OperatorRepo:             sqlite.NewOperatorRepo(),
+		OperatorResultRepo:       sqlite.NewOperatorResultRepo(),
+		UserRepo:                 sqlite.NewUserRepo(),
+		WatcherRepo:              sqlite.NewWatcherRepo(),
+		WorkflowRepo:             sqlite.NewWorklowRepo(),
+	}
 }
 
 func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
-	userReader, err := user.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	integrationReader, err := integration.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	notificationReader, err := notification.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	artifactReader, err := artifact.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	artifactResultReader, err := artifact_result.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	operatorReader, err := operator.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	operatorResultReader, err := operator_result.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	workflowReader, err := workflow.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	workflowDagReader, err := workflow_dag.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	workflowDagEdgeReader, err := workflow_dag_edge.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	workflowWatcherReader, err := workflow_watcher.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	workflowDagResultReader, err := workflow_dag_result.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	schemaVersionReader, err := schema_version.NewReader(dbConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	queriesReader, err := queries.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
 	return &Readers{
-		UserReader:              userReader,
-		IntegrationReader:       integrationReader,
-		NotificationReader:      notificationReader,
-		ArtifactReader:          artifactReader,
-		ArtifactResultReader:    artifactResultReader,
-		OperatorReader:          operatorReader,
-		OperatorResultReader:    operatorResultReader,
-		WorkflowReader:          workflowReader,
-		WorkflowDagReader:       workflowDagReader,
-		WorkflowDagEdgeReader:   workflowDagEdgeReader,
-		WorkflowWatcherReader:   workflowWatcherReader,
-		WorkflowDagResultReader: workflowDagResultReader,
-		SchemaVersionReader:     schemaVersionReader,
-		CustomReader:            queriesReader,
+		SchemaVersionReader: schemaVersionReader,
 	}, nil
 }
 
-func CreateWriters(dbConfig *database.DatabaseConfig) (*Writers, error) {
-	userWriter, err := user.NewWriter(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	integrationWriter, err := integration.NewWriter(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	notificationWriter, err := notification.NewWriter(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	artifactWriter, err := artifact.NewWriter(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	artifactResultWriter, err := artifact_result.NewWriter(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	operatorWriter, err := operator.NewWriter(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	operatorResultWriter, err := operator_result.NewWriter(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	workflowWriter, err := workflow.NewWriter(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	workflowDagWriter, err := workflow_dag.NewWriter(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	workflowDagEdgeWriter, err := workflow_dag_edge.NewWriter(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	workflowWatcherWriter, err := workflow_watcher.NewWriter(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	workflowDagResultWriter, err := workflow_dag_result.NewWriter(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Writers{
-		UserWriter:              userWriter,
-		IntegrationWriter:       integrationWriter,
-		NotificationWriter:      notificationWriter,
-		ArtifactWriter:          artifactWriter,
-		ArtifactResultWriter:    artifactResultWriter,
-		OperatorWriter:          operatorWriter,
-		OperatorResultWriter:    operatorResultWriter,
-		WorkflowWriter:          workflowWriter,
-		WorkflowDagWriter:       workflowDagWriter,
-		WorkflowDagEdgeWriter:   workflowDagEdgeWriter,
-		WorkflowWatcherWriter:   workflowWatcherWriter,
-		WorkflowDagResultWriter: workflowDagResultWriter,
-	}, nil
-}
-
-func GetEngineReaders(readers *Readers) *engine.EngineReaders {
-	return &engine.EngineReaders{
-		WorkflowReader:          readers.WorkflowReader,
-		WorkflowDagReader:       readers.WorkflowDagReader,
-		WorkflowDagEdgeReader:   readers.WorkflowDagEdgeReader,
-		WorkflowDagResultReader: readers.WorkflowDagResultReader,
-		OperatorReader:          readers.OperatorReader,
-		OperatorResultReader:    readers.OperatorResultReader,
-		ArtifactReader:          readers.ArtifactReader,
-		ArtifactResultReader:    readers.ArtifactResultReader,
-		UserReader:              readers.UserReader,
-		IntegrationReader:       readers.IntegrationReader,
-	}
-}
-
-func GetEngineWriters(writers *Writers) *engine.EngineWriters {
-	return &engine.EngineWriters{
-		WorkflowWriter:          writers.WorkflowWriter,
-		WorkflowDagWriter:       writers.WorkflowDagWriter,
-		WorkflowDagEdgeWriter:   writers.WorkflowDagEdgeWriter,
-		WorkflowDagResultWriter: writers.WorkflowDagResultWriter,
-		WorkflowWatcherWriter:   writers.WorkflowWatcherWriter,
-		OperatorWriter:          writers.OperatorWriter,
-		OperatorResultWriter:    writers.OperatorResultWriter,
-		ArtifactWriter:          writers.ArtifactWriter,
-		ArtifactResultWriter:    writers.ArtifactResultWriter,
-		NotificationWriter:      writers.NotificationWriter,
+func GetEngineRepos(repos *Repos) *engine.Repos {
+	return &engine.Repos{
+		ArtifactRepo:             repos.ArtifactRepo,
+		ArtifactResultRepo:       repos.ArtifactResultRepo,
+		DAGRepo:                  repos.DAGRepo,
+		DAGEdgeRepo:              repos.DAGEdgeRepo,
+		DAGResultRepo:            repos.DAGResultRepo,
+		ExecutionEnvironmentRepo: repos.ExecutionEnvironmentRepo,
+		NotificationRepo:         repos.NotificationRepo,
+		OperatorRepo:             repos.OperatorRepo,
+		OperatorResultRepo:       repos.OperatorResultRepo,
+		WatcherRepo:              repos.WatcherRepo,
+		WorkflowRepo:             repos.WorkflowRepo,
 	}
 }

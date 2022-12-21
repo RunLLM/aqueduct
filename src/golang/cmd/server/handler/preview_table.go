@@ -13,6 +13,7 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/scheduler"
@@ -41,7 +42,7 @@ const (
 
 type previewTableArgs struct {
 	*aq_context.AqContext
-	integrationId uuid.UUID
+	integrationID uuid.UUID
 	tableName     string
 }
 
@@ -52,10 +53,11 @@ type previewTableResponse struct {
 type PreviewTableHandler struct {
 	GetHandler
 
-	Database          database.Database
-	IntegrationReader integration.Reader
-	JobManager        job.JobManager
-	Vault             vault.Vault
+	Database   database.Database
+	JobManager job.JobManager
+	Vault      vault.Vault
+
+	IntegrationRepo repos.Integration
 }
 
 func (*PreviewTableHandler) Name() string {
@@ -72,8 +74,8 @@ func (h *PreviewTableHandler) Prepare(r *http.Request) (interface{}, int, error)
 		return nil, statusCode, err
 	}
 
-	integrationIdStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
-	integrationId, err := uuid.Parse(integrationIdStr)
+	integrationIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
+	integrationID, err := uuid.Parse(integrationIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
 	}
@@ -83,11 +85,11 @@ func (h *PreviewTableHandler) Prepare(r *http.Request) (interface{}, int, error)
 		return nil, http.StatusBadRequest, errors.Wrap(err, "No table name specified.")
 	}
 
-	ok, err := h.IntegrationReader.ValidateIntegrationOwnership(
+	ok, err := h.IntegrationRepo.ValidateOwnership(
 		r.Context(),
-		integrationId,
-		aqContext.OrganizationId,
-		aqContext.Id,
+		integrationID,
+		aqContext.OrgID,
+		aqContext.ID,
 		h.Database,
 	)
 	if err != nil {
@@ -99,7 +101,7 @@ func (h *PreviewTableHandler) Prepare(r *http.Request) (interface{}, int, error)
 
 	return &previewTableArgs{
 		AqContext:     aqContext,
-		integrationId: integrationId,
+		integrationID: integrationID,
 		tableName:     tableName,
 	}, http.StatusOK, nil
 }
@@ -107,9 +109,9 @@ func (h *PreviewTableHandler) Prepare(r *http.Request) (interface{}, int, error)
 func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*previewTableArgs)
 
-	integrationObject, err := h.IntegrationReader.GetIntegration(
+	integrationObject, err := h.IntegrationRepo.Get(
 		ctx,
-		args.integrationId,
+		args.integrationID,
 		h.Database,
 	)
 	if err != nil {
@@ -120,9 +122,9 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Preview table request is only allowed for relational databases.")
 	}
 
-	operatorMetadataPath := fmt.Sprintf("operator-metadata-%s", args.RequestId)
-	artifactMetadataPath := fmt.Sprintf("artifact-metadata-%s", args.RequestId)
-	artifactContentPath := fmt.Sprintf("artifact-content-%s", args.RequestId)
+	operatorMetadataPath := fmt.Sprintf("operator-metadata-%s", args.RequestID)
+	artifactMetadataPath := fmt.Sprintf("artifact-metadata-%s", args.RequestID)
+	artifactContentPath := fmt.Sprintf("artifact-content-%s", args.RequestID)
 
 	defer func() {
 		// Delete storage files created for preview table data
@@ -146,7 +148,7 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 		ctx,
 		connector.Extract{
 			Service:       integrationObject.Service,
-			IntegrationId: integrationObject.Id,
+			IntegrationId: integrationObject.ID,
 			Parameters:    queryParams,
 		},
 		operatorMetadataPath,

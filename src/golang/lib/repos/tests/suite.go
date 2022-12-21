@@ -20,8 +20,19 @@ type TestSuite struct {
 	ctx context.Context
 
 	// List of all repos
-	workflow repos.Workflow
-	user     repos.User
+	artifact       			   repos.Artifact
+	artifactResult 			   repos.ArtifactResult
+	dag           			   repos.DAG
+	dagEdge        			   repos.DAGEdge
+	dagResult      			   repos.DAGResult
+	executionEnvironment       repos.ExecutionEnvironment
+	integration    			   repos.Integration
+	notification   			   repos.Notification
+	operator       			   repos.Operator
+	operatorResult 			   repos.OperatorResult
+	user           			   repos.User
+	watcher        			   repos.Watcher
+	workflow       			   repos.Workflow
 
 	DB database.Database
 }
@@ -39,8 +50,19 @@ func (ts *TestSuite) SetupSuite() {
 	ts.DB = DB
 
 	// Initialize repos
-	ts.workflow = sqlite.NewWorklowRepo()
+	ts.artifact = sqlite.NewArtifactRepo()
+	ts.artifactResult = sqlite.NewArtifactResultRepo()
+	ts.dag = sqlite.NewDAGRepo()
+	ts.dagEdge = sqlite.NewDAGEdgeRepo()
+	ts.dagResult = sqlite.NewDAGResultRepo()
+	ts.executionEnvironment = sqlite.NewExecutionEnvironmentRepo()
+	ts.integration = sqlite.NewIntegrationRepo()
+	ts.notification = sqlite.NewNotificationRepo()
+	ts.operator = sqlite.NewOperatorRepo()
+	ts.operatorResult = sqlite.NewOperatorResultRepo()
 	ts.user = sqlite.NewUserRepo()
+	ts.watcher = sqlite.NewWatcherRepo()
+	ts.workflow = sqlite.NewWorklowRepo()
 
 	// Init database schema
 	if err := initDBSchema(DB); err != nil {
@@ -79,6 +101,7 @@ func (ts *TestSuite) TearDownTest() {
 	// Clear all of the tables
 	query := `
 	DELETE FROM app_user;
+	DELETE FROM execution_environment;
 	DELETE FROM integration;
 	DELETE FROM workflow;
 	DELETE FROM workflow_dag;

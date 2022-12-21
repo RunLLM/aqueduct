@@ -66,7 +66,7 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
 
   if (
     isSucceeded(operatorsState.status) &&
-    operatorsState.operators.length === 0
+    !operatorsState.operators.some((op) => op.is_active)
   ) {
     return (
       <>

@@ -18,6 +18,7 @@ export enum ArtifactType {
 
 export enum SerializationType {
   String = 'string',
+  BsonTable = 'bson_table',
   Table = 'table',
   Json = 'json',
   Bytes = 'bytes',
@@ -43,6 +44,7 @@ export type GetArtifactResultResponse = {
   data: string;
   artifact_type: ArtifactType;
   serialization_type: SerializationType;
+  // TODO: python_type goes here.
 };
 
 // Takes the ID of an artifact in our DAG and the state of the currently

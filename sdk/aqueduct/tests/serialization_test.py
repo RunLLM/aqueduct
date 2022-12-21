@@ -1,9 +1,8 @@
 import json
 import uuid
 
-from aqueduct.artifacts.metadata import ArtifactMetadata
-from aqueduct.dag import DAG, Metadata
-from aqueduct.enums import (
+from aqueduct.backend.response_models import ArtifactResult, Logs, OperatorResult, PreviewResponse
+from aqueduct.constants.enums import (
     ArtifactType,
     ExecutionStatus,
     FunctionGranularity,
@@ -16,7 +15,9 @@ from aqueduct.enums import (
     SerializationType,
     ServiceType,
 )
-from aqueduct.operators import (
+from aqueduct.models.artifact import ArtifactMetadata
+from aqueduct.models.dag import DAG, Metadata
+from aqueduct.models.operators import (
     ExtractSpec,
     FunctionSpec,
     GoogleSheetsExtractParams,
@@ -31,9 +32,8 @@ from aqueduct.operators import (
     SalesforceExtractParams,
     SalesforceLoadParams,
 )
-from aqueduct.responses import ArtifactResult, Logs, OperatorResult, PreviewResponse
 from aqueduct.tests.utils import _construct_dag, _construct_operator
-from aqueduct.utils import generate_uuid
+from aqueduct.utils.utils import generate_uuid
 
 
 def test_artifact_serialization():
@@ -119,7 +119,7 @@ def test_preview_response_loading():
     )
 
 
-def test_excluded_fields_can_be_compared():
+def test_excluded_fields_cannot_be_compared():
     op_id = generate_uuid()
     artifact_id = generate_uuid()
 
@@ -134,14 +134,13 @@ def test_excluded_fields_can_be_compared():
         operators=[op],
         artifacts=[],
     )
-    # Constructed DAG is missing the excluded field 'operator_by_name`
-    assert dag != DAG(
+
+    # It doesn't matter what we put as `operator_by_name`.
+    assert dag == DAG(
         operators={**{str(op.id): op}},
         artifacts={},
         metadata=Metadata(),
     )
-
-    # This is the correct comparison.
     assert dag == DAG(
         operators={**{str(op.id): op}},
         operator_by_name={**{op.name: op}},

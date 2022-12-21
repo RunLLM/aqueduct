@@ -11,6 +11,7 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -35,15 +36,16 @@ import (
 type ListIntegrationObjectsHandler struct {
 	GetHandler
 
-	Database          database.Database
-	JobManager        job.JobManager
-	Vault             vault.Vault
-	IntegrationReader integration.Reader
+	Database   database.Database
+	JobManager job.JobManager
+	Vault      vault.Vault
+
+	IntegrationRepo repos.Integration
 }
 
 type ListIntegrationObjectsArgs struct {
 	*aq_context.AqContext
-	integrationId uuid.UUID
+	integrationID uuid.UUID
 }
 
 type ListIntegrationObjectsResponse struct {
@@ -68,16 +70,16 @@ func (h *ListIntegrationObjectsHandler) Prepare(r *http.Request) (interface{}, i
 
 	return &ListIntegrationObjectsArgs{
 		AqContext:     aqContext,
-		integrationId: integrationId,
+		integrationID: integrationId,
 	}, http.StatusOK, nil
 }
 
 func (h *ListIntegrationObjectsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*ListIntegrationObjectsArgs)
 
-	integrationObject, err := h.IntegrationReader.GetIntegration(
+	integrationObject, err := h.IntegrationRepo.Get(
 		ctx,
-		args.integrationId,
+		args.integrationID,
 		h.Database,
 	)
 	if err != nil {
@@ -88,15 +90,15 @@ func (h *ListIntegrationObjectsHandler) Perform(ctx context.Context, interfaceAr
 		return nil, http.StatusBadRequest, errors.New("List objects request is only allowed for relational databases. (Too expensive to list objects for S3)")
 	}
 
-	jobMetadataPath := fmt.Sprintf("list-objects-metadata-%s", args.RequestId)
-	jobResultPath := fmt.Sprintf("list-objects-result-%s", args.RequestId)
+	jobMetadataPath := fmt.Sprintf("list-objects-metadata-%s", args.RequestID)
+	jobResultPath := fmt.Sprintf("list-objects-result-%s", args.RequestID)
 
 	defer func() {
 		// Delete storage files created for list objects job metadata
 		go workflow_utils.CleanupStorageFiles(ctx, args.StorageConfig, []string{jobMetadataPath, jobResultPath})
 	}()
 
-	config, err := auth.ReadConfigFromSecret(ctx, integrationObject.Id, h.Vault)
+	config, err := auth.ReadConfigFromSecret(ctx, integrationObject.ID, h.Vault)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to parse integration config.")
 	}

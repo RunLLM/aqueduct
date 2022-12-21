@@ -1,13 +1,15 @@
 import uuid
 from typing import Optional
 
-from aqueduct.artifacts.metadata import ArtifactMetadata
+from aqueduct.artifacts.base_artifact import BaseArtifact
+from aqueduct.artifacts.save import save_artifact
 from aqueduct.artifacts.table_artifact import TableArtifact
-from aqueduct.dag import DAG
-from aqueduct.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.enums import ArtifactType, SalesforceExtractType
-from aqueduct.integrations.integration import Integration, IntegrationInfo
-from aqueduct.operators import (
+from aqueduct.constants.enums import ArtifactType, SalesforceExtractType
+from aqueduct.logger import logger
+from aqueduct.models.artifact import ArtifactMetadata
+from aqueduct.models.dag import DAG
+from aqueduct.models.integration import Integration, IntegrationInfo
+from aqueduct.models.operators import (
     ExtractSpec,
     Operator,
     OperatorSpec,
@@ -15,7 +17,10 @@ from aqueduct.operators import (
     SalesforceLoadParams,
     SaveConfig,
 )
-from aqueduct.utils import artifact_name_from_op_name, generate_extract_op_name, generate_uuid
+from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.utils import artifact_name_from_op_name, generate_uuid
+
+from .naming import _generate_extract_op_name
 
 
 class SalesforceIntegration(Integration):
@@ -78,7 +83,7 @@ class SalesforceIntegration(Integration):
         )
 
     def config(self, object: str) -> SaveConfig:
-        """
+        """TODO(ENG-2035): Deprecated and will be removed.
         Configuration for saving to Salesforce Integration.
 
         Arguments:
@@ -87,9 +92,29 @@ class SalesforceIntegration(Integration):
         Returns:
             SaveConfig object to use in TableArtifact.save()
         """
+        logger().warning(
+            "`integration.config()` is deprecated. Please use `integration.save()` directly instead."
+        )
         return SaveConfig(
             integration_info=self._metadata,
             parameters=SalesforceLoadParams(object=object),
+        )
+
+    def save(self, artifact: BaseArtifact, object: str) -> None:
+        """Registers a save operator of the given artifact, to be executed when it's computed in a published flow.
+
+        Args:
+            artifact:
+                The artifact to save into Salesforce.
+            object:
+                The name of the Salesforce object to save to.
+        """
+        save_artifact(
+            artifact.id(),
+            artifact.type(),
+            self._dag,
+            self._metadata,
+            save_params=SalesforceLoadParams(object=object),
         )
 
     def _add_extract_operation(
@@ -102,7 +127,7 @@ class SalesforceIntegration(Integration):
 
         integration_info = self._metadata
 
-        op_name = generate_extract_op_name(self._dag, integration_info.name, name)
+        op_name = _generate_extract_op_name(self._dag, integration_info.name, name)
 
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()

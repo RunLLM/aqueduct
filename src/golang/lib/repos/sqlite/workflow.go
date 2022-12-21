@@ -5,10 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
@@ -45,6 +46,18 @@ func (*workflowReader) Get(ctx context.Context, ID uuid.UUID, DB database.Databa
 	return getWorkflow(ctx, DB, query, args...)
 }
 
+func (*workflowReader) GetByDAG(ctx context.Context, dagID uuid.UUID, DB database.Database) (*models.Workflow, error) {
+	query := fmt.Sprintf(`
+		SELECT %s FROM workflow, workflow_dag 
+		WHERE workflow.id = workflow_dag.workflow_id 
+		AND workflow_dag.id = $1;`,
+		models.WorkflowColsWithPrefix(),
+	)
+	args := []interface{}{dagID}
+
+	return getWorkflow(ctx, DB, query, args...)
+}
+
 func (*workflowReader) GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID, name string, DB database.Database) (*models.Workflow, error) {
 	query := fmt.Sprintf(
 		`SELECT %s FROM workflow WHERE user_id = $1 and name = $2;`,
@@ -53,6 +66,47 @@ func (*workflowReader) GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID,
 	args := []interface{}{ownerID, name}
 
 	return getWorkflow(ctx, DB, query, args...)
+}
+
+func (*workflowReader) GetLastRunByEngine(
+	ctx context.Context,
+	engine shared.EngineType,
+	DB database.Database,
+) ([]views.WorkflowLastRun, error) {
+	query := `
+		SELECT 
+			workflow.id AS workflow_id, 
+			workflow.schedule, 
+			workflow_dag_result.created_at AS last_run_at 
+		FROM 
+			workflow, 
+			workflow_dag, 
+			workflow_dag_result, 
+			(
+				SELECT 
+					workflow.id, 
+					MAX(workflow_dag_result.created_at) AS created_at 
+				FROM 
+					workflow, 
+					workflow_dag, 
+					workflow_dag_result 
+				WHERE 
+					workflow.id = workflow_dag.workflow_id 
+					AND workflow_dag.id = workflow_dag_result.workflow_dag_id 
+				GROUP BY workflow.id
+			) AS workflow_latest_run 
+		WHERE 
+			workflow.id = workflow_dag.workflow_id 
+			AND workflow_dag.id = workflow_dag_result.workflow_dag_id 
+			AND workflow.id = workflow_latest_run.id 
+			AND workflow_dag_result.created_at = workflow_latest_run.created_at
+			AND json_extract(workflow_dag.engine_config, '$.type') = $1;`
+
+	var lastRuns []views.WorkflowLastRun
+	args := []interface{}{engine}
+
+	err := DB.Query(ctx, &lastRuns, query, args...)
+	return lastRuns, err
 }
 
 func (*workflowReader) GetLatestStatusesByOrg(ctx context.Context, orgID string, DB database.Database) ([]views.LatestWorkflowStatus, error) {
@@ -72,7 +126,8 @@ func (*workflowReader) GetLatestStatusesByOrg(ctx context.Context, orgID string,
 			SELECT 
 				wf.id AS id, wf.name AS name,
 		 		wf.description AS description, wf.created_at AS created_at,
-		 		wfdr.created_at AS run_at, wfdr.status as status, 
+		 		wfdr.created_at AS run_at, wfdr.status as status,
+				wfdr.id as result_id, wfd.id AS dag_id,
 				json_extract(wfd.engine_config, '$.type') as engine
 			FROM 
 				workflow AS wf
@@ -92,8 +147,15 @@ func (*workflowReader) GetLatestStatusesByOrg(ctx context.Context, orgID string,
 				id
 		)
 		SELECT 
-			wfr.id, wfr.name, wfr.description, wfr.created_at, 
-			wfr.run_at AS last_run_at, wfr.status, wfr.engine
+			wfr.id,
+			wfr.name,
+			wfr.description,
+			wfr.created_at,
+			wfr.result_id,
+			wfr.dag_id, 
+			wfr.run_at AS last_run_at,
+			wfr.status,
+			wfr.engine
 		FROM 
 			workflow_results AS wfr, latest_result AS lr
 		WHERE 
@@ -150,8 +212,8 @@ func (*workflowWriter) Create(
 	userID uuid.UUID,
 	name string,
 	description string,
-	schedule *shared.Schedule,
-	retentionPolicy *shared.RetentionPolicy,
+	schedule *workflow.Schedule,
+	retentionPolicy *workflow.RetentionPolicy,
 	DB database.Database,
 ) (*models.Workflow, error) {
 	cols := []string{
@@ -161,7 +223,7 @@ func (*workflowWriter) Create(
 		models.WorkflowDescription,
 		models.WorkflowSchedule,
 		models.WorkflowCreatedAt,
-		models.WorkflowRetention,
+		models.WorkflowRetentionPolicy,
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.WorkflowTable, cols, models.WorkflowCols())
 

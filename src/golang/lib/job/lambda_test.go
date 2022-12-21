@@ -3,11 +3,12 @@ package job
 import (
 	"context"
 	"fmt"
+	"testing"
+
 	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func TestLambdaAPI(t *testing.T) {

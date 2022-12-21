@@ -5,18 +5,16 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
-
-var ErrNoAccessPermission = errors.New("You don't have permission to access this integration.")
 
 // Route: /integration/{integrationId}/test
 // Method: POST
@@ -33,10 +31,11 @@ var ErrNoAccessPermission = errors.New("You don't have permission to access this
 type TestIntegrationHandler struct {
 	PostHandler
 
-	Database          database.Database
-	IntegrationReader integration.Reader
-	Vault             vault.Vault
-	JobManager        job.JobManager
+	Database   database.Database
+	Vault      vault.Vault
+	JobManager job.JobManager
+
+	IntegrationRepo repos.Integration
 }
 
 type TestIntegrationArgs struct {
@@ -56,17 +55,17 @@ func (h *TestIntegrationHandler) Prepare(r *http.Request) (interface{}, int, err
 		return nil, statusCode, err
 	}
 
-	integrationIdStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
-	integrationId, err := uuid.Parse(integrationIdStr)
+	integrationIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
+	integrationID, err := uuid.Parse(integrationIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
 	}
 
-	hasPermission, err := h.IntegrationReader.ValidateIntegrationOwnership(
+	hasPermission, err := h.IntegrationRepo.ValidateOwnership(
 		r.Context(),
-		integrationId,
-		aqContext.OrganizationId,
-		aqContext.Id,
+		integrationID,
+		aqContext.OrgID,
+		aqContext.ID,
 		h.Database,
 	)
 	if err != nil {
@@ -74,19 +73,19 @@ func (h *TestIntegrationHandler) Prepare(r *http.Request) (interface{}, int, err
 	}
 
 	if !hasPermission {
-		return nil, http.StatusForbidden, ErrNoAccessPermission
+		return nil, http.StatusForbidden, errors.New("You don't have permission to access this integration.")
 	}
 
-	return &TestIntegrationArgs{AqContext: aqContext, IntegrationId: integrationId}, http.StatusOK, nil
+	return &TestIntegrationArgs{AqContext: aqContext, IntegrationId: integrationID}, http.StatusOK, nil
 }
 
 func (h *TestIntegrationHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*TestIntegrationArgs)
-	id := args.IntegrationId
+	ID := args.IntegrationId
 
 	emptyResp := TestIntegrationResponse{}
 
-	integrationObject, err := h.IntegrationReader.GetIntegration(ctx, id, h.Database)
+	integrationObject, err := h.IntegrationRepo.Get(ctx, ID, h.Database)
 	if err == database.ErrNoRows {
 		return emptyResp, http.StatusBadRequest, err
 	}
@@ -95,7 +94,7 @@ func (h *TestIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve integration")
 	}
 
-	config, err := auth.ReadConfigFromSecret(ctx, id, h.Vault)
+	config, err := auth.ReadConfigFromSecret(ctx, ID, h.Vault)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve secrets")
 	}
@@ -103,7 +102,7 @@ func (h *TestIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 	// Validate integration config
 	statusCode, err := ValidateConfig(
 		ctx,
-		args.RequestId,
+		args.RequestID,
 		config,
 		integrationObject.Service,
 		h.JobManager,

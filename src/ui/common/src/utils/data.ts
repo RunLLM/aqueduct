@@ -8,11 +8,26 @@ export const DataColumnTypeNames = [
   'boolean',
   'datetime',
   'json',
+  'object',
 ] as const;
 
 export type DataColumnType = typeof DataColumnTypeNames[number];
 
-export type DataColumn = { name: string; type: DataColumnType };
+export type DataColumn = {
+  /**
+   * Name of column (key of object)
+   */
+  name: string;
+  /**
+   * Used to show an alternate text in column header.
+   * e.g. colum named created_at but we wish to render as Created At
+   */
+  displayName?: string;
+  /**
+   * Type of data to be rendered in column.
+   */
+  type: DataColumnType;
+};
 
 export type DataSchema = {
   fields: DataColumn[];
@@ -54,3 +69,18 @@ export type DataPreview = {
   historical_versions: Record<string, DataPreviewInfo>;
   latest_versions: Record<string, DataPreviewInfo>;
 };
+
+export function inferSchema(rows: TableRow[]): DataSchema {
+  if (!rows) {
+    return { fields: [], pandas_version: '' };
+  }
+
+  return {
+    fields: Object.keys(rows[0]).map((col) => ({
+      name: col,
+      displayName: col,
+      type: 'object',
+    })),
+    pandas_version: '',
+  };
+}

@@ -2,10 +2,8 @@ import io
 import json
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-import cloudpickle as pickle
-import numpy as np
 import pandas as pd
-from aqueduct.serialization import (
+from aqueduct.utils.serialization import (
     DEFAULT_ENCODING,
     artifact_type_to_serialization_type,
     deserialize,
@@ -28,8 +26,6 @@ from aqueduct_executor.operators.utils.execution import (
 )
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 from aqueduct_executor.operators.utils.storage.storage import Storage
-from pandas import DataFrame
-from PIL import Image
 
 _RUNTIME_SEC_METRIC_NAME = "runtime"
 _MAX_MEMORY_MB_METRIC_NAME = "max_memory"
@@ -37,6 +33,7 @@ _METADATA_SCHEMA_KEY = "schema"
 _METADATA_SYSTEM_METADATA_KEY = "system_metadata"
 _METADATA_ARTIFACT_TYPE_KEY = "artifact_type"
 _METADATA_SERIALIZATION_TYPE_KEY = "serialization_type"
+_METADATA_PYTHON_TYPE_KEY = "python_type"
 
 # The temporary file name that a Tensorflow keras model will be dumped into before we read/write it from storage.
 # This will be cleaned up within the serialization logic.
@@ -55,7 +52,7 @@ def read_artifacts(
     storage: Storage,
     input_paths: List[str],
     input_metadata_paths: List[str],
-) -> Tuple[List[Any], List[ArtifactType]]:
+) -> Tuple[List[Any], List[ArtifactType], List[SerializationType]]:
     if len(input_paths) != len(input_metadata_paths):
         raise Exception(
             "Found inconsistent number of input paths (%d) and input metadata paths (%d)"
@@ -66,7 +63,8 @@ def read_artifacts(
         )
 
     inputs: List[Any] = []
-    input_types: List[ArtifactType] = []
+    artifact_types: List[ArtifactType] = []
+    serialization_types: List[SerializationType] = []
 
     for (input_path, input_metadata_path) in zip(input_paths, input_metadata_paths):
         # Make sure that the input paths exist.
@@ -81,12 +79,14 @@ def read_artifacts(
 
         artifact_metadata = json.loads(storage.get(input_metadata_path).decode(DEFAULT_ENCODING))
         artifact_type = artifact_metadata[_METADATA_ARTIFACT_TYPE_KEY]
-        input_types.append(artifact_type)
+        artifact_types.append(artifact_type)
 
         serialization_type = artifact_metadata[_METADATA_SERIALIZATION_TYPE_KEY]
+        serialization_types.append(serialization_type)
+
         inputs.append(deserialize(serialization_type, artifact_type, storage.get(input_path)))
 
-    return inputs, input_types
+    return inputs, artifact_types, serialization_types
 
 
 def read_system_metadata(
@@ -127,6 +127,10 @@ def serialize_val_wrapper(val: Any, serialization_type: SerializationType) -> by
 def write_artifact(
     storage: Storage,
     artifact_type: ArtifactType,
+    # derived_from_bson specifies if the artifact is derived from a bson object
+    # and thus requires bson encoding.
+    # For now, it only applies to data frames extracted / transformed from Mongo.
+    derived_from_bson: bool,
     output_path: Optional[str],
     output_metadata_path: str,
     content: Any,
@@ -142,13 +146,16 @@ def write_artifact(
     if artifact_type == ArtifactType.TABLE:
         output_metadata[_METADATA_SCHEMA_KEY] = [{col: str(content[col].dtype)} for col in content]
 
-    serialization_type = artifact_type_to_serialization_type(artifact_type, content).value
+    serialization_type = artifact_type_to_serialization_type(
+        artifact_type, derived_from_bson, content
+    ).value
 
     if output_path is not None:
         serialized_val = serialize_val_wrapper(content, serialization_type)
         storage.put(output_path, serialized_val)
 
     output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = serialization_type
+    output_metadata[_METADATA_PYTHON_TYPE_KEY] = type(content).__name__
     storage.put(output_metadata_path, json.dumps(output_metadata).encode(DEFAULT_ENCODING))
 
 

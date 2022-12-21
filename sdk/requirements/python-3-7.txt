@@ -13,3 +13,4 @@ ruamel.yaml
 Pillow
 multipart
 requests_toolbelt
+pymongo
