@@ -8,7 +8,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
-	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -47,12 +46,14 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 	}
 
 	errGroup, _ := errgroup.WithContext(ctx)
+
+	// Run Authentication only once since the credentials will be memorized.
 	lambda_utils.AuthenticateDockerToECR()
 
+	// Pull Image on a currency "MaxConcurrentDownload" to parallelize and avoid pull timeout.
 	for i := 0; i < len(functionsToShip); i += MaxConcurrentDownload {
 		for j := 0; j < MaxConcurrentDownload; j++ {
 			if j+i < len(functionsToShip) {
-				log.Info(j)
 				lambdaFunctionType := functionsToShip[j+i]
 				errGroup.Go(func() error {
 					return lambda_utils.PullImageFromECR(lambdaFunctionType)
@@ -64,6 +65,7 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 		}
 	}
 
+	// Push the image and create lambda function all at once.
 	for _, functionType := range functionsToShip {
 		lambdaFunctionType := functionType
 		errGroup.Go(func() error {
