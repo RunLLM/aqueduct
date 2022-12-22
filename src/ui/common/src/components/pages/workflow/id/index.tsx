@@ -461,7 +461,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           // TODO: just create a state variable to reflect the open state of the drawer.
           width:
             currentNode.type === NodeType.None
-              ? "100%;"
+              ? '100%;'
               : `calc(100% - ${SidesheetWidth});`,
           height: '100%',
           flexDirection: 'column',
