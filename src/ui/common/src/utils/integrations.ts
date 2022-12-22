@@ -278,7 +278,7 @@ export const ServiceLogos: ServiceLogo = {
   ['Lambda']: `${integrationLogosBucket}/Lambda.png`,
   ['MongoDB']: `${integrationLogosBucket}/mongo.png`,
   ['Conda']: `${integrationLogosBucket}/conda.png`,
-  ['Databricks']: `${integrationLogosBucket}/spark_logo.png`,
+  ['Databricks']: `${integrationLogosBucket}/databricks_logo.png`,
 };
 
 export const SupportedIntegrations: ServiceInfoMap = {
@@ -364,7 +364,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
   },
   ['Databricks']: {
     logo: ServiceLogos['Databricks'],
-    activated: true,
+    activated: false,
     category: IntegrationCategories.COMPUTE,
   },
 };
