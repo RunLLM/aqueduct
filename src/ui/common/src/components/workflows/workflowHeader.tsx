@@ -357,10 +357,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
           <WorkflowSettings
             user={user}
             open={showSettings}
-            onClose={() => {
-              console.log('WorkflowHeader workflowSettings onClose()');
-              setShowSettings(false);
-            }}
+            onClose={() => setShowSettings(false)}
             workflowDag={workflowDag}
           />
         </Box>

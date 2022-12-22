@@ -281,7 +281,6 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     triggerType: workflowDag.metadata.schedule.trigger,
     schedule: workflowDag.metadata.schedule.cron_schedule,
     paused: workflowDag.metadata.schedule.paused,
-    // TODO: figure out what to do with retentionPolicyUpdated.
     retentionPolicy: workflowDag.metadata?.retention_policy,
   };
 
