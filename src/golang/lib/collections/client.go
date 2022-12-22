@@ -3,8 +3,8 @@ package collections
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/schema_version"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 )
 
@@ -13,10 +13,10 @@ import (
 func RequireSchemaVersion(
 	ctx context.Context,
 	version int64,
-	schemaVersionReader schema_version.Reader,
+	schemaVersionRepo repos.SchemaVersion,
 	db database.Database,
 ) error {
-	currentVersion, err := schemaVersionReader.GetCurrentSchemaVersion(ctx, db)
+	currentVersion, err := schemaVersionRepo.GetCurrent(ctx, db)
 	if err != nil {
 		return err
 	}

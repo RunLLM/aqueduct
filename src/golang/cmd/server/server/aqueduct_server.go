@@ -21,6 +21,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos/sqlite"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
@@ -75,16 +76,10 @@ func NewAqServer() *AqServer {
 		log.Fatalf("Unable to initialize database: %v", err)
 	}
 
-	readers, err := CreateReaders(db.Config())
-	if err != nil {
-		db.Close()
-		log.Fatalf("Unable to create database readers: %v", err)
-	}
-
 	if err := collections.RequireSchemaVersion(
 		context.Background(),
-		models.SchemaVersion,
-		readers.SchemaVersionReader,
+		models.CurrentSchemaVersion,
+		sqlite.NewSchemaVersionRepo(),
 		db,
 	); err != nil {
 		db.Close()
