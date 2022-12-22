@@ -180,7 +180,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
 
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
-      <Box width={!sideSheetMode ? '800px' : 'auto'}>
+      <Box width={sideSheetMode ? '800px' : 'auto'}>
         <Box width="100%" mb={3}>
           {!sideSheetMode && (
             <Box width="100%">
