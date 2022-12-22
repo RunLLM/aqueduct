@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 
+	databricks_lib "github.com/aqueducthq/aqueduct/lib/databricks"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
@@ -48,5 +49,34 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 			return errors.Wrap(err, "Unable to Create Lambda Function")
 		}
 	}
+	return nil
+}
+
+func AuthenticateDatabricksConfig(ctx context.Context, authConf auth.Config) error {
+	databricksConfig, err := lib_utils.ParseDatabricksConfig(authConf)
+	if err != nil {
+		return errors.Wrap(err, "Unable to parse configuration.")
+	}
+
+	databricksClient, err := databricks_lib.NewWorkspaceClient(
+		databricksConfig.WorkspaceURL,
+		databricksConfig.AccessToken,
+	)
+	if err != nil {
+		return errors.Wrap(err, "Unable to create Databricks Workspace Client.")
+	}
+	_, err = databricks_lib.ListJobs(
+		ctx,
+		databricksClient,
+	)
+	if err != nil {
+		return errors.Wrap(err, "Unable to list Databricks Jobs.")
+	}
+
+	err = databricks_lib.AddEntrypointFilesToStorage(ctx)
+	if err != nil {
+		return errors.Wrap(err, "Unable to upload entrypoint files to storage.")
+	}
+
 	return nil
 }

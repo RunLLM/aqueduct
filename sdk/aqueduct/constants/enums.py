@@ -75,6 +75,7 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     MONGO_DB = "MongoDB"
     CONDA = "Conda"
     AQUEDUCT_ENGINE = "Aqueduct Engine"
+    DATABRICKS = "Databricks"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
@@ -182,3 +183,4 @@ class RuntimeType(Enum, metaclass=MetaEnum):
     AIRFLOW = "airflow"
     K8S = "k8s"
     LAMBDA = "lambda"
+    DATABRICKS = "databricks"
