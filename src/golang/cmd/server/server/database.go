@@ -1,8 +1,6 @@
 package server
 
 import (
-	"github.com/aqueducthq/aqueduct/lib/collections/schema_version"
-	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/repos/sqlite"
@@ -19,13 +17,10 @@ type Repos struct {
 	NotificationRepo         repos.Notification
 	OperatorRepo             repos.Operator
 	OperatorResultRepo       repos.OperatorResult
+	SchemaVersionRepo        repos.SchemaVersion
 	UserRepo                 repos.User
 	WatcherRepo              repos.Watcher
 	WorkflowRepo             repos.Workflow
-}
-
-type Readers struct {
-	SchemaVersionReader schema_version.Reader
 }
 
 func CreateRepos() *Repos {
@@ -40,21 +35,11 @@ func CreateRepos() *Repos {
 		NotificationRepo:         sqlite.NewNotificationRepo(),
 		OperatorRepo:             sqlite.NewOperatorRepo(),
 		OperatorResultRepo:       sqlite.NewOperatorResultRepo(),
+		SchemaVersionRepo:        sqlite.NewSchemaVersionRepo(),
 		UserRepo:                 sqlite.NewUserRepo(),
 		WatcherRepo:              sqlite.NewWatcherRepo(),
 		WorkflowRepo:             sqlite.NewWorklowRepo(),
 	}
-}
-
-func CreateReaders(dbConfig *database.DatabaseConfig) (*Readers, error) {
-	schemaVersionReader, err := schema_version.NewReader(dbConfig)
-	if err != nil {
-		return nil, err
-	}
-
-	return &Readers{
-		SchemaVersionReader: schemaVersionReader,
-	}, nil
 }
 
 func GetEngineRepos(repos *Repos) *engine.Repos {

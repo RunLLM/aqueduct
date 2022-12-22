@@ -30,6 +30,7 @@ type TestSuite struct {
 	notification   			   repos.Notification
 	operator       			   repos.Operator
 	operatorResult 			   repos.OperatorResult
+	schemaVersion 			   repos.SchemaVersion
 	user           			   repos.User
 	watcher        			   repos.Watcher
 	workflow       			   repos.Workflow
@@ -60,6 +61,7 @@ func (ts *TestSuite) SetupSuite() {
 	ts.notification = sqlite.NewNotificationRepo()
 	ts.operator = sqlite.NewOperatorRepo()
 	ts.operatorResult = sqlite.NewOperatorResultRepo()
+	ts.schemaVersion = sqlite.NewSchemaVersionRepo()
 	ts.user = sqlite.NewUserRepo()
 	ts.watcher = sqlite.NewWatcherRepo()
 	ts.workflow = sqlite.NewWorklowRepo()
@@ -89,7 +91,7 @@ func initDBSchema(DB database.Database) error {
 		}
 	}()
 
-	if err := migrator.GoTo(context.Background(), models.SchemaVersion, DB); err != nil {
+	if err := migrator.GoTo(context.Background(), models.CurrentSchemaVersion, DB); err != nil {
 		return err
 	}
 
@@ -101,17 +103,18 @@ func (ts *TestSuite) TearDownTest() {
 	// Clear all of the tables
 	query := `
 	DELETE FROM app_user;
-	DELETE FROM execution_environment;
-	DELETE FROM integration;
-	DELETE FROM workflow;
-	DELETE FROM workflow_dag;
-	DELETE FROM workflow_dag_result;
-	DELETE FROM workflow_dag_edge;
-	DELETE FROM operator;
-	DELETE FROM operator_result;
 	DELETE FROM artifact;
 	DELETE FROM artifact_result;
+	DELETE FROM execution_environment;
+	DELETE FROM integration;
 	DELETE FROM notification;
+	DELETE FROM operator;
+	DELETE FROM operator_result;
+	DELETE FROM schema_version;
+	DELETE FROM workflow;
+	DELETE FROM workflow_dag;
+	DELETE FROM workflow_dag_edge;
+	DELETE FROM workflow_dag_result;
 	;
 	`
 	if err := ts.DB.Execute(ts.ctx, query); err != nil {
