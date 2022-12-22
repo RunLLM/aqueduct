@@ -1,4 +1,6 @@
 import {
+  faXmark,
+  faSkullCrossbones,
   faCheck,
   faCircleCheck,
   faExclamation,
@@ -25,6 +27,7 @@ type Props = {
 export const checkOperatorNodeIcon = faMagnifyingGlass;
 
 const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
+  console.log("CheckOperatorNode");
   const defaultLabel = 'Check';
   const label = data.label ? data.label : defaultLabel;
   const result = data.result;
@@ -43,12 +46,26 @@ const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
     : theme.palette.DarkContrast;
   const borderColor = textColor;
 
-  let backgroundColor, hoverColor;
+  console.log(execState?.status);
+
+  let backgroundColor, hoverColor, displayValue;
   if (execState?.status === ExecutionStatus.Succeeded) {
     backgroundColor = selected
       ? theme.palette.DarkSuccessMain50
       : theme.palette.DarkSuccessMain;
     hoverColor = theme.palette.DarkSuccessMain75;
+
+
+    const icon = result === 'true' ? faCheck : faExclamation;
+
+    displayValue = <>
+        <Box sx={{ fontSize: '24px', marginRight: '8px' }}>
+          <FontAwesomeIcon icon={icon} />
+        </Box>
+        <Typography variant="body1">
+          {data.result === 'true' ? 'passed' : 'failed'}
+        </Typography>
+      </>;
 
     // Warning color for non-fatal errors.
   } else if (
@@ -59,20 +76,45 @@ const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
       ? theme.palette.DarkWarningMain50
       : theme.palette.DarkWarningMain;
     hoverColor = theme.palette.DarkWarningMain75;
+
+    displayValue = <>
+      <Box sx={{ fontSize: '50px' }}>
+        <FontAwesomeIcon icon={faSkullCrossbones} />
+      </Box>
+    </>;
+
   } else if (execState?.status === ExecutionStatus.Failed) {
     backgroundColor = selected
       ? theme.palette.DarkErrorMain50
       : theme.palette.DarkErrorMain;
     hoverColor = theme.palette.DarkErrorMain75;
+
+    displayValue = <>
+      <Box sx={{ fontSize: '50px' }}>
+        <FontAwesomeIcon icon={faSkullCrossbones} />
+      </Box>
+    </>;
+
   } else if (execState?.status === ExecutionStatus.Canceled) {
     backgroundColor = selected ? 'gray.700' : 'gray.500';
     hoverColor = 'gray.600';
+
+    displayValue = <>
+      <Box sx={{ fontSize: '50px' }}>
+        <FontAwesomeIcon icon={faXmark} />
+      </Box>
+    </>;
+
   } else if (execState?.status === ExecutionStatus.Pending) {
     backgroundColor = selected ? 'blue.300' : 'blue.100';
     hoverColor = 'blue.200';
-  }
 
-  const icon = result === 'true' ? faCheck : faExclamation;
+    displayValue = <>
+      <Typography variant="body1" sx={{ fontSize: '25px'}}>
+        Pending...
+      </Typography>
+    </>;
+  }
 
   return (
     <BaseNode
@@ -115,16 +157,7 @@ const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
         justifyContent="center"
         alignItems="center"
       >
-        {data.result && (
-          <>
-            <Box sx={{ fontSize: '24px', marginRight: '8px' }}>
-              <FontAwesomeIcon icon={icon} />
-            </Box>
-            <Typography variant="body1">
-              {data.result === 'true' ? 'passed' : 'failed'}
-            </Typography>
-          </>
-        )}
+        {displayValue}
       </Box>
 
       <Handle
