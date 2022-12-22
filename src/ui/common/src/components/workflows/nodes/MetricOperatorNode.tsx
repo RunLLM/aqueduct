@@ -1,8 +1,8 @@
 import {
-  faXmark,
-  faSkullCrossbones,
   faHashtag,
+  faSkullCrossbones,
   faTemperatureHalf,
+  faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Box from '@mui/material/Box';
@@ -63,9 +63,7 @@ const MetricOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
     hoverColor = theme.palette.DarkSuccessMain75;
 
     displayValue = (
-      <Typography variant="h5">
-        {parseMetricResult(data.result, 3)}
-      </Typography>
+      <Typography variant="h5">{parseMetricResult(data.result, 3)}</Typography>
     );
 
     // Warning color for non-fatal errors.
@@ -78,41 +76,48 @@ const MetricOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
       : theme.palette.DarkWarningMain;
     hoverColor = theme.palette.DarkWarningMain75;
 
-    displayValue = <>
-      <Box sx={{ fontSize: '50px' }}>
-        <FontAwesomeIcon icon={faSkullCrossbones} />
-      </Box>
-    </>;
+    displayValue = (
+      <>
+        <Box sx={{ fontSize: '50px' }}>
+          <FontAwesomeIcon icon={faSkullCrossbones} />
+        </Box>
+      </>
+    );
   } else if (execState?.status === ExecutionStatus.Failed) {
     backgroundColor = selected
       ? theme.palette.DarkErrorMain50
       : theme.palette.DarkErrorMain;
     hoverColor = theme.palette.DarkErrorMain75;
 
-    displayValue = <>
-      <Box sx={{ fontSize: '50px' }}>
-        <FontAwesomeIcon icon={faSkullCrossbones} />
-      </Box>
-    </>;
+    displayValue = (
+      <>
+        <Box sx={{ fontSize: '50px' }}>
+          <FontAwesomeIcon icon={faSkullCrossbones} />
+        </Box>
+      </>
+    );
   } else if (execState?.status === ExecutionStatus.Canceled) {
     backgroundColor = selected ? 'gray.700' : 'gray.500';
     hoverColor = 'gray.600';
 
-    displayValue = <>
-      <Box sx={{ fontSize: '50px' }}>
-        <FontAwesomeIcon icon={faXmark} />
-      </Box>
-    </>;
-
+    displayValue = (
+      <>
+        <Box sx={{ fontSize: '50px' }}>
+          <FontAwesomeIcon icon={faXmark} />
+        </Box>
+      </>
+    );
   } else if (execState?.status === ExecutionStatus.Pending) {
     backgroundColor = selected ? 'blue.300' : 'blue.100';
     hoverColor = 'blue.200';
 
-    displayValue = <>
-      <Typography variant="body1" sx={{ fontSize: '25px'}}>
+    displayValue = (
+      <>
+        <Typography variant="body1" sx={{ fontSize: '25px' }}>
           Pending...
         </Typography>
-    </>;
+      </>
+    );
   }
 
   return (

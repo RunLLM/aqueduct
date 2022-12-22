@@ -1,10 +1,10 @@
 import {
-  faXmark,
-  faSkullCrossbones,
   faCheck,
   faCircleCheck,
   faExclamation,
   faMagnifyingGlass,
+  faSkullCrossbones,
+  faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Box from '@mui/material/Box';
@@ -27,7 +27,7 @@ type Props = {
 export const checkOperatorNodeIcon = faMagnifyingGlass;
 
 const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
-  console.log("CheckOperatorNode");
+  console.log('CheckOperatorNode');
   const defaultLabel = 'Check';
   const label = data.label ? data.label : defaultLabel;
   const result = data.result;
@@ -55,17 +55,18 @@ const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
       : theme.palette.DarkSuccessMain;
     hoverColor = theme.palette.DarkSuccessMain75;
 
-
     const icon = result === 'true' ? faCheck : faExclamation;
 
-    displayValue = <>
+    displayValue = (
+      <>
         <Box sx={{ fontSize: '24px', marginRight: '8px' }}>
           <FontAwesomeIcon icon={icon} />
         </Box>
         <Typography variant="body1">
           {data.result === 'true' ? 'passed' : 'failed'}
         </Typography>
-      </>;
+      </>
+    );
 
     // Warning color for non-fatal errors.
   } else if (
@@ -77,43 +78,48 @@ const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
       : theme.palette.DarkWarningMain;
     hoverColor = theme.palette.DarkWarningMain75;
 
-    displayValue = <>
-      <Box sx={{ fontSize: '50px' }}>
-        <FontAwesomeIcon icon={faSkullCrossbones} />
-      </Box>
-    </>;
-
+    displayValue = (
+      <>
+        <Box sx={{ fontSize: '50px' }}>
+          <FontAwesomeIcon icon={faSkullCrossbones} />
+        </Box>
+      </>
+    );
   } else if (execState?.status === ExecutionStatus.Failed) {
     backgroundColor = selected
       ? theme.palette.DarkErrorMain50
       : theme.palette.DarkErrorMain;
     hoverColor = theme.palette.DarkErrorMain75;
 
-    displayValue = <>
-      <Box sx={{ fontSize: '50px' }}>
-        <FontAwesomeIcon icon={faSkullCrossbones} />
-      </Box>
-    </>;
-
+    displayValue = (
+      <>
+        <Box sx={{ fontSize: '50px' }}>
+          <FontAwesomeIcon icon={faSkullCrossbones} />
+        </Box>
+      </>
+    );
   } else if (execState?.status === ExecutionStatus.Canceled) {
     backgroundColor = selected ? 'gray.700' : 'gray.500';
     hoverColor = 'gray.600';
 
-    displayValue = <>
-      <Box sx={{ fontSize: '50px' }}>
-        <FontAwesomeIcon icon={faXmark} />
-      </Box>
-    </>;
-
+    displayValue = (
+      <>
+        <Box sx={{ fontSize: '50px' }}>
+          <FontAwesomeIcon icon={faXmark} />
+        </Box>
+      </>
+    );
   } else if (execState?.status === ExecutionStatus.Pending) {
     backgroundColor = selected ? 'blue.300' : 'blue.100';
     hoverColor = 'blue.200';
 
-    displayValue = <>
-      <Typography variant="body1" sx={{ fontSize: '25px'}}>
-        Pending...
-      </Typography>
-    </>;
+    displayValue = (
+      <>
+        <Typography variant="body1" sx={{ fontSize: '25px' }}>
+          Pending...
+        </Typography>
+      </>
+    );
   }
 
   return (
