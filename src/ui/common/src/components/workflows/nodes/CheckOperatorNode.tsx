@@ -27,7 +27,6 @@ type Props = {
 export const checkOperatorNodeIcon = faMagnifyingGlass;
 
 const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
-  console.log('CheckOperatorNode');
   const defaultLabel = 'Check';
   const label = data.label ? data.label : defaultLabel;
   const result = data.result;
@@ -45,8 +44,6 @@ const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
     ? theme.palette.DarkContrast50
     : theme.palette.DarkContrast;
   const borderColor = textColor;
-
-  console.log(execState?.status);
 
   let backgroundColor, hoverColor, displayValue;
   if (execState?.status === ExecutionStatus.Succeeded) {
