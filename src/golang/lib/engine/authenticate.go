@@ -11,6 +11,7 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
+// The maximum numnber of concurrent download allowed by Docker and is default to 3.
 const MaxConcurrentDownload = 3
 
 // Authenticates kubernetes configuration by trying to connect a client.
@@ -47,13 +48,13 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 
 	errGroup, _ := errgroup.WithContext(ctx)
 
-	// Run Authentication only once since the credentials will be memorized.
+	// Run authentication only once since the credentials will be memorized.
 	err = lambda_utils.AuthenticateDockerToECR()
 	if err != nil {
 		return errors.Wrap(err, "Unable to Create Lambda Function.")
 	}
 
-	// Pull Image on a currency "MaxConcurrentDownload" to parallelize and avoid pull timeout.
+	// Pull images on a currency of "MaxConcurrentDownload" to parallelize while avoiding pull timeout.
 	for i := 0; i < len(functionsToShip); i += MaxConcurrentDownload {
 		for j := 0; j < MaxConcurrentDownload; j++ {
 			if j+i < len(functionsToShip) {
@@ -68,7 +69,7 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 		}
 	}
 
-	// Push the image and create lambda function all at once.
+	// Push the images and create lambda functions all at once.
 	for _, functionType := range functionsToShip {
 		lambdaFunctionType := functionType
 		errGroup.Go(func() error {
