@@ -42,7 +42,7 @@ func NewJobManager(conf Config) (JobManager, error) {
 	if conf.Type() == DatabricksType {
 		databricksConfig, ok := conf.(*DatabricksJobManagerConfig)
 		if !ok {
-			return nil, ErrInvalidJobManagerConfig
+			return nil, errors.New("JobManager config is not of type Databricks.")
 		}
 		return NewDatabricksJobManager(databricksConfig)
 	}

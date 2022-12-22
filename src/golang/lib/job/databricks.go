@@ -94,36 +94,36 @@ func (j *DatabricksJobManager) Launch(
 	ctx context.Context,
 	name string,
 	spec Spec,
-) error {
+) JobError {
 	log.Infof("Running %s job %s.", spec.Type(), name)
 
 	scriptFile, specStr, err := j.mapJobTypeToFile(spec)
 	if err != nil {
-		return err
+		return systemError(err)
 	}
 	storageConfig, err := spec.GetStorageConfig()
 	if err != nil {
-		return errors.Wrap(err, "Spec unexpectedly has no storage config.")
+		return systemError(errors.Wrap(err, "Spec unexpectedly has no storage config."))
 	}
 	bucket := storageConfig.S3Config.Bucket
 	pythonFilePath := fmt.Sprintf("%s/%s", bucket, scriptFile)
 
 	jobID, err := databricks_lib.CreateJob(ctx, j.databricksClient, name, j.conf.S3InstanceProfileARN, pythonFilePath)
 	if err != nil {
-		return errors.Wrap(err, "Error creating job in Databricks.")
+		return systemError(errors.Wrap(err, "Error creating job in Databricks."))
 	}
 	runID, err := databricks_lib.RunNow(ctx, j.databricksClient, jobID, specStr)
 	if err != nil {
-		return errors.Wrap(err, "Error runnning job in Databricks.")
+		return systemError(errors.Wrap(err, "Error runnning job in Databricks."))
 	}
 	j.runMap[name] = runID
 	return nil
 }
 
-func (j *DatabricksJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, error) {
+func (j *DatabricksJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, JobError) {
 	runId, ok := j.runMap[name]
 	if !ok {
-		return shared.UnknownExecutionStatus, ErrJobNotExist
+		return shared.UnknownExecutionStatus, jobMissingError(errors.New("Job doesn't exist."))
 	}
 
 	getRunReq := &jobs.GetRun{
@@ -131,7 +131,7 @@ func (j *DatabricksJobManager) Poll(ctx context.Context, name string) (shared.Ex
 	}
 	getRunResp, err := j.databricksClient.Jobs.GetRun(ctx, *getRunReq)
 	if err != nil {
-		return shared.UnknownExecutionStatus, errors.Wrap(err, "Unable to get run from databricks.")
+		return shared.UnknownExecutionStatus, systemError(errors.Wrap(err, "Unable to get run from databricks."))
 	}
 
 	switch getRunResp.State.LifeCycleState {
@@ -147,7 +147,7 @@ func (j *DatabricksJobManager) Poll(ctx context.Context, name string) (shared.Ex
 			return shared.FailedExecutionStatus, nil
 		}
 	default:
-		return shared.UnknownExecutionStatus, ErrAsyncExecution
+		return shared.UnknownExecutionStatus, noopError(errors.New("Unable to determine job status."))
 	}
 }
 
@@ -156,18 +156,18 @@ func (j *DatabricksJobManager) DeployCronJob(
 	name string,
 	period string,
 	spec Spec,
-) error {
-	return errors.New("DatabricksJobManager does not support cronjobs.")
+) JobError {
+	return nil
 }
 
 func (j *DatabricksJobManager) CronJobExists(ctx context.Context, name string) bool {
 	return false
 }
 
-func (j *DatabricksJobManager) EditCronJob(ctx context.Context, name string, cronString string) error {
-	return errors.New("DatabricksJobManager does not support cronjobs.")
+func (j *DatabricksJobManager) EditCronJob(ctx context.Context, name string, cronString string) JobError {
+	return nil
 }
 
-func (j *DatabricksJobManager) DeleteCronJob(ctx context.Context, name string) error {
-	return errors.New("DatabricksJobManager does not support cronjobs.")
+func (j *DatabricksJobManager) DeleteCronJob(ctx context.Context, name string) JobError {
+	return nil
 }
