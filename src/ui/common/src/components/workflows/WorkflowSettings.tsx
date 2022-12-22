@@ -275,6 +275,16 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     retentionPolicy.k_latest_runs !==
     workflowDag.metadata?.retention_policy?.k_latest_runs;
 
+  const initialSettings = {
+    name: workflowDag.metadata?.name,
+    description: workflowDag.metadata?.description,
+    triggerType: workflowDag.metadata.schedule.trigger,
+    schedule: workflowDag.metadata.schedule.cron_schedule,
+    paused: workflowDag.metadata.schedule.paused,
+    // TODO: figure out what to do with retentionPolicyUpdated.
+    retentionPolicy: workflowDag.metadata?.retention_policy,
+  };
+
   const settingsChanged =
     name !== workflowDag.metadata?.name || // The workflow name has been changed.
     description !== workflowDag.metadata?.description || // The workflow description has changed.
@@ -537,7 +547,9 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const deleteDialog = (
     <Dialog
       open={showDeleteDialog}
-      onClose={() => setShowDeleteDialog(false)}
+      onClose={() => {
+        setShowDeleteDialog(false);
+      }}
       fullWidth
     >
       <DialogTitle>
@@ -776,7 +788,19 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
             <FontAwesomeIcon
               icon={faXmark}
-              onClick={onClose}
+              onClick={() => {
+                setName(initialSettings.name);
+                setDescription(initialSettings.description);
+                setTriggerType(initialSettings.triggerType);
+                setSchedule(initialSettings.schedule);
+                setPaused(initialSettings.paused);
+                setRetentionPolicy(initialSettings.retentionPolicy);
+
+                // Finally close the dialog
+                if (onClose) {
+                  onClose();
+                }
+              }}
               style={{ cursor: 'pointer' }}
             />
           </Box>
