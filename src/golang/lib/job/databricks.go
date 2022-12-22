@@ -12,13 +12,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	databricksFunctionScript = "aqscript.py"
-	databricksParamScript    = "paramScript.py"
-	databricksMetricScript   = "metricScript.py"
-	databricksDataScript     = "dataScript.py"
-)
-
 type DatabricksJobManager struct {
 	databricksClient *databricks.WorkspaceClient
 	conf             *DatabricksJobManagerConfig
@@ -60,14 +53,14 @@ func (j *DatabricksJobManager) mapJobTypeToFile(spec Spec) (string, string, erro
 		if err != nil {
 			return "", "", errors.Wrap(err, "Unable to encode spec.")
 		}
-		return databricksFunctionScript, specStr, nil
+		return databricks_lib.DatabricksFunctionScript, specStr, nil
 
 	} else if spec.Type() == ParamJobType {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
 			return "", "", errors.Wrap(err, "Unable to encode spec.")
 		}
-		return databricksParamScript, specStr, nil
+		return databricks_lib.DatabricksParamScript, specStr, nil
 
 	} else if spec.Type() == AuthenticateJobType ||
 		spec.Type() == LoadJobType ||
@@ -79,14 +72,14 @@ func (j *DatabricksJobManager) mapJobTypeToFile(spec Spec) (string, string, erro
 		if err != nil {
 			return "", "", errors.Wrap(err, "Unable to encode spec.")
 		}
-		return databricksDataScript, specStr, nil
+		return databricks_lib.DatabricksDataScript, specStr, nil
 
 	} else if spec.Type() == SystemMetricJobType {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
 			return "", "", errors.Wrap(err, "Unable to encode spec.")
 		}
-		return databricksMetricScript, specStr, nil
+		return databricks_lib.DatabricksMetricScript, specStr, nil
 
 	} else {
 		return "", "", errors.New("Unsupported JobType was passed in.")

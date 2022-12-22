@@ -57,6 +57,7 @@ func AuthenticateDatabricksConfig(ctx context.Context, authConf auth.Config) err
 	if err != nil {
 		return errors.Wrap(err, "Unable to parse configuration.")
 	}
+
 	databricksClient, err := databricks_lib.NewWorkspaceClient(
 		databricksConfig.WorkspaceURL,
 		databricksConfig.AccessToken,
@@ -70,6 +71,11 @@ func AuthenticateDatabricksConfig(ctx context.Context, authConf auth.Config) err
 	)
 	if err != nil {
 		return errors.Wrap(err, "Unable to list Databricks Jobs.")
+	}
+
+	err = databricks_lib.AddEntrypointFilesToStorage(ctx)
+	if err != nil {
+		return errors.Wrap(err, "Unable to upload entrypoint files to storage.")
 	}
 
 	return nil
