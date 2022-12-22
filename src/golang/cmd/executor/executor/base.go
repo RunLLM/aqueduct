@@ -5,10 +5,10 @@ import (
 
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections"
-	"github.com/aqueducthq/aqueduct/lib/collections/schema_version"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos/sqlite"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/dropbox/godropbox/errors"
 )
@@ -34,15 +34,12 @@ func NewBaseExecutor(conf *job.ExecutorConfiguration) (*BaseExecutor, error) {
 		}
 	}()
 
-	schemaVersionReader, err := schema_version.NewReader(db.Config())
-	if err != nil {
-		return nil, err
-	}
+	schemaVersionRepo := sqlite.NewSchemaVersionRepo()
 
 	if err := collections.RequireSchemaVersion(
 		context.Background(),
-		models.SchemaVersion,
-		schemaVersionReader,
+		models.CurrentSchemaVersion,
+		schemaVersionRepo,
 		db,
 	); err != nil {
 		return nil, errors.Wrap(err, "Found incompatible database schema version.")
