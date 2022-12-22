@@ -48,7 +48,10 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 	errGroup, _ := errgroup.WithContext(ctx)
 
 	// Run Authentication only once since the credentials will be memorized.
-	lambda_utils.AuthenticateDockerToECR()
+	err = lambda_utils.AuthenticateDockerToECR()
+	if err != nil {
+		return errors.Wrap(err, "Unable to Create Lambda Function.")
+	}
 
 	// Pull Image on a currency "MaxConcurrentDownload" to parallelize and avoid pull timeout.
 	for i := 0; i < len(functionsToShip); i += MaxConcurrentDownload {

@@ -24,7 +24,7 @@ type EcrAuth struct {
 }
 
 func AuthenticateDockerToECR() error {
-	//Authenticate ECR client.
+	// Authenticate ECR client.
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
 
@@ -64,7 +64,7 @@ func AuthenticateDockerToECR() error {
 }
 
 func PullImageFromECR(functionType LambdaFunctionType) error {
-	//Pull the Image from public ECR Library.
+	// Pull the Image from public ECR Library.
 	lambdaImageUri, _, err := mapFunctionType(functionType)
 	if err != nil {
 		return errors.Wrap(err, "Unable to map function type to image.")
