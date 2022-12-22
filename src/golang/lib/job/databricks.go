@@ -6,14 +6,14 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	databricks_lib "github.com/aqueducthq/aqueduct/lib/databricks"
-	"github.com/databricks/databricks-sdk-go"
+	databricks_sdk "github.com/databricks/databricks-sdk-go"
 	"github.com/databricks/databricks-sdk-go/service/jobs"
 	"github.com/dropbox/godropbox/errors"
 	log "github.com/sirupsen/logrus"
 )
 
 type DatabricksJobManager struct {
-	databricksClient *databricks.WorkspaceClient
+	databricksClient *databricks_sdk.WorkspaceClient
 	conf             *DatabricksJobManagerConfig
 	runMap           map[string]int64
 }

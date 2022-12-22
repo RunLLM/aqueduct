@@ -3,9 +3,9 @@ from typing import Optional, Union
 
 from aqueduct.constants.enums import RuntimeType
 from aqueduct.integrations.airflow_integration import AirflowIntegration
+from aqueduct.integrations.databricks_integration import DatabricksIntegration
 from aqueduct.integrations.k8s_integration import K8sIntegration
 from aqueduct.integrations.lambda_integration import LambdaIntegration
-from aqueduct.integrations.databricks_integration import DatabricksIntegration
 from pydantic import BaseModel
 
 
@@ -52,7 +52,9 @@ class EngineConfig(BaseModel):
 # TODO(...): this is deprecated.
 class FlowConfig(BaseModel):
 
-    engine: Optional[Union[AirflowIntegration, K8sIntegration, LambdaIntegration, DatabricksIntegration]]
+    engine: Optional[
+        Union[AirflowIntegration, K8sIntegration, LambdaIntegration, DatabricksIntegration]
+    ]
     k_latest_runs: int = -1
 
     class Config:

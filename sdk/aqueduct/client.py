@@ -272,7 +272,7 @@ class Client:
         elif integration_info.service == ServiceType.DATABRICKS:
             return DatabricksIntegration(
                 metadata=integration_info,
-            ) 
+            )
         else:
             raise InvalidIntegrationException(
                 "This method does not support loading integration of type %s"

@@ -2,13 +2,15 @@ import { Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React from 'react';
 
-import { Integration, DatabricksConfig } from '../../../utils/integrations';
+import { DatabricksConfig, Integration } from '../../../utils/integrations';
 
 type DatabricksCardProps = {
   integration: Integration;
 };
 
-export const DatabricksCard: React.FC<DatabricksCardProps> = ({ integration }) => {
+export const DatabricksCard: React.FC<DatabricksCardProps> = ({
+  integration,
+}) => {
   const config = integration.config as DatabricksConfig;
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>

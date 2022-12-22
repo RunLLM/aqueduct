@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib"
-	"github.com/databricks/databricks-sdk-go"
+	databricks_sdk "github.com/databricks/databricks-sdk-go"
 	"github.com/databricks/databricks-sdk-go/service/clusters"
 	"github.com/databricks/databricks-sdk-go/service/jobs"
 	"github.com/databricks/databricks-sdk-go/service/libraries"
@@ -15,12 +15,12 @@ import (
 func NewWorkspaceClient(
 	workspaceUrl string,
 	accessToken string,
-) (*databricks.WorkspaceClient, error) {
-	dConfig := &databricks.Config{
+) (*databricks_sdk.WorkspaceClient, error) {
+	dConfig := &databricks_sdk.Config{
 		Host:  workspaceUrl,
 		Token: accessToken,
 	}
-	datatbricksClient, err := databricks.NewWorkspaceClient(dConfig)
+	datatbricksClient, err := databricks_sdk.NewWorkspaceClient(dConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to create Databricks client.")
 	}
@@ -29,7 +29,7 @@ func NewWorkspaceClient(
 
 func ListJobs(
 	ctx context.Context,
-	databricksClient *databricks.WorkspaceClient,
+	databricksClient *databricks_sdk.WorkspaceClient,
 ) ([]jobs.Job, error) {
 	jobs, err := databricksClient.Jobs.ListAll(
 		ctx,
@@ -43,7 +43,7 @@ func ListJobs(
 
 func CreateJob(
 	ctx context.Context,
-	databricksClient *databricks.WorkspaceClient,
+	databricksClient *databricks_sdk.WorkspaceClient,
 	name string,
 	s3InstanceProfileArn string,
 	pythonFilePath string,
@@ -83,7 +83,7 @@ func CreateJob(
 
 func RunNow(
 	ctx context.Context,
-	databricksClient *databricks.WorkspaceClient,
+	databricksClient *databricks_sdk.WorkspaceClient,
 	jobId int64,
 	specStr string,
 ) (int64, error) {

@@ -157,7 +157,7 @@ export type DatabricksConfig = {
   workspace_url: string;
   access_token: string;
   s3_instance_profile_arn: string;
-}
+};
 
 export type IntegrationConfig =
   | PostgresConfig

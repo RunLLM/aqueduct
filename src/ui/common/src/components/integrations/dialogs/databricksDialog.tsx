@@ -39,7 +39,9 @@ export const DatabricksDialog: React.FC<Props> = ({
 
       <IntegrationTextInputField
         label={'Access Token*'}
-        description={'The access token to connect to your Databricks Workspace.'}
+        description={
+          'The access token to connect to your Databricks Workspace.'
+        }
         spellCheck={false}
         required={true}
         placeholder={Placeholders.access_token}
@@ -52,11 +54,15 @@ export const DatabricksDialog: React.FC<Props> = ({
 
       <IntegrationTextInputField
         label={'S3 Instance Profile ARN*'}
-        description={'The ARN of the instance profile that allows Databricks clusters to access S3.'}
+        description={
+          'The ARN of the instance profile that allows Databricks clusters to access S3.'
+        }
         spellCheck={false}
         required={true}
         placeholder={Placeholders.s3_instance_profile_arn}
-        onChange={(event) => onUpdateField('s3_instance_profile_arn', event.target.value)}
+        onChange={(event) =>
+          onUpdateField('s3_instance_profile_arn', event.target.value)
+        }
         value={value?.s3_instance_profile_arn ?? null}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
