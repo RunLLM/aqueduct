@@ -13,7 +13,7 @@ import {
 import {
   GetOperatorResultResponse,
   Operator,
-  OperatorType, RelationalDBLoadParams, S3LoadParams, ServiceType,
+  OperatorType,
 } from '../utils/operators';
 import {
   getArtifactNode,
@@ -24,7 +24,8 @@ import {
 import { isSucceeded, LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 import { ExecutionStatus } from '../utils/shared';
 import {
-  DeleteWorkflowResponse, getSavedObjectIdentifier,
+  DeleteWorkflowResponse,
+  getSavedObjectIdentifier,
   GetWorkflowResponse,
   ListWorkflowSavedObjectsResponse,
   normalizeGetWorkflowResponse,
@@ -283,10 +284,12 @@ export const handleDeleteWorkflow = createAsyncThunk<
     selectedObjects.forEach((object) => {
       if (data['external_delete'][object.integration_name]) {
         data['external_delete'][object.integration_name].push(
-          object.object_name
+          JSON.stringify(object.spec)
         );
       } else {
-        data['external_delete'][object.integration_name] = [object.object_name];
+        data['external_delete'][object.integration_name] = [
+          JSON.stringify(object.spec),
+        ];
       }
     });
 
@@ -585,8 +588,10 @@ export const workflowSlice = createSlice({
         // this altogether.
         if (!!response.object_details) {
           response.object_details.map((object: SavedObject) => {
-
-            const key = String([object.integration_name, getSavedObjectIdentifier(object)]);
+            const key = String([
+              object.integration_name,
+              getSavedObjectIdentifier(object),
+            ]);
             if (savedObjects[key]) {
               savedObjects[key].push(object);
             } else {

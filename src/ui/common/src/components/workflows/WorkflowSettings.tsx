@@ -62,7 +62,6 @@ import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
 import { LoadingButton } from '../primitives/LoadingButton.styles';
 import StorageSelector from './storageSelector';
-import {RelationalDBLoadParams} from "../../utils/operators";
 
 type PeriodicScheduleSelectorProps = {
   cronString: string;
@@ -503,7 +502,11 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           display="inline"
         >
           Update Mode:{' '}
-          {sortedObjects.map((object) => `${object.spec.parameters.update_mode || "replace"}`).join(', ')}
+          {sortedObjects
+            .map(
+              (object) => `${object.spec.parameters.update_mode || 'replace'}`
+            )
+            .join(', ')}
           {sortedObjects.length > 1 && ' (active)'}
         </Typography>
       )}
@@ -535,7 +538,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
                   {displayObject(
                     savedObjectsList[0].integration_name,
                     getSavedObjectIdentifier(savedObjectsList[0]),
-                    sortedObjects,
+                    sortedObjects
                   )}
                 </Box>
               }

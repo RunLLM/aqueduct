@@ -106,7 +106,10 @@ export type Extract = {
   parameters: ExtractParameters;
 };
 
-export type LoadParameters = RelationalDBLoadParams | GoogleSheetsLoadParams | S3LoadParams;
+export type LoadParameters =
+  | RelationalDBLoadParams
+  | GoogleSheetsLoadParams
+  | S3LoadParams;
 
 export type RelationalDBLoadParams = {
   table: string;
@@ -125,8 +128,8 @@ export enum S3TableFormat {
 }
 
 export type S3LoadParams = {
-   filepath: string;
-   format: S3TableFormat;
+  filepath: string;
+  format: S3TableFormat;
 };
 
 export type Load = {
