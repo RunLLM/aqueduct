@@ -233,7 +233,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
   const dispatch: AppDispatch = useDispatch();
 
-  useCallback(() => {
+  useEffect(() => {
     dispatch(
       handleListWorkflowSavedObjects({
         apiKey: user.apiKey,
