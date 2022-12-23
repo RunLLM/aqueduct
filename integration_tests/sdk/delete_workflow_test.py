@@ -2,20 +2,24 @@ import pandas as pd
 import pytest
 from aqueduct.constants.enums import LoadUpdateMode
 from aqueduct.error import InvalidRequestError
-from constants import SHORT_SENTIMENT_SQL_QUERY
+from data_objects import DataObject
+from relational import SHORT_SENTIMENT_SQL_QUERY, all_relational_DBs
 from utils import (
     check_flow_doesnt_exist,
     check_table_doesnt_exist,
     check_table_exists,
+    extract,
     generate_table_name,
+    get_object_identifier_from_load_spec,
     publish_flow_test,
     save,
+    set_object_identifier_on_load_spec,
 )
 
 
 def test_delete_workflow_invalid_saved_objects(client, flow_name, data_integration, engine):
     """Check the flow cannot delete an object it had not saved."""
-    table = data_integration.sql(query=SHORT_SENTIMENT_SQL_QUERY)
+    table = extract(data_integration, DataObject.SENTIMENT)
     save(data_integration, table)
 
     flow = publish_flow_test(
@@ -26,8 +30,9 @@ def test_delete_workflow_invalid_saved_objects(client, flow_name, data_integrati
     )
 
     tables = client.flow(flow.id()).list_saved_objects()
-    tables[data_integration][0].object_name = "I_DON_T_EXIST"
-    tables[data_integration] = [tables[data_integration][0]]
+    table_saved_object_update = tables[data_integration][0]
+    set_object_identifier_on_load_spec(table_saved_object_update.spec, "I_DONT_EXIST")
+    tables[data_integration] = [table_saved_object_update]
 
     # Cannot delete a flow if the saved objects specified had not been saved by the flow.
     with pytest.raises(InvalidRequestError):
@@ -37,7 +42,10 @@ def test_delete_workflow_invalid_saved_objects(client, flow_name, data_integrati
     client.flow(flow.id())
 
 
-def test_delete_workflow_saved_objects(client, flow_name, data_integration, engine, validator):
+@pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
+def test_force_delete_workflow_saved_objects(
+    client, flow_name, data_integration, engine, validator
+):
     """Check the flow with object(s) saved with update_mode=APPEND can only be deleted if in force mode."""
     table_name = generate_table_name()
     table = data_integration.sql(query=SHORT_SENTIMENT_SQL_QUERY)
@@ -66,7 +74,9 @@ def test_delete_workflow_saved_objects(client, flow_name, data_integration, engi
     )
 
     tables = client.flow(flow.id()).list_saved_objects()
-    assert table_name in [item.object_name for item in tables[data_integration]]
+    assert table_name in [
+        get_object_identifier_from_load_spec(item.spec) for item in tables[data_integration]
+    ]
 
     # Doesn't work if don't force because it is created in append mode.
     with pytest.raises(InvalidRequestError):
@@ -80,6 +90,7 @@ def test_delete_workflow_saved_objects(client, flow_name, data_integration, engi
     check_table_doesnt_exist(data_integration, table_name)
 
 
+@pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
 def test_delete_workflow_saved_objects_twice(
     client, flow_name, data_integration, engine, validator
 ):
@@ -122,11 +133,15 @@ def test_delete_workflow_saved_objects_twice(
     check_table_exists(data_integration, table_name)
 
     tables = client.flow(flow1.id()).list_saved_objects()
-    tables_1 = set([item.object_name for item in tables[data_integration]])
+    tables_1 = set(
+        [get_object_identifier_from_load_spec(item.spec) for item in tables[data_integration]]
+    )
     assert table_name in tables_1
 
     tables = client.flow(flow2.id()).list_saved_objects()
-    tables_2 = set([item.object_name for item in tables[data_integration]])
+    tables_2 = set(
+        [get_object_identifier_from_load_spec(item.spec) for item in tables[data_integration]]
+    )
     assert table_name in tables_2
 
     assert tables_1 == tables_2

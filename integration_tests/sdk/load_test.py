@@ -1,11 +1,11 @@
 import pandas as pd
+import pytest
 from aqueduct.constants.enums import LoadUpdateMode
-from constants import SHORT_SENTIMENT_SQL_QUERY
+from relational import SHORT_SENTIMENT_SQL_QUERY, all_relational_DBs
 from utils import generate_table_name, publish_flow_test, save
 
-from aqueduct import op
 
-
+@pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
 def test_list_saved_objects(client, flow_name, data_integration, engine, validator):
     table_1_save_name = generate_table_name()
     table_2_save_name = generate_table_name()
@@ -77,6 +77,7 @@ def test_list_saved_objects(client, flow_name, data_integration, engine, validat
     )
 
 
+@pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
 def test_multiple_artifacts_saved_to_same_integration(
     client, flow_name, data_integration, engine, validator
 ):
@@ -104,26 +105,4 @@ def test_multiple_artifacts_saved_to_same_integration(
             (table_1_save_name, LoadUpdateMode.REPLACE),
         ],
         order_matters=False,
-    )
-
-
-def test_lazy_artifact_with_save(client, flow_name, data_integration, engine, validator):
-    reviews = data_integration.sql(SHORT_SENTIMENT_SQL_QUERY)
-
-    @op()
-    def copy_field(df):
-        df["new"] = df["review"]
-        return df
-
-    review_copied = copy_field.lazy(reviews)
-    save(data_integration, review_copied, update_mode=LoadUpdateMode.REPLACE)
-
-    flow = publish_flow_test(
-        client,
-        review_copied,
-        name=flow_name(),
-        engine=engine,
-    )
-    validator.check_saved_artifact(
-        flow, review_copied.id(), expected_data=copy_field.local(reviews)
     )
