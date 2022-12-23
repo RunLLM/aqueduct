@@ -1,4 +1,4 @@
-import { faBell, faGear } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faSliders } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { AppBar, Breadcrumbs, Link, Toolbar, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
@@ -162,7 +162,7 @@ const NavBar: React.FC<{
         <Box sx={{ cursor: 'pointer', marginLeft: '16px' }}>
           <FontAwesomeIcon
             className={styles['navbar-icon']}
-            icon={faGear}
+            icon={faSliders}
             onClick={() => {
               navigate('/account');
             }}
