@@ -1,6 +1,6 @@
 import { Artifact } from './artifacts';
 import { EngineConfig } from './engine';
-import { normalizeOperator, Operator } from './operators';
+import {Load, normalizeOperator, Operator, RelationalDBLoadParams, S3LoadParams} from './operators';
 import ExecutionStatus, { ExecState } from './shared';
 import { StorageConfig } from './storage';
 
@@ -135,14 +135,24 @@ export type GetWorkflowResponse = {
   workflow_dag_results: WorkflowDagResultSummary[];
 };
 
+export function getSavedObjectIdentifier(savedObject: SavedObject): string {
+  if (savedObject.spec.parameters as S3LoadParams !== undefined) {
+    return (savedObject.spec.parameters as S3LoadParams).filepath
+  } else if (savedObject.spec.parameters as RelationalDBLoadParams !== undefined) {
+    return (savedObject.spec.parameters as RelationalDBLoadParams).table
+  } else {
+    return "";
+  }
+}
+
 export type SavedObject = {
   operator_name: string;
   modified_at: string;
   integration_name: string;
-  integration_id: string;
-  service: string;
-  object_name: string;
-  update_mode: string;
+  spec: Load;
+
+  // TODO: REMOVE
+  object_name: string; // Used in delete_workflow
 };
 
 export type ListWorkflowSavedObjectsResponse = {
