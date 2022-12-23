@@ -73,6 +73,7 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     LAMBDA = "Lambda"
     MONGO_DB = "MongoDB"
     CONDA = "Conda"
+    AQUEDUCT_ENGINE = "Aqueduct Engine"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):

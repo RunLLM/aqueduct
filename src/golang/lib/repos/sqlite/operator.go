@@ -89,22 +89,19 @@ func (*operatorReader) GetDistinctLoadOPsByWorkflow(
 	workflowID uuid.UUID,
 	DB database.Database,
 ) ([]views.LoadOperator, error) {
-	// Get all unique load operator (defined as a unique combination of integration,
-	// table, and update mode) that has an edge (in `from_id` or `to_id`) in a DAG
+	// Get all unique load operator (defined as a unique combination of operator name, integration,
+	// and operator spec) that has an edge (in `from_id` or `to_id`) in a DAG
 	// belonging to the specified workflow in order of when the operator was last modified.
 	query := `
 	SELECT
 		operator.name AS operator_name, 
 		workflow_dag.created_at AS modified_at,
-		integration.name AS integration_name, 
-		json_extract(operator.spec, '$.load.integration_id') AS integration_id, 
-		json_extract(operator.spec, '$.load.service') AS service, 
-		json_extract(operator.spec, '$.load.parameters.table') AS table_name, 
-		json_extract(operator.spec, '$.load.parameters.update_mode') AS update_mode
+		integration.name AS integration_name,
+		CAST(json_extract(operator.spec, '$.load') AS BLOB) AS spec 	
 	FROM 
 		operator, integration, workflow_dag_edge, workflow_dag
 	WHERE (
-		json_extract(spec, '$.type')='load' AND 
+		json_extract(operator.spec, '$.type')='load' AND 
 		integration.id = json_extract(operator.spec, '$.load.integration_id') AND
 		( 
 			workflow_dag_edge.from_id = operator.id OR 
@@ -114,13 +111,11 @@ func (*operatorReader) GetDistinctLoadOPsByWorkflow(
 		workflow_dag.workflow_id = $1
 	)
 	GROUP BY
-		integration.name, 
-		json_extract(operator.spec, '$.load.integration_id'), 
-		json_extract(operator.spec, '$.load.service'), 
-		json_extract(operator.spec, '$.load.parameters.table'), 
-		json_extract(operator.spec, '$.load.parameters.update_mode')
-	ORDER BY modified_at DESC;`
-
+		operator.name,
+		integration.name,
+		json_extract(operator.spec, '$.load')	
+	ORDER BY modified_at DESC;
+	`
 	args := []interface{}{workflowID}
 
 	var operators []views.LoadOperator
@@ -146,6 +141,7 @@ func (*operatorReader) GetExtractAndLoadOPsByIntegration(
 	return getOperators(ctx, DB, query, args...)
 }
 
+// This currently only works with relational and S3 loads!
 func (*operatorReader) GetLoadOPsByWorkflowAndIntegration(
 	ctx context.Context,
 	workflowID uuid.UUID,
@@ -161,7 +157,10 @@ func (*operatorReader) GetLoadOPsByWorkflowAndIntegration(
 	FROM operator
 	WHERE
 		json_extract(spec, '$.type') = '%s' AND 
-		json_extract(spec, '$.load.parameters.table') = $1 AND
+		(
+			json_extract(spec, '$.load.parameters.table') = $1 OR
+			json_extract(spec, '$.load.parameters.filepath') = $1
+		) AND
 		json_extract(spec, '$.load.integration_id') = $2 AND
 		EXISTS 
 		(

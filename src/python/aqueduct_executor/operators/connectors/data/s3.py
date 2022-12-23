@@ -146,7 +146,7 @@ class S3Connector(connector.DataConnector):
         if artifact_type == ArtifactType.TABLE:
             if params.format is None:
                 raise Exception("You must specify a file format for table data.")
-            buf = io.BytesIO(data)
+            buf = io.BytesIO()
             if params.format == common.S3TableFormat.CSV:
                 data.to_csv(buf, index=False)
             elif params.format == common.S3TableFormat.JSON:
@@ -181,6 +181,7 @@ class S3Connector(connector.DataConnector):
         self.s3.Object(self.bucket, params.filepath).put(Body=serialized_data)
 
     def _delete_object(self, name: str, context: Optional[Dict[str, Any]] = None) -> None:
+        """`name` is expected to be the S3 FilePath, found in S3Params."""
         self.s3.Object(self.bucket, name).delete()
 
     def delete(self, objects: List[str]) -> List[SavedObjectDelete]:

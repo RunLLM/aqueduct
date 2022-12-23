@@ -1,12 +1,12 @@
 package tests
 
 import (
-	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/views"
-	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -72,19 +72,18 @@ func (ts *TestSuite) TestOperator_GetDistinctLoadOPsByWorkflow() {
 	for _, expectedLoadOperator := range expectedOperators {
 		load := expectedLoadOperator.Spec.Load()
 		loadParams := load.Parameters
-		relationalLoad, ok := connector.CastToRelationalDBLoadParams(loadParams)
-		require.True(ts.T(), ok)
 		integration, err := ts.integration.Get(ts.ctx, load.IntegrationId, ts.DB)
 		require.Nil(ts.T(), err)
-					
+
 		expectedLoadOperators = append(expectedLoadOperators, views.LoadOperator{
-			OperatorName: expectedLoadOperator.Name,
-			ModifiedAt: dag.CreatedAt,
+			OperatorName:    expectedLoadOperator.Name,
+			ModifiedAt:      dag.CreatedAt,
 			IntegrationName: integration.Name,
-			IntegrationID: integration.ID,
-			Service: testIntegrationService,
-			TableName: relationalLoad.Table,
-			UpdateMode: relationalLoad.UpdateMode,
+			Spec: &connector.Load{
+				Service:       testIntegrationService,
+				IntegrationId: integration.ID,
+				Parameters:    loadParams,
+			},
 		})
 	}
 
@@ -162,9 +161,9 @@ func (ts *TestSuite) TestOperator_Create() {
 		function.Function{},
 	)
 	expectedOperator := &models.Operator{
-		Name: name,
+		Name:        name,
 		Description: description,
-		Spec: *spec,
+		Spec:        *spec,
 		ExecutionEnvironmentID: utils.NullUUID{
 			IsNull: true,
 		},
@@ -216,8 +215,8 @@ func (ts *TestSuite) TestOperator_Update() {
 		function.Function{},
 	)
 	changes := map[string]interface{}{
-		models.OperatorName:        name,
-		models.OperatorSpec:        spec,
+		models.OperatorName: name,
+		models.OperatorSpec: spec,
 	}
 
 	newOperator, err := ts.operator.Update(ts.ctx, operators[0].ID, changes, ts.DB)
