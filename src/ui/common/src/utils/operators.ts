@@ -70,9 +70,29 @@ export type Check = {
 export enum ServiceType {
   Postgres = 'Postgres',
   Snowflake = 'Snowflake',
-  S3 = 'S3',
+  MySQL = 'MySQL',
+  Redshift = 'Redshift',
+  MariaDB = 'MariaDB',
+  SQLServer = 'SQL Server',
+  BigQuery = 'BigQuery',
   AqueductDemo = 'Aqueduct Demo',
+  SQLite = 'SQLite',
+  Athena = 'Athena',
+  S3 = 'S3',
   Github = 'Github',
+}
+
+export enum RelationalDBServices {
+  Postgres = 'Postgres',
+  Snowflake = 'Snowflake',
+  MySQL = 'MySQL',
+  Redshift = 'Redshift',
+  MariaDB = 'MariaDB',
+  SQLServer = 'SQL Server',
+  BigQuery = 'BigQuery',
+  AqueductDemo = 'Aqueduct Demo',
+  SQLite = 'SQLite',
+  Athena = 'Athena',
 }
 
 export type ExtractParameters =

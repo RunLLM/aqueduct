@@ -5,7 +5,9 @@ import {
   normalizeOperator,
   Operator,
   RelationalDBLoadParams,
+  RelationalDBServices,
   S3LoadParams,
+  ServiceType,
 } from './operators';
 import ExecutionStatus, { ExecState } from './shared';
 import { StorageConfig } from './storage';
@@ -142,10 +144,11 @@ export type GetWorkflowResponse = {
 };
 
 export function getSavedObjectIdentifier(savedObject: SavedObject): string {
-  if ('format' in savedObject.spec.parameters) {
-    return (savedObject.spec.parameters as S3LoadParams).filepath;
-  } else if ('table' in savedObject.spec.parameters) {
+  const serviceString: string = savedObject.spec.service;
+  if (Object.values<string>(RelationalDBServices).includes(serviceString)) {
     return (savedObject.spec.parameters as RelationalDBLoadParams).table;
+  } else if (savedObject.spec.service == ServiceType.S3) {
+    return (savedObject.spec.parameters as S3LoadParams).filepath;
   } else {
     return '';
   }
