@@ -110,7 +110,7 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
         />
       </Box>
 
-      <Box width="500px" mt="32px">
+      <Box width="100%" mt="32px">
         <Typography variant="h6" fontWeight="normal">
           History
         </Typography>

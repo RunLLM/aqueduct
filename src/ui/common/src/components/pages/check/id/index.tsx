@@ -174,7 +174,7 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
         // Redux object.
         const artifactResult = structuredClone(
           (workflowDagResultWithLoadingStatus.result?.artifacts ?? {})[
-            artifactId
+          artifactId
           ]
         );
 
@@ -258,7 +258,7 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
 
         <Divider sx={{ my: '32px' }} />
 
-        <Box width="100%" marginTop={sideSheetMode ? '16px' : '40px'}>
+        <Box width={"46.25%"} marginTop={sideSheetMode ? '16px' : '40px'}>
           <CheckHistory
             historyWithLoadingStatus={artifactHistoryWithLoadingStatus}
             checkLevel={operator?.spec?.check?.level}
