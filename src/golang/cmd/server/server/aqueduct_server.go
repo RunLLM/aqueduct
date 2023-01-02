@@ -14,6 +14,7 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/authentication"
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/maintenance"
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/request_id"
+	"github.com/aqueducthq/aqueduct/cmd/server/middleware/usage"
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -61,9 +62,11 @@ type AqServer struct {
 	// RequestMutex's read lock is acquired and released by each request to indicate when there
 	// are no more active requests.
 	RequestMutex sync.RWMutex
+
+	DisableUsageReport bool
 }
 
-func NewAqServer() *AqServer {
+func NewAqServer(disableUsageReport bool) *AqServer {
 	ctx := context.Background()
 	aqPath := config.AqueductPath()
 
@@ -87,11 +90,12 @@ func NewAqServer() *AqServer {
 	}
 
 	s := &AqServer{
-		Router:           chi.NewRouter(),
-		Database:         db,
-		Repos:            CreateRepos(),
-		UnderMaintenance: atomic.Value{},
-		RequestMutex:     sync.RWMutex{},
+		Router:             chi.NewRouter(),
+		Database:           db,
+		Repos:              CreateRepos(),
+		UnderMaintenance:   atomic.Value{},
+		RequestMutex:       sync.RWMutex{},
+		DisableUsageReport: disableUsageReport,
 	}
 	s.UnderMaintenance.Store(false)
 
@@ -238,9 +242,14 @@ func (s *AqServer) StartWorkflowRetentionJob(period string) error {
 }
 
 func (s *AqServer) AddHandler(route string, handlerObj handler.Handler) {
-	var middleware alice.Chain
+	middleware := alice.New()
+
+	if !s.DisableUsageReport {
+		middleware = middleware.Append(usage.WithUsageStats())
+	}
+
 	if handlerObj.AuthMethod() == handler.ApiKeyAuthMethod {
-		middleware = alice.New(
+		middleware = middleware.Append(
 			maintenance.Check(&s.UnderMaintenance),
 			request_id.WithRequestId(),
 			authentication.RequireApiKey(s.UserRepo, s.Database),
