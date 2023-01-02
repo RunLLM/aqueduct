@@ -79,7 +79,7 @@ func (ts *TestSuite) TestOperator_GetDistinctLoadOPsByWorkflow() {
 			OperatorName:    expectedLoadOperator.Name,
 			ModifiedAt:      dag.CreatedAt,
 			IntegrationName: integration.Name,
-			Spec: &connector.Load{
+			Spec: connector.Load{
 				Service:       testIntegrationService,
 				IntegrationId: integration.ID,
 				Parameters:    loadParams,
