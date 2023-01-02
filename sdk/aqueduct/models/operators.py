@@ -146,7 +146,8 @@ class LoadSpec(BaseModel):
             self.parameters.table = new_obj_identifier
         elif self.service == ServiceType.S3:
             self.parameters.filepath = new_obj_identifier
-        raise UnsupportedFeatureException("set_identifier() is currently unsupported for data integration type %s." % self.service.value)
+        else:
+            raise UnsupportedFeatureException("set_identifier() is currently unsupported for data integration type %s." % self.service.value)
 
 
 class EntryPoint(BaseModel):
