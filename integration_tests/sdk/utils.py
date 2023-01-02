@@ -228,23 +228,6 @@ def extract(
     raise Exception("Unexpected data integration type provided in test: %s", type(integration))
 
 
-def get_object_identifier_from_load_spec(load_spec: LoadSpec) -> str:
-    if isinstance(load_spec.parameters, RelationalDBLoadParams):
-        return load_spec.parameters.table
-    elif isinstance(load_spec.parameters, S3LoadParams):
-        return load_spec.parameters.filepath
-    raise Exception("Unsupported load parameters %s." % type(load_spec.parameters))
-
-
-def set_object_identifier_on_load_spec(load_spec: LoadSpec, new_obj_identifier: str) -> str:
-    if isinstance(load_spec.parameters, RelationalDBLoadParams):
-        load_spec.parameters.table = new_obj_identifier
-    elif isinstance(load_spec.parameters, S3LoadParams):
-        load_spec.parameters.filepath = new_obj_identifier
-    else:
-        raise Exception("Unsupported load parameters %s." % type(load_spec.parameters))
-
-
 def save(
     integration,
     artifact: TableArtifact,

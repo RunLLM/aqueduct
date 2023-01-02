@@ -10,10 +10,8 @@ from utils import (
     check_table_exists,
     extract,
     generate_table_name,
-    get_object_identifier_from_load_spec,
     publish_flow_test,
     save,
-    set_object_identifier_on_load_spec,
 )
 
 
@@ -31,7 +29,7 @@ def test_delete_workflow_invalid_saved_objects(client, flow_name, data_integrati
 
     tables = client.flow(flow.id()).list_saved_objects()
     table_saved_object_update = tables[data_integration][0]
-    set_object_identifier_on_load_spec(table_saved_object_update.spec, "I_DONT_EXIST")
+    table_saved_object_update.spec.set_identifier("I_DONT_EXIST")
     tables[data_integration] = [table_saved_object_update]
 
     # Cannot delete a flow if the saved objects specified had not been saved by the flow.
@@ -75,7 +73,7 @@ def test_force_delete_workflow_saved_objects(
 
     tables = client.flow(flow.id()).list_saved_objects()
     assert table_name in [
-        get_object_identifier_from_load_spec(item.spec) for item in tables[data_integration]
+        item.spec.identifier() for item in tables[data_integration]
     ]
 
     # Doesn't work if don't force because it is created in append mode.
@@ -134,13 +132,13 @@ def test_delete_workflow_saved_objects_twice(
 
     tables = client.flow(flow1.id()).list_saved_objects()
     tables_1 = set(
-        [get_object_identifier_from_load_spec(item.spec) for item in tables[data_integration]]
+        [item.spec.identifier() for item in tables[data_integration]]
     )
     assert table_name in tables_1
 
     tables = client.flow(flow2.id()).list_saved_objects()
     tables_2 = set(
-        [get_object_identifier_from_load_spec(item.spec) for item in tables[data_integration]]
+        [item.spec.identifier() for item in tables[data_integration]]
     )
     assert table_name in tables_2
 

@@ -6,7 +6,7 @@ from aqueduct.constants.enums import LoadUpdateMode
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
 from aqueduct.models.integration import Integration
 from aqueduct.models.operators import RelationalDBLoadParams
-from utils import artifact_id_to_saved_identifier, extract, get_object_identifier_from_load_spec
+from utils import artifact_id_to_saved_identifier, extract
 
 from aqueduct import Client, Flow
 
@@ -31,7 +31,7 @@ class Validator:
         all_saved_objects = flow.list_saved_objects()[self._integration._metadata.name]
 
         all_saved_object_identifiers = [
-            get_object_identifier_from_load_spec(item.spec) for item in all_saved_objects
+            item.spec.identifier() for item in all_saved_objects
         ]
         saved_object_identifier = artifact_id_to_saved_identifier[str(artifact_id)]
         assert saved_object_identifier in all_saved_object_identifiers

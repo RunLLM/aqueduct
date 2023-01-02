@@ -13,9 +13,9 @@ from aqueduct.constants.enums import (
     S3TableFormat,
     SalesforceExtractType,
     SerializationType,
-    ServiceType,
+    ServiceType, RelationalDBServices,
 )
-from aqueduct.error import AqueductError
+from aqueduct.error import AqueductError, UnsupportedFeatureException
 from aqueduct.models.config import EngineConfig
 from aqueduct.models.integration import IntegrationInfo
 from pydantic import BaseModel, Extra
@@ -133,6 +133,20 @@ class LoadSpec(BaseModel):
     service: ServiceType
     integration_id: uuid.UUID
     parameters: UnionLoadParams
+
+    def identifier(self) -> str:
+        if self.service in RelationalDBServices:
+            return self.parameters.table
+        elif self.service == ServiceType.S3:
+            return self.parameters.filepath
+        raise UnsupportedFeatureException("identifier() is currently unsupported for data integration type %s." % self.service.value)
+
+    def set_identifier(self, new_obj_identifier: str) -> None:
+        if self.service in RelationalDBServices:
+            self.parameters.table = new_obj_identifier
+        elif self.service == ServiceType.S3:
+            self.parameters.filepath = new_obj_identifier
+        raise UnsupportedFeatureException("set_identifier() is currently unsupported for data integration type %s." % self.service.value)
 
 
 class EntryPoint(BaseModel):
