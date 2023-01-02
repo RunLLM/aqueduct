@@ -123,10 +123,7 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
             }}
             width="100%"
           >
-            <Box
-              sx={{ display: 'flex', alignItems: 'center' }}
-              width="100%"
-            >
+            <Box sx={{ display: 'flex', alignItems: 'center' }} width="100%">
               {icon}
 
               <Typography sx={{ ml: 1 }} variant="body2">

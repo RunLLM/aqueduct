@@ -137,8 +137,9 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   useEffect(() => {
     if (!!operator && !sideSheetMode) {
       // this should only be set when the user is viewing this as a full page, not side sheet.
-      document.title = `${operator ? operator.name : 'Operator Details'
-        } | Aqueduct`;
+      document.title = `${
+        operator ? operator.name : 'Operator Details'
+      } | Aqueduct`;
     }
   }, [operator, sideSheetMode]);
 
@@ -170,7 +171,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
       .map(
         (artifactId) =>
           (workflowDagResultWithLoadingStatus.result?.artifacts ?? {})[
-          artifactId
+            artifactId
           ]
       )
       .filter((artf) => !!artf);
@@ -217,7 +218,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
 
           <Divider sx={{ my: '32px' }} />
 
-          <Box width={"49.2%"} marginTop={sideSheetMode ? '16px' : '40px'}>
+          <Box width={'49.2%'} marginTop={sideSheetMode ? '16px' : '40px'}>
             <MetricsHistory
               historyWithLoadingStatus={artifactHistoryWithLoadingStatus}
             />
