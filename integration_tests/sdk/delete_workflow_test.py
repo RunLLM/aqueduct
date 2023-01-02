@@ -72,9 +72,7 @@ def test_force_delete_workflow_saved_objects(
     )
 
     tables = client.flow(flow.id()).list_saved_objects()
-    assert table_name in [
-        item.spec.identifier() for item in tables[data_integration]
-    ]
+    assert table_name in [item.spec.identifier() for item in tables[data_integration]]
 
     # Doesn't work if don't force because it is created in append mode.
     with pytest.raises(InvalidRequestError):
@@ -131,15 +129,11 @@ def test_delete_workflow_saved_objects_twice(
     check_table_exists(data_integration, table_name)
 
     tables = client.flow(flow1.id()).list_saved_objects()
-    tables_1 = set(
-        [item.spec.identifier() for item in tables[data_integration]]
-    )
+    tables_1 = set([item.spec.identifier() for item in tables[data_integration]])
     assert table_name in tables_1
 
     tables = client.flow(flow2.id()).list_saved_objects()
-    tables_2 = set(
-        [item.spec.identifier() for item in tables[data_integration]]
-    )
+    tables_2 = set([item.spec.identifier() for item in tables[data_integration]])
     assert table_name in tables_2
 
     assert tables_1 == tables_2

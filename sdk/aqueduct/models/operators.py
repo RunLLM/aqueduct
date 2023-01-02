@@ -10,10 +10,11 @@ from aqueduct.constants.enums import (
     GoogleSheetsSaveMode,
     LoadUpdateMode,
     OperatorType,
+    RelationalDBServices,
     S3TableFormat,
     SalesforceExtractType,
     SerializationType,
-    ServiceType, RelationalDBServices,
+    ServiceType,
 )
 from aqueduct.error import AqueductError, UnsupportedFeatureException
 from aqueduct.models.config import EngineConfig
@@ -135,19 +136,25 @@ class LoadSpec(BaseModel):
     parameters: UnionLoadParams
 
     def identifier(self) -> str:
-        if self.service in RelationalDBServices:
+        if isinstance(self.parameters, RelationalDBLoadParams):
             return self.parameters.table
-        elif self.service == ServiceType.S3:
+        elif isinstance(self.parameters, S3LoadParams):
             return self.parameters.filepath
-        raise UnsupportedFeatureException("identifier() is currently unsupported for data integration type %s." % self.service.value)
+        raise UnsupportedFeatureException(
+            "identifier() is currently unsupported for data integration type %s."
+            % self.service.value
+        )
 
     def set_identifier(self, new_obj_identifier: str) -> None:
-        if self.service in RelationalDBServices:
+        if isinstance(self.parameters, RelationalDBLoadParams):
             self.parameters.table = new_obj_identifier
-        elif self.service == ServiceType.S3:
+        elif isinstance(self.parameters, S3LoadParams):
             self.parameters.filepath = new_obj_identifier
         else:
-            raise UnsupportedFeatureException("set_identifier() is currently unsupported for data integration type %s." % self.service.value)
+            raise UnsupportedFeatureException(
+                "set_identifier() is currently unsupported for data integration type %s."
+                % self.service.value
+            )
 
 
 class EntryPoint(BaseModel):

@@ -30,9 +30,7 @@ class Validator:
         # Check that given saved artifacts were indeed saved based on the flow API.
         all_saved_objects = flow.list_saved_objects()[self._integration._metadata.name]
 
-        all_saved_object_identifiers = [
-            item.spec.identifier() for item in all_saved_objects
-        ]
+        all_saved_object_identifiers = [item.spec.identifier() for item in all_saved_objects]
         saved_object_identifier = artifact_id_to_saved_identifier[str(artifact_id)]
         assert saved_object_identifier in all_saved_object_identifiers
 

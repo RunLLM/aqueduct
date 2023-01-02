@@ -78,6 +78,7 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
     """Must match the corresponding entries in `ServiceType` exactly."""
+
     POSTGRES = "Postgres"
     SNOWFLAKE = "Snowflake"
     MYSQL = "MySQL"
