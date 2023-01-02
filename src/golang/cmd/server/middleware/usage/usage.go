@@ -34,9 +34,11 @@ func reportUsage(startTime time.Time, r *http.Request) {
 		}
 	}
 
+	// This call generates a unique hash of the host device in a privacy-preserving fashion.
+	// Details can be found here: https://github.com/denisbrodbeck/machineid
 	machineID, err := machineid.ProtectedID(hashKey)
 	if err != nil {
-		log.Errorf("Failed to generate device ID: %v", err)
+		log.Errorf("Failed to generate obfuscated device ID: %v", err)
 		return
 	}
 
