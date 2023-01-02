@@ -63,10 +63,10 @@ type AqServer struct {
 	// are no more active requests.
 	RequestMutex sync.RWMutex
 
-	DisableUsageReport bool
+	DisableUsageStats bool
 }
 
-func NewAqServer(disableUsageReport bool) *AqServer {
+func NewAqServer(disableUsageStats bool) *AqServer {
 	ctx := context.Background()
 	aqPath := config.AqueductPath()
 
@@ -90,12 +90,12 @@ func NewAqServer(disableUsageReport bool) *AqServer {
 	}
 
 	s := &AqServer{
-		Router:             chi.NewRouter(),
-		Database:           db,
-		Repos:              CreateRepos(),
-		UnderMaintenance:   atomic.Value{},
-		RequestMutex:       sync.RWMutex{},
-		DisableUsageReport: disableUsageReport,
+		Router:            chi.NewRouter(),
+		Database:          db,
+		Repos:             CreateRepos(),
+		UnderMaintenance:  atomic.Value{},
+		RequestMutex:      sync.RWMutex{},
+		DisableUsageStats: disableUsageStats,
 	}
 	s.UnderMaintenance.Store(false)
 
@@ -244,7 +244,7 @@ func (s *AqServer) StartWorkflowRetentionJob(period string) error {
 func (s *AqServer) AddHandler(route string, handlerObj handler.Handler) {
 	middleware := alice.New()
 
-	if !s.DisableUsageReport {
+	if !s.DisableUsageStats {
 		middleware = middleware.Append(usage.WithUsageStats())
 	}
 
