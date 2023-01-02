@@ -10,11 +10,10 @@ import (
 
 // LoadOperator contains metadata about a Load Operator
 type LoadOperator struct {
-	OperatorName    string    `db:"operator_name" json:"operator_name"`
-	ModifiedAt      time.Time `db:"modified_at" json:"modified_at"`
-	IntegrationName string    `db:"integration_name" json:"integration_name"`
-
-	Spec *connector.Load `db:"spec" json:"spec"`
+	OperatorName    string         `db:"operator_name" json:"operator_name"`
+	ModifiedAt      time.Time      `db:"modified_at" json:"modified_at"`
+	IntegrationName string         `db:"integration_name" json:"integration_name"`
+	Spec            connector.Load `db:"spec" json:"spec"`
 }
 
 // LoadOperatorSpec is a wrapper around a Load Operator's spec and other metadata
