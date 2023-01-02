@@ -253,7 +253,7 @@ export const IntegrationCategories = {
 };
 
 export const ServiceLogos: ServiceLogo = {
-  ['Aqueduct']: `${logoBucket}/aqueduct-logo-light/1x/logo_light_blue.png`,
+  ['Aqueduct']: `${logoBucket}/aqueduct-logo-dark/small/2x/aqueduct-logo-dark-small%402x.png`,
   ['Postgres']: `${integrationLogosBucket}/440px-Postgresql_elephant.svg.png`,
   ['Snowflake']: `${integrationLogosBucket}/51-513957_periscope-data-partners-snowflake-computing-logo.png`,
   ['Redshift']: `${integrationLogosBucket}/amazon-redshift.png`,
