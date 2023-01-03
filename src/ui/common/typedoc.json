@@ -1,0 +1,7 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["./src/index.tsx"],
+  "out": "doc",
+  "externalPattern": "**/node_modules/**",
+  "exclude": "**/node_modules/**"
+}
