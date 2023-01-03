@@ -1,24 +1,24 @@
 import pandas as pd
 import pytest
 from aqueduct.error import AqueductError
-from constants import SENTIMENT_SQL_QUERY
+from data_objects import DataObject
 from test_metrics.constant.model import constant_metric
-from utils import publish_flow_test
+from utils import extract, publish_flow_test
 
 from aqueduct import metric
 
 
 def test_basic_metric(client, data_integration):
-    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
+    table_artifact = extract(data_integration, DataObject.SENTIMENT)
 
-    metric = constant_metric(sql_artifact)
+    metric = constant_metric(table_artifact)
     assert metric.get() == 17.5
 
 
 def test_metric_bound(client, data_integration):
-    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
+    table_artifact = extract(data_integration, DataObject.SENTIMENT)
 
-    metric = constant_metric(sql_artifact)
+    metric = constant_metric(table_artifact)
     check_artifact = metric.bound(upper=100)
     assert check_artifact.get()
 
@@ -39,12 +39,13 @@ def test_metric_bound(client, data_integration):
 
 
 def test_register_metric(client, flow_name, data_integration, engine):
-    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
-    metric_artifact = constant_metric(sql_artifact)
+    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+
+    metric_artifact = constant_metric(table_artifact)
     publish_flow_test(
         client,
         name=flow_name(),
-        artifacts=[sql_artifact, metric_artifact],
+        artifacts=[table_artifact, metric_artifact],
         engine=engine,
     )
 
@@ -62,8 +63,8 @@ def metric_with_multiple_inputs(df1, m, df2):
 
 
 def test_metric_mixed_inputs(client, flow_name, data_integration, engine):
-    sql1 = data_integration.sql(query=SENTIMENT_SQL_QUERY)
-    sql2 = data_integration.sql(query=SENTIMENT_SQL_QUERY)
+    sql1 = extract(data_integration, DataObject.SENTIMENT)
+    sql2 = extract(data_integration, DataObject.SENTIMENT)
     metric_input = constant_metric(sql1)
 
     metric_output = metric_with_multiple_inputs(sql1, metric_input, sql2)

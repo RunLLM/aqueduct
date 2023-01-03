@@ -1,6 +1,7 @@
 import pytest
 from aqueduct.error import InvalidUserActionException
-from constants import SENTIMENT_SQL_QUERY
+from data_objects import DataObject
+from utils import extract
 
 from aqueduct import check, metric, op
 
@@ -32,9 +33,9 @@ def regular_function(args):
 
 def test_check_artifact_restriction(client, data_integration):
     """Test that an artifact produced by a check operator cannot be used as an argument to any operator types."""
-    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
+    table_artifact = extract(data_integration, DataObject.SENTIMENT)
 
-    check_artifact = produce_check_artifact(sql_artifact)
+    check_artifact = produce_check_artifact(table_artifact)
     with pytest.raises(InvalidUserActionException):
         check_function(check_artifact)
     with pytest.raises(InvalidUserActionException):
@@ -45,8 +46,8 @@ def test_check_artifact_restriction(client, data_integration):
 
 def test_metric_artifact_restriction(client, data_integration):
     """Test that an artifact produced by a metric operator cannot be used as an argument to function operator."""
-    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
+    table_artifact = extract(data_integration, DataObject.SENTIMENT)
 
-    metric_artifact = produce_metric_artifact(sql_artifact)
+    metric_artifact = produce_metric_artifact(table_artifact)
     with pytest.raises(InvalidUserActionException):
         regular_function(metric_artifact)

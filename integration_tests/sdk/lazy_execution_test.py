@@ -6,17 +6,18 @@ from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.constants.enums import ArtifactType
 from aqueduct.error import InvalidUserArgumentException
-from constants import SENTIMENT_SQL_QUERY, WINE_SQL_QUERY
+from data_objects import DataObject
+from utils import extract, publish_flow_test, save
 
 from aqueduct import check, global_config, metric, op
 
 
 def test_lazy_sql_extractor(client, data_integration):
-    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY, lazy=True)
-    assert sql_artifact._get_content() is None
-    assert isinstance(sql_artifact.get(), pd.DataFrame)
+    table_artifact = extract(data_integration, DataObject.SENTIMENT, lazy=True)
+    assert table_artifact._get_content() is None
+    assert isinstance(table_artifact.get(), pd.DataFrame)
     # After calling get(), artifact's content should be materialized.
-    assert sql_artifact._get_content() is not None
+    assert table_artifact._get_content() is not None
 
 
 def test_lazy_operators(client):
@@ -71,8 +72,8 @@ def test_eager_operator_after_lazy(client):
 
 
 def test_table_artifact_lazy_syntax_sugar(client, data_integration):
-    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY, lazy=True)
-    num_rows_artifact = sql_artifact.number_of_rows(lazy=True)
+    table_artifact = extract(data_integration, DataObject.SENTIMENT, lazy=True)
+    num_rows_artifact = table_artifact.number_of_rows(lazy=True)
     assert num_rows_artifact._get_content() is None
     assert isinstance(num_rows_artifact.get(), float)
     # After calling get(), artifact's content should be materialized.
@@ -115,15 +116,15 @@ def test_lazy_global_config(client, data_integration):
         global_config({"lazy": True})
 
         # Basic SQL artifact that was lazily computed.
-        sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
-        assert sql_artifact._get_content() is None
-        assert isinstance(sql_artifact.get(), pd.DataFrame)
+        table_artifact = extract(data_integration, DataObject.SENTIMENT)
+        assert table_artifact._get_content() is None
+        assert isinstance(table_artifact.get(), pd.DataFrame)
         # After calling get(), artifact's content should be materialized.
-        assert sql_artifact._get_content() is not None
+        assert table_artifact._get_content() is not None
 
         # For a lazily-created metric used pre-defined functions.
-        sql_artifact = data_integration.sql(query=WINE_SQL_QUERY)
-        max_metric = sql_artifact.max(column_id="fixed_acidity")
+        table_artifact = extract(data_integration, DataObject.WINE)
+        max_metric = table_artifact.max(column_id="fixed_acidity")
         assert max_metric._get_content() is None
         assert math.isclose(max_metric.get(), 15.899, rel_tol=1e-3)
         assert max_metric._get_content() is not None
@@ -212,3 +213,25 @@ def test_lazy_artifacts_with_custom_parameters(client):
     assert doubled.get(parameters={"number": 20}) == 40
     assert doubled.type() == ArtifactType.NUMERIC
     assert doubled._get_content() is None  # do not manifest the contents!
+
+
+def test_lazy_artifact_with_save(client, flow_name, data_integration, engine, validator):
+    reviews = extract(data_integration, DataObject.SENTIMENT)
+
+    @op()
+    def copy_field(df):
+        df["new"] = df["review"]
+        return df
+
+    review_copied = copy_field.lazy(reviews)
+    save(data_integration, review_copied)
+
+    flow = publish_flow_test(
+        client,
+        review_copied,
+        name=flow_name(),
+        engine=engine,
+    )
+    validator.check_saved_artifact(
+        flow, review_copied.id(), expected_data=copy_field.local(reviews)
+    )

@@ -1,14 +1,15 @@
 import pytest
 from aqueduct.constants.enums import ServiceType
-from constants import SENTIMENT_SQL_QUERY
-from utils import publish_flow_test
+from data_objects import DataObject
+from utils import extract, publish_flow_test
 
 from aqueduct import op
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S, ServiceType.LAMBDA)
 def test_flow_with_multiple_compute_using_op_spec(client, flow_name, data_integration, engine):
-    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
+    """Runs a workflow both Aqueduct and a third-party compute engine."""
+    table_artifact = extract(data_integration, DataObject.SENTIMENT)
 
     @op
     def noop(input):
@@ -19,5 +20,5 @@ def test_flow_with_multiple_compute_using_op_spec(client, flow_name, data_integr
         return input
 
     # Only `noop_on_third_party` is run on outside compute.
-    output = noop_on_third_party(noop(sql_artifact))
+    output = noop_on_third_party(noop(table_artifact))
     publish_flow_test(client, output, engine=None)
