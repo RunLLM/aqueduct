@@ -50,6 +50,7 @@ import {
   getNextUpdateTime,
   PeriodUnit,
 } from '../../utils/cron';
+import { UpdateMode } from '../../utils/operators';
 import ExecutionStatus, { LoadingStatusEnum } from '../../utils/shared';
 import {
   getSavedObjectIdentifier,
@@ -491,7 +492,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         [{integration}] <b>{name}</b>
       </Typography>
 
-      {/* Objects saved into S3 are currently expected to have update_mode === "replace". */}
+      {/* Objects saved into S3 are currently expected to have update_mode === UpdateMode.replace */}
       {sortedObjects && (
         <Typography
           style={{
@@ -504,7 +505,8 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           Update Mode:{' '}
           {sortedObjects
             .map(
-              (object) => `${object.spec.parameters.update_mode || 'replace'}`
+              (object) =>
+                `${object.spec.parameters.update_mode || UpdateMode.replace}`
             )
             .join(', ')}
           {sortedObjects.length > 1 && ' (active)'}

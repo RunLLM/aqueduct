@@ -126,6 +126,12 @@ export type Extract = {
   parameters: ExtractParameters;
 };
 
+export enum UpdateMode {
+  append = 'append',
+  replace = 'replace',
+  fail = 'fail',
+}
+
 export type LoadParameters =
   | RelationalDBLoadParams
   | GoogleSheetsLoadParams
@@ -133,7 +139,7 @@ export type LoadParameters =
 
 export type RelationalDBLoadParams = {
   table: string;
-  update_mode: string;
+  update_mode: UpdateMode;
 };
 
 export type GoogleSheetsLoadParams = {
