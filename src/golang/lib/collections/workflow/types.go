@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/google/uuid"
 )
 
 type CronString string
@@ -11,9 +12,10 @@ type CronString string
 type UpdateTrigger string
 
 const (
-	ManualUpdateTrigger   UpdateTrigger = "manual"
-	PeriodicUpdateTrigger UpdateTrigger = "periodic"
-	AirflowUpdateTrigger  UpdateTrigger = "airflow"
+	ManualUpdateTrigger    UpdateTrigger = "manual"
+	PeriodicUpdateTrigger  UpdateTrigger = "periodic"
+	AirflowUpdateTrigger   UpdateTrigger = "airflow"
+	CascadingUpdateTrigger UpdateTrigger = "cascade"
 )
 
 type Schedule struct {
@@ -21,6 +23,8 @@ type Schedule struct {
 	CronSchedule         CronString    `json:"cron_schedule"`
 	DisableManualTrigger bool          `json:"disable_manual_trigger"`
 	Paused               bool          `json:"paused"`
+	// TriggerIDs are all of the Workflows that trigger this Schedule
+	TriggerIDs []uuid.UUID `json:"trigger_ids"`
 }
 
 func (s *Schedule) Value() (driver.Value, error) {
