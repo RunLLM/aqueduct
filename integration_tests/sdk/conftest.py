@@ -1,13 +1,15 @@
 import os
+from typing import List
 
 import pytest
 import utils
+from aqueduct.constants.enums import ServiceType
 from aqueduct.models.dag import DAG, Metadata
 from utils import delete_flow, flow_name_to_id, generate_new_flow_name
 from validator import Validator
 
 import aqueduct
-from aqueduct import globals
+from aqueduct import Client, globals
 
 
 def pytest_addoption(parser):
@@ -24,6 +26,10 @@ def pytest_configure(config):
     """This is just to prevent warnings around our custom markers. eg. `pytest.mark.enable_only_for_engine`."""
     config.addinivalue_line(
         "markers", "enable_only_for_engine_type: runs the test only for the supplied engines."
+    )
+    config.addinivalue_line(
+        "markers",
+        "enable_only_for_data_integration_type: runs the test only for the supplied data integrations.",
     )
 
 
@@ -64,7 +70,7 @@ def use_deprecated(pytestconfig):
 
 # Pulled from: https://stackoverflow.com/questions/28179026/how-to-skip-a-pytest-using-an-external-fixture
 @pytest.fixture(autouse=True)
-def enable_by_engine_type(request, client, engine):
+def enable_only_for_engine_type(request, client, engine):
     """When a test is marked with this, it is enabled for particular ServiceType(s)!
 
     Eg.
@@ -74,22 +80,53 @@ def enable_by_engine_type(request, client, engine):
     """
     if request.node.get_closest_marker("enable_only_for_engine_type"):
         enabled_engine_types = request.node.get_closest_marker("enable_only_for_engine_type").args
+        assert all(
+            isinstance(engine_type, ServiceType) for engine_type in enabled_engine_types
+        ), "Arguments to `enable_only_for_engine_type()` must be of type ServiceType"
 
         if engine is None:
-            pytest.skip(
-                "Skipped. This test only runs on engine type `%s`." % ",".join(enabled_engine_types)
-            )
-            return
+            # We run against the default engine only if Aqueduct engine is specifically enabled.
+            # eg. `@pytest.mark.enable_only_for_engine(ServiceType.AQUEDUCT_ENGINE, ServiceType.AIRFLOW)
+            if ServiceType.AQUEDUCT_ENGINE in enabled_engine_types:
+                return
+            else:
+                pytest.skip(
+                    "Skipped. This test only runs on engine type `%s`."
+                    % ",".join(enabled_engine_types)
+                )
 
-        # Get the type of integration that `engine` is, so we know whether to skip.
         integration_info_by_name = client.list_integrations()
         if engine not in integration_info_by_name.keys():
-            raise Exception("Server is not connected an integration `%s`." % engine)
+            raise Exception("Server is not connected to integration `%s`." % engine)
 
         if integration_info_by_name[engine].service not in enabled_engine_types:
             pytest.skip(
-                "Skipped on engine `%s`, since it is not of type `%s`."
+                "Skipped for engine integration `%s`, since it is not of type `%s`."
                 % (engine, ",".join(enabled_engine_types))
+            )
+
+
+@pytest.fixture(autouse=True)
+def enable_only_for_data_integration_type(request, client, data_integration):
+    """When a test is marked with this, it is enabled for particular ServiceType(s)!
+
+    Eg.
+    @pytest.mark.enable_only_for_data_integration_type(*relational_dbs())
+    def test_relational_data_integrations_only(data_integration):
+        ...
+    """
+    if request.node.get_closest_marker("enable_only_for_data_integration_type"):
+        enabled_data_integration_types = request.node.get_closest_marker(
+            "enable_only_for_data_integration_type"
+        ).args
+        assert all(
+            isinstance(data_type, ServiceType) for data_type in enabled_data_integration_types
+        ), "Arguments to `enable_only_for_data_integration_type()` must be of type ServiceType"
+
+        if data_integration._metadata.service not in enabled_data_integration_types:
+            pytest.skip(
+                "Skipped for data integration `%s`, since it is not of type `%s`."
+                % (data_integration._metadata.name, ",".join(enabled_data_integration_types))
             )
 
 

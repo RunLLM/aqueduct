@@ -9,6 +9,7 @@ from aqueduct.error import (
     ClientValidationError,
     InternalServerError,
     InvalidRequestError,
+    InvalidUserArgumentException,
     NoConnectedIntegrationsException,
     ResourceNotFoundError,
     UnprocessableEntityError,
@@ -16,7 +17,7 @@ from aqueduct.error import (
 from aqueduct.logger import logger
 from aqueduct.models.dag import DAG
 from aqueduct.models.integration import Integration, IntegrationInfo
-from aqueduct.models.operators import ParamSpec
+from aqueduct.models.operators import LoadSpec, ParamSpec, RelationalDBLoadParams, S3LoadParams
 from aqueduct.utils.serialization import deserialize
 from pkg_resources import parse_version, require
 
@@ -345,15 +346,14 @@ class APIClient:
         url = self.construct_full_url(self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id)
         body = {
             "external_delete": {
-                str(integration): [obj.object_name for obj in saved_objects_to_delete[integration]]
+                str(integration): [obj.spec.json() for obj in saved_objects_to_delete[integration]]
                 for integration in saved_objects_to_delete
             },
             "force": force,
         }
         response = requests.post(url, headers=headers, json=body)
         self.raise_errors(response)
-        deleteWorkflowResponse = DeleteWorkflowResponse(**response.json())
-        return deleteWorkflowResponse
+        return DeleteWorkflowResponse(**response.json())
 
     def get_workflow(self, flow_id: str) -> GetWorkflowResponse:
         headers = self._generate_auth_headers()

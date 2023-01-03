@@ -1,12 +1,14 @@
 import pytest
 from aqueduct.error import InvalidIntegrationException, InvalidUserArgumentException
-from constants import SENTIMENT_SQL_QUERY
+from data_objects import DataObject
+from relational import all_relational_DBs
 from test_functions.simple.model import dummy_sentiment_model
-from utils import publish_flow_test, save
+from utils import extract, publish_flow_test, save
 
 from aqueduct import metric
 
 
+@pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
 def test_sql_integration_load_table(client, data_integration):
     df = data_integration.table(name="hotel_reviews")
     assert len(df) == 100
@@ -24,25 +26,27 @@ def test_invalid_source_integration(client):
 
 
 def test_invalid_destination_integration(client, data_integration):
-    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
-    output_artifact = dummy_sentiment_model(sql_artifact)
+    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+    output_artifact = dummy_sentiment_model(table_artifact)
 
     with pytest.raises(InvalidIntegrationException):
         data_integration._metadata.name = "bad name"
         save(data_integration, output_artifact)
 
 
+@pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
 def test_sql_today_tag(client, data_integration):
-    sql_artifact_today = data_integration.sql(
+    table_artifact_today = data_integration.sql(
         query="select * from hotel_reviews where review_date = {{today}}"
     )
-    assert sql_artifact_today.get().empty
-    sql_artifact_not_today = data_integration.sql(
+    assert table_artifact_today.get().empty
+    table_artifact_not_today = data_integration.sql(
         query="select * from hotel_reviews where review_date < {{today}}"
     )
-    assert len(sql_artifact_not_today.get()) == 100
+    assert len(table_artifact_not_today.get()) == 100
 
 
+@pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
 def test_sql_query_with_parameter(client, data_integration):
     # Missing parameters.
     with pytest.raises(InvalidUserArgumentException):
@@ -54,39 +58,40 @@ def test_sql_query_with_parameter(client, data_integration):
         _ = data_integration.sql(query="select * from {{ table_name }}")
 
     client.create_param("table_name", default="hotel_reviews")
-    sql_artifact = data_integration.sql(query="select * from {{ table_name }}")
+    table_artifact = data_integration.sql(query="select * from {{ table_name }}")
 
-    expected_sql_artifact = data_integration.sql(query="select * from hotel_reviews")
-    assert sql_artifact.get().equals(expected_sql_artifact.get())
-    expected_sql_artifact = data_integration.sql(query="select * from customer_activity")
-    assert sql_artifact.get(parameters={"table_name": "customer_activity"}).equals(
-        expected_sql_artifact.get()
+    expected_table_artifact = data_integration.sql(query="select * from hotel_reviews")
+    assert table_artifact.get().equals(expected_table_artifact.get())
+    expected_table_artifact = data_integration.sql(query="select * from customer_activity")
+    assert table_artifact.get(parameters={"table_name": "customer_activity"}).equals(
+        expected_table_artifact.get()
     )
 
     # Trigger the parameter with invalid values.
     with pytest.raises(InvalidUserArgumentException):
-        _ = sql_artifact.get(parameters={"table_name": ["this is the incorrect type"]})
+        _ = table_artifact.get(parameters={"table_name": ["this is the incorrect type"]})
     with pytest.raises(InvalidUserArgumentException):
-        _ = sql_artifact.get(parameters={"non-existant parameter": "blah"})
+        _ = table_artifact.get(parameters={"non-existant parameter": "blah"})
 
 
+@pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
 def test_sql_query_with_multiple_parameters(client, flow_name, data_integration, engine):
     _ = client.create_param("table_name", default="hotel_reviews")
     nationality = client.create_param(
         "reviewer-nationality", default="United Kingdom"
     )  # check that dashes work.
-    sql_artifact = data_integration.sql(
+    table_artifact = data_integration.sql(
         query="select * from {{ table_name }} where reviewer_nationality='{{ reviewer-nationality }}' and review_date < {{ today}}"
     )
-    expected_sql_artifact = data_integration.sql(
+    expected_table_artifact = data_integration.sql(
         "select * from hotel_reviews where reviewer_nationality='United Kingdom' and review_date < {{today}}"
     )
-    assert sql_artifact.get().equals(expected_sql_artifact.get())
-    expected_sql_artifact = data_integration.sql(
+    assert table_artifact.get().equals(expected_table_artifact.get())
+    expected_table_artifact = data_integration.sql(
         "select * from hotel_reviews where reviewer_nationality='Australia' and review_date < {{today}}"
     )
-    assert sql_artifact.get(parameters={"reviewer-nationality": "Australia"}).equals(
-        expected_sql_artifact.get()
+    assert table_artifact.get(parameters={"reviewer-nationality": "Australia"}).equals(
+        expected_table_artifact.get()
     )
 
     # Use the parameters in another operator.
@@ -94,34 +99,36 @@ def test_sql_query_with_multiple_parameters(client, flow_name, data_integration,
     def noop(sql_output, param):
         return len(param)
 
-    result = noop(sql_artifact, nationality)
+    result = noop(table_artifact, nationality)
     assert result.get() == len(nationality.get())
     assert result.get(parameters={"reviewer-nationality": "Australia"}) == len("Australia")
 
     publish_flow_test(client, name=flow_name(), artifacts=[result], engine=engine)
 
 
+@pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
 def test_sql_query_user_vs_builtin_precedence(client, data_integration):
     """If a user defines an expansion that collides with a built-in one, the user-defined one should take precedence."""
-    sql_artifact = data_integration.sql(
+    table_artifact = data_integration.sql(
         query="select * from hotel_reviews where review_date > {{today}}"
     )
-    builtin_result = sql_artifact.get()
+    builtin_result = table_artifact.get()
 
     datestring = "'2016-01-01'"
     _ = client.create_param("today", datestring)
-    sql_artifact = data_integration.sql(
+    table_artifact = data_integration.sql(
         query="select * from hotel_reviews where review_date > {{today}}"
     )
-    user_param_result = sql_artifact.get()
+    user_param_result = table_artifact.get()
     assert not builtin_result.equals(user_param_result)
 
-    expected_sql_artifact = data_integration.sql(
+    expected_table_artifact = data_integration.sql(
         query="select * from hotel_reviews where review_date > %s" % datestring
     )
-    assert user_param_result.equals(expected_sql_artifact.get())
+    assert user_param_result.equals(expected_table_artifact.get())
 
 
+@pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
 def test_chained_sql_query(client):
     client.create_param("nationality", default=" United Kingdom ")
     warehouse = client.integration(name="aqueduct_demo")

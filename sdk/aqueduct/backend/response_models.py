@@ -10,7 +10,7 @@ from aqueduct.constants.enums import (
 )
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import Metadata
-from aqueduct.models.operators import Operator
+from aqueduct.models.operators import LoadSpec, Operator
 from aqueduct.utils.utils import human_readable_timestamp
 from pydantic import BaseModel
 
@@ -231,10 +231,7 @@ class SavedObjectUpdate(BaseModel):
     operator_name: str
     modified_at: str
     integration_name: str
-    integration_id: uuid.UUID
-    service: ServiceType
-    object_name: str
-    update_mode: str
+    spec: LoadSpec
 
 
 class ListWorkflowSavedObjectsResponse(BaseModel):

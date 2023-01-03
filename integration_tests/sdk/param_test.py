@@ -10,9 +10,10 @@ from aqueduct.error import (
     ArtifactNeverComputedException,
     InvalidUserArgumentException,
 )
-from constants import SENTIMENT_SQL_QUERY
+from data_objects import DataObject
 from pandas._testing import assert_frame_equal
-from utils import publish_flow_test, trigger_flow_test
+from relational import all_relational_DBs
+from utils import extract, publish_flow_test, trigger_flow_test
 
 from aqueduct import metric, op
 
@@ -109,12 +110,12 @@ def append_row_to_df(df, row):
 
 
 def test_parameter_in_basic_flow(client, data_integration):
-    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
+    table_artifact = extract(data_integration, DataObject.SENTIMENT)
     row_to_add = ["new hotel", "09-28-1996", "US", "It was new."]
     new_row_param = client.create_param(name="new row", default=row_to_add)
-    output = append_row_to_df(sql_artifact, new_row_param)
+    output = append_row_to_df(table_artifact, new_row_param)
 
-    input_df = sql_artifact.get()
+    input_df = table_artifact.get()
     input_df.loc[len(input_df.index)] = row_to_add
 
     output_df = output.get()
@@ -122,10 +123,10 @@ def test_parameter_in_basic_flow(client, data_integration):
 
 
 def test_edit_param_for_flow(client, flow_name, data_integration, engine):
-    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
+    table_artifact = extract(data_integration, DataObject.SENTIMENT)
     row_to_add = ["new hotel", "09-28-1996", "US", "It was new."]
     new_row_param = client.create_param(name="new row", default=row_to_add)
-    output = append_row_to_df(sql_artifact, new_row_param)
+    output = append_row_to_df(table_artifact, new_row_param)
 
     flow = publish_flow_test(
         client,
@@ -137,7 +138,7 @@ def test_edit_param_for_flow(client, flow_name, data_integration, engine):
     # Edit the flow with a different row to append and re-publish
     new_row_to_add = ["another new hotel", "10-10-1000", "ID", "It was really really new."]
     new_row_param = client.create_param(name="new row", default=new_row_to_add)
-    output = append_row_to_df(sql_artifact, new_row_param)
+    output = append_row_to_df(table_artifact, new_row_param)
 
     flow = publish_flow_test(
         client,
@@ -169,11 +170,11 @@ def add_numbers(sql, num1, num2):
 
 
 def test_trigger_flow_with_different_param(client, flow_name, data_integration, engine):
-    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
+    table_artifact = extract(data_integration, DataObject.SENTIMENT)
 
     num1 = client.create_param(name="num1", default=5)
     num2 = client.create_param(name="num2", default=5)
-    output = add_numbers(sql_artifact, num1, num2)
+    output = add_numbers(table_artifact, num1, num2)
 
     flow = publish_flow_test(
         client,
@@ -209,13 +210,14 @@ def test_trigger_flow_with_different_param(client, flow_name, data_integration, 
     assert num2_artifact.get() == 5
 
 
+@pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
 def test_trigger_flow_with_different_sql_param(client, flow_name, data_integration, engine):
     _ = client.create_param("table_name", default="hotel_reviews")
-    sql_artifact = data_integration.sql(query="select * from {{ table_name}}")
+    table_artifact = data_integration.sql(query="select * from {{ table_name}}")
 
     flow = publish_flow_test(
         client,
-        sql_artifact,
+        table_artifact,
         name=flow_name(),
         engine=engine,
     )

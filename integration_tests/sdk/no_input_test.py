@@ -1,4 +1,6 @@
 import pandas as pd
+from data_objects import DataObject
+from utils import extract
 
 from aqueduct import op
 
@@ -21,7 +23,7 @@ def test_basic_no_input_function(client):
 
 
 def test_flow_with_no_input_function(client, data_integration):
-    customers_table = data_integration.sql(query="SELECT * FROM customers;")
+    customers_table = extract(data_integration, DataObject.CUSTOMERS)
 
     result = join(no_input(), customers_table)
     expected = pd.DataFrame(data={"col1": [1, 2], "col2": [3, 4]})

@@ -3,7 +3,12 @@ import uuid
 from typing import Any, Dict, List, Optional, Union
 
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.constants.enums import ExecutionStatus, LoadUpdateMode, RelationalDBServices
+from aqueduct.artifacts.table_artifact import TableArtifact
+from aqueduct.constants.enums import ArtifactType, ExecutionStatus, LoadUpdateMode, S3TableFormat
+from aqueduct.integrations.s3_integration import S3Integration
+from aqueduct.integrations.sql_integration import RelationalDBIntegration
+from aqueduct.models.operators import LoadSpec, RelationalDBLoadParams, S3LoadParams
+from data_objects import DataObject
 
 import aqueduct
 from aqueduct import Flow
@@ -199,28 +204,64 @@ def wait_for_flow_runs(
     )
 
 
+def extract(
+    integration,
+    obj_identifier: Union[DataObject, str],
+    op_name: Optional[str] = None,
+    lazy: bool = False,
+) -> BaseArtifact:
+    """Reads the specified object in from the integration and returns it as an artifact.
+
+    Assumption: the object is a pandas dataframe, serialized in a particular fashion in each integration.
+    This serialization method should match what is done in `save()`.
+    """
+    if isinstance(obj_identifier, DataObject):
+        obj_identifier = obj_identifier.value
+
+    assert isinstance(obj_identifier, str)
+    if isinstance(integration, RelationalDBIntegration):
+        return integration.sql(query="SELECT * from %s" % obj_identifier, name=op_name, lazy=lazy)
+    elif isinstance(integration, S3Integration):
+        return integration.file(
+            obj_identifier, ArtifactType.TABLE, "parquet", name=op_name, lazy=lazy
+        )
+    raise Exception("Unexpected data integration type provided in test: %s", type(integration))
+
+
 def save(
     integration,
-    artifact: BaseArtifact,
+    artifact: TableArtifact,
     name: Optional[str] = None,
     update_mode: Optional[LoadUpdateMode] = None,
 ):
-    """NOTE: if `name` is set, make sure that it is set to a globally unique value, since test cases can be run concurrently."""
-    assert (
-        integration._metadata.service in RelationalDBServices
-    ), "Currently, only relational data integrations are supported."
+    """Saves an artifact into the integration.
 
+    If `name` is set, make sure that it is set to a globally unique value, since test cases can be run concurrently.
+
+    Assumption: the artifact represents a pandas dataframe. Each type of integration is serialized in a particular fashion.
+    It should match the deserialization method in extract().
+    """
     if name is None:
         name = generate_table_name()
     if update_mode is None:
         update_mode = LoadUpdateMode.REPLACE
 
-    if use_deprecated_code_path():
-        artifact.save(integration.config(name, update_mode))
-    else:
-        integration.save(artifact, name, update_mode)
+    if isinstance(integration, RelationalDBIntegration):
+        if use_deprecated_code_path():
+            artifact.save(integration.config(name, update_mode))
+        else:
+            integration.save(artifact, name, update_mode)
 
-    # Record exactly where the artifact was saved, so we can validate the data later, after the flow is published.
+    elif isinstance(integration, S3Integration):
+        assert update_mode == LoadUpdateMode.REPLACE, "S3 only supports replacement update."
+        integration.save(artifact, name, S3TableFormat.PARQUET)
+
+        # Record where the artifact was saved, so we can validate the data later, after the flow is published.
+        artifact_id_to_saved_identifier[str(artifact.id())] = name
+    else:
+        raise Exception("Unexpected data integration type provided in test: %s", type(integration))
+
+    # Record where the artifact was saved, so we can validate the data later, after the flow is published.
     artifact_id_to_saved_identifier[str(artifact.id())] = name
 
 

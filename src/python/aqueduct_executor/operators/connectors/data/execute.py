@@ -89,16 +89,15 @@ def run(spec: Spec) -> None:
 
 
 def _execute(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
-
-    if isinstance(spec.connector_name, dict):
+    if spec.type == JobType.DELETESAVEDOBJECTS:
         run_delete_saved_objects(spec, storage, exec_state)
-    else:
-        # Because constructing certain connectors (eg. Postgres) can also involve authentication,
-        # we do both in `run_authenticate()`, and give a more helpful error message on failure.
-        if spec.type == JobType.AUTHENTICATE:
-            run_authenticate(spec, exec_state, is_demo=(spec.name == AQUEDUCT_DEMO_NAME))
-            return
 
+    # Because constructing certain connectors (eg. Postgres) can also involve authentication,
+    # we do both in `run_authenticate()`, and give a more helpful error message on failure.
+    elif spec.type == JobType.AUTHENTICATE:
+        run_authenticate(spec, exec_state, is_demo=(spec.name == AQUEDUCT_DEMO_NAME))
+
+    else:
         op = setup_connector(spec.connector_name, spec.connector_config)
         if spec.type == JobType.EXTRACT:
             run_extract(spec, op, storage, exec_state)
