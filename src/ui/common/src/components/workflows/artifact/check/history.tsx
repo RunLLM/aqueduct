@@ -121,9 +121,9 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
               backgroundColor: backgroundColor,
               '&:hover': { backgroundColor: hoverColor },
             }}
-            width="100%"
+            width="auto"
           >
-            <Box sx={{ display: 'flex', alignItems: 'center' }} width="100%">
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
               {icon}
 
               <Typography sx={{ ml: 1 }} variant="body2">
