@@ -86,7 +86,7 @@ const IntegrationsPage: React.FC<Props> = ({
         </Box>
 
         <Box marginY={3}>
-          <Divider sx={{ width: '950px' }} />
+          <Divider />
         </Box>
 
         <Box>
