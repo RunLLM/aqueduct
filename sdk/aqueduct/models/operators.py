@@ -10,7 +10,6 @@ from aqueduct.constants.enums import (
     GoogleSheetsSaveMode,
     LoadUpdateMode,
     OperatorType,
-    RelationalDBServices,
     S3TableFormat,
     SalesforceExtractType,
     SerializationType,

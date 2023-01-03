@@ -96,11 +96,21 @@ class TestBackend:
                 ("table_2", "replace"),
             ]
         )
-        assert set([(item["object_name"], item["update_mode"]) for item in data]) == data_set
+
+        print(data)
+        assert (
+            set(
+                [
+                    (item["spec"]["parameters"]["table"], item["spec"]["parameters"]["update_mode"])
+                    for item in data
+                ]
+            )
+            == data_set
+        )
 
         # Check all in same integration
         assert len(set([item["integration_name"] for item in data])) == 1
-        assert len(set([item["service"] for item in data])) == 1
+        assert len(set([item["spec"]["service"] for item in data])) == 1
 
     def test_endpoint_delete_integration(self):
         integration_name = f"test_delete_integration_{uuid.uuid4().hex[:8]}"
