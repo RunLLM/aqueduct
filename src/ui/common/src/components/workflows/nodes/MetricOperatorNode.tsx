@@ -1,8 +1,6 @@
 import {
   faHashtag,
-  faSkullCrossbones,
   faTemperatureHalf,
-  faXmark,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Box from '@mui/material/Box';
@@ -56,7 +54,9 @@ const MetricOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
     : theme.palette.DarkContrast;
   const borderColor = textColor;
 
-  const successDisplay =  <Typography variant="h5">{parseMetricResult(data.result, 3)}</Typography>;
+  const successDisplay = (
+    <Typography variant="h5">{parseMetricResult(data.result, 3)}</Typography>
+  );
 
   let backgroundColor, hoverColor;
   if (execState?.status === ExecutionStatus.Succeeded) {
@@ -127,7 +127,10 @@ const MetricOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
         justifyContent="center"
         alignItems="center"
       >
-        <NodeStatusIconography execState={execState} successDisplay={successDisplay} />
+        <NodeStatusIconography
+          execState={execState}
+          successDisplay={successDisplay}
+        />
       </Box>
 
       <Handle

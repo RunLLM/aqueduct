@@ -1,20 +1,20 @@
+import { faSkullCrossbones, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  faSkullCrossbones,
-  faXmark,
-} from '@fortawesome/free-solid-svg-icons';
 import { Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React from 'react';
 
-import ExecutionStatus, { ExecState, FailureType } from '../../../utils/shared';
+import ExecutionStatus, { ExecState } from '../../../utils/shared';
 
 type Props = {
   execState: ExecState;
   successDisplay: JSX.Element;
 };
 
-export const NodeStatusIconography: React.FC<Props> = ({ execState, successDisplay }) => {
+export const NodeStatusIconography: React.FC<Props> = ({
+  execState,
+  successDisplay,
+}) => {
   if (!execState) {
     return (
       <>
@@ -26,9 +26,7 @@ export const NodeStatusIconography: React.FC<Props> = ({ execState, successDispl
   }
   if (execState.status === ExecutionStatus.Succeeded) {
     return successDisplay;
-  } else if (
-    execState.status === ExecutionStatus.Failed
-  ) {
+  } else if (execState.status === ExecutionStatus.Failed) {
     return (
       <>
         <Box sx={{ fontSize: '50px' }}>

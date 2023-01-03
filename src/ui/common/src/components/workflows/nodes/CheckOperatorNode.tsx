@@ -126,7 +126,10 @@ const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
         justifyContent="center"
         alignItems="center"
       >
-        <NodeStatusIconography execState={execState} successDisplay={successDisplay} />
+        <NodeStatusIconography
+          execState={execState}
+          successDisplay={successDisplay}
+        />
       </Box>
 
       <Handle
