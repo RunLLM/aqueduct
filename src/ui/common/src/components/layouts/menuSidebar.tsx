@@ -128,19 +128,16 @@ const MenuSidebar: React.FC<{
 
   useEffect(() => {
     async function fetchVersionNumber() {
-      const res = await fetch(`${apiAddress}/api/version`, { method: 'GET', headers: { 'api-key': user.apiKey } });
+      const res = await fetch(`${apiAddress}/api/version`, {
+        method: 'GET',
+        headers: { 'api-key': user.apiKey },
+      });
       const versionNumberResponse = await res.json();
-
-      if (!res.ok) {
-        console.log('error getting version number', versionNumberResponse.error);
-      }
-
-      console.log('versionNumberResponse: ', versionNumberResponse);
       setVersionNumber(versionNumberResponse.version);
     }
 
     fetchVersionNumber();
-  }, [])
+  }, [user.apiKey]);
 
   const pathPrefix = getPathPrefix();
   return (
@@ -267,7 +264,9 @@ const MenuSidebar: React.FC<{
           </Tooltip>
         </Box>
         <Box marginLeft="16px">
-          <Typography variant="caption" sx={{ color: 'white' }}>v{versionNumber}</Typography>
+          <Typography variant="caption" sx={{ color: 'white' }}>
+            {versionNumber.length > 0 ? `v${versionNumber}` : ''}
+          </Typography>
         </Box>
       </Box>
     </Box>
