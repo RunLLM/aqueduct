@@ -32,7 +32,7 @@ import Snackbar from '@mui/material/Snackbar';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
@@ -233,7 +233,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
   const dispatch: AppDispatch = useDispatch();
 
-  useCallback(() => {
+  useEffect(() => {
     dispatch(
       handleListWorkflowSavedObjects({
         apiKey: user.apiKey,
@@ -274,6 +274,15 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const retentionPolicyUpdated =
     retentionPolicy.k_latest_runs !==
     workflowDag.metadata?.retention_policy?.k_latest_runs;
+
+  const initialSettings = {
+    name: workflowDag.metadata?.name,
+    description: workflowDag.metadata?.description,
+    triggerType: workflowDag.metadata.schedule.trigger,
+    schedule: workflowDag.metadata.schedule.cron_schedule,
+    paused: workflowDag.metadata.schedule.paused,
+    retentionPolicy: workflowDag.metadata?.retention_policy,
+  };
 
   const settingsChanged =
     name !== workflowDag.metadata?.name || // The workflow name has been changed.
@@ -537,7 +546,9 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const deleteDialog = (
     <Dialog
       open={showDeleteDialog}
-      onClose={() => setShowDeleteDialog(false)}
+      onClose={() => {
+        setShowDeleteDialog(false);
+      }}
       fullWidth
     >
       <DialogTitle>
@@ -776,7 +787,19 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
             <FontAwesomeIcon
               icon={faXmark}
-              onClick={onClose}
+              onClick={() => {
+                setName(initialSettings.name);
+                setDescription(initialSettings.description);
+                setTriggerType(initialSettings.triggerType);
+                setSchedule(initialSettings.schedule);
+                setPaused(initialSettings.paused);
+                setRetentionPolicy(initialSettings.retentionPolicy);
+
+                // Finally close the dialog
+                if (onClose) {
+                  onClose();
+                }
+              }}
               style={{ cursor: 'pointer' }}
             />
           </Box>

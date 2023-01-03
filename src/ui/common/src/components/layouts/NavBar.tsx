@@ -1,22 +1,10 @@
-import {
-  faBell,
-  faCircleUser,
-  faGear,
-} from '@fortawesome/free-solid-svg-icons';
+import { faBell, faSliders } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  AppBar,
-  Breadcrumbs,
-  Link,
-  Menu,
-  MenuItem,
-  Toolbar,
-  Typography,
-} from '@mui/material';
+import { AppBar, Breadcrumbs, Link, Toolbar, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 import { RootState } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
@@ -69,10 +57,8 @@ const NavBar: React.FC<{
   breadcrumbs: BreadcrumbLink[];
   onBreadCrumbClicked?: (name: string) => void;
 }> = ({ user, breadcrumbs, onBreadCrumbClicked = null }) => {
-  const [userPopoverAnchorEl, setUserPopoverAnchorEl] = useState(null);
+  const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
-
-  const userPopoverOpen = Boolean(userPopoverAnchorEl);
   const open = Boolean(anchorEl);
 
   const numUnreadNotifications = useSelector(
@@ -84,14 +70,6 @@ const NavBar: React.FC<{
       ).length
   );
 
-  const handleUserPopoverClick = (event: React.MouseEvent) => {
-    setUserPopoverAnchorEl(event.currentTarget);
-  };
-
-  const handleCloseUserPopover = () => {
-    setUserPopoverAnchorEl(null);
-  };
-
   const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -101,7 +79,6 @@ const NavBar: React.FC<{
   };
 
   const notificationsPopoverId = open ? 'simple-popover' : undefined;
-  const userPopoverId = userPopoverOpen ? 'user-popover' : undefined;
 
   return (
     <AppBar
@@ -185,34 +162,11 @@ const NavBar: React.FC<{
         <Box sx={{ cursor: 'pointer', marginLeft: '16px' }}>
           <FontAwesomeIcon
             className={styles['navbar-icon']}
-            icon={faGear}
-            onClick={handleUserPopoverClick}
-          />
-          <Menu
-            id={userPopoverId}
-            anchorEl={userPopoverAnchorEl}
-            onClose={handleCloseUserPopover}
-            open={userPopoverOpen}
-            PaperProps={{
-              sx: {
-                mt: 1.5,
-              },
+            icon={faSliders}
+            onClick={() => {
+              navigate('/account');
             }}
-          >
-            <Link
-              to={`${pathPrefix}/account`}
-              underline="none"
-              sx={{ color: 'blue.900' }}
-              component={RouterLink}
-            >
-              <MenuItem sx={{ width: '190px' }} disableRipple>
-                <Box sx={{ fontSize: '20px', mr: 1 }}>
-                  <FontAwesomeIcon icon={faCircleUser} />
-                </Box>
-                Account
-              </MenuItem>
-            </Link>
-          </Menu>
+          />
         </Box>
       </Toolbar>
     </AppBar>
