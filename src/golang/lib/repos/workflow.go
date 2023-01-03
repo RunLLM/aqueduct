@@ -33,6 +33,10 @@ type workflowReader interface {
 	// It returns a database.ErrNoRows if no rows are found.
 	GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID, name string, DB database.Database) (*models.Workflow, error)
 
+	// GetCascadingTargets returns an ID for each Workflow that should be triggered
+	// after the Workflow specified.
+	GetCascadingTargets(ctx context.Context, ID uuid.UUID, DB database.Database) ([]uuid.UUID, error)
+
 	// GetLastRunByEngine returns a WorkflowLastRun for each Workflow where the latest
 	// DAGResult created is associated with a DAG running on engine.
 	GetLastRunByEngine(ctx context.Context, engine shared.EngineType, DB database.Database) ([]views.WorkflowLastRun, error)
