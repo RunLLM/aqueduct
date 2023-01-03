@@ -70,8 +70,29 @@ export type Check = {
 export enum ServiceType {
   Postgres = 'Postgres',
   Snowflake = 'Snowflake',
+  MySQL = 'MySQL',
+  Redshift = 'Redshift',
+  MariaDB = 'MariaDB',
+  SQLServer = 'SQL Server',
+  BigQuery = 'BigQuery',
   AqueductDemo = 'Aqueduct Demo',
+  SQLite = 'SQLite',
+  Athena = 'Athena',
+  S3 = 'S3',
   Github = 'Github',
+}
+
+export enum RelationalDBServices {
+  Postgres = 'Postgres',
+  Snowflake = 'Snowflake',
+  MySQL = 'MySQL',
+  Redshift = 'Redshift',
+  MariaDB = 'MariaDB',
+  SQLServer = 'SQL Server',
+  BigQuery = 'BigQuery',
+  AqueductDemo = 'Aqueduct Demo',
+  SQLite = 'SQLite',
+  Athena = 'Athena',
 }
 
 export type ExtractParameters =
@@ -105,16 +126,36 @@ export type Extract = {
   parameters: ExtractParameters;
 };
 
-export type LoadParameters = RelationalDBLoadParams | GoogleSheetsLoadParams;
+export enum UpdateMode {
+  append = 'append',
+  replace = 'replace',
+  fail = 'fail',
+}
+
+export type LoadParameters =
+  | RelationalDBLoadParams
+  | GoogleSheetsLoadParams
+  | S3LoadParams;
 
 export type RelationalDBLoadParams = {
   table: string;
-  update_mode: string;
+  update_mode: UpdateMode;
 };
 
 export type GoogleSheetsLoadParams = {
   filepath: string;
   save_mode: string;
+};
+
+export enum S3TableFormat {
+  Csv = 'CSV',
+  Json = 'JSON',
+  Parquet = 'Parquet',
+}
+
+export type S3LoadParams = {
+  filepath: string;
+  format: S3TableFormat;
 };
 
 export type Load = {

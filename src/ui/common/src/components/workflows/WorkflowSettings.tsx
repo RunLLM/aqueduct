@@ -50,8 +50,10 @@ import {
   getNextUpdateTime,
   PeriodUnit,
 } from '../../utils/cron';
+import { UpdateMode } from '../../utils/operators';
 import ExecutionStatus, { LoadingStatusEnum } from '../../utils/shared';
 import {
+  getSavedObjectIdentifier,
   RetentionPolicy,
   SavedObject,
   WorkflowDag,
@@ -489,6 +491,8 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       <Typography variant="body1">
         [{integration}] <b>{name}</b>
       </Typography>
+
+      {/* Objects saved into S3 are currently expected to have update_mode === UpdateMode.replace */}
       {sortedObjects && (
         <Typography
           style={{
@@ -499,7 +503,12 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           display="inline"
         >
           Update Mode:{' '}
-          {sortedObjects.map((object) => `${object.update_mode}`).join(', ')}
+          {sortedObjects
+            .map(
+              (object) =>
+                `${object.spec.parameters.update_mode || UpdateMode.replace}`
+            )
+            .join(', ')}
           {sortedObjects.length > 1 && ' (active)'}
         </Typography>
       )}
@@ -513,6 +522,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           const sortedObjects = [...savedObjectsList].sort((object) =>
             Date.parse(object.modified_at)
           );
+
           // Cannot align the checkbox to the top of a multi-line label.
           // Using a weird marginTop workaround.
           return (
@@ -529,7 +539,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
                 <Box sx={{ paddingTop: '24px' }}>
                   {displayObject(
                     savedObjectsList[0].integration_name,
-                    savedObjectsList[0].object_name,
+                    getSavedObjectIdentifier(savedObjectsList[0]),
                     sortedObjects
                   )}
                 </Box>
