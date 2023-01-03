@@ -13,9 +13,11 @@ import Divider from '@mui/material/Divider';
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
+import UserProfile from 'src/utils/auth';
 
 import { AppDispatch } from '../../stores/store';
 import { getPathPrefix } from '../../utils/getPathPrefix';
+import { apiAddress } from '../hooks/useAqueductConsts';
 import {
   menuSidebar,
   menuSidebarContent,
@@ -113,14 +115,32 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
  */
 const MenuSidebar: React.FC<{
   onSidebarItemClicked?: (name: string) => void;
-}> = ({ onSidebarItemClicked }) => {
+  user: UserProfile;
+}> = ({ onSidebarItemClicked, user }) => {
   const dispatch: AppDispatch = useDispatch();
   const [currentPage, setCurrentPage] = useState(undefined);
+  const [versionNumber, setVersionNumber] = useState('');
   const location = useLocation();
 
   useEffect(() => {
     setCurrentPage(location.pathname);
   }, [dispatch, location.pathname]);
+
+  useEffect(() => {
+    async function fetchVersionNumber() {
+      const res = await fetch(`${apiAddress}/api/version`, { method: 'GET', headers: { 'api-key': user.apiKey } });
+      const versionNumberResponse = await res.json();
+
+      if (!res.ok) {
+        console.log('error getting version number', versionNumberResponse.error);
+      }
+
+      console.log('versionNumberResponse: ', versionNumberResponse);
+      setVersionNumber(versionNumberResponse.version);
+    }
+
+    fetchVersionNumber();
+  }, [])
 
   const pathPrefix = getPathPrefix();
   return (
@@ -245,6 +265,9 @@ const MenuSidebar: React.FC<{
               />
             </Link>
           </Tooltip>
+        </Box>
+        <Box marginLeft="16px">
+          <Typography variant="caption" sx={{ color: 'white' }}>v{versionNumber}</Typography>
         </Box>
       </Box>
     </Box>
