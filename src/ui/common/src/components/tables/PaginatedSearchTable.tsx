@@ -191,8 +191,8 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
                           variant="body1"
                           sx={{
                             textTransform: 'capitalize',
-                            fontSize: '16px',
-                            fontWeight: 400,
+                            fontSize: '14px',
+                            fontWeight: 800,
                           }}
                         >
                           {columnName}
