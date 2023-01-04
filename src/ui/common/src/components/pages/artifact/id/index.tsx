@@ -84,11 +84,11 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   const { metrics, checks } =
     !!workflowDagResultWithLoadingStatus &&
-      isSucceeded(workflowDagResultWithLoadingStatus.status)
+    isSucceeded(workflowDagResultWithLoadingStatus.status)
       ? getMetricsAndChecksOnArtifact(
-        workflowDagResultWithLoadingStatus?.result,
-        artifactId
-      )
+          workflowDagResultWithLoadingStatus?.result,
+          artifactId
+        )
       : { metrics: [], checks: [] };
 
   const pathPrefix = getPathPrefix();
@@ -128,8 +128,9 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   useEffect(() => {
     if (!!artifact) {
       if (!sideSheetMode) {
-        document.title = `${artifact ? artifact.name : 'Artifact Details'
-          } | Aqueduct`;
+        document.title = `${
+          artifact ? artifact.name : 'Artifact Details'
+        } | Aqueduct`;
       }
 
       if (
@@ -205,7 +206,8 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   const outputs = mapOperators(artifact.to ? artifact.to : []);
 
   const artifactStatus = artifact?.result?.exec_state?.status;
-  const previewAvailable = artifactStatus && artifactStatus !== ExecutionStatus.Canceled;
+  const previewAvailable =
+    artifactStatus && artifactStatus !== ExecutionStatus.Canceled;
 
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
@@ -245,27 +247,25 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
             )}
           </Box>
 
-          {
-            previewAvailable && (
-              <>
-                <Divider sx={{ marginY: '32px' }} />
-                <Box width="100%" marginTop="12px">
-                  <Typography
-                    variant="h6"
-                    component="div"
-                    marginBottom="8px"
-                    fontWeight="normal"
-                  >
-                    Preview
-                  </Typography>
-                  <ArtifactContent
-                    artifact={artifact}
-                    contentWithLoadingStatus={contentWithLoadingStatus}
-                  />
-                </Box>
-              </>
-            )
-          }
+          {previewAvailable && (
+            <>
+              <Divider sx={{ marginY: '32px' }} />
+              <Box width="100%" marginTop="12px">
+                <Typography
+                  variant="h6"
+                  component="div"
+                  marginBottom="8px"
+                  fontWeight="normal"
+                >
+                  Preview
+                </Typography>
+                <ArtifactContent
+                  artifact={artifact}
+                  contentWithLoadingStatus={contentWithLoadingStatus}
+                />
+              </Box>
+            </>
+          )}
 
           <Divider sx={{ marginY: '32px' }} />
 
