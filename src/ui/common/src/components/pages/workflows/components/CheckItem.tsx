@@ -120,7 +120,7 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
           display="flex"
           key={checks[i].checkId}
           justifyContent="space-between"
-          height="30px"
+          alignItems="center"
         >
           <Typography variant="body1" sx={{ fontWeight: 400 }}>
             {checks[i].name}

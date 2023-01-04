@@ -73,7 +73,7 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
           display="flex"
           key={metrics[i].metricId}
           justifyContent="space-between"
-          height="30px"
+          alignItems="center"
         >
           <Typography variant="body1" sx={{ fontWeight: 400 }}>
             {metrics[i].name}
@@ -98,10 +98,12 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
     setExpanded(!expanded);
   };
 
+  // 0.875rem is the size of the ShowMore.
+  // Add this additional padding if we don't have more than 1 metric to keep the rows equal size.
   return (
     <Box>
       {metrics.length > 0 ? (
-        <>
+        <Box sx={metrics.length === 1 && {padding:"0.875rem 0 0.875rem 0"}}>
           {metricList}
           <ShowMore
             totalItems={metrics.length}
@@ -109,9 +111,9 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
             expanded={expanded}
             onClick={toggleExpanded}
           />
-        </>
+        </Box>
       ) : (
-        <Typography variant="body1">No metrics.</Typography>
+        <Typography sx={{padding:"0.875rem 0 0.875rem 0"}} variant="body1">No metrics.</Typography>
       )}
     </Box>
   );
