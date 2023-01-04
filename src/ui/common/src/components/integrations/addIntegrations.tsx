@@ -1,7 +1,6 @@
 import { Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import Grid from '@mui/material/Grid';
 import Snackbar from '@mui/material/Snackbar';
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -32,7 +31,7 @@ const AddIntegrations: React.FC<Props> = ({
   const [showMigrationDialog, setShowMigrationDialog] = useState(false);
 
   return (
-    <Box sx={{ maxWidth: '616px' }}>
+    <Box>
       {showMigrationDialog && (
         <Alert
           onClose={() => {
@@ -44,7 +43,7 @@ const AddIntegrations: React.FC<Props> = ({
           {`Storage migration is in progress. The server will be temporarily unavailable. Please refresh the page to check if the server is ready.`}
         </Alert>
       )}
-      <Grid container spacing={1} sx={{ width: '100%' }} columns={4}>
+      <Box sx={{ width: '100%', display: 'flex', flexWrap: 'wrap' }}>
         {Object.entries(supportedIntegrations)
           .filter(([svc]) => svc !== 'Aqueduct Demo')
           .map(([svc, integration]) => {
@@ -62,7 +61,7 @@ const AddIntegrations: React.FC<Props> = ({
               />
             );
           })}
-      </Grid>
+      </Box>
     </Box>
   );
 };
@@ -105,6 +104,7 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
       sx={{
         width: '160px',
         height: '128px',
+        m: 1,
         px: 2,
         py: 2,
         borderRadius: 2,
@@ -135,7 +135,7 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
   );
 
   return (
-    <Grid container item xs={4} key={service}>
+    <Box key={service}>
       <Box>
         {iconWrapper}
         {showDialog && (
@@ -169,7 +169,7 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
           {`Successfully connected to ${service}!`}
         </Alert>
       </Snackbar>
-    </Grid>
+    </Box>
   );
 };
 
