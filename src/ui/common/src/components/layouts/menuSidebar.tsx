@@ -263,7 +263,7 @@ const MenuSidebar: React.FC<{
             </Link>
           </Tooltip>
         </Box>
-        <Box marginLeft="16px">
+        <Box marginLeft="14px" marginBottom="16px">
           <Typography variant="caption" sx={{ color: 'white' }}>
             {versionNumber.length > 0 ? `v${versionNumber}` : ''}
           </Typography>
