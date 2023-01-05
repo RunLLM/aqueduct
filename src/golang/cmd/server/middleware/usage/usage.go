@@ -32,6 +32,9 @@ func reportUsage(startTime time.Time, environment string, statusCode int, urlPat
 
 	startTimeUnix := startTime.UnixNano()
 
+	// Loki creates indexes for labels to speed up searching. Each label should have a bounded number
+	// of distinct values to prevent the index from getting too large. That's why fields such as ID
+	// and Latency should not be included as labels.
 	labels := Labels{
 		SchemaVersion: schemaVersion,
 		Environment:   environment,
