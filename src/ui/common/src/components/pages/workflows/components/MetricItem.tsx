@@ -103,7 +103,7 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
   return (
     <Box>
       {metrics.length > 0 ? (
-        <Box sx={metrics.length === 1 && {padding:"0.875rem 0 0.875rem 0"}}>
+        <Box sx={metrics.length === 1 && { padding: '0.875rem 0 0.875rem 0' }}>
           {metricList}
           <ShowMore
             totalItems={metrics.length}
@@ -113,7 +113,9 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
           />
         </Box>
       ) : (
-        <Typography sx={{padding:"0.875rem 0 0.875rem 0"}} variant="body1">No metrics.</Typography>
+        <Typography sx={{ padding: '0.875rem 0 0.875rem 0' }} variant="body1">
+          No metrics.
+        </Typography>
       )}
     </Box>
   );
