@@ -76,9 +76,6 @@ func reportUsage(startTime time.Time, environment string, statusCode int, urlPat
 		return
 	}
 
-	//log.Errorf("printing json log: %v", string(streamsJson))
-	//log.Errorf("payload: %v", streams.Streams[0].Values[0][1])
-
 	req, err := http.NewRequest("POST", logURL, bytes.NewBuffer(streamsJson))
 	if err != nil {
 		log.Errorf("Failed to initialize usage stats POST request: %v", err)
