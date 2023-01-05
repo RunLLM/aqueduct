@@ -123,7 +123,7 @@ def test_sql_integration_list_tables(client, data_integration):
     tables = data_integration.list_tables()
 
     for expected_table in demo_db_tables():
-        assert expected_table in tables["name"].unique()
+        assert tables["tablename"].str.contains(expected_table, case=False).sum() > 0
 
 
 def test_sql_today_tag(client, data_integration):

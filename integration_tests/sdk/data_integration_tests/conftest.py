@@ -6,7 +6,7 @@ import pytest
 # If a disallowed data integration is used, all tests in the file will be skipped.
 from aqueduct.constants.enums import ServiceType
 
-allowed_data_integrations_by_file = {"relational_test": [ServiceType.SQLITE]}
+allowed_data_integrations_by_file = {"relational_test": [ServiceType.SQLITE, ServiceType.SNOWFLAKE]}
 
 
 @pytest.fixture(autouse=True)
