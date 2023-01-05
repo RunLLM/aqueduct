@@ -18,6 +18,7 @@ export const SidesheetButtonHeight = '40px';
 type Props = {
   user: UserProfile;
   children: React.ReactElement | React.ReactElement[];
+  afterBreadcrumbAdornment?: React.ReactElement;
   breadcrumbs: BreadcrumbLink[];
   /**
    * Function to be called when breadcrumbs are clicked. Useful for doing cleanup on navigation.
@@ -30,6 +31,7 @@ export const DefaultLayout: React.FC<Props> = ({
   user,
   children,
   breadcrumbs,
+  afterBreadcrumbAdornment = null,
   onBreadCrumbClicked = null,
   onSidebarItemClicked = null,
 }) => {
@@ -55,6 +57,7 @@ export const DefaultLayout: React.FC<Props> = ({
           user={user}
           breadcrumbs={breadcrumbs}
           onBreadCrumbClicked={onBreadCrumbClicked}
+          afterBreadcrumbAdornment={afterBreadcrumbAdornment}
         />
         {/* Pad top for breadcrumbs (64px). */}
         {/* The margin here is fixed to be a constant (50px) more than the sidebar, which is a fixed width (200px). */}

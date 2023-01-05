@@ -274,8 +274,8 @@ export const StatusIndicator: React.FC<Props> = ({ status }) => {
     <Tooltip title={getExecutionStatusLabel(status)} placement="bottom" arrow>
       <Box
         sx={{
-          width: '12px',
-          height: '12px',
+          width: '16px',
+          height: '16px',
           alignItems: 'center',
           alignSelf: 'center',
         }}

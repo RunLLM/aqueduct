@@ -55,6 +55,7 @@ import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowHeader, {
   WorkflowPageContentId,
 } from '../../../workflows/workflowHeader';
+import { StatusIndicator } from '../../../workflows/workflowStatus';
 import { LayoutProps } from '../../types';
 
 type WorkflowPageProps = {
@@ -446,6 +447,9 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         BreadcrumbLink.WORKFLOWS,
         new BreadcrumbLink(path, dagName),
       ]}
+      afterBreadcrumbAdornment={
+        <StatusIndicator status={workflow.dagResults[0].status} />
+      }
       user={user}
       onBreadCrumbClicked={() => {
         resetWorkflowState();

@@ -1,4 +1,4 @@
-import { faGear, faPlay } from '@fortawesome/free-solid-svg-icons';
+import { faClock, faGear, faPlay } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Snackbar, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
@@ -26,13 +26,14 @@ import {
 import UserProfile from '../../utils/auth';
 import { getNextUpdateTime } from '../../utils/cron';
 import { EngineType } from '../../utils/engine';
+import { ServiceLogos } from '../../utils/integrations';
 import { WorkflowDag, WorkflowUpdateTrigger } from '../../utils/workflows';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
+import EngineItem from '../pages/workflows/components/EngineItem';
 import { Button } from '../primitives/Button.styles';
 import { WorkflowStatusBar } from './StatusBar';
 import VersionSelector from './version_selector';
 import WorkflowSettings from './WorkflowSettings';
-import StatusChip from './workflowStatus';
 
 export const WorkflowPageContentId = 'workflow-page-main';
 
@@ -42,7 +43,7 @@ type Props = {
   workflowId: string;
 };
 
-const ContainerWidthBreakpoint = 700;
+const ContainerWidthBreakpoint = 980;
 
 const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
   const dispatch: AppDispatch = useDispatch();
@@ -118,18 +119,26 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
       workflowDag.metadata?.schedule?.cron_schedule
     );
     nextUpdateComponent = (
-      <Box sx={{ mt: 1 }}>
+      <Box sx={{ mr: 2, display: 'flex', alignItems: 'center' }}>
+        <Box sx={{ color: 'gray.700', mr: 1 }}>
+          {' '}
+          <FontAwesomeIcon icon={faClock} />{' '}
+        </Box>
+
         <Typography variant="body2">
-          <strong> Workflow Engine: </strong>
-          {workflowDag.engine_config.type}
-        </Typography>
-        <Typography variant="body2">
-          <strong> Next Workflow Run: </strong>{' '}
           {nextUpdateTime.toDate().toLocaleString()}
         </Typography>
       </Box>
     );
   }
+
+  const engineName =
+    workflowDag.engine_config.type[0].toUpperCase() +
+    workflowDag.engine_config.type.substring(1);
+  const engineIconUrl = ServiceLogos[engineName];
+  const engineComponent = (
+    <EngineItem engineName={engineName} engineIconUrl={engineIconUrl} />
+  );
 
   const showAirflowUpdateWarning =
     workflowDag.engine_config.type === EngineType.Airflow &&
@@ -320,16 +329,22 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
           flexDirection: narrowView ? 'column' : 'row',
         }}
       >
-        <Box sx={{ flex: 1 }}>
-          <StatusChip status={workflow.dagResults[0].status} />
+        <Box
+          sx={{
+            flex: 1,
+            display: 'flex',
+            alignItems: narrowView ? 'start' : 'center',
+            mb: 1,
+            flexDirection: narrowView ? 'column' : 'row',
+          }}
+        >
+          {workflow.dagResults && workflow.dagResults.length > 0 && (
+            <VersionSelector />
+          )}
 
-          <Typography
-            variant="h4"
-            sx={{ my: 1, lineHeight: 1 }}
-            fontWeight="normal"
-          >
-            {name}
-          </Typography>
+          <Box mx={narrowView ? 0 : 2} my={narrowView ? 1 : 0}>
+            <WorkflowStatusBar user={user} />
+          </Box>
         </Box>
 
         <Box sx={{ mr: 4 }}>
@@ -337,7 +352,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
             color="primary"
             sx={{ height: '100%', mr: 2, fontSize: '20px' }}
             onClick={() => setShowRunWorkflowDialog(true)}
-            size="large"
+            size="medium"
           >
             <FontAwesomeIcon icon={faPlay} />
             <Typography sx={{ ml: 1 }}>Run Workflow</Typography>
@@ -348,6 +363,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
             color="primary"
             onClick={() => setShowSettings(true)}
             sx={{ py: 0 }}
+            size="medium"
           >
             <Box sx={{ fontSize: '20px' }}>
               <FontAwesomeIcon icon={faGear} />
@@ -363,6 +379,11 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
         </Box>
       </Box>
 
+      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+        {nextUpdateComponent}
+        {engineComponent}
+      </Box>
+
       {description && (
         <Typography variant="body1">
           <ReactMarkdown className={style.reactMarkdown}>
@@ -370,25 +391,6 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
           </ReactMarkdown>
         </Typography>
       )}
-
-      {nextUpdateComponent}
-
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: narrowView ? 'start' : 'center',
-          my: 1,
-          flexDirection: narrowView ? 'column' : 'row',
-        }}
-      >
-        {workflow.dagResults && workflow.dagResults.length > 0 && (
-          <VersionSelector />
-        )}
-
-        <Box mx={narrowView ? 0 : 2} my={narrowView ? 1 : 0}>
-          <WorkflowStatusBar user={user} />
-        </Box>
-      </Box>
 
       {runWorkflowDialog}
 
@@ -409,6 +411,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
           {successMessage}
         </Alert>
       </Snackbar>
+
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         open={showErrorToast}

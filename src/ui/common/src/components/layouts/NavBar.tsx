@@ -68,7 +68,13 @@ const NavBar: React.FC<{
   user: UserProfile;
   breadcrumbs: BreadcrumbLink[];
   onBreadCrumbClicked?: (name: string) => void;
-}> = ({ user, breadcrumbs, onBreadCrumbClicked = null }) => {
+  afterBreadcrumbAdornment?: React.ReactElement;
+}> = ({
+  user,
+  breadcrumbs,
+  afterBreadcrumbAdornment = null,
+  onBreadCrumbClicked = null,
+}) => {
   const [userPopoverAnchorEl, setUserPopoverAnchorEl] = useState(null);
   const [anchorEl, setAnchorEl] = useState(null);
 
@@ -115,33 +121,37 @@ const NavBar: React.FC<{
       }}
     >
       <Toolbar>
-        <Breadcrumbs>
-          {breadcrumbs.map((link, index) => {
-            if (index + 1 === breadcrumbs.length) {
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Breadcrumbs sx={{ mr: 2 }}>
+            {breadcrumbs.map((link, index) => {
+              if (index + 1 === breadcrumbs.length) {
+                return (
+                  <Typography key={link.name} color="text.primary">
+                    {link.name}
+                  </Typography>
+                );
+              }
               return (
-                <Typography key={link.name} color="text.primary">
+                <Link
+                  key={link.name}
+                  underline="hover"
+                  color="inherit"
+                  to={link.address}
+                  component={RouterLink}
+                  onClick={() => {
+                    if (onBreadCrumbClicked) {
+                      onBreadCrumbClicked(link.name);
+                    }
+                  }}
+                >
                   {link.name}
-                </Typography>
+                </Link>
               );
-            }
-            return (
-              <Link
-                key={link.name}
-                underline="hover"
-                color="inherit"
-                to={link.address}
-                component={RouterLink}
-                onClick={() => {
-                  if (onBreadCrumbClicked) {
-                    onBreadCrumbClicked(link.name);
-                  }
-                }}
-              >
-                {link.name}
-              </Link>
-            );
-          })}
-        </Breadcrumbs>
+            })}
+          </Breadcrumbs>
+
+          {afterBreadcrumbAdornment}
+        </Box>
 
         <Box sx={{ marginLeft: 'auto' }}>
           <Box

@@ -67,7 +67,7 @@ interface ActiveWorkflowStatusTabProps {
   listItems: WorkflowStatusItem[];
 }
 
-export const StatusBarHeaderHeightInPx = 41;
+export const StatusBarHeaderHeightInPx = 40;
 export const StatusBarWidthInPx = 384;
 export const MaxStatusBarListHeightInPx = 384;
 

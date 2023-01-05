@@ -1,9 +1,4 @@
-import {
-  faCircleCheck,
-  faCircleXmark,
-  faSpinner,
-} from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { InputLabel } from '@mui/material';
 import Box from '@mui/material/Box';
 import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
@@ -15,9 +10,8 @@ import { useNavigate } from 'react-router-dom';
 
 import { selectResultIdx } from '../../reducers/workflow';
 import { RootState } from '../../stores/store';
-import { theme } from '../../styles/theme/theme';
 import { dateString } from '../../utils/metadata';
-import ExecutionStatus from '../../utils/shared';
+import { StatusIndicator } from './workflowStatus';
 
 export const VersionSelector: React.FC = () => {
   const navigate = useNavigate();
@@ -35,31 +29,7 @@ export const VersionSelector: React.FC = () => {
         setSelectedResultIdx(idx);
       }
 
-      let menuItemIcon;
-      switch (r.status) {
-        case ExecutionStatus.Succeeded:
-          menuItemIcon = (
-            <Box sx={{ fontSize: '20px', color: theme.palette.green['500'] }}>
-              <FontAwesomeIcon icon={faCircleCheck} />
-            </Box>
-          );
-          break;
-        case ExecutionStatus.Pending:
-          menuItemIcon = (
-            <Box sx={{ fontSize: '20px', color: theme.palette.gray['700'] }}>
-              <FontAwesomeIcon icon={faSpinner} spin={true} />
-            </Box>
-          );
-          break;
-        case ExecutionStatus.Failed:
-          menuItemIcon = (
-            <Box sx={{ fontSize: '20px', color: theme.palette.red['500'] }}>
-              <FontAwesomeIcon icon={faCircleXmark} />
-            </Box>
-          );
-          break;
-      }
-
+      const menuItemIcon = <StatusIndicator status={r.status} />;
       return (
         <MenuItem
           value={idx}
@@ -84,10 +54,11 @@ export const VersionSelector: React.FC = () => {
   return (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
       <FormControl sx={{ minWidth: 120 }} size="small">
+        <InputLabel id="version-label">Version</InputLabel>
         <Select
-          sx={{ maxHeight: 48 }}
           id="grouped-select"
           autoWidth
+          label="Version"
           value={selectedResultIdx}
         >
           {getMenuItems()}
