@@ -96,6 +96,8 @@ func reportUsage(startTime time.Time, environment string, statusCode int, urlPat
 func WithUsageStats(environment string) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			// The reason we need this wrapper is so that we can get the status of the response via
+			// ww.Status().
 			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 
 			startTime := time.Now()
