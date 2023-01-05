@@ -89,7 +89,7 @@ BUILT_IN_EXPANSIONS = {
 
 class RelationalDBIntegration(Integration):
     """
-    Class for RealtionalDB integrations.
+    Class for Relational integrations.
     """
 
     def __init__(self, dag: DAG, metadata: IntegrationInfo):

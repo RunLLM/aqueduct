@@ -403,3 +403,15 @@ def test_publish_with_redundant_config_fields(client):
             k_latest_runs=10,
             config=FlowConfig(k_latest_runs=123),
         )
+
+
+def test_flow_list_saved_objects_none(client, flow_name, engine):
+    """Check that flow.list_saved_objects() works when no objects were actually saved."""
+
+    @op
+    def noop():
+        return 123
+
+    output = noop()
+    flow = publish_flow_test(client, artifacts=output, name=flow_name(), engine=engine)
+    assert len(flow.list_saved_objects()) == 0
