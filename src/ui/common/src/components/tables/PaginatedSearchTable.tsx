@@ -128,38 +128,39 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
       {searchEnabled && (
         <Box marginBottom="8px">
           <TextField
-            placeholder="Search by name ..."
+            placeholder="Search"
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
             id="outlined-basic"
-            variant="outlined"
-            fullWidth
+            variant="standard"
+            size="small"
+            sx={{ minWidth: '300px', mb: 1 }}
             InputProps={{
-              startAdornment: (
-                <Box marginRight="8px">
-                  <FontAwesomeIcon
-                    icon={faSearch}
+              endAdornment:
+                searchQuery === '' ? (
+                  <Box marginRight="8px">
+                    <FontAwesomeIcon
+                      icon={faSearch}
+                      color={theme.palette.gray[600]}
+                    />
+                  </Box>
+                ) : (
+                  <Box
+                    marginRight="8px"
                     color={theme.palette.gray[600]}
-                  />
-                </Box>
-              ),
-              endAdornment: (
-                <Box
-                  marginLeft="8px"
-                  color={theme.palette.gray[600]}
-                  sx={{
-                    '&:hover': {
-                      cursor: 'pointer',
-                      color: theme.palette.black,
-                    },
-                  }}
-                  onClick={() => {
-                    setSearchQuery('');
-                  }}
-                >
-                  <FontAwesomeIcon icon={faX} />
-                </Box>
-              ),
+                    sx={{
+                      '&:hover': {
+                        cursor: 'pointer',
+                        color: theme.palette.black,
+                      },
+                    }}
+                    onClick={() => {
+                      setSearchQuery('');
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faX} />
+                  </Box>
+                ),
             }}
           />
         </Box>
@@ -225,6 +226,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
                                 columnIndex < columns.length - 1
                                   ? '1px solid rgba(224, 224, 224, 1);'
                                   : 'none',
+                              fontSize: '16px', // This is needed for consistency.
                             }}
                           >
                             <Box padding="8px">
