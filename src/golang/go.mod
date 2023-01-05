@@ -8,6 +8,7 @@ require (
 	github.com/aws/aws-sdk-go v1.40.33
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/dropbox/godropbox v0.0.0-20200228041828-52ad444d3502
+	github.com/go-chi/chi v1.5.4
 	github.com/go-chi/chi/v5 v5.0.7
 	github.com/go-chi/cors v1.2.0
 	github.com/go-co-op/gocron v1.13.0

@@ -4,30 +4,18 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/denisbrodbeck/machineid"
+	"github.com/go-chi/chi/middleware"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	obfuscated string = "***"
-	delimiter  string = "/"
-	hashKey    string = "aqueduct"
-	// This is the Grafana Loki server address
-	logURL string = "http://34.25.83.71:9090/loki/api/v1/push"
-)
-
-type UsageStats struct {
-	ID      string `json:"id"`
-	Route   string `json:"route"`
-	Latency int64  `json:"latency"`
-}
-
-func reportUsage(startTime time.Time, r *http.Request) {
-	pathToken := strings.Split(r.URL.Path, delimiter)
+func reportUsage(startTime time.Time, environment string, statusCode int, urlPath string) {
+	pathToken := strings.Split(urlPath, delimiter)
 	for i, token := range pathToken {
 		if _, err := uuid.Parse(token); err == nil {
 			pathToken[i] = obfuscated
@@ -42,21 +30,51 @@ func reportUsage(startTime time.Time, r *http.Request) {
 		return
 	}
 
-	usage := UsageStats{
-		ID:      machineID,
-		Route:   strings.Join(pathToken, delimiter),
-		Latency: time.Since(startTime).Milliseconds(),
+	startTimeUnix := startTime.UnixNano()
+
+	labels := Labels{
+		SchemaVersion: schemaVersion,
+		Environment:   environment,
+		StatusCode:    statusCode,
+		Route:         strings.Join(pathToken, delimiter),
 	}
 
-	log.Errorf("This request took %d ms, request URL path: %s, machine id: %s.", usage.Latency, usage.Route, usage.ID)
+	payload := Payload{
+		ID:      machineID,
+		Latency: time.Since(startTime).Milliseconds(),
+		Labels:  labels,
+	}
 
-	payload, err := json.Marshal(usage)
+	payloadJson, err := json.Marshal(payload)
 	if err != nil {
-		log.Errorf("Failed to marshal usage stats: %v", err)
+		log.Errorf("Failed to marshal payload: %v", err)
 		return
 	}
 
-	req, err := http.NewRequest("POST", logURL, bytes.NewBuffer(payload))
+	streams := Streams{
+		Streams: []Stream{
+			{
+				Labels: labels,
+				Values: [][]string{
+					{
+						strconv.FormatInt(startTimeUnix, 10),
+						string(payloadJson),
+					},
+				},
+			},
+		},
+	}
+
+	streamsJson, err := json.Marshal(streams)
+	if err != nil {
+		log.Errorf("Failed to marshal streams: %v", err)
+		return
+	}
+
+	//log.Errorf("printing json log: %v", string(streamsJson))
+	//log.Errorf("payload: %v", streams.Streams[0].Values[0][1])
+
+	req, err := http.NewRequest("POST", logURL, bytes.NewBuffer(streamsJson))
 	if err != nil {
 		log.Errorf("Failed to initialize usage stats POST request: %v", err)
 		return
@@ -67,20 +85,23 @@ func reportUsage(startTime time.Time, r *http.Request) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
+		log.Errorf("Failed to send request to loki: %v", err)
 		panic(err)
 	}
 	defer resp.Body.Close()
 }
 
-func WithUsageStats() func(http.Handler) http.Handler {
+func WithUsageStats(environment string) func(http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+
 			startTime := time.Now()
 			defer func() {
-				go reportUsage(startTime, r)
+				go reportUsage(startTime, environment, ww.Status(), r.URL.Path)
 			}()
 
-			h.ServeHTTP(w, r)
+			h.ServeHTTP(ww, r)
 		})
 	}
 }
