@@ -58,6 +58,8 @@ func reportUsage(startTime time.Time, environment string, statusCode int, urlPat
 		Streams: []Stream{
 			{
 				Labels: labels,
+				// According to Loki's requirement, the first field should be the timestamp in ns,
+				// and the second field should be the payload in its json form.
 				Values: [][]string{
 					{
 						strconv.FormatInt(startTimeUnix, 10),
