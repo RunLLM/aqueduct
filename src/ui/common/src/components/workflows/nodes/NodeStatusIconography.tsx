@@ -5,6 +5,7 @@ import Box from '@mui/material/Box';
 import React from 'react';
 
 import ExecutionStatus, { ExecState } from '../../../utils/shared';
+import { StatusIndicator } from '../workflowStatus';
 
 type Props = {
   execState: ExecState;
@@ -16,49 +17,12 @@ export const NodeStatusIconography: React.FC<Props> = ({
   successDisplay,
 }) => {
   if (!execState) {
-    return (
-      <>
-        <Typography variant="body1" sx={{ fontSize: '25px' }}>
-          Loading
-        </Typography>
-      </>
-    );
-  }
-  if (execState.status === ExecutionStatus.Succeeded) {
+    return <StatusIndicator status={ExecutionStatus.Pending} size={'50px'} monochrome={'black'}/>;
+  } else if (execState.status === ExecutionStatus.Succeeded) {
     return successDisplay;
-  } else if (execState.status === ExecutionStatus.Failed) {
-    return (
-      <>
-        <Box sx={{ fontSize: '50px' }}>
-          <FontAwesomeIcon icon={faSkullCrossbones} />
-        </Box>
-      </>
-    );
-  } else if (execState.status === ExecutionStatus.Canceled) {
-    return (
-      <>
-        <Box sx={{ fontSize: '50px' }}>
-          <FontAwesomeIcon icon={faXmark} />
-        </Box>
-      </>
-    );
-  } else if (execState.status === ExecutionStatus.Pending) {
-    return (
-      <>
-        <Typography variant="body1" sx={{ fontSize: '25px' }}>
-          Pending...
-        </Typography>
-      </>
-    );
+  } else {
+    return <StatusIndicator status={execState.status} size={'50px'} monochrome={'black'} />;
   }
-
-  return (
-    <>
-      <Typography variant="body1" sx={{ fontSize: '25px' }}>
-        Error
-      </Typography>
-    </>
-  );
 };
 
 export default NodeStatusIconography;
