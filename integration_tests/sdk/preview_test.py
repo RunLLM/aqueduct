@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 from aqueduct.constants.enums import RuntimeType, ServiceType
 from aqueduct.error import AqueductError, InvalidDependencyFilePath, InvalidFunctionException
-from constants import SENTIMENT_SQL_QUERY
+from data_objects import DataObject
 from test_functions.simple.file_dependency_model import (
     model_with_file_dependency,
     model_with_improper_dependency_path,
@@ -15,17 +15,18 @@ from test_functions.simple.model import (
     dummy_sentiment_model,
     dummy_sentiment_model_multiple_input,
 )
+from utils import extract
 
 from aqueduct import global_config, op
 
 
 def test_basic_get(client, data_integration):
-    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
-    sql_df = sql_artifact.get()
+    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+    sql_df = table_artifact.get()
     assert list(sql_df) == ["hotel_name", "review_date", "reviewer_nationality", "review"]
     assert sql_df.shape[0] == 100
 
-    output_artifact = dummy_sentiment_model(sql_artifact)
+    output_artifact = dummy_sentiment_model(table_artifact)
     output_df = output_artifact.get()
     assert list(output_df) == [
         "hotel_name",
@@ -38,10 +39,10 @@ def test_basic_get(client, data_integration):
 
 
 def test_multiple_input_get(client, data_integration):
-    sql_artifact1 = data_integration.sql(name="Query 1", query=SENTIMENT_SQL_QUERY)
-    sql_artifact2 = data_integration.sql(name="Query 2", query=SENTIMENT_SQL_QUERY)
+    table_artifact1 = extract(data_integration, DataObject.SENTIMENT, op_name="Query 1")
+    table_artifact2 = extract(data_integration, DataObject.SENTIMENT, op_name="Query 2")
 
-    fn_artifact = dummy_sentiment_model_multiple_input(sql_artifact1, sql_artifact2)
+    fn_artifact = dummy_sentiment_model_multiple_input(table_artifact1, table_artifact2)
     fn_df = fn_artifact.get()
 
     assert list(fn_df) == [
@@ -69,9 +70,9 @@ def test_multiple_input_get(client, data_integration):
 
 
 def test_basic_file_dependencies(client, data_integration):
-    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
+    table_artifact = extract(data_integration, DataObject.SENTIMENT)
 
-    output_artifact = model_with_file_dependency(sql_artifact)
+    output_artifact = model_with_file_dependency(table_artifact)
     output_df = output_artifact.get()
     assert list(output_df) == [
         "hotel_name",
@@ -84,19 +85,19 @@ def test_basic_file_dependencies(client, data_integration):
 
 
 def test_invalid_file_dependencies(client, data_integration):
-    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
+    table_artifact = extract(data_integration, DataObject.SENTIMENT)
 
     with pytest.raises(AqueductError):
-        model_with_invalid_dependencies(sql_artifact)
+        model_with_invalid_dependencies(table_artifact)
 
     with pytest.raises(AqueductError):
-        model_with_missing_file_dependencies(sql_artifact)
+        model_with_missing_file_dependencies(table_artifact)
 
     with pytest.raises(InvalidFunctionException):
-        model_with_improper_dependency_path(sql_artifact)
+        model_with_improper_dependency_path(table_artifact)
 
     with pytest.raises(InvalidDependencyFilePath):
-        model_with_out_of_package_file_dependency(sql_artifact)
+        model_with_out_of_package_file_dependency(table_artifact)
 
 
 def test_table_with_non_string_column_name(client):
@@ -111,12 +112,12 @@ def test_table_with_non_string_column_name(client):
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S, ServiceType.LAMBDA)
 def test_basic_get_by_engine(client, data_integration, engine):
     global_config({"engine": engine})
-    sql_artifact = data_integration.sql(query=SENTIMENT_SQL_QUERY)
-    sql_df = sql_artifact.get()
+    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+    sql_df = table_artifact.get()
     assert list(sql_df) == ["hotel_name", "review_date", "reviewer_nationality", "review"]
     assert sql_df.shape[0] == 100
 
-    output_artifact = dummy_sentiment_model(sql_artifact)
+    output_artifact = dummy_sentiment_model(table_artifact)
     integration_info_by_name = client.list_integrations()
     if integration_info_by_name[engine].service == ServiceType.K8S:
         assert output_artifact._dag.engine_config.type == RuntimeType.K8S

@@ -25,6 +25,7 @@ import { isSucceeded, LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 import { ExecutionStatus } from '../utils/shared';
 import {
   DeleteWorkflowResponse,
+  getSavedObjectIdentifier,
   GetWorkflowResponse,
   ListWorkflowSavedObjectsResponse,
   normalizeGetWorkflowResponse,
@@ -283,10 +284,12 @@ export const handleDeleteWorkflow = createAsyncThunk<
     selectedObjects.forEach((object) => {
       if (data['external_delete'][object.integration_name]) {
         data['external_delete'][object.integration_name].push(
-          object.object_name
+          JSON.stringify(object.spec)
         );
       } else {
-        data['external_delete'][object.integration_name] = [object.object_name];
+        data['external_delete'][object.integration_name] = [
+          JSON.stringify(object.spec),
+        ];
       }
     });
 
@@ -584,8 +587,11 @@ export const workflowSlice = createSlice({
         // Only run this code if there are saved objects. If there are none, then just skip
         // this altogether.
         if (!!response.object_details) {
-          response.object_details.map((object) => {
-            const key = String([object.integration_name, object.object_name]);
+          response.object_details.map((object: SavedObject) => {
+            const key = String([
+              object.integration_name,
+              getSavedObjectIdentifier(object),
+            ]);
             if (savedObjects[key]) {
               savedObjects[key].push(object);
             } else {

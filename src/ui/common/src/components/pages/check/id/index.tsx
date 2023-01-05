@@ -220,7 +220,7 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
 
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
-      <Box width={sideSheetMode ? '800px' : 'auto'}>
+      <Box width={sideSheetMode ? 'auto' : 'auto'}>
         {!sideSheetMode && (
           <Box width="100%">
             <DetailsPageHeader
@@ -258,7 +258,10 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
 
         <Divider sx={{ my: '32px' }} />
 
-        <Box width="100%" marginTop={sideSheetMode ? '16px' : '40px'}>
+        <Box
+          width={sideSheetMode ? 'auto' : '49.2%'}
+          marginTop={sideSheetMode ? '16px' : '40px'}
+        >
           <CheckHistory
             historyWithLoadingStatus={artifactHistoryWithLoadingStatus}
             checkLevel={operator?.spec?.check?.level}
