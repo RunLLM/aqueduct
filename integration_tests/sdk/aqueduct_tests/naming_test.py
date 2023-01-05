@@ -1,13 +1,14 @@
 import pytest
 from aqueduct.error import ArtifactNotFoundException, InvalidUserActionException
-from data_objects import DataObject
-from test_functions.simple.model import (
+
+from ..shared.data_objects import DataObject
+from ..shared.utils import extract
+from .test_functions.simple.model import (
     dummy_model,
     dummy_model_2,
     dummy_sentiment_model,
     dummy_sentiment_model_multiple_input,
 )
-from utils import extract
 
 
 def test_extract_with_default_name_collision(client, data_integration):

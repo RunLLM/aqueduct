@@ -7,6 +7,11 @@ def dummy_sentiment_model(df):
     return df
 
 
+def dummy_sentiment_model_function(df):
+    df["positivity"] = 123
+    return df
+
+
 @op
 def dummy_sentiment_model_multiple_input(df1, df2):
     df1["positivity"] = 123

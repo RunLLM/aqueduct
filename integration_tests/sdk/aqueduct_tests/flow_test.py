@@ -8,26 +8,27 @@ from aqueduct.error import InvalidUserArgumentException
 from aqueduct.integrations.airflow_integration import AirflowIntegration
 from aqueduct.models.config import FlowConfig
 from aqueduct.models.integration import IntegrationInfo
-from data_objects import DataObject
-from test_functions.sentiment.model import sentiment_model
-from test_functions.simple.model import (
-    dummy_model,
-    dummy_sentiment_model,
-    dummy_sentiment_model_multiple_input,
-)
-from test_metrics.constant.model import constant_metric
-from utils import (
+
+import aqueduct
+from aqueduct import check, metric, op
+
+from ..shared.data_objects import DataObject
+from ..shared.utils import (
     extract,
     generate_new_flow_name,
     generate_table_name,
     publish_flow_test,
-    save,
     trigger_flow_test,
     wait_for_flow_runs,
 )
-
-import aqueduct
-from aqueduct import check, metric, op
+from .save import save
+from .test_functions.sentiment.model import sentiment_model
+from .test_functions.simple.model import (
+    dummy_model,
+    dummy_sentiment_model,
+    dummy_sentiment_model_multiple_input,
+)
+from .test_metrics.constant.model import constant_metric
 
 
 def test_basic_flow(client, flow_name, data_integration, engine, validator):
@@ -42,7 +43,9 @@ def test_basic_flow(client, flow_name, data_integration, engine, validator):
         engine=engine,
     )
 
-    validator.check_saved_artifact(flow, output_artifact.id(), expected_data=output_artifact.get())
+    validator.check_saved_artifact_data(
+        flow, output_artifact.id(), expected_data=output_artifact.get()
+    )
 
 
 def test_sentiment_flow(client, flow_name, data_integration, engine, validator):
@@ -57,7 +60,9 @@ def test_sentiment_flow(client, flow_name, data_integration, engine, validator):
         name=flow_name(),
         engine=engine,
     )
-    validator.check_saved_artifact(flow, output_artifact.id(), expected_data=output_artifact.get())
+    validator.check_saved_artifact_data(
+        flow, output_artifact.id(), expected_data=output_artifact.get()
+    )
 
 
 def test_complex_flow(client, flow_name, data_integration, engine, validator):
@@ -92,7 +97,9 @@ def test_complex_flow(client, flow_name, data_integration, engine, validator):
         name=flow_name(),
         engine=engine,
     )
-    validator.check_saved_artifact(flow, output_artifact.id(), expected_data=output_artifact.get())
+    validator.check_saved_artifact_data(
+        flow, output_artifact.id(), expected_data=output_artifact.get()
+    )
 
     # Metrics and checks should have been computed.
     flow_run = flow.latest()
@@ -107,7 +114,9 @@ def test_complex_flow(client, flow_name, data_integration, engine, validator):
         engine=engine,
         checks=[success_check],  # failing_check will no longer be included.
     )
-    validator.check_saved_artifact(flow, output_artifact.id(), expected_data=output_artifact.get())
+    validator.check_saved_artifact_data(
+        flow, output_artifact.id(), expected_data=output_artifact.get()
+    )
 
     # Only the explicitly defined metrics and checks should have been included in this second run.
     flow_run = flow.latest()

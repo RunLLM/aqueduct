@@ -1,11 +1,12 @@
 import pandas as pd
 import pytest
 from aqueduct.error import AqueductError
-from data_objects import DataObject
-from test_metrics.constant.model import constant_metric
-from utils import extract, publish_flow_test
 
 from aqueduct import metric
+
+from ..shared.data_objects import DataObject
+from ..shared.utils import extract, publish_flow_test
+from .test_metrics.constant.model import constant_metric
 
 
 def test_basic_metric(client, data_integration):

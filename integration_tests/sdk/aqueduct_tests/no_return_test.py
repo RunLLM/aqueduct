@@ -1,6 +1,6 @@
-from utils import publish_flow_test
-
 from aqueduct import op
+
+from ..shared.utils import publish_flow_test
 
 
 @op

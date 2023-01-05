@@ -3,9 +3,10 @@ from typing import Union
 import pytest
 from aqueduct.constants.enums import ExecutionStatus
 from aqueduct.error import AqueductError
-from utils import publish_flow_test, trigger_flow_test
 
 from aqueduct import op
+
+from ..shared.utils import publish_flow_test, trigger_flow_test
 
 
 @op

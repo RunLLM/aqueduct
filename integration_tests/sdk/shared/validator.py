@@ -6,9 +6,11 @@ from aqueduct.constants.enums import LoadUpdateMode
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
 from aqueduct.models.integration import Integration
 from aqueduct.models.operators import RelationalDBLoadParams
-from utils import artifact_id_to_saved_identifier, extract
 
 from aqueduct import Client, Flow
+
+from .globals import artifact_id_to_saved_identifier
+from .utils import extract
 
 
 class Validator:
@@ -21,20 +23,26 @@ class Validator:
         self._client = client
         self._integration = integration
 
-    def check_saved_artifact(self, flow: Flow, artifact_id: uuid.UUID, expected_data: Any):
-        """Checks that the given artifact was saved by the flow, and has the expected data.
-
-        The exact destination of the artifact is tracked internally by the test suite.
-        NOTE: this currently only works against SQL-based integrations.
-        """
-        # Check that given saved artifacts were indeed saved based on the flow API.
+    def _fetch_saved_object_identifier(self, flow: Flow, artifact_id: uuid.UUID) -> str:
+        """Also validates that the saved object exists according to the Flow API."""
         all_saved_objects = flow.list_saved_objects()[self._integration._metadata.name]
-
         all_saved_object_identifiers = [item.spec.identifier() for item in all_saved_objects]
+
         saved_object_identifier = artifact_id_to_saved_identifier[str(artifact_id)]
         assert saved_object_identifier in all_saved_object_identifiers
+        return saved_object_identifier
 
-        # Verify that the actual data was saved.
+    def check_saved_artifact_data(
+        self, flow: Flow, artifact_id: uuid.UUID, expected_data: Any
+    ) -> None:
+        """Checks that the given artifact was saved by the flow, and the data integration has the expected data.
+
+        The exact destination of the artifact is tracked internally by the test suite.
+        """
+        assert expected_data is not None
+        saved_object_identifier = self._fetch_saved_object_identifier(flow, artifact_id)
+
+        # Verify the artifact's actual data state in the data integration.
         saved_data = extract(self._integration, saved_object_identifier).get()
         if not isinstance(saved_data, pd.DataFrame):
             raise Exception(
@@ -42,12 +50,21 @@ class Validator:
                 "For more extensive third-party type coverage, please write data integration "
                 "tests instead."
             )
-
         assert isinstance(saved_data, pd.DataFrame)
         if not saved_data.equals(expected_data):
             print("Expected data: ", expected_data)
             print("Actual data: ", saved_data)
             raise Exception("Mismatch between expected and actual saved data.")
+
+    def check_saved_artifact_data_does_not_exist(self, artifact_id: uuid.UUID) -> None:
+        """Checks that the data integration no longer has the artifact's data stored."""
+        saved_object_identifier = artifact_id_to_saved_identifier[str(artifact_id)]
+        try:
+            extract(self._integration, saved_object_identifier)
+        except Exception:
+            return
+
+        raise Exception("Artifact %s is expected to no longer exist, but does." % artifact_id)
 
     def check_saved_update_mode_changes(
         self,
@@ -95,3 +112,8 @@ class Validator:
 
         # Check that mapping can be accessed by integration object too.
         assert data[self._integration] == data[integration_name]
+
+    def check_artifact_was_computed(self, flow: Flow, name: str):
+        """Checks only for the artifact computed in the latest flow run."""
+        artifact = flow.latest().artifact(name)
+        assert artifact is not None

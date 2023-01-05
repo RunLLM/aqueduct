@@ -1,9 +1,10 @@
 import pytest
 from aqueduct.constants.enums import ServiceType
-from data_objects import DataObject
-from utils import extract, publish_flow_test
 
 from aqueduct import op
+
+from ..shared.data_objects import DataObject
+from ..shared.utils import extract, publish_flow_test
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S, ServiceType.LAMBDA)

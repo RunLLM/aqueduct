@@ -2,12 +2,13 @@ import pandas as pd
 import pytest
 from aqueduct.constants.enums import CheckSeverity
 from aqueduct.error import AqueductError, ArtifactNotFoundException, InvalidUserActionException
-from data_objects import DataObject
-from test_functions.simple.model import dummy_sentiment_model
-from test_metrics.constant.model import constant_metric
-from utils import extract, publish_flow_test
 
 from aqueduct import check
+
+from ..shared.data_objects import DataObject
+from ..shared.utils import extract, publish_flow_test
+from .test_functions.simple.model import dummy_sentiment_model
+from .test_metrics.constant.model import constant_metric
 
 
 @check()

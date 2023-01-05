@@ -10,12 +10,13 @@ from aqueduct.error import (
     ArtifactNeverComputedException,
     InvalidUserArgumentException,
 )
-from data_objects import DataObject
 from pandas._testing import assert_frame_equal
-from relational import all_relational_DBs
-from utils import extract, publish_flow_test, trigger_flow_test
 
 from aqueduct import metric, op
+
+from ..shared.data_objects import DataObject
+from ..shared.relational import all_relational_DBs
+from ..shared.utils import extract, publish_flow_test, trigger_flow_test
 
 
 @metric

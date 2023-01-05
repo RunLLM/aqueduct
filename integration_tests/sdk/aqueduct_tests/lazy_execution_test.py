@@ -6,10 +6,12 @@ from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.constants.enums import ArtifactType
 from aqueduct.error import InvalidUserArgumentException
-from data_objects import DataObject
-from utils import extract, publish_flow_test, save
 
 from aqueduct import check, global_config, metric, op
+
+from ..shared.data_objects import DataObject
+from ..shared.utils import extract, publish_flow_test
+from .save import save
 
 
 def test_lazy_sql_extractor(client, data_integration):
@@ -232,6 +234,6 @@ def test_lazy_artifact_with_save(client, flow_name, data_integration, engine, va
         name=flow_name(),
         engine=engine,
     )
-    validator.check_saved_artifact(
+    validator.check_saved_artifact_data(
         flow, review_copied.id(), expected_data=copy_field.local(reviews)
     )

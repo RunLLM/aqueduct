@@ -1,8 +1,9 @@
 import pytest
 from aqueduct.error import AqueductError
-from utils import publish_flow_test
 
 from aqueduct import op
+
+from ..shared.utils import publish_flow_test
 
 
 def test_multiple_outputs(client, flow_name, engine):

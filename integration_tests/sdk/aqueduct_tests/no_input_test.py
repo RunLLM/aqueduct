@@ -1,8 +1,9 @@
 import pandas as pd
-from data_objects import DataObject
-from utils import extract
 
 from aqueduct import op
+
+from ..shared.data_objects import DataObject
+from ..shared.utils import extract
 
 
 @op

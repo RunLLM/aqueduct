@@ -3,9 +3,10 @@ from os import cpu_count
 import pytest
 from aqueduct.constants.enums import ExecutionStatus, ServiceType
 from aqueduct.error import AqueductError, InvalidUserArgumentException
-from utils import publish_flow_test
 
 from aqueduct import global_config, op
+
+from ..shared.utils import publish_flow_test
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S)

@@ -2,22 +2,23 @@ import pandas as pd
 import pytest
 from aqueduct.constants.enums import RuntimeType, ServiceType
 from aqueduct.error import AqueductError, InvalidDependencyFilePath, InvalidFunctionException
-from data_objects import DataObject
-from test_functions.simple.file_dependency_model import (
+
+from aqueduct import global_config, op
+
+from ..shared.data_objects import DataObject
+from ..shared.utils import extract
+from .test_functions.simple.file_dependency_model import (
     model_with_file_dependency,
     model_with_improper_dependency_path,
     model_with_invalid_dependencies,
     model_with_missing_file_dependencies,
     model_with_out_of_package_file_dependency,
 )
-from test_functions.simple.model import (
+from .test_functions.simple.model import (
     dummy_model,
     dummy_sentiment_model,
     dummy_sentiment_model_multiple_input,
 )
-from utils import extract
-
-from aqueduct import global_config, op
 
 
 def test_basic_get(client, data_integration):

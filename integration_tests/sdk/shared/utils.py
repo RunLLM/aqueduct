@@ -3,33 +3,15 @@ import uuid
 from typing import Any, Dict, List, Optional, Union
 
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.artifacts.table_artifact import TableArtifact
-from aqueduct.constants.enums import ArtifactType, ExecutionStatus, LoadUpdateMode, S3TableFormat
+from aqueduct.constants.enums import ArtifactType, ExecutionStatus
 from aqueduct.integrations.s3_integration import S3Integration
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
-from aqueduct.models.operators import LoadSpec, RelationalDBLoadParams, S3LoadParams
-from data_objects import DataObject
 
 import aqueduct
 from aqueduct import Flow
 
-# TODO(ENG-1738): this global dictionary is only maintained because we don't have a way
-#  of deleting flows by name yet. The teardown code has the flow name, but not the flow id,
-#  since that is generated in the test by `publish_flow()`. Therefore, we must register every
-#  flow we publish in `publish_flow_test` in this dictionary.
-flow_name_to_id: Dict[str, uuid.UUID] = {}
-
-# Toggles whether we should test deprecated code paths. The is useful for ensuring both the new and
-# old code paths continue to work when the API changes, but we want to continue to ensure backwards
-# compatibility for a while.
-use_deprecated_code_paths = False
-
-# Global map tracking all the artifacts we've saved in the test suite and the path that they were saved to.
-artifact_id_to_saved_identifier: Dict[str, str] = {}
-
-
-def use_deprecated_code_path() -> bool:
-    return use_deprecated_code_paths
+from .data_objects import DataObject
+from .globals import flow_name_to_id
 
 
 def generate_new_flow_name() -> str:
@@ -228,43 +210,6 @@ def extract(
     raise Exception("Unexpected data integration type provided in test: %s", type(integration))
 
 
-def save(
-    integration,
-    artifact: TableArtifact,
-    name: Optional[str] = None,
-    update_mode: Optional[LoadUpdateMode] = None,
-):
-    """Saves an artifact into the integration.
-
-    If `name` is set, make sure that it is set to a globally unique value, since test cases can be run concurrently.
-
-    Assumption: the artifact represents a pandas dataframe. Each type of integration is serialized in a particular fashion.
-    It should match the deserialization method in extract().
-    """
-    if name is None:
-        name = generate_table_name()
-    if update_mode is None:
-        update_mode = LoadUpdateMode.REPLACE
-
-    if isinstance(integration, RelationalDBIntegration):
-        if use_deprecated_code_path():
-            artifact.save(integration.config(name, update_mode))
-        else:
-            integration.save(artifact, name, update_mode)
-
-    elif isinstance(integration, S3Integration):
-        assert update_mode == LoadUpdateMode.REPLACE, "S3 only supports replacement update."
-        integration.save(artifact, name, S3TableFormat.PARQUET)
-
-        # Record where the artifact was saved, so we can validate the data later, after the flow is published.
-        artifact_id_to_saved_identifier[str(artifact.id())] = name
-    else:
-        raise Exception("Unexpected data integration type provided in test: %s", type(integration))
-
-    # Record where the artifact was saved, so we can validate the data later, after the flow is published.
-    artifact_id_to_saved_identifier[str(artifact.id())] = name
-
-
 def delete_flow(client: aqueduct.Client, workflow_id: uuid.UUID) -> None:
     try:
         client.delete_flow(str(workflow_id))
@@ -272,54 +217,6 @@ def delete_flow(client: aqueduct.Client, workflow_id: uuid.UUID) -> None:
         print("Error deleting workflow %s with exception: %s" % (workflow_id, e))
     else:
         print("Successfully deleted workflow %s" % (workflow_id))
-
-
-def check_flow_doesnt_exist(client, flow_id):
-    def stop_condition(client, flow_id):
-        try:
-            client.flow(flow_id)
-            return False
-        except:
-            return True
-
-    polling(
-        lambda: stop_condition(client, flow_id),
-        timeout=60,
-        poll_threshold=5,
-        timeout_comment="Timed out checking flow doens't exist.",
-    )
-
-
-def check_table_doesnt_exist(integration, table):
-    def stop_condition(integration, table):
-        try:
-            integration.sql(f"SELECT * FROM {table}").get()
-            return False
-        except:
-            return True
-
-    polling(
-        lambda: stop_condition(integration, table),
-        timeout=60,
-        poll_threshold=5,
-        timeout_comment="Timed out checking table doesn't exist.",
-    )
-
-
-def check_table_exists(integration, table):
-    def stop_condition(integration, table):
-        try:
-            integration.sql(f"SELECT * FROM {table}").get()
-            return True
-        except:
-            return False
-
-    polling(
-        lambda: stop_condition(integration, table),
-        timeout=60,
-        poll_threshold=5,
-        timeout_comment="Timed out checking table doesn't exist.",
-    )
 
 
 def polling(
