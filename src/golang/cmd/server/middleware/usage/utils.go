@@ -13,6 +13,7 @@ type Payload struct {
 	Labels
 }
 
+// These fields and json label names for Stream and Streams are required by Loki.
 type Stream struct {
 	Labels Labels     `json:"stream"`
 	Values [][]string `json:"values"`
