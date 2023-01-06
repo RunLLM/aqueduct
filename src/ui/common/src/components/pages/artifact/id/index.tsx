@@ -84,11 +84,11 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   const { metrics, checks } =
     !!workflowDagResultWithLoadingStatus &&
-      isSucceeded(workflowDagResultWithLoadingStatus.status)
+    isSucceeded(workflowDagResultWithLoadingStatus.status)
       ? getMetricsAndChecksOnArtifact(
-        workflowDagResultWithLoadingStatus?.result,
-        artifactId
-      )
+          workflowDagResultWithLoadingStatus?.result,
+          artifactId
+        )
       : { metrics: [], checks: [] };
 
   const pathPrefix = getPathPrefix();
@@ -128,8 +128,9 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   useEffect(() => {
     if (!!artifact) {
       if (!sideSheetMode) {
-        document.title = `${artifact ? artifact.name : 'Artifact Details'
-          } | Aqueduct`;
+        document.title = `${
+          artifact ? artifact.name : 'Artifact Details'
+        } | Aqueduct`;
       }
 
       if (
@@ -272,7 +273,8 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
               <Box marginBottom="32px">
                 <Alert severity="warning">
-                  An upstream operator failed, causing this artifact to not be created.
+                  An upstream operator failed, causing this artifact to not be
+                  created.
                 </Alert>
               </Box>
             </>
