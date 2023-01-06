@@ -182,6 +182,24 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     </Typography>
   );
 
+  const onChangeRowsPerPage = (rowsPerPage) => {
+    // Set the rows per page in localStorage here.
+    console.log('data page onChangeRowsPerPage: ', rowsPerPage);
+    localStorage.setItem('dataTableRowsPerPage', rowsPerPage)
+  }
+
+  const getRowsPerPage = () => {
+    const savedRowsPerPage = localStorage.getItem('dataTableRowsPerPage');
+    console.log('dataTableRowsPerPage', savedRowsPerPage);
+
+    if (!savedRowsPerPage) {
+      console.log('savedRowsPerPage not found, returning default');
+      return 5; // return default rows per page value.
+    }
+
+    return parseInt(savedRowsPerPage);
+  }
+
   return (
     <Layout
       breadcrumbs={[BreadcrumbLink.HOME, BreadcrumbLink.DATA]}
@@ -192,6 +210,8 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           data={artifactList}
           searchEnabled={true}
           onGetColumnValue={onGetColumnValue}
+          onChangeRowsPerPage={onChangeRowsPerPage}
+          savedRowsPerPage={getRowsPerPage()}
         />
       ) : (
         <Box>{noItemsMessage}</Box>

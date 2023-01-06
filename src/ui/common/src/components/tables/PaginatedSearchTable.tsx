@@ -36,6 +36,8 @@ export interface PaginatedSearchTableProps {
   searchEnabled?: boolean;
   onGetColumnValue?: (row, column) => PaginatedSearchTableElement;
   onShouldInclude?: (rowItem, searchQuery, searchColumn) => boolean;
+  onChangeRowsPerPage?: (rowsPerPage) => void;
+  savedRowsPerPage?: number;
 }
 
 export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
@@ -43,9 +45,11 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
   onGetColumnValue,
   searchEnabled = false,
   onShouldInclude,
+  onChangeRowsPerPage,
+  savedRowsPerPage
 }) => {
   const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
+  const [rowsPerPage, setRowsPerPage] = React.useState(savedRowsPerPage ? savedRowsPerPage : 5);
   const [searchQuery, setSearchQuery] = React.useState('');
   // TODO: Add dropdown to select which column to search the table on.
   // TODO: add setSearchColumn to the array below.
@@ -98,6 +102,10 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
   const handleChangeRowsPerPage = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
+    if (onChangeRowsPerPage) {
+      // Call the callback here and set the appropriate stuff in localstorage.
+      onChangeRowsPerPage(+event.target.value);
+    }
     setRowsPerPage(+event.target.value);
     setPage(0);
   };
