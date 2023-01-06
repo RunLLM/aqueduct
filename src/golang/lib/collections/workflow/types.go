@@ -23,8 +23,9 @@ type Schedule struct {
 	CronSchedule         CronString    `json:"cron_schedule"`
 	DisableManualTrigger bool          `json:"disable_manual_trigger"`
 	Paused               bool          `json:"paused"`
-	// TriggerIDs are all of the Workflows that trigger this Schedule
-	TriggerIDs []uuid.UUID `json:"trigger_ids"`
+	// SourceID is the source Workflow that triggers this
+	// Workflow upon a successful run
+	SourceID uuid.UUID `json:"source_id"`
 }
 
 func (s *Schedule) Value() (driver.Value, error) {

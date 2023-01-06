@@ -68,15 +68,12 @@ func (*workflowReader) GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID,
 	return getWorkflow(ctx, DB, query, args...)
 }
 
-func (*workflowReader) GetCascadingTargets(ctx context.Context, ID uuid.UUID, DB database.Database) ([]uuid.UUID, error) {
+func (*workflowReader) GetTargets(ctx context.Context, ID uuid.UUID, DB database.Database) ([]uuid.UUID, error) {
 	query := `
 		SELECT id FROM workflow
 		WHERE
 			json_extract(schedule, '$.trigger') = $1
-			AND EXISTS (
-				SELECT 1
-				FROM json_each(json_extract(schedule, '$.trigger_ids')) WHERE value = $2
-			)
+			AND json_extract(schedule, '$.source_id') = $2
 		;`
 	args := []interface{}{workflow.CascadingUpdateTrigger, ID}
 

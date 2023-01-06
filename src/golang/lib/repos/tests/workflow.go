@@ -42,7 +42,7 @@ func (ts *TestSuite) TestWorkflow_GetByOwnerAndName() {
 	requireDeepEqual(ts.T(), workflow, actualWorkflow)
 }
 
-func (ts *TestSuite) TestWorkflow_GetCascadingTargets() {
+func (ts *TestSuite) TestWorkflow_GetTargets() {
 	triggerWorkflow := ts.seedWorkflow(1)[0]
 
 	// Create 2 Workflows where the schedule is a cascading update after
@@ -55,8 +55,8 @@ func (ts *TestSuite) TestWorkflow_GetCascadingTargets() {
 			randString(10),
 			randString(15),
 			&workflow.Schedule{
-				Trigger:    workflow.CascadingUpdateTrigger,
-				TriggerIDs: []uuid.UUID{triggerWorkflow.ID},
+				Trigger:  workflow.CascadingUpdateTrigger,
+				SourceID: triggerWorkflow.ID,
 			},
 			&workflow.RetentionPolicy{
 				KLatestRuns: 5,
@@ -68,7 +68,7 @@ func (ts *TestSuite) TestWorkflow_GetCascadingTargets() {
 		expectedIDs = append(expectedIDs, workflow.ID)
 	}
 
-	actualIDs, err := ts.workflow.GetCascadingTargets(ts.ctx, triggerWorkflow.ID, ts.DB)
+	actualIDs, err := ts.workflow.GetTargets(ts.ctx, triggerWorkflow.ID, ts.DB)
 	require.Nil(ts.T(), err)
 	require.ElementsMatch(ts.T(), expectedIDs, actualIDs)
 }
