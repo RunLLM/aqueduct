@@ -63,10 +63,12 @@ type AqServer struct {
 	// are no more active requests.
 	RequestMutex sync.RWMutex
 
+	// The environment in which the server runs. This is for usage stats collection purpose.
+	Environment       string
 	DisableUsageStats bool
 }
 
-func NewAqServer(disableUsageStats bool) *AqServer {
+func NewAqServer(environment string, disableUsageStats bool) *AqServer {
 	ctx := context.Background()
 	aqPath := config.AqueductPath()
 
@@ -95,6 +97,7 @@ func NewAqServer(disableUsageStats bool) *AqServer {
 		Repos:             CreateRepos(),
 		UnderMaintenance:  atomic.Value{},
 		RequestMutex:      sync.RWMutex{},
+		Environment:       environment,
 		DisableUsageStats: disableUsageStats,
 	}
 	s.UnderMaintenance.Store(false)
@@ -245,7 +248,7 @@ func (s *AqServer) AddHandler(route string, handlerObj handler.Handler) {
 	middleware := alice.New()
 
 	if !s.DisableUsageStats {
-		middleware = middleware.Append(usage.WithUsageStats())
+		middleware = middleware.Append(usage.WithUsageStats(s.Environment))
 	}
 
 	if handlerObj.AuthMethod() == handler.ApiKeyAuthMethod {

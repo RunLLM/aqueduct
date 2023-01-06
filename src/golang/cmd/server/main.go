@@ -23,7 +23,10 @@ var (
 	verbose           = flag.Bool("verbose", false, "Whether all logs will be shown in the terminal, with filepaths and line numbers.")
 	port              = flag.Int("port", connection.ServerInternalPort, "The port that the server listens to.")
 	serverLogPath     = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "logs", "server")
+	environment       = flag.String("env", "prod", "The environment in which the Aqueduct server is operating.")
 	disableUsageStats = flag.Bool("disable-usage-stats", false, "Whether to disable usage statistics reporting.")
+
+	allowedEnvironments = map[string]bool{"dev": true, "test": true, "prod": true}
 )
 
 func main() {
@@ -78,7 +81,12 @@ func main() {
 		log.Fatalf("Failed to initialize server config: %v", err)
 	}
 
-	s := server.NewAqServer(*disableUsageStats)
+	_, ok := allowedEnvironments[*environment]
+	if !ok {
+		log.Fatalf("Unsupported environment: %v", *environment)
+	}
+
+	s := server.NewAqServer(*environment, *disableUsageStats)
 
 	err := s.StartWorkflowRetentionJob(config.RetentionJobPeriod())
 	if err != nil {
