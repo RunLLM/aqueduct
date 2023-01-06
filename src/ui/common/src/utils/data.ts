@@ -70,7 +70,10 @@ export type DataPreview = {
   latest_versions: Record<string, DataPreviewInfo>;
 };
 
-export function inferSchema(rows: TableRow[], defaultType='object'): DataSchema {
+export function inferSchema(
+  rows: TableRow[],
+  defaultType = 'object'
+): DataSchema {
   if (!rows) {
     return { fields: [], pandas_version: '' };
   }

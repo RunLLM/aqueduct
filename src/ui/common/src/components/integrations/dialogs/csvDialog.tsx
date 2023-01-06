@@ -2,11 +2,11 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 
+import { inferSchema, TableRow } from '../../../utils/data';
 import { CSVConfig, FileData } from '../../../utils/integrations';
+import PaginatedTable from '../../tables/PaginatedTable';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
-import { inferSchema, TableRow } from '../../../utils/data';
-import PaginatedTable from '../../tables/PaginatedTable';
 
 type Props = {
   setDialogConfig: (config: CSVConfig) => void;
@@ -29,23 +29,23 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
   // Source: https://stackoverflow.com/questions/8493195/how-can-i-parse-a-csv-string-with-javascript-which-contains-comma-in-data
   // Return 2D array.
   const splitFinder = /,|\r?\n|"(\\"|[^"])*?"/g;
-  const CSVtoArray = (text: string)  => {
+  const CSVtoArray = (text: string) => {
     let currentRow = [];
     const rowsOut = [currentRow];
-    let lastIndex = splitFinder.lastIndex = 0;
-    
+    let lastIndex = (splitFinder.lastIndex = 0);
+
     // add text from lastIndex to before a found newline or comma
     const pushCell = (endIndex: number | null) => {
       endIndex = endIndex || text.length;
       const addMe = text.substring(lastIndex, endIndex);
       // remove quotes around the item
-      currentRow.push(addMe.replace(/^"|"$/g, ""));
+      currentRow.push(addMe.replace(/^"|"$/g, ''));
       lastIndex = splitFinder.lastIndex;
-    }
+    };
 
     let regexResp;
     // for each regexp match (either comma, newline, or quoted item)
-    while (regexResp = splitFinder.exec(text)) {
+    while ((regexResp = splitFinder.exec(text))) {
       const split = regexResp[0];
 
       // if it's not a quote capture, add an item to the current row
@@ -56,7 +56,9 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
 
         // then start a new row if newline
         const isNewLine = /^\r?\n$/.test(split);
-        if (isNewLine) { rowsOut.push(currentRow = []); }
+        if (isNewLine) {
+          rowsOut.push((currentRow = []));
+        }
       }
     }
     return rowsOut;
@@ -64,7 +66,7 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
 
   const displayFileFn = (file: FileData) => {
     const allRows = CSVtoArray(file.data);
-    
+
     const parsedHeader = allRows[0];
     const parsedRows: TableRow[] = allRows.slice(1).map((line, id) => {
       const row = line;

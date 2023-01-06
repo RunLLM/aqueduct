@@ -9,7 +9,6 @@ import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import * as React from 'react';
-import { theme } from '../../styles/theme/theme';
 
 import { Data } from '../../utils/data';
 
