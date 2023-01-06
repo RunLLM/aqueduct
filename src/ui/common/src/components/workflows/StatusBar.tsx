@@ -278,28 +278,39 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
   // List of the workflow status items filtered out by category: errors, warnings, logs and checks passed.
   const [listItems, setListItems] = useState<WorkflowStatusItem[]>([]);
 
+  // Ignore Parameters from list of workflow status items
+  const shouldShowStatusItem = (statusItem: WorkflowStatusItem) => {
+    console.log('statusItem type: ', statusItem.type);
+
+    if (statusItem.type === 'paramOp') {
+      console.log('statusItem type is parameter')
+    }
+    return statusItem.type !== 'paramOp';
+  }
+
   useEffect(() => {
     const filteredErrors: WorkflowStatusItem[] = workflowStatusItems.filter(
       (workflowStatusItem) => {
-        return workflowStatusItem.level === WorkflowStatusTabs.Errors;
+        return shouldShowStatusItem(workflowStatusItem) && workflowStatusItem.level === WorkflowStatusTabs.Errors;
       }
     );
 
     const filteredWarnings: WorkflowStatusItem[] = workflowStatusItems.filter(
       (workflowStatusItem) => {
-        return workflowStatusItem.level === WorkflowStatusTabs.Warnings;
+        return shouldShowStatusItem(workflowStatusItem) && workflowStatusItem.level === WorkflowStatusTabs.Warnings;
       }
     );
 
     const filteredLogs: WorkflowStatusItem[] = workflowStatusItems.filter(
       (workflowStatusItem) => {
-        return workflowStatusItem.level === WorkflowStatusTabs.Logs;
+        return shouldShowStatusItem(workflowStatusItem) && workflowStatusItem.level === WorkflowStatusTabs.Logs;
       }
     );
 
     const filteredChecks: WorkflowStatusItem[] = workflowStatusItems.filter(
       (workflowStatusItem) => {
-        return workflowStatusItem.level === WorkflowStatusTabs.Checks;
+
+        return shouldShowStatusItem(workflowStatusItem) && workflowStatusItem.level === WorkflowStatusTabs.Checks;
       }
     );
 
@@ -542,9 +553,8 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
             </>
           );
           const err = opExecState.error;
-          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${
-            err.context ?? ''
-          }`;
+          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${err.context ?? ''
+            }`;
         } else {
           // no error message found, so treat this as a system internal error
           newWorkflowStatusItem.message = `Aqueduct Internal Error`;
