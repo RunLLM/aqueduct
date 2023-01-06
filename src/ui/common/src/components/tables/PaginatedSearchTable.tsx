@@ -46,10 +46,12 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
   searchEnabled = false,
   onShouldInclude,
   onChangeRowsPerPage,
-  savedRowsPerPage
+  savedRowsPerPage,
 }) => {
   const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(savedRowsPerPage ? savedRowsPerPage : 5);
+  const [rowsPerPage, setRowsPerPage] = React.useState(
+    savedRowsPerPage ? savedRowsPerPage : 5
+  );
   const [searchQuery, setSearchQuery] = React.useState('');
   // TODO: Add dropdown to select which column to search the table on.
   // TODO: add setSearchColumn to the array below.

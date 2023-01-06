@@ -170,8 +170,18 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   };
 
   const onChangeRowsPerPage = (rowsPerPage) => {
-    console.log('workflowsPage onChangeRowsPerPage: ', rowsPerPage);
-  }
+    localStorage.setItem('workflowsTableRowsPerPage', rowsPerPage);
+  };
+
+  const getRowsPerPage = () => {
+    const savedRowsPerPage = localStorage.getItem('workflowsTableRowsPerPage');
+
+    if (!savedRowsPerPage) {
+      return 5; // return default rows per page value.
+    }
+
+    return parseInt(savedRowsPerPage);
+  };
 
   return (
     <Layout
@@ -184,6 +194,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           searchEnabled={true}
           onGetColumnValue={onGetColumnValue}
           onChangeRowsPerPage={onChangeRowsPerPage}
+          savedRowsPerPage={getRowsPerPage()}
         />
       ) : (
         <Box>{noItemsMessage}</Box>
