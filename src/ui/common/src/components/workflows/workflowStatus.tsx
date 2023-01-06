@@ -136,13 +136,16 @@ type IndicatorProps = {
    * False if use default colors. Otherwise, specify the color.
    */
   monochrome: string | false;
-
 };
 
 /**
  * Smaller status indicator component that is just a circle with a background color.
  **/
-export const StatusIndicator: React.FC<IndicatorProps> = ({ status, size = '12px', monochrome = false }) => {
+export const StatusIndicator: React.FC<IndicatorProps> = ({
+  status,
+  size = '12px',
+  monochrome = false,
+}) => {
   const getIcon = (status: ExecutionStatus) => {
     let indicator = null;
     switch (status) {
@@ -157,7 +160,10 @@ export const StatusIndicator: React.FC<IndicatorProps> = ({ status, size = '12px
               alignSelf: 'center',
             }}
           >
-            <FontAwesomeIcon icon={faSpinner} color={monochrome? monochrome : 'black'} />
+            <FontAwesomeIcon
+              icon={faSpinner}
+              color={monochrome ? monochrome : 'black'}
+            />
           </Box>
         );
         break;
@@ -175,7 +181,7 @@ export const StatusIndicator: React.FC<IndicatorProps> = ({ status, size = '12px
           >
             <FontAwesomeIcon
               icon={faX}
-              color={monochrome? monochrome : getExecutionStatusColor(status)}
+              color={monochrome ? monochrome : getExecutionStatusColor(status)}
             />
           </Box>
         );
@@ -193,7 +199,7 @@ export const StatusIndicator: React.FC<IndicatorProps> = ({ status, size = '12px
           >
             <FontAwesomeIcon
               icon={faClockFour}
-              color={monochrome? monochrome : getExecutionStatusColor(status)}
+              color={monochrome ? monochrome : getExecutionStatusColor(status)}
             />
           </Box>
         );
@@ -212,7 +218,7 @@ export const StatusIndicator: React.FC<IndicatorProps> = ({ status, size = '12px
           >
             <FontAwesomeIcon
               icon={faListOl}
-              color={monochrome? monochrome : getExecutionStatusColor(status)}
+              color={monochrome ? monochrome : getExecutionStatusColor(status)}
             />
           </Box>
         );
@@ -231,7 +237,7 @@ export const StatusIndicator: React.FC<IndicatorProps> = ({ status, size = '12px
           >
             <FontAwesomeIcon
               icon={faCircleCheck}
-              color={monochrome? monochrome : getExecutionStatusColor(status)}
+              color={monochrome ? monochrome : getExecutionStatusColor(status)}
             />
           </Box>
         );
@@ -250,7 +256,7 @@ export const StatusIndicator: React.FC<IndicatorProps> = ({ status, size = '12px
           >
             <FontAwesomeIcon
               icon={faCircleQuestion}
-              color={monochrome? monochrome : getExecutionStatusColor(status)}
+              color={monochrome ? monochrome : getExecutionStatusColor(status)}
             />
           </Box>
         );
@@ -269,7 +275,7 @@ export const StatusIndicator: React.FC<IndicatorProps> = ({ status, size = '12px
           >
             <FontAwesomeIcon
               icon={faCircleExclamation}
-              color={monochrome? monochrome : getExecutionStatusColor(status)}
+              color={monochrome ? monochrome : getExecutionStatusColor(status)}
             />
           </Box>
         );
