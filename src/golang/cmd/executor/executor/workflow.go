@@ -108,7 +108,7 @@ func (ex *WorkflowExecutor) Run(ctx context.Context) error {
 // TriggerCascadingFlows triggers a new Workflow run for all Workflows (if any)
 // that are scheduled to run after this Workflow.
 func (ex *WorkflowExecutor) TriggerCascadingFlows(ctx context.Context) error {
-	targetIDs, err := ex.WorkflowRepo.GetCascadingTargets(ctx, ex.WorkflowID, ex.Database)
+	targetIDs, err := ex.WorkflowRepo.GetTargets(ctx, ex.WorkflowID, ex.Database)
 	if err != nil {
 		return err
 	}
