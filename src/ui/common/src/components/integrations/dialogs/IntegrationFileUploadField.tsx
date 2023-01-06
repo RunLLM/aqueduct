@@ -107,6 +107,7 @@ export const IntegrationFileUploadField: React.FC<
   }, [handleDrop]);
 
   if (file) {
+    // If displayFile is not null, interpret and display file with the function. Otherwise, display as text.
     header = (
       <Box>
         <Typography variant="body1" component="span" sx={{ mr: 4 }}>
@@ -140,6 +141,7 @@ export const IntegrationFileUploadField: React.FC<
       </Box>
     );
   } else {
+    // Upload file
     const overlay = dragging && theme.palette.gray[100];
     const styling = {
       margin: '16px',

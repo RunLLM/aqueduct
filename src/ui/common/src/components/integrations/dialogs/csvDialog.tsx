@@ -1,11 +1,12 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import { DataGrid } from '@mui/x-data-grid';
 import React, { useEffect, useState } from 'react';
 
 import { CSVConfig, FileData } from '../../../utils/integrations';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { inferSchema, TableRow } from '../../../utils/data';
+import PaginatedTable from '../../tables/PaginatedTable';
 
 type Props = {
   setDialogConfig: (config: CSVConfig) => void;
@@ -24,51 +25,78 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
     setDialogConfig(config);
   }, [name, csv, setDialogConfig]);
 
-  const displayFileFn = (file: FileData) => {
-    const allRows = file.data.split(/\r?\n/);
-    const parsedHeader = ['id'];
-    parsedHeader.push(...allRows[0].split(/,/));
+  // More sophisticated CSV parser to handle file with the deliminator values in the data itself.
+  // Source: https://stackoverflow.com/questions/8493195/how-can-i-parse-a-csv-string-with-javascript-which-contains-comma-in-data
+  // Return 2D array.
+  const splitFinder = /,|\r?\n|"(\\"|[^"])*?"/g;
+  const CSVtoArray = (text: string)  => {
+    let currentRow = [];
+    const rowsOut = [currentRow];
+    let lastIndex = splitFinder.lastIndex = 0;
+    
+    // add text from lastIndex to before a found newline or comma
+    const pushCell = (endIndex: number | null) => {
+      endIndex = endIndex || text.length;
+      const addMe = text.substring(lastIndex, endIndex);
+      // remove quotes around the item
+      currentRow.push(addMe.replace(/^"|"$/g, ""));
+      lastIndex = splitFinder.lastIndex;
+    }
 
-    const width = 25;
-    const parsedColumns = parsedHeader.map((headerName) => {
-      let hideColumn = false;
-      if (headerName === 'id') {
-        hideColumn = true;
+    let regexResp;
+    // for each regexp match (either comma, newline, or quoted item)
+    while (regexResp = splitFinder.exec(text)) {
+      const split = regexResp[0];
+
+      // if it's not a quote capture, add an item to the current row
+      // (quote captures will be pushed by the newline or comma following)
+      if (split.startsWith(`"`) === false) {
+        const splitStartIndex = splitFinder.lastIndex - split.length;
+        pushCell(splitStartIndex);
+
+        // then start a new row if newline
+        const isNewLine = /^\r?\n$/.test(split);
+        if (isNewLine) { rowsOut.push(currentRow = []); }
       }
+    }
+    return rowsOut;
+  };
 
-      return {
-        field: headerName,
-        headerName: headerName,
-        width: width * headerName.length,
-        hide: hideColumn,
-      };
-    });
+  const displayFileFn = (file: FileData) => {
+    const allRows = CSVtoArray(file.data);
+    
+    // Check if id in header and use that instead.
+    // If id not in header, need to add the id column. Update so that it is grayed out to show we added the column.
+    let parsedHeader = [];
+    let grayOut = [];
+    if (!allRows[0].includes('id')) {
+      parsedHeader.push('id');
+      grayOut.push('id');
+    }
+    parsedHeader.push(...allRows[0]);
 
-    const parsedRows = allRows.slice(1).map((line, id) => {
-      const row = line.split(/,/);
+    const parsedRows: TableRow[] = allRows.slice(1).map((line, id) => {
+      const row = line;
       const parsedRow = {};
       parsedHeader.forEach((headerName, i) => {
-        if (headerName === 'id') {
-          parsedRow[headerName] = id;
+        if (grayOut.includes('id')) {
+          if (headerName === 'id') {
+            parsedRow[headerName] = id;
+          } else {
+            parsedRow[headerName] = row[i - 1];
+          }
         } else {
-          parsedRow[headerName] = row[i - 1];
+          parsedRow[headerName] = row[i];
         }
       });
 
       return parsedRow;
     });
+    const schema = inferSchema(parsedRows, 'string');
 
-    return (
-      <DataGrid
-        autoHeight
-        rows={parsedRows}
-        columns={parsedColumns}
-        pageSize={5}
-        rowsPerPageOptions={[5]}
-        disableSelectionOnClick
-      />
-    );
+    return <PaginatedTable data={{ schema: schema, data: parsedRows }} grayOut={grayOut} />;
   };
+
   return (
     <Box sx={{ mt: 2 }}>
       <Typography>Upload a CSV file to the demo database.</Typography>
