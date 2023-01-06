@@ -28,6 +28,7 @@ class Schedule(BaseModel):
     trigger: Optional[TriggerType] = None
     cron_schedule: str = ""
     disable_manual_trigger: bool = False
+    source_id: Optional[uuid.UUID] = None
 
 
 class RetentionPolicy(BaseModel):
