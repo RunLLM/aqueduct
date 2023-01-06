@@ -43,9 +43,10 @@ from aqueduct.utils.type_inference import infer_artifact_type
 from aqueduct.utils.utils import (
     construct_param_spec,
     generate_engine_config,
+    generate_flow_schedule,
     generate_ui_url,
     parse_user_supplied_id,
-    schedule_from_cron_string,
+    parse_user_supplied_id_as_uuid,
 )
 
 from aqueduct import globals
@@ -321,6 +322,7 @@ class Client:
         checks: Optional[List[BoolArtifact]] = None,
         k_latest_runs: Optional[int] = None,
         config: Optional[FlowConfig] = None,
+        source_flow_id: Optional[Union[str, uuid.UUID]] = None,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
 
@@ -369,6 +371,10 @@ class Client:
                 - engine: Specify where this flow should run with one of your connected integrations.
                 - k_latest_runs: Number of most-recent runs of this flow that Aqueduct should store.
                     Runs outside of this bound are deleted. Defaults to persisting all runs.
+            source_flow_id:
+                Used to identify the source flow for this flow. If not empty, `schedule`
+                will be ignored and this flow will only run after each successful run of the
+                source flow.
 
         Raises:
             InvalidUserArgumentException:
@@ -416,6 +422,10 @@ class Client:
                 "`artifacts` argument must either be an artifact or a list of artifacts."
             )
 
+        source_id = None
+        if source_flow_id:
+            source_id = parse_user_supplied_id_as_uuid(source_flow_id)
+
         # If metrics and/or checks are explicitly included, add them to the artifacts list,
         # but don't include them implicitly.
         implicitly_include_metrics = True
@@ -432,7 +442,7 @@ class Client:
             artifacts += checks
             implicitly_include_checks = False
 
-        cron_schedule = schedule_from_cron_string(schedule)
+        flow_schedule = generate_flow_schedule(schedule, source_id)
 
         k_latest_runs_from_flow_config = config.k_latest_runs if config else None
         if k_latest_runs and k_latest_runs_from_flow_config:
@@ -466,7 +476,7 @@ class Client:
         dag.metadata = Metadata(
             name=name,
             description=description,
-            schedule=cron_schedule,
+            schedule=flow_schedule,
             retention_policy=retention_policy,
         )
         dag.set_engine_config(

@@ -50,6 +50,7 @@ class OperatorType(Enum, metaclass=MetaEnum):
 class TriggerType(Enum, metaclass=MetaEnum):
     MANUAL = "manual"
     PERIODIC = "periodic"
+    CASCADE = "cascade"
 
 
 class ServiceType(str, Enum, metaclass=MetaEnum):
