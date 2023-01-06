@@ -84,11 +84,11 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   const { metrics, checks } =
     !!workflowDagResultWithLoadingStatus &&
-    isSucceeded(workflowDagResultWithLoadingStatus.status)
+      isSucceeded(workflowDagResultWithLoadingStatus.status)
       ? getMetricsAndChecksOnArtifact(
-          workflowDagResultWithLoadingStatus?.result,
-          artifactId
-        )
+        workflowDagResultWithLoadingStatus?.result,
+        artifactId
+      )
       : { metrics: [], checks: [] };
 
   const pathPrefix = getPathPrefix();
@@ -128,9 +128,8 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   useEffect(() => {
     if (!!artifact) {
       if (!sideSheetMode) {
-        document.title = `${
-          artifact ? artifact.name : 'Artifact Details'
-        } | Aqueduct`;
+        document.title = `${artifact ? artifact.name : 'Artifact Details'
+          } | Aqueduct`;
       }
 
       if (
@@ -247,7 +246,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
             )}
           </Box>
 
-          {previewAvailable && (
+          {previewAvailable ? (
             <>
               <Divider sx={{ marginY: '32px' }} />
               <Box width="100%" marginTop="12px">
@@ -264,10 +263,20 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
                   contentWithLoadingStatus={contentWithLoadingStatus}
                 />
               </Box>
+
+              <Divider sx={{ marginY: '32px' }} />
+            </>
+          ) : (
+            <>
+              <Divider sx={{ marginY: '32px' }} />
+
+              <Box marginBottom="32px">
+                <Alert severity="warning">
+                  An upstream operator failed, causing this artifact to not be created.
+                </Alert>
+              </Box>
             </>
           )}
-
-          <Divider sx={{ marginY: '32px' }} />
 
           <Box display="flex" width="100%">
             <MetricsOverview metrics={metrics} />
