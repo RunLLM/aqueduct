@@ -63,6 +63,7 @@ type AqServer struct {
 	// are no more active requests.
 	RequestMutex sync.RWMutex
 
+	// The environment in which the server runs. This is for usage stats collection purpose.
 	Environment       string
 	DisableUsageStats bool
 }
