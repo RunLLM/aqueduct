@@ -15,10 +15,9 @@ import { Data } from '../../utils/data';
 
 interface PaginatedTableProps {
   data: Data;
-  grayOut: string[];
 }
 
-export const PaginatedTable: React.FC<PaginatedTableProps> = ({ data, grayOut=[] }) => {
+export const PaginatedTable: React.FC<PaginatedTableProps> = ({ data }) => {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
@@ -94,7 +93,7 @@ export const PaginatedTable: React.FC<PaginatedTableProps> = ({ data, grayOut=[]
                     {columns.map((column, columnIndex) => {
                       const value = row[column.name];
                       let displayedValue = '';
-                      if (!!value || value === 0) {
+                      if (!!value) {
                         // when the column type is json or object,
                         // the value parsed from backend API will be an arbitrary json object.
                         // Here we need to serialize the object to render it properly.
@@ -111,9 +110,6 @@ export const PaginatedTable: React.FC<PaginatedTableProps> = ({ data, grayOut=[]
                         <TableCell
                           key={`table-col-${columnIndex}`}
                           align={'left'}
-                          sx={grayOut.includes(column.name) && {
-                            backgroundColor: theme.palette.gray['50']
-                          }}
                         >
                           {displayedValue}
                         </TableCell>

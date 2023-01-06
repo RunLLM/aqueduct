@@ -65,36 +65,19 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
   const displayFileFn = (file: FileData) => {
     const allRows = CSVtoArray(file.data);
     
-    // Check if id in header and use that instead.
-    // If id not in header, need to add the id column. Update so that it is grayed out to show we added the column.
-    let parsedHeader = [];
-    let grayOut = [];
-    if (!allRows[0].includes('id')) {
-      parsedHeader.push('id');
-      grayOut.push('id');
-    }
-    parsedHeader.push(...allRows[0]);
-
+    const parsedHeader = allRows[0];
     const parsedRows: TableRow[] = allRows.slice(1).map((line, id) => {
       const row = line;
       const parsedRow = {};
       parsedHeader.forEach((headerName, i) => {
-        if (grayOut.includes('id')) {
-          if (headerName === 'id') {
-            parsedRow[headerName] = id;
-          } else {
-            parsedRow[headerName] = row[i - 1];
-          }
-        } else {
-          parsedRow[headerName] = row[i];
-        }
+        parsedRow[headerName] = row[i];
       });
 
       return parsedRow;
     });
     const schema = inferSchema(parsedRows, 'string');
 
-    return <PaginatedTable data={{ schema: schema, data: parsedRows }} grayOut={grayOut} />;
+    return <PaginatedTable data={{ schema: schema, data: parsedRows }} />;
   };
 
   return (
