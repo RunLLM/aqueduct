@@ -46,7 +46,6 @@ from aqueduct.utils.utils import (
     generate_flow_schedule,
     generate_ui_url,
     parse_user_supplied_id,
-    parse_user_supplied_id_as_uuid,
 )
 
 from aqueduct import globals
@@ -423,14 +422,19 @@ class Client:
                 "`artifacts` argument must either be an artifact or a list of artifacts."
             )
 
-        if not isinstance(source_flow, Flow) and not isinstance(source_flow, str) and not isinstance(source_flow, uuid.UUID):
+        if (
+            source_flow and 
+            not isinstance(source_flow, Flow) and
+            not isinstance(source_flow, str) and
+            not isinstance(source_flow, uuid.UUID)
+        ):
             raise InvalidUserArgumentException(
                 "`source_flow` argument must either be a flow, str, or uuid."
             )
         
         source_flow_id = None
         if isinstance(source_flow, Flow):
-            source_flow_id = source_flow.id
+            source_flow_id = source_flow.id()
         elif isinstance(source_flow, str):
             # Check if there is a flow with the name `source_flow`
             for workflow in globals.__GLOBAL_API_CLIENT__.list_workflows():
@@ -442,8 +446,7 @@ class Client:
                 # No flow with name `source_flow` was found so try to convert
                 # the str to a uuid
                 source_flow_id = uuid.UUID(source_flow)
-        else:
-            # `source_flow` is of type uuid
+        elif isinstance(source_flow, uuid.UUID):
             source_flow_id = source_flow
 
 
