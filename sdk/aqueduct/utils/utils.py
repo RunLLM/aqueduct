@@ -73,7 +73,7 @@ def is_string_valid_uuid(value: str) -> bool:
 def generate_flow_schedule(
     schedule_str: str, source_flow_id: Optional[uuid.UUID] = None
 ) -> Schedule:
-    """Generates a flow schedule using the provided cron string and the source flow ID if present."""
+    """Generates a flow schedule using the provided cron string and the source flow id if present."""
     if source_flow_id:
         return Schedule(trigger=TriggerType.CASCADE, source_id=source_flow_id)
 
@@ -107,16 +107,6 @@ def parse_user_supplied_id(id: Union[str, uuid.UUID]) -> str:
 
     if isinstance(id, uuid.UUID):
         return str(id)
-    return id
-
-
-def parse_user_supplied_id_as_uuid(id: Union[str, uuid.UUID]) -> uuid.UUID:
-    """Verifies that a user-defined id is of the expected types, returning the UUID version of the id."""
-    if not isinstance(id, str) and not isinstance(id, uuid.UUID):
-        raise InvalidUserArgumentException("Provided id must be either str or uuid.")
-
-    if isinstance(id, str):
-        return uuid.UUID(id)
     return id
 
 

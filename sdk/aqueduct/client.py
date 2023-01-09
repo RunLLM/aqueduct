@@ -322,7 +322,7 @@ class Client:
         checks: Optional[List[BoolArtifact]] = None,
         k_latest_runs: Optional[int] = None,
         config: Optional[FlowConfig] = None,
-        source_flow_id: Optional[Union[str, uuid.UUID]] = None,
+        source_flow: Optional[Union[Flow, str, uuid.UUID]] = None,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
 
@@ -371,10 +371,11 @@ class Client:
                 - engine: Specify where this flow should run with one of your connected integrations.
                 - k_latest_runs: Number of most-recent runs of this flow that Aqueduct should store.
                     Runs outside of this bound are deleted. Defaults to persisting all runs.
-            source_flow_id:
-                Used to identify the source flow for this flow. If not empty, `schedule`
-                will be ignored and this flow will only run after each successful run of the
-                source flow.
+            source_flow:
+                Used to identify the source flow for this flow. This can be identified
+                via an object (Flow), name (str), or id (str or uuid). 
+                If not empty, `schedule` will be ignored and this flow will only 
+                run after each successful run of the source flow.
 
         Raises:
             InvalidUserArgumentException:
@@ -422,9 +423,29 @@ class Client:
                 "`artifacts` argument must either be an artifact or a list of artifacts."
             )
 
-        source_id = None
-        if source_flow_id:
-            source_id = parse_user_supplied_id_as_uuid(source_flow_id)
+        if not isinstance(source_flow, Flow) and not isinstance(source_flow, str) and not isinstance(source_flow, uuid.UUID):
+            raise InvalidUserArgumentException(
+                "`source_flow` argument must either be a flow, str, or uuid."
+            )
+        
+        source_flow_id = None
+        if isinstance(source_flow, Flow):
+            source_flow_id = source_flow.id
+        elif isinstance(source_flow, str):
+            # Check if there is a flow with the name `source_flow`
+            for workflow in globals.__GLOBAL_API_CLIENT__.list_workflows():
+                if workflow.name == source_flow:
+                    source_flow_id = workflow.id
+                    break
+            
+            if not source_flow_id:
+                # No flow with name `source_flow` was found so try to convert
+                # the str to a uuid
+                source_flow_id = uuid.UUID(source_flow)
+        else:
+            # `source_flow` is of type uuid
+            source_flow_id = source_flow
+
 
         # If metrics and/or checks are explicitly included, add them to the artifacts list,
         # but don't include them implicitly.
@@ -442,7 +463,7 @@ class Client:
             artifacts += checks
             implicitly_include_checks = False
 
-        flow_schedule = generate_flow_schedule(schedule, source_id)
+        flow_schedule = generate_flow_schedule(schedule, source_flow_id)
 
         k_latest_runs_from_flow_config = config.k_latest_runs if config else None
         if k_latest_runs and k_latest_runs_from_flow_config:
