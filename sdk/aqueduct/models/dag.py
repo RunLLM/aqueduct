@@ -28,6 +28,8 @@ class Schedule(BaseModel):
     trigger: Optional[TriggerType] = None
     cron_schedule: str = ""
     disable_manual_trigger: bool = False
+    # source_id refers to the source flow for this schedule when
+    # the trigger is TriggerType.CASCADE
     source_id: Optional[uuid.UUID] = None
 
 
