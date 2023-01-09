@@ -32,6 +32,7 @@ def publish_flow_test(
     metrics: Optional[List[BaseArtifact]] = None,
     checks: Optional[List[BaseArtifact]] = None,
     schedule: str = "",
+    source_flow: Optional[Union[Flow, str, uuid.UUID]] = None,
     should_block: bool = True,
 ) -> Flow:
     """Publishes a flow and waits for a specified number of runs with specified statuses to complete.
@@ -58,6 +59,7 @@ def publish_flow_test(
         metrics:
         checks:
         schedule:
+        source_flow:
             These are fed directly into `publish_flow()`.
         should_block:
             When true (default), we return immediately after publishing, without waiting for the flows to complete.
@@ -87,6 +89,7 @@ def publish_flow_test(
         checks=checks,
         schedule=schedule,
         engine=engine,
+        source_flow=source_flow,
     )
     print("Workflow registration succeeded. Workflow ID %s. Name: %s" % (flow.id(), name))
 
