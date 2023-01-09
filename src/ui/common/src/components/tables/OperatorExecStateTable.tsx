@@ -6,8 +6,8 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import * as React from 'react';
-import { theme } from '../../styles/theme/theme';
 
+import { theme } from '../../styles/theme/theme';
 import { Data, DataSchema } from '../../utils/data';
 import { CheckTableItem } from './CheckTableItem';
 
@@ -85,7 +85,14 @@ export const OperatorExecStateTable: React.FC<OperatorExecStateTableProps> = ({
                     >
                       {tableType === OperatorExecStateTableType.Metric ||
                       columnName === 'title' ? (
-                        <Box sx={columnName === 'title' && {color: theme.palette.gray['700'], fontSize: '12px'}}>
+                        <Box
+                          sx={
+                            columnName === 'title' && {
+                              color: theme.palette.gray['700'],
+                              fontSize: '12px',
+                            }
+                          }
+                        >
                           {value.toString()}
                         </Box>
                       ) : (
