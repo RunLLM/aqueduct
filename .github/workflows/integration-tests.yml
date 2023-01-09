@@ -16,6 +16,8 @@ jobs:
     name: Run Fast Integration Tests with Python Version ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: fix-bug-with-list-saved-objects
 
       - name: Create the logs directory
         run: mkdir -p logs
