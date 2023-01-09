@@ -1,19 +1,16 @@
 import os
-from typing import List
 
 import pytest
-import utils
 from aqueduct.constants.enums import ServiceType
 from aqueduct.models.dag import DAG, Metadata
-from utils import delete_flow, flow_name_to_id, generate_new_flow_name
-from validator import Validator
 
-import aqueduct
 from aqueduct import Client, globals
+from sdk.shared import globals as test_globals
+from sdk.shared.utils import delete_flow, generate_new_flow_name
+from sdk.shared.validator import Validator
 
 
 def pytest_addoption(parser):
-    # We currently only support a single data integration and compute engine per test suite run.
     parser.addoption(f"--data", action="store", default="aqueduct_demo")
     parser.addoption(f"--engine", action="store", default=None)
     parser.addoption(f"--keep-flows", action="store_true", default=False)
@@ -50,7 +47,7 @@ def client(pytestconfig):
             "Test Setup Error: api_key and server_address must be set as environmental variables."
         )
 
-    return aqueduct.Client(api_key, server_address)
+    return Client(api_key, server_address)
 
 
 @pytest.fixture(scope="function")
@@ -65,7 +62,7 @@ def engine(pytestconfig):
 
 @pytest.fixture(autouse=True, scope="session")
 def use_deprecated(pytestconfig):
-    utils.use_deprecated_code_paths = pytestconfig.getoption("deprecated")
+    test_globals.use_deprecated_code_paths = pytestconfig.getoption("deprecated")
 
 
 # Pulled from: https://stackoverflow.com/questions/28179026/how-to-skip-a-pytest-using-an-external-fixture
@@ -106,30 +103,6 @@ def enable_only_for_engine_type(request, client, engine):
             )
 
 
-@pytest.fixture(autouse=True)
-def enable_only_for_data_integration_type(request, client, data_integration):
-    """When a test is marked with this, it is enabled for particular ServiceType(s)!
-
-    Eg.
-    @pytest.mark.enable_only_for_data_integration_type(*relational_dbs())
-    def test_relational_data_integrations_only(data_integration):
-        ...
-    """
-    if request.node.get_closest_marker("enable_only_for_data_integration_type"):
-        enabled_data_integration_types = request.node.get_closest_marker(
-            "enable_only_for_data_integration_type"
-        ).args
-        assert all(
-            isinstance(data_type, ServiceType) for data_type in enabled_data_integration_types
-        ), "Arguments to `enable_only_for_data_integration_type()` must be of type ServiceType"
-
-        if data_integration._metadata.service not in enabled_data_integration_types:
-            pytest.skip(
-                "Skipped for data integration `%s`, since it is not of type `%s`."
-                % (data_integration._metadata.name, ",".join(enabled_data_integration_types))
-            )
-
-
 @pytest.fixture(scope="function")
 def flow_name(client, request, pytestconfig):
     """Any flows created by this fixture will be automatically cleaned up at test teardown.
@@ -151,7 +124,7 @@ def flow_name(client, request, pytestconfig):
     def cleanup_flows():
         if not pytestconfig.getoption("keep_flows"):
             for flow_name in flow_names:
-                delete_flow(client, flow_name_to_id[flow_name])
+                delete_flow(client, test_globals.flow_name_to_id[flow_name])
 
     request.addfinalizer(cleanup_flows)
     return get_new_flow_name
@@ -159,5 +132,4 @@ def flow_name(client, request, pytestconfig):
 
 @pytest.fixture(scope="function")
 def validator(client, data_integration):
-    integration = client.integration(data_integration)
-    return Validator(client, integration)
+    return Validator(client, data_integration)
