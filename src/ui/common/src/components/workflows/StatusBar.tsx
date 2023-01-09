@@ -279,44 +279,38 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
   const [listItems, setListItems] = useState<WorkflowStatusItem[]>([]);
 
   // Ignore Parameters from list of workflow status items
-  const shouldShowStatusItem = (statusItem: WorkflowStatusItem) => {
-    return statusItem.type !== 'paramOp';
-  };
+  // const shouldShowStatusItem = (statusItem: WorkflowStatusItem) => {
+  //   return statusItem.type !== 'paramOp';
+  // };
+
+  const itemsToShow: WorkflowStatusItem[] = workflowStatusItems.filter(
+    (statusItem: WorkflowStatusItem) => {
+      return statusItem.type !== 'paramOp';
+    }
+  );
 
   useEffect(() => {
-    const filteredErrors: WorkflowStatusItem[] = workflowStatusItems.filter(
+    const filteredErrors: WorkflowStatusItem[] = itemsToShow.filter(
       (workflowStatusItem) => {
-        return (
-          shouldShowStatusItem(workflowStatusItem) &&
-          workflowStatusItem.level === WorkflowStatusTabs.Errors
-        );
+        return workflowStatusItem.level === WorkflowStatusTabs.Errors;
       }
     );
 
-    const filteredWarnings: WorkflowStatusItem[] = workflowStatusItems.filter(
+    const filteredWarnings: WorkflowStatusItem[] = itemsToShow.filter(
       (workflowStatusItem) => {
-        return (
-          shouldShowStatusItem(workflowStatusItem) &&
-          workflowStatusItem.level === WorkflowStatusTabs.Warnings
-        );
+        return workflowStatusItem.level === WorkflowStatusTabs.Warnings;
       }
     );
 
-    const filteredLogs: WorkflowStatusItem[] = workflowStatusItems.filter(
+    const filteredLogs: WorkflowStatusItem[] = itemsToShow.filter(
       (workflowStatusItem) => {
-        return (
-          shouldShowStatusItem(workflowStatusItem) &&
-          workflowStatusItem.level === WorkflowStatusTabs.Logs
-        );
+        return workflowStatusItem.level === WorkflowStatusTabs.Logs;
       }
     );
 
-    const filteredChecks: WorkflowStatusItem[] = workflowStatusItems.filter(
+    const filteredChecks: WorkflowStatusItem[] = itemsToShow.filter(
       (workflowStatusItem) => {
-        return (
-          shouldShowStatusItem(workflowStatusItem) &&
-          workflowStatusItem.level === WorkflowStatusTabs.Checks
-        );
+        return workflowStatusItem.level === WorkflowStatusTabs.Checks;
       }
     );
 
@@ -399,7 +393,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
     setNumWarnings(filteredWarnings.length);
     setNumWorkflowLogs(filteredLogs.length);
     setNumWorkflowChecksPassed(filteredChecks.length);
-  }, [workflowStatusItems, activeWorkflowStatusTab]);
+  }, [workflowStatusItems, activeWorkflowStatusTab, itemsToShow]);
 
   const selectTab = (tab: WorkflowStatusTabs) => {
     dispatch(setWorkflowStatusBarOpenState(true));
@@ -559,9 +553,8 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
             </>
           );
           const err = opExecState.error;
-          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${
-            err.context ?? ''
-          }`;
+          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${err.context ?? ''
+            }`;
         } else {
           // no error message found, so treat this as a system internal error
           newWorkflowStatusItem.message = `Aqueduct Internal Error`;
