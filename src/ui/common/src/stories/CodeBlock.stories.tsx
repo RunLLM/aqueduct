@@ -18,7 +18,7 @@ const Template: ComponentStory<typeof CodeBlock> = (args) => (
 
 const apiConnectionSnippet = `import aqueduct
 client = aqueduct.Client(
-    "QYIF0375KE4Z2GXSB6T8RNJLVMA9WCPH",
+    "<API_KEY>",
     "http://localhost:8080"
 )`;
 
