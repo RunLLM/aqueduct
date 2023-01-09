@@ -186,13 +186,18 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
                       key={`table-header-col-${columnIndex}`}
                       align={'left'}
                     >
-                      <Box flexDirection="column" padding="8px">
+                      <Box
+                        flexDirection="column"
+                        padding="8px"
+                        sx={{ backgroundColor: theme.palette.gray['50'] }}
+                      >
                         <Typography
                           variant="body1"
                           sx={{
                             textTransform: 'capitalize',
-                            fontSize: '16px',
-                            fontWeight: 400,
+                            fontSize: '12px',
+                            fontWeight: 800,
+                            color: theme.palette.gray['900'],
                           }}
                         >
                           {columnName}
