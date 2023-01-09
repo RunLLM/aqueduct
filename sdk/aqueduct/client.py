@@ -419,22 +419,22 @@ class Client:
             raise InvalidUserArgumentException(
                 "`artifacts` argument must either be an artifact or a list of artifacts."
             )
-        
+
         if source_flow and schedule != "":
             raise InvalidUserArgumentException(
                 "Cannot create a flow with a schedule and a source flow, pick one."
             )
 
         if (
-            source_flow and 
-            not isinstance(source_flow, Flow) and
-            not isinstance(source_flow, str) and
-            not isinstance(source_flow, uuid.UUID)
+            source_flow
+            and not isinstance(source_flow, Flow)
+            and not isinstance(source_flow, str)
+            and not isinstance(source_flow, uuid.UUID)
         ):
             raise InvalidUserArgumentException(
                 "`source_flow` argument must either be a flow, str, or uuid."
             )
-        
+
         source_flow_id = None
         if isinstance(source_flow, Flow):
             source_flow_id = source_flow.id()
@@ -444,14 +444,13 @@ class Client:
                 if workflow.name == source_flow:
                     source_flow_id = workflow.id
                     break
-            
+
             if not source_flow_id:
                 # No flow with name `source_flow` was found so try to convert
                 # the str to a uuid
                 source_flow_id = uuid.UUID(source_flow)
         elif isinstance(source_flow, uuid.UUID):
             source_flow_id = source_flow
-
 
         # If metrics and/or checks are explicitly included, add them to the artifacts list,
         # but don't include them implicitly.
