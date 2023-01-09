@@ -159,6 +159,44 @@ def test_publish_with_schedule(client, flow_name, data_integration, engine):
         expected_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.SUCCEEDED],
     )
 
+def test_publish_flow_with_cascading_trigger(client, flow_name, data_integration, engine):
+    """Tests publishing a flow that is set to run on a cascading trigger."""
+    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+    output_artifact = dummy_sentiment_model(table_artifact)
+
+    # Create a source flow
+    source_name = flow_name()
+    source_flow = publish_flow_test(
+        client,
+        name=source_name,
+        artifacts=output_artifact,
+        engine=engine,
+        schedule=aqueduct.daily(),
+    )
+
+    # Create a flow that is set to run after the above source_flow
+    name = flow_name()
+    flow = publish_flow_test(
+        client,
+        name=name,
+        artifacts=output_artifact,
+        engine=engine,
+        source_flow=source_flow,
+    )
+
+    # Trigger a run of the source flow
+    trigger_flow_test(
+        client,
+        source_flow,
+    )
+
+    # Verify that there are now 2 runs of flow
+    wait_for_flow_runs(
+        client,
+        flow.id(),
+        expected_statuses=[ExecutionStatus.SUCCEEDED, ExecutionStatus.SUCCEEDED],
+    )
+
 
 def test_invalid_flow(client):
     with pytest.raises(InvalidUserArgumentException):
