@@ -14,6 +14,7 @@ import (
 	mdl_utils "github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
+	"github.com/aqueducthq/aqueduct/lib/workflow"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	operator_utils "github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
@@ -132,6 +133,20 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 		} else {
 			return nil, http.StatusBadRequest, err
 		}
+	}
+
+	validateScheduleCode, err := workflow.ValidateSchedule(
+		r.Context(),
+		dagSummary.Dag.Metadata.Schedule,
+		h.ArtifactRepo,
+		h.DAGRepo,
+		h.DAGEdgeRepo,
+		h.OperatorRepo,
+		h.WorkflowRepo,
+		h.Database,
+	)
+	if err != nil {
+		return nil, validateScheduleCode, err
 	}
 
 	return &registerWorkflowArgs{
