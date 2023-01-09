@@ -422,7 +422,7 @@ class Client:
 
         if source_flow and schedule != "":
             raise InvalidUserArgumentException(
-                "Cannot create a flow with a schedule and a source flow, pick one."
+                "Cannot create a flow with both a schedule and a source flow, pick one."
             )
 
         if (
