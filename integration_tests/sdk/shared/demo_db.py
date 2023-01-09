@@ -11,5 +11,4 @@ def demo_db_tables() -> List[str]:
         "wine",
         "diabetes",
         "house_prices",
-        "pred_churn",
     ]

@@ -20,7 +20,11 @@ To run the Data Integration Tests:
 `API_KEY=<your api key> SERVER_ADDRESS=<your server's address> INTEGRATION=aqueduct_demo pytest data_integration_tests/ -rP -vv
 
 The test suite also has a variety of other custom flags, please inspect the `conftest.py` files in both this directory and subdirectories
-to find their descriptions.
+to find their descriptions. Flags shared by both suites are:
+* `--data`: The integration name of the data integration to run against.
+* `--engine`: The integration of the engine to run compute on.
+* `--keep-flows`: Does not delete any flows created by the test run. Useful for debugging.
+* `--deprecated`: Runs against any deprecated API that still exists in the SDK.
 
 Running all the tests in a single file:
 - `<your env variables> pytest <path to test file> -rP -vv`
