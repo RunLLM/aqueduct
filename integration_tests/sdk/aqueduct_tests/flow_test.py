@@ -207,7 +207,7 @@ def test_publish_with_schedule_and_source_flow(client, flow_name, data_integrati
     with pytest.raises(InvalidUserArgumentException):
         publish_flow_test(
             client,
-            name=flow_name(),
+            name=generate_new_flow_name(),
             artifacts=output_artifact,
             engine=engine,
             schedule=aqueduct.daily(),
