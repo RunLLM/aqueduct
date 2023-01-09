@@ -79,8 +79,7 @@ jobs:
         working-directory: integration_tests/sdk
         env:
           SERVER_ADDRESS: localhost:8080
-          INTEGRATION: aqueduct_demo
-        run: pytest . -rP -n ${{ matrix.concurrency }}
+        run: pytest aqueduct_tests/ -rP -n ${{ matrix.concurrency }}
 
       - uses: actions/upload-artifact@v3
         if: always()
