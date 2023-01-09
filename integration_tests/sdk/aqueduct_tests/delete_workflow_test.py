@@ -43,7 +43,7 @@ def test_delete_source_workflow(client, flow_name, data_integration, engine):
     )
 
     # Delete source flow
-    client.delete_flow(flow.id())
+    client.delete_flow(source_flow.id())
 
 
 def test_delete_workflow_invalid_saved_objects(client, flow_name, data_integration, engine):
