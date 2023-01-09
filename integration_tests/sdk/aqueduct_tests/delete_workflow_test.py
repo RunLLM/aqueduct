@@ -3,10 +3,47 @@ import pytest
 from aqueduct.constants.enums import LoadUpdateMode
 from aqueduct.error import InvalidRequestError, InvalidUserArgumentException
 
+import aqueduct
+from aqueduct import op
+
 from ..shared.data_objects import DataObject
 from ..shared.relational import SHORT_SENTIMENT_SQL_QUERY, all_relational_DBs
 from ..shared.utils import extract, generate_table_name, publish_flow_test
 from .save import save
+
+
+def test_delete_source_workflow(client, flow_name, data_integration, engine):
+    """Tests deleting a flow that is the source of another flow that has a cascading trigger."""
+    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+
+    @op
+    def noop(input):
+        return input
+
+    output_artifact = noop(table_artifact)
+
+    # Create a source flow
+    source_name = flow_name()
+    source_flow = publish_flow_test(
+        client,
+        name=source_name,
+        artifacts=output_artifact,
+        engine=engine,
+        schedule=aqueduct.daily(),
+    )
+
+    # Create a flow that is set to run after the above source_flow
+    name = flow_name()
+    flow = publish_flow_test(
+        client,
+        name=name,
+        artifacts=output_artifact,
+        engine=engine,
+        source_flow=source_flow,
+    )
+
+    # Delete source flow
+    client.delete_flow(flow.id())
 
 
 def test_delete_workflow_invalid_saved_objects(client, flow_name, data_integration, engine):
