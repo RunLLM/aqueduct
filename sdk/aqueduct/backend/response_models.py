@@ -242,7 +242,7 @@ class ListWorkflowSavedObjectsResponse(BaseModel):
             List of objects written by the workflow.
     """
 
-    object_details: List[SavedObjectUpdate]
+    object_details: Optional[List[SavedObjectUpdate]]
 
 
 class GetVersionResponse(BaseModel):

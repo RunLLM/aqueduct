@@ -66,7 +66,7 @@ def publish_flow_test(
     """
     assert (
         name or existing_flow and not (name and existing_flow)
-    ), "Either `name` or `existing_flow` can be set, but not both."
+    ), "Either `name` or `existing_flow` must be set (not both or neither)."
 
     if existing_flow is not None:
         name = existing_flow.name()
