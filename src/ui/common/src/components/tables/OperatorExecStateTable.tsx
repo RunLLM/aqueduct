@@ -1,3 +1,4 @@
+import { Box } from '@mui/material';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
 import TableCell, { TableCellProps } from '@mui/material/TableCell';
@@ -5,6 +6,7 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import * as React from 'react';
+import { theme } from '../../styles/theme/theme';
 
 import { Data, DataSchema } from '../../utils/data';
 import { CheckTableItem } from './CheckTableItem';
@@ -71,7 +73,8 @@ export const OperatorExecStateTable: React.FC<OperatorExecStateTableProps> = ({
                 key={`tableBody-${rowIndex}`}
               >
                 {schema.fields.map((column, columnIndex) => {
-                  const value = row[column.name.toLowerCase()];
+                  const columnName = column.name.toLowerCase();
+                  const value = row[columnName];
 
                   // For title columns we should just render the text.
                   // For a check's value column, we should render the appropriate icon.
@@ -81,8 +84,10 @@ export const OperatorExecStateTable: React.FC<OperatorExecStateTableProps> = ({
                       align={tableAlign as TableCellProps['align']}
                     >
                       {tableType === OperatorExecStateTableType.Metric ||
-                      column.name === 'title' ? (
-                        value.toString()
+                      columnName === 'title' ? (
+                        <Box sx={columnName === 'title' && {color: theme.palette.gray['700'], fontSize: '12px'}}>
+                          {value.toString()}
+                        </Box>
                       ) : (
                         <CheckTableItem checkValue={value as string} />
                       )}
