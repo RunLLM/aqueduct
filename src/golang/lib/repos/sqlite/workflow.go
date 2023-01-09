@@ -68,6 +68,29 @@ func (*workflowReader) GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID,
 	return getWorkflow(ctx, DB, query, args...)
 }
 
+func (*workflowReader) GetTargets(ctx context.Context, ID uuid.UUID, DB database.Database) ([]uuid.UUID, error) {
+	query := `
+		SELECT id FROM workflow
+		WHERE
+			json_extract(schedule, '$.trigger') = $1
+			AND json_extract(schedule, '$.source_id') = $2
+		;`
+	args := []interface{}{workflow.CascadingUpdateTrigger, ID}
+
+	var objectIDs []views.ObjectID
+	err := DB.Query(ctx, &objectIDs, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	IDs := make([]uuid.UUID, 0, len(objectIDs))
+	for _, objectID := range objectIDs {
+		IDs = append(IDs, objectID.ID)
+	}
+
+	return IDs, nil
+}
+
 func (*workflowReader) GetLastRunByEngine(
 	ctx context.Context,
 	engine shared.EngineType,

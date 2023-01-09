@@ -42,6 +42,37 @@ func (ts *TestSuite) TestWorkflow_GetByOwnerAndName() {
 	requireDeepEqual(ts.T(), workflow, actualWorkflow)
 }
 
+func (ts *TestSuite) TestWorkflow_GetTargets() {
+	triggerWorkflow := ts.seedWorkflow(1)[0]
+
+	// Create 2 Workflows where the schedule is a cascading update after
+	// `triggerWorkflow` completes
+	expectedIDs := make([]uuid.UUID, 0, 2)
+	for i := 0; i < 2; i++ {
+		workflow, err := ts.workflow.Create(
+			ts.ctx,
+			triggerWorkflow.UserID,
+			randString(10),
+			randString(15),
+			&workflow.Schedule{
+				Trigger:  workflow.CascadingUpdateTrigger,
+				SourceID: triggerWorkflow.ID,
+			},
+			&workflow.RetentionPolicy{
+				KLatestRuns: 5,
+			},
+			ts.DB,
+		)
+		require.Nil(ts.T(), err)
+
+		expectedIDs = append(expectedIDs, workflow.ID)
+	}
+
+	actualIDs, err := ts.workflow.GetTargets(ts.ctx, triggerWorkflow.ID, ts.DB)
+	require.Nil(ts.T(), err)
+	require.ElementsMatch(ts.T(), expectedIDs, actualIDs)
+}
+
 func (ts *TestSuite) TestWorkflow_GetLatestStatusesByOrg() {
 	// TODO: Implement once DAG, DAGRun, and DAGResult collections are refactored
 }
