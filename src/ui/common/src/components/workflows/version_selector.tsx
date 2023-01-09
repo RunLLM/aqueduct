@@ -1,7 +1,9 @@
-import { InputLabel } from '@mui/material';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faClock } from '@fortawesome/free-solid-svg-icons';
+import { buttonBaseClasses, InputLabel } from '@mui/material';
 import Box from '@mui/material/Box';
 import FormControl from '@mui/material/FormControl';
-import MenuItem from '@mui/material/MenuItem';
+import MenuItem, { menuItemClasses } from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
 import React from 'react';
@@ -12,6 +14,8 @@ import { selectResultIdx } from '../../reducers/workflow';
 import { RootState } from '../../stores/store';
 import { dateString } from '../../utils/metadata';
 import { StatusIndicator } from './workflowStatus';
+import { theme } from '../../styles/theme/theme';
+import ExecutionStatus from '../../utils/shared';
 
 export const VersionSelector: React.FC = () => {
   const navigate = useNavigate();
@@ -30,6 +34,15 @@ export const VersionSelector: React.FC = () => {
       }
 
       const menuItemIcon = <StatusIndicator status={r.status} />;
+      let color;
+
+      if (r.status === ExecutionStatus.Succeeded) {
+        color = theme.palette.green[600];
+      } else if (r.status === ExecutionStatus.Failed) {
+        color = theme.palette.red[600];
+      } else {
+        color = theme.palette.gray[700];
+      }
       return (
         <MenuItem
           value={idx}
@@ -38,13 +51,12 @@ export const VersionSelector: React.FC = () => {
             dispatch(selectResultIdx(idx));
             navigate(`?workflowDagResultId=${encodeURI(r.id)}`);
           }}
-          sx={{ backgroundColor: selected ? 'blueTint' : null }}
+          sx={{ fontWeight: 'bold', color: color, }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            {menuItemIcon}
-            <Typography sx={{ ml: 1 }}>{`${dateString(
+            <Box>{`${dateString(
               r.created_at
-            )}`}</Typography>
+            )}`}</Box>
           </Box>
         </MenuItem>
       );
@@ -53,13 +65,14 @@ export const VersionSelector: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-      <FormControl sx={{ minWidth: 120 }} size="small">
-        <InputLabel id="version-label">Version</InputLabel>
+      <FontAwesomeIcon icon={faClock} color={theme.palette.gray[700]} />
+      <FormControl sx={{ minWidth: 120, ml: 1 }} size="small">
         <Select
           id="grouped-select"
           autoWidth
-          label="Version"
+          variant="standard"
           value={selectedResultIdx}
+          inputProps={{ startAdornment: <FontAwesomeIcon icon={faClock} color={theme.palette.gray[700]} /> }}
         >
           {getMenuItems()}
         </Select>

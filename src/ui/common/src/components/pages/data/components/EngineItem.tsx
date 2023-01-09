@@ -11,7 +11,7 @@ export const EngineItem: React.FC<EngineItemProps> = ({
   engineIconUrl,
 }) => {
   return (
-    <Box display="flex" alignItems="left" justifyContent="left">
+    <Box display="flex" alignItems="center" justifyContent="left">
       <img
         src={engineIconUrl}
         style={{ marginTop: '4px', marginRight: '8px' }}

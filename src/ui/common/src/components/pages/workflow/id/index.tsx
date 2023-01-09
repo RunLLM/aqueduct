@@ -484,8 +484,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Box>
         )}
 
-        <Divider />
-
         <Box
           sx={{
             flex: 1,

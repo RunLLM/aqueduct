@@ -1,6 +1,6 @@
-import { faClock, faGear, faPlay } from '@fortawesome/free-solid-svg-icons';
+import { faClock, faGear, faMicrochip, faPlay } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Alert, Snackbar, Typography } from '@mui/material';
+import { Alert, Divider, Snackbar, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -125,7 +125,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
           <FontAwesomeIcon icon={faClock} />{' '}
         </Box>
 
-        <Typography variant="body2">
+        <Typography variant="body1">
           {nextUpdateTime.toDate().toLocaleString()}
         </Typography>
       </Box>
@@ -137,7 +137,12 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
     workflowDag.engine_config.type.substring(1);
   const engineIconUrl = ServiceLogos[engineName];
   const engineComponent = (
-    <EngineItem engineName={engineName} engineIconUrl={engineIconUrl} />
+    <Box display="flex" alignItems="center">
+      <Box sx={{ color: 'gray.700', mr: 1}}>
+        <FontAwesomeIcon icon={faMicrochip} />
+      </Box>
+      <EngineItem engineName={engineName} engineIconUrl={engineIconUrl} />
+    </Box>
   );
 
   const showAirflowUpdateWarning =
@@ -322,11 +327,22 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
 
   return (
     <Box>
+      {description && (
+        <Box sx={{ mt: '-1rem' }}> {/* This negative margin is needed because ReactMarkdown tons of unnecessary margin at the top of its text.  */}
+          <ReactMarkdown className={style.reactMarkdown}>
+            {description}
+          </ReactMarkdown>
+        </Box>
+      )}
+
+      <Divider />
+
       <Box
         sx={{
           display: 'flex',
           alignItems: narrowView ? 'start' : 'center',
           flexDirection: narrowView ? 'column' : 'row',
+          mt: 2
         }}
       >
         <Box
@@ -334,20 +350,31 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
             flex: 1,
             display: 'flex',
             alignItems: narrowView ? 'start' : 'center',
-            mb: 1,
+            my: 1,
             flexDirection: narrowView ? 'column' : 'row',
           }}
         >
-          {workflow.dagResults && workflow.dagResults.length > 0 && (
-            <VersionSelector />
-          )}
-
-          <Box mx={narrowView ? 0 : 2} my={narrowView ? 1 : 0}>
-            <WorkflowStatusBar user={user} />
+          <Box mr={2}>
+            {workflow.dagResults && workflow.dagResults.length > 0 && (
+              <VersionSelector />
+            )}
           </Box>
+
+          { nextUpdateComponent && 
+            <Box sx={{ mr: 2 }}>
+              {nextUpdateComponent}
+            </Box>
+          }
+
+          {engineComponent}
+
+
+          {/* <Box mx={narrowView ? 0 : 2} my={narrowView ? 1 : 0}>
+            <WorkflowStatusBar user={user} />
+          </Box> */}
         </Box>
 
-        <Box sx={{ mr: 4 }}>
+        {/* <Box sx={{ mr: 4 }}>
           <Button
             color="primary"
             sx={{ height: '100%', mr: 2, fontSize: '20px' }}
@@ -376,21 +403,9 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
             onClose={() => setShowSettings(false)}
             workflowDag={workflowDag}
           />
-        </Box>
+        </Box> */}
       </Box>
 
-      <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-        {nextUpdateComponent}
-        {engineComponent}
-      </Box>
-
-      {description && (
-        <Typography variant="body1">
-          <ReactMarkdown className={style.reactMarkdown}>
-            {description}
-          </ReactMarkdown>
-        </Typography>
-      )}
 
       {runWorkflowDialog}
 
