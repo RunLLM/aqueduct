@@ -372,9 +372,7 @@ class Client:
                     Runs outside of this bound are deleted. Defaults to persisting all runs.
             source_flow:
                 Used to identify the source flow for this flow. This can be identified
-                via an object (Flow), name (str), or id (str or uuid). 
-                If not empty, `schedule` will be ignored and this flow will only 
-                run after each successful run of the source flow.
+                via an object (Flow), name (str), or id (str or uuid).
 
         Raises:
             InvalidUserArgumentException:
@@ -420,6 +418,11 @@ class Client:
         ):
             raise InvalidUserArgumentException(
                 "`artifacts` argument must either be an artifact or a list of artifacts."
+            )
+        
+        if source_flow and schedule != "":
+            raise InvalidUserArgumentException(
+                "Cannot create a flow with a schedule and a source flow, pick one."
             )
 
         if (
