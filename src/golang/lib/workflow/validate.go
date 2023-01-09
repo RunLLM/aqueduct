@@ -26,6 +26,7 @@ const (
 func ValidateSchedule(
 	ctx context.Context,
 	schedule workflow.Schedule,
+	engineType shared.EngineType,
 	artifactRepo repos.Artifact,
 	dagRepo repos.DAG,
 	dagEdgeRepo repos.DAGEdge,
@@ -36,6 +37,13 @@ func ValidateSchedule(
 	if schedule.Trigger != workflow.CascadingUpdateTrigger {
 		// Only CascadingUpdateTriggers require validation
 		return http.StatusOK, nil
+	}
+
+	if engineType == shared.AirflowEngineType {
+		// TODO ENG-2202: Support cascading updates for Airflow target workflows
+		return http.StatusBadRequest, errors.New(
+			"We currently do not support providing a source Workflow for a Workflow running on Airflow.",
+		)
 	}
 
 	exists, err := workflowRepo.Exists(ctx, schedule.SourceID, DB)

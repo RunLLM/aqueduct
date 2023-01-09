@@ -138,6 +138,7 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 	validateScheduleCode, err := workflow.ValidateSchedule(
 		r.Context(),
 		dagSummary.Dag.Metadata.Schedule,
+		dagSummary.Dag.EngineConfig.Type,
 		h.ArtifactRepo,
 		h.DAGRepo,
 		h.DAGEdgeRepo,
