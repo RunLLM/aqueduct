@@ -359,9 +359,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       )}
 
       {triggerType === WorkflowUpdateTrigger.Cascade && (
-        <>
-          <TriggerSourceSelector workflows={workflows} />
-        </>
+        <TriggerSourceSelector workflows={workflows} />
       )}
     </Box>
   );
