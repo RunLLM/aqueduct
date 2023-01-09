@@ -14,17 +14,21 @@ our supported third-party integrations.
 ## Usage
 
 From this directory, to run the Aqueduct Tests:
-`API_KEY=<your api key> SERVER_ADDRESS=<your server's address> INTEGRATION=aqueduct_demo pytest aqueduct_tests/ -rP -vv
+`API_KEY=<your api key> SERVER_ADDRESS=<your server's address> pytest aqueduct_tests/ -rP -vv
 
 To run the Data Integration Tests:
-`API_KEY=<your api key> SERVER_ADDRESS=<your server's address> INTEGRATION=aqueduct_demo pytest data_integration_tests/ -rP -vv
+`API_KEY=<your api key> SERVER_ADDRESS=<your server's address> pytest data_integration_tests/ -rP -vv
 
-The test suite also has a variety of other custom flags, please inspect the `conftest.py` files in both this directory and subdirectories
-to find their descriptions. Flags shared by both suites are:
-* `--data`: The integration name of the data integration to run against.
-* `--engine`: The integration of the engine to run compute on.
-* `--keep-flows`: Does not delete any flows created by the test run. Useful for debugging.
-* `--deprecated`: Runs against any deprecated API that still exists in the SDK.
+Both these test suites share a collection of configuration flags:
+* `--data`: The integration name of the data integration to run all tests against.
+* `--engine`: The integration of the engine to compute all tests on.
+* `--keep-flows`: If set, we will not delete any flows created by the test run. This is useful for debugging.
+* `--deprecated`: Runs against any deprecated API that still exists in the SDK. Such code paths should be eventually deleted after some time, but this ensures backwards compatibility.
+
+For additional markers/fixtures/flags, please inspect `conftest.py` in this directory. For test-specific configurations,
+see `aqueduct_tests/conftest.py` and  `data_integration_tests/conftest.py`.
+
+## Useful Pytest Flags 
 
 Running all the tests in a single file:
 - `<your env variables> pytest <path to test file> -rP -vv`
