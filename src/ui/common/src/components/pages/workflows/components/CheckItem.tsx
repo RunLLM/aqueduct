@@ -122,7 +122,11 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
           justifyContent="space-between"
           alignItems="center"
         >
-          <Typography variant="body1" sx={{ fontWeight: 400 }}>
+          <Typography variant="body1" sx={{ 
+            fontWeight: 400,
+            color: theme.palette.gray['700'],
+            fontSize: '16px',
+          }}>
             {checks[i].name}
           </Typography>
           {statusIcon}
@@ -147,8 +151,8 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
       sx={{
         display: 'flex',
         alignItems: 'center',
+        minHeight: '48px',
       }}
-      height="48px"
     >
       {checks.length > 0 ? (
         <Box sx={cellStyling}>

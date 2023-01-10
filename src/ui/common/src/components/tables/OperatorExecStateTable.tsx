@@ -89,7 +89,7 @@ export const OperatorExecStateTable: React.FC<OperatorExecStateTableProps> = ({
                           sx={
                             columnName === 'title' && {
                               color: theme.palette.gray['700'],
-                              fontSize: '12px',
+                              fontSize: '16px',
                             }
                           }
                         >
