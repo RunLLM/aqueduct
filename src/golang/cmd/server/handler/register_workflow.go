@@ -135,23 +135,6 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 		}
 	}
 
-	validateScheduleCode, err := workflow.ValidateSchedule(
-		r.Context(),
-		isUpdate,
-		dagSummary.Dag.WorkflowID,
-		dagSummary.Dag.Metadata.Schedule,
-		dagSummary.Dag.EngineConfig.Type,
-		h.ArtifactRepo,
-		h.DAGRepo,
-		h.DAGEdgeRepo,
-		h.OperatorRepo,
-		h.WorkflowRepo,
-		h.Database,
-	)
-	if err != nil {
-		return nil, validateScheduleCode, err
-	}
-
 	return &registerWorkflowArgs{
 		AqContext:  aqContext,
 		dagSummary: dagSummary,
@@ -200,6 +183,25 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
+
+	// Schedule validation needs to happen inside the `txn` to prevent
+	// concurrent requests from forming a cycle among cascading workflows
+	validateScheduleCode, err := workflow.ValidateSchedule(
+		ctx,
+		args.isUpdate,
+		dbWorkflowDag.WorkflowID,
+		dbWorkflowDag.Metadata.Schedule,
+		dbWorkflowDag.EngineConfig.Type,
+		h.ArtifactRepo,
+		h.DAGRepo,
+		h.DAGEdgeRepo,
+		h.OperatorRepo,
+		h.WorkflowRepo,
+		h.Database,
+	)
+	if err != nil {
+		return emptyResp, validateScheduleCode, err
+	}
 
 	workflowId, err := utils.WriteDAGToDatabase(
 		ctx,
