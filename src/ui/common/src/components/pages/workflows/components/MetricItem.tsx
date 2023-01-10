@@ -98,20 +98,21 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
     setExpanded(!expanded);
   };
 
-  let cellStyling = {
-    width: "100%"
-  }
+  const cellStyling = {
+    width: '100%',
+  };
   if (metrics.length === 1) {
-    cellStyling["padding"] = showMorePadding;
+    cellStyling['padding'] = showMorePadding;
   }
   // height 48 because 8px padding top and bottom so 48+2*8=64px
   return (
-    <Box 
+    <Box
       sx={{
-        display: "flex",
-        alignItems: "center", 
+        display: 'flex',
+        alignItems: 'center',
       }}
-      height="48px">
+      height="48px"
+    >
       {metrics.length > 0 ? (
         <Box sx={cellStyling}>
           {metricList}

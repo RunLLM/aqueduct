@@ -135,20 +135,21 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
     setExpanded(!expanded);
   };
 
-  let cellStyling = {
-    width: "100%"
-  }
+  const cellStyling = {
+    width: '100%',
+  };
   if (checks.length === 1) {
-    cellStyling["padding"] = showMorePadding;
+    cellStyling['padding'] = showMorePadding;
   }
   // height 48 because 8px padding top and bottom so 48+2*8=64px
   return (
     <Box
       sx={{
-        display: "flex",
-        alignItems: "center", 
+        display: 'flex',
+        alignItems: 'center',
       }}
-      height="48px">
+      height="48px"
+    >
       {checks.length > 0 ? (
         <Box sx={cellStyling}>
           {checksList}
@@ -160,7 +161,9 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
           />
         </Box>
       ) : (
-        <Typography sx={{ padding: showMorePadding }} variant="body1">No checks.</Typography>
+        <Typography sx={{ padding: showMorePadding }} variant="body1">
+          No checks.
+        </Typography>
       )}
     </Box>
   );
