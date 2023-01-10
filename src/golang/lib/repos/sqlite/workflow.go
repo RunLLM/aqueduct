@@ -68,6 +68,22 @@ func (*workflowReader) GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID,
 	return getWorkflow(ctx, DB, query, args...)
 }
 
+func (*workflowReader) GetByScheduleTrigger(
+	ctx context.Context,
+	trigger workflow.UpdateTrigger,
+	DB database.Database,
+) ([]models.Workflow, error) {
+	query := fmt.Sprintf(
+		`SELECT %s FROM workflow WHERE
+			json_extract(schedule, '$.trigger') = $1;
+		`,
+		models.WorkflowCols(),
+	)
+	args := []interface{}{trigger}
+
+	return getWorkflows(ctx, DB, query, args...)
+}
+
 func (*workflowReader) GetTargets(ctx context.Context, ID uuid.UUID, DB database.Database) ([]uuid.UUID, error) {
 	query := `
 		SELECT id FROM workflow
