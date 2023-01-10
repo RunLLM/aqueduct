@@ -50,7 +50,7 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
 
       // if it's not a quote capture, add an item to the current row
       // (quote captures will be pushed by the newline or comma following)
-      if (split.startsWith(`"`) === false) {
+      if (!split.startsWith(`"`)) {
         const splitStartIndex = splitFinder.lastIndex - split.length;
         pushCell(splitStartIndex);
 
@@ -79,7 +79,9 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
     });
     const schema = inferSchema(parsedRows, 'string');
 
-    return <PaginatedTable data={{ schema: schema, data: parsedRows }} />;
+    return <Box sx={{ pb: 4}}>
+      <PaginatedTable data={{ schema: schema, data: parsedRows }} />
+    </Box>;
   };
 
   return (
