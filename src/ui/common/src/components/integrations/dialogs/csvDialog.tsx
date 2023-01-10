@@ -79,9 +79,11 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
     });
     const schema = inferSchema(parsedRows, 'string');
 
-    return <Box sx={{ pb: 4}}>
-      <PaginatedTable data={{ schema: schema, data: parsedRows }} />
-    </Box>;
+    return (
+      <Box sx={{ pb: 4 }}>
+        <PaginatedTable data={{ schema: schema, data: parsedRows }} />
+      </Box>
+    );
   };
 
   return (
