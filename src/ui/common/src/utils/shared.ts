@@ -79,3 +79,10 @@ export type Error = {
 };
 
 export const GithubIssueLink = `https://github.com/aqueducthq/aqueduct/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D`;
+
+
+
+// 0.875rem is the size of the ShowMore.
+export const showMoreFontSize = '0.875rem';
+// Add this additional padding if we don't have more than 1 metric to keep the rows equal size.
+export const showMorePadding = `${showMoreFontSize} 0 ${showMoreFontSize} 0`;

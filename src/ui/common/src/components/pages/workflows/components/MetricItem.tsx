@@ -5,7 +5,7 @@ import React from 'react';
 import { useState } from 'react';
 
 import { theme } from '../../../../styles/theme/theme';
-import ExecutionStatus from '../../../../utils/shared';
+import { ExecutionStatus, showMorePadding } from '../../../../utils/shared';
 import { parseMetricResult } from '../../../workflows/nodes/MetricOperatorNode';
 
 interface ShowMoreProps {
@@ -98,12 +98,22 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
     setExpanded(!expanded);
   };
 
-  // 0.875rem is the size of the ShowMore.
-  // Add this additional padding if we don't have more than 1 metric to keep the rows equal size.
+  let cellStyling = {
+    width: "100%"
+  }
+  if (metrics.length === 1) {
+    cellStyling["padding"] = showMorePadding;
+  }
+  // height 48 because 8px padding top and bottom so 48+2*8=64px
   return (
-    <Box>
+    <Box 
+      sx={{
+        display: "flex",
+        alignItems: "center", 
+      }}
+      height="48px">
       {metrics.length > 0 ? (
-        <Box sx={metrics.length === 1 && { padding: '0.875rem 0 0.875rem 0' }}>
+        <Box sx={cellStyling}>
           {metricList}
           <ShowMore
             totalItems={metrics.length}
@@ -113,7 +123,7 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
           />
         </Box>
       ) : (
-        <Typography sx={{ padding: '0.875rem 0 0.875rem 0' }} variant="body1">
+        <Typography sx={{ padding: showMorePadding }} variant="body1">
           No metrics.
         </Typography>
       )}
