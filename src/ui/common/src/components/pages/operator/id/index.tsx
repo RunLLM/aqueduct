@@ -110,6 +110,8 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   const logs = operator?.result?.exec_state?.user_logs ?? {};
   const operatorError = operator?.result?.exec_state?.error;
 
+  const operatorStatus = operator?.result?.exec_state?.status;
+
   if (
     !workflowDagResultWithLoadingStatus ||
     isInitial(workflowDagResultWithLoadingStatus.status) ||
@@ -136,7 +138,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
       .map(
         (artifactId) =>
           (workflowDagResultWithLoadingStatus.result?.artifacts ?? {})[
-            artifactId
+          artifactId
           ]
       )
       .filter((artf) => !!artf);
@@ -149,7 +151,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
         <Box width="100%">
           {!sideSheetMode && (
             <Box width="100%">
-              <DetailsPageHeader name={operator ? operator.name : 'Operator'} />
+              <DetailsPageHeader name={operator ? operator.name : 'Operator'} status={operatorStatus} />
               {operator?.description && (
                 <Typography variant="body1">{operator?.description}</Typography>
               )}
