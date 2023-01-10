@@ -1,9 +1,8 @@
-import { faCircleCheck } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React from 'react';
+
 import { StatusIndicator } from '../../../components/workflows/workflowStatus';
 import ExecutionStatus from '../../../utils/shared';
 
@@ -18,11 +17,18 @@ export const DetailsPageHeader: React.FC<DetailsPageHeaderProps> = ({
   name,
   createdAt,
   sourceLocation,
-  status
+  status,
 }) => {
   return (
     <Box width="100%" display="flex" alignItems="center">
-      <Box sx={{ width: '24px', height: '24px', marginRight: '8px', display: 'flex' }}>
+      <Box
+        sx={{
+          width: '24px',
+          height: '24px',
+          marginRight: '8px',
+          display: 'flex',
+        }}
+      >
         <StatusIndicator status={status} />
       </Box>
       <Typography variant="h4" component="div">
