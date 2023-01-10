@@ -7,24 +7,34 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/graph"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/google/uuid"
 )
 
 const (
 	internalValidationErrMsg = "Internal system error occurred while validating Workflow schedule."
 )
 
-// ValidateSchedule validates the provided schedule. The following conditions are
-// not allowed:
-// - Having a CascadingUpdateTrigger where SourceID is for a Workflow that is
+// ValidateSchedule validates the provided schedule. The flag isUpdate indicates
+// whether or not the Workflow, for which the schedule is being validated already exists.
+// If the Workflow exists, its ID should be provided as workflowID; otherwise,
+// workflowID can be ignored.
+// The following conditions are not allowed:
+// 1. Using a CascadingUpdateTrigger when engineType is Airflow.
+// 2. Having a CascadingUpdateTrigger where SourceID is for a Workflow that is
 // running on a non self-orchestrated engine, such as Airflow. This is not allowed
 // since Aqueduct cannot trigger Workflow runs at the end of execution on an
 // engine that is not self-orchestrated.
+// 3. Having a CascadingUpdateTrigger that creates a cycle amongst the cascading workflows.
 // It returns an HTTP status code and a client-friendly error, if any.
 func ValidateSchedule(
 	ctx context.Context,
+	isUpdate bool,
+	workflowID uuid.UUID,
 	schedule workflow.Schedule,
 	engineType shared.EngineType,
 	artifactRepo repos.Artifact,
@@ -39,6 +49,7 @@ func ValidateSchedule(
 		return http.StatusOK, nil
 	}
 
+	// Condition 1
 	if engineType == shared.AirflowEngineType {
 		// TODO ENG-2202: Support cascading updates for Airflow target workflows
 		return http.StatusBadRequest, errors.New(
@@ -69,9 +80,53 @@ func ValidateSchedule(
 		return http.StatusInternalServerError, errors.Wrap(err, internalValidationErrMsg)
 	}
 
+	// Condition 2
 	if dag.EngineConfig.Type == shared.AirflowEngineType {
 		return http.StatusBadRequest, errors.New("Cannot use Workflows running on Airflow for the source.")
 	}
 
+	// Condition 3
+	if !isUpdate {
+		// It is not possible to form a cycle when registering a NEW workflow.
+		// A cycle is formed when registering a workflow, B, with source, A, if
+		// and only if there already exists a path from B to A. Since workflow B
+		// does not exist, such a path also does not exist. In other words,
+		// we are adding a new edge in a graph from nodes A to B, but since node B
+		// is new, we know that there are no outgoing edges from B, so we can
+		// conclude that no cycle is formed.
+		return http.StatusOK, nil
+	}
+
+	// Note that we still need to check for cycles when the schedule of an existing
+	// Workflow is modified.
+
+	cascadingWorkflows, err := workflowRepo.GetByScheduleTrigger(ctx, workflow.CascadingUpdateTrigger, DB)
+	if err != nil {
+		return http.StatusInternalServerError, errors.Wrap(err, internalValidationErrMsg)
+	}
+
+	if hasCycle := checkForCycle(workflowID, schedule.SourceID, cascadingWorkflows); hasCycle {
+		return http.StatusBadRequest, errors.New("Cannot allow cycles for cascading workflows.")
+	}
+
 	return http.StatusOK, nil
+}
+
+// checkForCycle returns true if setting workflowID's source workflow to sourceID would
+// result in a cycle.
+func checkForCycle(workflowID uuid.UUID, sourceID uuid.UUID, targetWorkflows []models.Workflow) bool {
+	gph := graph.NewDirected()
+	for _, targetWorkflow := range targetWorkflows {
+		gph.AddNode(targetWorkflow.ID)
+		gph.AddNode(targetWorkflow.Schedule.SourceID)
+
+		if targetWorkflow.ID != workflowID {
+			// We don't add an edge for workflowID to its current source Workflow,
+			// since that will be overwritten by the new source anyways.
+			gph.AddEdge(targetWorkflow.Schedule.SourceID, targetWorkflow.ID)
+		}
+	}
+
+	// There is a cycle if there exists a path from workflowID to sourceID
+	return gph.HasPath(workflowID, sourceID)
 }
