@@ -98,6 +98,11 @@ if __name__ == "__main__":
     if not os.path.isdir(preview_outputs_directory):
         os.mkdir(preview_outputs_directory)
 
+    # Force the env to be "dev", so that we don't have to manually set the env when starting the server.
+    env_file_path = os.path.join(server_directory, "config", "env")
+    with open(env_file_path, "w") as f:
+        f.write("dev")
+
     # Install the local SDK.
     if args.update_sdk:
         print("Updating the Python SDK...")

@@ -169,6 +169,20 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     return value;
   };
 
+  const onChangeRowsPerPage = (rowsPerPage) => {
+    localStorage.setItem('workflowsTableRowsPerPage', rowsPerPage);
+  };
+
+  const getRowsPerPage = () => {
+    const savedRowsPerPage = localStorage.getItem('workflowsTableRowsPerPage');
+
+    if (!savedRowsPerPage) {
+      return 5; // return default rows per page value.
+    }
+
+    return parseInt(savedRowsPerPage);
+  };
+
   return (
     <Layout
       breadcrumbs={[BreadcrumbLink.HOME, BreadcrumbLink.WORKFLOWS]}
@@ -179,6 +193,8 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           data={workflowTableData}
           searchEnabled={true}
           onGetColumnValue={onGetColumnValue}
+          onChangeRowsPerPage={onChangeRowsPerPage}
+          savedRowsPerPage={getRowsPerPage()}
         />
       ) : (
         <Box>{noItemsMessage}</Box>

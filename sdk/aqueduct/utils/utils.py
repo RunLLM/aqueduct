@@ -70,7 +70,13 @@ def is_string_valid_uuid(value: str) -> bool:
         return False
 
 
-def schedule_from_cron_string(schedule_str: str) -> Schedule:
+def generate_flow_schedule(
+    schedule_str: str, source_flow_id: Optional[uuid.UUID] = None
+) -> Schedule:
+    """Generates a flow schedule using the provided cron string and the source flow id if present."""
+    if source_flow_id:
+        return Schedule(trigger=TriggerType.CASCADE, source_id=source_flow_id)
+
     if len(schedule_str) == 0:
         return Schedule(trigger=TriggerType.MANUAL)
 

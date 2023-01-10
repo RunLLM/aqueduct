@@ -21,6 +21,7 @@ export enum WorkflowUpdateTrigger {
   Manual = 'manual',
   Periodic = 'periodic',
   Airflow = 'airflow',
+  Cascade = 'cascade',
 }
 
 export type WorkflowSchedule = {
@@ -28,6 +29,7 @@ export type WorkflowSchedule = {
   cron_schedule: string;
   disable_manual_trigger: boolean;
   paused: boolean;
+  source_id: string;
 };
 
 export type RetentionPolicy = {

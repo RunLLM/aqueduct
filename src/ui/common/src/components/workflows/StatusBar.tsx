@@ -278,26 +278,37 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
   // List of the workflow status items filtered out by category: errors, warnings, logs and checks passed.
   const [listItems, setListItems] = useState<WorkflowStatusItem[]>([]);
 
+  // Ignore Parameters from list of workflow status items
+  // const shouldShowStatusItem = (statusItem: WorkflowStatusItem) => {
+  //   return statusItem.type !== 'paramOp';
+  // };
+
+  const itemsToShow: WorkflowStatusItem[] = workflowStatusItems.filter(
+    (statusItem: WorkflowStatusItem) => {
+      return statusItem.type !== 'paramOp';
+    }
+  );
+
   useEffect(() => {
-    const filteredErrors: WorkflowStatusItem[] = workflowStatusItems.filter(
+    const filteredErrors: WorkflowStatusItem[] = itemsToShow.filter(
       (workflowStatusItem) => {
         return workflowStatusItem.level === WorkflowStatusTabs.Errors;
       }
     );
 
-    const filteredWarnings: WorkflowStatusItem[] = workflowStatusItems.filter(
+    const filteredWarnings: WorkflowStatusItem[] = itemsToShow.filter(
       (workflowStatusItem) => {
         return workflowStatusItem.level === WorkflowStatusTabs.Warnings;
       }
     );
 
-    const filteredLogs: WorkflowStatusItem[] = workflowStatusItems.filter(
+    const filteredLogs: WorkflowStatusItem[] = itemsToShow.filter(
       (workflowStatusItem) => {
         return workflowStatusItem.level === WorkflowStatusTabs.Logs;
       }
     );
 
-    const filteredChecks: WorkflowStatusItem[] = workflowStatusItems.filter(
+    const filteredChecks: WorkflowStatusItem[] = itemsToShow.filter(
       (workflowStatusItem) => {
         return workflowStatusItem.level === WorkflowStatusTabs.Checks;
       }
@@ -382,7 +393,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
     setNumWarnings(filteredWarnings.length);
     setNumWorkflowLogs(filteredLogs.length);
     setNumWorkflowChecksPassed(filteredChecks.length);
-  }, [workflowStatusItems, activeWorkflowStatusTab]);
+  }, [workflowStatusItems, activeWorkflowStatusTab, itemsToShow]);
 
   const selectTab = (tab: WorkflowStatusTabs) => {
     dispatch(setWorkflowStatusBarOpenState(true));

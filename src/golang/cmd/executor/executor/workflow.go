@@ -7,6 +7,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/google/uuid"
@@ -18,7 +19,7 @@ const pollingIntervalMS = time.Millisecond * 500
 type WorkflowExecutor struct {
 	*BaseExecutor
 
-	WorkflowId    uuid.UUID
+	WorkflowID    uuid.UUID
 	GithubManager github.Manager
 	Engine        engine.Engine
 
@@ -28,7 +29,7 @@ type WorkflowExecutor struct {
 }
 
 func NewWorkflowExecutor(spec *job.WorkflowSpec, base *BaseExecutor) (*WorkflowExecutor, error) {
-	workflowId, err := uuid.Parse(spec.WorkflowId)
+	workflowID, err := uuid.Parse(spec.WorkflowId)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +55,7 @@ func NewWorkflowExecutor(spec *job.WorkflowSpec, base *BaseExecutor) (*WorkflowE
 
 	return &WorkflowExecutor{
 		BaseExecutor:  base,
-		WorkflowId:    workflowId,
+		WorkflowID:    workflowID,
 		GithubManager: githubManager,
 		Engine:        eng,
 		Parameters:    spec.Parameters,
@@ -77,7 +78,7 @@ func (ex *WorkflowExecutor) Run(ctx context.Context) error {
 
 	status, err := ex.Engine.ExecuteWorkflow(
 		ctx,
-		ex.WorkflowId,
+		ex.WorkflowID,
 		&engine.AqueductTimeConfig{
 			OperatorPollInterval: pollingIntervalMS,
 			ExecTimeout:          engine.DefaultExecutionTimeout,
@@ -90,9 +91,44 @@ func (ex *WorkflowExecutor) Run(ctx context.Context) error {
 	}
 
 	log.WithFields(log.Fields{
-		"WorkflowId": ex.WorkflowId,
+		"WorkflowId": ex.WorkflowID,
 		"Parameters": ex.Parameters,
 	}).Infof("Workflow run completed with status: %v", status)
+
+	if err := ex.TriggerCascadingFlows(ctx); err != nil {
+		log.WithFields(log.Fields{
+			"WorkflowId": ex.WorkflowID,
+		}).Error("Unable to trigger cascading Workflows")
+		return err
+	}
+
+	return nil
+}
+
+// TriggerCascadingFlows triggers a new Workflow run for all Workflows (if any)
+// that are scheduled to run after this Workflow.
+func (ex *WorkflowExecutor) TriggerCascadingFlows(ctx context.Context) error {
+	targetIDs, err := ex.WorkflowRepo.GetTargets(ctx, ex.WorkflowID, ex.Database)
+	if err != nil {
+		return err
+	}
+
+	for _, targetID := range targetIDs {
+		_, err := ex.Engine.TriggerWorkflow(
+			ctx,
+			targetID,
+			lib_utils.AppendPrefix(targetID.String()),
+			&engine.AqueductTimeConfig{
+				OperatorPollInterval: engine.DefaultPollIntervalMillisec,
+				ExecTimeout:          engine.DefaultExecutionTimeout,
+				CleanupTimeout:       engine.DefaultCleanupTimeout,
+			},
+			nil, /*parameters*/
+		)
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
