@@ -88,7 +88,7 @@ func reportUsage(startTime time.Time, environment string, statusCode int, urlPat
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Errorf("Failed to send request to loki: %v", err)
-		panic(err)
+		return
 	}
 	defer resp.Body.Close()
 }
