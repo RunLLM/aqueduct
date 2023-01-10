@@ -122,11 +122,14 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
           justifyContent="space-between"
           alignItems="center"
         >
-          <Typography variant="body1" sx={{ 
-            fontWeight: 400,
-            color: theme.palette.gray['700'],
-            fontSize: '16px',
-          }}>
+          <Typography
+            variant="body1"
+            sx={{
+              fontWeight: 400,
+              color: theme.palette.gray['700'],
+              fontSize: '16px',
+            }}
+          >
             {checks[i].name}
           </Typography>
           {statusIcon}

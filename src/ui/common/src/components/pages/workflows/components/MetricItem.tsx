@@ -75,11 +75,14 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
           justifyContent="space-between"
           alignItems="center"
         >
-          <Typography variant="body1" sx={{
-            fontWeight: 400,
-            color: theme.palette.gray['700'],
-            fontSize: '16px',
-          }}>
+          <Typography
+            variant="body1"
+            sx={{
+              fontWeight: 400,
+              color: theme.palette.gray['700'],
+              fontSize: '16px',
+            }}
+          >
             {metrics[i].name}
           </Typography>
           {metrics[i].status === ExecutionStatus.Failed ? (
