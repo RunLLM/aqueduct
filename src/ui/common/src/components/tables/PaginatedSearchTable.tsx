@@ -132,7 +132,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
             id="outlined-basic"
-            variant="standard"
+            variant="outlined"
             size="small"
             sx={{ minWidth: '300px', mb: 1 }}
             InputProps={{
