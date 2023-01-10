@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import pandas as pd
 import pytest
 from aqueduct.constants.enums import ExecutionStatus, ServiceType
-from aqueduct.error import InvalidUserArgumentException
+from aqueduct.error import InvalidRequestError, InvalidUserArgumentException
 from aqueduct.integrations.airflow_integration import AirflowIntegration
 from aqueduct.models.config import FlowConfig
 from aqueduct.models.integration import IntegrationInfo
@@ -212,6 +212,51 @@ def test_publish_with_schedule_and_source_flow(client, flow_name, data_integrati
             engine=engine,
             schedule=aqueduct.daily(),
             source_flow=uuid.uuid4(),
+        )
+
+
+def test_publish_with_source_flow_cyclic(client, flow_name, data_integration, engine):
+    """Tests publishing an invalid flow, because it would cause a cycle amongst cascading workflows."""
+    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+
+    @op
+    def noop(input):
+        return input
+
+    output_artifact = noop(table_artifact)
+
+    # First, create 3 workflows with the following dependencies: A --> B --> C
+    a_flow = publish_flow_test(
+        client,
+        name=flow_name(),
+        artifacts=output_artifact,
+        engine=engine,
+        schedule=aqueduct.daily(),
+    )
+
+    b_flow = publish_flow_test(
+        client,
+        name=flow_name(),
+        artifacts=output_artifact,
+        engine=engine,
+        source_flow=a_flow,
+    )
+
+    c_flow = publish_flow_test(
+        client,
+        name=flow_name(),
+        artifacts=output_artifact,
+        engine=engine,
+        source_flow=b_flow,
+    )
+
+    # Now, change a_flow to have c_flow as its source, which would create a cyle
+    with pytest.raises(InvalidRequestError):
+        client.publish_flow(
+            name=a_flow.name(),
+            artifacts=[output_artifact],
+            engine=engine,
+            source_flow=c_flow,
         )
 
 
