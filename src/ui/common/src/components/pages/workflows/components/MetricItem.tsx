@@ -110,8 +110,8 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
       sx={{
         display: 'flex',
         alignItems: 'center',
+        minHeight: '48px',
       }}
-      height="48px"
     >
       {metrics.length > 0 ? (
         <Box sx={cellStyling}>

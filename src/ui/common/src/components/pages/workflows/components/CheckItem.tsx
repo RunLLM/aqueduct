@@ -147,8 +147,8 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
       sx={{
         display: 'flex',
         alignItems: 'center',
+        minHeight: '48px',
       }}
-      height="48px"
     >
       {checks.length > 0 ? (
         <Box sx={cellStyling}>
