@@ -425,12 +425,12 @@ func (eng *aqEngine) DeleteWorkflow(
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
 	// We first retrieve all relevant records from the database.
-	workflow, err := eng.WorkflowRepo.Get(ctx, workflowID, txn)
+	workflowObj, err := eng.WorkflowRepo.Get(ctx, workflowID, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving workflow.")
 	}
 
-	dagsToDelete, err := eng.DAGRepo.GetByWorkflow(ctx, workflow.ID, txn)
+	dagsToDelete, err := eng.DAGRepo.GetByWorkflow(ctx, workflowObj.ID, txn)
 	if err != nil || len(dagsToDelete) == 0 {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving workflow dags.")
 	}
@@ -440,7 +440,7 @@ func (eng *aqEngine) DeleteWorkflow(
 		dagIDs = append(dagIDs, dag.ID)
 	}
 
-	dagResultsToDelete, err := eng.DAGResultRepo.GetByWorkflow(ctx, workflow.ID, txn)
+	dagResultsToDelete, err := eng.DAGResultRepo.GetByWorkflow(ctx, workflowObj.ID, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving workflow dag results.")
 	}
@@ -517,6 +517,11 @@ func (eng *aqEngine) DeleteWorkflow(
 		artifactResultIDs = append(artifactResultIDs, artifactResult.ID)
 	}
 
+	targetWorkflowIDs, err := eng.WorkflowRepo.GetTargets(ctx, workflowID, txn)
+	if err != nil {
+		return errors.Wrap(err, "Unexpected error occurred while retrieving target workflows.")
+	}
+
 	// Start deleting database records.
 	err = eng.WatcherRepo.DeleteByWorkflow(ctx, workflowID, txn)
 	if err != nil {
@@ -558,9 +563,32 @@ func (eng *aqEngine) DeleteWorkflow(
 		return errors.Wrap(err, "Unexpected error occurred while deleting workflow dags.")
 	}
 
-	err = eng.WorkflowRepo.Delete(ctx, workflow.ID, txn)
+	err = eng.WorkflowRepo.Delete(ctx, workflowObj.ID, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while deleting workflow.")
+	}
+
+	// For each target workflow, update its schedule to have a ManualTrigger
+	for _, targetWorkflowID := range targetWorkflowIDs {
+		targetWorkflow, err := eng.WorkflowRepo.Get(ctx, targetWorkflowID, txn)
+		if err != nil {
+			return errors.Wrap(err, "Unexpected error occurred while retrieving target workflow.")
+		}
+
+		schedule := targetWorkflow.Schedule
+		schedule.SourceID = uuid.Nil
+		schedule.Trigger = workflow.ManualUpdateTrigger
+
+		if _, err := eng.WorkflowRepo.Update(
+			ctx,
+			targetWorkflowID,
+			map[string]interface{}{
+				models.WorkflowSchedule: &schedule,
+			},
+			txn,
+		); err != nil {
+			return errors.Wrap(err, "Unexpected error occurred while updating target workflow trigger from cascading to manual.")
+		}
 	}
 
 	if err := txn.Commit(ctx); err != nil {
@@ -591,8 +619,8 @@ func (eng *aqEngine) DeleteWorkflow(
 	workflow_utils.CleanupStorageFiles(ctx, &storageConfig, storagePaths)
 
 	// Delete the cron job if it had one.
-	if workflow.Schedule.CronSchedule != "" {
-		cronjobName := shared_utils.AppendPrefix(workflow.ID.String())
+	if workflowObj.Schedule.CronSchedule != "" {
+		cronjobName := shared_utils.AppendPrefix(workflowID.String())
 		err = eng.CronjobManager.DeleteCronJob(ctx, cronjobName)
 		if err != nil {
 			return errors.Wrap(err, "Failed to delete workflow's cronjob.")
