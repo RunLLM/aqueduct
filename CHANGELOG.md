@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.1.9
+Released on Januay 9, 2023.
+
+### Key Features
+* As of this release, Aqueduct has usage tracking. Usage tracking is fully
+    anonymized and captures API routes, performance data, and error rates
+    without revealing any specifics of your machine or deployment. For more
+    details, check out our [documentation](https://docs.aqueducthq.com/usage).
+* We now support cascading workflow triggers, which means a workflow can trigger another one at the end of its execution. You can specify that in our [python SDK](https://github.com/aqueducthq/aqueduct/blob/main/sdk/aqueduct/client.py#L373).
+
+### Enhancements
+* Makes the artifact, check, metric, and operator details pages full width.
+* Shows the Aqueduct version number on the UI navigation bar.
+* Hides previews when artifacts are canceled.
+* Hides parameters in status bar.
+
+### Bugfixes
+* Fixes a number of UI bugs:
+  * Resets workflow settings dialog content after close.
+  * Aligns margins on right side of workflow details page.
+  * Removes vestigial popover to access settings page.
+  * Addresses regression where a workflow's saved objects were not being shown
+      prior to workflow deletion.
+  * Aligns the width of metric and check history items.
+  * Updates the metadata views (workflows & data list pages) to differentiate 
+      table headers from metadata rows.
+  * Persists the number of rows shown per-page on metadata views between page refreshes.
+
 ## 0.1.8
 Released on December 20, 2022.
 
