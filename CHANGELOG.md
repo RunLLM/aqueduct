@@ -8,10 +8,13 @@ Released on Januay 9, 2023.
     anonymized and captures API routes, performance data, and error rates
     without revealing any specifics of your machine or deployment. For more
     details, check out our [documentation](https://docs.aqueducthq.com/usage).
+* We now support cascading workflow triggers. You can specify that in our [python SDK](https://github.com/aqueducthq/aqueduct/blob/main/sdk/aqueduct/client.py#L373).
 
 ### Enhancements
 * Makes the artifact, check, metric, and operator details pages full width.
 * Shows the Aqueduct version number on the UI navigation bar.
+* Hides previews when artifacts are canceled.
+* Hides parameters in status bar.
 
 ### Bugfixes
 * Fixes a number of UI bugs:
@@ -23,6 +26,7 @@ Released on Januay 9, 2023.
   * Aligns the width of metric and check history items.
   * Updates the metadata views (workflows & data list pages) to differentiate 
       table headers from metadata rows.
+  * Persists the number of rows shown per-page on metadata views between page refreshes.
 
 ## 0.1.8
 Released on December 20, 2022.
