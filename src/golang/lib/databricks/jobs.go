@@ -48,13 +48,27 @@ func CreateJob(
 	s3InstanceProfileArn string,
 	pythonFilePath string,
 ) (int64, error) {
+	sparkVersions, err := databricksClient.Clusters.SparkVersions(ctx)
+	if err != nil {
+		return -1, errors.Wrap(err, "Error selecting a spark version.")
+	}
+
+	// Select the latest LTS version.
+	latestLTS, err := sparkVersions.Select(clusters.SparkVersionRequest{
+		Latest:          true,
+		LongTermSupport: true,
+	})
+	if err != nil {
+		return -1, errors.Wrap(err, "Error selecting a spark version.")
+	}
+
 	createRequest := &jobs.CreateJob{
 		Name: name,
 		Tasks: []jobs.JobTaskSettings{
 			{
 				TaskKey: name,
 				NewCluster: &clusters.CreateCluster{
-					SparkVersion: SparkVersion,
+					SparkVersion: latestLTS,
 					NumWorkers:   NumWorkers,
 					NodeTypeId:   NodeTypeId,
 					AwsAttributes: &clusters.AwsAttributes{
