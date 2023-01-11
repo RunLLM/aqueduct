@@ -1,7 +1,7 @@
 # Changelog
 
 ## 0.1.9
-Released on Januay 9, 2023.
+Released on Januay 10, 2023.
 
 ### Key Features
 * As of this release, Aqueduct has usage tracking. Usage tracking is fully
