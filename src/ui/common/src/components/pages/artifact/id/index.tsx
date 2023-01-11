@@ -215,7 +215,10 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
         <Box width="100%">
           {!sideSheetMode && (
             <Box width="100%" display="flex" alignItems="center">
-              <DetailsPageHeader name={artifact ? artifact.name : 'Artifact'} />
+              <DetailsPageHeader
+                name={artifact ? artifact.name : 'Artifact'}
+                status={artifactStatus}
+              />
               <CsvExporter
                 artifact={artifact}
                 contentWithLoadingStatus={contentWithLoadingStatus}
