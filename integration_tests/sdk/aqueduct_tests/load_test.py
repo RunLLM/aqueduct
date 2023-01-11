@@ -1,12 +1,14 @@
 from aqueduct.constants.enums import LoadUpdateMode
 
 from ..shared.data_objects import DataObject
-from ..shared.utils import extract, generate_table_name, publish_flow_test
+from ..shared.flow_helpers import publish_flow_test
+from ..shared.naming import generate_table_name
+from .extract import extract
 from .save import save
 
 
 def test_multiple_artifacts_saved_to_same_integration(
-    client, flow_name, data_integration, engine, validator
+    client, flow_name, data_integration, engine, data_validator
 ):
     table_1_save_name = generate_table_name()
     table_2_save_name = generate_table_name()
@@ -23,5 +25,5 @@ def test_multiple_artifacts_saved_to_same_integration(
         engine=engine,
     )
 
-    validator.check_saved_artifact_data(flow, table_1.id(), expected_data=table_1.get())
-    validator.check_saved_artifact_data(flow, table_2.id(), expected_data=table_2.get())
+    data_validator.check_saved_artifact_data(flow, table_1.id(), expected_data=table_1.get())
+    data_validator.check_saved_artifact_data(flow, table_2.id(), expected_data=table_2.get())

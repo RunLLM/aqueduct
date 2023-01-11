@@ -4,7 +4,7 @@ from aqueduct.error import InvalidUserActionException
 from aqueduct import check, metric, op
 
 from ..shared.data_objects import DataObject
-from ..shared.utils import extract
+from .extract import extract
 
 
 @check()

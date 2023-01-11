@@ -6,14 +6,24 @@ from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.constants.enums import ExecutionStatus
 from aqueduct.error import AqueductError, InvalidUserActionException, InvalidUserArgumentException
+from aqueduct.integrations.sql_integration import RelationalDBIntegration
 from aqueduct.models.operators import RelationalDBExtractParams
 
 from aqueduct import LoadUpdateMode, metric, op
 
 from ..shared.demo_db import demo_db_tables
+from ..shared.flow_helpers import publish_flow_test
+from ..shared.naming import generate_table_name
 from ..shared.relational import SHORT_SENTIMENT_SQL_QUERY
-from ..shared.utils import generate_table_name, publish_flow_test
+from ..shared.validation import check_artifact_was_computed
+from .relational_data_validator import RelationalDataValidator
 from .save import save
+from .validation_helpers import check_hotel_reviews_table_artifact
+
+
+@pytest.fixture(autouse=True)
+def assert_data_integration_is_relational(client, data_integration):
+    assert isinstance(data_integration, RelationalDBIntegration)
 
 
 def _create_successful_sql_artifacts(
@@ -38,13 +48,7 @@ def _create_successful_sql_artifacts(
 
     # Test a successful basic sql query.
     hotel_reviews_table = data_integration.sql(hotel_reviews_query)
-    assert list(hotel_reviews_table.get()) == [
-        "hotel_name",
-        "review_date",
-        "reviewer_nationality",
-        "review",
-    ]
-    assert hotel_reviews_table.get().shape[0] == 100
+    check_hotel_reviews_table_artifact(hotel_reviews_table)
 
     # Test a successful chain query.
     client.create_param("nationality", default=" United Kingdom ")
@@ -60,42 +64,42 @@ def _create_successful_sql_artifacts(
     return artifacts
 
 
-def _publish_saves_and_check(client, flow_name, validator, artifacts: List[BaseArtifact]):
-    flow = publish_flow_test(
-        client,
-        artifacts,
-        name=flow_name(),
-        engine=None,
-    )
-    for artifact in artifacts:
-        validator.check_saved_artifact_data(flow, artifact.id(), expected_data=artifact.get())
-
-
-def test_sql_integration_query_and_save(client, flow_name, data_integration, validator):
+def test_sql_integration_query_and_save(client, flow_manager, data_integration):
     artifacts = _create_successful_sql_artifacts(client, data_integration)
-    _publish_saves_and_check(client, flow_name, validator, artifacts)
+
+    flow = flow_manager.publish_flow_test(artifacts=artifacts)
+
+    relational_validator = RelationalDataValidator(client, data_integration)
+    for artifact in artifacts:
+        relational_validator.check_saved_artifact_data(
+            flow, artifact.id(), expected_data=artifact.get()
+        )
 
 
 def test_sql_integration_query_and_save_relationaldbextractparams(
-    client, flow_name, data_integration, validator
+    client, flow_manager, data_integration
 ):
     artifacts = _create_successful_sql_artifacts(
         client, data_integration, wrap_query_in_extract_params_struct=True
     )
-    _publish_saves_and_check(client, flow_name, validator, artifacts)
+    flow = flow_manager.publish_flow_test(artifacts=artifacts)
+
+    relational_validator = RelationalDataValidator(client, data_integration)
+    for artifact in artifacts:
+        relational_validator.check_saved_artifact_data(
+            flow, artifact.id(), expected_data=artifact.get()
+        )
 
 
-def test_sql_integration_artifact_with_custom_metadata(
-    client, flow_name, data_integration, validator
-):
+def test_sql_integration_artifact_with_custom_metadata(flow_manager, data_integration):
     # TODO: validate custom descriptions once we can fetch descriptions easily.
     artifact = data_integration.sql(
         "SELECT * FROM hotel_reviews", name="Test Artifact", description="This is a description"
     )
     assert artifact.name() == "Test Artifact artifact"
 
-    flow = publish_flow_test(client, artifact, name=flow_name(), engine=None)
-    validator.check_artifact_was_computed(flow, "Test Artifact artifact")
+    flow = flow_manager.publish_flow_test(artifacts=artifact)
+    check_artifact_was_computed(flow, "Test Artifact artifact")
 
 
 def test_sql_integration_failed_query(client, data_integration):
@@ -164,7 +168,7 @@ def test_sql_query_with_parameter(client, data_integration):
         _ = table_artifact.get(parameters={"non-existant parameter": "blah"})
 
 
-def test_sql_query_with_multiple_parameters(client, flow_name, data_integration, engine):
+def test_sql_query_with_multiple_parameters(client, flow_manager, data_integration):
     _ = client.create_param("table_name", default="hotel_reviews")
     nationality = client.create_param(
         "reviewer-nationality", default="United Kingdom"
@@ -192,7 +196,7 @@ def test_sql_query_with_multiple_parameters(client, flow_name, data_integration,
     assert result.get() == len(nationality.get())
     assert result.get(parameters={"reviewer-nationality": "Australia"}) == len("Australia")
 
-    publish_flow_test(client, name=flow_name(), artifacts=[result], engine=engine)
+    flow_manager.publish_flow_test(artifacts=[result])
 
 
 def test_sql_query_user_vs_builtin_precedence(client, data_integration):
@@ -216,7 +220,7 @@ def test_sql_query_user_vs_builtin_precedence(client, data_integration):
     assert user_param_result.equals(expected_table_artifact.get())
 
 
-def test_sql_integration_save_wrong_data_type(client, flow_name, data_integration):
+def test_sql_integration_save_wrong_data_type(client, flow_manager, data_integration):
     # Try to save a numeric artifact.
     num_param = client.create_param("number", default=123)
     with pytest.raises(
@@ -234,18 +238,13 @@ def test_sql_integration_save_wrong_data_type(client, flow_name, data_integratio
     string_artifact = foo.lazy()
     assert isinstance(string_artifact, GenericArtifact)
     save(data_integration, string_artifact, generate_table_name(), LoadUpdateMode.REPLACE)
-    publish_flow_test(
-        client,
-        string_artifact,
-        name=flow_name(),
-        engine=None,
+    flow_manager.publish_flow_test(
+        artifacts=string_artifact,
         expected_statuses=ExecutionStatus.FAILED,
     )
 
 
-def test_sql_integration_save_with_different_update_modes(
-    client, flow_name, data_integration, engine, validator
-):
+def test_sql_integration_save_with_different_update_modes(client, flow_manager, data_integration):
     table_1_save_name = generate_table_name()
     table_2_save_name = generate_table_name()
 
@@ -254,23 +253,19 @@ def test_sql_integration_save_with_different_update_modes(
     save(data_integration, table, table_1_save_name, LoadUpdateMode.REPLACE)
 
     # This will create the table.
-    flow = publish_flow_test(
-        client,
-        name=flow_name(),
-        artifacts=table,
-        engine=engine,
+    relational_validator = RelationalDataValidator(client, data_integration)
+    flow = flow_manager.publish_flow_test(artifacts=table)
+    relational_validator.check_saved_artifact_data(
+        flow, table.id(), expected_data=extracted_table_data
     )
-    validator.check_saved_artifact_data(flow, table.id(), expected_data=extracted_table_data)
 
     # Change to append mode.
     save(data_integration, table, table_1_save_name, LoadUpdateMode.APPEND)
-    publish_flow_test(
-        client,
+    flow_manager.publish_flow_test(
         existing_flow=flow,
         artifacts=table,
-        engine=engine,
     )
-    validator.check_saved_artifact_data(
+    relational_validator.check_saved_artifact_data(
         flow,
         table.id(),
         expected_data=pd.concat([extracted_table_data, extracted_table_data], ignore_index=True),
@@ -278,13 +273,11 @@ def test_sql_integration_save_with_different_update_modes(
 
     # Redundant append mode change
     save(data_integration, table, table_1_save_name, LoadUpdateMode.APPEND)
-    publish_flow_test(
-        client,
+    flow_manager.publish_flow_test(
         existing_flow=flow,
         artifacts=table,
-        engine=engine,
     )
-    validator.check_saved_artifact_data(
+    relational_validator.check_saved_artifact_data(
         flow,
         table.id(),
         expected_data=pd.concat(
@@ -294,19 +287,17 @@ def test_sql_integration_save_with_different_update_modes(
 
     # Create a different table from the same artifact.
     save(data_integration, table, table_2_save_name, LoadUpdateMode.REPLACE)
-    publish_flow_test(
-        client,
+    flow_manager.publish_flow_test(
         existing_flow=flow,
         artifacts=table,
-        engine=engine,
     )
-    validator.check_saved_artifact_data(
+    relational_validator.check_saved_artifact_data(
         flow,
         table.id(),
         expected_data=extracted_table_data,
     )
 
-    validator.check_saved_update_mode_changes(
+    relational_validator.check_saved_update_mode_changes(
         flow,
         expected_updates=[
             (table_2_save_name, LoadUpdateMode.REPLACE),

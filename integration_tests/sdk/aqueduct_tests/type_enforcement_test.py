@@ -6,7 +6,7 @@ from aqueduct.error import AqueductError
 
 from aqueduct import op
 
-from ..shared.utils import publish_flow_test, trigger_flow_test
+from ..shared.flow_helpers import publish_flow_test, trigger_flow_test
 
 
 @op

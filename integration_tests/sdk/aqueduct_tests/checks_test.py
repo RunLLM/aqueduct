@@ -6,7 +6,8 @@ from aqueduct.error import AqueductError, ArtifactNotFoundException, InvalidUser
 from aqueduct import check
 
 from ..shared.data_objects import DataObject
-from ..shared.utils import extract, publish_flow_test
+from ..shared.flow_helpers import publish_flow_test
+from .extract import extract
 from .test_functions.simple.model import dummy_sentiment_model
 from .test_metrics.constant.model import constant_metric
 

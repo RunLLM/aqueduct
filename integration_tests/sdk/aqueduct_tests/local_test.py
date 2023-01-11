@@ -2,8 +2,8 @@ from pandas import DataFrame
 from pandas._testing import assert_frame_equal
 
 from ..shared.data_objects import DataObject
-from ..shared.utils import extract
 from .checks_test import success_on_single_table_input
+from .extract import extract
 from .test_functions.simple.model import dummy_sentiment_model, dummy_sentiment_model_multiple_input
 from .test_metrics.constant.model import constant_metric
 

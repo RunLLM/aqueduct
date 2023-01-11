@@ -4,7 +4,7 @@ from aqueduct import op
 from sdk.aqueduct_tests.test_function import dummy_sentiment_model_function
 
 from ..shared.data_objects import DataObject
-from ..shared.utils import extract
+from .extract import extract
 
 
 def test_to_operator_local_function(client, data_integration):

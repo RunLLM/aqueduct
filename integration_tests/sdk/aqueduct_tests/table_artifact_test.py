@@ -6,7 +6,7 @@ import pandas as pd
 from aqueduct import op
 
 from ..shared.data_objects import DataObject
-from ..shared.utils import extract
+from .extract import extract
 
 
 def test_great_expectations_check(client, data_integration):

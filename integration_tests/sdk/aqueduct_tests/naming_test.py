@@ -2,7 +2,7 @@ import pytest
 from aqueduct.error import ArtifactNotFoundException, InvalidUserActionException
 
 from ..shared.data_objects import DataObject
-from ..shared.utils import extract
+from .extract import extract
 from .test_functions.simple.model import (
     dummy_model,
     dummy_model_2,
