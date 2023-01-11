@@ -14,10 +14,10 @@ our supported third-party integrations.
 ## Usage
 
 From this directory, to run the Aqueduct Tests:
-`API_KEY=<your api key> SERVER_ADDRESS=<your server's address> pytest aqueduct_tests/ -rP -vv
+`API_KEY=<your api key> SERVER_ADDRESS=<your server's address> pytest aqueduct_tests/ -rP -vv`
 
 To run the Data Integration Tests:
-`API_KEY=<your api key> SERVER_ADDRESS=<your server's address> pytest data_integration_tests/ -rP -vv
+`API_KEY=<your api key> SERVER_ADDRESS=<your server's address> pytest data_integration_tests/ -rP -vv`
 
 Both these test suites share a collection of configuration flags:
 * `--data`: The integration name of the data integration to run all tests against.
