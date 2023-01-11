@@ -6,6 +6,8 @@ from aqueduct_executor.operators.utils.enums import MetaEnum
 from pydantic import Field
 
 
+"""Duplicated at `aqueduct/integrations/connect_config.py` for now, please keep them in sync."""
+
 class BigQueryConfig(models.BaseConfig):
     project_id: str
     service_account_credentials: str
