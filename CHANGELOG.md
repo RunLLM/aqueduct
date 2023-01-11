@@ -8,7 +8,7 @@ Released on Januay 9, 2023.
     anonymized and captures API routes, performance data, and error rates
     without revealing any specifics of your machine or deployment. For more
     details, check out our [documentation](https://docs.aqueducthq.com/usage).
-* We now support cascading workflow triggers. You can specify that in our [python SDK](https://github.com/aqueducthq/aqueduct/blob/main/sdk/aqueduct/client.py#L373).
+* We now support cascading workflow triggers, which means a workflow can trigger another one at the end of its execution. You can specify that in our [python SDK](https://github.com/aqueducthq/aqueduct/blob/main/sdk/aqueduct/client.py#L373).
 
 ### Enhancements
 * Makes the artifact, check, metric, and operator details pages full width.
