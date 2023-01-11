@@ -120,6 +120,25 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     return workflowTableRow;
   });
 
+  const sortColumns = [
+    {
+      name: 'Last Run',
+      sortAccessPath: ['last_run'],
+    },
+    {
+      name: 'Name',
+      sortAccessPath: ['name', 'name'],
+    },
+    {
+      name: 'Engine',
+      sortAccessPath: ['engine', 'engineName'],
+    },
+    {
+      name: 'Status',
+      sortAccessPath: ['name', 'status'],
+    },
+  ];
+
   const workflowTableData: PaginatedSearchTableData = {
     schema: {
       fields: [
@@ -143,7 +162,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         value = <ExecutionStatusLink name={name} url={url} status={status} />;
         break;
       case 'last_run':
-        value = row[column.name];
+        value = row[column.name].toLocaleString();
         break;
       case 'engine': {
         const { engineName, engineIconUrl } = value;
@@ -195,6 +214,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           onGetColumnValue={onGetColumnValue}
           onChangeRowsPerPage={onChangeRowsPerPage}
           savedRowsPerPage={getRowsPerPage()}
+          sortColumns={sortColumns}
         />
       ) : (
         <Box>{noItemsMessage}</Box>
