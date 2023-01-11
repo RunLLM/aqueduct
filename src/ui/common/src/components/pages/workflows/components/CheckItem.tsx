@@ -161,7 +161,7 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
           />
         </Box>
       ) : (
-        <Typography sx={{ padding: showMorePadding, fontWeight: 300 }} variant="body1">
+        <Typography sx={{ padding: showMorePadding }} variant="body1">
           No checks.
         </Typography>
       )}

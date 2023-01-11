@@ -124,7 +124,7 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
           />
         </Box>
       ) : (
-        <Typography sx={{ padding: showMorePadding, fontWeight: 300 }} variant="body1">
+        <Typography sx={{ padding: showMorePadding }} variant="body1">
           No metrics.
         </Typography>
       )}

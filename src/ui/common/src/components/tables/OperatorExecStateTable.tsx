@@ -4,6 +4,7 @@ import TableCell, { TableCellProps } from '@mui/material/TableCell';
 import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
+import Typography from '@mui/material/Typography';
 import * as React from 'react';
 
 import { Data, DataSchema } from '../../utils/data';
@@ -82,7 +83,13 @@ export const OperatorExecStateTable: React.FC<OperatorExecStateTableProps> = ({
                     >
                       {tableType === OperatorExecStateTableType.Metric ||
                       column.name === 'title' ? (
-                        value.toString()
+                        <Typography
+                          sx={{
+                            fontWeight: column.name !== 'title' ? 300 : null,
+                          }}
+                        >
+                          {value.toString()}
+                        </Typography>
                       ) : (
                         <CheckTableItem checkValue={value as string} />
                       )}

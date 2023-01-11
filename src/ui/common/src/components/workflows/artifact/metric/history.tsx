@@ -77,6 +77,8 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
   const timestamps = dataToPlot.map((x) => x['timestamp']);
   const values = dataToPlot.map((x) => x['value']);
 
+  console.log('metricsHistory entry: ', entry);
+
   return (
     <Box display="flex" justifyContent="center" flexDirection="column">
       <Box mb={2}>
