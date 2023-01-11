@@ -108,7 +108,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         url: `/workflow/${value.id}`,
         status: value.status,
       },
-      last_run: new Date(value.last_run_at * 1000).toLocaleString(),
+      last_run: new Date(value.last_run_at * 1000),
       engine: {
         engineName,
         engineIconUrl: engineIconUrl,
