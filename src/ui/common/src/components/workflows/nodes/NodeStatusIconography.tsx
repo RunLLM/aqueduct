@@ -1,3 +1,4 @@
+import { Box, Typography } from '@mui/material';
 import React from 'react';
 
 import ExecutionStatus, { ExecState } from '../../../utils/shared';
@@ -12,23 +13,27 @@ export const NodeStatusIconography: React.FC<Props> = ({
   execState,
   successDisplay,
 }) => {
-  if (!execState) {
-    return (
-      <StatusIndicator
-        status={ExecutionStatus.Pending}
-        size={'50px'}
-        monochrome={'black'}
-      />
-    );
-  } else if (execState.status === ExecutionStatus.Succeeded) {
+  const iconSize = '24px'
+  let status = ExecutionStatus.Pending;
+  let statusLabel = "fetching";
+  if (execState) {
+    status = execState.status;
+    statusLabel = execState.status;
+  }
+  if (status === ExecutionStatus.Succeeded) {
     return successDisplay;
   } else {
     return (
-      <StatusIndicator
-        status={execState.status}
-        size={'50px'}
-        monochrome={'black'}
-      />
+      <Box display="flex" alignItems="center">
+        <StatusIndicator
+          status={status}
+          size={iconSize}
+          monochrome={'black'}
+        />
+        <Typography variant="body1" sx={{pl: 1 }}>
+          {statusLabel}
+        </Typography>
+      </Box>     
     );
   }
 };

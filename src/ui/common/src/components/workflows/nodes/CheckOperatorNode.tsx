@@ -47,14 +47,14 @@ const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
   const icon = result === 'true' ? faCheck : faExclamation;
 
   const successDisplay = (
-    <>
-      <Box sx={{ fontSize: '24px', marginRight: '8px' }}>
+    <Box display="flex" alignItems="center">
+      <Box sx={{ fontSize: '24px' }}>
         <FontAwesomeIcon icon={icon} />
       </Box>
-      <Typography variant="body1">
-        {data.result === 'true' ? 'passed' : 'failed'}
+      <Typography variant="body1" sx={{pl: 1 }}> 
+      {data.result === 'true' ? 'passed' : 'failed'}
       </Typography>
-    </>
+    </Box>
   );
 
   let backgroundColor, hoverColor;
