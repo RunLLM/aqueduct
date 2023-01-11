@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.1.9
+Released on Januay 9, 2023.
+
+### Key Features
+* As of this release, Aqueduct has usage tracking. Usage tracking is fully
+    anonymized and captures API routes, performance data, and error rates
+    without revealing any specifics of your machine or deployment. For more
+    details, check out our [documentation](https://docs.aqueducthq.com/usage).
+
+### Enhancements
+* Makes the artifact, check, metric, and operator details pages full width.
+* Shows the Aqueduct version number on the UI navigation bar.
+
+### Bugfixes
+* Fixes a number of UI bugs:
+  * Resets workflow settings dialog content after close.
+  * Aligns margins on right side of workflow details page.
+  * Removes vestigial popover to access settings page.
+  * Addresses regression where a workflow's saved objects were not being shown
+      prior to workflow deletion.
+  * Aligns the width of metric and check history items.
+  * Updates the metadata views (workflows & data list pages) to differentiate 
+      table headers from metadata rows.
+
 ## 0.1.8
 Released on December 20, 2022.
 
