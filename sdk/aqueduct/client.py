@@ -21,6 +21,7 @@ from aqueduct.error import (
 from aqueduct.flow import Flow
 from aqueduct.github import Github
 from aqueduct.integrations.airflow_integration import AirflowIntegration
+from aqueduct.integrations.databricks_integration import DatabricksIntegration
 from aqueduct.integrations.google_sheets_integration import GoogleSheetsIntegration
 from aqueduct.integrations.k8s_integration import K8sIntegration
 from aqueduct.integrations.lambda_integration import LambdaIntegration
@@ -208,6 +209,7 @@ class Client:
         K8sIntegration,
         LambdaIntegration,
         MongoDBIntegration,
+        DatabricksIntegration,
     ]:
         """Retrieves a connected integration object.
 
@@ -265,6 +267,10 @@ class Client:
         elif integration_info.service == ServiceType.MONGO_DB:
             return MongoDBIntegration(
                 dag=self._dag,
+                metadata=integration_info,
+            )
+        elif integration_info.service == ServiceType.DATABRICKS:
+            return DatabricksIntegration(
                 metadata=integration_info,
             )
         else:

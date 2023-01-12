@@ -8,6 +8,7 @@ import { AqueductDemoCard } from './components/integrations/cards/aqueductDemoCa
 import { BigQueryCard } from './components/integrations/cards/bigqueryCard';
 import { DataCard } from './components/integrations/cards/card';
 import { IntegrationCard } from './components/integrations/cards/card';
+import { DatabricksCard } from './components/integrations/cards/databricksCard';
 import { LoadSpecsCard } from './components/integrations/cards/loadSpecCard';
 import { MariaDbCard } from './components/integrations/cards/mariadbCard';
 import { MongoDBCard } from './components/integrations/cards/mongoDbCard';
@@ -21,6 +22,7 @@ import AddTableDialog from './components/integrations/dialogs/addTableDialog';
 import { BigQueryDialog } from './components/integrations/dialogs/bigqueryDialog';
 import { CondaDialog } from './components/integrations/dialogs/condaDialog';
 import { CSVDialog } from './components/integrations/dialogs/csvDialog';
+import { DatabricksDialog } from './components/integrations/dialogs/databricksDialog';
 import DeleteIntegrationDialog from './components/integrations/dialogs/deleteIntegrationDialog';
 import IntegrationDialog from './components/integrations/dialogs/dialog';
 import { IntegrationFileUploadField } from './components/integrations/dialogs/IntegrationFileUploadField';
@@ -225,6 +227,8 @@ export {
   createCronString,
   CSVDialog,
   DatabaseNode,
+  DatabricksCard,
+  DatabricksDialog,
   DataCard,
   DataColumnTypeNames,
   DataPage,
