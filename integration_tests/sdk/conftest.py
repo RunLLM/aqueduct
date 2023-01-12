@@ -5,13 +5,14 @@ from aqueduct.constants.enums import ServiceType
 from aqueduct.models.dag import DAG, Metadata
 
 from aqueduct import Client, globals
+from sdk.setup_integration import list_data_integrations, setup_data_integrations, get_aqueduct_config
 from sdk.shared import globals as test_globals
 from sdk.shared.utils import delete_flow, generate_new_flow_name
 from sdk.shared.validator import Validator
 
 
 def pytest_addoption(parser):
-    parser.addoption(f"--data", action="store", default="aqueduct_demo")
+    parser.addoption(f"--data", action="store", default=None)
     parser.addoption(f"--engine", action="store", default=None)
     parser.addoption(f"--keep-flows", action="store_true", default=False)
 
@@ -30,8 +31,11 @@ def pytest_configure(config):
     )
 
 
-API_KEY_ENV_NAME = "API_KEY"
-SERVER_ADDR_ENV_NAME = "SERVER_ADDRESS"
+# This is guaranteed to run before everything else, as it has the broadest scope and is set to autouse=True:
+# https://docs.pytest.org/en/stable/reference/fixtures.html#fixture-instantiation-order
+@pytest.fixture(scope="session", autouse=True)
+def setup_integrations():
+    setup_data_integrations()
 
 
 @pytest.fixture(scope="function")
@@ -40,19 +44,22 @@ def client(pytestconfig):
     # since the dag is a global variable on the aqueduct package.
     globals.__GLOBAL_DAG__ = DAG(metadata=Metadata())
 
-    api_key = os.getenv(API_KEY_ENV_NAME)
-    server_address = os.getenv(SERVER_ADDR_ENV_NAME)
+    api_key, server_address = get_aqueduct_config()
     if api_key is None or server_address is None:
         raise Exception(
-            "Test Setup Error: api_key and server_address must be set as environmental variables."
+            "Test Setup Error: api_key and server_address must be set in test-config.yml."
         )
-
     return Client(api_key, server_address)
 
 
-@pytest.fixture(scope="function")
-def data_integration(pytestconfig, client):
-    return client.integration(pytestconfig.getoption("data"))
+@pytest.fixture(scope="function", params=list_data_integrations())
+def data_integration(request, pytestconfig, client):
+    cmdline_data_flag = pytestconfig.getoption("data")
+    if cmdline_data_flag is not None:
+        if request.param != cmdline_data_flag:
+            pytest.skip("Skipped. Tests are only running against %s." % cmdline_data_flag)
+
+    return client.integration(request.param)
 
 
 @pytest.fixture(scope="session")
