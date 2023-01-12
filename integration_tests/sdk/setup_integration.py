@@ -1,9 +1,15 @@
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional, Tuple, Set
 
 import yaml
+from aqueduct.models.integration import Integration
 
 from aqueduct import Client
-from aqueduct.constants.enums import ServiceType
+from aqueduct.artifacts.base_artifact import BaseArtifact
+from aqueduct.constants.enums import ServiceType, LoadUpdateMode
+from aqueduct.integrations.sql_integration import RelationalDBIntegration
+from sdk.shared.demo_db import demo_db_tables
+from sdk.shared.flow_helpers import publish_flow_test, delete_flow
+from sdk.shared.naming import generate_new_flow_name
 
 TEST_CONFIG_FILE: str = "test-config-example.yml"
 
@@ -11,11 +17,63 @@ TEST_CONFIG_FILE: str = "test-config-example.yml"
 CACHED_CONFIG: Optional[Dict[str, Any]] = None
 
 # Tracks the integrations that we have already set up for this test run.
-ready_integrations: set = set()
+ready_integrations: Set[str] = set()
 
 
-def setup_snowflake_data(client):
-    pass
+def _sanitize_wine_data(df):
+    """The wine data in our demo db reads out with some unexpected tokens that
+    we need to remove before saving into other databases. The unsanitized version
+    will fail when saved to Snowflake, for example.
+    """
+    import numpy as np
+    return df.replace(r'^\\N$', np.nan, regex=True)
+
+
+def _missing_artifacts(client: Client, existing_names: Set[str]) -> Dict[str, BaseArtifact]:
+    """Given the names of all objects that already exists in an integration, computes
+    the objects that are missing the returns parameter artifacts with the missing data
+    for each of the missing objects.
+
+    All setup data is extracted from the demo db.
+    """
+    needed_names = set(demo_db_tables())
+    already_set_up_names = needed_names.intersection(existing_names)
+
+    missing_names = needed_names.difference(already_set_up_names)
+    if len(missing_names) == 0:
+        return []
+
+    demo = client.integration("aqueduct_demo")
+    artifact_by_name: Dict[str, BaseArtifact] = {}
+    for table_name in missing_names:
+        data = demo.table(table_name)
+        if table_name == "wine":
+            data = _sanitize_wine_data(data)
+
+        artifact_by_name[table_name] = client.create_param("Snowflake %s Data" % table_name, default=data)
+    return artifact_by_name
+
+
+def setup_snowflake_data(client: Client, snowflake: Integration) -> None:
+    assert isinstance(snowflake, RelationalDBIntegration)
+
+    # Check if these tables already exist.
+    existing_tables = set(snowflake.list_tables()["tablename"])
+
+    missing_artifact_by_name = _missing_artifacts(existing_tables)
+    if len(missing_artifact_by_name) == 0:
+        return
+
+    for table_name, artifact in missing_artifact_by_name:
+        snowflake.save(artifact, table_name, LoadUpdateMode.REPLACE)
+
+    flow = publish_flow_test(
+        client,
+        artifacts=list(missing_artifact_by_name.values()),
+        name=generate_new_flow_name(),
+        engine=None,
+    )
+    delete_flow(client, flow.id())
 
 
 def setup_sqlite_data(client):
@@ -60,9 +118,11 @@ def setup_data_integration(name: str) -> None:
         del integration_config["type"]
         client.connect_integration(name, service_type, integration_config)
 
+    integration = client.integration(name)
+
     # Setup the data in each of these integrations.
     if service_type == ServiceType.SNOWFLAKE:
-        setup_snowflake_data(client)
+        setup_snowflake_data(client, integration)
     elif service_type == ServiceType.SQLITE:
         setup_sqlite_data(client)
     elif service_type == ServiceType.S3:
