@@ -72,7 +72,8 @@ export const OperatorExecStateTable: React.FC<OperatorExecStateTableProps> = ({
                 key={`tableBody-${rowIndex}`}
               >
                 {schema.fields.map((column, columnIndex) => {
-                  const value = row[column.name.toLowerCase()];
+                  const columnName = column.name.toLowerCase();
+                  const value = row[columnName];
 
                   // For title columns we should just render the text.
                   // For a check's value column, we should render the appropriate icon.
@@ -82,10 +83,10 @@ export const OperatorExecStateTable: React.FC<OperatorExecStateTableProps> = ({
                       align={tableAlign as TableCellProps['align']}
                     >
                       {tableType === OperatorExecStateTableType.Metric ||
-                      column.name === 'title' ? (
+                      columnName === 'title' ? (
                         <Typography
                           sx={{
-                            fontWeight: column.name !== 'title' ? 300 : null,
+                            fontWeight: columnName === 'title' ? 400 : 300,
                           }}
                         >
                           {value.toString()}

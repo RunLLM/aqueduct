@@ -62,8 +62,6 @@ const SummaryList: React.FC<Props> = ({
       content = artifactResult.name;
     }
 
-    console.log('summaryList content: ', content);
-
     const element = (
       <Box
         key={artifactResult.id}
