@@ -15,13 +15,13 @@ import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { OperatorType } from '../../../../utils/operators';
-import {
+import ExecutionStatus, {
   isFailed,
   isInitial,
   isLoading,
   isSucceeded,
 } from '../../../../utils/shared';
-import DefaultLayout from '../../../layouts/default';
+import DefaultLayout, { SidesheetContentWidth } from '../../../layouts/default';
 import ArtifactContent from '../../../workflows/artifact/content';
 import CsvExporter from '../../../workflows/artifact/csvExporter';
 import {
@@ -205,13 +205,20 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   const inputs = mapOperators([artifact.from]);
   const outputs = mapOperators(artifact.to ? artifact.to : []);
 
+  const artifactStatus = artifact?.result?.exec_state?.status;
+  const previewAvailable =
+    artifactStatus && artifactStatus !== ExecutionStatus.Canceled;
+
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
-      <Box width={sideSheetMode ? '800px' : 'auto'}>
+      <Box width={sideSheetMode ? SidesheetContentWidth : '100%'}>
         <Box width="100%">
           {!sideSheetMode && (
             <Box width="100%" display="flex" alignItems="center">
-              <DetailsPageHeader name={artifact ? artifact.name : 'Artifact'} />
+              <DetailsPageHeader
+                name={artifact ? artifact.name : 'Artifact'}
+                status={artifactStatus}
+              />
               <CsvExporter
                 artifact={artifact}
                 contentWithLoadingStatus={contentWithLoadingStatus}
@@ -243,24 +250,38 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
             )}
           </Box>
 
-          <Divider sx={{ marginY: '32px' }} />
+          {previewAvailable ? (
+            <>
+              <Divider sx={{ marginY: '32px' }} />
+              <Box width="100%" marginTop="12px">
+                <Typography
+                  variant="h6"
+                  component="div"
+                  marginBottom="8px"
+                  fontWeight="normal"
+                >
+                  Preview
+                </Typography>
+                <ArtifactContent
+                  artifact={artifact}
+                  contentWithLoadingStatus={contentWithLoadingStatus}
+                />
+              </Box>
 
-          <Box width="100%" marginTop="12px">
-            <Typography
-              variant="h6"
-              component="div"
-              marginBottom="8px"
-              fontWeight="normal"
-            >
-              Preview
-            </Typography>
-            <ArtifactContent
-              artifact={artifact}
-              contentWithLoadingStatus={contentWithLoadingStatus}
-            />
-          </Box>
+              <Divider sx={{ marginY: '32px' }} />
+            </>
+          ) : (
+            <>
+              <Divider sx={{ marginY: '32px' }} />
 
-          <Divider sx={{ marginY: '32px' }} />
+              <Box marginBottom="32px">
+                <Alert severity="warning">
+                  An upstream operator failed, causing this artifact to not be
+                  created.
+                </Alert>
+              </Box>
+            </>
+          )}
 
           <Box display="flex" width="100%">
             <MetricsOverview metrics={metrics} />

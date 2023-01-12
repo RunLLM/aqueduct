@@ -50,6 +50,7 @@ class OperatorType(Enum, metaclass=MetaEnum):
 class TriggerType(Enum, metaclass=MetaEnum):
     MANUAL = "manual"
     PERIODIC = "periodic"
+    CASCADE = "cascade"
 
 
 class ServiceType(str, Enum, metaclass=MetaEnum):
@@ -73,9 +74,13 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     LAMBDA = "Lambda"
     MONGO_DB = "MongoDB"
     CONDA = "Conda"
+    AQUEDUCT_ENGINE = "Aqueduct Engine"
+    DATABRICKS = "Databricks"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
+    """Must match the corresponding entries in `ServiceType` exactly."""
+
     POSTGRES = "Postgres"
     SNOWFLAKE = "Snowflake"
     MYSQL = "MySQL"
@@ -178,3 +183,4 @@ class RuntimeType(Enum, metaclass=MetaEnum):
     AIRFLOW = "airflow"
     K8S = "k8s"
     LAMBDA = "lambda"
+    DATABRICKS = "databricks"

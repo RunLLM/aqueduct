@@ -27,7 +27,7 @@ base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
 server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = os.path.join(os.environ["HOME"], ".aqueduct", "ui")
 
-package_version = "0.1.8"
+package_version = "0.1.9"
 aws_credentials_path = os.path.join(os.environ["HOME"], ".aws", "credentials")
 
 default_server_port = 8080
@@ -43,10 +43,15 @@ welcome_message = """
 Your API Key: %s
 
 The Web UI and the backend server (v%s) are accessible at: http://%s:%d/login?apiKey=%s
+
+Aqueduct collects non sensitive usage data to improve its services.
+Please refer to https://docs.aqueducthq.com/usage for more details.
+Usage data collection is enabled by default, and can be disabled via `aqueduct start --disable-usage-stats`.
 ***************************************************
 """
 
 conda_cmd_prefix = "conda"
+env_file_path = os.path.join(os.environ["HOME"], ".aqueduct", "server", "config", "env")
 
 
 def update_config_yaml(file):
@@ -370,7 +375,13 @@ def is_port_in_use(port: int) -> bool:
         return s.connect_ex(("localhost", port)) == 0
 
 
-def start(expose, port, verbose):
+def cache_env(env):
+    if env:
+        with open(env_file_path, "w") as f:
+            f.write(env)
+
+
+def start(expose, port, verbose, env, disable_usage_stats):
     update()
 
     if port is None:
@@ -386,6 +397,8 @@ def start(expose, port, verbose):
         server_port = int(port)
         print("Server will use the user-specified port %d" % server_port)
 
+    cache_env(env)
+
     command = [
         os.path.join(server_directory, "bin", "server"),
         "--config",
@@ -399,6 +412,9 @@ def start(expose, port, verbose):
     
     if verbose:
         command.append("--verbose")
+
+    if disable_usage_stats:
+        command.append("--disable-usage-stats")
 
     popen_handle = execute_command_nonblocking(command)
     return popen_handle, server_port
@@ -603,6 +619,18 @@ if __name__ == "__main__":
     start_args.add_argument(
         "--port", dest="port", help="Specify the port on which the Aqueduct server runs."
     )
+    start_args.add_argument(
+        "--env",
+        dest="env",
+        help="Specify the environment in which the Aqueduct server is operating.",
+    )
+    start_args.add_argument(
+        "--disable-usage-stats",
+        default=False,
+        action="store_true",
+        dest="disable_usage_stats",
+        help="If set to true, usage statistics reporting will be disabled",
+    )
 
     install_args = subparsers.add_parser(
         "install",
@@ -667,7 +695,7 @@ if __name__ == "__main__":
 
     if args.command == "start":
         try:
-            popen_handle, server_port = start(args.expose, args.port, args.verbose)
+            popen_handle, server_port = start(args.expose, args.port, args.verbose, args.env, args.disable_usage_stats)
             time.sleep(1)
             terminated = popen_handle.poll()
             if terminated:

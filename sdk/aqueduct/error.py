@@ -98,6 +98,11 @@ class InvalidUserArgumentException(Error):
     pass
 
 
+# Exception raised when the user does something that is explicitly unsupported right now.
+class UnsupportedFeatureException(Error):
+    pass
+
+
 # Exception raised when user attempts to use an invalid file name as a file dependency.
 class ReservedFileNameException(Error):
     pass

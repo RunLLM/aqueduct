@@ -153,6 +153,12 @@ export type LambdaConfig = {
   role_arn: string;
 };
 
+export type DatabricksConfig = {
+  workspace_url: string;
+  access_token: string;
+  s3_instance_profile_arn: string;
+};
+
 export type IntegrationConfig =
   | PostgresConfig
   | SnowflakeConfig
@@ -170,7 +176,8 @@ export type IntegrationConfig =
   | AirflowConfig
   | KubernetesConfig
   | LambdaConfig
-  | CondaConfig;
+  | CondaConfig
+  | DatabricksConfig;
 
 export type Service =
   | 'Postgres'
@@ -190,7 +197,8 @@ export type Service =
   | 'Lambda'
   | 'Google Sheets'
   | 'MongoDB'
-  | 'Conda';
+  | 'Conda'
+  | 'Databricks';
 
 export type Info = {
   logo: string;
@@ -253,7 +261,7 @@ export const IntegrationCategories = {
 };
 
 export const ServiceLogos: ServiceLogo = {
-  ['Aqueduct']: `${logoBucket}/aqueduct-logo-light/1x/logo_light_blue.png`,
+  ['Aqueduct']: `${logoBucket}/aqueduct-logo-two-tone/small/2x/aqueduct-logo-two-tone-small%402x.png`,
   ['Postgres']: `${integrationLogosBucket}/440px-Postgresql_elephant.svg.png`,
   ['Snowflake']: `${integrationLogosBucket}/51-513957_periscope-data-partners-snowflake-computing-logo.png`,
   ['Redshift']: `${integrationLogosBucket}/amazon-redshift.png`,
@@ -270,6 +278,7 @@ export const ServiceLogos: ServiceLogo = {
   ['Lambda']: `${integrationLogosBucket}/Lambda.png`,
   ['MongoDB']: `${integrationLogosBucket}/mongo.png`,
   ['Conda']: `${integrationLogosBucket}/conda.png`,
+  ['Databricks']: `${integrationLogosBucket}/databricks_logo.png`,
 };
 
 export const SupportedIntegrations: ServiceInfoMap = {
@@ -351,6 +360,11 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['Conda']: {
     logo: ServiceLogos['Conda'],
     activated: true,
+    category: IntegrationCategories.COMPUTE,
+  },
+  ['Databricks']: {
+    logo: ServiceLogos['Databricks'],
+    activated: false,
     category: IntegrationCategories.COMPUTE,
   },
 };

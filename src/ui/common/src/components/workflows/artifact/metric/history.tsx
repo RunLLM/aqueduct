@@ -110,7 +110,7 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
         />
       </Box>
 
-      <Box width="500px" mt="32px">
+      <Box mt="32px">
         <Typography variant="h6" fontWeight="normal">
           History
         </Typography>
@@ -158,6 +158,7 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
                     : `1px solid ${theme.palette.gray[400]}`,
                 backgroundColor: backgroundColor,
                 '&:hover': { backgroundColor: hoverColor },
+                width: 'auto',
               }}
             >
               <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>

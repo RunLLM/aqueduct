@@ -33,6 +33,13 @@ type workflowReader interface {
 	// It returns a database.ErrNoRows if no rows are found.
 	GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID, name string, DB database.Database) (*models.Workflow, error)
 
+	// GetByScheduleTrigger returns all Workflows where Schedule.Trigger is equal to trigger.
+	GetByScheduleTrigger(ctx context.Context, trigger workflow.UpdateTrigger, DB database.Database) ([]models.Workflow, error)
+
+	// GetTargets returns the ID of each Workflow where Schedule.SourceID
+	// is equal to ID.
+	GetTargets(ctx context.Context, ID uuid.UUID, DB database.Database) ([]uuid.UUID, error)
+
 	// GetLastRunByEngine returns a WorkflowLastRun for each Workflow where the latest
 	// DAGResult created is associated with a DAG running on engine.
 	GetLastRunByEngine(ctx context.Context, engine shared.EngineType, DB database.Database) ([]views.WorkflowLastRun, error)

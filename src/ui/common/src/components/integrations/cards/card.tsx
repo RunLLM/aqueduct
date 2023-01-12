@@ -12,6 +12,7 @@ import IntegrationLogo from '../logo';
 import { AirflowCard } from './airflowCard';
 import { AqueductDemoCard } from './aqueductDemoCard';
 import { BigQueryCard } from './bigqueryCard';
+import { DatabricksCard } from './databricksCard';
 import { GCSCard } from './gcsCard';
 import { KubernetesCard } from './kubernetesCard';
 import { LambdaCard } from './lambdaCard';
@@ -133,6 +134,9 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
       break;
     case 'Lambda':
       serviceCard = <LambdaCard integration={integration} />;
+      break;
+    case 'Databricks':
+      serviceCard = <DatabricksCard integration={integration} />;
       break;
     default:
       serviceCard = null;

@@ -14,6 +14,7 @@ import (
 	mdl_utils "github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
+	"github.com/aqueducthq/aqueduct/lib/workflow"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	operator_utils "github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
@@ -182,6 +183,25 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
+
+	// Schedule validation needs to happen inside the `txn` to prevent
+	// concurrent requests from forming a cycle among cascading workflows
+	validateScheduleCode, err := workflow.ValidateSchedule(
+		ctx,
+		args.isUpdate,
+		dbWorkflowDag.WorkflowID,
+		dbWorkflowDag.Metadata.Schedule,
+		dbWorkflowDag.EngineConfig.Type,
+		h.ArtifactRepo,
+		h.DAGRepo,
+		h.DAGEdgeRepo,
+		h.OperatorRepo,
+		h.WorkflowRepo,
+		h.Database,
+	)
+	if err != nil {
+		return emptyResp, validateScheduleCode, err
+	}
 
 	workflowId, err := utils.WriteDAGToDatabase(
 		ctx,

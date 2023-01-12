@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -71,4 +72,8 @@ func (l *Load) UnmarshalJSON(data []byte) error {
 
 	l.Parameters = params
 	return nil
+}
+
+func (l *Load) Scan(value interface{}) error {
+	return utils.ScanJSONB(value, l)
 }

@@ -36,6 +36,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
+import { handleFetchAllWorkflowSummaries } from '../../reducers/listWorkflowSummaries';
 import {
   handleDeleteWorkflow,
   handleListWorkflowSavedObjects,
@@ -50,8 +51,10 @@ import {
   getNextUpdateTime,
   PeriodUnit,
 } from '../../utils/cron';
+import { UpdateMode } from '../../utils/operators';
 import ExecutionStatus, { LoadingStatusEnum } from '../../utils/shared';
 import {
+  getSavedObjectIdentifier,
   RetentionPolicy,
   SavedObject,
   WorkflowDag,
@@ -61,6 +64,7 @@ import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
 import { LoadingButton } from '../primitives/LoadingButton.styles';
 import StorageSelector from './storageSelector';
+import TriggerSourceSelector from './triggerSourceSelector';
 
 type PeriodicScheduleSelectorProps = {
   cronString: string;
@@ -240,6 +244,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         workflowId: workflowDag.workflow_id,
       })
     );
+    dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
   }, [dispatch, user.apiKey, workflowDag.workflow_id]);
 
   const savedObjectsResponse = useSelector(
@@ -255,6 +260,10 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
   const dagResults = useSelector(
     (state: RootState) => state.workflowReducer.dagResults
+  );
+
+  const workflows = useSelector(
+    (state: RootState) => state.listWorkflowReducer.workflows
   );
 
   const [name, setName] = useState(workflowDag.metadata?.name);
@@ -282,6 +291,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     schedule: workflowDag.metadata.schedule.cron_schedule,
     paused: workflowDag.metadata.schedule.paused,
     retentionPolicy: workflowDag.metadata?.retention_policy,
+    sourceId: workflowDag.metadata?.schedule.source_id,
   };
 
   const settingsChanged =
@@ -296,6 +306,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const triggerOptions = [
     { label: 'Update Manually', value: WorkflowUpdateTrigger.Manual },
     { label: 'Update Periodically', value: WorkflowUpdateTrigger.Periodic },
+    { label: 'Update After Source', value: WorkflowUpdateTrigger.Cascade },
   ];
 
   const scheduleSelector = (
@@ -317,6 +328,11 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
               sx={{
                 [`& .${formControlLabelClasses.label}`]: { fontSize: '14px' },
               }}
+              // TODO: ENG-2181 Add support for changing source trigger
+              disabled={
+                value === WorkflowUpdateTrigger.Cascade &&
+                triggerType !== WorkflowUpdateTrigger.Cascade
+              }
             />
           );
         })}
@@ -340,6 +356,10 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
             }
           />
         </>
+      )}
+
+      {triggerType === WorkflowUpdateTrigger.Cascade && (
+        <TriggerSourceSelector workflows={workflows} />
       )}
     </Box>
   );
@@ -489,6 +509,8 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       <Typography variant="body1">
         [{integration}] <b>{name}</b>
       </Typography>
+
+      {/* Objects saved into S3 are currently expected to have update_mode === UpdateMode.replace */}
       {sortedObjects && (
         <Typography
           style={{
@@ -499,7 +521,12 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           display="inline"
         >
           Update Mode:{' '}
-          {sortedObjects.map((object) => `${object.update_mode}`).join(', ')}
+          {sortedObjects
+            .map(
+              (object) =>
+                `${object.spec.parameters.update_mode || UpdateMode.replace}`
+            )
+            .join(', ')}
           {sortedObjects.length > 1 && ' (active)'}
         </Typography>
       )}
@@ -513,6 +540,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           const sortedObjects = [...savedObjectsList].sort((object) =>
             Date.parse(object.modified_at)
           );
+
           // Cannot align the checkbox to the top of a multi-line label.
           // Using a weird marginTop workaround.
           return (
@@ -529,7 +557,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
                 <Box sx={{ paddingTop: '24px' }}>
                   {displayObject(
                     savedObjectsList[0].integration_name,
-                    savedObjectsList[0].object_name,
+                    getSavedObjectIdentifier(savedObjectsList[0]),
                     sortedObjects
                   )}
                 </Box>

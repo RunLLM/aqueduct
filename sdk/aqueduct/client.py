@@ -21,6 +21,7 @@ from aqueduct.error import (
 from aqueduct.flow import Flow
 from aqueduct.github import Github
 from aqueduct.integrations.airflow_integration import AirflowIntegration
+from aqueduct.integrations.databricks_integration import DatabricksIntegration
 from aqueduct.integrations.google_sheets_integration import GoogleSheetsIntegration
 from aqueduct.integrations.k8s_integration import K8sIntegration
 from aqueduct.integrations.lambda_integration import LambdaIntegration
@@ -43,9 +44,9 @@ from aqueduct.utils.type_inference import infer_artifact_type
 from aqueduct.utils.utils import (
     construct_param_spec,
     generate_engine_config,
+    generate_flow_schedule,
     generate_ui_url,
     parse_user_supplied_id,
-    schedule_from_cron_string,
 )
 
 from aqueduct import globals
@@ -208,6 +209,7 @@ class Client:
         K8sIntegration,
         LambdaIntegration,
         MongoDBIntegration,
+        DatabricksIntegration,
     ]:
         """Retrieves a connected integration object.
 
@@ -267,6 +269,10 @@ class Client:
                 dag=self._dag,
                 metadata=integration_info,
             )
+        elif integration_info.service == ServiceType.DATABRICKS:
+            return DatabricksIntegration(
+                metadata=integration_info,
+            )
         else:
             raise InvalidIntegrationException(
                 "This method does not support loading integration of type %s"
@@ -321,6 +327,7 @@ class Client:
         checks: Optional[List[BoolArtifact]] = None,
         k_latest_runs: Optional[int] = None,
         config: Optional[FlowConfig] = None,
+        source_flow: Optional[Union[Flow, str, uuid.UUID]] = None,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
 
@@ -369,6 +376,9 @@ class Client:
                 - engine: Specify where this flow should run with one of your connected integrations.
                 - k_latest_runs: Number of most-recent runs of this flow that Aqueduct should store.
                     Runs outside of this bound are deleted. Defaults to persisting all runs.
+            source_flow:
+                Used to identify the source flow for this flow. This can be identified
+                via an object (Flow), name (str), or id (str or uuid).
 
         Raises:
             InvalidUserArgumentException:
@@ -416,6 +426,38 @@ class Client:
                 "`artifacts` argument must either be an artifact or a list of artifacts."
             )
 
+        if source_flow and schedule != "":
+            raise InvalidUserArgumentException(
+                "Cannot create a flow with both a schedule and a source flow, pick one."
+            )
+
+        if (
+            source_flow
+            and not isinstance(source_flow, Flow)
+            and not isinstance(source_flow, str)
+            and not isinstance(source_flow, uuid.UUID)
+        ):
+            raise InvalidUserArgumentException(
+                "`source_flow` argument must either be a flow, str, or uuid."
+            )
+
+        source_flow_id = None
+        if isinstance(source_flow, Flow):
+            source_flow_id = source_flow.id()
+        elif isinstance(source_flow, str):
+            # Check if there is a flow with the name `source_flow`
+            for workflow in globals.__GLOBAL_API_CLIENT__.list_workflows():
+                if workflow.name == source_flow:
+                    source_flow_id = workflow.id
+                    break
+
+            if not source_flow_id:
+                # No flow with name `source_flow` was found so try to convert
+                # the str to a uuid
+                source_flow_id = uuid.UUID(source_flow)
+        elif isinstance(source_flow, uuid.UUID):
+            source_flow_id = source_flow
+
         # If metrics and/or checks are explicitly included, add them to the artifacts list,
         # but don't include them implicitly.
         implicitly_include_metrics = True
@@ -432,7 +474,7 @@ class Client:
             artifacts += checks
             implicitly_include_checks = False
 
-        cron_schedule = schedule_from_cron_string(schedule)
+        flow_schedule = generate_flow_schedule(schedule, source_flow_id)
 
         k_latest_runs_from_flow_config = config.k_latest_runs if config else None
         if k_latest_runs and k_latest_runs_from_flow_config:
@@ -466,7 +508,7 @@ class Client:
         dag.metadata = Metadata(
             name=name,
             description=description,
-            schedule=cron_schedule,
+            schedule=flow_schedule,
             retention_policy=retention_policy,
         )
         dag.set_engine_config(
