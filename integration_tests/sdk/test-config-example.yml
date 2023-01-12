@@ -1,6 +1,11 @@
-# TODO: describe format
 apikey: D2BV8UQY7HJ6GECI03NW5ASTKXOL4MP9
 address: localhost:8080
+
+# An integration entry format:
+# <integration name>:
+#    - <integration config field>
+#    - <integration config field>
+#    - ...
 data:
   test_snowflake:
     type: Snowflake
