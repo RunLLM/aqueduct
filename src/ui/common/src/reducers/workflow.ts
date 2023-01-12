@@ -465,9 +465,12 @@ export const handleGetSelectDagPosition = createAsyncThunk<
     const artifactResults =
       thunkAPI.getState().workflowReducer.artifactResults ?? {};
     if (!!dag) {
-      return collapsePosition(allNodes, dag, artifactResults);
+      const collapsedPosition = collapsePosition(allNodes, dag, artifactResults);
+      console.log('getSelectDagPosition collapsedPosition: ', collapsedPosition);
+      return collapsedPosition;
     }
 
+    console.log('getSelectDagPosition allNodes: ', allNodes);
     return allNodes;
   }
 );

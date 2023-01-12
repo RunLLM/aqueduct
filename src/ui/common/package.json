@@ -48,6 +48,7 @@
     "autosuggest-highlight": "^3.2.1",
     "core-js": "^3.22.8",
     "cron-parser": "^4.0.0",
+    "elkjs": "0.8.2",
     "mui-image": "^1.0.7",
     "plotly.js": "2.14.0",
     "query-string": "^7.1.1",
