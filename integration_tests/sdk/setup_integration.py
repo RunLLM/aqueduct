@@ -6,7 +6,13 @@ from aqueduct import Client
 from aqueduct.constants.enums import ServiceType
 
 TEST_CONFIG_FILE: str = "test-config-example.yml"
+
+# We only cache the config for the lifecycle of a single test run.
 CACHED_CONFIG: Optional[Dict[str, Any]] = None
+
+# Tracks the integrations that we have already set up for this test run.
+ready_integrations: set = set()
+
 
 def setup_snowflake_data(client):
     pass
@@ -29,44 +35,49 @@ def _parse_config_file() -> Dict[str, Any]:
     return CACHED_CONFIG
 
 
-# TODO: do not require a full setup of the yaml file if you're just trying to run a single integration.
-def setup_data_integrations():
-    """Returns the list of data integrations that we expect the tests to run against.
-
-    This list of integrations is configured by `integrations-config.yml`. This method connects
-    to any integrations that the server doesn't have, and also ensures that the appropriate data
-    is populated in each one.
+def setup_data_integration(name: str) -> None:
+    """Connects to the given integration name if the server hasn't yet. It also ensures
+    that the appropriate data is populated.
     """
+    if name in ready_integrations:
+        return
+
     test_config = _parse_config_file()
-
-    assert "apikey" in test_config
-    assert "address" in test_config
     assert "data" in test_config
+    assert name in test_config["data"], "Supplied integration %s not found in config file." % name
 
-    client = Client(test_config["apikey"], test_config["address"])
+    client = Client(*get_aqueduct_config())
     connected_integrations = client.list_integrations()
-    for name, config in test_config["data"].items():
-        service_type = config["type"]
 
-        # Connect to any integrations that don't exist.
-        if name not in connected_integrations.keys():
-            del config["type"]
-            client.connect_integration(name, service_type, config)
+    integration_config = test_config["data"][name]
+    service_type = integration_config["type"]
 
-        # Setup the data in each of these integrations.
-        if service_type == ServiceType.SNOWFLAKE:
-            setup_snowflake_data(client)
-        elif service_type == ServiceType.SQLITE:
-            setup_sqlite_data(client)
-        elif service_type == ServiceType.S3:
-            setup_s3_data(client)
-        else:
-            raise Exception("Test suite does not yet support %s." % service_type)
+    # Connect to any integrations that don't exist.
+    if name not in connected_integrations.keys():
+
+        # Modifying the config dictionary should be ok, since we only ever process
+        # an entry once.
+        del integration_config["type"]
+        client.connect_integration(name, service_type, integration_config)
+
+    # Setup the data in each of these integrations.
+    if service_type == ServiceType.SNOWFLAKE:
+        setup_snowflake_data(client)
+    elif service_type == ServiceType.SQLITE:
+        setup_sqlite_data(client)
+    elif service_type == ServiceType.S3:
+        setup_s3_data(client)
+    else:
+        raise Exception("Test suite does not yet support %s." % service_type)
+
+    ready_integrations.add(name)
 
 
 def list_data_integrations() -> List[str]:
-    """Assumption is that `setup_data_integrations()` has already run."""
+    """Lists all the data integrations present in the config file. The demo db is always included."""
     test_config = _parse_config_file()
+    assert "data" in test_config
+
     data_integrations = list(test_config["data"].keys())
     data_integrations.insert(0, "aqueduct_demo")
     return data_integrations
@@ -75,4 +86,5 @@ def list_data_integrations() -> List[str]:
 def get_aqueduct_config() -> Tuple[str, str]:
     # Returns the apikey and server address.
     test_config = _parse_config_file()
+    assert "apikey" in test_config and "address" in test_config, "apikey and address must be set in test-config.yml."
     return test_config["apikey"], test_config["address"]
