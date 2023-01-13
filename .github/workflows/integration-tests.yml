@@ -16,6 +16,8 @@ jobs:
     name: Run Fast Integration Tests with Python Version ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: eng-2138-write-python-scripts-for-automatically
 
       - name: Create the logs directory
         run: mkdir -p logs
@@ -67,18 +69,19 @@ jobs:
       - name: Fetch the API key
         run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
 
+      - name: Set up the SDK Integration Test Config File
+        run: |
+          echo "apikey: $(aqueduct apikey)" >> test-config.yml
+          echo "address: localhost:8080" >> test-config.yml
+
       - name: Run the SDK Aqueduct Integration Tests
         timeout-minutes: 30
         working-directory: integration_tests/sdk
-        env:
-          SERVER_ADDRESS: localhost:8080
         run: pytest aqueduct_tests/ -rP -n 5
 
       - name: Run the SDK Data Integration Tests
         timeout-minutes: 10
         working-directory: integration_tests/sdk
-        env:
-          SERVER_ADDRESS: localhost:8080
         run: pytest data_integration_tests/ -rP -n 5
 
       - name: Run the No-Concurrency Integration Tests
