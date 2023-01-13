@@ -10,6 +10,7 @@ from sdk.data_integration_tests.flow_manager import FlowManager
 
 allowed_data_integrations_by_file = {
     "relational_test": [ServiceType.SQLITE, ServiceType.SNOWFLAKE],
+    "s3_test": [ServiceType.S3],
 }
 
 
