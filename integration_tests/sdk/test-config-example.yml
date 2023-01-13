@@ -22,8 +22,8 @@ data:
     # config_file_content:
     # config_file_profile:
 
-    bucket: integration-tests-kenny
-    region: us-east-2
+    bucket:
+    region:
 
     # Whether to configure this integration as the metadata store too.
     # use_as_storage:
