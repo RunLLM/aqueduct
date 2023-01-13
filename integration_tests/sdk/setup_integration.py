@@ -33,7 +33,7 @@ def _parse_config_file() -> Dict[str, Any]:
 def _fetch_demo_data(demo: RelationalDBIntegration, table_name: str) -> pd.DataFrame:
     df = demo.table(table_name)
 
-    # Certain tables in our demo db read out with some unexpected tokens that
+    # Certain tables in our demo db read out some unexpected tokens that
     # we need to remove before saving into other databases. The unsanitized version
     # will fail when saved to Snowflake, for example.
     if table_name == "wine" or table_name == "mpg":
