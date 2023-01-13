@@ -69,7 +69,8 @@ jobs:
       - name: Fetch the API key
         run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
 
-      - name: Set up the SDK Integration Test Config File
+      - name: Set up the SDK Integration Tests
+        working-directory: integration_tests/sdk
         run: |
           echo "apikey: $(aqueduct apikey)" >> test-config.yml
           echo "address: localhost:8080" >> test-config.yml

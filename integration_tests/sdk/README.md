@@ -11,13 +11,20 @@ APIs, abilities, and limitations, and Aqueduct Tests are philosophically less su
 to be focused and complete, instead of reusable. They should only use the SDK's Integration API to validate data movement to and from
 our supported third-party integrations.
 
+## Configuration
+For these test suites to run, a configuration file must exist at `test-config.yml`. This file contains:
+1) The apikey to access the server.
+2) The server's address.
+3) The connection configuration information for each of the data integrations to run against. The test suites
+will automatically run against each of the data integrations specified in this file, unless `--data` is supplied.
+
 ## Usage
 
 From this directory, to run the Aqueduct Tests:
-`API_KEY=<your api key> SERVER_ADDRESS=<your server's address> pytest aqueduct_tests/ -rP -vv`
+`pytest aqueduct_tests/ -rP -vv`
 
 To run the Data Integration Tests:
-`API_KEY=<your api key> SERVER_ADDRESS=<your server's address> pytest data_integration_tests/ -rP -vv`
+`pytest data_integration_tests/ -rP -vv`
 
 Both these test suites share a collection of configuration flags:
 * `--data`: The integration name of the data integration to run all tests against.
@@ -31,11 +38,11 @@ see `aqueduct_tests/conftest.py` and  `data_integration_tests/conftest.py`.
 ## Useful Pytest Flags 
 
 Running all the tests in a single file:
-- `<your env variables> pytest <path to test file> -rP -vv`
+- `pytest <path to test file> -rP -vv`
 
 Running a specific test:
-- `<your env variables>  pytest <specific test directory> -rP -vv -k '<specific test name>'`
+- `pytest <specific test directory> -rP -vv -k '<specific test name>'`
 
 Running tests in parallel, with concurrency 5:
 - Install pytest-xdist
-- `<your env variables> pytest <specific test directory> -rP -vv -n 5`
+- `pytest <specific test directory> -rP -vv -n 5`
