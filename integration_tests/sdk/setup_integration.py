@@ -177,9 +177,10 @@ def setup_data_integrations(filter_to: Optional[str] = None) -> None:
 def list_data_integrations() -> List[str]:
     """Get the list of data integrations from the config file."""
     test_config = _parse_config_file()
-    assert "data" in test_config
-    data_integrations = list(test_config["data"].keys())
-    data_integrations.insert(0, "aqueduct_demo")
+
+    data_integrations = ["aqueduct_demo"]
+    if "data" in test_config:
+        data_integrations += list(test_config["data"].keys())
     return data_integrations
 
 
