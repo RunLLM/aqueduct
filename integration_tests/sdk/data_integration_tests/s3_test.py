@@ -63,6 +63,9 @@ def test_s3_table_formats(flow_manager, data_integration):
     # Save the table with each of the other different formats.
     _save_artifact_and_check(flow_manager, data_integration, artifact=hotel_reviews, format="csv")
     _save_artifact_and_check(flow_manager, data_integration, artifact=hotel_reviews, format="json")
+    _save_artifact_and_check(
+        flow_manager, data_integration, artifact=hotel_reviews, format="parquet"
+    )
 
 
 def test_s3_table_fetch_with_merge(client, data_integration):
@@ -86,6 +89,7 @@ def test_s3_table_fetch_with_merge(client, data_integration):
     assert merged.get().equals(expected_merged_data)
 
 
+# TODO: check the weird merge behavior here with tables?
 def test_s3_fetch_directory(flow_manager, data_integration):
     """Create a random directory name and save a table and non-tabular artifact into it."""
     dir_name = generate_object_name()

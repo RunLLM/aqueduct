@@ -201,7 +201,11 @@ class S3Integration(Integration):
                 "You must supply a file format when saving tabular data into S3 integration `%s`."
                 % self._metadata.name,
             )
-        elif artifact.type() != ArtifactType.TABLE and format is not None:
+        elif (
+            artifact.type() != ArtifactType.TABLE
+            and artifact.type() != ArtifactType.UNTYPED
+            and format is not None
+        ):
             raise InvalidUserArgumentException(
                 "A `format` argument should only be supplied for saving table artifacts. This artifact type is %s."
                 % artifact.type()
