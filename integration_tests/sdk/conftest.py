@@ -34,6 +34,7 @@ def pytest_configure(config):
 
 
 def pytest_cmdline_main(config):
+    """Gets all the integrations ready for the tests to run. Should only run once, before we even collect any tests."""
     data_integration = config.getoption(f"--data")
     if data_integration is not None:
         setup_data_integrations(filter_to=data_integration)
@@ -51,6 +52,11 @@ def client(pytestconfig):
 
 @pytest.fixture(scope="function", params=list_data_integrations())
 def data_integration(request, pytestconfig, client):
+    """This fixture is parameterized to run every test case against every requested data integration.
+
+    The requested data integrations are all in the test configuration file, but can be overwritten
+    by the `--data` command line flag.
+    """
     cmdline_data_flag = pytestconfig.getoption("data")
     if cmdline_data_flag is not None:
         if request.param != cmdline_data_flag:
