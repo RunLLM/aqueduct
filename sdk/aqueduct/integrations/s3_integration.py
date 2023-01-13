@@ -23,7 +23,25 @@ from aqueduct.utils.utils import artifact_name_from_op_name, generate_uuid
 
 from aqueduct import globals
 
+from ..error import InvalidUserArgumentException
 from .naming import _generate_extract_op_name
+
+
+def _convert_to_s3_table_format(format: Optional[str]) -> Optional[S3TableFormat]:
+    """A simple string -> enum conversion. Returns None if no format provided."""
+    if format is None:
+        return None
+
+    lowercased_format = format.lower()
+    if lowercased_format == S3TableFormat.CSV.value.lower():
+        format_enum = S3TableFormat.CSV
+    elif lowercased_format == S3TableFormat.JSON.value.lower():
+        format_enum = S3TableFormat.JSON
+    elif lowercased_format == S3TableFormat.PARQUET.value.lower():
+        format_enum = S3TableFormat.PARQUET
+    else:
+        raise InvalidUserArgumentException("Unsupported S3 file format `%s`." % format)
+    return format_enum
 
 
 class S3Integration(Integration):
@@ -52,59 +70,61 @@ class S3Integration(Integration):
             filepaths:
                 Filepath to retrieve from. The filepaths can either be:
                 1) a single string that represents a file name or a directory name. The directory
-                name must ends with a `/`. In case of a file name, we attempt to retrieve that file,
-                and in case of a directory name, we do a prefix search on the directory and retrieve
-                all matched files and concatenate them into a single file.
+                name must ends with a `/`. In case of a file name, we attempt to retrieve that file.
+                In case of a directory name, we do a prefix search on the directory and retrieve
+                all matched files in alphabetical order, returning them as a TUPLE artifact.
                 2) a list of strings representing the file name. Note that in this case, we do not
-                accept directory names in the list.
+                accept directory names in the list. The fetched data in this case will always be of
+                ArtifactType.TUPLE.
             artifact_type:
                 The expected type of the S3 files. The `ArtifactType` class in `enums.py` contains all
                 supported types, except for ArtifactType.UNTYPED. Note that when multiple files are
                 retrieved, they must have the same artifact type.
             format:
                 If the artifact type is ArtifactType.TABLE, the user has to specify the table format.
-                We currently support JSON, CSV, and Parquet. Note that when multiple files are retrieved,
-                they must have the same format.
+                We currently support JSON, CSV, and Parquet. Note that when multiple table files are
+                retrieved, they must have the same format.
             merge:
                 If the artifact type is ArtifactType.TABLE, we can optionally merge multiple tables
-                into a single DataFrame if this flag is set to True.
+                into a single DataFrame if this flag is set to True. This merge is done with
+                `pandas.concat(tables, ignore_index=True)`.
             name:
                 Name of the query.
             description:
                 Description of the query.
 
         Returns:
-            Artifact or a tuple of artifacts representing the S3 Files.
+            An artifact representing the S3 File(s). If multiple files are expected, the artifact
+            will represent a tuple.
         """
         if globals.__GLOBAL_CONFIG__.lazy:
             lazy = True
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
 
-        if format:
-            if artifact_type != ArtifactType.TABLE:
-                raise Exception(
-                    "Format argument is only applicable to table artifact type, found %s instead."
-                    % artifact_type
-                )
-
-            lowercased_format = format.lower()
-            if lowercased_format == S3TableFormat.CSV.value.lower():
-                format_enum = S3TableFormat.CSV
-            elif lowercased_format == S3TableFormat.JSON.value.lower():
-                format_enum = S3TableFormat.JSON
-            elif lowercased_format == S3TableFormat.PARQUET.value.lower():
-                format_enum = S3TableFormat.PARQUET
-            else:
-                raise Exception("Unsupport file format %s." % format)
-        else:
-            format_enum = None
+        if format and artifact_type != ArtifactType.TABLE:
+            raise InvalidUserArgumentException(
+                "Format argument is only applicable to table artifact type, found %s instead."
+                % artifact_type
+            )
+        format_enum = _convert_to_s3_table_format(format)
 
         integration_info = self._metadata
-
         op_name = _generate_extract_op_name(self._dag, integration_info.name, name)
-
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
+
+        def _is_directory_search() -> bool:
+            return isinstance(filepaths, str) and filepaths[-1] == "/"
+
+        def _is_multi_file_search() -> bool:
+            return isinstance(filepaths, list)
+
+        # We expect a tuple output if multiple files are being fetched (unmerged), either due to
+        # multi-file or directory search.
+        output_artifact_type = artifact_type
+        if not merge and (_is_directory_search() or _is_multi_file_search()):
+            output_artifact_type = ArtifactType.TUPLE
+
         apply_deltas_to_dag(
             self._dag,
             deltas=[
@@ -131,7 +151,7 @@ class S3Integration(Integration):
                         ArtifactMetadata(
                             id=output_artifact_id,
                             name=artifact_name_from_op_name(op_name),
-                            type=artifact_type,
+                            type=output_artifact_type,
                         ),
                     ],
                 )
@@ -165,9 +185,7 @@ class S3Integration(Integration):
             parameters=S3LoadParams(filepath=filepath, format=format),
         )
 
-    def save(
-        self, artifact: BaseArtifact, filepath: str, format: Optional[S3TableFormat] = None
-    ) -> None:
+    def save(self, artifact: BaseArtifact, filepath: str, format: Optional[str] = None) -> None:
         """Registers a save operator of the given artifact, to be executed when it's computed in a published flow.
 
         Args:
@@ -176,15 +194,29 @@ class S3Integration(Integration):
             filepath:
                 The S3 path to save to. Will overwrite any existing object at that path.
             format:
-                Defines the format that the artifact will be saved as.
-                Options are "CSV", "JSON", "Parquet".
+                Only required if saving a table artifact. Options are case-insensitive "json", "csv", "parquet".
         """
+        if artifact.type() == ArtifactType.TABLE and format is None:
+            raise InvalidUserArgumentException(
+                "You must supply a file format when saving tabular data into S3 integration `%s`."
+                % self._metadata.name,
+            )
+        elif (
+            artifact.type() != ArtifactType.TABLE
+            and artifact.type() != ArtifactType.UNTYPED
+            and format is not None
+        ):
+            raise InvalidUserArgumentException(
+                "A `format` argument should only be supplied for saving table artifacts. This artifact type is %s."
+                % artifact.type()
+            )
+
         save_artifact(
             artifact.id(),
             artifact.type(),
             self._dag,
             self._metadata,
-            save_params=S3LoadParams(filepath=filepath, format=format),
+            save_params=S3LoadParams(filepath=filepath, format=_convert_to_s3_table_format(format)),
         )
 
     def describe(self) -> None:

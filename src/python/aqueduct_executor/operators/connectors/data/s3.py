@@ -42,13 +42,24 @@ class S3Connector(connector.DataConnector):
             if params.format is None:
                 raise Exception("You must specify a file format for table data.")
             buf = io.BytesIO(data)
-            if params.format == common.S3TableFormat.CSV:
-                return pd.read_csv(buf)
-            elif params.format == common.S3TableFormat.JSON:
-                return pd.read_json(buf)
-            elif params.format == common.S3TableFormat.PARQUET:
-                return pd.read_parquet(buf)
-            raise Exception("Unknown S3 file format %s." % params.format)
+
+            try:
+                if params.format == common.S3TableFormat.CSV:
+                    return pd.read_csv(buf)
+                elif params.format == common.S3TableFormat.JSON:
+                    return pd.read_json(buf)
+                elif params.format == common.S3TableFormat.PARQUET:
+                    return pd.read_parquet(buf)
+            except Exception:
+                raise Exception(
+                    "Unable to read in table at path `%s` with S3 file format `%s`."
+                    % (key, params.format)
+                )
+            else:
+                raise Exception(
+                    "Unknown S3 file format `%s` for file at path `%s`." % (params.format, key)
+                )
+
         elif params.artifact_type == ArtifactType.JSON:
             # This assumes that the encoding is "utf-8". May worth considering letting the user
             # specify custom encoding in the future.
@@ -58,9 +69,13 @@ class S3Connector(connector.DataConnector):
                 json.loads(json_data)
                 return json_data
             except:
-                raise Exception("The file is not a valid JSON object.")
+                raise Exception("The file at path `%s` is not a valid JSON object.", key)
         elif params.artifact_type == ArtifactType.IMAGE:
-            return Image.open(io.BytesIO(data))
+            try:
+                return Image.open(io.BytesIO(data))
+            except:
+                raise Exception("The file at path `%s` is not a valid image object.", key)
+
         elif params.artifact_type == ArtifactType.BYTES:
             return data
         elif (
@@ -68,20 +83,28 @@ class S3Connector(connector.DataConnector):
             or params.artifact_type == ArtifactType.BOOL
             or params.artifact_type == ArtifactType.NUMERIC
             or params.artifact_type == ArtifactType.DICT
+            or params.artifact_type == ArtifactType.LIST
             or params.artifact_type == ArtifactType.TUPLE
             or params.artifact_type == ArtifactType.PICKLABLE
         ):
-            unpickled_data = pickle.loads(data)
+            try:
+                unpickled_data = pickle.loads(data)
+            except Exception:
+                raise Exception(
+                    "The file at path `%s` is not a valid %s object." % (key, params.artifact_type),
+                )
 
             if params.artifact_type == ArtifactType.STRING:
                 if not isinstance(unpickled_data, str):
                     raise Exception(
-                        "The file is expected to be a string, got %s." % type(unpickled_data)
+                        "The file at path `%s` is expected to be a string, got %s."
+                        % (key, type(unpickled_data))
                     )
             elif params.artifact_type == ArtifactType.BOOL:
                 if not (isinstance(unpickled_data, bool) or isinstance(unpickled_data, np.bool_)):
                     raise Exception(
-                        "The file is expected to be a bool, got %s." % type(unpickled_data)
+                        "The file at path `%s` is expected to be a bool, got %s."
+                        % (key, type(unpickled_data))
                     )
             elif params.artifact_type == ArtifactType.NUMERIC:
                 if not (
@@ -90,22 +113,27 @@ class S3Connector(connector.DataConnector):
                     or isinstance(unpickled_data, np.number)
                 ):
                     raise Exception(
-                        "The file is expected to be a numeric, got %s." % type(unpickled_data)
+                        "The file at path `%s` is expected to be a numeric, got %s."
+                        % (key, type(unpickled_data))
                     )
             elif params.artifact_type == ArtifactType.DICT:
                 if not isinstance(unpickled_data, dict):
                     raise Exception(
-                        "The file is expected to be a dictionary, got %s." % type(unpickled_data)
+                        "The file at path `%s` is expected to be a dictionary, got %s."
+                        % (key, type(unpickled_data))
                     )
             elif params.artifact_type == ArtifactType.TUPLE:
                 if not isinstance(unpickled_data, tuple):
                     raise Exception(
-                        "The file is expected to be a tuple, got %s." % type(unpickled_data)
+                        "The file at path `%s` is expected to be a tuple, got %s."
+                        % (key, type(unpickled_data))
                     )
 
             return unpickled_data
         else:
-            raise Exception("Unsupported data type %s." % params.artifact_type)
+            raise Exception(
+                "Unsupported data type %s when fetching file at %s." % (params.artifact_type, key)
+            )
 
     def extract(self, params: extract.S3Params) -> Any:
         path = json.loads(params.filepath)
@@ -121,7 +149,8 @@ class S3Connector(connector.DataConnector):
                         files.append(self._fetch_object(obj.key, params))
 
                 if params.artifact_type == ArtifactType.TABLE and params.merge:
-                    return pd.concat(files)
+                    # We ignore indexes anyways when serializing the data later, so it's ok to do it earlier here.
+                    return pd.concat(files, ignore_index=True)
                 else:
                     return tuple(files)
             else:
@@ -138,7 +167,8 @@ class S3Connector(connector.DataConnector):
                 files.append(self._fetch_object(key, params))
 
             if params.artifact_type == ArtifactType.TABLE and params.merge:
-                return pd.concat(files)
+                # We ignore indexes anyways when serializing the data later, so it's ok to do it earlier here.
+                return pd.concat(files, ignore_index=True)
             else:
                 return tuple(files)
 
@@ -171,12 +201,13 @@ class S3Connector(connector.DataConnector):
             or artifact_type == ArtifactType.BOOL
             or artifact_type == ArtifactType.NUMERIC
             or artifact_type == ArtifactType.DICT
+            or artifact_type == ArtifactType.LIST
             or artifact_type == ArtifactType.TUPLE
             or artifact_type == ArtifactType.PICKLABLE
         ):
             serialized_data = pickle.dumps(data)
         else:
-            raise Exception("Unsupported data type %s." % artifact_type)
+            raise Exception("Unsupported data type `%s`." % artifact_type)
 
         self.s3.Object(self.bucket, params.filepath).put(Body=serialized_data)
 
