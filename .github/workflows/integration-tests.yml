@@ -16,8 +16,6 @@ jobs:
     name: Run Fast Integration Tests with Python Version ${{ matrix.python-version }}
     steps:
       - uses: actions/checkout@v2
-        with:
-          ref: eng-2138-write-python-scripts-for-automatically
 
       - name: Create the logs directory
         run: mkdir -p logs
