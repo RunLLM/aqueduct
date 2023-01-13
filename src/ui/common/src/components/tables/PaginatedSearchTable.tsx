@@ -18,7 +18,7 @@ import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import * as React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { theme } from '../../styles/theme/theme';
 import { DataSchema } from '../../utils/data';
@@ -49,6 +49,12 @@ export type SortColumn = {
   sortAccessPath: string[];
 };
 
+enum SortType {
+  None,
+  Ascending,
+  Descending,
+}
+
 export interface PaginatedSearchTableProps {
   data: PaginatedSearchTableData;
   searchEnabled?: boolean;
@@ -68,26 +74,24 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
   savedRowsPerPage,
   sortColumns = [],
 }) => {
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(
     savedRowsPerPage ? savedRowsPerPage : 5
   );
-  const [searchQuery, setSearchQuery] = React.useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   // TODO: Add dropdown to select which column to search the table on.
   // TODO: add setSearchColumn to the array below.
-  const [searchColumn] = React.useState('name');
+  const [searchColumn] = useState('name');
 
-  const [sortMenuAnchor, setSortMenuAnchor] =
-    React.useState<HTMLButtonElement>(null);
+  const [sortMenuAnchor, setSortMenuAnchor] = useState<HTMLButtonElement>(null);
   const [sortTypeMenuAnchor, setSortTypeMenuAnchor] =
-    React.useState<HTMLLIElement>(null);
-  const [sortConfig, setSortConfig] = React.useState({
+    useState<HTMLLIElement>(null);
+  const [sortConfig, setSortConfig] = useState({
     sortColumn: { name: null, sortAccessPath: [] as string[] },
-    sortType: null,
+    sortType: SortType.None,
   });
-  const [rows, setRows] = React.useState([...data.data]);
+  const [rows, setRows] = useState([...data.data]);
 
-  // let rows = data.data;
   const columns = data.schema.fields;
 
   /**
@@ -153,7 +157,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
     return value;
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (searchQuery.length > 0) {
       const filteredRows = data.data.filter((rowItem) => {
         return shouldInclude(rowItem, searchQuery, searchColumn);
@@ -163,13 +167,13 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
     } else {
       setRows(data.data);
     }
-  }, [searchQuery]);
+  }, [searchQuery, data]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (
       !sortConfig.sortColumn ||
       !sortConfig.sortColumn.name ||
-      !sortConfig.sortType
+      sortConfig.sortType === SortType.None
     ) {
       setRows(data.data);
       return;
@@ -184,7 +188,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
         v2 = v2[path];
       }
 
-      if (sortConfig.sortType === 'asc') {
+      if (sortConfig.sortType === SortType.Ascending) {
         if (v1 > v2) {
           return 1;
         } else if (v1 < v2) {
@@ -193,7 +197,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
           return 0;
         }
       } else {
-        // sortType === 'desc'
+        // sortType === SortType.Descending
         if (v1 > v2) {
           return -1;
         } else if (v1 < v2) {
@@ -295,7 +299,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
                 onClick={() => {
                   setSortConfig({
                     sortColumn: sortColumns[sortTypeMenuAnchor.value],
-                    sortType: 'asc',
+                    sortType: SortType.Ascending,
                   });
                   // Close the menus that are open.
                   setSortTypeMenuAnchor(null);
@@ -312,7 +316,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
                 onClick={() => {
                   setSortConfig({
                     sortColumn: sortColumns[sortTypeMenuAnchor.value],
-                    sortType: 'desc',
+                    sortType: SortType.Descending,
                   });
                   // Close the menus that are open.
                   setSortTypeMenuAnchor(null);
@@ -327,17 +331,21 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
             </Menu>
           </Box>
 
-          {sortConfig.sortType && sortConfig.sortType !== '' && (
+          {sortConfig.sortType !== SortType.None && (
             <Chip
               icon={
                 <FontAwesomeIcon
-                  icon={sortConfig.sortType === 'asc' ? faArrowUp : faArrowDown}
+                  icon={
+                    sortConfig.sortType === SortType.Ascending
+                      ? faArrowUp
+                      : faArrowDown
+                  }
                 />
               }
               label={`Sort: ${sortConfig.sortColumn.name}`}
               onDelete={() =>
                 setSortConfig({
-                  sortType: '',
+                  sortType: SortType.None,
                   sortColumn: { name: '', sortAccessPath: [] },
                 })
               }
