@@ -12,7 +12,6 @@ from aqueduct.models.operators import RelationalDBExtractParams
 from aqueduct import LoadUpdateMode, metric, op
 
 from ..shared.demo_db import demo_db_tables
-from ..shared.flow_helpers import publish_flow_test
 from ..shared.naming import generate_table_name
 from ..shared.relational import SHORT_SENTIMENT_SQL_QUERY
 from ..shared.validation import check_artifact_was_computed
