@@ -15,7 +15,7 @@ from sdk.shared.demo_db import demo_db_tables
 from sdk.shared.flow_helpers import delete_flow, publish_flow_test
 from sdk.shared.naming import generate_object_name
 
-TEST_CONFIG_FILE: str = "test-config-example.yml"
+TEST_CONFIG_FILE: str = "test-config.yml"
 
 # We only cache the config for the lifecycle of a single test run.
 CACHED_CONFIG: Optional[Dict[str, Any]] = None
