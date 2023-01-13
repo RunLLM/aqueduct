@@ -52,9 +52,9 @@ const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
         <FontAwesomeIcon icon={icon} />
       </Box>
       <Typography variant="body1" sx={{pl: 1 }}> 
-      {data.result === 'true' ? 'passed' : 'failed'}
+      {result === 'true' ? 'passed' : 'failed'}
       </Typography>
-    </Box>
+    </Box> 
   );
 
   let backgroundColor, hoverColor;
