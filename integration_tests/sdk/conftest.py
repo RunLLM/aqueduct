@@ -3,7 +3,11 @@ from aqueduct.constants.enums import ServiceType
 from aqueduct.models.dag import DAG, Metadata
 
 from aqueduct import Client, globals
-from sdk.setup_integration import list_data_integrations, setup_data_integration, get_aqueduct_config
+from sdk.setup_integration import (
+    get_aqueduct_config,
+    list_data_integrations,
+    setup_data_integrations,
+)
 from sdk.shared import globals as test_globals
 from sdk.shared.utils import delete_flow, generate_new_flow_name
 from sdk.shared.validator import Validator
@@ -29,6 +33,14 @@ def pytest_configure(config):
     )
 
 
+def pytest_cmdline_main(config):
+    data_integration = config.getoption(f"--data")
+    if data_integration is not None:
+        setup_data_integrations(filter_to=data_integration)
+    else:
+        setup_data_integrations()
+
+
 @pytest.fixture(scope="function")
 def client(pytestconfig):
     # Reset the global dag variable, in case it was dirtied by a previous test,
@@ -44,7 +56,6 @@ def data_integration(request, pytestconfig, client):
         if request.param != cmdline_data_flag:
             pytest.skip("Skipped. Tests are only running against %s." % cmdline_data_flag)
 
-    setup_data_integration(request.param)
     return client.integration(request.param)
 
 
