@@ -149,7 +149,8 @@ class S3Connector(connector.DataConnector):
                         files.append(self._fetch_object(obj.key, params))
 
                 if params.artifact_type == ArtifactType.TABLE and params.merge:
-                    return pd.concat(files)
+                    # We ignore indexes anyways when serializing the data later, so it's ok to do it earlier here.
+                    return pd.concat(files, ignore_index=True)
                 else:
                     return tuple(files)
             else:

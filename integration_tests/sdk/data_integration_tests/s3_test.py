@@ -89,9 +89,9 @@ def test_s3_table_fetch_with_merge(client, data_integration):
     assert merged.get().equals(expected_merged_data)
 
 
-# TODO: check the weird merge behavior here with tables?
-def test_s3_fetch_directory(flow_manager, data_integration):
-    """Create a random directory name and save a table and non-tabular artifact into it."""
+def test_s3_fetch_directory_mixed(flow_manager, data_integration):
+    """Create a random directory name and save a table and non-tabular artifact into it, and
+    check that a directory fetch will return a tuple of the contents."""
     dir_name = generate_object_name()
 
     # Order hotel_reviews to be listed before customers by ordering the paths alphabetically.
