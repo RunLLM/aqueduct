@@ -8,7 +8,7 @@ from aqueduct.integrations.sql_integration import RelationalDBIntegration
 from aqueduct import LoadUpdateMode
 
 from ..shared.globals import artifact_id_to_saved_identifier, use_deprecated_code_paths
-from ..shared.utils import generate_table_name
+from ..shared.naming import generate_table_name
 
 
 def save(

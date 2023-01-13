@@ -2,7 +2,7 @@ import pytest
 from aqueduct.error import InvalidIntegrationException
 
 from ..shared.data_objects import DataObject
-from ..shared.utils import extract
+from .extract import extract
 from .save import save
 from .test_functions.simple.model import dummy_sentiment_model
 

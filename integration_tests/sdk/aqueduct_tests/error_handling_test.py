@@ -5,7 +5,7 @@ import aqueduct
 from aqueduct import op
 
 from ..shared.data_objects import DataObject
-from ..shared.utils import extract
+from .extract import extract
 
 
 @aqueduct.op()

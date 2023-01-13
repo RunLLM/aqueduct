@@ -6,7 +6,7 @@ from aqueduct.error import AqueductError, InvalidDependencyFilePath, InvalidFunc
 from aqueduct import global_config, op
 
 from ..shared.data_objects import DataObject
-from ..shared.utils import extract
+from .extract import extract
 from .test_functions.simple.file_dependency_model import (
     model_with_file_dependency,
     model_with_improper_dependency_path,
