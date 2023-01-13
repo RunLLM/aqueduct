@@ -60,7 +60,6 @@ class S3Config(BaseConnectionConfig):
 
     # Config credentials
     config_file_path: str = ""
-    config_file_content: str = ""
     config_file_profile: str = ""
 
     bucket: str
