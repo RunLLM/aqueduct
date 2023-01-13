@@ -1,7 +1,10 @@
 import pytest
+from aqueduct.error import (
+    InvalidIntegrationException,
+    InvalidUserActionException,
+    InvalidUserArgumentException,
+)
 from pydantic import ValidationError
-
-from aqueduct.error import InvalidIntegrationException, InvalidUserActionException, InvalidUserArgumentException
 
 from ..shared.data_objects import DataObject
 from .extract import extract
@@ -28,11 +31,16 @@ def test_invalid_connect_integration(client):
     config = {
         "database": "test",
     }
-    with pytest.raises(InvalidUserActionException, match="An integration with this name already exists."):
+    with pytest.raises(
+        InvalidUserActionException, match="An integration with this name already exists."
+    ):
         client.connect_integration("aqueduct_demo", "SQLite", config)
 
     # Service is invalid.
-    with pytest.raises(InvalidUserArgumentException, match="Service argument must match exactly one of the enum values in ServiceType."):
+    with pytest.raises(
+        InvalidUserArgumentException,
+        match="Service argument must match exactly one of the enum values in ServiceType.",
+    ):
         client.connect_integration("New Integration", "invalid service", config)
 
     # Invalid config raises a pydantic error.

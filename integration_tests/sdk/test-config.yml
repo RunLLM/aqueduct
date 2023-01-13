@@ -1,0 +1,19 @@
+apikey: D2BV8UQY7HJ6GECI03NW5ASTKXOL4MP9
+address: localhost:8080
+
+# Each integration entry starts with the name of the integration, followed
+# by the list of credentials needed to connect to it.
+data:
+  test_snowflake:
+    type: Snowflake
+    username: AQADMIN
+    password: v&H7Y0lpAzl!fll4x3hi
+    account_identifier: baa81868
+    database: KENNY
+    warehouse: COMPUTE_WH
+  test_s3:
+    type: S3
+    access_key_id: AKIAZAAWG5MFAJY7N5X2
+    secret_access_key: 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
+    bucket: integration-tests-kenny
+    region: us-east-2

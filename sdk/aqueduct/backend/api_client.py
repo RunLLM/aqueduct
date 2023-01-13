@@ -21,6 +21,7 @@ from aqueduct.models.operators import LoadSpec, ParamSpec, RelationalDBLoadParam
 from aqueduct.utils.serialization import deserialize
 from pkg_resources import parse_version, require
 
+from ..integrations.connect_config import IntegrationConfig
 from .response_helpers import (
     _construct_preview_response,
     _handle_preview_resp,
@@ -37,7 +38,6 @@ from .response_models import (
     RegisterWorkflowResponse,
     SavedObjectUpdate,
 )
-from ..integrations.connect_config import IntegrationConfig
 
 
 class APIClient:
@@ -246,7 +246,9 @@ class APIClient:
 
         return [(table["name"], table["owner"]) for table in resp.json()["tables"]]
 
-    def connect_integration(self, name: str, service: ServiceType, config: IntegrationConfig) -> None:
+    def connect_integration(
+        self, name: str, service: ServiceType, config: IntegrationConfig
+    ) -> None:
         headers = self._generate_auth_headers()
         headers.update(
             {
@@ -255,7 +257,9 @@ class APIClient:
                 "integration-config": config.json(),
             }
         )
-        url = self.construct_full_url(self.CONNECT_INTEGRATION_ROUTE, )
+        url = self.construct_full_url(
+            self.CONNECT_INTEGRATION_ROUTE,
+        )
         resp = requests.post(url, url, headers=headers)
         self.raise_errors(resp)
 

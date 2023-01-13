@@ -1,10 +1,9 @@
 from enum import Enum
-from typing import Optional, Union, Dict
+from typing import Dict, Optional, Union
 
 from aqueduct.constants.enums import MetaEnum, ServiceType
-from pydantic import Field, Extra, BaseModel
-
 from aqueduct.error import InternalAqueductError
+from pydantic import BaseModel, Extra, Field
 
 """Copied mostly over from `aqueduct_executor/operators/connectors/data/config.py` for now, please keep them in sync."""
 
@@ -127,7 +126,9 @@ IntegrationConfig = Union[
 ]
 
 
-def convert_dict_to_integration_connect_config(service: ServiceType, config_dict: Dict[str, str]) -> IntegrationConfig:
+def convert_dict_to_integration_connect_config(
+    service: ServiceType, config_dict: Dict[str, str]
+) -> IntegrationConfig:
     if service == ServiceType.BIGQUERY:
         return BigQueryConfig(**config_dict)
     elif service == ServiceType.MYSQL:
