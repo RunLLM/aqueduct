@@ -17,25 +17,12 @@ export const TriggerSourceSelector: React.FC<Props> = ({
   setSourceId,
   workflows,
 }) => {
-  const [selected, setSelected] = useState<ListWorkflowSummary>(
-    workflows.find((workflow) => workflow.id === sourceId)
-  );
-
-  useEffect(() => {
-    if (!selected) {
-      return;
-    }
-
-    setSourceId(selected.id);
-  }, [selected, setSourceId]);
-
   const getMenuItems = () => {
     return workflows.map((workflow) => {
       return (
-        //@ts-ignore
         <MenuItem
           key={workflow.id}
-          value={workflow}
+          value={workflow.id}
           sx={{ backgroundColor: 'blueTint' }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -55,9 +42,9 @@ export const TriggerSourceSelector: React.FC<Props> = ({
           sx={{ maxHeight: 48 }}
           id="grouped-select"
           autoWidth
-          value={selected}
+          value={sourceId}
           onChange={(e) => {
-            setSelected(e.target.value as ListWorkflowSummary);
+            setSourceId(e.target.value);
           }}
         >
           {menuItems}
