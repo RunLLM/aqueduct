@@ -32,10 +32,11 @@ import Snackbar from '@mui/material/Snackbar';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
+import { handleFetchAllWorkflowSummaries } from '../../reducers/listWorkflowSummaries';
 import {
   handleDeleteWorkflow,
   handleListWorkflowSavedObjects,
@@ -50,8 +51,10 @@ import {
   getNextUpdateTime,
   PeriodUnit,
 } from '../../utils/cron';
+import { UpdateMode } from '../../utils/operators';
 import ExecutionStatus, { LoadingStatusEnum } from '../../utils/shared';
 import {
+  getSavedObjectIdentifier,
   RetentionPolicy,
   SavedObject,
   WorkflowDag,
@@ -61,6 +64,7 @@ import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
 import { LoadingButton } from '../primitives/LoadingButton.styles';
 import StorageSelector from './storageSelector';
+import TriggerSourceSelector from './triggerSourceSelector';
 
 type PeriodicScheduleSelectorProps = {
   cronString: string;
@@ -233,13 +237,14 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
   const dispatch: AppDispatch = useDispatch();
 
-  useCallback(() => {
+  useEffect(() => {
     dispatch(
       handleListWorkflowSavedObjects({
         apiKey: user.apiKey,
         workflowId: workflowDag.workflow_id,
       })
     );
+    dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
   }, [dispatch, user.apiKey, workflowDag.workflow_id]);
 
   const savedObjectsResponse = useSelector(
@@ -255,6 +260,10 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
   const dagResults = useSelector(
     (state: RootState) => state.workflowReducer.dagResults
+  );
+
+  const workflows = useSelector(
+    (state: RootState) => state.listWorkflowReducer.workflows
   );
 
   const [name, setName] = useState(workflowDag.metadata?.name);
@@ -275,6 +284,16 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     retentionPolicy.k_latest_runs !==
     workflowDag.metadata?.retention_policy?.k_latest_runs;
 
+  const initialSettings = {
+    name: workflowDag.metadata?.name,
+    description: workflowDag.metadata?.description,
+    triggerType: workflowDag.metadata.schedule.trigger,
+    schedule: workflowDag.metadata.schedule.cron_schedule,
+    paused: workflowDag.metadata.schedule.paused,
+    retentionPolicy: workflowDag.metadata?.retention_policy,
+    sourceId: workflowDag.metadata?.schedule.source_id,
+  };
+
   const settingsChanged =
     name !== workflowDag.metadata?.name || // The workflow name has been changed.
     description !== workflowDag.metadata?.description || // The workflow description has changed.
@@ -287,6 +306,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const triggerOptions = [
     { label: 'Update Manually', value: WorkflowUpdateTrigger.Manual },
     { label: 'Update Periodically', value: WorkflowUpdateTrigger.Periodic },
+    { label: 'Update After Source', value: WorkflowUpdateTrigger.Cascade },
   ];
 
   const scheduleSelector = (
@@ -308,6 +328,11 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
               sx={{
                 [`& .${formControlLabelClasses.label}`]: { fontSize: '14px' },
               }}
+              // TODO: ENG-2181 Add support for changing source trigger
+              disabled={
+                value === WorkflowUpdateTrigger.Cascade &&
+                triggerType !== WorkflowUpdateTrigger.Cascade
+              }
             />
           );
         })}
@@ -331,6 +356,10 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
             }
           />
         </>
+      )}
+
+      {triggerType === WorkflowUpdateTrigger.Cascade && (
+        <TriggerSourceSelector workflows={workflows} />
       )}
     </Box>
   );
@@ -480,6 +509,8 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       <Typography variant="body1">
         [{integration}] <b>{name}</b>
       </Typography>
+
+      {/* Objects saved into S3 are currently expected to have update_mode === UpdateMode.replace */}
       {sortedObjects && (
         <Typography
           style={{
@@ -490,7 +521,12 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           display="inline"
         >
           Update Mode:{' '}
-          {sortedObjects.map((object) => `${object.update_mode}`).join(', ')}
+          {sortedObjects
+            .map(
+              (object) =>
+                `${object.spec.parameters.update_mode || UpdateMode.replace}`
+            )
+            .join(', ')}
           {sortedObjects.length > 1 && ' (active)'}
         </Typography>
       )}
@@ -504,6 +540,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           const sortedObjects = [...savedObjectsList].sort((object) =>
             Date.parse(object.modified_at)
           );
+
           // Cannot align the checkbox to the top of a multi-line label.
           // Using a weird marginTop workaround.
           return (
@@ -520,7 +557,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
                 <Box sx={{ paddingTop: '24px' }}>
                   {displayObject(
                     savedObjectsList[0].integration_name,
-                    savedObjectsList[0].object_name,
+                    getSavedObjectIdentifier(savedObjectsList[0]),
                     sortedObjects
                   )}
                 </Box>
@@ -537,7 +574,9 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const deleteDialog = (
     <Dialog
       open={showDeleteDialog}
-      onClose={() => setShowDeleteDialog(false)}
+      onClose={() => {
+        setShowDeleteDialog(false);
+      }}
       fullWidth
     >
       <DialogTitle>
@@ -776,7 +815,19 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
             <FontAwesomeIcon
               icon={faXmark}
-              onClick={onClose}
+              onClick={() => {
+                setName(initialSettings.name);
+                setDescription(initialSettings.description);
+                setTriggerType(initialSettings.triggerType);
+                setSchedule(initialSettings.schedule);
+                setPaused(initialSettings.paused);
+                setRetentionPolicy(initialSettings.retentionPolicy);
+
+                // Finally close the dialog
+                if (onClose) {
+                  onClose();
+                }
+              }}
               style={{ cursor: 'pointer' }}
             />
           </Box>

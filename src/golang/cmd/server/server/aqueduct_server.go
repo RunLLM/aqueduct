@@ -14,6 +14,7 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/authentication"
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/maintenance"
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/request_id"
+	"github.com/aqueducthq/aqueduct/cmd/server/middleware/usage"
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -21,6 +22,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos/sqlite"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
@@ -60,9 +62,13 @@ type AqServer struct {
 	// RequestMutex's read lock is acquired and released by each request to indicate when there
 	// are no more active requests.
 	RequestMutex sync.RWMutex
+
+	// The environment in which the server runs. This is for usage stats collection purpose.
+	Environment       string
+	DisableUsageStats bool
 }
 
-func NewAqServer() *AqServer {
+func NewAqServer(environment string, disableUsageStats bool) *AqServer {
 	ctx := context.Background()
 	aqPath := config.AqueductPath()
 
@@ -75,16 +81,10 @@ func NewAqServer() *AqServer {
 		log.Fatalf("Unable to initialize database: %v", err)
 	}
 
-	readers, err := CreateReaders(db.Config())
-	if err != nil {
-		db.Close()
-		log.Fatalf("Unable to create database readers: %v", err)
-	}
-
 	if err := collections.RequireSchemaVersion(
 		context.Background(),
-		models.SchemaVersion,
-		readers.SchemaVersionReader,
+		models.CurrentSchemaVersion,
+		sqlite.NewSchemaVersionRepo(),
 		db,
 	); err != nil {
 		db.Close()
@@ -92,11 +92,13 @@ func NewAqServer() *AqServer {
 	}
 
 	s := &AqServer{
-		Router:           chi.NewRouter(),
-		Database:         db,
-		Repos:            CreateRepos(),
-		UnderMaintenance: atomic.Value{},
-		RequestMutex:     sync.RWMutex{},
+		Router:            chi.NewRouter(),
+		Database:          db,
+		Repos:             CreateRepos(),
+		UnderMaintenance:  atomic.Value{},
+		RequestMutex:      sync.RWMutex{},
+		Environment:       environment,
+		DisableUsageStats: disableUsageStats,
 	}
 	s.UnderMaintenance.Store(false)
 
@@ -243,9 +245,14 @@ func (s *AqServer) StartWorkflowRetentionJob(period string) error {
 }
 
 func (s *AqServer) AddHandler(route string, handlerObj handler.Handler) {
-	var middleware alice.Chain
+	middleware := alice.New()
+
+	if !s.DisableUsageStats {
+		middleware = middleware.Append(usage.WithUsageStats(s.Environment))
+	}
+
 	if handlerObj.AuthMethod() == handler.ApiKeyAuthMethod {
-		middleware = alice.New(
+		middleware = middleware.Append(
 			maintenance.Check(&s.UnderMaintenance),
 			request_id.WithRequestId(),
 			authentication.RequireApiKey(s.UserRepo, s.Database),

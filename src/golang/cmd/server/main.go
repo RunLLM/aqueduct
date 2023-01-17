@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"os"
 	"path/filepath"
@@ -19,11 +20,39 @@ var (
 		"",
 		"The path to .yml config file",
 	)
-	expose        = flag.Bool("expose", false, "Whether the server will be exposed to the public.")
-	verbose       = flag.Bool("verbose", false, "Whether all logs will be shown in the terminal, with filepaths and line numbers.")
-	port          = flag.Int("port", connection.ServerInternalPort, "The port that the server listens to.")
-	serverLogPath = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "logs", "server")
+	expose            = flag.Bool("expose", false, "Whether the server will be exposed to the public.")
+	verbose           = flag.Bool("verbose", false, "Whether all logs will be shown in the terminal, with filepaths and line numbers.")
+	port              = flag.Int("port", connection.ServerInternalPort, "The port that the server listens to.")
+	serverLogPath     = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "logs", "server")
+	disableUsageStats = flag.Bool("disable-usage-stats", false, "Whether to disable usage statistics reporting.")
+
+	envPath             = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "config", "env")
+	allowedEnvironments = map[string]bool{"dev": true, "test": true, "prod": true}
 )
+
+func parseEnv() string {
+	var environment string
+	if _, err := os.Stat(envPath); err == nil {
+		b, err := os.ReadFile(envPath)
+		if err != nil {
+			log.Fatalf("Unexpected error when reading server environment config.: %v", err)
+		}
+
+		environment = string(b)
+
+		_, ok := allowedEnvironments[environment]
+		if !ok {
+			os.Remove(envPath)
+			log.Fatalf("Unsupported environment: %v", environment)
+		}
+	} else if errors.Is(err, os.ErrNotExist) {
+		environment = "prod"
+	} else {
+		log.Fatalf("Unexpected error when reading server environment config.: %v", err)
+	}
+
+	return environment
+}
 
 func main() {
 	flag.Parse()
@@ -77,7 +106,9 @@ func main() {
 		log.Fatalf("Failed to initialize server config: %v", err)
 	}
 
-	s := server.NewAqServer()
+	environment := parseEnv()
+
+	s := server.NewAqServer(environment, *disableUsageStats)
 
 	err := s.StartWorkflowRetentionJob(config.RetentionJobPeriod())
 	if err != nil {

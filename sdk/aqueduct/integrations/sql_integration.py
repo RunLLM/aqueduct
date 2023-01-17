@@ -34,7 +34,7 @@ LIST_TABLES_QUERY_SQLSERVER = (
 )
 LIST_TABLES_QUERY_BIGQUERY = "SELECT schema_name FROM information_schema.schemata;"
 GET_TABLE_QUERY = "select * from %s"
-LIST_TABLES_QUERY_SQLITE = "SELECT name FROM sqlite_master WHERE type='table';"
+LIST_TABLES_QUERY_SQLITE = "SELECT name AS tablename FROM sqlite_master WHERE type='table';"
 LIST_TABLES_QUERY_ATHENA = "AQUEDUCT_ATHENA_LIST_TABLE"
 
 # Regular Expression that matches any substring appearance with
@@ -89,7 +89,7 @@ BUILT_IN_EXPANSIONS = {
 
 class RelationalDBIntegration(Integration):
     """
-    Class for RealtionalDB integrations.
+    Class for Relational integrations.
     """
 
     def __init__(self, dag: DAG, metadata: IntegrationInfo):
@@ -98,7 +98,7 @@ class RelationalDBIntegration(Integration):
 
     def list_tables(self) -> pd.DataFrame:
         """
-        Lists the tables available in the RealtionalDB integration.
+        Lists the tables available in the RelationalDB integration.
 
         Returns:
             pd.DataFrame of available tables.

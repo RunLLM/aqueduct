@@ -86,7 +86,7 @@ sure to run `python3 scripts/install_local.py` first:
 1. From `src`, run `make test` to ensure all Golang unit tests are passing.
 2. If the PR made changes to the database APIs, run `make test-database` in `src` to run the
 database integration tests.
-3. Run `pip3 install pytest` and run `pytest . -rP -vv` from the `sdk` directory to ensure all SDK unit tests are passing.
+3. Run `pip3 install pytest` and run `pytest aqueduct_tests/ -rP -vv` and `pytest data_integration_tests/ -rP -vv` from the `sdk` directory to ensure all SDK unit tests are passing.
 4. See [here](https://github.com/aqueducthq/aqueduct/tree/main/integration_tests/sdk) for instructions on running the SDK integration tests.
 
 ### Reviewing code changes

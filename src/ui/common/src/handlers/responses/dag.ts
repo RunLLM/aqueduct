@@ -57,7 +57,9 @@ export function getMetricsAndChecksOnArtifact(
       opResult.spec?.type === OperatorType.Check
   );
 
-  const metricsArtfIds = metricsOp.flatMap((opResult) => opResult.outputs);
+  const metricsArtfIds = metricsOp.flatMap((opResult) =>
+    opResult !== undefined ? opResult.outputs : []
+  );
   const metricsArtf = metricsArtfIds.map((id) => dagResult.artifacts[id]);
   const metricsDownstreamIds = metricsArtf.flatMap(
     (artfResult) => artfResult.to
@@ -66,7 +68,9 @@ export function getMetricsAndChecksOnArtifact(
     (id) => dagResult.operators[id]
   );
   checksOp.push(...metricsDownstreamOps);
-  const checksArtfIds = checksOp.flatMap((opResult) => opResult.outputs);
+  const checksArtfIds = checksOp.flatMap((opResult) =>
+    opResult !== undefined ? opResult.outputs : []
+  );
   const checksArtf = checksArtfIds.map((id) => dagResult.artifacts[id]);
   return { checks: checksArtf, metrics: metricsArtf };
 }

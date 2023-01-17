@@ -14,6 +14,7 @@ import { theme } from '../../../styles/theme/theme';
 import { ReactFlowNodeData } from '../../../utils/reactflow';
 import ExecutionStatus, { ExecState, FailureType } from '../../../utils/shared';
 import { BaseNode } from './BaseNode.styles';
+import { NodeStatusIconography } from './NodeStatusIconography';
 
 type Props = {
   data: ReactFlowNodeData;
@@ -53,13 +54,16 @@ const MetricOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
     : theme.palette.DarkContrast;
   const borderColor = textColor;
 
+  const successDisplay = (
+    <Typography variant="h5">{parseMetricResult(data.result, 3)}</Typography>
+  );
+
   let backgroundColor, hoverColor;
   if (execState?.status === ExecutionStatus.Succeeded) {
     backgroundColor = selected
       ? theme.palette.DarkSuccessMain50
       : theme.palette.DarkSuccessMain;
     hoverColor = theme.palette.DarkSuccessMain75;
-
     // Warning color for non-fatal errors.
   } else if (
     execState?.status === ExecutionStatus.Failed &&
@@ -123,11 +127,10 @@ const MetricOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
         justifyContent="center"
         alignItems="center"
       >
-        {data.result && (
-          <Typography variant="h5">
-            {parseMetricResult(data.result, 3)}
-          </Typography>
-        )}
+        <NodeStatusIconography
+          execState={execState}
+          successDisplay={successDisplay}
+        />
       </Box>
 
       <Handle
