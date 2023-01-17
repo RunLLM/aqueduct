@@ -122,7 +122,8 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
         maxWidth="lg"
       >
         <DialogContent>
-          We cannot delete this integration because it is currently being used.
+          We cannot delete this integration because it is currently being used
+          by at least one workflow.
         </DialogContent>
         <DialogActions>
           <Button onClick={onCloseDialog}>Dismiss</Button>
