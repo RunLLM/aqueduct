@@ -5,7 +5,7 @@ Released on January 17, 2023
 
 ### Enhancements
 * For workflows that are triggered at the end of other workflows, we now allow changing the
-    triggering workflow from the UI.
+    triggering workflow from the UI's workflow settings dialog.
 * Differentiate keys and values better on the UI; adds the use of different
     colored text to make it clear which is the key and which is the value when
     showing, for example, metric and check values.
