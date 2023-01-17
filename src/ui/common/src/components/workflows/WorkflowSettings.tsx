@@ -277,7 +277,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     workflowDag.metadata.schedule.cron_schedule
   );
   const [sourceId, setSourceId] = useState(
-    workflowDag.metadata.schedule.source_id
+    workflowDag.metadata?.schedule.source_id
   );
   const [paused, setPaused] = useState(workflowDag.metadata.schedule.paused);
   const [retentionPolicy, setRetentionPolicy] = useState(
@@ -311,7 +311,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const triggerOptions = [
     { label: 'Update Manually', value: WorkflowUpdateTrigger.Manual },
     { label: 'Update Periodically', value: WorkflowUpdateTrigger.Periodic },
-    { label: 'Update After Source', value: WorkflowUpdateTrigger.Cascade },
+    { label: 'Update After Completion Of', value: WorkflowUpdateTrigger.Cascade },
   ];
 
   const scheduleSelector = (
@@ -462,9 +462,12 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         cron_schedule:
           triggerType === WorkflowUpdateTrigger.Periodic ? schedule : '', // Always set the schedule if the update type is periodic.
         paused, // Set whatever value of paused was set, which will be the previous value if it's not modified.
+        sourceId: triggerType === WorkflowUpdateTrigger.Cascade ? sourceId : '',
       },
       retention_policy: retentionPolicyUpdated ? retentionPolicy : undefined,
     };
+
+    console.log('Changes, ', changes);
 
     fetch(`${apiAddress}/api/workflow/${workflowDag.workflow_id}/edit`, {
       method: 'POST',

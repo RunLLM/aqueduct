@@ -17,30 +17,29 @@ export const TriggerSourceSelector: React.FC<Props> = ({
   setSourceId,
   workflows,
 }) => {
-  // const [selected, setSelected] = useState(
-  //   workflows.find((workflow) => {
-  //     return workflow.id === sourceId
-  //   })
-  // );
-
-  const [selected, setSelected] = useState<ListWorkflowSummary>();
+  const [selected, setSelected] = useState<ListWorkflowSummary>(
+    workflows.find((workflow) => {
+      return workflow.id === sourceId
+    })
+  );
 
   useEffect(() => {
+    console.log('Inside useEffect, selected is: ', selected);
     if (!selected) {
       return;
     }
 
     setSourceId(selected.id);
-  }, [selected]);
+  }, [selected, setSourceId]);
 
-  console.log('Workflows: ', workflows);
   console.log('Selected: ', selected);
-  console.log('SourceID ', sourceId);
+  console.log('Source ID: ', sourceId);
 
   const getMenuItems = () => {
     return workflows.map((workflow) => {
       return (
-        <MenuItem key={workflow.id} sx={{ backgroundColor: 'blueTint' }}>
+        //@ts-ignore
+        <MenuItem key={workflow.id} value={workflow} sx={{ backgroundColor: 'blueTint' }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Typography>{workflow.name}</Typography>
           </Box>
@@ -59,7 +58,9 @@ export const TriggerSourceSelector: React.FC<Props> = ({
           id="grouped-select"
           autoWidth
           value={selected}
-          onChange={(e) => {setSelected(e.target.value as ListWorkflowSummary)}}
+          onChange={(e) => {
+            setSelected(e.target.value as ListWorkflowSummary)
+          }}
         >
           {menuItems}
         </Select>
