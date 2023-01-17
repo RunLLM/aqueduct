@@ -4,33 +4,26 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
 import React from 'react';
-import { useSelector } from 'react-redux';
 import { ListWorkflowSummary } from 'src/utils/workflows';
 
-import { RootState } from '../../stores/store';
-
 type Props = {
+  sourceId: string;
+  setSourceId: (string) => void;
   workflows: ListWorkflowSummary[];
 };
 
-export const TriggerSourceSelector: React.FC<Props> = ({ workflows }) => {
-  const workflow = useSelector((state: RootState) => state.workflowReducer);
-
-  const dag = workflow.selectedDag;
-
-  const filteredWorkflows = workflows.filter(
-    (workflow) => workflow.id === dag.metadata?.schedule.source_id
-  );
-  // TODO: ENG-2181 Add support for changing source trigger
-  const selected = filteredWorkflows[0].id;
-
+export const TriggerSourceSelector: React.FC<Props> = ({
+  sourceId,
+  setSourceId,
+  workflows,
+}) => {
   const getMenuItems = () => {
-    return filteredWorkflows.map((workflow) => {
+    return workflows.map((workflow) => {
       return (
         <MenuItem
-          value={workflow.id}
           key={workflow.id}
-          sx={{ backgroundColor: selected ? 'blueTint' : null }}
+          value={workflow.id}
+          sx={{ backgroundColor: 'blueTint' }}
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Typography>{workflow.name}</Typography>
@@ -44,12 +37,15 @@ export const TriggerSourceSelector: React.FC<Props> = ({ workflows }) => {
 
   return (
     <Box>
-      <FormControl disabled sx={{ minWidth: 120 }} size="small">
+      <FormControl sx={{ minWidth: 120 }} size="small">
         <Select
           sx={{ maxHeight: 48 }}
           id="grouped-select"
           autoWidth
-          value={selected}
+          value={sourceId}
+          onChange={(e) => {
+            setSourceId(e.target.value);
+          }}
         >
           {menuItems}
         </Select>

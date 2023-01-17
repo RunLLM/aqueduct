@@ -171,7 +171,7 @@ def wait_for_flow_runs(
 
         expect_status_strs = [status.value for status in expected_statuses]
         assert statuses == expect_status_strs, (
-            "Unexpected workflow run status(es). In ascending chronological order (latest last), expected %s, got %s. "
+            "Unexpected workflow run status(es). In ascending chronological order, expected %s, got %s. "
             % (expect_status_strs, statuses)
         )
 

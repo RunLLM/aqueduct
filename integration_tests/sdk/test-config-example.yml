@@ -1,0 +1,28 @@
+apikey: <APIKEY>
+address: <SERVER ADDRESS>
+
+# Each integration entry starts with the name of the integration, followed
+# by the list of credentials needed to connect to it.
+data:
+  test_snowflake:
+    type: Snowflake
+    username:
+    password:
+    account_identifier:
+    database:
+    warehouse:
+  test_s3:
+    type: S3
+
+    # Access Key Credentials
+    access_key_id:
+    secret_access_key:
+    # (Alternative) Config File Credentials
+    # config_file_path:
+    # config_file_profile:
+
+    bucket:
+    region:
+
+    # Whether to configure this integration as the metadata store too.
+    # use_as_storage:

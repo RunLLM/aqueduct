@@ -27,6 +27,10 @@ func (g *Directed) AddEdge(fromID uuid.UUID, toID uuid.UUID) {
 
 // HasPath returns whether there is a path from root to dest.
 func (g *Directed) HasPath(root uuid.UUID, dest uuid.UUID) bool {
+	if root == dest {
+		return true
+	}
+
 	var queue []uuid.UUID
 	queue = append(queue, g.nodes[root].edges...)
 
