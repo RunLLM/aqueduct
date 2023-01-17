@@ -467,10 +467,6 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       retention_policy: retentionPolicyUpdated ? retentionPolicy : undefined,
     };
 
-    console.log('Source ID in Changes: ', sourceId)
-    console.log('Trigger type: ', triggerType);
-    console.log('Changes Schedule, ', changes.schedule);
-
     fetch(`${apiAddress}/api/workflow/${workflowDag.workflow_id}/edit`, {
       method: 'POST',
       headers: {
