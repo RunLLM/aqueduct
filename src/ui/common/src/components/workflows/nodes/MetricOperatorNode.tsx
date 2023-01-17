@@ -14,6 +14,7 @@ import { theme } from '../../../styles/theme/theme';
 import { ReactFlowNodeData } from '../../../utils/reactflow';
 import ExecutionStatus, { ExecState, FailureType } from '../../../utils/shared';
 import { BaseNode } from './BaseNode.styles';
+import { NODE_HEIGHT, NODE_WIDTH } from './Node';
 import { NodeStatusIconography } from './NodeStatusIconography';
 
 type Props = {
@@ -93,9 +94,15 @@ const MetricOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
         color: textColor,
         borderColor: borderColor,
         '&:hover': { backgroundColor: hoverColor },
-        minHeight: 'unset',
-        minWidth: '240px',
+        //minHeight: 'unset',
+        //minWidth: '240px',
         padding: '0px',
+        height: NODE_HEIGHT,
+        width: NODE_WIDTH,
+        maxHeight: '250px',
+        maxWidth: '250px',
+        minHeight: '250px',
+        minWidth: '250px',
       }}
     >
       <Box

@@ -1,8 +1,8 @@
 // This is being deprecated. Please use `workflowDagResults` combining with
 // `artifactResults` for future development.
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import ELK from 'elkjs/lib/elk.bundled.js';
 import { Edge, Node } from 'react-flow-renderer';
-import ELK from 'elkjs/lib/elk.bundled.js'
 
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import { RootState } from '../stores/store';
@@ -466,353 +466,74 @@ export const handleGetSelectDagPosition = createAsyncThunk<
     const artifactResults =
       thunkAPI.getState().workflowReducer.artifactResults ?? {};
 
-
-    /**
-     * [
-    {
-        "id": "02ee9d4b-6c58-4b20-805c-cb00b792424b",
-        "type": "checkOp",
-        "draggable": false,
-        "data": {
-            "nodeType": "operator",
-            "nodeId": "02ee9d4b-6c58-4b20-805c-cb00b792424b",
-            "label": "valid_probabilities"
-        },
-        "position": {
-            "x": 2700,
-            "y": 800
-        }
-    },
-    {
-        "id": "0de1a746-99fc-4378-a6f8-2239c9d80687",
-        "type": "functionOp",
-        "draggable": false,
-        "data": {
-            "nodeType": "operator",
-            "nodeId": "0de1a746-99fc-4378-a6f8-2239c9d80687",
-            "label": "predict_tree"
-        },
-        "position": {
-            "x": 1400,
-            "y": 800
-        }
-    },
-    {
-        "id": "150a8d68-e508-4acc-b28a-797e595e7e5a",
-        "type": "checkOp",
-        "draggable": false,
-        "data": {
-            "nodeType": "operator",
-            "nodeId": "150a8d68-e508-4acc-b28a-797e595e7e5a",
-            "label": "greater than 0.1"
-        },
-        "position": {
-            "x": 3350,
-            "y": 200
-        }
-    },
-    {
-        "id": "2a6e97c2-fd0d-4aab-bed3-56fd33b919e7",
-        "type": "checkOp",
-        "draggable": false,
-        "data": {
-            "nodeType": "operator",
-            "nodeId": "2a6e97c2-fd0d-4aab-bed3-56fd33b919e7",
-            "label": "less than 0.4"
-        },
-        "position": {
-            "x": 3350,
-            "y": 800
-        }
-    },
-    {
-        "id": "3ef0268c-07e9-4673-863a-04cbd1e45e68",
-        "type": "extractOp",
-        "draggable": false,
-        "data": {
-            "nodeType": "operator",
-            "nodeId": "3ef0268c-07e9-4673-863a-04cbd1e45e68",
-            "label": "aqueduct_demo query 4"
-        },
-        "position": {
-            "x": 100,
-            "y": 200
-        }
-    },
-    {
-        "id": "4b02c8bb-15ed-4d3c-9cc4-e20b4e216bdc",
-        "type": "checkOp",
-        "draggable": false,
-        "data": {
-            "nodeType": "operator",
-            "nodeId": "4b02c8bb-15ed-4d3c-9cc4-e20b4e216bdc",
-            "label": "less than 0.3"
-        },
-        "position": {
-            "x": 3350,
-            "y": 500
-        }
-    },
-    {
-        "id": "53ef91e2-9776-446b-8f11-a2af9ffc83cb",
-        "type": "functionOp",
-        "draggable": false,
-        "data": {
-            "nodeType": "operator",
-            "nodeId": "53ef91e2-9776-446b-8f11-a2af9ffc83cb",
-            "label": "predict_ensemble"
-        },
-        "position": {
-            "x": 2050,
-            "y": 200
-        }
-    },
-    {
-        "id": "a946fc2a-9c6e-4364-8284-68eae3728000",
-        "type": "loadOp",
-        "draggable": false,
-        "data": {
-            "nodeType": "operator",
-            "nodeId": "a946fc2a-9c6e-4364-8284-68eae3728000",
-            "label": "save to aqueduct_demo 1"
-        },
-        "position": {
-            "x": 2700,
-            "y": 500
-        }
-    },
-    {
-        "id": "c8402fd5-d09d-4c18-8eec-9ebb0faeb7f8",
-        "type": "functionOp",
-        "draggable": false,
-        "data": {
-            "nodeType": "operator",
-            "nodeId": "c8402fd5-d09d-4c18-8eec-9ebb0faeb7f8",
-            "label": "predict_linear"
-        },
-        "position": {
-            "x": 1400,
-            "y": 500
-        }
-    },
-    {
-        "id": "eb244f91-424f-4309-8e14-00fc952aa014",
-        "type": "metricOp",
-        "draggable": false,
-        "data": {
-            "nodeType": "operator",
-            "nodeId": "eb244f91-424f-4309-8e14-00fc952aa014",
-            "label": "mean(prob_churn)"
-        },
-        "position": {
-            "x": 2700,
-            "y": 200
-        }
-    },
-    {
-        "id": "f1fc9258-d843-42f1-94c0-a1b669547770",
-        "type": "functionOp",
-        "draggable": false,
-        "data": {
-            "nodeType": "operator",
-            "nodeId": "f1fc9258-d843-42f1-94c0-a1b669547770",
-            "label": "log_featurize"
-        },
-        "position": {
-            "x": 750,
-            "y": 500
-        }
-    },
-    {
-        "id": "02a39695-633e-4466-9d49-0a8881a8bca5",
-        "type": "tableArtifact",
-        "draggable": false,
-        "data": {
-            "nodeType": "artifact",
-            "nodeId": "02a39695-633e-4466-9d49-0a8881a8bca5",
-            "label": "predict_tree artifact"
-        },
-        "position": {
-            "x": 1725,
-            "y": 800
-        }
-    },
-    {
-        "id": "03d47e76-7c7c-4b4a-b572-19508fd6ae9b",
-        "type": "tableArtifact",
-        "draggable": false,
-        "data": {
-            "nodeType": "artifact",
-            "nodeId": "03d47e76-7c7c-4b4a-b572-19508fd6ae9b",
-            "label": "aqueduct_demo query 4 artifact"
-        },
-        "position": {
-            "x": 425,
-            "y": 200
-        }
-    },
-    {
-        "id": "5da51a9d-5e45-48ef-ac9d-00fcf82834f4",
-        "type": "tableArtifact",
-        "draggable": false,
-        "data": {
-            "nodeType": "artifact",
-            "nodeId": "5da51a9d-5e45-48ef-ac9d-00fcf82834f4",
-            "label": "predict_ensemble artifact"
-        },
-        "position": {
-            "x": 2375,
-            "y": 200
-        }
-    },
-    {
-        "id": "bc84232e-ad21-4cfd-8e23-4bf8a1e326e3",
-        "type": "tableArtifact",
-        "draggable": false,
-        "data": {
-            "nodeType": "artifact",
-            "nodeId": "bc84232e-ad21-4cfd-8e23-4bf8a1e326e3",
-            "label": "predict_linear artifact"
-        },
-        "position": {
-            "x": 1725,
-            "y": 500
-        }
-    },
-    {
-        "id": "f841bba0-384e-4f36-9904-9ff0276112ec",
-        "type": "tableArtifact",
-        "draggable": false,
-        "data": {
-            "nodeType": "artifact",
-            "nodeId": "f841bba0-384e-4f36-9904-9ff0276112ec",
-            "label": "log_featurize artifact"
-        },
-        "position": {
-            "x": 1075,
-            "y": 500
-        }
-    }
-]
-     */
-
     if (!!dag) {
-      let collapsedPosition = collapsePosition(allNodes, dag, artifactResults);
-      console.log('getSelectDagPosition collapsedPosition: ', collapsedPosition);
-
-      // Do the stuff with the DAG here...
-      console.log('initializing ELK');
+      const collapsedPosition = collapsePosition(
+        allNodes,
+        dag,
+        artifactResults
+      );
       const elk = new ELK();
-
-      // const graph = {
-      //   id: "root",
-      //   layoutOptions: { 'elk.algorithm': 'layered' },
-      //   children: [
-      //     //{ id: "n1", width: 30, height: 30 },
-      //     { id: "n1", width: 30, height: 30 },
-      //     { id: "n2", width: 30, height: 30 },
-      //     { id: "n3", width: 30, height: 30 }
-      //   ],
-      //   edges: [
-      //     { id: "e1", sources: ["n1"], targets: ["n2"] },
-      //     { id: "e2", sources: ["n1"], targets: ["n3"] }
-      //   ]
-      // }
-
       const mappedNodes = collapsedPosition.nodes.map((node) => {
         return {
           id: node.id,
-          width: 250,
-          height: 250,
-        }
+          // Width and height set not only the node width/height, but also how far apart we want to position these nodes.
+          // So using a value of just the width and the height of the node will result in no spacing in between.
+          // Elk (eclipse layout kernel) also provides many knobs to tweak this as well.
+          width: 400,
+          height: 500,
+        };
       });
 
-      console.log('mappedNodes: ', mappedNodes);
-
-      const mappedEdges = collapsedPosition.edges.map((edge) => {
-        return {
-          id: edge.id,
-          sources: [edge.source],
-          targets: [edge.target]
-        }
-      }).filter((mappedEdge) => {
+      const mappedEdges = collapsedPosition.edges.filter((mappedEdge) => {
         // Check if the edge exists in the mappedNodes array.
         // If it does not exist, remove the edge. elk crashes if an edge does not have a corresponding node.
-        let nodeFound = false;
+        const nodeFound = false;
         for (let i = 0; i < mappedNodes.length; i++) {
-          if (mappedEdge.sources[0] === mappedNodes[i].id) {
+          if (
+            mappedEdge.source === mappedNodes[i].id ||
+            mappedEdge.target === mappedNodes[i].id
+          ) {
             console.log('found node in sources');
-            return true;
-          } else if (mappedEdge.targets[0] === mappedNodes[i].id) {
-            console.log('found node in target')
             return true;
           }
         }
 
-        console.log('returning nodeFound val: ', nodeFound);
         return nodeFound;
-      })
-
-      console.log('mappedEdges: ', mappedEdges);
+      });
 
       const graph = {
-        id: "root",
-        layoutOptions: { 'elk.algorithm': 'layered' },
+        id: 'root',
+        layoutOptions: {
+          'elk.algorithm': 'layered',
+          'elk.direction': 'RIGHT',
+          'elk.alignment': 'CENTER',
+          // https://www.eclipse.org/elk/reference/options/org-eclipse-elk-layered-nodePlacement-strategy.html
+          'nodePlacement.strategy': 'NETWORK_SIMPLEX',
+          //https://www.eclipse.org/elk/reference/options/org-eclipse-elk-layered-nodePlacement-strategy.html
+          'crossingMinimization.strategy': 'INTERACTIVE',
+          'crossingMinimization.forceNodeModelOrder': true,
+        },
         children: mappedNodes,
-        edges: mappedEdges
-      }
+        edges: mappedEdges,
+      };
 
       const positionedLayout = await elk.layout(graph);
-      console.log('positionedLayout: ', positionedLayout);
-
       collapsedPosition.nodes = collapsedPosition.nodes.map((node) => {
-        console.log('processedNodes node: ', node);
-        console.log('positionedLayout children length: ', positionedLayout.children.length);
         for (let i = 0; i < positionedLayout.children.length; i++) {
-          console.log('nodeId: ', node.id);
-          console.log('positionedLayout.children[i].id: ', positionedLayout.children[i].id);
           if (node.id === positionedLayout.children[i].id) {
-            console.log('node found setting layout ...');
             node.position = {
               x: positionedLayout.children[i].x,
-              y: positionedLayout.children[i].y
-            }
+              y: positionedLayout.children[i].y,
+            };
           }
         }
 
         return node;
-      })
-
-      //console.log('processedNodes result: ', processedNodes);
-
-      // collapsedPosition.nodes = collapsedPosition.nodes.map((node) => {
-      //   console.log('positionedLayout children length: ', positionedLayout.children.length);
-      //   debugger;
-      //   for (let i = 0; i < positionedLayout.children.length; i++) {
-      //     console.log('nodeId: ', node.id);
-      //     console.log('positionedLayout.children[i].id: ', positionedLayout.children[i].id);
-      //     if (node.id === positionedLayout.children[i].id) {
-      //       console.log('node found setting layout ...')
-      //       node.position = {
-      //         x: positionedLayout[i].x,
-      //         y: positionedLayout[i].y
-      //       }
-      //     }
-      //   }
-
-      //   return node;
-      // })
-
-      console.log('collapsedPosition after elk: ', collapsedPosition);
-
-      // elk.layout(graph)
-      //   .then(console.log)
-      //   .catch(console.error)
+      });
 
       return collapsedPosition;
     }
 
-    console.log('getSelectDagPosition allNodes: ', allNodes);
     return allNodes;
   }
 );
