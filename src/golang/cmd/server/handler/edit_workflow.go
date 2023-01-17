@@ -16,7 +16,6 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 // Route: /workflow/{workflowId}/edit
@@ -116,8 +115,6 @@ func (h *EditWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error)
 		return nil, http.StatusBadRequest, errors.New("Edit request issued without any updates specified.")
 	}
 
-	logrus.Warnf("Parsed input schedule as: %v", input.Schedule)
-
 	return &editWorkflowArgs{
 		workflowId:          workflowID,
 		workflowName:        input.WorkflowName,
@@ -162,7 +159,7 @@ func (h *EditWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfa
 		h.DAGEdgeRepo,
 		h.OperatorRepo,
 		h.WorkflowRepo,
-		h.Database,
+		txn,
 	)
 	if err != nil {
 		return nil, validateScheduleCode, err
