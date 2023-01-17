@@ -493,7 +493,6 @@ export const handleGetSelectDagPosition = createAsyncThunk<
             mappedEdge.source === mappedNodes[i].id ||
             mappedEdge.target === mappedNodes[i].id
           ) {
-            console.log('found node in sources');
             return true;
           }
         }
