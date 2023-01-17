@@ -6,14 +6,17 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
+	col_workflow "github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/workflow"
+	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 // Route: /workflow/{workflowId}/edit
@@ -33,22 +36,26 @@ type EditWorkflowHandler struct {
 	Database database.Database
 	Engine   engine.Engine
 
+	ArtifactRepo repos.Artifact
+	DAGRepo      repos.DAG
+	DAGEdgeRepo  repos.DAGEdge
+	OperatorRepo repos.Operator
 	WorkflowRepo repos.Workflow
 }
 
 type editWorkflowInput struct {
-	WorkflowName        string                    `json:"name"`
-	WorkflowDescription string                    `json:"description"`
-	Schedule            *workflow.Schedule        `json:"schedule"`
-	RetentionPolicy     *workflow.RetentionPolicy `json:"retention_policy"`
+	WorkflowName        string                        `json:"name"`
+	WorkflowDescription string                        `json:"description"`
+	Schedule            *col_workflow.Schedule        `json:"schedule"`
+	RetentionPolicy     *col_workflow.RetentionPolicy `json:"retention_policy"`
 }
 
 type editWorkflowArgs struct {
 	workflowId          uuid.UUID
 	workflowName        string
 	workflowDescription string
-	schedule            *workflow.Schedule
-	retentionPolicy     *workflow.RetentionPolicy
+	schedule            *col_workflow.Schedule
+	retentionPolicy     *col_workflow.RetentionPolicy
 }
 
 func (*EditWorkflowHandler) Name() string {
@@ -95,12 +102,12 @@ func (h *EditWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error)
 	// otherwise we fail out. Critically, this is true whether the workflow is
 	// paused or not. This is important because when we load the schedule for a
 	// paused workflow, unpausing it should resume previous behavior.
-	if input.Schedule.Trigger == workflow.PeriodicUpdateTrigger && input.Schedule.CronSchedule == "" {
+	if input.Schedule.Trigger == col_workflow.PeriodicUpdateTrigger && input.Schedule.CronSchedule == "" {
 		return nil, http.StatusBadRequest, errors.New("Invalid workflow schedule specified.")
 	}
 
 	// If the workflow is paused, it must be in periodic update mode.
-	if input.Schedule.Trigger == workflow.ManualUpdateTrigger && input.Schedule.Paused {
+	if input.Schedule.Trigger == col_workflow.ManualUpdateTrigger && input.Schedule.Paused {
 		return nil, http.StatusBadRequest, errors.New("Cannot pause a manually updated workflow.")
 	}
 
@@ -108,6 +115,8 @@ func (h *EditWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error)
 	if input.WorkflowName == "" && input.WorkflowDescription == "" && input.Schedule.Trigger == "" {
 		return nil, http.StatusBadRequest, errors.New("Edit request issued without any updates specified.")
 	}
+
+	logrus.Warnf("Parsed input schedule as: %v", input.Schedule)
 
 	return &editWorkflowArgs{
 		workflowId:          workflowID,
@@ -125,6 +134,39 @@ func (h *EditWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfa
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to update workflow.")
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
+
+	dag, err := utils.ReadLatestDAGFromDatabase(
+		ctx,
+		args.workflowId,
+		h.WorkflowRepo,
+		h.DAGRepo,
+		h.OperatorRepo,
+		h.ArtifactRepo,
+		h.DAGEdgeRepo,
+		txn,
+	)
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to update workflow.")
+	}
+
+	// Schedule validation needs to happen inside the `txn` to prevent
+	// concurrent requests from forming a cycle among cascading workflows
+	validateScheduleCode, err := workflow.ValidateSchedule(
+		ctx,
+		true, /*isUpdate*/
+		args.workflowId,
+		*args.schedule,
+		dag.EngineConfig.Type,
+		h.ArtifactRepo,
+		h.DAGRepo,
+		h.DAGEdgeRepo,
+		h.OperatorRepo,
+		h.WorkflowRepo,
+		h.Database,
+	)
+	if err != nil {
+		return nil, validateScheduleCode, err
+	}
 
 	err = h.Engine.EditWorkflow(
 		ctx,

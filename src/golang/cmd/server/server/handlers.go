@@ -57,6 +57,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database: s.Database,
 			Engine:   s.AqEngine,
 
+			ArtifactRepo: s.ArtifactRepo,
+			DAGRepo:      s.DAGRepo,
+			DAGEdgeRepo:  s.DAGEdgeRepo,
+			OperatorRepo: s.OperatorRepo,
 			WorkflowRepo: s.WorkflowRepo,
 		},
 		routes.ExportFunctionRoute: &handler.ExportFunctionHandler{
