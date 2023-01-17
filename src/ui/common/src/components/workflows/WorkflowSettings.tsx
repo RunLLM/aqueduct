@@ -276,6 +276,9 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const [schedule, setSchedule] = useState(
     workflowDag.metadata.schedule.cron_schedule
   );
+  const [sourceId, setSourceId] = useState(
+    workflowDag.metadata?.schedule?.source_id
+  );
   const [paused, setPaused] = useState(workflowDag.metadata.schedule.paused);
   const [retentionPolicy, setRetentionPolicy] = useState(
     workflowDag.metadata?.retention_policy
@@ -291,22 +294,27 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     schedule: workflowDag.metadata.schedule.cron_schedule,
     paused: workflowDag.metadata.schedule.paused,
     retentionPolicy: workflowDag.metadata?.retention_policy,
-    sourceId: workflowDag.metadata?.schedule.source_id,
+    sourceId: workflowDag.metadata?.schedule?.source_id,
   };
 
   const settingsChanged =
     name !== workflowDag.metadata?.name || // The workflow name has been changed.
     description !== workflowDag.metadata?.description || // The workflow description has changed.
     triggerType !== workflowDag.metadata.schedule.trigger || // The type of the trigger has changed.
-    (triggerType === WorkflowUpdateTrigger.Periodic &&
-      schedule !== workflowDag.metadata.schedule.cron_schedule) || // The schedule type is still periodic but the schedule itself has changed.
+    (triggerType === WorkflowUpdateTrigger.Periodic && // The trigger type is still periodic but the schedule itself has changed.
+      schedule !== workflowDag.metadata.schedule.cron_schedule) ||
+    (triggerType === WorkflowUpdateTrigger.Cascade && // The trigger type is still cascade but the source has changed.
+      sourceId !== workflowDag.metadata?.schedule?.source_id) ||
     paused !== workflowDag.metadata.schedule.paused || // The schedule type is periodic and we've changed the pausedness of the workflow.
     retentionPolicyUpdated; // retention policy has changed.
 
   const triggerOptions = [
     { label: 'Update Manually', value: WorkflowUpdateTrigger.Manual },
     { label: 'Update Periodically', value: WorkflowUpdateTrigger.Periodic },
-    { label: 'Update After Source', value: WorkflowUpdateTrigger.Cascade },
+    {
+      label: 'Update After Completion Of',
+      value: WorkflowUpdateTrigger.Cascade,
+    },
   ];
 
   const scheduleSelector = (
@@ -316,7 +324,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           setTriggerType(e.target.value as WorkflowUpdateTrigger)
         }
         value={triggerType}
-        sx={{ width: '200px' }}
+        sx={{ width: '250px' }}
       >
         {triggerOptions.map(({ label, value }) => {
           return (
@@ -328,11 +336,6 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
               sx={{
                 [`& .${formControlLabelClasses.label}`]: { fontSize: '14px' },
               }}
-              // TODO: ENG-2181 Add support for changing source trigger
-              disabled={
-                value === WorkflowUpdateTrigger.Cascade &&
-                triggerType !== WorkflowUpdateTrigger.Cascade
-              }
             />
           );
         })}
@@ -359,7 +362,11 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       )}
 
       {triggerType === WorkflowUpdateTrigger.Cascade && (
-        <TriggerSourceSelector workflows={workflows} />
+        <TriggerSourceSelector
+          sourceId={sourceId}
+          setSourceId={setSourceId}
+          workflows={workflows}
+        />
       )}
     </Box>
   );
@@ -458,6 +465,10 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         cron_schedule:
           triggerType === WorkflowUpdateTrigger.Periodic ? schedule : '', // Always set the schedule if the update type is periodic.
         paused, // Set whatever value of paused was set, which will be the previous value if it's not modified.
+        source_id:
+          triggerType === WorkflowUpdateTrigger.Cascade
+            ? sourceId
+            : '00000000-0000-0000-0000-000000000000',
       },
       retention_policy: retentionPolicyUpdated ? retentionPolicy : undefined,
     };
@@ -820,6 +831,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
                 setDescription(initialSettings.description);
                 setTriggerType(initialSettings.triggerType);
                 setSchedule(initialSettings.schedule);
+                setSourceId(initialSettings.sourceId);
                 setPaused(initialSettings.paused);
                 setRetentionPolicy(initialSettings.retentionPolicy);
 
