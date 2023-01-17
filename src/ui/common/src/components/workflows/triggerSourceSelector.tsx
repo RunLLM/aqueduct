@@ -17,17 +17,21 @@ export const TriggerSourceSelector: React.FC<Props> = ({
   setSourceId,
   workflows,
 }) => {
-  const [selected, setSelected] = useState<ListWorkflowSummary>(
-    workflows.find((workflow) => {
-      return workflow.id === sourceId
-    })
-  );
+  // const [selected, setSelected] = useState<ListWorkflowSummary>(
+  //   workflows.find((workflow) => {
+  //     return workflow.id === sourceId
+  //   })
+  // );
+
+  const [selected, setSelected] = useState<ListWorkflowSummary>();
 
   useEffect(() => {
     console.log('Inside useEffect, selected is: ', selected);
     if (!selected) {
       return;
     }
+
+    console.log('Inside useEffect, setting the src id');
 
     setSourceId(selected.id);
   }, [selected, setSourceId]);
