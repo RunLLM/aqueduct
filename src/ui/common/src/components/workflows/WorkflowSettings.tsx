@@ -277,7 +277,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     workflowDag.metadata.schedule.cron_schedule
   );
   const [sourceId, setSourceId] = useState(
-    workflowDag.metadata?.schedule.source_id
+    workflowDag.metadata?.schedule?.source_id
   );
   const [paused, setPaused] = useState(workflowDag.metadata.schedule.paused);
   const [retentionPolicy, setRetentionPolicy] = useState(
@@ -294,7 +294,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     schedule: workflowDag.metadata.schedule.cron_schedule,
     paused: workflowDag.metadata.schedule.paused,
     retentionPolicy: workflowDag.metadata?.retention_policy,
-    sourceId: workflowDag.metadata?.schedule.source_id,
+    sourceId: workflowDag.metadata?.schedule?.source_id,
   };
 
   const settingsChanged =
@@ -304,7 +304,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     (triggerType === WorkflowUpdateTrigger.Periodic && // The trigger type is still periodic but the schedule itself has changed.
       schedule !== workflowDag.metadata.schedule.cron_schedule) ||
     (triggerType === WorkflowUpdateTrigger.Cascade && // The trigger type is still cascade but the source has changed.
-      sourceId !== workflowDag.metadata.schedule.source_id) || 
+      sourceId !== workflowDag.metadata?.schedule?.source_id) || 
     paused !== workflowDag.metadata.schedule.paused || // The schedule type is periodic and we've changed the pausedness of the workflow.
     retentionPolicyUpdated; // retention policy has changed.
 
@@ -462,11 +462,13 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         cron_schedule:
           triggerType === WorkflowUpdateTrigger.Periodic ? schedule : '', // Always set the schedule if the update type is periodic.
         paused, // Set whatever value of paused was set, which will be the previous value if it's not modified.
-        sourceId: triggerType === WorkflowUpdateTrigger.Cascade ? sourceId : '',
+        source_id: triggerType === WorkflowUpdateTrigger.Cascade ? sourceId : '',
       },
       retention_policy: retentionPolicyUpdated ? retentionPolicy : undefined,
     };
 
+    console.log('Source ID in Changes: ', sourceId)
+    console.log('Trigger type: ', triggerType);
     console.log('Changes Schedule, ', changes.schedule);
 
     fetch(`${apiAddress}/api/workflow/${workflowDag.workflow_id}/edit`, {
