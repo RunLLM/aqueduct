@@ -324,7 +324,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           setTriggerType(e.target.value as WorkflowUpdateTrigger)
         }
         value={triggerType}
-        sx={{ width: '200px' }}
+        sx={{ width: '250px' }}
       >
         {triggerOptions.map(({ label, value }) => {
           return (
