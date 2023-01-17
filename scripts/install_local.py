@@ -176,17 +176,9 @@ if __name__ == "__main__":
             if not f == "__version__":
                 execute_command(["rm", f], cwd=ui_directory)
 
-        # We detect whether the server is running on a SageMaker instance by checking if the
-        # directory /home/ec2-user/SageMaker exists. This is hacky but we couldn't find a better
-        # solution at the moment.
-        if isdir(join(os.sep, "home", "ec2-user", "SageMaker")):
-            shutil.copytree(
-                join(cwd, "src", "ui", "app", "dist", "sagemaker"), ui_directory, dirs_exist_ok=True
-            )
-        else:
-            shutil.copytree(
-                join(cwd, "src", "ui", "app", "dist", "default"), ui_directory, dirs_exist_ok=True
-            )
+        shutil.copytree(
+            join(cwd, "src", "ui", "app", "dist", "default"), ui_directory, dirs_exist_ok=True
+        )
 
         # To prevent unnecessary files from getting into our releases
         # Will replace the react-code-block component soon (next week) to avoid this concern completely
