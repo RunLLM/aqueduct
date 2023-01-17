@@ -21,6 +21,12 @@ from aqueduct.error import (
 from aqueduct.flow import Flow
 from aqueduct.github import Github
 from aqueduct.integrations.airflow_integration import AirflowIntegration
+from aqueduct.integrations.connect_config import (
+    BaseConnectionConfig,
+    IntegrationConfig,
+    convert_dict_to_integration_connect_config,
+)
+from aqueduct.integrations.databricks_integration import DatabricksIntegration
 from aqueduct.integrations.google_sheets_integration import GoogleSheetsIntegration
 from aqueduct.integrations.k8s_integration import K8sIntegration
 from aqueduct.integrations.lambda_integration import LambdaIntegration
@@ -188,6 +194,45 @@ class Client:
         """
         return create_param_artifact(self._dag, name, default, description)
 
+    def connect_integration(
+        self, name: str, service: ServiceType, config: Union[Dict[str, str], IntegrationConfig]
+    ) -> None:
+        """Connects the Aqueduct server to an integration.
+
+        Args:
+            name:
+                The name to assign this integration. Will error if an integration with that name
+                already exists.
+            service:
+                The type of integration to connect to.
+            config:
+                Either a dictionary or an IntegrationConnectConfig object that contains the
+                configuration credentials needed to connect.
+        """
+        if service not in ServiceType:
+            raise InvalidUserArgumentException(
+                "Service argument must match exactly one of the enum values in ServiceType (case-sensitive)."
+            )
+
+        self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
+        if name in self._connected_integrations.keys():
+            raise InvalidUserActionException(
+                "Cannot connect a new integration with name `%s`. An integration with this name already exists."
+                % name
+            )
+
+        if not isinstance(config, dict) and not isinstance(config, BaseConnectionConfig):
+            raise InvalidUserArgumentException(
+                "`config` argument must be either a dict or IntegrationConnectConfig."
+            )
+
+        if isinstance(config, dict):
+            config = convert_dict_to_integration_connect_config(service, config)
+        assert isinstance(config, BaseConnectionConfig)
+
+        globals.__GLOBAL_API_CLIENT__.connect_integration(name, service, config)
+        logger().info("Successfully connected to new %s integration `%s`." % (service, name))
+
     def list_integrations(self) -> Dict[str, IntegrationInfo]:
         """Retrieves a dictionary of integrations the client can use.
 
@@ -208,6 +253,7 @@ class Client:
         K8sIntegration,
         LambdaIntegration,
         MongoDBIntegration,
+        DatabricksIntegration,
     ]:
         """Retrieves a connected integration object.
 
@@ -265,6 +311,10 @@ class Client:
         elif integration_info.service == ServiceType.MONGO_DB:
             return MongoDBIntegration(
                 dag=self._dag,
+                metadata=integration_info,
+            )
+        elif integration_info.service == ServiceType.DATABRICKS:
+            return DatabricksIntegration(
                 metadata=integration_info,
             )
         else:

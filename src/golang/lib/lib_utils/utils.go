@@ -99,3 +99,17 @@ func ParseLambdaConfig(conf auth.Config) (*integration.LambdaIntegrationConfig, 
 
 	return &c, nil
 }
+
+func ParseDatabricksConfig(conf auth.Config) (*integration.DatabricksIntegrationConfig, error) {
+	data, err := conf.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	var c integration.DatabricksIntegrationConfig
+	if err := json.Unmarshal(data, &c); err != nil {
+		return nil, err
+	}
+
+	return &c, nil
+}

@@ -15,8 +15,9 @@ from pandas._testing import assert_frame_equal
 from aqueduct import metric, op
 
 from ..shared.data_objects import DataObject
+from ..shared.flow_helpers import publish_flow_test, trigger_flow_test
 from ..shared.relational import all_relational_DBs
-from ..shared.utils import extract, publish_flow_test, trigger_flow_test
+from .extract import extract
 
 
 @metric

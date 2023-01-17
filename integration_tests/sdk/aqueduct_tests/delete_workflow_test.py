@@ -7,8 +7,10 @@ import aqueduct
 from aqueduct import op
 
 from ..shared.data_objects import DataObject
+from ..shared.flow_helpers import publish_flow_test
+from ..shared.naming import generate_table_name
 from ..shared.relational import SHORT_SENTIMENT_SQL_QUERY, all_relational_DBs
-from ..shared.utils import extract, generate_table_name, publish_flow_test
+from .extract import extract
 from .save import save
 
 
@@ -65,7 +67,7 @@ def test_delete_workflow_invalid_saved_objects(client, flow_name, data_integrati
 
     # Cannot delete a flow if the saved objects specified had not been saved by the flow.
     with pytest.raises(InvalidRequestError):
-        _ = client.delete_flow(flow.id(), saved_objects_to_delete=tables, force=True)
+        client.delete_flow(flow.id(), saved_objects_to_delete=tables, force=True)
 
     # Check flow exists.
     client.flow(flow.id())
@@ -73,7 +75,7 @@ def test_delete_workflow_invalid_saved_objects(client, flow_name, data_integrati
 
 @pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
 def test_force_delete_workflow_saved_objects(
-    client, flow_name, data_integration, engine, validator
+    client, flow_name, data_integration, engine, data_validator
 ):
     """Check the flow with object(s) saved with update_mode=APPEND can only be deleted if in force mode."""
     table_name = generate_table_name()
@@ -96,7 +98,7 @@ def test_force_delete_workflow_saved_objects(
     )
 
     extracted_table_data = table_artifact.get()
-    validator.check_saved_artifact_data(
+    data_validator.check_saved_artifact_data(
         flow,
         table_artifact.id(),
         expected_data=pd.concat([extracted_table_data, extracted_table_data], ignore_index=True),
@@ -117,12 +119,12 @@ def test_force_delete_workflow_saved_objects(
         client.flow(flow.id())
 
     # Check table no longer exists
-    validator.check_saved_artifact_data_does_not_exist(table_artifact.id())
+    data_validator.check_saved_artifact_data_does_not_exist(table_artifact.id())
 
 
 @pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
 def test_delete_workflow_saved_objects_twice(
-    client, flow_name, data_integration, engine, validator
+    client, flow_name, data_integration, engine, data_validator
 ):
     """Checking the successful deletion case and unsuccessful deletion case works as expected.
     To test this, I have two workflows that write to the same table. When I delete the table in the first workflow,
@@ -152,7 +154,7 @@ def test_delete_workflow_saved_objects_twice(
     )
 
     extracted_table_data = table_artifact.get()
-    validator.check_saved_artifact_data(
+    data_validator.check_saved_artifact_data(
         flow1,
         table_artifact.id(),
         expected_data=pd.concat([extracted_table_data, extracted_table_data], ignore_index=True),
@@ -173,7 +175,7 @@ def test_delete_workflow_saved_objects_twice(
     with pytest.raises(InvalidUserArgumentException, match="Unable to find a flow"):
         client.flow(flow1.id())
 
-    validator.check_saved_artifact_data_does_not_exist(table_artifact.id())
+    data_validator.check_saved_artifact_data_does_not_exist(table_artifact.id())
 
     # Try to delete table deleted by other flow.
     with pytest.raises(Exception) as e_info:

@@ -5,7 +5,6 @@
   "scripts": {
     "start": "parcel --no-cache index.html",
     "build": "parcel build --public-url /dist --dist-dir dist/default index.html",
-    "build-sagemaker": "parcel build --public-url /proxy/8080/dist --dist-dir dist/sagemaker index.html",
     "lint": "eslint '*/**/*.{js,ts,tsx}' --format table",
     "lint:fix": "eslint '*/**/*.{js,ts,tsx}' --format table --fix"
   },

@@ -76,7 +76,10 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   const breadcrumbs = [
     BreadcrumbLink.HOME,
     BreadcrumbLink.WORKFLOWS,
-    new BreadcrumbLink(workflowLink, workflow.selectedDag?.metadata.name),
+    new BreadcrumbLink(
+      workflowLink,
+      workflowDagResultWithLoadingStatus?.result?.name ?? 'Workflow'
+    ),
     new BreadcrumbLink(path, operator ? operator.name : 'Metric'),
   ];
 

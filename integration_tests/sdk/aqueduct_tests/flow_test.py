@@ -13,14 +13,9 @@ import aqueduct
 from aqueduct import check, metric, op
 
 from ..shared.data_objects import DataObject
-from ..shared.utils import (
-    extract,
-    generate_new_flow_name,
-    generate_table_name,
-    publish_flow_test,
-    trigger_flow_test,
-    wait_for_flow_runs,
-)
+from ..shared.flow_helpers import publish_flow_test, trigger_flow_test, wait_for_flow_runs
+from ..shared.naming import generate_new_flow_name, generate_table_name
+from .extract import extract
 from .save import save
 from .test_functions.sentiment.model import sentiment_model
 from .test_functions.simple.model import (
@@ -31,7 +26,7 @@ from .test_functions.simple.model import (
 from .test_metrics.constant.model import constant_metric
 
 
-def test_basic_flow(client, flow_name, data_integration, engine, validator):
+def test_basic_flow(client, flow_name, data_integration, engine, data_validator):
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
     output_artifact = dummy_sentiment_model(table_artifact)
     save(data_integration, output_artifact)
@@ -43,12 +38,12 @@ def test_basic_flow(client, flow_name, data_integration, engine, validator):
         engine=engine,
     )
 
-    validator.check_saved_artifact_data(
+    data_validator.check_saved_artifact_data(
         flow, output_artifact.id(), expected_data=output_artifact.get()
     )
 
 
-def test_sentiment_flow(client, flow_name, data_integration, engine, validator):
+def test_sentiment_flow(client, flow_name, data_integration, engine, data_validator):
     """Actually run the full sentiment model (with nltk dependency)."""
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
     output_artifact = sentiment_model(table_artifact)
@@ -60,12 +55,12 @@ def test_sentiment_flow(client, flow_name, data_integration, engine, validator):
         name=flow_name(),
         engine=engine,
     )
-    validator.check_saved_artifact_data(
+    data_validator.check_saved_artifact_data(
         flow, output_artifact.id(), expected_data=output_artifact.get()
     )
 
 
-def test_complex_flow(client, flow_name, data_integration, engine, validator):
+def test_complex_flow(client, flow_name, data_integration, engine, data_validator):
     table_artifact1 = extract(data_integration, DataObject.SENTIMENT)
     table_artifact2 = extract(data_integration, DataObject.SENTIMENT)
 
@@ -97,7 +92,7 @@ def test_complex_flow(client, flow_name, data_integration, engine, validator):
         name=flow_name(),
         engine=engine,
     )
-    validator.check_saved_artifact_data(
+    data_validator.check_saved_artifact_data(
         flow, output_artifact.id(), expected_data=output_artifact.get()
     )
 
@@ -114,7 +109,7 @@ def test_complex_flow(client, flow_name, data_integration, engine, validator):
         engine=engine,
         checks=[success_check],  # failing_check will no longer be included.
     )
-    validator.check_saved_artifact_data(
+    data_validator.check_saved_artifact_data(
         flow, output_artifact.id(), expected_data=output_artifact.get()
     )
 
@@ -279,10 +274,9 @@ def test_publish_flow_with_same_name(client, flow_name, data_integration, engine
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
     output_artifact = dummy_sentiment_model(table_artifact)
 
-    name = flow_name()
     flow = publish_flow_test(
         client,
-        name=name,
+        name=flow_name(),
         artifacts=output_artifact,
         engine=engine,
         schedule=aqueduct.daily(),
@@ -294,7 +288,6 @@ def test_publish_flow_with_same_name(client, flow_name, data_integration, engine
     publish_flow_test(
         client,
         metric,
-        name=name,
         engine=engine,
         schedule=aqueduct.daily(),
         existing_flow=flow,

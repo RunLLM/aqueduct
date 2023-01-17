@@ -225,14 +225,7 @@ def update_ui_version():
         generate_version_file(os.path.join(ui_directory, "__version__"))
         ui_zip_path = os.path.join(ui_directory, "ui.zip")
         with open(ui_zip_path, "wb") as f:
-            # We detect whether the server is running on a SageMaker instance by checking if the
-            # directory /home/ec2-user/SageMaker exists. This is hacky but we couldn't find a better
-            # solution at the moment.
-            if os.path.isdir(os.path.join(os.sep, "home", "ec2-user", "SageMaker")):
-                s3_path = os.path.join(s3_ui_prefix, "sagemaker", "ui.zip")
-            else:
-                s3_path = os.path.join(s3_ui_prefix, "default", "ui.zip")
-
+            s3_path = os.path.join(s3_ui_prefix, "default", "ui.zip")
             _download_file(s3_path, f, "UI")
         with zipfile.ZipFile(ui_zip_path, "r") as zip:
             zip.extractall(ui_directory)

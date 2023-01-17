@@ -26,12 +26,6 @@ dist:
 	# don't need to specify an address when making a request.
 	cd app && echo "SERVER_ADDRESS=" > .env
 	cd app && npm run build
-	
-	# This is to ensure that the server address is /proxy/8080 when running on
-	# SageMaker. We do this because SageMaker puts everything behind a proxy that
-	# we have to sub-route everything behind.
-	cd app && echo "SERVER_ADDRESS=/proxy/8080" > .env
-	cd app && npm run build-sagemaker
 
 lint:
 	cd common && npm run lint:fix

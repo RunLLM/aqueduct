@@ -68,6 +68,7 @@ def save_artifact(
         )
 
     # Tabular data written into S3 must include a S3FileFormat hint.
+    # TODO(ENG-2035): This is redundant after `.config()` pattern is deprecated.
     if artifact_type == ArtifactType.TABLE and isinstance(save_params, S3LoadParams):
         if save_params.format is None:
             raise InvalidUserArgumentException(

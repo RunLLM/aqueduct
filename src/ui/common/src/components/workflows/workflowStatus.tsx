@@ -123,10 +123,29 @@ export const StatusChip: React.FC<Props> = ({ status }) => {
 
 export default StatusChip;
 
+type IndicatorProps = {
+  /**
+   * Execution status to render.
+   */
+  status: ExecutionStatus;
+  /**
+   * Size of the Indicator.
+   */
+  size: string;
+  /**
+   * False if use default colors. Otherwise, specify the color.
+   */
+  monochrome: string | false;
+};
+
 /**
  * Smaller status indicator component that is just a circle with a background color.
  **/
-export const StatusIndicator: React.FC<Props> = ({ status }) => {
+export const StatusIndicator: React.FC<IndicatorProps> = ({
+  status,
+  size = '12px',
+  monochrome = false,
+}) => {
   const getIcon = (status: ExecutionStatus) => {
     let indicator = null;
     switch (status) {
@@ -136,11 +155,15 @@ export const StatusIndicator: React.FC<Props> = ({ status }) => {
             sx={{
               width: '100%',
               height: '100%',
+              fontSize: size,
               display: 'flex',
               alignSelf: 'center',
             }}
           >
-            <FontAwesomeIcon icon={faSpinner} color={'black'} />
+            <FontAwesomeIcon
+              icon={faSpinner}
+              color={monochrome ? monochrome : 'black'}
+            />
           </Box>
         );
         break;
@@ -151,13 +174,14 @@ export const StatusIndicator: React.FC<Props> = ({ status }) => {
             sx={{
               width: '100%',
               height: '100%',
+              fontSize: size,
               display: 'flex',
               alignSelf: 'center',
             }}
           >
             <FontAwesomeIcon
               icon={faX}
-              color={getExecutionStatusColor(status)}
+              color={monochrome ? monochrome : getExecutionStatusColor(status)}
             />
           </Box>
         );
@@ -168,13 +192,14 @@ export const StatusIndicator: React.FC<Props> = ({ status }) => {
             sx={{
               width: '100%',
               height: '100%',
+              fontSize: size,
               display: 'flex',
               alignSelf: 'center',
             }}
           >
             <FontAwesomeIcon
               icon={faClockFour}
-              color={getExecutionStatusColor(status)}
+              color={monochrome ? monochrome : getExecutionStatusColor(status)}
             />
           </Box>
         );
@@ -186,13 +211,14 @@ export const StatusIndicator: React.FC<Props> = ({ status }) => {
             sx={{
               width: '100%',
               height: '100%',
+              fontSize: size,
               display: 'flex',
               alignSelf: 'center',
             }}
           >
             <FontAwesomeIcon
               icon={faListOl}
-              color={getExecutionStatusColor(status)}
+              color={monochrome ? monochrome : getExecutionStatusColor(status)}
             />
           </Box>
         );
@@ -204,13 +230,14 @@ export const StatusIndicator: React.FC<Props> = ({ status }) => {
             sx={{
               width: '100%',
               height: '100%',
+              fontSize: size,
               display: 'flex',
               alignSelf: 'center',
             }}
           >
             <FontAwesomeIcon
               icon={faCircleCheck}
-              color={getExecutionStatusColor(status)}
+              color={monochrome ? monochrome : getExecutionStatusColor(status)}
             />
           </Box>
         );
@@ -222,13 +249,14 @@ export const StatusIndicator: React.FC<Props> = ({ status }) => {
             sx={{
               width: '100%',
               height: '100%',
+              fontSize: size,
               display: 'flex',
               alignSelf: 'center',
             }}
           >
             <FontAwesomeIcon
               icon={faCircleQuestion}
-              color={getExecutionStatusColor(status)}
+              color={monochrome ? monochrome : getExecutionStatusColor(status)}
             />
           </Box>
         );
@@ -240,13 +268,14 @@ export const StatusIndicator: React.FC<Props> = ({ status }) => {
             sx={{
               width: '100%',
               height: '100%',
+              fontSize: size,
               display: 'flex',
               alignSelf: 'center',
             }}
           >
             <FontAwesomeIcon
               icon={faCircleExclamation}
-              color={getExecutionStatusColor(status)}
+              color={monochrome ? monochrome : getExecutionStatusColor(status)}
             />
           </Box>
         );
@@ -259,6 +288,7 @@ export const StatusIndicator: React.FC<Props> = ({ status }) => {
             sx={{
               height: '100%',
               width: '100%',
+              fontSize: size,
               backgroundColor: getExecutionStatusColor(status),
               borderRadius: 999,
             }}
@@ -274,8 +304,8 @@ export const StatusIndicator: React.FC<Props> = ({ status }) => {
     <Tooltip title={getExecutionStatusLabel(status)} placement="bottom" arrow>
       <Box
         sx={{
-          width: '12px',
-          height: '12px',
+          width: size,
+          height: size,
           alignItems: 'center',
           alignSelf: 'center',
         }}

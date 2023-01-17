@@ -16,7 +16,7 @@ interface ShowMoreProps {
 }
 
 const showMoreStyles = {
-  fontWeight: 500,
+  fontWeight: 300,
   color: theme.palette.gray['600'],
   cursor: 'pointer',
   '&:hover': { textDecoration: 'underline' },
@@ -85,7 +85,7 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
               </Box>
             </Tooltip>
           ) : (
-            <Typography variant="body1">
+            <Typography variant="body1" sx={{ fontWeight: 300 }}>
               {parseMetricResult(metrics[i].value, 3)}
             </Typography>
           )}

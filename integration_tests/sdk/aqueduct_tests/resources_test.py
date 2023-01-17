@@ -6,7 +6,7 @@ from aqueduct.error import AqueductError, InvalidUserArgumentException
 
 from aqueduct import global_config, op
 
-from ..shared.utils import publish_flow_test
+from ..shared.flow_helpers import publish_flow_test
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S)

@@ -10,7 +10,8 @@ from aqueduct.error import InvalidUserArgumentException
 from aqueduct import check, global_config, metric, op
 
 from ..shared.data_objects import DataObject
-from ..shared.utils import extract, publish_flow_test
+from ..shared.flow_helpers import publish_flow_test
+from .extract import extract
 from .save import save
 
 
@@ -217,7 +218,7 @@ def test_lazy_artifacts_with_custom_parameters(client):
     assert doubled._get_content() is None  # do not manifest the contents!
 
 
-def test_lazy_artifact_with_save(client, flow_name, data_integration, engine, validator):
+def test_lazy_artifact_with_save(client, flow_name, data_integration, engine, data_validator):
     reviews = extract(data_integration, DataObject.SENTIMENT)
 
     @op()
@@ -234,6 +235,6 @@ def test_lazy_artifact_with_save(client, flow_name, data_integration, engine, va
         name=flow_name(),
         engine=engine,
     )
-    validator.check_saved_artifact_data(
+    data_validator.check_saved_artifact_data(
         flow, review_copied.id(), expected_data=copy_field.local(reviews)
     )

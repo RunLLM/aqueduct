@@ -6,7 +6,12 @@ import pytest
 # If a disallowed data integration is used, all tests in the file will be skipped.
 from aqueduct.constants.enums import ServiceType
 
-allowed_data_integrations_by_file = {"relational_test": [ServiceType.SQLITE, ServiceType.SNOWFLAKE]}
+from sdk.data_integration_tests.flow_manager import FlowManager
+
+allowed_data_integrations_by_file = {
+    "relational_test": [ServiceType.SQLITE, ServiceType.SNOWFLAKE],
+    "s3_test": [ServiceType.S3],
+}
 
 
 @pytest.fixture(autouse=True)
@@ -34,3 +39,15 @@ def filter_tests_based_on_data_integrations(request, client, data_integration):
             "Skipped for data integration `%s`, since it is not of type `%s`."
             % (data_integration._metadata.name, ",".join(allowed_data_integrations))
         )
+
+
+@pytest.fixture
+def flow_manager(client, flow_name, engine):
+    """This a purely a convenience fixture to package some flow-related fields together that
+    data integration tests usually don't care about.
+
+    This allows test cases in this suite to import one fixture in order to publish flows,
+    instead of three. Data Integration tests usually don't care about how flows are published,
+    as it is mostly a mechanism by which data can be saved.
+    """
+    return FlowManager(client, flow_name, engine)

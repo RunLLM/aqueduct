@@ -16,6 +16,7 @@ import { theme } from '../../../styles/theme/theme';
 import { ReactFlowNodeData } from '../../../utils/reactflow';
 import ExecutionStatus, { ExecState, FailureType } from '../../../utils/shared';
 import { BaseNode } from './BaseNode.styles';
+import NodeStatusIconography from './NodeStatusIconography';
 
 type Props = {
   data: ReactFlowNodeData;
@@ -43,13 +44,25 @@ const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
     : theme.palette.DarkContrast;
   const borderColor = textColor;
 
+  const icon = result === 'true' ? faCheck : faExclamation;
+
+  const successDisplay = (
+    <Box display="flex" alignItems="center">
+      <Box sx={{ fontSize: '24px' }}>
+        <FontAwesomeIcon icon={icon} />
+      </Box>
+      <Typography variant="body1" sx={{ pl: 1 }}>
+        {result === 'true' ? 'passed' : 'failed'}
+      </Typography>
+    </Box>
+  );
+
   let backgroundColor, hoverColor;
   if (execState?.status === ExecutionStatus.Succeeded) {
     backgroundColor = selected
       ? theme.palette.DarkSuccessMain50
       : theme.palette.DarkSuccessMain;
     hoverColor = theme.palette.DarkSuccessMain75;
-
     // Warning color for non-fatal errors.
   } else if (
     execState?.status === ExecutionStatus.Failed &&
@@ -71,8 +84,6 @@ const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
     backgroundColor = selected ? 'blue.300' : 'blue.100';
     hoverColor = 'blue.200';
   }
-
-  const icon = result === 'true' ? faCheck : faExclamation;
 
   return (
     <BaseNode
@@ -115,16 +126,10 @@ const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
         justifyContent="center"
         alignItems="center"
       >
-        {data.result && (
-          <>
-            <Box sx={{ fontSize: '24px', marginRight: '8px' }}>
-              <FontAwesomeIcon icon={icon} />
-            </Box>
-            <Typography variant="body1">
-              {data.result === 'true' ? 'passed' : 'failed'}
-            </Typography>
-          </>
-        )}
+        <NodeStatusIconography
+          execState={execState}
+          successDisplay={successDisplay}
+        />
       </Box>
 
       <Handle

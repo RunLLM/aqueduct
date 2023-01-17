@@ -1,6 +1,13 @@
 import pytest
 from aqueduct.constants.enums import ServiceType
 
+from .data_validator import DataValidator
+
+
+@pytest.fixture(scope="function")
+def data_validator(client, data_integration):
+    return DataValidator(client, data_integration)
+
 
 @pytest.fixture(autouse=True)
 def enable_only_for_data_integration_type(request, client, data_integration):

@@ -7,9 +7,10 @@ import (
 type ManagerType string
 
 const (
-	ProcessType ManagerType = "process"
-	K8sType     ManagerType = "k8s"
-	LambdaType  ManagerType = "lambda"
+	ProcessType    ManagerType = "process"
+	K8sType        ManagerType = "k8s"
+	LambdaType     ManagerType = "lambda"
+	DatabricksType ManagerType = "databricks"
 )
 
 type Config interface {
@@ -40,6 +41,23 @@ type LambdaJobManagerConfig struct {
 	AwsSecretAccessKey string `yaml:"awsSecretAccessKey" json:"aws_secret_access_key"`
 }
 
+type DatabricksJobManagerConfig struct {
+	// WorkspaceURL is the full url for the Databricks workspace that
+	// Aqueduct operators will run on.
+	WorkspaceURL string `yaml:"workspaceUrl" json:"workspace_url"`
+	// AccessToken is a Databricks AccessToken for a workspace. Information on how
+	// to create tokens can be found here: https://docs.databricks.com/dev-tools/auth.html#personal-access-tokens-for-users
+	AccessToken string `yaml:"accessToken" json:"access_token"`
+	// Databricks needs an Instance Profile with S3 permissions in order to access metadata
+	// storage in S3. Information on how to create this can be found here:
+	// https://docs.databricks.com/aws/iam/instance-profile-tutorial.html
+	S3InstanceProfileARN string `yaml:"s3InstanceProfileArn" json:"s3_instance_profile_arn"`
+	// AWS Access Key ID is passed from the StorageConfig.
+	AwsAccessKeyID string `yaml:"awsAccessKeyId" json:"aws_access_key_id"`
+	// AWS Secret Access Key is passed from the StorageConfig.
+	AwsSecretAccessKey string `yaml:"awsSecretAccessKey" json:"aws_secret_access_key"`
+}
+
 func (*ProcessConfig) Type() ManagerType {
 	return ProcessType
 }
@@ -50,6 +68,10 @@ func (*K8sJobManagerConfig) Type() ManagerType {
 
 func (*LambdaJobManagerConfig) Type() ManagerType {
 	return LambdaType
+}
+
+func (*DatabricksJobManagerConfig) Type() ManagerType {
+	return DatabricksType
 }
 
 func RegisterGobTypes() {

@@ -52,7 +52,7 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         value = <ExecutionStatusLink name={name} url={url} status={status} />;
         break;
       case 'created_at':
-        value = row[column.name];
+        value = row[column.name].toLocaleString();
         break;
       case 'metrics': {
         value = <MetricItem metrics={value} />;
@@ -143,7 +143,7 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           url: `${getPathPrefix()}/workflow/${workflowId}/result/${latestDagResultId}/artifact/${artifactId}`,
           status: latestVersion.status,
         },
-        created_at: new Date(latestVersion.timestamp * 1000).toLocaleString(),
+        created_at: new Date(latestVersion.timestamp * 1000),
         workflow: {
           name: workflowName,
           url: `${getPathPrefix()}/workflow/${workflowId}`,
@@ -155,6 +155,25 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       };
     });
   }
+
+  const sortColumns = [
+    {
+      name: 'Name',
+      sortAccessPath: ['name', 'name'],
+    },
+    {
+      name: 'Created At',
+      sortAccessPath: ['created_at'],
+    },
+    {
+      name: 'Type',
+      sortAccessPath: ['type'],
+    },
+    {
+      name: 'Status',
+      sortAccessPath: ['name', 'status'],
+    },
+  ];
 
   const artifactList: PaginatedSearchTableData = {
     schema: {
@@ -208,6 +227,7 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           onGetColumnValue={onGetColumnValue}
           onChangeRowsPerPage={onChangeRowsPerPage}
           savedRowsPerPage={getRowsPerPage()}
+          sortColumns={sortColumns}
         />
       ) : (
         <Box>{noItemsMessage}</Box>
