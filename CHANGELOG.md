@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.1.10
+Released on January 17, 2023
+
+### Key Features
+### Enhancements
+* Differentiate keys and values better on the UI; adds the use of different
+    colored text to make it clear which is the key and which is the value when
+    showing, for example, metric and check values.
+* Improves presentation of non-success states of metrics and checks on workflow
+    DAG. Rather than leaving the nodes empty as before, they now include icons
+    that demonstrate the execution state (failed, pending, canceled).
+* Adds redesigned search interface to workflow and data list pages. The search
+    bar itself has been reduced in size, and a sort functionality has been
+    added that allows users to select a column by which to sort the view.
+* Orders integrations alphabetically on the integrations page to make them
+    easier to find.
+
+### Bugfixes
+* Fixes bug where operator & artifact statuses were missing from details pages.
+* Fixes bug where the header breadcrumbs did not show the title of the workflow
+    on the metric details page.
+
 ## 0.1.9
 Released on Januay 10, 2023.
 
