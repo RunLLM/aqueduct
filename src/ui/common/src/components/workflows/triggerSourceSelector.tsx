@@ -4,7 +4,6 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
-import workflow from 'src/reducers/workflow';
 import { ListWorkflowSummary } from 'src/utils/workflows';
 
 type Props = {
@@ -19,7 +18,7 @@ export const TriggerSourceSelector: React.FC<Props> = ({
   workflows,
 }) => {
   const [selected, setSelected] = useState<ListWorkflowSummary>(
-    workflows.find(workflow => workflow.id === sourceId)
+    workflows.find((workflow) => workflow.id === sourceId)
   );
 
   useEffect(() => {
@@ -34,7 +33,11 @@ export const TriggerSourceSelector: React.FC<Props> = ({
     return workflows.map((workflow) => {
       return (
         //@ts-ignore
-        <MenuItem key={workflow.id} value={workflow} sx={{ backgroundColor: 'blueTint' }}>
+        <MenuItem
+          key={workflow.id}
+          value={workflow}
+          sx={{ backgroundColor: 'blueTint' }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Typography>{workflow.name}</Typography>
           </Box>
@@ -54,7 +57,7 @@ export const TriggerSourceSelector: React.FC<Props> = ({
           autoWidth
           value={selected}
           onChange={(e) => {
-            setSelected(e.target.value as ListWorkflowSummary)
+            setSelected(e.target.value as ListWorkflowSummary);
           }}
         >
           {menuItems}

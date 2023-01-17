@@ -304,14 +304,17 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     (triggerType === WorkflowUpdateTrigger.Periodic && // The trigger type is still periodic but the schedule itself has changed.
       schedule !== workflowDag.metadata.schedule.cron_schedule) ||
     (triggerType === WorkflowUpdateTrigger.Cascade && // The trigger type is still cascade but the source has changed.
-      sourceId !== workflowDag.metadata?.schedule?.source_id) || 
+      sourceId !== workflowDag.metadata?.schedule?.source_id) ||
     paused !== workflowDag.metadata.schedule.paused || // The schedule type is periodic and we've changed the pausedness of the workflow.
     retentionPolicyUpdated; // retention policy has changed.
 
   const triggerOptions = [
     { label: 'Update Manually', value: WorkflowUpdateTrigger.Manual },
     { label: 'Update Periodically', value: WorkflowUpdateTrigger.Periodic },
-    { label: 'Update After Completion Of', value: WorkflowUpdateTrigger.Cascade },
+    {
+      label: 'Update After Completion Of',
+      value: WorkflowUpdateTrigger.Cascade,
+    },
   ];
 
   const scheduleSelector = (
@@ -462,7 +465,8 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         cron_schedule:
           triggerType === WorkflowUpdateTrigger.Periodic ? schedule : '', // Always set the schedule if the update type is periodic.
         paused, // Set whatever value of paused was set, which will be the previous value if it's not modified.
-        source_id: triggerType === WorkflowUpdateTrigger.Cascade ? sourceId : '',
+        source_id:
+          triggerType === WorkflowUpdateTrigger.Cascade ? sourceId : '',
       },
       retention_policy: retentionPolicyUpdated ? retentionPolicy : undefined,
     };
