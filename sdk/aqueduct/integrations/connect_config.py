@@ -60,13 +60,12 @@ class S3Config(BaseConnectionConfig):
 
     # Config credentials
     config_file_path: str = ""
-    config_file_content: str = ""
     config_file_profile: str = ""
 
-    bucket: str = ""
+    bucket: str
+    region: str
 
-    region: str = ""
-    use_as_storage: str = ""
+    use_as_storage: str = "false"
 
 
 class AthenaConfig(BaseConnectionConfig):
