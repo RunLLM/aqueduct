@@ -1,3 +1,6 @@
+# usage: run with `sh update_helm.sh <VERSION>`
+# Please change `~` to the root of your aqueduct repos if they are not
+# located in `~`. 
 VERSION=$1
 GH_PAGES_BRANCH=gh_pages_$VERSION
 

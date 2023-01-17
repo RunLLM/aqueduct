@@ -1,3 +1,4 @@
+# usage: Run this script to generate docs for gitbook repo.
 GITBOOK_REPO=$HOME/gitbook
 
 cd ~/aqueduct/sdk
