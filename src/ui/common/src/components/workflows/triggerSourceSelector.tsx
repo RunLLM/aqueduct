@@ -3,7 +3,7 @@ import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { ListWorkflowSummary } from 'src/utils/workflows';
 
 type Props = {

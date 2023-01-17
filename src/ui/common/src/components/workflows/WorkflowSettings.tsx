@@ -466,7 +466,9 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           triggerType === WorkflowUpdateTrigger.Periodic ? schedule : '', // Always set the schedule if the update type is periodic.
         paused, // Set whatever value of paused was set, which will be the previous value if it's not modified.
         source_id:
-          triggerType === WorkflowUpdateTrigger.Cascade ? sourceId : '00000000-0000-0000-0000-000000000000',
+          triggerType === WorkflowUpdateTrigger.Cascade
+            ? sourceId
+            : '00000000-0000-0000-0000-000000000000',
       },
       retention_policy: retentionPolicyUpdated ? retentionPolicy : undefined,
     };
