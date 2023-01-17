@@ -100,6 +100,11 @@ func ValidateSchedule(
 	// Note that we still need to check for cycles when the schedule of an existing
 	// Workflow is modified.
 
+	if workflowID == schedule.SourceID {
+		// Cannot have a self-dependency
+		return http.StatusBadRequest, errors.New("Cannot allow cycles for cascading workflows.")
+	}
+
 	cascadingWorkflows, err := workflowRepo.GetByScheduleTrigger(ctx, workflow.CascadingUpdateTrigger, DB)
 	if err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, internalValidationErrMsg)
