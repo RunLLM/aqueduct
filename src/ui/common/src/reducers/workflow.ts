@@ -472,6 +472,7 @@ export const handleGetSelectDagPosition = createAsyncThunk<
         dag,
         artifactResults
       );
+
       const elk = new ELK();
       const mappedNodes = collapsedPosition.nodes.map((node) => {
         return {
@@ -480,7 +481,7 @@ export const handleGetSelectDagPosition = createAsyncThunk<
           // So using a value of just the width and the height of the node will result in no spacing in between.
           // Elk (eclipse layout kernel) also provides many knobs to tweak this as well.
           width: 400,
-          height: 500,
+          height: 400,
         };
       });
 
@@ -489,10 +490,7 @@ export const handleGetSelectDagPosition = createAsyncThunk<
         // If it does not exist, remove the edge. elk crashes if an edge does not have a corresponding node.
         const nodeFound = false;
         for (let i = 0; i < mappedNodes.length; i++) {
-          if (
-            mappedEdge.source === mappedNodes[i].id ||
-            mappedEdge.target === mappedNodes[i].id
-          ) {
+          if (mappedEdge.source === mappedNodes[i].id) {
             return true;
           }
         }
@@ -506,8 +504,12 @@ export const handleGetSelectDagPosition = createAsyncThunk<
           'elk.algorithm': 'layered',
           'elk.direction': 'RIGHT',
           'elk.alignment': 'CENTER',
+          'elk.spacing.nodeNode': '80',
+          'elk.layered.spacing.nodeNodeBetweenLayers': '80',
           // https://www.eclipse.org/elk/reference/options/org-eclipse-elk-layered-nodePlacement-strategy.html
           'nodePlacement.strategy': 'NETWORK_SIMPLEX',
+          // POLYLINE
+          'org.eclipse.elk.edgeRouting': 'SPLINES',
           //https://www.eclipse.org/elk/reference/options/org-eclipse-elk-layered-nodePlacement-strategy.html
           'crossingMinimization.strategy': 'INTERACTIVE',
           'crossingMinimization.forceNodeModelOrder': true,
@@ -516,19 +518,23 @@ export const handleGetSelectDagPosition = createAsyncThunk<
         edges: mappedEdges,
       };
 
-      const positionedLayout = await elk.layout(graph);
-      collapsedPosition.nodes = collapsedPosition.nodes.map((node) => {
-        for (let i = 0; i < positionedLayout.children.length; i++) {
-          if (node.id === positionedLayout.children[i].id) {
-            node.position = {
-              x: positionedLayout.children[i].x,
-              y: positionedLayout.children[i].y,
-            };
+      try {
+        const positionedLayout = await elk.layout(graph);
+        collapsedPosition.nodes = collapsedPosition.nodes.map((node) => {
+          for (let i = 0; i < positionedLayout.children.length; i++) {
+            if (node.id === positionedLayout.children[i].id) {
+              node.position = {
+                x: positionedLayout.children[i].x,
+                y: positionedLayout.children[i].y,
+              };
+            }
           }
-        }
 
-        return node;
-      });
+          return node;
+        });
+      } catch (error) {
+        console.log('error getting PositionedLayout: ', error);
+      }
 
       return collapsedPosition;
     }
