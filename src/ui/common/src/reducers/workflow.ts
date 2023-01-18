@@ -480,8 +480,8 @@ export const handleGetSelectDagPosition = createAsyncThunk<
           // Width and height set not only the node width/height, but also how far apart we want to position these nodes.
           // So using a value of just the width and the height of the node will result in no spacing in between.
           // Elk (eclipse layout kernel) also provides many knobs to tweak this as well.
-          width: 400,
-          height: 400,
+          width: 300,
+          height: 300,
         };
       });
 

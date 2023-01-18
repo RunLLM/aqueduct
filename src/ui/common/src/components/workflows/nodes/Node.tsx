@@ -85,8 +85,6 @@ export const Node: React.FC<Props> = ({
         color: textColor,
         borderColor: borderColor,
         '&:hover': { backgroundColor: hoverColor },
-        width: NODE_WIDTH,
-        height: NODE_HEIGHT,
       }}
     >
       {icon && (
