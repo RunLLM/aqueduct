@@ -508,7 +508,6 @@ export const handleGetSelectDagPosition = createAsyncThunk<
           'elk.layered.spacing.nodeNodeBetweenLayers': '80',
           // https://www.eclipse.org/elk/reference/options/org-eclipse-elk-layered-nodePlacement-strategy.html
           'nodePlacement.strategy': 'NETWORK_SIMPLEX',
-          // POLYLINE
           'org.eclipse.elk.edgeRouting': 'SPLINES',
           //https://www.eclipse.org/elk/reference/options/org-eclipse-elk-layered-nodePlacement-strategy.html
           'crossingMinimization.strategy': 'INTERACTIVE',
