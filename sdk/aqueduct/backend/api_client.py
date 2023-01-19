@@ -422,30 +422,3 @@ class APIClient:
             deserialize(serialization_type, artifact_type, parsed_response["data"]),
             execution_status,
         )
-
-    def get_node_positions(
-        self, operator_mapping: Dict[str, Dict[str, Any]]
-    ) -> Tuple[Dict[str, Dict[str, float]], Dict[str, Dict[str, float]]]:
-        """Queries the `self.NODE_POSITION_ROUTE` endpoint for graph display's nodes' positions.
-
-        Args:
-            operator_mapping:
-                The mapping between each operator in the graph and all required metadata.
-                This is serialized into a json and passed directly to the endpoint.
-                The expected keys are:
-                    `inputs`: list of the input artifacts' UUIDs
-                    `output`: list of the output artifacts' UUIDs
-
-        Returns:
-            Two mappings of UUIDs to positions, structured as a dictionary with the keys "x" and "y".
-            The first mapping is for operators and the second is for artifacts.
-        """
-        url = self.construct_full_url(self.NODE_POSITION_ROUTE)
-        headers = self._generate_auth_headers()
-        data = json.dumps(operator_mapping, sort_keys=False)
-        resp = requests.post(url, headers=headers, data=data)
-        self.raise_errors(resp)
-
-        resp_json = resp.json()
-
-        return resp_json["operator_positions"], resp_json["artifact_positions"]
