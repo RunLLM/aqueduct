@@ -184,23 +184,28 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           </Typography>
         )}
 
-        {SupportedIntegrations[selectedIntegration.service].category !==
-          IntegrationCategories.COMPUTE && (
+        {SupportedIntegrations[selectedIntegration.service].category ===
+          IntegrationCategories.DATA && (
           <IntegrationObjectList
             user={user}
             integration={selectedIntegration}
           />
         )}
 
-        <Typography
-          variant="h5"
-          gutterBottom
-          component="div"
-          sx={{ marginY: 4, mt: 4 }}
-        >
-          Workflows
-        </Typography>
-        <OperatorsOnIntegration />
+        {SupportedIntegrations[selectedIntegration.service].category !==
+          IntegrationCategories.NOTIFICATION && (
+          <Box sx={{ mt: 4 }}>
+            <Typography
+              variant="h5"
+              gutterBottom
+              component="div"
+              sx={{ mb: 4 }}
+            >
+              Workflows
+            </Typography>
+            <OperatorsOnIntegration />
+          </Box>
+        )}
       </Box>
 
       {showAddTableDialog && (

@@ -291,7 +291,7 @@ export const ServiceLogos: ServiceLogo = {
   ['MongoDB']: `${integrationLogosBucket}/mongo.png`,
   ['Conda']: `${integrationLogosBucket}/conda.png`,
   ['Databricks']: `${integrationLogosBucket}/databricks_logo.png`,
-  ['Email']: `${integrationLogosBucket}/databricks_logo.png`,
+  ['Email']: `${integrationLogosBucket}/email.png`,
 };
 
 export const SupportedIntegrations: ServiceInfoMap = {
