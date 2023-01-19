@@ -44,12 +44,12 @@ type K8sIntegrationConfig struct {
 }
 
 type EmailConfig struct {
-	User     string                 `json:"user" yaml:"user"`
-	Password string                 `json:"password" yaml:"password"`
-	Host     string                 `json:"host" yaml:"host"`
-	Port     string                 `json:"port" yaml:"port"`
-	Targets  []string               `json:"targets" yaml:"targets"`
-	Level    shared.ExecutionStatus `json:"level"`
+	User     string                   `json:"user" yaml:"user"`
+	Password string                   `json:"password" yaml:"password"`
+	Host     string                   `json:"host" yaml:"host"`
+	Port     string                   `json:"port" yaml:"port"`
+	Targets  []string                 `json:"targets" yaml:"targets"`
+	Level    shared.NotificationLevel `json:"level"`
 }
 
 func (c *EmailConfig) FullHost() string {
