@@ -13,9 +13,9 @@ def _execute_command(args, cwd=None) -> None:
 
 def _run_tests(dir_name: str, concurrency: int, rerun_failed: bool) -> None:
     if rerun_failed:
-        _execute_command(["pytest", dir_name, ".", "-lf", "-rP", "-vv", "-n", str(concurrency)])
+        _execute_command(["pytest", dir_name, "-lf", "-rP", "-vv", "-n", str(concurrency)])
     else:
-        _execute_command(["pytest", dir_name, ".", "-rP", "-vv", "-n", str(concurrency)])
+        _execute_command(["pytest", dir_name, "-rP", "-vv", "-n", str(concurrency)])
 
 
 if __name__ == "__main__":
