@@ -26,6 +26,7 @@ import {
   AthenaConfig,
   BigQueryConfig,
   DatabricksConfig,
+  EmailConfig,
   formatService,
   GCSConfig,
   Integration,
@@ -49,6 +50,7 @@ import { AthenaDialog, isAthenaConfigComplete } from './athenaDialog';
 import { BigQueryDialog } from './bigqueryDialog';
 import { CondaDialog } from './condaDialog';
 import { DatabricksDialog } from './databricksDialog';
+import { EmailDialog } from './emailDialog';
 import { GCSDialog } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { isK8sConfigComplete, KubernetesDialog } from './kubernetesDialog';
@@ -311,6 +313,11 @@ const IntegrationDialog: React.FC<Props> = ({
         />
       );
       break;
+    case 'Email':
+      serviceDialog = <EmailDialog
+        onUpdateField={setConfigField}
+        value={config as EmailConfig}
+      />
     default:
       return null;
   }

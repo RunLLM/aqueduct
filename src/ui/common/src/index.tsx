@@ -7,6 +7,7 @@ import AddIntegrations from './components/integrations/addIntegrations';
 import { AqueductDemoCard } from './components/integrations/cards/aqueductDemoCard';
 import { BigQueryCard } from './components/integrations/cards/bigqueryCard';
 import { DataCard } from './components/integrations/cards/card';
+import { EmailCard } from './components/integrations/cards/emailCard';
 import { IntegrationCard } from './components/integrations/cards/card';
 import { DatabricksCard } from './components/integrations/cards/databricksCard';
 import { LoadSpecsCard } from './components/integrations/cards/loadSpecCard';
@@ -23,6 +24,7 @@ import { BigQueryDialog } from './components/integrations/dialogs/bigqueryDialog
 import { CondaDialog } from './components/integrations/dialogs/condaDialog';
 import { CSVDialog } from './components/integrations/dialogs/csvDialog';
 import { DatabricksDialog } from './components/integrations/dialogs/databricksDialog';
+import { EmailDialog } from './components/integrations/dialogs/emailDialog';
 import DeleteIntegrationDialog from './components/integrations/dialogs/deleteIntegrationDialog';
 import IntegrationDialog from './components/integrations/dialogs/dialog';
 import { IntegrationFileUploadField } from './components/integrations/dialogs/IntegrationFileUploadField';
@@ -240,6 +242,8 @@ export {
   DefaultLayout,
   DeleteIntegrationDialog,
   EdgeTypes,
+  EmailCard,
+  EmailDialog,
   ErrorPage,
   ExecutionChip,
   ExecutionStatus,

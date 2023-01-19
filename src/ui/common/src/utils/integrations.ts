@@ -1,5 +1,6 @@
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
+import { NotificationLogLevel } from './notifications';
 
 export const aqueductDemoName = 'aqueduct_demo';
 
@@ -159,6 +160,15 @@ export type DatabricksConfig = {
   s3_instance_profile_arn: string;
 };
 
+export type EmailConfig = {
+  host: string;
+  port: string;
+  user: string;
+  password: string;
+  targets_serialized: string; // This should be a serialized list
+  level: string;
+}
+
 export type IntegrationConfig =
   | PostgresConfig
   | SnowflakeConfig
@@ -177,7 +187,8 @@ export type IntegrationConfig =
   | KubernetesConfig
   | LambdaConfig
   | CondaConfig
-  | DatabricksConfig;
+  | DatabricksConfig
+  | EmailConfig;
 
 export type Service =
   | 'Postgres'
@@ -198,7 +209,8 @@ export type Service =
   | 'Google Sheets'
   | 'MongoDB'
   | 'Conda'
-  | 'Databricks';
+  | 'Databricks'
+  | 'Email';
 
 export type Info = {
   logo: string;
@@ -258,6 +270,7 @@ const integrationLogosBucket =
 export const IntegrationCategories = {
   DATA: 'data',
   COMPUTE: 'compute',
+  NOTIFICATION: 'notification',
 };
 
 export const ServiceLogos: ServiceLogo = {
@@ -279,6 +292,7 @@ export const ServiceLogos: ServiceLogo = {
   ['MongoDB']: `${integrationLogosBucket}/mongo.png`,
   ['Conda']: `${integrationLogosBucket}/conda.png`,
   ['Databricks']: `${integrationLogosBucket}/databricks_logo.png`,
+  ['Email']: `${integrationLogosBucket}/databricks_logo.png`,
 };
 
 export const SupportedIntegrations: ServiceInfoMap = {
@@ -366,6 +380,11 @@ export const SupportedIntegrations: ServiceInfoMap = {
     logo: ServiceLogos['Databricks'],
     activated: false,
     category: IntegrationCategories.COMPUTE,
+  },
+  ['Email']: {
+    logo: ServiceLogos['Email'],
+    activated: true,
+    category: IntegrationCategories.NOTIFICATION,
   },
 };
 

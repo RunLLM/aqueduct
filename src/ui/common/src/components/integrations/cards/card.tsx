@@ -13,6 +13,7 @@ import { AirflowCard } from './airflowCard';
 import { AqueductDemoCard } from './aqueductDemoCard';
 import { BigQueryCard } from './bigqueryCard';
 import { DatabricksCard } from './databricksCard';
+import { EmailCard } from './emailCard';
 import { GCSCard } from './gcsCard';
 import { KubernetesCard } from './kubernetesCard';
 import { LambdaCard } from './lambdaCard';
@@ -138,6 +139,8 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
     case 'Databricks':
       serviceCard = <DatabricksCard integration={integration} />;
       break;
+    case 'Email':
+      serviceCard = <EmailCard integration={integration} />;
     default:
       serviceCard = null;
   }
