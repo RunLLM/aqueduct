@@ -1,11 +1,11 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React, {useState} from 'react';
+import React, { useState } from 'react';
+import { NotificationLogLevel } from 'src';
 
 import { EmailConfig } from '../../../utils/integrations';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
 import NotificationLevelSelector from '../../notifications/NotificationLevelSelector';
-import { NotificationLogLevel } from 'src';
+import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders = {
   host: 'smtp.myprovider.com',
@@ -21,11 +21,8 @@ type Props = {
   value?: EmailConfig;
 };
 
-export const EmailDialog: React.FC<Props> = ({
-  onUpdateField,
-  value,
-}) => {
-  const [receiver, setReceiver] = useState('')
+export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
+  const [receiver, setReceiver] = useState('');
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
@@ -80,8 +77,11 @@ export const EmailDialog: React.FC<Props> = ({
         description="The email address of the receiver."
         placeholder={Placeholders.reciever}
         onChange={(event) => {
-          onUpdateField('targets_serialized', JSON.stringify([event.target.value]))
-          setReceiver(event.target.value)
+          onUpdateField(
+            'targets_serialized',
+            JSON.stringify([event.target.value])
+          );
+          setReceiver(event.target.value);
         }}
         value={receiver ?? null}
       />
@@ -100,7 +100,6 @@ export const EmailDialog: React.FC<Props> = ({
           onSelectLevel={(level) => onUpdateField('level', level)}
         />
       </Box>
-
     </Box>
   );
 };

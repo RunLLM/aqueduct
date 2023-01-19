@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 
-import { Integration, EmailConfig } from '../../../utils/integrations';
+import { EmailConfig, Integration } from '../../../utils/integrations';
 
 type Props = {
   integration: Integration;
@@ -10,7 +10,7 @@ type Props = {
 
 export const EmailCard: React.FC<Props> = ({ integration }) => {
   const config = integration.config as EmailConfig;
-  const target = (JSON.parse(config.targets_serialized) as string[])[0]
+  const target = (JSON.parse(config.targets_serialized) as string[])[0];
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       <Typography variant="body2">
@@ -25,11 +25,11 @@ export const EmailCard: React.FC<Props> = ({ integration }) => {
         <strong>User: </strong>
         {config.user}
       </Typography>
-      <Typography variant="body2" color={!!target ? "black" : "gray700"}>
+      <Typography variant="body2" color={!!target ? 'black' : 'gray700'}>
         <strong>Receiver: </strong>
-        {target ?? "Not specified"}
+        {target ?? 'Not specified'}
       </Typography>
-      <Typography variant="body2" color={!!target ? "black" : "gray700"}>
+      <Typography variant="body2" color={!!target ? 'black' : 'gray700'}>
         <strong>Level: </strong>
         {config.level}
       </Typography>

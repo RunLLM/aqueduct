@@ -314,10 +314,12 @@ const IntegrationDialog: React.FC<Props> = ({
       );
       break;
     case 'Email':
-      serviceDialog = <EmailDialog
-        onUpdateField={setConfigField}
-        value={config as EmailConfig}
-      />
+      serviceDialog = (
+        <EmailDialog
+          onUpdateField={setConfigField}
+          value={config as EmailConfig}
+        />
+      );
     default:
       return null;
   }

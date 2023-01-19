@@ -1,6 +1,5 @@
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
-import { NotificationLogLevel } from './notifications';
 
 export const aqueductDemoName = 'aqueduct_demo';
 
@@ -167,7 +166,7 @@ export type EmailConfig = {
   password: string;
   targets_serialized: string; // This should be a serialized list
   level: string;
-}
+};
 
 export type IntegrationConfig =
   | PostgresConfig
