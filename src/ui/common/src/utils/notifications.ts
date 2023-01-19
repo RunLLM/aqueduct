@@ -43,7 +43,6 @@ export async function listNotifications(
   user: UserProfile
 ): Promise<[Notification[], string]> {
   try {
-    console.log("list notification: calling notification route!");
     const res = await fetch(`${apiAddress}/api/notifications`, {
       method: 'GET',
       headers: { 'api-key': user.apiKey },
@@ -66,7 +65,6 @@ export async function archiveNotification(
   id: string
 ): Promise<string> {
   try {
-    console.log("archive notification: calling notification route!");
     const res = await fetch(`${apiAddress}/api/notifications/${id}/archive`, {
       method: 'POST',
       headers: { 'api-key': user.apiKey },
