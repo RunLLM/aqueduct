@@ -84,6 +84,9 @@ const IntegrationsPage: React.FC<Props> = ({
             supportedIntegrations={SupportedIntegrations}
           />
           <Typography variant="h6" marginY={2}>
+            Notification
+          </Typography>
+          <Typography variant="h6" marginY={2}>
             <AddIntegrations
               user={user}
               category={IntegrationCategories.NOTIFICATION}

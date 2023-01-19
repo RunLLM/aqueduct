@@ -320,6 +320,7 @@ const IntegrationDialog: React.FC<Props> = ({
           value={config as EmailConfig}
         />
       );
+      break;
     default:
       return null;
   }

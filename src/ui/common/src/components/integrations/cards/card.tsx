@@ -141,6 +141,7 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
       break;
     case 'Email':
       serviceCard = <EmailCard integration={integration} />;
+      break;
     default:
       serviceCard = null;
   }
