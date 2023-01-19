@@ -31,21 +31,23 @@ see `aqueduct_tests/conftest.py` and  `data_integration_tests/conftest.py`.
 
 ## Commands
 
-From this directory, to run the Aqueduct Tests:
-`pytest aqueduct_tests/ -rP -vv`
+To run all SDK Integration Tests:
+`python3 run_tests.py [-lf] [-n CONCURRENCY]`
 
-To run the Data Integration Tests:
-`pytest data_integration_tests/ -rP -vv`
+To run just one of the test suites:
+- `python3 run_tests.py --aqueduct [-lf] [-n CONCURRENCY]`
+- `python3 run_tests.py --data-integration [-lf] [-n CONCURRENCY]`
 
+The run tests with concurrency > 1, `pytest-xdist` must be installed.
 
 ## Useful Pytest Command Flags 
+
+The above script simply runs the following pytest commands:
+- `pytest aqueduct_tests/ -rP -vv [-lf] [-n CONCURRENCY]`
+- `pytest data_integration_tests/ -rP -vv [-lf] [-n CONCURRENCY]`
 
 Running all the tests in a single file:
 - `pytest <path to test file> -rP -vv`
 
 Running a specific test:
 - `pytest <specific test directory> -rP -vv -k '<specific test name>'`
-
-Running tests in parallel, with concurrency 5:
-- Install pytest-xdist
-- `pytest <specific test directory> -rP -vv -n 5`
