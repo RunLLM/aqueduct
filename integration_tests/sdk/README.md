@@ -31,14 +31,14 @@ see `aqueduct_tests/conftest.py` and  `data_integration_tests/conftest.py`.
 
 ## Commands
 
-To run all SDK Integration Tests:
+To run all SDK Integration Tests, from the `integration_tests/sdk` directory, run:
 `python3 run_tests.py [-lf] [-n CONCURRENCY]`
 
 To run just one of the test suites:
 - `python3 run_tests.py --aqueduct [-lf] [-n CONCURRENCY]`
 - `python3 run_tests.py --data-integration [-lf] [-n CONCURRENCY]`
 
-The run tests with concurrency > 1, `pytest-xdist` must be installed.
+To run tests with concurrency > 1, `pytest-xdist` must be installed.
 
 ## Useful Pytest Command Flags 
 
