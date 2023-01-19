@@ -19,9 +19,6 @@ type Props = {
   icon?: IconDefinition;
 };
 
-export const NODE_WIDTH = 250;
-export const NODE_HEIGHT = 250;
-
 export const Node: React.FC<Props> = ({
   data,
   defaultLabel,
