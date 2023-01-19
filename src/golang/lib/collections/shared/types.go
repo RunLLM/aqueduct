@@ -30,6 +30,14 @@ const (
 	UnknownExecutionStatus    ExecutionStatus = "unknown"
 )
 
+type NotificationLevel string
+
+const (
+	SuccessNotificationLevel NotificationLevel = "success"
+	WarningNotificationLevel NotificationLevel = "warning"
+	ErrorNotificationLevel   NotificationLevel = "error"
+)
+
 type FailureType int64
 
 const (

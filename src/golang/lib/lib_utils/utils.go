@@ -122,12 +122,12 @@ func ParseEmailConfig(conf auth.Config) (*integration.EmailConfig, error) {
 	}
 
 	var c struct {
-		User              string                 `json:"user" yaml:"user"`
-		Password          string                 `json:"password" yaml:"password"`
-		Host              string                 `json:"host" yaml:"host"`
-		Port              string                 `json:"port" yaml:"port"`
-		TargetsSerialized string                 `json:"targets" yaml:"targets"`
-		Level             shared.ExecutionStatus `json:"level"`
+		User              string                   `json:"user" yaml:"user"`
+		Password          string                   `json:"password" yaml:"password"`
+		Host              string                   `json:"host" yaml:"host"`
+		Port              string                   `json:"port" yaml:"port"`
+		TargetsSerialized string                   `json:"targets_serialized" yaml:"targets_serialized"`
+		Level             shared.NotificationLevel `json:"level"`
 	}
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
