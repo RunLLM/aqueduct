@@ -22,7 +22,12 @@ type Props = {
 };
 
 export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
-  const [receiver, setReceiver] = useState('');
+  const [receiver, setReceiver] = useState(
+    value?.targets_serialized
+      ? (JSON.parse(value?.targets_serialized) as string[])[0]
+      : ''
+  );
+
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
@@ -48,7 +53,7 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       <IntegrationTextInputField
         spellCheck={false}
         required={true}
-        label="Sender *"
+        label="Sender Address *"
         description="The email address of the sender."
         placeholder={Placeholders.user}
         onChange={(event) => onUpdateField('user', event.target.value)}
@@ -58,8 +63,8 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       <IntegrationTextInputField
         spellCheck={false}
         required={false}
-        label="Password"
-        description="The password corresponding to the above username."
+        label="Sender Password *"
+        description="The password corresponding to the above email address."
         placeholder={Placeholders.password}
         type="password"
         onChange={(event) => {
@@ -73,7 +78,7 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       <IntegrationTextInputField
         spellCheck={false}
         required={true}
-        label="Receiver *"
+        label="Receiver Address *"
         description="The email address of the receiver."
         placeholder={Placeholders.reciever}
         onChange={(event) => {

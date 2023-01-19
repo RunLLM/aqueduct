@@ -79,23 +79,19 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     isLoading(state.integrationReducer.objectNames.status)
   );
 
+  const selectedIntegration = integrations[integrationId];
+
   // Using the ListIntegrationsRoute.
   // ENG-1036: We should create a route where we can pass in the integrationId and get the associated metadata and switch to using that.
   useEffect(() => {
     dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
-    dispatch(
-      handleListIntegrationObjects({
-        apiKey: user.apiKey,
-        integrationId: integrationId,
-      })
-    );
+    dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
     dispatch(
       handleLoadIntegrationOperators({
         apiKey: user.apiKey,
         integrationId: integrationId,
       })
     );
-    dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
   }, [dispatch, integrationId, user.apiKey]);
 
   useEffect(() => {
@@ -109,13 +105,24 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     }
   }, [dispatch, testConnectStatus]);
 
-  const selectedIntegration = integrations[integrationId];
-
   useEffect(() => {
     if (selectedIntegration && selectedIntegration.name) {
       document.title = `Integration Details: ${selectedIntegration.name} | Aqueduct`;
     } else {
       document.title = `Integration Details | Aqueduct`;
+    }
+
+    if (
+      selectedIntegration &&
+      SupportedIntegrations[selectedIntegration.service].category ===
+        IntegrationCategories.DATA
+    ) {
+      dispatch(
+        handleListIntegrationObjects({
+          apiKey: user.apiKey,
+          integrationId: integrationId,
+        })
+      );
     }
   }, [selectedIntegration]);
 

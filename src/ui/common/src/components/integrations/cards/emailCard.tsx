@@ -22,11 +22,11 @@ export const EmailCard: React.FC<Props> = ({ integration }) => {
         {config.port}
       </Typography>
       <Typography variant="body2">
-        <strong>User: </strong>
+        <strong>Sender Address: </strong>
         {config.user}
       </Typography>
       <Typography variant="body2" color={!!target ? 'black' : 'gray700'}>
-        <strong>Receiver: </strong>
+        <strong>Receiver Address: </strong>
         {target ?? 'Not specified'}
       </Typography>
       <Typography variant="body2" color={!!target ? 'black' : 'gray700'}>
