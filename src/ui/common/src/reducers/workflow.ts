@@ -431,30 +431,12 @@ export const handleGetSelectDagPosition = createAsyncThunk<
     },
     thunkAPI
   ) => {
-    const { apiKey, operators, artifacts, onChange, onConnect } = args;
-    // const res = await fetch(`${apiAddress}/api/positioning`, {
-    //   method: 'POST',
-    //   headers: {
-    //     'api-key': apiKey,
-    //   },
-    //   body: JSON.stringify(operators),
-    // });
-
-    // const position = await res.json();
-    // if (!res.ok) {
-    //   return thunkAPI.rejectWithValue(position.error);
-    // }
-
-    // const opPositions = position.operator_positions;
-    // const artfPositions = position.artifact_positions;
-
+    const { operators, artifacts, onChange, onConnect } = args;
     const opNodes = Object.values(operators)
       .filter((op) => {
         return op.spec.type != OperatorType.Param;
       })
-      .map((op) =>
-        getOperatorNode(op, onChange, onConnect)
-      );
+      .map((op) => getOperatorNode(op, onChange, onConnect));
     const artfNodes = Object.values(artifacts).map((artf) =>
       getArtifactNode(artf, onChange, onConnect)
     );

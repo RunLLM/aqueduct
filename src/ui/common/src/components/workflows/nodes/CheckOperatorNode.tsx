@@ -16,7 +16,6 @@ import { theme } from '../../../styles/theme/theme';
 import { ReactFlowNodeData } from '../../../utils/reactflow';
 import ExecutionStatus, { ExecState, FailureType } from '../../../utils/shared';
 import { BaseNode } from './BaseNode.styles';
-import { NODE_HEIGHT, NODE_WIDTH } from './Node';
 import NodeStatusIconography from './NodeStatusIconography';
 
 type Props = {
