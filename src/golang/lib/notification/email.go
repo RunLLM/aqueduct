@@ -15,11 +15,15 @@ func AuthenticateEmail(conf *integration.EmailConfig) error {
 		return err
 	}
 
-	err = client.StartTLS(&tls.Config{ServerName: conf.Host})
+	err = client.StartTLS(&tls.Config{
+		ServerName: conf.Host,
+		// Reference: https://github.com/go-redis/redis/issues/1553
+		MinVersion: tls.VersionTLS12,
+	})
 	if err != nil {
 		return err
 	}
 
-	defer client.Quit()
+	defer client.Close()
 	return client.Auth(auth)
 }
