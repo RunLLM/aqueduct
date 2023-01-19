@@ -1,6 +1,8 @@
 package integration
 
 import (
+	"fmt"
+
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/dropbox/godropbox/errors"
 )
@@ -39,6 +41,19 @@ type K8sIntegrationConfig struct {
 	KubeconfigPath string     `json:"kubeconfig_path" yaml:"kubeconfigPath"`
 	ClusterName    string     `json:"cluster_name"  yaml:"clusterName"`
 	UseSameCluster ConfigBool `json:"use_same_cluster"  yaml:"useSameCluster"`
+}
+
+type EmailConfig struct {
+	User     string                 `json:"user" yaml:"user"`
+	Password string                 `json:"password" yaml:"password"`
+	Host     string                 `json:"host" yaml:"host"`
+	Port     string                 `json:"port" yaml:"port"`
+	Targets  []string               `json:"targets" yaml:"targets"`
+	Level    shared.ExecutionStatus `json:"level"`
+}
+
+func (c *EmailConfig) FullHost() string {
+	return fmt.Sprintf("%s:%s", c.Host, c.Port)
 }
 
 type LambdaIntegrationConfig struct {

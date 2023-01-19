@@ -30,6 +30,7 @@ const (
 	MongoDB      Service = "MongoDB"
 	Conda        Service = "Conda"
 	Databricks   Service = "Databricks"
+	Email        Service = "Email"
 
 	DemoDbIntegrationName = "aqueduct_demo"
 )

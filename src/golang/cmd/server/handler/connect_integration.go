@@ -24,6 +24,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/notification"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
@@ -324,6 +325,10 @@ func ValidateConfig(
 		return validateDatabricksConfig(ctx, config)
 	}
 
+	if service == integration.Email {
+		return validateEmailConfig(config)
+	}
+
 	jobName := fmt.Sprintf("authenticate-operator-%s", uuid.New().String())
 	if service == integration.Conda {
 		return validateConda()
@@ -610,8 +615,22 @@ func validateDatabricksConfig(
 	return http.StatusOK, nil
 }
 
-// ValidatePrerequisites is currently only relevant to conda integration, but we can extend this to
-// validate other integrations in the future.
+func validateEmailConfig(config auth.Config) (int, error) {
+	emailConfig, err := lib_utils.ParseEmailConfig(config)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	if err := notification.AuthenticateEmail(emailConfig); err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	return http.StatusOK, nil
+}
+
+// ValidatePrerequisites validates if the integration for the given service can be connected at all.
+// For now, it checks if an integration already exists for unique integrations including
+// conda, email, and slack.
 func ValidatePrerequisites(
 	ctx context.Context,
 	svc integration.Service,
@@ -639,6 +658,19 @@ func ValidatePrerequisites(
 				err,
 				"You don't seem to have `conda develop` available. We use this to help set up conda environments. Please install the dependency before connecting Aqueduct to Conda. Typically, this can be done by running `conda install conda-build`.",
 			)
+		}
+
+		return http.StatusOK, nil
+	}
+
+	if svc == integration.Email {
+		emailIntegrations, err := integrationRepo.GetByServiceAndUser(ctx, svc, userID, db)
+		if err != nil {
+			return http.StatusInternalServerError, errors.Wrap(err, "Unable to verify if email is connected.")
+		}
+
+		if len(emailIntegrations) > 0 {
+			return http.StatusBadRequest, errors.Newf("You already have email integration %s connected.", emailIntegrations[0].Name)
 		}
 
 		return http.StatusOK, nil

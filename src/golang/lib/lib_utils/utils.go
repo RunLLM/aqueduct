@@ -10,6 +10,7 @@ import (
 	"os/exec"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
@@ -112,4 +113,36 @@ func ParseDatabricksConfig(conf auth.Config) (*integration.DatabricksIntegration
 	}
 
 	return &c, nil
+}
+
+func ParseEmailConfig(conf auth.Config) (*integration.EmailConfig, error) {
+	data, err := conf.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	var c struct {
+		User              string                 `json:"user" yaml:"user"`
+		Password          string                 `json:"password" yaml:"password"`
+		Host              string                 `json:"host" yaml:"host"`
+		Port              string                 `json:"port" yaml:"port"`
+		TargetsSerialized string                 `json:"targets" yaml:"targets"`
+		Level             shared.ExecutionStatus `json:"level"`
+	}
+	if err := json.Unmarshal(data, &c); err != nil {
+		return nil, err
+	}
+
+	var targets []string
+	if err := json.Unmarshal([]byte(c.TargetsSerialized), &targets); err != nil {
+		return nil, err
+	}
+
+	return &integration.EmailConfig{
+		User:     c.User,
+		Password: c.Password,
+		Host:     c.Host,
+		Port:     c.Port,
+		Targets:  targets,
+	}, nil
 }
