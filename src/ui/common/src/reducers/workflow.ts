@@ -432,30 +432,31 @@ export const handleGetSelectDagPosition = createAsyncThunk<
     thunkAPI
   ) => {
     const { apiKey, operators, artifacts, onChange, onConnect } = args;
-    const res = await fetch(`${apiAddress}/api/positioning`, {
-      method: 'POST',
-      headers: {
-        'api-key': apiKey,
-      },
-      body: JSON.stringify(operators),
-    });
+    // const res = await fetch(`${apiAddress}/api/positioning`, {
+    //   method: 'POST',
+    //   headers: {
+    //     'api-key': apiKey,
+    //   },
+    //   body: JSON.stringify(operators),
+    // });
 
-    const position = await res.json();
-    if (!res.ok) {
-      return thunkAPI.rejectWithValue(position.error);
-    }
+    // const position = await res.json();
+    // if (!res.ok) {
+    //   return thunkAPI.rejectWithValue(position.error);
+    // }
 
-    const opPositions = position.operator_positions;
-    const artfPositions = position.artifact_positions;
+    // const opPositions = position.operator_positions;
+    // const artfPositions = position.artifact_positions;
+
     const opNodes = Object.values(operators)
       .filter((op) => {
         return op.spec.type != OperatorType.Param;
       })
       .map((op) =>
-        getOperatorNode(op, opPositions[op.id], onChange, onConnect)
+        getOperatorNode(op, onChange, onConnect)
       );
     const artfNodes = Object.values(artifacts).map((artf) =>
-      getArtifactNode(artf, artfPositions[artf.id], onChange, onConnect)
+      getArtifactNode(artf, onChange, onConnect)
     );
     const edges = getEdges(operators);
     const allNodes = {
@@ -485,6 +486,7 @@ export const handleGetSelectDagPosition = createAsyncThunk<
         };
       });
 
+      // TODO: move into collapsed nodes function.
       const mappedEdges = collapsedPosition.edges.filter((mappedEdge) => {
         // Check if the edge exists in the mappedNodes array.
         // If it does not exist, remove the edge. elk crashes if an edge does not have a corresponding node.
@@ -517,6 +519,8 @@ export const handleGetSelectDagPosition = createAsyncThunk<
         edges: mappedEdges,
       };
 
+      console.log('mappedEdges: ', mappedEdges);
+
       try {
         const positionedLayout = await elk.layout(graph);
         collapsedPosition.nodes = collapsedPosition.nodes.map((node) => {
@@ -526,6 +530,8 @@ export const handleGetSelectDagPosition = createAsyncThunk<
                 x: positionedLayout.children[i].x,
                 y: positionedLayout.children[i].y,
               };
+
+              // TODO (future work): Handle mapping elk edge sections to react-flow edges
             }
           }
 
