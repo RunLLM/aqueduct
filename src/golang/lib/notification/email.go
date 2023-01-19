@@ -8,6 +8,7 @@ import (
 )
 
 func AuthenticateEmail(conf *integration.EmailConfig) error {
+	// Reference: https://gist.github.com/jim3ma/b5c9edeac77ac92157f8f8affa290f45
 	auth := smtp.PlainAuth("", conf.User, conf.Password, conf.Host)
 	client, err := smtp.Dial(conf.FullHost())
 	if err != nil {
