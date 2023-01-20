@@ -88,7 +88,7 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
       <Box>{icon}</Box>
       <Box
         sx={{
-          marginTop: '5px',
+          marginTop: '4px',
           fontSize: '12px',
         }}
       >
@@ -223,6 +223,8 @@ const MenuSidebar: React.FC<{
             selected={currentPage === '/data'}
           />
         </Link>
+
+        <Divider sx={{ width: '64px', backgroundColor: 'white' }} />
       </Box>
 
       <Box style={menuSidebarFooter}>
