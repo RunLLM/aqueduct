@@ -6,7 +6,7 @@ import {
   faShareNodes,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Link, Tooltip, Typography } from '@mui/material';
+import { Link, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
@@ -218,9 +218,7 @@ const MenuSidebar: React.FC<{
                 onSidebarItemClicked('data');
               }
             }}
-            icon={
-              <FontAwesomeIcon style={menuSidebarIcon} icon={faDatabase} />
-            }
+            icon={<FontAwesomeIcon style={menuSidebarIcon} icon={faDatabase} />}
             text="Data"
             selected={currentPage === '/data'}
           />
