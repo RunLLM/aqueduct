@@ -103,23 +103,23 @@ class RelationalDBIntegration(Integration):
         Returns:
             pd.DataFrame of available tables.
         """
-        if self._metadata.service in [
+        if self.type() in [
             ServiceType.POSTGRES,
             ServiceType.AQUEDUCTDEMO,
             ServiceType.REDSHIFT,
         ]:
             list_tables_query = LIST_TABLES_QUERY_PG
-        elif self._metadata.service == ServiceType.SNOWFLAKE:
+        elif self.type() == ServiceType.SNOWFLAKE:
             list_tables_query = LIST_TABLES_QUERY_SNOWFLAKE
-        elif self._metadata.service in [ServiceType.MYSQL, ServiceType.MARIADB]:
+        elif self.type() in [ServiceType.MYSQL, ServiceType.MARIADB]:
             list_tables_query = LIST_TABLES_QUERY_MYSQL
-        elif self._metadata.service == ServiceType.SQLSERVER:
+        elif self.type() == ServiceType.SQLSERVER:
             list_tables_query = LIST_TABLES_QUERY_SQLSERVER
-        elif self._metadata.service == ServiceType.BIGQUERY:
+        elif self.type() == ServiceType.BIGQUERY:
             list_tables_query = LIST_TABLES_QUERY_BIGQUERY
-        elif self._metadata.service == ServiceType.SQLITE:
+        elif self.type() == ServiceType.SQLITE:
             list_tables_query = LIST_TABLES_QUERY_SQLITE
-        elif self._metadata.service == ServiceType.ATHENA:
+        elif self.type() == ServiceType.ATHENA:
             list_tables_query = LIST_TABLES_QUERY_ATHENA
 
         sql_artifact = self.sql(query=list_tables_query)
@@ -175,7 +175,7 @@ class RelationalDBIntegration(Integration):
         # overwrite the existing one.
         sql_op_name = name
         if sql_op_name is None:
-            sql_op_name = self._dag.get_unclaimed_op_name(prefix="%s query" % integration_info.name)
+            sql_op_name = self._dag.get_unclaimed_op_name(prefix="%s query" % self.name())
 
         extract_params = query
         if isinstance(extract_params, str):
@@ -239,8 +239,8 @@ class RelationalDBIntegration(Integration):
                         description=description,
                         spec=OperatorSpec(
                             extract=ExtractSpec(
-                                service=integration_info.service,
-                                integration_id=integration_info.id,
+                                service=self.type(),
+                                integration_id=self.id(),
                                 parameters=extract_params,
                             )
                         ),
@@ -284,10 +284,9 @@ class RelationalDBIntegration(Integration):
             "`integration.config()` is deprecated. Please use `integration.save()` directly instead."
         )
 
-        if self._metadata.service == ServiceType.ATHENA:
+        if self.type() == ServiceType.ATHENA:
             raise InvalidUserActionException(
-                "Save operation is not supported for integration type %s."
-                % self._metadata.service.value
+                "Save operation is not supported for integration type %s." % self.type().value
             )
 
         return SaveConfig(

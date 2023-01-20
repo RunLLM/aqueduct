@@ -199,7 +199,7 @@ class S3Integration(Integration):
         if artifact.type() == ArtifactType.TABLE and format is None:
             raise InvalidUserArgumentException(
                 "You must supply a file format when saving tabular data into S3 integration `%s`."
-                % self._metadata.name,
+                % self.name(),
             )
         elif (
             artifact.type() != ArtifactType.TABLE

@@ -18,10 +18,10 @@ This file contains:
 2) The server's address.
 3) The connection configuration information for each of the data integrations to run against. The test suites
 will automatically run against each of the data integrations specified in this file, unless a `--data` argument
-is supplied.
+is supplied, whereby the tests will filter down to just that data integration.
 
 Both these test suites share a collection of command line flags:
-* `--data`: The integration name of the data integration to run all tests against.
+* `--data`: The integration name of the data integration to run all tests against. 
 * `--engine`: The integration of the engine to compute all tests on.
 * `--keep-flows`: If set, we will not delete any flows created by the test run. This is useful for debugging.
 * `--deprecated`: Runs against any deprecated API that still exists in the SDK. Such code paths should be eventually deleted after some time, but this ensures backwards compatibility.
