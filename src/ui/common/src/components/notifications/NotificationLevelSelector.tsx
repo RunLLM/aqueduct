@@ -36,7 +36,7 @@ const NotificationLevelSelector: React.FC<Props> = ({
             }
           />
         }
-        label="error"
+        label="ERROR"
       />
       <FormControlLabel
         control={
@@ -58,7 +58,7 @@ const NotificationLevelSelector: React.FC<Props> = ({
             }
           />
         }
-        label="warning"
+        label="WARNING"
       />
       <FormControlLabel
         control={
@@ -73,7 +73,7 @@ const NotificationLevelSelector: React.FC<Props> = ({
             }
           />
         }
-        label="succeeded"
+        label="SUCCESS"
       />
     </FormGroup>
   );

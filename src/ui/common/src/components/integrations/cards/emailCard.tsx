@@ -10,28 +10,24 @@ type Props = {
 
 export const EmailCard: React.FC<Props> = ({ integration }) => {
   const config = integration.config as EmailConfig;
-  const target = (JSON.parse(config.targets_serialized) as string[])[0];
+  const targets = JSON.parse(config.targets_serialized) as string[];
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       <Typography variant="body2">
-        <strong>Host: </strong>
-        {config.host}
-      </Typography>
-      <Typography variant="body2">
-        <strong>Port: </strong>
-        {config.port}
-      </Typography>
-      <Typography variant="body2">
         <strong>Sender Address: </strong>
-        {config.user}
+        {config.user} on {config.host}:{config.port}
       </Typography>
-      <Typography variant="body2" color={!!target ? 'black' : 'gray700'}>
-        <strong>Receiver Address: </strong>
-        {target ?? 'Not specified'}
+      <Typography variant="body2">
+        {targets.length > 1 ? (
+          <strong>Receiver Addresses: </strong>
+        ) : (
+          <strong>Receiver Address:</strong>
+        )}{' '}
+        {targets.join(', ')}
       </Typography>
-      <Typography variant="body2" color={!!target ? 'black' : 'gray700'}>
+      <Typography variant="body2">
         <strong>Level: </strong>
-        {config.level}
+        {config.level.toUpperCase()}
       </Typography>
     </Box>
   );

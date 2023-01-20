@@ -22,9 +22,9 @@ type Props = {
 };
 
 export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
-  const [receiver, setReceiver] = useState(
+  const [receivers, setReceivers] = useState(
     value?.targets_serialized
-      ? (JSON.parse(value?.targets_serialized) as string[])[0]
+      ? (JSON.parse(value?.targets_serialized) as string[]).join(',')
       : ''
   );
 
@@ -79,16 +79,16 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         spellCheck={false}
         required={true}
         label="Receiver Address *"
-        description="The email address of the receiver."
+        description="The email address(es) of the receiver(s). Use comma to separate different addresses."
         placeholder={Placeholders.reciever}
         onChange={(event) => {
-          onUpdateField(
-            'targets_serialized',
-            JSON.stringify([event.target.value])
-          );
-          setReceiver(event.target.value);
+          setReceivers(event.target.value);
+          const receiversList = event.target.value
+            .split(',')
+            .map((r) => r.trim());
+          onUpdateField('targets_serialized', JSON.stringify(receiversList));
         }}
-        value={receiver ?? null}
+        value={receivers ?? null}
       />
 
       <Box sx={{ mt: 2 }}>
@@ -97,7 +97,9 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
             Level *
           </Typography>
           <Typography variant="body2" sx={{ color: 'darkGray' }}>
-            The notification level to send emails.
+            The notification levels at which to send an email notification. This
+            applies to all workflows unless separately specified in workflow
+            settings.
           </Typography>
         </Box>
         <NotificationLevelSelector

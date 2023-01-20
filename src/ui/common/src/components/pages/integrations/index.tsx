@@ -84,7 +84,7 @@ const IntegrationsPage: React.FC<Props> = ({
             supportedIntegrations={SupportedIntegrations}
           />
           <Typography variant="h6" marginY={2}>
-            Notification
+            Notifications
           </Typography>
           <Typography variant="h6" marginY={2}>
             <AddIntegrations
