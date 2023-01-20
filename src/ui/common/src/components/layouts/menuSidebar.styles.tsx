@@ -38,6 +38,8 @@ export const menuSidebarLink = {
   minWidth: '64px',
   width: '64px',
   maxWidth: '64px',
+  marginTop: '5px',
+  marginBottom: '5px',
 };
 
 export const menuSidebarLogoLink = {
