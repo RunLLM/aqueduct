@@ -69,8 +69,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
     }
   };
 
-  // TODO: useLayoutEffect here. May want to figure out some way to debounce as it gets called quite quickly when resizing.
-  // useEffect(getContainerSize, [currentNode]);
+  // TODO (ENG-2302): useLayoutEffect here. May want to figure out some way to debounce as it gets called quite quickly when resizing.
   window.addEventListener('resize', getContainerSize);
 
   const [showRunWorkflowDialog, setShowRunWorkflowDialog] = useState(false);
