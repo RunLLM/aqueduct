@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
@@ -153,6 +154,8 @@ func containerStatusFromPod(pod *corev1.Pod, name string) (*corev1.ContainerStat
 }
 
 func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, JobError) {
+	time.Sleep(1 * time.Second)
+
 	job, err := k8s.GetJob(ctx, name, j.k8sClient)
 	if err != nil {
 		return shared.UnknownExecutionStatus, jobMissingError(err)
