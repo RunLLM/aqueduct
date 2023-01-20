@@ -26,8 +26,8 @@ def enable_only_for_data_integration_type(request, client, data_integration):
             isinstance(data_type, ServiceType) for data_type in enabled_data_integration_types
         ), "Arguments to `enable_only_for_data_integration_type()` must be of type ServiceType"
 
-        if data_integration._metadata.service not in enabled_data_integration_types:
+        if data_integration.type() not in enabled_data_integration_types:
             pytest.skip(
                 "Skipped for data integration `%s`, since it is not of type `%s`."
-                % (data_integration._metadata.name, ",".join(enabled_data_integration_types))
+                % (data_integration.name(), ",".join(enabled_data_integration_types))
             )
