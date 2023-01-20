@@ -636,11 +636,11 @@ func ValidatePrerequisites(
 	svc integration.Service,
 	userID uuid.UUID,
 	integrationRepo repos.Integration,
-	db database.Database,
+	DB database.Database,
 ) (int, error) {
 	if svc == integration.Conda {
 		condaIntegration, err := exec_env.GetCondaIntegration(
-			ctx, userID, integrationRepo, db,
+			ctx, userID, integrationRepo, DB,
 		)
 		if err != nil {
 			return http.StatusInternalServerError, errors.Wrap(err, "Unable to verify if conda is connected.")
@@ -664,13 +664,16 @@ func ValidatePrerequisites(
 	}
 
 	if svc == integration.Email {
-		emailIntegrations, err := integrationRepo.GetByServiceAndUser(ctx, svc, userID, db)
+		emailIntegrations, err := integrationRepo.GetByServiceAndUser(ctx, svc, userID, DB)
 		if err != nil {
 			return http.StatusInternalServerError, errors.Wrap(err, "Unable to verify if email is connected.")
 		}
 
 		if len(emailIntegrations) > 0 {
-			return http.StatusBadRequest, errors.Newf("You already have email integration %s connected.", emailIntegrations[0].Name)
+			return http.StatusBadRequest, errors.Newf(
+				"You already have an email integration %s connected.",
+				emailIntegrations[0].Name,
+			)
 		}
 
 		return http.StatusOK, nil
