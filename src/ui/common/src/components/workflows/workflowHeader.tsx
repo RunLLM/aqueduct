@@ -7,7 +7,7 @@ import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import TextField from '@mui/material/TextField';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useSelector } from 'react-redux';
 import { useDispatch } from 'react-redux';
@@ -59,6 +59,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
   const narrowView = containerWidth < ContainerWidthBreakpoint;
 
   const getContainerSize = () => {
+    console.log('getContainerSize useEffect');
     const container = document.getElementById(WorkflowPageContentId);
 
     if (!container) {
@@ -69,7 +70,8 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
     }
   };
 
-  useEffect(getContainerSize, [currentNode]);
+  // TODO: useLayoutEffect here. May want to figure out some way to debounce as it gets called quite quickly when resizing.
+  // useEffect(getContainerSize, [currentNode]);
   window.addEventListener('resize', getContainerSize);
 
   const [showRunWorkflowDialog, setShowRunWorkflowDialog] = useState(false);
@@ -111,7 +113,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
   let nextUpdateComponent;
   if (
     workflowDag.metadata?.schedule?.trigger ===
-      WorkflowUpdateTrigger.Periodic &&
+    WorkflowUpdateTrigger.Periodic &&
     !workflowDag.metadata?.schedule?.paused
   ) {
     const nextUpdateTime = getNextUpdateTime(

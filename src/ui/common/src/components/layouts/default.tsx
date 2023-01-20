@@ -35,10 +35,11 @@ export const DefaultLayout: React.FC<Props> = ({
 }) => {
   const dispatch: AppDispatch = useDispatch();
   useEffect(() => {
+    console.log('useEffect handleFetchNotifications');
     if (user) {
       dispatch(handleFetchNotifications({ user }));
     }
-  }, []);
+  }, [dispatch, user]);
 
   return (
     <Box
