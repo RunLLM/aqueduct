@@ -59,7 +59,6 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
   const narrowView = containerWidth < ContainerWidthBreakpoint;
 
   const getContainerSize = () => {
-    console.log('getContainerSize useEffect');
     const container = document.getElementById(WorkflowPageContentId);
 
     if (!container) {
