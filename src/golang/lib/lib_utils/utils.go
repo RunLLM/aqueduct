@@ -9,7 +9,7 @@ import (
 	"os"
 	"os/exec"
 
-	cl_integration "github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	log "github.com/sirupsen/logrus"
@@ -73,13 +73,13 @@ func RunCmd(command string, arg ...string) (string, string, error) {
 
 // ParseK8sConfig takes in an auth.Config and parses into a K8s config.
 // It also returns an error, if any.
-func ParseK8sConfig(conf auth.Config) (*cl_integration.K8sIntegrationConfig, error) {
+func ParseK8sConfig(conf auth.Config) (*integration.K8sIntegrationConfig, error) {
 	data, err := conf.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	var c cl_integration.K8sIntegrationConfig
+	var c integration.K8sIntegrationConfig
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
 	}
@@ -87,13 +87,13 @@ func ParseK8sConfig(conf auth.Config) (*cl_integration.K8sIntegrationConfig, err
 	return &c, nil
 }
 
-func ParseLambdaConfig(conf auth.Config) (*cl_integration.LambdaIntegrationConfig, error) {
+func ParseLambdaConfig(conf auth.Config) (*integration.LambdaIntegrationConfig, error) {
 	data, err := conf.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	var c cl_integration.LambdaIntegrationConfig
+	var c integration.LambdaIntegrationConfig
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
 	}
@@ -101,13 +101,13 @@ func ParseLambdaConfig(conf auth.Config) (*cl_integration.LambdaIntegrationConfi
 	return &c, nil
 }
 
-func ParseDatabricksConfig(conf auth.Config) (*cl_integration.DatabricksIntegrationConfig, error) {
+func ParseDatabricksConfig(conf auth.Config) (*integration.DatabricksIntegrationConfig, error) {
 	data, err := conf.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	var c cl_integration.DatabricksIntegrationConfig
+	var c integration.DatabricksIntegrationConfig
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
 	}
