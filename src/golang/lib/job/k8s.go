@@ -154,7 +154,7 @@ func containerStatusFromPod(pod *corev1.Pod, name string) (*corev1.ContainerStat
 }
 
 func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, JobError) {
-	time.Sleep(1 * time.Second)
+	time.Sleep(5 * time.Second)
 
 	job, err := k8s.GetJob(ctx, name, j.k8sClient)
 	if err != nil {
