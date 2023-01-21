@@ -468,7 +468,7 @@ export const handleGetSelectDagPosition = createAsyncThunk<
         };
       });
 
-      // TODO: move into collapsed nodes function.
+      // TODO (ENG-2303): move into collapsed nodes function.
       const mappedEdges = collapsedPosition.edges.filter((mappedEdge) => {
         // Check if the edge exists in the mappedNodes array.
         // If it does not exist, remove the edge. elk crashes if an edge does not have a corresponding node.
@@ -501,8 +501,6 @@ export const handleGetSelectDagPosition = createAsyncThunk<
         edges: mappedEdges,
       };
 
-      console.log('mappedEdges: ', mappedEdges);
-
       try {
         const positionedLayout = await elk.layout(graph);
         collapsedPosition.nodes = collapsedPosition.nodes.map((node) => {
@@ -520,6 +518,7 @@ export const handleGetSelectDagPosition = createAsyncThunk<
           return node;
         });
       } catch (error) {
+        // TODO (ENG-2304): Show alert box when positioned layout fails to be retrieved.
         console.log('error getting PositionedLayout: ', error);
       }
 
