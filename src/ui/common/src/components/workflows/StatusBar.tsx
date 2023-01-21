@@ -158,7 +158,9 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
       }}
     >
       {listItems.map((listItem, index) => {
-        const key = listItem.nodeId.length > 0 ? listItem.nodeId : index;
+        // It's possible to have multiple events from the same node, so we give it an extra index field to avoid key collisions.
+        const key =
+          listItem.nodeId.length > 0 ? listItem.nodeId + '-' + index : index;
         return (
           <Box
             key={key}
@@ -278,18 +280,13 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
   // List of the workflow status items filtered out by category: errors, warnings, logs and checks passed.
   const [listItems, setListItems] = useState<WorkflowStatusItem[]>([]);
 
-  // Ignore Parameters from list of workflow status items
-  // const shouldShowStatusItem = (statusItem: WorkflowStatusItem) => {
-  //   return statusItem.type !== 'paramOp';
-  // };
-
-  const itemsToShow: WorkflowStatusItem[] = workflowStatusItems.filter(
-    (statusItem: WorkflowStatusItem) => {
-      return statusItem.type !== 'paramOp';
-    }
-  );
-
   useEffect(() => {
+    const itemsToShow: WorkflowStatusItem[] = workflowStatusItems.filter(
+      (statusItem: WorkflowStatusItem) => {
+        return statusItem.type !== 'paramOp';
+      }
+    );
+
     const filteredErrors: WorkflowStatusItem[] = itemsToShow.filter(
       (workflowStatusItem) => {
         return workflowStatusItem.level === WorkflowStatusTabs.Errors;
@@ -393,7 +390,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
     setNumWarnings(filteredWarnings.length);
     setNumWorkflowLogs(filteredLogs.length);
     setNumWorkflowChecksPassed(filteredChecks.length);
-  }, [workflowStatusItems, activeWorkflowStatusTab, itemsToShow]);
+  }, [workflowStatusItems, activeWorkflowStatusTab]);
 
   const selectTab = (tab: WorkflowStatusTabs) => {
     dispatch(setWorkflowStatusBarOpenState(true));
