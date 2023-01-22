@@ -71,7 +71,7 @@ type aqEngine struct {
 	*Repos
 }
 
-type workflowRunMetadata struct {
+type WorkflowRunMetadata struct {
 	// Maps every operator to the number of its immediate dependencies
 	// that still needs to be computed. When this hits 0 during execution,
 	// then the operator is ready to be scheduled.
@@ -288,7 +288,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		opToDependencyCount[op.ID()] = len(inputs)
 	}
 
-	wfRunMetadata := &workflowRunMetadata{
+	wfRunMetadata := &WorkflowRunMetadata{
 		OpToDependencyCount: opToDependencyCount,
 		InProgressOps:       make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
 		CompletedOps:        make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
@@ -302,9 +302,13 @@ func (eng *aqEngine) ExecuteWorkflow(
 	execState.Status = mdl_shared.RunningExecutionStatus
 	runningAt := time.Now()
 	execState.Timestamps.RunningAt = &runningAt
-	err = eng.execute(
+
+	err = eng.executeWithEngine(
 		ctx,
 		dag,
+		dbDAG.WorkflowID.String(),
+		dbDAG.EngineConfig,
+		dbDAG.StorageConfig,
 		wfRunMetadata,
 		timeConfig,
 		operator.Publish,
@@ -358,7 +362,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		opToDependencyCount[op.ID()] = len(inputs)
 	}
 
-	wfRunMetadata := &workflowRunMetadata{
+	wfRunMetadata := &WorkflowRunMetadata{
 		OpToDependencyCount: opToDependencyCount,
 		InProgressOps:       make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
 		CompletedOps:        make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
@@ -366,9 +370,12 @@ func (eng *aqEngine) PreviewWorkflow(
 	}
 
 	wfRunMetadata.Status = shared.RunningExecutionStatus
-	err = eng.execute(
+	err = eng.executeWithEngine(
 		ctx,
 		dag,
+		dbDAG.WorkflowID.String(),
+		dbDAG.EngineConfig,
+		dbDAG.StorageConfig,
 		wfRunMetadata,
 		timeConfig,
 		operator.Preview,
@@ -717,10 +724,65 @@ func (eng *aqEngine) cleanupWorkflow(ctx context.Context, workflowDag dag_utils.
 	}
 }
 
+func (eng *aqEngine) executeWithEngine(
+	ctx context.Context,
+	workflowDag dag_utils.WorkflowDag,
+	workflowName string,
+	engineConfig shared.EngineConfig,
+	storageConfig shared.StorageConfig,
+	workflowRunMetadata *WorkflowRunMetadata,
+	timeConfig *AqueductTimeConfig,
+	opExecMode operator.ExecutionMode,
+) error {
+	switch engineConfig.Type {
+	case shared.DatabricksEngineType:
+		jobConfig, err := operator.GenerateJobManagerConfig(
+			ctx,
+			engineConfig,
+			&storageConfig,
+			eng.AqPath,
+			eng.Vault,
+		)
+		if err != nil {
+			return errors.Wrap(err, "Unable to generate JobManagerConfig.")
+		}
+
+		jobManager, err := job.NewJobManager(jobConfig)
+		if err != nil {
+			return errors.Wrap(err, "Unable to create JobManager.")
+		}
+
+		databricksJobManager, ok := jobManager.(*job.DatabricksJobManager)
+		if !ok {
+			return errors.Wrap(err, "Unable to create DatabricksJobManager.")
+		}
+
+		return ExecuteDatabricks(
+			ctx,
+			workflowDag,
+			workflowName,
+			workflowRunMetadata,
+			timeConfig,
+			opExecMode,
+			databricksJobManager,
+		)
+	default:
+		return eng.execute(
+
+			ctx,
+			workflowDag,
+			workflowRunMetadata,
+			timeConfig,
+			opExecMode,
+		)
+	}
+
+}
+
 func (eng *aqEngine) execute(
 	ctx context.Context,
 	workflowDag dag_utils.WorkflowDag,
-	workflowRunMetadata *workflowRunMetadata,
+	workflowRunMetadata *WorkflowRunMetadata,
 	timeConfig *AqueductTimeConfig,
 	opExecMode operator.ExecutionMode,
 ) error {
