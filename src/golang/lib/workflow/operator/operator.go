@@ -107,7 +107,7 @@ func NewOperator(
 		metadataPath = outputExecPaths[0].OpMetadataPath
 	}
 
-	jobConfig, err := generateJobManagerConfig(
+	jobConfig, err := GenerateJobManagerConfig(
 		ctx,
 		opEngineConfig,
 		storageConfig,
