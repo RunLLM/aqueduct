@@ -17,7 +17,7 @@ import { ShowMore } from './MetricItem';
 
 const errorIcon = (
   <Tooltip title="Error" placement="bottom" arrow>
-    <Box sx={{ fontSize: '20px', color: theme.palette.red['500'] }}>
+    <Box sx={{ fontSize: '20px', color: theme.palette.Error }}>
       <FontAwesomeIcon icon={faCircleExclamation} />
     </Box>
   </Tooltip>
@@ -25,7 +25,7 @@ const errorIcon = (
 
 const warningIcon = (
   <Tooltip title="Warning" placement="bottom" arrow>
-    <Box sx={{ fontSize: '20px', color: theme.palette.orange['500'] }}>
+    <Box sx={{ fontSize: '20px', color: theme.palette.Warning }}>
       <FontAwesomeIcon icon={faTriangleExclamation} />
     </Box>
   </Tooltip>

@@ -80,7 +80,7 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
           </Typography>
           {metrics[i].status === ExecutionStatus.Failed ? (
             <Tooltip title="Error" placement="bottom" arrow>
-              <Box sx={{ fontSize: '20px', color: theme.palette.red['500'] }}>
+              <Box sx={{ fontSize: '20px', color: theme.palette.Error }}>
                 <FontAwesomeIcon icon={faCircleExclamation} />
               </Box>
             </Tooltip>
