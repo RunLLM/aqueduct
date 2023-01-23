@@ -9,10 +9,13 @@ Released on January 23, 2023
 * Removes the Aqueduct logo on the UI's home page to reduce redundancy.
 
 ### Bugfixes
-* Fixes bug where operator execution fails when running on Kubernetes.
+* Fixes bug where operator execution fails when running on Kubernetes. This was due to a time gap
+    between launching a Kubernetes job and spinning up a pod, and our system wasn't accounting
+    for this.
 * Fixes bug where the workflow details page keeps re-rendering.
 * Fixes bug where the Kubernetes logo doesn't show up on the UI.
-* Fixes bug where the UI keeps hitting the notification route.
+* Fixes bug where the UI keeps hitting the notification route, which led to unnecessary overhead.
+    This was caused by omitting an empty dependency array in one of our useEffect hook.
 
 ## 0.1.10
 Released on January 17, 2023
