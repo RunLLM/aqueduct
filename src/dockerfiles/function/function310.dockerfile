@@ -8,15 +8,15 @@ USER root
 RUN mkdir -p /app/function/
 
 RUN pip install numpy==1.22.2 \
-pandas==1.4.1 \
-pip==22.0.4 \
-scipy==1.7.3 \
-cloudpickle==2.0.0 \
-pyarrow==7.0.0 \
-boto3==1.18.0 \
-pydantic==1.9.0 \
-scikit_learn==1.0.2 \
-aqueduct-ml==0.1.10
+    pandas==1.4.1 \
+    pip==22.0.4 \
+    scipy==1.7.3 \
+    cloudpickle==2.0.0 \
+    pyarrow==7.0.0 \
+    boto3==1.18.0 \
+    pydantic==1.9.0 \
+    scikit_learn==1.0.2 \
+    aqueduct-ml==0.1.11
 
 ENV PYTHONUNBUFFERED 1
 
