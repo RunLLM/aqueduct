@@ -33,7 +33,7 @@ const warningIcon = (
 
 const successIcon = (
   <Tooltip title="Success" placement="bottom" arrow>
-    <Box sx={{ fontSize: '20px', color: theme.palette.green['400'] }}>
+    <Box sx={{ fontSize: '20px', color: theme.palette.Success }}>
       <FontAwesomeIcon icon={faCircleCheck} />
     </Box>
   </Tooltip>

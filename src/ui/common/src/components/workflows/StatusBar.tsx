@@ -98,7 +98,7 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
       </Box>
     ),
     [WorkflowStatusTabs.Checks]: (
-      <Box sx={{ fontSize: '20px', color: theme.palette.green['400'] }}>
+      <Box sx={{ fontSize: '20px', color: theme.palette.Success }}>
         <FontAwesomeIcon icon={faCircleCheck} />
       </Box>
     ),
@@ -756,7 +756,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
             color:
               activeWorkflowStatusTab === WorkflowStatusTabs.Checks
                 ? theme.palette.green['500']
-                : theme.palette.green['400'],
+                : theme.palette.Success,
             borderBottom:
               activeWorkflowStatusTab === WorkflowStatusTabs.Checks
                 ? `2px solid ${theme.palette.green['500']}`
