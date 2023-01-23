@@ -28,12 +28,12 @@ export const CheckTableItem: React.FC<CheckTableItemProps> = ({
     }
     case 'false': {
       checkIcon = faCircleExclamation;
-      iconColor = theme.palette.red['500'];
+      iconColor = theme.palette.Error;
       break;
     }
     case 'warning': {
       checkIcon = faTriangleExclamation;
-      iconColor = theme.palette.orange['500'];
+      iconColor = theme.palette.Warning;
       break;
     }
     case 'none': {

@@ -53,7 +53,7 @@ export const VersionSelector: React.FC = () => {
           break;
         case ExecutionStatus.Failed:
           menuItemIcon = (
-            <Box sx={{ fontSize: '20px', color: theme.palette.red['500'] }}>
+            <Box sx={{ fontSize: '20px', color: theme.palette.Error }}>
               <FontAwesomeIcon icon={faCircleXmark} />
             </Box>
           );
