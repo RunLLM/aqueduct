@@ -213,15 +213,6 @@ def extract(
     raise Exception("Unexpected data integration type provided in test: %s", type(integration))
 
 
-def delete_flow(client: aqueduct.Client, workflow_id: uuid.UUID) -> None:
-    try:
-        client.delete_flow(str(workflow_id))
-    except Exception as e:
-        print("Error deleting workflow %s with exception: %s" % (workflow_id, e))
-    else:
-        print("Successfully deleted workflow %s" % (workflow_id))
-
-
 def polling(
     stop_condition_fn,
     timeout=60,
