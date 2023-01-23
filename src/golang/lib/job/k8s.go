@@ -183,7 +183,7 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 	} else {
 		pod, err := k8s.GetPod(ctx, name, j.k8sClient)
 		if err != nil {
-			if err == k8s.ErrNoPodExists {
+			if err == errors.New("No pod exists") {
 				return shared.PendingExecutionStatus, nil
 			}
 			return shared.FailedExecutionStatus, systemError(err)
