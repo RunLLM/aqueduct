@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.11
+Released on January 23, 2023
+
+### Enhancements
+* Uses the elkjs library to improve node and edge positioning on the UI.
+* Shows the name of the options on the UI's menu sidesheet to improve clarity.
+* Removes the Aqueduct logo on the UI's home page to reduce redundancy.
+
+### Bugfixes
+* Fixes bug where operator execution fails when running on Kubernetes.
+* Fixes bug where the workflow details page keeps re-rendering.
+* Fixes bug where the Kubernetes logo doesn't show up on the UI.
+* Fixes bug where the UI keeps hitting the notification route.
+
 ## 0.1.10
 Released on January 17, 2023
 
