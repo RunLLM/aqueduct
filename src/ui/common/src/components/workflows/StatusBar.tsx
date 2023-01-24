@@ -459,7 +459,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         newWorkflowStatusItem.level = WorkflowStatusTabs.Warnings;
         newWorkflowStatusItem.title = (
           <>
-            `Non-fatal error occurred for `<b>${artifactName}</b>
+            Non-fatal error occurred for <b>{artifactName}</b>
           </>
         );
         newWorkflowStatusItem.message = artifactExecState.error?.tip;
@@ -536,7 +536,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         newWorkflowStatusItem.level = WorkflowStatusTabs.Warnings;
         newWorkflowStatusItem.title = (
           <>
-            `Warning for `<b>{operatorName}</b>
+            Warning for <b>{operatorName}</b>
           </>
         );
         newWorkflowStatusItem.message = opExecState.error?.tip;
@@ -550,9 +550,8 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
             </>
           );
           const err = opExecState.error;
-          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${
-            err.context ?? ''
-          }`;
+          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${err.context ?? ''
+            }`;
         } else {
           // no error message found, so treat this as a system internal error
           newWorkflowStatusItem.message = `Aqueduct Internal Error`;
