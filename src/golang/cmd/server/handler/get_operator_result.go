@@ -116,6 +116,9 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 		args.operatorID,
 		h.Database,
 	)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving operator result.")
+	}
 
 	executionState := shared.ExecutionState{
 		Status: dbOperatorResult.ExecState.Status,

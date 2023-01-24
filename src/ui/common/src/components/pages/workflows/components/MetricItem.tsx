@@ -5,7 +5,7 @@ import React from 'react';
 import { useState } from 'react';
 
 import { theme } from '../../../../styles/theme/theme';
-import ExecutionStatus from '../../../../utils/shared';
+import { ExecutionStatus, showMorePadding } from '../../../../utils/shared';
 import { parseMetricResult } from '../../../workflows/nodes/MetricOperatorNode';
 
 interface ShowMoreProps {
@@ -16,7 +16,7 @@ interface ShowMoreProps {
 }
 
 const showMoreStyles = {
-  fontWeight: 500,
+  fontWeight: 300,
   color: theme.palette.gray['600'],
   cursor: 'pointer',
   '&:hover': { textDecoration: 'underline' },
@@ -33,9 +33,9 @@ export const ShowMore: React.FC<ShowMoreProps> = ({
     return null;
   }
 
-  let prompt = `Show More (${totalItems - numPreviewItems}) ...`;
+  let prompt = `Show ${totalItems - numPreviewItems} More`;
   if (expanded) {
-    prompt = `Show Less ...`;
+    prompt = `Show Less`;
   }
 
   return (
@@ -73,7 +73,7 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
           display="flex"
           key={metrics[i].metricId}
           justifyContent="space-between"
-          height="30px"
+          alignItems="center"
         >
           <Typography variant="body1" sx={{ fontWeight: 400 }}>
             {metrics[i].name}
@@ -85,7 +85,7 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
               </Box>
             </Tooltip>
           ) : (
-            <Typography variant="body1">
+            <Typography variant="body1" sx={{ fontWeight: 300 }}>
               {parseMetricResult(metrics[i].value, 3)}
             </Typography>
           )}
@@ -98,10 +98,23 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
     setExpanded(!expanded);
   };
 
+  const cellStyling = {
+    width: '100%',
+  };
+  if (metrics.length === 1) {
+    cellStyling['padding'] = showMorePadding;
+  }
+  // height 48 because 8px padding top and bottom so 48+2*8=64px
   return (
-    <Box>
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        minHeight: '48px',
+      }}
+    >
       {metrics.length > 0 ? (
-        <>
+        <Box sx={cellStyling}>
           {metricList}
           <ShowMore
             totalItems={metrics.length}
@@ -109,9 +122,11 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
             expanded={expanded}
             onClick={toggleExpanded}
           />
-        </>
+        </Box>
       ) : (
-        <Typography variant="body1">No metrics.</Typography>
+        <Typography sx={{ padding: showMorePadding }} variant="body1">
+          No metrics.
+        </Typography>
       )}
     </Box>
   );

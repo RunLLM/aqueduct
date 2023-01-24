@@ -3,12 +3,13 @@ import json
 from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import requests
-from aqueduct.constants.enums import ExecutionStatus
+from aqueduct.constants.enums import ExecutionStatus, ServiceType
 from aqueduct.error import (
     AqueductError,
     ClientValidationError,
     InternalServerError,
     InvalidRequestError,
+    InvalidUserArgumentException,
     NoConnectedIntegrationsException,
     ResourceNotFoundError,
     UnprocessableEntityError,
@@ -16,10 +17,11 @@ from aqueduct.error import (
 from aqueduct.logger import logger
 from aqueduct.models.dag import DAG
 from aqueduct.models.integration import Integration, IntegrationInfo
-from aqueduct.models.operators import ParamSpec
+from aqueduct.models.operators import LoadSpec, ParamSpec, RelationalDBLoadParams, S3LoadParams
 from aqueduct.utils.serialization import deserialize
 from pkg_resources import parse_version, require
 
+from ..integrations.connect_config import IntegrationConfig
 from .response_helpers import (
     _construct_preview_response,
     _handle_preview_resp,
@@ -47,6 +49,7 @@ class APIClient:
     HTTPS_PREFIX = "https://"
 
     GET_VERSION_ROUTE = "/api/version"
+    CONNECT_INTEGRATION_ROUTE = "/api/integration/connect"
     PREVIEW_ROUTE = "/api/preview"
     REGISTER_WORKFLOW_ROUTE = "/api/workflow/register"
     REGISTER_AIRFLOW_WORKFLOW_ROUTE = "/api/workflow/register/airflow"
@@ -243,6 +246,23 @@ class APIClient:
 
         return [(table["name"], table["owner"]) for table in resp.json()["tables"]]
 
+    def connect_integration(
+        self, name: str, service: ServiceType, config: IntegrationConfig
+    ) -> None:
+        headers = self._generate_auth_headers()
+        headers.update(
+            {
+                "integration-name": name,
+                "integration-service": service,
+                "integration-config": config.json(),
+            }
+        )
+        url = self.construct_full_url(
+            self.CONNECT_INTEGRATION_ROUTE,
+        )
+        resp = requests.post(url, url, headers=headers)
+        self.raise_errors(resp)
+
     def preview(
         self,
         dag: DAG,
@@ -345,15 +365,14 @@ class APIClient:
         url = self.construct_full_url(self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id)
         body = {
             "external_delete": {
-                str(integration): [obj.object_name for obj in saved_objects_to_delete[integration]]
+                str(integration): [obj.spec.json() for obj in saved_objects_to_delete[integration]]
                 for integration in saved_objects_to_delete
             },
             "force": force,
         }
         response = requests.post(url, headers=headers, json=body)
         self.raise_errors(response)
-        deleteWorkflowResponse = DeleteWorkflowResponse(**response.json())
-        return deleteWorkflowResponse
+        return DeleteWorkflowResponse(**response.json())
 
     def get_workflow(self, flow_id: str) -> GetWorkflowResponse:
         headers = self._generate_auth_headers()
@@ -403,30 +422,3 @@ class APIClient:
             deserialize(serialization_type, artifact_type, parsed_response["data"]),
             execution_status,
         )
-
-    def get_node_positions(
-        self, operator_mapping: Dict[str, Dict[str, Any]]
-    ) -> Tuple[Dict[str, Dict[str, float]], Dict[str, Dict[str, float]]]:
-        """Queries the `self.NODE_POSITION_ROUTE` endpoint for graph display's nodes' positions.
-
-        Args:
-            operator_mapping:
-                The mapping between each operator in the graph and all required metadata.
-                This is serialized into a json and passed directly to the endpoint.
-                The expected keys are:
-                    `inputs`: list of the input artifacts' UUIDs
-                    `output`: list of the output artifacts' UUIDs
-
-        Returns:
-            Two mappings of UUIDs to positions, structured as a dictionary with the keys "x" and "y".
-            The first mapping is for operators and the second is for artifacts.
-        """
-        url = self.construct_full_url(self.NODE_POSITION_ROUTE)
-        headers = self._generate_auth_headers()
-        data = json.dumps(operator_mapping, sort_keys=False)
-        resp = requests.post(url, headers=headers, data=data)
-        self.raise_errors(resp)
-
-        resp_json = resp.json()
-
-        return resp_json["operator_positions"], resp_json["artifact_positions"]

@@ -6,16 +6,18 @@ import {
   faShareNodes,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Link, Tooltip, Typography } from '@mui/material';
+import { Link, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
+import UserProfile from 'src/utils/auth';
 
 import { AppDispatch } from '../../stores/store';
 import { getPathPrefix } from '../../utils/getPathPrefix';
+import { apiAddress } from '../hooks/useAqueductConsts';
 import {
   menuSidebar,
   menuSidebarContent,
@@ -86,7 +88,8 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
       <Box>{icon}</Box>
       <Box
         sx={{
-          marginTop: '8px',
+          marginTop: '4px',
+          fontSize: '12px',
         }}
       >
         {text}
@@ -113,14 +116,29 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
  */
 const MenuSidebar: React.FC<{
   onSidebarItemClicked?: (name: string) => void;
-}> = ({ onSidebarItemClicked }) => {
+  user: UserProfile;
+}> = ({ onSidebarItemClicked, user }) => {
   const dispatch: AppDispatch = useDispatch();
   const [currentPage, setCurrentPage] = useState(undefined);
+  const [versionNumber, setVersionNumber] = useState('');
   const location = useLocation();
 
   useEffect(() => {
     setCurrentPage(location.pathname);
   }, [dispatch, location.pathname]);
+
+  useEffect(() => {
+    async function fetchVersionNumber() {
+      const res = await fetch(`${apiAddress}/api/version`, {
+        method: 'GET',
+        headers: { 'api-key': user.apiKey },
+      });
+      const versionNumberResponse = await res.json();
+      setVersionNumber(versionNumberResponse.version);
+    }
+
+    fetchVersionNumber();
+  }, [user.apiKey]);
 
   const pathPrefix = getPathPrefix();
   return (
@@ -146,105 +164,104 @@ const MenuSidebar: React.FC<{
       </Link>
 
       <Box sx={{ my: 2 }} style={menuSidebarContent}>
-        <Tooltip title="Workflows" arrow placement="right">
-          <Link
-            to={`${getPathPrefix()}/workflows`}
-            style={menuSidebarLink}
-            underline="none"
-            component={RouterLink}
-          >
-            <SidebarButton
-              onClick={() => {
-                if (onSidebarItemClicked) {
-                  onSidebarItemClicked('workflows');
-                }
-              }}
-              icon={
-                <FontAwesomeIcon style={menuSidebarIcon} icon={faShareNodes} />
+        <Link
+          to={`${getPathPrefix()}/workflows`}
+          style={menuSidebarLink}
+          underline="none"
+          component={RouterLink}
+        >
+          <SidebarButton
+            onClick={() => {
+              if (onSidebarItemClicked) {
+                onSidebarItemClicked('workflows');
               }
-              text=""
-              selected={currentPage === '/workflows'}
-            />
-          </Link>
-        </Tooltip>
+            }}
+            icon={
+              <FontAwesomeIcon style={menuSidebarIcon} icon={faShareNodes} />
+            }
+            text="Workflows"
+            selected={currentPage === '/workflows'}
+          />
+        </Link>
 
-        <Tooltip title="Integrations" arrow placement="right">
-          <Link
-            to={`${getPathPrefix()}/integrations`}
-            style={menuSidebarLink}
-            underline="none"
-            component={RouterLink}
-          >
-            <SidebarButton
-              onClick={() => {
-                if (onSidebarItemClicked) {
-                  onSidebarItemClicked('integrations');
-                }
-              }}
-              icon={<FontAwesomeIcon style={menuSidebarIcon} icon={faPlug} />}
-              text=""
-              selected={currentPage === '/integrations'}
-            />
-          </Link>
-        </Tooltip>
+        <Divider sx={{ width: '64px', backgroundColor: 'white' }} />
 
-        <Tooltip title="Data" placement="right" arrow>
-          <Link
-            to={`${getPathPrefix()}/data`}
-            style={menuSidebarLink}
-            underline="none"
-            component={RouterLink}
-          >
-            <SidebarButton
-              onClick={() => {
-                if (onSidebarItemClicked) {
-                  onSidebarItemClicked('data');
-                }
-              }}
-              icon={
-                <FontAwesomeIcon style={menuSidebarIcon} icon={faDatabase} />
+        <Link
+          to={`${getPathPrefix()}/integrations`}
+          style={menuSidebarLink}
+          underline="none"
+          component={RouterLink}
+        >
+          <SidebarButton
+            onClick={() => {
+              if (onSidebarItemClicked) {
+                onSidebarItemClicked('integrations');
               }
-              text=""
-              selected={currentPage === '/data'}
-            />
-          </Link>
-        </Tooltip>
+            }}
+            icon={<FontAwesomeIcon style={menuSidebarIcon} icon={faPlug} />}
+            text="Integrations"
+            selected={currentPage === '/integrations'}
+          />
+        </Link>
+
+        <Divider sx={{ width: '64px', backgroundColor: 'white' }} />
+
+        <Link
+          to={`${getPathPrefix()}/data`}
+          style={menuSidebarLink}
+          underline="none"
+          component={RouterLink}
+        >
+          <SidebarButton
+            onClick={() => {
+              if (onSidebarItemClicked) {
+                onSidebarItemClicked('data');
+              }
+            }}
+            icon={<FontAwesomeIcon style={menuSidebarIcon} icon={faDatabase} />}
+            text="Data"
+            selected={currentPage === '/data'}
+          />
+        </Link>
+
+        <Divider sx={{ width: '64px', backgroundColor: 'white' }} />
       </Box>
 
       <Box style={menuSidebarFooter}>
         <Divider sx={{ width: '64px', backgroundColor: 'white' }} />
         <Box sx={{ my: 2 }}>
-          <Tooltip title="Documentation" placement="right" arrow>
-            <Link href="https://docs.aqueducthq.com" underline="none">
-              <SidebarButton
-                onClick={() => {
-                  if (onSidebarItemClicked) {
-                    onSidebarItemClicked('documentation');
-                  }
-                }}
-                icon={<FontAwesomeIcon style={menuSidebarIcon} icon={faBook} />}
-                text=""
-              />
-            </Link>
-          </Tooltip>
+          <Link href="https://docs.aqueducthq.com" underline="none">
+            <SidebarButton
+              onClick={() => {
+                if (onSidebarItemClicked) {
+                  onSidebarItemClicked('documentation');
+                }
+              }}
+              icon={<FontAwesomeIcon style={menuSidebarIcon} icon={faBook} />}
+              text="Docs"
+            />
+          </Link>
         </Box>
         <Divider sx={{ width: '64px', backgroundColor: 'white' }} />
         <Box sx={{ my: 2 }}>
-          <Tooltip title="Report Issue" placement="right" arrow>
-            <Link href="mailto:support@aqueducthq.com" underline="none">
-              <SidebarButton
-                onClick={() => {
-                  if (onSidebarItemClicked) {
-                    onSidebarItemClicked('report_issue');
-                  }
-                }}
-                icon={
-                  <FontAwesomeIcon style={menuSidebarIcon} icon={faMessage} />
+          <Link href="mailto:support@aqueducthq.com" underline="none">
+            <SidebarButton
+              onClick={() => {
+                if (onSidebarItemClicked) {
+                  onSidebarItemClicked('report_issue');
                 }
-                text=""
-              />
-            </Link>
-          </Tooltip>
+              }}
+              icon={
+                <FontAwesomeIcon style={menuSidebarIcon} icon={faMessage} />
+              }
+              text="Feedback"
+            />
+          </Link>
+        </Box>
+        <Box marginLeft="14px" marginBottom="16px">
+          <Typography variant="caption" sx={{ color: 'white' }}>
+            {versionNumber.length > 0 ? `v${versionNumber}` : ''}
+          </Typography>
         </Box>
       </Box>
     </Box>

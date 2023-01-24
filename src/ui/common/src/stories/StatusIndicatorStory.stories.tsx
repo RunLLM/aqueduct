@@ -25,13 +25,27 @@ export default {
 const Template: ComponentStory<typeof StatusIndicator> = (
   args: StatusIndicatorStoryProps
 ) => (
-  <Box display="flex">
+  <Box display="flex" alignItems="center">
     <StatusIndicator {...args} />
     <Typography variant="body1" sx={{ marginLeft: '8px' }}>
       {args.label}
     </Typography>
   </Box>
 );
+
+export const LargeIndicator = Template.bind({});
+LargeIndicator.args = {
+  status: ExecutionStatus.Succeeded,
+  label: 'Succeeded',
+  size: '50px',
+};
+
+export const BlackIndicator = Template.bind({});
+BlackIndicator.args = {
+  status: ExecutionStatus.Succeeded,
+  label: 'Succeeded',
+  monochrome: 'black',
+};
 
 export const CanceledStatusIndicator = Template.bind({});
 CanceledStatusIndicator.args = {

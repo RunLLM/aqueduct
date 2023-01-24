@@ -1,11 +1,14 @@
+import time
+
 import aqueduct as aq
 
 NAME = "succeed_parameters"
-DESCRIPTION = """* Workflows Page: should fail.
-* Workflow Details Page: should fail starting the first parameter.
-    * Workflow Status Bar: 0 error, 0 warning, 0 info, 8 success.
-    * Click into `table` parameters, sidesheet should also show failure.
-    * There should be a older version that succeeded."""
+DESCRIPTION = """* Workflows Page: should succeed.
+* Workflow Details Page: everything should be green.
+    * Workflow Status Bar: 0 error, 0 warning, 0 info, 6 success.
+    * There should be 2 versions.
+    * Click into `bound` parameters, the value of the later version should be 5.
+    The value of the older version should be 10."""
 
 
 @aq.check(requirements=[])
@@ -20,9 +23,11 @@ def deploy(client, integration_name):
 
     reviews = integration.sql("SELECT * FROM {{ table }}")
     check(reviews, bound)
-    client.publish_flow(
+    flow = client.publish_flow(
         artifacts=[reviews],
         name=NAME,
         description=DESCRIPTION,
         schedule="",
     )
+    time.sleep(5)
+    client.trigger(flow.id(), parameters={"bound": 5})

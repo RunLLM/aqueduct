@@ -25,6 +25,7 @@ import {
   aqueductDemoName,
   AthenaConfig,
   BigQueryConfig,
+  DatabricksConfig,
   formatService,
   GCSConfig,
   Integration,
@@ -47,6 +48,7 @@ import { AirflowDialog } from './airflowDialog';
 import { AthenaDialog, isAthenaConfigComplete } from './athenaDialog';
 import { BigQueryDialog } from './bigqueryDialog';
 import { CondaDialog } from './condaDialog';
+import { DatabricksDialog } from './databricksDialog';
 import { GCSDialog } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { isK8sConfigComplete, KubernetesDialog } from './kubernetesDialog';
@@ -299,6 +301,15 @@ const IntegrationDialog: React.FC<Props> = ({
       break;
     case 'Conda':
       serviceDialog = <CondaDialog />;
+      break;
+    case 'Databricks':
+      serviceDialog = (
+        <DatabricksDialog
+          onUpdateField={setConfigField}
+          value={config as DatabricksConfig}
+          editMode={editMode}
+        />
+      );
       break;
     default:
       return null;

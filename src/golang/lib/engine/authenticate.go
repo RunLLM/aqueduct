@@ -3,14 +3,17 @@ package engine
 import (
 	"context"
 
-	"golang.org/x/sync/errgroup"
-
+	databricks_lib "github.com/aqueducthq/aqueduct/lib/databricks"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
+	"golang.org/x/sync/errgroup"
 )
+
+const MaxConcurrentDownload = 3
+const MaxConcurrentUpload = 5
 
 // Authenticates kubernetes configuration by trying to connect a client.
 func AuthenticateK8sConfig(ctx context.Context, authConf auth.Config) error {
@@ -31,8 +34,6 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 		return errors.Wrap(err, "Unable to parse configuration.")
 	}
 
-	errGroup := new(errgroup.Group)
-
 	functionsToShip := [10]lambda_utils.LambdaFunctionType{
 		lambda_utils.FunctionExecutor37Type,
 		lambda_utils.FunctionExecutor38Type,
@@ -46,8 +47,37 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 		lambda_utils.SnowflakeConnectorType,
 	}
 
-	for _, functionType := range functionsToShip {
-		lambdaFunctionType := functionType
+	errGroup, _ := errgroup.WithContext(ctx)
+
+	pullImageChannel := make(chan lambda_utils.LambdaFunctionType, MaxConcurrentDownload)
+
+	pushImageChannel := make(chan lambda_utils.LambdaFunctionType, MaxConcurrentUpload)
+
+	// Run authentication only once since the credentials will be recorded.
+	err = lambda_utils.AuthenticateDockerToECR()
+	if err != nil {
+		return errors.Wrap(err, "Unable to authenticate Lambda Function.")
+	}
+
+	// Pull images on a currency of "MaxConcurrentDownload" to parallelize while avoiding pull timeout.
+	errGroup.SetLimit(MaxConcurrentDownload)
+	go AddFunctionTypeToChannel(functionsToShip, pullImageChannel)
+	for lambdaFunction := range pullImageChannel {
+		lambdaFunctionType := lambdaFunction
+		errGroup.Go(func() error {
+			return lambda_utils.PullImageFromECR(lambdaFunctionType)
+		})
+	}
+
+	if err := errGroup.Wait(); err != nil {
+		return errors.Wrap(err, "Unable to Pull Lambda Function From ECR.")
+	}
+
+	// Push the images and create lambda functions all at once.
+	errGroup.SetLimit(MaxConcurrentUpload)
+	go AddFunctionTypeToChannel(functionsToShip, pushImageChannel)
+	for lambdaFunction := range pushImageChannel {
+		lambdaFunctionType := lambdaFunction
 		errGroup.Go(func() error {
 			return lambda_utils.CreateLambdaFunction(lambdaFunctionType, lambdaConf.RoleArn)
 		})
@@ -58,4 +88,41 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 	}
 
 	return nil
+}
+
+func AuthenticateDatabricksConfig(ctx context.Context, authConf auth.Config) error {
+	databricksConfig, err := lib_utils.ParseDatabricksConfig(authConf)
+	if err != nil {
+		return errors.Wrap(err, "Unable to parse configuration.")
+	}
+
+	databricksClient, err := databricks_lib.NewWorkspaceClient(
+		databricksConfig.WorkspaceURL,
+		databricksConfig.AccessToken,
+	)
+	if err != nil {
+		return errors.Wrap(err, "Unable to create Databricks Workspace Client.")
+	}
+	_, err = databricks_lib.ListJobs(
+		ctx,
+		databricksClient,
+	)
+	if err != nil {
+		return errors.Wrap(err, "Unable to list Databricks Jobs.")
+	}
+
+	err = databricks_lib.AddEntrypointFilesToStorage(ctx)
+	if err != nil {
+		return errors.Wrap(err, "Unable to upload entrypoint files to storage.")
+	}
+
+	return nil
+}
+
+func AddFunctionTypeToChannel(functionsToShip [10]lambda_utils.LambdaFunctionType, channel chan lambda_utils.LambdaFunctionType) {
+	for _, lambdaFunctionType := range functionsToShip {
+		lambdaFunctionTypeToPass := lambdaFunctionType
+		channel <- lambdaFunctionTypeToPass
+	}
+	close(channel)
 }

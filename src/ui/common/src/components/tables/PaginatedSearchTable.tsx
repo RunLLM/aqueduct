@@ -1,5 +1,12 @@
-import { faSearch, faX } from '@fortawesome/free-solid-svg-icons';
+import {
+  faArrowDown,
+  faArrowUp,
+  faArrowUpShortWide,
+  faSearch,
+  faX,
+} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Chip, Menu, MenuItem } from '@mui/material';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Table from '@mui/material/Table';
@@ -11,15 +18,17 @@ import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import * as React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { theme } from '../../styles/theme/theme';
 import { DataSchema } from '../../utils/data';
+import { Button } from '../primitives/Button.styles';
 
 export type PaginatedSearchTableElement =
   | string
   | number
   | boolean
+  | Date
   | JSX.Element;
 
 export type PaginatedSearchTableRow = {
@@ -31,11 +40,29 @@ export interface PaginatedSearchTableData {
   data: PaginatedSearchTableRow[];
 }
 
+export type SortColumn = {
+  // The name of the column by which to sort.
+  name: string;
+
+  // The sequence of keys in the row object to access in order to get the
+  // value which should be compared for sort purposes.
+  sortAccessPath: string[];
+};
+
+enum SortType {
+  None,
+  Ascending,
+  Descending,
+}
+
 export interface PaginatedSearchTableProps {
   data: PaginatedSearchTableData;
   searchEnabled?: boolean;
   onGetColumnValue?: (row, column) => PaginatedSearchTableElement;
   onShouldInclude?: (rowItem, searchQuery, searchColumn) => boolean;
+  onChangeRowsPerPage?: (rowsPerPage) => void;
+  savedRowsPerPage?: number;
+  sortColumns?: SortColumn[];
 }
 
 export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
@@ -43,18 +70,29 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
   onGetColumnValue,
   searchEnabled = false,
   onShouldInclude,
+  onChangeRowsPerPage,
+  savedRowsPerPage,
+  sortColumns = [],
 }) => {
-  const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(5);
-  const [searchQuery, setSearchQuery] = React.useState('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(
+    savedRowsPerPage ? savedRowsPerPage : 5
+  );
+  const [searchQuery, setSearchQuery] = useState('');
   // TODO: Add dropdown to select which column to search the table on.
   // TODO: add setSearchColumn to the array below.
-  const [searchColumn] = React.useState('name');
+  const [searchColumn] = useState('name');
 
-  let rows = data.data;
+  const [sortMenuAnchor, setSortMenuAnchor] = useState<HTMLButtonElement>(null);
+  const [sortTypeMenuAnchor, setSortTypeMenuAnchor] =
+    useState<HTMLLIElement>(null);
+  const [sortConfig, setSortConfig] = useState({
+    sortColumn: { name: null, sortAccessPath: [] as string[] },
+    sortType: SortType.None,
+  });
+  const [rows, setRows] = useState([...data.data]);
+
   const columns = data.schema.fields;
-
-  let filteredRows = [];
 
   /**
    * Function used to test whether a row should be included in search results.
@@ -98,6 +136,10 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
   const handleChangeRowsPerPage = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
+    if (onChangeRowsPerPage) {
+      // Call the callback here and set the appropriate stuff in localstorage.
+      onChangeRowsPerPage(+event.target.value);
+    }
     setRowsPerPage(+event.target.value);
     setPage(0);
   };
@@ -115,53 +157,200 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
     return value;
   };
 
-  if (searchQuery.length > 0) {
-    filteredRows = data.data.filter((rowItem) => {
-      return shouldInclude(rowItem, searchQuery, searchColumn);
+  useEffect(() => {
+    if (searchQuery.length > 0) {
+      const filteredRows = data.data.filter((rowItem) => {
+        return shouldInclude(rowItem, searchQuery, searchColumn);
+      });
+
+      setRows(filteredRows);
+    } else {
+      setRows(data.data);
+    }
+  }, [searchQuery, data]);
+
+  useEffect(() => {
+    if (
+      !sortConfig.sortColumn ||
+      !sortConfig.sortColumn.name ||
+      sortConfig.sortType === SortType.None
+    ) {
+      setRows(data.data);
+      return;
+    }
+
+    const sortedRows = [...rows].sort((r1, r2) => {
+      const col = sortConfig.sortColumn;
+      let v1: PaginatedSearchTableRow | PaginatedSearchTableElement = r1;
+      let v2: PaginatedSearchTableRow | PaginatedSearchTableElement = r2;
+      for (const path of col.sortAccessPath) {
+        v1 = v1[path];
+        v2 = v2[path];
+      }
+
+      if (sortConfig.sortType === SortType.Ascending) {
+        if (v1 > v2) {
+          return 1;
+        } else if (v1 < v2) {
+          return -1;
+        } else {
+          return 0;
+        }
+      } else {
+        // sortType === SortType.Descending
+        if (v1 > v2) {
+          return -1;
+        } else if (v1 < v2) {
+          return 1;
+        } else {
+          return 0;
+        }
+      }
     });
 
-    rows = filteredRows;
-  }
+    setRows(sortedRows);
+  }, [sortConfig]);
 
   return (
     <>
       {searchEnabled && (
-        <Box marginBottom="8px">
-          <TextField
-            placeholder="Search by name ..."
-            value={searchQuery}
-            onChange={(event) => setSearchQuery(event.target.value)}
-            id="outlined-basic"
-            variant="outlined"
-            fullWidth
-            InputProps={{
-              startAdornment: (
-                <Box marginRight="8px">
-                  <FontAwesomeIcon
-                    icon={faSearch}
-                    color={theme.palette.gray[600]}
-                  />
-                </Box>
-              ),
-              endAdornment: (
-                <Box
-                  marginLeft="8px"
-                  color={theme.palette.gray[600]}
-                  sx={{
-                    '&:hover': {
-                      cursor: 'pointer',
-                      color: theme.palette.black,
-                    },
-                  }}
-                  onClick={() => {
-                    setSearchQuery('');
-                  }}
+        <Box mb="8px">
+          <Box marginBottom="8px" display="flex">
+            <TextField
+              placeholder="Search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              id="outlined-basic"
+              variant="outlined"
+              size="small"
+              sx={{ minWidth: '300px' }}
+              InputProps={{
+                startAdornment:
+                  searchQuery === '' ? (
+                    <Box marginRight="8px">
+                      <FontAwesomeIcon
+                        icon={faSearch}
+                        color={theme.palette.gray[600]}
+                      />
+                    </Box>
+                  ) : (
+                    <Box
+                      marginRight="8px"
+                      color={theme.palette.gray[600]}
+                      sx={{
+                        '&:hover': {
+                          cursor: 'pointer',
+                          color: theme.palette.black,
+                        },
+                      }}
+                      onClick={() => {
+                        setSearchQuery('');
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faX} />
+                    </Box>
+                  ),
+              }}
+            />
+
+            {sortColumns && sortColumns.length > 0 && (
+              <Button
+                size="small"
+                color="secondary"
+                endIcon={<FontAwesomeIcon icon={faArrowUpShortWide} />}
+                sx={{ ml: 1 }}
+                onClick={(e) => setSortMenuAnchor(e.currentTarget)}
+              >
+                Sort
+              </Button>
+            )}
+
+            <Menu
+              open={!!sortMenuAnchor}
+              anchorEl={sortMenuAnchor}
+              onClose={() => setSortMenuAnchor(null)}
+            >
+              {sortColumns.map((column, idx) => (
+                // Note that the menu doesn't seem to like non-numerical values, so we use the idx here.
+                <MenuItem
+                  key={column.name}
+                  value={idx}
+                  onClick={(e) => setSortTypeMenuAnchor(e.currentTarget)}
                 >
-                  <FontAwesomeIcon icon={faX} />
+                  {column.name}
+                </MenuItem>
+              ))}
+            </Menu>
+
+            <Menu
+              open={!!sortTypeMenuAnchor}
+              anchorEl={sortTypeMenuAnchor}
+              onClose={() => setSortTypeMenuAnchor(null)}
+              anchorOrigin={{
+                vertical: 'top',
+                horizontal: 'right',
+              }}
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'left',
+              }}
+            >
+              <MenuItem
+                onClick={() => {
+                  setSortConfig({
+                    sortColumn: sortColumns[sortTypeMenuAnchor.value],
+                    sortType: SortType.Ascending,
+                  });
+                  // Close the menus that are open.
+                  setSortTypeMenuAnchor(null);
+                  setSortMenuAnchor(null);
+                }}
+              >
+                <Box sx={{ mr: 1 }}>
+                  <FontAwesomeIcon icon={faArrowUp} />
                 </Box>
-              ),
-            }}
-          />
+                Ascending
+              </MenuItem>
+
+              <MenuItem
+                onClick={() => {
+                  setSortConfig({
+                    sortColumn: sortColumns[sortTypeMenuAnchor.value],
+                    sortType: SortType.Descending,
+                  });
+                  // Close the menus that are open.
+                  setSortTypeMenuAnchor(null);
+                  setSortMenuAnchor(null);
+                }}
+              >
+                <Box sx={{ mr: 1 }}>
+                  <FontAwesomeIcon icon={faArrowDown} />
+                </Box>
+                Descending
+              </MenuItem>
+            </Menu>
+          </Box>
+
+          {sortConfig.sortType !== SortType.None && (
+            <Chip
+              icon={
+                <FontAwesomeIcon
+                  icon={
+                    sortConfig.sortType === SortType.Ascending
+                      ? faArrowUp
+                      : faArrowDown
+                  }
+                />
+              }
+              label={`Sort: ${sortConfig.sortColumn.name}`}
+              onDelete={() =>
+                setSortConfig({
+                  sortType: SortType.None,
+                  sortColumn: { name: '', sortAccessPath: [] },
+                })
+              }
+            />
+          )}
         </Box>
       )}
 
@@ -186,13 +375,18 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
                       key={`table-header-col-${columnIndex}`}
                       align={'left'}
                     >
-                      <Box flexDirection="column" padding="8px">
+                      <Box
+                        flexDirection="column"
+                        padding="8px"
+                        sx={{ backgroundColor: theme.palette.gray['50'] }}
+                      >
                         <Typography
                           variant="body1"
                           sx={{
                             textTransform: 'capitalize',
-                            fontSize: '16px',
-                            fontWeight: 400,
+                            fontSize: '14px',
+                            fontWeight: 800,
+                            color: theme.palette.gray['900'],
                           }}
                         >
                           {columnName}
@@ -225,6 +419,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
                                 columnIndex < columns.length - 1
                                   ? '1px solid rgba(224, 224, 224, 1);'
                                   : 'none',
+                              fontSize: '16px', // This is needed for consistency.
                             }}
                           >
                             <Box padding="8px">

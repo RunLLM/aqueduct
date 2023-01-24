@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/dropbox/godropbox/errors"
+	log "github.com/sirupsen/logrus"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -107,6 +108,11 @@ func GetPod(ctx context.Context, name string, k8sClient *kubernetes.Clientset) (
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	if len(podList.Items) == 0 {
+		log.Infof("No pod has been created from job %s yet...", name)
+		return nil, errors.New("No pod exists")
 	}
 
 	if len(podList.Items) != 1 {

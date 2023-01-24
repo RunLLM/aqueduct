@@ -119,8 +119,8 @@ func ScheduleWorkflow(
 				uuid.Nil, /* Airflow does not use the preview cache */
 				dbInputArtifact,
 				artifactIDToExecPaths[artifactId],
-				nil, /* artifactWriter */
-				nil, /* artifactResultWriter */
+				nil, /* artifactRepo */
+				nil, /* artifactResultRepo */
 				&dag.StorageConfig,
 				nil, /* artifactCacheManager */
 				nil, /* db */

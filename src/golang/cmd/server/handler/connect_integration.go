@@ -318,6 +318,12 @@ func ValidateConfig(
 		return validateLambdaConfig(ctx, config)
 	}
 
+	if service == integration.Databricks {
+		// Databricks authentication is performed by posting a ListJobs
+		// request, so we don't launch a job for it.
+		return validateDatabricksConfig(ctx, config)
+	}
+
 	jobName := fmt.Sprintf("authenticate-operator-%s", uuid.New().String())
 	if service == integration.Conda {
 		return validateConda()
@@ -587,6 +593,17 @@ func validateLambdaConfig(
 	config auth.Config,
 ) (int, error) {
 	if err := engine.AuthenticateLambdaConfig(ctx, config); err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	return http.StatusOK, nil
+}
+
+func validateDatabricksConfig(
+	ctx context.Context,
+	config auth.Config,
+) (int, error) {
+	if err := engine.AuthenticateDatabricksConfig(ctx, config); err != nil {
 		return http.StatusBadRequest, err
 	}
 

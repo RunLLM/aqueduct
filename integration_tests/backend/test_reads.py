@@ -96,11 +96,21 @@ class TestBackend:
                 ("table_2", "replace"),
             ]
         )
-        assert set([(item["object_name"], item["update_mode"]) for item in data]) == data_set
+
+        print(data)
+        assert (
+            set(
+                [
+                    (item["spec"]["parameters"]["table"], item["spec"]["parameters"]["update_mode"])
+                    for item in data
+                ]
+            )
+            == data_set
+        )
 
         # Check all in same integration
         assert len(set([item["integration_name"] for item in data])) == 1
-        assert len(set([item["service"] for item in data])) == 1
+        assert len(set([item["spec"]["service"] for item in data])) == 1
 
     def test_endpoint_delete_integration(self):
         integration_name = f"test_delete_integration_{uuid.uuid4().hex[:8]}"
@@ -136,7 +146,7 @@ class TestBackend:
         assert integration_name not in set([integration["name"] for integration in data])
 
     def test_endpoint_test_integration(self):
-        resp = self.get_response(self.GET_TEST_INTEGRATION_TEMPLATE % self.integration._metadata.id)
+        resp = self.get_response(self.GET_TEST_INTEGRATION_TEMPLATE % self.integration.id())
         assert resp.ok
 
     def test_endpoint_get_workflow_dag_result_with_failure(self):

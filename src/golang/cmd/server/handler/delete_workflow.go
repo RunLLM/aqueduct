@@ -58,8 +58,8 @@ type deleteWorkflowArgs struct {
 }
 
 type deleteWorkflowInput struct {
-	// This is a map from integration_id to list of object names.
-	ExternalDelete map[string][]string `json:"external_delete"`
+	// This is a map from integration_id to the serialized load spec we want to delete.
+	ExternalDeleteLoadParams map[string][]string `json:"external_delete"`
 	// `Force` serve as a safe-guard for client to confirm the deletion.
 	// If `Force` is true, all objects specified in `ExternalDelete` field
 	// will be removed. Otherwise, we will not delete the objects.
@@ -121,10 +121,30 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to parse JSON input.")
 	}
 
+	// Convert the supplied load params into object identifiers (eg. object names for relational databases)
+	externalDelete := make(map[string][]string, len(input.ExternalDeleteLoadParams))
+	for integrationName, loadSpecStrList := range input.ExternalDeleteLoadParams {
+		for _, loadSpecStr := range loadSpecStrList {
+			var loadSpec connector.Load
+			err = json.Unmarshal([]byte(loadSpecStr), &loadSpec)
+			if err != nil {
+				return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to parse request.")
+			}
+
+			if relationalLoadParams, ok := connector.CastToRelationalDBLoadParams(loadSpec.Parameters); ok {
+				externalDelete[integrationName] = append(externalDelete[integrationName], relationalLoadParams.Table)
+			} else if s3LoadParams, ok := loadSpec.Parameters.(*connector.S3LoadParams); ok {
+				externalDelete[integrationName] = append(externalDelete[integrationName], s3LoadParams.Filepath)
+			} else {
+				return nil, http.StatusBadRequest, errors.Newf("Unsupported integration type for deleting objects: %s", integrationName)
+			}
+		}
+	}
+
 	return &deleteWorkflowArgs{
 		AqContext:      aqContext,
 		WorkflowID:     workflowID,
-		ExternalDelete: input.ExternalDelete,
+		ExternalDelete: externalDelete,
 		Force:          input.Force,
 	}, http.StatusOK, nil
 }

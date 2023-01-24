@@ -59,8 +59,6 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
       state.workflowDagResultsReducer.results[workflowDagResultId]
   );
 
-  const workflow = useSelector((state: RootState) => state.workflowReducer);
-
   const operator = (workflowDagResultWithLoadingStatus?.result?.operators ??
     {})[metricOperatorId];
 
@@ -76,7 +74,10 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   const breadcrumbs = [
     BreadcrumbLink.HOME,
     BreadcrumbLink.WORKFLOWS,
-    new BreadcrumbLink(workflowLink, workflow.selectedDag?.metadata.name),
+    new BreadcrumbLink(
+      workflowLink,
+      workflowDagResultWithLoadingStatus?.result?.name ?? 'Workflow'
+    ),
     new BreadcrumbLink(path, operator ? operator.name : 'Metric'),
   ];
 
@@ -180,7 +181,7 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
 
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
-      <Box width={!sideSheetMode ? '800px' : 'auto'}>
+      <Box width={sideSheetMode ? 'auto' : 'auto'}>
         <Box width="100%" mb={3}>
           {!sideSheetMode && (
             <Box width="100%">
@@ -218,7 +219,10 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
 
           <Divider sx={{ my: '32px' }} />
 
-          <Box width="100%">
+          <Box
+            width={sideSheetMode ? 'auto' : '49.2%'}
+            marginTop={sideSheetMode ? '16px' : '40px'}
+          >
             <MetricsHistory
               historyWithLoadingStatus={artifactHistoryWithLoadingStatus}
             />

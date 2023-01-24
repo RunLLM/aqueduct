@@ -18,6 +18,7 @@ export const menuSidebarContent = {
   width: '100%',
   paddingLeft: '8px',
   paddingRight: '8px',
+  marginTop: '8px',
 };
 
 export const menuSidebarFooter = {
@@ -38,6 +39,8 @@ export const menuSidebarLink = {
   minWidth: '64px',
   width: '64px',
   maxWidth: '64px',
+  marginTop: '8px',
+  marginBottom: '8px',
 };
 
 export const menuSidebarLogoLink = {

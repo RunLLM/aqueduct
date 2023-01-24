@@ -19,11 +19,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # For now, we want to always perform inference in our periodic tests for additional coverage.
-      - name: Remove the requirements.txt file.
-        working-directory: integration_tests/sdk
-        run: rm requirements.txt
-
       - name: Create the logs directory
         run: mkdir -p logs
 
@@ -41,7 +36,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16.3
+          go-version: 1.19.1
       
       - name: Install aqueduct-ml
         run: python3 -m pip install aqueduct-ml
@@ -62,7 +57,7 @@ jobs:
         run: python3 scripts/install_local.py --gobinary --sdk --executor
 
       - name: Start the server again
-        run: (aqueduct start --verbose > $SERVER_LOGS_FILE 2>&1 &)
+        run: (aqueduct start --disable-usage-stats --verbose > $SERVER_LOGS_FILE 2>&1 &)
 
       - name: Install packages needed for testing
         run: python3 -m pip install nltk matplotlib pytest-xdist
@@ -74,13 +69,16 @@ jobs:
       - name: Fetch the API key
         run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
 
-      - name: Run the Integration Tests
-        timeout-minutes: 30
+      - name: Set up the SDK Integration Tests
         working-directory: integration_tests/sdk
-        env:
-          SERVER_ADDRESS: localhost:8080
-          INTEGRATION: aqueduct_demo
-        run: pytest . -rP -n ${{ matrix.concurrency }}
+        run: |
+          echo "apikey: $(aqueduct apikey)" >> test-config.yml
+          echo "address: localhost:8080" >> test-config.yml
+
+      - name: Run the SDK Integration Tests
+        timeout-minutes: 40
+        working-directory: integration_tests/sdk
+        run: python3 run_tests.py -n 5
 
       - uses: actions/upload-artifact@v3
         if: always()

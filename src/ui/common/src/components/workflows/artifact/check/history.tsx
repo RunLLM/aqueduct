@@ -72,7 +72,7 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
 
   return (
     <Box mt="32px">
-      <Typography variant="h6" fontWeight="normal">
+      <Typography variant="h6" fontWeight="normal" marginBottom="8px">
         History
       </Typography>
 
@@ -121,12 +121,9 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
               backgroundColor: backgroundColor,
               '&:hover': { backgroundColor: hoverColor },
             }}
-            width="fit-content"
+            width="auto"
           >
-            <Box
-              sx={{ display: 'flex', alignItems: 'center' }}
-              width="fit-content"
-            >
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
               {icon}
 
               <Typography sx={{ ml: 1 }} variant="body2">

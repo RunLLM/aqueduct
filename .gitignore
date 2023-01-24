@@ -92,3 +92,6 @@ sdk/docs/build/
 **/*_aqueduct_metric/
 **/*_aqueduct_check/
 **/*_internal_aqueduct_bound_check/
+
+# Integration Configuration - which may have sensitive credentials.
+integration_tests/sdk/test-config.yml

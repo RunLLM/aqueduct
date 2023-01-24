@@ -12,7 +12,7 @@ import { useState } from 'react';
 
 import { theme } from '../../../../styles/theme/theme';
 import { CheckLevel } from '../../../../utils/operators';
-import ExecutionStatus from '../../../../utils/shared';
+import { ExecutionStatus, showMorePadding } from '../../../../utils/shared';
 import { ShowMore } from './MetricItem';
 
 const errorIcon = (
@@ -120,7 +120,7 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
           display="flex"
           key={checks[i].checkId}
           justifyContent="space-between"
-          height="30px"
+          alignItems="center"
         >
           <Typography variant="body1" sx={{ fontWeight: 400 }}>
             {checks[i].name}
@@ -135,10 +135,23 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
     setExpanded(!expanded);
   };
 
+  const cellStyling = {
+    width: '100%',
+  };
+  if (checks.length === 1) {
+    cellStyling['padding'] = showMorePadding;
+  }
+  // height 48 because 8px padding top and bottom so 48+2*8=64px
   return (
-    <Box>
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        minHeight: '48px',
+      }}
+    >
       {checks.length > 0 ? (
-        <>
+        <Box sx={cellStyling}>
           {checksList}
           <ShowMore
             totalItems={checks.length}
@@ -146,9 +159,11 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
             expanded={expanded}
             onClick={toggleExpanded}
           />
-        </>
+        </Box>
       ) : (
-        <Typography variant="body1">No checks.</Typography>
+        <Typography sx={{ padding: showMorePadding }} variant="body1">
+          No checks.
+        </Typography>
       )}
     </Box>
   );

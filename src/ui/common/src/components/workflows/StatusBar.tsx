@@ -158,7 +158,9 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
       }}
     >
       {listItems.map((listItem, index) => {
-        const key = listItem.nodeId.length > 0 ? listItem.nodeId : index;
+        // It's possible to have multiple events from the same node, so we give it an extra index field to avoid key collisions.
+        const key =
+          listItem.nodeId.length > 0 ? listItem.nodeId + '-' + index : index;
         return (
           <Box
             key={key}
@@ -279,25 +281,31 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
   const [listItems, setListItems] = useState<WorkflowStatusItem[]>([]);
 
   useEffect(() => {
-    const filteredErrors: WorkflowStatusItem[] = workflowStatusItems.filter(
+    const itemsToShow: WorkflowStatusItem[] = workflowStatusItems.filter(
+      (statusItem: WorkflowStatusItem) => {
+        return statusItem.type !== 'paramOp';
+      }
+    );
+
+    const filteredErrors: WorkflowStatusItem[] = itemsToShow.filter(
       (workflowStatusItem) => {
         return workflowStatusItem.level === WorkflowStatusTabs.Errors;
       }
     );
 
-    const filteredWarnings: WorkflowStatusItem[] = workflowStatusItems.filter(
+    const filteredWarnings: WorkflowStatusItem[] = itemsToShow.filter(
       (workflowStatusItem) => {
         return workflowStatusItem.level === WorkflowStatusTabs.Warnings;
       }
     );
 
-    const filteredLogs: WorkflowStatusItem[] = workflowStatusItems.filter(
+    const filteredLogs: WorkflowStatusItem[] = itemsToShow.filter(
       (workflowStatusItem) => {
         return workflowStatusItem.level === WorkflowStatusTabs.Logs;
       }
     );
 
-    const filteredChecks: WorkflowStatusItem[] = workflowStatusItems.filter(
+    const filteredChecks: WorkflowStatusItem[] = itemsToShow.filter(
       (workflowStatusItem) => {
         return workflowStatusItem.level === WorkflowStatusTabs.Checks;
       }

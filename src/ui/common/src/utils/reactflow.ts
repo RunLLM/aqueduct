@@ -43,7 +43,6 @@ type NodePos = { x: number; y: number };
 
 export function getOperatorNode(
   op: Operator,
-  pos: NodePos,
   onChange: () => void,
   onConnect: (any) => void
 ): Node<ReactFlowNodeData> {
@@ -58,13 +57,13 @@ export function getOperatorNode(
       nodeId: op.id,
       label: op.name,
     },
-    position: pos,
+    // Give an initial position. We will reposition this node later.
+    position: { x: 0, y: 0 },
   };
 }
 
 export function getArtifactNode(
   artf: Artifact,
-  pos: NodePos,
   onChange: () => void,
   onConnect: (any) => void
 ): Node<ReactFlowNodeData> {
@@ -79,7 +78,8 @@ export function getArtifactNode(
       nodeId: artf.id,
       label: artf.name,
     },
-    position: pos,
+    // Give an initial position. We will reposition this node later.
+    position: { x: 0, y: 0 },
   };
 }
 

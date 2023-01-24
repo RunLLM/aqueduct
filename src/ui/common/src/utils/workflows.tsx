@@ -1,6 +1,14 @@
 import { Artifact } from './artifacts';
 import { EngineConfig } from './engine';
-import { normalizeOperator, Operator } from './operators';
+import {
+  Load,
+  normalizeOperator,
+  Operator,
+  RelationalDBLoadParams,
+  RelationalDBServices,
+  S3LoadParams,
+  ServiceType,
+} from './operators';
 import ExecutionStatus, { ExecState } from './shared';
 import { StorageConfig } from './storage';
 
@@ -13,6 +21,7 @@ export enum WorkflowUpdateTrigger {
   Manual = 'manual',
   Periodic = 'periodic',
   Airflow = 'airflow',
+  Cascade = 'cascade',
 }
 
 export type WorkflowSchedule = {
@@ -20,6 +29,7 @@ export type WorkflowSchedule = {
   cron_schedule: string;
   disable_manual_trigger: boolean;
   paused: boolean;
+  source_id: string;
 };
 
 export type RetentionPolicy = {
@@ -135,14 +145,22 @@ export type GetWorkflowResponse = {
   workflow_dag_results: WorkflowDagResultSummary[];
 };
 
+export function getSavedObjectIdentifier(savedObject: SavedObject): string {
+  const serviceString: string = savedObject.spec.service;
+  if (Object.values<string>(RelationalDBServices).includes(serviceString)) {
+    return (savedObject.spec.parameters as RelationalDBLoadParams).table;
+  } else if (savedObject.spec.service == ServiceType.S3) {
+    return (savedObject.spec.parameters as S3LoadParams).filepath;
+  } else {
+    return '';
+  }
+}
+
 export type SavedObject = {
   operator_name: string;
   modified_at: string;
   integration_name: string;
-  integration_id: string;
-  service: string;
-  object_name: string;
-  update_mode: string;
+  spec: Load;
 };
 
 export type ListWorkflowSavedObjectsResponse = {
