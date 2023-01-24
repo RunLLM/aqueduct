@@ -218,6 +218,8 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
     </Box>
   );
 
+  const status = operator?.result?.exec_state?.status;
+  
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
       <Box width={sideSheetMode ? 'auto' : 'auto'}>
@@ -225,6 +227,7 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
           <Box width="100%">
             <DetailsPageHeader
               name={operator ? operator.name : 'Check Details'}
+              status={status}
             />
             {operator?.description && (
               <Typography variant="body1">{operator.description}</Typography>
