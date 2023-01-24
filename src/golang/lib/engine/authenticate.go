@@ -70,7 +70,7 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 	}
 
 	if err := errGroup.Wait(); err != nil {
-		return errors.Wrap(err, "Unable to Create Lambda Function.")
+		return errors.Wrap(err, "Unable to Pull Lambda Function From ECR.")
 	}
 
 	// Push the images and create lambda functions all at once.
@@ -88,14 +88,6 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 	}
 
 	return nil
-}
-
-func AddFunctionTypeToChannel(functionsToShip [10]lambda_utils.LambdaFunctionType, channel chan lambda_utils.LambdaFunctionType) {
-	for _, lambdaFunctionType := range functionsToShip {
-		lambdaFunctionTypeToPass := lambdaFunctionType
-		channel <- lambdaFunctionTypeToPass
-	}
-	close(channel)
 }
 
 func AuthenticateDatabricksConfig(ctx context.Context, authConf auth.Config) error {
@@ -125,4 +117,12 @@ func AuthenticateDatabricksConfig(ctx context.Context, authConf auth.Config) err
 	}
 
 	return nil
+}
+
+func AddFunctionTypeToChannel(functionsToShip [10]lambda_utils.LambdaFunctionType, channel chan lambda_utils.LambdaFunctionType) {
+	for _, lambdaFunctionType := range functionsToShip {
+		lambdaFunctionTypeToPass := lambdaFunctionType
+		channel <- lambdaFunctionTypeToPass
+	}
+	close(channel)
 }
