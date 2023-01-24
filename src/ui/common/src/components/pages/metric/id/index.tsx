@@ -180,14 +180,17 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   const outputs = mapArtifacts(operator.outputs);
 
   const status = operator?.result?.exec_state?.status;
-  
+
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
       <Box width={sideSheetMode ? 'auto' : 'auto'}>
         <Box width="100%" mb={3}>
           {!sideSheetMode && (
             <Box width="100%">
-              <DetailsPageHeader name={operator ? operator.name : 'Operator'} status={status}/>
+              <DetailsPageHeader
+                name={operator ? operator.name : 'Operator'}
+                status={status}
+              />
               {operator.description && (
                 <Typography variant="body1">{operator.description}</Typography>
               )}

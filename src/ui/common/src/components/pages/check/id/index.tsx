@@ -219,7 +219,7 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
   );
 
   const status = operator?.result?.exec_state?.status;
-  
+
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
       <Box width={sideSheetMode ? 'auto' : 'auto'}>
