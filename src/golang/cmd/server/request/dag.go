@@ -3,6 +3,7 @@ package request
 import (
 	"encoding/json"
 	"fmt"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
@@ -45,6 +46,8 @@ func ParseDagSummaryFromRequest(
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Invalid dag specification.")
 	}
+
+	log.Errorf("HELLO: parsed engine type: %v", dag.EngineConfig.Type)
 
 	ghClient, err := githubManager.GetClient(r.Context(), userId)
 	if err != nil {

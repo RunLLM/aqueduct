@@ -3,9 +3,6 @@ package job
 import (
 	"context"
 	"fmt"
-	"strconv"
-	"time"
-
 	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
@@ -15,6 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"strconv"
 )
 
 const (
@@ -154,8 +152,6 @@ func containerStatusFromPod(pod *corev1.Pod, name string) (*corev1.ContainerStat
 }
 
 func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, JobError) {
-	time.Sleep(5 * time.Second)
-
 	job, err := k8s.GetJob(ctx, name, j.k8sClient)
 	if err != nil {
 		return shared.UnknownExecutionStatus, jobMissingError(err)
@@ -182,7 +178,11 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 		if containerStatus.State.Terminated.Reason == "OOMKilled" {
 			return status, userError(errors.New("Operator failed on Kubernetes due to Out-of-Memory exception."))
 		}
-		return status, systemError(errors.Newf("Kubernetes pod failed with reason: %s.", containerStatus.State.Terminated.Reason))
+
+		// We do not error here since pods are killed with a failing exit status on any failed checks.
+		// We should rely on the written execution state to decide whether to continue dag execution,
+		// and not the status of the pod.
+		return status, nil
 	} else {
 		pod, err := k8s.GetPod(ctx, name, j.k8sClient)
 		if err != nil {
