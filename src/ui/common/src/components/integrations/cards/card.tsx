@@ -24,6 +24,7 @@ import { MySqlCard } from './mysqlCard';
 import { PostgresCard } from './postgresCard';
 import { RedshiftCard } from './redshiftCard';
 import { S3Card } from './s3Card';
+import { SlackCard } from './slackCard';
 import { SnowflakeCard } from './snowflakeCard';
 
 type DataProps = {
@@ -141,6 +142,9 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
       break;
     case 'Email':
       serviceCard = <EmailCard integration={integration} />;
+      break;
+    case 'Slack':
+      serviceCard = <SlackCard integration={integration} />;
       break;
     default:
       serviceCard = null;

@@ -168,6 +168,12 @@ export type EmailConfig = {
   level: string;
 };
 
+export type SlackConfig = {
+  token: string;
+  channels_serialized: string;
+  level: string;
+};
+
 export type IntegrationConfig =
   | PostgresConfig
   | SnowflakeConfig
@@ -187,7 +193,8 @@ export type IntegrationConfig =
   | LambdaConfig
   | CondaConfig
   | DatabricksConfig
-  | EmailConfig;
+  | EmailConfig
+  | SlackConfig;
 
 export type Service =
   | 'Postgres'
@@ -209,7 +216,8 @@ export type Service =
   | 'MongoDB'
   | 'Conda'
   | 'Databricks'
-  | 'Email';
+  | 'Email'
+  | 'Slack';
 
 export type Info = {
   logo: string;
@@ -292,6 +300,7 @@ export const ServiceLogos: ServiceLogo = {
   ['Conda']: `${integrationLogosBucket}/conda.png`,
   ['Databricks']: `${integrationLogosBucket}/databricks_logo.png`,
   ['Email']: `${integrationLogosBucket}/email.png`,
+  ['Slack']: `${integrationLogosBucket}/slack.png`,
 };
 
 export const SupportedIntegrations: ServiceInfoMap = {
@@ -382,6 +391,11 @@ export const SupportedIntegrations: ServiceInfoMap = {
   },
   ['Email']: {
     logo: ServiceLogos['Email'],
+    activated: true,
+    category: IntegrationCategories.NOTIFICATION,
+  },
+  ['Slack']: {
+    logo: ServiceLogos['Slack'],
     activated: true,
     category: IntegrationCategories.NOTIFICATION,
   },
