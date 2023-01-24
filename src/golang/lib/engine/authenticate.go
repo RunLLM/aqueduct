@@ -12,8 +12,8 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// The maximum numnber of concurrent download allowed by Docker and is default to 3.
 const MaxConcurrentDownload = 3
+const MaxConcurrentUpload = 5
 
 // Authenticates kubernetes configuration by trying to connect a client.
 func AuthenticateK8sConfig(ctx context.Context, authConf auth.Config) error {
@@ -49,30 +49,35 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 
 	errGroup, _ := errgroup.WithContext(ctx)
 
-	// Run authentication only once since the credentials will be memorized.
+	pullImageChannel := make(chan lambda_utils.LambdaFunctionType, MaxConcurrentDownload)
+
+	pushImageChannel := make(chan lambda_utils.LambdaFunctionType, MaxConcurrentUpload)
+
+	// Run authentication only once since the credentials will be recorded.
 	err = lambda_utils.AuthenticateDockerToECR()
 	if err != nil {
-		return errors.Wrap(err, "Unable to Create Lambda Function.")
+		return errors.Wrap(err, "Unable to authenticate Lambda Function.")
 	}
 
 	// Pull images on a currency of "MaxConcurrentDownload" to parallelize while avoiding pull timeout.
-	for i := 0; i < len(functionsToShip); i += MaxConcurrentDownload {
-		for j := 0; j < MaxConcurrentDownload; j++ {
-			if j+i < len(functionsToShip) {
-				lambdaFunctionType := functionsToShip[j+i]
-				errGroup.Go(func() error {
-					return lambda_utils.PullImageFromECR(lambdaFunctionType)
-				})
-			}
-		}
-		if err := errGroup.Wait(); err != nil {
-			return errors.Wrap(err, "Unable to Create Lambda Function.")
-		}
+	errGroup.SetLimit(MaxConcurrentDownload)
+	go AddFunctionTypeToChannel(functionsToShip, pullImageChannel)
+	for lambdaFunction := range pullImageChannel {
+		lambdaFunctionType := lambdaFunction
+		errGroup.Go(func() error {
+			return lambda_utils.PullImageFromECR(lambdaFunctionType)
+		})
+	}
+
+	if err := errGroup.Wait(); err != nil {
+		return errors.Wrap(err, "Unable to Create Lambda Function.")
 	}
 
 	// Push the images and create lambda functions all at once.
-	for _, functionType := range functionsToShip {
-		lambdaFunctionType := functionType
+	errGroup.SetLimit(MaxConcurrentUpload)
+	go AddFunctionTypeToChannel(functionsToShip, pushImageChannel)
+	for lambdaFunction := range pushImageChannel {
+		lambdaFunctionType := lambdaFunction
 		errGroup.Go(func() error {
 			return lambda_utils.CreateLambdaFunction(lambdaFunctionType, lambdaConf.RoleArn)
 		})
@@ -83,6 +88,14 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 	}
 
 	return nil
+}
+
+func AddFunctionTypeToChannel(functionsToShip [10]lambda_utils.LambdaFunctionType, channel chan lambda_utils.LambdaFunctionType) {
+	for _, lambdaFunctionType := range functionsToShip {
+		lambdaFunctionTypeToPass := lambdaFunctionType
+		channel <- lambdaFunctionTypeToPass
+	}
+	close(channel)
 }
 
 func AuthenticateDatabricksConfig(ctx context.Context, authConf auth.Config) error {
