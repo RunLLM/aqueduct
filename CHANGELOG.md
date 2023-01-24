@@ -4,7 +4,7 @@
 Released on January 23, 2023
 
 ### Enhancements
-* Uses the elkjs library to improve node and edge positioning on the UI.
+* Upgrades workflow layout rendering tool to use the elkjs library.
 * Shows the name of the options on the UI's menu sidesheet to improve clarity.
 * Removes the Aqueduct logo on the UI's home page to reduce redundancy.
 
