@@ -146,3 +146,30 @@ func ParseEmailConfig(conf auth.Config) (*shared.EmailConfig, error) {
 		Targets:  targets,
 	}, nil
 }
+
+func ParseSlackConfig(conf auth.Config) (*shared.SlackConfig, error) {
+	data, err := conf.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	var c struct {
+		Token              string                   `json:"token" yaml:"token"`
+		ChannelsSerialized string                   `json:"channels_serialized" yaml:"channels_serialized"`
+		Level              shared.NotificationLevel `json:"level" yaml:"level"`
+	}
+	if err := json.Unmarshal(data, &c); err != nil {
+		return nil, err
+	}
+
+	var channels []string
+	if err := json.Unmarshal([]byte(c.ChannelsSerialized), &channels); err != nil {
+		return nil, err
+	}
+
+	return &shared.SlackConfig{
+		Token:    c.Token,
+		Channels: channels,
+		Level:    c.Level,
+	}, nil
+}
