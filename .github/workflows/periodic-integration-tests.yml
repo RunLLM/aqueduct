@@ -69,18 +69,16 @@ jobs:
       - name: Fetch the API key
         run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
 
-      - name: Set up the SDK Integration Tests Config File
+      - name: Set up the SDK Integration Tests
         working-directory: integration_tests/sdk
         run: |
           echo "apikey: $(aqueduct apikey)" >> test-config.yml
           echo "address: localhost:8080" >> test-config.yml
 
-      - name: Run the Integration Tests
-        timeout-minutes: 30
+      - name: Run the SDK Integration Tests
+        timeout-minutes: 40
         working-directory: integration_tests/sdk
-        env:
-          SERVER_ADDRESS: localhost:8080
-        run: pytest aqueduct_tests/ -rP -n ${{ matrix.concurrency }}
+        run: python3 run_tests.py -n 5
 
       - uses: actions/upload-artifact@v3
         if: always()

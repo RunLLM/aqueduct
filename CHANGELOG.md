@@ -1,5 +1,45 @@
 # Changelog
 
+## 0.1.11
+Released on January 23, 2023
+
+### Enhancements
+* Upgrades workflow layout rendering tool to use the elkjs library.
+* Shows the name of the options on the UI's menu sidesheet to improve clarity.
+* Removes the Aqueduct logo on the UI's home page to reduce redundancy.
+
+### Bugfixes
+* Fixes bug where operator execution fails when running on Kubernetes. This was due to a time gap
+    between launching a Kubernetes job and spinning up a pod, and our system wasn't accounting
+    for this.
+* Fixes bug where the workflow details page keeps re-rendering.
+* Fixes bug where the Kubernetes logo doesn't show up on the UI.
+* Fixes bug where the UI keeps hitting the notification route, which led to unnecessary overhead.
+    This was caused by omitting an empty dependency array in one of our useEffect hooks.
+
+## 0.1.10
+Released on January 17, 2023
+
+### Enhancements
+* For workflows that are triggered at the end of other workflows, we now allow changing the
+    triggering workflow from the UI's workflow settings dialog.
+* Differentiate keys and values better on the UI; adds the use of different
+    colored text to make it clear which is the key and which is the value when
+    showing, for example, metric and check values.
+* Improves presentation of non-success states of metrics and checks on workflow
+    DAG. Rather than leaving the nodes empty as before, they now include icons
+    that demonstrate the execution state (failed, pending, canceled).
+* Adds redesigned search interface to workflow and data list pages. The search
+    bar itself has been reduced in size, and a sort functionality has been
+    added that allows users to select a column by which to sort the view.
+* Orders integrations alphabetically on the integrations page to make them
+    easier to find.
+
+### Bugfixes
+* Fixes bug where operator & artifact statuses were missing from details pages.
+* Fixes bug where the header breadcrumbs did not show the title of the workflow
+    on the metric details page.
+
 ## 0.1.9
 Released on Januay 10, 2023.
 

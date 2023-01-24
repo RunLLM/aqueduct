@@ -11,4 +11,4 @@ typing_extensions>=4.3.0
 Pillow
 packaging
 pymongo
-aqueduct-sdk==0.1.9
+aqueduct-sdk==0.1.11

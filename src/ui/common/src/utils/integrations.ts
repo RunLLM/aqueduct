@@ -279,6 +279,9 @@ export const ServiceLogos: ServiceLogo = {
   ['MongoDB']: `${integrationLogosBucket}/mongo.png`,
   ['Conda']: `${integrationLogosBucket}/conda.png`,
   ['Databricks']: `${integrationLogosBucket}/databricks_logo.png`,
+
+  // TODO(ENG-2301): Once task is addressed, remove this duplicate entry.
+  ['K8s']: `${integrationLogosBucket}/kubernetes.png`,
 };
 
 export const SupportedIntegrations: ServiceInfoMap = {
