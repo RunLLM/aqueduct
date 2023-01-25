@@ -11,7 +11,16 @@ from pyspark.sql import SparkSession, dataframe
 import numpy as np
 import pandas as pd
 from aqueduct.utils.type_inference import infer_artifact_type
-from aqueduct_executor.operators.function_executor import extract_function, get_extract_path
+from aqueduct_executor.operators.function_executor import (
+    extract_function, 
+    get_extract_path,
+)
+from aqueduct_executor.operators.function_executor.execute import (
+    cleanup,
+    get_py_import_path,
+    import_invoke_method,
+    validate_spec,
+)
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils import utils
@@ -38,74 +47,11 @@ from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.timer import Timer
 
 
-def _get_py_import_path(spec: FunctionSpec) -> str:
-    """
-    Generates the import path based on fixed function dir and
-    FUNCTION_ENTRY_POINT_FILE env var.
-
-    It removes .py (if any) from the entry point and replaces all
-    '/' with '.'
-
-    For example, entry point 'model/churn.py'  will finally become
-    'app.function.model.churn', where we can import from.
-    """
-    file_path = spec.entry_point_file
-    if file_path.endswith(".py"):
-        file_path = file_path[:-3]
-
-    if file_path.startswith("/"):
-        file_path = file_path[1:]
-    return file_path.replace("/", ".")
-
-
 def _infer_artifact_type_spark(value: Any) -> ArtifactType:
     if isinstance(value, dataframe.DataFrame):
         return ArtifactType.TABLE
     else:
         return infer_artifact_type(value)
-
-
-def _import_invoke_method(spec: FunctionSpec) -> Callable[..., Any]:
-    """
-    `_import_invoke_method` imports the model object.
-    it assumes the operator has been extracted to `<storage>/operators/<id>/op`
-    and imports the route from the above path.
-    """
-
-    # fn_path should be `<storage>/operators/<id>`
-    fn_path = spec.function_extract_path
-
-    # work_dir should be `<storage>/operators/<id>/op`
-    work_dir = os.path.join(fn_path, OP_DIR)
-    print(f"listdir(workdir): {os.listdir(work_dir)}")
-    print(f"listdir(fn_path): {os.listdir(fn_path)}")
-
-    # this ensures any file manipulation happens with respect to work_dir
-    os.chdir(work_dir)
-    # adds work_dir to sys.path to support relative imports from work_dir
-    sys.path.append(work_dir)
-
-    import_path = _get_py_import_path(spec)
-    print(f"import_path: {import_path}")
-    class_name = spec.entry_point_class
-    method_name = spec.entry_point_method
-    custom_args_str = spec.custom_args
-
-    # Invoke the function and parse out the result object.
-
-    module = importlib.import_module(import_path)
-
-    if not class_name:
-        return getattr(module, method_name)  # type: ignore
-
-    fn_class = getattr(module, class_name)
-    function = fn_class()
-    # Set the custom arguments if provided
-    if custom_args_str:
-        custom_args = json.loads(custom_args_str)
-        function.set_args(custom_args)
-
-    return getattr(function, method_name)  # type: ignore
 
 
 def _execute_function(
@@ -120,7 +66,7 @@ def _execute_function(
     :param inputs: the input data to feed into the user's function.
     """
 
-    invoke = _import_invoke_method(spec)
+    invoke = import_invoke_method(spec)
     timer = Timer()
     print("Invoking the function...")
     timer.start()
@@ -155,53 +101,6 @@ def _execute_function(
 
     sys.path.pop(0)
     return results, inferred_result_types, system_metadata
-
-
-def validate_spec(spec: FunctionSpec) -> None:
-    if len(spec.input_content_paths) != len(spec.input_metadata_paths):
-        raise Exception(
-            "Found inconsistent number of input paths (%d) and input metadata paths (%d)"
-            % (
-                len(spec.input_content_paths),
-                len(spec.input_metadata_paths),
-            )
-        )
-
-    if len(spec.output_content_paths) != len(spec.output_metadata_paths):
-        raise Exception(
-            "Found inconsistent number of output paths (%d) and output metadata paths (%d)"
-            % (
-                len(spec.output_content_paths),
-                len(spec.output_metadata_paths),
-            )
-        )
-    if spec.expected_output_artifact_types is not None and len(
-        spec.expected_output_artifact_types
-    ) != len(spec.output_content_paths):
-        raise Exception(
-            "Found inconsistent number of expected output artifact types (%d) and output content paths (%d)"
-            % (
-                len(spec.expected_output_artifact_types),
-                len(spec.output_content_paths),
-            )
-        )
-
-    # Check and Metric operators must only have a single output.
-    if (spec.operator_type == OperatorType.CHECK or spec.operator_type == OperatorType.METRIC) and (
-        spec.expected_output_artifact_types is not None
-        and len(spec.expected_output_artifact_types) != 1
-    ):
-        raise Exception("%s operators must only have a single output." % spec.operator_type)
-
-
-def _cleanup(spec: FunctionSpec) -> None:
-    """
-    Cleans up any temporary files created during function execution.
-    """
-    # Delete the extracted fn file if it exists and the file path is not
-    # something dangerous
-    if spec.function_extract_path and spec.function_extract_path[-1] != "*":
-        shutil.rmtree(spec.function_extract_path)
 
 
 def run(spec: FunctionSpec, spark_session_obj: SparkSession) -> None:
@@ -351,7 +250,7 @@ def run(spec: FunctionSpec, spark_session_obj: SparkSession) -> None:
         sys.exit(1)
     finally:
         # Perform any cleanup
-        _cleanup(spec)
+        cleanup(spec)
 
 
 def run_with_setup(spec: FunctionSpec) -> None:

@@ -186,7 +186,7 @@ def validate_spec(spec: FunctionSpec) -> None:
         raise Exception("%s operators must only have a single output." % spec.operator_type)
 
 
-def _cleanup(spec: FunctionSpec) -> None:
+def cleanup(spec: FunctionSpec) -> None:
     """
     Cleans up any temporary files created during function execution.
     """
@@ -341,7 +341,7 @@ def run(spec: FunctionSpec) -> None:
         sys.exit(1)
     finally:
         # Perform any cleanup
-        _cleanup(spec)
+        cleanup(spec)
 
 
 def run_with_setup(spec: FunctionSpec) -> None:

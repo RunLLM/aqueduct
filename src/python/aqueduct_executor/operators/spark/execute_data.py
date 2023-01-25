@@ -3,6 +3,12 @@ from typing import Any
 from pyspark.sql import SparkSession
 
 from aqueduct_executor.operators.connectors.data import common, config, connector, extract
+from aqueduct_executor.operators.connectors.data.execute import (
+    run_authenticate,
+    run_delete_saved_objects,
+    run_discover,
+    setup_connector,
+)
 from aqueduct_executor.operators.connectors.data.spec import (
     AQUEDUCT_DEMO_NAME,
     AuthenticateSpec,
@@ -103,28 +109,13 @@ def _execute_spark(spec: Spec, storage: Storage, exec_state: ExecutionState, spa
         if spec.type == JobType.EXTRACT:
             run_extract_spark(spec, op, storage, exec_state, spark_session_obj)
         elif spec.type == JobType.LOADTABLE:
-            run_load_table(spec, op, storage, spark_session_obj)
+            run_load_table_spark(spec, op, storage, spark_session_obj)
         elif spec.type == JobType.LOAD:
-            run_load(spec, op, storage, exec_state, spark_session_obj)
+            run_load_spark(spec, op, storage, exec_state, spark_session_obj)
         elif spec.type == JobType.DISCOVER:
             run_discover(spec, op, storage)
         else:
             raise Exception("Unknown job: %s" % spec.type)
-
-
-def run_authenticate(
-    spec: AuthenticateSpec,
-    exec_state: ExecutionState,
-    is_demo: bool,
-) -> None:
-    @exec_state.user_fn_redirected(
-        failure_tip=TIP_DEMO_CONNECTION if is_demo else TIP_INTEGRATION_CONNECTION
-    )
-    def _authenticate() -> None:
-        op = setup_connector(spec.connector_name, spec.connector_config)
-        op.authenticate()
-
-    _authenticate()
 
 
 def run_extract_spark(
@@ -179,16 +170,7 @@ def run_extract_spark(
         )
 
 
-def run_delete_saved_objects(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
-    results = {}
-    assert isinstance(spec.connector_name, dict)
-    for integration in spec.connector_name:
-        op = setup_connector(spec.connector_name[integration], spec.connector_config[integration])
-        results[integration] = op.delete(spec.integration_to_object[integration])
-    utils.write_delete_saved_objects_results(storage, spec.output_content_path, results)
-
-
-def run_load(
+def run_load_spark(
     spec: LoadSpec, op: connector.DataConnector, storage: Storage, exec_state: ExecutionState, spark_session_obj: SparkSession,
 ) -> None:
     inputs, input_types, _ = utils.read_artifacts_spark(
@@ -207,152 +189,6 @@ def run_load(
     _load()
 
 
-def run_load_table(spec: LoadTableSpec, op: connector.DataConnector, storage: Storage) -> None:
+def run_load_table_spark(spec: LoadTableSpec, op: connector.DataConnector, storage: Storage) -> None:
     df = utils._read_csv(storage.get(spec.csv))
     op.load_spark(spec.load_parameters.parameters, df, ArtifactType.TABLE)
-
-
-def run_discover(spec: DiscoverSpec, op: connector.DataConnector, storage: Storage) -> None:
-    tables = op.discover()
-    utils.write_discover_results(storage, spec.output_content_path, tables)
-
-
-def setup_connector(
-    connector_name: common.Name, connector_config: config.Config
-) -> connector.DataConnector:
-    # prevent isort from moving around type: ignore comments which will cause mypy issues.
-    # isort: off
-    if connector_name == common.Name.AQUEDUCT_DEMO or connector_name == common.Name.POSTGRES:
-        try:
-            import psycopg2
-        except:
-            raise MissingConnectorDependencyException(
-                "Unable to initialize the Postgres connector. Have you run `aqueduct install postgres`?"
-            )
-
-        from aqueduct_executor.operators.connectors.data.postgres import (
-            PostgresConnector as OpConnector,
-        )
-    elif connector_name == common.Name.SNOWFLAKE:
-        try:
-            from snowflake import sqlalchemy
-        except:
-            raise MissingConnectorDependencyException(
-                "Unable to initialize the Snowflake connector. Have you run `aqueduct install snowflake`?"
-            )
-
-        from aqueduct_executor.operators.connectors.data.snowflake import (  # type: ignore
-            SnowflakeConnector as OpConnector,
-        )
-    elif connector_name == common.Name.BIG_QUERY:
-        try:
-            from google.cloud import bigquery
-        except:
-            raise MissingConnectorDependencyException(
-                "Unable to initialize the BigQuery connector. Have you run `aqueduct install bigquery`?"
-            )
-
-        from aqueduct_executor.operators.connectors.data.bigquery import (  # type: ignore
-            BigQueryConnector as OpConnector,
-        )
-    elif connector_name == common.Name.REDSHIFT:
-        try:
-            import psycopg2
-        except:
-            raise MissingConnectorDependencyException(
-                "Unable to initialize the Redshift connector. Have you run `aqueduct install redshift`?"
-            )
-
-        from aqueduct_executor.operators.connectors.data.redshift import (  # type: ignore
-            RedshiftConnector as OpConnector,
-        )
-    elif connector_name == common.Name.SQL_SERVER:
-        try:
-            import pyodbc
-        except:
-            raise MissingConnectorDependencyException(
-                "Unable to initialize the SQL Server connector. Have you run `aqueduct install sqlserver`?"
-            )
-
-        from aqueduct_executor.operators.connectors.data.sql_server import (  # type: ignore
-            SqlServerConnector as OpConnector,
-        )
-    elif connector_name == common.Name.MYSQL:
-        try:
-            import MySQLdb
-        except:
-            raise MissingConnectorDependencyException(
-                "Unable to initialize the MySQL connector. Have you run `aqueduct install mysql`?"
-            )
-
-        from aqueduct_executor.operators.connectors.data.mysql import (  # type: ignore
-            MySqlConnector as OpConnector,
-        )
-    elif connector_name == common.Name.MARIA_DB:
-        try:
-            import MySQLdb
-        except:
-            raise MissingConnectorDependencyException(
-                "Unable to initialize the MariaDB connector. Have you run `aqueduct install mariadb`?"
-            )
-
-        from aqueduct_executor.operators.connectors.data.maria_db import (  # type: ignore
-            MariaDbConnector as OpConnector,
-        )
-    elif connector_name == common.Name.AZURE_SQL:
-        try:
-            import pyodbc
-        except:
-            raise MissingConnectorDependencyException(
-                "Unable to initialize the Azure SQL connector. Have you run `aqueduct install azuresql`?"
-            )
-
-        from aqueduct_executor.operators.connectors.data.azure_sql import (  # type: ignore
-            AzureSqlConnector as OpConnector,
-        )
-    elif connector_name == common.Name.S3:
-        try:
-            import pyarrow
-        except:
-            raise MissingConnectorDependencyException(
-                "Unable to initialize the S3 connector. Have you run `aqueduct install s3`?"
-            )
-
-        from aqueduct_executor.operators.connectors.data.s3 import (  # type: ignore
-            S3Connector as OpConnector,
-        )
-    elif connector_name == common.Name.SQLITE:
-        from aqueduct_executor.operators.connectors.data.sqlite import (  # type: ignore
-            SqliteConnector as OpConnector,
-        )
-    elif connector_name == common.Name.GCS:
-        from aqueduct_executor.operators.connectors.data.gcs import (  # type: ignore
-            GCSConnector as OpConnector,
-        )
-    elif connector_name == common.Name.ATHENA:
-        try:
-            import awswrangler
-        except:
-            raise MissingConnectorDependencyException(
-                "Unable to initialize the Athena connector. Have you run `aqueduct install athena`?"
-            )
-
-        from aqueduct_executor.operators.connectors.data.athena import (  # type: ignore
-            AthenaConnector as OpConnector,
-        )
-    elif connector_name == common.Name.MONGO_DB:
-        try:
-            import pymongo
-        except:
-            raise MissingConnectorDependencyException(
-                "Unable to initialize MongoDB connector. Have you run `aqueduct install mongodb`?"
-            )
-
-        from aqueduct_executor.operators.connectors.data.mongodb import (  # type: ignore
-            MongoDBConnector as OpConnector,
-        )
-    else:
-        raise Exception("Unknown connector name: %s" % connector_name)
-
-    # isort: on
-    return OpConnector(config=connector_config)  # type: ignore
