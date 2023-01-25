@@ -1,6 +1,6 @@
-import { Link, Typography } from '@mui/material';
+import { Link, Typography, CircularProgress } from '@mui/material';
 import Box from '@mui/material/Box';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { BreadcrumbLink } from '../../../components/layouts/NavBar';
@@ -28,10 +28,20 @@ type Props = {
 const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   const apiKey = user.apiKey;
   const dispatch: AppDispatch = useDispatch();
+  const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    dispatch(getDataArtifactPreview({ apiKey }));
-    dispatch(handleLoadIntegrations({ apiKey }));
+    const fetchDataArtifactsAndIntegrations = async () => {
+      console.log('starting to fetch data.');
+      setIsLoading(true);
+      await dispatch(getDataArtifactPreview({ apiKey }));
+      await dispatch(handleLoadIntegrations({ apiKey }));
+      console.log('done fetching data');
+      setIsLoading(false);
+    };
+
+    fetchDataArtifactsAndIntegrations();
+
   }, [apiKey, dispatch]);
 
   const dataCardsInfo = useSelector(
@@ -83,9 +93,13 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       Object.keys(dataCardsInfo.data.latest_versions).length > 0
         ? Object.keys(dataCardsInfo.data.latest_versions)
         : [];
+
+    console.log('latestVersions: ', latestVersions);
     tableData = latestVersions.map((version) => {
       const currentVersion =
         dataCardsInfo.data.latest_versions[version.toString()];
+
+      console.log('currentVersion: ', currentVersion);
 
       const artifactId = currentVersion.artifact_id;
       const artifactName = currentVersion.artifact_name;
@@ -103,9 +117,12 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         }
       });
 
+      // TODO: Update DataPreviewVersion to have the fields we get back here. (see data.ts)
+      console.log('latestVersion: ', latestVersion);
+
       let checks = [];
-      if (latestVersion.checks?.length > 0) {
-        checks = latestVersion.checks.map((check, index) => {
+      if (latestVersion?.checks?.length > 0) {
+        checks = latestVersion?.checks.map((check, index) => {
           const level = check.metadata.failure_type
             ? CheckLevel.Warning
             : CheckLevel.Error;
@@ -124,7 +141,7 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
 
       let metrics = [];
       if (latestVersion?.metrics?.length > 0) {
-        metrics = latestVersion.metrics.map((metric) => {
+        metrics = latestVersion?.metrics?.map((metric) => {
           return {
             metricId: metric.id,
             name: metric.name,
@@ -215,12 +232,28 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     return parseInt(savedRowsPerPage);
   };
 
+  console.log('data page render artifactList: ', artifactList);
+
+  console.log('isLoading: ', isLoading);
+
+  if (isLoading) {
+    return (
+      <Layout breadcrumbs={[BreadcrumbLink.HOME, BreadcrumbLink.DATA]} user={user}>
+        <Box sx={{ display: 'flex', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' }}>
+          <Box sx={{ width: '64px', height: '64px' }}>
+            <CircularProgress sx={{ width: '100%', height: '100%' }} />
+          </Box>
+        </Box>
+      </Layout >
+    );
+  }
+
   return (
     <Layout
       breadcrumbs={[BreadcrumbLink.HOME, BreadcrumbLink.DATA]}
       user={user}
     >
-      {artifactList.data.length > 0 ? (
+      {artifactList.data?.length && artifactList.data?.length > 0 ? (
         <PaginatedSearchTable
           data={artifactList}
           searchEnabled={true}
