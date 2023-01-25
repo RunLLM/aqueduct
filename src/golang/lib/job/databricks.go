@@ -148,7 +148,7 @@ func (j *DatabricksJobManager) CreateTask(
 	return task, nil
 }
 
-func (j *DatabricksJobManager) LaunchMutlipleTaskJob(
+func (j *DatabricksJobManager) LaunchMultipleTaskJob(
 	ctx context.Context,
 	name string,
 	taskList []jobs.JobTaskSettings,

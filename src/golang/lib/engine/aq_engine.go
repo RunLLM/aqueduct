@@ -726,7 +726,7 @@ func (eng *aqEngine) cleanupWorkflow(ctx context.Context, workflowDag dag_utils.
 
 func (eng *aqEngine) executeWithEngine(
 	ctx context.Context,
-	workflowDag dag_utils.WorkflowDag,
+	dag dag_utils.WorkflowDag,
 	workflowName string,
 	engineConfig shared.EngineConfig,
 	storageConfig shared.StorageConfig,
@@ -759,7 +759,7 @@ func (eng *aqEngine) executeWithEngine(
 
 		return ExecuteDatabricks(
 			ctx,
-			workflowDag,
+			dag,
 			workflowName,
 			workflowRunMetadata,
 			timeConfig,
@@ -770,7 +770,7 @@ func (eng *aqEngine) executeWithEngine(
 		return eng.execute(
 
 			ctx,
-			workflowDag,
+			dag,
 			workflowRunMetadata,
 			timeConfig,
 			opExecMode,

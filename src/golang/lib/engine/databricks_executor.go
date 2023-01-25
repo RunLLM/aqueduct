@@ -4,13 +4,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/databricks/databricks-sdk-go/service/jobs"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // We seperate out the execution step for Databricks Jobs since
@@ -22,7 +20,7 @@ import (
 // 4. Poll on each Task and update accordingly.
 func ExecuteDatabricks(
 	ctx context.Context,
-	workflowDag dag_utils.WorkflowDag,
+	dag dag_utils.WorkflowDag,
 	workflowName string,
 	workflowRunMetadata *WorkflowRunMetadata,
 	timeConfig *AqueductTimeConfig,
@@ -31,7 +29,6 @@ func ExecuteDatabricks(
 ) error {
 	inProgressOps := workflowRunMetadata.InProgressOps
 	completedOps := workflowRunMetadata.CompletedOps
-	dag := workflowDag
 
 	// Convert the operators into tasks
 	taskList, err := CreateTaskList(ctx, dag, workflowName, databricksJobManager)
@@ -40,7 +37,7 @@ func ExecuteDatabricks(
 	}
 
 	// Launch the workflow job with all tasks
-	_, err = databricksJobManager.LaunchMutlipleTaskJob(ctx, workflowName, taskList)
+	_, err = databricksJobManager.LaunchMultipleTaskJob(ctx, workflowName, taskList)
 	if err != nil {
 		return errors.Wrap(err, "Unable to launch workflow job on Databricks.")
 	}
@@ -66,20 +63,12 @@ func ExecuteDatabricks(
 		for _, op := range inProgressOps {
 			// Poll on the individual operator
 			execState, err := op.Poll(ctx)
-			logrus.Infof("execState of operator:%v", op.JobSpec().JobName())
-			logrus.Info(execState.Status)
 			if err != nil {
 				return err
 			}
 
-			if execState.Status == shared.PendingExecutionStatus {
-				continue
-			} else if execState.Status == shared.RunningExecutionStatus {
-				continue
-			}
-
 			if !execState.Terminated() {
-				return errors.Newf("Internal error: the operator is expected to have terminated, but instead has status %s", execState.Status)
+				continue
 			}
 
 			// From here on we can assume that the operator has terminated.
@@ -90,15 +79,18 @@ func ExecuteDatabricks(
 				}
 			}
 
+			if shouldStopExecution(execState) {
+				return opFailureError(*execState.FailureType, op)
+			}
+
 			// Add the operator to the completed stack, and remove it from the in-progress one.
 			if _, ok := completedOps[op.ID()]; ok {
 				return errors.Newf("Internal error: operator %s was completed twice.", op.Name())
 			}
 			completedOps[op.ID()] = op
 			delete(inProgressOps, op.ID())
-
-			time.Sleep(timeConfig.OperatorPollInterval)
 		}
+		time.Sleep(timeConfig.OperatorPollInterval)
 	}
 
 	if len(completedOps) != len(dag.Operators()) {
