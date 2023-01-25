@@ -45,8 +45,8 @@ def _fetch_demo_data(demo: RelationalDBIntegration, table_name: str) -> pd.DataF
 
 def _generate_setup_flow_name(integration: Integration):
     return "Setup Data for %s Integration: %s" % (
-        integration._metadata.service,
-        integration._metadata.name,
+        integration.type(),
+        integration.name(),
     )
 
 
@@ -151,27 +151,31 @@ def setup_data_integrations(filter_to: Optional[str] = None) -> None:
 
     client = Client(*get_aqueduct_config())
     for integration_name in data_integrations:
-        integration_config = test_config["data"][integration_name]
-        service_type = integration_config["type"]
-
-        # Connect to any integrations that don't exist.
         connected_integrations = client.list_integrations()
+
+        # Only connect to integrations that don't already exist.
         if integration_name not in connected_integrations.keys():
+            assert integration_name in test_config["data"], (
+                "Data integration `%s` needs to exist in the test configuration file."
+                % integration_name
+            )
+
+            integration_config = test_config["data"][integration_name]
+            service_type = integration_config["type"]
 
             # Modifying the config dictionary should be ok, since we only ever process
             # an entry once.
             del integration_config["type"]
             client.connect_integration(integration_name, service_type, integration_config)
 
-        integration = client.integration(integration_name)
-
         # Setup the data in each of these integrations.
-        if service_type == ServiceType.SNOWFLAKE:
+        integration = client.integration(integration_name)
+        if integration.type() == ServiceType.SNOWFLAKE:
             _setup_snowflake_data(client, integration)
-        elif service_type == ServiceType.S3:
+        elif integration.type() == ServiceType.S3:
             _setup_s3_data(client, integration)
         else:
-            raise Exception("Test suite does not yet support %s." % service_type)
+            raise Exception("Test suite does not yet support %s." % integration.type())
 
 
 def list_data_integrations() -> List[str]:

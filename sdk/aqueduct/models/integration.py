@@ -43,10 +43,19 @@ class IntegrationInfo(BaseModel):
 
 class Integration(ABC):
     """
-    Abstract class for the various integrations Aqueduct interacts with.
+    Base class for the various integrations Aqueduct interacts with.
     """
 
     _metadata: IntegrationInfo
+
+    def id(self) -> uuid.UUID:
+        return self._metadata.id
+
+    def name(self) -> str:
+        return self._metadata.name
+
+    def type(self) -> ServiceType:
+        return self._metadata.service
 
     def __hash__(self) -> int:
         """An integration is uniquely identified by its name.
