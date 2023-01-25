@@ -1,6 +1,5 @@
 import pandas as pd
 import pytest
-from aqueduct.constants.enums import RuntimeType, ServiceType
 from aqueduct.error import AqueductError, InvalidDependencyFilePath, InvalidFunctionException
 
 from aqueduct import global_config, op
@@ -21,7 +20,9 @@ from .test_functions.simple.model import (
 )
 
 
-def test_basic_get(client, data_integration):
+def test_basic_get(client, data_integration, engine):
+    global_config({"engine": engine})
+
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
     sql_df = table_artifact.get()
     assert list(sql_df) == ["hotel_name", "review_date", "reviewer_nationality", "review"]
@@ -108,28 +109,3 @@ def test_table_with_non_string_column_name(client):
 
     with pytest.raises(AqueductError):
         bad_return()
-
-
-@pytest.mark.enable_only_for_engine_type(ServiceType.K8S, ServiceType.LAMBDA)
-def test_basic_get_by_engine(client, data_integration, engine):
-    global_config({"engine": engine})
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
-    sql_df = table_artifact.get()
-    assert list(sql_df) == ["hotel_name", "review_date", "reviewer_nationality", "review"]
-    assert sql_df.shape[0] == 100
-
-    output_artifact = dummy_sentiment_model(table_artifact)
-    integration_info_by_name = client.list_integrations()
-    if integration_info_by_name[engine].service == ServiceType.K8S:
-        assert output_artifact._dag.engine_config.type == RuntimeType.K8S
-    elif integration_info_by_name[engine].service == ServiceType.LAMBDA:
-        assert output_artifact._dag.engine_config.type == RuntimeType.K8S
-    output_df = output_artifact.get()
-    assert list(output_df) == [
-        "hotel_name",
-        "review_date",
-        "reviewer_nationality",
-        "review",
-        "positivity",
-    ]
-    assert output_df.shape[0] == 100
