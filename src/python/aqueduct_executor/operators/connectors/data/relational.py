@@ -57,7 +57,7 @@ class RelationalConnector(connector.DataConnector):
             )
         return results
 
-    def _map_object_dtype_to_varchar(df: pd.DataFrame) -> Dict[str, VARCHAR]:
+    def _map_object_dtype_to_varchar(self, df: pd.DataFrame) -> Dict[str, VARCHAR]:
         """Given a DataFrame, for each string column (i.e. object dtype), it
         returns a mapping of column name to the appropriate SQL type VARCHAR(N),
         where N is large enough for all values in the column. Non-string
@@ -69,20 +69,20 @@ class RelationalConnector(connector.DataConnector):
             # Use powers of 2 to determine how large the column needs to be
             # in terms of number of characters
             if max_size < 256:
-                col_to_type[col] = 256
+                col_to_type[col] = VARCHAR(256)
             elif max_size < 512:
-                col_to_type[col] = 512
+                col_to_type[col] = VARCHAR(512)
             elif max_size < 1024:
-                col_to_type[col] = 1024
+                col_to_type[col] = VARCHAR(1024)
             elif max_size < 4096:
-                col_to_type[col] = 4096
+                col_to_type[col] = VARCHAR(4096)
             elif max_size < 16384:
-                col_to_type[col] = 16384
+                col_to_type[col] = VARCHAR(16384)
             elif max_size < 32768:
-                col_to_type[col] = 32768
+                col_to_type[col] = VARCHAR(32768)
             elif max_size < 65536:
                 # The max VARCHAR size supported by many RDBMS is 65535 (2^16 - 1)
-                col_to_type[col] = 65535
+                col_to_type[col] = VARCHAR(65535)
             else:
                 raise Exception(
                     "Cannot support saving string columns with length greater than 65535 bytes"
