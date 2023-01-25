@@ -18,10 +18,10 @@ This file contains:
 2) The server's address.
 3) The connection configuration information for each of the data integrations to run against. The test suites
 will automatically run against each of the data integrations specified in this file, unless a `--data` argument
-is supplied.
+is supplied, whereby the tests will filter down to just that data integration.
 
 Both these test suites share a collection of command line flags:
-* `--data`: The integration name of the data integration to run all tests against.
+* `--data`: The integration name of the data integration to run all tests against. 
 * `--engine`: The integration of the engine to compute all tests on.
 * `--keep-flows`: If set, we will not delete any flows created by the test run. This is useful for debugging.
 * `--deprecated`: Runs against any deprecated API that still exists in the SDK. Such code paths should be eventually deleted after some time, but this ensures backwards compatibility.
@@ -31,21 +31,23 @@ see `aqueduct_tests/conftest.py` and  `data_integration_tests/conftest.py`.
 
 ## Commands
 
-From this directory, to run the Aqueduct Tests:
-`pytest aqueduct_tests/ -rP -vv`
+To run all SDK Integration Tests, from the `integration_tests/sdk` directory, run:
+`python3 run_tests.py [-lf] [-n CONCURRENCY]`
 
-To run the Data Integration Tests:
-`pytest data_integration_tests/ -rP -vv`
+To run just one of the test suites:
+- `python3 run_tests.py --aqueduct [-lf] [-n CONCURRENCY]`
+- `python3 run_tests.py --data-integration [-lf] [-n CONCURRENCY]`
 
+To run tests with concurrency > 1, `pytest-xdist` must be installed.
 
 ## Useful Pytest Command Flags 
+
+The above script simply runs the following pytest commands:
+- `pytest aqueduct_tests/ -rP -vv [-lf] [-n CONCURRENCY]`
+- `pytest data_integration_tests/ -rP -vv [-lf] [-n CONCURRENCY]`
 
 Running all the tests in a single file:
 - `pytest <path to test file> -rP -vv`
 
 Running a specific test:
 - `pytest <specific test directory> -rP -vv -k '<specific test name>'`
-
-Running tests in parallel, with concurrency 5:
-- Install pytest-xdist
-- `pytest <specific test directory> -rP -vv -n 5`

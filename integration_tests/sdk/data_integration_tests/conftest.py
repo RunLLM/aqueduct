@@ -34,10 +34,10 @@ def filter_tests_based_on_data_integrations(request, client, data_integration):
     )
 
     allowed_data_integrations = allowed_data_integrations_by_file[test_file_name]
-    if data_integration._metadata.service not in allowed_data_integrations:
+    if data_integration.type() not in allowed_data_integrations:
         pytest.skip(
             "Skipped for data integration `%s`, since it is not of type `%s`."
-            % (data_integration._metadata.name, ",".join(allowed_data_integrations))
+            % (data_integration.name(), ",".join(allowed_data_integrations))
         )
 
 
