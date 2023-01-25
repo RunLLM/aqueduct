@@ -53,7 +53,7 @@ const NotificationLevelSelector: React.FC<Props> = ({
           color={errorDisabled ? 'gray.700' : 'black'}
           marginLeft={1}
         >
-          ERROR
+          Error
         </Typography>
       </Box>
       <Box
@@ -79,7 +79,7 @@ const NotificationLevelSelector: React.FC<Props> = ({
           color={warningDisabled ? 'gray.700' : 'black'}
           marginLeft={1}
         >
-          WARNING
+          Warning
         </Typography>
       </Box>
       <Box
@@ -105,7 +105,7 @@ const NotificationLevelSelector: React.FC<Props> = ({
           marginLeft={1}
           alignContent="center"
         >
-          SUCCESS
+          Success
         </Typography>
       </Box>
     </Box>
