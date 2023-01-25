@@ -11,3 +11,9 @@ class MissingInputPathsException(Exception):
     """Exception raised due to input data not being supplied."""
 
     pass
+
+
+class UnsupportedConnectorExecption(Exception):
+     """Exception raised due to an unsupported connector."""
+
+    pass

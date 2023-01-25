@@ -26,7 +26,10 @@ from aqueduct_executor.operators.utils.enums import (
     JobType,
     SerializationType,
 )
-from aqueduct_executor.operators.utils.exceptions import MissingConnectorDependencyException
+from aqueduct_executor.operators.utils.exceptions import (
+    MissingConnectorDependencyException,
+    UnsupportedConnectorExecption,
+)
 from aqueduct_executor.operators.utils.execution import (
     TIP_DEMO_CONNECTION,
     TIP_EXTRACT,
@@ -105,7 +108,7 @@ def _execute_spark(spec: Spec, storage: Storage, exec_state: ExecutionState, spa
         run_authenticate(spec, exec_state, is_demo=(spec.name == AQUEDUCT_DEMO_NAME))
 
     else:
-        op = setup_connector(spec.connector_name, spec.connector_config)
+        op = setup_connector_spark(spec.connector_name, spec.connector_config)
         if spec.type == JobType.EXTRACT:
             run_extract_spark(spec, op, storage, exec_state, spark_session_obj)
         elif spec.type == JobType.LOADTABLE:
@@ -192,3 +195,26 @@ def run_load_spark(
 def run_load_table_spark(spec: LoadTableSpec, op: connector.DataConnector, storage: Storage) -> None:
     df = utils._read_csv(storage.get(spec.csv))
     op.load_spark(spec.load_parameters.parameters, df, ArtifactType.TABLE)
+
+
+def setup_connector_spark(
+    connector_name: common.Name, connector_config: config.Config
+) -> connector.DataConnector:
+    # prevent isort from moving around type: ignore comments which will cause mypy issues.
+    # isort: off
+    if connector_name == common.Name.SNOWFLAKE:
+        try:
+            from pyspark.sql import SparkSession
+            from snowflake import sqlalchemy
+        except:
+            raise MissingConnectorDependencyException(
+                "Unable to initialize the Spark Snowflake connector. Have you run `aqueduct install spark-snowflake`?"
+            )
+
+        from aqueduct_executor.operators.connectors.data.spark.snowflake import (
+            SparkSnowflakeConnector as OpConnector,
+        )
+    else:
+        raise UnsupportedConnectorExecption(
+                "Unable to initialize connector. This connector is not yet supported for Aqueduct on Spark."
+            )
