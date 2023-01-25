@@ -1,4 +1,4 @@
-import { Link, Typography, CircularProgress } from '@mui/material';
+import { CircularProgress, Link, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -32,16 +32,13 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
 
   useEffect(() => {
     const fetchDataArtifactsAndIntegrations = async () => {
-      console.log('starting to fetch data.');
       setIsLoading(true);
       await dispatch(getDataArtifactPreview({ apiKey }));
       await dispatch(handleLoadIntegrations({ apiKey }));
-      console.log('done fetching data');
       setIsLoading(false);
     };
 
     fetchDataArtifactsAndIntegrations();
-
   }, [apiKey, dispatch]);
 
   const dataCardsInfo = useSelector(
@@ -94,12 +91,9 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         ? Object.keys(dataCardsInfo.data.latest_versions)
         : [];
 
-    console.log('latestVersions: ', latestVersions);
     tableData = latestVersions.map((version) => {
       const currentVersion =
         dataCardsInfo.data.latest_versions[version.toString()];
-
-      console.log('currentVersion: ', currentVersion);
 
       const artifactId = currentVersion.artifact_id;
       const artifactName = currentVersion.artifact_name;
@@ -116,9 +110,6 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           latestVersion = version;
         }
       });
-
-      // TODO: Update DataPreviewVersion to have the fields we get back here. (see data.ts)
-      console.log('latestVersion: ', latestVersion);
 
       let checks = [];
       if (latestVersion?.checks?.length > 0) {
@@ -232,19 +223,26 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     return parseInt(savedRowsPerPage);
   };
 
-  console.log('data page render artifactList: ', artifactList);
-
-  console.log('isLoading: ', isLoading);
-
   if (isLoading) {
     return (
-      <Layout breadcrumbs={[BreadcrumbLink.HOME, BreadcrumbLink.DATA]} user={user}>
-        <Box sx={{ display: 'flex', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' }}>
+      <Layout
+        breadcrumbs={[BreadcrumbLink.HOME, BreadcrumbLink.DATA]}
+        user={user}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            width: '100%',
+            height: '100%',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
           <Box sx={{ width: '64px', height: '64px' }}>
             <CircularProgress sx={{ width: '100%', height: '100%' }} />
           </Box>
         </Box>
-      </Layout >
+      </Layout>
     );
   }
 
