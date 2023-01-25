@@ -12,8 +12,10 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-const MaxConcurrentDownload = 3
-const MaxConcurrentUpload = 5
+const (
+	MaxConcurrentDownload = 3
+	MaxConcurrentUpload   = 5
+)
 
 // Authenticates kubernetes configuration by trying to connect a client.
 func AuthenticateK8sConfig(ctx context.Context, authConf auth.Config) error {
@@ -59,9 +61,9 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 		return errors.Wrap(err, "Unable to authenticate Lambda Function.")
 	}
 
-	// Pull images on a currency of "MaxConcurrentDownload" to parallelize while avoiding pull timeout.
+	// Pull images on a concurrency of "MaxConcurrentDownload".
 	errGroup.SetLimit(MaxConcurrentDownload)
-	go AddFunctionTypeToChannel(functionsToShip, pullImageChannel)
+	go lambda_utils.AddFunctionTypeToChannel(functionsToShip, pullImageChannel)
 	for lambdaFunction := range pullImageChannel {
 		lambdaFunctionType := lambdaFunction
 		errGroup.Go(func() error {
@@ -73,9 +75,9 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 		return errors.Wrap(err, "Unable to Pull Lambda Function From ECR.")
 	}
 
-	// Push the images and create lambda functions all at once.
+	// Create lambda functions on a concurrency of "MaxConcurrentUpload".
 	errGroup.SetLimit(MaxConcurrentUpload)
-	go AddFunctionTypeToChannel(functionsToShip, pushImageChannel)
+	go lambda_utils.AddFunctionTypeToChannel(functionsToShip, pushImageChannel)
 	for lambdaFunction := range pushImageChannel {
 		lambdaFunctionType := lambdaFunction
 		errGroup.Go(func() error {
@@ -117,12 +119,4 @@ func AuthenticateDatabricksConfig(ctx context.Context, authConf auth.Config) err
 	}
 
 	return nil
-}
-
-func AddFunctionTypeToChannel(functionsToShip [10]lambda_utils.LambdaFunctionType, channel chan lambda_utils.LambdaFunctionType) {
-	for _, lambdaFunctionType := range functionsToShip {
-		lambdaFunctionTypeToPass := lambdaFunctionType
-		channel <- lambdaFunctionTypeToPass
-	}
-	close(channel)
 }
