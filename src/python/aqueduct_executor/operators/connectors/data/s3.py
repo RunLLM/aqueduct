@@ -11,6 +11,7 @@ from aqueduct_executor.operators.connectors.data.utils import construct_boto_ses
 from aqueduct_executor.operators.utils.enums import ArtifactType
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 from aqueduct_executor.operators.utils.utils import delete_object
+from botocore.client import ClientError
 from PIL import Image
 
 _DEFAULT_JSON_ENCODING = "utf8"
@@ -24,12 +25,14 @@ class S3Connector(connector.DataConnector):
         self.bucket = config.bucket
 
     def authenticate(self) -> None:
-        bucket = self.s3.Bucket(self.bucket)
-        # Below is a low-overhead way of checking if the user has access to the bucket.
-        # Source: https://stackoverflow.com/a/49817544
-        if not bucket.creation_date:
+        try:
+            # Below is a low-overhead way of checking if the user has access to the bucket.
+            # Source: https://stackoverflow.com/a/49817544
+            self.s3.meta.client.head_bucket(Bucket=self.bucket)
+        except ClientError as e:
             raise Exception(
-                "Bucket does not exist or you do not have permission to access the bucket."
+                "Bucket does not exist or you do not have permission to access the bucket: %s."
+                % str(e)
             )
 
     def discover(self) -> List[str]:
