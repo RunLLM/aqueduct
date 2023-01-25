@@ -301,6 +301,9 @@ export const ServiceLogos: ServiceLogo = {
   ['Databricks']: `${integrationLogosBucket}/databricks_logo.png`,
   ['Email']: `${integrationLogosBucket}/email.png`,
   ['Slack']: `${integrationLogosBucket}/slack.png`,
+
+  // TODO(ENG-2301): Once task is addressed, remove this duplicate entry.
+  ['K8s']: `${integrationLogosBucket}/kubernetes.png`,
 };
 
 export const SupportedIntegrations: ServiceInfoMap = {

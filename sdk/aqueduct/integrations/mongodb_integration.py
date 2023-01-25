@@ -58,7 +58,7 @@ class MongoDBCollectionIntegration(Integration):
             lazy:
                 Whether to run this operator lazily. See https://docs.aqueducthq.com/operators/lazy-vs.-eager-execution .
         """
-        op_name = name or self._dag.get_unclaimed_op_name(prefix="%s query" % self._metadata.name)
+        op_name = name or self._dag.get_unclaimed_op_name(prefix="%s query" % self.name())
         if globals.__GLOBAL_CONFIG__.lazy:
             lazy = True
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
@@ -102,8 +102,8 @@ class MongoDBCollectionIntegration(Integration):
                         description=description,
                         spec=OperatorSpec(
                             extract=ExtractSpec(
-                                service=self._metadata.service,
-                                integration_id=self._metadata.id,
+                                service=self.type(),
+                                integration_id=self.id(),
                                 parameters=mongo_extract_params,
                             )
                         ),

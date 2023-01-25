@@ -57,7 +57,7 @@ class RelationalDataValidator:
         # Check all objects were saved to the same integration.
         assert len(data.keys()) == 1
         integration_name = list(data.keys())[0]
-        assert integration_name == self._integration._metadata.name
+        assert integration_name == self._integration.name()
 
         assert len(data[integration_name]) == len(expected_updates)
         saved_objects = data[integration_name]

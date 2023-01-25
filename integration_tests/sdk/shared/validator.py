@@ -25,7 +25,7 @@ class Validator:
 
     def _fetch_saved_object_identifier(self, flow: Flow, artifact_id: uuid.UUID) -> str:
         """Also validates that the saved object exists according to the Flow API."""
-        all_saved_objects = flow.list_saved_objects()[self._integration._metadata.name]
+        all_saved_objects = flow.list_saved_objects()[self._integration.name()]
         all_saved_object_identifiers = [item.spec.identifier() for item in all_saved_objects]
 
         saved_object_identifier = artifact_id_to_saved_identifier[str(artifact_id)]
@@ -88,7 +88,7 @@ class Validator:
         # Check all objects were saved to the same integration.
         assert len(data.keys()) == 1
         integration_name = list(data.keys())[0]
-        assert integration_name == self._integration._metadata.name
+        assert integration_name == self._integration.name()
 
         assert len(data[integration_name]) == len(expected_updates)
         saved_objects = data[integration_name]

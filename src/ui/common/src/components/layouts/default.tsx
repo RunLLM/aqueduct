@@ -38,7 +38,7 @@ export const DefaultLayout: React.FC<Props> = ({
     if (user) {
       dispatch(handleFetchNotifications({ user }));
     }
-  });
+  }, [dispatch, user]);
 
   return (
     <Box
