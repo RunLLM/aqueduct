@@ -133,16 +133,20 @@ def enable_only_for_engine_type(request, client, engine):
 
 
 @pytest.fixture(autouse=True)
-def must_have_gpu(request, client, engine):
+def must_have_gpu(pytestconfig, request, client, engine):
     """When a test is marked with this, all it means that it will only be executed if the --gpu flag is
     passed into command line.
 
     The user is responsible for supplying a K8s integration with an available GPU.
     """
     if not request.node.get_closest_marker("gpu"):
+        return
+
+    if pytestconfig.getoption("gpu"):
         assert (
             _type_from_engine_name(client, engine) == ServiceType.K8S
         ), "@pytest.mark.must_have_gpu only works with K8s engine!"
+    else:
         pytest.skip("Skipped since --gpu flag is not provided")
 
 

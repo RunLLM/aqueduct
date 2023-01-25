@@ -284,33 +284,35 @@ def test_materializing_failed_artifact(client, flow_name, engine):
 
 
 def test_all_param_types(client, flow_name, engine):
-    # class EmptyClass:
-    #     """
-    #     For some reason, this class must be nested inside this test,
-    #     otherwise we get a pickle error on the backend: 'No module named `param_test`'.
-    #     """
-    #
-    #     def __init__(self):
-    #         pass
-    #
-    # @op
-    # def must_be_picklable(input):
-    #     """
-    #     Unable to check that the input is picklable, since `pickle.loads()`
-    #     complains about `import of module 'param_test' failed`.
-    #     """
-    #     assert input == EmptyClass
-    #     return input
-    #
-    # picklable_param = client.create_param("pickleable", default=EmptyClass)
-    # pickle_output = must_be_picklable(picklable_param)
-    #
-    # assert isinstance(pickle_output, GenericArtifact)
-    # assert pickle_output.get() == EmptyClass
+    class EmptyClass:
+        """
+        For some reason, this class must be nested inside this test,
+        otherwise we get a pickle error on the backend: 'No module named `param_test`'.
+        """
+
+        def __init__(self):
+            pass
+
+    @op
+    def must_be_picklable(input):
+        """
+        Unable to check that the input is picklable, since `pickle.loads()`
+        complains about `import of module 'param_test' failed`.
+        """
+        if input != EmptyClass:
+            raise Exception("Expected Class.")
+        return input
+
+    picklable_param = client.create_param("pickleable", default=EmptyClass)
+    pickle_output = must_be_picklable(picklable_param)
+
+    assert isinstance(pickle_output, GenericArtifact)
+    assert pickle_output.get() == EmptyClass
 
     @op
     def must_be_bytes(input):
-        assert isinstance(input, bytes)
+        if not isinstance(input, bytes):
+            raise Exception("Expected bytes")
         return input
 
     bytes_param = client.create_param("bytes", default=b"hello world")
@@ -318,41 +320,44 @@ def test_all_param_types(client, flow_name, engine):
 
     assert isinstance(bytes_output, GenericArtifact)
     assert bytes_output.get() == b"hello world"
-    #
-    # @op
-    # def must_be_string(input):
-    #     assert isinstance(input, str)
-    #     return input
-    #
-    # string_param = client.create_param("string", default="I am a string")
-    # string_output = must_be_string(string_param)
-    # assert isinstance(string_output, GenericArtifact)
-    # assert string_output.get() == "I am a string"
-    #
-    # @op
-    # def must_be_tuple(input):
-    #     assert isinstance(input, tuple)
-    #     return input
-    #
-    # tuple_param = client.create_param("tuple", default=(1, 2, 3))
-    # tuple_output = must_be_tuple(tuple_param)
-    # assert isinstance(tuple_output, GenericArtifact)
-    # assert tuple_output.get() == (1, 2, 3)
-    #
-    # @op
-    # def must_be_list(input):
-    #     assert isinstance(input, list)
-    #     return input
-    #
-    # list_param = client.create_param("list", default=[4, 5, 6])
-    # list_output = must_be_list(list_param)
-    # assert isinstance(list_output, GenericArtifact)
-    # assert list_output.get() == [4, 5, 6]
+
+    @op
+    def must_be_string(input):
+        if not isinstance(input, str):
+            raise Exception("Expected string.")
+        return input
+
+    string_param = client.create_param("string", default="I am a string")
+    string_output = must_be_string(string_param)
+    assert isinstance(string_output, GenericArtifact)
+    assert string_output.get() == "I am a string"
+
+    @op
+    def must_be_tuple(input):
+        if not isinstance(input, tuple):
+            raise Exception("Expected tuple.")
+        return input
+
+    tuple_param = client.create_param("tuple", default=(1, 2, 3))
+    tuple_output = must_be_tuple(tuple_param)
+    assert isinstance(tuple_output, GenericArtifact)
+    assert tuple_output.get() == (1, 2, 3)
+
+    @op
+    def must_be_list(input):
+        if not isinstance(input, list):
+            raise Exception("Expected list.")
+        return input
+
+    list_param = client.create_param("list", default=[4, 5, 6])
+    list_output = must_be_list(list_param)
+    assert isinstance(list_output, GenericArtifact)
+    assert list_output.get() == [4, 5, 6]
 
     publish_flow_test(
         client,
         name=flow_name(),
-        artifacts=[bytes_output],  # string_output, tuple_output, list_output], # pickle_output
+        artifacts=[pickle_output, bytes_output, string_output, tuple_output, list_output],
         engine=engine,
     )
 
