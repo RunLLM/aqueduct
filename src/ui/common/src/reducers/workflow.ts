@@ -1,6 +1,7 @@
 // This is being deprecated. Please use `workflowDagResults` combining with
 // `artifactResults` for future development.
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+import ELK from 'elkjs/lib/elk.bundled.js';
 import { Edge, Node } from 'react-flow-renderer';
 
 import { apiAddress } from '../components/hooks/useAqueductConsts';
@@ -430,31 +431,14 @@ export const handleGetSelectDagPosition = createAsyncThunk<
     },
     thunkAPI
   ) => {
-    const { apiKey, operators, artifacts, onChange, onConnect } = args;
-    const res = await fetch(`${apiAddress}/api/positioning`, {
-      method: 'POST',
-      headers: {
-        'api-key': apiKey,
-      },
-      body: JSON.stringify(operators),
-    });
-
-    const position = await res.json();
-    if (!res.ok) {
-      return thunkAPI.rejectWithValue(position.error);
-    }
-
-    const opPositions = position.operator_positions;
-    const artfPositions = position.artifact_positions;
+    const { operators, artifacts, onChange, onConnect } = args;
     const opNodes = Object.values(operators)
       .filter((op) => {
         return op.spec.type != OperatorType.Param;
       })
-      .map((op) =>
-        getOperatorNode(op, opPositions[op.id], onChange, onConnect)
-      );
+      .map((op) => getOperatorNode(op, onChange, onConnect));
     const artfNodes = Object.values(artifacts).map((artf) =>
-      getArtifactNode(artf, artfPositions[artf.id], onChange, onConnect)
+      getArtifactNode(artf, onChange, onConnect)
     );
     const edges = getEdges(operators);
     const allNodes = {
@@ -464,8 +448,81 @@ export const handleGetSelectDagPosition = createAsyncThunk<
     const dag = thunkAPI.getState().workflowReducer.selectedDag;
     const artifactResults =
       thunkAPI.getState().workflowReducer.artifactResults ?? {};
+
     if (!!dag) {
-      return collapsePosition(allNodes, dag, artifactResults);
+      const collapsedPosition = collapsePosition(
+        allNodes,
+        dag,
+        artifactResults
+      );
+
+      const elk = new ELK();
+      const mappedNodes = collapsedPosition.nodes.map((node) => {
+        return {
+          id: node.id,
+          // Width and height set not only the node width/height, but also how far apart we want to position these nodes.
+          // So using a value of just the width and the height of the node will result in no spacing in between.
+          // Elk (eclipse layout kernel) also provides many knobs to tweak this as well.
+          width: 300,
+          height: 300,
+        };
+      });
+
+      // TODO (ENG-2303): move into collapsed nodes function.
+      const mappedEdges = collapsedPosition.edges.filter((mappedEdge) => {
+        // Check if the edge exists in the mappedNodes array.
+        // If it does not exist, remove the edge. elk crashes if an edge does not have a corresponding node.
+        const nodeFound = false;
+        for (let i = 0; i < mappedNodes.length; i++) {
+          if (mappedEdge.source === mappedNodes[i].id) {
+            return true;
+          }
+        }
+
+        return nodeFound;
+      });
+
+      const graph = {
+        id: 'root',
+        layoutOptions: {
+          'elk.algorithm': 'layered',
+          'elk.direction': 'RIGHT',
+          'elk.alignment': 'CENTER',
+          'elk.spacing.nodeNode': '80',
+          'elk.layered.spacing.nodeNodeBetweenLayers': '80',
+          // https://www.eclipse.org/elk/reference/options/org-eclipse-elk-layered-nodePlacement-strategy.html
+          'nodePlacement.strategy': 'NETWORK_SIMPLEX',
+          'org.eclipse.elk.edgeRouting': 'SPLINES',
+          //https://www.eclipse.org/elk/reference/options/org-eclipse-elk-layered-nodePlacement-strategy.html
+          'crossingMinimization.strategy': 'INTERACTIVE',
+          'crossingMinimization.forceNodeModelOrder': true,
+        },
+        children: mappedNodes,
+        edges: mappedEdges,
+      };
+
+      try {
+        const positionedLayout = await elk.layout(graph);
+        collapsedPosition.nodes = collapsedPosition.nodes.map((node) => {
+          for (let i = 0; i < positionedLayout.children.length; i++) {
+            if (node.id === positionedLayout.children[i].id) {
+              node.position = {
+                x: positionedLayout.children[i].x,
+                y: positionedLayout.children[i].y,
+              };
+
+              // TODO (ENG-2305): Handle mapping elk edge sections to react-flow edges
+            }
+          }
+
+          return node;
+        });
+      } catch (error) {
+        // TODO (ENG-2304): Show alert box when positioned layout fails to be retrieved.
+        console.log('error getting PositionedLayout: ', error);
+      }
+
+      return collapsedPosition;
     }
 
     return allNodes;

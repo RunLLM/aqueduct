@@ -9,7 +9,7 @@ from sdk.setup_integration import (
     setup_data_integrations,
 )
 from sdk.shared import globals as test_globals
-from sdk.shared.utils import delete_flow, generate_new_flow_name
+from sdk.shared.utils import generate_new_flow_name
 from sdk.shared.validator import Validator
 
 
@@ -134,7 +134,17 @@ def flow_name(client, request, pytestconfig):
     def cleanup_flows():
         if not pytestconfig.getoption("keep_flows"):
             for flow_name in flow_names:
-                delete_flow(client, test_globals.flow_name_to_id[flow_name])
+                flow_id = test_globals.flow_name_to_id[flow_name]
+
+                try:
+                    client.delete_flow(
+                        str(flow_id),
+                        saved_objects_to_delete=client.flow(flow_id).list_saved_objects(),
+                    )
+                except Exception as e:
+                    print("Error deleting workflow %s with exception: %s" % (flow_id, e))
+                else:
+                    print("Successfully deleted workflow %s" % flow_id)
 
     request.addfinalizer(cleanup_flows)
     return get_new_flow_name
