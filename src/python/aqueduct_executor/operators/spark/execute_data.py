@@ -218,3 +218,5 @@ def setup_connector_spark(
         raise UnsupportedConnectorExecption(
                 "Unable to initialize connector. This connector is not yet supported for Aqueduct on Spark."
             )
+    # isort: on
+    return OpConnector(config=connector_config)  # type: ignore
