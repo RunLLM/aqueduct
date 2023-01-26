@@ -37,7 +37,7 @@ from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.timer import Timer
 
 
-def _get_py_import_path(spec: FunctionSpec) -> str:
+def get_py_import_path(spec: FunctionSpec) -> str:
     """
     Generates the import path based on fixed function dir and
     FUNCTION_ENTRY_POINT_FILE env var.
@@ -57,9 +57,9 @@ def _get_py_import_path(spec: FunctionSpec) -> str:
     return file_path.replace("/", ".")
 
 
-def _import_invoke_method(spec: FunctionSpec) -> Callable[..., Any]:
+def import_invoke_method(spec: FunctionSpec) -> Callable[..., Any]:
     """
-    `_import_invoke_method` imports the model object.
+    `import_invoke_method` imports the model object.
     it assumes the operator has been extracted to `<storage>/operators/<id>/op`
     and imports the route from the above path.
     """
@@ -77,7 +77,7 @@ def _import_invoke_method(spec: FunctionSpec) -> Callable[..., Any]:
     # adds work_dir to sys.path to support relative imports from work_dir
     sys.path.append(work_dir)
 
-    import_path = _get_py_import_path(spec)
+    import_path = get_py_import_path(spec)
     print(f"import_path: {import_path}")
     class_name = spec.entry_point_class
     method_name = spec.entry_point_method
@@ -112,7 +112,7 @@ def _execute_function(
     :param inputs: the input data to feed into the user's function.
     """
 
-    invoke = _import_invoke_method(spec)
+    invoke = import_invoke_method(spec)
     timer = Timer()
     print("Invoking the function...")
     timer.start()
