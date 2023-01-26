@@ -689,7 +689,8 @@ func ValidatePrerequisites(
 
 		if len(integrations) > 0 {
 			return http.StatusBadRequest, errors.Newf(
-				"You already have an email integration %s connected.",
+				"You already have an %s integration %s connected.",
+				svc,
 				integrations[0].Name,
 			)
 		}
