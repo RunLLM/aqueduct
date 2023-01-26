@@ -1,3 +1,6 @@
+//import styled from '@emotion/styled';
+import { styled } from '@mui/material/styles';
+
 import { faSlack } from '@fortawesome/free-brands-svg-icons';
 import {
   faBook,
@@ -7,7 +10,6 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
-import { styled } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
 

@@ -13,7 +13,8 @@ import Divider from '@mui/material/Divider';
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
-import UserProfile from 'src/utils/auth';
+import { theme } from '../../styles/theme/theme'
+import UserProfile from '../../utils/auth';
 
 import { AppDispatch } from '../../stores/store';
 import { getPathPrefix } from '../../utils/getPathPrefix';
@@ -71,15 +72,15 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
         display: 'block',
         py: 1,
         px: 0,
-        color: selected ? 'LogoLight' : 'white',
+        color: selected ? theme.palette.LogoLight : 'white',
         '&:hover': {
-          color: 'NavMenuHover',
+          color: theme.palette.NavMenuHover,
         },
         '&:active': {
-          color: 'NavMenuActive',
+          color: theme.palette.NavMenuActive,
         },
         '&:disabled': {
-          color: 'LogoLight',
+          color: theme.palette.LogoLight,
         },
       }}
       disabled={selected}
