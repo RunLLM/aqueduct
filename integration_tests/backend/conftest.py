@@ -2,8 +2,6 @@ import os
 
 import pytest
 
-import aqueduct
-
 API_KEY_ENV_NAME = "API_KEY"
 SERVER_ADDR_ENV_NAME = "SERVER_ADDRESS"
 INTEGRATION_ENV_NAME = "INTEGRATION"

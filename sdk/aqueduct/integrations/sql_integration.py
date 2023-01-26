@@ -165,9 +165,8 @@ class RelationalDBIntegration(Integration):
         """
         if globals.__GLOBAL_CONFIG__.lazy:
             lazy = True
-        execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
 
-        integration_info = self._metadata
+        execution_mode = ExecutionMode.LAZY if lazy else ExecutionMode.EAGER
 
         # The sql operator name defaults to "[integration name] query 1". If another
         # sql operator already exists with that name, we'll continue bumping the suffix

@@ -23,4 +23,4 @@ def test_flow_with_multiple_compute_using_op_spec(client, flow_name, data_integr
 
     # Only `noop_on_third_party` is run on outside compute.
     output = noop_on_third_party(noop(table_artifact))
-    publish_flow_test(client, output, engine=None)
+    publish_flow_test(client, output, name=flow_name(), engine=None)
