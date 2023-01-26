@@ -97,7 +97,7 @@ class RelationalConnector(connector.DataConnector):
 
         # Map of only string columns to their SQL type
         # If a column is not in this map, we rely on Panda's default mapping
-        dtype_to_sql = self._map_object_dtype_to_varchar(df)
+        col_to_type = self._map_object_dtype_to_varchar(df)
 
         # NOTE (saurav): df._to_sql has known performance issues. Using `method="multi"` helps incrementally,
         # since pandas will pass multiple rows in a single INSERT. If this still remains an issue, we can pass in a
@@ -108,6 +108,6 @@ class RelationalConnector(connector.DataConnector):
             con=self.engine,
             if_exists=params.update_mode.value,
             index=False,
-            dtype=dtype_to_sql,
+            dtype=col_to_type,
             method="multi",
         )
