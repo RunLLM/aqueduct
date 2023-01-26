@@ -34,6 +34,8 @@
     "@mui/base": "./node_modules/@mui/base",
     "@mui/utils": "./node_modules/@mui/utils",
     "@babel/runtime": "./node_modules/@babel/runtime",
+    "@emotion/react": "./node_modules/@emotion/react",
+    "@emotion/styled": "./node_modules/@emotion/styled",
     "process": false
   },
   "devDependencies": {
