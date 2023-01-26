@@ -83,7 +83,9 @@ const IntegrationsPage: React.FC<Props> = ({
             category={IntegrationCategories.COMPUTE}
             supportedIntegrations={SupportedIntegrations}
           />
-          <Typography variant="h6" marginY={2}>
+          {
+            // TODO: Enable this once notification are fully implemented.
+            /*<Typography variant="h6" marginY={2}>
             Notifications
           </Typography>
           <Typography variant="h6" marginY={2}>
@@ -92,7 +94,8 @@ const IntegrationsPage: React.FC<Props> = ({
               category={IntegrationCategories.NOTIFICATION}
               supportedIntegrations={SupportedIntegrations}
             />
-          </Typography>
+  </Typography>*/
+          }
         </Box>
 
         <Box marginY={3}>
