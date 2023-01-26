@@ -3,7 +3,7 @@ from typing import Any, Callable, Dict, List, Optional
 from aqueduct_executor.operators.connectors.data import common, config, relational, snowflake, utils
 from aqueduct_executor.operators.connectors.data import connector, extract, load
 from aqueduct_executor.operators.utils.enums import ArtifactType
-from sqlalchemy import create_engine, engine
+from sqlalchemy import create_snowflake_engine, engine
 from pyspark.sql import SparkSession, DataFrame
 
 
@@ -12,7 +12,7 @@ class SparkSnowflakeConnector(relational.RelationalConnector):
         url = "https://{account_identifier}.snowflakecomputing.com".format(
             account_identifier=config.account_identifier,
         )
-        conn_engine = _create_engine(config)
+        conn_engine = snowflake.create_snowflake_engine(config)
 
         self.snowflake_spark_options = {
             'sfURL': url,
