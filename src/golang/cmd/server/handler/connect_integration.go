@@ -24,6 +24,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/notification"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
@@ -324,6 +325,14 @@ func ValidateConfig(
 		return validateDatabricksConfig(ctx, config)
 	}
 
+	if service == integration.Email {
+		return validateEmailConfig(config)
+	}
+
+	if service == integration.Slack {
+		return validateSlackConfig(config)
+	}
+
 	jobName := fmt.Sprintf("authenticate-operator-%s", uuid.New().String())
 	if service == integration.Conda {
 		return validateConda()
@@ -610,18 +619,45 @@ func validateDatabricksConfig(
 	return http.StatusOK, nil
 }
 
-// ValidatePrerequisites is currently only relevant to conda integration, but we can extend this to
-// validate other integrations in the future.
+func validateEmailConfig(config auth.Config) (int, error) {
+	emailConfig, err := lib_utils.ParseEmailConfig(config)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	if err := notification.AuthenticateEmail(emailConfig); err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	return http.StatusOK, nil
+}
+
+func validateSlackConfig(config auth.Config) (int, error) {
+	slackConfig, err := lib_utils.ParseSlackConfig(config)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	if err := notification.AuthenticateSlack(slackConfig); err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	return http.StatusOK, nil
+}
+
+// ValidatePrerequisites validates if the integration for the given service can be connected at all.
+// For now, it checks if an integration already exists for unique integrations including
+// conda, email, and slack.
 func ValidatePrerequisites(
 	ctx context.Context,
 	svc integration.Service,
 	userID uuid.UUID,
 	integrationRepo repos.Integration,
-	db database.Database,
+	DB database.Database,
 ) (int, error) {
 	if svc == integration.Conda {
 		condaIntegration, err := exec_env.GetCondaIntegration(
-			ctx, userID, integrationRepo, db,
+			ctx, userID, integrationRepo, DB,
 		)
 		if err != nil {
 			return http.StatusInternalServerError, errors.Wrap(err, "Unable to verify if conda is connected.")
@@ -638,6 +674,24 @@ func ValidatePrerequisites(
 			return http.StatusBadRequest, errors.Wrap(
 				err,
 				"You don't seem to have `conda develop` available. We use this to help set up conda environments. Please install the dependency before connecting Aqueduct to Conda. Typically, this can be done by running `conda install conda-build`.",
+			)
+		}
+
+		return http.StatusOK, nil
+	}
+
+	// These integrations should be unique.
+	if svc == integration.Email || svc == integration.Slack {
+		integrations, err := integrationRepo.GetByServiceAndUser(ctx, svc, userID, DB)
+		if err != nil {
+			return http.StatusInternalServerError, errors.Wrap(err, "Unable to verify if email is connected.")
+		}
+
+		if len(integrations) > 0 {
+			return http.StatusBadRequest, errors.Newf(
+				"You already have an %s integration %s connected.",
+				svc,
+				integrations[0].Name,
 			)
 		}
 

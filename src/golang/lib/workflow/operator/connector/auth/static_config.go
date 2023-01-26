@@ -31,6 +31,7 @@ func (sc *StaticConfig) PublicConfig() map[string]string {
 	sensitiveKeys := []string{
 		"auth_uri",                    // MongoDB config.
 		"password",                    // most integration configs have this field.
+		"token",                       // slack config
 		"service_account_credentials", // S3 config.
 		"config_file_content",         // S3 config.
 	}

@@ -91,7 +91,7 @@ func setup(t *testing.T) {
 	data, err := yaml.Marshal(testConfig)
 	require.Nil(t, err)
 
-	err = ioutil.WriteFile(testConfigPath, data, 0644)
+	err = ioutil.WriteFile(testConfigPath, data, 0o644)
 	require.Nil(t, err)
 }
 
