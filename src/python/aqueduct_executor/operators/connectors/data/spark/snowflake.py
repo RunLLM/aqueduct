@@ -3,7 +3,6 @@ from typing import Any, Callable, Dict, List, Optional
 from aqueduct_executor.operators.connectors.data import common, config, relational, snowflake, utils
 from aqueduct_executor.operators.connectors.data import connector, extract, load
 from aqueduct_executor.operators.utils.enums import ArtifactType
-from sqlalchemy import create_snowflake_engine, engine
 from pyspark.sql import SparkSession, DataFrame
 
 
