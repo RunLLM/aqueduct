@@ -47,7 +47,7 @@ func WriteConfigToSecret(
 	return vaultObject.Put(ctx, integrationId.String(), secrets)
 }
 
-// ReadConfigFromSecret reads a Config from the k8s secret named integrationId.
+// ReadConfigFromSecret reads a Config from the vault keyed by integrationId.
 // It also refreshes the Config if necessary, and writes the updated Config to the k8s secret.
 func ReadConfigFromSecret(
 	ctx context.Context,
