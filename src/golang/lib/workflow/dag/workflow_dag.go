@@ -2,7 +2,6 @@ package dag
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 
 	db_operator "github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -160,8 +159,6 @@ func NewWorkflowDag(
 	aqPath string,
 	DB database.Database,
 ) (WorkflowDag, error) {
-	log.Errorf("HELLO: NewWorkflowDag engine %s", dag.EngineConfig.Type)
-
 	dbArtifacts := dag.Artifacts
 	dbOperators := dag.Operators
 
@@ -263,9 +260,7 @@ func NewWorkflowDag(
 
 		// Operator's engine takes precedence over dag's engine.
 		opEngineConfig := dag.EngineConfig
-		log.Errorf("HELLO: dag's Engine type: %s", dag.EngineConfig.Type)
 		if dbOperator.Spec.EngineConfig() != nil {
-			log.Errorf("HELLO: operator's engine type override: %s", dbOperator.Spec.EngineConfig().Type)
 			opEngineConfig = *dbOperator.Spec.EngineConfig()
 		}
 

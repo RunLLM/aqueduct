@@ -3,6 +3,8 @@ package job
 import (
 	"context"
 	"fmt"
+	"strconv"
+
 	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
@@ -12,7 +14,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"strconv"
 )
 
 const (
@@ -179,7 +180,6 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 			return status, userError(errors.New("Operator failed on Kubernetes due to Out-of-Memory exception."))
 		}
 
-		// TODO: look at the other job managers...
 		// We do not error here since pods are killed with a failing exit status on any failed checks.
 		// We should rely on the written execution state to decide whether to continue dag execution,
 		// and not the status of the pod.

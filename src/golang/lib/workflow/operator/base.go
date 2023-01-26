@@ -136,8 +136,6 @@ func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
 		}
 	}
 
-	log.Errorf("HELLO: %s is being run with job manager: %s.", spec.JobName(), bo.jobManager.Config().Type())
-
 	return bo.jobManager.Launch(ctx, spec.JobName(), spec)
 }
 
