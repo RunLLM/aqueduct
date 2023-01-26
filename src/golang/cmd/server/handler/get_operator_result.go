@@ -110,6 +110,8 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow result.")
 	}
 
+	executionState := shared.ExecutionState{}
+
 	dbOperatorResult, err := h.OperatorResultRepo.GetByDAGResultAndOperator(
 		ctx,
 		args.dagResultID,
@@ -117,19 +119,13 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 		h.Database,
 	)
 	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving operator result.")
-	}
-
-	executionState := shared.ExecutionState{
-		Status: dbOperatorResult.ExecState.Status,
-	}
-
-	if err != nil {
 		if err != database.ErrNoRows {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving operator result.")
 		}
 		// OperatorResult was never created, so we use the WorkflowDagResult's status as this OperatorResult's status
 		executionState.Status = shared.ExecutionStatus(dagResult.Status)
+	} else {
+		executionState.Status = dbOperatorResult.ExecState.Status
 	}
 
 	if dbOperatorResult != nil && !dbOperatorResult.ExecState.IsNull {

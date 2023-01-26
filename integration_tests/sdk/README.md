@@ -25,6 +25,7 @@ Both these test suites share a collection of command line flags:
 * `--engine`: The integration of the engine to compute all tests on.
 * `--keep-flows`: If set, we will not delete any flows created by the test run. This is useful for debugging.
 * `--deprecated`: Runs against any deprecated API that still exists in the SDK. Such code paths should be eventually deleted after some time, but this ensures backwards compatibility.
+* `--skip-data-setup`: Skips the checking and setup of external data integrations. Instead, assumes that all data integrations have been set up correctly with the appropriate data.
 
 For additional markers/fixtures/flags, please inspect `conftest.py` in this directory. For test-specific configurations,
 see `aqueduct_tests/conftest.py` and  `data_integration_tests/conftest.py`.

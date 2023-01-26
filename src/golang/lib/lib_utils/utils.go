@@ -122,12 +122,12 @@ func ParseEmailConfig(conf auth.Config) (*shared.EmailConfig, error) {
 	}
 
 	var c struct {
-		User              string                   `json:"user" yaml:"user"`
-		Password          string                   `json:"password" yaml:"password"`
-		Host              string                   `json:"host" yaml:"host"`
-		Port              string                   `json:"port" yaml:"port"`
-		TargetsSerialized string                   `json:"targets_serialized" yaml:"targets_serialized"`
-		Level             shared.NotificationLevel `json:"level" yaml:"level"`
+		User              string                   `json:"user"`
+		Password          string                   `json:"password"`
+		Host              string                   `json:"host"`
+		Port              string                   `json:"port"`
+		TargetsSerialized string                   `json:"targets_serialized"`
+		Level             shared.NotificationLevel `json:"level"`
 	}
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
@@ -154,9 +154,9 @@ func ParseSlackConfig(conf auth.Config) (*shared.SlackConfig, error) {
 	}
 
 	var c struct {
-		Token              string                   `json:"token" yaml:"token"`
-		ChannelsSerialized string                   `json:"channels_serialized" yaml:"channels_serialized"`
-		Level              shared.NotificationLevel `json:"level" yaml:"level"`
+		Token              string                   `json:"token"`
+		ChannelsSerialized string                   `json:"channels_serialized"`
+		Level              shared.NotificationLevel `json:"level"`
 	}
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
