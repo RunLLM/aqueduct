@@ -21,7 +21,8 @@ from .test_functions.simple.model import (
 
 
 def test_basic_get(client, data_integration, engine):
-    global_config({"engine": engine})
+    if engine is not None:
+        global_config({"engine": engine})
 
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
     sql_df = table_artifact.get()
