@@ -45,13 +45,19 @@ type K8sIntegrationConfig struct {
 }
 
 type EmailConfig struct {
-	User     string `json:"user" yaml:"user"`
-	Password string `json:"password" yaml:"password"`
-	Host     string `json:"host" yaml:"host"`
-	Port     string `json:"port" yaml:"port"`
+	User     string `json:"user"`
+	Password string `json:"password"`
+	Host     string `json:"host"`
+	Port     string `json:"port"`
 	// Targets are email addresses for receivers.
-	Targets []string          `json:"targets" yaml:"targets"`
-	Level   NotificationLevel `json:"level" yaml:"level"`
+	Targets []string          `json:"targets"`
+	Level   NotificationLevel `json:"level"`
+}
+
+type SlackConfig struct {
+	Token    string            `json:"token"`
+	Channels []string          `json:"channels"`
+	Level    NotificationLevel `json:"level"`
 }
 
 type SlackConfig struct {
