@@ -9,6 +9,7 @@ import { BigQueryCard } from './components/integrations/cards/bigqueryCard';
 import { DataCard } from './components/integrations/cards/card';
 import { IntegrationCard } from './components/integrations/cards/card';
 import { DatabricksCard } from './components/integrations/cards/databricksCard';
+import { EmailCard } from './components/integrations/cards/emailCard';
 import { LoadSpecsCard } from './components/integrations/cards/loadSpecCard';
 import { MariaDbCard } from './components/integrations/cards/mariadbCard';
 import { MongoDBCard } from './components/integrations/cards/mongoDbCard';
@@ -16,6 +17,7 @@ import { MySqlCard } from './components/integrations/cards/mysqlCard';
 import { PostgresCard } from './components/integrations/cards/postgresCard';
 import { RedshiftCard } from './components/integrations/cards/redshiftCard';
 import { S3Card } from './components/integrations/cards/s3Card';
+import { SlackCard } from './components/integrations/cards/slackCard';
 import { SnowflakeCard } from './components/integrations/cards/snowflakeCard';
 import { ConnectedIntegrations } from './components/integrations/connectedIntegrations';
 import AddTableDialog from './components/integrations/dialogs/addTableDialog';
@@ -25,6 +27,7 @@ import { CSVDialog } from './components/integrations/dialogs/csvDialog';
 import { DatabricksDialog } from './components/integrations/dialogs/databricksDialog';
 import DeleteIntegrationDialog from './components/integrations/dialogs/deleteIntegrationDialog';
 import IntegrationDialog from './components/integrations/dialogs/dialog';
+import { EmailDialog } from './components/integrations/dialogs/emailDialog';
 import { IntegrationFileUploadField } from './components/integrations/dialogs/IntegrationFileUploadField';
 import { IntegrationTextInputField } from './components/integrations/dialogs/IntegrationTextInputField';
 import { MariaDbDialog } from './components/integrations/dialogs/mariadbDialog';
@@ -33,6 +36,7 @@ import { MysqlDialog } from './components/integrations/dialogs/mysqlDialog';
 import { PostgresDialog } from './components/integrations/dialogs/postgresDialog';
 import { RedshiftDialog } from './components/integrations/dialogs/redshiftDialog';
 import { S3Dialog } from './components/integrations/dialogs/s3Dialog';
+import { SlackDialog } from './components/integrations/dialogs/slackDialog';
 import { SnowflakeDialog } from './components/integrations/dialogs/snowflakeDialog';
 import { Card } from './components/layouts/card';
 import DefaultLayout from './components/layouts/default';
@@ -41,6 +45,7 @@ import MenuSidebar, {
 } from './components/layouts/menuSidebar';
 import LogViewer from './components/LogViewer';
 import MultiFileViewer from './components/MultiFileViewer';
+import NotificationLevelSelector from './components/notifications/NotificationLevelSelector';
 import { NotificationListItem } from './components/notifications/NotificationListItem';
 import NotificationsPopover from './components/notifications/NotificationsPopover';
 import AccountPage from './components/pages/AccountPage';
@@ -240,6 +245,8 @@ export {
   DefaultLayout,
   DeleteIntegrationDialog,
   EdgeTypes,
+  EmailCard,
+  EmailDialog,
   ErrorPage,
   ExecutionChip,
   ExecutionStatus,
@@ -314,6 +321,7 @@ export {
   normalizeOperator,
   normalizeWorkflowDag,
   NotificationAssociation,
+  NotificationLevelSelector,
   NotificationListItem,
   NotificationLogLevel,
   notifications,
@@ -358,6 +366,8 @@ export {
   setWorkflowStatusBarOpenState,
   // TODO: Refactor to remove sidesheet state
   sideSheetSwitcher,
+  SlackCard,
+  SlackDialog,
   SnowflakeCard,
   SnowflakeDialog,
   StatusChip as Status,

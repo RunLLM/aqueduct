@@ -329,6 +329,10 @@ func ValidateConfig(
 		return validateEmailConfig(config)
 	}
 
+	if service == integration.Slack {
+		return validateSlackConfig(config)
+	}
+
 	jobName := fmt.Sprintf("authenticate-operator-%s", uuid.New().String())
 	if service == integration.Conda {
 		return validateConda()
@@ -628,6 +632,19 @@ func validateEmailConfig(config auth.Config) (int, error) {
 	return http.StatusOK, nil
 }
 
+func validateSlackConfig(config auth.Config) (int, error) {
+	slackConfig, err := lib_utils.ParseSlackConfig(config)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	if err := notification.AuthenticateSlack(slackConfig); err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	return http.StatusOK, nil
+}
+
 // ValidatePrerequisites validates if the integration for the given service can be connected at all.
 // For now, it checks if an integration already exists for unique integrations including
 // conda, email, and slack.
@@ -663,16 +680,18 @@ func ValidatePrerequisites(
 		return http.StatusOK, nil
 	}
 
-	if svc == integration.Email {
-		emailIntegrations, err := integrationRepo.GetByServiceAndUser(ctx, svc, userID, DB)
+	// These integrations should be unique.
+	if svc == integration.Email || svc == integration.Slack {
+		integrations, err := integrationRepo.GetByServiceAndUser(ctx, svc, userID, DB)
 		if err != nil {
 			return http.StatusInternalServerError, errors.Wrap(err, "Unable to verify if email is connected.")
 		}
 
-		if len(emailIntegrations) > 0 {
+		if len(integrations) > 0 {
 			return http.StatusBadRequest, errors.Newf(
-				"You already have an email integration %s connected.",
-				emailIntegrations[0].Name,
+				"You already have an %s integration %s connected.",
+				svc,
+				integrations[0].Name,
 			)
 		}
 

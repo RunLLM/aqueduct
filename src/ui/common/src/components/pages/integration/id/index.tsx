@@ -79,23 +79,19 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     isLoading(state.integrationReducer.objectNames.status)
   );
 
+  const selectedIntegration = integrations[integrationId];
+
   // Using the ListIntegrationsRoute.
   // ENG-1036: We should create a route where we can pass in the integrationId and get the associated metadata and switch to using that.
   useEffect(() => {
     dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
-    dispatch(
-      handleListIntegrationObjects({
-        apiKey: user.apiKey,
-        integrationId: integrationId,
-      })
-    );
+    dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
     dispatch(
       handleLoadIntegrationOperators({
         apiKey: user.apiKey,
         integrationId: integrationId,
       })
     );
-    dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
   }, [dispatch, integrationId, user.apiKey]);
 
   useEffect(() => {
@@ -109,13 +105,24 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     }
   }, [dispatch, testConnectStatus]);
 
-  const selectedIntegration = integrations[integrationId];
-
   useEffect(() => {
     if (selectedIntegration && selectedIntegration.name) {
       document.title = `Integration Details: ${selectedIntegration.name} | Aqueduct`;
     } else {
       document.title = `Integration Details | Aqueduct`;
+    }
+
+    if (
+      selectedIntegration &&
+      SupportedIntegrations[selectedIntegration.service].category ===
+        IntegrationCategories.DATA
+    ) {
+      dispatch(
+        handleListIntegrationObjects({
+          apiKey: user.apiKey,
+          integrationId: integrationId,
+        })
+      );
     }
   }, [selectedIntegration]);
 
@@ -184,23 +191,28 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           </Typography>
         )}
 
-        {SupportedIntegrations[selectedIntegration.service].category !==
-          IntegrationCategories.COMPUTE && (
+        {SupportedIntegrations[selectedIntegration.service].category ===
+          IntegrationCategories.DATA && (
           <IntegrationObjectList
             user={user}
             integration={selectedIntegration}
           />
         )}
 
-        <Typography
-          variant="h5"
-          gutterBottom
-          component="div"
-          sx={{ marginY: 4, mt: 4 }}
-        >
-          Workflows
-        </Typography>
-        <OperatorsOnIntegration />
+        {SupportedIntegrations[selectedIntegration.service].category !==
+          IntegrationCategories.NOTIFICATION && (
+          <Box sx={{ mt: 4 }}>
+            <Typography
+              variant="h5"
+              gutterBottom
+              component="div"
+              sx={{ mb: 4 }}
+            >
+              Workflows
+            </Typography>
+            <OperatorsOnIntegration />
+          </Box>
+        )}
       </Box>
 
       {showAddTableDialog && (
