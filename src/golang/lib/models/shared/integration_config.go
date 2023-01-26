@@ -60,12 +60,6 @@ type SlackConfig struct {
 	Level    NotificationLevel `json:"level"`
 }
 
-type SlackConfig struct {
-	Token    string            `json:"token" yaml:"token"`
-	Channels []string          `json:"channels" yaml:"channels"`
-	Level    NotificationLevel `json:"level" yaml:"level"`
-}
-
 func (c *EmailConfig) FullHost() string {
 	return fmt.Sprintf("%s:%s", c.Host, c.Port)
 }
