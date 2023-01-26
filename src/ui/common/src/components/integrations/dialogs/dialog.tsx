@@ -40,6 +40,7 @@ import {
   RedshiftConfig,
   S3Config,
   Service,
+  SlackConfig,
   SnowflakeConfig,
   SQLiteConfig,
   SupportedIntegrations,
@@ -61,6 +62,7 @@ import { MysqlDialog } from './mysqlDialog';
 import { PostgresDialog } from './postgresDialog';
 import { RedshiftDialog } from './redshiftDialog';
 import { isS3ConfigComplete, S3Dialog } from './s3Dialog';
+import { SlackDialog } from './slackDialog';
 import { SnowflakeDialog } from './snowflakeDialog';
 import { SQLiteDialog } from './sqliteDialog';
 
@@ -318,6 +320,14 @@ const IntegrationDialog: React.FC<Props> = ({
         <EmailDialog
           onUpdateField={setConfigField}
           value={config as EmailConfig}
+        />
+      );
+      break;
+    case 'Slack':
+      serviceDialog = (
+        <SlackDialog
+          onUpdateField={setConfigField}
+          value={config as SlackConfig}
         />
       );
       break;

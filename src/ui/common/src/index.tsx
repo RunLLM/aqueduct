@@ -17,6 +17,7 @@ import { MySqlCard } from './components/integrations/cards/mysqlCard';
 import { PostgresCard } from './components/integrations/cards/postgresCard';
 import { RedshiftCard } from './components/integrations/cards/redshiftCard';
 import { S3Card } from './components/integrations/cards/s3Card';
+import { SlackCard } from './components/integrations/cards/slackCard';
 import { SnowflakeCard } from './components/integrations/cards/snowflakeCard';
 import { ConnectedIntegrations } from './components/integrations/connectedIntegrations';
 import AddTableDialog from './components/integrations/dialogs/addTableDialog';
@@ -35,6 +36,7 @@ import { MysqlDialog } from './components/integrations/dialogs/mysqlDialog';
 import { PostgresDialog } from './components/integrations/dialogs/postgresDialog';
 import { RedshiftDialog } from './components/integrations/dialogs/redshiftDialog';
 import { S3Dialog } from './components/integrations/dialogs/s3Dialog';
+import { SlackDialog } from './components/integrations/dialogs/slackDialog';
 import { SnowflakeDialog } from './components/integrations/dialogs/snowflakeDialog';
 import { Card } from './components/layouts/card';
 import DefaultLayout from './components/layouts/default';
@@ -364,6 +366,8 @@ export {
   setWorkflowStatusBarOpenState,
   // TODO: Refactor to remove sidesheet state
   sideSheetSwitcher,
+  SlackCard,
+  SlackDialog,
   SnowflakeCard,
   SnowflakeDialog,
   StatusChip as Status,
