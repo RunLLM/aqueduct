@@ -153,7 +153,7 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
         borderRadius: '8px',
         zIndex: 10,
         border: `1px solid`,
-        borderColor: 'gray.500',
+        borderColor: theme.palette.gray[500],
         p: '4px',
       }}
     >
@@ -170,7 +170,7 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
               width: '100%',
               backgroundColor: 'white',
               borderBottom: index === listItems.length - 1 ? null : `1px solid`,
-              borderColor: 'gray.500',
+              borderColor: theme.palette.gray['500'],
               alignItems: 'start',
             }}
           >
@@ -550,9 +550,8 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
             </>
           );
           const err = opExecState.error;
-          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${
-            err.context ?? ''
-          }`;
+          newWorkflowStatusItem.message = `${err.tip ?? ''}\n${err.context ?? ''
+            }`;
         } else {
           // no error message found, so treat this as a system internal error
           newWorkflowStatusItem.message = `Aqueduct Internal Error`;

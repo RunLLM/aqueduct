@@ -20,7 +20,6 @@ declare module '@mui/material/styles' {
         black: string;
         white: string;
         darkGray: string;
-        gray: PaletteShades;
         blue: PaletteShades;
         red: PaletteShades;
         green: PaletteShades;
