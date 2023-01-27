@@ -6,6 +6,7 @@ import { store } from './stores/store';
 import { Provider } from 'react-redux';
 import { useUser, UserProfile } from '@aqueducthq/common';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+
 import { theme } from '@aqueducthq/common/src/styles/theme/theme';
 import { getPathPrefix } from '@aqueducthq/common/src/utils/getPathPrefix';
 import '@aqueducthq/common/src/styles/globals.css';
