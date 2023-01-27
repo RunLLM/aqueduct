@@ -1,6 +1,6 @@
 //import styled from '@emotion/styled';
-import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
+import { styled } from '@mui/material/styles';
 
 const BaseNode = styled(Box)({
   display: 'flex',
