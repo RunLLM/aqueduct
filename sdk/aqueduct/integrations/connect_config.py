@@ -41,7 +41,13 @@ class PostgresConfig(BaseConnectionConfig):
     password: str
     database: str
     host: str
+    # Postgres runs on port 5432 by default
     port: Optional[str] = "5432"
+
+
+class RedshiftConfig(PostgresConfig):
+    # Redshift runs on port 5439 by default
+    port: Optional[str] = "5439"
 
 
 class AWSCredentialType(str, Enum, metaclass=MetaEnum):
@@ -146,4 +152,6 @@ def convert_dict_to_integration_connect_config(
         return SqlServerConfig(**config_dict)
     elif service == ServiceType.SQLITE:
         return SQLiteConfig(**config_dict)
+    elif service == ServiceType.REDSHIFT:
+        return RedshiftConfig(**config_dict)
     raise InternalAqueductError("Unexpected Service Type: %s" % service)
