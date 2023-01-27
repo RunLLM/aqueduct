@@ -2,7 +2,7 @@ setuptools
 cloudpickle
 numpy
 requests
-pandas
+pandas<=1.5.2
 IPython
 croniter
 pydantic>=1.9.0
