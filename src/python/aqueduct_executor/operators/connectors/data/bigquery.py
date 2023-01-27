@@ -25,8 +25,13 @@ class BigQueryConnector(connector.DataConnector):
     def discover(self) -> List[str]:
         all_tables = []
         for dataset in self.client.list_datasets():
-            tables = self.client.list_tables(dataset.dataset_id)
-            all_tables.extend([table.full_table_id.split(":")[-1] for table in tables])
+            print(dataset)
+            try:
+                tables = self.client.list_tables(dataset.dataset_id)
+                all_tables.extend([table.full_table_id.split(":")[-1] for table in tables])
+            except:
+                print('Got exception for dataset: ', dataset)
+                continue
         return all_tables
 
     def extract(self, params: extract.RelationalParams) -> Any:
