@@ -10,7 +10,7 @@ data:
     password:
     database:
     host:
-    port:
+    port: # 5439 is the default port since that is what Redshift defaults to
   test_snowflake:
     type: Snowflake
     username:
