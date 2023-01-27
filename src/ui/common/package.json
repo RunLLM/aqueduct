@@ -110,6 +110,7 @@
     "cssnano": "^5.1.14",
     "eslint": "^8.32.0",
     "eslint-config-prettier": "^8.6.0",
+    "eslint-formatter-table": "^7.32.1",
     "eslint-plugin-prettier": "^4.2.1",
     "eslint-plugin-react": "^7.22.0",
     "eslint-plugin-react-hooks": "^4.6.0",
