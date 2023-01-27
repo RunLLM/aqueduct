@@ -4,12 +4,15 @@ import (
 	"context"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/gofrs/uuid"
 )
 
 var ErrIntegrationTypeIsNotNotification = errors.New("Integration type is not a notification.")
@@ -23,6 +26,39 @@ type Notification interface {
 	// and only notifications beyond this level will be sent.
 	// In such cases, the implementation of `Send()` should reflect the level preference.
 	Send(msg string, level shared.NotificationLevel) error
+}
+
+func GetNotificationsFromUser(
+	ctx context.Context,
+	userID uuid.UUID,
+	integrationRepo repos.Integration,
+	vaultObject vault.Vault,
+	DB database.Database,
+) ([]Notification, error) {
+	emailIntegrations, err := integrationRepo.GetByServiceAndUser(ctx, integration.Email, userID, DB)
+	if err != nil {
+		return nil, err
+	}
+
+	slackIntegrations, err := integrationRepo.GetByServiceAndUser(ctx, integration.Slack, userID, DB)
+	if err != nil {
+		return nil, err
+	}
+
+	allIntegrations := make([]Notification, 0, len(emailIntegrations)+len(slackIntegrations))
+	allIntegrations = append(allIntegrations, emailIntegrations...)
+	allIntegrations = append(allIntegrations, slackIntegrations...)
+	notifications := make([]Notification, 0, len(allIntegrations))
+	for _, integrationObj := range allIntegrations {
+		notification, err := NewNotificationFromIntegration(ctx, integrationObj, vaultObject)
+		if err != nil {
+			return nil, err
+		}
+
+		notifications = append(notifications, notification)
+	}
+
+	return notifications, nil
 }
 
 func NewNotificationFromIntegration(

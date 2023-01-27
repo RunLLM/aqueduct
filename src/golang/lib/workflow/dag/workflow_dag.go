@@ -46,6 +46,8 @@ type WorkflowDag interface {
 	// This function DO NOT update operators in DB. One should call `op.Persist()`
 	// to do so.
 	BindOperatorsToEnvs(ctx context.Context) error
+
+	Notify(ctx context.Context) error
 }
 
 type workflowDagImpl struct {
