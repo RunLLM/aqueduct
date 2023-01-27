@@ -111,6 +111,7 @@ def _setup_redshift_data(client: Client, redshift: RelationalDBIntegration) -> N
 
     _add_missing_artifacts(client, redshift, existing_table_names)
 
+
 def _setup_snowflake_data(client: Client, snowflake: RelationalDBIntegration) -> None:
     # Find all the tables that already exist.
     existing_table_names = set(snowflake.list_tables()["tablename"])
