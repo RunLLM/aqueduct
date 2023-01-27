@@ -12,3 +12,4 @@
     * Add the package to import.
     * Update the `init()` function.
 * Update the `SCHEMA_VERSION` variable in `<aqueduct repo>/src/python/bin/aqueduct`.
+* Update the `CurrentSchemaVersion` variable in `<aqueduct repo>/src/golang/lib/models/schema_version.go`.
