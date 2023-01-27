@@ -2,7 +2,7 @@ boto3
 cloudpickle
 google-cloud-storage
 numpy
-pandas<=1.5.2
+pandas
 pydantic
 SQLAlchemy<2.0.0
 distro
