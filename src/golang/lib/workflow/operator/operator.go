@@ -62,6 +62,8 @@ type Operator interface {
 	// Errors if the artifact hasn ot yet been computed, or InitializeResult() hasn't been called yet.
 	// *This method also persists any artifact results produced by this operator.*
 	PersistResult(ctx context.Context) error
+
+	UpdateExecState(execState *shared.ExecutionState)
 }
 
 // This should only be used within the boundaries of the execution engine.
