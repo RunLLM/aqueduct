@@ -72,12 +72,14 @@ func (j *DatabricksJobManager) Poll(ctx context.Context, name string) (shared.Ex
 	if err != nil {
 		return shared.UnknownExecutionStatus, systemError(errors.Wrap(err, "Unable to get run from databricks."))
 	}
-	log.Info("Poll response")
-	log.Info(runResp.State)
 
 	switch runResp.State.LifeCycleState {
+	case "BLOCKED":
+		return shared.PendingExecutionStatus, nil
 	case jobs.RunLifeCycleStatePending, jobs.RunLifeCycleStateRunning, jobs.RunLifeCycleStateTerminating:
 		return shared.RunningExecutionStatus, nil
+	case jobs.RunLifeCycleStateSkipped:
+		return shared.CanceledExecutionStatus, nil
 	case jobs.RunLifeCycleStateInternalError:
 		return shared.FailedExecutionStatus, nil
 	case jobs.RunLifeCycleStateTerminated:
@@ -173,6 +175,8 @@ func (j *DatabricksJobManager) LaunchMultipleTaskJob(
 	for taskName, taskID := range taskMap {
 		j.runMap[taskName] = taskID
 	}
+	log.Info("TASK MAP")
+	log.Info(j.runMap)
 	return runID, nil
 }
 

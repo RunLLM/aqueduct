@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
@@ -54,6 +55,7 @@ func ExecuteDatabricks(
 	defer waitForInProgressOperators(ctx, inProgressOps, timeConfig.OperatorPollInterval, timeConfig.CleanupTimeout)
 
 	start := time.Now()
+	var operatorError error
 
 	for len(inProgressOps) > 0 {
 		if time.Since(start) > timeConfig.ExecTimeout {
@@ -62,7 +64,9 @@ func ExecuteDatabricks(
 
 		for _, op := range inProgressOps {
 			// Poll on the individual operator
-			execState, err := op.Poll(ctx)
+			executionStatus, err := databricksJobManager.Poll(ctx, op.JobSpec().JobName())
+			op.UpdateExecState(&shared.ExecutionState{Status: executionStatus})
+			execState := op.ExecState()
 			if err != nil {
 				return err
 			}
@@ -73,14 +77,15 @@ func ExecuteDatabricks(
 
 			// From here on we can assume that the operator has terminated.
 			if opExecMode == operator.Publish {
-				err = op.PersistResult(ctx)
+				err := op.PersistResult(ctx)
 				if err != nil {
 					return errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
 				}
 			}
+			// Capture the first failed operator.
 
-			if shouldStopExecution(execState) {
-				return opFailureError(*execState.FailureType, op)
+			if shouldStopExecution(execState) && operatorError == nil {
+				operatorError = opFailureError(*execState.FailureType, op)
 			}
 
 			// Add the operator to the completed stack, and remove it from the in-progress one.
@@ -95,6 +100,9 @@ func ExecuteDatabricks(
 
 	if len(completedOps) != len(dag.Operators()) {
 		return errors.Newf("Internal error: %d operators were provided but only %d completed.", len(dag.Operators()), len(completedOps))
+	}
+	if operatorError != nil {
+		return operatorError
 	}
 	return nil
 }
