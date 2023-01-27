@@ -7,7 +7,7 @@ from aqueduct.integrations.sql_integration import RelationalDBIntegration
 
 from aqueduct import LoadUpdateMode
 
-from ..shared.globals import artifact_id_to_saved_identifier, use_deprecated_code_paths
+from ..shared.globals import artifact_id_to_saved_identifier
 from ..shared.naming import generate_table_name
 
 
@@ -30,10 +30,7 @@ def save(
         update_mode = LoadUpdateMode.REPLACE
 
     if isinstance(integration, RelationalDBIntegration):
-        if use_deprecated_code_paths:
-            artifact.save(integration.config(name, update_mode))
-        else:
-            integration.save(artifact, name, update_mode)
+        integration.save(artifact, name, update_mode)
 
     elif isinstance(integration, S3Integration):
         assert update_mode == LoadUpdateMode.REPLACE, "S3 only supports replacement update."
