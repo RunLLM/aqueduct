@@ -1,4 +1,3 @@
-//import styled from '@emotion/styled';
 import { faSlack } from '@fortawesome/free-brands-svg-icons';
 import {
   faBook,
