@@ -3,7 +3,11 @@ name: Run Notebooks
 on:
   workflow_dispatch:
   push:
-    branches: [ main, eng-2336-fix-bug-where-pandas-versioning-causes ]
+    branches: [ main ]
+    paths:
+      - 'src/golang/**'
+      - 'src/python/**'
+      - 'sdk/aqueduct/**'
   pull_request:
     paths:
       - '.github/workflows/run-notebooks.yml'
