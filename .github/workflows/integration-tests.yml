@@ -3,6 +3,9 @@ name: Integration Tests
 on:
   workflow_call:
   workflow_dispatch:
+  push:
+    branches:
+      - fix_integration_test_with_hack
 
 jobs:
   run-tests:
@@ -39,13 +42,8 @@ jobs:
       - name: Install aqueduct-ml
         run: python3 -m pip install aqueduct-ml
 
-      - name: Install local SDK dependencies
-        working-directory: sdk
-        run: pip3 install .
-      
-      - name: Install local executor dependencies
-        working-directory: src/python
-        run: pip3 install .
+      - name: Install compatible SQLAlchemy
+        run: pip3 install SQLAlchemy==1.4.46
 
       - name: Start the server
         run: (aqueduct start --verbose > $SERVER_LOGS_FILE 2>&1 &)
