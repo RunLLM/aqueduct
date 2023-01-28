@@ -730,6 +730,10 @@ func (eng *aqEngine) execute(
 	completedOps := workflowRunMetadata.CompletedOps
 	dag := workflowDag
 	opToDependencyCount := workflowRunMetadata.OpToDependencyCount
+	shouldNotify := false
+	notificationLevel := mdl_shared.NeutralNotificationLevel
+	notificationCtxMsg := ""
+	var err error = nil
 
 	// Kick off execution by starting all operators that don't have any inputs.
 	for _, op := range dag.Operators() {
@@ -743,13 +747,29 @@ func (eng *aqEngine) execute(
 	}
 
 	// Wait a little bit for all active operators to finish before exiting on failure.
-	defer waitForInProgressOperators(ctx, inProgressOps, timeConfig.OperatorPollInterval, timeConfig.CleanupTimeout)
+	defer func() {
+		waitForInProgressOperators(ctx, inProgressOps, timeConfig.OperatorPollInterval, timeConfig.CleanupTimeout)
+		if err != nil {
+			notificationLevel = mdl_shared.ErrorNotificationLevel
+			notificationCtxMsg = err.Error()
+			shouldNotify = true
+		}
+
+		if shouldNotify {
+			err = eng.sendNotifications(ctx, workflowDag, notificationLevel, notificationCtxMsg)
+			if err != nil {
+				log.Errorf("Error sending notifications: %s", err)
+			}
+		}
+	}()
 
 	start := time.Now()
 
 	for len(inProgressOps) > 0 {
 		if time.Since(start) > timeConfig.ExecTimeout {
-			return errors.New("Reached timeout waiting for workflow to complete.")
+			// explicitly set `err` variable to trigger notifications
+			err = errors.New("Reached timeout waiting for workflow to complete.")
+			return err
 		}
 
 		for _, op := range inProgressOps {
@@ -761,7 +781,8 @@ func (eng *aqEngine) execute(
 			if execState.Status == shared.PendingExecutionStatus {
 				err = op.Launch(ctx)
 				if err != nil {
-					return errors.Wrapf(err, "Unable to schedule operator %s.", op.Name())
+					err = errors.Wrapf(err, "Unable to schedule operator %s.", op.Name())
+					return err
 				}
 				continue
 			} else if execState.Status == shared.RunningExecutionStatus {
@@ -769,14 +790,16 @@ func (eng *aqEngine) execute(
 			}
 
 			if !execState.Terminated() {
-				return errors.Newf("Internal error: the operator is expected to have terminated, but instead has status %s", execState.Status)
+				err = errors.Newf("Internal error: the operator is expected to have terminated, but instead has status %s", execState.Status)
+				return err
 			}
 
 			// From here on we can assume that the operator has terminated.
 			if opExecMode == operator.Publish {
 				err = op.PersistResult(ctx)
 				if err != nil {
-					return errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
+					err = errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
+					return err
 				}
 			}
 
@@ -798,12 +821,25 @@ func (eng *aqEngine) execute(
 					if opExecMode == operator.Publish {
 						err = dagOp.PersistResult(ctx)
 						if err != nil {
-							return errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
+							err = errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
+							return err
 						}
 					}
 				}
 
+				shouldNotify = true
+				notificationLevel = mdl_shared.ErrorNotificationLevel
+				if execState.Error != nil {
+					notificationCtxMsg = fmt.Sprintf("%s\nContext:\n%s", execState.Error.Tip, execState.Error.Context)
+				}
+
 				return opFailureError(*execState.FailureType, op)
+			} else if execState.Status == shared.FailedExecutionStatus {
+				shouldNotify = true
+				notificationLevel = mdl_shared.WarningNotificationLevel
+				if execState.Error != nil {
+					notificationCtxMsg = fmt.Sprintf("%s\nContext:\n%s", execState.Error.Tip, execState.Error.Context)
+				}
 			}
 
 			// Add the operator to the completed stack, and remove it from the in-progress one.
@@ -829,7 +865,8 @@ func (eng *aqEngine) execute(
 					opToDependencyCount[nextOp.ID()] -= 1
 
 					if opToDependencyCount[nextOp.ID()] < 0 {
-						return errors.Newf("Internal error: operator %s has a negative dependnecy count.", op.Name())
+						err = errors.Newf("Internal error: operator %s has a negative dependnecy count.", op.Name())
+						return err
 					}
 
 					if opToDependencyCount[nextOp.ID()] == 0 {
@@ -847,13 +884,21 @@ func (eng *aqEngine) execute(
 	}
 
 	if len(completedOps) != len(dag.Operators()) {
-		return errors.Newf("Internal error: %d operators were provided but only %d completed.", len(dag.Operators()), len(completedOps))
+		err = errors.Newf("Internal error: %d operators were provided but only %d completed.", len(dag.Operators()), len(completedOps))
+		return err
 	}
 
 	for opID, depCount := range opToDependencyCount {
 		if depCount != 0 {
-			return errors.Newf("Internal error: operator %s has a non-zero dep count %d.", opID, depCount)
+			err = errors.Newf("Internal error: operator %s has a non-zero dep count %d.", opID, depCount)
+			return err
 		}
+	}
+
+	// avoid overriding a warning notification.
+	if notificationLevel != mdl_shared.WarningNotificationLevel {
+		shouldNotify = true
+		notificationLevel = mdl_shared.SuccessNotificationLevel
 	}
 	return nil
 }

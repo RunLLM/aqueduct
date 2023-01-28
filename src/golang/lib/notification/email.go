@@ -1,21 +1,33 @@
 package notification
 
 import (
+	"context"
 	"crypto/tls"
 	"net/smtp"
 
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/google/uuid"
 )
 
 type EmailNotification struct {
-	conf *shared.EmailConfig
+	integration *models.Integration
+	conf        *shared.EmailConfig
 }
 
-func newEmailNotification(conf *shared.EmailConfig) *EmailNotification {
-	return &EmailNotification{conf: conf}
+func newEmailNotification(integration *models.Integration, conf *shared.EmailConfig) *EmailNotification {
+	return &EmailNotification{integration: integration, conf: conf}
 }
 
-func (e *EmailNotification) Send(msg string, level shared.NotificationLevel) error {
+func (e *EmailNotification) ID() uuid.UUID {
+	return e.integration.ID
+}
+
+func (e *EmailNotification) Level() shared.NotificationLevel {
+	return e.conf.Level
+}
+
+func (e *EmailNotification) Send(ctx context.Context, msg string) error {
 	// TODO: Implement
 	return nil
 }

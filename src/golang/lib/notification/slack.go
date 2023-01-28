@@ -1,19 +1,32 @@
 package notification
 
 import (
+	"context"
+
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/google/uuid"
 	"github.com/slack-go/slack"
 )
 
 type SlackNotification struct {
-	conf *shared.SlackConfig
+	integration *models.Integration
+	conf        *shared.SlackConfig
 }
 
-func newSlackNotification(conf *shared.SlackConfig) *SlackNotification {
-	return &SlackNotification{conf: conf}
+func newSlackNotification(integration *models.Integration, conf *shared.SlackConfig) *SlackNotification {
+	return &SlackNotification{integration: integration, conf: conf}
 }
 
-func (e *SlackNotification) Send(msg string, level shared.NotificationLevel) error {
+func (s *SlackNotification) ID() uuid.UUID {
+	return s.integration.ID
+}
+
+func (s *SlackNotification) Level() shared.NotificationLevel {
+	return s.conf.Level
+}
+
+func (s *SlackNotification) Send(ctx context.Context, msg string) error {
 	// TODO: Implement
 	return nil
 }

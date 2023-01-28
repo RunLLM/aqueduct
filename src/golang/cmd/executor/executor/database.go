@@ -13,7 +13,7 @@ type Repos struct {
 	DAGEdgeRepo              repos.DAGEdge
 	DAGResultRepo            repos.DAGResult
 	ExecutionEnvironmentRepo repos.ExecutionEnvironment
-	IntegrationRepo          repos.IntegrationRepo
+	IntegrationRepo          repos.Integration
 	NotificationRepo         repos.Notification
 	OperatorRepo             repos.Operator
 	OperatorResultRepo       repos.OperatorResult

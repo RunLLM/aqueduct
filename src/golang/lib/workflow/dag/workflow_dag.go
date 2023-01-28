@@ -7,6 +7,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
@@ -18,6 +19,10 @@ import (
 )
 
 type WorkflowDag interface {
+	UserID() uuid.UUID
+	Name() string
+	NotificationSettings() shared.NotificationSettings
+
 	Operators() map[uuid.UUID]operator.Operator
 	Artifacts() map[uuid.UUID]artifact.Artifact
 
@@ -46,8 +51,6 @@ type WorkflowDag interface {
 	// This function DO NOT update operators in DB. One should call `op.Persist()`
 	// to do so.
 	BindOperatorsToEnvs(ctx context.Context) error
-
-	Notify(ctx context.Context) error
 }
 
 type workflowDagImpl struct {
@@ -60,6 +63,30 @@ type workflowDagImpl struct {
 	opToOutputArtifacts map[uuid.UUID][]uuid.UUID
 	opToInputArtifacts  map[uuid.UUID][]uuid.UUID
 	artifactToOps       map[uuid.UUID][]uuid.UUID
+}
+
+func (dag *workflowDagImpl) UserID() uuid.UUID {
+	if dag.dbDAG.Metadata == nil {
+		return uuid.UUID{}
+	}
+
+	return dag.dbDAG.Metadata.UserID
+}
+
+func (dag *workflowDagImpl) Name() string {
+	if dag.dbDAG.Metadata == nil {
+		return ""
+	}
+
+	return dag.dbDAG.Metadata.Name
+}
+
+func (dag *workflowDagImpl) NotificationSettings() shared.NotificationSettings {
+	if dag.dbDAG.Metadata == nil {
+		return shared.NotificationSettings{}
+	}
+
+	return dag.dbDAG.Metadata.NotificationSettings.NotificationSettings
 }
 
 // Assumption: all dag's start with operators.
