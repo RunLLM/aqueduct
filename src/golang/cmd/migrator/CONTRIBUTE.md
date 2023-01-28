@@ -1,6 +1,6 @@
 # To add a new schema version, please refer to the following checklist
 * Add your version package under `versions` directory.
-* The new veresion package should pattern-match existing versions. There are two use cases:
+* The new version package should pattern-match existing versions. There are two use cases:
     * Migration can be done using SQL queries. The package should contain the following:
         * `up_postgres.go` for postgres query upgrading from previous version to this version.
         * `up_sqlite.go` for sqlite query upgrading from previous version to this version.
