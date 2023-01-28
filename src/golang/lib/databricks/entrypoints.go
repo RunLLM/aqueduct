@@ -6,8 +6,8 @@ import argparse
 import subprocess
 import sys
 
+from aqueduct_executor.operators.spark.execute_function import run
 from aqueduct_executor.operators.function_executor import (
-	execute,
 	extract_function,
 	install_requirements,
 )
@@ -41,7 +41,8 @@ def main():
 		spec.function_extract_path + "op/missing.txt",
 		spec,
 	)
-	execute.run(spec)
+	spark_session_obj = spark
+	run(spec, spark_session_obj)
 
 
 if __name__ == "__main__":
@@ -86,7 +87,7 @@ if __name__ == "__main__":
 	DataEntrypoint = `import argparse
 import base64
 
-from aqueduct_executor.operators.connectors.data import execute
+from aqueduct_executor.operators.spark.execute_data import run
 from aqueduct_executor.operators.connectors.data.spec import parse_spec
 
 if __name__ == "__main__":
@@ -96,7 +97,8 @@ if __name__ == "__main__":
 
 	spec_json = base64.b64decode(args.spec)
 	spec = parse_spec(spec_json)
+	spark_session_obj = spark
 
-	execute.run(spec)
+	run(spec, spark_session_obj)
 `
 )
