@@ -3,9 +3,6 @@ name: Integration Tests
 on:
   workflow_call:
   workflow_dispatch:
-  push:
-    branches:
-      - fix_integration_test_with_hack
 
 jobs:
   run-tests:
