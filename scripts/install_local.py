@@ -22,6 +22,7 @@ from os import listdir
 from os.path import isdir, isfile, join
 
 base_directory = join(os.environ["HOME"], ".aqueduct")
+
 server_directory = join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = join(os.environ["HOME"], ".aqueduct", "ui")
 
