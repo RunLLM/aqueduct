@@ -25,6 +25,7 @@ import (
 	_000020 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000020_add_execution_environment_table"
 	_000021 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000021_add_gc_column_to_env_table"
 	_000022 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000022_backfill_python_type"
+	_000023 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000023_add_notification_settings_column"
 	"github.com/aqueducthq/aqueduct/lib/database"
 )
 
@@ -163,5 +164,11 @@ func init() {
 		upPostgres: _000022.Up, upSqlite: _000022.Up,
 		downPostgres: _000022.Down,
 		name:         "backfill python type to the artifact result table",
+	}
+
+	registeredMigrations[23] = &migration{
+		upPostgres: _000023.UpPostgres, upSqlite: _000023.UpSqlite,
+		downPostgres: _000023.DownPostgres,
+		name:         "add notification_settings column to workflow table",
 	}
 }
