@@ -1,9 +1,12 @@
 from typing import Any, Callable, Dict, List, Optional
 
+from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql.functions import col
+from pyspark.sql.types import FloatType
+
 from aqueduct_executor.operators.connectors.data import common, config, relational, snowflake, utils
 from aqueduct_executor.operators.connectors.data import connector, extract, load
 from aqueduct_executor.operators.utils.enums import ArtifactType
-from pyspark.sql import SparkSession, DataFrame, FloatType, col
 
 
 class SparkSnowflakeConnector(relational.RelationalConnector):
