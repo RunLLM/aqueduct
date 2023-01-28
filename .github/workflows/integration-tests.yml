@@ -1,9 +1,8 @@
 name: Integration Tests
 
 on:
-  push:
-    branches:
-      - eng-2355-fix-a-bug-where-demo-db-upload-is-broken
+  workflow_call:
+  workflow_dispatch:
 
 jobs:
   run-tests:
