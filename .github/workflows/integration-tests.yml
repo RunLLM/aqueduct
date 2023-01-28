@@ -40,8 +40,13 @@ jobs:
       - name: Install aqueduct-ml
         run: python3 -m pip install aqueduct-ml
 
-      - name: Install local sdk and executor
-        run: python3 scripts/install_local.py -s -e
+      - name: Install local SDK dependencies
+        working-directory: sdk
+        run: pip3 install .
+      
+      - name: Install local executor dependencies
+        working-directory: src/python
+        run: pip3 install .
 
       - name: Start the server
         run: (aqueduct start --verbose > $SERVER_LOGS_FILE 2>&1 &)
@@ -55,8 +60,8 @@ jobs:
         run: kill -9 $(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')
 
       # install_local.py requires ~/.aqueduct to exist.
-      - name: Update aqueduct binary with latest code
-        run: python3 scripts/install_local.py -g
+      - name: Update aqueduct with latest code
+        run: python3 scripts/install_local.py -g -s -e
 
       - name: Start the server again
         run: (aqueduct start --disable-usage-stats --verbose > $SERVER_LOGS_FILE 2>&1 &)
