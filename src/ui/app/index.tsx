@@ -6,6 +6,7 @@ import { store } from './stores/store';
 import { Provider } from 'react-redux';
 import { useUser, UserProfile } from '@aqueducthq/common';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+
 import { theme } from '@aqueducthq/common/src/styles/theme/theme';
 import { getPathPrefix } from '@aqueducthq/common/src/utils/getPathPrefix';
 import '@aqueducthq/common/src/styles/globals.css';
@@ -30,7 +31,7 @@ const App = () => {
   const pathPrefix = getPathPrefix();
   let routesContent: React.ReactElement;
   routesContent = (
-    <Routes>      
+    <Routes>
       <Route path={`${pathPrefix ?? "/"}`} element={<RequireAuth user={user}><HomePage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/data`} element={<RequireAuth user={user}><DataPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/integrations`} element={<RequireAuth user={user}><IntegrationsPage user={user} /> </RequireAuth>} />
@@ -42,7 +43,7 @@ const App = () => {
       <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/operator/:operatorId`} element={<RequireAuth user={user}><OperatorDetailsPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/artifact/:artifactId`} element={<RequireAuth user={user}><ArtifactDetailsPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/metric/:metricOperatorId`} element={<RequireAuth user={user}><MetricDetailsPage user={user} /> </RequireAuth>} />
-      <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/check/:checkOperatorId`} element={<RequireAuth user={user}><CheckDetailsPage user={user} /> </RequireAuth>} />      
+      <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/check/:checkOperatorId`} element={<RequireAuth user={user}><CheckDetailsPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/404`} element={user && user.apiKey ? <RequireAuth user={user}><ErrorPage user={user} /> </RequireAuth> : <ErrorPage />} />
       <Route path="*" element={<Navigate replace to={`/404`} />} />
     </Routes>

@@ -4,7 +4,7 @@ google-cloud-storage
 numpy
 pandas
 pydantic
-SQLAlchemy
+SQLAlchemy<2.0.0
 distro
 pyyaml
 typing_extensions>=4.3.0

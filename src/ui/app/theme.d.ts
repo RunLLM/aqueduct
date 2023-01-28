@@ -20,7 +20,6 @@ declare module '@mui/material/styles' {
         black: string;
         white: string;
         darkGray: string;
-        gray: PaletteShades;
         blue: PaletteShades;
         red: PaletteShades;
         green: PaletteShades;
@@ -28,6 +27,33 @@ declare module '@mui/material/styles' {
         purple: PaletteShades;
         teal: PaletteShades;
         yellow: PaletteShades;
+        Info: string;
+        Success: string;
+        Warning: string;
+        Error: string;
+        Secondary: string;
+        Primary: string;
+        Default: string;
+        Running: string;
+        TableSuccessBackground: string;
+        TableErrorBackground: string;
+        TableWarningBackground: string;
+        DarkContrast: string;
+        DarkContrast50: string;
+        DarkErrorMain: string;
+        DarkErrorMain75: string;
+        DarkErrorMain50: string;
+        DarkWarningMain: string;
+        DarkWarningMain75: string;
+        DarkWarningMain50: string;
+        DarkSuccessMain: string;
+        DarkSuccessMain75: string;
+        DarkSuccessMain50: string;
+        LogoDarkBlue: string;
+        LogoLight: string;
+        NavBackgroundDark: string;
+        NavMenuHover: string;
+        NavMenuActive: string;
     }
 
     interface Theme {
