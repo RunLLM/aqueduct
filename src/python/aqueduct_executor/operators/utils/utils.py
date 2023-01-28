@@ -241,10 +241,7 @@ def write_artifact_spark(
             # write that to aqueduct storage
             spark_df = content
             global_view_name = convert_path_to_view_name(output_path)
-            print("global_view_name")
-            print(global_view_name)
             spark_df.createOrReplaceGlobalTempView(global_view_name)
-            # sampleDF = sparkDF.sample(fraction=0.1)
             pandas_df = spark_df.limit(100).toPandas()
             serialized_val = serialize_val_wrapper(pandas_df, serialization_type)
             storage.put(output_path, serialized_val)
