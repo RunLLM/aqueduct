@@ -3,7 +3,7 @@ from typing import Any, Callable, Dict, List, Optional
 from aqueduct_executor.operators.connectors.data import common, config, relational, snowflake, utils
 from aqueduct_executor.operators.connectors.data import connector, extract, load
 from aqueduct_executor.operators.utils.enums import ArtifactType
-from pyspark.sql import SparkSession, DataFrame
+from pyspark.sql import SparkSession, DataFrame, FloatType, col
 
 
 class SparkSnowflakeConnector(relational.RelationalConnector):
@@ -29,6 +29,10 @@ class SparkSnowflakeConnector(relational.RelationalConnector):
         assert params.usable(), "Query is not usable. Did you forget to expand placeholders?"
 
         df = spark_session_obj.read.format("snowflake").options(**self.snowflake_spark_options).option("query", params.query).load()
+        decimals_cols = [c for c in df.columns if 'Decimal' in str(df.schema[c].dataType)]
+        #convert all decimals columns to floats
+        for col in decimals_cols:
+            df = df.withColumn(col, df[col].cast(FloatType()))
         return df
 
 
