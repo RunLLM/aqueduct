@@ -730,7 +730,7 @@ func (eng *aqEngine) execute(
 	completedOps := workflowRunMetadata.CompletedOps
 	dag := workflowDag
 	opToDependencyCount := workflowRunMetadata.OpToDependencyCount
-	shouldNotify := false
+	hasNotification := false
 	notificationLevel := mdl_shared.NeutralNotificationLevel
 	notificationCtxMsg := ""
 	var err error = nil
@@ -752,10 +752,10 @@ func (eng *aqEngine) execute(
 		if err != nil {
 			notificationLevel = mdl_shared.ErrorNotificationLevel
 			notificationCtxMsg = err.Error()
-			shouldNotify = true
+			hasNotification = true
 		}
 
-		if shouldNotify {
+		if hasNotification && opExecMode == operator.Publish {
 			err = eng.sendNotifications(ctx, workflowDag, notificationLevel, notificationCtxMsg)
 			if err != nil {
 				log.Errorf("Error sending notifications: %s", err)
@@ -827,7 +827,7 @@ func (eng *aqEngine) execute(
 					}
 				}
 
-				shouldNotify = true
+				hasNotification = true
 				notificationLevel = mdl_shared.ErrorNotificationLevel
 				if execState.Error != nil {
 					notificationCtxMsg = fmt.Sprintf("%s\nContext:\n%s", execState.Error.Tip, execState.Error.Context)
@@ -835,7 +835,7 @@ func (eng *aqEngine) execute(
 
 				return opFailureError(*execState.FailureType, op)
 			} else if execState.Status == shared.FailedExecutionStatus {
-				shouldNotify = true
+				hasNotification = true
 				notificationLevel = mdl_shared.WarningNotificationLevel
 				if execState.Error != nil {
 					notificationCtxMsg = fmt.Sprintf("%s\nContext:\n%s", execState.Error.Tip, execState.Error.Context)
@@ -897,7 +897,7 @@ func (eng *aqEngine) execute(
 
 	// avoid overriding a warning notification.
 	if notificationLevel != mdl_shared.WarningNotificationLevel {
-		shouldNotify = true
+		hasNotification = true
 		notificationLevel = mdl_shared.SuccessNotificationLevel
 	}
 	return nil
