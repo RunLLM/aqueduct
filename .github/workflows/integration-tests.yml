@@ -38,6 +38,10 @@ jobs:
       
       - name: Install aqueduct-ml
         run: python3 -m pip install aqueduct-ml
+      
+      - name: Install local package
+        working-directory: "./src/python"
+        run: pip3 install .
 
       - name: Start the server
         run: (aqueduct start --verbose > $SERVER_LOGS_FILE 2>&1 &)
