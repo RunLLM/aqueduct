@@ -23,17 +23,17 @@ export const CheckTableItem: React.FC<CheckTableItemProps> = ({
   switch (checkValue.toLowerCase()) {
     case 'true': {
       checkIcon = faCircleCheck;
-      iconColor = theme.palette.green['400'];
+      iconColor = theme.palette.Success;
       break;
     }
     case 'false': {
       checkIcon = faCircleExclamation;
-      iconColor = theme.palette.red['500'];
+      iconColor = theme.palette.Error;
       break;
     }
     case 'warning': {
       checkIcon = faTriangleExclamation;
-      iconColor = theme.palette.orange['500'];
+      iconColor = theme.palette.Warning;
       break;
     }
     case 'none': {

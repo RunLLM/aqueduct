@@ -39,6 +39,9 @@ jobs:
       - name: Install aqueduct-ml
         run: python3 -m pip install aqueduct-ml
 
+      - name: Install compatible SQLAlchemy
+        run: pip3 install SQLAlchemy==1.4.46
+
       - name: Start the server
         run: (aqueduct start --verbose > $SERVER_LOGS_FILE 2>&1 &)
 
@@ -52,7 +55,7 @@ jobs:
 
       # install_local.py requires ~/.aqueduct to exist.
       - name: Update aqueduct with latest code
-        run: python3 scripts/install_local.py --gobinary --sdk --executor
+        run: python3 scripts/install_local.py -g -s -e
 
       - name: Start the server again
         run: (aqueduct start --disable-usage-stats --verbose > $SERVER_LOGS_FILE 2>&1 &)

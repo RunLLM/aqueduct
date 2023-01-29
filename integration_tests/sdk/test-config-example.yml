@@ -4,6 +4,13 @@ address: <SERVER ADDRESS>
 # Each integration entry starts with the name of the integration, followed
 # by the list of credentials needed to connect to it.
 data:
+  test_redshift:
+    type: Redshift
+    username:
+    password:
+    database:
+    host:
+    port: # 5439 is the default port since that is what Redshift defaults to
   test_snowflake:
     type: Snowflake
     username:

@@ -490,7 +490,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             mb: contentBottomOffsetInPx,
             width: '100%',
             boxSizing: 'border-box',
-            backgroundColor: 'gray.50',
+            backgroundColor: theme.palette.gray['50'],
           }}
         >
           <ReactFlowProvider>

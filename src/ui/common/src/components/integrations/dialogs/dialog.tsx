@@ -26,6 +26,7 @@ import {
   AthenaConfig,
   BigQueryConfig,
   DatabricksConfig,
+  EmailConfig,
   formatService,
   GCSConfig,
   Integration,
@@ -39,6 +40,7 @@ import {
   RedshiftConfig,
   S3Config,
   Service,
+  SlackConfig,
   SnowflakeConfig,
   SQLiteConfig,
   SupportedIntegrations,
@@ -49,6 +51,7 @@ import { AthenaDialog, isAthenaConfigComplete } from './athenaDialog';
 import { BigQueryDialog } from './bigqueryDialog';
 import { CondaDialog } from './condaDialog';
 import { DatabricksDialog } from './databricksDialog';
+import { EmailDialog } from './emailDialog';
 import { GCSDialog } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { isK8sConfigComplete, KubernetesDialog } from './kubernetesDialog';
@@ -59,6 +62,7 @@ import { MysqlDialog } from './mysqlDialog';
 import { PostgresDialog } from './postgresDialog';
 import { RedshiftDialog } from './redshiftDialog';
 import { isS3ConfigComplete, S3Dialog } from './s3Dialog';
+import { SlackDialog } from './slackDialog';
 import { SnowflakeDialog } from './snowflakeDialog';
 import { SQLiteDialog } from './sqliteDialog';
 
@@ -311,16 +315,34 @@ const IntegrationDialog: React.FC<Props> = ({
         />
       );
       break;
+    case 'Email':
+      serviceDialog = (
+        <EmailDialog
+          onUpdateField={setConfigField}
+          value={config as EmailConfig}
+        />
+      );
+      break;
+    case 'Slack':
+      serviceDialog = (
+        <SlackDialog
+          onUpdateField={setConfigField}
+          value={config as SlackConfig}
+        />
+      );
+      break;
     default:
       return null;
   }
 
   const onConfirmDialog = () => {
     //check that name is unique before connecting.
-    for (let i = 0; i < integrations.length; i++) {
-      if (name === integrations[i].name) {
-        setShouldShowNameError(true);
-        return;
+    if (!editMode) {
+      for (let i = 0; i < integrations.length; i++) {
+        if (name === integrations[i].name) {
+          setShouldShowNameError(true);
+          return;
+        }
       }
     }
 
