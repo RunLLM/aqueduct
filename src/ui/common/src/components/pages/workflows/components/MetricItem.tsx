@@ -1,9 +1,8 @@
-import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Box, Tooltip, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import React from 'react';
 import { useState } from 'react';
 
+import { StatusIndicator } from '../../../../components/workflows/workflowStatus';
 import { theme } from '../../../../styles/theme/theme';
 import { ExecutionStatus, showMorePadding } from '../../../../utils/shared';
 import { parseMetricResult } from '../../../workflows/nodes/MetricOperatorNode';
@@ -78,12 +77,8 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
           <Typography variant="body1" sx={{ fontWeight: 400 }}>
             {metrics[i].name}
           </Typography>
-          {metrics[i].status === ExecutionStatus.Failed ? (
-            <Tooltip title="Error" placement="bottom" arrow>
-              <Box sx={{ fontSize: '20px', color: theme.palette.red['500'] }}>
-                <FontAwesomeIcon icon={faCircleExclamation} />
-              </Box>
-            </Tooltip>
+          {metrics[i].status === ExecutionStatus.Succeeded ? (
+            <StatusIndicator status={metrics[i].status} />
           ) : (
             <Typography variant="body1" sx={{ fontWeight: 300 }}>
               {parseMetricResult(metrics[i].value, 3)}
