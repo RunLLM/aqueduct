@@ -386,7 +386,7 @@ func (ts *TestSuite) seedOperatorResult(count int, opType operator.Type) ([]mode
 	artifactID := uuid.New()
 	users := ts.seedUser(1)
 	userIDs := sampleUserIDs(1, users)
-	workflows :=  ts.seedWorkflowWithUser(1, userIDs)
+	workflows := ts.seedWorkflowWithUser(1, userIDs)
 	workflowIDs := sampleWorkflowIDs(1, workflows)
 	dags := ts.seedDAGWithWorkflow(1, workflowIDs)
 	dag := dags[0]
@@ -446,11 +446,11 @@ func (ts *TestSuite) seedOperatorAndDAG(artifactID uuid.UUID, dagID uuid.UUID, u
 					},
 				},
 			},
-			)
+		)
 	case operator.CheckType:
 		spec = operator.NewSpecFromCheck(
 			check.Check{
-				Level: check.ErrorLevel,
+				Level:    check.ErrorLevel,
 				Function: function.Function{},
 			},
 		)
@@ -525,7 +525,7 @@ func (ts *TestSuite) seedOperatorAndDAGOperatorToArtifact(artifactID uuid.UUID, 
 	case operator.CheckType:
 		spec = operator.NewSpecFromCheck(
 			check.Check{
-				Level: check.ErrorLevel,
+				Level:    check.ErrorLevel,
 				Function: function.Function{},
 			},
 		)
@@ -603,7 +603,7 @@ func (ts *TestSuite) seedSchemaVersion(count int) []models.SchemaVersion {
 
 	for i := 1; i <= count; i++ {
 		name := randString(10)
-		schemaVersion, err := ts.schemaVersion.Create(ts.ctx, int64(models.CurrentSchemaVersion + i), name, ts.DB)
+		schemaVersion, err := ts.schemaVersion.Create(ts.ctx, int64(models.CurrentSchemaVersion+i), name, ts.DB)
 		require.Nil(ts.T(), err)
 
 		schemaVersions = append(schemaVersions, *schemaVersion)
@@ -619,7 +619,7 @@ func (ts *TestSuite) seedUnusedExecutionEnvironment(count int) []models.Executio
 	for i := 0; i < count; i++ {
 		spec := shared.ExecutionEnvironmentSpec{
 			PythonVersion: randString(10),
-			Dependencies: []string{randString(10), randString(10), randString(10)},
+			Dependencies:  []string{randString(10), randString(10), randString(10)},
 		}
 		hash := uuid.New()
 		executionEnvironment, err := ts.executionEnvironment.Create(ts.ctx, &spec, hash, ts.DB)
@@ -635,7 +635,7 @@ func (ts *TestSuite) seedUnusedExecutionEnvironment(count int) []models.Executio
 // and the workflow and operators that use them.
 func (ts *TestSuite) seedUsedExecutionEnvironment(count int) ([]models.ExecutionEnvironment, []models.Operator) {
 	operators := make([]models.Operator, 0, count)
-	
+
 	users := ts.seedUser(1)
 	userIDs := sampleUserIDs(1, users)
 
@@ -682,8 +682,9 @@ func (ts *TestSuite) seedUsedExecutionEnvironment(count int) ([]models.Execution
 // To make expected results easy to find, the map of artifacts and operators are keyed by names.
 // The workflow reflects the following DAG:
 // extract --> extract_artf --> function_1 --> function_1_artf --> metric_1 --> metric_1_artf --> check --> check_artf
-//                          |                      |=> function_3 --> function_3_artf // function_3 takes artf of function_1 and function_2 as inputs
-//                          |-> function_2 --> function_2_artf --> metric_2 --> metric_2_artf
+//
+//	|                      |=> function_3 --> function_3_artf // function_3 takes artf of function_1 and function_2 as inputs
+//	|-> function_2 --> function_2_artf --> metric_2 --> metric_2_artf
 func (ts *TestSuite) seedComplexWorkflow() (models.DAG, map[string]models.Operator, map[string]models.Artifact) {
 	// this gives all op -> op edges by names. We assume each operator is named by `<type>_<index>` format
 	// to deduce the type used to create the operator.

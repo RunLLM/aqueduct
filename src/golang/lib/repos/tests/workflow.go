@@ -3,6 +3,7 @@ package tests
 import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -143,6 +144,8 @@ func (ts *TestSuite) TestWorkflow_Create() {
 		RetentionPolicy: workflow.RetentionPolicy{
 			KLatestRuns: 10,
 		},
+		// Explicitly set `IsNull` to true, otherwise it will be false by default.
+		NotificationSettings: shared.NullNotificationSettings{IsNull: true},
 	}
 
 	actualWorkflow, err := ts.workflow.Create(

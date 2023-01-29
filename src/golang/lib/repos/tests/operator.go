@@ -151,7 +151,6 @@ func (ts *TestSuite) TestOperator_ValidateOrg() {
 	invalid, invalidErr := ts.operator.ValidateOrg(ts.ctx, operator.ID, randString(10), ts.DB)
 	require.Nil(ts.T(), invalidErr)
 	require.False(ts.T(), invalid)
-
 }
 
 func (ts *TestSuite) TestOperator_Create() {

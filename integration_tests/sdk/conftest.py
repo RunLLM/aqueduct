@@ -21,6 +21,13 @@ def pytest_addoption(parser):
     # Sets a global flag that can be toggled if we want to check that a deprecated code path still works.
     parser.addoption(f"--deprecated", action="store_true", default=False)
 
+    # Skips the setup of any data integrations for faster testing. Best used as an optimization after first
+    # test run of a debugging session.
+    parser.addoption(f"--skip-data-setup", action="store_true", default=False)
+
+    # Allows any tests that rely on a K8s cluster with a GPU setup to run.
+    parser.addoption(f"--gpu", action="store_true", default=False)
+
 
 def pytest_configure(config):
     """This is just to prevent warnings around our custom markers. eg. `pytest.mark.enable_only_for_engine`."""
@@ -31,10 +38,18 @@ def pytest_configure(config):
         "markers",
         "enable_only_for_data_integration_type: runs the test only for the supplied data integrations.",
     )
+    config.addinivalue_line(
+        "markers",
+        "must_have_gpu: the K8s integration is expected to have access to a GPU",
+    )
 
 
 def pytest_cmdline_main(config):
     """Gets all the integrations ready for the tests to run. Should only run once, before we even collect any tests."""
+    should_skip = config.getoption(f"--skip-data-setup")
+    if should_skip:
+        return
+
     data_integration = config.getoption(f"--data")
     if data_integration is not None:
         setup_data_integrations(filter_to=data_integration)
@@ -75,6 +90,14 @@ def use_deprecated(pytestconfig):
     test_globals.use_deprecated_code_paths = pytestconfig.getoption("deprecated")
 
 
+def _type_from_engine_name(client, engine: str) -> ServiceType:
+    integration_info_by_name = client.list_integrations()
+    if engine not in integration_info_by_name.keys():
+        raise Exception("Server is not connected to integration `%s`." % engine)
+
+    return integration_info_by_name[engine].service
+
+
 # Pulled from: https://stackoverflow.com/questions/28179026/how-to-skip-a-pytest-using-an-external-fixture
 @pytest.fixture(autouse=True)
 def enable_only_for_engine_type(request, client, engine):
@@ -102,15 +125,29 @@ def enable_only_for_engine_type(request, client, engine):
                     % ",".join(enabled_engine_types)
                 )
 
-        integration_info_by_name = client.list_integrations()
-        if engine not in integration_info_by_name.keys():
-            raise Exception("Server is not connected to integration `%s`." % engine)
-
-        if integration_info_by_name[engine].service not in enabled_engine_types:
+        if _type_from_engine_name(client, engine) not in enabled_engine_types:
             pytest.skip(
                 "Skipped for engine integration `%s`, since it is not of type `%s`."
                 % (engine, ",".join(enabled_engine_types))
             )
+
+
+@pytest.fixture(autouse=True)
+def must_have_gpu(pytestconfig, request, client, engine):
+    """When a test is marked with this, all it means that it will only be executed if the --gpu flag is
+    passed into command line.
+
+    The user is responsible for supplying a K8s integration with an available GPU.
+    """
+    if not request.node.get_closest_marker("gpu"):
+        return
+
+    if pytestconfig.getoption("gpu"):
+        assert (
+            _type_from_engine_name(client, engine) == ServiceType.K8S
+        ), "@pytest.mark.must_have_gpu only works with K8s engine!"
+    else:
+        pytest.skip("Skipped since --gpu flag is not provided")
 
 
 @pytest.fixture(scope="function")

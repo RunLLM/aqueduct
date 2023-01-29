@@ -51,7 +51,7 @@ type baseOperator struct {
 	execState        shared.ExecutionState
 
 	// If set to nil, the job manager will run this operator in the server's default Python environment.
-	// Otherwise, it will switch to the approppriate Conda environment before running the operator.
+	// Otherwise, it will switch to the appropriate Conda environment before running the operator.
 	// This only applies to operators running with the Aqueduct engine.
 	execEnv *exec_env.ExecutionEnvironment
 }

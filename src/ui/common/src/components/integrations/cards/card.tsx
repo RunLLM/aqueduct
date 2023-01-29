@@ -13,6 +13,7 @@ import { AirflowCard } from './airflowCard';
 import { AqueductDemoCard } from './aqueductDemoCard';
 import { BigQueryCard } from './bigqueryCard';
 import { DatabricksCard } from './databricksCard';
+import { EmailCard } from './emailCard';
 import { GCSCard } from './gcsCard';
 import { KubernetesCard } from './kubernetesCard';
 import { LambdaCard } from './lambdaCard';
@@ -23,6 +24,7 @@ import { MySqlCard } from './mysqlCard';
 import { PostgresCard } from './postgresCard';
 import { RedshiftCard } from './redshiftCard';
 import { S3Card } from './s3Card';
+import { SlackCard } from './slackCard';
 import { SnowflakeCard } from './snowflakeCard';
 
 type DataProps = {
@@ -137,6 +139,12 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
       break;
     case 'Databricks':
       serviceCard = <DatabricksCard integration={integration} />;
+      break;
+    case 'Email':
+      serviceCard = <EmailCard integration={integration} />;
+      break;
+    case 'Slack':
+      serviceCard = <SlackCard integration={integration} />;
       break;
     default:
       serviceCard = null;

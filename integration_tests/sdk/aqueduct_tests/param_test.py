@@ -296,10 +296,11 @@ def test_all_param_types(client, flow_name, engine):
     @op
     def must_be_picklable(input):
         """
-        Unable to check that the input is pickleabe, since `pickle.loads()`
+        Unable to check that the input is picklable, since `pickle.loads()`
         complains about `import of module 'param_test' failed`.
         """
-        assert input == EmptyClass
+        if input != EmptyClass:
+            raise Exception("Expected Class.")
         return input
 
     picklable_param = client.create_param("pickleable", default=EmptyClass)
@@ -310,7 +311,8 @@ def test_all_param_types(client, flow_name, engine):
 
     @op
     def must_be_bytes(input):
-        assert isinstance(input, bytes)
+        if not isinstance(input, bytes):
+            raise Exception("Expected bytes")
         return input
 
     bytes_param = client.create_param("bytes", default=b"hello world")
@@ -321,7 +323,8 @@ def test_all_param_types(client, flow_name, engine):
 
     @op
     def must_be_string(input):
-        assert isinstance(input, str)
+        if not isinstance(input, str):
+            raise Exception("Expected string.")
         return input
 
     string_param = client.create_param("string", default="I am a string")
@@ -331,7 +334,8 @@ def test_all_param_types(client, flow_name, engine):
 
     @op
     def must_be_tuple(input):
-        assert isinstance(input, tuple)
+        if not isinstance(input, tuple):
+            raise Exception("Expected tuple.")
         return input
 
     tuple_param = client.create_param("tuple", default=(1, 2, 3))
@@ -341,7 +345,8 @@ def test_all_param_types(client, flow_name, engine):
 
     @op
     def must_be_list(input):
-        assert isinstance(input, list)
+        if not isinstance(input, list):
+            raise Exception("Expected list.")
         return input
 
     list_param = client.create_param("list", default=[4, 5, 6])

@@ -1,8 +1,8 @@
 package tests
 
 import (
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -49,15 +49,15 @@ func (ts *TestSuite) TestExecutionEnvironment_GetActiveByOperatorBatch() {
 
 	require.Nil(ts.T(), err)
 	require.Equal(ts.T(), 3, len(actualExecutionEnvironments))
-	requireDeepEqualExecutionEnvironment(ts.T(), 
+	requireDeepEqualExecutionEnvironment(ts.T(),
 		[]models.ExecutionEnvironment{
-			expectedExecutionEnvironments[0], 
-			expectedExecutionEnvironments[2], 
+			expectedExecutionEnvironments[0],
+			expectedExecutionEnvironments[2],
 			expectedExecutionEnvironments[4],
-		}, 
+		},
 		[]models.ExecutionEnvironment{
-			actualExecutionEnvironments[operators[0].ID], 
-			actualExecutionEnvironments[operators[2].ID], 
+			actualExecutionEnvironments[operators[0].ID],
+			actualExecutionEnvironments[operators[2].ID],
 			actualExecutionEnvironments[operators[4].ID],
 		})
 }
@@ -80,7 +80,7 @@ func (ts *TestSuite) TestExecutionEnvironment_GetUnused() {
 func (ts *TestSuite) TestExecutionEnvironment_Create() {
 	spec := shared.ExecutionEnvironmentSpec{
 		PythonVersion: randString(10),
-		Dependencies: []string{randString(10), randString(10), randString(10)},
+		Dependencies:  []string{randString(10), randString(10), randString(10)},
 	}
 	hash := uuid.New()
 
@@ -124,14 +124,14 @@ func (ts *TestSuite) TestExecutionEnvironment_Update() {
 
 	spec := shared.ExecutionEnvironmentSpec{
 		PythonVersion: randString(10),
-		Dependencies: []string{randString(10), randString(10), randString(10)},
+		Dependencies:  []string{randString(10), randString(10), randString(10)},
 	}
 	hash := uuid.New()
 	garbageCollected := true
 
 	changes := map[string]interface{}{
-		models.ExecutionEnvironmentSpec: &spec,
-		models.ExecutionEnvironmentHash: hash,
+		models.ExecutionEnvironmentSpec:             &spec,
+		models.ExecutionEnvironmentHash:             hash,
 		models.ExecutionEnvironmentGarbageCollected: garbageCollected,
 	}
 

@@ -153,7 +153,7 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
         borderRadius: '8px',
         zIndex: 10,
         border: `1px solid`,
-        borderColor: 'gray.500',
+        borderColor: theme.palette.gray[500],
         p: '4px',
       }}
     >
@@ -170,7 +170,7 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
               width: '100%',
               backgroundColor: 'white',
               borderBottom: index === listItems.length - 1 ? null : `1px solid`,
-              borderColor: 'gray.500',
+              borderColor: theme.palette.gray['500'],
               alignItems: 'start',
             }}
           >
