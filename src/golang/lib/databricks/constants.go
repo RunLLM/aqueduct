@@ -1,9 +1,10 @@
 package databricks
 
 const (
-	SparkVersion = "10.4.x-scala2.12"
-	NumWorkers   = 1
-	NodeTypeId   = "m5d.large"
+	SparkVersion         = "10.4.x-scala2.12"
+	DefaultMinNumWorkers = 1
+	DefaultMaxNumWorkers = DefaultMinNumWorkers + 10
+	DefaultNodeTypeID    = "m5d.large"
 
 	DatabricksFunctionScript = "aqscript.py"
 	DatabricksParamScript    = "paramScript.py"

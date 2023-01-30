@@ -11,8 +11,15 @@ import numpy as np
 import pandas as pd
 from aqueduct.utils.type_inference import infer_artifact_type
 from aqueduct_executor.operators.function_executor import extract_function, get_extract_path
+from aqueduct_executor.operators.function_executor.execute import (
+    cleanup,
+    get_py_import_path,
+    import_invoke_method,
+    validate_spec,
+)
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
+from aqueduct_executor.operators.spark.utils import read_artifacts_spark, write_artifact_spark
 from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.enums import (
     ArtifactType,
@@ -35,69 +42,14 @@ from aqueduct_executor.operators.utils.execution import (
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.timer import Timer
+from pyspark.sql import SparkSession, dataframe
 
 
-def get_py_import_path(spec: FunctionSpec) -> str:
-    """
-    Generates the import path based on fixed function dir and
-    FUNCTION_ENTRY_POINT_FILE env var.
-
-    It removes .py (if any) from the entry point and replaces all
-    '/' with '.'
-
-    For example, entry point 'model/churn.py'  will finally become
-    'app.function.model.churn', where we can import from.
-    """
-    file_path = spec.entry_point_file
-    if file_path.endswith(".py"):
-        file_path = file_path[:-3]
-
-    if file_path.startswith("/"):
-        file_path = file_path[1:]
-    return file_path.replace("/", ".")
-
-
-def import_invoke_method(spec: FunctionSpec) -> Callable[..., Any]:
-    """
-    `import_invoke_method` imports the model object.
-    it assumes the operator has been extracted to `<storage>/operators/<id>/op`
-    and imports the route from the above path.
-    """
-
-    # fn_path should be `<storage>/operators/<id>`
-    fn_path = spec.function_extract_path
-
-    # work_dir should be `<storage>/operators/<id>/op`
-    work_dir = os.path.join(fn_path, OP_DIR)
-    print(f"listdir(workdir): {os.listdir(work_dir)}")
-    print(f"listdir(fn_path): {os.listdir(fn_path)}")
-
-    # this ensures any file manipulation happens with respect to work_dir
-    os.chdir(work_dir)
-    # adds work_dir to sys.path to support relative imports from work_dir
-    sys.path.append(work_dir)
-
-    import_path = get_py_import_path(spec)
-    print(f"import_path: {import_path}")
-    class_name = spec.entry_point_class
-    method_name = spec.entry_point_method
-    custom_args_str = spec.custom_args
-
-    # Invoke the function and parse out the result object.
-
-    module = importlib.import_module(import_path)
-
-    if not class_name:
-        return getattr(module, method_name)  # type: ignore
-
-    fn_class = getattr(module, class_name)
-    function = fn_class()
-    # Set the custom arguments if provided
-    if custom_args_str:
-        custom_args = json.loads(custom_args_str)
-        function.set_args(custom_args)
-
-    return getattr(function, method_name)  # type: ignore
+def _infer_artifact_type_spark(value: Any) -> Any:
+    if isinstance(value, dataframe.DataFrame):
+        return ArtifactType.TABLE
+    else:
+        return infer_artifact_type(value)
 
 
 def _execute_function(
@@ -136,7 +88,7 @@ def _execute_function(
     if len(spec.output_content_paths) == 1:
         results = [results]
 
-    inferred_result_types = [infer_artifact_type(res) for res in results]
+    inferred_result_types = [_infer_artifact_type_spark(res) for res in results]
 
     elapsedTime = timer.stop()
     _, peak = tracemalloc.get_traced_memory()
@@ -149,54 +101,7 @@ def _execute_function(
     return results, inferred_result_types, system_metadata
 
 
-def validate_spec(spec: FunctionSpec) -> None:
-    if len(spec.input_content_paths) != len(spec.input_metadata_paths):
-        raise Exception(
-            "Found inconsistent number of input paths (%d) and input metadata paths (%d)"
-            % (
-                len(spec.input_content_paths),
-                len(spec.input_metadata_paths),
-            )
-        )
-
-    if len(spec.output_content_paths) != len(spec.output_metadata_paths):
-        raise Exception(
-            "Found inconsistent number of output paths (%d) and output metadata paths (%d)"
-            % (
-                len(spec.output_content_paths),
-                len(spec.output_metadata_paths),
-            )
-        )
-    if spec.expected_output_artifact_types is not None and len(
-        spec.expected_output_artifact_types
-    ) != len(spec.output_content_paths):
-        raise Exception(
-            "Found inconsistent number of expected output artifact types (%d) and output content paths (%d)"
-            % (
-                len(spec.expected_output_artifact_types),
-                len(spec.output_content_paths),
-            )
-        )
-
-    # Check and Metric operators must only have a single output.
-    if (spec.operator_type == OperatorType.CHECK or spec.operator_type == OperatorType.METRIC) and (
-        spec.expected_output_artifact_types is not None
-        and len(spec.expected_output_artifact_types) != 1
-    ):
-        raise Exception("%s operators must only have a single output." % spec.operator_type)
-
-
-def cleanup(spec: FunctionSpec) -> None:
-    """
-    Cleans up any temporary files created during function execution.
-    """
-    # Delete the extracted fn file if it exists and the file path is not
-    # something dangerous
-    if spec.function_extract_path and spec.function_extract_path[-1] != "*":
-        shutil.rmtree(spec.function_extract_path)
-
-
-def run(spec: FunctionSpec) -> None:
+def run(spec: FunctionSpec, spark_session_obj: SparkSession) -> None:
     """
     Executes a function operator.
     """
@@ -208,8 +113,11 @@ def run(spec: FunctionSpec) -> None:
         validate_spec(spec)
 
         # Read the input data from intermediate storage.
-        inputs, _, serialization_types = utils.read_artifacts(
-            storage, spec.input_content_paths, spec.input_metadata_paths
+        inputs, _, serialization_types = read_artifacts_spark(
+            storage,
+            spec.input_content_paths,
+            spec.input_metadata_paths,
+            spark_session_obj,
         )
 
         derived_from_bson = SerializationType.BSON_TABLE in serialization_types
@@ -262,7 +170,7 @@ def run(spec: FunctionSpec) -> None:
             if not check_passed:
                 print(f"Check Operator did not pass.")
 
-                utils.write_artifact(
+                write_artifact_spark(
                     storage,
                     ArtifactType.BOOL,
                     derived_from_bson,  # derived_from_bson doesn't apply to bool artifact
@@ -270,6 +178,7 @@ def run(spec: FunctionSpec) -> None:
                     spec.output_metadata_paths[0],
                     check_passed,
                     system_metadata=system_metadata,
+                    spark_session_obj=spark_session_obj,
                 )
 
                 check_severity = spec.check_severity
@@ -310,7 +219,7 @@ def run(spec: FunctionSpec) -> None:
                     )
 
         for i, result in enumerate(results):
-            utils.write_artifact(
+            write_artifact_spark(
                 storage,
                 result_types[i],
                 derived_from_bson,
@@ -318,6 +227,7 @@ def run(spec: FunctionSpec) -> None:
                 spec.output_metadata_paths[i],
                 result,
                 system_metadata=system_metadata,
+                spark_session_obj=spark_session_obj,
             )
 
         # If we made it here, then the operator has succeeded.
@@ -342,23 +252,3 @@ def run(spec: FunctionSpec) -> None:
     finally:
         # Perform any cleanup
         cleanup(spec)
-
-
-def run_with_setup(spec: FunctionSpec) -> None:
-    """
-    Performs the setup needed for a Function operator and then executes it.
-    """
-    # Generate a unique function extract path if one does not exist already
-    if not spec.function_extract_path:
-        fn_extract_path = os.path.join(os.getcwd(), str(uuid.uuid4()))
-        spec.function_extract_path = fn_extract_path
-
-    op_path = get_extract_path.run(spec)
-
-    extract_function.run(spec)
-
-    requirements_path = os.path.join(op_path, "requirements.txt")
-    if os.path.exists(requirements_path):
-        os.system("{} -m pip install -r {}".format(sys.executable, requirements_path))
-
-    run(spec)

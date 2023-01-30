@@ -62,6 +62,13 @@ type Operator interface {
 	// Errors if the artifact hasn ot yet been computed, or InitializeResult() hasn't been called yet.
 	// *This method also persists any artifact results produced by this operator.*
 	PersistResult(ctx context.Context) error
+
+	// FetchExecState retrieves the execution state from storage.
+	FetchExecState(ctx context.Context) *shared.ExecutionState
+
+	// UpdateExecState and merge timestamps with current state based on the status of the new state.
+	// Other fields of bo.execState will be replaced.
+	UpdateExecState(execState *shared.ExecutionState)
 }
 
 // This should only be used within the boundaries of the execution engine.
@@ -107,7 +114,7 @@ func NewOperator(
 		metadataPath = outputExecPaths[0].OpMetadataPath
 	}
 
-	jobConfig, err := generateJobManagerConfig(
+	jobConfig, err := GenerateJobManagerConfig(
 		ctx,
 		opEngineConfig,
 		storageConfig,
