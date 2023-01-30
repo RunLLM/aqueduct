@@ -17,9 +17,9 @@ Release on January 30, 2023
 
 ### Enhancements
 * Allows workflows running on Airflow to be triggered upon the completion of
-    other workflows. Note that the completion an Airflow workflow cannot
+    other workflows. Note that the completion of an Airflow workflow cannot
     trigger the execution of another workflow because completion state is not
-    synchornously tracked on Airflow. 
+    synchronously tracked on Airflow. 
 * Unifies color and size of status indicators throughout the UI.
 
 ### Bugfixes
