@@ -173,8 +173,6 @@ func (j *DatabricksJobManager) LaunchMultipleTaskJob(
 	for taskName, taskID := range taskMap {
 		j.runMap[taskName] = taskID
 	}
-	log.Info("TASK MAP")
-	log.Info(j.runMap)
 	return runID, nil
 }
 

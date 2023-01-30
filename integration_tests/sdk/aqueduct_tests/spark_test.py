@@ -51,7 +51,7 @@ def test_spark_function(client, flow_name, data_integration, engine):
     output_artifact = _log_featurize_spark(table_artifact)
     save(data_integration, output_artifact)
 
-    default_cpus_flow = publish_flow_test(
+    spark_flow = publish_flow_test(
         client,
         name=flow_name(),
         artifacts=[output_artifact],

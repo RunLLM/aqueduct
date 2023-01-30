@@ -19,6 +19,7 @@ from aqueduct_executor.operators.function_executor.execute import (
 )
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
+from aqueduct_executor.operators.spark.utils import read_artifacts_spark, write_artifact_spark
 from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.enums import (
     ArtifactType,
@@ -112,7 +113,7 @@ def run(spec: FunctionSpec, spark_session_obj: SparkSession) -> None:
         validate_spec(spec)
 
         # Read the input data from intermediate storage.
-        inputs, _, serialization_types = utils.read_artifacts_spark(
+        inputs, _, serialization_types = read_artifacts_spark(
             storage,
             spec.input_content_paths,
             spec.input_metadata_paths,
@@ -169,7 +170,7 @@ def run(spec: FunctionSpec, spark_session_obj: SparkSession) -> None:
             if not check_passed:
                 print(f"Check Operator did not pass.")
 
-                utils.write_artifact_spark(
+                write_artifact_spark(
                     storage,
                     ArtifactType.BOOL,
                     derived_from_bson,  # derived_from_bson doesn't apply to bool artifact
@@ -218,7 +219,7 @@ def run(spec: FunctionSpec, spark_session_obj: SparkSession) -> None:
                     )
 
         for i, result in enumerate(results):
-            utils.write_artifact_spark(
+            write_artifact_spark(
                 storage,
                 result_types[i],
                 derived_from_bson,

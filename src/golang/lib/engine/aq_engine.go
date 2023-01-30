@@ -31,10 +31,6 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const (
-	previewWorkflowName = "PREVIEW"
-)
-
 type AqueductTimeConfig struct {
 	// Configures exactly long we wait before polling again on an in-progress operator.
 	OperatorPollInterval time.Duration
@@ -377,7 +373,7 @@ func (eng *aqEngine) PreviewWorkflow(
 	err = eng.executeWithEngine(
 		ctx,
 		dag,
-		previewWorkflowName,
+		fmt.Sprintf("PREVIEW_%s", uuid.New().String()),
 		dbDAG.EngineConfig,
 		dbDAG.StorageConfig,
 		wfRunMetadata,

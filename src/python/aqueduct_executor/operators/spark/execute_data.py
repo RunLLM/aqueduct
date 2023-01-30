@@ -17,6 +17,7 @@ from aqueduct_executor.operators.connectors.data.spec import (
     LoadTableSpec,
     Spec,
 )
+from aqueduct_executor.operators.spark.utils import read_artifacts_spark, write_artifact_spark
 from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.enums import (
     ArtifactType,
@@ -138,7 +139,7 @@ def run_extract_spark(
         extract_params, extract.MongoDBParams
     ):
         assert len(spec.input_param_names) == len(spec.input_content_paths)
-        input_vals, _, _ = utils.read_artifacts_spark(
+        input_vals, _, _ = read_artifacts_spark(
             storage,
             spec.input_content_paths,
             spec.input_metadata_paths,
@@ -167,7 +168,7 @@ def run_extract_spark(
             output_artifact_type = ArtifactType.TUPLE
 
     if exec_state.status != ExecutionStatus.FAILED:
-        utils.write_artifact_spark(
+        write_artifact_spark(
             storage,
             output_artifact_type,
             derived_from_bson,
@@ -186,7 +187,7 @@ def run_load_spark(
     exec_state: ExecutionState,
     spark_session_obj: SparkSession,
 ) -> None:
-    inputs, input_types, _ = utils.read_artifacts_spark(
+    inputs, input_types, _ = read_artifacts_spark(
         storage,
         [spec.input_content_path],
         [spec.input_metadata_path],
