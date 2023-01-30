@@ -1,5 +1,49 @@
 # Changelog
 
+## 0.2.0
+Release on January 30, 2023
+
+### Key Features
+* [Beta] Aqueduct now supports running workflows on Databricks Spark clusters! 
+    As of this release, you can now connect Aqueduct to a Databricks cluster 
+    from the UI and use the Aqueduct decorator API to deploy workflows onto 
+    those clusters. 
+    * Databricks workflows can read data from Snowflake and AWS S3. Future
+        releases support other data systems, including Delta Lake.
+    * Currently, you cannot run a subset of a workflow on a Databricks cluster;
+        the whole workflow must be run on Databricks.
+    * We plan to add support for non-Databricks Spark clusters in the coming
+        releases.
+
+### Enhancements
+* Allows workflows running on Airflow to be triggered upon the completion of
+    other workflows. Note that the completion an Airflow workflow cannot
+    trigger the execution of another workflow because completion state is not
+    synchornously tracked on Airflow. 
+* Unifies color and size of status indicators throughout the UI.
+
+### Bugfixes
+* Fixes bug where internal server error was uncaught when retrieving operator
+    results. 
+* Fixes bug where workflow status bar had unnecessary backticks around objects.
+* Fixes bug where access checks for AWS S3 buckets would fail with certain
+    permissions that were in fact valid.
+* Fixes bug where saving tables to relational databases with long column names
+    (\> 255 characters) would fail.
+* Fixes bug where SQLAlchemy version 2 introduced access issues with Pandas
+    DataFrames. Our current solution is require SQLAlchemy version 1.
+* Fixes bug where listing tables in BigQuery required complex, brittle SQL 
+    queries.
+* Fixes bug where data listing page might crash on UI after the execution of a
+    failed workflow.
+* Fixes bug where status indicator on check and metric details was not being 
+    properly displayed.
+
+### Deprecations
+* The `.save()` on Artifacts has been removed. As of
+    [v0.1.6](https://github.com/aqueducthq/aqueduct/releases/tag/v0.1.6), the
+    recommended method is to use the `.save()` API on integration objects.
+
 ## 0.1.11
 Released on January 23, 2023
 
