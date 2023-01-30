@@ -11,13 +11,6 @@ data:
     database:
     host:
     port: # 5439 is the default port since that is what Redshift defaults to
-  test_snowflake:
-    type: Snowflake
-    username:
-    password:
-    account_identifier:
-    database:
-    warehouse:
   test_s3:
     type: S3
 
@@ -33,3 +26,13 @@ data:
 
     # Whether to configure this integration as the metadata store too.
     # use_as_storage:
+  test_snowflake:
+    type: Snowflake
+    username:
+    password:
+    account_identifier:
+    database:
+    warehouse:
+  test_sqlite:
+    type: SQLite
+    database: /Users/eunicechan/Desktop/aqueduct/integration_tests/sdk/test.db
