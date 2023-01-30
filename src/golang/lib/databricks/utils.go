@@ -9,7 +9,8 @@ import (
 )
 
 func AddEntrypointFilesToStorage(ctx context.Context) error {
-	storageManager := storage.NewStorage(config.Storage())
+	config := config.Storage()
+	storageManager := storage.NewStorage(&config)
 
 	filesToWrite := map[string]string{
 		DatabricksFunctionScript: FunctionEntrypoint,

@@ -27,7 +27,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		},
 		routes.DeleteIntegrationRoute: &handler.DeleteIntegrationHandler{
 			Database: s.Database,
-			Vault:    s.Vault,
 
 			DAGRepo:                  s.DAGRepo,
 			ExecutionEnvironmentRepo: s.ExecutionEnvironmentRepo,
@@ -38,7 +37,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database:   s.Database,
 			Engine:     s.AqEngine,
 			JobManager: s.JobManager,
-			Vault:      s.Vault,
 
 			IntegrationRepo:          s.IntegrationRepo,
 			ExecutionEnvironmentRepo: s.ExecutionEnvironmentRepo,
@@ -48,7 +46,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		routes.EditIntegrationRoute: &handler.EditIntegrationHandler{
 			Database:   s.Database,
 			JobManager: s.JobManager,
-			Vault:      s.Vault,
 
 			IntegrationRepo: s.IntegrationRepo,
 		},
@@ -103,7 +100,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		},
 		routes.GetWorkflowRoute: &handler.GetWorkflowHandler{
 			Database: s.Database,
-			Vault:    s.Vault,
 
 			ArtifactRepo:       s.ArtifactRepo,
 			ArtifactResultRepo: s.ArtifactResultRepo,
@@ -153,7 +149,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		},
 		routes.ListWorkflowsRoute: &handler.ListWorkflowsHandler{
 			Database: s.Database,
-			Vault:    s.Vault,
 
 			ArtifactRepo:       s.ArtifactRepo,
 			ArtifactResultRepo: s.ArtifactResultRepo,
@@ -167,7 +162,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		routes.PreviewTableRoute: &handler.PreviewTableHandler{
 			Database:   s.Database,
 			JobManager: s.JobManager,
-			Vault:      s.Vault,
 
 			IntegrationRepo: s.IntegrationRepo,
 		},
@@ -182,7 +176,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		routes.DiscoverRoute: &handler.DiscoverHandler{
 			Database:   s.Database,
 			JobManager: s.JobManager,
-			Vault:      s.Vault,
 
 			IntegrationRepo: s.IntegrationRepo,
 			OperatorRepo:    s.OperatorRepo,
@@ -190,21 +183,18 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		routes.ListIntegrationObjectsRoute: &handler.ListIntegrationObjectsHandler{
 			Database:   s.Database,
 			JobManager: s.JobManager,
-			Vault:      s.Vault,
 
 			IntegrationRepo: s.IntegrationRepo,
 		},
 		routes.CreateTableRoute: &handler.CreateTableHandler{
 			Database:   s.Database,
 			JobManager: s.JobManager,
-			Vault:      s.Vault,
 
 			IntegrationRepo: s.IntegrationRepo,
 		},
 		routes.RefreshWorkflowRoute: &handler.RefreshWorkflowHandler{
 			Database: s.Database,
 			Engine:   s.AqEngine,
-			Vault:    s.Vault,
 
 			WorkflowRepo: s.WorkflowRepo,
 		},
@@ -212,7 +202,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database:      s.Database,
 			JobManager:    s.JobManager,
 			GithubManager: s.GithubManager,
-			Vault:         s.Vault,
 			Engine:        s.AqEngine,
 
 			ArtifactRepo:             s.ArtifactRepo,
@@ -229,7 +218,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 				Database:      s.Database,
 				JobManager:    s.JobManager,
 				GithubManager: s.GithubManager,
-				Vault:         s.Vault,
 
 				ArtifactRepo:    s.ArtifactRepo,
 				DAGRepo:         s.DAGRepo,
@@ -251,7 +239,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		routes.TestIntegrationRoute: &handler.TestIntegrationHandler{
 			Database:   s.Database,
 			JobManager: s.JobManager,
-			Vault:      s.Vault,
 
 			IntegrationRepo: s.IntegrationRepo,
 		},

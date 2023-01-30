@@ -53,7 +53,6 @@ type AqServer struct {
 	GithubManager github.Manager
 	// TODO ENG-1483: Move JobManager from Server to Handlers
 	JobManager job.JobManager
-	Vault      vault.Vault
 	AqEngine   engine.AqEngine
 	AqPath     string
 
@@ -176,14 +175,14 @@ func (s *AqServer) Init() error {
 	storageConfig := config.Storage()
 
 	previewCacheManager, err := preview_cache.NewInMemoryPreviewCacheManager(
-		storageConfig,
+		&storageConfig,
 		previewCacheSize,
 	)
 	if err != nil {
 		return err
 	}
 
-	vault, err := vault.NewVault(storageConfig, config.EncryptionKey())
+	vault, err := vault.NewVault(&storageConfig, config.EncryptionKey())
 	if err != nil {
 		return err
 	}
@@ -209,7 +208,6 @@ func (s *AqServer) Init() error {
 
 	s.GithubManager = githubManager
 	s.JobManager = jobManager
-	s.Vault = vault
 	s.AqPath = aqPath
 	s.AqEngine = eng
 

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	"github.com/aqueducthq/aqueduct/config"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
@@ -32,7 +33,6 @@ type TestIntegrationHandler struct {
 	PostHandler
 
 	Database   database.Database
-	Vault      vault.Vault
 	JobManager job.JobManager
 
 	IntegrationRepo repos.Integration
@@ -94,7 +94,13 @@ func (h *TestIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve integration")
 	}
 
-	config, err := auth.ReadConfigFromSecret(ctx, ID, h.Vault)
+	storageConfig := config.Storage()
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
+	}
+
+	config, err := auth.ReadConfigFromSecret(ctx, ID, vaultObject)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve secrets")
 	}

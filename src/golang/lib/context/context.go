@@ -82,6 +82,6 @@ func ParseAqContext(ctx context.Context) (*AqContext, int, error) {
 			Auth0ID: auth0Id,
 		},
 		RequestID:     requestId,
-		StorageConfig: storageConfig,
+		StorageConfig: &storageConfig,
 	}, http.StatusOK, nil
 }

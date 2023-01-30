@@ -31,7 +31,7 @@ func Up(ctx context.Context, db database.Database) error {
 				artifactResult.Id,
 				&(artifactResult.Metadata.Metadata),
 				artifactResult.ContentPath,
-				storageConfig,
+				&storageConfig,
 				db,
 			)
 			if err != nil {
