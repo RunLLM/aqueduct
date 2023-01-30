@@ -104,7 +104,8 @@ class RelationalDBIntegration(Integration):
             pd.DataFrame of available tables.
         """
         if self.type() in [ServiceType.BIGQUERY]:
-            # Use the `list_tables` endpoint instead of a hardcoded SQL query
+            # Use the list integration objects endpoint instead of 
+            # providing a hardcoded SQL query to execute
             tables = globals.__GLOBAL_API_CLIENT__.list_tables(str(self.id()))
             return pd.DataFrame(tables, columns=['tablename'])
 
