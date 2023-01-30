@@ -10,7 +10,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 
@@ -18,11 +17,6 @@ const (
 	DefaultExecutionTimeout     = 15 * time.Minute
 	DefaultCleanupTimeout       = 2 * time.Minute
 	DefaultPollIntervalMillisec = 300
-)
-
-var (
-	ErrOpExecSystemFailure       = errors.New("Operator execution failed due to system error.")
-	ErrOpExecBlockingUserFailure = errors.New("Operator execution failed due to user error.")
 )
 
 type Engine interface {
