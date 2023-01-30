@@ -78,11 +78,11 @@ const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
             {metrics[i].name}
           </Typography>
           {metrics[i].status === ExecutionStatus.Succeeded ? (
-            <StatusIndicator status={metrics[i].status} />
-          ) : (
             <Typography variant="body1" sx={{ fontWeight: 300 }}>
               {parseMetricResult(metrics[i].value, 3)}
             </Typography>
+          ) : (
+            <StatusIndicator status={metrics[i].status} />
           )}
         </Box>
       );
