@@ -39,9 +39,7 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
   if (isFailed(historyWithLoadingStatus.status)) {
     return (
       <Alert style={{ marginTop: '10px' }} severity="error">
-        <AlertTitle>
-          Failed to load historical data.
-        </AlertTitle>
+        <AlertTitle>Failed to load historical data.</AlertTitle>
         <pre>{historyWithLoadingStatus.status.err}</pre>
       </Alert>
     );

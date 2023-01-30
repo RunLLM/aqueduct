@@ -39,9 +39,7 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
   if (isFailed(historyWithLoadingStatus.status)) {
     return (
       <Alert style={{ marginTop: '10px' }} severity="error">
-        <AlertTitle>
-          Failed to load historical data.
-        </AlertTitle>
+        <AlertTitle>Failed to load historical data.</AlertTitle>
         <pre>{historyWithLoadingStatus.status.err}</pre>
       </Alert>
     );
@@ -105,7 +103,7 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
             width="auto"
           >
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <StatusIndicator status={entry.status as ExecutionStatus} />
+              <StatusIndicator status={entry.status as ExecutionStatus} />
 
               <Typography sx={{ ml: 1 }} variant="body2">
                 {entry.timestamp.toLocaleString()}
