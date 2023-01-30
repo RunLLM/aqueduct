@@ -25,7 +25,7 @@ func CleanupStorageFiles(ctx context.Context, storageConfig *shared.StorageConfi
 
 func ObjectExistsInStorage(ctx context.Context, storageConfig *shared.StorageConfig, path string) bool {
 	_, err := storage.NewStorage(storageConfig).Get(ctx, path)
-	return err != errors.New("Object does not exist in storage.")
+	return err != storage.ErrObjectDoesNotExist
 }
 
 func ReadFromStorage(ctx context.Context, storageConfig *shared.StorageConfig, path string, container interface{}) error {

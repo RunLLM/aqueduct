@@ -233,7 +233,7 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 	data, err := storage.NewStorage(&dag.StorageConfig).Get(ctx, dbArtifactResult.ContentPath)
 	if err == nil {
 		response.Data = data
-	} else if err != errors.New("Object does not exist in storage.") {
+	} else if err != storage.ErrObjectDoesNotExist {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve data for the artifact result.")
 	}
 

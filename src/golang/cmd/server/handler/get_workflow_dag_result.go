@@ -175,7 +175,7 @@ func getArtifactContents(
 				path := artfResult.ContentPath
 				// Read data from storage and deserialize payload to `container`.
 				contentBytes, err := storageObj.Get(ctx, path)
-				if err == errors.New("Object does not exist in storage.") {
+				if err == storage.ErrObjectDoesNotExist {
 					// If the data does not exist, skip the fetch.
 					continue
 				}

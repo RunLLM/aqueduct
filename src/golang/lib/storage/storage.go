@@ -5,10 +5,13 @@ import (
 	"log"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/dropbox/godropbox/errors"
 )
 
+var ErrObjectDoesNotExist = errors.New("Object does not exist in storage.")
+
 type Storage interface {
-	// Throws `errors.New("Object does not exist in storage.")` if the path does not exist.
+	// Throws ErrObjectDoesNotExist if the path does not exist.
 	Get(ctx context.Context, key string) ([]byte, error)
 	Put(ctx context.Context, key string, value []byte) error
 	Delete(ctx context.Context, key string) error

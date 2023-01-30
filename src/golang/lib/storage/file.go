@@ -28,7 +28,7 @@ func newFileStorage(fileConfig *shared.FileConfig) *fileStorage {
 func (f *fileStorage) Get(ctx context.Context, key string) ([]byte, error) {
 	path := f.getFullPath(key)
 	if _, err := os.Stat(path); errors.Is(err, os.ErrNotExist) {
-		return nil, errors.New("Object does not exist in storage.")
+		return nil, ErrObjectDoesNotExist
 	}
 	return os.ReadFile(path)
 }

@@ -3,7 +3,6 @@ package storage
 import (
 	"bytes"
 	"context"
-	"errors"
 	"net/url"
 	"path"
 	"strings"
@@ -68,7 +67,7 @@ func (s *s3Storage) Get(ctx context.Context, key string) ([]byte, error) {
 		// Cast `err` to an AWS error to check code
 		if aerr, ok := err.(awserr.Error); ok {
 			if aerr.Code() == s3.ErrCodeNoSuchKey {
-				return nil, errors.New("Object does not exist in storage.")
+				return nil, ErrObjectDoesNotExist
 			}
 		}
 

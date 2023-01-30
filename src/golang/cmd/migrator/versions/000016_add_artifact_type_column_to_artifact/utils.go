@@ -268,7 +268,7 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 			// and we need to revert the content change.
 			originalContent, err := storage.NewStorage(storageConfig).Get(ctx, artifactResult.ContentPath)
 			if err != nil {
-				if artifactResult.Status != SucceededExecutionStatus && err == errors.New("Object does not exist in storage.") {
+				if artifactResult.Status != SucceededExecutionStatus && err == storage.ErrObjectDoesNotExist {
 					log.Infof("Skipping data migration for artifact result %s since its content wasn't generated.", artifactResult.Id)
 					continue
 				} else {

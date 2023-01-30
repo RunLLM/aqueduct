@@ -321,7 +321,6 @@ func (eng *aqEngine) ExecuteWorkflow(
 		wfRunMetadata,
 		timeConfig,
 		operator.Publish,
-		eng.Vault,
 	)
 	if err != nil {
 		execState.Status = mdl_shared.FailedExecutionStatus
@@ -396,7 +395,6 @@ func (eng *aqEngine) PreviewWorkflow(
 		wfRunMetadata,
 		timeConfig,
 		operator.Preview,
-		eng.Vault,
 	)
 	if err != nil {
 		log.Errorf("Workflow failed with error: %v", err)
@@ -783,7 +781,6 @@ func (eng *aqEngine) executeWithEngine(
 	workflowRunMetadata *WorkflowRunMetadata,
 	timeConfig *AqueductTimeConfig,
 	opExecMode operator.ExecutionMode,
-	vaultObject vault.Vault,
 ) error {
 	switch engineConfig.Type {
 	case shared.DatabricksEngineType:
@@ -792,7 +789,7 @@ func (eng *aqEngine) executeWithEngine(
 			engineConfig,
 			&storageConfig,
 			eng.AqPath,
-			vaultObject,
+			eng.Vault,
 		)
 		if err != nil {
 			return errors.Wrap(err, "Unable to generate JobManagerConfig.")
