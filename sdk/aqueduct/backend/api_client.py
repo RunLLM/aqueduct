@@ -54,7 +54,7 @@ class APIClient:
     REGISTER_WORKFLOW_ROUTE = "/api/workflow/register"
     REGISTER_AIRFLOW_WORKFLOW_ROUTE = "/api/workflow/register/airflow"
     LIST_INTEGRATIONS_ROUTE = "/api/integrations"
-    LIST_INTEGRATION_OBJECTS_ROUTE = "/api/integration/%s/objects"
+    LIST_INTEGRATION_OBJECTS_ROUTE_TEMPLATE = "/api/integration/%s/objects"
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
     LIST_WORKFLOW_SAVED_OBJECTS_ROUTE = "/api/workflow/%s/objects"
     GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact/%s/%s/result"
@@ -241,7 +241,7 @@ class APIClient:
         """Returns a list of the tables in the specified integration.
         If the integration is not a relational database, it will throw an error.
         """
-        url = self.construct_full_url(self.LIST_INTEGRATION_OBJECTS_ROUTE % integration_id)
+        url = self.construct_full_url(self.LIST_INTEGRATION_OBJECTS_ROUTE_TEMPLATE % integration_id)
         headers = self._generate_auth_headers()
         resp = requests.get(url, headers=headers)
         self.raise_errors(resp)
