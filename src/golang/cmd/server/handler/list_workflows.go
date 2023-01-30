@@ -158,7 +158,7 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 					if err == nil {
 						content := string(contentBytes)
 						contentPtr = &content
-					} else if err != storage.ErrObjectDoesNotExist {
+					} else if err != errors.New("Object does not exist in storage.") {
 						return nil, http.StatusInternalServerError, errors.Wrap(
 							err, "Unable to get metric content from storage",
 						)

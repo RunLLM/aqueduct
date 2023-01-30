@@ -139,7 +139,7 @@ func NewAqServer(environment string, disableUsageStats bool) *AqServer {
 	}
 
 	if !demoConnected {
-		err = ConnectBuiltinIntegration(ctx, testUser, s.IntegrationRepo, s.Database, s.Vault)
+		err = ConnectBuiltinIntegration(ctx, testUser, s.IntegrationRepo, s.Database)
 		if err != nil {
 			db.Close()
 			log.Fatal(err)

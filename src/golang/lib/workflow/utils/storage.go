@@ -25,11 +25,12 @@ func CleanupStorageFiles(ctx context.Context, storageConfig *shared.StorageConfi
 
 func ObjectExistsInStorage(ctx context.Context, storageConfig *shared.StorageConfig, path string) bool {
 	_, err := storage.NewStorage(storageConfig).Get(ctx, path)
-	return err != storage.ErrObjectDoesNotExist
+	return err != errors.New("Object does not exist in storage.")
 }
 
 func ReadFromStorage(ctx context.Context, storageConfig *shared.StorageConfig, path string, container interface{}) error {
 	// Read data from storage and deserialize payload to `container`
+	log.Errorf("path to fetch is %s", path)
 	serializedPayload, err := storage.NewStorage(storageConfig).Get(ctx, path)
 	if err != nil {
 		return errors.Wrap(err, "Unable to get object from storage")

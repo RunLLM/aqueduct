@@ -15,7 +15,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		routes.ConnectIntegrationRoute: &handler.ConnectIntegrationHandler{
 			Database:   s.Database,
 			JobManager: s.JobManager,
-			Vault:      s.Vault,
 
 			ArtifactRepo:       s.ArtifactRepo,
 			ArtifactResultRepo: s.ArtifactResultRepo,

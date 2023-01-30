@@ -349,7 +349,7 @@ func (h *GetArtifactVersionsHandler) updateVersionsWithChecksAndMetrics(
 						if err == nil {
 							content := string(contentBytes)
 							contentPtr = &content
-						} else if err != storage.ErrObjectDoesNotExist {
+						} else if err != errors.New("Object does not exist in storage.") {
 							return errors.Wrap(err, "Unable to get artifact content from storage")
 						}
 					}

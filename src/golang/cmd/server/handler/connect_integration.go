@@ -54,7 +54,6 @@ type ConnectIntegrationHandler struct {
 	PostHandler
 
 	Database   database.Database
-	Vault      vault.Vault
 	JobManager job.JobManager
 
 	ArtifactRepo       repos.Artifact
@@ -167,7 +166,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	if statusCode, err := ConnectIntegration(ctx, args, h.IntegrationRepo, txn, h.Vault); err != nil {
+	if statusCode, err := ConnectIntegration(ctx, args, h.IntegrationRepo, txn); err != nil {
 		return emptyResp, statusCode, err
 	}
 
@@ -227,7 +226,6 @@ func ConnectIntegration(
 	args *ConnectIntegrationArgs,
 	integrationRepo repos.Integration,
 	DB database.Database,
-	vaultObject vault.Vault,
 ) (int, error) {
 	// Extract non-confidential config
 	publicConfig := args.Config.PublicConfig()
@@ -259,6 +257,13 @@ func ConnectIntegration(
 	}
 	if err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+	}
+
+	storageConfig := config.Storage()
+
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
 	}
 
 	// Store config (including confidential information) in vault

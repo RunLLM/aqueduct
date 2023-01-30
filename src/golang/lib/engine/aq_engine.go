@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
@@ -63,7 +64,6 @@ type Repos struct {
 type aqEngine struct {
 	Database       database.Database
 	GithubManager  github.Manager
-	Vault          vault.Vault
 	CronjobManager cronjob.CronjobManager
 	AqPath         string
 
@@ -109,7 +109,6 @@ func NewAqEngine(
 		Database:            database,
 		GithubManager:       githubManager,
 		PreviewCacheManager: previewCacheManager,
-		Vault:               vault,
 		CronjobManager:      cronjobManager,
 		AqPath:              aqPath,
 		Repos:               repos,
@@ -263,6 +262,13 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to read operator environments.")
 	}
 
+	storageConfig := config.Storage()
+
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to initialize vault.")
+	}
+
 	dag, err := dag_utils.NewWorkflowDag(
 		ctx,
 		dagResult.ID,
@@ -270,7 +276,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		eng.OperatorResultRepo,
 		eng.ArtifactRepo,
 		eng.ArtifactResultRepo,
-		eng.Vault,
+		vaultObject,
 		nil, /* artifactCacheManager */
 		execEnvsByOpId,
 		operator.Publish,
@@ -314,6 +320,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		wfRunMetadata,
 		timeConfig,
 		operator.Publish,
+		vaultObject,
 	)
 	if err != nil {
 		execState.Status = mdl_shared.FailedExecutionStatus
@@ -335,6 +342,13 @@ func (eng *aqEngine) PreviewWorkflow(
 	execEnvByOperatorId map[uuid.UUID]exec_env.ExecutionEnvironment,
 	timeConfig *AqueductTimeConfig,
 ) (*WorkflowPreviewResult, error) {
+	storageConfig := config.Storage()
+
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to initialize vault.")
+	}
+
 	dag, err := dag_utils.NewWorkflowDag(
 		ctx,
 		uuid.Nil, /* workflowDagResultID */
@@ -342,7 +356,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		eng.OperatorResultRepo,
 		eng.ArtifactRepo,
 		eng.ArtifactResultRepo,
-		eng.Vault,
+		vaultObject,
 		eng.PreviewCacheManager,
 		execEnvByOperatorId,
 		operator.Preview,
@@ -381,6 +395,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		wfRunMetadata,
 		timeConfig,
 		operator.Preview,
+		vaultObject,
 	)
 	if err != nil {
 		log.Errorf("Workflow failed with error: %v", err)
@@ -700,9 +715,16 @@ func (eng *aqEngine) TriggerWorkflow(
 		return shared.FailedExecutionStatus, err
 	}
 
+	storageConfig := config.Storage()
+
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to initialize vault.")
+	}
+
 	if dag.EngineConfig.Type == shared.AirflowEngineType {
 		// This is an Airflow workflow so the executor binary is not used
-		if err := airflow.TriggerWorkflow(ctx, dag, eng.Vault); err != nil {
+		if err := airflow.TriggerWorkflow(ctx, dag, vaultObject); err != nil {
 			return shared.FailedExecutionStatus, errors.Wrap(
 				err,
 				"Unable to trigger a new workflow run on Airflow",
@@ -760,6 +782,7 @@ func (eng *aqEngine) executeWithEngine(
 	workflowRunMetadata *WorkflowRunMetadata,
 	timeConfig *AqueductTimeConfig,
 	opExecMode operator.ExecutionMode,
+	vaultObject vault.Vault,
 ) error {
 	switch engineConfig.Type {
 	case shared.DatabricksEngineType:
@@ -768,7 +791,7 @@ func (eng *aqEngine) executeWithEngine(
 			engineConfig,
 			&storageConfig,
 			eng.AqPath,
-			eng.Vault,
+			vaultObject,
 		)
 		if err != nil {
 			return errors.Wrap(err, "Unable to generate JobManagerConfig.")

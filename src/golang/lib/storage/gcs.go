@@ -3,6 +3,7 @@ package storage
 import (
 	"bytes"
 	"context"
+	"errors"
 	"io"
 	"path"
 	"strings"
@@ -54,7 +55,7 @@ func (g *gcsStorage) Get(ctx context.Context, key string) ([]byte, error) {
 	_, err = client.Bucket(bucket).Object(key).Attrs(ctx)
 	if err != nil {
 		if err == storage.ErrObjectNotExist {
-			return nil, ErrObjectDoesNotExist
+			return nil, errors.New("Object does not exist in storage.")
 		}
 		return nil, err
 	}
