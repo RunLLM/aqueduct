@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -12,7 +13,7 @@ import (
 	"github.com/dropbox/godropbox/errors"
 )
 
-// We seperate out the execution step for Databricks Jobs since
+// We separate out the execution step for Databricks Jobs since
 // Databricks takes care of launching Tasks.
 // Steps:
 // 1. Convert each operator into a Task (includes parent dependency).
@@ -38,7 +39,11 @@ func ExecuteDatabricks(
 	}
 
 	// Launch the workflow job with all tasks
-	_, err = databricksJobManager.LaunchMultipleTaskJob(ctx, workflowName, taskList)
+	_, err = databricksJobManager.LaunchMultipleTaskJob(
+		ctx,
+		workflowName,
+		taskList,
+	)
 	if err != nil {
 		return errors.Wrap(err, "Unable to launch workflow job on Databricks.")
 	}
@@ -64,13 +69,7 @@ func ExecuteDatabricks(
 
 		for _, op := range inProgressOps {
 			// Poll on the individual operator
-			executionStatus, err := databricksJobManager.Poll(ctx, op.JobSpec().JobName())
-			op.UpdateExecState(&shared.ExecutionState{Status: executionStatus})
-			execState := op.ExecState()
-			if err != nil {
-				return err
-			}
-
+			execState := PollDatabricksOperator(ctx, op, databricksJobManager)
 			if !execState.Terminated() {
 				continue
 			}
@@ -115,7 +114,7 @@ func CreateTaskList(
 	databricksJobManager *job.DatabricksJobManager,
 ) ([]jobs.JobTaskSettings, error) {
 	dag := workflowDag
-	var taskList []jobs.JobTaskSettings
+	taskList := make([]jobs.JobTaskSettings, 0, len(dag.Operators()))
 
 	for _, op := range dag.Operators() {
 
@@ -141,4 +140,34 @@ func CreateTaskList(
 		taskList = append(taskList, *task)
 	}
 	return taskList, nil
+}
+
+func PollDatabricksOperator(
+	ctx context.Context,
+	op operator.Operator,
+	databricksJobManager *job.DatabricksJobManager,
+) *shared.ExecutionState {
+	status, err := databricksJobManager.Poll(ctx, op.JobSpec().JobName())
+	if err != nil {
+		failureType := shared.SystemFailure
+		op.UpdateExecState(&shared.ExecutionState{
+			Status:      shared.FailedExecutionStatus,
+			FailureType: &failureType,
+			Error: &shared.Error{
+				Context: fmt.Sprintf("%v", err),
+				Tip:     shared.TipUnknownInternalError,
+			},
+		})
+		return op.ExecState()
+	} else {
+		// The job just completed, so we know we can fetch the results (succeeded/failed).
+		if status == shared.FailedExecutionStatus || status == shared.SucceededExecutionStatus {
+			execState := op.FetchExecState(ctx)
+			op.UpdateExecState(execState)
+			return op.ExecState()
+		}
+
+		// The job must exist at this point, but it hasn't completed (running).
+		return op.ExecState()
+	}
 }

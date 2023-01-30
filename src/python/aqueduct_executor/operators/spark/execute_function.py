@@ -6,15 +6,11 @@ import sys
 import tracemalloc
 import uuid
 from typing import Any, Callable, Dict, List, Tuple
-from pyspark.sql import SparkSession, dataframe
 
 import numpy as np
 import pandas as pd
 from aqueduct.utils.type_inference import infer_artifact_type
-from aqueduct_executor.operators.function_executor import (
-    extract_function, 
-    get_extract_path,
-)
+from aqueduct_executor.operators.function_executor import extract_function, get_extract_path
 from aqueduct_executor.operators.function_executor.execute import (
     cleanup,
     get_py_import_path,
@@ -45,9 +41,10 @@ from aqueduct_executor.operators.utils.execution import (
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.timer import Timer
+from pyspark.sql import SparkSession, dataframe
 
 
-def _infer_artifact_type_spark(value: Any) -> ArtifactType:
+def _infer_artifact_type_spark(value: Any) -> Any:
     if isinstance(value, dataframe.DataFrame):
         return ArtifactType.TABLE
     else:
@@ -116,7 +113,10 @@ def run(spec: FunctionSpec, spark_session_obj: SparkSession) -> None:
 
         # Read the input data from intermediate storage.
         inputs, _, serialization_types = utils.read_artifacts_spark(
-            storage, spec.input_content_paths, spec.input_metadata_paths, spark_session_obj,
+            storage,
+            spec.input_content_paths,
+            spec.input_metadata_paths,
+            spark_session_obj,
         )
 
         derived_from_bson = SerializationType.BSON_TABLE in serialization_types
@@ -251,23 +251,3 @@ def run(spec: FunctionSpec, spark_session_obj: SparkSession) -> None:
     finally:
         # Perform any cleanup
         cleanup(spec)
-
-
-def run_with_setup(spec: FunctionSpec) -> None:
-    """
-    Performs the setup needed for a Function operator and then executes it.
-    """
-    # Generate a unique function extract path if one does not exist already
-    if not spec.function_extract_path:
-        fn_extract_path = os.path.join(os.getcwd(), str(uuid.uuid4()))
-        spec.function_extract_path = fn_extract_path
-
-    op_path = get_extract_path.run(spec)
-
-    extract_function.run(spec)
-
-    requirements_path = os.path.join(op_path, "requirements.txt")
-    if os.path.exists(requirements_path):
-        os.system("{} -m pip install -r {}".format(sys.executable, requirements_path))
-
-    run(spec)

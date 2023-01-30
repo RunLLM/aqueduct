@@ -139,8 +139,8 @@ func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
 	return bo.jobManager.Launch(ctx, spec.JobName(), spec)
 }
 
-// fetchAndUpdateExecState assumes that the operator has been computed already.
-func (bo *baseOperator) fetchExecState(ctx context.Context) *shared.ExecutionState {
+// FetchExecState assumes that the operator has been computed already.
+func (bo *baseOperator) FetchExecState(ctx context.Context) *shared.ExecutionState {
 	var execState shared.ExecutionState
 	err := utils.ReadFromStorage(
 		ctx,
@@ -245,7 +245,7 @@ func (bo *baseOperator) Poll(ctx context.Context) (*shared.ExecutionState, error
 		if err.Code() == job.JobMissing || err.Code() == job.Noop {
 			// Check whether the operator has actually completed.
 			if utils.ObjectExistsInStorage(ctx, bo.storageConfig, bo.metadataPath) {
-				execState := bo.fetchExecState(ctx)
+				execState := bo.FetchExecState(ctx)
 				bo.UpdateExecState(execState)
 				return bo.ExecState(), nil
 			}
@@ -271,7 +271,7 @@ func (bo *baseOperator) Poll(ctx context.Context) (*shared.ExecutionState, error
 	} else {
 		// The job just completed, so we know we can fetch the results (succeeded/failed).
 		if status == shared.FailedExecutionStatus || status == shared.SucceededExecutionStatus {
-			execState := bo.fetchExecState(ctx)
+			execState := bo.FetchExecState(ctx)
 			bo.UpdateExecState(execState)
 			return bo.ExecState(), nil
 		}

@@ -1,6 +1,5 @@
 import sys
 from typing import Any
-from pyspark.sql import SparkSession
 
 from aqueduct_executor.operators.connectors.data import common, config, connector, extract
 from aqueduct_executor.operators.connectors.data.execute import (
@@ -43,6 +42,7 @@ from aqueduct_executor.operators.utils.execution import (
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
+from pyspark.sql import SparkSession
 
 
 def run(spec: Spec, spark_session_obj: SparkSession) -> None:
@@ -98,7 +98,9 @@ def run(spec: Spec, spark_session_obj: SparkSession) -> None:
         sys.exit(1)
 
 
-def _execute_spark(spec: Spec, storage: Storage, exec_state: ExecutionState, spark_session_obj: SparkSession) -> None:
+def _execute_spark(
+    spec: Spec, storage: Storage, exec_state: ExecutionState, spark_session_obj: SparkSession
+) -> None:
     if spec.type == JobType.DELETESAVEDOBJECTS:
         run_delete_saved_objects(spec, storage, exec_state)
 
@@ -122,7 +124,11 @@ def _execute_spark(spec: Spec, storage: Storage, exec_state: ExecutionState, spa
 
 
 def run_extract_spark(
-    spec: ExtractSpec, op: connector.DataConnector, storage: Storage, exec_state: ExecutionState, spark_session_obj: SparkSession
+    spec: ExtractSpec,
+    op: connector.DataConnector,
+    storage: Storage,
+    exec_state: ExecutionState,
+    spark_session_obj: SparkSession,
 ) -> None:
     extract_params = spec.parameters
 
@@ -147,7 +153,7 @@ def run_extract_spark(
 
     @exec_state.user_fn_redirected(failure_tip=TIP_EXTRACT)
     def _extract() -> Any:
-        return op.extract_spark(spec.parameters, spark_session_obj)
+        return op.extract_spark(spec.parameters, spark_session_obj)  # type: ignore
 
     output = _extract()
 
@@ -174,7 +180,11 @@ def run_extract_spark(
 
 
 def run_load_spark(
-    spec: LoadSpec, op: connector.DataConnector, storage: Storage, exec_state: ExecutionState, spark_session_obj: SparkSession,
+    spec: LoadSpec,
+    op: connector.DataConnector,
+    storage: Storage,
+    exec_state: ExecutionState,
+    spark_session_obj: SparkSession,
 ) -> None:
     inputs, input_types, _ = utils.read_artifacts_spark(
         storage,
@@ -187,14 +197,19 @@ def run_load_spark(
 
     @exec_state.user_fn_redirected(failure_tip=TIP_LOAD)
     def _load() -> None:
-        op.load_spark(spec.parameters, inputs[0], input_types[0])
+        op.load_spark(spec.parameters, inputs[0], input_types[0])  # type: ignore
 
     _load()
 
 
-def run_load_table_spark(spec: LoadTableSpec, op: connector.DataConnector, storage: Storage) -> None:
+def run_load_table_spark(
+    spec: LoadTableSpec,
+    op: connector.DataConnector,
+    storage: Storage,
+    spark_session_obj: SparkSession,
+) -> None:
     df = utils._read_csv(storage.get(spec.csv))
-    op.load_spark(spec.load_parameters.parameters, df, ArtifactType.TABLE)
+    op.load_spark(spec.load_parameters.parameters, df, ArtifactType.TABLE)  # type: ignore
 
 
 def setup_connector_spark(
@@ -214,9 +229,20 @@ def setup_connector_spark(
         from aqueduct_executor.operators.connectors.data.spark.snowflake import (
             SparkSnowflakeConnector as OpConnector,
         )
+    elif connector_name == common.Name.S3:
+        try:
+            import pyarrow
+        except:
+            raise MissingConnectorDependencyException(
+                "Unable to initialize the Spark S3 connector. Have you run `aqueduct install s3`?"
+            )
+
+        from aqueduct_executor.operators.connectors.data.spark.s3 import (  # type: ignore
+            SparkS3Connector as OpConnector,
+        )
     else:
         raise UnsupportedConnectorExecption(
-                "Unable to initialize connector. This connector is not yet supported for Aqueduct on Spark."
-            )
+            "Unable to initialize connector. This connector is not yet supported for Aqueduct on Spark."
+        )
     # isort: on
     return OpConnector(config=connector_config)  # type: ignore

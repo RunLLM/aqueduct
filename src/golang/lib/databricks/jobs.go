@@ -48,7 +48,6 @@ func CreateJob(
 	s3InstanceProfileArn string,
 	tasks []jobs.JobTaskSettings,
 ) (int64, error) {
-
 	sparkVersions, err := databricksClient.Clusters.SparkVersions(ctx)
 	if err != nil {
 		return -1, errors.Wrap(err, "Error selecting a spark version.")
@@ -69,8 +68,11 @@ func CreateJob(
 				JobClusterKey: workflowNameToJobClusterKey(name),
 				NewCluster: &clusters.CreateCluster{
 					SparkVersion: latestLTS,
-					NumWorkers:   NumWorkers,
-					NodeTypeId:   NodeTypeId,
+					Autoscale: &clusters.AutoScale{
+						MinWorkers: DefaultMinNumWorkers,
+						MaxWorkers: DefaultMaxNumWorkers,
+					},
+					NodeTypeId: DefaultNodeTypeID,
 					AwsAttributes: &clusters.AwsAttributes{
 						InstanceProfileArn: s3InstanceProfileArn,
 					},
@@ -95,7 +97,6 @@ func CreateTask(
 	pythonFilePath string,
 	specStr string,
 ) (*jobs.JobTaskSettings, error) {
-
 	jobClusterKey := workflowNameToJobClusterKey(workflowName)
 
 	taskDependenciesList := make([]jobs.TaskDependenciesItem, 0, len(upstreamTaskNames))

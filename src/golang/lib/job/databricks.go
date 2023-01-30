@@ -121,7 +121,6 @@ func (j *DatabricksJobManager) CreateTask(
 	spec Spec,
 	parentOperatorNames []string,
 ) (*jobs.JobTaskSettings, error) {
-
 	// Get the entrypoint file for Databricks.
 	storageConfig, err := spec.GetStorageConfig()
 	if err != nil {
@@ -155,7 +154,6 @@ func (j *DatabricksJobManager) LaunchMultipleTaskJob(
 	name string,
 	taskList []jobs.JobTaskSettings,
 ) (int64, JobError) {
-
 	// Create and register the job with Databricks.
 	jobID, err := databricks_lib.CreateJob(ctx, j.databricksClient, name, j.conf.S3InstanceProfileARN, taskList)
 	if err != nil {

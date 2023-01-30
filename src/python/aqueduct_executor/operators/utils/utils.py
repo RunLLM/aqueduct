@@ -1,7 +1,6 @@
 import io
 import json
 from typing import Any, Callable, Dict, List, Optional, Tuple
-from pyspark.sql import SparkSession
 
 import pandas as pd
 from aqueduct.utils.serialization import (
@@ -27,6 +26,7 @@ from aqueduct_executor.operators.utils.execution import (
 )
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 from aqueduct_executor.operators.utils.storage.storage import Storage
+from pyspark.sql import SparkSession
 
 _RUNTIME_SEC_METRIC_NAME = "runtime"
 _MAX_MEMORY_MB_METRIC_NAME = "max_memory"
@@ -123,7 +123,7 @@ def read_artifacts_spark(
         if artifact_type != ArtifactType.TABLE:
             inputs.append(deserialize(serialization_type, artifact_type, storage.get(input_path)))
         else:
-            #read from temp view
+            # read from temp view
             try:
                 # global_temp_db = spark_session_obj.conf.get("spark.sql.globalTempDatabase")
                 view_path = "global_temp" + "." + convert_path_to_view_name(input_path)
@@ -245,7 +245,7 @@ def write_artifact_spark(
             pandas_df = spark_df.limit(100).toPandas()
             serialized_val = serialize_val_wrapper(pandas_df, serialization_type)
             storage.put(output_path, serialized_val)
-            
+
         else:
             serialized_val = serialize_val_wrapper(content, serialization_type)
             storage.put(output_path, serialized_val)

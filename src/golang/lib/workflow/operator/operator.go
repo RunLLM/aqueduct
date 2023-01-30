@@ -63,6 +63,11 @@ type Operator interface {
 	// *This method also persists any artifact results produced by this operator.*
 	PersistResult(ctx context.Context) error
 
+	// FetchExecState retrieves the execution state from storage.
+	FetchExecState(ctx context.Context) *shared.ExecutionState
+
+	// UpdateExecState and merge timestamps with current state based on the status of the new state.
+	// Other fields of bo.execState will be replaced.
 	UpdateExecState(execState *shared.ExecutionState)
 }
 
