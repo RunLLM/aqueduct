@@ -38,10 +38,10 @@ func waitForInProgressOperators(
 
 func opFailureError(failureType shared.FailureType, op operator.Operator) error {
 	if failureType == shared.SystemFailure {
-		return errors.New("Operator execution failed due to system error.")
+		return ErrOpExecSystemFailure
 	} else if failureType == shared.UserFatalFailure {
 		log.Errorf("Failed due to user error. Operator name %s, id %s.", op.Name(), op.ID())
-		return errors.New("Operator execution failed due to user error.")
+		return ErrOpExecBlockingUserFailure
 	}
 	return errors.Newf("Internal error: Unsupported failure type %v", failureType)
 }

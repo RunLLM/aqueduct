@@ -209,14 +209,14 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		execEnvByOpId,
 		timeConfig,
 	)
-	if err != nil && err != errors.New("Operator execution failed due to system error.") && err != errors.New("Operator execution failed due to user error.") {
+	if err != nil && err != engine.ErrOpExecSystemFailure && err != engine.ErrOpExecBlockingUserFailure {
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error executing the workflow.")
 	}
 
 	statusCode := http.StatusOK
-	if err == errors.New("Operator execution failed due to system error.") {
+	if err == engine.ErrOpExecSystemFailure {
 		statusCode = http.StatusInternalServerError
-	} else if err == errors.New("Operator execution failed due to user error.") {
+	} else if err == engine.ErrOpExecBlockingUserFailure {
 		statusCode = http.StatusBadRequest
 	}
 
