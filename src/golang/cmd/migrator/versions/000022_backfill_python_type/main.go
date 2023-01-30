@@ -22,8 +22,7 @@ func Up(ctx context.Context, db database.Database) error {
 		return err
 	}
 
-	sConfig := config.Storage()
-	storageConfig := &sConfig
+	storageConfig := config.Storage()
 
 	for _, artifactResult := range artifactResults {
 		if !artifactResult.Metadata.IsNull {

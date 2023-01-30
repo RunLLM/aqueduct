@@ -45,7 +45,7 @@ func TestUpdateStorage(t *testing.T) {
 	require.Nil(t, err)
 
 	currentStorage := Storage()
-	require.True(t, reflect.DeepEqual(testConfig.StorageConfig, &currentStorage))
+	require.True(t, reflect.DeepEqual(testConfig.StorageConfig, currentStorage))
 
 	expectedStorage := &shared.StorageConfig{
 		Type: shared.S3StorageType,
@@ -60,7 +60,7 @@ func TestUpdateStorage(t *testing.T) {
 	require.Nil(t, err)
 
 	actualStorage := Storage()
-	require.True(t, reflect.DeepEqual(expectedStorage, &actualStorage))
+	require.True(t, reflect.DeepEqual(expectedStorage, actualStorage))
 }
 
 func TestLoadConfig(t *testing.T) {

@@ -45,8 +45,8 @@ func APIKey() string {
 }
 
 // Storage returns the storage layer config.
-func Storage() shared.StorageConfig {
-	return *globalConfig.StorageConfig
+func Storage() *shared.StorageConfig {
+	return globalConfig.StorageConfig
 }
 
 // UpdateStorage updates the storage layer config.

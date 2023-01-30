@@ -259,9 +259,7 @@ func ConnectIntegration(
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
-	storageConfig := config.Storage()
-
-	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	vaultObject, err := vault.NewVault(config.Storage(), config.EncryptionKey())
 	if err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
 	}
@@ -484,12 +482,10 @@ func setIntegrationAsStorage(
 		return errors.Newf("%v cannot be used as the metadata storage layer", svc)
 	}
 
-	currentStorageConfig := config.Storage()
-
 	// Migrate all storage content to the new storage config
 	if err := utils.MigrateStorageAndVault(
 		ctx,
-		&currentStorageConfig,
+		config.Storage(),
 		storageConfig,
 		orgID,
 		dagRepo,

@@ -261,9 +261,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to read operator environments.")
 	}
 
-	storageConfig := config.Storage()
-
-	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	vaultObject, err := vault.NewVault(config.Storage(), config.EncryptionKey())
 	if err != nil {
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to initialize vault.")
 	}
@@ -341,9 +339,7 @@ func (eng *aqEngine) PreviewWorkflow(
 	execEnvByOperatorId map[uuid.UUID]exec_env.ExecutionEnvironment,
 	timeConfig *AqueductTimeConfig,
 ) (*WorkflowPreviewResult, error) {
-	storageConfig := config.Storage()
-
-	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	vaultObject, err := vault.NewVault(config.Storage(), config.EncryptionKey())
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to initialize vault.")
 	}
@@ -714,9 +710,7 @@ func (eng *aqEngine) TriggerWorkflow(
 		return shared.FailedExecutionStatus, err
 	}
 
-	storageConfig := config.Storage()
-
-	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	vaultObject, err := vault.NewVault(config.Storage(), config.EncryptionKey())
 	if err != nil {
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to initialize vault.")
 	}

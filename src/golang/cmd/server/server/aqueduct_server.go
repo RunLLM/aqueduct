@@ -176,14 +176,14 @@ func (s *AqServer) Init() error {
 	storageConfig := config.Storage()
 
 	previewCacheManager, err := preview_cache.NewInMemoryPreviewCacheManager(
-		&storageConfig,
+		storageConfig,
 		previewCacheSize,
 	)
 	if err != nil {
 		return err
 	}
 
-	vault, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	vault, err := vault.NewVault(storageConfig, config.EncryptionKey())
 	if err != nil {
 		return err
 	}
