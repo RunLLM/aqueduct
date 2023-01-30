@@ -10,7 +10,7 @@ data:
     password:
     database:
     host:
-    port: # 5439 is the default port since that is what Redshift defaults to
+    port: # 5439 is the default port since that is what Redshift defaults togit 
   test_s3:
     type: S3
 
@@ -35,4 +35,4 @@ data:
     warehouse:
   test_sqlite:
     type: SQLite
-    database: /Users/eunicechan/Desktop/aqueduct/integration_tests/sdk/test.db
+    database: 
