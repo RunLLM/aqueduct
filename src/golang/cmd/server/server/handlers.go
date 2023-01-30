@@ -207,10 +207,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Engine:   s.AqEngine,
 			Vault:    s.Vault,
 
-			ArtifactRepo: s.ArtifactRepo,
-			DAGRepo:      s.DAGRepo,
-			DAGEdgeRepo:  s.DAGEdgeRepo,
-			OperatorRepo: s.OperatorRepo,
 			WorkflowRepo: s.WorkflowRepo,
 		},
 		routes.RegisterWorkflowRoute: &handler.RegisterWorkflowHandler{

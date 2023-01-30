@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/lib/airflow"
 	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
@@ -25,6 +26,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
+	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -672,11 +674,36 @@ func (eng *aqEngine) EditWorkflow(
 // Remove once executor is done.
 func (eng *aqEngine) TriggerWorkflow(
 	ctx context.Context,
-	workflowId uuid.UUID,
+	workflowID uuid.UUID,
 	name string,
 	timeConfig *AqueductTimeConfig,
 	parameters map[string]param.Param,
 ) (shared.ExecutionStatus, error) {
+	dag, err := utils.ReadLatestDAGFromDatabase(
+		ctx,
+		workflowID,
+		eng.WorkflowRepo,
+		eng.DAGRepo,
+		eng.OperatorRepo,
+		eng.ArtifactRepo,
+		eng.DAGEdgeRepo,
+		eng.Database,
+	)
+	if err != nil {
+		return shared.FailedExecutionStatus, err
+	}
+
+	if dag.EngineConfig.Type == shared.AirflowEngineType {
+		// This is an Airflow workflow so the executor binary is not used
+		if err := airflow.TriggerWorkflow(ctx, dag, eng.Vault); err != nil {
+			return shared.FailedExecutionStatus, errors.Wrap(
+				err,
+				"Unable to trigger a new workflow run on Airflow",
+			)
+		}
+		return shared.SucceededExecutionStatus, nil
+	}
+
 	jobManager, err := job.NewProcessJobManager(
 		&job.ProcessConfig{
 			BinaryDir:          path.Join(eng.AqPath, job.BinaryDir),
@@ -689,7 +716,7 @@ func (eng *aqEngine) TriggerWorkflow(
 
 	jobSpec := job.NewWorkflowSpec(
 		name,
-		workflowId.String(),
+		workflowID.String(),
 		eng.Database.Config(),
 		&job.ProcessConfig{
 			BinaryDir:          path.Join(eng.AqPath, job.BinaryDir),

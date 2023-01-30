@@ -24,12 +24,11 @@ const (
 // If the Workflow exists, its ID should be provided as workflowID; otherwise,
 // workflowID can be ignored.
 // The following conditions are not allowed:
-// 1. Using a CascadingUpdateTrigger when engineType is Airflow.
-// 2. Having a CascadingUpdateTrigger where SourceID is for a Workflow that is
+// 1. Having a CascadingUpdateTrigger where SourceID is for a Workflow that is
 // running on a non self-orchestrated engine, such as Airflow. This is not allowed
 // since Aqueduct cannot trigger Workflow runs at the end of execution on an
 // engine that is not self-orchestrated.
-// 3. Having a CascadingUpdateTrigger that creates a cycle amongst the cascading workflows.
+// 2. Having a CascadingUpdateTrigger that creates a cycle amongst the cascading workflows.
 // It returns an HTTP status code and a client-friendly error, if any.
 func ValidateSchedule(
 	ctx context.Context,
@@ -49,14 +48,6 @@ func ValidateSchedule(
 		return http.StatusOK, nil
 	}
 
-	// Condition 1
-	if engineType == shared.AirflowEngineType {
-		// TODO ENG-2202: Support cascading updates for Airflow target workflows
-		return http.StatusBadRequest, errors.New(
-			"We currently do not support providing a source Workflow for a Workflow running on Airflow.",
-		)
-	}
-
 	exists, err := workflowRepo.Exists(ctx, schedule.SourceID, DB)
 	if err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, internalValidationErrMsg)
@@ -66,7 +57,7 @@ func ValidateSchedule(
 		return http.StatusBadRequest, errors.New("The specified source Workflow does not exist.")
 	}
 
-	dag, err := utils.ReadLatestDAGFromDatabase(
+	sourceDAG, err := utils.ReadLatestDAGFromDatabase(
 		ctx,
 		schedule.SourceID,
 		workflowRepo,
@@ -80,12 +71,12 @@ func ValidateSchedule(
 		return http.StatusInternalServerError, errors.Wrap(err, internalValidationErrMsg)
 	}
 
-	// Condition 2
-	if dag.EngineConfig.Type == shared.AirflowEngineType {
+	// Condition 1
+	if sourceDAG.EngineConfig.Type == shared.AirflowEngineType {
 		return http.StatusBadRequest, errors.New("Cannot use Workflows running on Airflow for the source.")
 	}
 
-	// Condition 3
+	// Condition 2
 	if !isUpdate {
 		// It is not possible to form a cycle when registering a NEW workflow.
 		// A cycle is formed when registering a workflow, B, with source, A, if
