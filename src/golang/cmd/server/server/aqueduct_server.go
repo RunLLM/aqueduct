@@ -200,7 +200,6 @@ func (s *AqServer) Init() error {
 		s.Database,
 		githubManager,
 		previewCacheManager,
-		vault,
 		aqPath,
 		GetEngineRepos(s.Repos),
 	)
