@@ -246,7 +246,7 @@ class APIClient:
         resp = requests.get(url, headers=headers)
         self.raise_errors(resp)
 
-        return resp.json()["object_names"]
+        return [x for x in resp.json()["object_names"]]
 
     def connect_integration(
         self, name: str, service: ServiceType, config: IntegrationConfig
