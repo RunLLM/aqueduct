@@ -30,7 +30,6 @@ func ObjectExistsInStorage(ctx context.Context, storageConfig *shared.StorageCon
 
 func ReadFromStorage(ctx context.Context, storageConfig *shared.StorageConfig, path string, container interface{}) error {
 	// Read data from storage and deserialize payload to `container`
-	log.Errorf("path to fetch is %s", path)
 	serializedPayload, err := storage.NewStorage(storageConfig).Get(ctx, path)
 	if err != nil {
 		return errors.Wrap(err, "Unable to get object from storage")
