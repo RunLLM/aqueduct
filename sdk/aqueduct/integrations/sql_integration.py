@@ -32,7 +32,6 @@ LIST_TABLES_QUERY_MYSQL = "SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHER
 LIST_TABLES_QUERY_SQLSERVER = (
     "SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_type = 'BASE TABLE';"
 )
-LIST_TABLES_QUERY_BIGQUERY = "SELECT schema_name FROM information_schema.schemata;"
 GET_TABLE_QUERY = "select * from %s"
 LIST_TABLES_QUERY_SQLITE = "SELECT name AS tablename FROM sqlite_master WHERE type='table';"
 LIST_TABLES_QUERY_ATHENA = "AQUEDUCT_ATHENA_LIST_TABLE"
@@ -103,6 +102,12 @@ class RelationalDBIntegration(Integration):
         Returns:
             pd.DataFrame of available tables.
         """
+        if self.type() in [ServiceType.BIGQUERY]:
+            # Use the list integration objects endpoint instead of
+            # providing a hardcoded SQL query to execute
+            tables = globals.__GLOBAL_API_CLIENT__.list_tables(str(self.id()))
+            return pd.DataFrame(tables, columns=["tablename"])
+
         if self.type() in [
             ServiceType.POSTGRES,
             ServiceType.AQUEDUCTDEMO,
@@ -115,8 +120,6 @@ class RelationalDBIntegration(Integration):
             list_tables_query = LIST_TABLES_QUERY_MYSQL
         elif self.type() == ServiceType.SQLSERVER:
             list_tables_query = LIST_TABLES_QUERY_SQLSERVER
-        elif self.type() == ServiceType.BIGQUERY:
-            list_tables_query = LIST_TABLES_QUERY_BIGQUERY
         elif self.type() == ServiceType.SQLITE:
             list_tables_query = LIST_TABLES_QUERY_SQLITE
         elif self.type() == ServiceType.ATHENA:

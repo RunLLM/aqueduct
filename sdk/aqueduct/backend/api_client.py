@@ -54,7 +54,7 @@ class APIClient:
     REGISTER_WORKFLOW_ROUTE = "/api/workflow/register"
     REGISTER_AIRFLOW_WORKFLOW_ROUTE = "/api/workflow/register/airflow"
     LIST_INTEGRATIONS_ROUTE = "/api/integrations"
-    LIST_TABLES_ROUTE = "/api/tables"
+    LIST_INTEGRATION_OBJECTS_ROUTE_TEMPLATE = "/api/integration/%s/objects"
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
     LIST_WORKFLOW_SAVED_OBJECTS_ROUTE = "/api/workflow/%s/objects"
     GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact/%s/%s/result"
@@ -237,14 +237,16 @@ class APIClient:
         resp = requests.get(url, headers=headers)
         return [x for x in resp.json()["branches"]]
 
-    def list_tables(self, limit: int) -> List[Tuple[str, str]]:
-        url = self.construct_full_url(self.LIST_TABLES_ROUTE)
+    def list_tables(self, integration_id: str) -> List[str]:
+        """Returns a list of the tables in the specified integration.
+        If the integration is not a relational database, it will throw an error.
+        """
+        url = self.construct_full_url(self.LIST_INTEGRATION_OBJECTS_ROUTE_TEMPLATE % integration_id)
         headers = self._generate_auth_headers()
-        headers["limit"] = str(limit)
         resp = requests.get(url, headers=headers)
         self.raise_errors(resp)
 
-        return [(table["name"], table["owner"]) for table in resp.json()["tables"]]
+        return [x for x in resp.json()["object_names"]]
 
     def connect_integration(
         self, name: str, service: ServiceType, config: IntegrationConfig
