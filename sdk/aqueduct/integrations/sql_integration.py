@@ -103,6 +103,11 @@ class RelationalDBIntegration(Integration):
         Returns:
             pd.DataFrame of available tables.
         """
+        if self.type() in [ServiceType.BIGQUERY]:
+            # Use the `list_tables` endpoint instead of a hardcoded SQL query
+            tables = globals.__GLOBAL_API_CLIENT__.list_tables(str(self.id()))
+            return pd.DataFrame(tables, columns=['tablename'])
+
         if self.type() in [
             ServiceType.POSTGRES,
             ServiceType.AQUEDUCTDEMO,
@@ -115,8 +120,6 @@ class RelationalDBIntegration(Integration):
             list_tables_query = LIST_TABLES_QUERY_MYSQL
         elif self.type() == ServiceType.SQLSERVER:
             list_tables_query = LIST_TABLES_QUERY_SQLSERVER
-        elif self.type() == ServiceType.BIGQUERY:
-            list_tables_query = LIST_TABLES_QUERY_BIGQUERY
         elif self.type() == ServiceType.SQLITE:
             list_tables_query = LIST_TABLES_QUERY_SQLITE
         elif self.type() == ServiceType.ATHENA:
