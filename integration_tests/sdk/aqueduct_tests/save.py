@@ -35,9 +35,6 @@ def save(
     elif isinstance(integration, S3Integration):
         assert update_mode == LoadUpdateMode.REPLACE, "S3 only supports replacement update."
         integration.save(artifact, name, S3TableFormat.PARQUET)
-
-        # Record where the artifact was saved, so we can validate the data later, after the flow is published.
-        artifact_id_to_saved_identifier[str(artifact.id())] = name
     else:
         raise Exception("Unexpected data integration type provided in test: %s", type(integration))
 

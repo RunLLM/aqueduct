@@ -1,6 +1,8 @@
 import uuid
 
 from aqueduct.constants.enums import OperatorType
+from aqueduct.error import InvalidIntegrationException
+from aqueduct.globals import __GLOBAL_API_CLIENT__ as global_api_client
 from aqueduct.models.dag import DAG
 from aqueduct.models.integration import IntegrationInfo
 from aqueduct.models.operators import LoadSpec, Operator, OperatorSpec, UnionLoadParams
@@ -35,6 +37,13 @@ def _save_artifact(
         InvalidUserArgumentException:
             An error occurred because some necessary fields are missing in the SaveParams.
     """
+
+    integrations_map = global_api_client.list_integrations()
+    if integration_info.name not in integrations_map:
+        raise InvalidIntegrationException(
+            "Not connected to integration %s!" % integration_info.name
+        )
+
     # We currently do not allow multiple load operators on the same artifact to the same integration.
     # We do allow multiple artifacts to write to the same integration, as well as a single artifact
     # to write to multiple integrations.
