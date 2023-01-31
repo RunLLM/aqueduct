@@ -638,8 +638,7 @@ func (eng *aqEngine) EditWorkflow(
 	workflowDescription string,
 	schedule *workflow.Schedule,
 	retentionPolicy *workflow.RetentionPolicy,
-	notificationSettings mdl_shared.NotificationSettings,
-	updateNotificationSettings bool,
+	notificationSettings *mdl_shared.NotificationSettings,
 ) error {
 	changes := map[string]interface{}{}
 	if workflowName != "" {
@@ -654,7 +653,7 @@ func (eng *aqEngine) EditWorkflow(
 		changes[models.WorkflowRetentionPolicy] = retentionPolicy
 	}
 
-	if updateNotificationSettings {
+	if notificationSettings != nil {
 		changes[models.WorkflowNotificationSettings] = notificationSettings
 	}
 

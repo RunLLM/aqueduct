@@ -41,7 +41,7 @@ func WriteDAGToDatabase(
 			dag.Metadata.Description,
 			&dag.Metadata.Schedule,
 			&dag.Metadata.RetentionPolicy,
-			dag.Metadata.NotificationSettings,
+			&dag.Metadata.NotificationSettings,
 			DB,
 		)
 		if err != nil {
