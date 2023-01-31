@@ -1,11 +1,12 @@
-import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { faPlusSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Box, MenuItem, Select, Typography } from '@mui/material';
 import React from 'react';
-import { Integration } from 'src/utils/integrations';
-import { NotificationLogLevel } from 'src/utils/notifications';
-import { NotificationSettings } from 'src/utils/workflows';
 
+import { theme } from '../../styles/theme/theme';
+import { Integration } from '../../utils/integrations';
+import { NotificationLogLevel } from '../../utils/notifications';
+import { NotificationSettings } from '../../utils/workflows';
 import NotificationLevelSelector from '../notifications/NotificationLevelSelector';
 
 type SelectedNotificationEntryProps = {
@@ -28,7 +29,7 @@ export const SelectedNotificationEntry: React.FC<
   return (
     <Box display="flex" flexDirection="column">
       <Box display="flex" flexDirection="row" alignItems="center">
-        <Select autoWidth value={selected.id}>
+        <Select autoWidth sx={{ height: 36 }} value={selected.id}>
           {[selected].concat(remainingNotificationIntegrations).map((x) => (
             <MenuItem
               key={selected.id + x.id}
@@ -42,7 +43,8 @@ export const SelectedNotificationEntry: React.FC<
         <Box ml={2}>
           <FontAwesomeIcon
             icon={faTrash}
-            color="gray.600"
+            color={theme.palette.gray[700]}
+            style={{ cursor: 'pointer' }}
             onClick={() => onRemove(selected.id)}
           />
         </Box>
@@ -78,7 +80,7 @@ const WorkflowNotificationSettings: React.FC<Props> = ({
   notificationIntegrations.forEach((x) => (integrationsByID[x.id] = x));
 
   const selectedEntries = Object.entries(curSettings).map(([id, level]) => (
-    <Box key={id} mb={1}>
+    <Box key={id} mt={1}>
       <SelectedNotificationEntry
         remainingNotificationIntegrations={remainingIntegrations}
         selected={integrationsByID[id]}
@@ -93,11 +95,16 @@ const WorkflowNotificationSettings: React.FC<Props> = ({
     <Box display="flex" flexDirection="column" alignContent="left">
       {selectedEntries}
       {remainingIntegrations.length > 0 && (
-        <FontAwesomeIcon
-          icon={faPlus}
-          color="gray.800"
-          onClick={() => onSelect(remainingIntegrations[0].id, undefined)}
-        />
+        <Box mt={1}>
+          <FontAwesomeIcon
+            icon={faPlusSquare}
+            color={theme.palette.gray[700]}
+            width="24px"
+            fontSize="24px"
+            style={{ cursor: 'pointer' }}
+            onClick={() => onSelect(remainingIntegrations[0].id, undefined)}
+          />
+        </Box>
       )}
     </Box>
   );

@@ -234,7 +234,7 @@ type WorkflowSettingsProps = {
 };
 
 // Returns whether `updated` is different from `existing`.
-function isNotificationSettingsDifferent(
+function IsNotificationSettingsUpdated(
   curSettings: NotificationSettings | undefined,
   newSettings: NotificationSettings | undefined
 ): boolean {
@@ -248,7 +248,7 @@ function isNotificationSettingsDifferent(
 
   // Starting here, both `curSettings` and `newSettings` should be non-empty.
   if (Object.keys(curSettings).length !== Object.keys(newSettings).length) {
-    return false;
+    return true;
   }
 
   // both should have the same key size. Check k-v match
@@ -351,7 +351,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     retentionPolicy.k_latest_runs !==
     workflowDag.metadata?.retention_policy?.k_latest_runs;
 
-  const isNotificationSettingsUpdated = isNotificationSettingsDifferent(
+  const isNotificationSettingsUpdated = IsNotificationSettingsUpdated(
     initialSettings.notificationSettings,
     normalizedNotificationSettings
   );
