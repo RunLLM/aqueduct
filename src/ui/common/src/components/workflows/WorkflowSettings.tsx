@@ -978,12 +978,15 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
               <WorkflowNotificationSettings
                 notificationIntegrations={notificationIntegrations}
                 curSettingsMap={notificationSettingsMap}
-                onSelect={(id, level) =>
-                  setNotificationSettingsMap({
-                    ...notificationSettingsMap,
-                    [id]: level,
-                  })
-                }
+                onSelect={(id, level, replacingID) => {
+                  const newSettings = { ...notificationSettingsMap };
+                  newSettings[id] = level;
+                  if (replacingID) {
+                    delete newSettings[replacingID];
+                  }
+
+                  setNotificationSettingsMap(newSettings);
+                }}
                 onRemove={(id) => {
                   const newSettings = { ...notificationSettingsMap };
                   delete newSettings[id];

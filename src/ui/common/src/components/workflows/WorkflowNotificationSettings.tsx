@@ -13,14 +13,22 @@ type SelectedNotificationEntryProps = {
   remainingNotificationIntegrations: Integration[];
   selected: Integration;
   level: NotificationLogLevel | undefined;
-  onSelect: (id: string, level: NotificationLogLevel | undefined) => void;
+  onSelect: (
+    id: string,
+    level: NotificationLogLevel | undefined,
+    replacingID?: string
+  ) => void;
   onRemove: (id: string) => void;
 };
 
 type Props = {
   notificationIntegrations: Integration[];
   curSettingsMap: NotificationSettingsMap;
-  onSelect: (id: string, level?: NotificationLogLevel) => void;
+  onSelect: (
+    id: string,
+    level?: NotificationLogLevel,
+    replacingID?: string
+  ) => void;
   onRemove: (id: string) => void;
 };
 
@@ -37,15 +45,18 @@ export const SelectedNotificationEntry: React.FC<
     <Box display="flex" flexDirection="column">
       <Box display="flex" flexDirection="row" alignItems="center">
         <Select autoWidth sx={{ height: 36 }} value={selected.id}>
-          {[selected].concat(remainingNotificationIntegrations).map((x) => (
-            <MenuItem
-              key={selected.id + x.id}
-              value={x.id}
-              onClick={() => onSelect(x.id, level)}
-            >
-              <Typography>{x.name}</Typography>
-            </MenuItem>
-          ))}
+          {[selected]
+            .concat(remainingNotificationIntegrations) // show current + remaining as options
+            .sort((x, y) => (x.name > y.name ? 1 : -1)) // sort to ensure items are stable
+            .map((x) => (
+              <MenuItem
+                key={x.id}
+                value={x.id}
+                onClick={() => onSelect(x.id, level, selected.id)}
+              >
+                <Typography>{x.name}</Typography>
+              </MenuItem>
+            ))}
         </Select>
         <Box ml={2}>
           <FontAwesomeIcon
@@ -95,7 +106,7 @@ const WorkflowNotificationSettings: React.FC<Props> = ({
     <Box display="flex" flexDirection="column" alignContent="left">
       {selectedEntries}
       {remainingIntegrations.length > 0 && (
-        <Box mt={1}>
+        <Box mt={selectedEntries.length > 0 ? 2 : 1}>
           <FontAwesomeIcon
             icon={faPlusSquare}
             color={theme.palette.gray[700]}
