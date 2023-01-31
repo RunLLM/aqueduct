@@ -10,6 +10,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -49,7 +50,12 @@ type Engine interface {
 		workflowName string,
 		workflowDescription string,
 		schedule *workflow.Schedule,
+		// We use an explicit flag to specify if `NotificationSettings` should be updated
+		// to cover the case where this field is updated to `nil`.
+		// Overall, we update workflow with `NotificationSettings` only if this flag is turned on.
 		retentionPolicy *workflow.RetentionPolicy,
+		notificationSettings mdl_shared.NotificationSettings,
+		updateNotificationSettings bool,
 	) error
 
 	// TODO ENG-1444: Used as a wrapper to trigger a workflow via executor binary.

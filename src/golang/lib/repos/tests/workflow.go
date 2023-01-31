@@ -60,6 +60,7 @@ func (ts *TestSuite) TestWorkflow_GetByScheduleTrigger() {
 			&workflow.RetentionPolicy{
 				KLatestRuns: 5,
 			},
+			nil,
 			ts.DB,
 		)
 		require.Nil(ts.T(), err)
@@ -91,6 +92,7 @@ func (ts *TestSuite) TestWorkflow_GetTargets() {
 			&workflow.RetentionPolicy{
 				KLatestRuns: 5,
 			},
+			nil,
 			ts.DB,
 		)
 		require.Nil(ts.T(), err)
@@ -130,6 +132,7 @@ func (ts *TestSuite) TestWorkflow_ValidateOrg() {
 func (ts *TestSuite) TestWorkflow_Create() {
 	users := ts.seedUser(1)
 	user := users[0]
+	notificationIntegrationID := uuid.New()
 
 	expectedWorkflow := &models.Workflow{
 		UserID:      user.ID,
@@ -144,8 +147,9 @@ func (ts *TestSuite) TestWorkflow_Create() {
 		RetentionPolicy: workflow.RetentionPolicy{
 			KLatestRuns: 10,
 		},
-		// Explicitly set `IsNull` to true, otherwise it will be false by default.
-		NotificationSettings: shared.NullNotificationSettings{IsNull: true},
+		NotificationSettings: shared.NotificationSettings{
+			notificationIntegrationID: shared.ErrorNotificationLevel, // just need an arbitrary uuid
+		},
 	}
 
 	actualWorkflow, err := ts.workflow.Create(
@@ -155,6 +159,7 @@ func (ts *TestSuite) TestWorkflow_Create() {
 		expectedWorkflow.Description,
 		&expectedWorkflow.Schedule,
 		&expectedWorkflow.RetentionPolicy,
+		expectedWorkflow.NotificationSettings,
 		ts.DB,
 	)
 	require.Nil(ts.T(), err)
@@ -177,6 +182,7 @@ func (ts *TestSuite) TestWorkflow_Delete() {
 func (ts *TestSuite) TestWorkflow_Update() {
 	workflows := ts.seedWorkflow(1)
 	oldWorkflow := workflows[0]
+	notificationIntegrationID := uuid.New()
 
 	newName := "new_workflow_name"
 	newSchedule := workflow.Schedule{
@@ -186,9 +192,14 @@ func (ts *TestSuite) TestWorkflow_Update() {
 		Paused:               true,
 	}
 
+	newNotificationSettings := shared.NotificationSettings{
+		notificationIntegrationID: shared.ErrorNotificationLevel,
+	}
+
 	changes := map[string]interface{}{
-		models.WorkflowName:     newName,
-		models.WorkflowSchedule: &newSchedule,
+		models.WorkflowName:                 newName,
+		models.WorkflowSchedule:             &newSchedule,
+		models.WorkflowNotificationSettings: newNotificationSettings,
 	}
 
 	newWorkflow, err := ts.workflow.Update(ts.ctx, oldWorkflow.ID, changes, ts.DB)
@@ -196,4 +207,5 @@ func (ts *TestSuite) TestWorkflow_Update() {
 
 	requireDeepEqual(ts.T(), newSchedule, newWorkflow.Schedule)
 	require.Equal(ts.T(), newName, newWorkflow.Name)
+	requireDeepEqual(ts.T(), newWorkflow.NotificationSettings, newNotificationSettings)
 }

@@ -187,6 +187,7 @@ func (ts *TestSuite) seedWorkflowWithUser(count int, userIDs []uuid.UUID) []mode
 			description,
 			schedule,
 			retentionPolicy,
+			shared.NotificationSettings{},
 			ts.DB,
 		)
 		require.Nil(ts.T(), err)

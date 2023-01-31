@@ -229,6 +229,8 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 			dbWorkflowDag.Metadata.Description,
 			&dbWorkflowDag.Metadata.Schedule,
 			&dbWorkflowDag.Metadata.RetentionPolicy,
+			dbWorkflowDag.Metadata.NotificationSettings,
+			true, // updateNotificationSettings. Set to true to attempt to update.
 		)
 		if err != nil {
 			return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to update workflow.")

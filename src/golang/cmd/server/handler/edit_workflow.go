@@ -10,6 +10,7 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/workflow"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -43,18 +44,25 @@ type EditWorkflowHandler struct {
 }
 
 type editWorkflowInput struct {
-	WorkflowName        string                        `json:"name"`
-	WorkflowDescription string                        `json:"description"`
-	Schedule            *col_workflow.Schedule        `json:"schedule"`
-	RetentionPolicy     *col_workflow.RetentionPolicy `json:"retention_policy"`
+	WorkflowName         string                        `json:"name"`
+	WorkflowDescription  string                        `json:"description"`
+	Schedule             *col_workflow.Schedule        `json:"schedule"`
+	RetentionPolicy      *col_workflow.RetentionPolicy `json:"retention_policy"`
+	NotificationSettings shared.NotificationSettings   `json:"notification_settings"`
+	// We use an explicit flag to specify if `NotificationSettings` should be updated
+	// to cover the case where this field is updated to `nil`.
+	// Overall, we update workflow with `NotificationSettings` only if this flag is turned on.
+	UpdateNotificationSettings bool `json:"update_notification_settings"`
 }
 
 type editWorkflowArgs struct {
-	workflowId          uuid.UUID
-	workflowName        string
-	workflowDescription string
-	schedule            *col_workflow.Schedule
-	retentionPolicy     *col_workflow.RetentionPolicy
+	workflowId                 uuid.UUID
+	workflowName               string
+	workflowDescription        string
+	schedule                   *col_workflow.Schedule
+	retentionPolicy            *col_workflow.RetentionPolicy
+	notificationSettings       shared.NotificationSettings
+	updateNotificationSettings bool `json:"update_notification_settings"`
 }
 
 func (*EditWorkflowHandler) Name() string {
@@ -116,11 +124,13 @@ func (h *EditWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error)
 	}
 
 	return &editWorkflowArgs{
-		workflowId:          workflowID,
-		workflowName:        input.WorkflowName,
-		workflowDescription: input.WorkflowDescription,
-		schedule:            input.Schedule,
-		retentionPolicy:     input.RetentionPolicy,
+		workflowId:                 workflowID,
+		workflowName:               input.WorkflowName,
+		workflowDescription:        input.WorkflowDescription,
+		schedule:                   input.Schedule,
+		retentionPolicy:            input.RetentionPolicy,
+		notificationSettings:       input.NotificationSettings,
+		updateNotificationSettings: input.UpdateNotificationSettings,
 	}, http.StatusOK, nil
 }
 
@@ -173,6 +183,8 @@ func (h *EditWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfa
 		args.workflowDescription,
 		args.schedule,
 		args.retentionPolicy,
+		args.notificationSettings,
+		args.updateNotificationSettings,
 	)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to update workflow.")

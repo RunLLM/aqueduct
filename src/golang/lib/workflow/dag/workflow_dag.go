@@ -86,7 +86,7 @@ func (dag *workflowDagImpl) NotificationSettings() shared.NotificationSettings {
 		return shared.NotificationSettings{}
 	}
 
-	return dag.dbDAG.Metadata.NotificationSettings.NotificationSettings
+	return dag.dbDAG.Metadata.NotificationSettings
 }
 
 // Assumption: all dag's start with operators.
