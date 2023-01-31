@@ -1,4 +1,5 @@
 import { Service } from './integrations';
+import { ExecState } from './shared';
 import ExecutionStatus from './shared';
 
 export const DataColumnTypeNames = [
@@ -42,6 +43,7 @@ export type Data = {
   // each key of the row object corresponds to a column.
   // column names must be unique (obviously ;) )
   data: TableRow[];
+  status?: string;
 };
 
 export type DataPreviewLoadSpec = {

@@ -1,6 +1,7 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
+import { ExecutionStatus } from '../../../utils/shared';
 
 import { ArtifactResultResponse } from '../../../handlers/responses/artifact';
 import { DataSchema } from '../../../utils/data';
@@ -30,16 +31,20 @@ export const MetricsOverview: React.FC<MetricsOverviewProps> = ({
     schema: schema,
     data: metrics
       .map((metricArtf) => {
-        let name = metricArtf.name;
-        if (name.endsWith('artifact') || name.endsWith('Aritfact')) {
-          name = name.slice(0, 0 - 'artifact'.length);
+        let title = metricArtf.name;
+        if (title.endsWith('artifact') || title.endsWith('Aritfact')) {
+          title = title.slice(0, 0 - 'artifact'.length);
         }
+
+        const value = metricArtf.result?.content_serialized;
+        const status = metricArtf.result?.exec_state?.status;
+
         return {
-          title: name,
-          value: metricArtf.result?.content_serialized,
+          title,
+          value,
+          status
         };
       })
-      .filter((x) => !!x.value),
   };
 
   return (
@@ -85,7 +90,6 @@ export const ChecksOverview: React.FC<ChecksOverviewProps> = ({ checks }) => {
           value: checkArtf.result?.content_serialized,
         };
       })
-      .filter((x) => !!x.value),
   };
 
   return (

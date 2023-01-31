@@ -49,16 +49,24 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
     schema: metricHistorySchema,
     data: (historyWithLoadingStatus.results?.results ?? []).map(
       (artifactStatusResult) => {
+        let timestamp = new Date(
+          artifactStatusResult.exec_state?.timestamps?.finished_at
+        ).toLocaleString();
+
+        // Metrics that are canceled / fail to execute have no exec_state, and thus no date.
+        if (timestamp === 'Invalid Date') {
+          timestamp = 'Unknown';
+        }
+
         return {
           status: artifactStatusResult.exec_state?.status ?? 'Unknown',
-          timestamp: new Date(
-            artifactStatusResult.exec_state?.timestamps?.finished_at
-          ).toLocaleString(),
+          timestamp,
           value: artifactStatusResult.content_serialized,
         };
       }
     ),
   };
+
   const dataSortedByLatest = historicalData.data.sort(
     (x, y) =>
       Date.parse(y['timestamp'] as string) -
@@ -144,10 +152,10 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
                 <StatusIndicator status={entry.status as ExecutionStatus} />
 
                 <Typography sx={{ ml: 1 }} variant="body2">
-                  {entry.timestamp.toLocaleString()}
+                  {entry.timestamp}
                 </Typography>
               </Box>
-              <Typography variant="body1">{entry.value.toString()}</Typography>
+              <Typography variant="body1">{entry.value ? entry.value.toString() : '-'}</Typography>
             </Box>
           );
         })}
