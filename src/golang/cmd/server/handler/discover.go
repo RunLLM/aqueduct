@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -52,7 +53,6 @@ type DiscoverHandler struct {
 
 	Database   database.Database
 	JobManager job.JobManager
-	Vault      vault.Vault
 
 	IntegrationRepo repos.Integration
 	OperatorRepo    repos.Operator
@@ -121,7 +121,13 @@ func (h *DiscoverHandler) Perform(
 		go workflow_utils.CleanupStorageFiles(ctx, args.StorageConfig, []string{jobMetadataPath, jobResultPath})
 	}()
 
-	config, err := auth.ReadConfigFromSecret(ctx, integrationObject.ID, h.Vault)
+	storageConfig := config.Storage()
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
+	}
+
+	config, err := auth.ReadConfigFromSecret(ctx, integrationObject.ID, vaultObject)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to parse integration config.")
 	}
