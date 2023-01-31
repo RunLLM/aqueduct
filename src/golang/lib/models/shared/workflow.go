@@ -8,7 +8,10 @@ import (
 )
 
 // `NotificationSettings` maps IntegrationID to NotificationLevel
-type NotificationSettings map[uuid.UUID]NotificationLevel
+// This has to be a struct since sql driver does not support map type.
+type NotificationSettings struct {
+	Settings map[uuid.UUID]NotificationLevel `json:"settings"`
+}
 
 func (s *NotificationSettings) Value() (driver.Value, error) {
 	return utils.ValueJSONB(*s)
@@ -16,7 +19,7 @@ func (s *NotificationSettings) Value() (driver.Value, error) {
 
 func (s *NotificationSettings) Scan(value interface{}) error {
 	if value == nil {
-		*s = nil
+		s.Settings = nil
 		return nil
 	}
 

@@ -60,7 +60,7 @@ func (ts *TestSuite) TestWorkflow_GetByScheduleTrigger() {
 			&workflow.RetentionPolicy{
 				KLatestRuns: 5,
 			},
-			nil,
+			&shared.NotificationSettings{},
 			ts.DB,
 		)
 		require.Nil(ts.T(), err)
@@ -92,7 +92,7 @@ func (ts *TestSuite) TestWorkflow_GetTargets() {
 			&workflow.RetentionPolicy{
 				KLatestRuns: 5,
 			},
-			nil,
+			&shared.NotificationSettings{},
 			ts.DB,
 		)
 		require.Nil(ts.T(), err)
@@ -148,7 +148,9 @@ func (ts *TestSuite) TestWorkflow_Create() {
 			KLatestRuns: 10,
 		},
 		NotificationSettings: shared.NotificationSettings{
-			notificationIntegrationID: shared.ErrorNotificationLevel, // just need an arbitrary uuid
+			Settings: map[uuid.UUID]shared.NotificationLevel{
+				notificationIntegrationID: shared.ErrorNotificationLevel,
+			},
 		},
 	}
 
@@ -159,7 +161,7 @@ func (ts *TestSuite) TestWorkflow_Create() {
 		expectedWorkflow.Description,
 		&expectedWorkflow.Schedule,
 		&expectedWorkflow.RetentionPolicy,
-		expectedWorkflow.NotificationSettings,
+		&expectedWorkflow.NotificationSettings,
 		ts.DB,
 	)
 	require.Nil(ts.T(), err)
@@ -193,13 +195,15 @@ func (ts *TestSuite) TestWorkflow_Update() {
 	}
 
 	newNotificationSettings := shared.NotificationSettings{
-		notificationIntegrationID: shared.ErrorNotificationLevel,
+		Settings: map[uuid.UUID]shared.NotificationLevel{
+			notificationIntegrationID: shared.ErrorNotificationLevel,
+		},
 	}
 
 	changes := map[string]interface{}{
 		models.WorkflowName:                 newName,
 		models.WorkflowSchedule:             &newSchedule,
-		models.WorkflowNotificationSettings: newNotificationSettings,
+		models.WorkflowNotificationSettings: &newNotificationSettings,
 	}
 
 	newWorkflow, err := ts.workflow.Update(ts.ctx, oldWorkflow.ID, changes, ts.DB)

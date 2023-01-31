@@ -254,7 +254,7 @@ func (*workflowWriter) Create(
 	description string,
 	schedule *workflow.Schedule,
 	retentionPolicy *workflow.RetentionPolicy,
-	notificationSettings mdl_shared.NotificationSettings,
+	notificationSettings *mdl_shared.NotificationSettings,
 	DB database.Database,
 ) (*models.Workflow, error) {
 	cols := []string{
