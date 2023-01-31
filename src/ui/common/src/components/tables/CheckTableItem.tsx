@@ -12,7 +12,6 @@ import { theme } from '../../styles/theme/theme';
 import { stringToExecutionStatus } from '../../utils/shared';
 import { StatusIndicator } from '../workflows/workflowStatus';
 
-// TODO: Pass in the ExecutionStatus here and render when the check has no value.
 interface CheckTableItemProps {
   checkValue: string;
   status?: string;
