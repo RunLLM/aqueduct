@@ -58,7 +58,7 @@ export function getMetricsAndChecksOnArtifact(
   );
 
   const metricsArtfIds = metricsOp.flatMap((opResult) => {
-    return opResult !== undefined ? opResult.outputs : []
+    return opResult !== undefined ? opResult.outputs : [];
   });
 
   const metricsArtf = metricsArtfIds.map((id) => dagResult.artifacts[id]);

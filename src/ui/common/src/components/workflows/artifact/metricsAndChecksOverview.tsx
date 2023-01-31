@@ -1,7 +1,6 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
-import { ExecutionStatus } from '../../../utils/shared';
 
 import { ArtifactResultResponse } from '../../../handlers/responses/artifact';
 import { DataSchema } from '../../../utils/data';
@@ -29,22 +28,21 @@ export const MetricsOverview: React.FC<MetricsOverviewProps> = ({
 }) => {
   const metricTableEntries = {
     schema: schema,
-    data: metrics
-      .map((metricArtf) => {
-        let title = metricArtf.name;
-        if (title.endsWith('artifact') || title.endsWith('Aritfact')) {
-          title = title.slice(0, 0 - 'artifact'.length);
-        }
+    data: metrics.map((metricArtf) => {
+      let title = metricArtf.name;
+      if (title.endsWith('artifact') || title.endsWith('Aritfact')) {
+        title = title.slice(0, 0 - 'artifact'.length);
+      }
 
-        const value = metricArtf.result?.content_serialized;
-        const status = metricArtf.result?.exec_state?.status;
+      const value = metricArtf.result?.content_serialized;
+      const status = metricArtf.result?.exec_state?.status;
 
-        return {
-          title,
-          value,
-          status
-        };
-      })
+      return {
+        title,
+        value,
+        status,
+      };
+    }),
   };
 
   return (
@@ -79,17 +77,16 @@ export type ChecksOverviewProps = {
 export const ChecksOverview: React.FC<ChecksOverviewProps> = ({ checks }) => {
   const checkTableEntries = {
     schema: schema,
-    data: checks
-      .map((checkArtf) => {
-        let name = checkArtf.name;
-        if (name.endsWith('artifact') || name.endsWith('Aritfact')) {
-          name = name.slice(0, 0 - 'artifact'.length);
-        }
-        return {
-          title: name,
-          value: checkArtf.result?.content_serialized,
-        };
-      })
+    data: checks.map((checkArtf) => {
+      let name = checkArtf.name;
+      if (name.endsWith('artifact') || name.endsWith('Aritfact')) {
+        name = name.slice(0, 0 - 'artifact'.length);
+      }
+      return {
+        title: name,
+        value: checkArtf.result?.content_serialized,
+      };
+    }),
   };
 
   return (

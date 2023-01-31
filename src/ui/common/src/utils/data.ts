@@ -1,5 +1,4 @@
 import { Service } from './integrations';
-import { ExecState } from './shared';
 import ExecutionStatus from './shared';
 
 export const DataColumnTypeNames = [

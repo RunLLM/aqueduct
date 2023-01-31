@@ -5,7 +5,9 @@ import React from 'react';
 import { ArtifactResultsWithLoadingStatus } from '../../../../reducers/artifactResults';
 import { theme } from '../../../../styles/theme/theme';
 import { Data, DataSchema } from '../../../../utils/data';
-import ExecutionStatus, { stringToExecutionStatus } from '../../../../utils/shared';
+import ExecutionStatus, {
+  stringToExecutionStatus,
+} from '../../../../utils/shared';
 import { isFailed, isInitial, isLoading } from '../../../../utils/shared';
 import { StatusIndicator } from '../../workflowStatus';
 
@@ -110,7 +112,11 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
             width="auto"
           >
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <StatusIndicator status={stringToExecutionStatus(entry.status as string)} size={'16px'} monochrome={false} />
+              <StatusIndicator
+                status={stringToExecutionStatus(entry.status as string)}
+                size={'16px'}
+                monochrome={false}
+              />
 
               <Typography sx={{ ml: 1 }} variant="body2">
                 {entry.timestamp.toLocaleString()}

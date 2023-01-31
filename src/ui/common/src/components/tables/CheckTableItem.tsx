@@ -7,9 +7,9 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Box from '@mui/material/Box';
 import React from 'react';
-import ExecutionStatus, { stringToExecutionStatus } from '../../utils/shared';
 
 import { theme } from '../../styles/theme/theme';
+import { stringToExecutionStatus } from '../../utils/shared';
 import { StatusIndicator } from '../workflows/workflowStatus';
 
 // TODO: Pass in the ExecutionStatus here and render when the check has no value.
@@ -20,7 +20,7 @@ interface CheckTableItemProps {
 
 export const CheckTableItem: React.FC<CheckTableItemProps> = ({
   checkValue,
-  status
+  status,
 }) => {
   let iconColor = theme.palette.black;
   let checkIcon = faMinus;
@@ -54,7 +54,13 @@ export const CheckTableItem: React.FC<CheckTableItemProps> = ({
     }
   } else {
     // Check value not found, render the status indicator for this check.
-    return <StatusIndicator status={stringToExecutionStatus(status)} size={'16px'} monochrome={false} />
+    return (
+      <StatusIndicator
+        status={stringToExecutionStatus(status)}
+        size={'16px'}
+        monochrome={false}
+      />
+    );
   }
 
   return (

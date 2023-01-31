@@ -66,7 +66,7 @@ export const stringToExecutionStatus = (status: string): ExecutionStatus => {
   }
 
   return executionStatus;
-}
+};
 
 export type ExecutionTimestamps = {
   registered_at?: string;

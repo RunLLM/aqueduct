@@ -8,7 +8,6 @@ import Typography from '@mui/material/Typography';
 import * as React from 'react';
 
 import { Data, DataSchema } from '../../utils/data';
-import { ExecutionStatus } from '../../utils/shared';
 import { CheckTableItem } from './CheckTableItem';
 import MetricTableItem from './MetricTableItem';
 
@@ -46,7 +45,6 @@ export const OperatorExecStateTable: React.FC<OperatorExecStateTableProps> = ({
   tableAlign = 'left',
   tableType,
 }) => {
-
   const getTableItem = (tableType, columnName, value, status) => {
     // return title text in bold.
     if (columnName === 'title') {
@@ -58,16 +56,12 @@ export const OperatorExecStateTable: React.FC<OperatorExecStateTableProps> = ({
         >
           {value.toString()}
         </Typography>
-      )
+      );
     } else if (tableType === OperatorExecStateTableType.Metric) {
       // Send off to the MetricTableItem component.
-      return (
-        <MetricTableItem metricValue={value as string} status={status} />
-      );
+      return <MetricTableItem metricValue={value as string} status={status} />;
     } else if (tableType === OperatorExecStateTableType.Check) {
-      return (
-        <CheckTableItem checkValue={value as string} status={status} />
-      );
+      return <CheckTableItem checkValue={value as string} status={status} />;
     }
 
     // Default case, code here shouldn't get hit assuming this table is just used to render metrics and cheecks.
@@ -79,8 +73,8 @@ export const OperatorExecStateTable: React.FC<OperatorExecStateTableProps> = ({
       >
         {value.toString()}
       </Typography>
-    )
-  }
+    );
+  };
 
   return (
     <TableContainer sx={{ maxHeight, height, width }}>

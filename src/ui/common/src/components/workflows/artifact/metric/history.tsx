@@ -155,7 +155,9 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
                   {entry.timestamp}
                 </Typography>
               </Box>
-              <Typography variant="body1">{entry.value ? entry.value.toString() : '-'}</Typography>
+              <Typography variant="body1">
+                {entry.value ? entry.value.toString() : '-'}
+              </Typography>
             </Box>
           );
         })}
