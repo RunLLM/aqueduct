@@ -15,5 +15,10 @@ func (s *NotificationSettings) Value() (driver.Value, error) {
 }
 
 func (s *NotificationSettings) Scan(value interface{}) error {
+	if value == nil {
+		*s = nil
+		return nil
+	}
+
 	return utils.ScanJSONB(value, s)
 }
