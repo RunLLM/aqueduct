@@ -402,9 +402,9 @@ function collapsePosition(
     }
   });
 
-
   // remove any edge who's target is a metric artifact.
-  const filteredEdges = edges.filter((e) => !collapsedArtfIds.has(e.target))
+  const filteredEdges = edges
+    .filter((e) => !collapsedArtfIds.has(e.target))
     .filter((edge) => {
       // Check if the edge exists in the mappedNodes array.
       // If it does not exist, remove the edge. elk crashes if an edge does not have a corresponding node.
@@ -480,7 +480,6 @@ export const handleGetSelectDagPosition = createAsyncThunk<
           height: 300,
         };
       });
-
 
       const graph = {
         id: 'root',
