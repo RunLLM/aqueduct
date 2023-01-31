@@ -51,10 +51,16 @@ import {
   getNextUpdateTime,
   PeriodUnit,
 } from '../../utils/cron';
+import {
+  IntegrationCategories,
+  SupportedIntegrations,
+} from '../../utils/integrations';
+import { NotificationLogLevel } from '../../utils/notifications';
 import { UpdateMode } from '../../utils/operators';
 import ExecutionStatus, { LoadingStatusEnum } from '../../utils/shared';
 import {
   getSavedObjectIdentifier,
+  NotificationSettings,
   RetentionPolicy,
   SavedObject,
   WorkflowDag,
@@ -65,6 +71,7 @@ import { Button } from '../primitives/Button.styles';
 import { LoadingButton } from '../primitives/LoadingButton.styles';
 import StorageSelector from './storageSelector';
 import TriggerSourceSelector from './triggerSourceSelector';
+import WorkflowNotificationSettings from './WorkflowNotificationSettings';
 
 type PeriodicScheduleSelectorProps = {
   cronString: string;
@@ -226,6 +233,34 @@ type WorkflowSettingsProps = {
   onClose: () => void;
 };
 
+// Returns whether `updated` is different from `existing`.
+function isNotificationSettingsDifferent(
+  curSettings: NotificationSettings | undefined,
+  newSettings: NotificationSettings | undefined
+): boolean {
+  if ((!curSettings && !!newSettings) || (!!curSettings && !newSettings)) {
+    return true;
+  }
+
+  if (!curSettings && !newSettings) {
+    return false;
+  }
+
+  // Starting here, both `curSettings` and `newSettings` should be non-empty.
+  if (Object.keys(curSettings).length !== Object.keys(newSettings).length) {
+    return false;
+  }
+
+  // both should have the same key size. Check k-v match
+  let updated = false;
+  Object.entries(curSettings).forEach(([k, v]) => {
+    if (newSettings[k] !== v) {
+      updated = true;
+    }
+  });
+  return updated;
+}
+
 const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   user,
   workflowDag,
@@ -266,6 +301,16 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     (state: RootState) => state.listWorkflowReducer.workflows
   );
 
+  const integrations = useSelector(
+    (state: RootState) => state.integrationsReducer.integrations
+  );
+
+  const notificationIntegrations = Object.values(integrations).filter(
+    (x) =>
+      SupportedIntegrations[x.service].category ===
+      IntegrationCategories.NOTIFICATION
+  );
+
   const [name, setName] = useState(workflowDag.metadata?.name);
   const [description, setDescription] = useState(
     workflowDag.metadata?.description
@@ -283,10 +328,14 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const [retentionPolicy, setRetentionPolicy] = useState(
     workflowDag.metadata?.retention_policy
   );
-  const retentionPolicyUpdated =
-    retentionPolicy.k_latest_runs !==
-    workflowDag.metadata?.retention_policy?.k_latest_runs;
+  const [notificationSettings, setNotificationSettings] = useState<{
+    [id: string]: NotificationLogLevel;
+  }>(workflowDag.metadata?.notification_settings ?? {});
 
+  // filter out empty key / values
+  const normalizedNotificationSettings = Object.fromEntries(
+    Object.entries(notificationSettings).filter(([k, v]) => !!k && !!v)
+  );
   const initialSettings = {
     name: workflowDag.metadata?.name,
     description: workflowDag.metadata?.description,
@@ -295,7 +344,17 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     paused: workflowDag.metadata.schedule.paused,
     retentionPolicy: workflowDag.metadata?.retention_policy,
     sourceId: workflowDag.metadata?.schedule?.source_id,
+    notificationSettings: workflowDag.metadata?.notification_settings ?? {},
   };
+
+  const retentionPolicyUpdated =
+    retentionPolicy.k_latest_runs !==
+    workflowDag.metadata?.retention_policy?.k_latest_runs;
+
+  const isNotificationSettingsUpdated = isNotificationSettingsDifferent(
+    initialSettings.notificationSettings,
+    normalizedNotificationSettings
+  );
 
   const settingsChanged =
     name !== workflowDag.metadata?.name || // The workflow name has been changed.
@@ -306,7 +365,8 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     (triggerType === WorkflowUpdateTrigger.Cascade && // The trigger type is still cascade but the source has changed.
       sourceId !== workflowDag.metadata?.schedule?.source_id) ||
     paused !== workflowDag.metadata.schedule.paused || // The schedule type is periodic and we've changed the pausedness of the workflow.
-    retentionPolicyUpdated; // retention policy has changed.
+    retentionPolicyUpdated ||
+    isNotificationSettingsUpdated; // retention policy has changed.
 
   const triggerOptions = [
     { label: 'Update Manually', value: WorkflowUpdateTrigger.Manual },
@@ -471,6 +531,8 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
             : '00000000-0000-0000-0000-000000000000',
       },
       retention_policy: retentionPolicyUpdated ? retentionPolicy : undefined,
+      notification_settings: normalizedNotificationSettings,
+      update_notification_settings: isNotificationSettingsUpdated,
     };
 
     fetch(`${apiAddress}/api/workflow/${workflowDag.workflow_id}/edit`, {
@@ -910,6 +972,30 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
               />
             </Box>
           </Box>
+
+          {notificationIntegrations.length > 0 && (
+            <Box sx={{ my: 2 }}>
+              <Typography style={{ fontWeight: 'bold' }}>
+                Notifications
+              </Typography>
+
+              <WorkflowNotificationSettings
+                notificationIntegrations={notificationIntegrations}
+                curSettings={notificationSettings}
+                onSelect={(id, level) =>
+                  setNotificationSettings({
+                    ...notificationSettings,
+                    [id]: level,
+                  })
+                }
+                onRemove={(id) => {
+                  const newSettings = { ...notificationSettings };
+                  delete newSettings[id];
+                  setNotificationSettings(newSettings);
+                }}
+              />
+            </Box>
+          )}
 
           <LoadingButton
             loading={isUpdating}
