@@ -98,7 +98,9 @@ export type WorkflowDagResultSummary = {
   workflow_dag_id: string;
 };
 
-export type NotificationSettings = { [id: string]: NotificationLogLevel };
+export type NotificationSettingsMap = { [id: string]: NotificationLogLevel };
+
+export type NotificationSettings = { settings: NotificationSettingsMap };
 
 export type Workflow = {
   id: string;

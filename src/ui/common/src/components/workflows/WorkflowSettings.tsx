@@ -55,12 +55,11 @@ import {
   IntegrationCategories,
   SupportedIntegrations,
 } from '../../utils/integrations';
-import { NotificationLogLevel } from '../../utils/notifications';
 import { UpdateMode } from '../../utils/operators';
 import ExecutionStatus, { LoadingStatusEnum } from '../../utils/shared';
 import {
   getSavedObjectIdentifier,
-  NotificationSettings,
+  NotificationSettingsMap,
   RetentionPolicy,
   SavedObject,
   WorkflowDag,
@@ -234,27 +233,21 @@ type WorkflowSettingsProps = {
 };
 
 // Returns whether `updated` is different from `existing`.
-function IsNotificationSettingsUpdated(
-  curSettings: NotificationSettings | undefined,
-  newSettings: NotificationSettings | undefined
+function IsNotificationSettingsMapUpdated(
+  curSettingsMap: NotificationSettingsMap,
+  newSettingsMap: NotificationSettingsMap
 ): boolean {
-  if ((!curSettings && !!newSettings) || (!!curSettings && !newSettings)) {
-    return true;
-  }
-
-  if (!curSettings && !newSettings) {
-    return false;
-  }
-
   // Starting here, both `curSettings` and `newSettings` should be non-empty.
-  if (Object.keys(curSettings).length !== Object.keys(newSettings).length) {
+  if (
+    Object.keys(curSettingsMap).length !== Object.keys(newSettingsMap).length
+  ) {
     return true;
   }
 
   // both should have the same key size. Check k-v match
   let updated = false;
-  Object.entries(curSettings).forEach(([k, v]) => {
-    if (newSettings[k] !== v) {
+  Object.entries(curSettingsMap).forEach(([k, v]) => {
+    if (newSettingsMap[k] !== v) {
       updated = true;
     }
   });
@@ -328,13 +321,14 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const [retentionPolicy, setRetentionPolicy] = useState(
     workflowDag.metadata?.retention_policy
   );
-  const [notificationSettings, setNotificationSettings] = useState<{
-    [id: string]: NotificationLogLevel;
-  }>(workflowDag.metadata?.notification_settings ?? {});
+  const [notificationSettingsMap, setNotificationSettingsMap] =
+    useState<NotificationSettingsMap>(
+      workflowDag.metadata?.notification_settings?.settings ?? {}
+    );
 
   // filter out empty key / values
-  const normalizedNotificationSettings = Object.fromEntries(
-    Object.entries(notificationSettings).filter(([k, v]) => !!k && !!v)
+  const normalizedNotificationSettingsMap = Object.fromEntries(
+    Object.entries(notificationSettingsMap).filter(([k, v]) => !!k && !!v)
   );
   const initialSettings = {
     name: workflowDag.metadata?.name,
@@ -344,16 +338,17 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     paused: workflowDag.metadata.schedule.paused,
     retentionPolicy: workflowDag.metadata?.retention_policy,
     sourceId: workflowDag.metadata?.schedule?.source_id,
-    notificationSettings: workflowDag.metadata?.notification_settings ?? {},
+    notificationSettingsMap:
+      workflowDag.metadata?.notification_settings?.settings ?? {},
   };
 
   const retentionPolicyUpdated =
     retentionPolicy.k_latest_runs !==
     workflowDag.metadata?.retention_policy?.k_latest_runs;
 
-  const isNotificationSettingsUpdated = IsNotificationSettingsUpdated(
-    initialSettings.notificationSettings,
-    normalizedNotificationSettings
+  const isNotificationSettingsUpdated = IsNotificationSettingsMapUpdated(
+    initialSettings.notificationSettingsMap,
+    normalizedNotificationSettingsMap
   );
 
   const settingsChanged =
@@ -531,8 +526,9 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
             : '00000000-0000-0000-0000-000000000000',
       },
       retention_policy: retentionPolicyUpdated ? retentionPolicy : undefined,
-      notification_settings: normalizedNotificationSettings,
-      update_notification_settings: isNotificationSettingsUpdated,
+      notification_settings: isNotificationSettingsUpdated
+        ? { settings: normalizedNotificationSettingsMap }
+        : undefined,
     };
 
     fetch(`${apiAddress}/api/workflow/${workflowDag.workflow_id}/edit`, {
@@ -981,17 +977,17 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
               <WorkflowNotificationSettings
                 notificationIntegrations={notificationIntegrations}
-                curSettings={notificationSettings}
+                curSettingsMap={notificationSettingsMap}
                 onSelect={(id, level) =>
-                  setNotificationSettings({
-                    ...notificationSettings,
+                  setNotificationSettingsMap({
+                    ...notificationSettingsMap,
                     [id]: level,
                   })
                 }
                 onRemove={(id) => {
-                  const newSettings = { ...notificationSettings };
+                  const newSettings = { ...notificationSettingsMap };
                   delete newSettings[id];
-                  setNotificationSettings(newSettings);
+                  setNotificationSettingsMap(newSettings);
                 }}
               />
             </Box>

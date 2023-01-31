@@ -6,7 +6,7 @@ import React from 'react';
 import { theme } from '../../styles/theme/theme';
 import { Integration } from '../../utils/integrations';
 import { NotificationLogLevel } from '../../utils/notifications';
-import { NotificationSettings } from '../../utils/workflows';
+import { NotificationSettingsMap } from '../../utils/workflows';
 import NotificationLevelSelector from '../notifications/NotificationLevelSelector';
 
 type SelectedNotificationEntryProps = {
@@ -14,6 +14,13 @@ type SelectedNotificationEntryProps = {
   selected: Integration;
   level: NotificationLogLevel | undefined;
   onSelect: (id: string, level: NotificationLogLevel | undefined) => void;
+  onRemove: (id: string) => void;
+};
+
+type Props = {
+  notificationIntegrations: Integration[];
+  curSettingsMap: NotificationSettingsMap;
+  onSelect: (id: string, level?: NotificationLogLevel) => void;
   onRemove: (id: string) => void;
 };
 
@@ -59,27 +66,20 @@ export const SelectedNotificationEntry: React.FC<
   );
 };
 
-type Props = {
-  notificationIntegrations: Integration[];
-  curSettings: NotificationSettings;
-  onSelect: (id: string, level?: NotificationLogLevel) => void;
-  onRemove: (id: string) => void;
-};
-
 const WorkflowNotificationSettings: React.FC<Props> = ({
   notificationIntegrations,
-  curSettings,
+  curSettingsMap,
   onSelect,
   onRemove,
 }) => {
-  const selectedIDs = Object.keys(curSettings);
+  const selectedIDs = Object.keys(curSettingsMap);
   const remainingIntegrations = notificationIntegrations.filter(
     (x) => !selectedIDs.includes(x.id)
   );
   const integrationsByID: { [id: string]: Integration } = {};
   notificationIntegrations.forEach((x) => (integrationsByID[x.id] = x));
 
-  const selectedEntries = Object.entries(curSettings).map(([id, level]) => (
+  const selectedEntries = Object.entries(curSettingsMap).map(([id, level]) => (
     <Box key={id} mt={1}>
       <SelectedNotificationEntry
         remainingNotificationIntegrations={remainingIntegrations}
