@@ -14,4 +14,4 @@ dependencies:
   - pip:
     - scikit_learn==1.0.2
     - typing_extensions==4.3.0
-    - aqueduct-ml==0.1.11
+    - aqueduct-ml==0.2.0
