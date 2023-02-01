@@ -812,16 +812,55 @@ func (eng *aqEngine) executeWithEngine(
 			timeConfig,
 			opExecMode,
 			databricksJobManager,
+			vaultObject,
+			eng.IntegrationRepo,
+			eng.Database,
 		)
 	default:
 		return eng.execute(
-
 			ctx,
 			dag,
 			workflowRunMetadata,
 			timeConfig,
+			vaultObject,
 			opExecMode,
 		)
+	}
+}
+
+func onFinishExecution(
+	ctx context.Context,
+	inProgressOps map[uuid.UUID]operator.Operator,
+	pollInterval time.Duration,
+	cleanupTimeout time.Duration,
+	curErr error,
+	notificationContent *notificationContentStruct,
+	dag dag_utils.WorkflowDag,
+	execMode operator.ExecutionMode,
+	vaultObject vault.Vault,
+	integrationRepo repos.Integration,
+	DB database.Database,
+) {
+	waitForInProgressOperators(ctx, inProgressOps, pollInterval, cleanupTimeout)
+	if curErr != nil && notificationContent == nil {
+		notificationContent = &notificationContentStruct{
+			level:      mdl_shared.ErrorNotificationLevel,
+			contextMsg: curErr.Error(),
+		}
+	}
+
+	if notificationContent != nil && execMode == operator.Publish {
+		err := sendNotifications(
+			ctx,
+			dag,
+			notificationContent,
+			vaultObject,
+			integrationRepo,
+			DB,
+		)
+		if err != nil {
+			log.Errorf("Error sending notifications: %s", err)
+		}
 	}
 }
 
@@ -830,6 +869,7 @@ func (eng *aqEngine) execute(
 	workflowDag dag_utils.WorkflowDag,
 	workflowRunMetadata *WorkflowRunMetadata,
 	timeConfig *AqueductTimeConfig,
+	vaultObject vault.Vault,
 	opExecMode operator.ExecutionMode,
 ) (err error) {
 	// These are the operators of immediate interest. They either need to be scheduled or polled on.
@@ -837,11 +877,6 @@ func (eng *aqEngine) execute(
 	completedOps := workflowRunMetadata.CompletedOps
 	dag := workflowDag
 	opToDependencyCount := workflowRunMetadata.OpToDependencyCount
-
-	type notificationContentStruct struct {
-		level      mdl_shared.NotificationLevel
-		contextMsg string
-	}
 
 	var notificationContent *notificationContentStruct = nil
 	err = nil
@@ -858,22 +893,19 @@ func (eng *aqEngine) execute(
 	}
 
 	// Wait a little bit for all active operators to finish before exiting on failure.
-	defer func() {
-		waitForInProgressOperators(ctx, inProgressOps, timeConfig.OperatorPollInterval, timeConfig.CleanupTimeout)
-		if err != nil && notificationContent == nil {
-			notificationContent = &notificationContentStruct{
-				level:      mdl_shared.ErrorNotificationLevel,
-				contextMsg: err.Error(),
-			}
-		}
-
-		if notificationContent != nil && opExecMode == operator.Publish {
-			err = eng.sendNotifications(ctx, workflowDag, notificationContent.level, notificationContent.contextMsg)
-			if err != nil {
-				log.Errorf("Error sending notifications: %s", err)
-			}
-		}
-	}()
+	defer onFinishExecution(
+		ctx,
+		inProgressOps,
+		timeConfig.OperatorPollInterval,
+		timeConfig.CleanupTimeout,
+		err,
+		notificationContent,
+		workflowDag,
+		opExecMode,
+		vaultObject,
+		eng.IntegrationRepo,
+		eng.Database,
+	)
 
 	start := time.Now()
 
