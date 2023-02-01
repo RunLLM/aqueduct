@@ -131,7 +131,6 @@ def _setup_snowflake_data(client: Client, snowflake: RelationalDBIntegration) ->
 
 
 def _setup_s3_data(client: Client, s3: S3Integration):
-
     # Find all the objects that already exist.
     existing_names = set()
     for object_name in demo_db_tables():

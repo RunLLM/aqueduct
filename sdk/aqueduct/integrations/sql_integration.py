@@ -42,6 +42,7 @@ TAG_PATTERN = r"{{\s*[\w-]+\s*}}"
 # The TAG for 'previous table' when the user specifies a chained query.
 PREV_TABLE_TAG = "$"
 
+
 # A dictionary of built-in tags to their replacement string functions.
 def replace_today() -> str:
     return "'" + date.today().strftime("%Y-%m-%d") + "'"
