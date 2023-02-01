@@ -15,28 +15,28 @@ def setup_changing_saves(client: aqueduct.Client, integration_name: str) -> str:
 
     ###
     table = integration.sql(query="SELECT * FROM wine;")
-    table.save(integration.config(table="table_1", update_mode="replace"))
+    integration.save(table, "table_1", "replace")
     flow = client.publish_flow(
         name=name,
         artifacts=[table],
     )
 
     ### update
-    table.save(integration.config(table="table_1", update_mode="append"))
+    integration.save(table, "table_1", "append")
     flow = client.publish_flow(
         name=name,
         artifacts=[table],
     )
 
     ### update
-    table.save(integration.config(table="table_1", update_mode="append"))
+    integration.save(table, "table_1", "append")
     flow = client.publish_flow(
         name=name,
         artifacts=[table],
     )
 
     ### update
-    table.save(integration.config(table="table_2", update_mode="replace"))
+    integration.save(table, "table_2", "replace")
     flow = client.publish_flow(
         name=name,
         artifacts=[table],

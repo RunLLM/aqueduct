@@ -1,41 +1,26 @@
 import uuid
 
-from aqueduct.constants.enums import ArtifactType, OperatorType
-from aqueduct.error import (
-    InvalidIntegrationException,
-    InvalidUserActionException,
-    InvalidUserArgumentException,
-)
+from aqueduct.constants.enums import OperatorType
+from aqueduct.error import InvalidIntegrationException
 from aqueduct.globals import __GLOBAL_API_CLIENT__ as global_api_client
 from aqueduct.models.dag import DAG
 from aqueduct.models.integration import IntegrationInfo
-from aqueduct.models.operators import (
-    LoadSpec,
-    Operator,
-    OperatorSpec,
-    S3LoadParams,
-    UnionLoadParams,
-)
+from aqueduct.models.operators import LoadSpec, Operator, OperatorSpec, UnionLoadParams
 from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import generate_uuid
 
 
-def save_artifact(
+def _save_artifact(
     artifact_id: uuid.UUID,
-    artifact_type: ArtifactType,
     dag: DAG,
     integration_info: IntegrationInfo,
     save_params: UnionLoadParams,
 ) -> None:
     """Configures the given artifact to be written to a specific integration after it's computed in a published flow.
 
-    TODO(ENG-2035): Move this method into the base integration object.
-
     Args:
         artifact_id:
             The artifact who's contents will be saved.
-        artifact_type:
-            The type of the given artifact.
         dag:
             The dag object that we will attach the load operator to.
         integration_info:
@@ -52,29 +37,12 @@ def save_artifact(
         InvalidUserArgumentException:
             An error occurred because some necessary fields are missing in the SaveParams.
     """
+
     integrations_map = global_api_client.list_integrations()
-
     if integration_info.name not in integrations_map:
-        raise InvalidIntegrationException("Not connected to db %s!" % integration_info.name)
-
-    # Non-tabular data cannot be saved into relational data stores.
-    if (
-        artifact_type not in [ArtifactType.UNTYPED, ArtifactType.TABLE]
-        and integration_info.is_relational()
-    ):
-        raise InvalidUserActionException(
-            "Unable to save non-relational data into relational data store `%s`."
-            % integration_info.name
+        raise InvalidIntegrationException(
+            "Not connected to integration %s!" % integration_info.name
         )
-
-    # Tabular data written into S3 must include a S3FileFormat hint.
-    # TODO(ENG-2035): This is redundant after `.config()` pattern is deprecated.
-    if artifact_type == ArtifactType.TABLE and isinstance(save_params, S3LoadParams):
-        if save_params.format is None:
-            raise InvalidUserArgumentException(
-                "You must supply a file format when saving tabular data into S3 integration `%s`."
-                % integration_info.name
-            )
 
     # We currently do not allow multiple load operators on the same artifact to the same integration.
     # We do allow multiple artifacts to write to the same integration, as well as a single artifact

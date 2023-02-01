@@ -3,10 +3,8 @@ from typing import List, Optional, Union
 
 from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.artifacts.save import save_artifact
 from aqueduct.artifacts.transform import to_artifact_class
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, S3TableFormat
-from aqueduct.logger import logger
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
 from aqueduct.models.integration import Integration, IntegrationInfo
@@ -16,7 +14,6 @@ from aqueduct.models.operators import (
     OperatorSpec,
     S3ExtractParams,
     S3LoadParams,
-    SaveConfig,
 )
 from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import artifact_name_from_op_name, generate_uuid
@@ -25,6 +22,7 @@ from aqueduct import globals
 
 from ..error import InvalidUserArgumentException
 from .naming import _generate_extract_op_name
+from .save import _save_artifact
 
 
 def _convert_to_s3_table_format(format: Optional[str]) -> Optional[S3TableFormat]:
@@ -165,26 +163,6 @@ class S3Integration(Integration):
             # We are in lazy mode.
             return to_artifact_class(self._dag, output_artifact_id, artifact_type)
 
-    def config(self, filepath: str, format: Optional[S3TableFormat] = None) -> SaveConfig:
-        """TODO(ENG-2035): Deprecated and will be removed.
-        Configuration for saving to S3 Integration.
-
-        Arguments:
-            filepath:
-                S3 Filepath to save to.
-            format:
-                S3 Fileformat to save as. Can be CSV, JSON, or Parquet.
-        Returns:
-            SaveConfig object to use in Artifact.save()
-        """
-        logger().warning(
-            "`integration.config()` is deprecated. Please use `integration.save()` directly instead."
-        )
-        return SaveConfig(
-            integration_info=self._metadata,
-            parameters=S3LoadParams(filepath=filepath, format=format),
-        )
-
     def save(self, artifact: BaseArtifact, filepath: str, format: Optional[str] = None) -> None:
         """Registers a save operator of the given artifact, to be executed when it's computed in a published flow.
 
@@ -211,9 +189,8 @@ class S3Integration(Integration):
                 % artifact.type()
             )
 
-        save_artifact(
+        _save_artifact(
             artifact.id(),
-            artifact.type(),
             self._dag,
             self._metadata,
             save_params=S3LoadParams(filepath=filepath, format=_convert_to_s3_table_format(format)),

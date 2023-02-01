@@ -10,7 +10,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 )
 
 type EmailNotification struct {
@@ -47,7 +46,6 @@ func (e *EmailNotification) Send(ctx context.Context, msg string) error {
 	)
 
 	fullMsg := fullMessage("aqueduct notification", e.conf.User, e.conf.Targets, msg)
-	log.Info(fullMsg)
 	return smtp.SendMail(
 		e.conf.FullHost(),
 		auth,

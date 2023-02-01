@@ -29,7 +29,7 @@ export const DetailsPageHeader: React.FC<DetailsPageHeaderProps> = ({
           display: 'flex',
         }}
       >
-        <StatusIndicator status={status} />
+        <StatusIndicator size={'24px'} status={status} />
       </Box>
       <Typography variant="h4" component="div">
         {name}

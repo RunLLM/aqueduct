@@ -106,7 +106,7 @@ func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
 		return errors.Newf("Cannot launch operator with state %s", bo.execState.Status)
 	}
 
-	bo.updateExecState(&shared.ExecutionState{Status: shared.RunningExecutionStatus})
+	bo.UpdateExecState(&shared.ExecutionState{Status: shared.RunningExecutionStatus})
 
 	// Check if this operator can use previously cached results instead of computing for scratch.
 	if bo.previewCacheManager != nil {
@@ -139,8 +139,8 @@ func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
 	return bo.jobManager.Launch(ctx, spec.JobName(), spec)
 }
 
-// fetchAndUpdateExecState assumes that the operator has been computed already.
-func (bo *baseOperator) fetchExecState(ctx context.Context) *shared.ExecutionState {
+// FetchExecState assumes that the operator has been computed already.
+func (bo *baseOperator) FetchExecState(ctx context.Context) *shared.ExecutionState {
 	var execState shared.ExecutionState
 	err := utils.ReadFromStorage(
 		ctx,
@@ -159,9 +159,9 @@ func (bo *baseOperator) fetchExecState(ctx context.Context) *shared.ExecutionSta
 	return &execState
 }
 
-// updateExecState and merge timestamps with current state based on the status of the new state.
+// UpdateExecState and merge timestamps with current state based on the status of the new state.
 // Other fields of bo.execState will be replaced.
-func (bo *baseOperator) updateExecState(execState *shared.ExecutionState) {
+func (bo *baseOperator) UpdateExecState(execState *shared.ExecutionState) {
 	now := time.Now()
 	// copy current timestamps to merge these time
 	execTimestamps := bo.execState.Timestamps
@@ -245,8 +245,8 @@ func (bo *baseOperator) Poll(ctx context.Context) (*shared.ExecutionState, error
 		if err.Code() == job.JobMissing || err.Code() == job.Noop {
 			// Check whether the operator has actually completed.
 			if utils.ObjectExistsInStorage(ctx, bo.storageConfig, bo.metadataPath) {
-				execState := bo.fetchExecState(ctx)
-				bo.updateExecState(execState)
+				execState := bo.FetchExecState(ctx)
+				bo.UpdateExecState(execState)
 				return bo.ExecState(), nil
 			}
 
@@ -256,12 +256,12 @@ func (bo *baseOperator) Poll(ctx context.Context) (*shared.ExecutionState, error
 			// Catch any errors here that originate from within the JobManager, outside of the
 			// python execution context, and that need a better user-facing message (eg. OOM issues).
 		} else if err.Code() == job.User {
-			bo.updateExecState(
+			bo.UpdateExecState(
 				jobManagerUserFailureExecState(err, "Job manager failed due to user error."),
 			)
 			return bo.ExecState(), nil
 		} else if err.Code() == job.System {
-			bo.updateExecState(
+			bo.UpdateExecState(
 				unknownSystemFailureExecState(err, "Unable to poll job manager."),
 			)
 			return bo.ExecState(), nil
@@ -271,8 +271,8 @@ func (bo *baseOperator) Poll(ctx context.Context) (*shared.ExecutionState, error
 	} else {
 		// The job just completed, so we know we can fetch the results (succeeded/failed).
 		if status == shared.FailedExecutionStatus || status == shared.SucceededExecutionStatus {
-			execState := bo.fetchExecState(ctx)
-			bo.updateExecState(execState)
+			execState := bo.FetchExecState(ctx)
+			bo.UpdateExecState(execState)
 			return bo.ExecState(), nil
 		}
 
@@ -347,7 +347,7 @@ func (bo *baseOperator) Finish(ctx context.Context) {
 }
 
 func (bo *baseOperator) Cancel() {
-	bo.updateExecState(&shared.ExecutionState{
+	bo.UpdateExecState(&shared.ExecutionState{
 		Status: shared.CanceledExecutionStatus,
 	})
 }
