@@ -5,7 +5,9 @@ import React from 'react';
 import { ArtifactResultsWithLoadingStatus } from '../../../../reducers/artifactResults';
 import { theme } from '../../../../styles/theme/theme';
 import { Data, DataSchema } from '../../../../utils/data';
-import ExecutionStatus from '../../../../utils/shared';
+import ExecutionStatus, {
+  stringToExecutionStatus,
+} from '../../../../utils/shared';
 import { isFailed, isInitial, isLoading } from '../../../../utils/shared';
 import { StatusIndicator } from '../../workflowStatus';
 
@@ -49,13 +51,20 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
     schema: checkHistorySchema,
     data: (historyWithLoadingStatus.results?.results ?? []).map(
       (artifactStatusResult) => {
+        let timestamp = new Date(
+          artifactStatusResult.exec_state?.timestamps?.finished_at
+        ).toLocaleString();
+
+        // Checks that are canceled / fail to execute have no exec_state or finished_at time.
+        if (timestamp === 'Invalid Date') {
+          timestamp = 'Unknown';
+        }
+
         return {
           status: artifactStatusResult.exec_state?.status ?? 'Unknown',
           level: checkLevel ? checkLevel : 'undefined',
           value: artifactStatusResult.content_serialized,
-          timestamp: new Date(
-            artifactStatusResult.exec_state?.timestamps?.finished_at
-          ).toLocaleString(),
+          timestamp,
         };
       }
     ),
@@ -103,7 +112,11 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
             width="auto"
           >
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <StatusIndicator status={entry.status as ExecutionStatus} />
+              <StatusIndicator
+                status={stringToExecutionStatus(entry.status as string)}
+                size={'16px'}
+                monochrome={false}
+              />
 
               <Typography sx={{ ml: 1 }} variant="body2">
                 {entry.timestamp.toLocaleString()}

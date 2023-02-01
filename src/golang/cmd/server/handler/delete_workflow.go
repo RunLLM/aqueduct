@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -78,7 +79,6 @@ type DeleteWorkflowHandler struct {
 	Database   database.Database
 	Engine     engine.Engine
 	JobManager job.JobManager
-	Vault      vault.Vault
 
 	ExecutionEnvironmentRepo repos.ExecutionEnvironment
 	IntegrationRepo          repos.Integration
@@ -214,13 +214,19 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 		}
 	}
 
+	storageConfig := config.Storage()
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return resp, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
+	}
+
 	// Delete associated objects.
 	if objCount > 0 {
 		savedObjectDeletionResults, httpResponse, err := DeleteSavedObject(
 			ctx,
 			args,
 			nameToID,
-			h.Vault,
+			vaultObject,
 			args.StorageConfig,
 			h.JobManager,
 			h.Database,
@@ -232,7 +238,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 		resp.SavedObjectDeletionResults = savedObjectDeletionResults
 	}
 
-	err := h.Engine.DeleteWorkflow(ctx, args.WorkflowID)
+	err = h.Engine.DeleteWorkflow(ctx, args.WorkflowID)
 	if err != nil {
 		return resp, http.StatusInternalServerError, errors.Wrap(err, "Unable to delete workflow.")
 	}

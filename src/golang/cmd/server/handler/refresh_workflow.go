@@ -12,7 +12,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/repos"
-	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -40,7 +39,6 @@ type RefreshWorkflowHandler struct {
 
 	Database database.Database
 	Engine   engine.Engine
-	Vault    vault.Vault
 
 	WorkflowRepo repos.Workflow
 }

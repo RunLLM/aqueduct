@@ -9,6 +9,7 @@ import * as React from 'react';
 
 import { Data, DataSchema } from '../../utils/data';
 import { CheckTableItem } from './CheckTableItem';
+import MetricTableItem from './MetricTableItem';
 
 export enum OperatorExecStateTableType {
   Metric = 'metric',
@@ -44,6 +45,37 @@ export const OperatorExecStateTable: React.FC<OperatorExecStateTableProps> = ({
   tableAlign = 'left',
   tableType,
 }) => {
+  const getTableItem = (tableType, columnName, value, status) => {
+    // return title text in bold.
+    if (columnName === 'title') {
+      return (
+        <Typography
+          sx={{
+            fontWeight: 400,
+          }}
+        >
+          {value.toString()}
+        </Typography>
+      );
+    } else if (tableType === OperatorExecStateTableType.Metric) {
+      // Send off to the MetricTableItem component.
+      return <MetricTableItem metricValue={value as string} status={status} />;
+    } else if (tableType === OperatorExecStateTableType.Check) {
+      return <CheckTableItem checkValue={value as string} status={status} />;
+    }
+
+    // Default case, code here shouldn't get hit assuming this table is just used to render metrics and cheecks.
+    return (
+      <Typography
+        sx={{
+          fontWeight: 300,
+        }}
+      >
+        {value.toString()}
+      </Typography>
+    );
+  };
+
   return (
     <TableContainer sx={{ maxHeight, height, width }}>
       <Table
@@ -75,25 +107,12 @@ export const OperatorExecStateTable: React.FC<OperatorExecStateTableProps> = ({
                   const columnName = column.name.toLowerCase();
                   const value = row[columnName];
 
-                  // For title columns we should just render the text.
-                  // For a check's value column, we should render the appropriate icon.
                   return (
                     <TableCell
                       key={`cell-${rowIndex}-${columnIndex}`}
                       align={tableAlign as TableCellProps['align']}
                     >
-                      {tableType === OperatorExecStateTableType.Metric ||
-                      columnName === 'title' ? (
-                        <Typography
-                          sx={{
-                            fontWeight: columnName === 'title' ? 400 : 300,
-                          }}
-                        >
-                          {value.toString()}
-                        </Typography>
-                      ) : (
-                        <CheckTableItem checkValue={value as string} />
-                      )}
+                      {getTableItem(tableType, columnName, value, row.status)}
                     </TableCell>
                   );
                 })}

@@ -36,6 +36,38 @@ export enum ExecutionStatus {
   Running = 'running',
 }
 
+export const stringToExecutionStatus = (status: string): ExecutionStatus => {
+  let executionStatus = ExecutionStatus.Unknown;
+  switch (status) {
+    case 'unknown':
+      executionStatus = ExecutionStatus.Unknown;
+      break;
+    case 'succeeded':
+      executionStatus = ExecutionStatus.Succeeded;
+      break;
+    case 'failed':
+      executionStatus = ExecutionStatus.Failed;
+      break;
+    case 'pending':
+      executionStatus = ExecutionStatus.Pending;
+      break;
+    case 'canceled':
+      executionStatus = ExecutionStatus.Canceled;
+      break;
+    case 'registered':
+      executionStatus = ExecutionStatus.Registered;
+      break;
+    case 'running':
+      executionStatus = ExecutionStatus.Running;
+      break;
+    default:
+      executionStatus = ExecutionStatus.Unknown;
+      break;
+  }
+
+  return executionStatus;
+};
+
 export type ExecutionTimestamps = {
   registered_at?: string;
   pending_at?: string;

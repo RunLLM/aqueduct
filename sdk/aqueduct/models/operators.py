@@ -122,12 +122,6 @@ UnionLoadParams = Union[
 ]
 
 
-# Internal class used by SDK to represent the config for loading to an integration.
-class SaveConfig(BaseModel):
-    integration_info: IntegrationInfo
-    parameters: UnionLoadParams
-
-
 # Class expected by backend for a load operator.
 class LoadSpec(BaseModel):
     service: ServiceType
