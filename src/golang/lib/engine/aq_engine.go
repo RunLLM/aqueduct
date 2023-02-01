@@ -766,9 +766,10 @@ func (eng *aqEngine) execute(
 		}
 
 		if notificationContent != nil && opExecMode == operator.Publish {
-			err = eng.sendNotifications(ctx, workflowDag, notificationContent.level, notificationContent.contextMsg)
-			if err != nil {
-				log.Errorf("Error sending notifications: %s", err)
+			// We should not overwrite 'err' variable, which will be handled by downstream.
+			notificationErr := eng.sendNotifications(ctx, workflowDag, notificationContent.level, notificationContent.contextMsg)
+			if notificationErr != nil {
+				log.Errorf("Error sending notifications: %s", notificationErr)
 			}
 		}
 	}()
