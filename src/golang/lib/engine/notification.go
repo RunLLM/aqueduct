@@ -57,7 +57,6 @@ func (eng *aqEngine) sendNotifications(
 	msg := notificationMsg(wfDag.Name(), level, contextMsg)
 	workflowSettings := wfDag.NotificationSettings().Settings
 	for _, notificationObj := range notifications {
-		log.Infof("notflevel: %s", level)
 		if len(workflowSettings) > 0 {
 			// send based on settings
 			thresholdLevel, ok := workflowSettings[notificationObj.ID()]
@@ -72,9 +71,7 @@ func (eng *aqEngine) sendNotifications(
 		} else {
 			// Otherwise we send based on global settings.
 			// ENG-2341 will allow user to configure if a notification applies to all workflows.
-			log.Infof("obj level: %s", notificationObj.Level())
 			if notification.ShouldSend(notificationObj.Level(), level) {
-				log.Infof("trying to send")
 				err = notificationObj.Send(ctx, msg)
 				if err != nil {
 					return err

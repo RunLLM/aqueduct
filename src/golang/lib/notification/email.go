@@ -5,10 +5,12 @@ import (
 	"crypto/tls"
 	"fmt"
 	"net/smtp"
+	"strings"
 
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 type EmailNotification struct {
@@ -28,8 +30,15 @@ func (e *EmailNotification) Level() shared.NotificationLevel {
 	return e.conf.Level
 }
 
+func fullMessage(subject string, from string, targets []string, body string) string {
+	fullMsg := fmt.Sprintf("From: %s\n", from)
+	fullMsg += fmt.Sprintf("To: %s\n", strings.Join(targets, ","))
+	fullMsg += fmt.Sprintf("Subject: %s\n\n", subject)
+	fullMsg += body
+	return fullMsg
+}
+
 func (e *EmailNotification) Send(ctx context.Context, msg string) error {
-	fmt.Print("sending email")
 	auth := smtp.PlainAuth(
 		"", // identity
 		e.conf.User,
@@ -37,7 +46,8 @@ func (e *EmailNotification) Send(ctx context.Context, msg string) error {
 		e.conf.Host,
 	)
 
-	fullMsg := fmt.Sprintf("Subject: aqueduct notifications\n%s", msg)
+	fullMsg := fullMessage("aqueduct notification", e.conf.User, e.conf.Targets, msg)
+	log.Info(fullMsg)
 	return smtp.SendMail(
 		e.conf.FullHost(),
 		auth,
