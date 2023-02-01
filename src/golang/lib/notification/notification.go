@@ -21,7 +21,13 @@ type Notification interface {
 	// `ID()` is the unique identifier, typically mapped to the integration ID.
 	ID() uuid.UUID
 
-	// `Level()` is the default level beyond which a notification should send.
+	// `Level()` is the global default severity level threshold beyond which a notification should send.
+	// For example, 'warning' threshold allows 'error' and 'warning' level notifications,
+	// but blocking 'success' notifications.
+	//
+	// This behavior is controlled by caller calling `ShouldSend()` function.
+	// This field is a 'global default' as we allow overriding this behavior in,
+	// for example, workflow specific settings.
 	Level() shared.NotificationLevel
 
 	// `Send()` sends a notification.

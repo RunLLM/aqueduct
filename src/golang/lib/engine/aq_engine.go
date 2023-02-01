@@ -724,16 +724,20 @@ func (eng *aqEngine) execute(
 	workflowRunMetadata *workflowRunMetadata,
 	timeConfig *AqueductTimeConfig,
 	opExecMode operator.ExecutionMode,
-) error {
+) (err error) {
 	// These are the operators of immediate interest. They either need to be scheduled or polled on.
 	inProgressOps := workflowRunMetadata.InProgressOps
 	completedOps := workflowRunMetadata.CompletedOps
 	dag := workflowDag
 	opToDependencyCount := workflowRunMetadata.OpToDependencyCount
-	hasNotification := false
-	notificationLevel := mdl_shared.NeutralNotificationLevel
-	notificationCtxMsg := ""
-	var err error = nil
+
+	type notificationContentStruct struct {
+		level      mdl_shared.NotificationLevel
+		contextMsg string
+	}
+
+	var notificationContent *notificationContentStruct = nil
+	err = nil
 
 	// Kick off execution by starting all operators that don't have any inputs.
 	for _, op := range dag.Operators() {
@@ -749,14 +753,15 @@ func (eng *aqEngine) execute(
 	// Wait a little bit for all active operators to finish before exiting on failure.
 	defer func() {
 		waitForInProgressOperators(ctx, inProgressOps, timeConfig.OperatorPollInterval, timeConfig.CleanupTimeout)
-		if err != nil {
-			notificationLevel = mdl_shared.ErrorNotificationLevel
-			notificationCtxMsg = err.Error()
-			hasNotification = true
+		if err != nil && notificationContent == nil {
+			notificationContent = &notificationContentStruct{
+				level:      mdl_shared.ErrorNotificationLevel,
+				contextMsg: err.Error(),
+			}
 		}
 
-		if hasNotification && opExecMode == operator.Publish {
-			err = eng.sendNotifications(ctx, workflowDag, notificationLevel, notificationCtxMsg)
+		if notificationContent != nil && opExecMode == operator.Publish {
+			err = eng.sendNotifications(ctx, workflowDag, notificationContent.level, notificationContent.contextMsg)
 			if err != nil {
 				log.Errorf("Error sending notifications: %s", err)
 			}
@@ -767,9 +772,7 @@ func (eng *aqEngine) execute(
 
 	for len(inProgressOps) > 0 {
 		if time.Since(start) > timeConfig.ExecTimeout {
-			// explicitly set `err` variable to trigger notifications
-			err = errors.New("Reached timeout waiting for workflow to complete.")
-			return err
+			return errors.New("Reached timeout waiting for workflow to complete.")
 		}
 
 		for _, op := range inProgressOps {
@@ -781,8 +784,7 @@ func (eng *aqEngine) execute(
 			if execState.Status == shared.PendingExecutionStatus {
 				err = op.Launch(ctx)
 				if err != nil {
-					err = errors.Wrapf(err, "Unable to schedule operator %s.", op.Name())
-					return err
+					return errors.Wrapf(err, "Unable to schedule operator %s.", op.Name())
 				}
 				continue
 			} else if execState.Status == shared.RunningExecutionStatus {
@@ -790,16 +792,14 @@ func (eng *aqEngine) execute(
 			}
 
 			if !execState.Terminated() {
-				err = errors.Newf("Internal error: the operator is expected to have terminated, but instead has status %s", execState.Status)
-				return err
+				return errors.Newf("Internal error: the operator is expected to have terminated, but instead has status %s", execState.Status)
 			}
 
 			// From here on we can assume that the operator has terminated.
 			if opExecMode == operator.Publish {
 				err = op.PersistResult(ctx)
 				if err != nil {
-					err = errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
-					return err
+					return errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
 				}
 			}
 
@@ -821,24 +821,31 @@ func (eng *aqEngine) execute(
 					if opExecMode == operator.Publish {
 						err = dagOp.PersistResult(ctx)
 						if err != nil {
-							err = errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
-							return err
+							return errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
 						}
 					}
 				}
 
-				hasNotification = true
-				notificationLevel = mdl_shared.ErrorNotificationLevel
+				notificationCtxMsg := ""
 				if execState.Error != nil {
 					notificationCtxMsg = fmt.Sprintf("%s\nContext:\n%s", execState.Error.Tip, execState.Error.Context)
 				}
 
+				notificationContent = &notificationContentStruct{
+					level:      mdl_shared.ErrorNotificationLevel,
+					contextMsg: notificationCtxMsg,
+				}
+
 				return opFailureError(*execState.FailureType, op)
 			} else if execState.Status == shared.FailedExecutionStatus {
-				hasNotification = true
-				notificationLevel = mdl_shared.WarningNotificationLevel
+				notificationCtxMsg := ""
 				if execState.Error != nil {
 					notificationCtxMsg = fmt.Sprintf("%s\nContext:\n%s", execState.Error.Tip, execState.Error.Context)
+				}
+
+				notificationContent = &notificationContentStruct{
+					level:      mdl_shared.WarningNotificationLevel,
+					contextMsg: notificationCtxMsg,
 				}
 			}
 
@@ -865,8 +872,7 @@ func (eng *aqEngine) execute(
 					opToDependencyCount[nextOp.ID()] -= 1
 
 					if opToDependencyCount[nextOp.ID()] < 0 {
-						err = errors.Newf("Internal error: operator %s has a negative dependnecy count.", op.Name())
-						return err
+						return errors.Newf("Internal error: operator %s has a negative dependnecy count.", op.Name())
 					}
 
 					if opToDependencyCount[nextOp.ID()] == 0 {
@@ -884,21 +890,20 @@ func (eng *aqEngine) execute(
 	}
 
 	if len(completedOps) != len(dag.Operators()) {
-		err = errors.Newf("Internal error: %d operators were provided but only %d completed.", len(dag.Operators()), len(completedOps))
-		return err
+		return errors.Newf("Internal error: %d operators were provided but only %d completed.", len(dag.Operators()), len(completedOps))
 	}
 
 	for opID, depCount := range opToDependencyCount {
 		if depCount != 0 {
-			err = errors.Newf("Internal error: operator %s has a non-zero dep count %d.", opID, depCount)
-			return err
+			return errors.Newf("Internal error: operator %s has a non-zero dep count %d.", opID, depCount)
 		}
 	}
 
-	// avoid overriding a warning notification.
-	if notificationLevel != mdl_shared.WarningNotificationLevel {
-		hasNotification = true
-		notificationLevel = mdl_shared.SuccessNotificationLevel
+	// avoid overriding an existing notification (in practice, this is a warning)
+	if notificationContent == nil {
+		notificationContent = &notificationContentStruct{
+			level: mdl_shared.SuccessNotificationLevel,
+		}
 	}
 	return nil
 }
