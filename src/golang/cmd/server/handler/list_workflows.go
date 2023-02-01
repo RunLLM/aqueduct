@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -46,7 +47,6 @@ type ListWorkflowsHandler struct {
 	GetHandler
 
 	Database database.Database
-	Vault    vault.Vault
 
 	ArtifactRepo       repos.Artifact
 	ArtifactResultRepo repos.ArtifactResult
@@ -204,6 +204,12 @@ func syncSelfOrchestratedWorkflows(ctx context.Context, h *ListWorkflowsHandler,
 		return err
 	}
 
+	storageConfig := config.Storage()
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return errors.Wrap(err, "Unable to initialize vault.")
+	}
+
 	if err := airflow.SyncDAGs(
 		ctx,
 		airflowDagIDs,
@@ -215,7 +221,7 @@ func syncSelfOrchestratedWorkflows(ctx context.Context, h *ListWorkflowsHandler,
 		h.DAGResultRepo,
 		h.OperatorResultRepo,
 		h.ArtifactResultRepo,
-		h.Vault,
+		vaultObject,
 		h.Database,
 	); err != nil {
 		return err

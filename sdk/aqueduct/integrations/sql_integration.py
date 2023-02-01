@@ -5,11 +5,10 @@ from typing import List, Optional, Union
 import pandas as pd
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.preview import preview_artifact
-from aqueduct.artifacts.save import save_artifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, LoadUpdateMode, ServiceType
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.logger import logger
+from aqueduct.integrations.save import _save_artifact
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
 from aqueduct.models.integration import Integration, IntegrationInfo
@@ -19,7 +18,6 @@ from aqueduct.models.operators import (
     OperatorSpec,
     RelationalDBExtractParams,
     RelationalDBLoadParams,
-    SaveConfig,
 )
 from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import artifact_name_from_op_name, generate_uuid
@@ -32,7 +30,6 @@ LIST_TABLES_QUERY_MYSQL = "SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHER
 LIST_TABLES_QUERY_SQLSERVER = (
     "SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_type = 'BASE TABLE';"
 )
-LIST_TABLES_QUERY_BIGQUERY = "SELECT schema_name FROM information_schema.schemata;"
 GET_TABLE_QUERY = "select * from %s"
 LIST_TABLES_QUERY_SQLITE = "SELECT name AS tablename FROM sqlite_master WHERE type='table';"
 LIST_TABLES_QUERY_ATHENA = "AQUEDUCT_ATHENA_LIST_TABLE"
@@ -103,6 +100,12 @@ class RelationalDBIntegration(Integration):
         Returns:
             pd.DataFrame of available tables.
         """
+        if self.type() in [ServiceType.BIGQUERY]:
+            # Use the list integration objects endpoint instead of
+            # providing a hardcoded SQL query to execute
+            tables = globals.__GLOBAL_API_CLIENT__.list_tables(str(self.id()))
+            return pd.DataFrame(tables, columns=["tablename"])
+
         if self.type() in [
             ServiceType.POSTGRES,
             ServiceType.AQUEDUCTDEMO,
@@ -115,8 +118,6 @@ class RelationalDBIntegration(Integration):
             list_tables_query = LIST_TABLES_QUERY_MYSQL
         elif self.type() == ServiceType.SQLSERVER:
             list_tables_query = LIST_TABLES_QUERY_SQLSERVER
-        elif self.type() == ServiceType.BIGQUERY:
-            list_tables_query = LIST_TABLES_QUERY_BIGQUERY
         elif self.type() == ServiceType.SQLITE:
             list_tables_query = LIST_TABLES_QUERY_SQLITE
         elif self.type() == ServiceType.ATHENA:
@@ -266,33 +267,6 @@ class RelationalDBIntegration(Integration):
             # We are in lazy mode.
             return TableArtifact(self._dag, sql_output_artifact_id)
 
-    def config(self, table: str, update_mode: LoadUpdateMode) -> SaveConfig:
-        """TODO(ENG-2035): Deprecated and will be removed.
-        Configuration for saving to RelationalDB Integration.
-
-        Arguments:
-            table:
-                Table to save to.
-            update_mode:
-                The update mode to use when saving the artifact as a relational table.
-                Possible values are: APPEND, REPLACE, or FAIL.
-        Returns:
-            SaveConfig object to use in TableArtifact.save()
-        """
-        logger().warning(
-            "`integration.config()` is deprecated. Please use `integration.save()` directly instead."
-        )
-
-        if self.type() == ServiceType.ATHENA:
-            raise InvalidUserActionException(
-                "Save operation is not supported for integration type %s." % self.type().value
-            )
-
-        return SaveConfig(
-            integration_info=self._metadata,
-            parameters=RelationalDBLoadParams(table=table, update_mode=update_mode),
-        )
-
     def save(self, artifact: BaseArtifact, table_name: str, update_mode: LoadUpdateMode) -> None:
         """Registers a save operator of the given artifact, to be executed when it's computed in a published flow.
 
@@ -305,9 +279,14 @@ class RelationalDBIntegration(Integration):
                 Defines the semantics of the save if a table already exists.
                 Options are "replace", "append" (row-wise), or "fail" (if table already exists).
         """
-        save_artifact(
+        # Non-tabular data cannot be saved into relational data stores.
+        if artifact.type() not in [ArtifactType.UNTYPED, ArtifactType.TABLE]:
+            raise InvalidUserActionException(
+                "Unable to save non-relational data into relational data store `%s`." % self.name()
+            )
+
+        _save_artifact(
             artifact.id(),
-            artifact.type(),
             self._dag,
             self._metadata,
             save_params=RelationalDBLoadParams(table=table_name, update_mode=update_mode),

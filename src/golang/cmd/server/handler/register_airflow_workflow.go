@@ -5,11 +5,13 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/vault"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	operator_utils "github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -126,6 +128,12 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 
 	emptyResp := registerAirflowWorkflowResponse{}
 
+	storageConfig := config.Storage()
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
+	}
+
 	if args.isUpdate {
 		// Sync existing Airflow DAGRuns before DAG is updated
 		dag, err := utils.ReadLatestDAGFromDatabase(
@@ -155,7 +163,7 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 			h.DAGResultRepo,
 			h.OperatorResultRepo,
 			h.ArtifactResultRepo,
-			h.Vault,
+			vaultObject,
 			h.Database,
 		); err != nil {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to update workflow.")
@@ -228,7 +236,7 @@ func (h *RegisterAirflowWorkflowHandler) Perform(ctx context.Context, interfaceA
 		dag,
 		h.DAGRepo,
 		h.JobManager,
-		h.Vault,
+		vaultObject,
 		txn,
 	)
 	if err != nil {

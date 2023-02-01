@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -47,7 +48,6 @@ type CreateTableHandler struct {
 
 	Database   database.Database
 	JobManager job.JobManager
-	Vault      vault.Vault
 
 	IntegrationRepo repos.Integration
 }
@@ -121,7 +121,13 @@ func (h *CreateTableHandler) Perform(ctx context.Context, interfaceArgs interfac
 
 	emptyResp := CreateTableResponse{}
 
-	if statusCode, err := CreateTable(ctx, args, contentPath, integrationObject, h.Vault, args.StorageConfig, h.JobManager); err != nil {
+	storageConfig := config.Storage()
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
+	}
+
+	if statusCode, err := CreateTable(ctx, args, contentPath, integrationObject, vaultObject, args.StorageConfig, h.JobManager); err != nil {
 		return emptyResp, statusCode, err
 	}
 

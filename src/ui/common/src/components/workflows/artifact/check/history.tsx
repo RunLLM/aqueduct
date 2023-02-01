@@ -1,17 +1,15 @@
-import {
-  faCheckCircle,
-  faQuestionCircle,
-  faXmarkCircle,
-} from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { AlertTitle } from '@mui/material';
 import { Alert, Box, CircularProgress, Typography } from '@mui/material';
 import React from 'react';
 
 import { ArtifactResultsWithLoadingStatus } from '../../../../reducers/artifactResults';
 import { theme } from '../../../../styles/theme/theme';
 import { Data, DataSchema } from '../../../../utils/data';
-import ExecutionStatus from '../../../../utils/shared';
+import ExecutionStatus, {
+  stringToExecutionStatus,
+} from '../../../../utils/shared';
 import { isFailed, isInitial, isLoading } from '../../../../utils/shared';
+import { StatusIndicator } from '../../workflowStatus';
 
 type CheckHistoryProps = {
   historyWithLoadingStatus?: ArtifactResultsWithLoadingStatus;
@@ -42,8 +40,9 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
 
   if (isFailed(historyWithLoadingStatus.status)) {
     return (
-      <Alert title="Failed to load historical data.">
-        {historyWithLoadingStatus.status.err}
+      <Alert style={{ marginTop: '10px' }} severity="error">
+        <AlertTitle>Failed to load historical data.</AlertTitle>
+        <pre>{historyWithLoadingStatus.status.err}</pre>
       </Alert>
     );
   }
@@ -52,13 +51,20 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
     schema: checkHistorySchema,
     data: (historyWithLoadingStatus.results?.results ?? []).map(
       (artifactStatusResult) => {
+        let timestamp = new Date(
+          artifactStatusResult.exec_state?.timestamps?.finished_at
+        ).toLocaleString();
+
+        // Checks that are canceled / fail to execute have no exec_state or finished_at time.
+        if (timestamp === 'Invalid Date') {
+          timestamp = 'Unknown';
+        }
+
         return {
           status: artifactStatusResult.exec_state?.status ?? 'Unknown',
           level: checkLevel ? checkLevel : 'undefined',
           value: artifactStatusResult.content_serialized,
-          timestamp: new Date(
-            artifactStatusResult.exec_state?.timestamps?.finished_at
-          ).toLocaleString(),
+          timestamp,
         };
       }
     ),
@@ -77,34 +83,16 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
       </Typography>
 
       {dataSortedByLatest.map((entry, index) => {
-        let backgroundColor, hoverColor, icon;
+        let backgroundColor, hoverColor;
         if (entry.status === ExecutionStatus.Succeeded) {
           backgroundColor = theme.palette.green[100];
           hoverColor = theme.palette.green[200];
-          icon = (
-            <FontAwesomeIcon
-              icon={faCheckCircle}
-              color={theme.palette.green[600]}
-            />
-          );
         } else if (entry.status === ExecutionStatus.Failed) {
           backgroundColor = theme.palette.red[25];
           hoverColor = theme.palette.red[100];
-          icon = (
-            <FontAwesomeIcon
-              icon={faXmarkCircle}
-              color={theme.palette.red[600]}
-            />
-          );
         } else {
           backgroundColor = theme.palette.gray[100];
           hoverColor = theme.palette.gray[200];
-          icon = (
-            <FontAwesomeIcon
-              icon={faQuestionCircle}
-              color={theme.palette.gray[600]}
-            />
-          );
         }
 
         return (
@@ -124,7 +112,11 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
             width="auto"
           >
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              {icon}
+              <StatusIndicator
+                status={stringToExecutionStatus(entry.status as string)}
+                size={'16px'}
+                monochrome={false}
+              />
 
               <Typography sx={{ ml: 1 }} variant="body2">
                 {entry.timestamp.toLocaleString()}

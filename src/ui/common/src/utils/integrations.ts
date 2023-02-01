@@ -389,7 +389,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
   },
   ['Databricks']: {
     logo: ServiceLogos['Databricks'],
-    activated: false,
+    activated: true,
     category: IntegrationCategories.COMPUTE,
   },
   ['Email']: {

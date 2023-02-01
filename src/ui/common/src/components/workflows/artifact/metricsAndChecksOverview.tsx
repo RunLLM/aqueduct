@@ -28,18 +28,21 @@ export const MetricsOverview: React.FC<MetricsOverviewProps> = ({
 }) => {
   const metricTableEntries = {
     schema: schema,
-    data: metrics
-      .map((metricArtf) => {
-        let name = metricArtf.name;
-        if (name.endsWith('artifact') || name.endsWith('Aritfact')) {
-          name = name.slice(0, 0 - 'artifact'.length);
-        }
-        return {
-          title: name,
-          value: metricArtf.result?.content_serialized,
-        };
-      })
-      .filter((x) => !!x.value),
+    data: metrics.map((metricArtf) => {
+      let title = metricArtf.name;
+      if (title.endsWith('artifact') || title.endsWith('Aritfact')) {
+        title = title.slice(0, 0 - 'artifact'.length);
+      }
+
+      const value = metricArtf.result?.content_serialized;
+      const status = metricArtf.result?.exec_state?.status;
+
+      return {
+        title,
+        value,
+        status,
+      };
+    }),
   };
 
   return (
@@ -74,18 +77,16 @@ export type ChecksOverviewProps = {
 export const ChecksOverview: React.FC<ChecksOverviewProps> = ({ checks }) => {
   const checkTableEntries = {
     schema: schema,
-    data: checks
-      .map((checkArtf) => {
-        let name = checkArtf.name;
-        if (name.endsWith('artifact') || name.endsWith('Aritfact')) {
-          name = name.slice(0, 0 - 'artifact'.length);
-        }
-        return {
-          title: name,
-          value: checkArtf.result?.content_serialized,
-        };
-      })
-      .filter((x) => !!x.value),
+    data: checks.map((checkArtf) => {
+      let name = checkArtf.name;
+      if (name.endsWith('artifact') || name.endsWith('Aritfact')) {
+        name = name.slice(0, 0 - 'artifact'.length);
+      }
+      return {
+        title: name,
+        value: checkArtf.result?.content_serialized,
+      };
+    }),
   };
 
   return (

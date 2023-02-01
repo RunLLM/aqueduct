@@ -2,10 +2,8 @@ import uuid
 from typing import Optional
 
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.artifacts.save import save_artifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, SalesforceExtractType
-from aqueduct.logger import logger
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
 from aqueduct.models.integration import Integration, IntegrationInfo
@@ -15,12 +13,12 @@ from aqueduct.models.operators import (
     OperatorSpec,
     SalesforceExtractParams,
     SalesforceLoadParams,
-    SaveConfig,
 )
 from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import artifact_name_from_op_name, generate_uuid
 
 from .naming import _generate_extract_op_name
+from .save import _save_artifact
 
 
 class SalesforceIntegration(Integration):
@@ -82,24 +80,6 @@ class SalesforceIntegration(Integration):
             artifact_id=output_artifact_id,
         )
 
-    def config(self, object: str) -> SaveConfig:
-        """TODO(ENG-2035): Deprecated and will be removed.
-        Configuration for saving to Salesforce Integration.
-
-        Arguments:
-            object:
-                Object to save to.
-        Returns:
-            SaveConfig object to use in TableArtifact.save()
-        """
-        logger().warning(
-            "`integration.config()` is deprecated. Please use `integration.save()` directly instead."
-        )
-        return SaveConfig(
-            integration_info=self._metadata,
-            parameters=SalesforceLoadParams(object=object),
-        )
-
     def save(self, artifact: BaseArtifact, object: str) -> None:
         """Registers a save operator of the given artifact, to be executed when it's computed in a published flow.
 
@@ -109,9 +89,8 @@ class SalesforceIntegration(Integration):
             object:
                 The name of the Salesforce object to save to.
         """
-        save_artifact(
+        _save_artifact(
             artifact.id(),
-            artifact.type(),
             self._dag,
             self._metadata,
             save_params=SalesforceLoadParams(object=object),
