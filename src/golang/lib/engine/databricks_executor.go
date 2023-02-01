@@ -65,20 +65,21 @@ func ExecuteDatabricks(
 		return errors.Newf("No initial operators to schedule.")
 	}
 
-	// Wait a little bit for all active operators to finish before exiting on failure.
-	defer onFinishExecution(
-		ctx,
-		inProgressOps,
-		timeConfig.OperatorPollInterval,
-		timeConfig.CleanupTimeout,
-		err,
-		notificationContent,
-		dag,
-		opExecMode,
-		vaultObject,
-		integrationRepo,
-		DB,
-	)
+	defer func() {
+		onFinishExecution(
+			ctx,
+			inProgressOps,
+			timeConfig.OperatorPollInterval,
+			timeConfig.CleanupTimeout,
+			err,
+			notificationContent,
+			dag,
+			opExecMode,
+			vaultObject,
+			integrationRepo,
+			DB,
+		)
+	}()
 
 	start := time.Now()
 	var operatorError error
