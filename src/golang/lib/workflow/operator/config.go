@@ -51,7 +51,7 @@ func extractAwsCredentials(config *shared.S3Config) (string, string, error) {
 	return "", "", errors.New("Unable to extract AWS credentials.")
 }
 
-func generateJobManagerConfig(
+func GenerateJobManagerConfig(
 	ctx context.Context,
 	engineConfig shared.EngineConfig,
 	storageConfig *shared.StorageConfig,

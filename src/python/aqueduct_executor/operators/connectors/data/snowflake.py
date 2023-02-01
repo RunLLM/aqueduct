@@ -4,11 +4,11 @@ from sqlalchemy import create_engine, engine
 
 class SnowflakeConnector(relational.RelationalConnector):
     def __init__(self, config: config.SnowflakeConfig):
-        conn_engine = _create_engine(config)
+        conn_engine = create_snowflake_engine(config)
         super().__init__(conn_engine)
 
 
-def _create_engine(config: config.SnowflakeConfig) -> engine.Engine:
+def create_snowflake_engine(config: config.SnowflakeConfig) -> engine.Engine:
     # Snowflake Dialect:
     # https://github.com/snowflakedb/snowflake-sqlalchemy
     url = "snowflake://{username}:{password}@{account_identifier}/{database}/{schema}?warehouse={warehouse}".format(

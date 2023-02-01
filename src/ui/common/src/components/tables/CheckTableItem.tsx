@@ -9,42 +9,57 @@ import Box from '@mui/material/Box';
 import React from 'react';
 
 import { theme } from '../../styles/theme/theme';
+import { stringToExecutionStatus } from '../../utils/shared';
+import { StatusIndicator } from '../workflows/workflowStatus';
 
 interface CheckTableItemProps {
   checkValue: string;
+  status?: string;
 }
 
 export const CheckTableItem: React.FC<CheckTableItemProps> = ({
   checkValue,
+  status,
 }) => {
   let iconColor = theme.palette.black;
   let checkIcon = faMinus;
 
-  switch (checkValue.toLowerCase()) {
-    case 'true': {
-      checkIcon = faCircleCheck;
-      iconColor = theme.palette.green['400'];
-      break;
+  if (checkValue) {
+    switch (checkValue.toLowerCase()) {
+      case 'true': {
+        checkIcon = faCircleCheck;
+        iconColor = theme.palette.Success;
+        break;
+      }
+      case 'false': {
+        checkIcon = faCircleExclamation;
+        iconColor = theme.palette.Error;
+        break;
+      }
+      case 'warning': {
+        checkIcon = faTriangleExclamation;
+        iconColor = theme.palette.Warning;
+        break;
+      }
+      case 'none': {
+        checkIcon = faMinus;
+        iconColor = theme.palette.black;
+        break;
+      }
+      default: {
+        // None of the icon cases met, just fall through and render table value.
+        return <>{checkValue}</>;
+      }
     }
-    case 'false': {
-      checkIcon = faCircleExclamation;
-      iconColor = theme.palette.red['500'];
-      break;
-    }
-    case 'warning': {
-      checkIcon = faTriangleExclamation;
-      iconColor = theme.palette.orange['500'];
-      break;
-    }
-    case 'none': {
-      checkIcon = faMinus;
-      iconColor = theme.palette.black;
-      break;
-    }
-    default: {
-      // None of the icon cases met, just fall through and render table value.
-      return <>{checkValue}</>;
-    }
+  } else {
+    // Check value not found, render the status indicator for this check.
+    return (
+      <StatusIndicator
+        status={stringToExecutionStatus(status)}
+        size={'16px'}
+        monochrome={false}
+      />
+    );
   }
 
   return (

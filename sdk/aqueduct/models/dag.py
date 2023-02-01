@@ -96,6 +96,25 @@ class DAG(BaseModel):
                         "All operators must run on Airflow. Operator %s is designated to run on custom engine `%s`."
                         % (op.name, op.spec.engine_config.name),
                     )
+                # DAG's expected to run on Databricks cannot have different Operator specs.
+                if (
+                    dag_engine_config.type == RuntimeType.DATABRICKS
+                    and op.spec.engine_config.type != RuntimeType.DATABRICKS
+                ):
+                    raise InvalidUserActionException(
+                        "All operators must run on Databricks. Operator %s is designated to run on custom engine `%s`."
+                        % (op.name, op.spec.engine_config.name),
+                    )
+                # We don't allow individual operators to set Databricks as an engine spec without setting it globally.
+                if (
+                    dag_engine_config.type != RuntimeType.DATABRICKS
+                    and op.spec.engine_config.type == RuntimeType.DATABRICKS
+                ):
+                    raise InvalidUserActionException(
+                        """In order to use 
+                        Databricks while previewing operators, please set 
+                        aqueduct.global_config({'engine': '<databricks_integration>'})""",
+                    )
 
                 op_engine_config = op.spec.engine_config
 

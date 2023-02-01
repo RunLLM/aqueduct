@@ -1,9 +1,4 @@
-import {
-  faCheckCircle,
-  faQuestionCircle,
-  faXmarkCircle,
-} from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { AlertTitle } from '@mui/material';
 import { CircularProgress, Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -18,6 +13,7 @@ import ExecutionStatus, {
   isInitial,
   isLoading,
 } from '../../../../utils/shared';
+import { StatusIndicator } from '../../workflowStatus';
 
 type Props = {
   historyWithLoadingStatus?: ArtifactResultsWithLoadingStatus;
@@ -42,8 +38,9 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
   }
   if (isFailed(historyWithLoadingStatus.status)) {
     return (
-      <Alert title="Failed to load historical data.">
-        {historyWithLoadingStatus.status.err}
+      <Alert style={{ marginTop: '10px' }} severity="error">
+        <AlertTitle>Failed to load historical data.</AlertTitle>
+        <pre>{historyWithLoadingStatus.status.err}</pre>
       </Alert>
     );
   }
@@ -52,16 +49,24 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
     schema: metricHistorySchema,
     data: (historyWithLoadingStatus.results?.results ?? []).map(
       (artifactStatusResult) => {
+        let timestamp = new Date(
+          artifactStatusResult.exec_state?.timestamps?.finished_at
+        ).toLocaleString();
+
+        // Metrics that are canceled / fail to execute have no exec_state, and thus no date.
+        if (timestamp === 'Invalid Date') {
+          timestamp = 'Unknown';
+        }
+
         return {
           status: artifactStatusResult.exec_state?.status ?? 'Unknown',
-          timestamp: new Date(
-            artifactStatusResult.exec_state?.timestamps?.finished_at
-          ).toLocaleString(),
+          timestamp,
           value: artifactStatusResult.content_serialized,
         };
       }
     ),
   };
+
   const dataSortedByLatest = historicalData.data.sort(
     (x, y) =>
       Date.parse(y['timestamp'] as string) -
@@ -115,34 +120,16 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
           History
         </Typography>
         {dataSortedByLatest.map((entry, index) => {
-          let backgroundColor, hoverColor, icon;
+          let backgroundColor, hoverColor;
           if (entry.status === ExecutionStatus.Succeeded) {
             backgroundColor = theme.palette.green[100];
             hoverColor = theme.palette.green[200];
-            icon = (
-              <FontAwesomeIcon
-                icon={faCheckCircle}
-                color={theme.palette.green[600]}
-              />
-            );
           } else if (entry.status === ExecutionStatus.Failed) {
             backgroundColor = theme.palette.red[25];
             hoverColor = theme.palette.red[100];
-            icon = (
-              <FontAwesomeIcon
-                icon={faXmarkCircle}
-                color={theme.palette.red[600]}
-              />
-            );
           } else {
             backgroundColor = theme.palette.gray[100];
             hoverColor = theme.palette.gray[200];
-            icon = (
-              <FontAwesomeIcon
-                icon={faQuestionCircle}
-                color={theme.palette.gray[600]}
-              />
-            );
           }
 
           return (
@@ -162,13 +149,15 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
               }}
             >
               <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
-                {icon}
+                <StatusIndicator status={entry.status as ExecutionStatus} />
 
                 <Typography sx={{ ml: 1 }} variant="body2">
-                  {entry.timestamp.toLocaleString()}
+                  {entry.timestamp}
                 </Typography>
               </Box>
-              <Typography variant="body1">{entry.value.toString()}</Typography>
+              <Typography variant="body1">
+                {entry.value ? entry.value.toString() : '-'}
+              </Typography>
             </Box>
           );
         })}

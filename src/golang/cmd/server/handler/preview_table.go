@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
@@ -55,7 +56,6 @@ type PreviewTableHandler struct {
 
 	Database   database.Database
 	JobManager job.JobManager
-	Vault      vault.Vault
 
 	IntegrationRepo repos.Integration
 }
@@ -144,6 +144,12 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 		}
 	}
 
+	storageConfig := config.Storage()
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
+	}
+
 	jobName, err := scheduler.ScheduleExtract(
 		ctx,
 		connector.Extract{
@@ -159,7 +165,7 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 		artifactMetadataPath,
 		args.StorageConfig,
 		h.JobManager,
-		h.Vault,
+		vaultObject,
 	)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to schedule job to preview table.")

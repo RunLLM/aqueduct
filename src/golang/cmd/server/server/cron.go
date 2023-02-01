@@ -30,12 +30,7 @@ func (s *AqServer) triggerMissedCronJobs(
 		_, _, err := (&handler.RefreshWorkflowHandler{
 			Database: s.Database,
 			Engine:   s.AqEngine,
-			Vault:    s.Vault,
 
-			ArtifactRepo: s.ArtifactRepo,
-			DAGRepo:      s.DAGRepo,
-			DAGEdgeRepo:  s.DAGEdgeRepo,
-			OperatorRepo: s.OperatorRepo,
 			WorkflowRepo: s.WorkflowRepo,
 		}).Perform(
 			ctx,

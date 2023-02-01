@@ -46,7 +46,7 @@ jobs:
         run: (aqueduct start --verbose > $SERVER_LOGS_FILE 2>&1 &)
 
       - name: Wait for server
-        timeout-minutes: 1
+        timeout-minutes: 2
         run: while ! echo exit | nc localhost 8080; do sleep 1; done
 
       # Grabs the pid of the process bound to port 8080 and kills it.

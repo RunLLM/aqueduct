@@ -38,7 +38,7 @@ class S3Connector(connector.DataConnector):
     def discover(self) -> List[str]:
         raise Exception("Discover is not supported for S3.")
 
-    def _fetch_object(self, key: str, params: extract.S3Params) -> Any:
+    def fetch_object(self, key: str, params: extract.S3Params) -> Any:
         response = self.s3.Object(self.bucket, key).get()
         data = response["Body"].read()
         if params.artifact_type == ArtifactType.TABLE:
@@ -149,7 +149,7 @@ class S3Connector(connector.DataConnector):
                 for obj in self.s3.Bucket(self.bucket).objects.filter(Prefix=path):
                     # The filter api also returns the directories, so we filter them out.
                     if (obj.key)[-1] != "/":
-                        files.append(self._fetch_object(obj.key, params))
+                        files.append(self.fetch_object(obj.key, params))
 
                 if params.artifact_type == ArtifactType.TABLE and params.merge:
                     # We ignore indexes anyways when serializing the data later, so it's ok to do it earlier here.
@@ -158,7 +158,7 @@ class S3Connector(connector.DataConnector):
                     return tuple(files)
             else:
                 # This means the path is a file name, and we do a regular file retrieval.
-                return self._fetch_object(path, params)
+                return self.fetch_object(path, params)
         else:
             # This means we have a list of file paths.
             files = []
@@ -167,7 +167,7 @@ class S3Connector(connector.DataConnector):
                     raise Exception("S3 file path cannot be an empty string.")
                 if key[-1] == "/":
                     raise Exception("Each key in the list must not be a directory, found %s." % key)
-                files.append(self._fetch_object(key, params))
+                files.append(self.fetch_object(key, params))
 
             if params.artifact_type == ArtifactType.TABLE and params.merge:
                 # We ignore indexes anyways when serializing the data later, so it's ok to do it earlier here.
