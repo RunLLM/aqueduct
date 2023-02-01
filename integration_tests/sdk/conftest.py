@@ -5,8 +5,9 @@ from aqueduct.models.dag import DAG, Metadata
 from aqueduct import Client, globals
 from sdk.setup_integration import (
     get_aqueduct_config,
+    list_compute_integrations,
     list_data_integrations,
-    setup_data_integrations, list_compute_integrations,
+    setup_data_integrations,
 )
 from sdk.shared import globals as test_globals
 from sdk.shared.utils import generate_new_flow_name
@@ -75,7 +76,9 @@ def data_integration(request, pytestconfig, client):
     cmdline_data_flag = pytestconfig.getoption("data")
     if cmdline_data_flag is not None:
         if request.param != cmdline_data_flag:
-            pytest.skip("Skipped. Tests are only running against data integration %s." % cmdline_data_flag)
+            pytest.skip(
+                "Skipped. Tests are only running against data integration %s." % cmdline_data_flag
+            )
 
     return client.integration(request.param)
 
@@ -85,7 +88,9 @@ def engine(request, pytestconfig):
     cmdline_compute_flag = pytestconfig.getoption("engine")
     if cmdline_compute_flag is not None:
         if request.param != cmdline_compute_flag:
-            pytest.skip("Skipped. Tests are only running against compute %s." % cmdline_compute_flag)
+            pytest.skip(
+                "Skipped. Tests are only running against compute %s." % cmdline_compute_flag
+            )
 
     # Test cases process the aqueduct engine as None. We do the conversion here
     # because fixture parameters are printed as part of test execution.
