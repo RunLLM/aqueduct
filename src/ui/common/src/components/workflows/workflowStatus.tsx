@@ -143,7 +143,7 @@ type IndicatorProps = {
  **/
 export const StatusIndicator: React.FC<IndicatorProps> = ({
   status,
-  size = '12px',
+  size = '20px',
   monochrome = false,
 }) => {
   const getIcon = (status: ExecutionStatus) => {

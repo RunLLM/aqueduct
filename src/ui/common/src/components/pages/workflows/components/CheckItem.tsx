@@ -1,8 +1,6 @@
 import {
   faCircleCheck,
   faCircleExclamation,
-  faCircleXmark,
-  faQuestionCircle,
   faTriangleExclamation,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -10,6 +8,7 @@ import { Box, Tooltip, Typography } from '@mui/material';
 import React from 'react';
 import { useState } from 'react';
 
+import { StatusIndicator } from '../../../../components/workflows/workflowStatus';
 import { theme } from '../../../../styles/theme/theme';
 import { CheckLevel } from '../../../../utils/operators';
 import { ExecutionStatus, showMorePadding } from '../../../../utils/shared';
@@ -17,7 +16,7 @@ import { ShowMore } from './MetricItem';
 
 const errorIcon = (
   <Tooltip title="Error" placement="bottom" arrow>
-    <Box sx={{ fontSize: '20px', color: theme.palette.red['500'] }}>
+    <Box sx={{ fontSize: '20px', color: theme.palette.Error }}>
       <FontAwesomeIcon icon={faCircleExclamation} />
     </Box>
   </Tooltip>
@@ -25,7 +24,7 @@ const errorIcon = (
 
 const warningIcon = (
   <Tooltip title="Warning" placement="bottom" arrow>
-    <Box sx={{ fontSize: '20px', color: theme.palette.orange['500'] }}>
+    <Box sx={{ fontSize: '20px', color: theme.palette.Warning }}>
       <FontAwesomeIcon icon={faTriangleExclamation} />
     </Box>
   </Tooltip>
@@ -33,24 +32,8 @@ const warningIcon = (
 
 const successIcon = (
   <Tooltip title="Success" placement="bottom" arrow>
-    <Box sx={{ fontSize: '20px', color: theme.palette.green['400'] }}>
+    <Box sx={{ fontSize: '20px', color: theme.palette.Success }}>
       <FontAwesomeIcon icon={faCircleCheck} />
-    </Box>
-  </Tooltip>
-);
-
-const unknownIcon = (
-  <Tooltip title="Unknown" placement="bottom" arrow>
-    <Box sx={{ fontSize: '20px', color: theme.palette.gray['400'] }}>
-      <FontAwesomeIcon icon={faQuestionCircle} />
-    </Box>
-  </Tooltip>
-);
-
-const canceledIcon = (
-  <Tooltip title="Canceled" placement="bottom" arrow>
-    <Box sx={{ fontSize: '20px', color: theme.palette.gray['400'] }}>
-      <FontAwesomeIcon icon={faCircleXmark} />
     </Box>
   </Tooltip>
 );
@@ -83,17 +66,6 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
       let statusIcon = successIcon;
 
       switch (checks[i].status) {
-        case ExecutionStatus.Canceled: {
-          statusIcon = canceledIcon;
-          break;
-        }
-        case ExecutionStatus.Failed: {
-          statusIcon = errorIcon;
-          if (checks[i].level === CheckLevel.Warning) {
-            statusIcon = warningIcon;
-          }
-          break;
-        }
         case ExecutionStatus.Succeeded: {
           // now we check the value to see if we should show warning or error icon
           if (checks[i].value === 'False') {
@@ -105,12 +77,8 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
           }
           break;
         }
-        case ExecutionStatus.Running:
-        case ExecutionStatus.Registered:
-        case ExecutionStatus.Pending:
-        case ExecutionStatus.Unknown:
         default: {
-          statusIcon = unknownIcon;
+          statusIcon = <StatusIndicator status={checks[i].status} />;
           break;
         }
       }

@@ -52,7 +52,6 @@ def test_custom_num_cpus(client, flow_name, engine):
         name=flow_name(),
         artifacts=num_default_available_cpus,
         engine=engine,
-        delete_flow_after=False,
     )
 
     custom_cpus_flow = publish_flow_test(
@@ -60,12 +59,11 @@ def test_custom_num_cpus(client, flow_name, engine):
         name=flow_name(),
         artifacts=num_count_available_cpus,
         engine=engine,
-        delete_flow_after=False,
     )
 
     assert default_cpus_flow.latest().artifact("count_default_available_cpus artifact").get() == 2
     assert (
-        custom_cpus_flow.latest().artifact("count_with_custom_available_cpus artifact").get() == 6
+        custom_cpus_flow.latest().artifact("count_with_custom_available_cpus artifact").get() == 4
     )
 
 
@@ -121,7 +119,7 @@ def test_custom_memory(client, flow_name, engine):
 
     publish_flow_test(
         client,
-        name=flow_name,
+        name=flow_name(),
         artifacts=failure_output,
         engine=engine,
         expected_statuses=ExecutionStatus.FAILED,
@@ -165,6 +163,7 @@ def test_too_much_memory_requested_lambda(client, flow_name, engine):
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
+@pytest.mark.must_have_gpu()
 def test_custom_gpus(client, flow_name, engine):
     """Assumption: there is a GPU node in the K8s cluster. Also assumes the
     machine executing the test has pytorch installed.

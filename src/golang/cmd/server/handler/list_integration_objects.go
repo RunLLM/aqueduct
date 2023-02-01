@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -38,7 +39,6 @@ type ListIntegrationObjectsHandler struct {
 
 	Database   database.Database
 	JobManager job.JobManager
-	Vault      vault.Vault
 
 	IntegrationRepo repos.Integration
 }
@@ -98,7 +98,13 @@ func (h *ListIntegrationObjectsHandler) Perform(ctx context.Context, interfaceAr
 		go workflow_utils.CleanupStorageFiles(ctx, args.StorageConfig, []string{jobMetadataPath, jobResultPath})
 	}()
 
-	config, err := auth.ReadConfigFromSecret(ctx, integrationObject.ID, h.Vault)
+	storageConfig := config.Storage()
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
+	}
+
+	config, err := auth.ReadConfigFromSecret(ctx, integrationObject.ID, vaultObject)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to parse integration config.")
 	}

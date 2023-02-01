@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -37,7 +38,6 @@ type DeleteIntegrationHandler struct {
 	PostHandler
 
 	Database database.Database
-	Vault    vault.Vault
 
 	DAGRepo                  repos.DAG
 	ExecutionEnvironmentRepo repos.ExecutionEnvironment
@@ -114,11 +114,17 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting integration.")
 	}
 
+	storageConfig := config.Storage()
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
+	}
+
 	if err := cleanUpIntegration(
 		ctx,
 		integrationObject,
 		h.ExecutionEnvironmentRepo,
-		h.Vault,
+		vaultObject,
 		txn,
 	); err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to delete integration.")

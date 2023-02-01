@@ -51,7 +51,6 @@ func NewBaseExecutor(conf *job.ExecutorConfiguration) (*BaseExecutor, error) {
 	}
 
 	storageConfig := config.Storage()
-
 	vault, err := vault.NewVault(&storageConfig, config.EncryptionKey())
 	if err != nil {
 		return nil, err

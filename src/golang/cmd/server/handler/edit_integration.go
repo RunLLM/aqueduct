@@ -6,6 +6,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -37,7 +38,6 @@ type EditIntegrationHandler struct {
 	PostHandler
 
 	Database   database.Database
-	Vault      vault.Vault
 	JobManager job.JobManager
 
 	IntegrationRepo repos.Integration
@@ -206,7 +206,13 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 		return emptyResp, http.StatusBadRequest, errors.New("You cannot edit demo DB credentials.")
 	}
 
-	config, err := auth.ReadConfigFromSecret(ctx, ID, h.Vault)
+	storageConfig := config.Storage()
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
+	}
+
+	config, err := auth.ReadConfigFromSecret(ctx, ID, vaultObject)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve secrets")
 	}
@@ -232,7 +238,7 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 				nil,
 				h.IntegrationRepo,
 				h.Database,
-				h.Vault,
+				vaultObject,
 			)
 			if err != nil {
 				return emptyResp, status, err
@@ -262,7 +268,7 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 		staticConfig,
 		h.IntegrationRepo,
 		h.Database,
-		h.Vault,
+		vaultObject,
 	); err != nil {
 		return emptyResp, statusCode, err
 	}

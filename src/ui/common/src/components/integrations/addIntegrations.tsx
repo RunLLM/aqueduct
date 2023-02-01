@@ -112,7 +112,9 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
         border: `2px solid ${theme.palette.gray['700']}`,
         cursor: integration.activated ? 'pointer' : 'default',
         '&:hover': {
-          backgroundColor: integration.activated ? 'gray.300' : 'white',
+          backgroundColor: integration.activated
+            ? theme.palette.gray['300']
+            : 'white',
         },
       }}
     >

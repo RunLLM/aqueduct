@@ -20,20 +20,20 @@ type TestSuite struct {
 	ctx context.Context
 
 	// List of all repos
-	artifact       			   repos.Artifact
-	artifactResult 			   repos.ArtifactResult
-	dag           			   repos.DAG
-	dagEdge        			   repos.DAGEdge
-	dagResult      			   repos.DAGResult
-	executionEnvironment       repos.ExecutionEnvironment
-	integration    			   repos.Integration
-	notification   			   repos.Notification
-	operator       			   repos.Operator
-	operatorResult 			   repos.OperatorResult
-	schemaVersion 			   repos.SchemaVersion
-	user           			   repos.User
-	watcher        			   repos.Watcher
-	workflow       			   repos.Workflow
+	artifact             repos.Artifact
+	artifactResult       repos.ArtifactResult
+	dag                  repos.DAG
+	dagEdge              repos.DAGEdge
+	dagResult            repos.DAGResult
+	executionEnvironment repos.ExecutionEnvironment
+	integration          repos.Integration
+	notification         repos.Notification
+	operator             repos.Operator
+	operatorResult       repos.OperatorResult
+	schemaVersion        repos.SchemaVersion
+	user                 repos.User
+	watcher              repos.Watcher
+	workflow             repos.Workflow
 
 	DB database.Database
 }

@@ -45,7 +45,6 @@ func NewWorkflowExecutor(spec *job.WorkflowSpec, base *BaseExecutor) (*WorkflowE
 		base.Database,
 		githubManager,
 		nil, /* PreviewCacheManager */
-		base.Vault,
 		spec.AqPath,
 		engineRepos,
 	)

@@ -10,11 +10,13 @@ import (
 
 // This manually creates a DAG as follows:
 // extract_0 -> artifact_0 --
-// 						    |
-//							v
-//						    |--> func_0 -> artifact_2 -> load_0
-//						    ^
-//						    |
+//
+//	    |
+//		v
+//	    |--> func_0 -> artifact_2 -> load_0
+//	    ^
+//	    |
+//
 // extract_1 -> artifact_1 --
 func generateBasicDag(t *testing.T) *models.DAG {
 	artifactZero := models.Artifact{
@@ -67,12 +69,14 @@ func generateBasicDag(t *testing.T) *models.DAG {
 
 // This manually creates a cyclic DAG as follows:
 // extract_0 -> artifact_0 --
-// 						    |
-//							v
-//							|--> func_0 -> artifact_2 -> load_0
-//							^				|
-//							|				|-> extract_0 // cyclic
-//							|
+//
+//	    |
+//		v
+//		|--> func_0 -> artifact_2 -> load_0
+//		^				|
+//		|				|-> extract_0 // cyclic
+//		|
+//
 // extract_1 -> artifact_1 --
 func generateCyclicDag(t *testing.T) *models.DAG {
 	artifactZero := models.Artifact{

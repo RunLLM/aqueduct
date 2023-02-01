@@ -17,7 +17,6 @@ from aqueduct_executor.operators.utils.enums import (
     ExecutionStatus,
     FailureType,
     JobType,
-    SerializationType,
 )
 from aqueduct_executor.operators.utils.exceptions import MissingConnectorDependencyException
 from aqueduct_executor.operators.utils.execution import (
