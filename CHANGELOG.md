@@ -31,7 +31,7 @@ Release on January 31, 2023
 * Fixes bug where saving tables to relational databases with long column names
     (\> 255 characters) would fail.
 * Fixes bug where SQLAlchemy version 2 introduced access issues with Pandas
-    DataFrames. Our current solution is require SQLAlchemy version 1.
+    DataFrames. Our current solution is to require SQLAlchemy version 1.
 * Fixes bug where listing tables in BigQuery required complex, brittle SQL 
     queries.
 * Fixes bug where data listing page might crash on UI after the execution of a
