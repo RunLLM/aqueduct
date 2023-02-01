@@ -7,6 +7,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/notification"
 	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
+	log "github.com/sirupsen/logrus"
 )
 
 func (eng *aqEngine) getNotifications(ctx context.Context, wfDag dag.WorkflowDag) ([]notification.Notification, error) {
@@ -52,9 +53,11 @@ func (eng *aqEngine) sendNotifications(
 		return err
 	}
 
+	log.Info(len(notifications))
 	msg := notificationMsg(wfDag, level, contextMsg)
 	workflowSettings := wfDag.NotificationSettings().Settings
 	for _, notificationObj := range notifications {
+		log.Infof("notflevel: %s", level)
 		if len(workflowSettings) > 0 {
 			// send based on settings
 			thresholdLevel, ok := workflowSettings[notificationObj.ID()]
@@ -69,7 +72,9 @@ func (eng *aqEngine) sendNotifications(
 		} else {
 			// Otherwise we send based on global settings.
 			// ENG-2341 will allow user to configure if a notification applies to all workflows.
+			log.Infof("obj level: %s", notificationObj.Level())
 			if notification.ShouldSend(notificationObj.Level(), level) {
+				log.Infof("trying to send")
 				err = notificationObj.Send(ctx, msg)
 				if err != nil {
 					return err
