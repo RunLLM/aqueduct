@@ -41,6 +41,6 @@ data:
 
 # REQUIRED: All the compute integrations to run the test suite against.
 # All entries here must be present in `test-credentials.yml`, except
-# `aqueduct`, which is our native orchestration engine.
+# `aqueduct_engine`, which is our native orchestration engine.
 compute:
   aqueduct_engine:
