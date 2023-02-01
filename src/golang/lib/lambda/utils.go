@@ -232,7 +232,7 @@ func mapFunctionType(functionType LambdaFunctionType) (string, string, error) {
 	}
 }
 
-func AddFunctionTypeToChannel(functionsToShip [10]LambdaFunctionType, channel chan LambdaFunctionType) {
+func AddFunctionTypeToChannel(functionsToShip []LambdaFunctionType, channel chan LambdaFunctionType) {
 	// Add lambda function types to buffered channel for pulling and creating lambda function.
 	for _, lambdaFunctionType := range functionsToShip {
 		lambdaFunctionTypeToPass := lambdaFunctionType

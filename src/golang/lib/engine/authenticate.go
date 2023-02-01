@@ -63,7 +63,7 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 
 	// Pull images on a concurrency of "MaxConcurrentDownload".
 	errGroup.SetLimit(MaxConcurrentDownload)
-	go lambda_utils.AddFunctionTypeToChannel(functionsToShip, pullImageChannel)
+	go lambda_utils.AddFunctionTypeToChannel(functionsToShip[:], pullImageChannel)
 	for lambdaFunction := range pullImageChannel {
 		lambdaFunctionType := lambdaFunction
 		errGroup.Go(func() error {
@@ -77,7 +77,7 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 
 	// Create lambda functions on a concurrency of "MaxConcurrentUpload".
 	errGroup.SetLimit(MaxConcurrentUpload)
-	go lambda_utils.AddFunctionTypeToChannel(functionsToShip, pushImageChannel)
+	go lambda_utils.AddFunctionTypeToChannel(functionsToShip[:], pushImageChannel)
 	for lambdaFunction := range pushImageChannel {
 		lambdaFunctionType := lambdaFunction
 		errGroup.Go(func() error {
