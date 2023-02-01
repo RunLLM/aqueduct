@@ -841,6 +841,7 @@ func onFinishExecution(
 	integrationRepo repos.Integration,
 	DB database.Database,
 ) {
+	// Wait a little bit for all active operators to finish before exiting on failure.
 	waitForInProgressOperators(ctx, inProgressOps, pollInterval, cleanupTimeout)
 	if curErr != nil && notificationContent == nil {
 		notificationContent = &notificationContentStruct{
@@ -849,6 +850,7 @@ func onFinishExecution(
 		}
 	}
 
+	// Send notifications
 	if notificationContent != nil && execMode == operator.Publish {
 		err := sendNotifications(
 			ctx,
@@ -892,20 +894,21 @@ func (eng *aqEngine) execute(
 		return errors.Newf("No initial operators to schedule.")
 	}
 
-	// Wait a little bit for all active operators to finish before exiting on failure.
-	defer onFinishExecution(
-		ctx,
-		inProgressOps,
-		timeConfig.OperatorPollInterval,
-		timeConfig.CleanupTimeout,
-		err,
-		notificationContent,
-		workflowDag,
-		opExecMode,
-		vaultObject,
-		eng.IntegrationRepo,
-		eng.Database,
-	)
+	defer func() {
+		onFinishExecution(
+			ctx,
+			inProgressOps,
+			timeConfig.OperatorPollInterval,
+			timeConfig.CleanupTimeout,
+			err,
+			notificationContent,
+			workflowDag,
+			opExecMode,
+			vaultObject,
+			eng.IntegrationRepo,
+			eng.Database,
+		)
+	}()
 
 	start := time.Now()
 
