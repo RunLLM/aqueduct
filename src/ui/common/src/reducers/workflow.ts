@@ -403,7 +403,20 @@ function collapsePosition(
   });
 
   // remove any edge who's target is a metric artifact.
-  const filteredEdges = edges.filter((e) => !collapsedArtfIds.has(e.target));
+  const filteredEdges = edges
+    .filter((e) => !collapsedArtfIds.has(e.target))
+    .filter((edge) => {
+      // Check if the edge exists in the mappedNodes array.
+      // If it does not exist, remove the edge. elk crashes if an edge does not have a corresponding node.
+      const nodeFound = false;
+      for (let i = 0; i < filteredNodes.length; i++) {
+        if (edge.source === filteredNodes[i].id) {
+          return true;
+        }
+      }
+
+      return nodeFound;
+    });
 
   return {
     edges: filteredEdges,
@@ -468,20 +481,6 @@ export const handleGetSelectDagPosition = createAsyncThunk<
         };
       });
 
-      // TODO (ENG-2303): move into collapsed nodes function.
-      const mappedEdges = collapsedPosition.edges.filter((mappedEdge) => {
-        // Check if the edge exists in the mappedNodes array.
-        // If it does not exist, remove the edge. elk crashes if an edge does not have a corresponding node.
-        const nodeFound = false;
-        for (let i = 0; i < mappedNodes.length; i++) {
-          if (mappedEdge.source === mappedNodes[i].id) {
-            return true;
-          }
-        }
-
-        return nodeFound;
-      });
-
       const graph = {
         id: 'root',
         layoutOptions: {
@@ -498,7 +497,7 @@ export const handleGetSelectDagPosition = createAsyncThunk<
           'crossingMinimization.forceNodeModelOrder': true,
         },
         children: mappedNodes,
-        edges: mappedEdges,
+        edges: collapsedPosition.edges,
       };
 
       try {
