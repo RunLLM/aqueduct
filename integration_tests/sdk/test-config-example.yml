@@ -1,25 +1,9 @@
 address: <SERVER_ADDRESS>
 
 # A test run will cover the cross-product of each of the sections below.
-# Any randomized sections will be resolved and written to `test-config-run.yml`,
-# which is the template that the test suite will actually follow.
-
-# OPTIONAL: This should only ever be used in the Github Actions context!
-# The assumption is that only one python version is picked at random, based
-# on the weight of each option.
-python:
-  python3.7:
-    weight: 1
-  python3.8:
-    weight: 1
-  python3.9:
-    weight: 1
-  python3.10:
-    weight: 1
 
 # OPTIONAL: If set, this can alter the metadata store of the server, so use
-# with care. The assumption is that, if multiple options are provided, only
-# one metadata store is picked at random.
+# with care.
 metadata:
   # If set, we will error if unless the server is in local metadata mode.
   # This ensures that a metadata migration is performed. Otherwise, we allow
@@ -27,9 +11,6 @@ metadata:
   # explicit migration action.
   must_migrate: true
   test_s3:
-    weight: 7
-  test_gcs:
-    weight: 3
 
 # REQUIRED: All the data integrations to run the test suite against.
 # All entries here must be present in `test-credentials.yml`, except
