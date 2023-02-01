@@ -20,7 +20,8 @@ func (eng *aqEngine) getNotifications(ctx context.Context, wfDag dag.WorkflowDag
 	)
 }
 
-func notificationMsg(wfDag dag.WorkflowDag, level shared.NotificationLevel, contextMsg string) string {
+func notificationMsg(dagName string, level shared.NotificationLevel, contextMsg string) string {
+	// Full message will look like "Workflow my_churn succeeded with warning: some context ."
 	statusMsg := ""
 	contextSuffix := "."
 	if len(contextMsg) > 0 {
@@ -35,11 +36,10 @@ func notificationMsg(wfDag dag.WorkflowDag, level shared.NotificationLevel, cont
 	} else {
 		// For now, no caller will send message other than success, warning, or error.
 		// This line is in case of future use cases.
-		statusMsg = fmt.Sprintf("has a message: %s", contextMsg)
+		statusMsg = fmt.Sprintf("has a message: %s .", contextMsg)
 	}
 
-	// Full message will look like "Workflow my_churn succeeded with warning: some context ."
-	return fmt.Sprintf("Workflow %s %s", wfDag.Name(), statusMsg)
+	return fmt.Sprintf("Workflow %s %s", dagName, statusMsg)
 }
 
 func (eng *aqEngine) sendNotifications(
@@ -54,7 +54,7 @@ func (eng *aqEngine) sendNotifications(
 	}
 
 	log.Info(len(notifications))
-	msg := notificationMsg(wfDag, level, contextMsg)
+	msg := notificationMsg(wfDag.Name(), level, contextMsg)
 	workflowSettings := wfDag.NotificationSettings().Settings
 	for _, notificationObj := range notifications {
 		log.Infof("notflevel: %s", level)
