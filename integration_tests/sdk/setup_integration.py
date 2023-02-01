@@ -111,6 +111,7 @@ def _setup_relational_data(client: Client, relationalDB: RelationalDBIntegration
 
     _add_missing_artifacts(client, relationalDB, existing_table_names)
 
+
 def _setup_s3_data(client: Client, s3: S3Integration):
 
     # Find all the objects that already exist.
