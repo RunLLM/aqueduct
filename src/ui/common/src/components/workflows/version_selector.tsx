@@ -39,7 +39,7 @@ export const VersionSelector: React.FC = () => {
       switch (r.status) {
         case ExecutionStatus.Succeeded:
           menuItemIcon = (
-            <Box sx={{ fontSize: '20px', color: theme.palette.green['500'] }}>
+            <Box sx={{ fontSize: '20px', color: theme.palette.Success }}>
               <FontAwesomeIcon icon={faCircleCheck} />
             </Box>
           );
@@ -53,7 +53,7 @@ export const VersionSelector: React.FC = () => {
           break;
         case ExecutionStatus.Failed:
           menuItemIcon = (
-            <Box sx={{ fontSize: '20px', color: theme.palette.red['500'] }}>
+            <Box sx={{ fontSize: '20px', color: theme.palette.Error }}>
               <FontAwesomeIcon icon={faCircleXmark} />
             </Box>
           );

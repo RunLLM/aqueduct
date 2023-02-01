@@ -145,6 +145,7 @@ def generate_engine_config(
     if integration.service == ServiceType.AIRFLOW:
         return EngineConfig(
             type=RuntimeType.AIRFLOW,
+            name=integration_name,
             airflow_config=AirflowEngineConfig(
                 integration_id=integration.id,
             ),
@@ -152,6 +153,7 @@ def generate_engine_config(
     elif integration.service == ServiceType.K8S:
         return EngineConfig(
             type=RuntimeType.K8S,
+            name=integration_name,
             k8s_config=K8sEngineConfig(
                 integration_id=integration.id,
             ),
@@ -159,6 +161,7 @@ def generate_engine_config(
     elif integration.service == ServiceType.LAMBDA:
         return EngineConfig(
             type=RuntimeType.LAMBDA,
+            name=integration_name,
             lambda_config=LambdaEngineConfig(
                 integration_id=integration.id,
             ),
@@ -166,6 +169,7 @@ def generate_engine_config(
     elif integration.service == ServiceType.DATABRICKS:
         return EngineConfig(
             type=RuntimeType.DATABRICKS,
+            name=integration_name,
             databricks_config=DatabricksEngineConfig(
                 integration_id=integration.id,
             ),
