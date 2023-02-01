@@ -1,7 +1,7 @@
 # Changelog
 
 ## 0.2.0
-Release on January 30, 2023
+Release on January 31, 2023
 
 ### Key Features
 * [Beta] Aqueduct now supports running workflows on Databricks Spark clusters! 
@@ -38,6 +38,11 @@ Release on January 30, 2023
     failed workflow.
 * Fixes bug where status indicator on check and metric details was not being 
     properly displayed.
+* Fixes bug where checks and metrics of failed workflow executions show no values.
+* Fixes bug where after switching to cloud storage as the metadata store, new integration
+    credentials weren't properly saved to cloud storage.
+* Fixes bug where preview fails after switching to cloud storage as the metadata store.
+* Fixes bug where failing metrics show as NaN in metric preview list on UI.
 
 ### Deprecations
 * The `.save()` on Artifacts has been removed. As of
