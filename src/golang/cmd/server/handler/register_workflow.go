@@ -13,7 +13,6 @@ import (
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	mdl_utils "github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/aqueducthq/aqueduct/lib/repos"
-	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	operator_utils "github.com/aqueducthq/aqueduct/lib/workflow/operator"
@@ -42,7 +41,6 @@ type RegisterWorkflowHandler struct {
 	Database      database.Database
 	JobManager    job.JobManager
 	GithubManager github.Manager
-	Vault         vault.Vault
 	Engine        engine.Engine
 
 	ArtifactRepo             repos.Artifact

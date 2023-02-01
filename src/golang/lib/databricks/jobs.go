@@ -46,13 +46,12 @@ func CreateJob(
 	databricksClient *databricks_sdk.WorkspaceClient,
 	name string,
 	s3InstanceProfileArn string,
-	pythonFilePath string,
+	tasks []jobs.JobTaskSettings,
 ) (int64, error) {
 	sparkVersions, err := databricksClient.Clusters.SparkVersions(ctx)
 	if err != nil {
 		return -1, errors.Wrap(err, "Error selecting a spark version.")
 	}
-
 	// Select the latest LTS version.
 	latestLTS, err := sparkVersions.Select(clusters.SparkVersionRequest{
 		Latest:          true,
@@ -64,29 +63,23 @@ func CreateJob(
 
 	createRequest := &jobs.CreateJob{
 		Name: name,
-		Tasks: []jobs.JobTaskSettings{
+		JobClusters: []jobs.JobCluster{
 			{
-				TaskKey: name,
+				JobClusterKey: workflowNameToJobClusterKey(name),
 				NewCluster: &clusters.CreateCluster{
 					SparkVersion: latestLTS,
-					NumWorkers:   NumWorkers,
-					NodeTypeId:   NodeTypeId,
+					Autoscale: &clusters.AutoScale{
+						MinWorkers: DefaultMinNumWorkers,
+						MaxWorkers: DefaultMaxNumWorkers,
+					},
+					NodeTypeId: DefaultNodeTypeID,
 					AwsAttributes: &clusters.AwsAttributes{
 						InstanceProfileArn: s3InstanceProfileArn,
 					},
 				},
-				SparkPythonTask: &jobs.SparkPythonTask{
-					PythonFile: pythonFilePath,
-				},
-				Libraries: []libraries.Library{
-					{
-						Pypi: &libraries.PythonPyPiLibrary{
-							Package: fmt.Sprintf("aqueduct-ml==%s", lib.ServerVersionNumber),
-						},
-					},
-				},
 			},
 		},
+		Tasks: tasks,
 	}
 	createResp, err := databricksClient.Jobs.Create(ctx, *createRequest)
 	if err != nil {
@@ -95,21 +88,94 @@ func CreateJob(
 	return createResp.JobId, nil
 }
 
+func CreateTask(
+	ctx context.Context,
+	databricksClient *databricks_sdk.WorkspaceClient,
+	workflowName string,
+	name string,
+	upstreamTaskNames []string,
+	pythonFilePath string,
+	specStr string,
+) (*jobs.JobTaskSettings, error) {
+	jobClusterKey := workflowNameToJobClusterKey(workflowName)
+
+	taskDependenciesList := make([]jobs.TaskDependenciesItem, 0, len(upstreamTaskNames))
+	for _, taskName := range upstreamTaskNames {
+		taskDependenciesList = append(taskDependenciesList, jobs.TaskDependenciesItem{TaskKey: taskName})
+	}
+
+	task := &jobs.JobTaskSettings{
+		TaskKey:       name,
+		JobClusterKey: jobClusterKey,
+		DependsOn:     taskDependenciesList,
+		SparkPythonTask: &jobs.SparkPythonTask{
+			PythonFile: pythonFilePath,
+			Parameters: []string{"--spec", specStr},
+		},
+		Libraries: []libraries.Library{
+			{
+				Pypi: &libraries.PythonPyPiLibrary{
+					Package: fmt.Sprintf("aqueduct-ml==%v", lib.ServerVersionNumber),
+				},
+			},
+			{
+				Pypi: &libraries.PythonPyPiLibrary{
+					Package: "snowflake-sqlalchemy",
+				},
+			},
+		},
+	}
+	return task, nil
+}
+
 func RunNow(
 	ctx context.Context,
 	databricksClient *databricks_sdk.WorkspaceClient,
-	jobId int64,
-	specStr string,
+	jobID int64,
 ) (int64, error) {
 	runResp, err := databricksClient.Jobs.RunNow(
 		ctx,
 		jobs.RunNow{
-			JobId:        jobId,
-			PythonParams: []string{"--spec", specStr},
+			JobId: jobID,
 		},
 	)
 	if err != nil {
 		return -1, errors.Wrap(err, "Error launching job in Databricks.")
 	}
 	return runResp.RunId, nil
+}
+
+func GetRun(
+	ctx context.Context,
+	databricksClient *databricks_sdk.WorkspaceClient,
+	runID int64,
+) (*jobs.Run, error) {
+	getRunReq := &jobs.GetRun{
+		RunId: runID,
+	}
+	getRunResp, err := databricksClient.Jobs.GetRun(ctx, *getRunReq)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to get run from databricks.")
+	}
+	return getRunResp, nil
+}
+
+func GetTaskRunIDs(
+	ctx context.Context,
+	databricksClient *databricks_sdk.WorkspaceClient,
+	runID int64,
+) (map[string]int64, error) {
+	taskNameToID := make(map[string]int64)
+	runResp, err := GetRun(ctx, databricksClient, runID)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to get run metadata.")
+	}
+	for _, taskResp := range runResp.Tasks {
+		taskNameToID[taskResp.TaskKey] = taskResp.RunId
+	}
+	return taskNameToID, nil
+}
+
+func workflowNameToJobClusterKey(workflowName string) string {
+	return fmt.Sprintf("%s_cluster", workflowName)
 }

@@ -4,18 +4,33 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/notification"
+	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
 )
 
-func (eng *aqEngine) getNotifications(ctx context.Context, wfDag dag.WorkflowDag) ([]notification.Notification, error) {
+type notificationContentStruct struct {
+	level      mdl_shared.NotificationLevel
+	contextMsg string
+}
+
+func getNotifications(
+	ctx context.Context,
+	wfDag dag.WorkflowDag,
+	vaultObject vault.Vault,
+	integrationRepo repos.Integration,
+	DB database.Database,
+) ([]notification.Notification, error) {
 	return notification.GetNotificationsFromUser(
 		ctx,
 		wfDag.UserID(),
-		eng.IntegrationRepo,
-		eng.Vault,
-		eng.Database,
+		integrationRepo,
+		vaultObject,
+		DB,
 	)
 }
 
@@ -41,25 +56,31 @@ func notificationMsg(dagName string, level shared.NotificationLevel, contextMsg 
 	return fmt.Sprintf("Workflow %s %s", dagName, statusMsg)
 }
 
-func (eng *aqEngine) sendNotifications(
+func sendNotifications(
 	ctx context.Context,
 	wfDag dag.WorkflowDag,
-	level shared.NotificationLevel,
-	contextMsg string,
+	content *notificationContentStruct,
+	vaultObject vault.Vault,
+	integrationRepo repos.Integration,
+	DB database.Database,
 ) error {
-	notifications, err := eng.getNotifications(ctx, wfDag)
+	if content == nil {
+		return nil
+	}
+
+	notifications, err := getNotifications(ctx, wfDag, vaultObject, integrationRepo, DB)
 	if err != nil {
 		return err
 	}
 
-	msg := notificationMsg(wfDag.Name(), level, contextMsg)
+	msg := notificationMsg(wfDag.Name(), content.level, content.contextMsg)
 	workflowSettings := wfDag.NotificationSettings().Settings
 	for _, notificationObj := range notifications {
 		if len(workflowSettings) > 0 {
 			// send based on settings
 			thresholdLevel, ok := workflowSettings[notificationObj.ID()]
 			if ok {
-				if notification.ShouldSend(thresholdLevel, level) {
+				if notification.ShouldSend(thresholdLevel, content.level) {
 					err = notificationObj.Send(ctx, msg)
 					if err != nil {
 						return err
@@ -69,7 +90,7 @@ func (eng *aqEngine) sendNotifications(
 		} else {
 			// Otherwise we send based on global settings.
 			// ENG-2341 will allow user to configure if a notification applies to all workflows.
-			if notification.ShouldSend(notificationObj.Level(), level) {
+			if notification.ShouldSend(notificationObj.Level(), content.level) {
 				err = notificationObj.Send(ctx, msg)
 				if err != nil {
 					return err

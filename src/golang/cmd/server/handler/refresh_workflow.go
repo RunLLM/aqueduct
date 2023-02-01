@@ -6,16 +6,12 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/repos"
-	"github.com/aqueducthq/aqueduct/lib/vault"
-	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -43,12 +39,7 @@ type RefreshWorkflowHandler struct {
 
 	Database database.Database
 	Engine   engine.Engine
-	Vault    vault.Vault
 
-	ArtifactRepo repos.Artifact
-	DAGRepo      repos.DAG
-	DAGEdgeRepo  repos.DAGEdge
-	OperatorRepo repos.Operator
 	WorkflowRepo repos.Workflow
 }
 
@@ -101,35 +92,13 @@ func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs inte
 
 	emptyResp := struct{}{}
 
-	dag, err := utils.ReadLatestDAGFromDatabase(
-		ctx,
-		args.WorkflowId,
-		h.WorkflowRepo,
-		h.DAGRepo,
-		h.OperatorRepo,
-		h.ArtifactRepo,
-		h.DAGEdgeRepo,
-		h.Database,
-	)
-	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow.")
-	}
-
-	if dag.EngineConfig.Type == shared.AirflowEngineType {
-		// This is an Airflow workflow
-		if err := airflow.TriggerWorkflow(ctx, dag, h.Vault); err != nil {
-			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow on Airflow.")
-		}
-		return emptyResp, http.StatusOK, nil
-	}
-
 	timeConfig := &engine.AqueductTimeConfig{
 		OperatorPollInterval: engine.DefaultPollIntervalMillisec,
 		ExecTimeout:          engine.DefaultExecutionTimeout,
 		CleanupTimeout:       engine.DefaultCleanupTimeout,
 	}
 
-	_, err = h.Engine.TriggerWorkflow(
+	_, err := h.Engine.TriggerWorkflow(
 		ctx,
 		args.WorkflowId,
 		shared_utils.AppendPrefix(args.WorkflowId.String()),

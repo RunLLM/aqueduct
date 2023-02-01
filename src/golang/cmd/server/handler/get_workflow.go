@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -53,7 +54,6 @@ type GetWorkflowHandler struct {
 	GetHandler
 
 	Database database.Database
-	Vault    vault.Vault
 
 	ArtifactRepo       repos.Artifact
 	ArtifactResultRepo repos.ArtifactResult
@@ -119,6 +119,12 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
 	}
 
+	storageConfig := config.Storage()
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
+	}
+
 	if latestDAG.EngineConfig.Type == shared.AirflowEngineType {
 		// Airflow workflows need to be synced
 		if err := airflow.SyncDAGs(
@@ -132,7 +138,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 			h.DAGResultRepo,
 			h.OperatorResultRepo,
 			h.ArtifactResultRepo,
-			h.Vault,
+			vaultObject,
 			h.Database,
 		); err != nil {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
