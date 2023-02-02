@@ -113,7 +113,6 @@ def _setup_relational_data(client: Client, relationalDB: RelationalDBIntegration
 
 
 def _setup_s3_data(client: Client, s3: S3Integration):
-
     # Find all the objects that already exist.
     existing_names = set()
     for object_name in demo_db_tables():
