@@ -136,7 +136,7 @@ def convert_dict_to_integration_connect_config(
 ) -> IntegrationConfig:
     if service == ServiceType.BIGQUERY:
         return BigQueryConfig(**config_dict)
-    elif service == ServiceType.MYSQL:
+    elif service in [ServiceType.MARIADB, ServiceType.MYSQL]:
         return MySQLConfig(**config_dict)
     elif service == ServiceType.MONGO_DB:
         return MongoDBConfig(**config_dict)
@@ -154,4 +154,4 @@ def convert_dict_to_integration_connect_config(
         return SQLiteConfig(**config_dict)
     elif service == ServiceType.REDSHIFT:
         return RedshiftConfig(**config_dict)
-    raise InternalAqueductError("Unexpected Service Type: %s" % service)
+    raise InternalAqueductError("Unexpected Service Type[TEST]: %s" % service)
