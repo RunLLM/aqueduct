@@ -154,4 +154,4 @@ def convert_dict_to_integration_connect_config(
         return SQLiteConfig(**config_dict)
     elif service == ServiceType.REDSHIFT:
         return RedshiftConfig(**config_dict)
-    raise InternalAqueductError("Unexpected Service Type[TEST]: %s" % service)
+    raise InternalAqueductError("Unexpected Service Type: %s" % service)
