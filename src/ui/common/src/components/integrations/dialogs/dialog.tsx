@@ -50,7 +50,10 @@ import { AirflowDialog } from './airflowDialog';
 import { AthenaDialog, isAthenaConfigComplete } from './athenaDialog';
 import { BigQueryDialog } from './bigqueryDialog';
 import { CondaDialog } from './condaDialog';
-import { isDatabricksConfigComplete, DatabricksDialog } from './databricksDialog';
+import {
+  DatabricksDialog,
+  isDatabricksConfigComplete,
+} from './databricksDialog';
 import { EmailDialog } from './emailDialog';
 import { GCSDialog } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
@@ -348,21 +351,21 @@ const IntegrationDialog: React.FC<Props> = ({
 
     return editMode
       ? dispatch(
-        handleEditIntegration({
-          apiKey: user.apiKey,
-          integrationId: integrationToEdit.id,
-          name: name,
-          config: config,
-        })
-      )
+          handleEditIntegration({
+            apiKey: user.apiKey,
+            integrationId: integrationToEdit.id,
+            name: name,
+            config: config,
+          })
+        )
       : dispatch(
-        handleConnectToNewIntegration({
-          apiKey: user.apiKey,
-          service: service,
-          name: name,
-          config: config,
-        })
-      );
+          handleConnectToNewIntegration({
+            apiKey: user.apiKey,
+            service: service,
+            name: name,
+            config: config,
+          })
+        );
   };
 
   const nameInput = (
@@ -387,8 +390,9 @@ const IntegrationDialog: React.FC<Props> = ({
       <DialogContent>
         {editMode && numWorkflows > 0 && (
           <Alert sx={{ mb: 2 }} severity="info">
-            {`Changing this integration will automatically update ${numWorkflows} ${numWorkflows === 1 ? 'workflow' : 'workflows'
-              }.`}
+            {`Changing this integration will automatically update ${numWorkflows} ${
+              numWorkflows === 1 ? 'workflow' : 'workflows'
+            }.`}
           </Alert>
         )}
         {nameInput}
