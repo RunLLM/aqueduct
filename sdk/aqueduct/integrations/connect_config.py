@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Any, Dict, Optional, Union, cast
 
 from aqueduct.constants.enums import MetaEnum, ServiceType
-from aqueduct.error import InternalAqueductError
+from aqueduct.error import InternalAqueductError, InvalidUserArgumentException
 from pydantic import BaseModel, Extra, Field
 
 """Copied mostly over from `aqueduct_executor/operators/connectors/data/config.py` for now, please keep them in sync."""
@@ -27,8 +27,8 @@ class BigQueryConfig(BaseConnectionConfig):
     """
 
     project_id: str
-    service_account_credentials: Optional[str]
-    service_account_credentials_path: Optional[str]
+    service_account_credentials: Optional[str] = None
+    service_account_credentials_path: Optional[str] = None
 
     def json(self, **kwargs: Any) -> Any:
         """Overrides default JSON serialization to ensure that `service_account_credentials_path`
@@ -186,6 +186,11 @@ def _prepare_big_query_config(config: BigQueryConfig) -> BigQueryConfig:
     """Prepares the BigQueryConfig object by reading the service account
     credentials into a string field if the filepath is specified.
     """
+    if not config.service_account_credentials and not config.service_account_credentials_path:
+        raise InvalidUserArgumentException(
+            "At least one of `service_account_credentials` or `service_account_credentials_path` must be set for a BigQueryConfig."
+        )
+
     if not config.service_account_credentials_path:
         return config
 
