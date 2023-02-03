@@ -186,11 +186,14 @@ def _prepare_big_query_config(config: BigQueryConfig) -> BigQueryConfig:
     """Prepares the BigQueryConfig object by reading the service account
     credentials into a string field if the filepath is specified.
     """
+<<<<<<< HEAD
     if not config.service_account_credentials and not config.service_account_credentials_path:
         raise InvalidUserArgumentException(
             "At least one of `service_account_credentials` or `service_account_credentials_path` must be set for a BigQueryConfig."
         )
 
+=======
+>>>>>>> 46c13793 (Allows for using big query credential file on SDK)
     if not config.service_account_credentials_path:
         return config
 
