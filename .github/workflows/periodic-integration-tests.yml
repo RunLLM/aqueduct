@@ -23,8 +23,10 @@ jobs:
       - name: Set up the SDK Integration Tests
         working-directory: integration_tests/sdk
         run: |
-          echo "apikey: $(aqueduct apikey)" >> test-config.yml
-          echo "address: localhost:8080" >> test-config.yml
+          echo "apikey: $(aqueduct apikey)" >> test-credentials.yml
+          printf "address: localhost:8080" >> test-config.yml
+          printf "\ndata:\n  aqueduct_demo:" >> test-config.yml
+          printf "\ncompute:\n  aqueduct_engine:" >> test-config.yml
 
       - name: Run the SDK Integration Tests
         timeout-minutes: 30
