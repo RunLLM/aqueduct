@@ -104,7 +104,7 @@ def _execute_function(
     spec: FunctionSpec,
     inputs: List[Any],
     exec_state: ExecutionState,
-) -> Tuple[List[Any], List[ArtifactType], Dict[str, str]]:
+) -> Tuple[List[Any], Dict[str, str]]:
     """
     Invokes the given function on the input data. Does not raise an exception on any
     user function errors, but instead annotates the given exec state with the error.
