@@ -260,7 +260,7 @@ class APIClient:
         headers.update(
             {
                 "integration-name": name,
-                "integration-service": service.value,
+                "integration-service": integration_service,
                 "integration-config": config.json(),
             }
         )
