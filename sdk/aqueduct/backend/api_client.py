@@ -251,11 +251,16 @@ class APIClient:
     def connect_integration(
         self, name: str, service: ServiceType, config: IntegrationConfig
     ) -> None:
+        integration_service = service
+        if not isinstance(integration_service, str):
+            # The enum value needs to be used
+            integration_service = integration_service.value
+
         headers = self._generate_auth_headers()
         headers.update(
             {
                 "integration-name": name,
-                "integration-service": service.value,
+                "integration-service": integration_service,
                 "integration-config": config.json(),
             }
         )
