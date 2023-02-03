@@ -147,7 +147,6 @@ def test_default_requirements_installation(client):
 
 
 def test_requirements_invalid_arguments(client):
-
     with pytest.raises(InvalidUserArgumentException):
 
         @op(requirements=123)

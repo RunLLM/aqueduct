@@ -66,7 +66,7 @@ def read_artifacts(
     artifact_types: List[ArtifactType] = []
     serialization_types: List[SerializationType] = []
 
-    for (input_path, input_metadata_path) in zip(input_paths, input_metadata_paths):
+    for input_path, input_metadata_path in zip(input_paths, input_metadata_paths):
         # Make sure that the input paths exist.
         try:
             _ = storage.get(input_path)

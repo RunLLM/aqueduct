@@ -56,8 +56,7 @@ def read_artifacts_spark(
     artifact_types: List[ArtifactType] = []
     serialization_types: List[SerializationType] = []
 
-    for (input_path, input_metadata_path) in zip(input_paths, input_metadata_paths):
-
+    for input_path, input_metadata_path in zip(input_paths, input_metadata_paths):
         artifact_metadata = json.loads(storage.get(input_metadata_path).decode(DEFAULT_ENCODING))
         artifact_type = artifact_metadata[_METADATA_ARTIFACT_TYPE_KEY]
         artifact_types.append(artifact_type)

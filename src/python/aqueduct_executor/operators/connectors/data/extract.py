@@ -82,7 +82,7 @@ class RelationalParams(models.BaseParams):
         with_clause = "WITH\n"
         prev_table_name = ""
         normalized_query = ""
-        for (idx, query) in enumerate(queries):
+        for idx, query in enumerate(queries):
             # Remove spaces and trailing semicolumns if any.
             normalized_query = query.strip().rstrip(";")
 

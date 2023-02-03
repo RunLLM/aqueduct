@@ -51,7 +51,6 @@ class EngineConfig(BaseModel):
 
 # TODO(...): this is deprecated.
 class FlowConfig(BaseModel):
-
     engine: Optional[
         Union[AirflowIntegration, K8sIntegration, LambdaIntegration, DatabricksIntegration]
     ]
