@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 
-#!/usr/bin/env bash
-
 # This script creates a SQLite database file called `test.db` in the 
 # specified directory. 
 # By default it assumes the directory is `~/tests`. However, you can
