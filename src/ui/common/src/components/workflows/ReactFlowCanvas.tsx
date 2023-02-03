@@ -38,7 +38,7 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
   const { edges, nodes } = dagPositionState.result ?? { edges: [], nodes: [] };
 
   return (
-    <Box sx={{ height: '55vh', width: '88vw' }}>
+    <Box sx={{ height: '50vh', width: '100%' }}>
       <ReactFlow
         onPaneClick={onPaneClicked}
         nodes={nodes}
