@@ -5,10 +5,9 @@ address: <SERVER_ADDRESS>
 # OPTIONAL: If set, this can alter the metadata store of the server, so use
 # with care.
 metadata:
-  # If set, we will error if unless the server is in local metadata mode.
-  # This ensures that a metadata migration is performed. Otherwise, we allow
-  # the server to already be using the appropriate metadata store without any
-  # explicit migration action.
+  # If `must_migrate` is set, we will error unless the server is in local metadata mode.
+  # This ensures that a metadata migration is performed. Otherwise, the server
+  # is allowed to be using the appropriate metadata store already.
   must_migrate: true
   test_s3:
 

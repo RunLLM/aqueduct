@@ -103,6 +103,8 @@ def use_deprecated(pytestconfig):
 
 
 def _type_from_engine_name(client, engine: str) -> ServiceType:
+    assert engine != "aqueduct_engine"
+
     integration_info_by_name = client.list_integrations()
     if engine not in integration_info_by_name.keys():
         raise Exception("Server is not connected to integration `%s`." % engine)
