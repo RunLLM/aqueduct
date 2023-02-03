@@ -255,7 +255,7 @@ class APIClient:
         headers.update(
             {
                 "integration-name": name,
-                "integration-service": service,
+                "integration-service": service.value,
                 "integration-config": config.json(),
             }
         )

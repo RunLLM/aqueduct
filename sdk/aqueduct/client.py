@@ -25,6 +25,7 @@ from aqueduct.integrations.connect_config import (
     BaseConnectionConfig,
     IntegrationConfig,
     convert_dict_to_integration_connect_config,
+    prepare_integration_config,
 )
 from aqueduct.integrations.databricks_integration import DatabricksIntegration
 from aqueduct.integrations.google_sheets_integration import GoogleSheetsIntegration
@@ -229,6 +230,8 @@ class Client:
         if isinstance(config, dict):
             config = convert_dict_to_integration_connect_config(service, config)
         assert isinstance(config, BaseConnectionConfig)
+
+        config = prepare_integration_config(service, config)
 
         globals.__GLOBAL_API_CLIENT__.connect_integration(name, service, config)
         logger().info("Successfully connected to new %s integration `%s`." % (service, name))
