@@ -57,6 +57,8 @@ import WorkflowHeader, {
 } from '../../../workflows/workflowHeader';
 import { LayoutProps } from '../../types';
 
+import { Tab, Tabs } from '../../../primitives/Tabs.styles';
+
 type WorkflowPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
@@ -72,6 +74,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const urlSearchParams = parse(window.location.search);
   const location = useLocation();
   const path = location.pathname;
+  const [currentTab, setCurrentTab] = React.useState<string>("Overview");
 
   const currentNode = useSelector(
     (state: RootState) => state.nodeSelectionReducer.selected
@@ -333,8 +336,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             onClick={() => {
               // All we're really doing here is adding the artifactId onto the end of the URL.
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/artifact/${currentNode.id}`
               );
             }}
@@ -381,8 +383,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/metric/${currentNode.id}`
               );
             }}
@@ -401,8 +402,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/operator/${currentNode.id}`
               );
             }}
@@ -421,8 +421,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/check/${currentNode.id}`
               );
             }}
@@ -438,6 +437,38 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   };
 
   const drawerHeaderHeightInPx = 64;
+
+  const handleTabChange = (event: React.SyntheticEvent, newTab: string) => {
+    setCurrentTab(newTab);
+  };
+
+  interface TabPanelProps {
+    children?: React.ReactNode;
+    index: string;
+    value: string;
+  }
+
+  // TODO: Make this a component, probably can put this near the other tab component that we have
+  function TabPanel(props: TabPanelProps) {
+    const { children, value, index, ...other } = props;
+
+    return (
+      <div
+        role="tabpanel"
+        hidden={value !== index}
+        id={`simple-tabpanel-${index}`}
+        aria-labelledby={`simple-tab-${index}`}
+        {...other}
+      >
+        {value === index && (
+          <Box sx={{ p: 3 }}>
+            {children}
+          </Box>
+        )}
+      </div>
+    );
+  }
+
 
   return (
     <Layout
@@ -481,92 +512,111 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         )}
 
         <Divider />
+        {/* Start of tabs for Workflow details page */}
+        <Tabs value={currentTab} onChange={handleTabChange}>
+          <Tab value="Details" label="Details" />
+          <Tab value="Settings" label="Settings" />
+        </Tabs>
 
-        <Box
-          sx={{
-            flex: 1,
-            mt: 2,
-            p: 3,
-            mb: contentBottomOffsetInPx,
-            width: '100%',
-            boxSizing: 'border-box',
-            backgroundColor: theme.palette.gray['50'],
-          }}
-        >
-          <ReactFlowProvider>
-            <ReactFlowCanvas
-              switchSideSheet={switchSideSheet}
-              onPaneClicked={onPaneClicked}
-            />
-          </ReactFlowProvider>
-        </Box>
-      </Box>
-
-      {currentNode.type !== NodeType.None && (
-        <Drawer
-          anchor="right"
-          variant="persistent"
-          open={true}
-          PaperProps={{
-            sx: {
-              transition: 'width 200ms ease-in-out',
-              transitionDelay: '1000ms',
-            },
-          }}
-        >
+        <TabPanel value={currentTab} index="Details">
           <Box
-            width={SidesheetWidth}
-            maxWidth={SidesheetWidth}
-            minHeight="100vh"
-            display="flex"
-            flexDirection="column"
+            sx={{
+              flex: 1,
+              mt: 2,
+              p: 3,
+              mb: contentBottomOffsetInPx,
+              width: '100%',
+              height: '100%',
+              boxSizing: 'border-box',
+              backgroundColor: theme.palette.gray['50'],
+            }}
           >
-            <Box
-              width="100%"
-              sx={{ backgroundColor: theme.palette.gray['100'] }}
-              height={`${drawerHeaderHeightInPx}px`}
-            >
-              <Box display="flex">
-                <Box
-                  sx={{ cursor: 'pointer', m: 1, alignSelf: 'center' }}
-                  onClick={onPaneClicked}
-                >
-                  <FontAwesomeIcon icon={faChevronRight} />
-                </Box>
-                <Box maxWidth="400px">
-                  <Typography
-                    variant="h5"
-                    padding="16px"
-                    textOverflow="ellipsis"
-                    overflow="hidden"
-                    whiteSpace="nowrap"
-                  >
-                    {getNodeLabel()}
-                  </Typography>
-                </Box>
-                <Box sx={{ mx: 2, alignSelf: 'center' }}>
-                  {getNodeActionButton()}
-                </Box>
-              </Box>
-            </Box>
-            <Box
-              sx={{
-                overflow: 'auto',
-                flexGrow: 1,
-                marginBottom: DefaultLayoutMargin,
-              }}
-            >
-              {getDataSideSheetContent(
-                user,
-                currentNode,
-                workflowId,
-                workflow.selectedResult.id
-              )}
+            <Box style={{ height: '100%' }}>
+              <ReactFlowProvider>
+                <ReactFlowCanvas
+                  switchSideSheet={switchSideSheet}
+                  onPaneClicked={onPaneClicked}
+                />
+              </ReactFlowProvider>
             </Box>
           </Box>
-        </Drawer>
-      )}
-    </Layout>
+        </TabPanel>
+
+
+        <TabPanel value={currentTab} index="Settings">
+          Settings Tab
+        </TabPanel>
+
+        {/* End of tabs for workflow details page */}
+      </Box >
+
+      {
+        currentNode.type !== NodeType.None && (
+          <Drawer
+            anchor="right"
+            variant="persistent"
+            open={true}
+            PaperProps={{
+              sx: {
+                transition: 'width 200ms ease-in-out',
+                transitionDelay: '1000ms',
+              },
+            }}
+          >
+            <Box
+              width={SidesheetWidth}
+              maxWidth={SidesheetWidth}
+              minHeight="100vh"
+              display="flex"
+              flexDirection="column"
+            >
+              <Box
+                width="100%"
+                sx={{ backgroundColor: theme.palette.gray['100'] }}
+                height={`${drawerHeaderHeightInPx}px`}
+              >
+                <Box display="flex">
+                  <Box
+                    sx={{ cursor: 'pointer', m: 1, alignSelf: 'center' }}
+                    onClick={onPaneClicked}
+                  >
+                    <FontAwesomeIcon icon={faChevronRight} />
+                  </Box>
+                  <Box maxWidth="400px">
+                    <Typography
+                      variant="h5"
+                      padding="16px"
+                      textOverflow="ellipsis"
+                      overflow="hidden"
+                      whiteSpace="nowrap"
+                    >
+                      {getNodeLabel()}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ mx: 2, alignSelf: 'center' }}>
+                    {getNodeActionButton()}
+                  </Box>
+                </Box>
+              </Box>
+              <Box
+                sx={{
+                  overflow: 'auto',
+                  flexGrow: 1,
+                  marginBottom: DefaultLayoutMargin,
+                }}
+              >
+                {getDataSideSheetContent(
+                  user,
+                  currentNode,
+                  workflowId,
+                  workflow.selectedResult.id
+                )}
+              </Box>
+            </Box>
+          </Drawer>
+        )
+      }
+    </Layout >
   );
 };
 
