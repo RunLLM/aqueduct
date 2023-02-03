@@ -5,11 +5,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  run-tests-aqueduct-engine-and-db:
+  run-tests-basic:
     runs-on: ubuntu-latest-8-cores
     timeout-minutes: 20
 
-    name: Run all Integration Tests with Aqueduct Engine and DB
+    name: All Integration Tests with Basic Config
     steps:
       - uses: actions/checkout@v2
 
@@ -51,4 +51,4 @@ jobs:
       - uses: ./.github/actions/upload-artifacts
         if: always()
         with:
-          prefix: Aqueduct Engine and DB
+          prefix: Basic
