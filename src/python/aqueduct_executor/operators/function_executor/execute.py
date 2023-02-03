@@ -155,8 +155,6 @@ def _validate_result_count_and_infer_type(
     Raises:
         ExecFailureException: If the expected number of results were not returned
     """
-    # We only validate the number of results if multiple outputs are expected.
-    # Otherwise, we treat the results as a single object.
     if len(spec.output_content_paths) != len(results):
         raise ExecFailureException(
             failure_type=FailureType.USER_FATAL,
