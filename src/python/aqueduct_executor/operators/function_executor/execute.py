@@ -123,20 +123,8 @@ def _execute_function(
         return invoke(*inputs)
 
     results = _invoke()
-
-    # We only validate the number of results if multiple outputs are expected.
-    # Otherwise, we treat the results as a single object.
-    if len(spec.output_content_paths) > 1 and len(spec.output_content_paths) != len(results):
-        raise ExecFailureException(
-            failure_type=FailureType.USER_FATAL,
-            tip="Expected function to have %s outputs, but instead it had %s."
-            % (len(spec.output_content_paths), len(results)),
-        )
-
-    if len(spec.output_content_paths) == 1:
+    if not isinstance(results, list):
         results = [results]
-
-    inferred_result_types = [infer_artifact_type(res) for res in results]
 
     elapsedTime = timer.stop()
     _, peak = tracemalloc.get_traced_memory()
@@ -146,7 +134,37 @@ def _execute_function(
     }
 
     sys.path.pop(0)
-    return results, inferred_result_types, system_metadata
+    return results, system_metadata
+
+
+def _validate_result_count_and_infer_type(
+    spec: FunctionSpec,
+    results: List[Any],
+) -> List[ArtifactType]:
+    """
+    Validates that the expected number of results were returned by the Function
+    and infers the ArtifactType of each result.
+
+    Args:
+        spec: The FunctionSpec for the Function
+        results: The results returned by the Function
+
+    Returns:
+        The ArtifactType of each result
+
+    Raises:
+        ExecFailureException: If the expected number of results were not returned
+    """
+    # We only validate the number of results if multiple outputs are expected.
+    # Otherwise, we treat the results as a single object.
+    if len(spec.output_content_paths) != len(results):
+        raise ExecFailureException(
+            failure_type=FailureType.USER_FATAL,
+            tip="Expected function to have %s outputs, but instead it had %s."
+            % (len(spec.output_content_paths), len(results)),
+        )
+
+    return [infer_artifact_type(res) for res in results]
 
 
 def validate_spec(spec: FunctionSpec) -> None:
@@ -214,13 +232,15 @@ def run(spec: FunctionSpec) -> None:
 
         derived_from_bson = SerializationType.BSON_TABLE in serialization_types
         print("Invoking the function...")
-        results, result_types, system_metadata = _execute_function(spec, inputs, exec_state)
+        results, system_metadata = _execute_function(spec, inputs, exec_state)
         if exec_state.status == ExecutionStatus.FAILED:
             # user failure
             utils.write_exec_state(storage, spec.metadata_path, exec_state)
             sys.exit(1)
 
         print("Function invoked successfully!")
+
+        result_types = _validate_result_count_and_infer_type(spec, results)
 
         # Perform type checking on the function output.
         if spec.operator_type == OperatorType.METRIC:
@@ -290,14 +310,6 @@ def run(spec: FunctionSpec) -> None:
             result_types[0] = ArtifactType.BOOL
             results[0] = True
         else:
-            # Error if the number of expected outputs is not what was returned by the user's function.
-            if len(results) != len(spec.expected_output_artifact_types):
-                raise ExecFailureException(
-                    failure_type=FailureType.USER_FATAL,
-                    tip="Expected function to return %d outputs, but instead got %d."
-                    % (len(spec.expected_output_artifact_types), len(results)),
-                )
-
             for i, expected_output_type in enumerate(spec.expected_output_artifact_types):
                 if (
                     expected_output_type != ArtifactType.UNTYPED
