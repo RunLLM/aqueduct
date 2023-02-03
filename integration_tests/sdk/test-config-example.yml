@@ -16,6 +16,8 @@ metadata:
 # `aqueduct_demo`, which is built-in.
 data:
   aqueduct_demo:
+  test_bigquery:
+  test_redshift:
   test_snowflake:
   test_s3:
 
