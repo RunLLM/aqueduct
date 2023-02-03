@@ -16,9 +16,7 @@ metadata:
 # `aqueduct_demo`, which is built-in.
 data:
   aqueduct_demo:
-  test_redshift:
   test_snowflake:
-  test_sqlite:
   test_s3:
 
 # REQUIRED: All the compute integrations to run the test suite against.
