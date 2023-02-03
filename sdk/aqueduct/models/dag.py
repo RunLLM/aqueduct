@@ -337,6 +337,9 @@ class DAG(BaseModel):
     def update_artifact_type(self, artifact_id: uuid.UUID, artifact_type: ArtifactType) -> None:
         self.must_get_artifact(artifact_id).type = artifact_type
 
+    def update_artifact_name(self, artifact_id: uuid.UUID, new_name: str) -> None:
+        self.must_get_artifact(artifact_id).name = new_name
+
     def update_operator_spec(self, name: str, spec: OperatorSpec) -> None:
         """Replaces an operator's spec in the dag.
 

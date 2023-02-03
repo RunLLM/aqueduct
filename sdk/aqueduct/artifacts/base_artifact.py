@@ -4,6 +4,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
 from aqueduct.constants.enums import ArtifactType, OperatorType
+from aqueduct.error import InvalidUserActionException
 from aqueduct.models.dag import DAG
 
 
@@ -36,6 +37,15 @@ class BaseArtifact(ABC):
 
     def set_operator_type(self, operator_type: OperatorType) -> None:
         self._from_operator_type = operator_type
+
+    def set_name(self, name: str) -> None:
+        existing = self._dag.get_artifact_by_name(name)
+        if existing is not None:
+            raise InvalidUserActionException(
+                "Artifact with name `%s` has already been created locally. Artifact names must be unique."
+                % name,
+            )
+        self._dag.update_artifact_name(self._artifact_id, name)
 
     def _describe(self) -> Dict[str, Any]:
         input_operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
