@@ -46,12 +46,9 @@ func findChannels(client *slack.Client, names []string) ([]slack.Channel, error)
 		namesSet[name] = true
 	}
 
-	// Slack channel names should be unique, based on
-	// https://twitter.com/slackhq/status/965358920146608128?lang=en .
-	// However, we make this list dynamic size on purpose to prevent potential
-	// compatibility issue in future. We will still send notifications to all
+	// Slack channel names should be unique. We will still send notifications to all
 	// channels matching the given name.
-	results := []slack.Channel{}
+	results := make([]slack.Channel, 0, len(names))
 	for _, channel := range channels {
 		_, ok := namesSet[channel.Name]
 		if ok {
