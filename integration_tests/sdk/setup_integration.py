@@ -132,6 +132,14 @@ def _setup_mongo_db_data(client: Client, mongo_db: MongoDBIntegration) -> None:
     _add_missing_artifacts(client, mongo_db, existing_names)
 
 
+def _setup_snowflake_data(client: Client, snowflake: RelationalDBIntegration) -> None:
+    # Find all the tables that already exist.
+    existing_table_names = set(snowflake.list_tables()["tablename"])
+
+    _add_missing_artifacts(client, snowflake, existing_table_names)
+
+
+
 def _setup_relational_data(client: Client, db: RelationalDBIntegration) -> None:
     # Find all the tables that already exist.
     existing_table_names = set(db.list_tables()["tablename"])
