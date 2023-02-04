@@ -12,7 +12,6 @@ class S3Storage(Storage):
     _config: S3StorageConfig
 
     def __init__(self, config: S3StorageConfig):
-
         if config.aws_access_key_id and config.aws_secret_access_key:
             # The AWS keys are passed in as part of the storage spec for AWS Lambda engines
             self._client = boto3.client(

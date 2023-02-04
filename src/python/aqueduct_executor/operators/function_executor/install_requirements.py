@@ -14,7 +14,6 @@ from aqueduct_executor.operators.utils.storage.parse import parse_storage
 def install_missing_packages(
     missing_path: str, spec: FunctionSpec, conda_env: Optional[str]
 ) -> None:
-
     if conda_env:
         install_output = subprocess.run(
             [

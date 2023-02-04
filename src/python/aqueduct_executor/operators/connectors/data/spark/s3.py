@@ -23,7 +23,6 @@ s3_template = "s3a://%s/%s"
 
 class SparkS3Connector(s3.S3Connector):
     def __init__(self, config: S3Config):
-
         super().__init__(config)
 
     def _fetch_object_spark(
