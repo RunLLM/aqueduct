@@ -54,7 +54,6 @@ class SparkSnowflakeConnector(relational.RelationalConnector):
     def load_spark(
         self, params: load.RelationalParams, df: DataFrame, artifact_type: ArtifactType
     ) -> None:
-
         snowflake_update_mode = _map_to_snowflake_mode(params)
 
         df.write.format("snowflake").options(**self.snowflake_spark_options).option(

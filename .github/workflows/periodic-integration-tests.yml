@@ -11,87 +11,34 @@ jobs:
     timeout-minutes: 20
     strategy:
       matrix:
-        # These are all the Python versions that we support.
-        python-version: ['3.7', '3.8', '3.9', '3.10']
         concurrency: [ 2, 5 ]
 
     name: Run Integration Tests with Python Version ${{ matrix.python-version }} Concurrency ${{ matrix.concurrency }}
     steps:
       - uses: actions/checkout@v2
 
-      - name: Create the logs directory
-        run: mkdir -p logs
-
-      - name: Set filename for the server's output logs
-        run: echo "SERVER_LOGS_FILE=logs/server_logs_${{ matrix.python-version }}" >> $GITHUB_ENV
-
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Set up GOPATH variable
-        run: echo "GOPATH=$(echo $HOME)" >> $GITHUB_ENV
-
-      - name: Set up Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.19.1
-      
-      - name: Install aqueduct-ml
-        run: python3 -m pip install aqueduct-ml
-
-      - name: Start the server
-        run: (aqueduct start --verbose > $SERVER_LOGS_FILE 2>&1 &)
-
-      - name: Wait for server
-        timeout-minutes: 1
-        run: while ! echo exit | nc localhost 8080; do sleep 1; done
-
-      # Grabs the pid of the process bound to port 8080 and kills it.
-      - name: Kill the server
-        run: kill -9 $(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')
-
-      # install_local.py requires ~/.aqueduct/server scaffolding to exist.
-      - name: Update aqueduct with latest code
-        run: python3 scripts/install_local.py --gobinary --sdk --executor
-
-      - name: Start the server again
-        run: (aqueduct start --disable-usage-stats --verbose > $SERVER_LOGS_FILE 2>&1 &)
-
-      - name: Install packages needed for testing
-        run: python3 -m pip install nltk matplotlib pytest-xdist
-
-      - name: Wait for server again
-        timeout-minutes: 1
-        run: while ! echo exit | nc localhost 8080; do sleep 1; done
-
-      - name: Fetch the API key
-        run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
+      - uses: ./.github/actions/setup-server
+        timeout-minutes: 5
 
       - name: Set up the SDK Integration Tests
         working-directory: integration_tests/sdk
         run: |
-          echo "apikey: $(aqueduct apikey)" >> test-config.yml
-          echo "address: localhost:8080" >> test-config.yml
+          echo "apikey: $(aqueduct apikey)" >> test-credentials.yml
+          printf "address: localhost:8080" >> test-config.yml
+          printf "\ndata:\n  aqueduct_demo:" >> test-config.yml
+          printf "\ncompute:\n  aqueduct_engine:" >> test-config.yml
 
       - name: Run the SDK Integration Tests
-        timeout-minutes: 40
+        timeout-minutes: 30
         working-directory: integration_tests/sdk
         run: python3 run_tests.py -n 5
 
-      - uses: actions/upload-artifact@v3
+      - uses: ./.github/actions/upload-artifacts
         if: always()
         with:
-          name: Server Logs
-          path: logs/
+          prefix: Aqueduct Engine and DB
 
-      - uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: Executor Logs
-          path: ~/.aqueduct/server/logs/*
-
+      # Notifies Kenny, Suresh.
       - name: Report to Slack on Failure
         if: always()
         uses: ravsamhq/notify-slack-action@v1
@@ -101,6 +48,6 @@ jobs:
           message_format: '{emoji} *{workflow}* has {status_message}'
           footer: '{run_url}'
           notify_when: 'failure,warnings'
-          mention_users: 'U025MDH5KS6'
+          mention_users: 'U025MDH5KS6,U04CRDACQMQ'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}

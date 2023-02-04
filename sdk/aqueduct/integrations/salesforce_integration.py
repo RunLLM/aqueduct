@@ -103,7 +103,6 @@ class SalesforceIntegration(Integration):
         query: str,
         extract_type: SalesforceExtractType,
     ) -> uuid.UUID:
-
         integration_info = self._metadata
 
         op_name = _generate_extract_op_name(self._dag, integration_info.name, name)

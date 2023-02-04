@@ -8,6 +8,8 @@ CELL_CODE_HEADER_TEMPLATE = 'print("Cell %d")\n'
 SERVER_ADDRESS_CODE_SNIPPET = "address = "
 API_KEY_SNIPPET = "aqueduct.get_apikey()"
 ABBR_API_KEY_SNIPPET = "aq.get_apikey()"
+
+
 # Pull out the client credential value in the notebook, formatted like "<credential_prefix> <value>\n".
 # Strips out any quotes.
 def extract_credential(code: str, credential_prefix: str) -> str:
