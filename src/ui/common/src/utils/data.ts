@@ -11,7 +11,7 @@ export const DataColumnTypeNames = [
   'object',
 ] as const;
 
-export type DataColumnType = (typeof DataColumnTypeNames)[number];
+export type DataColumnType = typeof DataColumnTypeNames[number];
 
 export type DataColumn = {
   /**

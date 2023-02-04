@@ -23,7 +23,7 @@ export const SlackCard: React.FC<Props> = ({ integration }) => {
       </Typography>
       <Typography variant="body2">
         <strong>Level: </strong>
-        {config.level.toUpperCase()}
+        {config.level[0].toUpperCase() + config.level.slice(1)}
       </Typography>
     </Box>
   );
