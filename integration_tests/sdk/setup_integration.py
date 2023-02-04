@@ -5,6 +5,7 @@ import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ServiceType
+from aqueduct.integrations.mongodb_integration import MongoDBIntegration
 from aqueduct.integrations.s3_integration import S3Integration
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
 from aqueduct.models.integration import Integration
@@ -105,6 +106,20 @@ def _add_missing_artifacts(
     )
 
 
+def _setup_mongo_db_data(client: Client, mongo_db: MongoDBIntegration) -> None:
+    # Find all the objects that already exist.
+    existing_names = set()
+    for object_name in demo_db_tables():
+        try:
+            data = mongo_db.collection(object_name).find({}).get()
+            existing_names.add(object_name)
+        except Exception as e:
+            # Failing to fetch simply means we will need to populate this data.
+            pass
+
+    _add_missing_artifacts(client, mongo_db, existing_names)
+
+
 def _setup_redshift_data(client: Client, redshift: RelationalDBIntegration) -> None:
     # Find all the tables that already exist.
     existing_table_names = set(redshift.list_tables()["tablename"])
@@ -183,6 +198,8 @@ def setup_data_integrations(filter_to: Optional[str] = None) -> None:
             _setup_snowflake_data(client, integration)
         elif integration.type() == ServiceType.S3:
             _setup_s3_data(client, integration)
+        elif integration.type() == ServiceType.MONGO_DB:
+            _setup_mongo_db_data(client, integration)
         else:
             raise Exception("Test suite does not yet support %s." % integration.type())
 

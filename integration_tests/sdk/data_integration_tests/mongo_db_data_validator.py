@@ -1,13 +1,11 @@
 import uuid
-from typing import Any, List, Tuple
+from typing import Any
 
 import pandas as pd
-from aqueduct.constants.enums import LoadUpdateMode
 from aqueduct.integrations.mongodb_integration import MongoDBIntegration
-from aqueduct.models.operators import RelationalDBLoadParams
-from sdk.data_integration_tests.relational_data_validator import RelationalDataValidator
 
 from aqueduct import Client, Flow
+from sdk.data_integration_tests.relational_data_validator import RelationalDataValidator
 
 from ..shared.validation import fetch_and_validate_saved_object_identifier
 
@@ -20,7 +18,7 @@ class MongoDBDataValidator(RelationalDataValidator):
     _integration: MongoDBIntegration
 
     def __init__(self, client: Client, integration: MongoDBIntegration):
-        super(MongoDBDataValidator).__init__(client, integration)
+        super(MongoDBDataValidator, self).__init__(client, integration)
 
     def check_saved_artifact_data(
         self, flow: Flow, artifact_id: uuid.UUID, expected_data: Any
@@ -35,7 +33,7 @@ class MongoDBDataValidator(RelationalDataValidator):
         )
 
         # Verify the artifact's actual data state in the data integration.
-        saved_data = self._integration.collection(saved_object_identifier).find({})
+        saved_data = self._integration.collection(saved_object_identifier).find({}).get()
         assert isinstance(saved_data, pd.DataFrame)
         if not saved_data.equals(expected_data):
             print("Expected data: ", expected_data)

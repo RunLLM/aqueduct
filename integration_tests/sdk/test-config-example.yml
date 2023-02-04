@@ -33,3 +33,7 @@ data:
 
     # Whether to configure this integration as the metadata store too.
     # use_as_storage:
+  test_mongo_db:
+    type: MongoDB
+    auth_uri: # the URI from cluster -> connection -> connect to application.
+    database: aqueduct

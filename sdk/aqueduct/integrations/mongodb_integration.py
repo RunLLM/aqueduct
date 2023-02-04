@@ -36,7 +36,8 @@ class MongoDBCollectionIntegration(Integration):
     def find(
         self,
         *args: List[Any],
-        name: Optional[str] = None,
+        name: Optional[str] = None,  # operator name
+        output: Optional[str] = None,  # artifact name
         description: str = "",
         lazy: bool = False,
         **kwargs: Dict[str, Any],
@@ -57,6 +58,7 @@ class MongoDBCollectionIntegration(Integration):
                 Whether to run this operator lazily. See https://docs.aqueducthq.com/operators/lazy-vs.-eager-execution .
         """
         op_name = name or self._dag.get_unclaimed_op_name(prefix="%s query" % self.name())
+        artf_name = output or artifact_name_from_op_name(op_name)
         if globals.__GLOBAL_CONFIG__.lazy:
             lazy = True
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
@@ -111,7 +113,7 @@ class MongoDBCollectionIntegration(Integration):
                     output_artifacts=[
                         ArtifactMetadata(
                             id=output_artf_id,
-                            name=artifact_name_from_op_name(op_name),
+                            name=artf_name,
                             type=ArtifactType.TABLE,
                         ),
                     ],
