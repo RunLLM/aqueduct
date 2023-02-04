@@ -74,7 +74,7 @@ func sendNotifications(
 	}
 
 	msg := notificationMsg(wfDag.Name(), content.level, content.contextMsg)
-	workflowSettings := wfDag.NotificationSettings()
+	workflowSettings := wfDag.NotificationSettings().Settings
 	for _, notificationObj := range notifications {
 		if len(workflowSettings) > 0 {
 			// send based on settings

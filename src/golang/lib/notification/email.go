@@ -3,7 +3,9 @@ package notification
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
 	"net/smtp"
+	"strings"
 
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -27,9 +29,30 @@ func (e *EmailNotification) Level() shared.NotificationLevel {
 	return e.conf.Level
 }
 
+func fullMessage(subject string, from string, targets []string, body string) string {
+	fullMsg := fmt.Sprintf("From: %s\n", from)
+	fullMsg += fmt.Sprintf("To: %s\n", strings.Join(targets, ","))
+	fullMsg += fmt.Sprintf("Subject: %s\n\n", subject)
+	fullMsg += body
+	return fullMsg
+}
+
 func (e *EmailNotification) Send(ctx context.Context, msg string) error {
-	// TODO: Implement
-	return nil
+	auth := smtp.PlainAuth(
+		"", // identity
+		e.conf.User,
+		e.conf.Password,
+		e.conf.Host,
+	)
+
+	fullMsg := fullMessage("aqueduct notification", e.conf.User, e.conf.Targets, msg)
+	return smtp.SendMail(
+		e.conf.FullHost(),
+		auth,
+		e.conf.User,
+		e.conf.Targets,
+		[]byte(fullMsg),
+	)
 }
 
 func AuthenticateEmail(conf *shared.EmailConfig) error {

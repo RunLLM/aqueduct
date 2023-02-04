@@ -21,7 +21,7 @@ export const StorageSelector: React.FC = () => {
   const getMenuItems = () => {
     return (
       Object.values(StorageType) as Array<
-        (typeof StorageType)[keyof typeof StorageType]
+        typeof StorageType[keyof typeof StorageType]
       >
     ).map((storageType) => {
       return (
