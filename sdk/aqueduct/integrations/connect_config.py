@@ -1,8 +1,8 @@
 from enum import Enum
-from typing import Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, cast
 
 from aqueduct.constants.enums import MetaEnum, ServiceType
-from aqueduct.error import InternalAqueductError
+from aqueduct.error import InternalAqueductError, InvalidUserArgumentException
 from pydantic import BaseModel, Extra, Field
 
 """Copied mostly over from `aqueduct_executor/operators/connectors/data/config.py` for now, please keep them in sync."""
@@ -19,8 +19,22 @@ class BaseConnectionConfig(BaseModel):
 
 
 class BigQueryConfig(BaseConnectionConfig):
+    """
+    BigQueryConfig defines the Pydantic Config for a BigQuery integration.
+    One of the following between `service_account_credentials` and
+    `service_account_credentials_path` must be specified. If `service_account_credentials_path`
+    is specified, it takes priority.
+    """
+
     project_id: str
-    service_account_credentials: str
+    service_account_credentials: Optional[str] = None
+    service_account_credentials_path: Optional[str] = None
+
+    def json(self, **kwargs: Any) -> Any:
+        """Overrides default JSON serialization to ensure that `service_account_credentials_path`
+        is not passed along to the backend.
+        """
+        return super().json(exclude={"service_account_credentials_path"}, **kwargs)
 
 
 class MySQLConfig(BaseConnectionConfig):
@@ -155,3 +169,33 @@ def convert_dict_to_integration_connect_config(
     elif service == ServiceType.REDSHIFT:
         return RedshiftConfig(**config_dict)
     raise InternalAqueductError("Unexpected Service Type: %s" % service)
+
+
+def prepare_integration_config(
+    service: ServiceType, config: IntegrationConfig
+) -> IntegrationConfig:
+    """Prepares the IntegrationConfig object to be sent to the backend
+    as part of a request to connect a new integration.
+    """
+    if service == ServiceType.BIGQUERY:
+        return _prepare_big_query_config(cast(BigQueryConfig, config))
+    return config
+
+
+def _prepare_big_query_config(config: BigQueryConfig) -> BigQueryConfig:
+    """Prepares the BigQueryConfig object by reading the service account
+    credentials into a string field if the filepath is specified.
+    """
+    if not config.service_account_credentials and not config.service_account_credentials_path:
+        raise InvalidUserArgumentException(
+            "At least one of `service_account_credentials` or `service_account_credentials_path` must be set for a BigQueryConfig."
+        )
+
+    if not config.service_account_credentials_path:
+        return config
+
+    with open(config.service_account_credentials_path, "r") as file:
+        credentials = file.read().replace("\n", "")
+        config.service_account_credentials = credentials
+
+    return config
