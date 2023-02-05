@@ -139,7 +139,6 @@ def _setup_snowflake_data(client: Client, snowflake: RelationalDBIntegration) ->
     _add_missing_artifacts(client, snowflake, existing_table_names)
 
 
-
 def _setup_relational_data(client: Client, db: RelationalDBIntegration) -> None:
     # Find all the tables that already exist.
     existing_table_names = set(db.list_tables()["tablename"])
