@@ -41,7 +41,7 @@ class AthenaConnector(connector.DataConnector):
     def extract(self, params: extract.RelationalParams) -> pd.DataFrame:
         assert params.usable(), "Query is not usable. Did you forget to expand placeholders?"
         if params.query == LIST_TABLES_QUERY_ATHENA:
-            return pd.DataFrame(self._list_tables(), columns=["Tables"])
+            return pd.DataFrame(self._list_tables(), columns=["tablename"])
         else:
             return wr.athena.read_sql_query(
                 sql=params.query,

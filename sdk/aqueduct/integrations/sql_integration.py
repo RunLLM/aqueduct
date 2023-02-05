@@ -280,6 +280,10 @@ class RelationalDBIntegration(Integration):
                 Defines the semantics of the save if a table already exists.
                 Options are "replace", "append" (row-wise), or "fail" (if table already exists).
         """
+        if self.type() == ServiceType.ATHENA:
+            raise InvalidUserActionException(
+                "Save operation not supported for %s." % self.type().value
+            )
         # Non-tabular data cannot be saved into relational data stores.
         if artifact.type() not in [ArtifactType.UNTYPED, ArtifactType.TABLE]:
             raise InvalidUserActionException(
