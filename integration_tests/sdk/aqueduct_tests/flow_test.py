@@ -462,7 +462,7 @@ def test_flow_with_args(client):
     with pytest.raises(InvalidUserArgumentException):
         foo_with_args(*[str_val, num_val])
 
-
+# TODO
 def test_publish_with_redundant_config_fields(client):
     """Once the user-facing `FlowConfig` struct is deprecated, we can get rid of this test."""
 
