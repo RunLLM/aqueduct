@@ -1,7 +1,8 @@
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
+from aqueduct.backend.response_models import ListWorkflowResponseEntry
 from aqueduct.constants.enums import ArtifactType, RuntimeType, ServiceType, TriggerType
 from aqueduct.error import *
 from aqueduct.models.config import (
@@ -176,3 +177,46 @@ def generate_engine_config(
         )
     else:
         raise AqueductError("Unsupported engine configuration.")
+
+
+def find_flow_with_user_supplied_id_and_name(
+    flows: List[ListWorkflowResponseEntry],
+    flow_id: Optional[Union[str, uuid.UUID]] = None,
+    flow_name: Optional[str] = None,
+) -> str:
+    """Verifies that the user supplied flow id and name correspond
+    to an actual flow in `flows`. Only one of `flow_id` and `flow_name` is necessary,
+    but if both are provided, they must match to the same flow. It returns the
+    string version of the matching flow's id.
+    """
+    if not flow_id and not flow_name:
+        raise InvalidUserArgumentException(
+            "Must supply at least one of the following:`flow_id` or `flow_name`"
+        )
+
+    if flow_id:
+        flow_id_str = parse_user_supplied_id(flow_id)
+        if all(uuid.UUID(flow_id_str) != flow.id for flow in flows):
+            raise InvalidUserArgumentException("Unable to find a flow with id %s" % flow_id)
+
+    if flow_name:
+        flow_id_str_from_name = None
+        for flow in flows:
+            if flow.name == flow_name:
+                flow_id_str_from_name = str(flow.id)
+                break
+
+        if not flow_id_str_from_name:
+            raise InvalidUserArgumentException("Unable to find a flow with name %s" % flow_name)
+
+        if flow_id and flow_id_str != flow_id_str_from_name:
+            # User supplied both flow_id and flow_name, but they do not
+            # correspond to the same flow
+            raise InvalidUserArgumentException(
+                "The flow with id %s does not correspond to the flow with name %s"
+                % (flow_id, flow_name)
+            )
+
+        return flow_id_str_from_name
+
+    return flow_id_str

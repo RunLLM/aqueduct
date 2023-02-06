@@ -49,6 +49,7 @@ from aqueduct.utils.function_packaging import infer_requirements_from_env
 from aqueduct.utils.type_inference import infer_artifact_type
 from aqueduct.utils.utils import (
     construct_param_spec,
+    find_flow_with_user_supplied_id_and_name,
     generate_engine_config,
     generate_flow_schedule,
     generate_ui_url,
@@ -339,24 +340,30 @@ class Client:
             for workflow_resp in globals.__GLOBAL_API_CLIENT__.list_workflows()
         ]
 
-    def flow(self, flow_id: Union[str, uuid.UUID]) -> Flow:
+    def flow(
+        self,
+        flow_id: Optional[Union[str, uuid.UUID]] = None,
+        flow_name: Optional[str] = None,
+    ) -> Flow:
         """Fetches a flow corresponding to the given flow id.
 
         Args:
-             flow_id:
+            flow_id:
+                Used to identify the flow to fetch from the system.
+                Between `flow_id` and `flow_name`, at least one must be provided.
+                If both are specified, they must correspond to the same flow.
+            flow_name:
                 Used to identify the flow to fetch from the system.
 
         Raises:
             InvalidUserArgumentException:
-                If the provided flow id does not correspond to a flow the client knows about.
+                If the provided flow id or name does not correspond to a flow the client knows about.
         """
-        flow_id = parse_user_supplied_id(flow_id)
-
-        if all(
-            uuid.UUID(flow_id) != workflow.id
-            for workflow in globals.__GLOBAL_API_CLIENT__.list_workflows()
-        ):
-            raise InvalidUserArgumentException("Unable to find a flow with id %s" % flow_id)
+        flow_id = find_flow_with_user_supplied_id_and_name(
+            globals.__GLOBAL_API_CLIENT__.list_workflows(),
+            flow_id,
+            flow_name,
+        )
 
         return Flow(
             flow_id,
@@ -607,14 +614,19 @@ class Client:
 
     def trigger(
         self,
-        flow_id: Union[str, uuid.UUID],
+        flow_id: Optional[Union[str, uuid.UUID]] = None,
+        flow_name: Optional[str] = None,
         parameters: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Immediately triggers another run of the provided flow.
 
         Args:
             flow_id:
-                The id of the workflow to delete (not the name)
+                The id of the flow to delete.
+                Between `flow_id` and `flow_name`, at least one must be provided.
+                If both are specified, they must correspond to the same flow.
+            flow_name:
+                The name of the flow to delete.
             parameters:
                 A map containing custom values to use for the designated parameters. The mapping
                 is expected to be from parameter name to the custom value. These custom values
@@ -645,12 +657,17 @@ class Client:
                 artifact_type = infer_artifact_type(new_val)
                 param_specs[name] = construct_param_spec(new_val, artifact_type)
 
-        flow_id = parse_user_supplied_id(flow_id)
+        flow_id = find_flow_with_user_supplied_id_and_name(
+            globals.__GLOBAL_API_CLIENT__.list_workflows(),
+            flow_id,
+            flow_name,
+        )
         globals.__GLOBAL_API_CLIENT__.refresh_workflow(flow_id, param_specs)
 
     def delete_flow(
         self,
-        flow_id: Union[str, uuid.UUID],
+        flow_id: Optional[Union[str, uuid.UUID]] = None,
+        flow_name: Optional[str] = None,
         saved_objects_to_delete: Optional[
             DefaultDict[Union[str, Integration], List[SavedObjectUpdate]]
         ] = None,
@@ -660,7 +677,11 @@ class Client:
 
         Args:
             flow_id:
-                The id of the workflow to delete (not the name)
+                The id of the flow to delete.
+                Between `flow_id` and `flow_name`, at least one must be provided.
+                If both are specified, they must correspond to the same flow.
+            flow_name:
+                The name of the flow to delete.
             saved_objects_to_delete:
                 The tables or storage paths to delete grouped by integration name.
             force:
@@ -675,7 +696,12 @@ class Client:
         """
         if saved_objects_to_delete is None:
             saved_objects_to_delete = defaultdict()
-        flow_id = parse_user_supplied_id(flow_id)
+
+        flow_id = find_flow_with_user_supplied_id_and_name(
+            globals.__GLOBAL_API_CLIENT__.list_workflows(),
+            flow_id,
+            flow_name,
+        )
 
         # TODO(ENG-410): This method gives no indication as to whether the flow
         #  was successfully deleted.
