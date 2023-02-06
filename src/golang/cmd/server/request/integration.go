@@ -47,6 +47,8 @@ func isUserOnlyIntegration(svc integration.Service) bool {
 		integration.GoogleSheets,
 		integration.Github,
 		integration.Conda,
+		integration.Email,
+		integration.Slack,
 	}
 	for _, s := range userSpecific {
 		if s == svc {

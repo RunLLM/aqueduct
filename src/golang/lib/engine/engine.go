@@ -10,6 +10,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -50,6 +51,7 @@ type Engine interface {
 		workflowDescription string,
 		schedule *workflow.Schedule,
 		retentionPolicy *workflow.RetentionPolicy,
+		notificationSettings *mdl_shared.NotificationSettings,
 	) error
 
 	// TODO ENG-1444: Used as a wrapper to trigger a workflow via executor binary.
