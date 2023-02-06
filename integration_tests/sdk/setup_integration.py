@@ -116,11 +116,11 @@ def _add_missing_artifacts(
     )
 
 
-def _setup_relational_data(client: Client, relationalDB: RelationalDBIntegration) -> None:
+def _setup_relational_data(client: Client, db: RelationalDBIntegration) -> None:
     # Find all the tables that already exist.
-    existing_table_names = set(relationalDB.list_tables()["tablename"])
+    existing_table_names = set(db.list_tables()["tablename"])
 
-    _add_missing_artifacts(client, relationalDB, existing_table_names)
+    _add_missing_artifacts(client, db, existing_table_names)
 
 
 def _setup_s3_data(client: Client, s3: S3Integration):

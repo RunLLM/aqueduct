@@ -71,3 +71,11 @@ export const DatabricksDialog: React.FC<Props> = ({
     </Box>
   );
 };
+
+export function isDatabricksConfigComplete(config: DatabricksConfig): boolean {
+  return (
+    !!config.access_token &&
+    !!config.s3_instance_profile_arn &&
+    !!config.workspace_url
+  );
+}
