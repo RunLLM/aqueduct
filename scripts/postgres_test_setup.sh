@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Create the Docker container
-docker run --name aqueduct-postgres -e POSTGRES_PASSWORD=aqueduct -d postgres -p 5432:5432
+docker run --name aqueduct-postgres -e POSTGRES_PASSWORD=aqueduct -d -p 5432:5432 postgres
 
 # Wait for the database to be ready
 echo "Waiting for database container to be ready ..."
