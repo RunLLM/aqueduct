@@ -1,10 +1,16 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-# First, start up the container
+# Create the Docker container
 docker run --name aqueduct-postgres -e POSTGRES_PASSWORD=aqueduct -d postgres -p 5432:5432
-# TODO: Figure out how to do commands below in bash script.
-# Open terminal inside the container
-docker exec -it <container_id> bash
-# Run Psql to create a database
-psql -U postgres
-CREATE DATABASE aqueducttest;
+
+# Wait for the database to be ready
+echo "Waiting for database container to be ready ..."
+until docker exec aqueduct-postgres psql -U postgres -c '\l' &> /dev/null; do
+  sleep 1
+done
+
+# Create the 'aqueducttest' database
+echo "Creating aqueducttest database ..."
+docker exec -it aqueduct-postgres psql -U postgres -c "CREATE DATABASE aqueducttest;"
+
+echo "PostgreSQL container with the 'aqueducttest' database created successfully."
