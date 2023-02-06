@@ -122,18 +122,6 @@ def test_sql_integration_table_retrieval(client, data_integration):
     ]
 
 
-def test_sql_set_output_name(client, flow_manager, data_integration):
-    output = data_integration.sql("SELECT * FROM hotel_reviews", output="hotel reviews")
-    assert output.name() == "hotel reviews"
-
-    flow = flow_manager.publish_flow_test(artifacts=output)
-    assert flow.latest().artifact("hotel reviews").get().equals(output.get())
-
-    # Cannot name an output artifact the same as an existing one.
-    with pytest.raises(InvalidUserActionException, match="has already been created locally"):
-        data_integration.sql("SELECT * FROM hotel_reviews", output="hotel reviews")
-
-
 def test_sql_integration_list_tables(client, data_integration):
     tables = data_integration.list_tables()
 

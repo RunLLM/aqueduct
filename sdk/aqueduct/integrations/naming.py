@@ -50,6 +50,8 @@ def _validate_artifact_name(dag: DAG, op_name: str, artifact_name: str) -> None:
         # If we are overwriting an existing operator, further check that this overwrite
         # will detach the colliding artifact, thus preserving dag uniqueness.
         if existing_op is not None and len(existing_op.outputs) == 1:
+            # TODO(ENG-2399): This is overly restrictive. We should be checking if the colliding
+            #  artifact is downstream of the operator being overwritten.
             if existing_artifact == dag.get_artifact(existing_op.outputs[0]):
                 return
 

@@ -2,6 +2,7 @@ import pytest
 from aqueduct.error import ArtifactNotFoundException, InvalidUserActionException
 
 from ..shared.data_objects import DataObject
+from ..shared.flow_helpers import publish_flow_test
 from .extract import extract
 from .test_functions.simple.model import (
     dummy_model,
@@ -9,7 +10,6 @@ from .test_functions.simple.model import (
     dummy_sentiment_model,
     dummy_sentiment_model_multiple_input,
 )
-from ..shared.flow_helpers import publish_flow_test
 
 
 def test_extract_with_default_name_collision(client, data_integration):
