@@ -145,6 +145,7 @@ class RelationalDBIntegration(Integration):
         self,
         query: Union[str, List[str], RelationalDBExtractParams],
         name: Optional[str] = None,
+        output: Optional[str] = None,
         description: str = "",
         lazy: bool = False,
     ) -> TableArtifact:
@@ -157,6 +158,8 @@ class RelationalDBIntegration(Integration):
                 in a chain and return the result of the final query.
             name:
                 Name of the query.
+            output:
+                Name to assign the output artifact. If not set, the default naming scheme will be used.
             description:
                 Description of the query.
             lazy:
@@ -174,9 +177,16 @@ class RelationalDBIntegration(Integration):
         # sql operator already exists with that name, we'll continue bumping the suffix
         # until the sql operator is unique. If an explicit name is provided, we will
         # overwrite the existing one.
-        sql_op_name = name
-        if sql_op_name is None:
-            sql_op_name = self._dag.get_unclaimed_op_name(prefix="%s query" % self.name())
+        sql_op_name = name or self._dag.get_unclaimed_op_name(prefix="%s query" % self.name())
+
+        # Must check that the artifact name doesn't already exist.
+        artifact_name = output or artifact_name_from_op_name(sql_op_name)
+        existing = self._dag.get_artifact_by_name(artifact_name)
+        if existing is not None:
+            raise InvalidUserActionException(
+                "Artifact with name `%s` has already been created locally. Artifact names must be unique."
+                % name,
+            )
 
         extract_params = query
         if isinstance(extract_params, str):
@@ -251,7 +261,7 @@ class RelationalDBIntegration(Integration):
                     output_artifacts=[
                         ArtifactMetadata(
                             id=sql_output_artifact_id,
-                            name=artifact_name_from_op_name(sql_op_name),
+                            name=artifact_name,
                             type=ArtifactType.TABLE,
                         ),
                     ],

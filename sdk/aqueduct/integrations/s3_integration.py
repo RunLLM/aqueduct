@@ -20,7 +20,7 @@ from aqueduct.utils.utils import artifact_name_from_op_name, generate_uuid
 
 from aqueduct import globals
 
-from ..error import InvalidUserArgumentException
+from ..error import InvalidUserActionException, InvalidUserArgumentException
 from .naming import _generate_extract_op_name
 from .save import _save_artifact
 
@@ -58,6 +58,7 @@ class S3Integration(Integration):
         format: Optional[str] = None,
         merge: Optional[bool] = None,
         name: Optional[str] = None,
+        output: Optional[str] = None,
         description: str = "",
         lazy: bool = False,
     ) -> BaseArtifact:
@@ -88,8 +89,12 @@ class S3Integration(Integration):
                 `pandas.concat(tables, ignore_index=True)`.
             name:
                 Name of the query.
+            output:
+                Name to assign the output artifact. If not set, the default naming scheme will be used.
             description:
                 Description of the query.
+            lazy:
+                Whether to run this operator lazily. See https://docs.aqueducthq.com/operators/lazy-vs.-eager-execution .
 
         Returns:
             An artifact representing the S3 File(s). If multiple files are expected, the artifact
@@ -108,6 +113,14 @@ class S3Integration(Integration):
 
         integration_info = self._metadata
         op_name = _generate_extract_op_name(self._dag, integration_info.name, name)
+        artifact_name = output or artifact_name_from_op_name(op_name)
+        existing = self._dag.get_artifact_by_name(artifact_name)
+        if existing is not None:
+            raise InvalidUserActionException(
+                "Artifact with name `%s` has already been created locally. Artifact names must be unique."
+                % name,
+            )
+
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
 
@@ -148,7 +161,7 @@ class S3Integration(Integration):
                     output_artifacts=[
                         ArtifactMetadata(
                             id=output_artifact_id,
-                            name=artifact_name_from_op_name(op_name),
+                            name=artifact_name,
                             type=output_artifact_type,
                         ),
                     ],

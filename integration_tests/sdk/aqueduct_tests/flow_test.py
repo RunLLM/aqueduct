@@ -4,7 +4,11 @@ from datetime import datetime, timedelta
 import pandas as pd
 import pytest
 from aqueduct.constants.enums import ExecutionStatus, ServiceType
-from aqueduct.error import InvalidRequestError, InvalidUserArgumentException
+from aqueduct.error import (
+    InvalidRequestError,
+    InvalidUserActionException,
+    InvalidUserArgumentException,
+)
 from aqueduct.integrations.airflow_integration import AirflowIntegration
 from aqueduct.models.config import FlowConfig
 from aqueduct.models.integration import IntegrationInfo
@@ -548,6 +552,10 @@ def test_operators_with_custom_output_names(client, flow_name, engine):
 
     c = passed(output2)
     assert c.name() == "check output"
+
+    # Fail if the name collides with another artifact in the dag.
+    with pytest.raises(InvalidUserActionException, match="has already been created locally"):
+        output1.set_name("metric output")
 
     flow = publish_flow_test(
         client,

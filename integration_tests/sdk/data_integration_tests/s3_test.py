@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import ArtifactType
-from aqueduct.error import AqueductError, InvalidUserArgumentException
+from aqueduct.error import AqueductError, InvalidUserActionException, InvalidUserArgumentException
 from aqueduct.integrations.s3_integration import S3Integration
 
 from sdk.data_integration_tests.flow_manager import FlowManager
@@ -413,3 +413,24 @@ def test_s3_save_failure(client, data_integration):
         InvalidUserArgumentException, match="Unsupported S3 file format `wrong format`."
     ):
         save(data_integration, hotel_reviews, generate_table_name(), format="wrong format")
+
+
+def test_s3_set_output_name(client, flow_manager, data_integration):
+    output = data_integration.file(
+        "hotel_reviews",
+        artifact_type=ArtifactType.TABLE,
+        format="parquet",
+        output="hotel reviews",
+    )
+    assert output.name() == "hotel reviews"
+
+    flow = flow_manager.publish_flow_test(artifacts=output)
+    assert flow.latest().artifact("hotel reviews").get().equals(output.get())
+
+    # Cannot name an output artifact the same as an existing one.
+    with pytest.raises(InvalidUserActionException, match="has already been created locally"):
+        output = data_integration.file(
+            "hotel_reviews",
+            artifact_type=ArtifactType.TABLE,
+            output="hotel reviews",
+        )
