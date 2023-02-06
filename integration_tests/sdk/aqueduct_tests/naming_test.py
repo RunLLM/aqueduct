@@ -65,7 +65,7 @@ def test_extract_with_explicit_name_collision(client, data_integration):
 
 
 def test_extract_with_custom_artifact(client, data_integration, engine, flow_name):
-    output = extract(data_integration, DataObject.SENTIMENT, output_name="hotel_reviews")
+    output = extract(data_integration, DataObject.SENTIMENT, output_name="hotel reviews")
     assert output.name() == "hotel reviews"
 
     flow = publish_flow_test(client, artifacts=output, engine=engine, name=flow_name())
