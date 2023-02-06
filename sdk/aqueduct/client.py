@@ -36,7 +36,7 @@ from aqueduct.integrations.s3_integration import S3Integration
 from aqueduct.integrations.salesforce_integration import SalesforceIntegration
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
 from aqueduct.logger import logger
-from aqueduct.models.config import EngineConfig, FlowConfig
+from aqueduct.models.config import FlowConfig
 from aqueduct.models.dag import Metadata, RetentionPolicy
 from aqueduct.models.integration import Integration, IntegrationInfo
 from aqueduct.models.operators import ParamSpec
@@ -53,7 +53,6 @@ from aqueduct.utils.utils import (
     generate_engine_config,
     generate_flow_schedule,
     generate_ui_url,
-    parse_user_supplied_id,
 )
 
 from aqueduct import globals
@@ -359,8 +358,9 @@ class Client:
             InvalidUserArgumentException:
                 If the provided flow id or name does not correspond to a flow the client knows about.
         """
+        flows = [(flow.id, flow.name) for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()]
         flow_id = find_flow_with_user_supplied_id_and_name(
-            globals.__GLOBAL_API_CLIENT__.list_workflows(),
+            flows,
             flow_id,
             flow_name,
         )
@@ -657,8 +657,9 @@ class Client:
                 artifact_type = infer_artifact_type(new_val)
                 param_specs[name] = construct_param_spec(new_val, artifact_type)
 
+        flows = [(flow.id, flow.name) for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()]
         flow_id = find_flow_with_user_supplied_id_and_name(
-            globals.__GLOBAL_API_CLIENT__.list_workflows(),
+            flows,
             flow_id,
             flow_name,
         )
@@ -697,8 +698,9 @@ class Client:
         if saved_objects_to_delete is None:
             saved_objects_to_delete = defaultdict()
 
+        flows = [(flow.id, flow.name) for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()]
         flow_id = find_flow_with_user_supplied_id_and_name(
-            globals.__GLOBAL_API_CLIENT__.list_workflows(),
+            flows,
             flow_id,
             flow_name,
         )

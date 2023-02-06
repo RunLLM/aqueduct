@@ -1,8 +1,7 @@
 import uuid
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
-from aqueduct.backend.response_models import ListWorkflowResponseEntry
 from aqueduct.constants.enums import ArtifactType, RuntimeType, ServiceType, TriggerType
 from aqueduct.error import *
 from aqueduct.models.config import (
@@ -180,7 +179,7 @@ def generate_engine_config(
 
 
 def find_flow_with_user_supplied_id_and_name(
-    flows: List[ListWorkflowResponseEntry],
+    flows: List[Tuple[uuid.UUID, str]],
     flow_id: Optional[Union[str, uuid.UUID]] = None,
     flow_name: Optional[str] = None,
 ) -> str:
@@ -196,14 +195,14 @@ def find_flow_with_user_supplied_id_and_name(
 
     if flow_id:
         flow_id_str = parse_user_supplied_id(flow_id)
-        if all(uuid.UUID(flow_id_str) != flow.id for flow in flows):
+        if all(uuid.UUID(flow_id_str) != flow[0] for flow in flows):
             raise InvalidUserArgumentException("Unable to find a flow with id %s" % flow_id)
 
     if flow_name:
         flow_id_str_from_name = None
         for flow in flows:
-            if flow.name == flow_name:
-                flow_id_str_from_name = str(flow.id)
+            if flow[1] == flow_name:
+                flow_id_str_from_name = str(flow[0])
                 break
 
         if not flow_id_str_from_name:
