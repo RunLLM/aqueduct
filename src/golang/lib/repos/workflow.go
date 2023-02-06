@@ -7,6 +7,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
@@ -63,6 +64,7 @@ type workflowWriter interface {
 		description string,
 		schedule *workflow.Schedule,
 		retentionPolicy *workflow.RetentionPolicy,
+		notificationSettings *mdl_shared.NotificationSettings,
 		DB database.Database,
 	) (*models.Workflow, error)
 

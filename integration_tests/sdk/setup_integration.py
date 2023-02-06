@@ -123,26 +123,20 @@ def _setup_mongo_db_data(client: Client, mongo_db: MongoDBIntegration) -> None:
     for object_name in demo_db_tables():
         try:
             data = mongo_db.collection(object_name).find({}).get()
-            existing_names.add(object_name)
-        except Exception as e:
+            if len(data) > 0:
+                existing_names.add(object_name)
+        except Exception:
             # Failing to fetch simply means we will need to populate this data.
             pass
 
     _add_missing_artifacts(client, mongo_db, existing_names)
 
 
-def _setup_redshift_data(client: Client, redshift: RelationalDBIntegration) -> None:
+def _setup_relational_data(client: Client, db: RelationalDBIntegration) -> None:
     # Find all the tables that already exist.
-    existing_table_names = set(redshift.list_tables()["tablename"])
+    existing_table_names = set(db.list_tables()["tablename"])
 
-    _add_missing_artifacts(client, redshift, existing_table_names)
-
-
-def _setup_snowflake_data(client: Client, snowflake: RelationalDBIntegration) -> None:
-    # Find all the tables that already exist.
-    existing_table_names = set(snowflake.list_tables()["tablename"])
-
-    _add_missing_artifacts(client, snowflake, existing_table_names)
+    _add_missing_artifacts(client, db, existing_table_names)
 
 
 def _setup_s3_data(client: Client, s3: S3Integration):
@@ -204,10 +198,12 @@ def setup_data_integrations(filter_to: Optional[str] = None) -> None:
 
         # Setup the data in each of these integrations.
         integration = client.integration(integration_name)
-        if integration.type() == ServiceType.REDSHIFT:
-            _setup_redshift_data(client, integration)
-        elif integration.type() == ServiceType.SNOWFLAKE:
-            _setup_snowflake_data(client, integration)
+        if integration.type() in [
+            ServiceType.BIGQUERY,
+            ServiceType.REDSHIFT,
+            ServiceType.SNOWFLAKE,
+        ]:
+            _setup_relational_data(client, integration)
         elif integration.type() == ServiceType.S3:
             _setup_s3_data(client, integration)
         elif integration.type() == ServiceType.MONGO_DB:

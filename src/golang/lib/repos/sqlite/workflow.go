@@ -10,6 +10,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
@@ -253,6 +254,7 @@ func (*workflowWriter) Create(
 	description string,
 	schedule *workflow.Schedule,
 	retentionPolicy *workflow.RetentionPolicy,
+	notificationSettings *mdl_shared.NotificationSettings,
 	DB database.Database,
 ) (*models.Workflow, error) {
 	cols := []string{
@@ -263,6 +265,7 @@ func (*workflowWriter) Create(
 		models.WorkflowSchedule,
 		models.WorkflowCreatedAt,
 		models.WorkflowRetentionPolicy,
+		models.WorkflowNotificationSettings,
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.WorkflowTable, cols, models.WorkflowCols())
 
@@ -271,7 +274,7 @@ func (*workflowWriter) Create(
 		return nil, err
 	}
 
-	args := []interface{}{ID, userID, name, description, schedule, time.Now(), retentionPolicy}
+	args := []interface{}{ID, userID, name, description, schedule, time.Now(), retentionPolicy, notificationSettings}
 	return getWorkflow(ctx, DB, query, args...)
 }
 

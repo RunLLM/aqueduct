@@ -50,7 +50,10 @@ import { AirflowDialog } from './airflowDialog';
 import { AthenaDialog, isAthenaConfigComplete } from './athenaDialog';
 import { BigQueryDialog } from './bigqueryDialog';
 import { CondaDialog } from './condaDialog';
-import { DatabricksDialog } from './databricksDialog';
+import {
+  DatabricksDialog,
+  isDatabricksConfigComplete,
+} from './databricksDialog';
 import { EmailDialog } from './emailDialog';
 import { GCSDialog } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
@@ -431,7 +434,7 @@ const IntegrationDialog: React.FC<Props> = ({
   );
 };
 
-// Helper function to check if the Integration config is completely filled
+// Helper function to check if the Integration config is completely filled.
 export function isConfigComplete(
   config: IntegrationConfig,
   service: Service
@@ -445,6 +448,8 @@ export function isConfigComplete(
       return isK8sConfigComplete(config as KubernetesConfig);
     case 'Conda':
       return true;
+    case 'Databricks':
+      return isDatabricksConfigComplete(config as DatabricksConfig);
 
     default:
       // Make sure config is not empty and all fields are not empty as well.
