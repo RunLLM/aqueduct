@@ -1,5 +1,6 @@
 from typing import Optional
 
+from aqueduct.error import InvalidUserActionException
 from aqueduct.models.dag import DAG
 
 
@@ -36,3 +37,23 @@ def _generate_extract_op_name(
     assert op_name is not None
 
     return op_name
+
+
+def _validate_artifact_name(dag: DAG, op_name: str, artifact_name: str) -> None:
+    """Checks that the proposed artifact name is unique, expect in the case where
+    we are overwriting the colliding operator - artifact pair.
+    """
+    existing_op = dag.get_operator(with_name=op_name)
+    existing_artifact = dag.get_artifact_by_name(artifact_name)
+
+    if existing_artifact is not None:
+        # If we are overwriting an existing operator, further check that this overwrite
+        # will detach the colliding artifact, thus preserving dag uniqueness.
+        if existing_op is not None and len(existing_op.outputs) == 1:
+            if existing_artifact == dag.get_artifact(existing_op.outputs[0]):
+                return
+
+        raise InvalidUserActionException(
+            "Artifact with name `%s` has already been created locally. Artifact names must be unique."
+            % artifact_name,
+        )

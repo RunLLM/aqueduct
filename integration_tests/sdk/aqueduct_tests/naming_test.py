@@ -9,6 +9,7 @@ from .test_functions.simple.model import (
     dummy_sentiment_model,
     dummy_sentiment_model_multiple_input,
 )
+from ..shared.flow_helpers import publish_flow_test
 
 
 def test_extract_with_default_name_collision(client, data_integration):
@@ -61,6 +62,18 @@ def test_extract_with_explicit_name_collision(client, data_integration):
         "positivity",
     ]
     assert fn_df.shape[0] == 100
+
+
+def test_extract_with_custom_artifact(client, data_integration, engine, flow_name):
+    output = extract(data_integration, DataObject.SENTIMENT, output_name="hotel_reviews")
+    assert output.name() == "hotel reviews"
+
+    flow = publish_flow_test(client, artifacts=output, engine=engine, name=flow_name())
+    assert flow.latest().artifact("hotel reviews").get().equals(output.get())
+
+    # Cannot name an output artifact the same as an existing one.
+    with pytest.raises(InvalidUserActionException, match="has already been created locally"):
+        extract(data_integration, DataObject.SENTIMENT, output_name="hotel reviews")
 
 
 def test_function_with_name_collision(client, data_integration):

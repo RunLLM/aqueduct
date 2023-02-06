@@ -12,6 +12,7 @@ def extract(
     integration,
     obj_identifier: Union[DataObject, str],
     op_name: Optional[str] = None,
+    output_name: Optional[str] = None,
     lazy: bool = False,
 ) -> BaseArtifact:
     """Reads the specified object in from the integration and returns it as an artifact.
@@ -24,9 +25,9 @@ def extract(
 
     assert isinstance(obj_identifier, str)
     if isinstance(integration, RelationalDBIntegration):
-        return integration.sql(query="SELECT * from %s" % obj_identifier, name=op_name, lazy=lazy)
+        return integration.sql(query="SELECT * from %s" % obj_identifier, name=op_name, output=output_name, lazy=lazy)
     elif isinstance(integration, S3Integration):
         return integration.file(
-            obj_identifier, ArtifactType.TABLE, "parquet", name=op_name, lazy=lazy
+            obj_identifier, ArtifactType.TABLE, "parquet", name=op_name, output=output_name, lazy=lazy
         )
     raise Exception("Unexpected data integration type provided in test: %s", type(integration))

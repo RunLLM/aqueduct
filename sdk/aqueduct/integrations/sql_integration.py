@@ -8,6 +8,7 @@ from aqueduct.artifacts.preview import preview_artifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, LoadUpdateMode, ServiceType
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
+from aqueduct.integrations.naming import _validate_artifact_name
 from aqueduct.integrations.save import _save_artifact
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
@@ -178,15 +179,8 @@ class RelationalDBIntegration(Integration):
         # until the sql operator is unique. If an explicit name is provided, we will
         # overwrite the existing one.
         sql_op_name = name or self._dag.get_unclaimed_op_name(prefix="%s query" % self.name())
-
-        # Must check that the artifact name doesn't already exist.
         artifact_name = output or artifact_name_from_op_name(sql_op_name)
-        existing = self._dag.get_artifact_by_name(artifact_name)
-        if existing is not None:
-            raise InvalidUserActionException(
-                "Artifact with name `%s` has already been created locally. Artifact names must be unique."
-                % name,
-            )
+        _validate_artifact_name(self._dag, sql_op_name, artifact_name)
 
         extract_params = query
         if isinstance(extract_params, str):

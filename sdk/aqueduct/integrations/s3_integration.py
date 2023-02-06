@@ -21,7 +21,7 @@ from aqueduct.utils.utils import artifact_name_from_op_name, generate_uuid
 from aqueduct import globals
 
 from ..error import InvalidUserActionException, InvalidUserArgumentException
-from .naming import _generate_extract_op_name
+from .naming import _generate_extract_op_name, _validate_artifact_name
 from .save import _save_artifact
 
 
@@ -114,12 +114,7 @@ class S3Integration(Integration):
         integration_info = self._metadata
         op_name = _generate_extract_op_name(self._dag, integration_info.name, name)
         artifact_name = output or artifact_name_from_op_name(op_name)
-        existing = self._dag.get_artifact_by_name(artifact_name)
-        if existing is not None:
-            raise InvalidUserActionException(
-                "Artifact with name `%s` has already been created locally. Artifact names must be unique."
-                % name,
-            )
+        _validate_artifact_name(self._dag, op_name, artifact_name)
 
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()

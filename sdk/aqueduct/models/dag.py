@@ -1,5 +1,5 @@
 import uuid
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 from aqueduct.constants.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
 from aqueduct.error import (
@@ -239,9 +239,13 @@ class DAG(BaseModel):
         return root_operators
 
     def must_get_artifact(self, artifact_id: uuid.UUID) -> ArtifactMetadata:
-        if str(artifact_id) not in self.artifacts:
+        artifact = self.get_artifact(artifact_id)
+        if artifact is None:
             raise ArtifactNotFoundException("Unable to find artifact.")
-        return self.artifacts[str(artifact_id)]
+        return artifact
+
+    def get_artifact(self, artifact_id: uuid.UUID) -> Optional[ArtifactMetadata]:
+        return self.artifacts.get(str(artifact_id))
 
     def must_get_artifacts(self, artifact_ids: List[uuid.UUID]) -> List[ArtifactMetadata]:
         return [self.must_get_artifact(artifact_id) for artifact_id in artifact_ids]
