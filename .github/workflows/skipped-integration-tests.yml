@@ -10,12 +10,8 @@ jobs:
   run-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    strategy:
-      matrix:
-        # These are all the Python versions that we support.
-        python-version: ['3.7', '3.8', '3.9', '3.10']
-    
-    name: Run Fast Integration Tests with Python Version ${{ matrix.python-version }}
+
+    name: All Integration Tests with Basic Config
     steps:
       - run: |
           exit 0
