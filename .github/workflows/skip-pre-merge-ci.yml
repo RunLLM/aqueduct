@@ -7,4 +7,4 @@ on:
 jobs:
   trigger-integration-tests:
     if: contains(github.event.pull_request.labels.*.name, 'skip_integration_test')
-    uses: aqueducthq/aqueduct/.github/workflows/skipped-integration-tests.yml@main
+    uses: aqueducthq/aqueduct/.github/workflows/skipped-integration-tests.yml@fix_skip_tests
