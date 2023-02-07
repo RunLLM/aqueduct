@@ -9,6 +9,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
+	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -49,12 +50,6 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 		lambda_utils.SnowflakeConnectorType,
 	}
 
-	errGroup, _ := errgroup.WithContext(ctx)
-
-	pullImageChannel := make(chan lambda_utils.LambdaFunctionType, MaxConcurrentDownload)
-
-	pushImageChannel := make(chan lambda_utils.LambdaFunctionType, MaxConcurrentUpload)
-
 	// Run authentication only once since the credentials will be recorded.
 	err = lambda_utils.AuthenticateDockerToECR()
 	if err != nil {
@@ -62,33 +57,43 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 	}
 
 	// Pull images on a concurrency of "MaxConcurrentDownload".
-	errGroup.SetLimit(MaxConcurrentDownload)
-	go lambda_utils.AddFunctionTypeToChannel(functionsToShip[:], pullImageChannel)
-	for lambdaFunction := range pullImageChannel {
-		lambdaFunctionType := lambdaFunction
-		errGroup.Go(func() error {
-			return lambda_utils.PullImageFromECR(lambdaFunctionType)
-		})
-	}
 
-	if err := errGroup.Wait(); err != nil {
-		return errors.Wrap(err, "Unable to Pull Lambda Function From ECR.")
-	}
+	errGroup, _ := errgroup.WithContext(ctx)
+
+	pushImageChannel := make(chan lambda_utils.LambdaFunctionType, MaxConcurrentUpload)
+	errGroupPull, _ := errgroup.WithContext(ctx)
+	errGroupPull.SetLimit(MaxConcurrentDownload)
+	errGroup.Go(func() error {
+		for i := 0; i < len(functionsToShip); i++ {
+			lambdaFunctionType := functionsToShip[i]
+			log.Info("Pulling", lambdaFunctionType)
+			errGroupPull.Go(func() error {
+				return lambda_utils.PullImageFromECR(lambdaFunctionType, pushImageChannel)
+			})
+		}
+		err := errGroupPull.Wait()
+		close(pushImageChannel)
+		return err
+	})
 
 	// Create lambda functions on a concurrency of "MaxConcurrentUpload".
-	errGroup.SetLimit(MaxConcurrentUpload)
-	go lambda_utils.AddFunctionTypeToChannel(functionsToShip[:], pushImageChannel)
-	for lambdaFunction := range pushImageChannel {
-		lambdaFunctionType := lambdaFunction
-		errGroup.Go(func() error {
-			return lambda_utils.CreateLambdaFunction(lambdaFunctionType, lambdaConf.RoleArn)
-		})
-	}
+	errGroupPush, _ := errgroup.WithContext(ctx)
+	errGroupPush.SetLimit(MaxConcurrentUpload)
+	errGroup.Go(func() error {
+		for functionType := range pushImageChannel {
+			lambdaFunctionType := functionType
+			log.Info("Pushing", lambdaFunctionType)
+			errGroupPush.Go(func() error {
+				return lambda_utils.CreateLambdaFunction(lambdaFunctionType, lambdaConf.RoleArn)
+			})
+		}
+		err := errGroupPush.Wait()
+		return err
+	})
 
 	if err := errGroup.Wait(); err != nil {
 		return errors.Wrap(err, "Unable to Create Lambda Function.")
 	}
-
 	return nil
 }
 
