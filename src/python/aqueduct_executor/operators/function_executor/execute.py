@@ -123,7 +123,7 @@ def _execute_function(
         return invoke(*inputs)
 
     results = _invoke()
-    if not isinstance(results, list):
+    if len(spec.output_content_paths) == 1:
         results = [results]
 
     elapsedTime = timer.stop()
@@ -155,7 +155,7 @@ def _validate_result_count_and_infer_type(
     Raises:
         ExecFailureException: If the expected number of results were not returned
     """
-    if len(spec.output_content_paths) != len(results):
+    if len(spec.output_content_paths) > 1 and len(spec.output_content_paths) != len(results):
         raise ExecFailureException(
             failure_type=FailureType.USER_FATAL,
             tip="Expected function to have %s outputs, but instead it had %s."
