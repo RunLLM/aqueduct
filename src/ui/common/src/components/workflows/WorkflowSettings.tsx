@@ -885,30 +885,8 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
             Settings{' '}
           </Typography>
         </Box>
-
-        {/* <FontAwesomeIcon
-          icon={faXmark}
-          onClick={() => {
-            // TODO: Add button to handle resetting the settings dialog.
-            setName(initialSettings.name);
-            setDescription(initialSettings.description);
-            setTriggerType(initialSettings.triggerType);
-            setSchedule(initialSettings.schedule);
-            setSourceId(initialSettings.sourceId);
-            setPaused(initialSettings.paused);
-            setRetentionPolicy(initialSettings.retentionPolicy);
-
-            // Finally close the dialog
-            // if (onClose) {
-            //   onClose();
-            // }
-          }}
-          style={{ cursor: 'pointer' }}
-        /> */}
       </Box>
-      {/* </DialogTitle> */}
 
-      {/* <DialogContent sx={{ width: '600px' }}> */}
       <Box sx={{ mb: 2 }}>
         <Box sx={{ mb: 2 }}>
           <Typography sx={{ fontWeight: 'bold' }} component="span">

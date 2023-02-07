@@ -511,7 +511,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         )}
 
         <Divider />
-        {/* Start of tabs for Workflow details page */}
+
         <Tabs value={currentTab} onChange={handleTabChange}>
           <Tab value="Details" label="Details" />
           <Tab value="Settings" label="Settings" />
@@ -551,8 +551,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             </Box>
           )}
         </TabPanel>
-
-        {/* End of tabs for workflow details page */}
       </Box>
 
       {currentNode.type !== NodeType.None && (
