@@ -1,4 +1,4 @@
-import { faGear, faPlay } from '@fortawesome/free-solid-svg-icons';
+import { faPlay } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Snackbar, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
@@ -31,7 +31,6 @@ import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
 import { WorkflowStatusBar } from './StatusBar';
 import VersionSelector from './version_selector';
-import WorkflowSettings from './WorkflowSettings';
 import StatusChip from './workflowStatus';
 
 export const WorkflowPageContentId = 'workflow-page-main';
@@ -110,7 +109,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
   let nextUpdateComponent;
   if (
     workflowDag.metadata?.schedule?.trigger ===
-    WorkflowUpdateTrigger.Periodic &&
+      WorkflowUpdateTrigger.Periodic &&
     !workflowDag.metadata?.schedule?.paused
   ) {
     const nextUpdateTime = getNextUpdateTime(
@@ -341,7 +340,6 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
             <FontAwesomeIcon icon={faPlay} />
             <Typography sx={{ ml: 1 }}>Run Workflow</Typography>
           </Button>
-
         </Box>
       </Box>
 

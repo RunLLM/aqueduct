@@ -425,7 +425,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   let nextUpdateComponent;
   if (
     workflowDag.metadata?.schedule?.trigger ===
-    WorkflowUpdateTrigger.Periodic &&
+      WorkflowUpdateTrigger.Periodic &&
     !workflowDag.metadata?.schedule?.paused
   ) {
     const nextUpdateTime = getNextUpdateTime(
@@ -459,10 +459,11 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
   // State that controls the Snackbar for an attempted workflow settings
   // update.
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [updateMessage, setUpdateMessage] = useState('');
-  const [showUpdateMessage, setShowUpdateMessage] = useState(false);
-  const [updateSucceeded, setUpdateSucceeded] = useState(false);
+  const [isUpdating, setIsUpdating] = useState<boolean>(false);
+  const [updateMessage, setUpdateMessage] = useState<string>('');
+  const [showUpdateMessage, setShowUpdateMessage] = useState<boolean>(false);
+  const [updateSucceeded, setUpdateSucceeded] = useState<boolean>(false);
+  const [deleteSucceeded, setDeleteSucceeded] = useState<boolean>(false);
 
   const savedObjectsDeletionResponse = useSelector(
     (state: RootState) => state.workflowReducer.savedObjectDeletion
@@ -472,36 +473,45 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const deleteWorkflowResultsStatus =
     savedObjectsDeletionResponse.loadingStatus.loading;
 
-  let deleteSucceeded = false;
-  if (
-    deleteWorkflowResultsStatus === LoadingStatusEnum.Succeeded ||
-    deleteWorkflowResultsStatus === LoadingStatusEnum.Failed
-  ) {
-    if (showDeleteDialog) {
-      setShowDeleteDialog(false);
-    }
-    if (deleteWorkflowResultsStatus === LoadingStatusEnum.Succeeded) {
-      deleteSucceeded = true;
-      if (selectedObjects.size > 0) {
-        if (!showSavedObjectDeletionResultsDialog) {
-          setShowSavedObjectDeletionResultsDialog(true);
+  useEffect(() => {
+    if (
+      deleteWorkflowResultsStatus === LoadingStatusEnum.Succeeded ||
+      deleteWorkflowResultsStatus === LoadingStatusEnum.Failed
+    ) {
+      if (showDeleteDialog) {
+        setShowDeleteDialog(false);
+      }
+      if (deleteWorkflowResultsStatus === LoadingStatusEnum.Succeeded) {
+        setDeleteSucceeded(true);
+        if (selectedObjects.size > 0) {
+          if (!showSavedObjectDeletionResultsDialog) {
+            setShowSavedObjectDeletionResultsDialog(true);
+          }
+        } else {
+          setDeleteMessage(
+            'Successfully deleted your workflow. Redirecting you to the workflows page...'
+          );
+          setShowDeleteMessage(true);
+          navigate('/workflows');
         }
-      } else {
+      } else if (deleteWorkflowResultsStatus === LoadingStatusEnum.Failed) {
+        setDeleteSucceeded(false);
         setDeleteMessage(
-          'Successfully deleted your workflow. Redirecting you to the workflows page...'
+          `We were unable to delete your workflow: ${savedObjectsDeletionResponse.loadingStatus.err}`
         );
         setShowDeleteMessage(true);
-        navigate('/workflows');
+        setDeleteValidation('');
       }
-    } else if (deleteWorkflowResultsStatus === LoadingStatusEnum.Failed) {
-      deleteSucceeded = false;
-      setDeleteMessage(
-        `We were unable to delete your workflow: ${savedObjectsDeletionResponse.loadingStatus.err}`
-      );
-      setShowDeleteMessage(true);
-      setDeleteValidation('');
     }
-  }
+  }, [
+    deleteWorkflowResultsStatus,
+    navigate,
+    savedObjectsDeletionResponse.loadingStatus.err,
+    selectedObjects.size,
+    showDeleteDialog,
+    showSavedObjectDeletionResultsDialog,
+    setShowSavedObjectDeletionResultsDialog,
+  ]);
 
   const updateSettings = (event) => {
     event.preventDefault();
@@ -807,7 +817,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
                   <ListItem key={`${integrationName}-${objectResult.name}`}>
                     <ListItemIcon style={{ minWidth: '30px' }}>
                       {objectResult.exec_state.status ===
-                        ExecutionStatus.Succeeded ? (
+                      ExecutionStatus.Succeeded ? (
                         <FontAwesomeIcon
                           icon={faCircleCheck}
                           style={{
@@ -833,13 +843,13 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
                   </ListItem>
                   {objectResult.exec_state.status ===
                     ExecutionStatus.Failed && (
-                      <Alert icon={false} severity="error">
-                        <AlertTitle>
-                          Failed to delete {objectResult.name}.
-                        </AlertTitle>
-                        <pre>{objectResult.exec_state.error.context}</pre>
-                      </Alert>
-                    )}
+                    <Alert icon={false} severity="error">
+                      <AlertTitle>
+                        Failed to delete {objectResult.name}.
+                      </AlertTitle>
+                      <pre>{objectResult.exec_state.error.context}</pre>
+                    </Alert>
+                  )}
                 </>
               ))
             )
@@ -904,10 +914,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           <Typography sx={{ fontWeight: 'bold' }} component="span">
             ID:
           </Typography>
-          <Typography component="span">
-            {' '}
-            {workflowDag.workflow_id}
-          </Typography>
+          <Typography component="span"> {workflowDag.workflow_id}</Typography>
         </Box>
       </Box>
 
@@ -925,10 +932,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       </Box>
 
       <Box sx={{ my: 2 }}>
-        <Typography style={{ fontWeight: 'bold' }}>
-          {' '}
-          Description{' '}
-        </Typography>
+        <Typography style={{ fontWeight: 'bold' }}> Description </Typography>
 
         <Box sx={{ my: 1 }}>
           <TextField
@@ -952,9 +956,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       </Box>
 
       <Box sx={{ my: 2 }}>
-        <Typography style={{ fontWeight: 'bold' }}>
-          Retention Policy
-        </Typography>
+        <Typography style={{ fontWeight: 'bold' }}>Retention Policy</Typography>
 
         <Box sx={{ my: 1 }}>
           <RetentionPolicySelector
@@ -966,9 +968,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
       {notificationIntegrations.length > 0 && (
         <Box sx={{ my: 2 }}>
-          <Typography style={{ fontWeight: 'bold' }}>
-            Notifications
-          </Typography>
+          <Typography style={{ fontWeight: 'bold' }}>Notifications</Typography>
 
           <WorkflowNotificationSettings
             notificationIntegrations={notificationIntegrations}
@@ -1025,11 +1025,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         <Typography variant="h6"> Danger Zone </Typography>
       </Box>
 
-      <Button
-        color="error"
-        variant="outlined"
-        onClick={handleDeleteClicked}
-      >
+      <Button color="error" variant="outlined" onClick={handleDeleteClicked}>
         Delete Workflow
       </Button>
 
