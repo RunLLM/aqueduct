@@ -580,6 +580,7 @@ def test_operators_with_custom_output_names(client, flow_name, engine):
 
 def test_get_flow_with_name(client, flow_name, engine):
     """Tests performing flow read operations using the flow name."""
+
     @op
     def noop():
         return 123
