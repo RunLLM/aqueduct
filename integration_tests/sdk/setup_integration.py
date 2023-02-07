@@ -186,6 +186,9 @@ def setup_data_integrations(filter_to: Optional[str] = None) -> None:
             _setup_relational_data(client, integration)
         elif integration.type() == ServiceType.S3:
             _setup_s3_data(client, integration)
+        elif integration.type() == ServiceType.ATHENA:
+            # We only support reading from Athena, so no setup is necessary.
+            pass
         else:
             raise Exception("Test suite does not yet support %s." % integration.type())
 
