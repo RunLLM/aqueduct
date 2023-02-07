@@ -576,3 +576,77 @@ def test_operators_with_custom_output_names(client, flow_name, engine):
         @op(num_outputs=2, outputs=["output"])
         def bar():
             return 222
+
+
+def test_get_flow_with_name(client, flow_name, engine):
+    """Tests performing flow read operations using the flow name."""
+
+    @op
+    def noop():
+        return 123
+
+    output = noop()
+
+    flow = publish_flow_test(
+        client,
+        artifacts=[output],
+        name=flow_name(),
+        engine=engine,
+    )
+
+    fetched_with_id = client.flow(flow.id())
+    fetched_with_name = client.flow(flow_name=flow.name())
+    fetched_with_id_and_name = client.flow(flow_id=flow.id(), flow_name=flow.name())
+
+    assert fetched_with_id.id() == fetched_with_name.id()
+    assert fetched_with_id.id() == fetched_with_id_and_name.id()
+
+    # Failure case: flow id and name do not match
+    with pytest.raises(InvalidUserArgumentException):
+        client.flow(flow_id=flow.id(), flow_name="not a real flow")
+
+
+def test_refresh_flow_with_name(client, flow_name, engine):
+    """Tests triggering new run using the flow name."""
+
+    @op
+    def noop():
+        return 123
+
+    output = noop()
+
+    flow = publish_flow_test(
+        client,
+        artifacts=[output],
+        name=flow_name(),
+        engine=engine,
+    )
+
+    # Failure case: flow id and name do not match
+    with pytest.raises(InvalidUserArgumentException):
+        client.trigger(flow_id=flow.id(), flow_name="not a real flow")
+
+    client.trigger(flow_name=flow.name())
+
+
+def test_delete_flow_with_name(client, flow_name, engine):
+    """Tests deleting flow using name."""
+
+    @op
+    def noop():
+        return 123
+
+    output = noop()
+
+    flow = publish_flow_test(
+        client,
+        artifacts=[output],
+        name=flow_name(),
+        engine=engine,
+    )
+
+    # Failure case: flow id and name do not match
+    with pytest.raises(InvalidUserArgumentException):
+        client.delete_flow(flow_id=flow.id(), flow_name="not a real flow")
+
+    client.delete_flow(flow_name=flow.name())

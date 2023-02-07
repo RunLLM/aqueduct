@@ -204,6 +204,9 @@ def setup_data_integrations(filter_to: Optional[str] = None) -> None:
             _setup_s3_data(client, integration)
         elif integration.type() == ServiceType.MONGO_DB:
             _setup_mongo_db_data(client, integration)
+        elif integration.type() == ServiceType.ATHENA:
+            # We only support reading from Athena, so no setup is necessary.
+            pass
         else:
             raise Exception("Test suite does not yet support %s." % integration.type())
 

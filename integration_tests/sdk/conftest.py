@@ -185,17 +185,17 @@ def flow_name(client, request, pytestconfig):
     def cleanup_flows():
         if not pytestconfig.getoption("keep_flows"):
             for flow_name in flow_names:
-                flow_id = test_globals.flow_name_to_id[flow_name]
-
                 try:
                     client.delete_flow(
-                        str(flow_id),
-                        saved_objects_to_delete=client.flow(flow_id).list_saved_objects(),
+                        flow_name=flow_name,
+                        saved_objects_to_delete=client.flow(
+                            flow_name=flow_name
+                        ).list_saved_objects(),
                     )
                 except Exception as e:
-                    print("Error deleting workflow %s with exception: %s" % (flow_id, e))
+                    print("Error deleting workflow %s with exception: %s" % (flow_name, e))
                 else:
-                    print("Successfully deleted workflow %s" % flow_id)
+                    print("Successfully deleted workflow %s" % flow_name)
 
     request.addfinalizer(cleanup_flows)
     return get_new_flow_name
