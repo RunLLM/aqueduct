@@ -103,7 +103,7 @@ def test_mongo_save_append(flow_manager: FlowManager, data_integration: MongoDBI
     # saving twice with append mode
     # Everything is done with `_id` excluded, as this field must be unique.
     # We rely on mongoDB to generate `_id`s when we upload copies. Otherwise,
-    # append would file if we try to upload with duplicated `_id`s .
+    # append would fail if we try to upload with duplicated `_id`s .
     hotel_reviews = data_integration.collection("hotel_reviews").find({}, {"_id": 0})
     save(data_integration, hotel_reviews, table_name, LoadUpdateMode.REPLACE)
     flow = flow_manager.publish_flow_test(hotel_reviews)

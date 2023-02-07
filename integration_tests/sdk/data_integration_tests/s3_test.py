@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import ArtifactType
-from aqueduct.error import AqueductError, InvalidUserArgumentException
+from aqueduct.error import AqueductError, InvalidUserActionException, InvalidUserArgumentException
 from aqueduct.integrations.s3_integration import S3Integration
 
 from sdk.data_integration_tests.flow_manager import FlowManager

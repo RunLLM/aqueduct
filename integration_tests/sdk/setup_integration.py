@@ -198,11 +198,7 @@ def setup_data_integrations(filter_to: Optional[str] = None) -> None:
 
         # Setup the data in each of these integrations.
         integration = client.integration(integration_name)
-        if integration.type() in [
-            ServiceType.BIGQUERY,
-            ServiceType.REDSHIFT,
-            ServiceType.SNOWFLAKE,
-        ]:
+        if isinstance(integration, RelationalDBIntegration):
             _setup_relational_data(client, integration)
         elif integration.type() == ServiceType.S3:
             _setup_s3_data(client, integration)

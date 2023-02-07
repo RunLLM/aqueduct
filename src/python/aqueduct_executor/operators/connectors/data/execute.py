@@ -258,7 +258,7 @@ def setup_connector(
                 "Unable to initialize the Redshift connector. Have you run `aqueduct install redshift`?"
             )
 
-        from aqueduct_executor.operators.connectors.data.redshift import (  # type: ignore
+        from aqueduct_executor.operators.connectors.data.redshift import (
             RedshiftConnector as OpConnector,
         )
     elif connector_name == common.Name.SQL_SERVER:
