@@ -9,6 +9,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/google/uuid"
 )
 
@@ -32,12 +33,38 @@ func (e *EmailNotification) Level() shared.NotificationLevel {
 func fullMessage(subject string, from string, targets []string, body string) string {
 	fullMsg := fmt.Sprintf("From: %s\n", from)
 	fullMsg += fmt.Sprintf("To: %s\n", strings.Join(targets, ","))
-	fullMsg += fmt.Sprintf("Subject: %s\n\n", subject)
+	fullMsg += fmt.Sprintf("Subject: %s\n", subject)
+	fullMsg += fmt.Sprintf("Content-Type: text/html; charset=\"UTF-8\";\n\n")
 	fullMsg += body
 	return fullMsg
 }
 
-func (e *EmailNotification) Send(ctx context.Context, msg string) error {
+func (e *EmailNotification) SendForDag(
+	ctx context.Context,
+	wfDag dag.WorkflowDag,
+	level shared.NotificationLevel,
+	contextMsg string,
+) error {
+	subject := summary(wfDag, level)
+	contextBlock := ""
+	if contextMsg != "" {
+		contextBlock = fmt.Sprintf(`<div>
+			<b>Context</b>:
+		</div>
+		<div>
+			<font face="monospace">%s</font>
+		</div>`, contextMsg)
+	}
+	body := fmt.Sprintf(`<div dir="ltr">
+		<b>Result ID</b>: <font face="monospace">%s</font>
+		%s
+	</div>`, wfDag.ResultID(), contextBlock)
+	fullMsg := fullMessage(subject, e.conf.User, e.conf.Targets, body)
+
+	return e.send(ctx, fullMsg)
+}
+
+func (e *EmailNotification) send(ctx context.Context, msg string) error {
 	auth := smtp.PlainAuth(
 		"", // identity
 		e.conf.User,
@@ -45,13 +72,12 @@ func (e *EmailNotification) Send(ctx context.Context, msg string) error {
 		e.conf.Host,
 	)
 
-	fullMsg := fullMessage("aqueduct notification", e.conf.User, e.conf.Targets, msg)
 	return smtp.SendMail(
 		e.conf.FullHost(),
 		auth,
 		e.conf.User,
 		e.conf.Targets,
-		[]byte(fullMsg),
+		[]byte(msg),
 	)
 }
 

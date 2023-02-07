@@ -975,7 +975,7 @@ func (eng *aqEngine) execute(
 
 				notificationCtxMsg := ""
 				if execState.Error != nil {
-					notificationCtxMsg = fmt.Sprintf("%s\nContext:\n%s", execState.Error.Tip, execState.Error.Context)
+					notificationCtxMsg = execState.Error.Message()
 				}
 
 				notificationContent = &notificationContentStruct{
@@ -987,7 +987,7 @@ func (eng *aqEngine) execute(
 			} else if execState.Status == shared.FailedExecutionStatus {
 				notificationCtxMsg := ""
 				if execState.Error != nil {
-					notificationCtxMsg = fmt.Sprintf("%s\nContext:\n%s", execState.Error.Tip, execState.Error.Context)
+					notificationCtxMsg = execState.Error.Message()
 				}
 
 				notificationContent = &notificationContentStruct{

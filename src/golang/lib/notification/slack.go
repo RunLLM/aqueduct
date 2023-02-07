@@ -2,9 +2,11 @@ package notification
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	"github.com/slack-go/slack"
@@ -69,19 +71,37 @@ func findChannels(client *slack.Client, names []string) ([]slack.Channel, error)
 	return results, nil
 }
 
-func (s *SlackNotification) Send(ctx context.Context, msg string) error {
+func (s *SlackNotification) SendForDag(
+	ctx context.Context,
+	wfDag dag.WorkflowDag,
+	level shared.NotificationLevel,
+	contextMsg string,
+) error {
 	client := slack.New(s.conf.Token)
 	channels, err := findChannels(client, s.conf.Channels)
 	if err != nil {
 		return err
 	}
 
+	contextMarkdownBlock := ""
+	if contextMsg != "" {
+		contextMarkdownBlock = fmt.Sprintf("\n*Context:*\n%s", contextMsg)
+	}
+	msg := fmt.Sprintf("*Result ID:* `%s`%s", wfDag.ResultID(), contextMarkdownBlock)
 	for _, channel := range channels {
 		// reference: https://medium.com/@gausha/a-simple-slackbot-with-golang-c5a932d719c7
-		_, _, _, err = client.SendMessage(channel.ID, slack.MsgOptionBlocks(
-			slack.NewSectionBlock(
+		_, _, _, err = client.SendMessageContext(ctx, channel.ID, slack.MsgOptionBlocks(
+			slack.NewHeaderBlock(
 				slack.NewTextBlockObject(
 					"plain_text",
+					summary(wfDag, level),
+					false,
+					false,
+				),
+			),
+			slack.NewSectionBlock(
+				slack.NewTextBlockObject(
+					"mrkdwn",
 					msg,
 					false, /* emoji */
 					false, /* verbatim */

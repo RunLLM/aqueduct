@@ -112,7 +112,7 @@ func ExecuteDatabricks(
 
 				notificationCtxMsg := ""
 				if execState.Error != nil {
-					notificationCtxMsg = fmt.Sprintf("%s\nContext:\n%s", execState.Error.Tip, execState.Error.Context)
+					notificationCtxMsg = execState.Error.Message()
 				}
 
 				notificationContent = &notificationContentStruct{
@@ -122,7 +122,7 @@ func ExecuteDatabricks(
 			} else if execState.Status == shared.FailedExecutionStatus {
 				notificationCtxMsg := ""
 				if execState.Error != nil {
-					notificationCtxMsg = fmt.Sprintf("%s\nContext:\n%s", execState.Error.Tip, execState.Error.Context)
+					notificationCtxMsg = execState.Error.Message()
 				}
 
 				notificationContent = &notificationContentStruct{

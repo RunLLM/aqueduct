@@ -2,6 +2,7 @@ package notification
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -10,6 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
+	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -30,10 +32,13 @@ type Notification interface {
 	// for example, workflow specific settings.
 	Level() shared.NotificationLevel
 
-	// `Send()` sends a notification.
-	// The caller should decide, based on `Level()` and any other context, if `Send()`
-	// should be called.
-	Send(ctx context.Context, msg string) error
+	// `SendForDag()` sends a notification for a workflow execution.
+	SendForDag(
+		ctx context.Context,
+		wfDag dag.WorkflowDag,
+		level shared.NotificationLevel,
+		contextMsg string,
+	) error
 }
 
 func GetNotificationsFromUser(
@@ -104,6 +109,19 @@ func NewNotificationFromIntegration(
 	}
 
 	return nil, ErrIntegrationTypeIsNotNotification
+}
+
+func summary(wfDag dag.WorkflowDag, level shared.NotificationLevel) string {
+	statusMsg := "has an update."
+	if level == shared.SuccessNotificationLevel {
+		statusMsg = "succeeded."
+	} else if level == shared.WarningNotificationLevel {
+		statusMsg = "succeeded with warning."
+	} else if level == shared.ErrorNotificationLevel {
+		statusMsg = "failed."
+	}
+
+	return fmt.Sprintf("Aqueduct: workflow %s %s", wfDag.Name(), statusMsg)
 }
 
 // `ShouldSend` determines if a notification at 'level' passes configuration

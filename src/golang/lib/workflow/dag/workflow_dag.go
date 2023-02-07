@@ -20,6 +20,7 @@ import (
 
 type WorkflowDag interface {
 	UserID() uuid.UUID
+	ResultID() uuid.UUID
 	Name() string
 	NotificationSettings() shared.NotificationSettings
 
@@ -79,6 +80,10 @@ func (dag *workflowDagImpl) UserID() uuid.UUID {
 	}
 
 	return dag.dbDAG.Metadata.UserID
+}
+
+func (dag *workflowDagImpl) ResultID() uuid.UUID {
+	return dag.resultID
 }
 
 func (dag *workflowDagImpl) Name() string {
