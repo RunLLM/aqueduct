@@ -32,6 +32,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			ExecutionEnvironmentRepo: s.ExecutionEnvironmentRepo,
 			IntegrationRepo:          s.IntegrationRepo,
 			OperatorRepo:             s.OperatorRepo,
+			WorkflowRepo:             s.WorkflowRepo,
 		},
 		routes.DeleteWorkflowRoute: &handler.DeleteWorkflowHandler{
 			Database:   s.Database,

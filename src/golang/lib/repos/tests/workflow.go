@@ -213,3 +213,44 @@ func (ts *TestSuite) TestWorkflow_Update() {
 	require.Equal(ts.T(), newName, newWorkflow.Name)
 	requireDeepEqual(ts.T(), newWorkflow.NotificationSettings, newNotificationSettings)
 }
+
+func (ts *TestSuite) TestWorkflow_RemoveNotificationFromSettings() {
+	users := ts.seedUser(1)
+	user := users[0]
+	notificationToRemove := uuid.New()
+	notificationToKeep := uuid.New()
+
+	workflow := &models.Workflow{
+		UserID: user.ID,
+		NotificationSettings: shared.NotificationSettings{
+			Settings: map[uuid.UUID]shared.NotificationLevel{
+				notificationToRemove: shared.ErrorNotificationLevel,
+				notificationToKeep:   shared.SuccessNotificationLevel,
+			},
+		},
+	}
+
+	workflowCreated, err := ts.workflow.Create(
+		ts.ctx,
+		workflow.UserID,
+		workflow.Name,
+		workflow.Description,
+		&workflow.Schedule,
+		&workflow.RetentionPolicy,
+		&workflow.NotificationSettings,
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+
+	err = ts.workflow.RemoveNotificationFromSettings(ts.ctx, notificationToRemove, ts.DB)
+	require.Nil(ts.T(), err)
+	expectedSettings := shared.NotificationSettings{
+		Settings: map[uuid.UUID]shared.NotificationLevel{
+			notificationToKeep: shared.SuccessNotificationLevel,
+		},
+	}
+
+	actualWorkflow, err := ts.workflow.Get(ts.ctx, workflowCreated.ID, ts.DB)
+	require.Nil(ts.T(), err)
+	requireDeepEqual(ts.T(), expectedSettings, actualWorkflow.NotificationSettings)
+}
