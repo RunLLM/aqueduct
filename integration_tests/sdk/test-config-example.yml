@@ -18,6 +18,7 @@ data:
   aqueduct_demo:
   test_snowflake:
   test_s3:
+  test_mongo_db:
   test_athena:
 
 # REQUIRED: All the compute integrations to run the test suite against.
