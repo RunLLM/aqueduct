@@ -1,7 +1,45 @@
 # Changelog
 
+## 0.2.1
+Released on February 7, 2023.
+
+### Key Features
+* Allows customizing artifact names from the SDK in one of two ways.
+    ```python
+    # Method 1: Use the decorator
+    @op(outputs=['sklearn model', 'churn predictions'])
+    def train_and_predict_churn(features):
+      # ...
+      return model, predictions
+
+    # Method 2: Use .set_name()
+    @op
+    def train_model(features):
+      # ...
+      return model
+
+    # ...
+    model = train_model(features)
+    model.set_name('churn model')
+    ```
+
+### Enhancements
+* Allows providing filepath to ServiceAccount key file when connecting to
+    BigQuery from Aqueduct SDK.
+* Improve form validation when connecting Databricks integration.
+* Throughout the SDK, enables references to workflows using workflow name in
+    addition to workflow ID.
+* Puts upper bounds on Python package dependencies to prevent unexpected
+    regressions (e.g., recent issues caused by SQLAlchemy 2.0).
+* Moves settings modal on workflow details page into a tab.
+
+### Bugfixes
+* Fixes bug where errors were not being properly handled when an operator had
+    multiple outputs. This was occurring because the return value didn't have
+    the expected length.
+
 ## 0.2.0
-Release on January 31, 2023
+Released on January 31, 2023
 
 ### Key Features
 * [Beta] Aqueduct now supports running workflows on Databricks Spark clusters! 
