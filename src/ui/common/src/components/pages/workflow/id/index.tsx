@@ -58,6 +58,7 @@ import WorkflowHeader, {
 import { LayoutProps } from '../../types';
 
 import { Tab, Tabs } from '../../../primitives/Tabs.styles';
+import WorkflowSettings from '../../../workflows/WorkflowSettings';
 
 type WorkflowPageProps = {
   user: UserProfile;
@@ -74,7 +75,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const urlSearchParams = parse(window.location.search);
   const location = useLocation();
   const path = location.pathname;
-  const [currentTab, setCurrentTab] = React.useState<string>("Overview");
+  const [currentTab, setCurrentTab] = React.useState<string>("Details");
 
   const currentNode = useSelector(
     (state: RootState) => state.nodeSelectionReducer.selected
@@ -544,7 +545,14 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
 
         <TabPanel value={currentTab} index="Settings">
-          Settings Tab
+          {workflow.selectedDag && (
+            <Box marginBottom={1}>
+              <WorkflowSettings
+                user={user}
+                workflowDag={workflow.selectedDag}
+              />
+            </Box>
+          )}
         </TabPanel>
 
         {/* End of tabs for workflow details page */}

@@ -83,7 +83,6 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
 
   const [showErrorToast, setShowErrorToast] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
 
   const handleSuccessToastClose = async () => {
     setShowSuccessToast(false);
@@ -111,7 +110,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
   let nextUpdateComponent;
   if (
     workflowDag.metadata?.schedule?.trigger ===
-      WorkflowUpdateTrigger.Periodic &&
+    WorkflowUpdateTrigger.Periodic &&
     !workflowDag.metadata?.schedule?.paused
   ) {
     const nextUpdateTime = getNextUpdateTime(
@@ -343,23 +342,6 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
             <Typography sx={{ ml: 1 }}>Run Workflow</Typography>
           </Button>
 
-          <Button
-            variant="outlined"
-            color="primary"
-            onClick={() => setShowSettings(true)}
-            sx={{ py: 0 }}
-          >
-            <Box sx={{ fontSize: '20px' }}>
-              <FontAwesomeIcon icon={faGear} />
-            </Box>
-          </Button>
-
-          <WorkflowSettings
-            user={user}
-            open={showSettings}
-            onClose={() => setShowSettings(false)}
-            workflowDag={workflowDag}
-          />
         </Box>
       </Box>
 
