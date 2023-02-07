@@ -578,7 +578,7 @@ def test_operators_with_custom_output_names(client, flow_name, engine):
             return 222
 
 
-def test_get_flow_with_name(client, flow_name):
+def test_get_flow_with_name(client, flow_name, engine):
     """Tests performing flow read operations using the flow name."""
     @op
     def noop():
@@ -590,14 +590,15 @@ def test_get_flow_with_name(client, flow_name):
         client,
         artifacts=[output],
         name=flow_name(),
+        engine=engine,
     )
 
     fetched_with_id = client.flow(flow.id())
-    fetched_with_name = client.flow(flow.name())
+    fetched_with_name = client.flow(flow_name=flow.name())
     fetched_with_id_and_name = client.flow(flow_id=flow.id(), flow_name=flow.name())
 
-    assert fetched_with_id == fetched_with_name
-    assert fetched_with_id == fetched_with_id_and_name
+    assert fetched_with_id.id() == fetched_with_name.id()
+    assert fetched_with_id.id() == fetched_with_id_and_name.id()
 
     # Failure case: flow id and name do not match
     with pytest.raises(InvalidUserArgumentException):
