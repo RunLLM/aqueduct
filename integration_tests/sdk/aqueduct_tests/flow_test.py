@@ -4,7 +4,11 @@ from datetime import datetime, timedelta
 import pandas as pd
 import pytest
 from aqueduct.constants.enums import ExecutionStatus, ServiceType
-from aqueduct.error import InvalidRequestError, InvalidUserArgumentException
+from aqueduct.error import (
+    InvalidRequestError,
+    InvalidUserActionException,
+    InvalidUserArgumentException,
+)
 from aqueduct.integrations.airflow_integration import AirflowIntegration
 from aqueduct.models.config import FlowConfig
 from aqueduct.models.integration import IntegrationInfo
@@ -508,3 +512,67 @@ def test_flow_list_saved_objects_none(client, flow_name, engine):
     output = noop()
     flow = publish_flow_test(client, artifacts=output, name=flow_name(), engine=engine)
     assert len(flow.list_saved_objects()) == 0
+
+
+def test_artifact_set_name(client, flow_name, engine):
+    @op
+    def foo():
+        return 123
+
+    output = foo()
+    assert output.name() == "foo artifact"
+
+    output.set_name("bar")
+    assert output.name() == "bar"
+
+    # Check that the artifact can be fetched by the new name after publishing.
+    flow = publish_flow_test(client, output, engine=engine, name=flow_name())
+    assert flow.latest().artifact("bar").get() == 123
+
+
+def test_operators_with_custom_output_names(client, flow_name, engine):
+    @op(outputs=["output1", "output2"])
+    def foo():
+        return 123, "hello"
+
+    output1, output2 = foo()
+    assert output1.name() == "output1"
+    assert output2.name() == "output2"
+
+    @metric(output="metric output")
+    def my_metric(input):
+        return 99999
+
+    @check(output="check output")
+    def passed(input):
+        return True
+
+    m = my_metric(output1)
+    assert m.name() == "metric output"
+
+    c = passed(output2)
+    assert c.name() == "check output"
+
+    # Fail if the name collides with another artifact in the dag.
+    with pytest.raises(InvalidUserActionException, match="has already been created locally"):
+        output1.set_name("metric output")
+
+    flow = publish_flow_test(
+        client,
+        artifacts=[output1, output2],
+        name=flow_name(),
+        engine=engine,
+    )
+    flow_run = flow.latest()
+
+    assert flow_run.artifact("output1").get() == 123
+    assert flow_run.artifact("output2").get() == "hello"
+    assert flow_run.artifact("metric output").get() == 99999
+    assert flow_run.artifact("check output").get()
+
+    # Failure case: mismatches between num_outputs and len(outputs)
+    with pytest.raises(InvalidUserArgumentException):
+
+        @op(num_outputs=2, outputs=["output"])
+        def bar():
+            return 222
