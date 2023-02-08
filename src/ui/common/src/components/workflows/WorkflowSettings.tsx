@@ -449,7 +449,6 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const [deleteValidation, setDeleteValidation] = useState('');
   const handleDeleteClicked = (event) => {
     event.preventDefault();
-    //onClose(); // Close the settings modal.
     setShowDeleteDialog(true);
   };
 
@@ -973,6 +972,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         color="info"
         variant="outlined"
         sx={{ marginRight: 2 }}
+        disabled={!settingsChanged}
         onClick={() => {
           setName(initialSettings.name);
           setDescription(initialSettings.description);
