@@ -31,7 +31,6 @@ Released on February 7, 2023.
     addition to workflow ID.
 * Puts upper bounds on Python package dependencies to prevent unexpected
     regressions (e.g., recent issues caused by SQLAlchemy 2.0).
-* Moves settings modal on workflow details page into a tab.
 
 ### Bugfixes
 * Fixes bug where errors were not being properly handled when an operator had
