@@ -137,7 +137,8 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
             metricId: metric.id,
             name: metric.name,
             value: metric.result.content_serialized,
-            status: metric.status,
+            status:
+              metric.result?.exec_state?.status ?? ExecutionStatus.Unknown,
           };
         });
       }

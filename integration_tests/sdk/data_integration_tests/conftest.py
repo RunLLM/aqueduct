@@ -16,6 +16,7 @@ allowed_data_integrations_by_file = {
         ServiceType.SNOWFLAKE,
     ],
     "s3_test": [ServiceType.S3],
+    "mongo_db_test": [ServiceType.MONGO_DB],
     "athena_test": [ServiceType.ATHENA],
 }
 
