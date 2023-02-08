@@ -126,7 +126,12 @@ def test_sql_integration_list_tables(client, data_integration):
     tables = data_integration.list_tables()
 
     for expected_table in demo_db_tables():
-        assert tables["tablename"].str.contains(expected_table, case=False).sum() > 0
+        if "tablename" in tables:
+            assert tables["tablename"].str.contains(expected_table, case=False).sum() > 0
+        elif "table_name" in tables:
+            assert tables["table_name"].str.contains(expected_table, case=False).sum() > 0
+        else:
+            assert False
 
 
 def test_sql_today_tag(client, data_integration):
