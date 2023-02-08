@@ -26,7 +26,7 @@ Released on February 7, 2023.
 ### Enhancements
 * Allows providing filepath to ServiceAccount key file when connecting to
     BigQuery from Aqueduct SDK.
-* Improve form validation when connecting Databricks integration.
+* Improves form validation when connecting Databricks integration.
 * Throughout the SDK, enables references to workflows using workflow name in
     addition to workflow ID.
 * Puts upper bounds on Python package dependencies to prevent unexpected
