@@ -268,6 +268,24 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to initialize vault.")
 	}
 
+	var jobManager *job.JobManager = nil
+	if dbDAG.EngineConfig.Type == shared.DatabricksEngineType {
+		jobConfig, err := operator.GenerateJobManagerConfig(
+			ctx,
+			dbDAG.EngineConfig,
+			&dbDAG.StorageConfig,
+			eng.AqPath,
+			vaultObject,
+		)
+		if err != nil {
+			return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create JobManager config.")
+		}
+		*jobManager, err = job.NewJobManager(jobConfig)
+		if err != nil {
+			return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create JobManager.")
+		}
+	}
+
 	dag, err := dag_utils.NewWorkflowDag(
 		ctx,
 		dagResult.ID,
@@ -281,6 +299,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		operator.Publish,
 		eng.AqPath,
 		eng.Database,
+		jobManager,
 	)
 	if err != nil {
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create NewWorkflowDag.")
@@ -320,6 +339,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		timeConfig,
 		operator.Publish,
 		vaultObject,
+		jobManager,
 	)
 	if err != nil {
 		execState.Status = mdl_shared.FailedExecutionStatus
@@ -347,6 +367,24 @@ func (eng *aqEngine) PreviewWorkflow(
 		return nil, errors.Wrap(err, "Unable to initialize vault.")
 	}
 
+	var jobManager *job.JobManager = nil
+	if dbDAG.EngineConfig.Type == shared.DatabricksEngineType {
+		jobConfig, err := operator.GenerateJobManagerConfig(
+			ctx,
+			dbDAG.EngineConfig,
+			&dbDAG.StorageConfig,
+			eng.AqPath,
+			vaultObject,
+		)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to create JobManager config.")
+		}
+		*jobManager, err = job.NewJobManager(jobConfig)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to create JobManager.")
+		}
+	}
+
 	dag, err := dag_utils.NewWorkflowDag(
 		ctx,
 		uuid.Nil, /* workflowDagResultID */
@@ -360,6 +398,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		operator.Preview,
 		eng.AqPath,
 		eng.Database,
+		jobManager,
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to create NewWorkflowDag.")
@@ -394,6 +433,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		timeConfig,
 		operator.Preview,
 		vaultObject,
+		jobManager,
 	)
 	if err != nil {
 		log.Errorf("Workflow failed with error: %v", err)
@@ -785,28 +825,14 @@ func (eng *aqEngine) executeWithEngine(
 	timeConfig *AqueductTimeConfig,
 	opExecMode operator.ExecutionMode,
 	vaultObject vault.Vault,
+	engJobManager *job.JobManager,
 ) error {
 	switch engineConfig.Type {
 	case shared.DatabricksEngineType:
-		jobConfig, err := operator.GenerateJobManagerConfig(
-			ctx,
-			engineConfig,
-			&storageConfig,
-			eng.AqPath,
-			vaultObject,
-		)
-		if err != nil {
-			return errors.Wrap(err, "Unable to generate JobManagerConfig.")
-		}
-
-		jobManager, err := job.NewJobManager(jobConfig)
-		if err != nil {
-			return errors.Wrap(err, "Unable to create JobManager.")
-		}
-
+		jobManager := *engJobManager
 		databricksJobManager, ok := jobManager.(*job.DatabricksJobManager)
 		if !ok {
-			return errors.Wrap(err, "Unable to create DatabricksJobManager.")
+			return errors.New("Unable to create DatabricksJobManager.")
 		}
 
 		return ExecuteDatabricks(

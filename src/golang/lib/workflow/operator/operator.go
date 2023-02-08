@@ -98,6 +98,7 @@ func NewOperator(
 	execEnv *exec_env.ExecutionEnvironment,
 	aqPath string,
 	db database.Database,
+	engineJobManager *job.JobManager,
 ) (Operator, error) {
 	if len(inputs) != len(inputExecPaths) {
 		return nil, errors.New("Internal error: mismatched number of input arguments.")
@@ -114,20 +115,25 @@ func NewOperator(
 		metadataPath = outputExecPaths[0].OpMetadataPath
 	}
 
-	jobConfig, err := GenerateJobManagerConfig(
-		ctx,
-		opEngineConfig,
-		storageConfig,
-		aqPath,
-		vaultObject,
-	)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to generate JobManagerConfig.")
-	}
+	var jobManager job.JobManager
+	if engineJobManager == nil {
+		jobConfig, err := GenerateJobManagerConfig(
+			ctx,
+			opEngineConfig,
+			storageConfig,
+			aqPath,
+			vaultObject,
+		)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to generate JobManagerConfig.")
+		}
 
-	jobManager, err := job.NewJobManager(jobConfig)
-	if err != nil {
-		return nil, errors.Wrap(err, "Unable to create JobManager.")
+		jobManager, err = job.NewJobManager(jobConfig)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to create JobManager.")
+		}
+	} else {
+		jobManager = *engineJobManager
 	}
 
 	now := time.Now()

@@ -6,6 +6,7 @@ import (
 	db_operator "github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
+	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -195,6 +196,7 @@ func NewWorkflowDag(
 	opExecMode operator.ExecutionMode,
 	aqPath string,
 	DB database.Database,
+	engJobManager *job.JobManager,
 ) (WorkflowDag, error) {
 	dbArtifacts := dag.Artifacts
 	dbOperators := dag.Operators
@@ -317,6 +319,7 @@ func NewWorkflowDag(
 			execEnvPtr,
 			aqPath,
 			DB,
+			engJobManager,
 		)
 		if err != nil {
 			return nil, err
