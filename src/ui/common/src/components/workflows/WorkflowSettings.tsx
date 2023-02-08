@@ -32,7 +32,7 @@ import Snackbar from '@mui/material/Snackbar';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
@@ -228,8 +228,6 @@ const RetentionPolicySelector: React.FC<RetentionPolicyProps> = ({
 type WorkflowSettingsProps = {
   user: UserProfile;
   workflowDag: WorkflowDag;
-  open: boolean;
-  onClose: () => void;
 };
 
 // Returns whether `updated` is different from `existing`.
@@ -257,15 +255,13 @@ function IsNotificationSettingsMapUpdated(
 const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   user,
   workflowDag,
-  open,
-  onClose,
 }) => {
   const { apiAddress } = useAqueductConsts();
   const navigate = useNavigate();
 
   const dispatch: AppDispatch = useDispatch();
 
-  useEffect(() => {
+  useCallback(() => {
     dispatch(
       handleListWorkflowSavedObjects({
         apiKey: user.apiKey,
@@ -453,7 +449,6 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const [deleteValidation, setDeleteValidation] = useState('');
   const handleDeleteClicked = (event) => {
     event.preventDefault();
-    onClose(); // Close the settings modal.
     setShowDeleteDialog(true);
   };
 
@@ -463,10 +458,11 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
   // State that controls the Snackbar for an attempted workflow settings
   // update.
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [updateMessage, setUpdateMessage] = useState('');
-  const [showUpdateMessage, setShowUpdateMessage] = useState(false);
-  const [updateSucceeded, setUpdateSucceeded] = useState(false);
+  const [isUpdating, setIsUpdating] = useState<boolean>(false);
+  const [updateMessage, setUpdateMessage] = useState<string>('');
+  const [showUpdateMessage, setShowUpdateMessage] = useState<boolean>(false);
+  const [updateSucceeded, setUpdateSucceeded] = useState<boolean>(false);
+  const [deleteSucceeded, setDeleteSucceeded] = useState<boolean>(false);
 
   const savedObjectsDeletionResponse = useSelector(
     (state: RootState) => state.workflowReducer.savedObjectDeletion
@@ -476,36 +472,45 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const deleteWorkflowResultsStatus =
     savedObjectsDeletionResponse.loadingStatus.loading;
 
-  let deleteSucceeded = false;
-  if (
-    deleteWorkflowResultsStatus === LoadingStatusEnum.Succeeded ||
-    deleteWorkflowResultsStatus === LoadingStatusEnum.Failed
-  ) {
-    if (showDeleteDialog) {
-      setShowDeleteDialog(false);
-    }
-    if (deleteWorkflowResultsStatus === LoadingStatusEnum.Succeeded) {
-      deleteSucceeded = true;
-      if (selectedObjects.size > 0) {
-        if (!showSavedObjectDeletionResultsDialog) {
-          setShowSavedObjectDeletionResultsDialog(true);
+  useEffect(() => {
+    if (
+      deleteWorkflowResultsStatus === LoadingStatusEnum.Succeeded ||
+      deleteWorkflowResultsStatus === LoadingStatusEnum.Failed
+    ) {
+      if (showDeleteDialog) {
+        setShowDeleteDialog(false);
+      }
+      if (deleteWorkflowResultsStatus === LoadingStatusEnum.Succeeded) {
+        setDeleteSucceeded(true);
+        if (selectedObjects.size > 0) {
+          if (!showSavedObjectDeletionResultsDialog) {
+            setShowSavedObjectDeletionResultsDialog(true);
+          }
+        } else {
+          setDeleteMessage(
+            'Successfully deleted your workflow. Redirecting you to the workflows page...'
+          );
+          setShowDeleteMessage(true);
+          navigate('/workflows');
         }
-      } else {
+      } else if (deleteWorkflowResultsStatus === LoadingStatusEnum.Failed) {
+        setDeleteSucceeded(false);
         setDeleteMessage(
-          'Successfully deleted your workflow. Redirecting you to the workflows page...'
+          `We were unable to delete your workflow: ${savedObjectsDeletionResponse.loadingStatus.err}`
         );
         setShowDeleteMessage(true);
-        navigate('/workflows');
+        setDeleteValidation('');
       }
-    } else if (deleteWorkflowResultsStatus === LoadingStatusEnum.Failed) {
-      deleteSucceeded = false;
-      setDeleteMessage(
-        `We were unable to delete your workflow: ${savedObjectsDeletionResponse.loadingStatus.err}`
-      );
-      setShowDeleteMessage(true);
-      setDeleteValidation('');
     }
-  }
+  }, [
+    deleteWorkflowResultsStatus,
+    navigate,
+    savedObjectsDeletionResponse.loadingStatus.err,
+    selectedObjects.size,
+    showDeleteDialog,
+    showSavedObjectDeletionResultsDialog,
+    setShowSavedObjectDeletionResultsDialog,
+  ]);
 
   const updateSettings = (event) => {
     event.preventDefault();
@@ -868,160 +873,140 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
   return (
     <>
-      <Dialog open={open} onClose={onClose} maxWidth={false}>
-        <DialogTitle>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="h5">
-                {' '}
-                {/* We don't use the `name` state here because it will update when the user is mid-changes, which is awkward. */}
-                <span style={{ fontFamily: 'Monospace' }}>
-                  {workflowDag.metadata?.name}
-                </span>{' '}
-                Settings{' '}
-              </Typography>
-            </Box>
+      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <Box sx={{ flex: 1 }}>
+          <Typography variant="h5">
+            {' '}
+            {/* We don't use the `name` state here because it will update when the user is mid-changes, which is awkward. */}
+            <span style={{ fontFamily: 'Monospace' }}>
+              {workflowDag.metadata?.name}
+            </span>{' '}
+            Settings{' '}
+          </Typography>
+        </Box>
+      </Box>
 
-            <FontAwesomeIcon
-              icon={faXmark}
-              onClick={() => {
-                setName(initialSettings.name);
-                setDescription(initialSettings.description);
-                setTriggerType(initialSettings.triggerType);
-                setSchedule(initialSettings.schedule);
-                setSourceId(initialSettings.sourceId);
-                setPaused(initialSettings.paused);
-                setRetentionPolicy(initialSettings.retentionPolicy);
+      <Box sx={{ mb: 2 }}>
+        <Box sx={{ mb: 2 }}>
+          <Typography sx={{ fontWeight: 'bold' }} component="span">
+            ID:
+          </Typography>
+          <Typography component="span"> {workflowDag.workflow_id}</Typography>
+        </Box>
+      </Box>
 
-                // Finally close the dialog
-                if (onClose) {
-                  onClose();
-                }
-              }}
-              style={{ cursor: 'pointer' }}
-            />
-          </Box>
-        </DialogTitle>
+      <Box sx={{ my: 2 }}>
+        <Typography style={{ fontWeight: 'bold' }}> Name </Typography>
 
-        <DialogContent sx={{ width: '600px' }}>
-          <Box sx={{ mb: 2 }}>
-            <Box sx={{ mb: 2 }}>
-              <Typography sx={{ fontWeight: 'bold' }} component="span">
-                ID:
-              </Typography>
-              <Typography component="span">
-                {' '}
-                {workflowDag.workflow_id}
-              </Typography>
-            </Box>
-          </Box>
+        <Box sx={{ my: 1 }}>
+          <TextField
+            fullWidth
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            size="small"
+          />
+        </Box>
+      </Box>
 
-          <Box sx={{ my: 2 }}>
-            <Typography style={{ fontWeight: 'bold' }}> Name </Typography>
+      <Box sx={{ my: 2 }}>
+        <Typography style={{ fontWeight: 'bold' }}> Description </Typography>
 
-            <Box sx={{ my: 1 }}>
-              <TextField
-                fullWidth
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                size="small"
-              />
-            </Box>
-          </Box>
+        <Box sx={{ my: 1 }}>
+          <TextField
+            fullWidth
+            placeholder="Your description goes here."
+            value={description}
+            multiline
+            rows={4}
+            size="small"
+            onChange={(e) => setDescription(e.target.value)}
+          />
+        </Box>
+      </Box>
 
-          <Box sx={{ my: 2 }}>
-            <Typography style={{ fontWeight: 'bold' }}>
-              {' '}
-              Description{' '}
-            </Typography>
+      {dagResults && dagResults.length > 0 && <StorageSelector />}
 
-            <Box sx={{ my: 1 }}>
-              <TextField
-                fullWidth
-                placeholder="Your description goes here."
-                value={description}
-                multiline
-                rows={4}
-                size="small"
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </Box>
-          </Box>
+      <Box sx={{ my: 2 }}>
+        <Typography style={{ fontWeight: 'bold' }}> Schedule </Typography>
+        {scheduleSelector}
+        {nextUpdateComponent}
+      </Box>
 
-          {dagResults && dagResults.length > 0 && <StorageSelector />}
+      <Box sx={{ my: 2 }}>
+        <Typography style={{ fontWeight: 'bold' }}>Retention Policy</Typography>
 
-          <Box sx={{ my: 2 }}>
-            <Typography style={{ fontWeight: 'bold' }}> Schedule </Typography>
-            {scheduleSelector}
-            {nextUpdateComponent}
-          </Box>
+        <Box sx={{ my: 1 }}>
+          <RetentionPolicySelector
+            retentionPolicy={retentionPolicy}
+            setRetentionPolicy={setRetentionPolicy}
+          />
+        </Box>
+      </Box>
 
-          <Box sx={{ my: 2 }}>
-            <Typography style={{ fontWeight: 'bold' }}>
-              Retention Policy
-            </Typography>
+      {notificationIntegrations.length > 0 && (
+        <Box sx={{ my: 2 }}>
+          <Typography style={{ fontWeight: 'bold' }}>Notifications</Typography>
 
-            <Box sx={{ my: 1 }}>
-              <RetentionPolicySelector
-                retentionPolicy={retentionPolicy}
-                setRetentionPolicy={setRetentionPolicy}
-              />
-            </Box>
-          </Box>
+          <WorkflowNotificationSettings
+            notificationIntegrations={notificationIntegrations}
+            curSettingsMap={notificationSettingsMap}
+            onSelect={(id, level, replacingID) => {
+              const newSettings = { ...notificationSettingsMap };
+              newSettings[id] = level;
+              if (replacingID) {
+                delete newSettings[replacingID];
+              }
 
-          {notificationIntegrations.length > 0 && (
-            <Box sx={{ my: 2 }}>
-              <Typography style={{ fontWeight: 'bold' }}>
-                Notifications
-              </Typography>
+              setNotificationSettingsMap(newSettings);
+            }}
+            onRemove={(id) => {
+              const newSettings = { ...notificationSettingsMap };
+              delete newSettings[id];
+              setNotificationSettingsMap(newSettings);
+            }}
+          />
+        </Box>
+      )}
 
-              <WorkflowNotificationSettings
-                notificationIntegrations={notificationIntegrations}
-                curSettingsMap={notificationSettingsMap}
-                onSelect={(id, level, replacingID) => {
-                  const newSettings = { ...notificationSettingsMap };
-                  newSettings[id] = level;
-                  if (replacingID) {
-                    delete newSettings[replacingID];
-                  }
+      <Button
+        color="info"
+        variant="outlined"
+        sx={{ marginRight: 2 }}
+        disabled={!settingsChanged}
+        onClick={() => {
+          setName(initialSettings.name);
+          setDescription(initialSettings.description);
+          setTriggerType(initialSettings.triggerType);
+          setSchedule(initialSettings.schedule);
+          setSourceId(initialSettings.sourceId);
+          setPaused(initialSettings.paused);
+          setRetentionPolicy(initialSettings.retentionPolicy);
+        }}
+      >
+        Discard Changes
+      </Button>
 
-                  setNotificationSettingsMap(newSettings);
-                }}
-                onRemove={(id) => {
-                  const newSettings = { ...notificationSettingsMap };
-                  delete newSettings[id];
-                  setNotificationSettingsMap(newSettings);
-                }}
-              />
-            </Box>
-          )}
+      <LoadingButton
+        loading={isUpdating}
+        onClick={updateSettings}
+        sx={{ my: 1 }}
+        color="primary"
+        variant="contained"
+        disabled={!settingsChanged}
+      >
+        Save
+      </LoadingButton>
 
-          <LoadingButton
-            loading={isUpdating}
-            onClick={updateSettings}
-            sx={{ my: 1 }}
-            color="primary"
-            variant="contained"
-            disabled={!settingsChanged}
-          >
-            Save
-          </LoadingButton>
+      <Divider />
 
-          <Divider />
+      <Box sx={{ my: 2 }}>
+        <Typography variant="h6"> Danger Zone </Typography>
+      </Box>
 
-          <Box sx={{ my: 2 }}>
-            <Typography variant="h6"> Danger Zone </Typography>
-          </Box>
+      <Button color="error" variant="outlined" onClick={handleDeleteClicked}>
+        Delete Workflow
+      </Button>
 
-          <Button
-            color="error"
-            variant="outlined"
-            onClick={handleDeleteClicked}
-          >
-            Delete Workflow
-          </Button>
-        </DialogContent>
-      </Dialog>
       {deleteDialog}
       {savedObjectDeletionResultsDialog}
 
