@@ -34,7 +34,7 @@ func fullMessage(subject string, from string, targets []string, body string) str
 	fullMsg := fmt.Sprintf("From: %s\n", from)
 	fullMsg += fmt.Sprintf("To: %s\n", strings.Join(targets, ","))
 	fullMsg += fmt.Sprintf("Subject: %s\n", subject)
-	fullMsg += fmt.Sprintf("Content-Type: text/html; charset=\"UTF-8\";\n\n")
+	fullMsg += "Content-Type: text/html; charset=\"UTF-8\";\n\n"
 	fullMsg += body
 	return fullMsg
 }
@@ -56,15 +56,22 @@ func (e *EmailNotification) SendForDag(
 		</div>`, contextMsg)
 	}
 	body := fmt.Sprintf(`<div dir="ltr">
-		<b>Result ID</b>: <font face="monospace">%s</font>
-		%s
-	</div>`, wfDag.ResultID(), contextBlock)
+		<div><b>Workflow</b>: <font face="monospace">%s</font></div>
+		<div><b>ID</b>: <font face="monospace">%s</font></div>
+		<div><b>Result ID</b>: <font face="monospace">%s</font></div>
+			%s
+		</div>`,
+		wfDag.Name(),
+		wfDag.ID(),
+		wfDag.ResultID(),
+		contextBlock,
+	)
 	fullMsg := fullMessage(subject, e.conf.User, e.conf.Targets, body)
 
-	return e.send(ctx, fullMsg)
+	return e.send(fullMsg)
 }
 
-func (e *EmailNotification) send(ctx context.Context, msg string) error {
+func (e *EmailNotification) send(msg string) error {
 	auth := smtp.PlainAuth(
 		"", // identity
 		e.conf.User,

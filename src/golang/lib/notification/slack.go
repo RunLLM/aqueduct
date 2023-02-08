@@ -87,7 +87,17 @@ func (s *SlackNotification) SendForDag(
 	if contextMsg != "" {
 		contextMarkdownBlock = fmt.Sprintf("\n*Context:*\n%s", contextMsg)
 	}
-	msg := fmt.Sprintf("*Result ID:* `%s`%s", wfDag.ResultID(), contextMarkdownBlock)
+
+	nameContent := fmt.Sprintf("*Workflow:* `%s`", wfDag.Name())
+	IDContent := fmt.Sprintf("*ID:* `%s`", wfDag.ID())
+	resultIDContent := fmt.Sprintf("*Result ID:* `%s`", wfDag.ResultID())
+	msg := fmt.Sprintf(
+		"%s\n%s\n%s%s",
+		nameContent,
+		IDContent,
+		resultIDContent,
+		contextMarkdownBlock,
+	)
 	for _, channel := range channels {
 		// reference: https://medium.com/@gausha/a-simple-slackbot-with-golang-c5a932d719c7
 		_, _, _, err = client.SendMessageContext(ctx, channel.ID, slack.MsgOptionBlocks(

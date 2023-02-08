@@ -116,12 +116,12 @@ func summary(wfDag dag.WorkflowDag, level shared.NotificationLevel) string {
 	if level == shared.SuccessNotificationLevel {
 		statusMsg = "succeeded."
 	} else if level == shared.WarningNotificationLevel {
-		statusMsg = "succeeded with warning."
+		statusMsg = "succeeded but had warnings."
 	} else if level == shared.ErrorNotificationLevel {
-		statusMsg = "failed."
+		statusMsg = "errored."
 	}
 
-	return fmt.Sprintf("Aqueduct: workflow %s %s", wfDag.Name(), statusMsg)
+	return fmt.Sprintf("Aqueduct: Workflow %s %s", wfDag.Name(), statusMsg)
 }
 
 // `ShouldSend` determines if a notification at 'level' passes configuration
