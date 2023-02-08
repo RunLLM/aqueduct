@@ -850,8 +850,8 @@ func onFinishExecution(
 	waitForInProgressOperators(ctx, inProgressOps, pollInterval, cleanupTimeout)
 	if curErr != nil && notificationContent == nil {
 		notificationContent = &notificationContentStruct{
-			level:      mdl_shared.ErrorNotificationLevel,
-			contextMsg: curErr.Error(),
+			level:            mdl_shared.ErrorNotificationLevel,
+			systemErrContext: curErr.Error(),
 		}
 	}
 
@@ -952,7 +952,7 @@ func (eng *aqEngine) execute(
 
 			// We can continue orchestration on non-fatal errors; currently, this only allows through succeeded operators
 			// and check operators with warning severity.
-			if shouldStopExecution(execState) {
+			if execState.HasBlockingFailure() {
 				log.Infof("Stopping execution of operator %v", op.ID())
 				for id, dagOp := range workflowDag.Operators() {
 					log.Infof("Checking status of operator %v", id)
@@ -974,26 +974,20 @@ func (eng *aqEngine) execute(
 				}
 
 				notificationCtxMsg := ""
-				if execState.Error != nil {
-					notificationCtxMsg = execState.Error.Message()
+				if execState.HasSystemError() {
+					if execState.Error != nil {
+						notificationCtxMsg = execState.Error.Message()
+					} else {
+						notificationCtxMsg = "This is a system error with no further context provided." + shared.TipCreateBugReport
+					}
 				}
 
 				notificationContent = &notificationContentStruct{
-					level:      mdl_shared.ErrorNotificationLevel,
-					contextMsg: notificationCtxMsg,
+					level:            mdl_shared.ErrorNotificationLevel,
+					systemErrContext: notificationCtxMsg,
 				}
 
 				return opFailureError(*execState.FailureType, op)
-			} else if execState.Status == shared.FailedExecutionStatus {
-				notificationCtxMsg := ""
-				if execState.Error != nil {
-					notificationCtxMsg = execState.Error.Message()
-				}
-
-				notificationContent = &notificationContentStruct{
-					level:      mdl_shared.WarningNotificationLevel,
-					contextMsg: notificationCtxMsg,
-				}
 			}
 
 			// Add the operator to the completed stack, and remove it from the in-progress one.

@@ -12,8 +12,8 @@ import (
 )
 
 type notificationContentStruct struct {
-	level      mdl_shared.NotificationLevel
-	contextMsg string
+	level            mdl_shared.NotificationLevel
+	systemErrContext string
 }
 
 func getNotifications(
@@ -60,7 +60,7 @@ func sendNotifications(
 						ctx,
 						wfDag,
 						content.level,
-						content.contextMsg,
+						content.systemErrContext,
 					)
 					if err != nil {
 						return err
@@ -75,7 +75,7 @@ func sendNotifications(
 					ctx,
 					wfDag,
 					content.level,
-					content.contextMsg,
+					content.systemErrContext,
 				)
 				if err != nil {
 					return err

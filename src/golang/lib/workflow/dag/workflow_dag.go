@@ -56,6 +56,13 @@ type WorkflowDag interface {
 	// This function DO NOT update operators in DB. One should call `op.Persist()`
 	// to do so.
 	BindOperatorsToEnvs(ctx context.Context) error
+
+	// ChecksWithWarning returns all checks that completed with warning state.
+	ChecksWithWarning() []operator.Operator
+
+	// ChecksWithError returns all checks that completed with error state.
+	// This does not include those with warning state.
+	ChecksWithError() []operator.Operator
 }
 
 type workflowDagImpl struct {

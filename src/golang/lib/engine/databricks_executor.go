@@ -105,7 +105,7 @@ func ExecuteDatabricks(
 			}
 
 			// Capture the first failed operator.
-			if shouldStopExecution(execState) {
+			if execState.HasBlockingFailure() {
 				if operatorError == nil {
 					operatorError = opFailureError(*execState.FailureType, op)
 				}
@@ -116,18 +116,18 @@ func ExecuteDatabricks(
 				}
 
 				notificationContent = &notificationContentStruct{
-					level:      mdl_shared.ErrorNotificationLevel,
-					contextMsg: notificationCtxMsg,
+					level:            mdl_shared.ErrorNotificationLevel,
+					systemErrContext: notificationCtxMsg,
 				}
-			} else if execState.Status == shared.FailedExecutionStatus {
+			} else if execState.HasWarning() {
 				notificationCtxMsg := ""
 				if execState.Error != nil {
 					notificationCtxMsg = execState.Error.Message()
 				}
 
 				notificationContent = &notificationContentStruct{
-					level:      mdl_shared.WarningNotificationLevel,
-					contextMsg: notificationCtxMsg,
+					level:            mdl_shared.WarningNotificationLevel,
+					systemErrContext: notificationCtxMsg,
 				}
 			}
 

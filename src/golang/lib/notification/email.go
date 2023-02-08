@@ -39,32 +39,62 @@ func fullMessage(subject string, from string, targets []string, body string) str
 	return fullMsg
 }
 
+func (e *EmailNotification) checkMessages(wfDag dag.WorkflowDag) string {
+	warningChecks := wfDag.ChecksWithWarning()
+	errorChecks := wfDag.ChecksWithError()
+
+	if len(warningChecks)+len(errorChecks) == 0 {
+		return ""
+	}
+
+	// there are at least some checks failed:
+	msg := ""
+	for _, check := range warningChecks {
+		msg += fmt.Sprintf(
+			`<div>Check <font face="monospace">%s</font> failed (warning).</div>`,
+			check.Name(),
+		)
+	}
+
+	for _, check := range errorChecks {
+		msg += fmt.Sprintf(
+			`<div>Check <font face="monospace">%s</font> failed (error).</div>`,
+			check.Name(),
+		)
+	}
+
+	return msg
+}
+
 func (e *EmailNotification) SendForDag(
 	ctx context.Context,
 	wfDag dag.WorkflowDag,
 	level shared.NotificationLevel,
-	contextMsg string,
+	systemErrContext string,
 ) error {
 	subject := summary(wfDag, level)
-	contextBlock := ""
-	if contextMsg != "" {
-		contextBlock = fmt.Sprintf(`<div>
-			<b>Context</b>:
+	systemErrBlock := ""
+	if systemErrContext != "" {
+		systemErrBlock = fmt.Sprintf(`<div>
+			<b>Error:</b>
 		</div>
 		<div>
 			<font face="monospace">%s</font>
-		</div>`, contextMsg)
+		</div>`, systemErrContext)
 	}
+
 	body := fmt.Sprintf(`<div dir="ltr">
 		<div><b>Workflow</b>: <font face="monospace">%s</font></div>
 		<div><b>ID</b>: <font face="monospace">%s</font></div>
 		<div><b>Result ID</b>: <font face="monospace">%s</font></div>
-			%s
+		%s
+		%s
 		</div>`,
 		wfDag.Name(),
 		wfDag.ID(),
 		wfDag.ResultID(),
-		contextBlock,
+		e.checkMessages(wfDag),
+		systemErrBlock,
 	)
 	fullMsg := fullMessage(subject, e.conf.User, e.conf.Targets, body)
 

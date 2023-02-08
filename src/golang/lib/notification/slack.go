@@ -71,11 +71,38 @@ func findChannels(client *slack.Client, names []string) ([]slack.Channel, error)
 	return results, nil
 }
 
+func (s *SlackNotification) checkMessages(wfDag dag.WorkflowDag) string {
+	warningChecks := wfDag.ChecksWithWarning()
+	errorChecks := wfDag.ChecksWithError()
+
+	if len(warningChecks)+len(errorChecks) == 0 {
+		return ""
+	}
+
+	// there are at least some checks failed:
+	msg := "\n"
+	for _, check := range warningChecks {
+		msg += fmt.Sprintf(
+			"Check `%s` failed (warning).\n",
+			check.Name(),
+		)
+	}
+
+	for _, check := range errorChecks {
+		msg += fmt.Sprintf(
+			"Check `%s` failed (error).\n",
+			check.Name(),
+		)
+	}
+
+	return msg
+}
+
 func (s *SlackNotification) SendForDag(
 	ctx context.Context,
 	wfDag dag.WorkflowDag,
 	level shared.NotificationLevel,
-	contextMsg string,
+	systemErrContext string,
 ) error {
 	client := slack.New(s.conf.Token)
 	channels, err := findChannels(client, s.conf.Channels)
@@ -84,18 +111,19 @@ func (s *SlackNotification) SendForDag(
 	}
 
 	contextMarkdownBlock := ""
-	if contextMsg != "" {
-		contextMarkdownBlock = fmt.Sprintf("\n*Context:*\n%s", contextMsg)
+	if systemErrContext != "" {
+		contextMarkdownBlock = fmt.Sprintf("\n*Error:*\n%s", systemErrContext)
 	}
 
 	nameContent := fmt.Sprintf("*Workflow:* `%s`", wfDag.Name())
 	IDContent := fmt.Sprintf("*ID:* `%s`", wfDag.ID())
 	resultIDContent := fmt.Sprintf("*Result ID:* `%s`", wfDag.ResultID())
 	msg := fmt.Sprintf(
-		"%s\n%s\n%s%s",
+		"%s\n%s\n%s%s%s",
 		nameContent,
 		IDContent,
 		resultIDContent,
+		s.checkMessages(wfDag),
 		contextMarkdownBlock,
 	)
 	for _, channel := range channels {
