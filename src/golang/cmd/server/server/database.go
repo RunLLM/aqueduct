@@ -50,6 +50,7 @@ func GetEngineRepos(repos *Repos) *engine.Repos {
 		DAGEdgeRepo:              repos.DAGEdgeRepo,
 		DAGResultRepo:            repos.DAGResultRepo,
 		ExecutionEnvironmentRepo: repos.ExecutionEnvironmentRepo,
+		IntegrationRepo:          repos.IntegrationRepo,
 		NotificationRepo:         repos.NotificationRepo,
 		OperatorRepo:             repos.OperatorRepo,
 		OperatorResultRepo:       repos.OperatorResultRepo,

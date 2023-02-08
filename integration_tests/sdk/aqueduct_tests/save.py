@@ -2,6 +2,7 @@ from typing import Optional
 
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import S3TableFormat
+from aqueduct.integrations.mongodb_integration import MongoDBIntegration
 from aqueduct.integrations.s3_integration import S3Integration
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
 
@@ -35,6 +36,8 @@ def save(
     elif isinstance(integration, S3Integration):
         assert update_mode == LoadUpdateMode.REPLACE, "S3 only supports replacement update."
         integration.save(artifact, name, S3TableFormat.PARQUET)
+    elif isinstance(integration, MongoDBIntegration):
+        integration.collection(name).save(artifact, update_mode)
     else:
         raise Exception("Unexpected data integration type provided in test: %s", type(integration))
 

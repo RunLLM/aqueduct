@@ -54,6 +54,7 @@ type Repos struct {
 	DAGEdgeRepo              repos.DAGEdge
 	DAGResultRepo            repos.DAGResult
 	ExecutionEnvironmentRepo repos.ExecutionEnvironment
+	IntegrationRepo          repos.Integration
 	NotificationRepo         repos.Notification
 	OperatorRepo             repos.Operator
 	OperatorResultRepo       repos.OperatorResult
@@ -658,6 +659,7 @@ func (eng *aqEngine) EditWorkflow(
 	workflowDescription string,
 	schedule *workflow.Schedule,
 	retentionPolicy *workflow.RetentionPolicy,
+	notificationSettings *mdl_shared.NotificationSettings,
 ) error {
 	changes := map[string]interface{}{}
 	if workflowName != "" {
@@ -670,6 +672,10 @@ func (eng *aqEngine) EditWorkflow(
 
 	if retentionPolicy != nil {
 		changes[models.WorkflowRetentionPolicy] = retentionPolicy
+	}
+
+	if notificationSettings != nil {
+		changes[models.WorkflowNotificationSettings] = notificationSettings
 	}
 
 	if schedule.Trigger != "" {
@@ -811,16 +817,57 @@ func (eng *aqEngine) executeWithEngine(
 			timeConfig,
 			opExecMode,
 			databricksJobManager,
+			vaultObject,
+			eng.IntegrationRepo,
+			eng.Database,
 		)
 	default:
 		return eng.execute(
-
 			ctx,
 			dag,
 			workflowRunMetadata,
 			timeConfig,
+			vaultObject,
 			opExecMode,
 		)
+	}
+}
+
+func onFinishExecution(
+	ctx context.Context,
+	inProgressOps map[uuid.UUID]operator.Operator,
+	pollInterval time.Duration,
+	cleanupTimeout time.Duration,
+	curErr error,
+	notificationContent *notificationContentStruct,
+	dag dag_utils.WorkflowDag,
+	execMode operator.ExecutionMode,
+	vaultObject vault.Vault,
+	integrationRepo repos.Integration,
+	DB database.Database,
+) {
+	// Wait a little bit for all active operators to finish before exiting on failure.
+	waitForInProgressOperators(ctx, inProgressOps, pollInterval, cleanupTimeout)
+	if curErr != nil && notificationContent == nil {
+		notificationContent = &notificationContentStruct{
+			level:      mdl_shared.ErrorNotificationLevel,
+			contextMsg: curErr.Error(),
+		}
+	}
+
+	// Send notifications
+	if notificationContent != nil && execMode == operator.Publish {
+		err := sendNotifications(
+			ctx,
+			dag,
+			notificationContent,
+			vaultObject,
+			integrationRepo,
+			DB,
+		)
+		if err != nil {
+			log.Errorf("Error sending notifications: %s", err)
+		}
 	}
 }
 
@@ -829,13 +876,17 @@ func (eng *aqEngine) execute(
 	workflowDag dag_utils.WorkflowDag,
 	workflowRunMetadata *WorkflowRunMetadata,
 	timeConfig *AqueductTimeConfig,
+	vaultObject vault.Vault,
 	opExecMode operator.ExecutionMode,
-) error {
+) (err error) {
 	// These are the operators of immediate interest. They either need to be scheduled or polled on.
 	inProgressOps := workflowRunMetadata.InProgressOps
 	completedOps := workflowRunMetadata.CompletedOps
 	dag := workflowDag
 	opToDependencyCount := workflowRunMetadata.OpToDependencyCount
+
+	var notificationContent *notificationContentStruct = nil
+	err = nil
 
 	// Kick off execution by starting all operators that don't have any inputs.
 	for _, op := range dag.Operators() {
@@ -848,8 +899,21 @@ func (eng *aqEngine) execute(
 		return errors.Newf("No initial operators to schedule.")
 	}
 
-	// Wait a little bit for all active operators to finish before exiting on failure.
-	defer waitForInProgressOperators(ctx, inProgressOps, timeConfig.OperatorPollInterval, timeConfig.CleanupTimeout)
+	defer func() {
+		onFinishExecution(
+			ctx,
+			inProgressOps,
+			timeConfig.OperatorPollInterval,
+			timeConfig.CleanupTimeout,
+			err,
+			notificationContent,
+			workflowDag,
+			opExecMode,
+			vaultObject,
+			eng.IntegrationRepo,
+			eng.Database,
+		)
+	}()
 
 	start := time.Now()
 
@@ -909,7 +973,27 @@ func (eng *aqEngine) execute(
 					}
 				}
 
+				notificationCtxMsg := ""
+				if execState.Error != nil {
+					notificationCtxMsg = fmt.Sprintf("%s\nContext:\n%s", execState.Error.Tip, execState.Error.Context)
+				}
+
+				notificationContent = &notificationContentStruct{
+					level:      mdl_shared.ErrorNotificationLevel,
+					contextMsg: notificationCtxMsg,
+				}
+
 				return opFailureError(*execState.FailureType, op)
+			} else if execState.Status == shared.FailedExecutionStatus {
+				notificationCtxMsg := ""
+				if execState.Error != nil {
+					notificationCtxMsg = fmt.Sprintf("%s\nContext:\n%s", execState.Error.Tip, execState.Error.Context)
+				}
+
+				notificationContent = &notificationContentStruct{
+					level:      mdl_shared.WarningNotificationLevel,
+					contextMsg: notificationCtxMsg,
+				}
 			}
 
 			// Add the operator to the completed stack, and remove it from the in-progress one.
@@ -959,6 +1043,13 @@ func (eng *aqEngine) execute(
 	for opID, depCount := range opToDependencyCount {
 		if depCount != 0 {
 			return errors.Newf("Internal error: operator %s has a non-zero dep count %d.", opID, depCount)
+		}
+	}
+
+	// avoid overriding an existing notification (in practice, this is a warning)
+	if notificationContent == nil {
+		notificationContent = &notificationContentStruct{
+			level: mdl_shared.SuccessNotificationLevel,
 		}
 	}
 	return nil

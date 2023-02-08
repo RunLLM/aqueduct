@@ -59,6 +59,7 @@ def wrap_spec(
     *input_artifacts: BaseArtifact,
     op_name: str,
     output_artifact_type_hints: List[ArtifactType],
+    output_artifact_names: Optional[List[str]] = None,
     description: str = "",
     execution_mode: ExecutionMode = ExecutionMode.EAGER,
 ) -> Union[BaseArtifact, List[BaseArtifact]]:
@@ -79,6 +80,8 @@ def wrap_spec(
             artifacts.
         op_name:
             The name of the operator that generated this artifact.
+        output_artifact_names:
+            If set, provides the custom output artifact names.
         output_artifact_type_hints:
             The artifact types that the function is expected to output, in the correct order.
         description:
@@ -107,8 +110,8 @@ def wrap_spec(
     operator_id = generate_uuid()
     output_artifact_ids = [generate_uuid() for _ in output_artifact_type_hints]
 
-    def _construct_artifact_name(i: int, op_name: str) -> str:
-        """The artifact naming policy is "<op_name> artifact <optional counter>".
+    def _construct_default_artifact_name(i: int, op_name: str) -> str:
+        """The default artifact naming policy is "<op_name> artifact <optional counter>".
 
         The counter starts at 1, and is only present in the multi-output case.
         """
@@ -132,7 +135,11 @@ def wrap_spec(
                 output_artifacts=[
                     ArtifactMetadata(
                         id=output_artifact_id,
-                        name=_construct_artifact_name(i, op_name),
+                        name=(
+                            output_artifact_names[i]
+                            if output_artifact_names is not None
+                            else _construct_default_artifact_name(i, op_name)
+                        ),
                         type=output_artifact_type_hints[i],
                     )
                     for i, output_artifact_id in enumerate(output_artifact_ids)
@@ -155,7 +162,29 @@ def wrap_spec(
     return output_artifacts if len(output_artifacts) > 1 else output_artifacts[0]
 
 
-def _type_check_decorator_arguments(
+def _typecheck_op_decorator_arguments(
+    description: Optional[str],
+    file_dependencies: Optional[List[str]],
+    requirements: Optional[Union[str, List[str]]],
+    engine: Optional[str],
+    num_outputs: int,
+    outputs: Optional[List[str]],
+) -> None:
+    _typecheck_common_decorator_arguments(description, file_dependencies, requirements)
+
+    if engine is not None and not isinstance(engine, str):
+        raise InvalidUserArgumentException("`engine` must be a string.")
+
+    if num_outputs is not None:
+        if not isinstance(num_outputs, int) or num_outputs < 1:
+            raise InvalidUserArgumentException("`num_outputs` must be set to a positive integer.")
+
+    if outputs is not None:
+        if not (isinstance(outputs, str) or isinstance(outputs, List)):
+            raise InvalidUserArgumentException("`outputs` must be either a string or a list.")
+
+
+def _typecheck_common_decorator_arguments(
     description: Optional[str],
     file_dependencies: Optional[List[str]],
     requirements: Optional[Union[str, List[str]]],
@@ -305,7 +334,8 @@ def op(
     engine: Optional[str] = None,
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
-    num_outputs: int = 1,
+    num_outputs: Optional[int] = None,
+    outputs: Optional[List[str]] = None,
     resources: Optional[Dict[str, Any]] = None,
 ) -> Union[DecoratedFunction, OutputArtifactsFunction]:
     """Decorator that converts regular python functions into an operator.
@@ -337,6 +367,10 @@ def op(
         num_outputs:
             The number of outputs the decorated function is expected to return.
             Will fail at runtime if a different number of outputs is returned by the function.
+        outputs:
+            The name to assign the output artifacts of for this operator. The number of names provided
+            must match the number of return values of the decorated function. If not set, the artifact
+            names will default to "<op_name> artifact <optional counter>".
         resources:
             A dictionary containing the custom resource configurations that this operator will run with.
             These configurations are guaranteed to be followed, we will not silently ignore any of them.
@@ -373,15 +407,25 @@ def op(
 
         >>> recommendations.get()
     """
-    _type_check_decorator_arguments(
-        description,
-        file_dependencies,
-        requirements,
+    # Establish parity between `num_outputs` and `outputs`, or raise exception if there is a mismatch.
+    if num_outputs is None and outputs is None:
+        num_outputs = 1
+    elif num_outputs is not None and outputs is not None:
+        if len(outputs) != num_outputs:
+            raise InvalidUserArgumentException(
+                "`len(outputs) must be equivalent to `num_outputs`. Getting %d and %d"
+                % (len(outputs), num_outputs)
+            )
+    elif num_outputs is None and outputs is not None:
+        num_outputs = len(outputs)
+
+    # If not set, default number of outputs is one.
+    if num_outputs is None:
+        num_outputs = 1
+
+    _typecheck_op_decorator_arguments(
+        description, file_dependencies, requirements, engine, num_outputs, outputs
     )
-    if engine is not None and not isinstance(engine, str):
-        raise InvalidUserArgumentException("`engine` must be a string.")
-    if not isinstance(num_outputs, int) or num_outputs < 1:
-        raise InvalidUserArgumentException("`num_outputs` must be set to a positive integer.")
 
     resource_config = None
     if resources is not None:
@@ -475,10 +519,12 @@ def op(
                     engine,
                 )
 
+            assert isinstance(num_outputs, int)
             return wrap_spec(
                 op_spec,
                 *artifacts,
                 op_name=name,
+                output_artifact_names=outputs,
                 output_artifact_type_hints=[ArtifactType.UNTYPED for _ in range(num_outputs)],
                 description=description,
                 execution_mode=execution_mode,
@@ -516,6 +562,7 @@ def metric(
     description: Optional[str] = None,
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
+    output: Optional[str] = None,
 ) -> Union[DecoratedMetricFunction, OutputArtifactFunction]:
     """Decorator that converts regular python functions into a metric.
 
@@ -543,6 +590,9 @@ def metric(
             look for a `requirements.txt` file in the same directory as the decorated function
             and install those. Otherwise, we'll attempt to infer the requirements with
             `pip freeze`.
+        output:
+            An optional custom name for the output metric artifact. Otherwise, the default naming scheme
+            will be used.
 
     Examples:
         The metric name is inferred from the function name. The description is pulled from the function
@@ -558,7 +608,10 @@ def metric(
 
         >>> churn_metric.get()
     """
-    _type_check_decorator_arguments(description, file_dependencies, requirements)
+    _typecheck_common_decorator_arguments(description, file_dependencies, requirements)
+
+    if output is not None and not isinstance(output, str):
+        raise InvalidUserArgumentException("`output` must be of type string if set.")
 
     def inner_decorator(func: MetricFunction) -> OutputArtifactFunction:
         nonlocal name
@@ -605,10 +658,12 @@ def metric(
 
             metric_spec = MetricSpec(function=function_spec)
 
+            output_names = [output] if output is not None else None
             numeric_artifact = wrap_spec(
                 OperatorSpec(metric=metric_spec),
                 *artifacts,
                 op_name=name,
+                output_artifact_names=output_names,
                 output_artifact_type_hints=[ArtifactType.NUMERIC],
                 description=description,
                 execution_mode=execution_mode,
@@ -659,6 +714,7 @@ def check(
     severity: CheckSeverity = CheckSeverity.WARNING,
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
+    output: Optional[str] = None,
 ) -> Union[DecoratedCheckFunction, OutputArtifactFunction]:
     """Decorator that converts a regular python function into a check.
 
@@ -689,6 +745,9 @@ def check(
             look for a `requirements.txt` file in the same directory as the decorated function
             and install those. Otherwise, we'll attempt to infer the requirements with
             `pip freeze`.
+        output:
+            An optional custom name for the output metric artifact. Otherwise, the default naming scheme
+            will be used.
 
     Examples:
         The check name is inferred from the function name. The description is pulled from the function
@@ -706,7 +765,10 @@ def check(
 
         >>> churn_is_low_check.get()
     """
-    _type_check_decorator_arguments(description, file_dependencies, requirements)
+    _typecheck_common_decorator_arguments(description, file_dependencies, requirements)
+
+    if output is not None and not isinstance(output, str):
+        raise InvalidUserArgumentException("`output` must be of type string if set.")
 
     def inner_decorator(func: CheckFunction) -> OutputArtifactFunction:
         nonlocal name
@@ -750,10 +812,12 @@ def check(
             )
             check_spec = CheckSpec(level=severity, function=function_spec)
 
+            output_names = [output] if output is not None else None
             bool_artifact = wrap_spec(
                 OperatorSpec(check=check_spec),
                 *artifacts,
                 op_name=name,
+                output_artifact_names=output_names,
                 output_artifact_type_hints=[ArtifactType.BOOL],
                 description=description,
                 execution_mode=execution_mode,

@@ -23,11 +23,21 @@ from tqdm import tqdm
 SCHEMA_VERSION = "23"
 CHUNK_SIZE = 4096
 
+# Connector Package Version Bounds
+PYMONGO_VERSION_BOUND = "<=4.3.3"
+PSYCOPG2_VERSION_BOUND = "<=2.9.5"
+BIGQUERY_VERSION_BOUND = "<=3.5.0"
+SNOWFLAKE_VERSION_BOUND = "<=1.4.4"
+PYARROW_VERSION_BOUND = "<=11.0.0"
+AWS_WRANGLER_VERSION_BOUND = "<=2.19.0"
+MYSQL_CLIENT_VERSION_BOUND = "<=2.1.1"
+PYODBC_VERSION_BOUND = "<=4.0.35"
+
 base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
 server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = os.path.join(os.environ["HOME"], ".aqueduct", "ui")
 
-package_version = "0.2.0"
+package_version = "0.2.1"
 aws_credentials_path = os.path.join(os.environ["HOME"], ".aws", "credentials")
 
 default_server_port = 8080
@@ -413,22 +423,22 @@ def start(expose, port, verbose, env, disable_usage_stats):
     return popen_handle, server_port
 
 def install_mongodb():
-    execute_command([sys.executable, "-m", "pip", "install", "pymongo"])
+    execute_command([sys.executable, "-m", "pip", "install", "pymongo%s" % PYMONGO_VERSION_BOUND])
 
 def install_postgres():
-    execute_command([sys.executable, "-m", "pip", "install", "psycopg2-binary"])
+    execute_command([sys.executable, "-m", "pip", "install", "psycopg2-binary%s" % PSYCOPG2_VERSION_BOUND])
 
 def install_bigquery():
-    execute_command([sys.executable, "-m", "pip", "install", "google-cloud-bigquery"])
+    execute_command([sys.executable, "-m", "pip", "install", "google-cloud-bigquery%s" % BIGQUERY_VERSION_BOUND])
 
 def install_snowflake():
-    execute_command([sys.executable, "-m", "pip", "install", "snowflake-sqlalchemy"])
+    execute_command([sys.executable, "-m", "pip", "install", "snowflake-sqlalchemy%s" % SNOWFLAKE_VERSION_BOUND])
 
 def install_s3():
-    execute_command([sys.executable, "-m", "pip", "install", "pyarrow"])
+    execute_command([sys.executable, "-m", "pip", "install", "pyarrow%s" % PYARROW_VERSION_BOUND])
 
 def install_athena():
-    execute_command([sys.executable, "-m", "pip", "install", "awswrangler"])
+    execute_command([sys.executable, "-m", "pip", "install", "awswrangler%s" % AWS_WRANGLER_VERSION_BOUND])
 
 def install_mysql():
     system = platform.system()
@@ -454,7 +464,7 @@ def install_mysql():
     else:
         print("Unsupported operating system:", system)
 
-    execute_command([sys.executable, "-m", "pip", "install", "mysqlclient"])
+    execute_command([sys.executable, "-m", "pip", "install", "mysqlclient%s" % MYSQL_CLIENT_VERSION_BOUND])
 
 
 def install_sqlserver():
@@ -489,7 +499,7 @@ def install_sqlserver():
     else:
         print("Unsupported operating system:", system)
 
-    execute_command([sys.executable, "-m", "pip", "install", "pyodbc"])
+    execute_command([sys.executable, "-m", "pip", "install", "pyodbc%s" % PYODBC_VERSION_BOUND])
 
 
 def install(system):
