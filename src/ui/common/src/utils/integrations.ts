@@ -33,6 +33,7 @@ export type SnowflakeConfig = {
   account_identifier: string;
   warehouse: string;
   database: string;
+  schema: string;
   username: string;
   password?: string;
 };
