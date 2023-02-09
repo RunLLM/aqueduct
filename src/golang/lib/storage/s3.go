@@ -132,6 +132,8 @@ func (s *s3Storage) Exists(ctx context.Context, key string) bool {
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	})
+	// TODO: ENG-2428 we should explicitly surface other error types to the caller
+	// instead of just returning `false` for non s3.ErrCodeNoSuchKey errors.
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
