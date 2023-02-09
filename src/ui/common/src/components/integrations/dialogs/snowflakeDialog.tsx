@@ -1,5 +1,5 @@
 import Box from '@mui/material/Box';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { SnowflakeConfig } from '../../../utils/integrations';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
@@ -9,6 +9,7 @@ const Placeholders: SnowflakeConfig = {
   account_identifier: '123456',
   warehouse: 'aqueduct-warehouse',
   database: 'aqueduct-db',
+  schema: 'public',
   username: 'aqueduct',
   password: '********',
 };
@@ -24,6 +25,18 @@ export const SnowflakeDialog: React.FC<Props> = ({
   value,
   editMode,
 }) => {
+  const [schema, setSchema] = useState<string>(
+    value?.schema ?? Placeholders.schema
+  );
+
+  useEffect(() => {
+    if (schema) {
+      onUpdateField('schema', schema);
+    } else {
+      onUpdateField('schema', Placeholders.schema);
+    }
+  }, [schema]);
+
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
@@ -62,6 +75,19 @@ export const SnowflakeDialog: React.FC<Props> = ({
         placeholder={Placeholders.database}
         onChange={(event) => onUpdateField('database', event.target.value)}
         value={value?.database ?? null}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disabled={editMode}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
+      />
+
+      <IntegrationTextInputField
+        spellCheck={false}
+        required={false}
+        label="Schema"
+        description="The name of the schema to connect to. The public schema will be used if none is provided."
+        placeholder={Placeholders.schema}
+        onChange={(event) => setSchema(event.target.value)}
+        value={schema !== Placeholders.schema ? schema : null}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disabled={editMode}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
