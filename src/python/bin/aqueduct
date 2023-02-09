@@ -350,9 +350,9 @@ def get_address(expose):
         expose_ip = "http://localhost"
     else:
         try:
-            expose_ip = f"http://{requests.get(
+            expose_ip = "http://" + requests.get(
                 "http://169.254.169.254/latest/meta-data/public-ipv4", timeout=0.25
-            ).content.decode("utf-8")}"
+            ).content.decode("utf-8")
         except:  # If you're not running on EC2, this will return an error.
             expose_ip = ""
     
