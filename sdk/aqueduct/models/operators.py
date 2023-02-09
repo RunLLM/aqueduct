@@ -189,7 +189,7 @@ class ParamSpec(BaseModel):
     serialization_type: SerializationType
 
     # Records whether the parameter was implicitly created or not.
-    implicitly_created: bool = False
+    implicitly_created: bool
 
     class Config:
         fields = {"implicitly_created": {"exclude": ...}}

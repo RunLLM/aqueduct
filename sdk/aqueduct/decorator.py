@@ -251,12 +251,6 @@ def _convert_input_arguments_to_parameters(
             implicit parameter.
         func_params:
             Maps from parameter name to an `inspect.Parameter` object containing additional information.
-
-    The collision policy is as follows:
-    - If the colliding operator is also a parameter operator that was created implicitly, we will overwrite it.
-    - Otherwise, we will bump the parameter name until it is unique.
-
-    Errors if the function has a variable-length parameter, since we don't know what name to attribute to those.
     """
     # KEYWORD_ONLY parameters are allowed, since they are guaranteed to have a name.
     # Note that we only accept them after "*" arguments, since we error out on VAR_POSITIONAL (eg. *args).
@@ -284,28 +278,7 @@ def _convert_input_arguments_to_parameters(
 
             # We assume that the parameter name exists here, since we've disallowed any variable-length parameters.
             arg_name = param_names[idx]
-
-            param_name = arg_name
-            if not dag.is_name_unique(param_name):
-
-                # Because parameter operators and their artifacts must always have the same name, we only
-                # need to check for operator name collisions to decide whether to bump or not.
-                colliding_op = dag.get_operator(with_name=param_name)
-                if (
-                    colliding_op is None or
-                    get_operator_type(colliding_op) != OperatorType.PARAM or
-                    not colliding_op.spec.param.implicitly_created
-                ):
-                    param_name = dag.get_unclaimed_name(prefix=param_name)
-
-            new_artifact = create_param_artifact(dag=dag, name=param_name, default=default, is_implicit=True)
-            warnings.warn(
-                """Input to function argument "%s" is not an artifact type. We have implicitly \
-created a parameter named "%s" and your input will be used as its default value. This parameter \
-will be used when running the function."""
-                % (arg_name, param_name)
-            )
-            artifacts[idx] = new_artifact
+            artifacts[idx] = create_param_artifact(dag=dag, candidate_name=arg_name, default=default, is_implicit=True)
     return artifacts
 
 

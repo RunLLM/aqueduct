@@ -111,7 +111,7 @@ def parse_user_supplied_id(id: Union[str, uuid.UUID]) -> str:
     return id
 
 
-def construct_param_spec(val: Any, artifact_type: ArtifactType) -> ParamSpec:
+def construct_param_spec(val: Any, artifact_type: ArtifactType, is_implicit: bool = False) -> ParamSpec:
     serialization_type = artifact_type_to_serialization_type(
         artifact_type,
         # Not derived from bson.
@@ -126,6 +126,7 @@ def construct_param_spec(val: Any, artifact_type: ArtifactType) -> ParamSpec:
     return ParamSpec(
         val=_bytes_to_base64_string(serialize_val(val, serialization_type)),
         serialization_type=serialization_type,
+        implicitly_created=is_implicit,
     )
 
 
