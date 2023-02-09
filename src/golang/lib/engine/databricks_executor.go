@@ -120,14 +120,8 @@ func ExecuteDatabricks(
 					systemErrContext: notificationCtxMsg,
 				}
 			} else if execState.HasWarning() {
-				notificationCtxMsg := ""
-				if execState.Error != nil {
-					notificationCtxMsg = execState.Error.Message()
-				}
-
 				notificationContent = &notificationContentStruct{
-					level:            mdl_shared.WarningNotificationLevel,
-					systemErrContext: notificationCtxMsg,
+					level: mdl_shared.WarningNotificationLevel,
 				}
 			}
 

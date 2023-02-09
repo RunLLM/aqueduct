@@ -995,6 +995,10 @@ func (eng *aqEngine) execute(
 				}
 
 				return opFailureError(*execState.FailureType, op)
+			} else if execState.HasWarning() {
+				notificationContent = &notificationContentStruct{
+					level: mdl_shared.WarningNotificationLevel,
+				}
 			}
 
 			// Add the operator to the completed stack, and remove it from the in-progress one.
