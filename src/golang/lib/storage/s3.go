@@ -3,6 +3,7 @@ package storage
 import (
 	"bytes"
 	"context"
+	"io"
 	"net/url"
 	"path"
 	"strings"
@@ -13,7 +14,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 )
 
 type s3Storage struct {
@@ -48,32 +48,28 @@ func (s *s3Storage) Get(ctx context.Context, key string) ([]byte, error) {
 		return nil, err
 	}
 
-	buff := &aws.WriteAtBuffer{}
-	downloader := s3manager.NewDownloader(sess)
-
 	bucket, key, err := s.parseBucketAndKey(key)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = downloader.DownloadWithContext(
-		ctx,
-		buff,
-		&s3.GetObjectInput{
-			Bucket: aws.String(bucket),
-			Key:    aws.String(key),
-		})
+	svc := s3.New(sess)
+	// Get the object
+	result, err := svc.GetObject(&s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
 	if err != nil {
-		// Cast `err` to an AWS error to check code
-		if aerr, ok := err.(awserr.Error); ok {
-			if aerr.Code() == s3.ErrCodeNoSuchKey {
-				return nil, ErrObjectDoesNotExist
-			}
-		}
-
 		return nil, err
 	}
-	return buff.Bytes(), nil
+	defer result.Body.Close()
+
+	content, err := io.ReadAll(result.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return content, err
 }
 
 func (s *s3Storage) Put(ctx context.Context, key string, value []byte) error {
@@ -82,26 +78,18 @@ func (s *s3Storage) Put(ctx context.Context, key string, value []byte) error {
 		return err
 	}
 
-	file := bytes.NewReader(value)
-
-	uploader := s3manager.NewUploader(sess)
-
 	bucket, key, err := s.parseBucketAndKey(key)
 	if err != nil {
 		return err
 	}
 
-	_, err = uploader.UploadWithContext(
-		ctx,
-		&s3manager.UploadInput{
-			Bucket: aws.String(bucket),
-			Key:    aws.String(key),
-			Body:   file,
-		})
-	if err != nil {
-		return err
-	}
-	return nil
+	svc := s3.New(sess)
+	_, err = svc.PutObject(&s3.PutObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+		Body:   bytes.NewReader(value),
+	})
+	return err
 }
 
 func (s *s3Storage) Delete(ctx context.Context, key string) error {
@@ -125,6 +113,39 @@ func (s *s3Storage) Delete(ctx context.Context, key string) error {
 		},
 	)
 	return err
+}
+
+func (s *s3Storage) Exists(ctx context.Context, key string) bool {
+	sess, err := CreateS3Session(s.s3Config)
+	if err != nil {
+		return false
+	}
+
+	s3Client := s3.New(sess)
+
+	bucket, key, err := s.parseBucketAndKey(key)
+	if err != nil {
+		return false
+	}
+
+	_, err = s3Client.HeadObject(&s3.HeadObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	})
+	// TODO: ENG-2428 we should explicitly surface other error types to the caller
+	// instead of just returning `false` for non s3.ErrCodeNoSuchKey errors.
+	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case s3.ErrCodeNoSuchKey:
+				return false
+			default:
+				return false
+			}
+		}
+		return false
+	}
+	return true
 }
 
 func CreateS3Session(s3Config *shared.S3Config) (*session.Session, error) {
