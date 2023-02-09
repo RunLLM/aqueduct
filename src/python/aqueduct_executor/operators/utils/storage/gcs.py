@@ -32,3 +32,10 @@ class GCSStorage(Storage):
 
         print(f"reading from gcs: {key}")
         return bytes(blob.download_as_bytes())
+
+    def exists(self, key: str) -> bool:
+        bucket = self._client.bucket(self._config.bucket)
+        blob = bucket.blob(key)
+
+        print(f"checking if exists in gcs: {key}")
+        return bool(blob.exists())

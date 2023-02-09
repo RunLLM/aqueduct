@@ -1,3 +1,5 @@
+import os
+
 from aqueduct_executor.operators.utils.storage.config import FileStorageConfig
 from aqueduct_executor.operators.utils.storage.storage import Storage
 
@@ -19,6 +21,11 @@ class FileStorage(Storage):
         print(f"reading from file: {path}")
         with open(path, "rb") as f:
             return f.read()
+
+    def exists(self, key: str) -> bool:
+        path = self.get_full_path(key)
+        print(f"checking if file exists: {path}")
+        return os.path.isfile(path)
 
     def get_full_path(self, key: str) -> str:
         return self._config.directory + "/" + key

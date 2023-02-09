@@ -5,6 +5,7 @@ import boto3
 from aqueduct_executor.operators.utils.storage.config import S3StorageConfig
 from aqueduct_executor.operators.utils.storage.storage import Storage
 from botocore.config import Config as BotoConfig
+from botocore.exceptions import ClientError
 
 
 class S3Storage(Storage):
@@ -46,6 +47,21 @@ class S3Storage(Storage):
         key = self._prefix_key(key)
         print(f"reading from s3: {key}")
         return self._client.get_object(Bucket=self._bucket, Key=key)["Body"].read()  # type: ignore
+
+    def exists(self, key: str) -> bool:
+        key = self._prefix_key(key)
+        print(f"checking if exists in s3: {key}")
+        try:
+            self._client.head_object(Bucket=self._bucket, Key=key)
+        except ClientError as e:
+            # checking for NoSuchKey error
+            if e.response["Error"]["Code"] == "404":
+                return False
+            else:
+                # TODO: ENG-2428 we should explicitly surface other error types to the caller
+                # instead of just returning `false` for non s3.ErrCodeNoSuchKey errors.
+                return False
+        return True
 
     def _prefix_key(self, key: str) -> str:
         if not self._key_prefix:
