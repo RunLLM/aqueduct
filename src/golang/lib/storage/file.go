@@ -56,6 +56,8 @@ func (f *fileStorage) Delete(ctx context.Context, key string) error {
 func (f *fileStorage) Exists(ctx context.Context, key string) bool {
 	path := f.getFullPath(key)
 	_, err := os.Stat(path)
+	// TODO: ENG-2428 we should explicitly surface other error types to the caller
+	// instead of just returning `false` for non os.ErrNotExist errors.
 	return !errors.Is(err, os.ErrNotExist)
 }
 

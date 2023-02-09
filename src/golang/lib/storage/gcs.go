@@ -115,6 +115,8 @@ func (g *gcsStorage) Exists(ctx context.Context, key string) bool {
 
 	// Check if object exists
 	_, err = client.Bucket(bucket).Object(key).Attrs(ctx)
+	// TODO: ENG-2428 we should explicitly surface other error types to the caller
+	// instead of just returning `false` for non storage.ErrObjectNotExist errors.
 	return err != storage.ErrObjectNotExist
 }
 
