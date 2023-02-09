@@ -182,7 +182,7 @@ class RelationalDBIntegration(Integration):
         # sql operator already exists with that name, we'll continue bumping the suffix
         # until the sql operator is unique. If an explicit name is provided, we will
         # overwrite the existing one.
-        sql_op_name = name or self._dag.get_unclaimed_op_name(prefix="%s query" % self.name())
+        sql_op_name = name or self._dag.get_unclaimed_name(prefix="%s query" % self.name())
         artifact_name = output or artifact_name_from_op_name(sql_op_name)
         _validate_artifact_name(self._dag, sql_op_name, artifact_name)
 

@@ -18,6 +18,7 @@ def create_param_artifact(
     name: str,
     default: Any,
     description: str = "",
+    is_implicit: bool = False,
 ) -> BaseArtifact:
     """Creates a parameter operator and return an artifact that can be fed into other operators."""
     if default is None:
@@ -25,6 +26,10 @@ def create_param_artifact(
 
     artifact_type = infer_artifact_type(default)
     param_spec = construct_param_spec(default, artifact_type)
+
+    # Only when creating a new parameter artifact can we potentially set whether it was originally
+    # defined as an implicit parameter.
+    param_spec.implicitly_created = is_implicit
 
     operator_id = generate_uuid()
     output_artifact_id = generate_uuid()

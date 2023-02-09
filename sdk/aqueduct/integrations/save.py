@@ -64,7 +64,7 @@ def _save_artifact(
     # If the name is not set yet, we know we have to make a new load operator, so bump the
     # suffix until a unique name is found.
     if load_op_name is None:
-        load_op_name = dag.get_unclaimed_op_name(prefix="save to %s" % integration_info.name)
+        load_op_name = dag.get_unclaimed_name(prefix="save to %s" % integration_info.name)
 
     apply_deltas_to_dag(
         dag,

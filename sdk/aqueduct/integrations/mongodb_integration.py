@@ -60,7 +60,7 @@ class MongoDBCollectionIntegration(Integration):
             lazy:
                 Whether to run this operator lazily. See https://docs.aqueducthq.com/operators/lazy-vs.-eager-execution .
         """
-        op_name = name or self._dag.get_unclaimed_op_name(prefix="%s query" % self.name())
+        op_name = name or self._dag.get_unclaimed_name(prefix="%s query" % self.name())
         artifact_name = output or artifact_name_from_op_name(op_name)
         _validate_artifact_name(self._dag, op_name, artifact_name)
 

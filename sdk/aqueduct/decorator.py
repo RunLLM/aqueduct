@@ -26,7 +26,7 @@ from aqueduct.models.operators import (
     MetricSpec,
     Operator,
     OperatorSpec,
-    ResourceConfig,
+    ResourceConfig, get_operator_type,
 )
 from aqueduct.type_annotations import CheckFunction, MetricFunction, Number, UserFunction
 from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
@@ -243,10 +243,20 @@ def _convert_input_arguments_to_parameters(
     """
     Converts non-artifact inputs to parameters.
 
-    Errors if the implicitly-created parameter collides with an existing one. Also errors if the function has a
-    variable-length parameter, since we don't know what name to attribute to those.
+    Errors if the function has a variable-length parameter, since we don't know what name to attribute to those.
 
-    `func_params` maps from parameter name to an `inspect.Parameter` object containing additional information.
+    Args:
+        input_artifacts:
+            Entries in this list are not artifacts if the corresponding argument was supplied as an
+            implicit parameter.
+        func_params:
+            Maps from parameter name to an `inspect.Parameter` object containing additional information.
+
+    The collision policy is as follows:
+    - If the colliding operator is also a parameter operator that was created implicitly, we will overwrite it.
+    - Otherwise, we will bump the parameter name until it is unique.
+
+    Errors if the function has a variable-length parameter, since we don't know what name to attribute to those.
     """
     # KEYWORD_ONLY parameters are allowed, since they are guaranteed to have a name.
     # Note that we only accept them after "*" arguments, since we error out on VAR_POSITIONAL (eg. *args).
@@ -263,6 +273,8 @@ def _convert_input_arguments_to_parameters(
     artifacts = list(input_artifacts)
     for idx, artifact in enumerate(artifacts):
         if not isinstance(artifact, BaseArtifact):
+            default = artifact
+
             if implicit_params_disallowed:
                 raise InvalidUserArgumentException(
                     """Input at index %d to function is not an artifact. Creating an Aqueduct parameter implicitly for a """
@@ -272,19 +284,26 @@ def _convert_input_arguments_to_parameters(
 
             # We assume that the parameter name exists here, since we've disallowed any variable-length parameters.
             arg_name = param_names[idx]
-            if dag.get_operator(with_name=arg_name) is not None:
-                raise InvalidUserArgumentException(
-                    """Input to function argument "%s" is not an artifact. We tried implicitly \
-creating a parameter named "%s", but an existing operator or parameter with the same name already exists."""
-                    % (arg_name, arg_name)
-                )
 
-            new_artifact = create_param_artifact(dag=dag, name=arg_name, default=artifact)
+            param_name = arg_name
+            if not dag.is_name_unique(param_name):
+
+                # Because parameter operators and their artifacts must always have the same name, we only
+                # need to check for operator name collisions to decide whether to bump or not.
+                colliding_op = dag.get_operator(with_name=param_name)
+                if (
+                    colliding_op is None or
+                    get_operator_type(colliding_op) != OperatorType.PARAM or
+                    not colliding_op.spec.param.implicitly_created
+                ):
+                    param_name = dag.get_unclaimed_name(prefix=param_name)
+
+            new_artifact = create_param_artifact(dag=dag, name=param_name, default=default, is_implicit=True)
             warnings.warn(
                 """Input to function argument "%s" is not an artifact type. We have implicitly \
 created a parameter named "%s" and your input will be used as its default value. This parameter \
 will be used when running the function."""
-                % (arg_name, arg_name)
+                % (arg_name, param_name)
             )
             artifacts[idx] = new_artifact
     return artifacts

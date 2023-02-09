@@ -281,8 +281,15 @@ class DAG(BaseModel):
 
         return artifacts
 
-    def get_unclaimed_op_name(self, prefix: str) -> str:
-        """Returns an operator name that is guaranteed to not collide with any existing name in the dag.
+    def is_name_unique(self, name: str) -> bool:
+        colliding_op = self.get_operator(with_name=name)
+        colliding_artifact = self.get_artifact_by_name(name)
+        return colliding_op is None and colliding_artifact is None
+
+    def get_unclaimed_name(self, prefix: str) -> str:
+        """Returns a name that is guaranteed to not collide with any existing name in the dag.
+
+        This includes both operators and artifacts, since artifacts can be renamed separately now.
 
         Starts with the operator name `<prefix> 1`. If it is taken, we continue to increment the suffix counter
         until we hit an unclaimed name.
@@ -290,9 +297,7 @@ class DAG(BaseModel):
         curr_suffix = 1
         while True:
             candidate_name = prefix + " %d" % curr_suffix
-            colliding_op = self.get_operator(with_name=candidate_name)
-            if colliding_op is None:
-                # We've found an unallocated name!
+            if self.is_name_unique(candidate_name):
                 op_name = candidate_name
                 break
             curr_suffix += 1
@@ -343,6 +348,9 @@ class DAG(BaseModel):
 
     def update_artifact_name(self, artifact_id: uuid.UUID, new_name: str) -> None:
         self.must_get_artifact(artifact_id).name = new_name
+
+    def update_operator_name(self, op_id: uuid.UUID, new_name: str) -> None:
+        self.must_get_operator(op_id).name = new_name
 
     def update_operator_spec(self, name: str, spec: OperatorSpec) -> None:
         """Replaces an operator's spec in the dag.
