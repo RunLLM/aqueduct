@@ -10,7 +10,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
-	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -55,10 +54,9 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 	if err != nil {
 		return errors.Wrap(err, "Unable to authenticate Lambda Function.")
 	}
-	// Pull images on a concurrency of "MaxConcurrentDownload".
 
 	errGroup, _ := errgroup.WithContext(ctx)
-
+	// Pull images on a concurrency of "MaxConcurrentDownload".
 	pullImageChannel := make(chan lambda_utils.LambdaFunctionType, len(functionsToShip))
 	defer close(pullImageChannel)
 	pushImageChannel := make(chan lambda_utils.LambdaFunctionType, len(functionsToShip))
@@ -70,32 +68,29 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 				select {
 				case functionType := <-pullImageChannel:
 					lambdaFunctionType := functionType
-					log.Info("Pulling", lambdaFunctionType)
 					err := lambda_utils.PullImageFromECR(lambdaFunctionType)
 					if err != nil {
 						return err
 					}
 					pushImageChannel <- functionType
 				default:
-					log.Info("stop here ", len(pullImageChannel))
 					return nil
 				}
 			}
 		})
 	}
 
-	// Create lambda functions on a concurrency of "MaxConcurrentUpload".
-
+	// Create a signal channel to flag when all the lambda functions have been created.
 	signalChannel := make(chan lambda_utils.LambdaFunctionType, len(functionsToShip))
 	lambda_utils.AddFunctionTypeToChannel(functionsToShip[:], signalChannel)
 
+	// Receive the downloaded docker images from push channels and create lambda functions on a concurrency of "MaxConcurrentUpload".
 	for i := 0; i < MaxConcurrentUpload; i++ {
 		errGroup.Go(func() error {
 			for {
 				select {
 				case functionType := <-pushImageChannel:
 					lambdaFunctionType := functionType
-					log.Info("Pushing", lambdaFunctionType)
 					err := lambda_utils.CreateLambdaFunction(lambdaFunctionType, lambdaConf.RoleArn)
 					if err != nil {
 						return err
