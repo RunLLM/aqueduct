@@ -3,7 +3,7 @@ package storage
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"io"
 	"net/url"
 	"path"
 	"strings"
@@ -64,7 +64,7 @@ func (s *s3Storage) Get(ctx context.Context, key string) ([]byte, error) {
 	}
 	defer result.Body.Close()
 
-	content, err := ioutil.ReadAll(result.Body)
+	content, err := io.ReadAll(result.Body)
 	if err != nil {
 		return nil, err
 	}
