@@ -88,7 +88,7 @@ type workflowDagImpl struct {
 }
 
 func (dag *workflowDagImpl) ID() uuid.UUID {
-	return dag.dbDAG.ID
+	return dag.dbDAG.Metadata.ID
 }
 
 func (dag *workflowDagImpl) UserID() uuid.UUID {
