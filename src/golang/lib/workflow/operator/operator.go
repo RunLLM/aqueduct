@@ -98,7 +98,7 @@ func NewOperator(
 	execEnv *exec_env.ExecutionEnvironment,
 	aqPath string,
 	db database.Database,
-	engineJobManager *job.JobManager,
+	dagJobManager job.JobManager, // Override that is only used when operator jobManagers need shared context.
 ) (Operator, error) {
 	if len(inputs) != len(inputExecPaths) {
 		return nil, errors.New("Internal error: mismatched number of input arguments.")
@@ -116,24 +116,17 @@ func NewOperator(
 	}
 
 	var jobManager job.JobManager
-	if engineJobManager == nil {
-		jobConfig, err := GenerateJobManagerConfig(
-			ctx,
-			opEngineConfig,
-			storageConfig,
-			aqPath,
-			vaultObject,
+	var err error
+
+	if dagJobManager == nil {
+		jobManager, err = job.GenerateNewJobManager(
+			ctx, opEngineConfig, storageConfig, aqPath, vaultObject,
 		)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to generate JobManagerConfig.")
-		}
-
-		jobManager, err = job.NewJobManager(jobConfig)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to create JobManager.")
+			return nil, errors.Wrap(err, "Unable to generate a new JobManager.")
 		}
 	} else {
-		jobManager = *engineJobManager
+		jobManager = dagJobManager
 	}
 
 	now := time.Now()

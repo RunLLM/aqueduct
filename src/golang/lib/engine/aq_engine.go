@@ -268,9 +268,9 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to initialize vault.")
 	}
 
-	var jobManager *job.JobManager = nil
+	var jobManager job.JobManager
 	if dbDAG.EngineConfig.Type == shared.DatabricksEngineType {
-		jobConfig, err := operator.GenerateJobManagerConfig(
+		jobManager, err = job.GenerateNewJobManager(
 			ctx,
 			dbDAG.EngineConfig,
 			&dbDAG.StorageConfig,
@@ -278,11 +278,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 			vaultObject,
 		)
 		if err != nil {
-			return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create JobManager config.")
-		}
-		*jobManager, err = job.NewJobManager(jobConfig)
-		if err != nil {
-			return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create JobManager.")
+			return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to generate a new JobManager.")
 		}
 	}
 
@@ -366,9 +362,9 @@ func (eng *aqEngine) PreviewWorkflow(
 		return nil, errors.Wrap(err, "Unable to initialize vault.")
 	}
 
-	var jobManager *job.JobManager = nil
+	var jobManager job.JobManager
 	if dbDAG.EngineConfig.Type == shared.DatabricksEngineType {
-		jobConfig, err := operator.GenerateJobManagerConfig(
+		jobManager, err = job.GenerateNewJobManager(
 			ctx,
 			dbDAG.EngineConfig,
 			&dbDAG.StorageConfig,
@@ -376,11 +372,7 @@ func (eng *aqEngine) PreviewWorkflow(
 			vaultObject,
 		)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to create JobManager config.")
-		}
-		*jobManager, err = job.NewJobManager(jobConfig)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to create JobManager.")
+			return nil, errors.Wrap(err, "Unable to generate a new JobManager.")
 		}
 	}
 
@@ -822,12 +814,11 @@ func (eng *aqEngine) executeWithEngine(
 	timeConfig *AqueductTimeConfig,
 	opExecMode operator.ExecutionMode,
 	vaultObject vault.Vault,
-	engJobManager *job.JobManager,
+	dagJobManager job.JobManager,
 ) error {
 	switch engineConfig.Type {
 	case shared.DatabricksEngineType:
-		jobManager := *engJobManager
-		databricksJobManager, ok := jobManager.(*job.DatabricksJobManager)
+		databricksJobManager, ok := dagJobManager.(*job.DatabricksJobManager)
 		if !ok {
 			return errors.New("Unable to create DatabricksJobManager.")
 		}

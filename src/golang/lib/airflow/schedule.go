@@ -159,7 +159,6 @@ func ScheduleWorkflow(
 			outputArtifacts = append(outputArtifacts, outputArtifact)
 			outputExecPaths = append(outputExecPaths, artifactIDToExecPaths[artifactId])
 		}
-		var emptyJobManager *job.JobManager = nil
 		airflowOperator, err := operator.NewOperator(
 			ctx,
 			op,
@@ -176,7 +175,7 @@ func ScheduleWorkflow(
 			nil,              /* ExecEnv */
 			"",               /* aqPath */
 			DB,
-			emptyJobManager,
+			nil, /* jobManager */
 		)
 		if err != nil {
 			return nil, err

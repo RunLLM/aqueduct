@@ -196,7 +196,7 @@ func NewWorkflowDag(
 	opExecMode operator.ExecutionMode,
 	aqPath string,
 	DB database.Database,
-	engJobManager *job.JobManager,
+	dagJobManager job.JobManager,
 ) (WorkflowDag, error) {
 	dbArtifacts := dag.Artifacts
 	dbOperators := dag.Operators
@@ -319,7 +319,7 @@ func NewWorkflowDag(
 			execEnvPtr,
 			aqPath,
 			DB,
-			engJobManager,
+			dagJobManager,
 		)
 		if err != nil {
 			return nil, err
