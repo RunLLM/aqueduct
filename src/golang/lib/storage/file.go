@@ -53,6 +53,12 @@ func (f *fileStorage) Delete(ctx context.Context, key string) error {
 	return os.Remove(f.getFullPath(key))
 }
 
+func (f *fileStorage) Exists(ctx context.Context, key string) bool {
+	path := f.getFullPath(key)
+	_, err := os.Stat(path)
+	return !errors.Is(err, os.ErrNotExist)
+}
+
 func (f *fileStorage) getFullPath(key string) string {
 	return fmt.Sprintf("%s/%s", f.fileConfig.Directory, key)
 }

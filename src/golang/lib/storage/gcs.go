@@ -104,6 +104,20 @@ func (g *gcsStorage) Delete(ctx context.Context, key string) error {
 	return client.Bucket(bucket).Object(key).Delete(ctx)
 }
 
+func (g *gcsStorage) Exists(ctx context.Context, key string) bool {
+	client, err := g.newClient(ctx)
+	if err != nil {
+		return false
+	}
+	defer client.Close()
+
+	bucket, key := g.parseBucketAndKey(key)
+
+	// Check if object exists
+	_, err = client.Bucket(bucket).Object(key).Attrs(ctx)
+	return err != storage.ErrObjectNotExist
+}
+
 // newClient returns a GCS client for this storage object.
 // The caller must call `defer client.Close()` on the returned storage client.
 func (g *gcsStorage) newClient(ctx context.Context) (*storage.Client, error) {
