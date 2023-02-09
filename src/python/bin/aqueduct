@@ -37,12 +37,12 @@ s3_server_prefix = (
 )
 s3_ui_prefix = "https://aqueduct-ai.s3.us-east-2.amazonaws.com/assets/%s/ui" % package_version
 
-login_url = "http://%s:%d/login?apiKey=%s"
+login_url = "%s:%d/login?apiKey=%s"
 welcome_message = """
 ***************************************************
 Your API Key: %s
 
-The Web UI and the backend server (v%s) are accessible at: http://%s:%d/login?apiKey=%s
+The Web UI and the backend server (v%s) are accessible at: %s:%d/login?apiKey=%s
 
 Aqueduct collects non sensitive usage data to improve its services.
 Please refer to https://docs.aqueducthq.com/usage for more details.
@@ -345,21 +345,26 @@ def execute_command_nonblocking(args, cwd=None):
     return subprocess.Popen(args, stdout=sys.stdout, stderr=sys.stderr, cwd=cwd)
 
 
-def generate_welcome_message(expose, port):
+def get_address(expose):
     if not expose:
-        expose_ip = "localhost"
+        expose_ip = "http://localhost"
     else:
         try:
-            expose_ip = requests.get(
+            expose_ip = f"http://{requests.get(
                 "http://169.254.169.254/latest/meta-data/public-ipv4", timeout=0.25
-            ).content.decode("utf-8")
+            ).content.decode("utf-8")}"
         except:  # If you're not running on EC2, this will return an error.
-            expose_ip = "<IP_ADDRESS>"
+            expose_ip = ""
+    
+    return expose_ip
 
+def generate_welcome_message(addr, port):
+    addr = addr if addr else "http://<IP_ADDRESS>"
     apikey = get_apikey()
+
     return (
-        welcome_message % (apikey, package_version, expose_ip, port, apikey),
-        login_url % (expose_ip, port, apikey),
+        welcome_message % (apikey, package_version, addr, port, apikey),
+        login_url % (addr, port, apikey),
     )
 
 
@@ -374,7 +379,7 @@ def cache_env(env):
             f.write(env)
 
 
-def start(expose, port, verbose, env, disable_usage_stats):
+def start(addr, expose, port, verbose, env, disable_usage_stats):
     update()
 
     if port is None:
@@ -398,6 +403,8 @@ def start(expose, port, verbose, env, disable_usage_stats):
         os.path.join(server_directory, "config", "config.yml"),
         "--port",
         str(server_port),
+        "--external-ip",
+        addr,
     ]
 
     if expose:
@@ -688,13 +695,21 @@ if __name__ == "__main__":
 
     if args.command == "start":
         try:
-            popen_handle, server_port = start(args.expose, args.port, args.verbose, args.env, args.disable_usage_stats)
+            addr = get_address(args.expose)
+            popen_handle, server_port = start(
+                addr,
+                args.expose,
+                args.port,
+                args.verbose,
+                args.env,
+                args.disable_usage_stats,
+            )
             time.sleep(1)
             terminated = popen_handle.poll()
             if terminated:
                 print("Server terminated due to an error.")
             else:
-                welcome_message, url = generate_welcome_message(args.expose, server_port)
+                welcome_message, url = generate_welcome_message(addr, server_port)
                 print(welcome_message)
 
                 if not args.expose:

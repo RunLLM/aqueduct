@@ -115,11 +115,13 @@ func (s *SlackNotification) SendForDag(
 		contextMarkdownBlock = fmt.Sprintf("\n*Error:*\n%s", systemErrContext)
 	}
 
+	linkContent := fmt.Sprintf("Check Aqueduct UI for more details: %s", wfDag.ResultLink())
 	nameContent := fmt.Sprintf("*Workflow:* `%s`", wfDag.Name())
 	IDContent := fmt.Sprintf("*ID:* `%s`", wfDag.ID())
 	resultIDContent := fmt.Sprintf("*Result ID:* `%s`", wfDag.ResultID())
 	msg := fmt.Sprintf(
-		"%s\n%s\n%s%s%s",
+		"%s\n%s\n%s\n%s%s%s",
+		linkContent,
 		nameContent,
 		IDContent,
 		resultIDContent,

@@ -84,12 +84,15 @@ func (e *EmailNotification) SendForDag(
 	}
 
 	body := fmt.Sprintf(`<div dir="ltr">
+		<div>Go to Aqueduct UI for more details: <a href="%s">%s</a></div>
 		<div><b>Workflow</b>: <font face="monospace">%s</font></div>
 		<div><b>ID</b>: <font face="monospace">%s</font></div>
 		<div><b>Result ID</b>: <font face="monospace">%s</font></div>
 		%s
 		%s
 		</div>`,
+		wfDag.ResultLink(),
+		wfDag.ResultLink(),
 		wfDag.Name(),
 		wfDag.ID(),
 		wfDag.ResultID(),
