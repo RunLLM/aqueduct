@@ -63,7 +63,7 @@ func AuthenticateDockerToECR() error {
 	return nil
 }
 
-func PullImageFromECR(functionType LambdaFunctionType, channel chan LambdaFunctionType) error {
+func PullImageFromECR(functionType LambdaFunctionType) error {
 	// Pull the Image from public ECR Library.
 	lambdaImageUri, _, err := mapFunctionType(functionType)
 	if err != nil {
@@ -83,7 +83,6 @@ func PullImageFromECR(functionType LambdaFunctionType, channel chan LambdaFuncti
 		log.Info(stderr.String())
 		return errors.Wrap(err, "Unable to pull docker image from dockerhub.")
 	}
-	channel <- functionType
 	return nil
 }
 
@@ -182,7 +181,7 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 			return errors.Wrap(err, "Unable to update lambda function.")
 		}
 	}
-	log.Info(functionType)
+	log.Info("finishing", functionType)
 	return nil
 }
 
@@ -229,5 +228,13 @@ func mapFunctionType(functionType LambdaFunctionType) (string, string, error) {
 	default:
 		return "", "", errors.New("Invalide function type")
 
+	}
+}
+
+func AddFunctionTypeToChannel(functionsToShip []LambdaFunctionType, channel chan LambdaFunctionType) {
+	// Add lambda function types to buffered channel for pulling and creating lambda function.
+	for _, lambdaFunctionType := range functionsToShip {
+		lambdaFunctionTypeToPass := lambdaFunctionType
+		channel <- lambdaFunctionTypeToPass
 	}
 }
