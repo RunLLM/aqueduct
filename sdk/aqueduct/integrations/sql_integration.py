@@ -28,6 +28,8 @@ from aqueduct import globals
 LIST_TABLES_QUERY_PG = "SELECT tablename, tableowner FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema';"
 LIST_TABLES_QUERY_SNOWFLAKE = "SELECT table_name AS \"tablename\", table_owner AS \"tableowner\" FROM information_schema.tables WHERE table_schema != 'INFORMATION_SCHEMA' AND table_type = 'BASE TABLE';"
 LIST_TABLES_QUERY_MYSQL = "SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('mysql', 'sys', 'performance_schema');"
+LIST_TABLES_QUERY_MARIADB = "SELECT table_name AS \"tablename\" FROM INFORMATION_SCHEMA.TABLES WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('mysql', 'sys', 'performance_schema');"
+
 LIST_TABLES_QUERY_SQLSERVER = (
     "SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_type = 'BASE TABLE';"
 )
@@ -116,8 +118,10 @@ class RelationalDBIntegration(Integration):
             list_tables_query = LIST_TABLES_QUERY_PG
         elif self.type() == ServiceType.SNOWFLAKE:
             list_tables_query = LIST_TABLES_QUERY_SNOWFLAKE
-        elif self.type() in [ServiceType.MYSQL, ServiceType.MARIADB]:
+        elif self.type() == ServiceType.MYSQL:
             list_tables_query = LIST_TABLES_QUERY_MYSQL
+        elif self.type() == ServiceType.MARIADB:
+            list_tables_query = LIST_TABLES_QUERY_MARIADB
         elif self.type() == ServiceType.SQLSERVER:
             list_tables_query = LIST_TABLES_QUERY_SQLSERVER
         elif self.type() == ServiceType.SQLITE:
@@ -126,7 +130,6 @@ class RelationalDBIntegration(Integration):
             list_tables_query = LIST_TABLES_QUERY_ATHENA
 
         sql_artifact = self.sql(query=list_tables_query)
-        print(self.type(), list_tables_query, sql_artifact.get())
         return sql_artifact.get()
 
     def table(self, name: str) -> pd.DataFrame:

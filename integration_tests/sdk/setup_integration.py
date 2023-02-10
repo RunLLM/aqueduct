@@ -141,13 +141,8 @@ def _setup_snowflake_data(client: Client, snowflake: RelationalDBIntegration) ->
 
 def _setup_relational_data(client: Client, db: RelationalDBIntegration) -> None:
     # Find all the tables that already exist.
-    columns = list(db.list_tables().columns)
-    if "tablename" in columns:
-        existing_table_names = set(db.list_tables()["tablename"])
-    elif "table_name" in columns:
-        existing_table_names = set(db.list_tables()["table_name"])
-    else:
-        raise Exception(f"Cannot find table names in: {columns}")
+    existing_table_names = set(db.list_tables()["tablename"])
+
     _add_missing_artifacts(client, db, existing_table_names)
 
 
