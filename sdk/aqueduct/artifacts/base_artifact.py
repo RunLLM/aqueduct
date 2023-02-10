@@ -40,12 +40,7 @@ class BaseArtifact(ABC):
         self._from_operator_type = operator_type
 
     def set_name(self, name: str) -> None:
-        existing = self._dag.get_artifact_by_name(name)
-        if existing is not None:
-            raise InvalidUserActionException(
-                "Artifact with name `%s` has already been created locally. Artifact names must be unique."
-                % name,
-            )
+        self._dag.validate_artifact_name(name)
 
         # If this a parameter artifact, we will also need to change the name of the parameter,
         # to preserve our invariant that a param op and its artifact always have the same name.

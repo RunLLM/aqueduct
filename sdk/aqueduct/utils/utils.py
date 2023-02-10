@@ -87,10 +87,6 @@ def generate_flow_schedule(
     return Schedule(trigger=TriggerType.PERIODIC, cron_schedule=schedule_str)
 
 
-def artifact_name_from_op_name(op_name: str) -> str:
-    return op_name + " artifact"
-
-
 def human_readable_timestamp(ts: int) -> str:
     format = "%Y-%m-%d %H:%M:%S"
     return datetime.utcfromtimestamp(ts).strftime(format)

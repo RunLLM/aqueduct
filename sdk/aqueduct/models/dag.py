@@ -1,27 +1,18 @@
 import uuid
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from aqueduct.constants.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
 from aqueduct.error import (
     ArtifactNotFoundException,
     InternalAqueductError,
     InvalidUserActionException,
-    InvalidUserArgumentException,
 )
-from aqueduct.logger import logger
 from pydantic import BaseModel
 
 from .artifact import ArtifactMetadata
 from .config import EngineConfig
 from .dag_rules import check_customized_resources_are_supported
-from .operators import (
-    LAMBDA_MAX_MEMORY_MB,
-    LAMBDA_MIN_MEMORY_MB,
-    Operator,
-    OperatorSpec,
-    get_operator_type,
-    get_operator_type_from_spec,
-)
+from .operators import Operator, OperatorSpec, get_operator_type, get_operator_type_from_spec
 
 
 class Schedule(BaseModel):
@@ -282,28 +273,39 @@ class DAG(BaseModel):
         return artifacts
 
     def is_name_unique(self, name: str) -> bool:
+        """Returns whether a name is globally unique."""
         colliding_op = self.get_operator(with_name=name)
         colliding_artifact = self.get_artifact_by_name(name)
         return colliding_op is None and colliding_artifact is None
 
     def get_unclaimed_name(self, prefix: str) -> str:
-        """Returns a name that is guaranteed to not collide with any existing name in the dag.
+        """Returns a name that is guaranteed to not collide with *any* existing name in the dag.
 
-        This includes both operators and artifacts, since artifacts can be renamed separately now.
+        This is mainly used for allocating a unique parameter name. For non-parameter use cases,
+        see `resolve_op_and_artifact_names()`.
 
-        Starts with the operator name `<prefix> 1`. If it is taken, we continue to increment the suffix counter
+        Starts with the operator name `<prefix> (1)`. If it is taken, we continue to increment the suffix counter
         until we hit an unclaimed name.
         """
         curr_suffix = 1
         while True:
             candidate_name = prefix + " (%d)" % curr_suffix
             if self.is_name_unique(candidate_name):
-                op_name = candidate_name
+                name = candidate_name
                 break
             curr_suffix += 1
 
-        assert op_name is not None
-        return op_name
+        assert name is not None
+        return name
+
+    def validate_artifact_name(self, name: str) -> None:
+        """Checks that the artifact name is unique."""
+        existing = self.get_artifact_by_name(name)
+        if existing is not None:
+            raise InvalidUserActionException(
+                "Artifact with name `%s` has already been created locally. Artifact names must be unique."
+                % name,
+            )
 
     def list_metrics_for_operator(self, op: Operator) -> List[Operator]:
         """Returns all the metric operators on the given operator's outputs."""

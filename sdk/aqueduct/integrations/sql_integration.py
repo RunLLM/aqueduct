@@ -8,7 +8,7 @@ from aqueduct.artifacts.preview import preview_artifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, LoadUpdateMode, ServiceType
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.integrations.naming import _validate_artifact_name
+from aqueduct.integrations.naming import _resolve_op_and_artifact_name_for_extract
 from aqueduct.integrations.save import _save_artifact
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
@@ -21,7 +21,7 @@ from aqueduct.models.operators import (
     RelationalDBLoadParams,
 )
 from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.utils.utils import artifact_name_from_op_name, generate_uuid
+from aqueduct.utils.utils import generate_uuid
 
 from aqueduct import globals
 
@@ -178,13 +178,12 @@ class RelationalDBIntegration(Integration):
 
         execution_mode = ExecutionMode.LAZY if lazy else ExecutionMode.EAGER
 
-        # The sql operator name defaults to "[integration name] query 1". If another
-        # sql operator already exists with that name, we'll continue bumping the suffix
-        # until the sql operator is unique. If an explicit name is provided, we will
-        # overwrite the existing one.
-        sql_op_name = name or self._dag.get_unclaimed_name(prefix="%s query" % self.name())
-        artifact_name = output or artifact_name_from_op_name(sql_op_name)
-        _validate_artifact_name(self._dag, sql_op_name, artifact_name)
+        op_name, artifact_name = _resolve_op_and_artifact_name_for_extract(
+            dag=self._dag,
+            op_name=name,
+            default_op_name="%s query" % self.name(),
+            artifact_name=output,
+        )
 
         extract_params = query
         if isinstance(extract_params, str):
@@ -244,7 +243,7 @@ class RelationalDBIntegration(Integration):
                 AddOrReplaceOperatorDelta(
                     op=Operator(
                         id=sql_operator_id,
-                        name=sql_op_name,
+                        name=op_name,
                         description=description,
                         spec=OperatorSpec(
                             extract=ExtractSpec(

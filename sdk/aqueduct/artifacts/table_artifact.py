@@ -38,7 +38,8 @@ from aqueduct.utils.describe import (
     get_readable_description_for_metric,
 )
 from aqueduct.utils.function_packaging import serialize_function
-from aqueduct.utils.utils import artifact_name_from_op_name, format_header_for_print, generate_uuid
+from aqueduct.utils.naming import artifact_name_from_op_name
+from aqueduct.utils.utils import format_header_for_print, generate_uuid
 from ruamel import yaml
 
 from aqueduct import globals

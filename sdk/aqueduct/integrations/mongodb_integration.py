@@ -6,7 +6,7 @@ from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, LoadUpdateMode
 from aqueduct.error import InvalidUserArgumentException
-from aqueduct.integrations.naming import _validate_artifact_name
+from aqueduct.integrations.naming import _resolve_op_and_artifact_name_for_extract
 from aqueduct.integrations.save import _save_artifact
 from aqueduct.integrations.sql_integration import find_parameter_artifacts, find_parameter_names
 from aqueduct.models.artifact import ArtifactMetadata
@@ -20,7 +20,7 @@ from aqueduct.models.operators import (
     RelationalDBLoadParams,
 )
 from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.utils.utils import artifact_name_from_op_name, generate_uuid
+from aqueduct.utils.utils import generate_uuid
 
 from aqueduct import globals
 
@@ -60,9 +60,12 @@ class MongoDBCollectionIntegration(Integration):
             lazy:
                 Whether to run this operator lazily. See https://docs.aqueducthq.com/operators/lazy-vs.-eager-execution .
         """
-        op_name = name or self._dag.get_unclaimed_name(prefix="%s query" % self.name())
-        artifact_name = output or artifact_name_from_op_name(op_name)
-        _validate_artifact_name(self._dag, op_name, artifact_name)
+        op_name, artifact_name = _resolve_op_and_artifact_name_for_extract(
+            dag=self._dag,
+            op_name=name,
+            default_op_name="%s query" % self.name(),
+            artifact_name=output,
+        )
 
         if globals.__GLOBAL_CONFIG__.lazy:
             lazy = True

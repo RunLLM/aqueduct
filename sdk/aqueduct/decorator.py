@@ -32,7 +32,8 @@ from aqueduct.models.operators import (
 from aqueduct.type_annotations import CheckFunction, MetricFunction, Number, UserFunction
 from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.function_packaging import serialize_function
-from aqueduct.utils.utils import artifact_name_from_op_name, generate_engine_config, generate_uuid
+from aqueduct.utils.naming import artifact_name_from_op_name, resolve_op_and_artifact_names
+from aqueduct.utils.utils import generate_engine_config, generate_uuid
 
 from aqueduct import globals
 
@@ -111,15 +112,13 @@ def wrap_spec(
     operator_id = generate_uuid()
     output_artifact_ids = [generate_uuid() for _ in output_artifact_type_hints]
 
-    def _construct_default_artifact_name(i: int, op_name: str) -> str:
-        """The default artifact naming policy is "<op_name> artifact <optional counter>".
-
-        The counter starts at 1, and is only present in the multi-output case.
-        """
-        assert i < len(output_artifact_ids)
-        if len(output_artifact_ids) == 1:
-            return artifact_name_from_op_name(op_name)
-        return artifact_name_from_op_name(op_name) + " %d" % (i + 1)
+    op_name, artifact_names = resolve_op_and_artifact_names(
+        dag,
+        op_name,
+        overwrite_existing_op_name=True,
+        candidate_artifact_names=output_artifact_names,
+        num_outputs=len(output_artifact_ids),
+    )
 
     apply_deltas_to_dag(
         dag,
@@ -136,11 +135,7 @@ def wrap_spec(
                 output_artifacts=[
                     ArtifactMetadata(
                         id=output_artifact_id,
-                        name=(
-                            output_artifact_names[i]
-                            if output_artifact_names is not None
-                            else _construct_default_artifact_name(i, op_name)
-                        ),
+                        name=artifact_names[i],
                         type=output_artifact_type_hints[i],
                     )
                     for i, output_artifact_id in enumerate(output_artifact_ids)

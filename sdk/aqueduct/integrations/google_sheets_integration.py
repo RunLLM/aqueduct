@@ -14,9 +14,9 @@ from aqueduct.models.operators import (
     OperatorSpec,
 )
 from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.utils.utils import artifact_name_from_op_name, generate_uuid
+from aqueduct.utils.utils import generate_uuid
 
-from .naming import _generate_extract_op_name
+from .naming import _resolve_op_and_artifact_name_for_extract
 from .save import _save_artifact
 
 
@@ -30,7 +30,11 @@ class GoogleSheetsIntegration(Integration):
         self._metadata = metadata
 
     def spreadsheet(
-        self, spreadsheet_id: str, name: Optional[str] = None, description: str = ""
+        self,
+        spreadsheet_id: str,
+        name: Optional[str] = None,
+        output: Optional[str] = None,
+        description: str = "",
     ) -> TableArtifact:
         """
         Retrieves a spreadsheet from the Google Sheets integration.
@@ -41,6 +45,8 @@ class GoogleSheetsIntegration(Integration):
                 https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/edit#gid=0
             name:
                 Name of the query.
+            output:
+                Name to assign the output artifact. If not set, the default naming scheme will be used.
             description:
                 Description of the query.
 
@@ -49,7 +55,12 @@ class GoogleSheetsIntegration(Integration):
         """
         integration_info = self._metadata
 
-        op_name = _generate_extract_op_name(self._dag, integration_info.name, name)
+        op_name, artifact_name = _resolve_op_and_artifact_name_for_extract(
+            dag=self._dag,
+            op_name=name,
+            default_op_name="%s query" % self.name(),
+            artifact_name=output,
+        )
 
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
@@ -75,7 +86,7 @@ class GoogleSheetsIntegration(Integration):
                     output_artifacts=[
                         ArtifactMetadata(
                             id=output_artifact_id,
-                            name=artifact_name_from_op_name(op_name),
+                            name=artifact_name,
                             type=ArtifactType.TABLE,
                         ),
                     ],
