@@ -32,15 +32,9 @@ import {
 import { AppDispatch, RootState } from '../../../../stores/store';
 import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
-import { Data } from '../../../../utils/data';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { handleExportFunction } from '../../../../utils/operators';
-import { exportCsv } from '../../../../utils/preview';
-import {
-  ExecutionStatus,
-  LoadingStatusEnum,
-  WidthTransition,
-} from '../../../../utils/shared';
+import { LoadingStatusEnum, WidthTransition } from '../../../../utils/shared';
 import {
   getDataSideSheetContent,
   sideSheetSwitcher,
@@ -51,10 +45,12 @@ import DefaultLayout, {
   SidesheetWidth,
 } from '../../../layouts/default';
 import { Button } from '../../../primitives/Button.styles';
+import { Tab, Tabs } from '../../../primitives/Tabs.styles';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowHeader, {
   WorkflowPageContentId,
 } from '../../../workflows/workflowHeader';
+import WorkflowSettings from '../../../workflows/WorkflowSettings';
 import { LayoutProps } from '../../types';
 
 type WorkflowPageProps = {
@@ -72,6 +68,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const urlSearchParams = parse(window.location.search);
   const location = useLocation();
   const path = location.pathname;
+  const [currentTab, setCurrentTab] = React.useState<string>('Details');
 
   const currentNode = useSelector(
     (state: RootState) => state.nodeSelectionReducer.selected
@@ -164,7 +161,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
    */
 
   const getArtifactResultDetails = useCallback(
-    (nodeId: string) => {
+    (nodeId: string, metadataOnly: boolean) => {
       const artf = (workflow.selectedDag?.artifacts ?? {})[nodeId];
       if (!artf || !workflow.selectedResult) {
         return;
@@ -176,6 +173,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             apiKey: user.apiKey,
             workflowDagResultId: workflow.selectedResult.id,
             artifactId: nodeId,
+            metadataOnly: metadataOnly,
           })
         );
       }
@@ -218,8 +216,16 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         );
       }
 
-      for (const artfId of [...op.inputs, ...op.outputs]) {
-        getArtifactResultDetails(artfId);
+      if (op.spec.metric || op.spec.check) {
+        for (const artfId of [...op.outputs]) {
+          // We set metadataOnly to false because for metric and check, we want to also show
+          // their values on the workflow page.
+          getArtifactResultDetails(artfId, false);
+        }
+      } else {
+        for (const artfId of [...op.outputs]) {
+          getArtifactResultDetails(artfId, true);
+        }
       }
     },
     [
@@ -234,7 +240,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
   useEffect(() => {
     getOperatorResultDetails(currentNode.id);
-    getArtifactResultDetails(currentNode.id);
+    getArtifactResultDetails(currentNode.id, true);
   }, [
     currentNode?.id,
     getArtifactResultDetails,
@@ -316,16 +322,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     };
 
     if (currentNode.type === NodeType.TableArtifact) {
-      // Since workflow is pending, it doesn't have a result set yet.
-      let artifactResultData: Data | null = null;
-      if (
-        artifactResult?.result &&
-        artifactResult.result.exec_state.status === ExecutionStatus.Succeeded &&
-        artifactResult.result.data.length > 0
-      ) {
-        artifactResultData = JSON.parse(artifactResult.result.data);
-      }
-
       return (
         <Box>
           <Button
@@ -340,14 +336,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             }}
           >
             View Artifact Details
-          </Button>
-          <Button
-            style={buttonStyle}
-            onClick={() =>
-              exportCsv(artifactResultData, getNodeLabel().replaceAll(' ', '_'))
-            }
-          >
-            Export CSV
           </Button>
         </Box>
       );
@@ -439,6 +427,34 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
   const drawerHeaderHeightInPx = 64;
 
+  const handleTabChange = (event: React.SyntheticEvent, newTab: string) => {
+    setCurrentTab(newTab);
+  };
+
+  interface TabPanelProps {
+    children?: React.ReactNode;
+    index: string;
+    value: string;
+  }
+
+  // TODO: Make this a component, probably can put this near the other tab component that we have
+  // Linear Task: https://linear.app/aqueducthq/issue/ENG-2409/tabpanel-component
+  function TabPanel(props: TabPanelProps) {
+    const { children, value, index, ...other } = props;
+
+    return (
+      <div
+        role="tabpanel"
+        hidden={value !== index}
+        id={`simple-tabpanel-${index}`}
+        aria-labelledby={`simple-tab-${index}`}
+        {...other}
+      >
+        {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+      </div>
+    );
+  }
+
   return (
     <Layout
       breadcrumbs={[
@@ -482,24 +498,45 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
         <Divider />
 
-        <Box
-          sx={{
-            flex: 1,
-            mt: 2,
-            p: 3,
-            mb: contentBottomOffsetInPx,
-            width: '100%',
-            boxSizing: 'border-box',
-            backgroundColor: theme.palette.gray['50'],
-          }}
-        >
-          <ReactFlowProvider>
-            <ReactFlowCanvas
-              switchSideSheet={switchSideSheet}
-              onPaneClicked={onPaneClicked}
-            />
-          </ReactFlowProvider>
-        </Box>
+        <Tabs value={currentTab} onChange={handleTabChange}>
+          <Tab value="Details" label="Details" />
+          <Tab value="Settings" label="Settings" />
+        </Tabs>
+
+        <TabPanel value={currentTab} index="Details">
+          <Box
+            sx={{
+              flex: 1,
+              mt: 2,
+              p: 3,
+              mb: contentBottomOffsetInPx,
+              width: '100%',
+              height: '100%',
+              boxSizing: 'border-box',
+              backgroundColor: theme.palette.gray['50'],
+            }}
+          >
+            <Box style={{ height: '100%' }}>
+              <ReactFlowProvider>
+                <ReactFlowCanvas
+                  switchSideSheet={switchSideSheet}
+                  onPaneClicked={onPaneClicked}
+                />
+              </ReactFlowProvider>
+            </Box>
+          </Box>
+        </TabPanel>
+
+        <TabPanel value={currentTab} index="Settings">
+          {workflow.selectedDag && (
+            <Box marginBottom={1}>
+              <WorkflowSettings
+                user={user}
+                workflowDag={workflow.selectedDag}
+              />
+            </Box>
+          )}
+        </TabPanel>
       </Box>
 
       {currentNode.type !== NodeType.None && (

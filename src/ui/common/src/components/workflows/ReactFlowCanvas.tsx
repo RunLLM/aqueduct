@@ -1,3 +1,4 @@
+import Box from '@mui/material/Box';
 import React, { useEffect } from 'react';
 import ReactFlow, {
   Node as ReactFlowNode,
@@ -37,19 +38,21 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
   const { edges, nodes } = dagPositionState.result ?? { edges: [], nodes: [] };
 
   return (
-    <ReactFlow
-      onPaneClick={onPaneClicked}
-      nodes={nodes}
-      edges={edges}
-      onNodeClick={switchSideSheet}
-      nodeTypes={nodeTypes}
-      connectionLineStyle={connectionLineStyle}
-      snapToGrid={true}
-      snapGrid={snapGrid as [number, number]}
-      defaultZoom={1}
-      edgeTypes={EdgeTypes}
-      minZoom={0.25}
-    />
+    <Box sx={{ height: '50vh', width: '100%' }}>
+      <ReactFlow
+        onPaneClick={onPaneClicked}
+        nodes={nodes}
+        edges={edges}
+        onNodeClick={switchSideSheet}
+        nodeTypes={nodeTypes}
+        connectionLineStyle={connectionLineStyle}
+        snapToGrid={true}
+        snapGrid={snapGrid as [number, number]}
+        defaultZoom={1}
+        edgeTypes={EdgeTypes}
+        minZoom={0.25}
+      />
+    </Box>
   );
 };
 

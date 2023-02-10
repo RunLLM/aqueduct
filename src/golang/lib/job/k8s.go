@@ -185,25 +185,12 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 		// and not the status of the pod.
 		return status, nil
 	} else {
-		pod, err := k8s.GetPod(ctx, name, j.k8sClient)
+		_, err := k8s.GetPod(ctx, name, j.k8sClient)
 		if err != nil {
 			if err == k8s.ErrNoPodExists {
 				return shared.PendingExecutionStatus, nil
 			}
 			return shared.FailedExecutionStatus, systemError(err)
-		}
-
-		if pod.Status.Phase == corev1.PodPending {
-			for _, condition := range pod.Status.Conditions {
-				// If the pod is unschedulable, fail the operator immediately with the K8s message (eg. "Insufficient CPU").
-				if condition.Type == corev1.PodScheduled &&
-					condition.Status == corev1.ConditionFalse &&
-					condition.Reason == corev1.PodReasonUnschedulable {
-					return shared.FailedExecutionStatus, userError(
-						errors.Newf("Pod could not be scheduled on Kubernetes. Reason: %s", condition.Message),
-					)
-				}
-			}
 		}
 
 		status = shared.PendingExecutionStatus

@@ -20,6 +20,8 @@ data:
   test_s3:
   test_mongo_db:
   test_athena:
+  test_mysql:
+  test_postgres:
 
 # REQUIRED: All the compute integrations to run the test suite against.
 # All entries here must be present in `test-credentials.yml`, except

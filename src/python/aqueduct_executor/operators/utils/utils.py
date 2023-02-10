@@ -69,8 +69,8 @@ def read_artifacts(
     for input_path, input_metadata_path in zip(input_paths, input_metadata_paths):
         # Make sure that the input paths exist.
         try:
-            _ = storage.get(input_path)
-            _ = storage.get(input_metadata_path)
+            _ = storage.exists(input_path)
+            _ = storage.exists(input_metadata_path)
         except Exception as e:
             # TODO(ENG-1627): think about retrying the parent operator in such instances.
             raise MissingInputPathsException(
