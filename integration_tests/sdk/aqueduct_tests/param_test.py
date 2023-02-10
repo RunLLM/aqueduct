@@ -150,6 +150,22 @@ def test_implicitly_create_parameter_with_naming_collisions(client, flow_name, e
     assert baz_output.get() == 800
     assert baz_output.get({"baz_param (2)": 800}) == 800
 
+    # Test that an implicit parameter can collide with an existing operator, also causing a name bump.
+    @op
+    def colliding():
+        return 222
+
+    _ = colliding()
+
+    @op
+    def qup(colliding):
+        return colliding
+
+    qup_output = qup(
+        500
+    )  # implicit parameter "colliding" will deduplicate against the function colliding().
+    assert qup_output.get({"colliding (1)": 100}) == 100
+
     # Test that an explicit parameter colliding with an explicit one will raise an exception.
     @op
     def another_fn(another_param):
@@ -164,13 +180,17 @@ def test_implicitly_create_parameter_with_naming_collisions(client, flow_name, e
 
     # Publish and validate the final value of each parameter.
     flow = publish_flow_test(
-        client, artifacts=[foo_output, bar_output, baz_output], name=flow_name(), engine=engine
+        client,
+        artifacts=[foo_output, bar_output, baz_output, qup_output],
+        name=flow_name(),
+        engine=engine,
     )
     flow_run = flow.latest()
 
     assert flow_run.artifact("foo_param").get() == "hello"
     assert flow_run.artifact("bar_param (1)").get() == 300
     assert flow_run.artifact("baz_param (2)").get() == 800
+    assert flow_run.artifact("colliding (1)").get() == 500
 
 
 def test_change_param_artifact_name(client, flow_name, engine):
