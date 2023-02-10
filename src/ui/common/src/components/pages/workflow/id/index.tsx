@@ -32,15 +32,9 @@ import {
 import { AppDispatch, RootState } from '../../../../stores/store';
 import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
-import { Data } from '../../../../utils/data';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { handleExportFunction } from '../../../../utils/operators';
-import { exportCsv } from '../../../../utils/preview';
-import {
-  ExecutionStatus,
-  LoadingStatusEnum,
-  WidthTransition,
-} from '../../../../utils/shared';
+import { LoadingStatusEnum, WidthTransition } from '../../../../utils/shared';
 import {
   getDataSideSheetContent,
   sideSheetSwitcher,
@@ -167,7 +161,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
    */
 
   const getArtifactResultDetails = useCallback(
-    (nodeId: string) => {
+    (nodeId: string, metadataOnly: boolean) => {
       const artf = (workflow.selectedDag?.artifacts ?? {})[nodeId];
       if (!artf || !workflow.selectedResult) {
         return;
@@ -179,6 +173,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             apiKey: user.apiKey,
             workflowDagResultId: workflow.selectedResult.id,
             artifactId: nodeId,
+            metadataOnly: metadataOnly,
           })
         );
       }
@@ -221,8 +216,16 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         );
       }
 
-      for (const artfId of [...op.inputs, ...op.outputs]) {
-        getArtifactResultDetails(artfId);
+      if (op.spec.metric || op.spec.check) {
+        for (const artfId of [...op.outputs]) {
+          // We set metadataOnly to false because for metric and check, we want to also show
+          // their values on the workflow page.
+          getArtifactResultDetails(artfId, false);
+        }
+      } else {
+        for (const artfId of [...op.outputs]) {
+          getArtifactResultDetails(artfId, true);
+        }
       }
     },
     [
@@ -237,7 +240,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
   useEffect(() => {
     getOperatorResultDetails(currentNode.id);
-    getArtifactResultDetails(currentNode.id);
+    getArtifactResultDetails(currentNode.id, true);
   }, [
     currentNode?.id,
     getArtifactResultDetails,
@@ -319,16 +322,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     };
 
     if (currentNode.type === NodeType.TableArtifact) {
-      // Since workflow is pending, it doesn't have a result set yet.
-      let artifactResultData: Data | null = null;
-      if (
-        artifactResult?.result &&
-        artifactResult.result.exec_state.status === ExecutionStatus.Succeeded &&
-        artifactResult.result.data.length > 0
-      ) {
-        artifactResultData = JSON.parse(artifactResult.result.data);
-      }
-
       return (
         <Box>
           <Button
@@ -343,14 +336,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             }}
           >
             View Artifact Details
-          </Button>
-          <Button
-            style={buttonStyle}
-            onClick={() =>
-              exportCsv(artifactResultData, getNodeLabel().replaceAll(' ', '_'))
-            }
-          >
-            Export CSV
           </Button>
         </Box>
       );

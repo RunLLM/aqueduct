@@ -136,7 +136,12 @@ export const handleGetOperatorResults = createAsyncThunk<
 
 export const handleGetArtifactResults = createAsyncThunk<
   GetArtifactResultResponse,
-  { apiKey: string; workflowDagResultId: string; artifactId: string }
+  {
+    apiKey: string;
+    workflowDagResultId: string;
+    artifactId: string;
+    metadataOnly: boolean;
+  }
 >(
   'workflowReducer/getArtifactResults',
   async (
@@ -144,16 +149,18 @@ export const handleGetArtifactResults = createAsyncThunk<
       apiKey: string;
       workflowDagResultId: string;
       artifactId: string;
+      metadataOnly: boolean;
     },
     thunkAPI
   ) => {
-    const { apiKey, workflowDagResultId, artifactId } = args;
+    const { apiKey, workflowDagResultId, artifactId, metadataOnly } = args;
     const res = await fetch(
       `${apiAddress}/api/artifact/${workflowDagResultId}/${artifactId}/result`,
       {
         method: 'GET',
         headers: {
           'api-key': apiKey,
+          'metadata-only': metadataOnly.toString(),
         },
       }
     );
@@ -164,6 +171,10 @@ export const handleGetArtifactResults = createAsyncThunk<
       const artifactResult = JSON.parse(
         metadataJson
       ) as GetArtifactResultResponse;
+
+      if (metadataOnly) {
+        return artifactResult;
+      }
 
       if (artifactResult.exec_state.status === ExecutionStatus.Succeeded) {
         if (

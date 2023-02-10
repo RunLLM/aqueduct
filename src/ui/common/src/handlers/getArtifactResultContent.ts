@@ -32,6 +32,9 @@ export const handleGetArtifactResultContent = createAsyncThunk<
         method: 'GET',
         headers: {
           'api-key': apiKey,
+          // The caller of this function is always going to need the artifact payload,
+          // so we set metadata-only to false.
+          'metadata-only': 'false',
         },
       }
     );

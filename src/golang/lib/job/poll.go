@@ -33,6 +33,7 @@ func PollJob(
 				return status, nil
 			}
 		case <-timeout.C:
+			// TODO: ENG-2447 Surface more info on why a job timed out
 			return shared.UnknownExecutionStatus, errors.Newf("Reached timeout waiting for the job %s to finish.", name)
 		}
 	}

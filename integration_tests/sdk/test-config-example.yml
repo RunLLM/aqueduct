@@ -20,6 +20,8 @@ data:
   test_bigquery:
   test_mariadb:
   test_mongo_db:
+  test_mysql:
+  test_postgres:
   test_redshift:
   test_s3:
   test_snowflake:
