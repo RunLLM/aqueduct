@@ -363,10 +363,22 @@ def generate_welcome_message(expose, port):
             ec2_ip = requests.get(
                 "http://169.254.169.254/latest/meta-data/public-ipv4", timeout=0.25
             )
-            if ec2_ip.status_code != 404: # User is in EC2 isntance.
+            if ec2_ip.status_code != 404: # User is in EC2 instance.
                 expose_ip = ec2_ip.content.decode("utf-8")
             else:  
-                expose_ip = "<IP_ADDRESS>"
+                # Assume is Google Cloud
+                metadata_flavor = {'Metadata-Flavor': 'Google'}
+                gcp_ip = requests.get('http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip', headers = metadata_flavor)
+                if gcp_ip.status_code != 404:
+                    expose_ip = gcp_ip.text
+                else:
+                    # Assume is Azure
+                    azure_ip = requests.get('http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0/publicIpAddress?api-version=2017-08-01&format=text', headers = {'Metadata': 'true'})
+                    if azure_ip.status_code != 404:
+                        expose_ip = azure_ip.text
+                    else:
+                        # Default
+                        expose_ip = "<IP_ADDRESS>"
         except:  # If you're not running on EC2, this will return an error.
             expose_ip = "<IP_ADDRESS>"
 
