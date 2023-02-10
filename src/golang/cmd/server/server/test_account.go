@@ -9,7 +9,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
-	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/demo"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -71,7 +70,6 @@ func ConnectBuiltinIntegration(
 	user *models.User,
 	integrationRepo repos.Integration,
 	db database.Database,
-	vaultObject vault.Vault,
 ) error {
 	serviceType := integration.Sqlite
 	builtinConfig := demo.GetSqliteIntegrationConfig()
@@ -90,7 +88,6 @@ func ConnectBuiltinIntegration(
 		},
 		integrationRepo,
 		db,
-		vaultObject,
 	); err != nil {
 		return err
 	}

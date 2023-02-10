@@ -3,11 +3,8 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
-from aqueduct.artifacts.save import save_artifact
 from aqueduct.constants.enums import ArtifactType, OperatorType
-from aqueduct.logger import logger
 from aqueduct.models.dag import DAG
-from aqueduct.models.operators import SaveConfig
 
 
 class BaseArtifact(ABC):
@@ -55,29 +52,3 @@ class BaseArtifact(ABC):
     @abstractmethod
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> Any:
         pass
-
-    def save(self, config: SaveConfig) -> None:
-        """DEPRECATED: use integration.save() directly instead!
-        Configure this artifact to be written to a specific integration after it's computed in a published flow.
-
-
-        Args:
-            config:
-                SaveConfig object generated from integration using
-                the <integration>.config(...) method.
-        Raises:
-            InvalidIntegrationException:
-                An error occurred because the requested integration could not be
-                found.
-            InvalidUserActionException:
-                An error occurred because you are trying to load non-relational data into a relational integration.
-            InvalidUserArgumentException:
-                An error occurred because some necessary fields are missing in the SaveConfig.
-        """
-        logger().warning(
-            "`artifact.save()` is deprecated. Please use `integration.save()` instead!"
-        )
-
-        save_artifact(
-            self._artifact_id, self.type(), self._dag, config.integration_info, config.parameters
-        )

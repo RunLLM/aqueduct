@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"time"
 
 	databricks_lib "github.com/aqueducthq/aqueduct/lib/databricks"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
@@ -35,7 +36,6 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 	if err != nil {
 		return errors.Wrap(err, "Unable to parse configuration.")
 	}
-
 	functionsToShip := [10]lambda_utils.LambdaFunctionType{
 		lambda_utils.FunctionExecutor37Type,
 		lambda_utils.FunctionExecutor38Type,
@@ -49,46 +49,70 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 		lambda_utils.SnowflakeConnectorType,
 	}
 
-	errGroup, _ := errgroup.WithContext(ctx)
-
-	pullImageChannel := make(chan lambda_utils.LambdaFunctionType, MaxConcurrentDownload)
-
-	pushImageChannel := make(chan lambda_utils.LambdaFunctionType, MaxConcurrentUpload)
-
 	// Run authentication only once since the credentials will be recorded.
 	err = lambda_utils.AuthenticateDockerToECR()
 	if err != nil {
 		return errors.Wrap(err, "Unable to authenticate Lambda Function.")
 	}
 
+	errGroup, errGroupCtx := errgroup.WithContext(ctx)
 	// Pull images on a concurrency of "MaxConcurrentDownload".
-	errGroup.SetLimit(MaxConcurrentDownload)
-	go lambda_utils.AddFunctionTypeToChannel(functionsToShip, pullImageChannel)
-	for lambdaFunction := range pullImageChannel {
-		lambdaFunctionType := lambdaFunction
+	pullImageChannel := make(chan lambda_utils.LambdaFunctionType, len(functionsToShip))
+	defer close(pullImageChannel)
+	pushImageChannel := make(chan lambda_utils.LambdaFunctionType, len(functionsToShip))
+	defer close(pushImageChannel)
+	lambda_utils.AddFunctionTypeToChannel(functionsToShip[:], pullImageChannel)
+	for i := 0; i < MaxConcurrentDownload; i++ {
 		errGroup.Go(func() error {
-			return lambda_utils.PullImageFromECR(lambdaFunctionType)
+			for {
+				select {
+				case functionType := <-pullImageChannel:
+					lambdaFunctionType := functionType
+					err := lambda_utils.PullImageFromECR(lambdaFunctionType)
+					if err != nil {
+						return err
+					}
+					pushImageChannel <- functionType
+				case <-errGroupCtx.Done():
+					return errGroupCtx.Err()
+				default:
+					return nil
+				}
+			}
 		})
 	}
 
-	if err := errGroup.Wait(); err != nil {
-		return errors.Wrap(err, "Unable to Pull Lambda Function From ECR.")
-	}
+	// Create a signal channel to flag when all the lambda functions have been created.
+	signalChannel := make(chan lambda_utils.LambdaFunctionType, len(functionsToShip))
+	lambda_utils.AddFunctionTypeToChannel(functionsToShip[:], signalChannel)
 
-	// Create lambda functions on a concurrency of "MaxConcurrentUpload".
-	errGroup.SetLimit(MaxConcurrentUpload)
-	go lambda_utils.AddFunctionTypeToChannel(functionsToShip, pushImageChannel)
-	for lambdaFunction := range pushImageChannel {
-		lambdaFunctionType := lambdaFunction
+	// Receive the downloaded docker images from push channels and create lambda functions on a concurrency of "MaxConcurrentUpload".
+	for i := 0; i < MaxConcurrentUpload; i++ {
 		errGroup.Go(func() error {
-			return lambda_utils.CreateLambdaFunction(lambdaFunctionType, lambdaConf.RoleArn)
+			for {
+				select {
+				case functionType := <-pushImageChannel:
+					lambdaFunctionType := functionType
+					err := lambda_utils.CreateLambdaFunction(lambdaFunctionType, lambdaConf.RoleArn)
+					if err != nil {
+						return err
+					}
+					<-signalChannel
+				case <-errGroupCtx.Done():
+					return errGroupCtx.Err()
+				default:
+					time.Sleep(1 * time.Second)
+					if len(signalChannel) == 0 {
+						return nil
+					}
+				}
+			}
 		})
 	}
 
 	if err := errGroup.Wait(); err != nil {
 		return errors.Wrap(err, "Unable to Create Lambda Function.")
 	}
-
 	return nil
 }
 

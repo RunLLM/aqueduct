@@ -7,6 +7,8 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/config"
+	"github.com/aqueducthq/aqueduct/lib/airflow"
 	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
@@ -25,6 +27,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
+	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -61,7 +64,6 @@ type Repos struct {
 type aqEngine struct {
 	Database       database.Database
 	GithubManager  github.Manager
-	Vault          vault.Vault
 	CronjobManager cronjob.CronjobManager
 	AqPath         string
 
@@ -71,7 +73,7 @@ type aqEngine struct {
 	*Repos
 }
 
-type workflowRunMetadata struct {
+type WorkflowRunMetadata struct {
 	// Maps every operator to the number of its immediate dependencies
 	// that still needs to be computed. When this hits 0 during execution,
 	// then the operator is ready to be scheduled.
@@ -97,7 +99,6 @@ func NewAqEngine(
 	database database.Database,
 	githubManager github.Manager,
 	previewCacheManager preview_cache.CacheManager,
-	vault vault.Vault,
 	aqPath string,
 	repos *Repos,
 ) (*aqEngine, error) {
@@ -107,7 +108,6 @@ func NewAqEngine(
 		Database:            database,
 		GithubManager:       githubManager,
 		PreviewCacheManager: previewCacheManager,
-		Vault:               vault,
 		CronjobManager:      cronjobManager,
 		AqPath:              aqPath,
 		Repos:               repos,
@@ -261,6 +261,12 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to read operator environments.")
 	}
 
+	storageConfig := config.Storage()
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to initialize vault.")
+	}
+
 	dag, err := dag_utils.NewWorkflowDag(
 		ctx,
 		dagResult.ID,
@@ -268,7 +274,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		eng.OperatorResultRepo,
 		eng.ArtifactRepo,
 		eng.ArtifactResultRepo,
-		eng.Vault,
+		vaultObject,
 		nil, /* artifactCacheManager */
 		execEnvsByOpId,
 		operator.Publish,
@@ -288,7 +294,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		opToDependencyCount[op.ID()] = len(inputs)
 	}
 
-	wfRunMetadata := &workflowRunMetadata{
+	wfRunMetadata := &WorkflowRunMetadata{
 		OpToDependencyCount: opToDependencyCount,
 		InProgressOps:       make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
 		CompletedOps:        make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
@@ -302,12 +308,17 @@ func (eng *aqEngine) ExecuteWorkflow(
 	execState.Status = mdl_shared.RunningExecutionStatus
 	runningAt := time.Now()
 	execState.Timestamps.RunningAt = &runningAt
-	err = eng.execute(
+
+	err = eng.executeWithEngine(
 		ctx,
 		dag,
+		dbDAG.Metadata.Name,
+		dbDAG.EngineConfig,
+		dbDAG.StorageConfig,
 		wfRunMetadata,
 		timeConfig,
 		operator.Publish,
+		vaultObject,
 	)
 	if err != nil {
 		execState.Status = mdl_shared.FailedExecutionStatus
@@ -329,6 +340,12 @@ func (eng *aqEngine) PreviewWorkflow(
 	execEnvByOperatorId map[uuid.UUID]exec_env.ExecutionEnvironment,
 	timeConfig *AqueductTimeConfig,
 ) (*WorkflowPreviewResult, error) {
+	storageConfig := config.Storage()
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to initialize vault.")
+	}
+
 	dag, err := dag_utils.NewWorkflowDag(
 		ctx,
 		uuid.Nil, /* workflowDagResultID */
@@ -336,7 +353,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		eng.OperatorResultRepo,
 		eng.ArtifactRepo,
 		eng.ArtifactResultRepo,
-		eng.Vault,
+		vaultObject,
 		eng.PreviewCacheManager,
 		execEnvByOperatorId,
 		operator.Preview,
@@ -358,7 +375,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		opToDependencyCount[op.ID()] = len(inputs)
 	}
 
-	wfRunMetadata := &workflowRunMetadata{
+	wfRunMetadata := &WorkflowRunMetadata{
 		OpToDependencyCount: opToDependencyCount,
 		InProgressOps:       make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
 		CompletedOps:        make(map[uuid.UUID]operator.Operator, len(dag.Operators())),
@@ -366,12 +383,16 @@ func (eng *aqEngine) PreviewWorkflow(
 	}
 
 	wfRunMetadata.Status = shared.RunningExecutionStatus
-	err = eng.execute(
+	err = eng.executeWithEngine(
 		ctx,
 		dag,
+		fmt.Sprintf("PREVIEW_%s", uuid.New().String()),
+		dbDAG.EngineConfig,
+		dbDAG.StorageConfig,
 		wfRunMetadata,
 		timeConfig,
 		operator.Preview,
+		vaultObject,
 	)
 	if err != nil {
 		log.Errorf("Workflow failed with error: %v", err)
@@ -672,11 +693,42 @@ func (eng *aqEngine) EditWorkflow(
 // Remove once executor is done.
 func (eng *aqEngine) TriggerWorkflow(
 	ctx context.Context,
-	workflowId uuid.UUID,
+	workflowID uuid.UUID,
 	name string,
 	timeConfig *AqueductTimeConfig,
 	parameters map[string]param.Param,
 ) (shared.ExecutionStatus, error) {
+	dag, err := utils.ReadLatestDAGFromDatabase(
+		ctx,
+		workflowID,
+		eng.WorkflowRepo,
+		eng.DAGRepo,
+		eng.OperatorRepo,
+		eng.ArtifactRepo,
+		eng.DAGEdgeRepo,
+		eng.Database,
+	)
+	if err != nil {
+		return shared.FailedExecutionStatus, err
+	}
+
+	storageConfig := config.Storage()
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to initialize vault.")
+	}
+
+	if dag.EngineConfig.Type == shared.AirflowEngineType {
+		// This is an Airflow workflow so the executor binary is not used
+		if err := airflow.TriggerWorkflow(ctx, dag, vaultObject); err != nil {
+			return shared.FailedExecutionStatus, errors.Wrap(
+				err,
+				"Unable to trigger a new workflow run on Airflow",
+			)
+		}
+		return shared.SucceededExecutionStatus, nil
+	}
+
 	jobManager, err := job.NewProcessJobManager(
 		&job.ProcessConfig{
 			BinaryDir:          path.Join(eng.AqPath, job.BinaryDir),
@@ -689,7 +741,7 @@ func (eng *aqEngine) TriggerWorkflow(
 
 	jobSpec := job.NewWorkflowSpec(
 		name,
-		workflowId.String(),
+		workflowID.String(),
 		eng.Database.Config(),
 		&job.ProcessConfig{
 			BinaryDir:          path.Join(eng.AqPath, job.BinaryDir),
@@ -717,10 +769,65 @@ func (eng *aqEngine) cleanupWorkflow(ctx context.Context, workflowDag dag_utils.
 	}
 }
 
+func (eng *aqEngine) executeWithEngine(
+	ctx context.Context,
+	dag dag_utils.WorkflowDag,
+	workflowName string,
+	engineConfig shared.EngineConfig,
+	storageConfig shared.StorageConfig,
+	workflowRunMetadata *WorkflowRunMetadata,
+	timeConfig *AqueductTimeConfig,
+	opExecMode operator.ExecutionMode,
+	vaultObject vault.Vault,
+) error {
+	switch engineConfig.Type {
+	case shared.DatabricksEngineType:
+		jobConfig, err := operator.GenerateJobManagerConfig(
+			ctx,
+			engineConfig,
+			&storageConfig,
+			eng.AqPath,
+			vaultObject,
+		)
+		if err != nil {
+			return errors.Wrap(err, "Unable to generate JobManagerConfig.")
+		}
+
+		jobManager, err := job.NewJobManager(jobConfig)
+		if err != nil {
+			return errors.Wrap(err, "Unable to create JobManager.")
+		}
+
+		databricksJobManager, ok := jobManager.(*job.DatabricksJobManager)
+		if !ok {
+			return errors.Wrap(err, "Unable to create DatabricksJobManager.")
+		}
+
+		return ExecuteDatabricks(
+			ctx,
+			dag,
+			workflowName,
+			workflowRunMetadata,
+			timeConfig,
+			opExecMode,
+			databricksJobManager,
+		)
+	default:
+		return eng.execute(
+
+			ctx,
+			dag,
+			workflowRunMetadata,
+			timeConfig,
+			opExecMode,
+		)
+	}
+}
+
 func (eng *aqEngine) execute(
 	ctx context.Context,
 	workflowDag dag_utils.WorkflowDag,
-	workflowRunMetadata *workflowRunMetadata,
+	workflowRunMetadata *WorkflowRunMetadata,
 	timeConfig *AqueductTimeConfig,
 	opExecMode operator.ExecutionMode,
 ) error {

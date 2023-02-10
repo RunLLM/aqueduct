@@ -179,11 +179,15 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 		if containerStatus.State.Terminated.Reason == "OOMKilled" {
 			return status, userError(errors.New("Operator failed on Kubernetes due to Out-of-Memory exception."))
 		}
-		return status, systemError(errors.Newf("Kubernetes pod failed with reason: %s.", containerStatus.State.Terminated.Reason))
+
+		// We do not error here since pods are killed with a failing exit status on any failed checks.
+		// We should rely on the written execution state to decide whether to continue dag execution,
+		// and not the status of the pod.
+		return status, nil
 	} else {
 		pod, err := k8s.GetPod(ctx, name, j.k8sClient)
 		if err != nil {
-			if err == errors.New("No pod exists") {
+			if err == k8s.ErrNoPodExists {
 				return shared.PendingExecutionStatus, nil
 			}
 			return shared.FailedExecutionStatus, systemError(err)

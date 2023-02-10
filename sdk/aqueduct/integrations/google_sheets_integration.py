@@ -1,10 +1,8 @@
 from typing import Optional
 
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.artifacts.save import save_artifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, GoogleSheetsSaveMode
-from aqueduct.logger import logger
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
 from aqueduct.models.integration import Integration, IntegrationInfo
@@ -14,12 +12,12 @@ from aqueduct.models.operators import (
     GoogleSheetsLoadParams,
     Operator,
     OperatorSpec,
-    SaveConfig,
 )
 from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import artifact_name_from_op_name, generate_uuid
 
 from .naming import _generate_extract_op_name
+from .save import _save_artifact
 
 
 class GoogleSheetsIntegration(Integration):
@@ -90,38 +88,6 @@ class GoogleSheetsIntegration(Integration):
             artifact_id=output_artifact_id,
         )
 
-    def config(
-        self,
-        filepath: str,
-        save_mode: GoogleSheetsSaveMode = GoogleSheetsSaveMode.OVERWRITE,
-    ) -> SaveConfig:
-        """TODO(ENG-2035): Deprecated and will be removed.
-        Configuration for saving to Google Sheets Integration.
-
-        Arguments:
-            filepath:
-                Google Sheets filepath to save to. Any directory in the path that does not exist
-                will be created.
-            save_mode:
-                The save mode to use when saving this artifact to Google Sheets.
-                Possible values are:
-                - OVERWRITE: If a spreadsheet with the same name exists, it will overwrite it.
-                    Otherwise, it will create a new spreadsheet.
-                - NEWSHEET: If a spreadsheet with the same name exists, it will create a new sheet for this artifact.
-                    Otherwise, it will create a new spreadsheet.
-                - CREATE: This will create a new spreadsheet, even if one with the same name exists. The previous
-                    spreadsheet will not be deleted, as Google Sheets allows for multiple spreadsheets of the same name.
-        Returns:
-            SaveConfig object to use in TableArtifact.save()
-        """
-        logger().warning(
-            "`integration.config()` is deprecated. Please use `integration.save()` directly instead."
-        )
-        return SaveConfig(
-            integration_info=self._metadata,
-            parameters=GoogleSheetsLoadParams(filepath=filepath, save_mode=save_mode),
-        )
-
     def save(
         self,
         artifact: BaseArtifact,
@@ -143,9 +109,8 @@ class GoogleSheetsIntegration(Integration):
                 - "newsheet": Creates a new sheet in an existing spreadsheet.
                               If the spreadsheet doesn't exist, has `create` behavior.
         """
-        save_artifact(
+        _save_artifact(
             artifact.id(),
-            artifact.type(),
             self._dag,
             self._metadata,
             save_params=GoogleSheetsLoadParams(filepath=filepath, save_mode=save_mode),

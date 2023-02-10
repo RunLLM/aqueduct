@@ -2,13 +2,14 @@ package tests
 
 import (
 	"time"
+
+	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/views"
-	"github.com/aqueducthq/aqueduct/lib/models/utils"
 )
 
 func (ts *TestSuite) TestOperatorResult_Get() {
@@ -62,8 +63,8 @@ func (ts *TestSuite) TestOperatorResult_GetCheckStatusByArtifactBatch() {
 	expectedOperatorResultStatuses := make([]views.OperatorResultStatus, 0, len(expectedOperatorResults))
 	for _, expectedOperatorResult := range expectedOperatorResults {
 		expectedOperatorResultStatus := views.OperatorResultStatus{
-			ArtifactID: artifactID,
-			Metadata: &expectedOperatorResult.ExecState.ExecutionState,
+			ArtifactID:  artifactID,
+			Metadata:    &expectedOperatorResult.ExecState.ExecutionState,
 			DAGResultID: expectedOperatorResult.DAGResultID,
 			OperatorName: utils.NullString{
 				String: operator.Name,
@@ -72,7 +73,7 @@ func (ts *TestSuite) TestOperatorResult_GetCheckStatusByArtifactBatch() {
 		}
 		expectedOperatorResultStatuses = append(expectedOperatorResultStatuses, expectedOperatorResultStatus)
 	}
-	
+
 	actualOperatorResultStatuses, err := ts.operatorResult.GetCheckStatusByArtifactBatch(ts.ctx, []uuid.UUID{artifactID}, ts.DB)
 	require.Nil(ts.T(), err)
 	requireDeepEqualOperatorResultStatuses(ts.T(), expectedOperatorResultStatuses, actualOperatorResultStatuses)
@@ -91,7 +92,7 @@ func (ts *TestSuite) TestOperatorResult_GetStatusByDAGResultAndArtifactBatch() {
 	operatorB := ts.seedOperatorAndDAGOperatorToArtifact(artifactIDB, dagResultIDB, operator.FunctionType)
 	operatorC := ts.seedOperatorAndDAGOperatorToArtifact(artifactIDA, dagResultIDC, operator.FunctionType)
 	operatorD := ts.seedOperatorAndDAGOperatorToArtifact(uuid.New(), dagResultIDD, operator.FunctionType)
-	
+
 	expectedOperatorResultsA := ts.seedOperatorResultForDAGAndOperator(3, dagResultIDA, operatorA.ID)
 	expectedOperatorResultsB := ts.seedOperatorResultForDAGAndOperator(3, dagResultIDB, operatorB.ID)
 	expectedOperatorResultsC := ts.seedOperatorResultForDAGAndOperator(3, dagResultIDC, operatorC.ID)
@@ -100,8 +101,8 @@ func (ts *TestSuite) TestOperatorResult_GetStatusByDAGResultAndArtifactBatch() {
 	expectedOperatorResultStatuses := make([]views.OperatorResultStatus, 0, len(expectedOperatorResultsA)+len(expectedOperatorResultsB)+len(expectedOperatorResultsC))
 	for _, expectedOperatorResult := range expectedOperatorResultsA {
 		expectedOperatorResultStatus := views.OperatorResultStatus{
-			ArtifactID: artifactIDA,
-			Metadata: &expectedOperatorResult.ExecState.ExecutionState,
+			ArtifactID:  artifactIDA,
+			Metadata:    &expectedOperatorResult.ExecState.ExecutionState,
 			DAGResultID: expectedOperatorResult.DAGResultID,
 			OperatorName: utils.NullString{
 				String: "",
@@ -113,8 +114,8 @@ func (ts *TestSuite) TestOperatorResult_GetStatusByDAGResultAndArtifactBatch() {
 
 	for _, expectedOperatorResult := range expectedOperatorResultsB {
 		expectedOperatorResultStatus := views.OperatorResultStatus{
-			ArtifactID: artifactIDB,
-			Metadata: &expectedOperatorResult.ExecState.ExecutionState,
+			ArtifactID:  artifactIDB,
+			Metadata:    &expectedOperatorResult.ExecState.ExecutionState,
 			DAGResultID: expectedOperatorResult.DAGResultID,
 			OperatorName: utils.NullString{
 				String: "",
@@ -126,8 +127,8 @@ func (ts *TestSuite) TestOperatorResult_GetStatusByDAGResultAndArtifactBatch() {
 
 	for _, expectedOperatorResult := range expectedOperatorResultsC {
 		expectedOperatorResultStatus := views.OperatorResultStatus{
-			ArtifactID: artifactIDB,
-			Metadata: &expectedOperatorResult.ExecState.ExecutionState,
+			ArtifactID:  artifactIDB,
+			Metadata:    &expectedOperatorResult.ExecState.ExecutionState,
 			DAGResultID: expectedOperatorResult.DAGResultID,
 			OperatorName: utils.NullString{
 				String: "",
@@ -136,7 +137,7 @@ func (ts *TestSuite) TestOperatorResult_GetStatusByDAGResultAndArtifactBatch() {
 		}
 		expectedOperatorResultStatuses = append(expectedOperatorResultStatuses, expectedOperatorResultStatus)
 	}
-	
+
 	actualOperatorResultStatuses, err := ts.operatorResult.GetStatusByDAGResultAndArtifactBatch(ts.ctx, []uuid.UUID{dagResultIDA, dagResultIDB}, []uuid.UUID{artifactIDA, artifactIDB}, ts.DB)
 	require.Nil(ts.T(), err)
 	requireDeepEqualOperatorResultStatuses(ts.T(), expectedOperatorResultStatuses, actualOperatorResultStatuses)
@@ -154,11 +155,11 @@ func (ts *TestSuite) TestOperatorResult_Create() {
 	}
 	expectedOperatorResult := &models.OperatorResult{
 		DAGResultID: dagResultID,
-		OperatorID: operatorID,
-		Status: execState.Status,
+		OperatorID:  operatorID,
+		Status:      execState.Status,
 		ExecState: shared.NullExecutionState{
 			ExecutionState: execState,
-			IsNull: false,
+			IsNull:         false,
 		},
 	}
 	actualOperatorResult, err := ts.operatorResult.Create(
@@ -211,7 +212,7 @@ func (ts *TestSuite) TestOperatorResult_Update() {
 	}
 
 	changes := map[string]interface{}{
-		models.OperatorResultExecState:   &execState,
+		models.OperatorResultExecState: &execState,
 	}
 
 	actualOperatorResult, err := ts.operatorResult.Update(ts.ctx, expectedOperatorResult.ID, changes, ts.DB)

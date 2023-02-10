@@ -53,7 +53,6 @@ type AqServer struct {
 	GithubManager github.Manager
 	// TODO ENG-1483: Move JobManager from Server to Handlers
 	JobManager job.JobManager
-	Vault      vault.Vault
 	AqEngine   engine.AqEngine
 	AqPath     string
 
@@ -139,7 +138,7 @@ func NewAqServer(environment string, disableUsageStats bool) *AqServer {
 	}
 
 	if !demoConnected {
-		err = ConnectBuiltinIntegration(ctx, testUser, s.IntegrationRepo, s.Database, s.Vault)
+		err = ConnectBuiltinIntegration(ctx, testUser, s.IntegrationRepo, s.Database)
 		if err != nil {
 			db.Close()
 			log.Fatal(err)
@@ -200,7 +199,6 @@ func (s *AqServer) Init() error {
 		s.Database,
 		githubManager,
 		previewCacheManager,
-		vault,
 		aqPath,
 		GetEngineRepos(s.Repos),
 	)
@@ -210,7 +208,6 @@ func (s *AqServer) Init() error {
 
 	s.GithubManager = githubManager
 	s.JobManager = jobManager
-	s.Vault = vault
 	s.AqPath = aqPath
 	s.AqEngine = eng
 

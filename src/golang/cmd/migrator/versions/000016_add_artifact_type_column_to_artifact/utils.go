@@ -249,12 +249,11 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 			// Temporaty file to store the updated metadata dict that contains
 			// the serialization type and artifact type.
 			metadataPath := fmt.Sprintf("%s_%s", artifactResult.Id, "metadata")
-			sConfig := config.Storage()
-			storageConfig := &sConfig
+			storageConfig := config.Storage()
 
 			migrationSpec := MigrationSpec{
 				ArtifactType:  string(artifactSpec.Spec.spec.Type),
-				StorageConfig: *storageConfig,
+				StorageConfig: storageConfig,
 				MetadataPath:  metadataPath,
 				ContentPath:   artifactResult.ContentPath,
 			}
@@ -266,7 +265,7 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 
 			// Before launching storage migration, copy the content file in case the database migration fails
 			// and we need to revert the content change.
-			originalContent, err := storage.NewStorage(storageConfig).Get(ctx, artifactResult.ContentPath)
+			originalContent, err := storage.NewStorage(&storageConfig).Get(ctx, artifactResult.ContentPath)
 			if err != nil {
 				if artifactResult.Status != SucceededExecutionStatus && err == storage.ErrObjectDoesNotExist {
 					log.Infof("Skipping data migration for artifact result %s since its content wasn't generated.", artifactResult.Id)
@@ -279,7 +278,7 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 
 			defer func() {
 				if err != nil {
-					putOperatorError := storage.NewStorage(storageConfig).Put(ctx, artifactResult.ContentPath, originalContent)
+					putOperatorError := storage.NewStorage(&storageConfig).Put(ctx, artifactResult.ContentPath, originalContent)
 					if putOperatorError != nil {
 						log.Errorf("Storage migration rollback failed due to error %s", putOperatorError)
 					}
@@ -306,7 +305,7 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 				return err
 			}
 
-			serializedTypeMetadata, err := storage.NewStorage(storageConfig).Get(ctx, metadataPath)
+			serializedTypeMetadata, err := storage.NewStorage(&storageConfig).Get(ctx, metadataPath)
 			if err != nil {
 				return err
 			}
@@ -318,7 +317,7 @@ func migrateArtifact(ctx context.Context, db database.Database) error {
 			}
 
 			// Garbage collect the temp file.
-			err = storage.NewStorage(storageConfig).Delete(ctx, metadataPath)
+			err = storage.NewStorage(&storageConfig).Delete(ctx, metadataPath)
 			if err != nil {
 				return err
 			}

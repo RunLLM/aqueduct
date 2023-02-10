@@ -26,8 +26,8 @@ func (ts *TestSuite) TestSchemaVersion_GetCurrent() {
 func (ts *TestSuite) TestSchemaVersion_Create() {
 	expectedSchemaVersion := &models.SchemaVersion{
 		Version: int64(models.CurrentSchemaVersion + 1),
-		Dirty:  true,
-		Name: randString(10),
+		Dirty:   true,
+		Name:    randString(10),
 	}
 
 	actualSchemaVersion, err := ts.schemaVersion.Create(ts.ctx, expectedSchemaVersion.Version, expectedSchemaVersion.Name, ts.DB)

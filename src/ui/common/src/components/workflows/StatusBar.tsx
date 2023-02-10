@@ -83,7 +83,7 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
 
   const workflowStatusIcons = {
     [WorkflowStatusTabs.Errors]: (
-      <Box sx={{ fontSize: '20px', color: theme.palette.red['500'] }}>
+      <Box sx={{ fontSize: '20px', color: theme.palette.Error }}>
         <FontAwesomeIcon icon={faCircleExclamation} />
       </Box>
     ),
@@ -93,12 +93,12 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
       </Box>
     ),
     [WorkflowStatusTabs.Warnings]: (
-      <Box sx={{ fontSize: '20px', color: theme.palette.orange['500'] }}>
+      <Box sx={{ fontSize: '20px', color: theme.palette.Warning }}>
         <FontAwesomeIcon icon={faTriangleExclamation} />
       </Box>
     ),
     [WorkflowStatusTabs.Checks]: (
-      <Box sx={{ fontSize: '20px', color: theme.palette.green['400'] }}>
+      <Box sx={{ fontSize: '20px', color: theme.palette.Success }}>
         <FontAwesomeIcon icon={faCircleCheck} />
       </Box>
     ),
@@ -153,7 +153,7 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
         borderRadius: '8px',
         zIndex: 10,
         border: `1px solid`,
-        borderColor: 'gray.500',
+        borderColor: theme.palette.gray[500],
         p: '4px',
       }}
     >
@@ -170,7 +170,7 @@ const ActiveWorkflowStatusTab: React.FC<ActiveWorkflowStatusTabProps> = ({
               width: '100%',
               backgroundColor: 'white',
               borderBottom: index === listItems.length - 1 ? null : `1px solid`,
-              borderColor: 'gray.500',
+              borderColor: theme.palette.gray['500'],
               alignItems: 'start',
             }}
           >
@@ -459,7 +459,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         newWorkflowStatusItem.level = WorkflowStatusTabs.Warnings;
         newWorkflowStatusItem.title = (
           <>
-            `Non-fatal error occurred for `<b>${artifactName}</b>
+            Non-fatal error occurred for <b>{artifactName}</b>
           </>
         );
         newWorkflowStatusItem.message = artifactExecState.error?.tip;
@@ -536,7 +536,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
         newWorkflowStatusItem.level = WorkflowStatusTabs.Warnings;
         newWorkflowStatusItem.title = (
           <>
-            `Warning for `<b>{operatorName}</b>
+            Warning for <b>{operatorName}</b>
           </>
         );
         newWorkflowStatusItem.message = opExecState.error?.tip;
@@ -683,7 +683,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
             color:
               activeWorkflowStatusTab === WorkflowStatusTabs.Errors
                 ? theme.palette.red['600']
-                : theme.palette.red['500'],
+                : theme.palette.Error,
             borderBottom:
               activeWorkflowStatusTab === WorkflowStatusTabs.Errors
                 ? `2px solid ${theme.palette.red['600']}`
@@ -708,7 +708,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
             color:
               activeWorkflowStatusTab === WorkflowStatusTabs.Warnings
                 ? theme.palette.orange['600']
-                : theme.palette.orange['500'],
+                : theme.palette.Warning,
             borderBottom:
               activeWorkflowStatusTab === WorkflowStatusTabs.Warnings
                 ? `2px solid ${theme.palette.orange['600']}`
@@ -756,7 +756,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
             color:
               activeWorkflowStatusTab === WorkflowStatusTabs.Checks
                 ? theme.palette.green['500']
-                : theme.palette.green['400'],
+                : theme.palette.Success,
             borderBottom:
               activeWorkflowStatusTab === WorkflowStatusTabs.Checks
                 ? `2px solid ${theme.palette.green['500']}`
