@@ -368,12 +368,12 @@ def generate_welcome_message(expose, port):
             else:  
                 # Assume is Google Cloud
                 metadata_flavor = {'Metadata-Flavor': 'Google'}
-                gcp_ip = requests.get('http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip', headers = metadata_flavor)
+                gcp_ip = requests.get('http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip', headers = metadata_flavor, timeout=0.25)
                 if gcp_ip.status_code != 404:
                     expose_ip = gcp_ip.text
                 else:
                     # Assume is Azure
-                    azure_ip = requests.get('http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0/publicIpAddress?api-version=2017-08-01&format=text', headers = {'Metadata': 'true'})
+                    azure_ip = requests.get('http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0/publicIpAddress?api-version=2017-08-01&format=text', headers = {'Metadata': 'true'}, timeout=0.25)
                     if azure_ip.status_code != 404:
                         expose_ip = azure_ip.text
                     else:
