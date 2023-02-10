@@ -216,12 +216,14 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         );
       }
 
-      for (const artfId of [...op.outputs]) {
-        if (op.spec.metric || op.spec.check) {
+      if (op.spec.metric || op.spec.check) {
+        for (const artfId of [...op.outputs]) {
           // We set metadataOnly to false because for metric and check, we want to also show
           // their values on the workflow page.
           getArtifactResultDetails(artfId, false);
-        } else {
+        }
+      } else {
+        for (const artfId of [...op.outputs]) {
           getArtifactResultDetails(artfId, true);
         }
       }
