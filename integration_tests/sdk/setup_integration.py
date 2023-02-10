@@ -134,8 +134,8 @@ def _setup_mongo_db_data(client: Client, mongo_db: MongoDBIntegration) -> None:
 
 def _setup_relational_data(client: Client, db: RelationalDBIntegration) -> None:
     # Find all the tables that already exist.
-    columns = list(db.list_tables().columns)
-    _add_missing_artifacts(client, db, set(db.list_tables()["tablename"]))
+    existing_table_names = set(db.list_tables()["tablename"])
+    _add_missing_artifacts(client, db, existing_table_names)
 
 
 def _setup_s3_data(client: Client, s3: S3Integration):
