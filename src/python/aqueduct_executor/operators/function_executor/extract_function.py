@@ -6,6 +6,7 @@ import shutil
 import sys
 import traceback
 import zipfile
+import time
 
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec, parse_spec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
@@ -74,6 +75,8 @@ def run(spec: FunctionSpec) -> None:
 
 
 if __name__ == "__main__":
+    begin = time.time()
+
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--spec", required=True)
     args = parser.parse_args()
@@ -82,3 +85,6 @@ if __name__ == "__main__":
     spec = parse_spec(spec_json)
 
     run(spec)
+
+    end = time.time()
+    print("Extracting the function took %s seconds" % (end - begin))

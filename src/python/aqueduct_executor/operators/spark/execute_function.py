@@ -66,7 +66,6 @@ def _execute_function(
 
     invoke = import_invoke_method(spec)
     timer = Timer()
-    print("Invoking the function...")
     timer.start()
     tracemalloc.start()
 

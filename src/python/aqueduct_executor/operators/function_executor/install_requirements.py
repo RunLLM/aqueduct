@@ -3,6 +3,7 @@ import base64
 import subprocess
 import sys
 from typing import Optional
+import time
 
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec, parse_spec
 from aqueduct_executor.operators.utils import utils
@@ -81,6 +82,8 @@ def run(
 
 
 if __name__ == "__main__":
+    begin = time.time()
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--local_path", required=True)
     parser.add_argument("--requirements_path", required=True)
@@ -93,3 +96,6 @@ if __name__ == "__main__":
     spec = parse_spec(spec_json)
 
     run(args.local_path, args.requirements_path, args.missing_path, spec, args.conda_env)
+
+    end = time.time()
+    print("Installing requirements took %s seconds" % (end - begin))

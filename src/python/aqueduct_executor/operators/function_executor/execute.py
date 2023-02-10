@@ -6,6 +6,7 @@ import sys
 import tracemalloc
 import uuid
 from typing import Any, Callable, Dict, List, Tuple
+import time
 
 import numpy as np
 import pandas as pd
@@ -114,7 +115,6 @@ def _execute_function(
 
     invoke = import_invoke_method(spec)
     timer = Timer()
-    print("Invoking the function...")
     timer.start()
     tracemalloc.start()
 
@@ -224,13 +224,22 @@ def run(spec: FunctionSpec) -> None:
         validate_spec(spec)
 
         # Read the input data from intermediate storage.
+        begin = time.time()
+
         inputs, _, serialization_types = utils.read_artifacts(
             storage, spec.input_content_paths, spec.input_metadata_paths
         )
 
+        end = time.time()
+        print("Reading input data took %s seconds" % (end - begin))
+
         derived_from_bson = SerializationType.BSON_TABLE in serialization_types
         print("Invoking the function...")
+        begin = time.time()
         results, system_metadata = _execute_function(spec, inputs, exec_state)
+        end = time.time()
+        print("Function execution took %s seconds" % (end - begin))
+
         if exec_state.status == ExecutionStatus.FAILED:
             # user failure
             utils.write_exec_state(storage, spec.metadata_path, exec_state)
@@ -319,6 +328,7 @@ def run(spec: FunctionSpec) -> None:
                         % (expected_output_type, i, result_types[i]),
                     )
 
+        begin = time.time()
         for i, result in enumerate(results):
             utils.write_artifact(
                 storage,
@@ -329,6 +339,8 @@ def run(spec: FunctionSpec) -> None:
                 result,
                 system_metadata=system_metadata,
             )
+        end = time.time()
+        print("Writing output data took %s seconds" % (end - begin))
 
         # If we made it here, then the operator has succeeded.
         exec_state.status = ExecutionStatus.SUCCEEDED
