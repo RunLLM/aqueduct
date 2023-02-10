@@ -26,7 +26,8 @@ from aqueduct.models.operators import (
     MetricSpec,
     Operator,
     OperatorSpec,
-    ResourceConfig, get_operator_type,
+    ResourceConfig,
+    get_operator_type,
 )
 from aqueduct.type_annotations import CheckFunction, MetricFunction, Number, UserFunction
 from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
@@ -278,7 +279,9 @@ def _convert_input_arguments_to_parameters(
 
             # We assume that the parameter name exists here, since we've disallowed any variable-length parameters.
             arg_name = param_names[idx]
-            artifacts[idx] = create_param_artifact(dag=dag, candidate_name=arg_name, default=default, is_implicit=True)
+            artifacts[idx] = create_param_artifact(
+                dag=dag, candidate_name=arg_name, default=default, is_implicit=True
+            )
     return artifacts
 
 

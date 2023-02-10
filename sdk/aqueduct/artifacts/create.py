@@ -3,11 +3,10 @@ from __future__ import annotations
 import warnings
 from typing import Any
 
-from aqueduct.constants.enums import OperatorType
-
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.transform import to_artifact_class
-from aqueduct.error import InvalidUserArgumentException, InvalidUserActionException
+from aqueduct.constants.enums import OperatorType
+from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
 from aqueduct.models.operators import Operator, OperatorSpec, get_operator_type
@@ -17,7 +16,10 @@ from aqueduct.utils.utils import construct_param_spec, generate_uuid
 
 
 def _operator_is_implicitly_created_param(op: Operator) -> bool:
-    return get_operator_type(op) != OperatorType.PARAM and op.spec.param.implicitly_created
+    if get_operator_type(op) != OperatorType.PARAM:
+        return False
+    assert op.spec.param is not None
+    return op.spec.param.implicitly_created
 
 
 def create_param_artifact(
@@ -64,26 +66,19 @@ def create_param_artifact(
             # We only overwrite an existing operator in a very particular case, otherwise we'll attempt to find
             # a unique name.
             colliding_op = dag.get_operator(with_name=candidate_name)
-            if (
-                colliding_op is None or
-                not _operator_is_implicitly_created_param(colliding_op)
-            ):
+            if colliding_op is None or not _operator_is_implicitly_created_param(colliding_op):
                 param_name = dag.get_unclaimed_name(prefix=candidate_name)
-
-        warnings.warn(
-            """Input to function argument "%s" is not an artifact type. We have implicitly \
-created a parameter named "%s" and your input will be used as its default value. This parameter \
-will be used when running the function."""
-            % (candidate_name, param_name)
-        )
+        else:
+            warnings.warn(
+                """Input to function argument `%s` is not an artifact type. We have implicitly created a parameter named `%s` and your input will be used as its default value. This parameter will be used when running the function."""
+                % (candidate_name, param_name)
+            )
     else:
         colliding_op = dag.get_operator(with_name=param_name)
         if colliding_op is not None and _operator_is_implicitly_created_param(colliding_op):
             raise InvalidUserActionException(
-                """Unable to create parameter `%s`, since there is an implicitly created parameter with the
-                same name. If the old parameter is not longer relevant, you can remove it with `client.delete_param()`
-                and rerun this operation. Otherwise, you'll need to rename one of the two.
-                """ % param_name,
+                """Unable to create parameter `%s`, since there is an implicitly created parameter with the same name. If the old parameter is not longer relevant, you can remove it with `client.delete_param()` and rerun this operation. Otherwise, you'll need to rename one of the two. """
+                % param_name,
             )
 
     artifact_type = infer_artifact_type(default)

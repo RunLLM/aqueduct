@@ -296,7 +296,7 @@ class DAG(BaseModel):
         """
         curr_suffix = 1
         while True:
-            candidate_name = prefix + " %d" % curr_suffix
+            candidate_name = prefix + " (%d)" % curr_suffix
             if self.is_name_unique(candidate_name):
                 op_name = candidate_name
                 break
@@ -350,6 +350,12 @@ class DAG(BaseModel):
         self.must_get_artifact(artifact_id).name = new_name
 
     def update_operator_name(self, op_id: uuid.UUID, new_name: str) -> None:
+        # Update the name -> operator map.
+        old_name = self.must_get_operator(op_id).name
+        self.operator_by_name[new_name] = self.operator_by_name[old_name]
+        del self.operator_by_name[old_name]
+
+        # Update the name on the operator spec.
         self.must_get_operator(op_id).name = new_name
 
     def update_operator_spec(self, name: str, spec: OperatorSpec) -> None:
