@@ -449,8 +449,14 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         id={`simple-tabpanel-${index}`}
         aria-labelledby={`simple-tab-${index}`}
         {...other}
+        style={{
+          height: '100%',
+          width: '100%',
+          margin: 0,
+          padding: '0 0 32px 0',
+        }}
       >
-        {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+        {value === index && children}
       </div>
     );
   }
@@ -506,24 +512,21 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         <TabPanel value={currentTab} index="Details">
           <Box
             sx={{
-              flex: 1,
-              mt: 2,
-              p: 3,
-              mb: contentBottomOffsetInPx,
-              width: '100%',
+              flexDirection: 'column',
+              display: 'flex',
+              flexGrow: 1,
               height: '100%',
-              boxSizing: 'border-box',
-              backgroundColor: theme.palette.gray['50'],
+              backgroundColor: theme.palette.gray[50],
             }}
           >
-            <Box style={{ height: '100%' }}>
-              <ReactFlowProvider>
+            <ReactFlowProvider>
+              <Box sx={{ flexGrow: 1 }}>
                 <ReactFlowCanvas
                   switchSideSheet={switchSideSheet}
                   onPaneClicked={onPaneClicked}
                 />
-              </ReactFlowProvider>
-            </Box>
+              </Box>
+            </ReactFlowProvider>
           </Box>
         </TabPanel>
 
