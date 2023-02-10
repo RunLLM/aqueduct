@@ -426,6 +426,7 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
             apiKey: user.apiKey,
             workflowDagResultId: workflow.selectedResult.id,
             artifactId: artifactId,
+            metadataOnly: true,
           })
         );
 

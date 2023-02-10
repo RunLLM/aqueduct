@@ -15,4 +15,6 @@ const (
 	ExportFnUserFriendlyHeader = "user-friendly"
 
 	TableNameHeader = "table-name"
+
+	MetadataOnlyHeader = "metadata-only"
 )

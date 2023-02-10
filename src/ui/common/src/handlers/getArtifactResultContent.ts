@@ -32,6 +32,7 @@ export const handleGetArtifactResultContent = createAsyncThunk<
         method: 'GET',
         headers: {
           'api-key': apiKey,
+          'metadata-only': 'false',
         },
       }
     );
