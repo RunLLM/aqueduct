@@ -1,7 +1,9 @@
-import '@testing-library/jest-dom'
+import '@testing-library/jest-dom';
+
 import React from 'react';
-import { render, screen, mockUser } from '../testUtils';
+
 import GettingStartedTutorial from '../../src/components/Cards/GettingStartedTutorial';
+import { mockUser, render, screen } from '../testUtils';
 
 describe('it', () => {
   it('renders GettingStartedTutorial component', () => {
@@ -13,6 +15,8 @@ describe('it', () => {
     expect(screen.getByText('👋')).toBeInTheDocument();
 
     // Check that welcome message is in the document
-    expect(screen.getByText('Welcome ' + mockUser.given_name + '!')).toBeInTheDocument();
+    expect(
+      screen.getByText('Welcome ' + mockUser.given_name + '!')
+    ).toBeInTheDocument();
   });
 });
