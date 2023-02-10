@@ -360,9 +360,13 @@ def generate_welcome_message(expose, port):
         expose_ip = "localhost"
     else:
         try:
-            expose_ip = requests.get(
+            ec2_ip = requests.get(
                 "http://169.254.169.254/latest/meta-data/public-ipv4", timeout=0.25
-            ).content.decode("utf-8")
+            )
+            if ec2_ip.status_code != 404: # User is in EC2 isntance.
+                expose_ip = ec2_ip.content.decode("utf-8")
+            else:  
+                expose_ip = "<IP_ADDRESS>"
         except:  # If you're not running on EC2, this will return an error.
             expose_ip = "<IP_ADDRESS>"
 
