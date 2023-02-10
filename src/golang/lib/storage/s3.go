@@ -60,6 +60,14 @@ func (s *s3Storage) Get(ctx context.Context, key string) ([]byte, error) {
 		Key:    aws.String(key),
 	})
 	if err != nil {
+		if aerr, ok := err.(awserr.Error); ok {
+			switch aerr.Code() {
+			case s3.ErrCodeNoSuchKey:
+				return nil, ErrObjectDoesNotExist
+			default:
+				return nil, err
+			}
+		}
 		return nil, err
 	}
 	defer result.Body.Close()
