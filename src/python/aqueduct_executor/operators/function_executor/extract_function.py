@@ -87,4 +87,4 @@ if __name__ == "__main__":
     run(spec)
 
     end = time.time()
-    print("Extracting the function took %s seconds" % (end - begin))
+    print("Extracting the function took %s seconds." % (end - begin))

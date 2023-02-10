@@ -98,4 +98,4 @@ if __name__ == "__main__":
     run(args.local_path, args.requirements_path, args.missing_path, spec, args.conda_env)
 
     end = time.time()
-    print("Installing requirements took %s seconds" % (end - begin))
+    print("Installing requirements took %s seconds." % (end - begin))

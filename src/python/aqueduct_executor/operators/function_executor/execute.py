@@ -231,14 +231,14 @@ def run(spec: FunctionSpec) -> None:
         )
 
         end = time.time()
-        print("Reading input data took %s seconds" % (end - begin))
+        print("Reading input data took %s seconds." % (end - begin))
 
         derived_from_bson = SerializationType.BSON_TABLE in serialization_types
         print("Invoking the function...")
         begin = time.time()
         results, system_metadata = _execute_function(spec, inputs, exec_state)
         end = time.time()
-        print("Function execution took %s seconds" % (end - begin))
+        print("Function execution took %s seconds." % (end - begin))
 
         if exec_state.status == ExecutionStatus.FAILED:
             # user failure
@@ -340,7 +340,7 @@ def run(spec: FunctionSpec) -> None:
                 system_metadata=system_metadata,
             )
         end = time.time()
-        print("Writing output data took %s seconds" % (end - begin))
+        print("Writing output data took %s seconds." % (end - begin))
 
         # If we made it here, then the operator has succeeded.
         exec_state.status = ExecutionStatus.SUCCEEDED
