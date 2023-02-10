@@ -150,7 +150,7 @@ def convert_dict_to_integration_connect_config(
 ) -> IntegrationConfig:
     if service == ServiceType.BIGQUERY:
         return BigQueryConfig(**config_dict)
-    elif service == ServiceType.MYSQL:
+    elif service in [ServiceType.MARIADB, ServiceType.MYSQL]:
         return MySQLConfig(**config_dict)
     elif service == ServiceType.MONGO_DB:
         return MongoDBConfig(**config_dict)
