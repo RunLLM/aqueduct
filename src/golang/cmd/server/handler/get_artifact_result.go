@@ -166,6 +166,10 @@ func (h *GetArtifactResultHandler) Prepare(r *http.Request) (interface{}, int, e
 	}
 
 	metadataOnlyString := r.Header.Get(routes.MetadataOnlyHeader)
+	if metadataOnlyString == "" {
+		metadataOnlyString = "false"
+	}
+
 	metadataOnly, err := strconv.ParseBool(metadataOnlyString)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error when converting metadata-only header to bool.")
