@@ -136,7 +136,12 @@ export const handleGetOperatorResults = createAsyncThunk<
 
 export const handleGetArtifactResults = createAsyncThunk<
   GetArtifactResultResponse,
-  { apiKey: string; workflowDagResultId: string; artifactId: string; metadataOnly: boolean }
+  {
+    apiKey: string;
+    workflowDagResultId: string;
+    artifactId: string;
+    metadataOnly: boolean;
+  }
 >(
   'workflowReducer/getArtifactResults',
   async (

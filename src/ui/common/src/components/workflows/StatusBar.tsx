@@ -426,6 +426,8 @@ export const WorkflowStatusBar: React.FC<WorkflowStatusBarProps> = ({
             apiKey: user.apiKey,
             workflowDagResultId: workflow.selectedResult.id,
             artifactId: artifactId,
+            // The StatusBar component never need the artifact payload, so we set
+            // metadataOnly to true.
             metadataOnly: true,
           })
         );

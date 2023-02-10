@@ -32,14 +32,9 @@ import {
 import { AppDispatch, RootState } from '../../../../stores/store';
 import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
-import { Data } from '../../../../utils/data';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { handleExportFunction } from '../../../../utils/operators';
-import {
-  ExecutionStatus,
-  LoadingStatusEnum,
-  WidthTransition,
-} from '../../../../utils/shared';
+import { LoadingStatusEnum, WidthTransition } from '../../../../utils/shared';
 import {
   getDataSideSheetContent,
   sideSheetSwitcher,
@@ -223,6 +218,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
       for (const artfId of [...op.outputs]) {
         if (op.spec.metric || op.spec.check) {
+          // We set metadataOnly to false because for metric and check, we want to also show
+          // their value on the workflow page.
           getArtifactResultDetails(artfId, false);
         } else {
           getArtifactResultDetails(artfId, true);
