@@ -1,12 +1,14 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
-import { NotificationLogLevel } from 'src';
 
 import { EmailConfig } from '../../../utils/integrations';
+import { NotificationLogLevel } from '../../../utils/notifications';
 import NotificationLevelSelector from '../../notifications/NotificationLevelSelector';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
+// Placeholders are example values not filled for users, but
+// may show up in textbox as hint if user don't fill the form field.
 const Placeholders = {
   host: 'smtp.myprovider.com',
   port: '',
@@ -14,6 +16,18 @@ const Placeholders = {
   password: '******',
   reciever: 'myreciever@myprovider.com',
   level: 'succeeded',
+  enabled: 'false',
+};
+
+// Default fields are actual filled form values on 'create' dialog.
+export const EmailDefaultsOnCreate = {
+  host: '',
+  port: '',
+  user: '',
+  password: '',
+  targets_serialized: '',
+  level: NotificationLogLevel.Success,
+  enabled: 'false',
 };
 
 type Props = {
@@ -94,19 +108,42 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       <Box sx={{ mt: 2 }}>
         <Box sx={{ my: 1 }}>
           <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-            Level *
+            How to apply to workflows *
           </Typography>
           <Typography variant="body2" sx={{ color: 'darkGray' }}>
-            The notification levels at which to send an email notification. This
-            applies to all workflows unless separately specified in workflow
-            settings.
+            Configure if this email notification applies to all workflows. If
+            enabled, choose level(s) on which to recieve notifications. You can
+            override this setting in each workflow&apos;s settings page.
           </Typography>
         </Box>
         <NotificationLevelSelector
           level={value?.level as NotificationLogLevel}
           onSelectLevel={(level) => onUpdateField('level', level)}
+          disableSelectorMessage="Do not apply this notification to all workflows."
+          disabled={value?.enabled === 'false'}
+          onDisable={(disabled) =>
+            onUpdateField('enabled', disabled ? 'false' : 'true')
+          }
         />
       </Box>
     </Box>
   );
 };
+
+export function isEmailConfigComplete(config: EmailConfig): boolean {
+  if (config.enabled !== 'true' && config.enabled !== 'false') {
+    return false;
+  }
+
+  if (config.enabled == 'true' && !config.level) {
+    return false;
+  }
+
+  return (
+    !!config.host &&
+    !!config.port &&
+    !!config.password &&
+    !!config.targets_serialized &&
+    !!config.user
+  );
+}

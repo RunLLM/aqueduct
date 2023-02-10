@@ -32,6 +32,12 @@ type Notification interface {
 	// for example, workflow specific settings.
 	Level() shared.NotificationLevel
 
+	// `Enabled()` specifies if the notification is enabled by default.
+	// We allow overriding this behavior in, for example, workflow specific settings.
+	// As a result, a notification can be disabled for all workflows (`Enabled()` returns false),
+	// with a few exceptions (overrided in workflow's `NotificationSettings` field.)
+	Enabled() bool
+
 	// `SendForDag()` sends a notification for a workflow execution.
 	SendForDag(
 		ctx context.Context,

@@ -166,12 +166,14 @@ export type EmailConfig = {
   password: string;
   targets_serialized: string; // This should be a serialized list
   level: string;
+  enabled: 'true' | 'false'; // this has to be string to fit backend requirements.
 };
 
 export type SlackConfig = {
   token: string;
   channels_serialized: string;
   level: string;
+  enabled: 'true' | 'false'; // this has to be string to fit backend requirements.
 };
 
 export type IntegrationConfig =

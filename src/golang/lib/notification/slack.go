@@ -31,6 +31,10 @@ func (s *SlackNotification) Level() shared.NotificationLevel {
 	return s.conf.Level
 }
 
+func (s *SlackNotification) Enabled() bool {
+	return s.conf.Enabled
+}
+
 // reference: https://stackoverflow.com/questions/50106263/slack-api-to-find-existing-channel
 // We have to use list channel API together with a linear search.
 func findChannels(client *slack.Client, names []string) ([]slack.Channel, error) {

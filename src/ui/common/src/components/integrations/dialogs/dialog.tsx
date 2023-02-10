@@ -54,7 +54,11 @@ import {
   DatabricksDialog,
   isDatabricksConfigComplete,
 } from './databricksDialog';
-import { EmailDialog } from './emailDialog';
+import {
+  EmailDefaultsOnCreate,
+  EmailDialog,
+  isEmailConfigComplete,
+} from './emailDialog';
 import { GCSDialog } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { isK8sConfigComplete, KubernetesDialog } from './kubernetesDialog';
@@ -65,7 +69,11 @@ import { MysqlDialog } from './mysqlDialog';
 import { PostgresDialog } from './postgresDialog';
 import { RedshiftDialog } from './redshiftDialog';
 import { isS3ConfigComplete, S3Dialog } from './s3Dialog';
-import { SlackDialog } from './slackDialog';
+import {
+  isSlackConfigComplete,
+  SlackDefaultsOnCreate,
+  SlackDialog,
+} from './slackDialog';
 import { SnowflakeDialog } from './snowflakeDialog';
 import { SQLiteDialog } from './sqliteDialog';
 
@@ -77,6 +85,19 @@ type Props = {
   showMigrationDialog?: () => void;
   integrationToEdit?: Integration;
 };
+
+// Default fields are actual filled form values on 'create' dialog.
+function defaultFields(service: Service): IntegrationConfig {
+  switch (service) {
+    case 'Email':
+      return EmailDefaultsOnCreate as EmailConfig;
+
+    case 'Slack':
+      return SlackDefaultsOnCreate as SlackConfig;
+  }
+
+  return {};
+}
 
 const IntegrationDialog: React.FC<Props> = ({
   user,
@@ -91,7 +112,7 @@ const IntegrationDialog: React.FC<Props> = ({
   const [config, setConfig] = useState<IntegrationConfig>(
     editMode
       ? { ...integrationToEdit.config } // make a copy to avoid accessing a state object
-      : {}
+      : { ...defaultFields(service) }
   );
   const [name, setName] = useState<string>(
     editMode ? integrationToEdit.name : ''
@@ -450,6 +471,10 @@ export function isConfigComplete(
       return true;
     case 'Databricks':
       return isDatabricksConfigComplete(config as DatabricksConfig);
+    case 'Email':
+      return isEmailConfigComplete(config as EmailConfig);
+    case 'Slack':
+      return isSlackConfigComplete(config as SlackConfig);
 
     default:
       // Make sure config is not empty and all fields are not empty as well.

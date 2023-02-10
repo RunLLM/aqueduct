@@ -1,16 +1,27 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
-import { NotificationLogLevel } from 'src';
 
 import { SlackConfig } from '../../../utils/integrations';
+import { NotificationLogLevel } from '../../../utils/notifications';
 import NotificationLevelSelector from '../../notifications/NotificationLevelSelector';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
+// Placeholders are example values not filled for users, but
+// may show up in textbox as hint if user don't fill the form field.
 const Placeholders = {
   token: '*****',
   channel: 'my_channel',
   level: 'succeeded',
+  enabled: true,
+};
+
+// Default fields are actual filled form values on 'create' dialog.
+export const SlackDefaultsOnCreate = {
+  token: '',
+  channels_serialized: '',
+  level: NotificationLogLevel.Success,
+  enabled: 'false',
 };
 
 type Props = {
@@ -72,8 +83,25 @@ export const SlackDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         <NotificationLevelSelector
           level={value?.level as NotificationLogLevel}
           onSelectLevel={(level) => onUpdateField('level', level)}
+          disableSelectorMessage="Do not apply this notification to all workflows."
+          disabled={value?.enabled === 'false'}
+          onDisable={(disabled) =>
+            onUpdateField('enabled', disabled ? 'false' : 'true')
+          }
         />
       </Box>
     </Box>
   );
 };
+
+export function isSlackConfigComplete(config: SlackConfig): boolean {
+  if (config.enabled !== 'true' && config.enabled !== 'false') {
+    return false;
+  }
+
+  if (config.enabled == 'true' && !config.level) {
+    return false;
+  }
+
+  return !!config.channels_serialized && !!config.token;
+}
