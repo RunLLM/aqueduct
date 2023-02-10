@@ -1,9 +1,5 @@
-import Box from '@mui/material/Box';
-import React, { useEffect } from 'react';
-import ReactFlow, {
-  Node as ReactFlowNode,
-  useReactFlow,
-} from 'react-flow-renderer';
+import React from 'react';
+import ReactFlow, { Node as ReactFlowNode } from 'react-flow-renderer';
 import { useSelector } from 'react-redux';
 
 import { RootState } from '../../stores/store';
@@ -29,30 +25,22 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
     (state: RootState) => state.workflowReducer.selectedDagPosition
   );
 
-  const { fitView } = useReactFlow();
-
-  useEffect(() => {
-    fitView();
-  }, [dagPositionState, fitView]);
-
   const { edges, nodes } = dagPositionState.result ?? { edges: [], nodes: [] };
 
   return (
-    <Box sx={{ height: '50vh', width: '100%' }}>
-      <ReactFlow
-        onPaneClick={onPaneClicked}
-        nodes={nodes}
-        edges={edges}
-        onNodeClick={switchSideSheet}
-        nodeTypes={nodeTypes}
-        connectionLineStyle={connectionLineStyle}
-        snapToGrid={true}
-        snapGrid={snapGrid as [number, number]}
-        defaultZoom={1}
-        edgeTypes={EdgeTypes}
-        minZoom={0.25}
-      />
-    </Box>
+    <ReactFlow
+      onPaneClick={onPaneClicked}
+      nodes={nodes}
+      edges={edges}
+      onNodeClick={switchSideSheet}
+      nodeTypes={nodeTypes}
+      connectionLineStyle={connectionLineStyle}
+      snapToGrid={true}
+      snapGrid={snapGrid as [number, number]}
+      defaultZoom={1}
+      edgeTypes={EdgeTypes}
+      minZoom={0.25}
+    />
   );
 };
 

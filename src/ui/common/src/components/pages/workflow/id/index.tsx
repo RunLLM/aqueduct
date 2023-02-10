@@ -329,8 +329,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             onClick={() => {
               // All we're really doing here is adding the artifactId onto the end of the URL.
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/artifact/${currentNode.id}`
               );
             }}
@@ -369,8 +368,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/metric/${currentNode.id}`
               );
             }}
@@ -389,8 +387,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/operator/${currentNode.id}`
               );
             }}
@@ -409,8 +406,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/check/${currentNode.id}`
               );
             }}
@@ -449,8 +445,14 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         id={`simple-tabpanel-${index}`}
         aria-labelledby={`simple-tab-${index}`}
         {...other}
+        style={{
+          height: '100%',
+          width: '100%',
+          margin: 0,
+          padding: '0 0 32px 0',
+        }}
       >
-        {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+        {value === index && children}
       </div>
     );
   }
@@ -506,24 +508,21 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         <TabPanel value={currentTab} index="Details">
           <Box
             sx={{
-              flex: 1,
-              mt: 2,
-              p: 3,
-              mb: contentBottomOffsetInPx,
-              width: '100%',
+              flexDirection: 'column',
+              display: 'flex',
+              flexGrow: 1,
               height: '100%',
-              boxSizing: 'border-box',
-              backgroundColor: theme.palette.gray['50'],
+              backgroundColor: theme.palette.gray[50]
             }}
           >
-            <Box style={{ height: '100%' }}>
-              <ReactFlowProvider>
+            <ReactFlowProvider>
+              <Box sx={{ flexGrow: 1 }}>
                 <ReactFlowCanvas
                   switchSideSheet={switchSideSheet}
                   onPaneClicked={onPaneClicked}
                 />
-              </ReactFlowProvider>
-            </Box>
+              </Box>
+            </ReactFlowProvider>
           </Box>
         </TabPanel>
 
