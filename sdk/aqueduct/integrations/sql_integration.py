@@ -126,7 +126,7 @@ class RelationalDBIntegration(Integration):
             list_tables_query = LIST_TABLES_QUERY_ATHENA
 
         sql_artifact = self.sql(query=list_tables_query)
-        print(self.type(), list_tables_query, sql_artifact)
+        print(self.type(), list_tables_query, sql_artifact.get())
         return sql_artifact.get()
 
     def table(self, name: str) -> pd.DataFrame:
