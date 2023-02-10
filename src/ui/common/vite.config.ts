@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { resolve } from 'path';
 import { defineConfig } from 'vite';
 import { externalizeDeps } from 'vite-plugin-externalize-deps';
@@ -25,6 +26,10 @@ export default defineConfig(() => {
                 name: '@aqueducthq/common',
                 fileName: 'common',
             }
+        },
+        test: {
+            environment: 'jsdom',
+            globals: true,
         },
     }
 })
