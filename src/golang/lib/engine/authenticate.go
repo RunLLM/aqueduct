@@ -55,7 +55,7 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 		return errors.Wrap(err, "Unable to authenticate Lambda Function.")
 	}
 
-	errGroup, _ := errgroup.WithContext(ctx)
+	errGroup, errGroupCtx := errgroup.WithContext(ctx)
 	// Pull images on a concurrency of "MaxConcurrentDownload".
 	pullImageChannel := make(chan lambda_utils.LambdaFunctionType, len(functionsToShip))
 	defer close(pullImageChannel)
@@ -73,6 +73,8 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 						return err
 					}
 					pushImageChannel <- functionType
+				case <-errGroupCtx.Done():
+					return errGroupCtx.Err()
 				default:
 					return nil
 				}
@@ -96,6 +98,8 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 						return err
 					}
 					<-signalChannel
+				case <-errGroupCtx.Done():
+					return errGroupCtx.Err()
 				default:
 					time.Sleep(1 * time.Second)
 					if len(signalChannel) == 0 {
