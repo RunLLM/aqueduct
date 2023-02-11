@@ -3,7 +3,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 
-import { Tab, Tabs } from '../../../components/primitives/Tabs.styles';
+import { Tab, Tabs } from '../../Tabs/Tabs.styles';
 import {
   AWSCredentialType,
   FileData,
@@ -49,9 +49,9 @@ export const S3Dialog: React.FC<Props> = ({
   const fileData =
     fileName && !!value?.config_file_content
       ? {
-          name: fileName,
-          data: value.config_file_content,
-        }
+        name: fileName,
+        data: value.config_file_content,
+      }
       : null;
 
   useEffect(() => {

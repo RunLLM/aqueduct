@@ -64,7 +64,7 @@ import WorkflowsPage from './components/pages/workflows';
 import { Button } from './components/primitives/Button.styles';
 import { IconButton } from './components/primitives/IconButton.styles';
 import { LoadingButton } from './components/primitives/LoadingButton.styles';
-import { Tab, Tabs } from './components/primitives/Tabs.styles';
+import { Tab, Tabs } from './components/Tabs/Tabs.styles';
 import { OperatorExecStateTableType } from './components/tables/OperatorExecStateTable';
 import PaginatedTable from './components/tables/PaginatedTable';
 import LogBlock, { LogLevel } from './components/text/LogBlock';

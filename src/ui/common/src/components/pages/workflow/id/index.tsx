@@ -45,7 +45,8 @@ import DefaultLayout, {
   SidesheetWidth,
 } from '../../../layouts/default';
 import { Button } from '../../../primitives/Button.styles';
-import { Tab, Tabs } from '../../../primitives/Tabs.styles';
+import { Tab, Tabs } from '../../../Tabs/Tabs.styles';
+import { TabPanel } from '../../../../components/Tabs/TabPanel';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowHeader, {
   WorkflowPageContentId,
@@ -75,9 +76,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   );
   const workflow = useSelector((state: RootState) => state.workflowReducer);
   const switchSideSheet = sideSheetSwitcher(dispatch);
-  const artifactResult = useSelector(
-    (state: RootState) => state.workflowReducer.artifactResults[currentNode.id]
-  );
 
   const dagName = workflow.selectedDag?.metadata?.name;
 
@@ -289,8 +287,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
   // TODO: Remove openSideSheet reducer, as it's no longer used in the ui-redesign project
   // const sideSheetOpen = currentNode.type !== NodeType.None;
-
-  const contentBottomOffsetInPx = `32px`;
   const getNodeLabel = () => {
     if (
       currentNode.type === NodeType.TableArtifact ||
@@ -329,8 +325,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             onClick={() => {
               // All we're really doing here is adding the artifactId onto the end of the URL.
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/artifact/${currentNode.id}`
               );
             }}
@@ -369,8 +364,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/metric/${currentNode.id}`
               );
             }}
@@ -389,8 +383,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/operator/${currentNode.id}`
               );
             }}
@@ -409,8 +402,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/check/${currentNode.id}`
               );
             }}
@@ -430,36 +422,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const handleTabChange = (event: React.SyntheticEvent, newTab: string) => {
     setCurrentTab(newTab);
   };
-
-  interface TabPanelProps {
-    children?: React.ReactNode;
-    index: string;
-    value: string;
-  }
-
-  // TODO: Make this a component, probably can put this near the other tab component that we have
-  // Linear Task: https://linear.app/aqueducthq/issue/ENG-2409/tabpanel-component
-  function TabPanel(props: TabPanelProps) {
-    const { children, value, index, ...other } = props;
-
-    return (
-      <div
-        role="tabpanel"
-        hidden={value !== index}
-        id={`simple-tabpanel-${index}`}
-        aria-labelledby={`simple-tab-${index}`}
-        {...other}
-        style={{
-          height: '100%',
-          width: '100%',
-          margin: 0,
-          padding: '0 0 32px 0',
-        }}
-      >
-        {value === index && children}
-      </div>
-    );
-  }
 
   return (
     <Layout
