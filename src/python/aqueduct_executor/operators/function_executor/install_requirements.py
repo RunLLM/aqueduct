@@ -1,15 +1,17 @@
 import argparse
 import base64
+import json
 import subprocess
 import sys
-from typing import Optional
 import time
+from typing import Optional
 
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec, parse_spec
 from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.enums import FailureType
 from aqueduct_executor.operators.utils.execution import ExecFailureException, ExecutionState, Logs
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
+from aqueduct_executor.operators.utils.utils import print_with_color
 
 
 def install_missing_packages(
@@ -98,4 +100,5 @@ if __name__ == "__main__":
     run(args.local_path, args.requirements_path, args.missing_path, spec, args.conda_env)
 
     end = time.time()
-    print("Installing requirements took %s seconds." % (end - begin))
+    performance = {"job": spec.name, "step": "Installing Dependencies", "latency(s)": (end - begin)}
+    print_with_color(json.dumps(performance, indent=4))

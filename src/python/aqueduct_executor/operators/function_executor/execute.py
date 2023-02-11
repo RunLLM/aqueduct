@@ -3,10 +3,10 @@ import json
 import os
 import shutil
 import sys
+import time
 import tracemalloc
 import uuid
 from typing import Any, Callable, Dict, List, Tuple
-import time
 
 import numpy as np
 import pandas as pd
@@ -36,6 +36,7 @@ from aqueduct_executor.operators.utils.execution import (
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.timer import Timer
+from aqueduct_executor.operators.utils.utils import print_with_color
 
 
 def get_py_import_path(spec: FunctionSpec) -> str:
@@ -231,14 +232,18 @@ def run(spec: FunctionSpec) -> None:
         )
 
         end = time.time()
-        print("Reading input data took %s seconds." % (end - begin))
+        performance = {"job": spec.name, "step": "Reading Inputs", "latency(s)": (end - begin)}
+        print_with_color(json.dumps(performance, indent=4))
 
         derived_from_bson = SerializationType.BSON_TABLE in serialization_types
+
         print("Invoking the function...")
         begin = time.time()
         results, system_metadata = _execute_function(spec, inputs, exec_state)
         end = time.time()
-        print("Function execution took %s seconds." % (end - begin))
+
+        performance = {"job": spec.name, "step": "Running Function", "latency(s)": (end - begin)}
+        print_with_color(json.dumps(performance, indent=4))
 
         if exec_state.status == ExecutionStatus.FAILED:
             # user failure
@@ -340,7 +345,8 @@ def run(spec: FunctionSpec) -> None:
                 system_metadata=system_metadata,
             )
         end = time.time()
-        print("Writing output data took %s seconds." % (end - begin))
+        performance = {"job": spec.name, "step": "Writing Outputs", "latency(s)": (end - begin)}
+        print_with_color(json.dumps(performance, indent=4))
 
         # If we made it here, then the operator has succeeded.
         exec_state.status = ExecutionStatus.SUCCEEDED

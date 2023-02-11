@@ -1,17 +1,19 @@
 import argparse
 import base64
 import io
+import json
 import os
 import shutil
 import sys
+import time
 import traceback
 import zipfile
-import time
 
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec, parse_spec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
+from aqueduct_executor.operators.utils.utils import print_with_color
 
 
 def _unzip_function_contents(function_in_bytes: bytes, extract_path: str) -> None:
@@ -87,4 +89,5 @@ if __name__ == "__main__":
     run(spec)
 
     end = time.time()
-    print("Extracting the function took %s seconds." % (end - begin))
+    performance = {"job": spec.name, "step": "Loading Function", "latency(s)": (end - begin)}
+    print_with_color(json.dumps(performance, indent=4))

@@ -39,6 +39,9 @@ _METADATA_PYTHON_TYPE_KEY = "python_type"
 # This will be cleaned up within the serialization logic.
 _TEMP_KERAS_MODEL_NAME = "keras_model"
 
+CYELLOW = "\33[33m"
+CEND = "\33[0m"
+
 
 def _read_csv(input_bytes: bytes) -> pd.DataFrame:
     return pd.read_csv(io.BytesIO(input_bytes))
@@ -215,3 +218,7 @@ def write_compile_airflow_output(storage: Storage, path: str, dag_file: bytes) -
     Writes the provided Airflow DAG file to storage.
     """
     storage.put(path, dag_file)
+
+
+def print_with_color(log: str) -> None:
+    print(CYELLOW + log + CEND)
