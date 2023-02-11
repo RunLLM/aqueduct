@@ -181,7 +181,6 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 			return errors.Wrap(err, "Unable to update lambda function.")
 		}
 	}
-	log.Info("finishing", functionType)
 	return nil
 }
 
