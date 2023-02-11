@@ -186,6 +186,7 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 	if err != nil {
 		return errors.Wrap(err, "Unable to delete downloaded docker image.")
 	}
+  
 	return nil
 }
 
