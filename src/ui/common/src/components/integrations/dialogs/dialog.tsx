@@ -5,6 +5,7 @@ import {
   Box,
   DialogActions,
   DialogContent,
+  Link,
   Typography,
 } from '@mui/material';
 import Button from '@mui/material/Button';
@@ -415,6 +416,15 @@ const IntegrationDialog: React.FC<Props> = ({
               numWorkflows === 1 ? 'workflow' : 'workflows'
             }.`}
           </Alert>
+        )}
+        {(service === 'Email' || service === 'Slack') && (
+          <Typography variant="body1" color="gray.700">
+            New to {service} integration? See our{' '}
+            <Link href={SupportedIntegrations[service].docs} target="_blank">
+              guide
+            </Link>{' '}
+            to connect to this integration.
+          </Typography>
         )}
         {nameInput}
         {serviceDialog}
