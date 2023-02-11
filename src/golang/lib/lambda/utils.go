@@ -182,7 +182,11 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 			return errors.Wrap(err, "Unable to update lambda function.")
 		}
 	}
-	log.Info(functionType)
+
+	err = DeleteDockerImage(versionedLambdaImageUri)
+	if err != nil {
+		return errors.Wrap(err, "Unable to delete downloaded docker image.")
+	}
 	return nil
 }
 
@@ -231,27 +235,19 @@ func mapFunctionType(functionType LambdaFunctionType) (string, string, error) {
 
 	}
 }
-func DeleteDockerImage(functionsToShip []LambdaFunctionType) error {
-	// Remove Docker Images after finishing creating Lambda functions.
-	for _, functionType := range functionsToShip {
-		lambdaImageUri, _, err := mapFunctionType(functionType)
-		if err != nil {
-			return errors.Wrap(err, "Unable to map function type to image.")
-		}
-		versionedLambdaImageUri := fmt.Sprintf("%s:%s", lambdaImageUri, lib.ServerVersionNumber)
+func DeleteDockerImage(versionedLambdaImageUri string) error {
+	// Remove Docker Image after finishing creating Lambda functions.
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("docker rmi -f $(docker images --filter=reference='%s' -q)", versionedLambdaImageUri))
+	// cmd := exec.Command(fmt.Sprint("docker rmi -f $(docker images --filter=reference='%s' -q)", versionedLambdaImageUri))
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
 
-		stdout := &bytes.Buffer{}
-		stderr := &bytes.Buffer{}
-		// cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("docker rmi -f $(docker images --filter=reference='%s' -q)", versionedLambdaImageUri))
-		cmd := exec.Command(fmt.Sprint("docker rmi -f $(docker images --filter=reference='%s' -q)", versionedLambdaImageUri))
-		cmd.Stdout = stdout
-		cmd.Stderr = stderr
+	err := cmd.Run()
 
-		err = cmd.Run()
-
-		if stderr != nil {
-			return errors.Wrap(err, "Unable to delete docker image.")
-		}
+	if err != nil {
+		return errors.Wrap(err, "Unable to delete docker image.")
 	}
 
 	return nil
