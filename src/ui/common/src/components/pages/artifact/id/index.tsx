@@ -204,10 +204,11 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   const inputs = mapOperators([artifact.from]);
   const outputs = mapOperators(artifact.to ? artifact.to : []);
-  
+
   let upstream_pending = false;
   inputs.some((operator) => {
-    let operator_pending = operator.result.exec_state.status === ExecutionStatus.Pending;
+    const operator_pending =
+      operator.result.exec_state.status === ExecutionStatus.Pending;
     if (operator_pending) {
       upstream_pending = operator_pending;
     }
@@ -224,8 +225,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
       <Box marginBottom="32px">
         <Alert severity="warning">
-          An upstream operator failed, causing this artifact to not be
-          created.
+          An upstream operator failed, causing this artifact to not be created.
         </Alert>
       </Box>
     </>
@@ -235,7 +235,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     preview = (
       <>
         <Divider sx={{ marginY: '32px' }} />
-  
+
         <Box marginBottom="32px">
           <Alert severity="warning">
             An upstream operator is in progress so this artifact is not yet
