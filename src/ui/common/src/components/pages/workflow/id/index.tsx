@@ -12,6 +12,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
+import { TabPanel } from '../../../../components/Tabs/TabPanel';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import {
   NodeType,
@@ -46,7 +47,6 @@ import DefaultLayout, {
 } from '../../../layouts/default';
 import { Button } from '../../../primitives/Button.styles';
 import { Tab, Tabs } from '../../../Tabs/Tabs.styles';
-import { TabPanel } from '../../../../components/Tabs/TabPanel';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowHeader, {
   WorkflowPageContentId,
@@ -325,7 +325,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             onClick={() => {
               // All we're really doing here is adding the artifactId onto the end of the URL.
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
                 }/artifact/${currentNode.id}`
               );
             }}
@@ -364,7 +365,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
                 }/metric/${currentNode.id}`
               );
             }}
@@ -383,7 +385,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
                 }/operator/${currentNode.id}`
               );
             }}
@@ -402,7 +405,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
                 }/check/${currentNode.id}`
               );
             }}

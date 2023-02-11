@@ -3,12 +3,12 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 
-import { Tab, Tabs } from '../../Tabs/Tabs.styles';
 import {
   AWSCredentialType,
   FileData,
   S3Config,
 } from '../../../utils/integrations';
+import { Tab, Tabs } from '../../Tabs/Tabs.styles';
 import { readCredentialsFile } from './bigqueryDialog';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';
@@ -49,9 +49,9 @@ export const S3Dialog: React.FC<Props> = ({
   const fileData =
     fileName && !!value?.config_file_content
       ? {
-        name: fileName,
-        data: value.config_file_content,
-      }
+          name: fileName,
+          data: value.config_file_content,
+        }
       : null;
 
   useEffect(() => {
