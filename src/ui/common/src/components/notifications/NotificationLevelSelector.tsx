@@ -54,7 +54,12 @@ const NotificationLevelSelector: React.FC<Props> = ({
   return (
     <Box display="flex" flexDirection="column" alignContent="left">
       {showLevelOptions && (
-        <Box display="flex" flexDirection="row" alignContent="center">
+        <Box
+          display="flex"
+          flexDirection="row"
+          alignContent="center"
+          marginTop={1}
+        >
           <Checkbox
             checked={errorChecked}
             disabled={errorDisabled}
