@@ -204,10 +204,69 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   const inputs = mapOperators([artifact.from]);
   const outputs = mapOperators(artifact.to ? artifact.to : []);
+  
+  let upstream_pending = false;
+  inputs.some((operator) => {
+    let operator_pending = operator.result.exec_state.status === ExecutionStatus.Pending;
+    if (operator_pending) {
+      upstream_pending = operator_pending;
+    }
+    return operator_pending;
+  });
 
   const artifactStatus = artifact?.result?.exec_state?.status;
   const previewAvailable =
     artifactStatus && artifactStatus !== ExecutionStatus.Canceled;
+
+  let preview = (
+    <>
+      <Divider sx={{ marginY: '32px' }} />
+
+      <Box marginBottom="32px">
+        <Alert severity="warning">
+          An upstream operator failed, causing this artifact to not be
+          created.
+        </Alert>
+      </Box>
+    </>
+  );
+
+  if (upstream_pending) {
+    preview = (
+      <>
+        <Divider sx={{ marginY: '32px' }} />
+  
+        <Box marginBottom="32px">
+          <Alert severity="warning">
+            An upstream operator is in progress so this artifact is not yet
+            created.
+          </Alert>
+        </Box>
+      </>
+    );
+  } else if (previewAvailable) {
+    preview = (
+      <>
+        <Divider sx={{ marginY: '32px' }} />
+        <Box width="100%" marginTop="12px">
+          <Typography
+            variant="h6"
+            component="div"
+            marginBottom="8px"
+            fontWeight="normal"
+          >
+            Preview
+          </Typography>
+          <ArtifactContent
+            artifact={artifact}
+            contentWithLoadingStatus={contentWithLoadingStatus}
+          />
+        </Box>
+
+        <Divider sx={{ marginY: '32px' }} />
+      </>
+    );
+  }
 
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
@@ -250,38 +309,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
             )}
           </Box>
 
-          {previewAvailable ? (
-            <>
-              <Divider sx={{ marginY: '32px' }} />
-              <Box width="100%" marginTop="12px">
-                <Typography
-                  variant="h6"
-                  component="div"
-                  marginBottom="8px"
-                  fontWeight="normal"
-                >
-                  Preview
-                </Typography>
-                <ArtifactContent
-                  artifact={artifact}
-                  contentWithLoadingStatus={contentWithLoadingStatus}
-                />
-              </Box>
-
-              <Divider sx={{ marginY: '32px' }} />
-            </>
-          ) : (
-            <>
-              <Divider sx={{ marginY: '32px' }} />
-
-              <Box marginBottom="32px">
-                <Alert severity="warning">
-                  An upstream operator failed, causing this artifact to not be
-                  created.
-                </Alert>
-              </Box>
-            </>
-          )}
+          {preview}
 
           <Box display="flex" width="100%">
             <MetricsOverview metrics={metrics} />
