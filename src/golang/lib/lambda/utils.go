@@ -245,10 +245,10 @@ func AddFunctionTypeToChannel(functionsToShip []LambdaFunctionType, channel chan
 
 func DeleteDockerImage(versionedLambdaImageUri string) error {
 	// Remove Docker Image after finishing creating Lambda functions.
+
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
 	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("docker rmi -f $(docker images --filter=reference='%s' -q)", versionedLambdaImageUri))
-	// cmd := exec.Command(fmt.Sprint("docker rmi -f $(docker images --filter=reference='%s' -q)", versionedLambdaImageUri))
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 
