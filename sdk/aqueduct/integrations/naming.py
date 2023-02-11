@@ -22,4 +22,5 @@ def _resolve_op_and_artifact_name_for_extract(
         overwrite_existing_op_name=overwrite_existing_op_name,
         candidate_artifact_names=artifact_name,
     )
+    assert len(artifact_names) == 1
     return op_name, artifact_names[0]

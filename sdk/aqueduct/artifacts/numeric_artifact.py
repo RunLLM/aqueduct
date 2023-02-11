@@ -261,11 +261,12 @@ class NumericArtifact(BaseArtifact):
         )
         op_spec = OperatorSpec(check=CheckSpec(level=severity, function=function_spec))
 
-        op_name, artifact_name = resolve_op_and_artifact_names(
+        op_name, artifact_names = resolve_op_and_artifact_names(
             self._dag,
             check_name,
             overwrite_existing_op_name=False,
         )
+        assert len(artifact_names) == 1
 
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
@@ -284,7 +285,7 @@ class NumericArtifact(BaseArtifact):
                     output_artifacts=[
                         ArtifactMetadata(
                             id=output_artifact_id,
-                            name=artifact_name,
+                            name=artifact_names[0],
                             type=ArtifactType.BOOL,
                         )
                     ],
