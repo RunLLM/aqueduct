@@ -34,7 +34,7 @@ from aqueduct.utils.dag_deltas import (
 )
 from aqueduct.utils.describe import get_readable_description_for_metric
 from aqueduct.utils.function_packaging import serialize_function
-from aqueduct.utils.naming import artifact_name_from_op_name
+from aqueduct.utils.naming import resolve_op_and_artifact_names
 from aqueduct.utils.utils import format_header_for_print, generate_uuid
 
 from aqueduct import globals
@@ -261,6 +261,12 @@ class NumericArtifact(BaseArtifact):
         )
         op_spec = OperatorSpec(check=CheckSpec(level=severity, function=function_spec))
 
+        op_name, artifact_name = resolve_op_and_artifact_names(
+            self._dag,
+            check_name,
+            overwrite_existing_op_name=False,
+        )
+
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
         apply_deltas_to_dag(
@@ -269,7 +275,7 @@ class NumericArtifact(BaseArtifact):
                 AddOrReplaceOperatorDelta(
                     op=Operator(
                         id=operator_id,
-                        name=check_name,
+                        name=op_name,
                         description=check_description,
                         spec=op_spec,
                         inputs=[self._artifact_id],
@@ -278,7 +284,7 @@ class NumericArtifact(BaseArtifact):
                     output_artifacts=[
                         ArtifactMetadata(
                             id=output_artifact_id,
-                            name=artifact_name_from_op_name(check_name),
+                            name=artifact_name,
                             type=ArtifactType.BOOL,
                         )
                     ],

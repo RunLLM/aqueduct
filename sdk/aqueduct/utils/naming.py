@@ -4,21 +4,21 @@ from aqueduct.models.dag import DAG
 from aqueduct.utils.dag_deltas import RemoveOperatorDelta, apply_deltas_to_dag
 
 
-def artifact_name_from_op_name(op_name: str) -> str:
+def _artifact_name_from_op_name(op_name: str) -> str:
     return op_name + " artifact"
 
 
-def construct_default_artifact_names_from_op(op_name: str, num_outputs: int) -> List[str]:
+def _construct_default_output_artifact_names_from_op(op_name: str, num_outputs: int) -> List[str]:
     """The default artifact naming policy is "<op_name> artifact (<optional counter>)".
 
     In the multi-output case, we deduplicate by starting the counter at 1.
     """
-    artifact_names = [artifact_name_from_op_name(op_name)]
+    artifact_names = [_artifact_name_from_op_name(op_name)]
     if num_outputs == 1:
         return artifact_names
 
     artifact_names += [
-        artifact_name_from_op_name(op_name) + " %d" % i for i in range(1, num_outputs)
+        _artifact_name_from_op_name(op_name) + " (%d)" % i for i in range(1, num_outputs)
     ]
     return artifact_names
 
@@ -59,7 +59,7 @@ def resolve_op_and_artifact_names(
 
     # Second, validate the artifact name(s) does not collide with other artifacts.
     if candidate_artifact_names is None:
-        candidate_artifact_names = construct_default_artifact_names_from_op(op_name, num_outputs)
+        candidate_artifact_names = _construct_default_output_artifact_names_from_op(op_name, num_outputs)
     assert candidate_artifact_names is not None
 
     if isinstance(candidate_artifact_names, str):

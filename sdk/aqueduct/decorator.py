@@ -27,12 +27,11 @@ from aqueduct.models.operators import (
     Operator,
     OperatorSpec,
     ResourceConfig,
-    get_operator_type,
 )
 from aqueduct.type_annotations import CheckFunction, MetricFunction, Number, UserFunction
 from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.function_packaging import serialize_function
-from aqueduct.utils.naming import artifact_name_from_op_name, resolve_op_and_artifact_names
+from aqueduct.utils.naming import resolve_op_and_artifact_names
 from aqueduct.utils.utils import generate_engine_config, generate_uuid
 
 from aqueduct import globals
