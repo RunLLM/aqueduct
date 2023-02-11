@@ -63,7 +63,7 @@ func AuthenticateDockerToECR() error {
 	return nil
 }
 
-func PullImageFromECR(functionType LambdaFunctionType, channel chan LambdaFunctionType) error {
+func PullImageFromECR(functionType LambdaFunctionType) error {
 	// Pull the Image from public ECR Library.
 	lambdaImageUri, _, err := mapFunctionType(functionType)
 	if err != nil {
@@ -83,7 +83,6 @@ func PullImageFromECR(functionType LambdaFunctionType, channel chan LambdaFuncti
 		log.Info(stderr.String())
 		return errors.Wrap(err, "Unable to pull docker image from dockerhub.")
 	}
-	channel <- functionType
 	return nil
 }
 
@@ -185,7 +184,7 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 
 	err = DeleteDockerImage(versionedLambdaImageUri)
 	if err != nil {
-		return errors.Wrap(err, "Unable to delete downloaded docker image.")
+		return errors.Wrap("finishing", err, "Unable to delete downloaded docker image.")
 	}
 	return nil
 }
@@ -234,21 +233,4 @@ func mapFunctionType(functionType LambdaFunctionType) (string, string, error) {
 		return "", "", errors.New("Invalide function type")
 
 	}
-}
-func DeleteDockerImage(versionedLambdaImageUri string) error {
-	// Remove Docker Image after finishing creating Lambda functions.
-	stdout := &bytes.Buffer{}
-	stderr := &bytes.Buffer{}
-	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("docker rmi -f $(docker images --filter=reference='%s' -q)", versionedLambdaImageUri))
-	// cmd := exec.Command(fmt.Sprint("docker rmi -f $(docker images --filter=reference='%s' -q)", versionedLambdaImageUri))
-	cmd.Stdout = stdout
-	cmd.Stderr = stderr
-
-	err := cmd.Run()
-
-	if err != nil {
-		return errors.Wrap(err, "Unable to delete docker image.")
-	}
-
-	return nil
 }
