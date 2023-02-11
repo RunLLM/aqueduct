@@ -105,7 +105,9 @@ client = aqueduct.Client(
 
   useEffect(() => {
     if (!updatingNotifications) {
-      dispatch(handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: true }));
+      dispatch(
+        handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: true })
+      );
     }
   }, [updatingNotifications, dispatch, user.apiKey]);
 
@@ -148,9 +150,7 @@ client = aqueduct.Client(
       breadcrumbs={[BreadcrumbLink.HOME, BreadcrumbLink.ACCOUNT]}
       user={user}
     >
-      <Typography variant="h5">
-        API Key
-      </Typography>
+      <Typography variant="h5">API Key</Typography>
       <Box sx={{ my: 1 }}>
         <code>{user.apiKey}</code>
       </Box>
@@ -176,6 +176,13 @@ client = aqueduct.Client(
       <Typography variant="h5" sx={{ mt: 3 }}>
         Notifications
       </Typography>
+      {notifications.length > 0 && (
+        <Typography variant="body2" marginBottom={1}>
+          Configure how your notification(s) apply to all workflows. You can
+          override these settings in each workflow&asop;s individual settings
+          page.
+        </Typography>
+      )}
       {notificationSection}
 
       <Snackbar
