@@ -94,6 +94,7 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 	if err := errGroup.Wait(); err != nil {
 		return errors.Wrap(err, "Unable to Create Lambda Function.")
 	}
+	lambda_utils.DeleteDockerImage(functionsToShip[:])
 	return nil
 }
 
