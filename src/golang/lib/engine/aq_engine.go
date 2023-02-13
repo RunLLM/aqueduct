@@ -278,7 +278,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 			vaultObject,
 		)
 		if err != nil {
-			return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to generate a new JobManager.")
+			return shared.FailedExecutionStatus, err
 		}
 	}
 
@@ -372,7 +372,7 @@ func (eng *aqEngine) PreviewWorkflow(
 			vaultObject,
 		)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to generate a new JobManager.")
+			return nil, err
 		}
 	}
 

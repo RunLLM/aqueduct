@@ -123,7 +123,7 @@ func NewOperator(
 			ctx, opEngineConfig, storageConfig, aqPath, vaultObject,
 		)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to generate a new JobManager.")
+			return nil, err
 		}
 	} else {
 		jobManager = dagJobManager
