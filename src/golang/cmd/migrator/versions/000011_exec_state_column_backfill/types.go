@@ -3,8 +3,8 @@ package _000011_exec_state_column_backfill
 import (
 	"database/sql/driver"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 )
 
 type Metadata struct {

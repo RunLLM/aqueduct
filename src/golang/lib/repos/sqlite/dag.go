@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
@@ -136,8 +135,8 @@ func (*dagReader) GetByOperator(ctx context.Context, operatorID uuid.UUID, DB da
 				(workflow_dag_edge.type = '%s' AND workflow_dag_edge.to_id = $1)
 			);`,
 		models.DAGCols(),
-		mdl_shared.OperatorToArtifactDAGEdge,
-		mdl_shared.ArtifactToOperatorDAGEdge,
+		shared.OperatorToArtifactDAGEdge,
+		shared.ArtifactToOperatorDAGEdge,
 	)
 	args := []interface{}{operatorID}
 

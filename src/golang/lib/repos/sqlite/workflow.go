@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
@@ -70,7 +69,7 @@ func (*workflowReader) GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID,
 
 func (*workflowReader) GetByScheduleTrigger(
 	ctx context.Context,
-	trigger mdl_shared.UpdateTrigger,
+	trigger shared.UpdateTrigger,
 	DB database.Database,
 ) ([]models.Workflow, error) {
 	query := fmt.Sprintf(
@@ -91,7 +90,7 @@ func (*workflowReader) GetTargets(ctx context.Context, ID uuid.UUID, DB database
 			json_extract(schedule, '$.trigger') = $1
 			AND json_extract(schedule, '$.source_id') = $2
 		;`
-	args := []interface{}{mdl_shared.CascadingUpdateTrigger, ID}
+	args := []interface{}{shared.CascadingUpdateTrigger, ID}
 
 	var objectIDs []views.ObjectID
 	err := DB.Query(ctx, &objectIDs, query, args...)
@@ -251,9 +250,9 @@ func (*workflowWriter) Create(
 	userID uuid.UUID,
 	name string,
 	description string,
-	schedule *mdl_shared.Schedule,
-	retentionPolicy *mdl_shared.RetentionPolicy,
-	notificationSettings *mdl_shared.NotificationSettings,
+	schedule *shared.Schedule,
+	retentionPolicy *shared.RetentionPolicy,
+	notificationSettings *shared.NotificationSettings,
 	DB database.Database,
 ) (*models.Workflow, error) {
 	cols := []string{

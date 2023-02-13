@@ -6,11 +6,10 @@ import (
 
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/logging"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
@@ -32,15 +31,15 @@ import (
 //		serialized `listWorkflowsResponse`, a list of workflow information in the user's org
 
 type workflowResponse struct {
-	Id          uuid.UUID                  `json:"id"`
-	Name        string                     `json:"name"`
-	Description string                     `json:"description"`
-	CreatedAt   int64                      `json:"created_at"`
-	LastRunAt   int64                      `json:"last_run_at"`
-	Status      mdl_shared.ExecutionStatus `json:"status"`
-	Engine      string                     `json:"engine"`
-	Checks      []operator.ResultResponse  `json:"checks"`
-	Metrics     []artifact.ResultResponse  `json:"metrics"`
+	Id          uuid.UUID                 `json:"id"`
+	Name        string                    `json:"name"`
+	Description string                    `json:"description"`
+	CreatedAt   int64                     `json:"created_at"`
+	LastRunAt   int64                     `json:"last_run_at"`
+	Status      shared.ExecutionStatus    `json:"status"`
+	Engine      string                    `json:"engine"`
+	Checks      []operator.ResultResponse `json:"checks"`
+	Metrics     []artifact.ResultResponse `json:"metrics"`
 }
 
 type ListWorkflowsHandler struct {
@@ -94,7 +93,7 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 	checkResults, err := h.OperatorResultRepo.GetWithOperatorByDAGResultBatch(
 		ctx,
 		dagResultIDs,
-		[]mdl_shared.OperatorType{mdl_shared.CheckType},
+		[]shared.OperatorType{shared.CheckType},
 		h.Database,
 	)
 	if err != nil {
@@ -180,7 +179,7 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 			} else {
 				// There are no workflow runs yet for this workflow, so we simply return
 				// that the workflow has been registered
-				response.Status = mdl_shared.RegisteredExecutionStatus
+				response.Status = shared.RegisteredExecutionStatus
 			}
 
 			workflowResponses = append(workflowResponses, response)

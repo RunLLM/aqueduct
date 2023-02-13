@@ -3,9 +3,8 @@ package dag
 import (
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/google/uuid"
@@ -19,13 +18,13 @@ type MetadataResponse struct {
 	EngineConfig  shared.EngineConfig  `json:"engine_config"`
 
 	// Workflow metadata
-	WorkflowId        uuid.UUID                  `json:"workflow_id"`
-	WorkflowCreatedAt time.Time                  `json:"workflow_created_at"`
-	UserId            uuid.UUID                  `json:"user_id"`
-	Name              string                     `json:"name"`
-	Description       string                     `json:"description"`
-	Schedule          mdl_shared.Schedule        `json:"schedule"`
-	RetentionPolicy   mdl_shared.RetentionPolicy `json:"retention_policy"`
+	WorkflowId        uuid.UUID              `json:"workflow_id"`
+	WorkflowCreatedAt time.Time              `json:"workflow_created_at"`
+	UserId            uuid.UUID              `json:"user_id"`
+	Name              string                 `json:"name"`
+	Description       string                 `json:"description"`
+	Schedule          shared.Schedule        `json:"schedule"`
+	RetentionPolicy   shared.RetentionPolicy `json:"retention_policy"`
 }
 
 type Response struct {
@@ -38,7 +37,7 @@ type RawResultResponse struct {
 	// Contains only the `result`. It mostly mirrors 'workflow_dag_result' schema.
 	Id uuid.UUID `json:"id"`
 
-	ExecState *mdl_shared.ExecutionState `json:"exec_state"`
+	ExecState *shared.ExecutionState `json:"exec_state"`
 }
 
 type ResultResponse struct {
