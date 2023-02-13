@@ -8,13 +8,12 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
-	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
@@ -57,8 +56,8 @@ type previewResponseMetadata struct {
 }
 
 type artifactTypeMetadata struct {
-	SerializationType artifact_result.SerializationType `json:"serialization_type"`
-	ArtifactType      artifact_db.Type                  `json:"artifact_type"`
+	SerializationType mdl_shared.ArtifactSerializationType `json:"serialization_type"`
+	ArtifactType      mdl_shared.ArtifactType              `json:"artifact_type"`
 }
 
 type PreviewHandler struct {

@@ -1,7 +1,6 @@
 package artifact
 
 import (
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -25,8 +24,8 @@ type Response struct {
 
 type RawResultResponse struct {
 	// Contains only the `result`. It mostly mirrors 'artifact_result' schema.
-	Id                uuid.UUID                         `json:"id"`
-	SerializationType artifact_result.SerializationType `json:"serialization_type"`
+	Id                uuid.UUID                            `json:"id"`
+	SerializationType mdl_shared.ArtifactSerializationType `json:"serialization_type"`
 
 	// If `ContentSerialized` is set, the content is small and we directly send
 	// it as a part of response. It's consistent with the object stored in `ContentPath`.

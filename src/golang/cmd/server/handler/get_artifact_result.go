@@ -8,11 +8,10 @@ import (
 	"strconv"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/dropbox/godropbox/errors"
@@ -55,12 +54,12 @@ type artifactResultMetadata struct {
 	// `Status` is redundant due to `ExecState`. Avoid consuming `Status` in new code.
 	// We are incurring this tech debt right now since there are quite a few usages of
 	// `status` in the UI.
-	Status            shared.ExecutionStatus            `json:"status"`
-	ExecState         shared.ExecutionState             `json:"exec_state"`
-	Schema            []map[string]string               `json:"schema"`
-	SerializationType artifact_result.SerializationType `json:"serialization_type"`
-	ArtifactType      artifact.Type                     `json:"artifact_type"`
-	PythonType        string                            `json:"python_type"`
+	Status            shared.ExecutionStatus               `json:"status"`
+	ExecState         shared.ExecutionState                `json:"exec_state"`
+	Schema            []map[string]string                  `json:"schema"`
+	SerializationType mdl_shared.ArtifactSerializationType `json:"serialization_type"`
+	ArtifactType      mdl_shared.ArtifactType              `json:"artifact_type"`
+	PythonType        string                               `json:"python_type"`
 }
 
 type getArtifactResultResponse struct {

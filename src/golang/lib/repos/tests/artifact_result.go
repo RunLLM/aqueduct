@@ -1,10 +1,9 @@
 package tests
 
 import (
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -95,7 +94,7 @@ func (ts *TestSuite) TestArtifactResult_Create() {
 		ExecState: shared.NullExecutionState{
 			IsNull: true,
 		},
-		Metadata: artifact_result.NullMetadata{
+		Metadata: mdl_shared.NullArtifactResultMetadata{
 			IsNull: true,
 		},
 	}
@@ -133,12 +132,12 @@ func (ts *TestSuite) TestArtifactResult_CreateWithExecStateAndMetadata() {
 			},
 			IsNull: false,
 		},
-		Metadata: artifact_result.NullMetadata{
-			Metadata: artifact_result.Metadata{
+		Metadata: mdl_shared.NullArtifactResultMetadata{
+			ArtifactResultMetadata: mdl_shared.ArtifactResultMetadata{
 				Schema:            schema,
 				SystemMetrics:     systemMetrics,
-				SerializationType: artifact_result.String,
-				ArtifactType:      artifact.Untyped,
+				SerializationType: mdl_shared.StringSerialization,
+				ArtifactType:      mdl_shared.UntypedArtifact,
 			},
 			IsNull: false,
 		},
@@ -150,7 +149,7 @@ func (ts *TestSuite) TestArtifactResult_CreateWithExecStateAndMetadata() {
 		expectedArtifactResult.ArtifactID,
 		expectedArtifactResult.ContentPath,
 		&expectedArtifactResult.ExecState.ExecutionState,
-		&expectedArtifactResult.Metadata.Metadata,
+		&expectedArtifactResult.Metadata.ArtifactResultMetadata,
 		ts.DB,
 	)
 	require.Nil(ts.T(), err)
@@ -200,12 +199,12 @@ func (ts *TestSuite) TestArtifactResult_Update() {
 		},
 		IsNull: false,
 	}
-	metadata := artifact_result.NullMetadata{
-		Metadata: artifact_result.Metadata{
+	metadata := mdl_shared.NullArtifactResultMetadata{
+		ArtifactResultMetadata: mdl_shared.ArtifactResultMetadata{
 			Schema:            schema,
 			SystemMetrics:     systemMetrics,
-			SerializationType: artifact_result.String,
-			ArtifactType:      artifact.Json,
+			SerializationType: mdl_shared.StringSerialization,
+			ArtifactType:      mdl_shared.JsonArtifact,
 		},
 		IsNull: false,
 	}

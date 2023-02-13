@@ -3,10 +3,10 @@ package repos
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
@@ -71,7 +71,7 @@ type artifactResultWriter interface {
 		artifactID uuid.UUID,
 		contentPath string,
 		execState *shared.ExecutionState,
-		metadata *artifact_result.Metadata,
+		metadata *mdl_shared.ArtifactResultMetadata,
 		DB database.Database,
 	) (*models.ArtifactResult, error)
 

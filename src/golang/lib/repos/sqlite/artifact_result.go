@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -238,7 +237,7 @@ func (*artifactResultWriter) CreateWithExecStateAndMetadata(
 	artifactID uuid.UUID,
 	contentPath string,
 	execState *shared.ExecutionState,
-	metadata *artifact_result.Metadata,
+	metadata *mdl_shared.ArtifactResultMetadata,
 	DB database.Database,
 ) (*models.ArtifactResult, error) {
 	cols := []string{

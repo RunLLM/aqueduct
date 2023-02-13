@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/apache/airflow-client-go/airflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -114,7 +113,7 @@ func createArtifactResult(
 	}
 	metadataPath := getArtifactMetadataPath(metadataPathPrefix, dagRunId)
 
-	var metadata artifact_result.Metadata
+	var metadata mdl_shared.ArtifactResultMetadata
 	if utils.ObjectExistsInStorage(ctx, &dag.StorageConfig, metadataPath) {
 		if err := utils.ReadFromStorage(
 			ctx,

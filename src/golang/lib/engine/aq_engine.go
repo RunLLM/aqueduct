@@ -9,8 +9,6 @@ import (
 
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
-	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
@@ -91,9 +89,9 @@ type WorkflowPreviewResult struct {
 }
 
 type PreviewArtifactResult struct {
-	SerializationType artifact_result.SerializationType `json:"serialization_type"`
-	ArtifactType      artifact_db.Type                  `json:"artifact_type"`
-	Content           []byte                            `json:"content"`
+	SerializationType mdl_shared.ArtifactSerializationType `json:"serialization_type"`
+	ArtifactType      mdl_shared.ArtifactType              `json:"artifact_type"`
+	Content           []byte                               `json:"content"`
 }
 
 func NewAqEngine(

@@ -3,7 +3,6 @@ package artifact
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -44,7 +43,7 @@ type Artifact interface {
 
 	// GetMetadata fetches the metadata for this artifact.
 	// Errors if the artifact has not yet been computed.
-	GetMetadata(ctx context.Context) (*artifact_result.Metadata, error)
+	GetMetadata(ctx context.Context) (*mdl_shared.ArtifactResultMetadata, error)
 
 	// GetContent fetches the content of this artifact.
 	// Errors if the artifact has not yet been computed.
@@ -168,7 +167,7 @@ func (a *ArtifactImpl) updateArtifactResultAfterComputation(
 	}
 
 	if a.Computed(ctx) {
-		var artifactResultMetadata artifact_result.Metadata
+		var artifactResultMetadata mdl_shared.ArtifactResultMetadata
 		err := utils.ReadFromStorage(
 			ctx,
 			a.storageConfig,
@@ -270,12 +269,12 @@ func (a *ArtifactImpl) Finish(ctx context.Context) {
 	}
 }
 
-func (a *ArtifactImpl) GetMetadata(ctx context.Context) (*artifact_result.Metadata, error) {
+func (a *ArtifactImpl) GetMetadata(ctx context.Context) (*mdl_shared.ArtifactResultMetadata, error) {
 	if !a.Computed(ctx) {
 		return nil, errors.Newf("Cannot get metadata of Artifact %s, it has not yet been computed.", a.Name())
 	}
 
-	var metadata artifact_result.Metadata
+	var metadata mdl_shared.ArtifactResultMetadata
 	err := utils.ReadFromStorage(ctx, a.storageConfig, a.execPaths.ArtifactMetadataPath, &metadata)
 	if err != nil {
 		return nil, err
