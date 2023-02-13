@@ -233,7 +233,7 @@ def _type_check_decorated_function_arguments(
 
 
 def _convert_input_arguments_to_parameters(
-    *input_artifacts: Any, func_params: Mapping[str, inspect.Parameter]
+    *input_artifacts: Any, op_name: str, func_params: Mapping[str, inspect.Parameter]
 ) -> List[BaseArtifact]:
     """
     Converts non-artifact inputs to parameters.
@@ -244,6 +244,9 @@ def _convert_input_arguments_to_parameters(
         input_artifacts:
             Entries in this list are not artifacts if the corresponding argument was supplied as an
             implicit parameter.
+        op_name:
+            The name of the operator that will consume this implicit parameter as input. Necessary only
+            for resolving implicit parameter naming collisions.
         func_params:
             Maps from parameter name to an `inspect.Parameter` object containing additional information.
     """
@@ -274,7 +277,10 @@ def _convert_input_arguments_to_parameters(
             # We assume that the parameter name exists here, since we've disallowed any variable-length parameters.
             arg_name = param_names[idx]
             artifacts[idx] = create_param_artifact(
-                dag=dag, candidate_name=arg_name, default=default, is_implicit=True
+                dag=dag,
+                candidate_name=arg_name,
+                default=default,
+                op_name_for_implicit_param=op_name,
             )
     return artifacts
 
@@ -480,6 +486,7 @@ def op(
 
             artifacts = _convert_input_arguments_to_parameters(
                 *input_artifacts,
+                op_name=name,
                 func_params=inspect.signature(func).parameters,
             )
 
@@ -631,6 +638,7 @@ def metric(
 
             artifacts = _convert_input_arguments_to_parameters(
                 *input_artifacts,
+                op_name=name,
                 func_params=inspect.signature(func).parameters,
             )
 
@@ -788,6 +796,7 @@ def check(
 
             artifacts = _convert_input_arguments_to_parameters(
                 *input_artifacts,
+                op_name=name,
                 func_params=inspect.signature(func).parameters,
             )
 

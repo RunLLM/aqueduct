@@ -117,12 +117,24 @@ def test_implicitly_create_parameter_with_naming_collisions(client, flow_name, e
     def foo(foo_param):
         return foo_param
 
-    # Test that two implicit parameters colliding will result in an override.
+    # Test that two implicit parameters colliding will result in an override if they
+    # are used by the same function.
     foo_output = foo(123)
     assert foo_output.get() == 123
 
     foo_output = foo("hello")
     assert foo_output.get() == "hello"
+    assert foo_output.get({"foo_param": "custom val"}) == "custom val"
+
+    # Test that two implicit parameters colliding with NOT result in an override if
+    # they are used by different functions.
+    @op
+    def different_fn(foo_param):
+        return foo_param
+
+    different_fn_output = different_fn("different value")
+    assert different_fn_output.get() == "different value"
+    assert different_fn_output.get({"foo_param (1)": "another val"}) == "another val"
 
     # Test that an implicit parameter colliding with a globally created parameter will
     # bump the name.
@@ -181,13 +193,14 @@ def test_implicitly_create_parameter_with_naming_collisions(client, flow_name, e
     # Publish and validate the final value of each parameter.
     flow = publish_flow_test(
         client,
-        artifacts=[foo_output, bar_output, baz_output, qup_output],
+        artifacts=[foo_output, different_fn_output, bar_output, baz_output, qup_output],
         name=flow_name(),
         engine=engine,
     )
     flow_run = flow.latest()
 
     assert flow_run.artifact("foo_param").get() == "hello"
+    assert flow_run.artifact("foo_param (1)").get() == "different value"
     assert flow_run.artifact("bar_param (1)").get() == 300
     assert flow_run.artifact("baz_param (2)").get() == 800
     assert flow_run.artifact("colliding (1)").get() == 500
