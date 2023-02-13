@@ -184,9 +184,9 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 
 	err = DeleteDockerImage(versionedLambdaImageUri)
 	if err != nil {
-		return errors.Wrap(err, "Unable to delete downloaded docker image.")
+		return errors.Wrap(err, "Unable to delete downloaded Docker image.")
 	}
-  
+
 	return nil
 }
 
@@ -245,7 +245,7 @@ func AddFunctionTypeToChannel(functionsToShip []LambdaFunctionType, channel chan
 }
 
 func DeleteDockerImage(versionedLambdaImageUri string) error {
-	// Remove Docker Image after finishing creating Lambda functions.
+	// Remove Docker Image after finish creating Lambda functions.
 
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
@@ -254,9 +254,10 @@ func DeleteDockerImage(versionedLambdaImageUri string) error {
 	cmd.Stderr = stderr
 
 	err := cmd.Run()
-
 	if err != nil {
-		return errors.Wrap(err, "Unable to delete docker image.")
+		log.Info(stdout.String())
+		log.Info(stderr.String())
+		return errors.Wrap(err, "Unable to delete Docker image.")
 	}
 
 	return nil
