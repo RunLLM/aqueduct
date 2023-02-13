@@ -39,27 +39,29 @@ func fullMessage(subject string, from string, targets []string, body string) str
 	return fullMsg
 }
 
-func (e *EmailNotification) checkMessages(wfDag dag.WorkflowDag) string {
-	warningChecks := wfDag.ChecksWithWarning()
-	errorChecks := wfDag.ChecksWithError()
+func (e *EmailNotification) constructOperatorMessages(wfDag dag.WorkflowDag) string {
+	warningOps := wfDag.OperatorsWithWarning()
+	errorOps := wfDag.OperatorsWithError()
 
-	if len(warningChecks)+len(errorChecks) == 0 {
+	if len(warningOps)+len(errorOps) == 0 {
 		return ""
 	}
 
-	// there are at least some checks failed:
+	// there are at least some operators failed:
 	msg := ""
-	for _, check := range warningChecks {
+	for _, op := range warningOps {
 		msg += fmt.Sprintf(
-			`<div>Check <font face="monospace">%s</font> failed (warning).</div>`,
-			check.Name(),
+			`<div>%s <font face="monospace">%s</font> failed (warning).</div>`,
+			constructDisplayedOperatorType(op.Type()),
+			op.Name(),
 		)
 	}
 
-	for _, check := range errorChecks {
+	for _, op := range errorOps {
 		msg += fmt.Sprintf(
-			`<div>Check <font face="monospace">%s</font> failed (error).</div>`,
-			check.Name(),
+			`<div>%s <font face="monospace">%s</font> failed (error).</div>`,
+			constructDisplayedOperatorType(op.Type()),
+			op.Name(),
 		)
 	}
 
@@ -72,7 +74,7 @@ func (e *EmailNotification) SendForDag(
 	level shared.NotificationLevel,
 	systemErrContext string,
 ) error {
-	subject := summary(wfDag, level)
+	subject := summarize(wfDag, level)
 	systemErrBlock := ""
 	if systemErrContext != "" {
 		systemErrBlock = fmt.Sprintf(`<div>
@@ -96,7 +98,7 @@ func (e *EmailNotification) SendForDag(
 		wfDag.Name(),
 		wfDag.ID(),
 		wfDag.ResultID(),
-		e.checkMessages(wfDag),
+		e.constructOperatorMessages(wfDag),
 		systemErrBlock,
 	)
 	fullMsg := fullMessage(subject, e.conf.User, e.conf.Targets, body)
