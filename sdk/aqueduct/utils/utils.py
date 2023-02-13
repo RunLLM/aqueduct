@@ -131,8 +131,11 @@ def construct_param_spec(
 def generate_engine_config(
     integrations: Dict[str, IntegrationInfo], integration_name: Optional[str]
 ) -> Optional[EngineConfig]:
-    """Generates an EngineConfig from an integration info object."""
-    if integration_name is None:
+    """Generates an EngineConfig from an integration info object.
+
+    Both None and "Aqueduct" (case-insensitive) map to the Aqueduct Engine.
+    """
+    if integration_name is None or integration_name.lower() == "aqueduct":
         return None
 
     if integration_name not in integrations.keys():

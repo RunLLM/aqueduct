@@ -37,6 +37,10 @@ def pytest_configure(config):
     )
     config.addinivalue_line(
         "markers",
+        "enable_only_for_external_compute: runs the test only for external compute engines.",
+    )
+    config.addinivalue_line(
+        "markers",
         "enable_only_for_data_integration_type: runs the test only for the supplied data integrations.",
     )
     config.addinivalue_line(
@@ -144,6 +148,14 @@ def enable_only_for_engine_type(request, client, engine):
                 "Skipped for engine integration `%s`, since it is not of type `%s`."
                 % (engine, ",".join(enabled_engine_types))
             )
+
+
+@pytest.fixture(autouse=True)
+def enable_only_for_external_compute(request, client, engine):
+    """When a test is marked with this, it will run for all engine types EXCEPT Aqueduct!"""
+    if request.node.get_closest_marker("enable_only_for_external_compute"):
+        if engine is None:
+            pytest.skip("Skipped. This test only runs against external compute integrations.")
 
 
 @pytest.fixture(autouse=True)
