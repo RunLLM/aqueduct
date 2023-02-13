@@ -5,7 +5,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +12,7 @@ import (
 func TestMarshalAndUnmarshallLoad(t *testing.T) {
 	postgresParams := generateLoadPostgresParams()
 	originalLoad := Load{
-		Service:       integration.Postgres,
+		Service:       shared.Postgres,
 		IntegrationId: uuid.New(),
 		Parameters:    postgresParams,
 	}

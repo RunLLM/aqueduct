@@ -9,7 +9,6 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -17,6 +16,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
@@ -288,7 +288,7 @@ func DeleteSavedObject(
 	}()
 
 	integrationConfigs := make(map[string]auth.Config, len(integrationNameToID))
-	integrationNames := make(map[string]integration.Service, len(integrationNameToID))
+	integrationNames := make(map[string]mdl_shared.Service, len(integrationNameToID))
 	for integrationName := range args.ExternalDelete {
 		integrationId := integrationNameToID[integrationName]
 		config, err := auth.ReadConfigFromSecret(ctx, integrationId, vaultObject)

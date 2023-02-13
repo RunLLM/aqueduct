@@ -3,7 +3,7 @@ package connector
 import (
 	"encoding/json"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -11,9 +11,9 @@ import (
 
 // Load defines the spec for a Load operator.
 type Load struct {
-	Service       integration.Service `json:"service"`
-	IntegrationId uuid.UUID           `json:"integration_id"`
-	Parameters    LoadParams          `json:"parameters"`
+	Service       shared.Service `json:"service"`
+	IntegrationId uuid.UUID      `json:"integration_id"`
+	Parameters    LoadParams     `json:"parameters"`
 }
 
 // UnmarshalJSON overrides the default unmarshalling, so that Load.Parameters
@@ -22,9 +22,9 @@ func (l *Load) UnmarshalJSON(data []byte) error {
 	// Unmarshal data to an alias of Load. Unmarshalling to loadAlias defers unmarshalling of
 	// Parameters, since it is defined as a *json.RawMessage.
 	var loadAlias struct {
-		Service       integration.Service `json:"service"`
-		IntegrationId uuid.UUID           `json:"integration_id"`
-		Parameters    *json.RawMessage    `json:"parameters"`
+		Service       shared.Service   `json:"service"`
+		IntegrationId uuid.UUID        `json:"integration_id"`
+		Parameters    *json.RawMessage `json:"parameters"`
 	}
 	if err := json.Unmarshal(data, &loadAlias); err != nil {
 		return err
@@ -37,29 +37,29 @@ func (l *Load) UnmarshalJSON(data []byte) error {
 	// Initialize correct destination struct for this operator's Load.Parameters
 	var params LoadParams
 	switch l.Service {
-	case integration.Postgres, integration.AqueductDemo:
+	case shared.Postgres, shared.AqueductDemo:
 		params = &PostgresLoadParams{}
-	case integration.Snowflake:
+	case shared.Snowflake:
 		params = &SnowflakeLoadParams{}
-	case integration.MySql:
+	case shared.MySql:
 		params = &MySqlLoadParams{}
-	case integration.Redshift:
+	case shared.Redshift:
 		params = &RedshiftLoadParams{}
-	case integration.MariaDb:
+	case shared.MariaDb:
 		params = &MariaDbLoadParams{}
-	case integration.SqlServer:
+	case shared.SqlServer:
 		params = &SqlServerLoadParams{}
-	case integration.BigQuery:
+	case shared.BigQuery:
 		params = &BigQueryLoadParams{}
-	case integration.Sqlite:
+	case shared.Sqlite:
 		params = &SqliteLoadParams{}
-	case integration.GoogleSheets:
+	case shared.GoogleSheets:
 		params = &GoogleSheetsLoadParams{}
-	case integration.Salesforce:
+	case shared.Salesforce:
 		params = &SalesforceLoadParams{}
-	case integration.S3:
+	case shared.S3:
 		params = &S3LoadParams{}
-	case integration.MongoDB:
+	case shared.MongoDB:
 		params = &MongoDBLoadParams{}
 	default:
 		return errors.Newf("Unknown Service type: %s, unable to unmarshal LoadParams", l.Service)

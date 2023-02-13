@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/dropbox/godropbox/errors"
 	go_github "github.com/google/go-github/v40/github"
 	"golang.org/x/oauth2"
@@ -39,7 +39,7 @@ type OAuthConfig struct {
 // The authorizationCode is the grant type that is used in exchange for the access token.
 func NewOAuthConfig(
 	ctx context.Context,
-	service integration.Service,
+	service shared.Service,
 	clientId string,
 	clientSecret string,
 	redirectURL string,
@@ -70,7 +70,7 @@ func NewOAuthConfig(
 // newOAuth2Config returns an *oauth2.Config for the service specified using
 // clientId and clientSecret. It returns an error, if any.
 func newOAuth2Config(
-	service integration.Service,
+	service shared.Service,
 	clientId string,
 	clientSecret string,
 	redirectURL string,
@@ -82,12 +82,12 @@ func newOAuth2Config(
 	}
 
 	switch service {
-	case integration.GoogleSheets:
+	case shared.GoogleSheets:
 		oauthConf.Endpoint = google.Endpoint
 		oauthConf.Scopes = []string{googleContactsReadOnlyScope, googleSheetsScope, googleDriveScope}
-	case integration.Github:
+	case shared.Github:
 		oauthConf.Endpoint = github.Endpoint
-	case integration.Salesforce:
+	case shared.Salesforce:
 		oauthConf.Endpoint = oauth2.Endpoint{
 			AuthURL:  "https://login.salesforce.com/services/oauth2/authorize",
 			TokenURL: "https://login.salesforce.com/services/oauth2/token",
@@ -101,13 +101,13 @@ func newOAuth2Config(
 
 // getPublicConfig fetches additional information about the end user, such as email.
 // Returns a map[string]string of information and an error, if any.
-func getPublicConfig(ctx context.Context, service integration.Service, token *oauth2.Token) (map[string]string, error) {
+func getPublicConfig(ctx context.Context, service shared.Service, token *oauth2.Token) (map[string]string, error) {
 	switch service {
-	case integration.GoogleSheets:
+	case shared.GoogleSheets:
 		return getGoogleSheetsPublicConfig(token)
-	case integration.Github:
+	case shared.Github:
 		return getGithubPublicConfig(ctx, token)
-	case integration.Salesforce:
+	case shared.Salesforce:
 		return getSalesforcePublicConfig(token)
 	default:
 		return nil, errors.Newf("OAuth 2 Config is not supported for: %v", service)

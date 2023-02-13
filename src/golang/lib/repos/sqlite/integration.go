@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -92,7 +92,7 @@ func (*integrationReader) GetByOrg(ctx context.Context, orgId string, DB databas
 	return getIntegrations(ctx, DB, query, args...)
 }
 
-func (*integrationReader) GetByServiceAndUser(ctx context.Context, service integration.Service, userID uuid.UUID, DB database.Database) ([]models.Integration, error) {
+func (*integrationReader) GetByServiceAndUser(ctx context.Context, service shared.Service, userID uuid.UUID, DB database.Database) ([]models.Integration, error) {
 	query := fmt.Sprintf(
 		`SELECT %s FROM integration WHERE service = $1 AND user_id = $2;`,
 		models.IntegrationCols(),
@@ -123,7 +123,7 @@ func (*integrationReader) ValidateOwnership(ctx context.Context, integrationID u
 	if err != nil {
 		return false, err
 	}
-	userOnly := integration.IsUserOnlyIntegration(integrationObject.Service)
+	userOnly := shared.IsUserOnlyIntegration(integrationObject.Service)
 
 	if userOnly {
 		query := `SELECT COUNT(*) AS count FROM integration WHERE id = $1 AND user_id = $2;`
@@ -145,7 +145,7 @@ func (*integrationReader) ValidateOwnership(ctx context.Context, integrationID u
 func (*integrationWriter) Create(
 	ctx context.Context,
 	orgID string,
-	service integration.Service,
+	service shared.Service,
 	name string,
 	config *utils.Config,
 	validated bool,
@@ -183,7 +183,7 @@ func (*integrationWriter) CreateForUser(
 	ctx context.Context,
 	orgID string,
 	userID uuid.UUID,
-	service integration.Service,
+	service shared.Service,
 	name string,
 	config *utils.Config,
 	validated bool,

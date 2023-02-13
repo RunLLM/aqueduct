@@ -3,16 +3,16 @@ package connector
 import (
 	"encoding/json"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 
 // Extract defines the spec for an Extract operator.
 type Extract struct {
-	Service       integration.Service `json:"service"`
-	IntegrationId uuid.UUID           `json:"integration_id"`
-	Parameters    ExtractParams       `json:"parameters"`
+	Service       shared.Service `json:"service"`
+	IntegrationId uuid.UUID      `json:"integration_id"`
+	Parameters    ExtractParams  `json:"parameters"`
 }
 
 // UnmarshalJSON overrides the default unmarshalling, so that Extract.Parameters
@@ -21,9 +21,9 @@ func (e *Extract) UnmarshalJSON(data []byte) error {
 	// Unmarshal data to an alias of Extract. Unmarshalling to extractAlias defers unmarshalling of
 	// Parameters, since it is defined as a *json.RawMessage.
 	var extractAlias struct {
-		Service       integration.Service `json:"service"`
-		IntegrationId uuid.UUID           `json:"integration_id"`
-		Parameters    *json.RawMessage    `json:"parameters"`
+		Service       shared.Service   `json:"service"`
+		IntegrationId uuid.UUID        `json:"integration_id"`
+		Parameters    *json.RawMessage `json:"parameters"`
 	}
 	if err := json.Unmarshal(data, &extractAlias); err != nil {
 		return err
@@ -36,31 +36,31 @@ func (e *Extract) UnmarshalJSON(data []byte) error {
 	// Initialize correct destination struct for this operator's Extract.Parameters
 	var params ExtractParams
 	switch e.Service {
-	case integration.Postgres, integration.AqueductDemo:
+	case shared.Postgres, shared.AqueductDemo:
 		params = &PostgresExtractParams{}
-	case integration.Athena:
+	case shared.Athena:
 		params = &AthenaExtractParams{}
-	case integration.Snowflake:
+	case shared.Snowflake:
 		params = &SnowflakeExtractParams{}
-	case integration.MySql:
+	case shared.MySql:
 		params = &MySqlExtractParams{}
-	case integration.Redshift:
+	case shared.Redshift:
 		params = &RedshiftExtractParams{}
-	case integration.MariaDb:
+	case shared.MariaDb:
 		params = &MariaDbExtractParams{}
-	case integration.SqlServer:
+	case shared.SqlServer:
 		params = &SqlServerExtractParams{}
-	case integration.BigQuery:
+	case shared.BigQuery:
 		params = &BigQueryExtractParams{}
-	case integration.Sqlite:
+	case shared.Sqlite:
 		params = &SqliteExtractParams{}
-	case integration.GoogleSheets:
+	case shared.GoogleSheets:
 		params = &GoogleSheetsExtractParams{}
-	case integration.Salesforce:
+	case shared.Salesforce:
 		params = &SalesforceExtractParams{}
-	case integration.S3:
+	case shared.S3:
 		params = &S3ExtractParams{}
-	case integration.MongoDB:
+	case shared.MongoDB:
 		params = &MongoDBExtractParams{}
 	default:
 		return errors.Newf("Unknown Service type: %s, unable to unmarshal ExtractParams", e.Service)

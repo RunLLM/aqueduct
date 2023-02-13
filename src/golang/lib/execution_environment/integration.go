@@ -6,12 +6,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	collection_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -200,7 +200,7 @@ func GetCondaIntegration(
 ) (*models.Integration, error) {
 	integrations, err := integrationRepo.GetByServiceAndUser(
 		ctx,
-		integration.Conda,
+		mdl_shared.Conda,
 		userID,
 		DB,
 	)
@@ -222,7 +222,7 @@ func GetCondaIntegration(
 func ExtractConnectionState(
 	integrationObject *models.Integration,
 ) (*shared.ExecutionState, error) {
-	if integrationObject.Service != integration.Conda {
+	if integrationObject.Service != mdl_shared.Conda {
 		return &shared.ExecutionState{
 			Status: shared.SucceededExecutionStatus,
 		}, nil

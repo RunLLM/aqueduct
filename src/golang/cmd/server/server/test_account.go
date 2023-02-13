@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/demo"
 	"github.com/dropbox/godropbox/errors"
@@ -54,7 +54,7 @@ func CheckBuiltinIntegration(ctx context.Context, s *AqServer, orgID string) (bo
 	}
 
 	for _, integrationObject := range integrations {
-		if integrationObject.Name == integration.DemoDbIntegrationName {
+		if integrationObject.Name == shared.DemoDbIntegrationName {
 			// Builtin integration already connected
 			return true, nil
 		}
@@ -71,7 +71,7 @@ func ConnectBuiltinIntegration(
 	integrationRepo repos.Integration,
 	db database.Database,
 ) error {
-	serviceType := integration.Sqlite
+	serviceType := shared.Sqlite
 	builtinConfig := demo.GetSqliteIntegrationConfig()
 
 	if _, err := handler.ConnectIntegration(
@@ -81,7 +81,7 @@ func ConnectBuiltinIntegration(
 				User:      *user,
 				RequestID: uuid.New().String(),
 			},
-			Name:     integration.DemoDbIntegrationName,
+			Name:     shared.DemoDbIntegrationName,
 			Service:  serviceType,
 			Config:   builtinConfig,
 			UserOnly: false,

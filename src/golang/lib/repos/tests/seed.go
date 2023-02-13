@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
@@ -24,7 +23,7 @@ import (
 const (
 	// Defaults used for seeding database records
 	testOrgID              = "aqueduct-test"
-	testIntegrationService = integration.AqueductDemo
+	testIntegrationService = shared.AqueductDemo
 )
 
 // seedIntegration creates count integration records for the given user.
@@ -428,7 +427,7 @@ func (ts *TestSuite) seedOperatorAndDAG(artifactID uuid.UUID, dagID uuid.UUID, u
 	case operator.ExtractType:
 		spec = operator.NewSpecFromExtract(
 			connector.Extract{
-				Service:       integration.Postgres,
+				Service:       shared.Postgres,
 				IntegrationId: uuid.New(),
 				Parameters:    &connector.PostgresExtractParams{},
 			},
@@ -505,7 +504,7 @@ func (ts *TestSuite) seedOperatorAndDAGOperatorToArtifact(artifactID uuid.UUID, 
 	case operator.ExtractType:
 		spec = operator.NewSpecFromExtract(
 			connector.Extract{
-				Service:       integration.Postgres,
+				Service:       shared.Postgres,
 				IntegrationId: uuid.New(),
 				Parameters:    &connector.PostgresExtractParams{},
 			},
@@ -513,7 +512,7 @@ func (ts *TestSuite) seedOperatorAndDAGOperatorToArtifact(artifactID uuid.UUID, 
 	case operator.LoadType:
 		spec = operator.NewSpecFromLoad(
 			connector.Load{
-				Service:       integration.Postgres,
+				Service:       shared.Postgres,
 				IntegrationId: uuid.New(),
 				Parameters: &connector.PostgresLoadParams{
 					RelationalDBLoadParams: connector.RelationalDBLoadParams{
@@ -741,7 +740,7 @@ func (ts *TestSuite) seedComplexWorkflow() (models.DAG, map[string]models.Operat
 
 	extract_spec := operator.NewSpecFromExtract(
 		connector.Extract{
-			Service:       integration.Postgres,
+			Service:       shared.Postgres,
 			IntegrationId: uuid.New(),
 			Parameters:    &connector.PostgresExtractParams{},
 		},
