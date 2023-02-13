@@ -6,7 +6,6 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -49,8 +48,8 @@ type Engine interface {
 		workflowId uuid.UUID,
 		workflowName string,
 		workflowDescription string,
-		schedule *workflow.Schedule,
-		retentionPolicy *workflow.RetentionPolicy,
+		schedule *mdl_shared.Schedule,
+		retentionPolicy *mdl_shared.RetentionPolicy,
 		notificationSettings *mdl_shared.NotificationSettings,
 	) error
 

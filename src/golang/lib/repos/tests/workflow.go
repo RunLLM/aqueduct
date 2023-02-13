@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
@@ -53,11 +52,11 @@ func (ts *TestSuite) TestWorkflow_GetByScheduleTrigger() {
 			triggerWorkflow.UserID,
 			randString(10),
 			randString(15),
-			&workflow.Schedule{
-				Trigger:  workflow.CascadingUpdateTrigger,
+			&shared.Schedule{
+				Trigger:  shared.CascadingUpdateTrigger,
 				SourceID: triggerWorkflow.ID,
 			},
-			&workflow.RetentionPolicy{
+			&shared.RetentionPolicy{
 				KLatestRuns: 5,
 			},
 			&shared.NotificationSettings{},
@@ -68,7 +67,7 @@ func (ts *TestSuite) TestWorkflow_GetByScheduleTrigger() {
 		expectedWorkflows = append(expectedWorkflows, *workflow)
 	}
 
-	actualWorkflows, err := ts.workflow.GetByScheduleTrigger(ts.ctx, workflow.CascadingUpdateTrigger, ts.DB)
+	actualWorkflows, err := ts.workflow.GetByScheduleTrigger(ts.ctx, shared.CascadingUpdateTrigger, ts.DB)
 	require.Nil(ts.T(), err)
 	requireDeepEqualWorkflows(ts.T(), expectedWorkflows, actualWorkflows)
 }
@@ -85,11 +84,11 @@ func (ts *TestSuite) TestWorkflow_GetTargets() {
 			triggerWorkflow.UserID,
 			randString(10),
 			randString(15),
-			&workflow.Schedule{
-				Trigger:  workflow.CascadingUpdateTrigger,
+			&shared.Schedule{
+				Trigger:  shared.CascadingUpdateTrigger,
 				SourceID: triggerWorkflow.ID,
 			},
-			&workflow.RetentionPolicy{
+			&shared.RetentionPolicy{
 				KLatestRuns: 5,
 			},
 			&shared.NotificationSettings{},
@@ -138,13 +137,13 @@ func (ts *TestSuite) TestWorkflow_Create() {
 		UserID:      user.ID,
 		Name:        randString(10),
 		Description: randString(20),
-		Schedule: workflow.Schedule{
-			Trigger:              workflow.PeriodicUpdateTrigger,
+		Schedule: shared.Schedule{
+			Trigger:              shared.PeriodicUpdateTrigger,
 			CronSchedule:         "* * * * *",
 			DisableManualTrigger: false,
 			Paused:               false,
 		},
-		RetentionPolicy: workflow.RetentionPolicy{
+		RetentionPolicy: shared.RetentionPolicy{
 			KLatestRuns: 10,
 		},
 		NotificationSettings: shared.NotificationSettings{
@@ -187,8 +186,8 @@ func (ts *TestSuite) TestWorkflow_Update() {
 	notificationIntegrationID := uuid.New()
 
 	newName := "new_workflow_name"
-	newSchedule := workflow.Schedule{
-		Trigger:              workflow.ManualUpdateTrigger,
+	newSchedule := shared.Schedule{
+		Trigger:              shared.ManualUpdateTrigger,
 		CronSchedule:         "0 0 0 0 0",
 		DisableManualTrigger: true,
 		Paused:               true,

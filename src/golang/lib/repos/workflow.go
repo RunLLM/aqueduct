@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -35,7 +34,7 @@ type workflowReader interface {
 	GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID, name string, DB database.Database) (*models.Workflow, error)
 
 	// GetByScheduleTrigger returns all Workflows where Schedule.Trigger is equal to trigger.
-	GetByScheduleTrigger(ctx context.Context, trigger workflow.UpdateTrigger, DB database.Database) ([]models.Workflow, error)
+	GetByScheduleTrigger(ctx context.Context, trigger mdl_shared.UpdateTrigger, DB database.Database) ([]models.Workflow, error)
 
 	// GetTargets returns the ID of each Workflow where Schedule.SourceID
 	// is equal to ID.
@@ -62,8 +61,8 @@ type workflowWriter interface {
 		userID uuid.UUID,
 		name string,
 		description string,
-		schedule *workflow.Schedule,
-		retentionPolicy *workflow.RetentionPolicy,
+		schedule *mdl_shared.Schedule,
+		retentionPolicy *mdl_shared.RetentionPolicy,
 		notificationSettings *mdl_shared.NotificationSettings,
 		DB database.Database,
 	) (*models.Workflow, error)

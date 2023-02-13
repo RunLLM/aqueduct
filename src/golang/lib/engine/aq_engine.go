@@ -11,7 +11,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/cronjob"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
@@ -627,7 +626,7 @@ func (eng *aqEngine) DeleteWorkflow(
 
 		schedule := targetWorkflow.Schedule
 		schedule.SourceID = uuid.Nil
-		schedule.Trigger = workflow.ManualUpdateTrigger
+		schedule.Trigger = mdl_shared.ManualUpdateTrigger
 
 		if _, err := eng.WorkflowRepo.Update(
 			ctx,
@@ -685,8 +684,8 @@ func (eng *aqEngine) EditWorkflow(
 	workflowID uuid.UUID,
 	workflowName string,
 	workflowDescription string,
-	schedule *workflow.Schedule,
-	retentionPolicy *workflow.RetentionPolicy,
+	schedule *mdl_shared.Schedule,
+	retentionPolicy *mdl_shared.RetentionPolicy,
 	notificationSettings *mdl_shared.NotificationSettings,
 ) error {
 	changes := map[string]interface{}{}
@@ -1096,7 +1095,7 @@ func (eng *aqEngine) updateWorkflowSchedule(
 	ctx context.Context,
 	workflowId uuid.UUID,
 	cronjobName string,
-	newSchedule *workflow.Schedule,
+	newSchedule *mdl_shared.Schedule,
 ) error {
 	// How we update the workflow schedule depends on whether a cron job already exists.
 	// A manually triggered workflow does not have a cron job. If we're editing it to have a periodic

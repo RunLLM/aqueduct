@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
@@ -20,13 +19,13 @@ type MetadataResponse struct {
 	EngineConfig  shared.EngineConfig  `json:"engine_config"`
 
 	// Workflow metadata
-	WorkflowId        uuid.UUID                `json:"workflow_id"`
-	WorkflowCreatedAt time.Time                `json:"workflow_created_at"`
-	UserId            uuid.UUID                `json:"user_id"`
-	Name              string                   `json:"name"`
-	Description       string                   `json:"description"`
-	Schedule          workflow.Schedule        `json:"schedule"`
-	RetentionPolicy   workflow.RetentionPolicy `json:"retention_policy"`
+	WorkflowId        uuid.UUID                  `json:"workflow_id"`
+	WorkflowCreatedAt time.Time                  `json:"workflow_created_at"`
+	UserId            uuid.UUID                  `json:"user_id"`
+	Name              string                     `json:"name"`
+	Description       string                     `json:"description"`
+	Schedule          mdl_shared.Schedule        `json:"schedule"`
+	RetentionPolicy   mdl_shared.RetentionPolicy `json:"retention_policy"`
 }
 
 type Response struct {

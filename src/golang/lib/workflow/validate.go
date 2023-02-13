@@ -5,10 +5,10 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/graph"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
@@ -34,7 +34,7 @@ func ValidateSchedule(
 	ctx context.Context,
 	isUpdate bool,
 	workflowID uuid.UUID,
-	schedule workflow.Schedule,
+	schedule mdl_shared.Schedule,
 	engineType shared.EngineType,
 	artifactRepo repos.Artifact,
 	dagRepo repos.DAG,
@@ -43,7 +43,7 @@ func ValidateSchedule(
 	workflowRepo repos.Workflow,
 	DB database.Database,
 ) (int, error) {
-	if schedule.Trigger != workflow.CascadingUpdateTrigger {
+	if schedule.Trigger != mdl_shared.CascadingUpdateTrigger {
 		// Only CascadingUpdateTriggers require validation
 		return http.StatusOK, nil
 	}
@@ -91,7 +91,7 @@ func ValidateSchedule(
 	// Note that we still need to check for cycles when the schedule of an existing
 	// Workflow is modified.
 
-	cascadingWorkflows, err := workflowRepo.GetByScheduleTrigger(ctx, workflow.CascadingUpdateTrigger, DB)
+	cascadingWorkflows, err := workflowRepo.GetByScheduleTrigger(ctx, mdl_shared.CascadingUpdateTrigger, DB)
 	if err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, internalValidationErrMsg)
 	}
