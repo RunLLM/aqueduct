@@ -3,6 +3,7 @@ package notification
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -17,6 +18,8 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
+
+const localHostIP = "localhost"
 
 var ErrIntegrationTypeIsNotNotification = errors.New("Integration type is not a notification.")
 
@@ -152,6 +155,16 @@ func summarize(wfDag dag.WorkflowDag, level shared.NotificationLevel) string {
 	}
 
 	return fmt.Sprintf("Aqueduct: Workflow %s %s", wfDag.Name(), statusMsg)
+}
+
+// `constructLinkWarning` generates any warning for a given string, assuming it's a link.
+// Typically, it warns about 'localhost' only works on server's machine.
+func constructLinkWarning(link string) string {
+	if strings.Contains(link, localHostIP) {
+		return "This link only works if you are on the same machine of your server."
+	}
+
+	return ""
 }
 
 // `ShouldSend` determines if a notification at 'level' passes configuration

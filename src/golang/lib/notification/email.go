@@ -85,21 +85,29 @@ func (e *EmailNotification) SendForDag(
 		</div>`, systemErrContext)
 	}
 
+	link := wfDag.ResultLink()
+	linkWarning := ""
+	linkWarningStr := constructLinkWarning(link)
+	if len(linkWarningStr) > 0 {
+		linkWarning = fmt.Sprintf("(%s)", linkWarningStr)
+	}
+
 	body := fmt.Sprintf(`<div dir="ltr">
-		<div>Go to Aqueduct UI for more details: <a href="%s">%s</a></div>
 		<div><b>Workflow</b>: <font face="monospace">%s</font></div>
 		<div><b>ID</b>: <font face="monospace">%s</font></div>
 		<div><b>Result ID</b>: <font face="monospace">%s</font></div>
 		%s
 		%s
+		<div>See the Aqueduct UI for more details: <a href="%s">%s</a> %s</div>
 		</div>`,
-		wfDag.ResultLink(),
-		wfDag.ResultLink(),
 		wfDag.Name(),
 		wfDag.ID(),
 		wfDag.ResultID(),
 		e.constructOperatorMessages(wfDag),
 		systemErrBlock,
+		link,
+		link,
+		linkWarning,
 	)
 	fullMsg := fullMessage(subject, e.conf.User, e.conf.Targets, body)
 

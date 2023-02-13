@@ -117,18 +117,25 @@ func (s *SlackNotification) SendForDag(
 		contextMarkdownBlock = fmt.Sprintf("\n*Error:*\n%s", systemErrContext)
 	}
 
-	linkContent := fmt.Sprintf("Check Aqueduct UI for more details: %s", wfDag.ResultLink())
+	link := wfDag.ResultLink()
+	linkWarning := ""
+	linkWarningStr := constructLinkWarning(link)
+	if len(linkWarningStr) > 0 {
+		linkWarning = fmt.Sprintf("(%s)", linkWarningStr)
+	}
+
+	linkContent := fmt.Sprintf("See the Aqueduct UI for more details: %s %s", link, linkWarning)
 	nameContent := fmt.Sprintf("*Workflow:* `%s`", wfDag.Name())
 	IDContent := fmt.Sprintf("*ID:* `%s`", wfDag.ID())
 	resultIDContent := fmt.Sprintf("*Result ID:* `%s`", wfDag.ResultID())
 	msg := fmt.Sprintf(
-		"%s\n%s\n%s\n%s%s%s",
-		linkContent,
+		"%s\n%s\n%s%s%s\n%s",
 		nameContent,
 		IDContent,
 		resultIDContent,
 		s.constructOperatorMessages(wfDag),
 		contextMarkdownBlock,
+		linkContent,
 	)
 	for _, channel := range channels {
 		// reference: https://medium.com/@gausha/a-simple-slackbot-with-golang-c5a932d719c7
