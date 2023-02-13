@@ -8,7 +8,7 @@ from typing import Optional
 
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec, parse_spec
 from aqueduct_executor.operators.utils import utils
-from aqueduct_executor.operators.utils.enums import FailureType
+from aqueduct_executor.operators.utils.enums import FailureType, PrintColorType
 from aqueduct_executor.operators.utils.execution import ExecFailureException, ExecutionState, Logs
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.utils import print_with_color
@@ -84,8 +84,6 @@ def run(
 
 
 if __name__ == "__main__":
-    begin = time.time()
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--local_path", required=True)
     parser.add_argument("--requirements_path", required=True)
@@ -97,8 +95,19 @@ if __name__ == "__main__":
     spec_json = base64.b64decode(args.spec)
     spec = parse_spec(spec_json)
 
+    print_with_color(
+        "Installing dependencies for %s job: %s" % (spec.type.value, spec.name),
+        color=PrintColorType.GREEN,
+    )
+    begin = time.time()
+
     run(args.local_path, args.requirements_path, args.missing_path, spec, args.conda_env)
 
     end = time.time()
-    performance = {"job": spec.name, "step": "Installing Dependencies", "latency(s)": (end - begin)}
+    performance = {
+        "job": spec.name,
+        "type": spec.type,
+        "step": "Installing Dependencies",
+        "latency(s)": (end - begin),
+    }
     print_with_color(json.dumps(performance, indent=4))

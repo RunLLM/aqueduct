@@ -11,6 +11,7 @@ import zipfile
 
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec, parse_spec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
+from aqueduct_executor.operators.utils.enums import PrintColorType
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
 from aqueduct_executor.operators.utils.utils import print_with_color
@@ -77,8 +78,6 @@ def run(spec: FunctionSpec) -> None:
 
 
 if __name__ == "__main__":
-    begin = time.time()
-
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--spec", required=True)
     args = parser.parse_args()
@@ -86,8 +85,18 @@ if __name__ == "__main__":
     spec_json = base64.b64decode(args.spec)
     spec = parse_spec(spec_json)
 
+    print_with_color(
+        "Loading function for %s job: %s" % (spec.type.value, spec.name), color=PrintColorType.GREEN
+    )
+    begin = time.time()
+
     run(spec)
 
     end = time.time()
-    performance = {"job": spec.name, "step": "Loading Function", "latency(s)": (end - begin)}
+    performance = {
+        "job": spec.name,
+        "type": spec.type,
+        "step": "Loading Function",
+        "latency(s)": (end - begin),
+    }
     print_with_color(json.dumps(performance, indent=4))

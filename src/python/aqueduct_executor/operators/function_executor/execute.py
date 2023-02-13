@@ -21,6 +21,7 @@ from aqueduct_executor.operators.utils.enums import (
     ExecutionStatus,
     FailureType,
     OperatorType,
+    PrintColorType,
     SerializationType,
 )
 from aqueduct_executor.operators.utils.execution import (
@@ -217,14 +218,16 @@ def run(spec: FunctionSpec) -> None:
     """
     Executes a function operator.
     """
-    print("Started %s job: %s" % (spec.type, spec.name))
-
     exec_state = ExecutionState(user_logs=Logs())
     storage = parse_storage(spec.storage_config)
     try:
         validate_spec(spec)
 
         # Read the input data from intermediate storage.
+        print_with_color(
+            "Reading inputs for %s job: %s" % (spec.type.value, spec.name),
+            color=PrintColorType.GREEN,
+        )
         begin = time.time()
 
         inputs, _, serialization_types = utils.read_artifacts(
@@ -232,17 +235,30 @@ def run(spec: FunctionSpec) -> None:
         )
 
         end = time.time()
-        performance = {"job": spec.name, "step": "Reading Inputs", "latency(s)": (end - begin)}
+        performance = {
+            "job": spec.name,
+            "type": spec.type,
+            "step": "Reading Inputs",
+            "latency(s)": (end - begin),
+        }
         print_with_color(json.dumps(performance, indent=4))
 
         derived_from_bson = SerializationType.BSON_TABLE in serialization_types
 
-        print("Invoking the function...")
+        print_with_color(
+            "Running function for %s job: %s" % (spec.type.value, spec.name),
+            color=PrintColorType.GREEN,
+        )
         begin = time.time()
         results, system_metadata = _execute_function(spec, inputs, exec_state)
         end = time.time()
 
-        performance = {"job": spec.name, "step": "Running Function", "latency(s)": (end - begin)}
+        performance = {
+            "job": spec.name,
+            "type": spec.type,
+            "step": "Running Function",
+            "latency(s)": (end - begin),
+        }
         print_with_color(json.dumps(performance, indent=4))
 
         if exec_state.status == ExecutionStatus.FAILED:
@@ -333,6 +349,10 @@ def run(spec: FunctionSpec) -> None:
                         % (expected_output_type, i, result_types[i]),
                     )
 
+        print_with_color(
+            "Writing outputs for %s job: %s" % (spec.type.value, spec.name),
+            color=PrintColorType.GREEN,
+        )
         begin = time.time()
         for i, result in enumerate(results):
             utils.write_artifact(
@@ -345,7 +365,12 @@ def run(spec: FunctionSpec) -> None:
                 system_metadata=system_metadata,
             )
         end = time.time()
-        performance = {"job": spec.name, "step": "Writing Outputs", "latency(s)": (end - begin)}
+        performance = {
+            "job": spec.name,
+            "type": spec.type,
+            "step": "Writing Outputs",
+            "latency(s)": (end - begin),
+        }
         print_with_color(json.dumps(performance, indent=4))
 
         # If we made it here, then the operator has succeeded.

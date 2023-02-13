@@ -22,6 +22,7 @@ if __name__ == "__main__":
     end = time.time()
     performance = {
         "job": spec.name,
+        "type": spec.type,
         "step": "Running Operator (including IO)",
         "latency(s)": (end - begin),
     }

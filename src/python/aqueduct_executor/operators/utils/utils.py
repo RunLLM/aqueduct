@@ -13,6 +13,7 @@ from aqueduct_executor.operators.utils.enums import (
     ArtifactType,
     ExecutionStatus,
     FailureType,
+    PrintColorType,
     SerializationType,
 )
 from aqueduct_executor.operators.utils.exceptions import MissingInputPathsException
@@ -38,9 +39,6 @@ _METADATA_PYTHON_TYPE_KEY = "python_type"
 # The temporary file name that a Tensorflow keras model will be dumped into before we read/write it from storage.
 # This will be cleaned up within the serialization logic.
 _TEMP_KERAS_MODEL_NAME = "keras_model"
-
-CYELLOW = "\33[33m"
-CEND = "\33[0m"
 
 
 def _read_csv(input_bytes: bytes) -> pd.DataFrame:
@@ -220,5 +218,7 @@ def write_compile_airflow_output(storage: Storage, path: str, dag_file: bytes) -
     storage.put(path, dag_file)
 
 
-def print_with_color(log: str) -> None:
-    print(CYELLOW + log + CEND)
+def print_with_color(log: str, color: PrintColorType = PrintColorType.YELLOW) -> None:
+    assert color in PrintColorType
+    CEND = "\33[0m"
+    print(color + log + CEND)

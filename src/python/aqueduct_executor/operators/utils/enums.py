@@ -81,3 +81,8 @@ class SerializationType(str, Enum, metaclass=MetaEnum):
     STRING = "string"
     BYTES = "bytes"
     TF_KERAS = "tensorflow-keras-model"
+
+
+class PrintColorType(str, Enum, metaclass=MetaEnum):
+    GREEN = "\33[32m"
+    YELLOW = "\33[33m"
