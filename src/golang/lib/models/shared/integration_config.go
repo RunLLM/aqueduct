@@ -3,7 +3,6 @@ package shared
 import (
 	"fmt"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/dropbox/godropbox/errors"
 )
 
@@ -33,7 +32,7 @@ type AirflowIntegrationConfig struct{}
 
 // GCSIntegrationConfig contains the fields for connecting a Google Cloud Storage integration.
 type GCSIntegrationConfig struct {
-	shared.GCSConfig
+	GCSConfig
 	UseAsStorage ConfigBool `json:"use_as_storage"`
 }
 
