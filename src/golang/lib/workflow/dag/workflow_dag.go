@@ -61,12 +61,12 @@ type WorkflowDag interface {
 	// to do so.
 	BindOperatorsToEnvs(ctx context.Context) error
 
-	// ChecksWithWarning returns all checks that completed with warning state.
-	ChecksWithWarning() []operator.Operator
+	// OperatorsWithWarning returns all oeprators that completed with warning state.
+	OperatorsWithWarning() []operator.Operator
 
-	// ChecksWithError returns all checks that completed with error state.
+	// OperatorsWithError returns all operators that completed with error state.
 	// This does not include those with warning state.
-	ChecksWithError() []operator.Operator
+	OperatorsWithError() []operator.Operator
 }
 
 type workflowDagImpl struct {

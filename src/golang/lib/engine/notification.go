@@ -12,7 +12,10 @@ import (
 )
 
 type notificationContentStruct struct {
-	level            mdl_shared.NotificationLevel
+	level mdl_shared.NotificationLevel
+	// Additional system error that the user should be notified.
+	// Execution related user errors should already captured by
+	// dag.WorkflowDag object.
 	systemErrContext string
 }
 
