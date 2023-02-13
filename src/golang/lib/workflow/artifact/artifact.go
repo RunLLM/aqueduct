@@ -217,7 +217,7 @@ func (a *ArtifactImpl) updateArtifactTypeAfterComputation(
 	}
 
 	changes := map[string]interface{}{
-		models.ArtifactType: mdl_shared.ArtifactType(metadata.ArtifactType),
+		models.ArtifactType: metadata.ArtifactType,
 	}
 
 	_, err = a.repo.Update(ctx, a.ID(), changes, a.db)
