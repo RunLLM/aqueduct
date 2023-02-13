@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -145,7 +144,7 @@ func (*executionEnvironmentReader) GetUnused(ctx context.Context, DB database.Da
 		execution_environment.garbage_collected = FALSE 
 		AND 
 		active_execution_environment.id IS NULL;`,
-		workflow_dag_edge.OperatorToArtifactType,
+		shared.OperatorToArtifactDAGEdge,
 		models.ExecutionEnvironmentColsWithPrefix())
 
 	return getExecutionEnvironments(ctx, DB, query)

@@ -6,7 +6,6 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -71,8 +70,8 @@ func (*artifactReader) GetByDAG(ctx context.Context, dagID uuid.UUID, DB databas
 					WHERE workflow_dag_id = $1 AND type = '%s'
 			)`,
 		models.ArtifactCols(),
-		workflow_dag_edge.ArtifactToOperatorType,
-		workflow_dag_edge.OperatorToArtifactType,
+		shared.ArtifactToOperatorDAGEdge,
+		shared.OperatorToArtifactDAGEdge,
 	)
 	args := []interface{}{dagID}
 
