@@ -12,7 +12,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
-import { TabPanel } from '../../../../components/Tabs/TabPanel';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import {
   NodeType,
@@ -325,7 +324,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             onClick={() => {
               // All we're really doing here is adding the artifactId onto the end of the URL.
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
                 }/artifact/${currentNode.id}`
               );
             }}
@@ -364,7 +364,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
                 }/metric/${currentNode.id}`
               );
             }}
@@ -383,7 +384,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
                 }/operator/${currentNode.id}`
               );
             }}
@@ -402,7 +404,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${
+                  workflow.selectedResult.id
                 }/check/${currentNode.id}`
               );
             }}
@@ -451,7 +454,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           flexDirection: 'column',
           transition: WidthTransition,
           transitionDelay: '-150ms',
-          paddingBottom: '24px'
+          paddingBottom: '24px',
         }}
         id={WorkflowPageContentId}
       >
@@ -472,40 +475,32 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           <Tab value="Settings" label="Settings" />
         </Tabs>
 
-        {
-          currentTab === "Details" && (
-            <Box
-              sx={{
-                flexDirection: 'column',
-                display: 'flex',
-                flexGrow: 1,
-                height: '100%',
-                backgroundColor: theme.palette.gray[50],
-              }}
-            >
-              <ReactFlowProvider>
-                <Box sx={{ flexGrow: 1 }}>
-                  <ReactFlowCanvas
-                    switchSideSheet={switchSideSheet}
-                    onPaneClicked={onPaneClicked}
-                  />
-                </Box>
-              </ReactFlowProvider>
-            </Box>
-          )
-        }
+        {currentTab === 'Details' && (
+          <Box
+            sx={{
+              flexDirection: 'column',
+              display: 'flex',
+              flexGrow: 1,
+              height: '100%',
+              backgroundColor: theme.palette.gray[50],
+            }}
+          >
+            <ReactFlowProvider>
+              <Box sx={{ flexGrow: 1 }}>
+                <ReactFlowCanvas
+                  switchSideSheet={switchSideSheet}
+                  onPaneClicked={onPaneClicked}
+                />
+              </Box>
+            </ReactFlowProvider>
+          </Box>
+        )}
 
-        {
-          currentTab === "Settings" && workflow.selectedDag && (
-            <Box sx={{ paddingBottom: '24px' }}>
-              <WorkflowSettings
-                user={user}
-                workflowDag={workflow.selectedDag}
-              />
-            </Box>
-          )
-        }
-
+        {currentTab === 'Settings' && workflow.selectedDag && (
+          <Box sx={{ paddingBottom: '24px' }}>
+            <WorkflowSettings user={user} workflowDag={workflow.selectedDag} />
+          </Box>
+        )}
       </Box>
 
       {currentNode.type !== NodeType.None && (
