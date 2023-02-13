@@ -4,40 +4,46 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/metric"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/system_metric"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/check"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/connector"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/function"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/metric"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/param"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/system_metric"
 	"github.com/dropbox/godropbox/errors"
 )
 
 // This file covers all operator specs.
 //
 // To add a new spec:
-// - Add a new enum constant for `OperatorType`
+// - Add a new enum constant for `Type`
 // - Add a new field in specUnion for the new spec struct
 // - Implement 3 additional methods for top level Spec type:
 //  - IsNewType() method to validate the type
 //  - NewType() method to get the value of the type from private `spec` field
 //  - NewSpecFromNewType() method to construct a spec from the new type
 
-type OperatorType string
+type Type string
 
 const (
-	FunctionType     OperatorType = "function"
-	MetricType       OperatorType = "metric"
-	CheckType        OperatorType = "check"
-	ExtractType      OperatorType = "extract"
-	LoadType         OperatorType = "load"
-	ParamType        OperatorType = "param"
-	SystemMetricType OperatorType = "system_metric"
+	FunctionType     Type = "function"
+	MetricType       Type = "metric"
+	CheckType        Type = "check"
+	ExtractType      Type = "extract"
+	LoadType         Type = "load"
+	ParamType        Type = "param"
+	SystemMetricType Type = "system_metric"
 )
 
+type ResourceConfig struct {
+	NumCPU          *int    `json:"num_cpus,omitempty"`
+	MemoryMB        *int    `json:"memory_mb,omitempty"`
+	GPUResourceName *string `json:"gpu_resource_name,omitempty"`
+}
+
 type specUnion struct {
-	Type         OperatorType                `json:"type"`
+	Type         Type                        `json:"type"`
 	Function     *function.Function          `json:"function,omitempty"`
 	Check        *check.Check                `json:"check,omitempty"`
 	Metric       *metric.Metric              `json:"metric,omitempty"`
@@ -45,6 +51,10 @@ type specUnion struct {
 	Load         *connector.Load             `json:"load,omitempty"`
 	Param        *param.Param                `json:"param,omitempty"`
 	SystemMetric *system_metric.SystemMetric `json:"system_metric,omitempty"`
+
+	// This can currently only be set for function operators.
+	Resources    *ResourceConfig `json:"resources,omitempty"`
+	EngineConfig *EngineConfig   `json:"engine_config,omitempty"`
 }
 
 type Spec struct {
@@ -86,7 +96,7 @@ func NewSpecFromLoad(l connector.Load) *Spec {
 	}}
 }
 
-func (s Spec) Type() OperatorType {
+func (s Spec) Type() Type {
 	return s.spec.Type
 }
 
@@ -96,6 +106,14 @@ func (s Spec) IsFunction() bool {
 
 func (s Spec) HasFunction() bool {
 	return s.IsFunction() || s.IsCheck() || s.IsMetric()
+}
+
+func (s Spec) Resources() *ResourceConfig {
+	return s.spec.Resources
+}
+
+func (s Spec) EngineConfig() *EngineConfig {
+	return s.spec.EngineConfig
 }
 
 func (s Spec) Function() *function.Function {

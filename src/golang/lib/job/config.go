@@ -203,7 +203,7 @@ func GenerateJobManagerConfig(
 		if storageConfig.Type != shared.S3StorageType {
 			return nil, errors.New("Must use S3 storage config for Databricks engine.")
 		}
-		databricksIntegrationId := engineConfig.DatabricksConfig.IntegrationId
+		databricksIntegrationId := engineConfig.DatabricksConfig.IntegrationID
 		config, err := auth.ReadConfigFromSecret(ctx, databricksIntegrationId, vault)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to read config from vault.")
