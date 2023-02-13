@@ -1,19 +1,17 @@
 package artifact
 
 import (
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
 
 type Response struct {
-	Id          uuid.UUID               `json:"id"`
-	Name        string                  `json:"name"`
-	Description string                  `json:"description"`
-	Type        mdl_shared.ArtifactType `json:"type"`
+	Id          uuid.UUID           `json:"id"`
+	Name        string              `json:"name"`
+	Description string              `json:"description"`
+	Type        shared.ArtifactType `json:"type"`
 	// Once we clean up DBArtifact we should include inputs / outputs fields here.
 
 	// upstream operator ID, must be unique.
@@ -25,8 +23,8 @@ type Response struct {
 
 type RawResultResponse struct {
 	// Contains only the `result`. It mostly mirrors 'artifact_result' schema.
-	Id                uuid.UUID                         `json:"id"`
-	SerializationType artifact_result.SerializationType `json:"serialization_type"`
+	Id                uuid.UUID                        `json:"id"`
+	SerializationType shared.ArtifactSerializationType `json:"serialization_type"`
 
 	// If `ContentSerialized` is set, the content is small and we directly send
 	// it as a part of response. It's consistent with the object stored in `ContentPath`.

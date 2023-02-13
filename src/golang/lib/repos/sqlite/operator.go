@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
@@ -33,7 +32,7 @@ func NewOperatorRepo() repos.Operator {
 }
 
 func (*operatorReader) Exists(ctx context.Context, ID uuid.UUID, DB database.Database) (bool, error) {
-	return utils.IdExistsInTable(ctx, ID, models.OperatorTable, DB)
+	return IDExistsInTable(ctx, ID, models.OperatorTable, DB)
 }
 
 func (*operatorReader) Get(ctx context.Context, ID uuid.UUID, DB database.Database) (*models.Operator, error) {
@@ -176,7 +175,7 @@ func (*operatorReader) GetLoadOPsByWorkflowAndIntegration(
 			workflow_dag.workflow_id = $3
 		);`,
 		models.OperatorCols(),
-		shared.LoadType,
+		operator.LoadType,
 	)
 	args := []interface{}{objectName, integrationID, workflowID}
 
@@ -293,7 +292,7 @@ func (*operatorReader) GetWithExecEnv(ctx context.Context, DB database.Database)
 }
 
 func (*operatorReader) ValidateOrg(ctx context.Context, ID uuid.UUID, orgID string, DB database.Database) (bool, error) {
-	return utils.ValidateNodeOwnership(ctx, orgID, ID, DB)
+	return validateNodeOwnership(ctx, orgID, ID, DB)
 }
 
 func (*operatorWriter) Create(
@@ -313,7 +312,7 @@ func (*operatorWriter) Create(
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.OperatorTable, cols, models.OperatorCols())
 
-	ID, err := utils.GenerateUniqueUUID(ctx, models.OperatorTable, DB)
+	ID, err := GenerateUniqueUUID(ctx, models.OperatorTable, DB)
 	if err != nil {
 		return nil, err
 	}
@@ -344,7 +343,7 @@ func (*operatorWriter) Update(
 	DB database.Database,
 ) (*models.Operator, error) {
 	var operator models.Operator
-	err := utils.UpdateRecordToDest(
+	err := repos.UpdateRecordToDest(
 		ctx,
 		&operator,
 		changes,

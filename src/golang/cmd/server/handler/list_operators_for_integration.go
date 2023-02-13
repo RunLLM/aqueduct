@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
@@ -78,7 +78,7 @@ func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interf
 	var operators []models.Operator
 
 	// Fetch all operators on this integration.
-	if integrationObject.Service == integration.Conda {
+	if integrationObject.Service == shared.Conda {
 		operators, err = h.OperatorRepo.GetWithExecEnv(ctx, h.Database)
 	} else {
 		// TODO (ENG-2068): current implementation only works for data integrations.

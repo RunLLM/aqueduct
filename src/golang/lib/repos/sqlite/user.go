@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"fmt"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -58,7 +57,7 @@ func (*userWriter) Create(
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.UserTable, cols, models.UserCols())
 
-	ID, err := utils.GenerateUniqueUUID(ctx, models.UserTable, DB)
+	ID, err := GenerateUniqueUUID(ctx, models.UserTable, DB)
 	if err != nil {
 		return nil, err
 	}

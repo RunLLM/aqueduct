@@ -16,7 +16,7 @@ func TriggerWorkflow(
 ) error {
 	authConf, err := auth.ReadConfigFromSecret(
 		ctx,
-		dag.EngineConfig.AirflowConfig.IntegrationId,
+		dag.EngineConfig.AirflowConfig.IntegrationID,
 		vault,
 	)
 	if err != nil {
@@ -28,5 +28,5 @@ func TriggerWorkflow(
 		return err
 	}
 
-	return cli.triggerDAGRun(dag.EngineConfig.AirflowConfig.DagId)
+	return cli.triggerDAGRun(dag.EngineConfig.AirflowConfig.DagID)
 }

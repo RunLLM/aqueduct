@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/notification"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -12,7 +12,7 @@ import (
 )
 
 type notificationContentStruct struct {
-	level mdl_shared.NotificationLevel
+	level shared.NotificationLevel
 	// Additional system error that the user should be notified.
 	// Execution related user errors should already captured by
 	// dag.WorkflowDag object using `OperatorsWithError()` and

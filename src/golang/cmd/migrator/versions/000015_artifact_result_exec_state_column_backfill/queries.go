@@ -3,9 +3,9 @@ package _000015_artifact_result_exec_state_column_backfill
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/google/uuid"
 )
 
@@ -38,7 +38,7 @@ func updateExecStateInArtifactResult(
 	changes := map[string]interface{}{
 		"execution_state": execState,
 	}
-	return utils.UpdateRecord(ctx, changes, "artifact_result", "id", id, db)
+	return repos.UpdateRecord(ctx, changes, "artifact_result", "id", id, db)
 }
 
 func updateStatusInArtifactResult(
@@ -50,5 +50,5 @@ func updateStatusInArtifactResult(
 	changes := map[string]interface{}{
 		"status": status,
 	}
-	return utils.UpdateRecord(ctx, changes, "artifact_result", "id", id, db)
+	return repos.UpdateRecord(ctx, changes, "artifact_result", "id", id, db)
 }

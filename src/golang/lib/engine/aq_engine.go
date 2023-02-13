@@ -9,18 +9,14 @@ import (
 
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
-	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/cronjob"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
@@ -92,9 +88,9 @@ type WorkflowPreviewResult struct {
 }
 
 type PreviewArtifactResult struct {
-	SerializationType artifact_result.SerializationType `json:"serialization_type"`
-	ArtifactType      artifact_db.Type                  `json:"artifact_type"`
-	Content           []byte                            `json:"content"`
+	SerializationType shared.ArtifactSerializationType `json:"serialization_type"`
+	ArtifactType      shared.ArtifactType              `json:"artifact_type"`
+	Content           []byte                           `json:"content"`
 }
 
 func NewAqEngine(
@@ -171,9 +167,9 @@ func (eng *aqEngine) ExecuteWorkflow(
 	}
 
 	pendingAt := time.Now()
-	execState := &mdl_shared.ExecutionState{
-		Status: mdl_shared.PendingExecutionStatus,
-		Timestamps: &mdl_shared.ExecutionTimestamps{
+	execState := &shared.ExecutionState{
+		Status: shared.PendingExecutionStatus,
+		Timestamps: &shared.ExecutionTimestamps{
 			PendingAt: &pendingAt,
 		},
 	}
@@ -192,7 +188,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 	defer func() {
 		if err != nil {
 			// Mark the workflow dag result as failed
-			execState.Status = mdl_shared.FailedExecutionStatus
+			execState.Status = shared.FailedExecutionStatus
 			now := time.Now()
 			execState.Timestamps.FinishedAt = &now
 		}
@@ -326,7 +322,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to initialize dag results.")
 	}
 
-	execState.Status = mdl_shared.RunningExecutionStatus
+	execState.Status = shared.RunningExecutionStatus
 	runningAt := time.Now()
 	execState.Timestamps.RunningAt = &runningAt
 
@@ -342,12 +338,12 @@ func (eng *aqEngine) ExecuteWorkflow(
 		jobManager,
 	)
 	if err != nil {
-		execState.Status = mdl_shared.FailedExecutionStatus
+		execState.Status = shared.FailedExecutionStatus
 		now := time.Now()
 		execState.Timestamps.FinishedAt = &now
 		return shared.FailedExecutionStatus, errors.Wrapf(err, "Error executing workflow")
 	} else {
-		execState.Status = mdl_shared.SucceededExecutionStatus
+		execState.Status = shared.SucceededExecutionStatus
 		now := time.Now()
 		execState.Timestamps.FinishedAt = &now
 	}
@@ -523,7 +519,7 @@ func (eng *aqEngine) DeleteWorkflow(
 		var operatorId uuid.UUID
 		var artifactID uuid.UUID
 
-		if dagEdge.Type == mdl_shared.OperatorToArtifactDAGEdge {
+		if dagEdge.Type == shared.OperatorToArtifactDAGEdge {
 			operatorId = dagEdge.FromID
 			artifactID = dagEdge.ToID
 		} else {
@@ -635,7 +631,7 @@ func (eng *aqEngine) DeleteWorkflow(
 
 		schedule := targetWorkflow.Schedule
 		schedule.SourceID = uuid.Nil
-		schedule.Trigger = workflow.ManualUpdateTrigger
+		schedule.Trigger = shared.ManualUpdateTrigger
 
 		if _, err := eng.WorkflowRepo.Update(
 			ctx,
@@ -693,9 +689,9 @@ func (eng *aqEngine) EditWorkflow(
 	workflowID uuid.UUID,
 	workflowName string,
 	workflowDescription string,
-	schedule *workflow.Schedule,
-	retentionPolicy *workflow.RetentionPolicy,
-	notificationSettings *mdl_shared.NotificationSettings,
+	schedule *shared.Schedule,
+	retentionPolicy *shared.RetentionPolicy,
+	notificationSettings *shared.NotificationSettings,
 ) error {
 	changes := map[string]interface{}{}
 	if workflowName != "" {
@@ -871,7 +867,7 @@ func onFinishExecution(
 	waitForInProgressOperators(ctx, inProgressOps, pollInterval, cleanupTimeout)
 	if curErr != nil && notificationContent == nil {
 		notificationContent = &notificationContentStruct{
-			level:            mdl_shared.ErrorNotificationLevel,
+			level:            shared.ErrorNotificationLevel,
 			systemErrContext: curErr.Error(),
 		}
 	}
@@ -1004,14 +1000,14 @@ func (eng *aqEngine) execute(
 				}
 
 				notificationContent = &notificationContentStruct{
-					level:            mdl_shared.ErrorNotificationLevel,
+					level:            shared.ErrorNotificationLevel,
 					systemErrContext: notificationCtxMsg,
 				}
 
 				return opFailureError(*execState.FailureType, op)
 			} else if execState.HasWarning() {
 				notificationContent = &notificationContentStruct{
-					level: mdl_shared.WarningNotificationLevel,
+					level: shared.WarningNotificationLevel,
 				}
 			}
 
@@ -1068,7 +1064,7 @@ func (eng *aqEngine) execute(
 	// avoid overriding an existing notification (in practice, this is a warning)
 	if notificationContent == nil {
 		notificationContent = &notificationContentStruct{
-			level: mdl_shared.SuccessNotificationLevel,
+			level: shared.SuccessNotificationLevel,
 		}
 	}
 	return nil
@@ -1103,7 +1099,7 @@ func (eng *aqEngine) updateWorkflowSchedule(
 	ctx context.Context,
 	workflowId uuid.UUID,
 	cronjobName string,
-	newSchedule *workflow.Schedule,
+	newSchedule *shared.Schedule,
 ) error {
 	// How we update the workflow schedule depends on whether a cron job already exists.
 	// A manually triggered workflow does not have a cron job. If we're editing it to have a periodic

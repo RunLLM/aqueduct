@@ -5,12 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
@@ -34,7 +31,7 @@ func NewWorklowRepo() repos.Workflow {
 }
 
 func (*workflowReader) Exists(ctx context.Context, ID uuid.UUID, DB database.Database) (bool, error) {
-	return utils.IdExistsInTable(ctx, ID, models.WorkflowTable, DB)
+	return IDExistsInTable(ctx, ID, models.WorkflowTable, DB)
 }
 
 func (*workflowReader) Get(ctx context.Context, ID uuid.UUID, DB database.Database) (*models.Workflow, error) {
@@ -71,7 +68,7 @@ func (*workflowReader) GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID,
 
 func (*workflowReader) GetByScheduleTrigger(
 	ctx context.Context,
-	trigger workflow.UpdateTrigger,
+	trigger shared.UpdateTrigger,
 	DB database.Database,
 ) ([]models.Workflow, error) {
 	query := fmt.Sprintf(
@@ -92,7 +89,7 @@ func (*workflowReader) GetTargets(ctx context.Context, ID uuid.UUID, DB database
 			json_extract(schedule, '$.trigger') = $1
 			AND json_extract(schedule, '$.source_id') = $2
 		;`
-	args := []interface{}{workflow.CascadingUpdateTrigger, ID}
+	args := []interface{}{shared.CascadingUpdateTrigger, ID}
 
 	var objectIDs []views.ObjectID
 	err := DB.Query(ctx, &objectIDs, query, args...)
@@ -238,7 +235,7 @@ func (*workflowReader) ValidateOrg(ctx context.Context, ID uuid.UUID, orgID stri
 		AND app_user.organization_id = $2;`
 	args := []interface{}{ID, orgID}
 
-	var count utils.CountResult
+	var count countResult
 	err := DB.Query(ctx, &count, query, args...)
 	if err != nil {
 		return false, err
@@ -252,9 +249,9 @@ func (*workflowWriter) Create(
 	userID uuid.UUID,
 	name string,
 	description string,
-	schedule *workflow.Schedule,
-	retentionPolicy *workflow.RetentionPolicy,
-	notificationSettings *mdl_shared.NotificationSettings,
+	schedule *shared.Schedule,
+	retentionPolicy *shared.RetentionPolicy,
+	notificationSettings *shared.NotificationSettings,
 	DB database.Database,
 ) (*models.Workflow, error) {
 	cols := []string{
@@ -269,7 +266,7 @@ func (*workflowWriter) Create(
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.WorkflowTable, cols, models.WorkflowCols())
 
-	ID, err := utils.GenerateUniqueUUID(ctx, models.WorkflowTable, DB)
+	ID, err := GenerateUniqueUUID(ctx, models.WorkflowTable, DB)
 	if err != nil {
 		return nil, err
 	}
@@ -291,7 +288,7 @@ func (*workflowWriter) Update(
 	DB database.Database,
 ) (*models.Workflow, error) {
 	var workflow models.Workflow
-	err := utils.UpdateRecordToDest(
+	err := repos.UpdateRecordToDest(
 		ctx,
 		&workflow,
 		changes,

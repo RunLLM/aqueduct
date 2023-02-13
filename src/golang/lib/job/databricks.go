@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	databricks_lib "github.com/aqueducthq/aqueduct/lib/databricks"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	databricks_sdk "github.com/databricks/databricks-sdk-go"
 	"github.com/databricks/databricks-sdk-go/service/jobs"
 	"github.com/dropbox/godropbox/errors"

@@ -3,7 +3,7 @@ package _000013_add_workflow_dag_engine_config
 import (
 	"database/sql/driver"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
 )
 
 type EngineType string
@@ -20,9 +20,9 @@ type EngineConfig struct {
 type AqueductConfig struct{}
 
 func (e *EngineConfig) Scan(value interface{}) error {
-	return utils.ScanJsonB(value, e)
+	return utils.ScanJSONB(value, e)
 }
 
 func (e *EngineConfig) Value() (driver.Value, error) {
-	return utils.ValueJsonB(*e)
+	return utils.ValueJSONB(*e)
 }

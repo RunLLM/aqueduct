@@ -6,17 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/metric"
-	col_shared "github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/check"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/connector"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/function"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/metric"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +20,7 @@ import (
 const (
 	// Defaults used for seeding database records
 	testOrgID              = "aqueduct-test"
-	testIntegrationService = integration.AqueductDemo
+	testIntegrationService = shared.AqueductDemo
 )
 
 // seedIntegration creates count integration records for the given user.
@@ -33,7 +29,7 @@ func (ts *TestSuite) seedIntegrationWithUser(count int, userID uuid.UUID) []mode
 
 	for i := 0; i < count; i++ {
 		name := randString(10)
-		config := make(utils.Config)
+		config := make(shared.IntegrationConfig)
 		config[randString(10)] = randString(10)
 		validated := true
 		integration, err := ts.integration.CreateForUser(
@@ -170,13 +166,13 @@ func (ts *TestSuite) seedWorkflowWithUser(count int, userIDs []uuid.UUID) []mode
 		userID := userIDs[i]
 		name := randString(10)
 		description := randString(15)
-		schedule := &workflow.Schedule{
-			Trigger:              workflow.PeriodicUpdateTrigger,
+		schedule := &shared.Schedule{
+			Trigger:              shared.PeriodicUpdateTrigger,
 			CronSchedule:         "* * * * *",
 			DisableManualTrigger: false,
 			Paused:               false,
 		}
-		retentionPolicy := &workflow.RetentionPolicy{
+		retentionPolicy := &shared.RetentionPolicy{
 			KLatestRuns: 10,
 		}
 
@@ -224,16 +220,16 @@ func (ts *TestSuite) seedDAGWithWorkflow(count int, workflowIDs []uuid.UUID) []m
 
 	for i := 0; i < count; i++ {
 		workflowID := workflowIDs[i]
-		storageConfig := &col_shared.StorageConfig{
-			Type: col_shared.S3StorageType,
-			S3Config: &col_shared.S3Config{
+		storageConfig := &shared.StorageConfig{
+			Type: shared.S3StorageType,
+			S3Config: &shared.S3Config{
 				Region: "us-east-2",
 				Bucket: "test",
 			},
 		}
-		engineConfig := &col_shared.EngineConfig{
-			Type:           col_shared.AqueductEngineType,
-			AqueductConfig: &col_shared.AqueductConfig{},
+		engineConfig := &shared.EngineConfig{
+			Type:           shared.AqueductEngineType,
+			AqueductConfig: &shared.AqueductConfig{},
 		}
 
 		dag, err := ts.dag.Create(
@@ -360,9 +356,9 @@ func (ts *TestSuite) seedOperatorResultForDAGAndOperator(count int, dagResultID 
 
 	for i := 0; i < count; i++ {
 		now := time.Now()
-		execState := &col_shared.ExecutionState{
-			Status: col_shared.PendingExecutionStatus,
-			Timestamps: &col_shared.ExecutionTimestamps{
+		execState := &shared.ExecutionState{
+			Status: shared.PendingExecutionStatus,
+			Timestamps: &shared.ExecutionTimestamps{
 				PendingAt: &now,
 			},
 		}
@@ -428,7 +424,7 @@ func (ts *TestSuite) seedOperatorAndDAG(artifactID uuid.UUID, dagID uuid.UUID, u
 	case operator.ExtractType:
 		spec = operator.NewSpecFromExtract(
 			connector.Extract{
-				Service:       integration.Postgres,
+				Service:       shared.Postgres,
 				IntegrationId: uuid.New(),
 				Parameters:    &connector.PostgresExtractParams{},
 			},
@@ -505,7 +501,7 @@ func (ts *TestSuite) seedOperatorAndDAGOperatorToArtifact(artifactID uuid.UUID, 
 	case operator.ExtractType:
 		spec = operator.NewSpecFromExtract(
 			connector.Extract{
-				Service:       integration.Postgres,
+				Service:       shared.Postgres,
 				IntegrationId: uuid.New(),
 				Parameters:    &connector.PostgresExtractParams{},
 			},
@@ -513,7 +509,7 @@ func (ts *TestSuite) seedOperatorAndDAGOperatorToArtifact(artifactID uuid.UUID, 
 	case operator.LoadType:
 		spec = operator.NewSpecFromLoad(
 			connector.Load{
-				Service:       integration.Postgres,
+				Service:       shared.Postgres,
 				IntegrationId: uuid.New(),
 				Parameters: &connector.PostgresLoadParams{
 					RelationalDBLoadParams: connector.RelationalDBLoadParams{
@@ -741,7 +737,7 @@ func (ts *TestSuite) seedComplexWorkflow() (models.DAG, map[string]models.Operat
 
 	extract_spec := operator.NewSpecFromExtract(
 		connector.Extract{
-			Service:       integration.Postgres,
+			Service:       shared.Postgres,
 			IntegrationId: uuid.New(),
 			Parameters:    &connector.PostgresExtractParams{},
 		},

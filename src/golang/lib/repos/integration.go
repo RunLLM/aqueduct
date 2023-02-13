@@ -3,10 +3,9 @@ package repos
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
 )
 
@@ -33,7 +32,7 @@ type integrationReader interface {
 	GetByOrg(ctx context.Context, orgID string, DB database.Database) ([]models.Integration, error)
 
 	// GetByServiceAndUser returns the Integrations with the specified service created by the user with the ID userID.
-	GetByServiceAndUser(ctx context.Context, service integration.Service, userID uuid.UUID, DB database.Database) ([]models.Integration, error)
+	GetByServiceAndUser(ctx context.Context, service shared.Service, userID uuid.UUID, DB database.Database) ([]models.Integration, error)
 
 	// GetByUser returns the Integrations created by the org where the userID is equal to userID or it is NULL.
 	GetByUser(ctx context.Context, orgID string, userID uuid.UUID, DB database.Database) ([]models.Integration, error)
@@ -47,9 +46,9 @@ type integrationWriter interface {
 	Create(
 		ctx context.Context,
 		orgID string,
-		service integration.Service,
+		service shared.Service,
 		name string,
-		config *utils.Config,
+		config *shared.IntegrationConfig,
 		validated bool,
 		DB database.Database,
 	) (*models.Integration, error)
@@ -59,9 +58,9 @@ type integrationWriter interface {
 		ctx context.Context,
 		orgID string,
 		userID uuid.UUID,
-		service integration.Service,
+		service shared.Service,
 		name string,
-		config *utils.Config,
+		config *shared.IntegrationConfig,
 		validated bool,
 		DB database.Database,
 	) (*models.Integration, error)

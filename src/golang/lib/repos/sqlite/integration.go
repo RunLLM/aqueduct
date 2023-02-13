@@ -5,11 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -92,7 +91,7 @@ func (*integrationReader) GetByOrg(ctx context.Context, orgId string, DB databas
 	return getIntegrations(ctx, DB, query, args...)
 }
 
-func (*integrationReader) GetByServiceAndUser(ctx context.Context, service integration.Service, userID uuid.UUID, DB database.Database) ([]models.Integration, error) {
+func (*integrationReader) GetByServiceAndUser(ctx context.Context, service shared.Service, userID uuid.UUID, DB database.Database) ([]models.Integration, error) {
 	query := fmt.Sprintf(
 		`SELECT %s FROM integration WHERE service = $1 AND user_id = $2;`,
 		models.IntegrationCols(),
@@ -111,7 +110,7 @@ func (*integrationReader) GetByUser(ctx context.Context, orgID string, userID uu
 }
 
 func (*integrationReader) ValidateOwnership(ctx context.Context, integrationID uuid.UUID, orgID string, userID uuid.UUID, DB database.Database) (bool, error) {
-	var count utils.CountResult
+	var count countResult
 
 	query := fmt.Sprintf(
 		`SELECT %s FROM integration WHERE id = $1;`,
@@ -123,7 +122,7 @@ func (*integrationReader) ValidateOwnership(ctx context.Context, integrationID u
 	if err != nil {
 		return false, err
 	}
-	userOnly := integration.IsUserOnlyIntegration(integrationObject.Service)
+	userOnly := shared.IsUserOnlyIntegration(integrationObject.Service)
 
 	if userOnly {
 		query := `SELECT COUNT(*) AS count FROM integration WHERE id = $1 AND user_id = $2;`
@@ -145,9 +144,9 @@ func (*integrationReader) ValidateOwnership(ctx context.Context, integrationID u
 func (*integrationWriter) Create(
 	ctx context.Context,
 	orgID string,
-	service integration.Service,
+	service shared.Service,
 	name string,
-	config *utils.Config,
+	config *shared.IntegrationConfig,
 	validated bool,
 	DB database.Database,
 ) (*models.Integration, error) {
@@ -162,7 +161,7 @@ func (*integrationWriter) Create(
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.IntegrationTable, cols, models.IntegrationCols())
 
-	ID, err := utils.GenerateUniqueUUID(ctx, models.IntegrationTable, DB)
+	ID, err := GenerateUniqueUUID(ctx, models.IntegrationTable, DB)
 	if err != nil {
 		return nil, err
 	}
@@ -183,9 +182,9 @@ func (*integrationWriter) CreateForUser(
 	ctx context.Context,
 	orgID string,
 	userID uuid.UUID,
-	service integration.Service,
+	service shared.Service,
 	name string,
-	config *utils.Config,
+	config *shared.IntegrationConfig,
 	validated bool,
 	DB database.Database,
 ) (*models.Integration, error) {
@@ -201,7 +200,7 @@ func (*integrationWriter) CreateForUser(
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.IntegrationTable, cols, models.IntegrationCols())
 
-	ID, err := utils.GenerateUniqueUUID(ctx, models.IntegrationTable, DB)
+	ID, err := GenerateUniqueUUID(ctx, models.IntegrationTable, DB)
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +225,7 @@ func (*integrationWriter) Delete(ctx context.Context, ID uuid.UUID, DB database.
 
 func (*integrationWriter) Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.Integration, error) {
 	var integration models.Integration
-	err := utils.UpdateRecordToDest(ctx, &integration, changes, models.IntegrationTable, models.IntegrationID, ID, models.IntegrationCols(), DB)
+	err := repos.UpdateRecordToDest(ctx, &integration, changes, models.IntegrationTable, models.IntegrationID, ID, models.IntegrationCols(), DB)
 	return &integration, err
 }
 

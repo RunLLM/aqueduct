@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
 )
@@ -30,9 +29,9 @@ type Workflow struct {
 	UserID               uuid.UUID                   `db:"user_id" json:"user_id"`
 	Name                 string                      `db:"name" json:"name"`
 	Description          string                      `db:"description" json:"description"`
-	Schedule             workflow.Schedule           `db:"schedule" json:"schedule"`
+	Schedule             shared.Schedule             `db:"schedule" json:"schedule"`
 	CreatedAt            time.Time                   `db:"created_at" json:"created_at"`
-	RetentionPolicy      workflow.RetentionPolicy    `db:"retention_policy" json:"retention_policy"`
+	RetentionPolicy      shared.RetentionPolicy      `db:"retention_policy" json:"retention_policy"`
 	NotificationSettings shared.NotificationSettings `db:"notification_settings" json:"notification_settings"`
 }
 

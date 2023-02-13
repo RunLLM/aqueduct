@@ -6,15 +6,13 @@ import (
 	"encoding/gob"
 	"encoding/json"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/check"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/check"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/connector"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/dropbox/godropbox/errors"
@@ -154,10 +152,10 @@ type FunctionSpec struct {
 
 type ParamSpec struct {
 	BasePythonSpec
-	ExpectedType       mdl_shared.ArtifactType `json:"expected_type" yaml:"expected_type"`
-	SerializationType  string                  `json:"serialization_type" yaml:"serialization_type"`
-	OutputContentPath  string                  `json:"output_content_path"  yaml:"output_content_path"`
-	OutputMetadataPath string                  `json:"output_metadata_path"  yaml:"output_metadata_path"`
+	ExpectedType       shared.ArtifactType `json:"expected_type" yaml:"expected_type"`
+	SerializationType  string              `json:"serialization_type" yaml:"serialization_type"`
+	OutputContentPath  string              `json:"output_content_path"  yaml:"output_content_path"`
+	OutputMetadataPath string              `json:"output_metadata_path"  yaml:"output_metadata_path"`
 }
 
 type SystemMetricSpec struct {
@@ -170,7 +168,7 @@ type SystemMetricSpec struct {
 
 type ExtractSpec struct {
 	BasePythonSpec
-	ConnectorName   integration.Service     `json:"connector_name"  yaml:"connector_name"`
+	ConnectorName   shared.Service          `json:"connector_name"  yaml:"connector_name"`
 	ConnectorConfig auth.Config             `json:"connector_config"  yaml:"connector_config"`
 	Parameters      connector.ExtractParams `json:"parameters"  yaml:"parameters"`
 
@@ -184,15 +182,15 @@ type ExtractSpec struct {
 
 type DeleteSavedObjectsSpec struct {
 	BasePythonSpec
-	ConnectorName       map[string]integration.Service `json:"connector_name"  yaml:"connector_name"`
-	ConnectorConfig     map[string]auth.Config         `json:"connector_config"  yaml:"connector_config"`
-	IntegrationToObject map[string][]string            `json:"integration_to_object"  yaml:"integration_to_object"`
-	OutputContentPath   string                         `json:"output_content_path"  yaml:"output_content_path"`
+	ConnectorName       map[string]shared.Service `json:"connector_name"  yaml:"connector_name"`
+	ConnectorConfig     map[string]auth.Config    `json:"connector_config"  yaml:"connector_config"`
+	IntegrationToObject map[string][]string       `json:"integration_to_object"  yaml:"integration_to_object"`
+	OutputContentPath   string                    `json:"output_content_path"  yaml:"output_content_path"`
 }
 
 type LoadSpec struct {
 	BasePythonSpec
-	ConnectorName     integration.Service  `json:"connector_name"  yaml:"connector_name"`
+	ConnectorName     shared.Service       `json:"connector_name"  yaml:"connector_name"`
 	ConnectorConfig   auth.Config          `json:"connector_config"  yaml:"connector_config"`
 	Parameters        connector.LoadParams `json:"parameters"  yaml:"parameters"`
 	InputContentPath  string               `json:"input_content_path"  yaml:"input_content_path"`
@@ -201,23 +199,23 @@ type LoadSpec struct {
 
 type LoadTableSpec struct {
 	BasePythonSpec
-	ConnectorName   integration.Service `json:"connector_name"  yaml:"connector_name"`
-	ConnectorConfig auth.Config         `json:"connector_config"  yaml:"connector_config"`
-	CSV             string              `json:"csv"  yaml:"csv"`
-	LoadParameters  LoadSpec            `json:"load_parameters"  yaml:"load_parameters"`
+	ConnectorName   shared.Service `json:"connector_name"  yaml:"connector_name"`
+	ConnectorConfig auth.Config    `json:"connector_config"  yaml:"connector_config"`
+	CSV             string         `json:"csv"  yaml:"csv"`
+	LoadParameters  LoadSpec       `json:"load_parameters"  yaml:"load_parameters"`
 }
 
 type AuthenticateSpec struct {
 	BasePythonSpec
-	ConnectorName   integration.Service `json:"connector_name"  yaml:"connector_name"`
-	ConnectorConfig auth.Config         `json:"connector_config"  yaml:"connector_config"`
+	ConnectorName   shared.Service `json:"connector_name"  yaml:"connector_name"`
+	ConnectorConfig auth.Config    `json:"connector_config"  yaml:"connector_config"`
 }
 
 type DiscoverSpec struct {
 	BasePythonSpec
-	ConnectorName     integration.Service `json:"connector_name"  yaml:"connector_name"`
-	ConnectorConfig   auth.Config         `json:"connector_config"  yaml:"connector_config"`
-	OutputContentPath string              `json:"output_content_path"  yaml:"output_content_path"`
+	ConnectorName     shared.Service `json:"connector_name"  yaml:"connector_name"`
+	ConnectorConfig   auth.Config    `json:"connector_config"  yaml:"connector_config"`
+	OutputContentPath string         `json:"output_content_path"  yaml:"output_content_path"`
 }
 
 type CompileAirflowSpec struct {
@@ -344,7 +342,7 @@ func NewAuthenticateSpec(
 	name string,
 	storageConfig *shared.StorageConfig,
 	metadataPath string,
-	connectorName integration.Service,
+	connectorName shared.Service,
 	connectorConfig auth.Config,
 ) Spec {
 	return &AuthenticateSpec{
@@ -366,7 +364,7 @@ func NewExtractSpec(
 	name string,
 	storageConfig *shared.StorageConfig,
 	metadataPath string,
-	connectorName integration.Service,
+	connectorName shared.Service,
 	connectorConfig auth.Config,
 	parameters connector.ExtractParams,
 	inputParamNames []string,
@@ -400,7 +398,7 @@ func NewDeleteSavedObjectsSpec(
 	name string,
 	storageConfig *shared.StorageConfig,
 	metadataPath string,
-	connectorName map[string]integration.Service,
+	connectorName map[string]shared.Service,
 	connectorConfig map[string]auth.Config,
 	integrationToObject map[string][]string,
 	outputContentPath string,
@@ -427,7 +425,7 @@ func NewLoadTableSpec(
 	csv string,
 	storageConfig *shared.StorageConfig,
 	metadataPath string,
-	connectorName integration.Service,
+	connectorName shared.Service,
 	connectorConfig auth.Config,
 	parameters connector.LoadParams,
 	inputContentPath string,
@@ -468,7 +466,7 @@ func NewDiscoverSpec(
 	name string,
 	storageConfig *shared.StorageConfig,
 	metadataPath string,
-	connectorName integration.Service,
+	connectorName shared.Service,
 	connectorConfig auth.Config,
 	outputContentPath string,
 ) Spec {

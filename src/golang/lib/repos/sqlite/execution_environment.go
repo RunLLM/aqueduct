@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -145,7 +143,7 @@ func (*executionEnvironmentReader) GetUnused(ctx context.Context, DB database.Da
 		execution_environment.garbage_collected = FALSE 
 		AND 
 		active_execution_environment.id IS NULL;`,
-		workflow_dag_edge.OperatorToArtifactType,
+		shared.OperatorToArtifactDAGEdge,
 		models.ExecutionEnvironmentColsWithPrefix())
 
 	return getExecutionEnvironments(ctx, DB, query)
@@ -164,7 +162,7 @@ func (*executionEnvironmentWriter) Create(
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.ExecutionEnvironmentTable, cols, models.ExecutionEnvironmentCols())
 
-	ID, err := utils.GenerateUniqueUUID(ctx, models.ExecutionEnvironmentTable, DB)
+	ID, err := GenerateUniqueUUID(ctx, models.ExecutionEnvironmentTable, DB)
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +195,7 @@ func (*executionEnvironmentWriter) DeleteBatch(ctx context.Context, IDs []uuid.U
 
 func (*executionEnvironmentWriter) Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.ExecutionEnvironment, error) {
 	var executionEnvironment models.ExecutionEnvironment
-	err := utils.UpdateRecordToDest(ctx, &executionEnvironment, changes, models.ExecutionEnvironmentTable, models.ExecutionEnvironmentID, ID, models.ExecutionEnvironmentCols(), DB)
+	err := repos.UpdateRecordToDest(ctx, &executionEnvironment, changes, models.ExecutionEnvironmentTable, models.ExecutionEnvironmentID, ID, models.ExecutionEnvironmentCols(), DB)
 	return &executionEnvironment, err
 }
 

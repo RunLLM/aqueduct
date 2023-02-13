@@ -8,8 +8,8 @@ import (
 	"os"
 	"path"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
@@ -152,7 +152,7 @@ func GenerateJobManagerConfig(
 			awsSecretAccessKey = secretKey
 		}
 
-		k8sIntegrationId := engineConfig.K8sConfig.IntegrationId
+		k8sIntegrationId := engineConfig.K8sConfig.IntegrationID
 		config, err := auth.ReadConfigFromSecret(ctx, k8sIntegrationId, vault)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to read config from vault.")
@@ -173,7 +173,7 @@ func GenerateJobManagerConfig(
 		if storageConfig.Type != shared.S3StorageType {
 			return nil, errors.New("Must use S3 for Lambda engine.")
 		}
-		lambdaIntegrationId := engineConfig.LambdaConfig.IntegrationId
+		lambdaIntegrationId := engineConfig.LambdaConfig.IntegrationID
 		config, err := auth.ReadConfigFromSecret(ctx, lambdaIntegrationId, vault)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to read config from vault.")
@@ -203,7 +203,7 @@ func GenerateJobManagerConfig(
 		if storageConfig.Type != shared.S3StorageType {
 			return nil, errors.New("Must use S3 storage config for Databricks engine.")
 		}
-		databricksIntegrationId := engineConfig.DatabricksConfig.IntegrationId
+		databricksIntegrationId := engineConfig.DatabricksConfig.IntegrationID
 		config, err := auth.ReadConfigFromSecret(ctx, databricksIntegrationId, vault)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to read config from vault.")

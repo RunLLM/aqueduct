@@ -3,7 +3,7 @@ package auth
 import (
 	"testing"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -56,7 +56,7 @@ func testOAuthConfigMarshal(t *testing.T, config *OAuthConfig, expectedMarshalSt
 func TestNewOAuth2Config(t *testing.T) {
 	testCases := []struct {
 		description          string
-		service              integration.Service
+		service              shared.Service
 		clientId             string
 		clientSecret         string
 		redirectURL          string
@@ -65,7 +65,7 @@ func TestNewOAuth2Config(t *testing.T) {
 	}{
 		{
 			description:  "google sheets",
-			service:      integration.GoogleSheets,
+			service:      shared.GoogleSheets,
 			clientId:     "testClient",
 			clientSecret: "secret",
 			redirectURL:  "postmessage",
@@ -80,7 +80,7 @@ func TestNewOAuth2Config(t *testing.T) {
 		},
 		{
 			description:          "non-OAuth2 supported service",
-			service:              integration.Postgres,
+			service:              shared.Postgres,
 			clientId:             "testClient",
 			clientSecret:         "secret",
 			expectedOAuth2Config: nil,

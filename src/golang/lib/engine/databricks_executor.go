@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
@@ -116,12 +115,12 @@ func ExecuteDatabricks(
 				}
 
 				notificationContent = &notificationContentStruct{
-					level:            mdl_shared.ErrorNotificationLevel,
+					level:            shared.ErrorNotificationLevel,
 					systemErrContext: notificationCtxMsg,
 				}
 			} else if execState.HasWarning() {
 				notificationContent = &notificationContentStruct{
-					level: mdl_shared.WarningNotificationLevel,
+					level: shared.WarningNotificationLevel,
 				}
 			}
 
@@ -146,7 +145,7 @@ func ExecuteDatabricks(
 	// avoid overriding an existing notification (in practice, this is a warning)
 	if notificationContent == nil {
 		notificationContent = &notificationContentStruct{
-			level: mdl_shared.SuccessNotificationLevel,
+			level: shared.SuccessNotificationLevel,
 		}
 	}
 

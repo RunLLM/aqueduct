@@ -3,11 +3,9 @@ package artifact
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
@@ -22,7 +20,7 @@ import (
 type Artifact interface {
 	ID() uuid.UUID
 	Signature() uuid.UUID
-	Type() mdl_shared.ArtifactType
+	Type() shared.ArtifactType
 	Name() string
 
 	// InitializeResult initializes the artifact in the database.
@@ -44,7 +42,7 @@ type Artifact interface {
 
 	// GetMetadata fetches the metadata for this artifact.
 	// Errors if the artifact has not yet been computed.
-	GetMetadata(ctx context.Context) (*artifact_result.Metadata, error)
+	GetMetadata(ctx context.Context) (*shared.ArtifactResultMetadata, error)
 
 	// GetContent fetches the content of this artifact.
 	// Errors if the artifact has not yet been computed.
@@ -63,7 +61,7 @@ type ArtifactImpl struct {
 
 	name         string
 	description  string
-	artifactType mdl_shared.ArtifactType
+	artifactType shared.ArtifactType
 
 	execPaths *utils.ExecPaths
 
@@ -119,7 +117,7 @@ func (a *ArtifactImpl) Signature() uuid.UUID {
 	return a.signature
 }
 
-func (a *ArtifactImpl) Type() mdl_shared.ArtifactType {
+func (a *ArtifactImpl) Type() shared.ArtifactType {
 	return a.artifactType
 }
 
@@ -168,7 +166,7 @@ func (a *ArtifactImpl) updateArtifactResultAfterComputation(
 	}
 
 	if a.Computed(ctx) {
-		var artifactResultMetadata artifact_result.Metadata
+		var artifactResultMetadata shared.ArtifactResultMetadata
 		err := utils.ReadFromStorage(
 			ctx,
 			a.storageConfig,
@@ -203,7 +201,7 @@ func (a *ArtifactImpl) updateArtifactResultAfterComputation(
 func (a *ArtifactImpl) updateArtifactTypeAfterComputation(
 	ctx context.Context,
 ) {
-	if a.artifactType != mdl_shared.UntypedArtifact {
+	if a.artifactType != shared.UntypedArtifact {
 		return
 	}
 
@@ -218,7 +216,7 @@ func (a *ArtifactImpl) updateArtifactTypeAfterComputation(
 	}
 
 	changes := map[string]interface{}{
-		models.ArtifactType: mdl_shared.ArtifactType(metadata.ArtifactType),
+		models.ArtifactType: metadata.ArtifactType,
 	}
 
 	_, err = a.repo.Update(ctx, a.ID(), changes, a.db)
@@ -270,12 +268,12 @@ func (a *ArtifactImpl) Finish(ctx context.Context) {
 	}
 }
 
-func (a *ArtifactImpl) GetMetadata(ctx context.Context) (*artifact_result.Metadata, error) {
+func (a *ArtifactImpl) GetMetadata(ctx context.Context) (*shared.ArtifactResultMetadata, error) {
 	if !a.Computed(ctx) {
 		return nil, errors.Newf("Cannot get metadata of Artifact %s, it has not yet been computed.", a.Name())
 	}
 
-	var metadata artifact_result.Metadata
+	var metadata shared.ArtifactResultMetadata
 	err := utils.ReadFromStorage(ctx, a.storageConfig, a.execPaths.ArtifactMetadataPath, &metadata)
 	if err != nil {
 		return nil, err

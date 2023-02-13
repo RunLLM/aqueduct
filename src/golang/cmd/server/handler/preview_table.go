@@ -8,12 +8,11 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -118,7 +117,7 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to retrieve integration.")
 	}
 
-	if _, ok := integration.GetRelationalDatabaseIntegrations()[integrationObject.Service]; !ok {
+	if _, ok := shared.GetRelationalDatabaseIntegrations()[integrationObject.Service]; !ok {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Preview table request is only allowed for relational databases.")
 	}
 
@@ -132,7 +131,7 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 	}()
 
 	var queryParams connector.ExtractParams
-	if integrationObject.Service == integration.MongoDB {
+	if integrationObject.Service == shared.MongoDB {
 		// This triggers `db.my_table.find({})`
 		queryParams = &connector.MongoDBExtractParams{
 			Collection:      args.tableName,

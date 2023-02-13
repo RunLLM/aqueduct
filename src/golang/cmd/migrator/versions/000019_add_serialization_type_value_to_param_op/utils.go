@@ -10,8 +10,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
@@ -106,7 +106,7 @@ func updateParamOperatorWithNewSpec(
 		spec_field: newParamSpec,
 	}
 
-	return utils.UpdateRecord(ctx, changes, "operator", "id", operator.Id, db)
+	return repos.UpdateRecord(ctx, changes, "operator", "id", operator.Id, db)
 }
 
 func updateParamOperatorWithOldSpec(
@@ -170,5 +170,5 @@ func updateParamOperatorWithOldSpec(
 		spec_field: newParamSpec,
 	}
 
-	return utils.UpdateRecord(ctx, changes, "operator", "id", operator.Id, db)
+	return repos.UpdateRecord(ctx, changes, "operator", "id", operator.Id, db)
 }

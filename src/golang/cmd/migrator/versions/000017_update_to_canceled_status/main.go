@@ -3,8 +3,8 @@ package _000017_update_to_canceled_status
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 )
 
 func Up(ctx context.Context, db database.Database) error {
@@ -22,7 +22,7 @@ func Up(ctx context.Context, db database.Database) error {
 			"execution_state": &artifactStatusInfo.ExecState,
 		}
 
-		err = utils.UpdateRecord(ctx, changes, "artifact_result", "id", artifactStatusInfo.ArtifactResultID, db)
+		err = repos.UpdateRecord(ctx, changes, "artifact_result", "id", artifactStatusInfo.ArtifactResultID, db)
 		if err != nil {
 			return err
 		}
@@ -41,7 +41,7 @@ func Up(ctx context.Context, db database.Database) error {
 			"execution_state": &operatorStatusInfo.ExecState,
 		}
 
-		err = utils.UpdateRecord(ctx, changes, "operator_result", "id", operatorStatusInfo.OperatorResultID, db)
+		err = repos.UpdateRecord(ctx, changes, "operator_result", "id", operatorStatusInfo.OperatorResultID, db)
 		if err != nil {
 			return err
 		}
@@ -62,7 +62,7 @@ func Up(ctx context.Context, db database.Database) error {
 			"execution_state": &artifactStatusInfo.ExecState,
 		}
 
-		err = utils.UpdateRecord(ctx, changes, "artifact_result", "id", artifactStatusInfo.ArtifactResultID, db)
+		err = repos.UpdateRecord(ctx, changes, "artifact_result", "id", artifactStatusInfo.ArtifactResultID, db)
 		if err != nil {
 			return err
 		}
@@ -85,7 +85,7 @@ func Down(ctx context.Context, db database.Database) error {
 			"execution_state": &operatorStatusInfo.ExecState,
 		}
 
-		err = utils.UpdateRecord(ctx, changes, "operator_result", "id", operatorStatusInfo.OperatorResultID, db)
+		err = repos.UpdateRecord(ctx, changes, "operator_result", "id", operatorStatusInfo.OperatorResultID, db)
 		if err != nil {
 			return err
 		}
@@ -114,7 +114,7 @@ func Down(ctx context.Context, db database.Database) error {
 			"execution_state": &artifactStatusInfo.ExecState,
 		}
 
-		err = utils.UpdateRecord(ctx, changes, "artifact_result", "id", artifactStatusInfo.ArtifactResultID, db)
+		err = repos.UpdateRecord(ctx, changes, "artifact_result", "id", artifactStatusInfo.ArtifactResultID, db)
 		if err != nil {
 			return err
 		}
