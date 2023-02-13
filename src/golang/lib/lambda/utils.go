@@ -16,8 +16,9 @@ import (
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/dropbox/godropbox/errors"
-	"golang.org/x/sync/errgroup"
 	log "github.com/sirupsen/logrus"
+	log "github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 )
 
 type EcrAuth struct {
@@ -36,12 +37,12 @@ func CreateLambdaFunction(ctx context.Context, functionsToShip []LambdaFunctionT
 	// 1. Pull the image from the public ECR repository on a concurrency of `MaxConcurrentDownload`.
 	// 2. Create the private ECR repo if it doesn't exist.
 	// 3. Get the ECR auth token and log in the docker client.
-	// 4. Push the image to the private ECR repo on a concurrency of `MaxConcurrentUpload`. 
+	// 4. Push the image to the private ECR repo on a concurrency of `MaxConcurrentUpload`.
 	// 5. Create the lambda function using the private ECR repo as the code.
 
 	errGroup, errGroupCtx := errgroup.WithContext(ctx)
 
-	// Create a `pullImageChannel` and `pushImageChannel` and add all lambda functions to the channel. 
+	// Create a `pullImageChannel` and `pushImageChannel` and add all lambda functions to the channel.
 	pullImageChannel := make(chan LambdaFunctionType, len(functionsToShip))
 	defer close(pullImageChannel)
 	pushImageChannel := make(chan LambdaFunctionType, len(functionsToShip))
@@ -62,7 +63,7 @@ func CreateLambdaFunction(ctx context.Context, functionsToShip []LambdaFunctionT
 				case <-errGroupCtx.Done():
 					return errGroupCtx.Err()
 				default:
-					// The case should only be hit when `pullImageChannel` is empty. 
+					// The case should only be hit when `pullImageChannel` is empty.
 					return nil
 				}
 			}
