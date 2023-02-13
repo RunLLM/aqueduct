@@ -1,9 +1,8 @@
 package tests
 
 import (
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -94,7 +93,7 @@ func (ts *TestSuite) TestArtifactResult_Create() {
 		ExecState: shared.NullExecutionState{
 			IsNull: true,
 		},
-		Metadata: mdl_shared.NullArtifactResultMetadata{
+		Metadata: shared.NullArtifactResultMetadata{
 			IsNull: true,
 		},
 	}
@@ -132,12 +131,12 @@ func (ts *TestSuite) TestArtifactResult_CreateWithExecStateAndMetadata() {
 			},
 			IsNull: false,
 		},
-		Metadata: mdl_shared.NullArtifactResultMetadata{
-			ArtifactResultMetadata: mdl_shared.ArtifactResultMetadata{
+		Metadata: shared.NullArtifactResultMetadata{
+			ArtifactResultMetadata: shared.ArtifactResultMetadata{
 				Schema:            schema,
 				SystemMetrics:     systemMetrics,
-				SerializationType: mdl_shared.StringSerialization,
-				ArtifactType:      mdl_shared.UntypedArtifact,
+				SerializationType: shared.StringSerialization,
+				ArtifactType:      shared.UntypedArtifact,
 			},
 			IsNull: false,
 		},
@@ -199,12 +198,12 @@ func (ts *TestSuite) TestArtifactResult_Update() {
 		},
 		IsNull: false,
 	}
-	metadata := mdl_shared.NullArtifactResultMetadata{
-		ArtifactResultMetadata: mdl_shared.ArtifactResultMetadata{
+	metadata := shared.NullArtifactResultMetadata{
+		ArtifactResultMetadata: shared.ArtifactResultMetadata{
 			Schema:            schema,
 			SystemMetrics:     systemMetrics,
-			SerializationType: mdl_shared.StringSerialization,
-			ArtifactType:      mdl_shared.JsonArtifact,
+			SerializationType: shared.StringSerialization,
+			ArtifactType:      shared.JsonArtifact,
 		},
 		IsNull: false,
 	}

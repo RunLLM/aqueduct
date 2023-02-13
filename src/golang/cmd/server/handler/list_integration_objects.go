@@ -7,7 +7,6 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
@@ -128,11 +127,11 @@ func (h *ListIntegrationObjectsHandler) Perform(ctx context.Context, interfaceAr
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while waiting for integration objects job to finish.")
 	}
 
-	if jobStatus == shared.FailedExecutionStatus {
+	if jobStatus == mdl_shared.FailedExecutionStatus {
 		return nil, http.StatusInternalServerError, errors.New("Unexpected error while listing objects.")
 	}
 
-	var metadata shared.ExecutionState
+	var metadata mdl_shared.ExecutionState
 	if err := workflow_utils.ReadFromStorage(
 		ctx,
 		args.StorageConfig,

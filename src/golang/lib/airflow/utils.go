@@ -6,8 +6,7 @@ import (
 	"strings"
 
 	"github.com/apache/airflow-client-go/airflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/dropbox/godropbox/errors"
 )
 
@@ -52,18 +51,18 @@ func wrapApiError(err error, api string, resp *http.Response) error {
 }
 
 // mapDagStateToStatus maps an Airflow DagState to an ExecutionStatus
-func mapDagStateToStatus(state airflow.DagState) mdl_shared.ExecutionStatus {
+func mapDagStateToStatus(state airflow.DagState) shared.ExecutionStatus {
 	switch state {
 	case airflow.DAGSTATE_QUEUED:
-		return mdl_shared.PendingExecutionStatus
+		return shared.PendingExecutionStatus
 	case airflow.DAGSTATE_RUNNING:
-		return mdl_shared.RunningExecutionStatus
+		return shared.RunningExecutionStatus
 	case airflow.DAGSTATE_SUCCESS:
-		return mdl_shared.SucceededExecutionStatus
+		return shared.SucceededExecutionStatus
 	case airflow.DAGSTATE_FAILED:
-		return mdl_shared.FailedExecutionStatus
+		return shared.FailedExecutionStatus
 	default:
-		return mdl_shared.UnknownExecutionStatus
+		return shared.UnknownExecutionStatus
 	}
 }
 

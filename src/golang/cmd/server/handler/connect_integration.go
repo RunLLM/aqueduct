@@ -367,13 +367,13 @@ func ValidateConfig(
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
-	if jobStatus == shared.SucceededExecutionStatus {
+	if jobStatus == mdl_shared.SucceededExecutionStatus {
 		// Authentication was successful
 		return http.StatusOK, nil
 	}
 
 	// Authentication failed, so we need to fetch the error message from storage
-	var execState shared.ExecutionState
+	var execState mdl_shared.ExecutionState
 	if err := utils.ReadFromStorage(
 		ctx,
 		storageConfig,

@@ -5,11 +5,10 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -48,9 +47,9 @@ type Engine interface {
 		workflowId uuid.UUID,
 		workflowName string,
 		workflowDescription string,
-		schedule *mdl_shared.Schedule,
-		retentionPolicy *mdl_shared.RetentionPolicy,
-		notificationSettings *mdl_shared.NotificationSettings,
+		schedule *shared.Schedule,
+		retentionPolicy *shared.RetentionPolicy,
+		notificationSettings *shared.NotificationSettings,
 	) error
 
 	// TODO ENG-1444: Used as a wrapper to trigger a workflow via executor binary.

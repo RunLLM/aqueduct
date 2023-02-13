@@ -5,12 +5,11 @@ import (
 	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
@@ -74,7 +73,7 @@ func (*operatorResultReader) GetByDAGResultAndOperator(
 func (*operatorResultReader) GetWithOperatorByDAGResultBatch(
 	ctx context.Context,
 	dagResultIDs []uuid.UUID,
-	types []mdl_shared.OperatorType,
+	types []shared.OperatorType,
 	DB database.Database,
 ) ([]views.OperatorWithResult, error) {
 	query := fmt.Sprintf(

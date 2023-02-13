@@ -358,9 +358,9 @@ func (ts *TestSuite) seedOperatorResultForDAGAndOperator(count int, dagResultID 
 
 	for i := 0; i < count; i++ {
 		now := time.Now()
-		execState := &col_shared.ExecutionState{
-			Status: col_shared.PendingExecutionStatus,
-			Timestamps: &col_shared.ExecutionTimestamps{
+		execState := &shared.ExecutionState{
+			Status: shared.PendingExecutionStatus,
+			Timestamps: &shared.ExecutionTimestamps{
 				PendingAt: &now,
 			},
 		}

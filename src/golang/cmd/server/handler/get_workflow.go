@@ -11,6 +11,7 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -44,10 +45,10 @@ type getWorkflowResponse struct {
 }
 
 type workflowDagResult struct {
-	Id            uuid.UUID              `json:"id"`
-	CreatedAt     int64                  `json:"created_at"`
-	Status        shared.ExecutionStatus `json:"status"`
-	WorkflowDagId uuid.UUID              `json:"workflow_dag_id"`
+	Id            uuid.UUID                  `json:"id"`
+	CreatedAt     int64                      `json:"created_at"`
+	Status        mdl_shared.ExecutionStatus `json:"status"`
+	WorkflowDagId uuid.UUID                  `json:"workflow_dag_id"`
 }
 
 type GetWorkflowHandler struct {
@@ -190,7 +191,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 		workflowDagResults = append(workflowDagResults, workflowDagResult{
 			Id:            dagResult.ID,
 			CreatedAt:     dagResult.CreatedAt.Unix(),
-			Status:        shared.ExecutionStatus(dagResult.Status),
+			Status:        mdl_shared.ExecutionStatus(dagResult.Status),
 			WorkflowDagId: dagResult.DagID,
 		})
 	}

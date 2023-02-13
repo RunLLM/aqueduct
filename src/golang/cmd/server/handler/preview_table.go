@@ -9,7 +9,6 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
@@ -176,11 +175,11 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while waiting for the preview table job to finish.")
 	}
 
-	if jobStatus == shared.FailedExecutionStatus {
+	if jobStatus == mdl_shared.FailedExecutionStatus {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while previewing table.")
 	}
 
-	var metadata shared.ExecutionState
+	var metadata mdl_shared.ExecutionState
 	if err := workflow_utils.ReadFromStorage(
 		ctx,
 		args.StorageConfig,

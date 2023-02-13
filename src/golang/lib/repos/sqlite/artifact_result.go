@@ -4,12 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
@@ -189,7 +188,7 @@ func (*artifactResultReader) GetWithArtifactOfMetricsByDAGResultBatch(
 			AND json_extract(operator.spec, '$.type') = '%s'
 			AND artifact_result.artifact_id = artifact.id
 			AND artifact_result.workflow_dag_result_id IN (%s);`,
-		mdl_shared.MetricType,
+		shared.MetricType,
 		stmt_preparers.GenerateArgsList(len(dagResultIDs), 1),
 	)
 
@@ -237,7 +236,7 @@ func (*artifactResultWriter) CreateWithExecStateAndMetadata(
 	artifactID uuid.UUID,
 	contentPath string,
 	execState *shared.ExecutionState,
-	metadata *mdl_shared.ArtifactResultMetadata,
+	metadata *shared.ArtifactResultMetadata,
 	DB database.Database,
 ) (*models.ArtifactResult, error) {
 	cols := []string{

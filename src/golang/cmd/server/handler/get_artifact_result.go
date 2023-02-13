@@ -8,7 +8,6 @@ import (
 	"strconv"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -54,8 +53,8 @@ type artifactResultMetadata struct {
 	// `Status` is redundant due to `ExecState`. Avoid consuming `Status` in new code.
 	// We are incurring this tech debt right now since there are quite a few usages of
 	// `status` in the UI.
-	Status            shared.ExecutionStatus               `json:"status"`
-	ExecState         shared.ExecutionState                `json:"exec_state"`
+	Status            mdl_shared.ExecutionStatus           `json:"status"`
+	ExecState         mdl_shared.ExecutionState            `json:"exec_state"`
 	Schema            []map[string]string                  `json:"schema"`
 	SerializationType mdl_shared.ArtifactSerializationType `json:"serialization_type"`
 	ArtifactType      mdl_shared.ArtifactType              `json:"artifact_type"`
@@ -206,7 +205,7 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact result.")
 	}
 
-	execState := shared.ExecutionState{}
+	execState := mdl_shared.ExecutionState{}
 	dbArtifactResult, err := h.ArtifactResultRepo.GetByArtifactAndDAGResult(
 		ctx,
 		args.artifactID,
@@ -218,7 +217,7 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact result.")
 		}
 		// ArtifactResult was never created, so we use the WorkflowDagResult's status as this ArtifactResult's status
-		execState.Status = shared.ExecutionStatus(dagResult.Status)
+		execState.Status = mdl_shared.ExecutionStatus(dagResult.Status)
 	} else {
 		execState.Status = dbArtifactResult.Status
 	}

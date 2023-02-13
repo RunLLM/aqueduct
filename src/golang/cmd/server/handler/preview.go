@@ -8,7 +8,6 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
@@ -43,16 +42,16 @@ type previewArgs struct {
 }
 
 type previewResponse struct {
-	Status                shared.ExecutionStatus              `json:"status"`
-	OperatorResults       map[uuid.UUID]shared.ExecutionState `json:"operator_results"`
-	ArtifactContents      map[uuid.UUID][]byte                `json:"artifact_contents"`
-	ArtifactTypesMetadata map[uuid.UUID]artifactTypeMetadata  `json:"artifact_types_metadata"`
+	Status                mdl_shared.ExecutionStatus              `json:"status"`
+	OperatorResults       map[uuid.UUID]mdl_shared.ExecutionState `json:"operator_results"`
+	ArtifactContents      map[uuid.UUID][]byte                    `json:"artifact_contents"`
+	ArtifactTypesMetadata map[uuid.UUID]artifactTypeMetadata      `json:"artifact_types_metadata"`
 }
 
 type previewResponseMetadata struct {
-	Status                shared.ExecutionStatus              `json:"status"`
-	OperatorResults       map[uuid.UUID]shared.ExecutionState `json:"operator_results"`
-	ArtifactTypesMetadata map[uuid.UUID]artifactTypeMetadata  `json:"artifact_types_metadata"`
+	Status                mdl_shared.ExecutionStatus              `json:"status"`
+	OperatorResults       map[uuid.UUID]mdl_shared.ExecutionState `json:"operator_results"`
+	ArtifactTypesMetadata map[uuid.UUID]artifactTypeMetadata      `json:"artifact_types_metadata"`
 }
 
 type artifactTypeMetadata struct {
@@ -176,7 +175,7 @@ func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
 
 func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*previewArgs)
-	errorRespPtr := &previewResponse{Status: shared.FailedExecutionStatus}
+	errorRespPtr := &previewResponse{Status: mdl_shared.FailedExecutionStatus}
 	dagSummary := args.DagSummary
 
 	_, err := operator.UploadOperatorFiles(ctx, dagSummary.Dag, dagSummary.FileContentsByOperatorUUID)
@@ -260,7 +259,7 @@ func setupExecEnv(
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve Conda connection state.")
 	}
 
-	if condaConnectionState.Status == shared.FailedExecutionStatus {
+	if condaConnectionState.Status == mdl_shared.FailedExecutionStatus {
 		errMsg := "Failed to create conda environments."
 		if condaConnectionState.Error != nil {
 			errMsg = fmt.Sprintf(
@@ -273,7 +272,7 @@ func setupExecEnv(
 		return nil, http.StatusInternalServerError, errors.New(errMsg)
 	}
 
-	if condaConnectionState.Status != shared.SucceededExecutionStatus {
+	if condaConnectionState.Status != mdl_shared.SucceededExecutionStatus {
 		return nil, http.StatusBadRequest, errors.New(
 			"We are still creating base conda environments. This may take a few minutes.",
 		)

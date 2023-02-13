@@ -15,6 +15,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -183,13 +184,13 @@ func CreateTable(
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to create table.")
 	}
 
-	if jobStatus == shared.SucceededExecutionStatus {
+	if jobStatus == mdl_shared.SucceededExecutionStatus {
 		// Table creation was successful
 		return http.StatusOK, nil
 	}
 
 	// Table creation failed, so we need to fetch the error message from storage
-	var execState shared.ExecutionState
+	var execState mdl_shared.ExecutionState
 	if err := utils.ReadFromStorage(
 		ctx,
 		storageConfig,

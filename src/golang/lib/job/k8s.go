@@ -7,9 +7,8 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/dropbox/godropbox/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -276,19 +275,19 @@ func mapJobTypeToDockerImage(spec Spec, launchGpu bool) (string, error) {
 	}
 }
 
-func mapIntegrationServiceToDockerImage(service mdl_shared.Service) (string, error) {
+func mapIntegrationServiceToDockerImage(service shared.Service) (string, error) {
 	switch service {
-	case mdl_shared.Postgres, mdl_shared.Redshift, mdl_shared.AqueductDemo:
+	case shared.Postgres, shared.Redshift, shared.AqueductDemo:
 		return PostgresConnectorDockerImage, nil
-	case mdl_shared.Snowflake:
+	case shared.Snowflake:
 		return SnowflakeConnectorDockerImage, nil
-	case mdl_shared.MySql, mdl_shared.MariaDb:
+	case shared.MySql, shared.MariaDb:
 		return MySqlConnectorDockerImage, nil
-	case mdl_shared.SqlServer:
+	case shared.SqlServer:
 		return SqlServerConnectorDockerImage, nil
-	case mdl_shared.BigQuery:
+	case shared.BigQuery:
 		return BigQueryConnectorDockerImage, nil
-	case mdl_shared.S3:
+	case shared.S3:
 		return S3ConnectorDockerImage, nil
 	default:
 		return "", errors.Newf("Unknown integration service provided %v", service)

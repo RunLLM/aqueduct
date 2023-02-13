@@ -32,15 +32,15 @@ import (
 //		serialized `listWorkflowsResponse`, a list of workflow information in the user's org
 
 type workflowResponse struct {
-	Id          uuid.UUID                 `json:"id"`
-	Name        string                    `json:"name"`
-	Description string                    `json:"description"`
-	CreatedAt   int64                     `json:"created_at"`
-	LastRunAt   int64                     `json:"last_run_at"`
-	Status      shared.ExecutionStatus    `json:"status"`
-	Engine      string                    `json:"engine"`
-	Checks      []operator.ResultResponse `json:"checks"`
-	Metrics     []artifact.ResultResponse `json:"metrics"`
+	Id          uuid.UUID                  `json:"id"`
+	Name        string                     `json:"name"`
+	Description string                     `json:"description"`
+	CreatedAt   int64                      `json:"created_at"`
+	LastRunAt   int64                      `json:"last_run_at"`
+	Status      mdl_shared.ExecutionStatus `json:"status"`
+	Engine      string                     `json:"engine"`
+	Checks      []operator.ResultResponse  `json:"checks"`
+	Metrics     []artifact.ResultResponse  `json:"metrics"`
 }
 
 type ListWorkflowsHandler struct {
@@ -180,7 +180,7 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 			} else {
 				// There are no workflow runs yet for this workflow, so we simply return
 				// that the workflow has been registered
-				response.Status = shared.RegisteredExecutionStatus
+				response.Status = mdl_shared.RegisteredExecutionStatus
 			}
 
 			workflowResponses = append(workflowResponses, response)
