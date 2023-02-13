@@ -512,3 +512,42 @@ def test_parameter_type_changes(client, flow_name, engine):
         expected_status=ExecutionStatus.FAILED,
         parameters={"number": "This is a string"},
     )
+
+
+def test_param_management(client):
+    # Create some implicit parameters that are consumed by downstream operators.
+    @op
+    def foo(param1, param2):
+        return 123
+
+    foo_output = foo(1000, "string val")
+
+    @op
+    def bar(input):
+        return input
+
+    bar_output = bar(foo_output)
+
+    # Create a global parameter with no attachements.
+    client.create_param("param3", default="content")
+
+    assert client.list_params() == {
+        "param1": 1000,
+        "param2": "string val",
+        "param3": "content",
+    }
+
+    # Delete the unattached parameter.
+    client.delete_param("param3")
+    assert client.list_params() == {
+        "param1": 1000,
+        "param2": "string val",
+    }
+
+    # Delete one of the attached parameters.
+    with pytest.raises(InvalidUserActionException, match="Cannot delete parameter"):
+        client.delete_param("param1")
+
+    client.delete_param("param1", force=True)
+    client.delete_param("param2", force=True)
+    assert client.list_params() == {}
