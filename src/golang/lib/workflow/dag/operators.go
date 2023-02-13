@@ -1,15 +1,14 @@
 package dag
 
 import (
-	col_op "github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 )
 
-func (dag *workflowDagImpl) ChecksWithError() []operator.Operator {
+func (dag *workflowDagImpl) OperatorsWithError() []operator.Operator {
 	operators := dag.Operators()
 	results := make([]operator.Operator, 0, len(operators))
 	for _, op := range operators {
-		if op.Type() == col_op.CheckType && op.ExecState().HasBlockingFailure() {
+		if op.ExecState().HasBlockingFailure() {
 			results = append(results, op)
 		}
 	}
@@ -17,11 +16,11 @@ func (dag *workflowDagImpl) ChecksWithError() []operator.Operator {
 	return results
 }
 
-func (dag *workflowDagImpl) ChecksWithWarning() []operator.Operator {
+func (dag *workflowDagImpl) OperatorsWithWarning() []operator.Operator {
 	operators := dag.Operators()
 	results := make([]operator.Operator, 0, len(operators))
 	for _, op := range operators {
-		if op.Type() == col_op.CheckType && op.ExecState().HasWarning() {
+		if op.ExecState().HasWarning() {
 			results = append(results, op)
 		}
 	}

@@ -1,4 +1,4 @@
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import React from 'react';
 
 import { NotificationLogLevel } from '../../utils/notifications';
@@ -10,6 +10,7 @@ type Props = {
   // if set, we will show an additional option to allow disabling the notification
   // using the given message.
   disabled: boolean;
+  disabledMessage?: string;
   disableSelectorMessage?: string;
   onDisable?: (disabled: boolean) => void;
 };
@@ -18,6 +19,7 @@ const NotificationLevelSelector: React.FC<Props> = ({
   level,
   onSelectLevel,
   disabled,
+  disabledMessage,
   disableSelectorMessage,
   onDisable,
 }) => {
@@ -43,10 +45,46 @@ const NotificationLevelSelector: React.FC<Props> = ({
   const errorDisabled = warningChecked;
   const warningDisabled = successChecked;
 
+  const levelSelectorLeftMargin = showDisableOption ? 2 : 0;
+
   return (
     <Box display="flex" flexDirection="column" alignContent="left">
+      {showDisableOption && (
+        <Box
+          display="flex"
+          flexDirection="row"
+          alignContent="center"
+          marginTop={1}
+        >
+          <CheckboxEntry
+            checked={disabled}
+            onChange={(checked) => {
+              if (!checked && !level) {
+                onSelectLevel(NotificationLogLevel.Success);
+              }
+
+              if (!!onDisable) {
+                onDisable(checked);
+              }
+            }}
+          >
+            {disableSelectorMessage}
+          </CheckboxEntry>
+        </Box>
+      )}
+      {disabled && !!disabledMessage && (
+        <Typography variant="body2" color="gray.700">
+          {disabledMessage}
+        </Typography>
+      )}
       {showLevelOptions && (
-        <Box marginTop={1}>
+        <Box
+          marginLeft={levelSelectorLeftMargin}
+          marginTop={1}
+          display="flex"
+          flexDirection="row"
+          alignContent="center"
+        >
           <CheckboxEntry
             checked={errorChecked}
             disabled={errorDisabled}
@@ -59,7 +97,13 @@ const NotificationLevelSelector: React.FC<Props> = ({
         </Box>
       )}
       {showLevelOptions && (
-        <Box marginTop={1}>
+        <Box
+          marginLeft={levelSelectorLeftMargin}
+          display="flex"
+          flexDirection="row"
+          alignContent="center"
+          marginTop={1}
+        >
           <CheckboxEntry
             checked={warningChecked}
             disabled={warningDisabled}
@@ -77,6 +121,7 @@ const NotificationLevelSelector: React.FC<Props> = ({
       )}
       {showLevelOptions && (
         <Box
+          marginLeft={levelSelectorLeftMargin}
           display="flex"
           flexDirection="row"
           alignContent="center"
@@ -93,24 +138,6 @@ const NotificationLevelSelector: React.FC<Props> = ({
             }
           >
             Success
-          </CheckboxEntry>
-        </Box>
-      )}
-      {showDisableOption && (
-        <Box marginTop={1}>
-          <CheckboxEntry
-            checked={disabled}
-            onChange={(checked) => {
-              if (!checked && !level) {
-                onSelectLevel(NotificationLogLevel.Success);
-              }
-
-              if (!!onDisable) {
-                onDisable(checked);
-              }
-            }}
-          >
-            {disableSelectorMessage}
           </CheckboxEntry>
         </Box>
       )}

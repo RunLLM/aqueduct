@@ -75,27 +75,29 @@ func findChannels(client *slack.Client, names []string) ([]slack.Channel, error)
 	return results, nil
 }
 
-func (s *SlackNotification) checkMessages(wfDag dag.WorkflowDag) string {
-	warningChecks := wfDag.ChecksWithWarning()
-	errorChecks := wfDag.ChecksWithError()
+func (s *SlackNotification) constructOperatorMessages(wfDag dag.WorkflowDag) string {
+	warningOps := wfDag.OperatorsWithWarning()
+	errorOps := wfDag.OperatorsWithError()
 
-	if len(warningChecks)+len(errorChecks) == 0 {
+	if len(warningOps)+len(errorOps) == 0 {
 		return ""
 	}
 
 	// there are at least some checks failed:
 	msg := "\n"
-	for _, check := range warningChecks {
+	for _, op := range warningOps {
 		msg += fmt.Sprintf(
-			"Check `%s` failed (warning).\n",
-			check.Name(),
+			"%s `%s` failed (warning).\n",
+			constructDisplayedOperatorType(op.Type()),
+			op.Name(),
 		)
 	}
 
-	for _, check := range errorChecks {
+	for _, op := range errorOps {
 		msg += fmt.Sprintf(
-			"Check `%s` failed (error).\n",
-			check.Name(),
+			"%s `%s` failed (error).\n",
+			constructDisplayedOperatorType(op.Type()),
+			op.Name(),
 		)
 	}
 
@@ -119,18 +121,25 @@ func (s *SlackNotification) SendForDag(
 		contextMarkdownBlock = fmt.Sprintf("\n*Error:*\n%s", systemErrContext)
 	}
 
-	linkContent := fmt.Sprintf("Check Aqueduct UI for more details: %s", wfDag.ResultLink())
+	link := wfDag.ResultLink()
+	linkWarning := ""
+	linkWarningStr := constructLinkWarning(link)
+	if len(linkWarningStr) > 0 {
+		linkWarning = fmt.Sprintf("(%s)", linkWarningStr)
+	}
+
+	linkContent := fmt.Sprintf("See the Aqueduct UI for more details: %s %s", link, linkWarning)
 	nameContent := fmt.Sprintf("*Workflow:* `%s`", wfDag.Name())
 	IDContent := fmt.Sprintf("*ID:* `%s`", wfDag.ID())
 	resultIDContent := fmt.Sprintf("*Result ID:* `%s`", wfDag.ResultID())
 	msg := fmt.Sprintf(
-		"%s\n%s\n%s\n%s%s%s",
-		linkContent,
+		"%s\n%s\n%s%s%s\n%s",
 		nameContent,
 		IDContent,
 		resultIDContent,
-		s.checkMessages(wfDag),
+		s.constructOperatorMessages(wfDag),
 		contextMarkdownBlock,
+		linkContent,
 	)
 	for _, channel := range channels {
 		// reference: https://medium.com/@gausha/a-simple-slackbot-with-golang-c5a932d719c7
@@ -138,7 +147,7 @@ func (s *SlackNotification) SendForDag(
 			slack.NewHeaderBlock(
 				slack.NewTextBlockObject(
 					"plain_text",
-					summary(wfDag, level),
+					summarize(wfDag, level),
 					false,
 					false,
 				),

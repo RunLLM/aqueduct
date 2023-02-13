@@ -76,7 +76,6 @@ const AccountNotificationSettingsSelector: React.FC<Props> = ({
           marginBottom={1}
           bgcolor={theme.palette.gray[100]}
         >
-          <Typography variant="body1">{n.name}</Typography>
           <NotificationLevelSelector
             level={configs[n.id].level as NotificationLogLevel}
             onSelectLevel={(level) =>
@@ -86,7 +85,8 @@ const AccountNotificationSettingsSelector: React.FC<Props> = ({
               })
             }
             disabled={configs[n.id].enabled === 'false'}
-            disableSelectorMessage="Do not apply this notification to all workflows."
+            disableSelectorMessage={n.name}
+            disabledMessage={`${n.name} notifications will not be configured for all workflows by default.`}
             onDisable={(disabled) =>
               setConfigs({
                 ...configs,
