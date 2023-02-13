@@ -9,7 +9,7 @@ describe('it', () => {
   it('renders GettingStartedTutorial component', () => {
     render(<GettingStartedTutorial user={mockUser} />);
     // To log contents of screen:
-    // screen.debug();
+    //screen.debug();
 
     // Check that wave emoji is in the document
     expect(screen.getByText('👋')).toBeInTheDocument();
