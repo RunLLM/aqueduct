@@ -14,7 +14,6 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	col_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -424,13 +423,13 @@ func checkIntegrationSetStorage(svc mdl_shared.Service, conf auth.Config) (bool,
 
 	switch svc {
 	case mdl_shared.S3:
-		var c integration.S3Config
+		var c mdl_shared.S3IntegrationConfig
 		if err := json.Unmarshal(data, &c); err != nil {
 			return false, err
 		}
 		return bool(c.UseAsStorage), nil
 	case mdl_shared.GCS:
-		var c integration.GCSConfig
+		var c mdl_shared.GCSIntegrationConfig
 		if err := json.Unmarshal(data, &c); err != nil {
 			return false, err
 		}
@@ -464,7 +463,7 @@ func setIntegrationAsStorage(
 
 	switch svc {
 	case mdl_shared.S3:
-		var c integration.S3Config
+		var c mdl_shared.S3IntegrationConfig
 		if err := json.Unmarshal(data, &c); err != nil {
 			return err
 		}
@@ -474,7 +473,7 @@ func setIntegrationAsStorage(
 			return err
 		}
 	case mdl_shared.GCS:
-		var c integration.GCSConfig
+		var c mdl_shared.GCSIntegrationConfig
 		if err := json.Unmarshal(data, &c); err != nil {
 			return err
 		}
@@ -506,7 +505,7 @@ func setIntegrationAsStorage(
 	return config.UpdateStorage(storageConfig)
 }
 
-func convertS3IntegrationtoStorageConfig(c *integration.S3Config) (*shared.StorageConfig, error) {
+func convertS3IntegrationtoStorageConfig(c *mdl_shared.S3IntegrationConfig) (*shared.StorageConfig, error) {
 	// Users provide AWS credentials for an S3 integration via one of the following:
 	//  1. AWS Access Key and Secret Key
 	//  2. Credentials file content
@@ -521,7 +520,7 @@ func convertS3IntegrationtoStorageConfig(c *integration.S3Config) (*shared.Stora
 		},
 	}
 	switch c.Type {
-	case integration.AccessKeyS3ConfigType:
+	case mdl_shared.AccessKeyS3ConfigType:
 		// AWS access and secret keys need to be written to a credentials file
 		path := filepath.Join(config.AqueductPath(), "storage", uuid.NewString())
 		f, err := os.Create(path)
@@ -541,7 +540,7 @@ func convertS3IntegrationtoStorageConfig(c *integration.S3Config) (*shared.Stora
 
 		storageConfig.S3Config.CredentialsPath = path
 		storageConfig.S3Config.CredentialsProfile = "default"
-	case integration.ConfigFileContentS3ConfigType:
+	case mdl_shared.ConfigFileContentS3ConfigType:
 		// The credentials content needs to be written to a credentials file
 		path := filepath.Join(config.AqueductPath(), "storage", uuid.NewString())
 		f, err := os.Create(path)
@@ -569,7 +568,7 @@ func convertS3IntegrationtoStorageConfig(c *integration.S3Config) (*shared.Stora
 
 		storageConfig.S3Config.CredentialsPath = path
 		storageConfig.S3Config.CredentialsProfile = profileName
-	case integration.ConfigFilePathS3ConfigType:
+	case mdl_shared.ConfigFilePathS3ConfigType:
 		// The credentials are already in the form of a filepath and profile, so no changes
 		// need to be made
 		storageConfig.S3Config.CredentialsPath = c.ConfigFilePath
@@ -581,7 +580,7 @@ func convertS3IntegrationtoStorageConfig(c *integration.S3Config) (*shared.Stora
 	return storageConfig, nil
 }
 
-func convertGCSIntegrationtoStorageConfig(c *integration.GCSConfig) *shared.StorageConfig {
+func convertGCSIntegrationtoStorageConfig(c *mdl_shared.GCSIntegrationConfig) *shared.StorageConfig {
 	return &shared.StorageConfig{
 		Type: shared.GCSStorageType,
 		GCSConfig: &shared.GCSConfig{
