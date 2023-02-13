@@ -111,15 +111,15 @@ const WorkflowNotificationSettings: React.FC<Props> = ({
       checked={usingDefault}
       onChange={(checked) => setUsingDefault(checked)}
     >
-      Use{' '}
+      Use default notification settings. See{' '}
       <Link
         underline="none"
         href={`${getPathPrefix()}/account`}
         target="_blank"
       >
-        default notification settings
+        settings
       </Link>{' '}
-      .
+      for more details.
     </CheckboxEntry>
   );
 
