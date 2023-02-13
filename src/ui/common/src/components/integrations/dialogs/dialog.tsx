@@ -419,11 +419,11 @@ const IntegrationDialog: React.FC<Props> = ({
         )}
         {(service === 'Email' || service === 'Slack') && (
           <Typography variant="body1" color="gray.700">
-            New to {service} integration? See our{' '}
+            To learn more about how to set up {service}, see our{' '}
             <Link href={SupportedIntegrations[service].docs} target="_blank">
-              guide
-            </Link>{' '}
-            to connect to this integration.
+              documentation
+            </Link>
+            .
           </Typography>
         )}
         {nameInput}
