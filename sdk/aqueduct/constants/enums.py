@@ -78,6 +78,7 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     DATABRICKS = "Databricks"
     EMAIL = "Email"
     SLACK = "Slack"
+    SPARK = "Spark"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
@@ -190,15 +191,24 @@ class ExecutionMode(str, Enum, metaclass=MetaEnum):
     LAZY = "lazy"
 
 
-class RuntimeType(Enum, metaclass=MetaEnum):
+class RuntimeType(str, Enum, metaclass=MetaEnum):
     AQUEDUCT = "aqueduct"
     AIRFLOW = "airflow"
     K8S = "k8s"
     LAMBDA = "lambda"
     DATABRICKS = "databricks"
+<<<<<<< HEAD
 
 
 class NotificationLevel(Enum, metaclass=MetaEnum):
     SUCCESS = "success"
     WARNING = "warning"
     ERROR = "error"
+=======
+    SPARK = "spark"
+
+
+class SparkRuntimeType(str, Enum, metaclass=MetaEnum):
+    DATABRICKS = "databricks"
+    SPARK = "spark"
+>>>>>>> Use Spark integration on SDK

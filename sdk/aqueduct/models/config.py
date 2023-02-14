@@ -6,6 +6,7 @@ from aqueduct.integrations.airflow_integration import AirflowIntegration
 from aqueduct.integrations.databricks_integration import DatabricksIntegration
 from aqueduct.integrations.k8s_integration import K8sIntegration
 from aqueduct.integrations.lambda_integration import LambdaIntegration
+from aqueduct.integrations.spark_integration import SparkIntegration
 from pydantic import BaseModel
 
 
@@ -29,6 +30,10 @@ class DatabricksEngineConfig(BaseModel):
     integration_id: uuid.UUID
 
 
+class SparkEngineConfig(BaseModel):
+    integration_id: uuid.UUID
+
+
 class EngineConfig(BaseModel):
     # The runtime type dictates the engine config that is set.
     # We default to the AqueductEngine.
@@ -38,6 +43,7 @@ class EngineConfig(BaseModel):
     k8s_config: Optional[K8sEngineConfig]
     lambda_config: Optional[LambdaEngineConfig]
     databricks_config: Optional[DatabricksEngineConfig]
+    spark_config: Optional[SparkEngineConfig]
 
     # The name of the compute integration. This not consumed by the backend,
     # but is instead only used for logging purposes in the SDK.
@@ -52,7 +58,13 @@ class EngineConfig(BaseModel):
 # TODO(...): this is deprecated.
 class FlowConfig(BaseModel):
     engine: Optional[
-        Union[AirflowIntegration, K8sIntegration, LambdaIntegration, DatabricksIntegration]
+        Union[
+            AirflowIntegration,
+            K8sIntegration,
+            LambdaIntegration,
+            DatabricksIntegration,
+            SparkIntegration,
+        ]
     ]
     k_latest_runs: int = -1
 
