@@ -357,7 +357,7 @@ def execute_command_nonblocking(args, cwd=None):
 
 def get_address(expose):
     if not expose:
-        expose_ip = "localhost"
+        expose_ip = "http://localhost"
     else:
         try:
             ec2_ip = requests.get(
