@@ -10,7 +10,7 @@ long_description = open(readme_path).read()
 
 setup(
     name="aqueduct-ml",
-    version="0.2.1",
+    version="0.2.2",
     install_requires=install_requires,
     scripts=["bin/aqueduct"],
     packages=find_packages(),
