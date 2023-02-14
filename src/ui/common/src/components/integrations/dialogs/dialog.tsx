@@ -77,7 +77,10 @@ import {
   SlackDialog,
 } from './slackDialog';
 import { SnowflakeDialog } from './snowflakeDialog';
-import { SparkDialog } from './sparkDialog';
+import { 
+  SparkDialog,
+  isSparkConfigComplete, 
+} from './sparkDialog';
 import { SQLiteDialog } from './sqliteDialog';
 
 type Props = {
@@ -496,6 +499,8 @@ export function isConfigComplete(
       return isEmailConfigComplete(config as EmailConfig);
     case 'Slack':
       return isSlackConfigComplete(config as SlackConfig);
+    case 'Spark':
+      return isSparkConfigComplete(config as SparkConfig);
 
     default:
       // Make sure config is not empty and all fields are not empty as well.
