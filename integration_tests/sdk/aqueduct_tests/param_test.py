@@ -528,26 +528,30 @@ def test_param_management(client):
 
     bar_output = bar(foo_output)
 
-    # Create a global parameter with no attachements.
+    # Create a global parameter with no attachments.
     client.create_param("param3", default="content")
 
     assert client.list_params() == {
-        "param1": 1000,
-        "param2": "string val",
+        "foo:param1": 1000,
+        "foo:param2": "string val",
         "param3": "content",
     }
 
     # Delete the unattached parameter.
     client.delete_param("param3")
     assert client.list_params() == {
-        "param1": 1000,
-        "param2": "string val",
+        "foo:param1": 1000,
+        "foo:param2": "string val",
     }
 
     # Delete one of the attached parameters.
     with pytest.raises(InvalidUserActionException, match="Cannot delete parameter"):
-        client.delete_param("param1")
+        client.delete_param("foo:param1")
 
-    client.delete_param("param1", force=True)
-    client.delete_param("param2", force=True)
+    client.delete_param("foo:param1", force=True)
+    client.delete_param("foo:param2", force=True)
     assert client.list_params() == {}
+
+    # Check that bar_output is now invalid
+    with pytest.raises(Exception):
+        bar_output.get()
