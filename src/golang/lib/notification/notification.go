@@ -167,7 +167,7 @@ func summarize(wfDag dag.WorkflowDag, level shared.NotificationLevel) string {
 // Typically, it warns about 'localhost' only works on server's machine.
 func constructLinkWarning(link string) string {
 	if strings.Contains(link, localHostIP) {
-		return "This link only works if you are on the same machine of your server."
+		return "This link only works if you are on the same machine of your server"
 	}
 
 	return ""
