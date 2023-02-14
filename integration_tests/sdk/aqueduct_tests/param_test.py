@@ -89,7 +89,7 @@ def test_implicitly_created_parameter(client, flow_name, engine):
 
     result = func(2)
     assert result.get() == 2
-    assert result.get(parameters={"foo": 10}) == 10
+    assert result.get(parameters={"func:foo": 10}) == 10
 
     # Test with multiple outputs.
     @op(outputs=["output1", "output2"])
@@ -106,16 +106,16 @@ def test_implicitly_created_parameter(client, flow_name, engine):
     )
     flow_run = flow.latest()
 
-    assert flow_run.artifact("foo").get() == 2
-    assert flow_run.artifact("param").get() == 100
+    assert flow_run.artifact("func:foo").get() == 2
+    assert flow_run.artifact("multi_output:param").get() == 100
     assert flow_run.artifact("output1").get() == 101
     assert flow_run.artifact("output2").get() == 200
 
 
-def test_implicitly_create_parameter_with_naming_collisions(client, flow_name, engine):
+def test_implicitly_created_param_overwrites(client, flow_name, engine):
     @op
-    def foo(foo_param):
-        return foo_param
+    def foo(param):
+        return param
 
     # Test that two implicit parameters colliding will result in an override if they
     # are used by the same function.
@@ -124,61 +124,77 @@ def test_implicitly_create_parameter_with_naming_collisions(client, flow_name, e
 
     foo_output = foo("hello")
     assert foo_output.get() == "hello"
-    assert foo_output.get({"foo_param": "custom val"}) == "custom val"
+    assert foo_output.get({"foo:param": "custom val"}) == "custom val"
 
     # Test that two implicit parameters colliding with NOT result in an override if
-    # they are used by different functions.
+    # they are used by different functions. In this case, is it because the names are
+    # resolved to different values.
     @op
-    def different_fn(foo_param):
-        return foo_param
+    def different_fn(param):
+        return param
 
     different_fn_output = different_fn("different value")
     assert different_fn_output.get() == "different value"
-    assert different_fn_output.get({"foo_param (1)": "another val"}) == "another val"
+    assert different_fn_output.get({"different_fn:param": "another val"}) == "another val"
 
-    # Test that an implicit parameter colliding with a globally created parameter will
-    # bump the name.
+    # Publish and validate the final value of each parameter.
+    flow = publish_flow_test(
+        client,
+        artifacts=[foo_output, different_fn_output],
+        name=flow_name(),
+        engine=engine,
+    )
+    flow_run = flow.latest()
+
+    assert flow_run.artifact("foo:param").get() == "hello"
+    assert flow_run.artifact("different_fn:param").get() == "different value"
+
+
+def test_implicit_created_param_failures(client):
+    # Test that an implicit parameter colliding with a globally created parameter will error.
     @op
-    def bar(bar_param):
-        return bar_param
+    def bar(param):
+        return param
 
-    _ = client.create_param("bar_param", default=200)
-    bar_output = bar(300)
-    assert bar_output.get() == 300
-    assert bar_output.get({"bar_param (1)": 400}) == 400
+    _ = client.create_param("bar:param", default=200)
+    with pytest.raises(
+        InvalidUserActionException,
+        match="there is an existing operator or artifact with the same name",
+    ):
+        _ = bar(300)
 
     # Same case as above, but actually attach the global parameter to the operator first.
     @op
-    def baz(baz_param):
-        return baz_param
+    def baz(param):
+        return param
 
-    baz_param = client.create_param("baz_param", default=500)
+    baz_param = client.create_param("baz:param", default=500)
     _ = baz(baz_param)
-    baz_output = baz(600)
-    assert baz_output.get() == 600
-    assert baz_output.get({"baz_param (1)": 700}) == 700
 
-    baz_output = baz(800)
-    assert baz_output.get() == 800
-    assert baz_output.get({"baz_param (2)": 800}) == 800
+    with pytest.raises(
+        InvalidUserActionException,
+        match="there is an existing operator or artifact with the same name",
+    ):
+        baz(500)
 
-    # Test that an implicit parameter can collide with an existing operator, also causing a name bump.
-    @op
-    def colliding():
+    # Test that an implicit parameter can cannot collide with an existing operator.
+    @op(name="qup:param")
+    def colliding_fn():
         return 222
 
-    _ = colliding()
+    _ = colliding_fn()
 
     @op
-    def qup(colliding):
-        return colliding
+    def qup(param):
+        return param
 
-    qup_output = qup(
-        500
-    )  # implicit parameter "colliding" will deduplicate against the function colliding().
-    assert qup_output.get({"colliding (1)": 100}) == 100
+    with pytest.raises(
+        InvalidUserActionException,
+        match="there is an existing operator or artifact with the same name",
+    ):
+        _ = qup(500)
 
-    # Test that an explicit parameter colliding with an explicit one will raise an exception.
+    # Test that an explicit parameter colliding with an implicit one will raise an exception.
     @op
     def another_fn(another_param):
         return another_param
@@ -188,22 +204,7 @@ def test_implicitly_create_parameter_with_naming_collisions(client, flow_name, e
         InvalidUserActionException,
         match="there is an implicitly created parameter with the same name",
     ):
-        client.create_param("another_param", default="this should fail")
-
-    # Publish and validate the final value of each parameter.
-    flow = publish_flow_test(
-        client,
-        artifacts=[foo_output, different_fn_output, bar_output, baz_output, qup_output],
-        name=flow_name(),
-        engine=engine,
-    )
-    flow_run = flow.latest()
-
-    assert flow_run.artifact("foo_param").get() == "hello"
-    assert flow_run.artifact("foo_param (1)").get() == "different value"
-    assert flow_run.artifact("bar_param (1)").get() == 300
-    assert flow_run.artifact("baz_param (2)").get() == 800
-    assert flow_run.artifact("colliding (1)").get() == 500
+        client.create_param("another_fn:another_param", default="this should fail")
 
 
 def test_change_param_artifact_name(client, flow_name, engine):

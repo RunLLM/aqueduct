@@ -22,26 +22,35 @@ def _operator_is_implicitly_created_param(op: Operator) -> bool:
     return op.spec.param.implicitly_created
 
 
-def _resolve_implicit_param_name(dag: DAG, candidate_name: str, op_name: str) -> str:
-    """Assumption: only called when the candidate_name is not globally unique in the dag.
+def _resolve_implicit_param_name(dag: DAG, candidate_name: str, op_name: str) -> bool:
+    """We will either error or overwrite the colliding parameter, if it is consumed by the same op_name.
 
-    We will typically bump the parameter name, expect in a very particular case where we're
-    replacing the parameter-operator pair.
+    Returns whether this is a new parameter or we're overwriting an existing one.
     """
+    colliding_artifact = dag.get_artifact_by_name(candidate_name)
     colliding_op = dag.get_operator(with_name=candidate_name)
-    if colliding_op is None:
-        return dag.get_unclaimed_name(prefix=candidate_name)
 
-    if _operator_is_implicitly_created_param(colliding_op):
-        assert len(colliding_op.outputs) == 1, "Parameter operator must have a single output."
-        ops = dag.list_operators(on_artifact_id=colliding_op.outputs[0])
-        assert len(ops) == 1, "Implicit parameters can only be consumed by a single operator."
+    # No collisions.
+    if colliding_op is None and colliding_artifact is None:
+        return False
 
-        # We only overwrite if it's an exact replacement!
-        if op_name == ops[0].name:
-            return candidate_name
+    # If colliding with both another operator and artifact, check whether we can overwrite.
+    # This is because parameter operator-artifact pairs must have the same name.
+    elif colliding_op is not None and colliding_artifact is not None:
+        if _operator_is_implicitly_created_param(colliding_op):
+            assert len(colliding_op.outputs) == 1, "Parameter operator must have a single output."
+            ops = dag.list_operators(on_artifact_id=colliding_op.outputs[0])
+            assert len(ops) == 1, "Implicit parameters can only be consumed by a single operator."
 
-    return dag.get_unclaimed_name(prefix=candidate_name)
+            # We only overwrite if it's an exact replacement!
+            if op_name == ops[0].name:
+                return True
+
+    # Anything else is not salvagable.
+    raise InvalidUserActionException(
+        """Unable to create parameter `%s`, since there is an existing operator or artifact with the same name."""
+        % candidate_name
+    )
 
 
 def create_param_artifact(
@@ -99,18 +108,22 @@ def create_param_artifact(
 
     param_name = candidate_name
 
-    # Check if the parameter is being created implicitly.
+    # Check if the parameter is being created implicitly. An implicit parameter will have the operator
+    # name prepended to it.
     is_implicit = op_name_for_implicit_param is not None
     if is_implicit:
         assert op_name_for_implicit_param is not None  # for mypy
-        if not dag.is_name_unique(candidate_name):
-            param_name = _resolve_implicit_param_name(
-                dag, candidate_name, op_name_for_implicit_param
-            )
-        else:
+
+        param_name = op_name_for_implicit_param + ":" + param_name
+        is_overwrite = _resolve_implicit_param_name(
+            dag,
+            param_name,
+            op_name_for_implicit_param,
+        )
+        if not is_overwrite:
             warnings.warn(
                 """Input to function argument `%s` is not an artifact type. We have implicitly created a parameter named `%s` and your input will be used as its default value. This parameter will be used when running the function."""
-                % (candidate_name, param_name)
+                % (param_name, param_name)
             )
     else:
         colliding_op = dag.get_operator(with_name=param_name)

@@ -48,8 +48,8 @@ class BaseArtifact(ABC):
         if get_operator_type(op) == OperatorType.PARAM:
             if self._dag.get_operator(with_name=name) is not None:
                 raise InvalidUserActionException(
-                    "Parameter names must be globally unique. There already exists an operator named `%s`."
-                    % name,
+                    "Unable to change parameter name to %s, there already exists an operator with the same name. "
+                    "Parameter names must be globally unique." % name,
                 )
             self._dag.update_operator_name(op.id, name)
 
