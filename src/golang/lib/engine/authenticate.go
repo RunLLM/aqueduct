@@ -29,7 +29,6 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 	if err != nil {
 		return errors.Wrap(err, "Unable to parse configuration.")
 	}
-
 	functionsToShip := [10]lambda_utils.LambdaFunctionType{
 		lambda_utils.FunctionExecutor37Type,
 		lambda_utils.FunctionExecutor38Type,
@@ -43,12 +42,16 @@ func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
 		lambda_utils.SnowflakeConnectorType,
 	}
 
-	for _, functionType := range functionsToShip {
-		err := lambda_utils.CreateLambdaFunction(functionType, lambdaConf.RoleArn)
-		if err != nil {
-			return errors.Wrap(err, "Unable to Create Lambda Function")
-		}
+	err = lambda_utils.AuthenticateDockerToECR()
+	if err != nil {
+		return errors.Wrap(err, "Unable to authenticate Lambda Function.")
 	}
+
+	err = lambda_utils.CreateLambdaFunction(ctx, functionsToShip[:], lambdaConf.RoleArn)
+	if err != nil {
+		return errors.Wrap(err, "Unable to create Lambda Function.")
+	}
+
 	return nil
 }
 

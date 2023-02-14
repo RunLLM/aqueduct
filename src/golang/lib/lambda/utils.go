@@ -2,10 +2,12 @@ package lambda
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aws/aws-sdk-go/aws"
@@ -15,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/dropbox/godropbox/errors"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 )
 
 type EcrAuth struct {
@@ -23,15 +26,128 @@ type EcrAuth struct {
 	ProxyEndpoint string
 }
 
-func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error {
+const (
+	MaxConcurrentDownload = 3
+	MaxConcurrentUpload   = 5
+)
+
+func CreateLambdaFunction(ctx context.Context, functionsToShip []LambdaFunctionType, roleArn string) error {
 	// For each lambda function we create, we take the following steps:
-	// 1. Pull the image from the public ECR repository.
-	// 2. Create the private ECR repo if it doesn't exist
+	// 1. Pull the image from the public ECR repository on a concurrency of `MaxConcurrentDownload`.
+	// 2. Create the private ECR repo if it doesn't exist.
 	// 3. Get the ECR auth token and log in the docker client.
-	// 4. Push the image to the private ECR repo
+	// 4. Push the image to the private ECR repo on a concurrency of `MaxConcurrentUpload`.
 	// 5. Create the lambda function using the private ECR repo as the code.
 
-	lambdaImageUri, userRepoName, err := mapFunctionType(functionType)
+	errGroup, errGroupCtx := errgroup.WithContext(ctx)
+
+	// Create a `pullImageChannel` and `pushImageChannel` and add all lambda functions to the channel.
+	pullImageChannel := make(chan LambdaFunctionType, len(functionsToShip))
+	defer close(pullImageChannel)
+	pushImageChannel := make(chan LambdaFunctionType, len(functionsToShip))
+	defer close(pushImageChannel)
+	AddFunctionTypeToChannel(functionsToShip[:], pullImageChannel)
+
+	for i := 0; i < MaxConcurrentDownload; i++ {
+		errGroup.Go(func() error {
+			for {
+				select {
+				case functionType := <-pullImageChannel:
+					lambdaFunctionType := functionType
+					err := PullImageFromPublicECR(lambdaFunctionType)
+					if err != nil {
+						return err
+					}
+					pushImageChannel <- functionType
+				case <-errGroupCtx.Done():
+					return errGroupCtx.Err()
+				default:
+					// The case should only be hit when `pullImageChannel` is empty.
+					return nil
+				}
+			}
+		})
+	}
+
+	// The `incompleteWorkChannel` is empty if and only if all the all lambda functions are successfully created.
+	incompleteWorkChannel := make(chan LambdaFunctionType, len(functionsToShip))
+	defer close(incompleteWorkChannel)
+	AddFunctionTypeToChannel(functionsToShip[:], incompleteWorkChannel)
+
+	// Receive the downloaded docker images from push channels and create lambda functions on a concurrency of "MaxConcurrentUpload".
+	for i := 0; i < MaxConcurrentUpload; i++ {
+		errGroup.Go(func() error {
+			for {
+				select {
+				case functionType := <-pushImageChannel:
+					lambdaFunctionType := functionType
+					err := PushImageToPrivateECR(lambdaFunctionType, roleArn)
+					if err != nil {
+						return err
+					}
+					<-incompleteWorkChannel
+				case <-errGroupCtx.Done():
+					return errGroupCtx.Err()
+				default:
+					time.Sleep(1 * time.Second)
+					if len(incompleteWorkChannel) == 0 {
+						return nil
+					}
+				}
+			}
+		})
+	}
+
+	if err := errGroup.Wait(); err != nil {
+		return errors.Wrap(err, "Unable to Create Lambda Function.")
+	}
+
+	return nil
+}
+
+func AuthenticateDockerToECR() error {
+	// Authenticate ECR client.
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+
+	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+	}))
+	ecrSvc := ecr.New(sess)
+
+	token, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
+	if err != nil {
+		return errors.Wrap(err, "Unable to get authorization token.")
+	}
+	auth, err := extractToken(*token.AuthorizationData[0].AuthorizationToken, *token.AuthorizationData[0].ProxyEndpoint)
+	if err != nil {
+		return errors.Wrap(err, "Unable to extract username and password.")
+	}
+
+	cmd := exec.Command(
+		"docker",
+		"login",
+		"--username",
+		auth.Username,
+		"--password",
+		auth.Password,
+		auth.ProxyEndpoint,
+	)
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+
+	err = cmd.Run()
+	if err != nil {
+		log.Info(stdout.String())
+		log.Info(stderr.String())
+		return errors.Wrap(err, "Unable to authenticate docker client to ECR.")
+	}
+	return nil
+}
+
+func PullImageFromPublicECR(functionType LambdaFunctionType) error {
+	// Pull the Image from public ECR Library.
+	lambdaImageUri, _, err := mapFunctionType(functionType)
 	if err != nil {
 		return errors.Wrap(err, "Unable to map function type to image.")
 	}
@@ -49,6 +165,19 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 		log.Info(stderr.String())
 		return errors.Wrap(err, "Unable to pull docker image from dockerhub.")
 	}
+	return nil
+}
+
+func PushImageToPrivateECR(functionType LambdaFunctionType, roleArn string) error {
+	// Push the image to the private ECR repo and create the lambda function using the private ECR repo as the code.
+	lambdaImageUri, userRepoName, err := mapFunctionType(functionType)
+	if err != nil {
+		return errors.Wrap(err, "Unable to map function type to image.")
+	}
+	versionedLambdaImageUri := fmt.Sprintf("%s:%s", lambdaImageUri, lib.ServerVersionNumber)
+
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
 
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
@@ -81,38 +210,12 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 
 	repositoryUri := fmt.Sprintf("%s:%s", *result.Repository.RepositoryUri, lib.ServerVersionNumber)
 
-	cmd = exec.Command("docker", "tag", versionedLambdaImageUri, repositoryUri)
+	cmd := exec.Command("docker", "tag", versionedLambdaImageUri, repositoryUri)
 	err = cmd.Run()
 	if err != nil {
 		log.Info(stdout.String())
 		log.Info(stderr.String())
 		return errors.Wrap(err, "Unable to tag docker image from ECR.")
-	}
-
-	token, err := ecrSvc.GetAuthorizationToken(&ecr.GetAuthorizationTokenInput{})
-	if err != nil {
-		return errors.Wrap(err, "Unable to get authorization token.")
-	}
-	auth, err := extractToken(*token.AuthorizationData[0].AuthorizationToken, *token.AuthorizationData[0].ProxyEndpoint)
-	if err != nil {
-		return errors.Wrap(err, "Unable to extract username and password.")
-	}
-
-	cmd = exec.Command(
-		"docker",
-		"login",
-		"--username",
-		auth.Username,
-		"--password",
-		auth.Password,
-		auth.ProxyEndpoint,
-	)
-
-	err = cmd.Run()
-	if err != nil {
-		log.Info(stdout.String())
-		log.Info(stderr.String())
-		return errors.Wrap(err, "Unable to authenticate docker client to ECR.")
 	}
 
 	cmd = exec.Command("docker", "push", repositoryUri)
@@ -155,7 +258,6 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 			return errors.Wrap(err, "Unable to update lambda function.")
 		}
 	}
-
 	return nil
 }
 
@@ -202,5 +304,13 @@ func mapFunctionType(functionType LambdaFunctionType) (string, string, error) {
 	default:
 		return "", "", errors.New("Invalide function type")
 
+	}
+}
+
+func AddFunctionTypeToChannel(functionsToShip []LambdaFunctionType, channel chan LambdaFunctionType) {
+	// Add lambda function types to buffered channel for pulling and creating lambda function.
+	for _, lambdaFunctionType := range functionsToShip {
+		lambdaFunctionTypeToPass := lambdaFunctionType
+		channel <- lambdaFunctionTypeToPass
 	}
 }
