@@ -380,7 +380,7 @@ def get_address(expose):
                         # Default
                         expose_ip = "<IP_ADDRESS>"
         except:  # If you're not running on EC2, this will return an error.
-            expose_ip = ""
+            expose_ip = "<IP_ADDRESS>"
     
     return expose_ip
 
@@ -429,7 +429,7 @@ def start(addr, expose, port, verbose, env, disable_usage_stats):
         "--port",
         str(server_port),
         "--external-ip",
-        addr if addr.startswith("http://") else "http://" + addr,
+        addr,
     ]
 
     if expose:
