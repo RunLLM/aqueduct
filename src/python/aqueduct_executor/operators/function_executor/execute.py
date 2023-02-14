@@ -246,13 +246,13 @@ def run(spec: FunctionSpec) -> None:
         validate_spec(spec)
 
         # Read the input data from intermediate storage.
-        inputs, _, serialization_types = timeit(
+        inputs, _, serialization_types = time_it(
             job_name=spec.name, job_type=spec.type.value, step="Reading Inputs"
         )(utils.read_artifacts)(storage, spec.input_content_paths, spec.input_metadata_paths)
 
         derived_from_bson = SerializationType.BSON_TABLE in serialization_types
 
-        results, system_metadata = timeit(
+        results, system_metadata = time_it(
             job_name=spec.name, job_type=spec.type.value, step="Running Function"
         )(_execute_function)(spec, inputs, exec_state)
 
@@ -344,7 +344,7 @@ def run(spec: FunctionSpec) -> None:
                         % (expected_output_type, i, result_types[i]),
                     )
 
-        timeit(job_name=spec.name, job_type=spec.type.value, step="Writing Outputs")(
+        time_it(job_name=spec.name, job_type=spec.type.value, step="Writing Outputs")(
             _write_artifacts
         )(
             results,

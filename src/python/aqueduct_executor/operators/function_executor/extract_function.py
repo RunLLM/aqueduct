@@ -82,4 +82,4 @@ if __name__ == "__main__":
     spec_json = base64.b64decode(args.spec)
     spec = parse_spec(spec_json)
 
-    timeit(job_name=spec.name, job_type=spec.type.value, step="Loading Function")(run)(spec)
+    time_it(job_name=spec.name, job_type=spec.type.value, step="Loading Function")(run)(spec)
