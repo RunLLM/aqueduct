@@ -346,5 +346,5 @@ func (s *AqServer) fullDisplayAddress() string {
 		displayIP = "<IP_ADDRESS>"
 	}
 
-	return fmt.Sprintf("%s:%d", displayIP, s.Port)
+	return fmt.Sprintf("http://%s:%d", displayIP, s.Port)
 }

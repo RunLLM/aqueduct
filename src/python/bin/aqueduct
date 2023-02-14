@@ -47,12 +47,12 @@ s3_server_prefix = (
 )
 s3_ui_prefix = "https://aqueduct-ai.s3.us-east-2.amazonaws.com/assets/%s/ui" % package_version
 
-login_url = "%s:%d/login?apiKey=%s"
+login_url = "http://%s:%d/login?apiKey=%s"
 welcome_message = """
 ***************************************************
 Your API Key: %s
 
-The Web UI and the backend server (v%s) are accessible at: %s:%d/login?apiKey=%s
+The Web UI and the backend server (v%s) are accessible at: http://%s:%d/login?apiKey=%s
 
 Aqueduct collects non sensitive usage data to improve its services.
 Please refer to https://docs.aqueducthq.com/usage for more details.
@@ -357,7 +357,7 @@ def execute_command_nonblocking(args, cwd=None):
 
 def get_address(expose):
     if not expose:
-        expose_ip = "http://localhost"
+        expose_ip = "localhost"
     else:
         try:
             ec2_ip = requests.get(
@@ -385,7 +385,6 @@ def get_address(expose):
     return expose_ip
 
 def generate_welcome_message(addr, port):
-    addr = addr if addr else "http://<IP_ADDRESS>"
     apikey = get_apikey()
 
     return (
