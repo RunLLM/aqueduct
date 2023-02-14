@@ -1,5 +1,6 @@
 import io
 import json
+import time
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
@@ -222,3 +223,27 @@ def print_with_color(log: str, color: PrintColorType = PrintColorType.YELLOW) ->
     assert color in PrintColorType
     CEND = "\33[0m"
     print(color + log + CEND)
+
+
+def timeit(job_name: str, job_type: str, step: str):
+    def decorator(func):
+        def wrapper(*args, **kwargs):
+            print_with_color(
+                "%s for %s job: %s" % (step, job_type, job_name),
+                color=PrintColorType.GREEN,
+            )
+            begin = time.time()
+            result = func(*args, **kwargs)
+            end = time.time()
+            performance = {
+                "job": job_name,
+                "type": job_type,
+                "step": step,
+                "latency(s)": (end - begin),
+            }
+            print_with_color(json.dumps(performance, indent=4))
+            return result
+
+        return wrapper
+
+    return decorator

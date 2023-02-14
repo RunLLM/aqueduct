@@ -36,8 +36,9 @@ from aqueduct_executor.operators.utils.execution import (
     exception_traceback,
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
+from aqueduct_executor.operators.utils.storage.storage import Storage
 from aqueduct_executor.operators.utils.timer import Timer
-from aqueduct_executor.operators.utils.utils import print_with_color
+from aqueduct_executor.operators.utils.utils import timeit
 
 
 def get_py_import_path(spec: FunctionSpec) -> str:
@@ -167,6 +168,27 @@ def _validate_result_count_and_infer_type(
     return [infer_artifact_type(res) for res in results]
 
 
+def _write_artifacts(
+    results: Any,
+    result_types: List[ArtifactType],
+    derived_from_bson: bool,
+    output_content_paths: List[str],
+    output_metadata_paths: List[str],
+    system_metadata: Any,
+    storage: Storage,
+) -> None:
+    for i, result in enumerate(results):
+        utils.write_artifact(
+            storage,
+            result_types[i],
+            derived_from_bson,
+            output_content_paths[i],
+            output_metadata_paths[i],
+            result,
+            system_metadata=system_metadata,
+        )
+
+
 def validate_spec(spec: FunctionSpec) -> None:
     if len(spec.input_content_paths) != len(spec.input_metadata_paths):
         raise Exception(
@@ -224,42 +246,15 @@ def run(spec: FunctionSpec) -> None:
         validate_spec(spec)
 
         # Read the input data from intermediate storage.
-        print_with_color(
-            "Reading inputs for %s job: %s" % (spec.type.value, spec.name),
-            color=PrintColorType.GREEN,
-        )
-        begin = time.time()
-
-        inputs, _, serialization_types = utils.read_artifacts(
-            storage, spec.input_content_paths, spec.input_metadata_paths
-        )
-
-        end = time.time()
-        performance = {
-            "job": spec.name,
-            "type": spec.type,
-            "step": "Reading Inputs",
-            "latency(s)": (end - begin),
-        }
-        print_with_color(json.dumps(performance, indent=4))
+        inputs, _, serialization_types = timeit(
+            job_name=spec.name, job_type=spec.type.value, step="Reading Inputs"
+        )(utils.read_artifacts)(storage, spec.input_content_paths, spec.input_metadata_paths)
 
         derived_from_bson = SerializationType.BSON_TABLE in serialization_types
 
-        print_with_color(
-            "Running function for %s job: %s" % (spec.type.value, spec.name),
-            color=PrintColorType.GREEN,
-        )
-        begin = time.time()
-        results, system_metadata = _execute_function(spec, inputs, exec_state)
-        end = time.time()
-
-        performance = {
-            "job": spec.name,
-            "type": spec.type,
-            "step": "Running Function",
-            "latency(s)": (end - begin),
-        }
-        print_with_color(json.dumps(performance, indent=4))
+        results, system_metadata = timeit(
+            job_name=spec.name, job_type=spec.type.value, step="Running Function"
+        )(_execute_function)(spec, inputs, exec_state)
 
         if exec_state.status == ExecutionStatus.FAILED:
             # user failure
@@ -349,29 +344,17 @@ def run(spec: FunctionSpec) -> None:
                         % (expected_output_type, i, result_types[i]),
                     )
 
-        print_with_color(
-            "Writing outputs for %s job: %s" % (spec.type.value, spec.name),
-            color=PrintColorType.GREEN,
+        timeit(job_name=spec.name, job_type=spec.type.value, step="Writing Outputs")(
+            _write_artifacts
+        )(
+            results,
+            result_types,
+            derived_from_bson,
+            spec.output_content_paths,
+            spec.output_metadata_paths,
+            system_metadata,
+            storage,
         )
-        begin = time.time()
-        for i, result in enumerate(results):
-            utils.write_artifact(
-                storage,
-                result_types[i],
-                derived_from_bson,
-                spec.output_content_paths[i],
-                spec.output_metadata_paths[i],
-                result,
-                system_metadata=system_metadata,
-            )
-        end = time.time()
-        performance = {
-            "job": spec.name,
-            "type": spec.type,
-            "step": "Writing Outputs",
-            "latency(s)": (end - begin),
-        }
-        print_with_color(json.dumps(performance, indent=4))
 
         # If we made it here, then the operator has succeeded.
         exec_state.status = ExecutionStatus.SUCCEEDED
