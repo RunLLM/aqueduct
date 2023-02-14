@@ -190,7 +190,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 		workflowDagResults = append(workflowDagResults, workflowDagResult{
 			Id:            dagResult.ID,
 			CreatedAt:     dagResult.CreatedAt.Unix(),
-			Status:        shared.ExecutionStatus(dagResult.Status),
+			Status:        dagResult.Status,
 			WorkflowDagId: dagResult.DagID,
 		})
 	}

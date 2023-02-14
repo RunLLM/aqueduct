@@ -123,7 +123,7 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving operator result.")
 		}
 		// OperatorResult was never created, so we use the WorkflowDagResult's status as this OperatorResult's status
-		executionState.Status = shared.ExecutionStatus(dagResult.Status)
+		executionState.Status = dagResult.Status
 	} else {
 		executionState.Status = dbOperatorResult.ExecState.Status
 	}
