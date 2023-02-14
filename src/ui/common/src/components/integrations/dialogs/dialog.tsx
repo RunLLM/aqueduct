@@ -43,6 +43,7 @@ import {
   Service,
   SlackConfig,
   SnowflakeConfig,
+  SparkConfig,
   SQLiteConfig,
   SupportedIntegrations,
 } from '../../../utils/integrations';
@@ -76,6 +77,7 @@ import {
   SlackDialog,
 } from './slackDialog';
 import { SnowflakeDialog } from './snowflakeDialog';
+import { SparkDialog } from './sparkDialog';
 import { SQLiteDialog } from './sqliteDialog';
 
 type Props = {
@@ -353,6 +355,15 @@ const IntegrationDialog: React.FC<Props> = ({
         <SlackDialog
           onUpdateField={setConfigField}
           value={config as SlackConfig}
+        />
+      );
+      break;
+    case 'Spark':
+      serviceDialog = (
+        <SparkDialog
+          onUpdateField={setConfigField}
+          value={config as SparkConfig}
+          editMode={editMode}
         />
       );
       break;
