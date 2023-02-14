@@ -1,5 +1,58 @@
 # Changelog
 
+## 0.2.2
+Released on February 14, 2023.
+
+### Key Features
+* Adds support for receiving Aqueduct notifications via email or in Slack
+    workspaces. You can configure notification settings for your Aqueduct
+    installation at large, and you can also customize notification settings
+    per-workflow. Notifications can be configured to be sent for all workflow
+    executions, only on warnings, or only on errors.
+    * *Email*: You can connect Aqueduct to your email account and specify a
+        list of email addresses as recipients. Each notification will trigger a
+        separate email.
+    * *Slack*: You can connect Aqueduct to your Slack workspace and specify a
+        channel that Aqueduct should send notifications on. Each notification
+        will send a separate message.
+
+### Enhancements
+* Adds support for specifying Snowflake schema when creating integration from
+    UI.
+* Adds support for executing an operator that has one or more parameters and 
+    multiple outputs interactively. You can call the same function, and
+    Aqueduct will automatically override previous implicitly created
+    parameters. See [our
+    documentation](https://docs.aqueducthq.com/parameters) for more details.
+    ```python
+    @op
+    def fn(param):
+      return param
+
+    res = fn(1).get()
+    >>> 1 # Creates a parameter named `param` for you automatically, with a default value of 1.
+
+    res = fn(2).get()
+    >>> 2 # Updates `param` to have a default value of 2.
+    ```
+
+### Bugfixes
+* Fixes two bugs where Aqueduct server was retrieving full data objects from
+    the Aqueduct metadata store to check for their existence. When working 
+    with non-trivial data, this could cause serious performance issues.
+* Fixes bug where object does not exist errors from S3 were mishandled, causing
+    Aqueduct to surface incorrect errors.
+* Fixes bug where pods that are marked as pending on Kubernetes were being
+    treated as failed operators.
+* Fixes bug where log and stack traces blocks didn't have proper formatting and
+    backgrounds on the UI.
+* Fixes bug that was causing full data objects to be retrieved repeatedly when
+    loading metadata on the UI.
+* Fixes bug where UI was previously treating not-yet-executed operators (for an
+    in-progress workflow) as failed operators.
+* Fixes bug where the SDK's `global_config` could not be changed to set
+    Aqueduct as the compute engine.
+
 ## 0.2.1
 Released on February 7, 2023.
 
