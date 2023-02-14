@@ -1,8 +1,9 @@
 import Box from '@mui/material/Box';
 import React, { useState } from 'react';
 
+import { theme } from '../../styles/theme/theme';
 import { Error, Logs } from '../../utils/shared';
-import { Tab, Tabs } from '../primitives/Tabs.styles';
+import { Tab, Tabs } from '../Tabs/Tabs.styles';
 
 type Props = {
   logs?: Logs;
@@ -15,7 +16,9 @@ const LogViewer: React.FC<Props> = ({ logs, err }) => {
 
   const [selectedTab, setSelectedTab] = useState(0);
   const emptyElement = (
-    <Box sx={{ p: 2, backgroundColor: 'gray.100' }}>Nothing to see here!</Box>
+    <Box sx={{ p: 2, backgroundColor: theme.palette.gray[100] }}>
+      Nothing to see here!
+    </Box>
   );
 
   return (
@@ -37,8 +40,8 @@ const LogViewer: React.FC<Props> = ({ logs, err }) => {
         {err !== undefined && hasOutput(err?.tip) ? (
           <Box
             sx={{
-              backgroundColor: 'red.100',
-              color: 'red.600',
+              backgroundColor: theme.palette.red[100],
+              color: theme.palette.red[600],
               p: 2,
               height: 'fit-content',
             }}
@@ -53,7 +56,11 @@ const LogViewer: React.FC<Props> = ({ logs, err }) => {
       <Box key={1} role="tabpanel" hidden={selectedTab !== 1}>
         {hasOutput(logs?.stdout) ? (
           <Box
-            sx={{ backgroundColor: 'gray.100', p: 2, height: 'fit-content' }}
+            sx={{
+              backgroundColor: theme.palette.gray[100],
+              p: 2,
+              height: 'fit-content',
+            }}
           >
             <pre style={{ margin: '0px' }}>{logs.stdout}</pre>
           </Box>
@@ -65,7 +72,11 @@ const LogViewer: React.FC<Props> = ({ logs, err }) => {
       <Box key={2} role="tabpanel" hidden={selectedTab !== 2}>
         {hasOutput(logs?.stderr) ? (
           <Box
-            sx={{ backgroundColor: 'gray.100', p: 2, height: 'fit-content' }}
+            sx={{
+              backgroundColor: theme.palette.gray[100],
+              p: 2,
+              height: 'fit-content',
+            }}
           >
             <pre style={{ margin: '0px' }}>{logs.stderr}</pre>
           </Box>

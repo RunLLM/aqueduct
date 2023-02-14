@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"mime/multipart"
 	"net/http"
+	"strconv"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
@@ -43,8 +44,9 @@ const (
 //		metadata and content of the result of `artifactId` on the given workflow_dag_result object.
 type getArtifactResultArgs struct {
 	*aq_context.AqContext
-	dagResultID uuid.UUID
-	artifactID  uuid.UUID
+	dagResultID  uuid.UUID
+	artifactID   uuid.UUID
+	metadataOnly bool
 }
 
 type artifactResultMetadata struct {
@@ -81,6 +83,10 @@ type GetArtifactResultHandler struct {
 
 func (*GetArtifactResultHandler) Name() string {
 	return "GetArtifactResult"
+}
+
+func (*GetArtifactResultHandler) Headers() []string {
+	return []string{routes.MetadataOnlyHeader}
 }
 
 // This custom implementation of SendResponse constructs a multipart form response with two fields:
@@ -159,10 +165,21 @@ func (h *GetArtifactResultHandler) Prepare(r *http.Request) (interface{}, int, e
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this artifact.")
 	}
 
+	metadataOnlyString := r.Header.Get(routes.MetadataOnlyHeader)
+	if metadataOnlyString == "" {
+		metadataOnlyString = "false"
+	}
+
+	metadataOnly, err := strconv.ParseBool(metadataOnlyString)
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error when converting metadata-only header to bool.")
+	}
+
 	return &getArtifactResultArgs{
-		AqContext:   aqContext,
-		dagResultID: dagResultID,
-		artifactID:  artifactID,
+		AqContext:    aqContext,
+		dagResultID:  dagResultID,
+		artifactID:   artifactID,
+		metadataOnly: metadataOnly,
 	}, http.StatusOK, nil
 }
 
@@ -228,6 +245,10 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 
 	response := &getArtifactResultResponse{
 		Metadata: &metadata,
+	}
+
+	if args.metadataOnly {
+		return response, http.StatusOK, nil
 	}
 
 	data, err := storage.NewStorage(&dag.StorageConfig).Get(ctx, dbArtifactResult.ContentPath)

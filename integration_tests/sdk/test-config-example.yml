@@ -16,9 +16,16 @@ metadata:
 # `aqueduct_demo`, which is built-in.
 data:
   aqueduct_demo:
-  test_snowflake:
-  test_s3:
   test_athena:
+  test_bigquery:
+  test_mariadb:
+  test_mongo_db:
+  test_mysql:
+  test_postgres:
+  test_redshift:
+  test_s3:
+  test_snowflake:
+  test_sqlite:
 
 # REQUIRED: All the compute integrations to run the test suite against.
 # All entries here must be present in `test-credentials.yml`, except

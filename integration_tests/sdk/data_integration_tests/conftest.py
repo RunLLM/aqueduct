@@ -14,8 +14,10 @@ allowed_data_integrations_by_file = {
         ServiceType.REDSHIFT,
         ServiceType.SQLITE,
         ServiceType.SNOWFLAKE,
+        ServiceType.MARIADB,
     ],
     "s3_test": [ServiceType.S3],
+    "mongo_db_test": [ServiceType.MONGO_DB],
     "athena_test": [ServiceType.ATHENA],
 }
 
