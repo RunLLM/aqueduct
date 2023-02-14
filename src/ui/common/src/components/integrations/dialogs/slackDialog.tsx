@@ -1,16 +1,29 @@
+import { Divider } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
-import { NotificationLogLevel } from 'src';
 
 import { SlackConfig } from '../../../utils/integrations';
+import { NotificationLogLevel } from '../../../utils/notifications';
+import CheckboxEntry from '../../notifications/CheckboxEntry';
 import NotificationLevelSelector from '../../notifications/NotificationLevelSelector';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
+// Placeholders are example values not filled for users, but
+// may show up in textbox as hint if user don't fill the form field.
 const Placeholders = {
   token: '*****',
   channel: 'my_channel',
   level: 'succeeded',
+  enabled: true,
+};
+
+// Default fields are actual filled form values on 'create' dialog.
+export const SlackDefaultsOnCreate = {
+  token: '',
+  channels_serialized: '',
+  level: NotificationLogLevel.Success,
+  enabled: 'false',
 };
 
 type Props = {
@@ -58,22 +71,55 @@ export const SlackDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         value={channels ?? null}
       />
 
+      <Divider sx={{ mt: 2 }} />
+
       <Box sx={{ mt: 2 }}>
-        <Box sx={{ my: 1 }}>
-          <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-            Level *
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'darkGray' }}>
-            The notification levels at which to send a slack notification. This
-            applies to all workflows unless separately specified in workflow
-            settings.
-          </Typography>
-        </Box>
-        <NotificationLevelSelector
-          level={value?.level as NotificationLogLevel}
-          onSelectLevel={(level) => onUpdateField('level', level)}
-        />
+        <CheckboxEntry
+          checked={value?.enabled === 'true'}
+          disabled={false}
+          onChange={(checked) =>
+            onUpdateField('enabled', checked ? 'true' : 'false')
+          }
+        >
+          Enable this notification for all workflows.
+        </CheckboxEntry>
+        <Typography variant="body2" color="darkGray">
+          Configure if we should apply this notification to all workflows unless
+          separately specified in workflow settings.
+        </Typography>
       </Box>
+
+      {value?.enabled === 'true' && (
+        <Box sx={{ mt: 2 }}>
+          <Box sx={{ my: 1 }}>
+            <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+              Level
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'darkGray' }}>
+              The notification levels at which to send a slack notification.
+              This applies to all workflows unless separately specified in
+              workflow settings.
+            </Typography>
+          </Box>
+          <NotificationLevelSelector
+            level={value?.level as NotificationLogLevel}
+            onSelectLevel={(level) => onUpdateField('level', level)}
+            enabled={value?.enabled === 'true'}
+          />
+        </Box>
+      )}
     </Box>
   );
 };
+
+export function isSlackConfigComplete(config: SlackConfig): boolean {
+  if (config.enabled !== 'true' && config.enabled !== 'false') {
+    return false;
+  }
+
+  if (config.enabled == 'true' && !config.level) {
+    return false;
+  }
+
+  return !!config.channels_serialized && !!config.token;
+}

@@ -25,10 +25,17 @@ export const EmailCard: React.FC<Props> = ({ integration }) => {
         )}{' '}
         {targets.join(', ')}
       </Typography>
-      <Typography variant="body2">
-        <strong>Level: </strong>
-        {config.level[0].toUpperCase() + config.level.slice(1)}
-      </Typography>
+      {config.enabled === 'true' && (
+        <Typography variant="body2">
+          <strong>Level: </strong>
+          {config.level[0].toUpperCase() + config.level.slice(1)}
+        </Typography>
+      )}
+      {config.enabled !== 'true' && (
+        <Typography variant="body2">
+          By default, this notification does NOT apply to all workflows.
+        </Typography>
+      )}
     </Box>
   );
 };

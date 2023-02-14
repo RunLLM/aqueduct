@@ -31,6 +31,18 @@ func (e ExecutionState) Terminated() bool {
 	return e.Status == FailedExecutionStatus || e.Status == SucceededExecutionStatus || e.Status == CanceledExecutionStatus
 }
 
+func (e *ExecutionState) HasBlockingFailure() bool {
+	return e.Status == FailedExecutionStatus && *e.FailureType != UserNonFatalFailure
+}
+
+func (e *ExecutionState) HasWarning() bool {
+	return e.Status == FailedExecutionStatus && !e.HasBlockingFailure()
+}
+
+func (e *ExecutionState) HasSystemError() bool {
+	return e.Status == FailedExecutionStatus && *e.FailureType == SystemFailure
+}
+
 func (e *ExecutionState) Value() (driver.Value, error) {
 	return utils.ValueJSONB(*e)
 }

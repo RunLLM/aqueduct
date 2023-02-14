@@ -9,6 +9,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/google/uuid"
 )
 
@@ -29,15 +30,96 @@ func (e *EmailNotification) Level() shared.NotificationLevel {
 	return e.conf.Level
 }
 
+func (e *EmailNotification) Enabled() bool {
+	return e.conf.Enabled
+}
+
 func fullMessage(subject string, from string, targets []string, body string) string {
 	fullMsg := fmt.Sprintf("From: %s\n", from)
 	fullMsg += fmt.Sprintf("To: %s\n", strings.Join(targets, ","))
-	fullMsg += fmt.Sprintf("Subject: %s\n\n", subject)
+	fullMsg += fmt.Sprintf("Subject: %s\n", subject)
+	fullMsg += "Content-Type: text/html; charset=\"UTF-8\";\n\n"
 	fullMsg += body
 	return fullMsg
 }
 
-func (e *EmailNotification) Send(ctx context.Context, msg string) error {
+func (e *EmailNotification) constructOperatorMessages(wfDag dag.WorkflowDag) string {
+	warningOps := wfDag.OperatorsWithWarning()
+	errorOps := wfDag.OperatorsWithError()
+
+	if len(warningOps)+len(errorOps) == 0 {
+		return ""
+	}
+
+	// there are at least some operators failed:
+	msg := ""
+	for _, op := range warningOps {
+		msg += fmt.Sprintf(
+			`<div>%s <font face="monospace">%s</font> failed (warning).</div>`,
+			constructDisplayedOperatorType(op.Type()),
+			op.Name(),
+		)
+	}
+
+	for _, op := range errorOps {
+		msg += fmt.Sprintf(
+			`<div>%s <font face="monospace">%s</font> failed (error).</div>`,
+			constructDisplayedOperatorType(op.Type()),
+			op.Name(),
+		)
+	}
+
+	return msg
+}
+
+func (e *EmailNotification) SendForDag(
+	ctx context.Context,
+	wfDag dag.WorkflowDag,
+	level shared.NotificationLevel,
+	systemErrContext string,
+) error {
+	subject := summarize(wfDag, level)
+	systemErrBlock := ""
+	if systemErrContext != "" {
+		systemErrBlock = fmt.Sprintf(`<div>
+			<b>Error:</b>
+		</div>
+		<div>
+			<font face="monospace">%s</font>
+		</div>`, systemErrContext)
+	}
+
+	link := strings.Replace(wfDag.ResultLink(), ">", "&gt;", -1)
+	link = strings.Replace(link, "<", "&lt;", -1)
+	linkWarning := ""
+	linkWarningStr := constructLinkWarning(link)
+	if len(linkWarningStr) > 0 {
+		linkWarning = fmt.Sprintf("(%s)", linkWarningStr)
+	}
+
+	body := fmt.Sprintf(`<div dir="ltr">
+		<div><b>Workflow</b>: <font face="monospace">%s</font></div>
+		<div><b>ID</b>: <font face="monospace">%s</font></div>
+		<div><b>Result ID</b>: <font face="monospace">%s</font></div>
+		%s
+		%s
+		<div>See the Aqueduct UI for more details: <a href="%s">%s</a> %s</div>
+		</div>`,
+		wfDag.Name(),
+		wfDag.ID(),
+		wfDag.ResultID(),
+		e.constructOperatorMessages(wfDag),
+		systemErrBlock,
+		link,
+		link,
+		linkWarning,
+	)
+	fullMsg := fullMessage(subject, e.conf.User, e.conf.Targets, body)
+
+	return e.send(fullMsg)
+}
+
+func (e *EmailNotification) send(msg string) error {
 	auth := smtp.PlainAuth(
 		"", // identity
 		e.conf.User,
@@ -45,13 +127,12 @@ func (e *EmailNotification) Send(ctx context.Context, msg string) error {
 		e.conf.Host,
 	)
 
-	fullMsg := fullMessage("aqueduct notification", e.conf.User, e.conf.Targets, msg)
 	return smtp.SendMail(
 		e.conf.FullHost(),
 		auth,
 		e.conf.User,
 		e.conf.Targets,
-		[]byte(fullMsg),
+		[]byte(msg),
 	)
 }
 

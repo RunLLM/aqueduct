@@ -52,12 +52,14 @@ type EmailConfig struct {
 	// Targets are email addresses for receivers.
 	Targets []string          `json:"targets"`
 	Level   NotificationLevel `json:"level"`
+	Enabled bool              `json:"enabled"`
 }
 
 type SlackConfig struct {
 	Token    string            `json:"token"`
 	Channels []string          `json:"channels"`
 	Level    NotificationLevel `json:"level"`
+	Enabled  bool              `json:"enabled"`
 }
 
 func (c *EmailConfig) FullHost() string {

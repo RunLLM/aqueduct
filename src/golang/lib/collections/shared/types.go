@@ -2,6 +2,7 @@ package shared
 
 import (
 	"database/sql/driver"
+	"fmt"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
@@ -52,6 +53,15 @@ type Error struct {
 	Tip     string `json:"tip"`
 }
 
+func (e *Error) Message() string {
+	errCtxMsg := ""
+	if e.Context != "" {
+		errCtxMsg = fmt.Sprintf("\nContext:\n%s", e.Context)
+	}
+
+	return fmt.Sprintf("%s%s", e.Tip, errCtxMsg)
+}
+
 // This should mirror all ExecutionStatus
 
 type ExecutionTimestamps struct {
@@ -73,6 +83,18 @@ type ExecutionState struct {
 
 func (e ExecutionState) Terminated() bool {
 	return e.Status == FailedExecutionStatus || e.Status == SucceededExecutionStatus || e.Status == CanceledExecutionStatus
+}
+
+func (e *ExecutionState) HasBlockingFailure() bool {
+	return e.Status == FailedExecutionStatus && *e.FailureType != UserNonFatalFailure
+}
+
+func (e *ExecutionState) HasWarning() bool {
+	return e.Status == FailedExecutionStatus && !e.HasBlockingFailure()
+}
+
+func (e *ExecutionState) HasSystemError() bool {
+	return e.Status == FailedExecutionStatus && *e.FailureType == SystemFailure
 }
 
 func (e *ExecutionState) Value() (driver.Value, error) {

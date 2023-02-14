@@ -2,9 +2,11 @@ package notification
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	"github.com/slack-go/slack"
@@ -27,6 +29,10 @@ func (s *SlackNotification) ID() uuid.UUID {
 
 func (s *SlackNotification) Level() shared.NotificationLevel {
 	return s.conf.Level
+}
+
+func (s *SlackNotification) Enabled() bool {
+	return s.conf.Enabled
 }
 
 // reference: https://stackoverflow.com/questions/50106263/slack-api-to-find-existing-channel
@@ -69,19 +75,86 @@ func findChannels(client *slack.Client, names []string) ([]slack.Channel, error)
 	return results, nil
 }
 
-func (s *SlackNotification) Send(ctx context.Context, msg string) error {
+func (s *SlackNotification) constructOperatorMessages(wfDag dag.WorkflowDag) string {
+	warningOps := wfDag.OperatorsWithWarning()
+	errorOps := wfDag.OperatorsWithError()
+
+	if len(warningOps)+len(errorOps) == 0 {
+		return ""
+	}
+
+	// there are at least some checks failed:
+	msg := "\n"
+	for _, op := range warningOps {
+		msg += fmt.Sprintf(
+			"%s `%s` failed (warning).\n",
+			constructDisplayedOperatorType(op.Type()),
+			op.Name(),
+		)
+	}
+
+	for _, op := range errorOps {
+		msg += fmt.Sprintf(
+			"%s `%s` failed (error).\n",
+			constructDisplayedOperatorType(op.Type()),
+			op.Name(),
+		)
+	}
+
+	return msg
+}
+
+func (s *SlackNotification) SendForDag(
+	ctx context.Context,
+	wfDag dag.WorkflowDag,
+	level shared.NotificationLevel,
+	systemErrContext string,
+) error {
 	client := slack.New(s.conf.Token)
 	channels, err := findChannels(client, s.conf.Channels)
 	if err != nil {
 		return err
 	}
 
+	contextMarkdownBlock := ""
+	if systemErrContext != "" {
+		contextMarkdownBlock = fmt.Sprintf("\n*Error:*\n%s", systemErrContext)
+	}
+
+	link := wfDag.ResultLink()
+	linkWarning := ""
+	linkWarningStr := constructLinkWarning(link)
+	if len(linkWarningStr) > 0 {
+		linkWarning = fmt.Sprintf("(%s)", linkWarningStr)
+	}
+
+	linkContent := fmt.Sprintf("See the Aqueduct UI for more details: %s %s", link, linkWarning)
+	nameContent := fmt.Sprintf("*Workflow:* `%s`", wfDag.Name())
+	IDContent := fmt.Sprintf("*ID:* `%s`", wfDag.ID())
+	resultIDContent := fmt.Sprintf("*Result ID:* `%s`", wfDag.ResultID())
+	msg := fmt.Sprintf(
+		"%s\n%s\n%s%s%s\n%s",
+		nameContent,
+		IDContent,
+		resultIDContent,
+		s.constructOperatorMessages(wfDag),
+		contextMarkdownBlock,
+		linkContent,
+	)
 	for _, channel := range channels {
 		// reference: https://medium.com/@gausha/a-simple-slackbot-with-golang-c5a932d719c7
-		_, _, _, err = client.SendMessage(channel.ID, slack.MsgOptionBlocks(
-			slack.NewSectionBlock(
+		_, _, _, err = client.SendMessageContext(ctx, channel.ID, slack.MsgOptionBlocks(
+			slack.NewHeaderBlock(
 				slack.NewTextBlockObject(
 					"plain_text",
+					summarize(wfDag, level),
+					false,
+					false,
+				),
+			),
+			slack.NewSectionBlock(
+				slack.NewTextBlockObject(
+					"mrkdwn",
 					msg,
 					false, /* emoji */
 					false, /* verbatim */

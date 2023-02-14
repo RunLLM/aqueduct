@@ -2,10 +2,8 @@ package engine
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/notification"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -14,8 +12,12 @@ import (
 )
 
 type notificationContentStruct struct {
-	level      mdl_shared.NotificationLevel
-	contextMsg string
+	level mdl_shared.NotificationLevel
+	// Additional system error that the user should be notified.
+	// Execution related user errors should already captured by
+	// dag.WorkflowDag object using `OperatorsWithError()` and
+	// `OperatorsWithWarning()` interfaces.
+	systemErrContext string
 }
 
 func getNotifications(
@@ -32,28 +34,6 @@ func getNotifications(
 		vaultObject,
 		DB,
 	)
-}
-
-func notificationMsg(dagName string, level shared.NotificationLevel, contextMsg string) string {
-	// Full message will look like "Workflow my_churn succeeded with warning: some context ."
-	statusMsg := ""
-	contextSuffix := "."
-	if len(contextMsg) > 0 {
-		contextSuffix = fmt.Sprintf(": %s .", contextMsg)
-	}
-	if level == shared.SuccessNotificationLevel {
-		statusMsg = fmt.Sprintf("succeeded%s", contextSuffix)
-	} else if level == shared.WarningNotificationLevel {
-		statusMsg = fmt.Sprintf("succeeded with warning%s", contextSuffix)
-	} else if level == shared.ErrorNotificationLevel {
-		statusMsg = fmt.Sprintf("failed%s", contextSuffix)
-	} else {
-		// For now, no caller will send message other than success, warning, or error.
-		// This line is in case of future use cases.
-		statusMsg = fmt.Sprintf("has a message: %s .", contextMsg)
-	}
-
-	return fmt.Sprintf("Workflow %s %s", dagName, statusMsg)
 }
 
 func sendNotifications(
@@ -73,15 +53,19 @@ func sendNotifications(
 		return err
 	}
 
-	msg := notificationMsg(wfDag.Name(), content.level, content.contextMsg)
 	workflowSettings := wfDag.NotificationSettings().Settings
 	for _, notificationObj := range notifications {
 		if len(workflowSettings) > 0 {
-			// send based on settings
+			// send based on workflow settings
 			thresholdLevel, ok := workflowSettings[notificationObj.ID()]
 			if ok {
 				if notification.ShouldSend(thresholdLevel, content.level) {
-					err = notificationObj.Send(ctx, msg)
+					err = notificationObj.SendForDag(
+						ctx,
+						wfDag,
+						content.level,
+						content.systemErrContext,
+					)
 					if err != nil {
 						return err
 					}
@@ -89,9 +73,15 @@ func sendNotifications(
 			}
 		} else {
 			// Otherwise we send based on global settings.
-			// ENG-2341 will allow user to configure if a notification applies to all workflows.
-			if notification.ShouldSend(notificationObj.Level(), content.level) {
-				err = notificationObj.Send(ctx, msg)
+			if notificationObj.Enabled() && notification.ShouldSend(
+				notificationObj.Level(), content.level,
+			) {
+				err = notificationObj.SendForDag(
+					ctx,
+					wfDag,
+					content.level,
+					content.systemErrContext,
+				)
 				if err != nil {
 					return err
 				}

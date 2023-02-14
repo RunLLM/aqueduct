@@ -304,6 +304,26 @@ func (*workflowWriter) Update(
 	return &workflow, err
 }
 
+func (*workflowWriter) RemoveNotificationFromSettings(ctx context.Context, notificationIntegrationID uuid.UUID, DB database.Database) error {
+	query := `
+	UPDATE workflow
+	SET
+		notification_settings=CAST(
+			json_remove(
+				notification_settings,
+				$1
+			) AS BLOB
+		)
+	WHERE
+		notification_settings IS NOT NULL
+		AND json_extract(
+			notification_settings,
+			$1
+		) IS NOT NULL;`
+	json_path := fmt.Sprintf("$.settings.%s", notificationIntegrationID)
+	return DB.Execute(ctx, query, json_path)
+}
+
 func getWorkflows(ctx context.Context, DB database.Database, query string, args ...interface{}) ([]models.Workflow, error) {
 	var workflows []models.Workflow
 	err := DB.Query(ctx, &workflows, query, args...)
