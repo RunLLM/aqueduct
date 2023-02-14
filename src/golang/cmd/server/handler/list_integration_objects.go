@@ -10,7 +10,7 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
@@ -85,7 +85,7 @@ func (h *ListIntegrationObjectsHandler) Perform(ctx context.Context, interfaceAr
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to retrieve integration.")
 	}
 
-	if _, ok := mdl_shared.GetRelationalDatabaseIntegrations()[integrationObject.Service]; !ok {
+	if _, ok := shared.GetRelationalDatabaseIntegrations()[integrationObject.Service]; !ok {
 		return nil, http.StatusBadRequest, errors.New("List objects request is only allowed for relational databases. (Too expensive to list objects for S3)")
 	}
 
@@ -127,11 +127,11 @@ func (h *ListIntegrationObjectsHandler) Perform(ctx context.Context, interfaceAr
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while waiting for integration objects job to finish.")
 	}
 
-	if jobStatus == mdl_shared.FailedExecutionStatus {
+	if jobStatus == shared.FailedExecutionStatus {
 		return nil, http.StatusInternalServerError, errors.New("Unexpected error while listing objects.")
 	}
 
-	var metadata mdl_shared.ExecutionState
+	var metadata shared.ExecutionState
 	if err := workflow_utils.ReadFromStorage(
 		ctx,
 		args.StorageConfig,

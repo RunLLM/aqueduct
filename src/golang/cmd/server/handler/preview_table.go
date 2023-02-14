@@ -11,7 +11,7 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
@@ -117,7 +117,7 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to retrieve integration.")
 	}
 
-	if _, ok := mdl_shared.GetRelationalDatabaseIntegrations()[integrationObject.Service]; !ok {
+	if _, ok := shared.GetRelationalDatabaseIntegrations()[integrationObject.Service]; !ok {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Preview table request is only allowed for relational databases.")
 	}
 
@@ -131,7 +131,7 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 	}()
 
 	var queryParams connector.ExtractParams
-	if integrationObject.Service == mdl_shared.MongoDB {
+	if integrationObject.Service == shared.MongoDB {
 		// This triggers `db.my_table.find({})`
 		queryParams = &connector.MongoDBExtractParams{
 			Collection:      args.tableName,
@@ -175,11 +175,11 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while waiting for the preview table job to finish.")
 	}
 
-	if jobStatus == mdl_shared.FailedExecutionStatus {
+	if jobStatus == shared.FailedExecutionStatus {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while previewing table.")
 	}
 
-	var metadata mdl_shared.ExecutionState
+	var metadata shared.ExecutionState
 	if err := workflow_utils.ReadFromStorage(
 		ctx,
 		args.StorageConfig,

@@ -6,7 +6,6 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/notification"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -14,7 +13,7 @@ import (
 )
 
 type notificationContentStruct struct {
-	level      mdl_shared.NotificationLevel
+	level      shared.NotificationLevel
 	contextMsg string
 }
 

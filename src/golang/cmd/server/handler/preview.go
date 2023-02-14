@@ -12,7 +12,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
@@ -42,21 +42,21 @@ type previewArgs struct {
 }
 
 type previewResponse struct {
-	Status                mdl_shared.ExecutionStatus              `json:"status"`
-	OperatorResults       map[uuid.UUID]mdl_shared.ExecutionState `json:"operator_results"`
-	ArtifactContents      map[uuid.UUID][]byte                    `json:"artifact_contents"`
-	ArtifactTypesMetadata map[uuid.UUID]artifactTypeMetadata      `json:"artifact_types_metadata"`
+	Status                shared.ExecutionStatus              `json:"status"`
+	OperatorResults       map[uuid.UUID]shared.ExecutionState `json:"operator_results"`
+	ArtifactContents      map[uuid.UUID][]byte                `json:"artifact_contents"`
+	ArtifactTypesMetadata map[uuid.UUID]artifactTypeMetadata  `json:"artifact_types_metadata"`
 }
 
 type previewResponseMetadata struct {
-	Status                mdl_shared.ExecutionStatus              `json:"status"`
-	OperatorResults       map[uuid.UUID]mdl_shared.ExecutionState `json:"operator_results"`
-	ArtifactTypesMetadata map[uuid.UUID]artifactTypeMetadata      `json:"artifact_types_metadata"`
+	Status                shared.ExecutionStatus              `json:"status"`
+	OperatorResults       map[uuid.UUID]shared.ExecutionState `json:"operator_results"`
+	ArtifactTypesMetadata map[uuid.UUID]artifactTypeMetadata  `json:"artifact_types_metadata"`
 }
 
 type artifactTypeMetadata struct {
-	SerializationType mdl_shared.ArtifactSerializationType `json:"serialization_type"`
-	ArtifactType      mdl_shared.ArtifactType              `json:"artifact_type"`
+	SerializationType shared.ArtifactSerializationType `json:"serialization_type"`
+	ArtifactType      shared.ArtifactType              `json:"artifact_type"`
 }
 
 type PreviewHandler struct {
@@ -175,7 +175,7 @@ func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
 
 func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*previewArgs)
-	errorRespPtr := &previewResponse{Status: mdl_shared.FailedExecutionStatus}
+	errorRespPtr := &previewResponse{Status: shared.FailedExecutionStatus}
 	dagSummary := args.DagSummary
 
 	_, err := operator.UploadOperatorFiles(ctx, dagSummary.Dag, dagSummary.FileContentsByOperatorUUID)
@@ -259,7 +259,7 @@ func setupExecEnv(
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve Conda connection state.")
 	}
 
-	if condaConnectionState.Status == mdl_shared.FailedExecutionStatus {
+	if condaConnectionState.Status == shared.FailedExecutionStatus {
 		errMsg := "Failed to create conda environments."
 		if condaConnectionState.Error != nil {
 			errMsg = fmt.Sprintf(
@@ -272,7 +272,7 @@ func setupExecEnv(
 		return nil, http.StatusInternalServerError, errors.New(errMsg)
 	}
 
-	if condaConnectionState.Status != mdl_shared.SucceededExecutionStatus {
+	if condaConnectionState.Status != shared.SucceededExecutionStatus {
 		return nil, http.StatusBadRequest, errors.New(
 			"We are still creating base conda environments. This may take a few minutes.",
 		)
