@@ -68,6 +68,21 @@ from aqueduct import globals
 
 
 def global_config(config_dict: Dict[str, Any]) -> None:
+    """Sets any global configuration variables in the current Aqueduct context.
+
+    Args:
+        config_dict:
+            A dict from the configuration key to its new value.
+
+    Available configuration keys:
+        "lazy":
+            A boolean indicating whether any new functions will be constructed lazily (True) or eagerly (False).
+        "engine":
+            The name of the default compute integration to run all functions against.
+            This can still be overriden by the `engine` argument in `client.publish_flow()` or
+            on the @op spec. To set this to run against the Aqueduct engine, use "aqueduct" (case-insensitive).
+    """
+
     if globals.GLOBAL_LAZY_KEY in config_dict:
         lazy_val = config_dict[globals.GLOBAL_LAZY_KEY]
         if not isinstance(lazy_val, bool):
