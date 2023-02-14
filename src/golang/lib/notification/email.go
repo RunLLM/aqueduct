@@ -30,6 +30,10 @@ func (e *EmailNotification) Level() shared.NotificationLevel {
 	return e.conf.Level
 }
 
+func (e *EmailNotification) Enabled() bool {
+	return e.conf.Enabled
+}
+
 func fullMessage(subject string, from string, targets []string, body string) string {
 	fullMsg := fmt.Sprintf("From: %s\n", from)
 	fullMsg += fmt.Sprintf("To: %s\n", strings.Join(targets, ","))
