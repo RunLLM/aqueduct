@@ -74,9 +74,9 @@ type workflowWriter interface {
 	// Update applies changes to the Workflow with ID. It returns the updated Workflow.
 	Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.Workflow, error)
 
-	// RemoveNotificationFromSettings removes `NotificationIntegrationID` from notification_settings
+	// RemoveNotificationFromSettings removes `notificationIntegrationID` from notification_settings
 	// field when possible.
 	// If the ID does not appear in any notification_settings field,
 	// the API simply return without error.
-	RemoveNotificationFromSettings(ctx context.Context, NotificationIntegrationID uuid.UUID, DB database.Database) error
+	RemoveNotificationFromSettings(ctx context.Context, notificationIntegrationID uuid.UUID, DB database.Database) error
 }

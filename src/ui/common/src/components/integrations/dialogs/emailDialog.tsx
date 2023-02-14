@@ -1,4 +1,5 @@
 import Box from '@mui/material/Box';
+import { Divider } from '@mui/material';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 
@@ -105,6 +106,8 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         }}
         value={receivers ?? null}
       />
+
+      <Divider sx={{ mt: 2}}/>
 
       <Box sx={{ mt: 2 }}>
         <CheckboxEntry

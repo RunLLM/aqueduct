@@ -304,7 +304,7 @@ func (*workflowWriter) Update(
 	return &workflow, err
 }
 
-func (*workflowWriter) RemoveNotificationFromSettings(ctx context.Context, NotificationIntegrationID uuid.UUID, DB database.Database) error {
+func (*workflowWriter) RemoveNotificationFromSettings(ctx context.Context, notificationIntegrationID uuid.UUID, DB database.Database) error {
 	query := `
 	UPDATE workflow
 	SET
@@ -320,7 +320,7 @@ func (*workflowWriter) RemoveNotificationFromSettings(ctx context.Context, Notif
 			notification_settings,
 			$1
 		) IS NOT NULL;`
-	json_path := fmt.Sprintf("$.settings.%s", NotificationIntegrationID)
+	json_path := fmt.Sprintf("$.settings.%s", notificationIntegrationID)
 	return DB.Execute(ctx, query, json_path)
 }
 

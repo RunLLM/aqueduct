@@ -981,6 +981,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           setSourceId(initialSettings.sourceId);
           setPaused(initialSettings.paused);
           setRetentionPolicy(initialSettings.retentionPolicy);
+          setNotificationSettingsMap(initialSettings.notificationSettingsMap);
         }}
       >
         Discard Changes
