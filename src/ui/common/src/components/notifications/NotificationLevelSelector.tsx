@@ -1,36 +1,28 @@
-import { Box, Checkbox, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import React from 'react';
 
-import { theme } from '../../styles/theme/theme';
 import { NotificationLogLevel } from '../../utils/notifications';
+import CheckboxEntry from './CheckboxEntry';
 
 type Props = {
   level?: NotificationLogLevel;
   onSelectLevel: (level?: NotificationLogLevel) => void;
-  // if set, we will show an additional option to allow disabling the notification
+  // if set, we will show an additional option to allow enabling the notification
   // using the given message.
-  disabled: boolean;
+  enabled: boolean;
   disabledMessage?: string;
-  disableSelectorMessage?: string;
-  onDisable?: (disabled: boolean) => void;
+  enableSelectorMessage?: string;
+  onEnable?: (enabled: boolean) => void;
 };
 
 const NotificationLevelSelector: React.FC<Props> = ({
   level,
   onSelectLevel,
-  disabled,
+  enabled,
   disabledMessage,
-  disableSelectorMessage,
-  onDisable,
+  enableSelectorMessage,
+  onEnable,
 }) => {
-  // Overrides default checkbox behavior.
-  // The `padding` is particularly important as the checkbox has a default padding of 9.
-  const checkboxStyle = {
-    padding: 0,
-    '&.Mui-checked': { color: theme.palette.blue[700] },
-    '&.Mui-disabled': { color: theme.palette.gray[700] },
-  };
-
   const errorChecked = [
     NotificationLogLevel.Success,
     NotificationLogLevel.Warning,
@@ -42,52 +34,44 @@ const NotificationLevelSelector: React.FC<Props> = ({
   ].includes(level);
   const successChecked = level === NotificationLogLevel.Success;
 
-  const showDisableOption = !!disableSelectorMessage;
+  const showEnableOption = !!enableSelectorMessage;
   // show level if either:
-  // * showing disable options and the option is unchecked
-  // * not showing disable options
-  const showLevelOptions =
-    (!disabled && showDisableOption) || !showDisableOption;
+  // * showing enable options and the option is checked
+  // * not showing enable options
+  const showLevelOptions = (enabled && showEnableOption) || !showEnableOption;
 
   // disable if higher level has been checked
   const errorDisabled = warningChecked;
   const warningDisabled = successChecked;
 
-  const levelSelectorLeftMargin = showDisableOption ? 2 : 0;
+  const levelSelectorLeftMargin = showEnableOption ? '30px' : undefined;
 
   return (
     <Box display="flex" flexDirection="column" alignContent="left">
-      {showDisableOption && (
+      {showEnableOption && (
         <Box
           display="flex"
           flexDirection="row"
           alignContent="center"
           marginTop={1}
         >
-          <Checkbox
-            checked={disabled}
-            onChange={(event) => {
-              if (!event.target.checked && !level) {
+          <CheckboxEntry
+            checked={enabled}
+            onChange={(checked) => {
+              if (!checked && !level) {
                 onSelectLevel(NotificationLogLevel.Success);
               }
 
-              if (!!onDisable) {
-                onDisable(event.target.checked);
+              if (!!onEnable) {
+                onEnable(checked);
               }
             }}
-            sx={checkboxStyle}
-          />
-          <Typography
-            variant="body1"
-            color="black"
-            marginLeft={1}
-            alignContent="center"
           >
-            {disableSelectorMessage}
-          </Typography>
+            {enableSelectorMessage}
+          </CheckboxEntry>
         </Box>
       )}
-      {disabled && !!disabledMessage && (
+      {!enabled && !!disabledMessage && (
         <Typography variant="body2" color="gray.700">
           {disabledMessage}
         </Typography>
@@ -95,27 +79,20 @@ const NotificationLevelSelector: React.FC<Props> = ({
       {showLevelOptions && (
         <Box
           marginLeft={levelSelectorLeftMargin}
+          marginTop={1}
           display="flex"
           flexDirection="row"
           alignContent="center"
         >
-          <Checkbox
+          <CheckboxEntry
             checked={errorChecked}
             disabled={errorDisabled}
-            onChange={(event) =>
-              onSelectLevel(
-                event.target.checked ? NotificationLogLevel.Error : undefined
-              )
+            onChange={(checked) =>
+              onSelectLevel(checked ? NotificationLogLevel.Error : undefined)
             }
-            sx={checkboxStyle}
-          />
-          <Typography
-            variant="body1"
-            color={errorDisabled ? 'gray.700' : 'black'}
-            marginLeft={1}
           >
             Error
-          </Typography>
+          </CheckboxEntry>
         </Box>
       )}
       {showLevelOptions && (
@@ -126,25 +103,19 @@ const NotificationLevelSelector: React.FC<Props> = ({
           alignContent="center"
           marginTop={1}
         >
-          <Checkbox
+          <CheckboxEntry
             checked={warningChecked}
             disabled={warningDisabled}
-            onChange={(event) =>
+            onChange={(checked) =>
               onSelectLevel(
-                event.target.checked
+                checked
                   ? NotificationLogLevel.Warning
                   : NotificationLogLevel.Error
               )
             }
-            sx={checkboxStyle}
-          />
-          <Typography
-            variant="body1"
-            color={warningDisabled ? 'gray.700' : 'black'}
-            marginLeft={1}
           >
             Warning
-          </Typography>
+          </CheckboxEntry>
         </Box>
       )}
       {showLevelOptions && (
@@ -155,25 +126,18 @@ const NotificationLevelSelector: React.FC<Props> = ({
           alignContent="center"
           marginTop={1}
         >
-          <Checkbox
+          <CheckboxEntry
             checked={successChecked}
-            onChange={(event) =>
+            onChange={(checked) =>
               onSelectLevel(
-                event.target.checked
+                checked
                   ? NotificationLogLevel.Success
                   : NotificationLogLevel.Warning
               )
             }
-            sx={checkboxStyle}
-          />
-          <Typography
-            variant="body1"
-            color="black"
-            marginLeft={1}
-            alignContent="center"
           >
             Success
-          </Typography>
+          </CheckboxEntry>
         </Box>
       )}
     </Box>
