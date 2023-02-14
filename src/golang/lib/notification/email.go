@@ -89,7 +89,8 @@ func (e *EmailNotification) SendForDag(
 		</div>`, systemErrContext)
 	}
 
-	link := wfDag.ResultLink()
+	link := strings.Replace(wfDag.ResultLink(), ">", "&gt;", -1)
+	link = strings.Replace(link, "<", "&lt;", -1)
 	linkWarning := ""
 	linkWarningStr := constructLinkWarning(link)
 	if len(linkWarningStr) > 0 {
