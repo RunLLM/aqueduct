@@ -11,7 +11,7 @@ from aqueduct_executor.operators.function_executor.spec import FunctionSpec, par
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
-from aqueduct_executor.operators.utils.utils import timeit
+from aqueduct_executor.operators.utils.utils import time_it
 
 
 def _unzip_function_contents(function_in_bytes: bytes, extract_path: str) -> None:

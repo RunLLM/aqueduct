@@ -9,7 +9,7 @@ from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.enums import FailureType
 from aqueduct_executor.operators.utils.execution import ExecFailureException, ExecutionState, Logs
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
-from aqueduct_executor.operators.utils.utils import timeit
+from aqueduct_executor.operators.utils.utils import time_it
 
 
 def install_missing_packages(

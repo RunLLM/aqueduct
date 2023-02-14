@@ -3,7 +3,7 @@ import base64
 
 from aqueduct_executor.operators.function_executor import execute
 from aqueduct_executor.operators.function_executor.spec import parse_spec
-from aqueduct_executor.operators.utils.utils import timeit
+from aqueduct_executor.operators.utils.utils import time_it
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

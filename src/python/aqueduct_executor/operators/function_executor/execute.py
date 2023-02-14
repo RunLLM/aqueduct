@@ -38,7 +38,7 @@ from aqueduct_executor.operators.utils.execution import (
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
 from aqueduct_executor.operators.utils.timer import Timer
-from aqueduct_executor.operators.utils.utils import timeit
+from aqueduct_executor.operators.utils.utils import time_it
 
 
 def get_py_import_path(spec: FunctionSpec) -> str:
