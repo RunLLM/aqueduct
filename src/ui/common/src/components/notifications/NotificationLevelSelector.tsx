@@ -7,21 +7,21 @@ import CheckboxEntry from './CheckboxEntry';
 type Props = {
   level?: NotificationLogLevel;
   onSelectLevel: (level?: NotificationLogLevel) => void;
-  // if set, we will show an additional option to allow disabling the notification
+  // if set, we will show an additional option to allow enabling the notification
   // using the given message.
-  disabled: boolean;
+  enabled: boolean;
   disabledMessage?: string;
-  disableSelectorMessage?: string;
-  onDisable?: (disabled: boolean) => void;
+  enableSelectorMessage?: string;
+  onEnable?: (enabled: boolean) => void;
 };
 
 const NotificationLevelSelector: React.FC<Props> = ({
   level,
   onSelectLevel,
-  disabled,
+  enabled,
   disabledMessage,
-  disableSelectorMessage,
-  onDisable,
+  enableSelectorMessage,
+  onEnable,
 }) => {
   const errorChecked = [
     NotificationLogLevel.Success,
@@ -34,22 +34,21 @@ const NotificationLevelSelector: React.FC<Props> = ({
   ].includes(level);
   const successChecked = level === NotificationLogLevel.Success;
 
-  const showDisableOption = !!disableSelectorMessage;
+  const showEnableOption = !!enableSelectorMessage;
   // show level if either:
-  // * showing disable options and the option is unchecked
-  // * not showing disable options
-  const showLevelOptions =
-    (!disabled && showDisableOption) || !showDisableOption;
+  // * showing enable options and the option is checked
+  // * not showing enable options
+  const showLevelOptions = (enabled && showEnableOption) || !showEnableOption;
 
   // disable if higher level has been checked
   const errorDisabled = warningChecked;
   const warningDisabled = successChecked;
 
-  const levelSelectorLeftMargin = showDisableOption ? 2 : 0;
+  const levelSelectorLeftMargin = showEnableOption ? '30px' : undefined;
 
   return (
     <Box display="flex" flexDirection="column" alignContent="left">
-      {showDisableOption && (
+      {showEnableOption && (
         <Box
           display="flex"
           flexDirection="row"
@@ -57,22 +56,22 @@ const NotificationLevelSelector: React.FC<Props> = ({
           marginTop={1}
         >
           <CheckboxEntry
-            checked={disabled}
+            checked={enabled}
             onChange={(checked) => {
               if (!checked && !level) {
                 onSelectLevel(NotificationLogLevel.Success);
               }
 
-              if (!!onDisable) {
-                onDisable(checked);
+              if (!!onEnable) {
+                onEnable(checked);
               }
             }}
           >
-            {disableSelectorMessage}
+            {enableSelectorMessage}
           </CheckboxEntry>
         </Box>
       )}
-      {disabled && !!disabledMessage && (
+      {!enabled && !!disabledMessage && (
         <Typography variant="body2" color="gray.700">
           {disabledMessage}
         </Typography>

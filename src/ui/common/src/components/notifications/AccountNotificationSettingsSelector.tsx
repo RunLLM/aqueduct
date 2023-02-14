@@ -1,7 +1,6 @@
 import { Box, Link, Typography } from '@mui/material';
 import React, { useState } from 'react';
 
-import { theme } from '../../styles/theme/theme';
 import { getPathPrefix } from '../../utils/getPathPrefix';
 import {
   Integration,
@@ -72,9 +71,7 @@ const AccountNotificationSettingsSelector: React.FC<Props> = ({
           display="flex"
           flexDirection="column"
           alignItems="left"
-          padding={1}
-          marginBottom={1}
-          bgcolor={theme.palette.gray[100]}
+          paddingY={1}
         >
           <NotificationLevelSelector
             level={configs[n.id].level as NotificationLogLevel}
@@ -84,14 +81,14 @@ const AccountNotificationSettingsSelector: React.FC<Props> = ({
                 [n.id]: { enabled: configs[n.id].enabled, level: level },
               })
             }
-            disabled={configs[n.id].enabled === 'false'}
-            disableSelectorMessage={n.name}
+            enabled={configs[n.id].enabled === 'true'}
+            enableSelectorMessage={n.name}
             disabledMessage={`${n.name} notifications will not be configured for all workflows by default.`}
-            onDisable={(disabled) =>
+            onEnable={(enabled) =>
               setConfigs({
                 ...configs,
                 [n.id]: {
-                  enabled: disabled ? 'false' : 'true',
+                  enabled: enabled ? 'true' : 'false',
                   level: configs[n.id].level,
                 },
               })

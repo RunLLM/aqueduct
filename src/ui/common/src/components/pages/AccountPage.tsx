@@ -179,8 +179,8 @@ client = aqueduct.Client(
       {notifications.length > 0 && (
         <Typography variant="body2" marginBottom={1}>
           Configure how your notification(s) apply to all workflows. You can
-          override these settings in each workflow&asop;s individual settings
-          page.
+          override these settings in for individual workflows in workflow
+          settings page.
         </Typography>
       )}
       {notificationSection}

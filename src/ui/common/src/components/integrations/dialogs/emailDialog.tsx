@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 
 import { EmailConfig } from '../../../utils/integrations';
 import { NotificationLogLevel } from '../../../utils/notifications';
+import CheckboxEntry from '../../notifications/CheckboxEntry';
 import NotificationLevelSelector from '../../notifications/NotificationLevelSelector';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
@@ -106,26 +107,40 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       />
 
       <Box sx={{ mt: 2 }}>
-        <Box sx={{ my: 1 }}>
-          <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-            How to apply to workflows *
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'darkGray' }}>
-            Configure if this email notification applies to all workflows. If
-            enabled, choose level(s) on which to recieve notifications. You can
-            override this setting in each workflow&apos;s settings page.
-          </Typography>
-        </Box>
-        <NotificationLevelSelector
-          level={value?.level as NotificationLogLevel}
-          onSelectLevel={(level) => onUpdateField('level', level)}
-          disableSelectorMessage="Do not apply this notification to all workflows."
-          disabled={value?.enabled === 'false'}
-          onDisable={(disabled) =>
-            onUpdateField('enabled', disabled ? 'false' : 'true')
+        <CheckboxEntry
+          checked={value?.enabled === 'true'}
+          disabled={false}
+          onChange={(checked) =>
+            onUpdateField('enabled', checked ? 'true' : 'false')
           }
-        />
+        >
+          Enable this notification for all workflows.
+        </CheckboxEntry>
+        <Typography variant="body2" color="darkGray">
+          Configure if we should apply this notification to all workflows unless
+          separately specified in workflow settings.
+        </Typography>
       </Box>
+
+      {value?.enabled === 'true' && (
+        <Box sx={{ mt: 2 }}>
+          <Box sx={{ my: 1 }}>
+            <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+              Level
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'darkGray' }}>
+              The notification levels at which to send an email notification.
+              This applies to all workflows unless separately specified in
+              workflow settings.
+            </Typography>
+          </Box>
+          <NotificationLevelSelector
+            level={value?.level as NotificationLogLevel}
+            onSelectLevel={(level) => onUpdateField('level', level)}
+            enabled={value?.enabled === 'true'}
+          />
+        </Box>
+      )}
     </Box>
   );
 };

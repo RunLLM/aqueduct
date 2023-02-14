@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 
 import { SlackConfig } from '../../../utils/integrations';
 import { NotificationLogLevel } from '../../../utils/notifications';
+import CheckboxEntry from '../../notifications/CheckboxEntry';
 import NotificationLevelSelector from '../../notifications/NotificationLevelSelector';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
@@ -70,26 +71,40 @@ export const SlackDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       />
 
       <Box sx={{ mt: 2 }}>
-        <Box sx={{ my: 1 }}>
-          <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-            Level *
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'darkGray' }}>
-            The notification levels at which to send a slack notification. This
-            applies to all workflows unless separately specified in workflow
-            settings.
-          </Typography>
-        </Box>
-        <NotificationLevelSelector
-          level={value?.level as NotificationLogLevel}
-          onSelectLevel={(level) => onUpdateField('level', level)}
-          disableSelectorMessage="Do not apply this notification to all workflows."
-          disabled={value?.enabled === 'false'}
-          onDisable={(disabled) =>
-            onUpdateField('enabled', disabled ? 'false' : 'true')
+        <CheckboxEntry
+          checked={value?.enabled === 'true'}
+          disabled={false}
+          onChange={(checked) =>
+            onUpdateField('enabled', checked ? 'true' : 'false')
           }
-        />
+        >
+          Enable this notification for all workflows.
+        </CheckboxEntry>
+        <Typography variant="body2" color="darkGray">
+          Configure if we should apply this notification to all workflows unless
+          separately specified in workflow settings.
+        </Typography>
       </Box>
+
+      {value?.enabled === 'true' && (
+        <Box sx={{ mt: 2 }}>
+          <Box sx={{ my: 1 }}>
+            <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+              Level
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'darkGray' }}>
+              The notification levels at which to send a slack notification.
+              This applies to all workflows unless separately specified in
+              workflow settings.
+            </Typography>
+          </Box>
+          <NotificationLevelSelector
+            level={value?.level as NotificationLogLevel}
+            onSelectLevel={(level) => onUpdateField('level', level)}
+            enabled={value?.enabled === 'true'}
+          />
+        </Box>
+      )}
     </Box>
   );
 };

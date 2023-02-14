@@ -73,7 +73,7 @@ export const SelectedNotificationEntry: React.FC<
         <NotificationLevelSelector
           level={level}
           onSelectLevel={(level) => onSelect(selected.id, level)}
-          disabled={false}
+          enabled={true}
         />
       </Box>
     </Box>
