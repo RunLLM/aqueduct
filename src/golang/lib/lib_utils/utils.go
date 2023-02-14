@@ -128,6 +128,7 @@ func ParseEmailConfig(conf auth.Config) (*shared.EmailConfig, error) {
 		Port              string                   `json:"port"`
 		TargetsSerialized string                   `json:"targets_serialized"`
 		Level             shared.NotificationLevel `json:"level"`
+		Enabled           string                   `json:"enabled"`
 	}
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
@@ -144,6 +145,8 @@ func ParseEmailConfig(conf auth.Config) (*shared.EmailConfig, error) {
 		Host:     c.Host,
 		Port:     c.Port,
 		Targets:  targets,
+		Level:    c.Level,
+		Enabled:  c.Enabled == "true",
 	}, nil
 }
 
@@ -157,6 +160,7 @@ func ParseSlackConfig(conf auth.Config) (*shared.SlackConfig, error) {
 		Token              string                   `json:"token"`
 		ChannelsSerialized string                   `json:"channels_serialized"`
 		Level              shared.NotificationLevel `json:"level"`
+		Enabled            string                   `json:"enabled"`
 	}
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
@@ -171,5 +175,6 @@ func ParseSlackConfig(conf auth.Config) (*shared.SlackConfig, error) {
 		Token:    c.Token,
 		Channels: channels,
 		Level:    c.Level,
+		Enabled:  c.Enabled == "true",
 	}, nil
 }

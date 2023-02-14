@@ -105,29 +105,23 @@ func ExecuteDatabricks(
 			}
 
 			// Capture the first failed operator.
-			if shouldStopExecution(execState) {
+			if execState.HasBlockingFailure() {
 				if operatorError == nil {
 					operatorError = opFailureError(*execState.FailureType, op)
 				}
 
 				notificationCtxMsg := ""
 				if execState.Error != nil {
-					notificationCtxMsg = fmt.Sprintf("%s\nContext:\n%s", execState.Error.Tip, execState.Error.Context)
+					notificationCtxMsg = execState.Error.Message()
 				}
 
 				notificationContent = &notificationContentStruct{
-					level:      mdl_shared.ErrorNotificationLevel,
-					contextMsg: notificationCtxMsg,
+					level:            mdl_shared.ErrorNotificationLevel,
+					systemErrContext: notificationCtxMsg,
 				}
-			} else if execState.Status == shared.FailedExecutionStatus {
-				notificationCtxMsg := ""
-				if execState.Error != nil {
-					notificationCtxMsg = fmt.Sprintf("%s\nContext:\n%s", execState.Error.Tip, execState.Error.Context)
-				}
-
+			} else if execState.HasWarning() {
 				notificationContent = &notificationContentStruct{
-					level:      mdl_shared.WarningNotificationLevel,
-					contextMsg: notificationCtxMsg,
+					level: mdl_shared.WarningNotificationLevel,
 				}
 			}
 

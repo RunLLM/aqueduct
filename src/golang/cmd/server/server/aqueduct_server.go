@@ -44,9 +44,11 @@ const (
 var uiDir = path.Join(os.Getenv("HOME"), ".aqueduct", "ui")
 
 type AqServer struct {
-	Router   *chi.Mux
-	Name     string
-	Database database.Database
+	Router     *chi.Mux
+	Name       string
+	ExternalIP string
+	Port       int
+	Database   database.Database
 	*Repos
 
 	// Only the following group of fields will be reinitialized when the server is restarted
@@ -67,7 +69,7 @@ type AqServer struct {
 	DisableUsageStats bool
 }
 
-func NewAqServer(environment string, disableUsageStats bool) *AqServer {
+func NewAqServer(environment string, externalIP string, port int, disableUsageStats bool) *AqServer {
 	ctx := context.Background()
 	aqPath := config.AqueductPath()
 
@@ -92,6 +94,8 @@ func NewAqServer(environment string, disableUsageStats bool) *AqServer {
 
 	s := &AqServer{
 		Router:            chi.NewRouter(),
+		ExternalIP:        externalIP,
+		Port:              port,
 		Database:          db,
 		Repos:             CreateRepos(),
 		UnderMaintenance:  atomic.Value{},
@@ -200,6 +204,7 @@ func (s *AqServer) Init() error {
 		githubManager,
 		previewCacheManager,
 		aqPath,
+		s.fullDisplayAddress(),
 		GetEngineRepos(s.Repos),
 	)
 	if err != nil {
@@ -289,7 +294,7 @@ func (s *AqServer) Log(ctx context.Context, key string, req *http.Request, statu
 	logging.LogRoute(ctx, key, req, excludedHeaderFields, statusCode, logging.ServerComponent, s.Name, err)
 }
 
-func (s *AqServer) Run(expose bool, port int) {
+func (s *AqServer) Run(expose bool) {
 	// When we configure the server to listen on ":<PORT>" (without specifying the ip), it exposes itself
 	// to the public.
 	ip := ""
@@ -301,8 +306,8 @@ func (s *AqServer) Run(expose bool, port int) {
 	s.Router.Method("GET", "/dist/*", http.StripPrefix("/dist/", static))
 	s.Router.Get("/*", IndexHandler())
 
-	log.Infof("%s Starting HTTP server on port %d\n", time.Now().Format("2006-01-02 03:04:05 PM"), port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", ip, port), s.Router))
+	log.Infof("%s Starting HTTP server on port %d\n", time.Now().Format("2006-01-02 03:04:05 PM"), s.Port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf("%s:%d", ip, s.Port), s.Router))
 }
 
 func IndexHandler() func(w http.ResponseWriter, r *http.Request) {
@@ -329,4 +334,17 @@ func (s *AqServer) Restart() {
 	}
 	s.RequestMutex.Unlock()
 	s.UnderMaintenance.Store(false)
+}
+
+// Generates the full server address for display purpose.
+// If `ExternalIP` is configured, it returns `[ExternalIP]:[Port]`.
+// Otherwise it returns `<IP_ADDRESS>:[PORT]` expecting the user to replace
+// `<IP_ADDRESS>` string while using this information.
+func (s *AqServer) fullDisplayAddress() string {
+	displayIP := s.ExternalIP
+	if displayIP == "" {
+		displayIP = "<IP_ADDRESS>"
+	}
+
+	return fmt.Sprintf("%s:%d", displayIP, s.Port)
 }
