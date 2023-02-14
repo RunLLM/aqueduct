@@ -2,6 +2,7 @@
 # NOTE: Keep this in sync with the `start-function-executor.sh` in `/src/dockerfiles/function`.
 CONDA_ENV=$1
 echo $CONDA_ENV
+# The `--no-capture-output` flag disables log buffering so we can view the logs being printed in real-time. 
 FUNCTION_EXTRACT_PATH=$(conda run --no-capture-output -n $CONDA_ENV python3 -m aqueduct_executor.operators.function_executor.get_extract_path --spec "$JOB_SPEC")
 EXIT_CODE=$?
 if [ $EXIT_CODE != "0" ]; then exit $(($EXIT_CODE)); fi
