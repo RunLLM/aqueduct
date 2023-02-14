@@ -12,7 +12,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
-import { TabPanel } from '../../../../components/Tabs/TabPanel';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import {
   NodeType,
@@ -455,6 +454,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           flexDirection: 'column',
           transition: WidthTransition,
           transitionDelay: '-150ms',
+          paddingBottom: '24px',
         }}
         id={WorkflowPageContentId}
       >
@@ -475,7 +475,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           <Tab value="Settings" label="Settings" />
         </Tabs>
 
-        <TabPanel value={currentTab} index="Details">
+        {currentTab === 'Details' && (
           <Box
             sx={{
               flexDirection: 'column',
@@ -494,18 +494,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
               </Box>
             </ReactFlowProvider>
           </Box>
-        </TabPanel>
+        )}
 
-        <TabPanel value={currentTab} index="Settings">
-          {workflow.selectedDag && (
-            <Box marginBottom={1}>
-              <WorkflowSettings
-                user={user}
-                workflowDag={workflow.selectedDag}
-              />
-            </Box>
-          )}
-        </TabPanel>
+        {currentTab === 'Settings' && workflow.selectedDag && (
+          <Box sx={{ paddingBottom: '24px' }}>
+            <WorkflowSettings user={user} workflowDag={workflow.selectedDag} />
+          </Box>
+        )}
       </Box>
 
       {currentNode.type !== NodeType.None && (
