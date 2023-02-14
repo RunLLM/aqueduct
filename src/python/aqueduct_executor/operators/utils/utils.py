@@ -225,9 +225,9 @@ def print_with_color(log: str, color: PrintColorType = PrintColorType.YELLOW) ->
     print(color + log + CEND)
 
 
-def timeit(job_name: str, job_type: str, step: str):
-    def decorator(func):
-        def wrapper(*args, **kwargs):
+def timeit(job_name: str, job_type: str, step: str) -> Callable:
+    def decorator(func: Callable) -> Callable:
+        def wrapper(*args, **kwargs) -> Any:
             print_with_color(
                 "%s for %s job: %s" % (step, job_type, job_name),
                 color=PrintColorType.GREEN,
