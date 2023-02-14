@@ -1,12 +1,14 @@
 import { faPlusSquare, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Box, MenuItem, Select, Typography } from '@mui/material';
-import React from 'react';
+import { Box, Link, MenuItem, Select, Typography } from '@mui/material';
+import React, { useState } from 'react';
 
 import { theme } from '../../styles/theme/theme';
+import { getPathPrefix } from '../../utils/getPathPrefix';
 import { Integration } from '../../utils/integrations';
 import { NotificationLogLevel } from '../../utils/notifications';
 import { NotificationSettingsMap } from '../../utils/workflows';
+import CheckboxEntry from '../notifications/CheckboxEntry';
 import NotificationLevelSelector from '../notifications/NotificationLevelSelector';
 
 type SelectedNotificationEntryProps = {
@@ -71,6 +73,7 @@ export const SelectedNotificationEntry: React.FC<
         <NotificationLevelSelector
           level={level}
           onSelectLevel={(level) => onSelect(selected.id, level)}
+          enabled={true}
         />
       </Box>
     </Box>
@@ -84,6 +87,7 @@ const WorkflowNotificationSettings: React.FC<Props> = ({
   onRemove,
 }) => {
   const selectedIDs = Object.keys(curSettingsMap);
+  const [usingDefault, setUsingDefault] = useState(selectedIDs.length === 0);
   const remainingIntegrations = notificationIntegrations.filter(
     (x) => !selectedIDs.includes(x.id)
   );
@@ -102,10 +106,28 @@ const WorkflowNotificationSettings: React.FC<Props> = ({
     </Box>
   ));
 
+  const usingDefaultCheckbox = (
+    <CheckboxEntry
+      checked={usingDefault}
+      onChange={(checked) => setUsingDefault(checked)}
+    >
+      Use default notification settings. See{' '}
+      <Link
+        underline="none"
+        href={`${getPathPrefix()}/account`}
+        target="_blank"
+      >
+        settings
+      </Link>{' '}
+      for more details.
+    </CheckboxEntry>
+  );
+
   return (
     <Box display="flex" flexDirection="column" alignContent="left">
-      {selectedEntries}
-      {remainingIntegrations.length > 0 && (
+      {<Box marginY={1}>{usingDefaultCheckbox}</Box>}
+      {!usingDefault && selectedEntries}
+      {!usingDefault && remainingIntegrations.length > 0 && (
         <Box mt={selectedEntries.length > 0 ? 2 : 1}>
           <FontAwesomeIcon
             icon={faPlusSquare}

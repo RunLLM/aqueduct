@@ -63,6 +63,7 @@ type Repos struct {
 }
 
 type aqEngine struct {
+	DisplayIP      string
 	Database       database.Database
 	GithubManager  github.Manager
 	CronjobManager cronjob.CronjobManager
@@ -101,11 +102,13 @@ func NewAqEngine(
 	githubManager github.Manager,
 	previewCacheManager preview_cache.CacheManager,
 	aqPath string,
+	displayIP string,
 	repos *Repos,
 ) (*aqEngine, error) {
 	cronjobManager := cronjob.NewProcessCronjobManager()
 
 	return &aqEngine{
+		DisplayIP:           displayIP,
 		Database:            database,
 		GithubManager:       githubManager,
 		PreviewCacheManager: previewCacheManager,
@@ -132,6 +135,7 @@ func (eng *aqEngine) ScheduleWorkflow(
 		},
 		eng.GithubManager.Config(),
 		eng.AqPath,
+		eng.DisplayIP,
 		nil,
 	)
 	err := eng.CronjobManager.DeployCronJob(
@@ -280,6 +284,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		execEnvsByOpId,
 		operator.Publish,
 		eng.AqPath,
+		eng.DisplayIP,
 		eng.Database,
 	)
 	if err != nil {
@@ -359,6 +364,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		execEnvByOperatorId,
 		operator.Preview,
 		eng.AqPath,
+		eng.DisplayIP,
 		eng.Database,
 	)
 	if err != nil {
@@ -755,6 +761,7 @@ func (eng *aqEngine) TriggerWorkflow(
 		},
 		eng.GithubManager.Config(),
 		eng.AqPath,
+		eng.DisplayIP,
 		parameters,
 	)
 
@@ -1124,6 +1131,7 @@ func (eng *aqEngine) updateWorkflowSchedule(
 			},
 			eng.GithubManager.Config(),
 			eng.AqPath,
+			eng.DisplayIP,
 			nil,
 		)
 

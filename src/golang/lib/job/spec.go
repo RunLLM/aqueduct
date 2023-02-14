@@ -97,6 +97,7 @@ type WorkflowSpec struct {
 	GithubManager  github.ManagerConfig   `json:"github_manager" yaml:"github_manager"`
 	Parameters     map[string]param.Param `json:"parameters" yaml:"parameters"`
 	AqPath         string                 `json:"aq_path" yaml:"aqPath"`
+	DisplayIP      string                 `json:"display_ip" yaml:"displayIP"`
 	ExecutorConfig *ExecutorConfiguration
 }
 
@@ -303,6 +304,7 @@ func NewWorkflowSpec(
 	jobManager Config,
 	githubManager github.ManagerConfig,
 	aqPath string,
+	displayIP string,
 	parameters map[string]param.Param,
 ) Spec {
 	return &WorkflowSpec{
@@ -313,6 +315,7 @@ func NewWorkflowSpec(
 		WorkflowId:    workflowId,
 		GithubManager: githubManager,
 		AqPath:        aqPath,
+		DisplayIP:     displayIP,
 		Parameters:    parameters,
 		ExecutorConfig: &ExecutorConfiguration{
 			Database:   database,

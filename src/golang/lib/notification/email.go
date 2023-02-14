@@ -30,6 +30,10 @@ func (e *EmailNotification) Level() shared.NotificationLevel {
 	return e.conf.Level
 }
 
+func (e *EmailNotification) Enabled() bool {
+	return e.conf.Enabled
+}
+
 func fullMessage(subject string, from string, targets []string, body string) string {
 	fullMsg := fmt.Sprintf("From: %s\n", from)
 	fullMsg += fmt.Sprintf("To: %s\n", strings.Join(targets, ","))
@@ -85,18 +89,29 @@ func (e *EmailNotification) SendForDag(
 		</div>`, systemErrContext)
 	}
 
+	link := wfDag.ResultLink()
+	linkWarning := ""
+	linkWarningStr := constructLinkWarning(link)
+	if len(linkWarningStr) > 0 {
+		linkWarning = fmt.Sprintf("(%s)", linkWarningStr)
+	}
+
 	body := fmt.Sprintf(`<div dir="ltr">
 		<div><b>Workflow</b>: <font face="monospace">%s</font></div>
 		<div><b>ID</b>: <font face="monospace">%s</font></div>
 		<div><b>Result ID</b>: <font face="monospace">%s</font></div>
 		%s
 		%s
+		<div>See the Aqueduct UI for more details: <a href="%s">%s</a> %s</div>
 		</div>`,
 		wfDag.Name(),
 		wfDag.ID(),
 		wfDag.ResultID(),
 		e.constructOperatorMessages(wfDag),
 		systemErrBlock,
+		link,
+		link,
+		linkWarning,
 	)
 	fullMsg := fullMessage(subject, e.conf.User, e.conf.Targets, body)
 

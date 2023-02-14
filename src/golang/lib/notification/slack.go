@@ -31,6 +31,10 @@ func (s *SlackNotification) Level() shared.NotificationLevel {
 	return s.conf.Level
 }
 
+func (s *SlackNotification) Enabled() bool {
+	return s.conf.Enabled
+}
+
 // reference: https://stackoverflow.com/questions/50106263/slack-api-to-find-existing-channel
 // We have to use list channel API together with a linear search.
 func findChannels(client *slack.Client, names []string) ([]slack.Channel, error) {
@@ -117,16 +121,25 @@ func (s *SlackNotification) SendForDag(
 		contextMarkdownBlock = fmt.Sprintf("\n*Error:*\n%s", systemErrContext)
 	}
 
+	link := wfDag.ResultLink()
+	linkWarning := ""
+	linkWarningStr := constructLinkWarning(link)
+	if len(linkWarningStr) > 0 {
+		linkWarning = fmt.Sprintf("(%s)", linkWarningStr)
+	}
+
+	linkContent := fmt.Sprintf("See the Aqueduct UI for more details: %s %s", link, linkWarning)
 	nameContent := fmt.Sprintf("*Workflow:* `%s`", wfDag.Name())
 	IDContent := fmt.Sprintf("*ID:* `%s`", wfDag.ID())
 	resultIDContent := fmt.Sprintf("*Result ID:* `%s`", wfDag.ResultID())
 	msg := fmt.Sprintf(
-		"%s\n%s\n%s%s%s",
+		"%s\n%s\n%s%s%s\n%s",
 		nameContent,
 		IDContent,
 		resultIDContent,
 		s.constructOperatorMessages(wfDag),
 		contextMarkdownBlock,
+		linkContent,
 	)
 	for _, channel := range channels {
 		// reference: https://medium.com/@gausha/a-simple-slackbot-with-golang-c5a932d719c7

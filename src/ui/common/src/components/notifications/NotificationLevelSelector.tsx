@@ -1,26 +1,28 @@
-import { Box, Checkbox, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import React from 'react';
 
-import { theme } from '../../styles/theme/theme';
 import { NotificationLogLevel } from '../../utils/notifications';
+import CheckboxEntry from './CheckboxEntry';
 
 type Props = {
   level?: NotificationLogLevel;
   onSelectLevel: (level?: NotificationLogLevel) => void;
+  // if set, we will show an additional option to allow enabling the notification
+  // using the given message.
+  enabled: boolean;
+  disabledMessage?: string;
+  enableSelectorMessage?: string;
+  onEnable?: (enabled: boolean) => void;
 };
 
 const NotificationLevelSelector: React.FC<Props> = ({
   level,
   onSelectLevel,
+  enabled,
+  disabledMessage,
+  enableSelectorMessage,
+  onEnable,
 }) => {
-  // Overrides default checkbox behavior.
-  // The `padding` is particularly important as the checkbox has a default padding of 9.
-  const checkboxStyle = {
-    padding: 0,
-    '&.Mui-checked': { color: theme.palette.blue[700] },
-    '&.Mui-disabled': { color: theme.palette.gray[700] },
-  };
-
   const errorChecked = [
     NotificationLogLevel.Success,
     NotificationLogLevel.Warning,
@@ -32,82 +34,112 @@ const NotificationLevelSelector: React.FC<Props> = ({
   ].includes(level);
   const successChecked = level === NotificationLogLevel.Success;
 
+  const showEnableOption = !!enableSelectorMessage;
+  // show level if either:
+  // * showing enable options and the option is checked
+  // * not showing enable options
+  const showLevelOptions = (enabled && showEnableOption) || !showEnableOption;
+
   // disable if higher level has been checked
   const errorDisabled = warningChecked;
   const warningDisabled = successChecked;
+
+  const levelSelectorLeftMargin = showEnableOption ? '30px' : undefined;
+
   return (
     <Box display="flex" flexDirection="column" alignContent="left">
-      <Box display="flex" flexDirection="row" alignContent="center">
-        <Checkbox
-          checked={errorChecked}
-          disabled={errorDisabled}
-          onChange={(event) =>
-            onSelectLevel(
-              event.target.checked ? NotificationLogLevel.Error : undefined
-            )
-          }
-          sx={checkboxStyle}
-        />
-        <Typography
-          variant="body1"
-          color={errorDisabled ? 'gray.700' : 'black'}
-          marginLeft={1}
+      {showEnableOption && (
+        <Box
+          display="flex"
+          flexDirection="row"
+          alignContent="center"
+          marginTop={1}
         >
-          Error
+          <CheckboxEntry
+            checked={enabled}
+            onChange={(checked) => {
+              if (!checked && !level) {
+                onSelectLevel(NotificationLogLevel.Success);
+              }
+
+              if (!!onEnable) {
+                onEnable(checked);
+              }
+            }}
+          >
+            {enableSelectorMessage}
+          </CheckboxEntry>
+        </Box>
+      )}
+      {!enabled && !!disabledMessage && (
+        <Typography variant="body2" color="gray.700">
+          {disabledMessage}
         </Typography>
-      </Box>
-      <Box
-        display="flex"
-        flexDirection="row"
-        alignContent="center"
-        marginTop={1}
-      >
-        <Checkbox
-          checked={warningChecked}
-          disabled={warningDisabled}
-          onChange={(event) =>
-            onSelectLevel(
-              event.target.checked
-                ? NotificationLogLevel.Warning
-                : NotificationLogLevel.Error
-            )
-          }
-          sx={checkboxStyle}
-        />
-        <Typography
-          variant="body1"
-          color={warningDisabled ? 'gray.700' : 'black'}
-          marginLeft={1}
-        >
-          Warning
-        </Typography>
-      </Box>
-      <Box
-        display="flex"
-        flexDirection="row"
-        alignContent="center"
-        marginTop={1}
-      >
-        <Checkbox
-          checked={successChecked}
-          onChange={(event) =>
-            onSelectLevel(
-              event.target.checked
-                ? NotificationLogLevel.Success
-                : NotificationLogLevel.Warning
-            )
-          }
-          sx={checkboxStyle}
-        />
-        <Typography
-          variant="body1"
-          color="black"
-          marginLeft={1}
+      )}
+      {showLevelOptions && (
+        <Box
+          marginLeft={levelSelectorLeftMargin}
+          marginTop={1}
+          display="flex"
+          flexDirection="row"
           alignContent="center"
         >
-          Success
-        </Typography>
-      </Box>
+          <CheckboxEntry
+            checked={errorChecked}
+            disabled={errorDisabled}
+            onChange={(checked) =>
+              onSelectLevel(checked ? NotificationLogLevel.Error : undefined)
+            }
+          >
+            Error
+          </CheckboxEntry>
+        </Box>
+      )}
+      {showLevelOptions && (
+        <Box
+          marginLeft={levelSelectorLeftMargin}
+          display="flex"
+          flexDirection="row"
+          alignContent="center"
+          marginTop={1}
+        >
+          <CheckboxEntry
+            checked={warningChecked}
+            disabled={warningDisabled}
+            onChange={(checked) =>
+              onSelectLevel(
+                checked
+                  ? NotificationLogLevel.Warning
+                  : NotificationLogLevel.Error
+              )
+            }
+          >
+            Warning
+          </CheckboxEntry>
+        </Box>
+      )}
+      {showLevelOptions && (
+        <Box
+          marginLeft={levelSelectorLeftMargin}
+          display="flex"
+          flexDirection="row"
+          alignContent="center"
+          marginTop={1}
+        >
+          <CheckboxEntry
+            checked={successChecked}
+            onChange={(checked) =>
+              onSelectLevel(
+                checked
+                  ? NotificationLogLevel.Success
+                  : NotificationLogLevel.Warning
+              )
+            }
+          >
+            Success
+          </CheckboxEntry>
+        </Box>
+      )}
     </Box>
   );
 };

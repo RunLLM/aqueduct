@@ -2,6 +2,7 @@ package dag
 
 import (
 	"context"
+	"fmt"
 
 	db_operator "github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -24,6 +25,9 @@ type WorkflowDag interface {
 	ResultID() uuid.UUID
 	Name() string
 	NotificationSettings() shared.NotificationSettings
+
+	Link() string
+	ResultLink() string
 
 	Operators() map[uuid.UUID]operator.Operator
 	Artifacts() map[uuid.UUID]artifact.Artifact
@@ -68,7 +72,8 @@ type WorkflowDag interface {
 type workflowDagImpl struct {
 	dbDAG *models.DAG
 	// resultID corresponds to the WorkflowDagResult created for the current run of this dag
-	resultID uuid.UUID
+	resultID  uuid.UUID
+	displayIP string
 
 	operators map[uuid.UUID]operator.Operator
 	artifacts map[uuid.UUID]artifact.Artifact
@@ -83,7 +88,7 @@ type workflowDagImpl struct {
 }
 
 func (dag *workflowDagImpl) ID() uuid.UUID {
-	return dag.dbDAG.ID
+	return dag.dbDAG.Metadata.ID
 }
 
 func (dag *workflowDagImpl) UserID() uuid.UUID {
@@ -112,6 +117,19 @@ func (dag *workflowDagImpl) NotificationSettings() shared.NotificationSettings {
 	}
 
 	return dag.dbDAG.Metadata.NotificationSettings
+}
+
+func (dag *workflowDagImpl) Link() string {
+	return fmt.Sprintf("%s/workflow/%s", dag.displayIP, dag.ID())
+}
+
+func (dag *workflowDagImpl) ResultLink() string {
+	return fmt.Sprintf(
+		"%s/workflow/%s?workflowDagResultId=%s",
+		dag.displayIP,
+		dag.ID(),
+		dag.ResultID(),
+	)
 }
 
 // Assumption: all dag's start with operators.
@@ -211,6 +229,7 @@ func NewWorkflowDag(
 	execEnvs map[uuid.UUID]exec_env.ExecutionEnvironment,
 	opExecMode operator.ExecutionMode,
 	aqPath string,
+	displayIP string,
 	DB database.Database,
 ) (WorkflowDag, error) {
 	dbArtifacts := dag.Artifacts
@@ -343,6 +362,7 @@ func NewWorkflowDag(
 
 	return &workflowDagImpl{
 		dbDAG:               dag,
+		displayIP:           displayIP,
 		resultID:            dagResultID,
 		operators:           operators,
 		artifacts:           artifacts,

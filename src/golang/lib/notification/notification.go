@@ -3,6 +3,7 @@ package notification
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/collections/operator"
@@ -18,6 +19,8 @@ import (
 	"github.com/google/uuid"
 )
 
+const localHostIP = "localhost"
+
 var ErrIntegrationTypeIsNotNotification = errors.New("Integration type is not a notification.")
 
 type Notification interface {
@@ -32,6 +35,12 @@ type Notification interface {
 	// This field is a 'global default' as we allow overriding this behavior in,
 	// for example, workflow specific settings.
 	Level() shared.NotificationLevel
+
+	// `Enabled()` specifies if the notification is enabled by default.
+	// We allow overriding this behavior in, for example, workflow specific settings.
+	// As a result, a notification can be disabled for all workflows (`Enabled()` returns false),
+	// with a few exceptions (overrided in workflow's `NotificationSettings` field.)
+	Enabled() bool
 
 	// `SendForDag()` sends a notification for a workflow execution.
 	SendForDag(
@@ -152,6 +161,16 @@ func summarize(wfDag dag.WorkflowDag, level shared.NotificationLevel) string {
 	}
 
 	return fmt.Sprintf("Aqueduct: Workflow %s %s", wfDag.Name(), statusMsg)
+}
+
+// `constructLinkWarning` generates any warning for a given string, assuming it's a link.
+// Typically, it warns about 'localhost' only works on server's machine.
+func constructLinkWarning(link string) string {
+	if strings.Contains(link, localHostIP) {
+		return "This link only works if you are on the same machine of your server."
+	}
+
+	return ""
 }
 
 // `ShouldSend` determines if a notification at 'level' passes configuration
