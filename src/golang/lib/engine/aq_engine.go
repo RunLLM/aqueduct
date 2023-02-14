@@ -63,6 +63,7 @@ type Repos struct {
 }
 
 type aqEngine struct {
+	DisplayIP      string
 	Database       database.Database
 	GithubManager  github.Manager
 	CronjobManager cronjob.CronjobManager
@@ -101,11 +102,13 @@ func NewAqEngine(
 	githubManager github.Manager,
 	previewCacheManager preview_cache.CacheManager,
 	aqPath string,
+	displayIP string,
 	repos *Repos,
 ) (*aqEngine, error) {
 	cronjobManager := cronjob.NewProcessCronjobManager()
 
 	return &aqEngine{
+		DisplayIP:           displayIP,
 		Database:            database,
 		GithubManager:       githubManager,
 		PreviewCacheManager: previewCacheManager,
@@ -132,6 +135,7 @@ func (eng *aqEngine) ScheduleWorkflow(
 		},
 		eng.GithubManager.Config(),
 		eng.AqPath,
+		eng.DisplayIP,
 		nil,
 	)
 	err := eng.CronjobManager.DeployCronJob(
@@ -280,6 +284,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		execEnvsByOpId,
 		operator.Publish,
 		eng.AqPath,
+		eng.DisplayIP,
 		eng.Database,
 	)
 	if err != nil {
@@ -359,6 +364,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		execEnvByOperatorId,
 		operator.Preview,
 		eng.AqPath,
+		eng.DisplayIP,
 		eng.Database,
 	)
 	if err != nil {
@@ -755,6 +761,7 @@ func (eng *aqEngine) TriggerWorkflow(
 		},
 		eng.GithubManager.Config(),
 		eng.AqPath,
+		eng.DisplayIP,
 		parameters,
 	)
 
@@ -850,8 +857,8 @@ func onFinishExecution(
 	waitForInProgressOperators(ctx, inProgressOps, pollInterval, cleanupTimeout)
 	if curErr != nil && notificationContent == nil {
 		notificationContent = &notificationContentStruct{
-			level:      mdl_shared.ErrorNotificationLevel,
-			contextMsg: curErr.Error(),
+			level:            mdl_shared.ErrorNotificationLevel,
+			systemErrContext: curErr.Error(),
 		}
 	}
 
@@ -952,7 +959,7 @@ func (eng *aqEngine) execute(
 
 			// We can continue orchestration on non-fatal errors; currently, this only allows through succeeded operators
 			// and check operators with warning severity.
-			if shouldStopExecution(execState) {
+			if execState.HasBlockingFailure() {
 				log.Infof("Stopping execution of operator %v", op.ID())
 				for id, dagOp := range workflowDag.Operators() {
 					log.Infof("Checking status of operator %v", id)
@@ -974,25 +981,23 @@ func (eng *aqEngine) execute(
 				}
 
 				notificationCtxMsg := ""
-				if execState.Error != nil {
-					notificationCtxMsg = execState.Error.Message()
+				if execState.HasSystemError() {
+					if execState.Error != nil {
+						notificationCtxMsg = execState.Error.Message()
+					} else {
+						notificationCtxMsg = "This is a system error with no further context provided." + shared.TipCreateBugReport
+					}
 				}
 
 				notificationContent = &notificationContentStruct{
-					level:      mdl_shared.ErrorNotificationLevel,
-					contextMsg: notificationCtxMsg,
+					level:            mdl_shared.ErrorNotificationLevel,
+					systemErrContext: notificationCtxMsg,
 				}
 
 				return opFailureError(*execState.FailureType, op)
-			} else if execState.Status == shared.FailedExecutionStatus {
-				notificationCtxMsg := ""
-				if execState.Error != nil {
-					notificationCtxMsg = execState.Error.Message()
-				}
-
+			} else if execState.HasWarning() {
 				notificationContent = &notificationContentStruct{
-					level:      mdl_shared.WarningNotificationLevel,
-					contextMsg: notificationCtxMsg,
+					level: mdl_shared.WarningNotificationLevel,
 				}
 			}
 
@@ -1126,6 +1131,7 @@ func (eng *aqEngine) updateWorkflowSchedule(
 			},
 			eng.GithubManager.Config(),
 			eng.AqPath,
+			eng.DisplayIP,
 			nil,
 		)
 

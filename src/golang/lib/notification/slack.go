@@ -31,6 +31,10 @@ func (s *SlackNotification) Level() shared.NotificationLevel {
 	return s.conf.Level
 }
 
+func (s *SlackNotification) Enabled() bool {
+	return s.conf.Enabled
+}
+
 // reference: https://stackoverflow.com/questions/50106263/slack-api-to-find-existing-channel
 // We have to use list channel API together with a linear search.
 func findChannels(client *slack.Client, names []string) ([]slack.Channel, error) {
@@ -71,11 +75,40 @@ func findChannels(client *slack.Client, names []string) ([]slack.Channel, error)
 	return results, nil
 }
 
+func (s *SlackNotification) constructOperatorMessages(wfDag dag.WorkflowDag) string {
+	warningOps := wfDag.OperatorsWithWarning()
+	errorOps := wfDag.OperatorsWithError()
+
+	if len(warningOps)+len(errorOps) == 0 {
+		return ""
+	}
+
+	// there are at least some checks failed:
+	msg := "\n"
+	for _, op := range warningOps {
+		msg += fmt.Sprintf(
+			"%s `%s` failed (warning).\n",
+			constructDisplayedOperatorType(op.Type()),
+			op.Name(),
+		)
+	}
+
+	for _, op := range errorOps {
+		msg += fmt.Sprintf(
+			"%s `%s` failed (error).\n",
+			constructDisplayedOperatorType(op.Type()),
+			op.Name(),
+		)
+	}
+
+	return msg
+}
+
 func (s *SlackNotification) SendForDag(
 	ctx context.Context,
 	wfDag dag.WorkflowDag,
 	level shared.NotificationLevel,
-	contextMsg string,
+	systemErrContext string,
 ) error {
 	client := slack.New(s.conf.Token)
 	channels, err := findChannels(client, s.conf.Channels)
@@ -84,19 +117,29 @@ func (s *SlackNotification) SendForDag(
 	}
 
 	contextMarkdownBlock := ""
-	if contextMsg != "" {
-		contextMarkdownBlock = fmt.Sprintf("\n*Context:*\n%s", contextMsg)
+	if systemErrContext != "" {
+		contextMarkdownBlock = fmt.Sprintf("\n*Error:*\n%s", systemErrContext)
 	}
 
+	link := wfDag.ResultLink()
+	linkWarning := ""
+	linkWarningStr := constructLinkWarning(link)
+	if len(linkWarningStr) > 0 {
+		linkWarning = fmt.Sprintf("(%s)", linkWarningStr)
+	}
+
+	linkContent := fmt.Sprintf("See the Aqueduct UI for more details: %s %s", link, linkWarning)
 	nameContent := fmt.Sprintf("*Workflow:* `%s`", wfDag.Name())
 	IDContent := fmt.Sprintf("*ID:* `%s`", wfDag.ID())
 	resultIDContent := fmt.Sprintf("*Result ID:* `%s`", wfDag.ResultID())
 	msg := fmt.Sprintf(
-		"%s\n%s\n%s%s",
+		"%s\n%s\n%s%s%s\n%s",
 		nameContent,
 		IDContent,
 		resultIDContent,
+		s.constructOperatorMessages(wfDag),
 		contextMarkdownBlock,
+		linkContent,
 	)
 	for _, channel := range channels {
 		// reference: https://medium.com/@gausha/a-simple-slackbot-with-golang-c5a932d719c7
@@ -104,7 +147,7 @@ func (s *SlackNotification) SendForDag(
 			slack.NewHeaderBlock(
 				slack.NewTextBlockObject(
 					"plain_text",
-					summary(wfDag, level),
+					summarize(wfDag, level),
 					false,
 					false,
 				),

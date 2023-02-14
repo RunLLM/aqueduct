@@ -23,6 +23,7 @@ var (
 	expose            = flag.Bool("expose", false, "Whether the server will be exposed to the public.")
 	verbose           = flag.Bool("verbose", false, "Whether all logs will be shown in the terminal, with filepaths and line numbers.")
 	port              = flag.Int("port", connection.ServerInternalPort, "The port that the server listens to.")
+	externalIP        = flag.String("external-ip", "", "The IP address that the server exposed. For now, it's used to generate links for notifications.")
 	serverLogPath     = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "logs", "server")
 	disableUsageStats = flag.Bool("disable-usage-stats", false, "Whether to disable usage statistics reporting.")
 
@@ -108,7 +109,7 @@ func main() {
 
 	environment := parseEnv()
 
-	s := server.NewAqServer(environment, *disableUsageStats)
+	s := server.NewAqServer(environment, *externalIP, *port, *disableUsageStats)
 
 	err := s.StartWorkflowRetentionJob(config.RetentionJobPeriod())
 	if err != nil {
@@ -122,5 +123,5 @@ func main() {
 
 	// Start the HTTP server and listen for requests indefinitely.
 	log.Infof("You can use api key %s to connect to the server", config.APIKey())
-	s.Run(*expose, *port)
+	s.Run(*expose)
 }

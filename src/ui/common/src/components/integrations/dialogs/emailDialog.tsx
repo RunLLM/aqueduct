@@ -1,12 +1,15 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
-import { NotificationLogLevel } from 'src';
 
 import { EmailConfig } from '../../../utils/integrations';
+import { NotificationLogLevel } from '../../../utils/notifications';
+import CheckboxEntry from '../../notifications/CheckboxEntry';
 import NotificationLevelSelector from '../../notifications/NotificationLevelSelector';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
+// Placeholders are example values not filled for users, but
+// may show up in textbox as hint if user don't fill the form field.
 const Placeholders = {
   host: 'smtp.myprovider.com',
   port: '',
@@ -14,6 +17,18 @@ const Placeholders = {
   password: '******',
   reciever: 'myreciever@myprovider.com',
   level: 'succeeded',
+  enabled: 'false',
+};
+
+// Default fields are actual filled form values on 'create' dialog.
+export const EmailDefaultsOnCreate = {
+  host: '',
+  port: '',
+  user: '',
+  password: '',
+  targets_serialized: '',
+  level: NotificationLogLevel.Success,
+  enabled: 'false',
 };
 
 type Props = {
@@ -92,21 +107,58 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       />
 
       <Box sx={{ mt: 2 }}>
-        <Box sx={{ my: 1 }}>
-          <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
-            Level *
-          </Typography>
-          <Typography variant="body2" sx={{ color: 'darkGray' }}>
-            The notification levels at which to send an email notification. This
-            applies to all workflows unless separately specified in workflow
-            settings.
-          </Typography>
-        </Box>
-        <NotificationLevelSelector
-          level={value?.level as NotificationLogLevel}
-          onSelectLevel={(level) => onUpdateField('level', level)}
-        />
+        <CheckboxEntry
+          checked={value?.enabled === 'true'}
+          disabled={false}
+          onChange={(checked) =>
+            onUpdateField('enabled', checked ? 'true' : 'false')
+          }
+        >
+          Enable this notification for all workflows.
+        </CheckboxEntry>
+        <Typography variant="body2" color="darkGray">
+          Configure if we should apply this notification to all workflows unless
+          separately specified in workflow settings.
+        </Typography>
       </Box>
+
+      {value?.enabled === 'true' && (
+        <Box sx={{ mt: 2 }}>
+          <Box sx={{ my: 1 }}>
+            <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
+              Level
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'darkGray' }}>
+              The notification levels at which to send an email notification.
+              This applies to all workflows unless separately specified in
+              workflow settings.
+            </Typography>
+          </Box>
+          <NotificationLevelSelector
+            level={value?.level as NotificationLogLevel}
+            onSelectLevel={(level) => onUpdateField('level', level)}
+            enabled={value?.enabled === 'true'}
+          />
+        </Box>
+      )}
     </Box>
   );
 };
+
+export function isEmailConfigComplete(config: EmailConfig): boolean {
+  if (config.enabled !== 'true' && config.enabled !== 'false') {
+    return false;
+  }
+
+  if (config.enabled == 'true' && !config.level) {
+    return false;
+  }
+
+  return (
+    !!config.host &&
+    !!config.port &&
+    !!config.password &&
+    !!config.targets_serialized &&
+    !!config.user
+  );
+}

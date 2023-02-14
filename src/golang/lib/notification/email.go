@@ -30,6 +30,10 @@ func (e *EmailNotification) Level() shared.NotificationLevel {
 	return e.conf.Level
 }
 
+func (e *EmailNotification) Enabled() bool {
+	return e.conf.Enabled
+}
+
 func fullMessage(subject string, from string, targets []string, body string) string {
 	fullMsg := fmt.Sprintf("From: %s\n", from)
 	fullMsg += fmt.Sprintf("To: %s\n", strings.Join(targets, ","))
@@ -39,32 +43,75 @@ func fullMessage(subject string, from string, targets []string, body string) str
 	return fullMsg
 }
 
+func (e *EmailNotification) constructOperatorMessages(wfDag dag.WorkflowDag) string {
+	warningOps := wfDag.OperatorsWithWarning()
+	errorOps := wfDag.OperatorsWithError()
+
+	if len(warningOps)+len(errorOps) == 0 {
+		return ""
+	}
+
+	// there are at least some operators failed:
+	msg := ""
+	for _, op := range warningOps {
+		msg += fmt.Sprintf(
+			`<div>%s <font face="monospace">%s</font> failed (warning).</div>`,
+			constructDisplayedOperatorType(op.Type()),
+			op.Name(),
+		)
+	}
+
+	for _, op := range errorOps {
+		msg += fmt.Sprintf(
+			`<div>%s <font face="monospace">%s</font> failed (error).</div>`,
+			constructDisplayedOperatorType(op.Type()),
+			op.Name(),
+		)
+	}
+
+	return msg
+}
+
 func (e *EmailNotification) SendForDag(
 	ctx context.Context,
 	wfDag dag.WorkflowDag,
 	level shared.NotificationLevel,
-	contextMsg string,
+	systemErrContext string,
 ) error {
-	subject := summary(wfDag, level)
-	contextBlock := ""
-	if contextMsg != "" {
-		contextBlock = fmt.Sprintf(`<div>
-			<b>Context</b>:
+	subject := summarize(wfDag, level)
+	systemErrBlock := ""
+	if systemErrContext != "" {
+		systemErrBlock = fmt.Sprintf(`<div>
+			<b>Error:</b>
 		</div>
 		<div>
 			<font face="monospace">%s</font>
-		</div>`, contextMsg)
+		</div>`, systemErrContext)
 	}
+
+	link := wfDag.ResultLink()
+	linkWarning := ""
+	linkWarningStr := constructLinkWarning(link)
+	if len(linkWarningStr) > 0 {
+		linkWarning = fmt.Sprintf("(%s)", linkWarningStr)
+	}
+
 	body := fmt.Sprintf(`<div dir="ltr">
 		<div><b>Workflow</b>: <font face="monospace">%s</font></div>
 		<div><b>ID</b>: <font face="monospace">%s</font></div>
 		<div><b>Result ID</b>: <font face="monospace">%s</font></div>
-			%s
+		%s
+		%s
+		<div>See the Aqueduct UI for more details: <a href="%s">%s</a> %s</div>
 		</div>`,
 		wfDag.Name(),
 		wfDag.ID(),
 		wfDag.ResultID(),
-		contextBlock,
+		e.constructOperatorMessages(wfDag),
+		systemErrBlock,
+		link,
+		link,
+		linkWarning,
 	)
 	fullMsg := fullMessage(subject, e.conf.User, e.conf.Targets, body)
 

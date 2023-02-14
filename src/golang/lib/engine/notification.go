@@ -12,8 +12,12 @@ import (
 )
 
 type notificationContentStruct struct {
-	level      mdl_shared.NotificationLevel
-	contextMsg string
+	level mdl_shared.NotificationLevel
+	// Additional system error that the user should be notified.
+	// Execution related user errors should already captured by
+	// dag.WorkflowDag object using `OperatorsWithError()` and
+	// `OperatorsWithWarning()` interfaces.
+	systemErrContext string
 }
 
 func getNotifications(
@@ -52,7 +56,7 @@ func sendNotifications(
 	workflowSettings := wfDag.NotificationSettings().Settings
 	for _, notificationObj := range notifications {
 		if len(workflowSettings) > 0 {
-			// send based on settings
+			// send based on workflow settings
 			thresholdLevel, ok := workflowSettings[notificationObj.ID()]
 			if ok {
 				if notification.ShouldSend(thresholdLevel, content.level) {
@@ -60,7 +64,7 @@ func sendNotifications(
 						ctx,
 						wfDag,
 						content.level,
-						content.contextMsg,
+						content.systemErrContext,
 					)
 					if err != nil {
 						return err
@@ -69,13 +73,14 @@ func sendNotifications(
 			}
 		} else {
 			// Otherwise we send based on global settings.
-			// ENG-2341 will allow user to configure if a notification applies to all workflows.
-			if notification.ShouldSend(notificationObj.Level(), content.level) {
+			if notificationObj.Enabled() && notification.ShouldSend(
+				notificationObj.Level(), content.level,
+			) {
 				err = notificationObj.SendForDag(
 					ctx,
 					wfDag,
 					content.level,
-					content.contextMsg,
+					content.systemErrContext,
 				)
 				if err != nil {
 					return err
