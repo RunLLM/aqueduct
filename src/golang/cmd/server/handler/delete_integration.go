@@ -201,7 +201,7 @@ func cleanUpIntegration(
 		return exec_env.DeleteBaseEnvs()
 	}
 
-	if integrationObject.Service == integration.Email || integrationObject.Service == integration.Slack {
+	if integrationObject.Service == shared.Email || integrationObject.Service == shared.Slack {
 		err := workflowRepo.RemoveNotificationFromSettings(ctx, integrationObject.ID, DB)
 		if err != nil {
 			return err
