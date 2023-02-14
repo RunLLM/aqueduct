@@ -46,6 +46,7 @@ func NewWorkflowExecutor(spec *job.WorkflowSpec, base *BaseExecutor) (*WorkflowE
 		githubManager,
 		nil, /* PreviewCacheManager */
 		spec.AqPath,
+		spec.DisplayIP,
 		engineRepos,
 	)
 	if err != nil {

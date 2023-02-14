@@ -45,6 +45,7 @@ import MenuSidebar, {
 } from './components/layouts/menuSidebar';
 import LogViewer from './components/LogViewer';
 import MultiFileViewer from './components/MultiFileViewer';
+import AccountNotificationSettingsSelector from './components/notifications/AccountNotificationSettingsSelector';
 import NotificationLevelSelector from './components/notifications/NotificationLevelSelector';
 import { NotificationListItem } from './components/notifications/NotificationListItem';
 import NotificationsPopover from './components/notifications/NotificationsPopover';
@@ -202,6 +203,7 @@ import {
 } from './utils/workflows';
 
 export {
+  AccountNotificationSettingsSelector,
   AccountPage,
   AddIntegrations,
   addTable,
