@@ -482,7 +482,11 @@ def install_mysql():
         else:
             print("Unsupported distribution:", distro.id())
     elif system == "Darwin":
-        execute_command(["brew", "install", "mysql"])
+        cmd = ["brew", "install", "mysql"]
+        architecture = subprocess.Popen(["which", "-a", "brew"], stdout=subprocess.PIPE ).communicate()[0]
+        if architecture.startswith(b"/opt/homebrew"): # Using arm verison of brew
+            cmd = ["arch", "-arm64", *cmd]
+        execute_command(cmd)
     else:
         print("Unsupported operating system:", system)
 
