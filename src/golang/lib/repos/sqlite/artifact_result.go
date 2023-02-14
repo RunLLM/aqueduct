@@ -9,6 +9,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
@@ -188,7 +189,7 @@ func (*artifactResultReader) GetWithArtifactOfMetricsByDAGResultBatch(
 			AND json_extract(operator.spec, '$.type') = '%s'
 			AND artifact_result.artifact_id = artifact.id
 			AND artifact_result.workflow_dag_result_id IN (%s);`,
-		shared.MetricType,
+		operator.MetricType,
 		stmt_preparers.GenerateArgsList(len(dagResultIDs), 1),
 	)
 

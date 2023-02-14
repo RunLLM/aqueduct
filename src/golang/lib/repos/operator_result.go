@@ -6,6 +6,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
@@ -54,7 +55,7 @@ type operatorResultReader interface {
 	GetWithOperatorByDAGResultBatch(
 		ctx context.Context,
 		dagResultIDs []uuid.UUID,
-		types []shared.OperatorType,
+		types []operator.Type,
 		DB database.Database,
 	) ([]views.OperatorWithResult, error)
 }

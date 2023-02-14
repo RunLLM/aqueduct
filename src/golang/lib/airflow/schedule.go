@@ -257,7 +257,7 @@ func ScheduleWorkflow(
 
 	// Update the AirflowRuntimeConfig for `dag`
 	newRuntimeConfig := dag.EngineConfig
-	newRuntimeConfig.AirflowConfig.DagId = dagId
+	newRuntimeConfig.AirflowConfig.DagID = dagId
 	// The DAGs will not match until the user has copied over the newly generated `airflowDagFile`
 	newRuntimeConfig.AirflowConfig.MatchesAirflow = false
 	newRuntimeConfig.AirflowConfig.OperatorToTask = operatorToTask
@@ -290,7 +290,7 @@ func prepareStorageConfig(
 ) (shared.StorageConfig, error) {
 	emptyStorageConf := shared.StorageConfig{}
 
-	authConf, err := auth.ReadConfigFromSecret(ctx, dag.EngineConfig.AirflowConfig.IntegrationId, vault)
+	authConf, err := auth.ReadConfigFromSecret(ctx, dag.EngineConfig.AirflowConfig.IntegrationID, vault)
 	if err != nil {
 		return emptyStorageConf, err
 	}

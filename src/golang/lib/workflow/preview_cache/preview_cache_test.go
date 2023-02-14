@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"

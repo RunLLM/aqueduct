@@ -1,10 +1,11 @@
-package shared
+package operator
 
 import (
 	"database/sql/driver"
 	"encoding/json"
 
 	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/check"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/function"
@@ -53,8 +54,8 @@ type specUnion struct {
 	SystemMetric *system_metric.SystemMetric `json:"system_metric,omitempty"`
 
 	// This can currently only be set for function operators.
-	Resources    *ResourceConfig `json:"resources,omitempty"`
-	EngineConfig *EngineConfig   `json:"engine_config,omitempty"`
+	Resources    *ResourceConfig      `json:"resources,omitempty"`
+	EngineConfig *shared.EngineConfig `json:"engine_config,omitempty"`
 }
 
 type Spec struct {
@@ -112,7 +113,7 @@ func (s Spec) Resources() *ResourceConfig {
 	return s.spec.Resources
 }
 
-func (s Spec) EngineConfig() *EngineConfig {
+func (s Spec) EngineConfig() *shared.EngineConfig {
 	return s.spec.EngineConfig
 }
 

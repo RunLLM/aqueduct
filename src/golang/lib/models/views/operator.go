@@ -3,7 +3,7 @@ package views
 import (
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/connector"
 	"github.com/google/uuid"
 )

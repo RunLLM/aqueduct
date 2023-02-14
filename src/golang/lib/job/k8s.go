@@ -6,9 +6,9 @@ import (
 	"strconv"
 
 	"github.com/aqueducthq/aqueduct/lib"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/function"
 	"github.com/dropbox/godropbox/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
