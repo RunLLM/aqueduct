@@ -41,8 +41,8 @@ def resolve_op_and_artifact_names(
         candidate_op_name:
             The operator name that we want to check and potentially deduplicate.
         overwrite_existing_op_name:
-            If set, any operator collisions will be ignored. Otherwise, we will bump
-            the operator name until an available one is found.
+            If set, we will overwrite any existing operator with the same name.
+            If not set, we will bump the operator name until an available one is found.
         candidate_artifact_names:
             The custom output artifact names the caller wants to assign to the operator
             outputs. If not set, we will use our default artifact naming scheme. Regardless,
@@ -51,8 +51,9 @@ def resolve_op_and_artifact_names(
             Must be consistent with `candidate_artifact_names`, if set. The number of
             output artifacts to expected.
         only_resolve_op_name:
-            If set, skip the artifact naming validation step. An empty list will be
-            returned for the artifact names in that case.
+            NOTE: only use this if the operator does not produce any artifacts! (eg. saves).
+            If set, this will skip the artifact naming validation step. An empty list will be
+            returned for the artifact names.
     Returns:
         A tuple of the operator name and artifact name(s), which the caller can use
         to safely attach elements to the DAG.

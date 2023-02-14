@@ -62,33 +62,10 @@ def create_param_artifact(
 ) -> BaseArtifact:
     """Creates a parameter operator and return an artifact that can be fed into other operators.
 
-    For implicitly created parameters, the naming collision policy is as follows:
-    - We will bump the parameter name until it is unique, unless the colliding operator satisfies
-    the following conditions:
-    1) It is also created implicitly.
-    2) It is also consumed by an operator with the same name as `op_name_for_implicit_param`.
-        Essentially, it is replacing that exact parameter-operator pair in the dag.
-    In such cases, we will overwrite the existing parameter, which is more natural.
-        ```
-        @op
-        def foo(bar: int):
-            ...
-
-        foo(123) # Creates implicit param named `bar`.
-        foo(234) # Overwrites the previously created `bar` parameter with new default value 234.
-        ```
-
-    For explicitly created parameters (those made with client.create_param()), we need to check
-    that it's not overwriting an implicitly created parameter:
-
-        ```
-        @op
-        def foo(bar: int):
-            ...
-
-        foo(123) # Creates implicit param named `bar`.
-        client.create_param("bar", default=555) # Throws an error to avoid unexpected overwriting behavior.
-        ```
+    For implicitly created parameters, the naming collision policy is as follows: we will error
+    if there exists other operators or artifacts with the same name, unless we are overwriting
+    another implicit parameter being used by the same operator. An implicit parameter is named
+    "<op_name>:<param_name>".
 
     Args:
         dag:

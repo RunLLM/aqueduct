@@ -213,7 +213,7 @@ def test_change_param_artifact_name(client, flow_name, engine):
     param.set_name("new param name")
     new_param = param  # Move the parameter to a different variable
 
-    # The output name collides with the old param name, but we already moved it out.
+    # The operator name collides with the old param name, but we already moved it out.
     @op
     def param():
         return "value"
