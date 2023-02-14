@@ -81,3 +81,10 @@ class SerializationType(str, Enum, metaclass=MetaEnum):
     STRING = "string"
     BYTES = "bytes"
     TF_KERAS = "tensorflow-keras-model"
+
+
+class PrintColorType(str, Enum, metaclass=MetaEnum):
+    # These are the ANSI color codes for Python.
+    # More color codes here (https://code-maven.com/ansi-command-line-colors-with-python).
+    GREEN = "\33[32m"
+    YELLOW = "\33[33m"
