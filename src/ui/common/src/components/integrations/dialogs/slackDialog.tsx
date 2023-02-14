@@ -1,5 +1,5 @@
-import Box from '@mui/material/Box';
 import { Divider } from '@mui/material';
+import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 
@@ -71,7 +71,7 @@ export const SlackDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         value={channels ?? null}
       />
 
-      <Divider sx={{ mt: 2}}/>
+      <Divider sx={{ mt: 2 }} />
 
       <Box sx={{ mt: 2 }}>
         <CheckboxEntry
