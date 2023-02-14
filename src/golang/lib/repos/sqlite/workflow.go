@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -32,7 +31,7 @@ func NewWorklowRepo() repos.Workflow {
 }
 
 func (*workflowReader) Exists(ctx context.Context, ID uuid.UUID, DB database.Database) (bool, error) {
-	return utils.IdExistsInTable(ctx, ID, models.WorkflowTable, DB)
+	return IDExistsInTable(ctx, ID, models.WorkflowTable, DB)
 }
 
 func (*workflowReader) Get(ctx context.Context, ID uuid.UUID, DB database.Database) (*models.Workflow, error) {
@@ -236,7 +235,7 @@ func (*workflowReader) ValidateOrg(ctx context.Context, ID uuid.UUID, orgID stri
 		AND app_user.organization_id = $2;`
 	args := []interface{}{ID, orgID}
 
-	var count utils.CountResult
+	var count countResult
 	err := DB.Query(ctx, &count, query, args...)
 	if err != nil {
 		return false, err
@@ -267,7 +266,7 @@ func (*workflowWriter) Create(
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.WorkflowTable, cols, models.WorkflowCols())
 
-	ID, err := utils.GenerateUniqueUUID(ctx, models.WorkflowTable, DB)
+	ID, err := GenerateUniqueUUID(ctx, models.WorkflowTable, DB)
 	if err != nil {
 		return nil, err
 	}
@@ -289,7 +288,7 @@ func (*workflowWriter) Update(
 	DB database.Database,
 ) (*models.Workflow, error) {
 	var workflow models.Workflow
-	err := utils.UpdateRecordToDest(
+	err := repos.UpdateRecordToDest(
 		ctx,
 		&workflow,
 		changes,

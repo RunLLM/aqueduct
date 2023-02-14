@@ -3,8 +3,8 @@ package _000011_exec_state_column_backfill
 import (
 	"database/sql/driver"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
 )
 
 type Metadata struct {
@@ -18,11 +18,11 @@ type NullMetadata struct {
 }
 
 func (m *Metadata) Value() (driver.Value, error) {
-	return utils.ValueJsonB(*m)
+	return utils.ValueJSONB(*m)
 }
 
 func (m *Metadata) Scan(value interface{}) error {
-	return utils.ScanJsonB(value, m)
+	return utils.ScanJSONB(value, m)
 }
 
 func (n *NullMetadata) Value() (driver.Value, error) {
@@ -66,11 +66,11 @@ type ExecutionState struct {
 }
 
 func (e *ExecutionState) Value() (driver.Value, error) {
-	return utils.ValueJsonB(*e)
+	return utils.ValueJSONB(*e)
 }
 
 func (e *ExecutionState) Scan(value interface{}) error {
-	return utils.ScanJsonB(value, e)
+	return utils.ScanJSONB(value, e)
 }
 
 type NullExecutionState struct {

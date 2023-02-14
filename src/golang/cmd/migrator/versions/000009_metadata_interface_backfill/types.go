@@ -3,7 +3,7 @@ package _000009_metadata_interface_backfill
 import (
 	"database/sql/driver"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
 )
 
 type OldMetadata []map[string]string
@@ -24,19 +24,19 @@ type NullMetadata struct {
 }
 
 func (m *Metadata) Value() (driver.Value, error) {
-	return utils.ValueJsonB(*m)
+	return utils.ValueJSONB(*m)
 }
 
 func (m *Metadata) Scan(value interface{}) error {
-	return utils.ScanJsonB(value, m)
+	return utils.ScanJSONB(value, m)
 }
 
 func (m *OldMetadata) Value() (driver.Value, error) {
-	return utils.ValueJsonB(*m)
+	return utils.ValueJSONB(*m)
 }
 
 func (m *OldMetadata) Scan(value interface{}) error {
-	return utils.ScanJsonB(value, m)
+	return utils.ScanJSONB(value, m)
 }
 
 func (n *OldNullMetadata) Value() (driver.Value, error) {

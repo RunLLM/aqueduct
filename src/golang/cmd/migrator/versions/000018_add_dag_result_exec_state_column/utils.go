@@ -5,8 +5,9 @@ import (
 	"database/sql/driver"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/google/uuid"
 )
 
@@ -61,11 +62,11 @@ type ExecutionState struct {
 }
 
 func (e *ExecutionState) Value() (driver.Value, error) {
-	return utils.ValueJsonB(*e)
+	return utils.ValueJSONB(*e)
 }
 
 func (e *ExecutionState) Scan(value interface{}) error {
-	return utils.ScanJsonB(value, e)
+	return utils.ScanJSONB(value, e)
 }
 
 type NullExecutionState struct {
@@ -130,7 +131,7 @@ func backfill(ctx context.Context, db database.Database) error {
 			},
 		}
 
-		err = utils.UpdateRecord(ctx, changes, "workflow_dag_result", "id", dagResult.Id, db)
+		err = repos.UpdateRecord(ctx, changes, "workflow_dag_result", "id", dagResult.Id, db)
 		if err != nil {
 			return err
 		}

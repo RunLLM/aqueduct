@@ -3,8 +3,8 @@ package _000004_storage_interface_backfill
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/google/uuid"
 )
 
@@ -49,7 +49,7 @@ func updateStorageConfig(
 	changes := map[string]interface{}{
 		"storage_config": &storageConfig,
 	}
-	return utils.UpdateRecord(ctx, changes, "workflow_dag", "id", id, db)
+	return repos.UpdateRecord(ctx, changes, "workflow_dag", "id", id, db)
 }
 
 func updateOperatorSpec(
@@ -61,7 +61,7 @@ func updateOperatorSpec(
 	changes := map[string]interface{}{
 		"spec": &spec,
 	}
-	return utils.UpdateRecord(ctx, changes, "operator", "id", id, db)
+	return repos.UpdateRecord(ctx, changes, "operator", "id", id, db)
 }
 
 func setStorageConfigToNull(

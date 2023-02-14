@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -38,12 +37,12 @@ type listIntegrationsArgs struct {
 type listIntegrationsResponse []integrationResponse
 
 type integrationResponse struct {
-	ID        uuid.UUID      `json:"id"`
-	Service   shared.Service `json:"service"`
-	Name      string         `json:"name"`
-	Config    utils.Config   `json:"config"`
-	CreatedAt int64          `json:"createdAt"`
-	Validated bool           `json:"validated"`
+	ID        uuid.UUID                `json:"id"`
+	Service   shared.Service           `json:"service"`
+	Name      string                   `json:"name"`
+	Config    shared.IntegrationConfig `json:"config"`
+	CreatedAt int64                    `json:"createdAt"`
+	Validated bool                     `json:"validated"`
 }
 
 func (*ListIntegrationsHandler) Name() string {

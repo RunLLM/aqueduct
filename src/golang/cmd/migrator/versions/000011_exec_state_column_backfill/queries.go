@@ -3,9 +3,9 @@ package _000011_exec_state_column_backfill
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/google/uuid"
 )
 
@@ -41,7 +41,7 @@ func updateExecState(
 	changes := map[string]interface{}{
 		"execution_state": execState,
 	}
-	return utils.UpdateRecord(ctx, changes, "operator_result", "id", id, db)
+	return repos.UpdateRecord(ctx, changes, "operator_result", "id", id, db)
 }
 
 func getOpResultsWithExecState(
@@ -64,5 +64,5 @@ func updateMetadata(
 	changes := map[string]interface{}{
 		"metadata": metadata,
 	}
-	return utils.UpdateRecord(ctx, changes, "operator_result", "id", id, db)
+	return repos.UpdateRecord(ctx, changes, "operator_result", "id", id, db)
 }

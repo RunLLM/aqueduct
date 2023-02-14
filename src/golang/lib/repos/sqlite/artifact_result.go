@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -216,7 +215,7 @@ func (*artifactResultWriter) Create(
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.ArtifactResultTable, cols, models.ArtifactResultCols())
 
-	ID, err := utils.GenerateUniqueUUID(ctx, models.ArtifactResultTable, DB)
+	ID, err := GenerateUniqueUUID(ctx, models.ArtifactResultTable, DB)
 	if err != nil {
 		return nil, err
 	}
@@ -251,7 +250,7 @@ func (*artifactResultWriter) CreateWithExecStateAndMetadata(
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.ArtifactResultTable, cols, models.ArtifactResultCols())
 
-	ID, err := utils.GenerateUniqueUUID(ctx, models.ArtifactResultTable, DB)
+	ID, err := GenerateUniqueUUID(ctx, models.ArtifactResultTable, DB)
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +277,7 @@ func (*artifactResultWriter) DeleteBatch(ctx context.Context, IDs []uuid.UUID, D
 
 func (*artifactResultWriter) Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.ArtifactResult, error) {
 	var artifactResult models.ArtifactResult
-	err := utils.UpdateRecordToDest(
+	err := repos.UpdateRecordToDest(
 		ctx,
 		&artifactResult,
 		changes,

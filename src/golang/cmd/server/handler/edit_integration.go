@@ -7,7 +7,6 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
@@ -296,7 +295,7 @@ func UpdateIntegration(
 	if newConfig != nil {
 		// Extract non-confidential config
 		publicConfig := newConfig.PublicConfig()
-		changedFields[models.IntegrationConfig] = (*utils.Config)(&publicConfig)
+		changedFields[models.IntegrationConfig] = (*shared.IntegrationConfig)(&publicConfig)
 	}
 
 	txn, err := DB.BeginTx(ctx)

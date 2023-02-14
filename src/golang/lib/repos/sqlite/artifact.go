@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -33,7 +32,7 @@ func NewArtifactRepo() repos.Artifact {
 }
 
 func (*artifactReader) Exists(ctx context.Context, ID uuid.UUID, DB database.Database) (bool, error) {
-	return utils.IdExistsInTable(ctx, ID, models.ArtifactTable, DB)
+	return IDExistsInTable(ctx, ID, models.ArtifactTable, DB)
 }
 
 func (*artifactReader) Get(ctx context.Context, ID uuid.UUID, DB database.Database) (*models.Artifact, error) {
@@ -114,7 +113,7 @@ func (*artifactReader) GetIDsByDAGAndDownstreamOPBatch(
 }
 
 func (*artifactReader) ValidateOrg(ctx context.Context, ID uuid.UUID, orgID string, DB database.Database) (bool, error) {
-	return utils.ValidateNodeOwnership(ctx, orgID, ID, DB)
+	return validateNodeOwnership(ctx, orgID, ID, DB)
 }
 
 func (*artifactReader) GetMetricsByUpstreamArtifactBatch(
@@ -187,7 +186,7 @@ func (*artifactWriter) Create(
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.ArtifactTable, cols, models.ArtifactCols())
 
-	ID, err := utils.GenerateUniqueUUID(ctx, models.ArtifactTable, DB)
+	ID, err := GenerateUniqueUUID(ctx, models.ArtifactTable, DB)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +210,7 @@ func (*artifactWriter) Update(
 	DB database.Database,
 ) (*models.Artifact, error) {
 	var artifact models.Artifact
-	err := utils.UpdateRecordToDest(
+	err := repos.UpdateRecordToDest(
 		ctx,
 		&artifact,
 		changes,

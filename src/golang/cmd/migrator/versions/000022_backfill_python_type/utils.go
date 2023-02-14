@@ -11,9 +11,10 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
@@ -45,11 +46,11 @@ type NullMetadata struct {
 }
 
 func (m *Metadata) Value() (driver.Value, error) {
-	return utils.ValueJsonB(*m)
+	return utils.ValueJSONB(*m)
 }
 
 func (m *Metadata) Scan(value interface{}) error {
-	return utils.ScanJsonB(value, m)
+	return utils.ScanJSONB(value, m)
 }
 
 func (n *NullMetadata) Value() (driver.Value, error) {
@@ -147,5 +148,5 @@ func backfillPythonType(
 		metadataColumn: metadata,
 	}
 
-	return utils.UpdateRecord(ctx, changes, artifactResultTable, "id", id, db)
+	return repos.UpdateRecord(ctx, changes, artifactResultTable, "id", id, db)
 }

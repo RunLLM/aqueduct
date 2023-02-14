@@ -14,7 +14,6 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
-	col_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
@@ -239,7 +238,7 @@ func ConnectIntegration(
 			args.ID,
 			args.Service,
 			args.Name,
-			(*col_utils.Config)(&publicConfig),
+			(*shared.IntegrationConfig)(&publicConfig),
 			true,
 			DB,
 		)
@@ -249,7 +248,7 @@ func ConnectIntegration(
 			args.OrgID,
 			args.Service,
 			args.Name,
-			(*col_utils.Config)(&publicConfig),
+			(*shared.IntegrationConfig)(&publicConfig),
 			true,
 			DB,
 		)

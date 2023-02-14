@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -111,7 +110,7 @@ func (*integrationReader) GetByUser(ctx context.Context, orgID string, userID uu
 }
 
 func (*integrationReader) ValidateOwnership(ctx context.Context, integrationID uuid.UUID, orgID string, userID uuid.UUID, DB database.Database) (bool, error) {
-	var count utils.CountResult
+	var count countResult
 
 	query := fmt.Sprintf(
 		`SELECT %s FROM integration WHERE id = $1;`,
@@ -147,7 +146,7 @@ func (*integrationWriter) Create(
 	orgID string,
 	service shared.Service,
 	name string,
-	config *utils.Config,
+	config *shared.IntegrationConfig,
 	validated bool,
 	DB database.Database,
 ) (*models.Integration, error) {
@@ -162,7 +161,7 @@ func (*integrationWriter) Create(
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.IntegrationTable, cols, models.IntegrationCols())
 
-	ID, err := utils.GenerateUniqueUUID(ctx, models.IntegrationTable, DB)
+	ID, err := GenerateUniqueUUID(ctx, models.IntegrationTable, DB)
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +184,7 @@ func (*integrationWriter) CreateForUser(
 	userID uuid.UUID,
 	service shared.Service,
 	name string,
-	config *utils.Config,
+	config *shared.IntegrationConfig,
 	validated bool,
 	DB database.Database,
 ) (*models.Integration, error) {
@@ -201,7 +200,7 @@ func (*integrationWriter) CreateForUser(
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.IntegrationTable, cols, models.IntegrationCols())
 
-	ID, err := utils.GenerateUniqueUUID(ctx, models.IntegrationTable, DB)
+	ID, err := GenerateUniqueUUID(ctx, models.IntegrationTable, DB)
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +225,7 @@ func (*integrationWriter) Delete(ctx context.Context, ID uuid.UUID, DB database.
 
 func (*integrationWriter) Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.Integration, error) {
 	var integration models.Integration
-	err := utils.UpdateRecordToDest(ctx, &integration, changes, models.IntegrationTable, models.IntegrationID, ID, models.IntegrationCols(), DB)
+	err := repos.UpdateRecordToDest(ctx, &integration, changes, models.IntegrationTable, models.IntegrationID, ID, models.IntegrationCols(), DB)
 	return &integration, err
 }
 

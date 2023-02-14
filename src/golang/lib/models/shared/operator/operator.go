@@ -4,7 +4,6 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/check"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/connector"
@@ -12,6 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/metric"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/system_metric"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/dropbox/godropbox/errors"
 )
 
@@ -253,9 +253,9 @@ func (s *Spec) UnmarshalJSON(rawMessage []byte) error {
 }
 
 func (s *Spec) Value() (driver.Value, error) {
-	return utils.ValueJsonB(*s)
+	return utils.ValueJSONB(*s)
 }
 
 func (s *Spec) Scan(value interface{}) error {
-	return utils.ScanJsonB(value, s)
+	return utils.ScanJSONB(value, s)
 }

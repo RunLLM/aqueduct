@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -297,7 +296,7 @@ func (*dagWriter) Create(
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.DagTable, cols, models.DAGCols())
 
-	ID, err := utils.GenerateUniqueUUID(ctx, models.DagTable, DB)
+	ID, err := GenerateUniqueUUID(ctx, models.DagTable, DB)
 	if err != nil {
 		return nil, err
 	}
@@ -323,7 +322,7 @@ func (*dagWriter) DeleteBatch(ctx context.Context, IDs []uuid.UUID, DB database.
 
 func (*dagWriter) Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.DAG, error) {
 	var dag models.DAG
-	err := utils.UpdateRecordToDest(
+	err := repos.UpdateRecordToDest(
 		ctx,
 		&dag,
 		changes,

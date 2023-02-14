@@ -3,7 +3,7 @@ package shared
 import (
 	"database/sql/driver"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
 )
 
 type ExecutionEnvironmentSpec struct {
@@ -12,9 +12,9 @@ type ExecutionEnvironmentSpec struct {
 }
 
 func (m *ExecutionEnvironmentSpec) Value() (driver.Value, error) {
-	return utils.ValueJsonB(*m)
+	return utils.ValueJSONB(*m)
 }
 
 func (m *ExecutionEnvironmentSpec) Scan(value interface{}) error {
-	return utils.ScanJsonB(value, m)
+	return utils.ScanJSONB(value, m)
 }

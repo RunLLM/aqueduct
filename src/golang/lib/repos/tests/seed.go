@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
@@ -30,7 +29,7 @@ func (ts *TestSuite) seedIntegrationWithUser(count int, userID uuid.UUID) []mode
 
 	for i := 0; i < count; i++ {
 		name := randString(10)
-		config := make(utils.Config)
+		config := make(shared.IntegrationConfig)
 		config[randString(10)] = randString(10)
 		validated := true
 		integration, err := ts.integration.CreateForUser(

@@ -3,7 +3,6 @@ package repos
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -49,7 +48,7 @@ type integrationWriter interface {
 		orgID string,
 		service shared.Service,
 		name string,
-		config *utils.Config,
+		config *shared.IntegrationConfig,
 		validated bool,
 		DB database.Database,
 	) (*models.Integration, error)
@@ -61,7 +60,7 @@ type integrationWriter interface {
 		userID uuid.UUID,
 		service shared.Service,
 		name string,
-		config *utils.Config,
+		config *shared.IntegrationConfig,
 		validated bool,
 		DB database.Database,
 	) (*models.Integration, error)

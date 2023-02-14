@@ -42,7 +42,7 @@ func (*notificationReader) GetByReceiverAndStatus(ctx context.Context, receiverI
 
 func (*notificationReader) ValidateUser(ctx context.Context, notificationID uuid.UUID, userID uuid.UUID, DB database.Database) (bool, error) {
 	query := `SELECT COUNT(*) AS count FROM notification WHERE id = $1 AND receiver_id = $2;`
-	var count utils.CountResult
+	var count countResult
 
 	err := DB.Query(ctx, &count, query, notificationID, userID)
 	if err != nil {
