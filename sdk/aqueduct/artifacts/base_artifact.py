@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional
 from aqueduct.constants.enums import ArtifactType, OperatorType
 from aqueduct.error import InvalidUserActionException
 from aqueduct.models.dag import DAG
+from aqueduct.models.operators import get_operator_type
 
 
 class BaseArtifact(ABC):
@@ -39,12 +40,20 @@ class BaseArtifact(ABC):
         self._from_operator_type = operator_type
 
     def set_name(self, name: str) -> None:
-        existing = self._dag.get_artifact_by_name(name)
-        if existing is not None:
-            raise InvalidUserActionException(
-                "Artifact with name `%s` has already been created locally. Artifact names must be unique."
-                % name,
-            )
+        self._dag.validate_artifact_name(name)
+
+        # If this a parameter artifact, we will also need to change the name of the parameter,
+        # to preserve our invariant that a param op and its artifact always have the same name.
+        op = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
+        if get_operator_type(op) == OperatorType.PARAM:
+            if self._dag.get_operator(with_name=name) is not None:
+                raise InvalidUserActionException(
+                    "Unable to change parameter name to %s, there already exists an operator with the same name. "
+                    "Parameter names must be globally unique." % name,
+                )
+            self._dag.update_operator_name(op.id, name)
+
+        # Update the name of the artifact.
         self._dag.update_artifact_name(self._artifact_id, name)
 
     def _describe(self) -> Dict[str, Any]:

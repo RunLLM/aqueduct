@@ -31,7 +31,8 @@ from aqueduct.models.operators import (
 from aqueduct.type_annotations import CheckFunction, MetricFunction, Number, UserFunction
 from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.function_packaging import serialize_function
-from aqueduct.utils.utils import artifact_name_from_op_name, generate_engine_config, generate_uuid
+from aqueduct.utils.naming import resolve_op_and_artifact_names
+from aqueduct.utils.utils import generate_engine_config, generate_uuid
 
 from aqueduct import globals
 
@@ -110,15 +111,13 @@ def wrap_spec(
     operator_id = generate_uuid()
     output_artifact_ids = [generate_uuid() for _ in output_artifact_type_hints]
 
-    def _construct_default_artifact_name(i: int, op_name: str) -> str:
-        """The default artifact naming policy is "<op_name> artifact <optional counter>".
-
-        The counter starts at 1, and is only present in the multi-output case.
-        """
-        assert i < len(output_artifact_ids)
-        if len(output_artifact_ids) == 1:
-            return artifact_name_from_op_name(op_name)
-        return artifact_name_from_op_name(op_name) + " %d" % (i + 1)
+    op_name, artifact_names = resolve_op_and_artifact_names(
+        dag,
+        op_name,
+        overwrite_existing_op_name=True,
+        candidate_artifact_names=output_artifact_names,
+        num_outputs=len(output_artifact_ids),
+    )
 
     apply_deltas_to_dag(
         dag,
@@ -135,11 +134,7 @@ def wrap_spec(
                 output_artifacts=[
                     ArtifactMetadata(
                         id=output_artifact_id,
-                        name=(
-                            output_artifact_names[i]
-                            if output_artifact_names is not None
-                            else _construct_default_artifact_name(i, op_name)
-                        ),
+                        name=artifact_names[i],
                         type=output_artifact_type_hints[i],
                     )
                     for i, output_artifact_id in enumerate(output_artifact_ids)
@@ -238,15 +233,22 @@ def _type_check_decorated_function_arguments(
 
 
 def _convert_input_arguments_to_parameters(
-    *input_artifacts: Any, func_params: Mapping[str, inspect.Parameter]
+    *input_artifacts: Any, op_name: str, func_params: Mapping[str, inspect.Parameter]
 ) -> List[BaseArtifact]:
     """
     Converts non-artifact inputs to parameters.
 
-    Errors if the implicitly-created parameter collides with an existing one. Also errors if the function has a
-    variable-length parameter, since we don't know what name to attribute to those.
+    Errors if the function has a variable-length parameter, since we don't know what name to attribute to those.
 
-    `func_params` maps from parameter name to an `inspect.Parameter` object containing additional information.
+    Args:
+        input_artifacts:
+            Entries in this list are not artifacts if the corresponding argument was supplied as an
+            implicit parameter.
+        op_name:
+            The name of the operator that will consume this implicit parameter as input. Necessary only
+            for resolving implicit parameter naming collisions.
+        func_params:
+            Maps from parameter name to an `inspect.Parameter` object containing additional information.
     """
     # KEYWORD_ONLY parameters are allowed, since they are guaranteed to have a name.
     # Note that we only accept them after "*" arguments, since we error out on VAR_POSITIONAL (eg. *args).
@@ -263,6 +265,8 @@ def _convert_input_arguments_to_parameters(
     artifacts = list(input_artifacts)
     for idx, artifact in enumerate(artifacts):
         if not isinstance(artifact, BaseArtifact):
+            default = artifact
+
             if implicit_params_disallowed:
                 raise InvalidUserArgumentException(
                     """Input at index %d to function is not an artifact. Creating an Aqueduct parameter implicitly for a """
@@ -272,21 +276,12 @@ def _convert_input_arguments_to_parameters(
 
             # We assume that the parameter name exists here, since we've disallowed any variable-length parameters.
             arg_name = param_names[idx]
-            if dag.get_operator(with_name=arg_name) is not None:
-                raise InvalidUserArgumentException(
-                    """Input to function argument "%s" is not an artifact. We tried implicitly \
-creating a parameter named "%s", but an existing operator or parameter with the same name already exists."""
-                    % (arg_name, arg_name)
-                )
-
-            new_artifact = create_param_artifact(dag=dag, name=arg_name, default=artifact)
-            warnings.warn(
-                """Input to function argument "%s" is not an artifact type. We have implicitly \
-created a parameter named "%s" and your input will be used as its default value. This parameter \
-will be used when running the function."""
-                % (arg_name, arg_name)
+            artifacts[idx] = create_param_artifact(
+                dag=dag,
+                candidate_name=arg_name,
+                default=default,
+                op_name_for_implicit_param=op_name,
             )
-            artifacts[idx] = new_artifact
     return artifacts
 
 
@@ -491,6 +486,7 @@ def op(
 
             artifacts = _convert_input_arguments_to_parameters(
                 *input_artifacts,
+                op_name=name,
                 func_params=inspect.signature(func).parameters,
             )
 
@@ -642,6 +638,7 @@ def metric(
 
             artifacts = _convert_input_arguments_to_parameters(
                 *input_artifacts,
+                op_name=name,
                 func_params=inspect.signature(func).parameters,
             )
 
@@ -799,6 +796,7 @@ def check(
 
             artifacts = _convert_input_arguments_to_parameters(
                 *input_artifacts,
+                op_name=name,
                 func_params=inspect.signature(func).parameters,
             )
 

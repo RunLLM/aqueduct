@@ -250,6 +250,21 @@ class RemoveCheckOperatorDelta(DAGDelta):
             )
 
 
+class RemoveOperatorDelta(DAGDelta):
+    """Removes a given operator, along with all it's downstream dependencies."""
+
+    def __init__(
+        self,
+        op_id: uuid.UUID,
+    ):
+        self.op_id = op_id
+
+    def apply(self, dag: DAG) -> None:
+        dag.remove_operators(
+            operator_ids=dag.list_downstream_operators(op_id=self.op_id),
+        )
+
+
 def validate_overwriting_parameters(dag: DAG, parameters: Dict[str, Any]) -> None:
     """Validates any parameters the user supplies that override the default value.
 
