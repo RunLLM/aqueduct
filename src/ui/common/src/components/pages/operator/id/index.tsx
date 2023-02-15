@@ -138,7 +138,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
       .map(
         (artifactId) =>
           (workflowDagResultWithLoadingStatus.result?.artifacts ?? {})[
-            artifactId
+          artifactId
           ]
       )
       .filter((artf) => !!artf);
@@ -160,7 +160,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
               )}
             </Box>
           )}
-          <Box display="flex" width="100%" pt={sideSheetMode ? '16px' : '40px'}>
+          <Box display="flex" width="100%" pt={sideSheetMode ? '16px' : '64px'}>
             {inputs.length > 0 && (
               <Box width="100%" mr="32px">
                 <ArtifactSummaryList
