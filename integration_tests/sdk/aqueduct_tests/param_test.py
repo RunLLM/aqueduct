@@ -150,7 +150,16 @@ def test_implicitly_created_param_overwrites(client, flow_name, engine):
     assert flow_run.artifact("different_fn:param").get() == "different value"
 
 
-def test_implicit_created_param_failures(client):
+def test_multiple_implicitly_created_param_multiple(client):
+    @op
+    def foo(param1, param2):
+        return param1 + param2
+
+    assert foo(100, 50).get() == 150
+    assert foo(500, 500).get() == 1000
+
+
+def test_implicitly_created_param_failures(client):
     # Test that an implicit parameter colliding with a globally created parameter will error.
     @op
     def bar(param):

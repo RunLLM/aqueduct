@@ -9,7 +9,7 @@ import __main__ as main
 import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
-from aqueduct.artifacts.create import create_param_artifact
+from aqueduct.artifacts.create import check_explicit_param_name, create_param_artifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.backend.response_models import SavedObjectUpdate
 from aqueduct.constants.enums import (
@@ -217,6 +217,7 @@ class Client:
         Returns:
             A parameter artifact.
         """
+        check_explicit_param_name(self._dag, name)
         return create_param_artifact(self._dag, name, default, description)
 
     def list_params(self) -> Dict[str, Any]:
