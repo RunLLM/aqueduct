@@ -131,11 +131,11 @@ type IndicatorProps = {
   /**
    * Size of the Indicator.
    */
-  size: string;
+  size?: string;
   /**
    * False if use default colors. Otherwise, specify the color.
    */
-  monochrome: string | false;
+  monochrome?: string | false;
 };
 
 /**
