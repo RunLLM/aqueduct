@@ -5,10 +5,9 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/function"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/lambda"
@@ -255,17 +254,17 @@ func mapJobTypeToLambdaFunction(spec Spec) (string, error) {
 	}
 }
 
-func mapIntegrationServiceToLambdaFunction(service integration.Service) (string, error) {
+func mapIntegrationServiceToLambdaFunction(service shared.Service) (string, error) {
 	switch service {
-	case integration.Snowflake:
+	case shared.Snowflake:
 		return lambda_utils.SnowflakeLambdaFunction, nil
-	case integration.Postgres, integration.Redshift, integration.AqueductDemo:
+	case shared.Postgres, shared.Redshift, shared.AqueductDemo:
 		return lambda_utils.PostgresLambdaFunction, nil
-	case integration.BigQuery:
+	case shared.BigQuery:
 		return lambda_utils.BigQueryLambdaFunction, nil
-	case integration.S3:
+	case shared.S3:
 		return lambda_utils.S3LambdaFunction, nil
-	case integration.Athena:
+	case shared.Athena:
 		return lambda_utils.AthenaLambdaFunction, nil
 	default:
 		return "", errors.Newf("Unknown integration service provided %v", service)

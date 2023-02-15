@@ -3,7 +3,6 @@ name: Database Integration Tests
 on:
   pull_request:
     paths:
-      - 'src/golang/lib/collections/**'
       - 'src/golang/lib/models/**'
       - 'src/golang/lib/repos/**'
 

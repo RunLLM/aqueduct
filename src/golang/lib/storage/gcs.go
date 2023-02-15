@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"cloud.google.com/go/storage"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"google.golang.org/api/option"
 )
 

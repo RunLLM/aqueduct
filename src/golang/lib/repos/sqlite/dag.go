@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
@@ -136,8 +134,8 @@ func (*dagReader) GetByOperator(ctx context.Context, operatorID uuid.UUID, DB da
 				(workflow_dag_edge.type = '%s' AND workflow_dag_edge.to_id = $1)
 			);`,
 		models.DAGCols(),
-		workflow_dag_edge.OperatorToArtifactType,
-		workflow_dag_edge.ArtifactToOperatorType,
+		shared.OperatorToArtifactDAGEdge,
+		shared.ArtifactToOperatorDAGEdge,
 	)
 	args := []interface{}{operatorID}
 
@@ -298,7 +296,7 @@ func (*dagWriter) Create(
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.DagTable, cols, models.DAGCols())
 
-	ID, err := utils.GenerateUniqueUUID(ctx, models.DagTable, DB)
+	ID, err := GenerateUniqueUUID(ctx, models.DagTable, DB)
 	if err != nil {
 		return nil, err
 	}
@@ -324,7 +322,7 @@ func (*dagWriter) DeleteBatch(ctx context.Context, IDs []uuid.UUID, DB database.
 
 func (*dagWriter) Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.DAG, error) {
 	var dag models.DAG
-	err := utils.UpdateRecordToDest(
+	err := repos.UpdateRecordToDest(
 		ctx,
 		&dag,
 		changes,

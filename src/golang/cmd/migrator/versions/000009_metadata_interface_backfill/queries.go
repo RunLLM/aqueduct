@@ -3,8 +3,8 @@ package _000009_metadata_interface_backfill
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/google/uuid"
 )
 
@@ -55,7 +55,7 @@ func updateArtifactResultAsNewMetadata(
 		"metadata": newMetadata,
 	}
 
-	return utils.UpdateRecord(ctx, changes, "artifact_result", "id", id, db)
+	return repos.UpdateRecord(ctx, changes, "artifact_result", "id", id, db)
 }
 
 func updateArtifactResultAsOldMetadata(
@@ -68,5 +68,5 @@ func updateArtifactResultAsOldMetadata(
 		"metadata": metadata.Schema,
 	}
 
-	return utils.UpdateRecord(ctx, changes, "artifact_result", "id", id, db)
+	return repos.UpdateRecord(ctx, changes, "artifact_result", "id", id, db)
 }

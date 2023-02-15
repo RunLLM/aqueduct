@@ -1,8 +1,6 @@
 package check
 
-import (
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
-)
+import "github.com/aqueducthq/aqueduct/lib/models/shared/operator/function"
 
 type Level string
 

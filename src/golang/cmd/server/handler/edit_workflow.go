@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	col_workflow "github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
@@ -44,19 +43,19 @@ type EditWorkflowHandler struct {
 }
 
 type editWorkflowInput struct {
-	WorkflowName         string                        `json:"name"`
-	WorkflowDescription  string                        `json:"description"`
-	Schedule             *col_workflow.Schedule        `json:"schedule"`
-	RetentionPolicy      *col_workflow.RetentionPolicy `json:"retention_policy"`
-	NotificationSettings *shared.NotificationSettings  `json:"notification_settings"`
+	WorkflowName         string                       `json:"name"`
+	WorkflowDescription  string                       `json:"description"`
+	Schedule             *shared.Schedule             `json:"schedule"`
+	RetentionPolicy      *shared.RetentionPolicy      `json:"retention_policy"`
+	NotificationSettings *shared.NotificationSettings `json:"notification_settings"`
 }
 
 type editWorkflowArgs struct {
 	workflowId           uuid.UUID
 	workflowName         string
 	workflowDescription  string
-	schedule             *col_workflow.Schedule
-	retentionPolicy      *col_workflow.RetentionPolicy
+	schedule             *shared.Schedule
+	retentionPolicy      *shared.RetentionPolicy
 	notificationSettings *shared.NotificationSettings
 }
 
@@ -104,12 +103,12 @@ func (h *EditWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error)
 	// otherwise we fail out. Critically, this is true whether the workflow is
 	// paused or not. This is important because when we load the schedule for a
 	// paused workflow, unpausing it should resume previous behavior.
-	if input.Schedule.Trigger == col_workflow.PeriodicUpdateTrigger && input.Schedule.CronSchedule == "" {
+	if input.Schedule.Trigger == shared.PeriodicUpdateTrigger && input.Schedule.CronSchedule == "" {
 		return nil, http.StatusBadRequest, errors.New("Invalid workflow schedule specified.")
 	}
 
 	// If the workflow is paused, it must be in periodic update mode.
-	if input.Schedule.Trigger == col_workflow.ManualUpdateTrigger && input.Schedule.Paused {
+	if input.Schedule.Trigger == shared.ManualUpdateTrigger && input.Schedule.Paused {
 		return nil, http.StatusBadRequest, errors.New("Cannot pause a manually updated workflow.")
 	}
 

@@ -16,7 +16,6 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/request_id"
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/usage"
 	"github.com/aqueducthq/aqueduct/config"
-	"github.com/aqueducthq/aqueduct/lib/collections"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/job"
@@ -82,7 +81,7 @@ func NewAqServer(environment string, externalIP string, port int, disableUsageSt
 		log.Fatalf("Unable to initialize database: %v", err)
 	}
 
-	if err := collections.RequireSchemaVersion(
+	if err := requireSchemaVersion(
 		context.Background(),
 		models.CurrentSchemaVersion,
 		sqlite.NewSchemaVersionRepo(),

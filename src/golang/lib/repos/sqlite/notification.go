@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -42,7 +41,7 @@ func (*notificationReader) GetByReceiverAndStatus(ctx context.Context, receiverI
 
 func (*notificationReader) ValidateUser(ctx context.Context, notificationID uuid.UUID, userID uuid.UUID, DB database.Database) (bool, error) {
 	query := `SELECT COUNT(*) AS count FROM notification WHERE id = $1 AND receiver_id = $2;`
-	var count utils.CountResult
+	var count countResult
 
 	err := DB.Query(ctx, &count, query, notificationID, userID)
 	if err != nil {
@@ -71,7 +70,7 @@ func (*notificationWriter) Create(
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.NotificationTable, cols, models.NotificationCols())
 
-	ID, err := utils.GenerateUniqueUUID(ctx, models.UserTable, DB)
+	ID, err := GenerateUniqueUUID(ctx, models.UserTable, DB)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +96,7 @@ func (*notificationWriter) Update(ctx context.Context, ID uuid.UUID, status shar
 
 func updateNotification(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.Notification, error) {
 	var notification models.Notification
-	err := utils.UpdateRecordToDest(ctx, &notification, changes, models.NotificationTable, models.NotificationID, ID, models.NotificationCols(), DB)
+	err := repos.UpdateRecordToDest(ctx, &notification, changes, models.NotificationTable, models.NotificationID, ID, models.NotificationCols(), DB)
 	return &notification, err
 }
 

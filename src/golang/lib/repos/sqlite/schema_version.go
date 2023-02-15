@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -76,7 +75,7 @@ func (*schemaVersionWriter) Delete(ctx context.Context, version int64, DB databa
 
 func (*schemaVersionWriter) Update(ctx context.Context, version int64, changes map[string]interface{}, DB database.Database) (*models.SchemaVersion, error) {
 	var schemaVersion models.SchemaVersion
-	err := utils.UpdateRecordToDest(
+	err := repos.UpdateRecordToDest(
 		ctx,
 		&schemaVersion,
 		changes,

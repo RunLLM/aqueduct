@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow_dag_edge"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
@@ -34,7 +32,7 @@ func NewArtifactRepo() repos.Artifact {
 }
 
 func (*artifactReader) Exists(ctx context.Context, ID uuid.UUID, DB database.Database) (bool, error) {
-	return utils.IdExistsInTable(ctx, ID, models.ArtifactTable, DB)
+	return IDExistsInTable(ctx, ID, models.ArtifactTable, DB)
 }
 
 func (*artifactReader) Get(ctx context.Context, ID uuid.UUID, DB database.Database) (*models.Artifact, error) {
@@ -71,8 +69,8 @@ func (*artifactReader) GetByDAG(ctx context.Context, dagID uuid.UUID, DB databas
 					WHERE workflow_dag_id = $1 AND type = '%s'
 			)`,
 		models.ArtifactCols(),
-		workflow_dag_edge.ArtifactToOperatorType,
-		workflow_dag_edge.OperatorToArtifactType,
+		shared.ArtifactToOperatorDAGEdge,
+		shared.OperatorToArtifactDAGEdge,
 	)
 	args := []interface{}{dagID}
 
@@ -115,7 +113,7 @@ func (*artifactReader) GetIDsByDAGAndDownstreamOPBatch(
 }
 
 func (*artifactReader) ValidateOrg(ctx context.Context, ID uuid.UUID, orgID string, DB database.Database) (bool, error) {
-	return utils.ValidateNodeOwnership(ctx, orgID, ID, DB)
+	return validateNodeOwnership(ctx, orgID, ID, DB)
 }
 
 func (*artifactReader) GetMetricsByUpstreamArtifactBatch(
@@ -188,7 +186,7 @@ func (*artifactWriter) Create(
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.ArtifactTable, cols, models.ArtifactCols())
 
-	ID, err := utils.GenerateUniqueUUID(ctx, models.ArtifactTable, DB)
+	ID, err := GenerateUniqueUUID(ctx, models.ArtifactTable, DB)
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +210,7 @@ func (*artifactWriter) Update(
 	DB database.Database,
 ) (*models.Artifact, error) {
 	var artifact models.Artifact
-	err := utils.UpdateRecordToDest(
+	err := repos.UpdateRecordToDest(
 		ctx,
 		&artifact,
 		changes,

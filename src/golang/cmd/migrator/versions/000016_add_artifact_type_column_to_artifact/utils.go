@@ -12,9 +12,10 @@ import (
 	"path/filepath"
 
 	"github.com/aqueducthq/aqueduct/config"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -95,11 +96,11 @@ func (s *Spec) UnmarshalJSON(rawMessage []byte) error {
 }
 
 func (s *Spec) Value() (driver.Value, error) {
-	return utils.ValueJsonB(*s)
+	return utils.ValueJSONB(*s)
 }
 
 func (s *Spec) Scan(value interface{}) error {
-	return utils.ScanJsonB(value, s)
+	return utils.ScanJSONB(value, s)
 }
 
 type artifactSpec struct {
@@ -130,11 +131,11 @@ type NullMetadata struct {
 }
 
 func (m *Metadata) Value() (driver.Value, error) {
-	return utils.ValueJsonB(*m)
+	return utils.ValueJSONB(*m)
 }
 
 func (m *Metadata) Scan(value interface{}) error {
-	return utils.ScanJsonB(value, m)
+	return utils.ScanJSONB(value, m)
 }
 
 func (n *NullMetadata) Value() (driver.Value, error) {
@@ -190,7 +191,7 @@ func updateMetadataInArtifactResult(
 	changes := map[string]interface{}{
 		"metadata": metadata,
 	}
-	return utils.UpdateRecord(ctx, changes, "artifact_result", "id", id, db)
+	return repos.UpdateRecord(ctx, changes, "artifact_result", "id", id, db)
 }
 
 type MigrationSpec struct {
@@ -218,7 +219,7 @@ func updateTypeInArtifact(
 	changes := map[string]interface{}{
 		"type": artifactType,
 	}
-	return utils.UpdateRecord(ctx, changes, "artifact", "id", id, db)
+	return repos.UpdateRecord(ctx, changes, "artifact", "id", id, db)
 }
 
 func migrateArtifact(ctx context.Context, db database.Database) error {

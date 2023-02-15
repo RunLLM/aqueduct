@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/param"
 	"github.com/dropbox/godropbox/errors"
 )
 

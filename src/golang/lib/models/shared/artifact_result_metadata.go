@@ -13,6 +13,7 @@ type ArtifactResultMetadata struct {
 	SystemMetrics     map[string]string         `json:"system_metadata,omitempty"`
 	SerializationType ArtifactSerializationType `json:"serialization_type,omitempty"`
 	ArtifactType      ArtifactType              `json:"artifact_type,omitempty"`
+	PythonType        string                    `json:"python_type,omitempty"`
 }
 
 type NullArtifactResultMetadata struct {

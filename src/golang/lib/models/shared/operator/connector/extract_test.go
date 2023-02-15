@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -13,7 +13,7 @@ import (
 func TestMarshalAndUnmarshallExtract(t *testing.T) {
 	postgresParams := generateExtractPostgresParams()
 	originalExtract := Extract{
-		Service:       integration.Postgres,
+		Service:       shared.Postgres,
 		IntegrationId: uuid.New(),
 		Parameters:    postgresParams,
 	}

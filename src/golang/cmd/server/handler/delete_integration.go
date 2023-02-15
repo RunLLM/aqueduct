@@ -6,11 +6,11 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/dropbox/godropbox/errors"
@@ -189,7 +189,7 @@ func cleanUpIntegration(
 	vaultObject vault.Vault,
 	DB database.Database,
 ) error {
-	if integrationObject.Service == integration.Conda {
+	if integrationObject.Service == shared.Conda {
 		// Best effort to clean up
 		err := exec_env.CleanupUnusedEnvironments(
 			ctx, execEnvRepo, DB,
@@ -201,7 +201,7 @@ func cleanUpIntegration(
 		return exec_env.DeleteBaseEnvs()
 	}
 
-	if integrationObject.Service == integration.Email || integrationObject.Service == integration.Slack {
+	if integrationObject.Service == shared.Email || integrationObject.Service == shared.Slack {
 		err := workflowRepo.RemoveNotificationFromSettings(ctx, integrationObject.ID, DB)
 		if err != nil {
 			return err

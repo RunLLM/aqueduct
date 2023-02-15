@@ -10,18 +10,20 @@ import (
 type EngineType string
 
 const (
-	AqueductEngineType EngineType = "aqueduct"
-	AirflowEngineType  EngineType = "airflow"
-	K8sEngineType      EngineType = "k8s"
-	LambdaEngineType   EngineType = "lambda"
+	AqueductEngineType   EngineType = "aqueduct"
+	AirflowEngineType    EngineType = "airflow"
+	K8sEngineType        EngineType = "k8s"
+	LambdaEngineType     EngineType = "lambda"
+	DatabricksEngineType EngineType = "databricks"
 )
 
 type EngineConfig struct {
-	Type           EngineType      `yaml:"type" json:"type"`
-	AqueductConfig *AqueductConfig `yaml:"aqueductConfig" json:"aqueduct_config,omitempty"`
-	AirflowConfig  *AirflowConfig  `yaml:"airflowConfig" json:"airflow_config,omitempty"`
-	K8sConfig      *K8sConfig      `yaml:"k8sConfig" json:"k8s_config,omitempty"`
-	LambdaConfig   *LambdaConfig   `yaml:"lambdaConfig" json:"lambda_config,omitempty"`
+	Type             EngineType        `yaml:"type" json:"type"`
+	AqueductConfig   *AqueductConfig   `yaml:"aqueductConfig" json:"aqueduct_config,omitempty"`
+	AirflowConfig    *AirflowConfig    `yaml:"airflowConfig" json:"airflow_config,omitempty"`
+	K8sConfig        *K8sConfig        `yaml:"k8sConfig" json:"k8s_config,omitempty"`
+	LambdaConfig     *LambdaConfig     `yaml:"lambdaConfig" json:"lambda_config,omitempty"`
+	DatabricksConfig *DatabricksConfig `yaml:"databricksConfig" json:"databricks_config,omitempty"`
 }
 
 type AqueductConfig struct{}
@@ -42,6 +44,10 @@ type K8sConfig struct {
 }
 
 type LambdaConfig struct {
+	IntegrationID uuid.UUID `json:"integration_id"  yaml:"integration_id"`
+}
+
+type DatabricksConfig struct {
 	IntegrationID uuid.UUID `json:"integration_id"  yaml:"integration_id"`
 }
 

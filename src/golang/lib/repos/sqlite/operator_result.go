@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
@@ -74,7 +72,7 @@ func (*operatorResultReader) GetByDAGResultAndOperator(
 func (*operatorResultReader) GetWithOperatorByDAGResultBatch(
 	ctx context.Context,
 	dagResultIDs []uuid.UUID,
-	types []mdl_shared.OperatorType,
+	types []operator.Type,
 	DB database.Database,
 ) ([]views.OperatorWithResult, error) {
 	query := fmt.Sprintf(
@@ -201,7 +199,7 @@ func (*operatorResultWriter) Create(
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.OperatorResultTable, cols, models.OperatorResultCols())
 
-	ID, err := utils.GenerateUniqueUUID(ctx, models.OperatorResultTable, DB)
+	ID, err := GenerateUniqueUUID(ctx, models.OperatorResultTable, DB)
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +230,7 @@ func (*operatorResultWriter) Update(
 	DB database.Database,
 ) (*models.OperatorResult, error) {
 	var operatorResult models.OperatorResult
-	err := utils.UpdateRecordToDest(
+	err := repos.UpdateRecordToDest(
 		ctx,
 		&operatorResult,
 		changes,

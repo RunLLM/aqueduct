@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
@@ -58,12 +57,12 @@ func GetNotificationsFromUser(
 	vaultObject vault.Vault,
 	DB database.Database,
 ) ([]Notification, error) {
-	emailIntegrations, err := integrationRepo.GetByServiceAndUser(ctx, integration.Email, userID, DB)
+	emailIntegrations, err := integrationRepo.GetByServiceAndUser(ctx, shared.Email, userID, DB)
 	if err != nil {
 		return nil, err
 	}
 
-	slackIntegrations, err := integrationRepo.GetByServiceAndUser(ctx, integration.Slack, userID, DB)
+	slackIntegrations, err := integrationRepo.GetByServiceAndUser(ctx, shared.Slack, userID, DB)
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +89,7 @@ func NewNotificationFromIntegration(
 	integrationObject *models.Integration,
 	vaultObject vault.Vault,
 ) (Notification, error) {
-	if integrationObject.Service == integration.Email {
+	if integrationObject.Service == shared.Email {
 		conf, err := auth.ReadConfigFromSecret(ctx, integrationObject.ID, vaultObject)
 		if err != nil {
 			return nil, err
@@ -104,7 +103,7 @@ func NewNotificationFromIntegration(
 		return newEmailNotification(integrationObject, emailConf), nil
 	}
 
-	if integrationObject.Service == integration.Slack {
+	if integrationObject.Service == shared.Slack {
 		conf, err := auth.ReadConfigFromSecret(ctx, integrationObject.ID, vaultObject)
 		if err != nil {
 			return nil, err

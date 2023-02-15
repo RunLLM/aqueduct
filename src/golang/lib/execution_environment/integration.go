@@ -6,12 +6,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	collection_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -97,7 +95,7 @@ func updateOnFailure(
 		ctx,
 		integrationID,
 		map[string]interface{}{
-			models.IntegrationConfig: (*collection_utils.Config)(&map[string]string{
+			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
 				CondaPathKey: condaPath,
 				ExecStateKey: serializedFailure(outputs, msg, runningAt),
 			}),
@@ -130,7 +128,7 @@ func InitializeConda(
 		ctx,
 		integrationID,
 		map[string]interface{}{
-			models.IntegrationConfig: (*collection_utils.Config)(&map[string]string{
+			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
 				ExecStateKey: serializedRunning(&now),
 			}),
 		},
@@ -179,7 +177,7 @@ func InitializeConda(
 		ctx,
 		integrationID,
 		map[string]interface{}{
-			models.IntegrationConfig: (*collection_utils.Config)(&map[string]string{
+			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
 				CondaPathKey: condaPath,
 				ExecStateKey: serializedSuccess(&now),
 			}),
@@ -200,7 +198,7 @@ func GetCondaIntegration(
 ) (*models.Integration, error) {
 	integrations, err := integrationRepo.GetByServiceAndUser(
 		ctx,
-		integration.Conda,
+		shared.Conda,
 		userID,
 		DB,
 	)
@@ -222,7 +220,7 @@ func GetCondaIntegration(
 func ExtractConnectionState(
 	integrationObject *models.Integration,
 ) (*shared.ExecutionState, error) {
-	if integrationObject.Service != integration.Conda {
+	if integrationObject.Service != shared.Conda {
 		return &shared.ExecutionState{
 			Status: shared.SucceededExecutionStatus,
 		}, nil

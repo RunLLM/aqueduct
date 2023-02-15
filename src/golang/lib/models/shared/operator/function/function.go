@@ -1,8 +1,6 @@
 package function
 
-import (
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector/github"
-)
+import "github.com/aqueducthq/aqueduct/lib/models/shared/operator/connector/github"
 
 type Function struct {
 	Type           Type                   `json:"type"`

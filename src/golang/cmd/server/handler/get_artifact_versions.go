@@ -4,13 +4,11 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
-	collect_shared "github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
@@ -44,19 +42,19 @@ type artifactVersions struct {
 }
 
 type artifactVersion struct {
-	Timestamp int64                     `json:"timestamp"`
-	Status    shared.ExecutionStatus    `json:"status"`
-	DagStatus shared.ExecutionStatus    `json:"dag_status"`
-	Error     string                    `json:"error"`
-	Metadata  *artifact_result.Metadata `json:"metadata"`
-	Checks    []CheckResult             `json:"checks"`
-	Metrics   []artifact.ResultResponse `json:"metrics"`
+	Timestamp int64                          `json:"timestamp"`
+	Status    shared.ExecutionStatus         `json:"status"`
+	DagStatus shared.ExecutionStatus         `json:"dag_status"`
+	Error     string                         `json:"error"`
+	Metadata  *shared.ArtifactResultMetadata `json:"metadata"`
+	Checks    []CheckResult                  `json:"checks"`
+	Metrics   []artifact.ResultResponse      `json:"metrics"`
 }
 
 type CheckResult struct {
-	Name     string                         `json:"name"`
-	Status   collect_shared.ExecutionStatus `json:"status"`
-	Metadata *collect_shared.ExecutionState `json:"metadata"`
+	Name     string                 `json:"name"`
+	Status   shared.ExecutionStatus `json:"status"`
+	Metadata *shared.ExecutionState `json:"metadata"`
 }
 
 type GetArtifactVersionsHandler struct {
@@ -237,7 +235,7 @@ func (h *GetArtifactVersionsHandler) updateVersionsWithArtifactResultStatuses(
 				Timestamp: artifactResultStatus.Timestamp.Unix(),
 				Status:    artifactResultStatus.Status,
 				DagStatus: dagResultsByID[artifactResultStatus.DAGResultID].Status,
-				Metadata:  &artifactResultStatus.Metadata.Metadata,
+				Metadata:  &artifactResultStatus.Metadata.ArtifactResultMetadata,
 				Checks:    nil,
 			}
 		}

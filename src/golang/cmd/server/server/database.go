@@ -1,9 +1,13 @@
 package server
 
 import (
+	"context"
+
+	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/repos/sqlite"
+	"github.com/dropbox/godropbox/errors"
 )
 
 type Repos struct {
@@ -57,4 +61,27 @@ func GetEngineRepos(repos *Repos) *engine.Repos {
 		WatcherRepo:              repos.WatcherRepo,
 		WorkflowRepo:             repos.WorkflowRepo,
 	}
+}
+
+// requireSchemaVersion returns an error if the database schema version is
+// not at least version.
+func requireSchemaVersion(
+	ctx context.Context,
+	version int64,
+	schemaVersionRepo repos.SchemaVersion,
+	DB database.Database,
+) error {
+	currentVersion, err := schemaVersionRepo.GetCurrent(ctx, DB)
+	if err != nil {
+		return err
+	}
+
+	if currentVersion.Version < version {
+		return errors.Newf(
+			"Current version is %d, but %d is required.",
+			currentVersion.Version,
+			version,
+		)
+	}
+	return nil
 }

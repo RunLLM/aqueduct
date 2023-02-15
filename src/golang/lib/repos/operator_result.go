@@ -3,10 +3,10 @@ package repos
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
@@ -55,7 +55,7 @@ type operatorResultReader interface {
 	GetWithOperatorByDAGResultBatch(
 		ctx context.Context,
 		dagResultIDs []uuid.UUID,
-		types []mdl_shared.OperatorType,
+		types []operator.Type,
 		DB database.Database,
 	) ([]views.OperatorWithResult, error)
 }

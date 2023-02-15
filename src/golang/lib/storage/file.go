@@ -7,7 +7,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 )
 
 const (
