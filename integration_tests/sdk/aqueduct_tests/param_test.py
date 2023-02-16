@@ -2,8 +2,6 @@ from typing import Dict, List
 
 import pandas as pd
 import pytest
-from PIL import Image
-
 from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.constants.enums import ExecutionStatus
@@ -14,6 +12,7 @@ from aqueduct.error import (
     InvalidUserArgumentException,
 )
 from pandas._testing import assert_frame_equal
+from PIL import Image
 
 from aqueduct import metric, op
 
@@ -506,7 +505,14 @@ def test_all_param_types(client, flow_name, engine):
     publish_flow_test(
         client,
         name=flow_name(),
-        artifacts=[pickle_output, bytes_output, string_output, tuple_output, list_output, image_output],
+        artifacts=[
+            pickle_output,
+            bytes_output,
+            string_output,
+            tuple_output,
+            list_output,
+            image_output,
+        ],
         engine=engine,
     )
 

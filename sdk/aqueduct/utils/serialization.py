@@ -2,13 +2,12 @@ import io
 import json
 import os
 import shutil
-from typing import Any, Callable, Dict, cast, List
+from typing import Any, Callable, Dict, List, cast
 
 import cloudpickle as pickle
 import pandas as pd
-from aqueduct.utils.type_inference import infer_artifact_type
-
 from aqueduct.constants.enums import ArtifactType, SerializationType
+from aqueduct.utils.type_inference import infer_artifact_type
 from bson import json_util as bson_json_util
 from PIL import Image
 
@@ -23,13 +22,16 @@ _TEMP_KERAS_MODEL_NAME = "keras_model"
 
 
 # These keys are set on the dictionary serialized with pickle on list or tuple content.
-IS_TUPLE = "_is_tuple" # otherwise, this collection was a list.
+IS_TUPLE = "_is_tuple"  # otherwise, this collection was a list.
 COLLECTION_SERIALIZATION_TYPES = "_aqueduct_serialization_types"
 DATA = "_data"
 
 
 def _serialization_is_pickle(serialization_type: SerializationType) -> bool:
-    return serialization_type == SerializationType.PICKLE or serialization_type == SerializationType.BSON_PICKLE
+    return (
+        serialization_type == SerializationType.PICKLE
+        or serialization_type == SerializationType.BSON_PICKLE
+    )
 
 
 def _read_table_content(content: bytes) -> pd.DataFrame:
@@ -104,10 +106,10 @@ def deserialize(
     # Check if the type is an expanded collection and resolve the content for that special case.
     if _serialization_is_pickle(serialization_type):
         if (
-            isinstance(deserialized_val, dict) and
-            COLLECTION_SERIALIZATION_TYPES in deserialized_val and
-            DATA in deserialized_val and
-            IS_TUPLE in deserialized_val
+            isinstance(deserialized_val, dict)
+            and COLLECTION_SERIALIZATION_TYPES in deserialized_val
+            and DATA in deserialized_val
+            and IS_TUPLE in deserialized_val
         ):
             collection_serialization_types = deserialized_val[COLLECTION_SERIALIZATION_TYPES]
             data = deserialized_val[DATA]
@@ -189,11 +191,14 @@ serialization_function_mapping: Dict[str, Callable[..., bytes]] = {
 }
 
 
-def serialize_val(val: Any, serialization_type: SerializationType, expand_collections: bool = True) -> bytes:
+def serialize_val(
+    val: Any, serialization_type: SerializationType, expand_collections: bool = True
+) -> bytes:
     """Serializes a parameter or computed value into bytes."""
     if (
-        expand_collections and _serialization_is_pickle(serialization_type) and
-        (isinstance(val, list) or isinstance(val, tuple))
+        expand_collections
+        and _serialization_is_pickle(serialization_type)
+        and (isinstance(val, list) or isinstance(val, tuple))
     ):
         elem_serialization_types: List[SerializationType] = []
         for elem in val:
@@ -206,10 +211,13 @@ def serialize_val(val: Any, serialization_type: SerializationType, expand_collec
                 )
             )
 
-        expanded_dict = {
+        expanded_dict: Dict[str, Any] = {
             DATA: [
-                serialize_val(val[i], elem_serialization_types[i], expand_collections=False), # do not recursively expand.
-            ] for i in range(len(elem_serialization_types))
+                serialize_val(
+                    val[i], elem_serialization_types[i], expand_collections=False
+                ),  # do not recursively expand.
+            ]
+            for i in range(len(elem_serialization_types))
         }
         expanded_dict[COLLECTION_SERIALIZATION_TYPES] = elem_serialization_types
         expanded_dict[IS_TUPLE] = isinstance(val, tuple)
