@@ -22,23 +22,43 @@ interface CheckItemProps {
   checks: CheckPreview[];
 }
 
-export const getCheckStatusIcon = (check: CheckPreview): JSX.Element => {
-  let statusIcon = <StatusIndicator status={ExecutionStatus.Succeeded} />;
+export const getCheckStatusIcon = (
+  check: CheckPreview,
+  tooltipText?: string
+): JSX.Element => {
+  let statusIcon = (
+    <StatusIndicator
+      status={ExecutionStatus.Succeeded}
+      tooltipText={tooltipText}
+    />
+  );
 
   switch (check.status) {
     case ExecutionStatus.Succeeded: {
       // now we check the value to see if we should show warning or error icon
       if (check.value === 'False') {
         if (check.level === CheckLevel.Error) {
-          statusIcon = <StatusIndicator status={ExecutionStatus.Failed} />;
+          statusIcon = (
+            <StatusIndicator
+              status={ExecutionStatus.Failed}
+              tooltipText={tooltipText}
+            />
+          );
         } else {
-          statusIcon = <StatusIndicator status={ExecutionStatus.Warning} />;
+          statusIcon = (
+            <StatusIndicator
+              status={ExecutionStatus.Warning}
+              tooltipText={tooltipText}
+            />
+          );
         }
       }
       break;
     }
     default: {
-      statusIcon = <StatusIndicator status={check.status} />;
+      statusIcon = (
+        <StatusIndicator status={check.status} tooltipText={tooltipText} />
+      );
       break;
     }
   }

@@ -10,9 +10,13 @@ interface ChecksListPreviewProps {
 export const ChecksListPreview: React.FC<ChecksListPreviewProps> = ({
   checks,
 }) => {
-  const checkIcons: JSX.Element[] = checks.map((check) =>
-    getCheckStatusIcon(check)
-  );
+  const checkIcons: JSX.Element[] = checks.map((check) => {
+    return (
+      <Box key={check.checkId} sx={{ marginRight: '4px', marginBottom: '8px' }}>
+        {getCheckStatusIcon(check, check.name)}
+      </Box>
+    );
+  });
 
   return (
     <Box
