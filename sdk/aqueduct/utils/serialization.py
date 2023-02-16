@@ -23,20 +23,12 @@ _DEFAULT_IMAGE_FORMAT = "jpeg"
 _TEMP_KERAS_MODEL_NAME = "keras_model"
 
 
-# These keys are set on the dictionary serialized with pickle on list or tuple content.
-IS_TUPLE = "_is_tuple"  # otherwise, this collection was a list.
-COLLECTION_SERIALIZATION_TYPES = "_aqueduct_serialization_types"
-DATA = "_data"
-
-
 class PickledCollectionSerializationFormat(BaseModel):
-    # TODO: documentation
+    # TODO: documentation. Underscores to are make it unlikely to hit.
     is_tuple: bool
     aqueduct_serialization_types: List[SerializationType]
     data: List[bytes]
 
-    class Config:
-        extra = Extra.forbid
 
 def _serialization_is_pickle(serialization_type: SerializationType) -> bool:
     return (
