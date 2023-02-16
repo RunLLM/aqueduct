@@ -150,7 +150,7 @@ def test_implicitly_created_param_overwrites(client, flow_name, engine):
     assert flow_run.artifact("different_fn:param").get() == "different value"
 
 
-def test_multiple_implicitly_created_param_multiple(client):
+def test_multiple_implicitly_created_param(client):
     @op
     def foo(param1, param2):
         return param1 + param2
