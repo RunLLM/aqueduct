@@ -244,6 +244,21 @@ func AddFunctionTypeToChannel(functionsToShip []LambdaFunctionType, channel chan
 	}
 }
 
+func DeleteAllDockerImage(functionsToShip []LambdaFunctionType) error {
+	for _, lambdaFunctionType := range functionsToShip {
+		lambdaImageUri, userRepoName, err := mapFunctionType(functionType)
+		if err != nil {
+			return errors.Wrap(err, "Unable to map function type to image.")
+		}
+		versionedLambdaImageUri := fmt.Sprintf("%s:%s", lambdaImageUri, lib.ServerVersionNumber)
+		err := DeleteDockerImage(versionedLambdaImageUri)
+		if err != nil {
+			return errors.Wrapf(err, "Unable to delete docker image of %s",versionedLambdaImageUri)
+		}
+	}
+	return nil
+}
+
 func DeleteDockerImage(versionedLambdaImageUri string) error {
 	// Remove Docker Image after finish creating Lambda functions.
 
@@ -264,10 +279,15 @@ func DeleteDockerImage(versionedLambdaImageUri string) error {
 		stdoutString := strings.TrimSpace(stdout.String())
 		stderrString := strings.TrimSpace(stderr.String())
 		return errors.Wrapf(err, "Unable to find the docker image. Stdout: %s. Stderr: %s.", stdoutString, stderrString)
-		return nil
 	}
 
 	imageId := strings.TrimSpace(stdout.String())
+
+	// The docker image does not exist or has been deleted so we can't delete it again.
+	if imageId == "" {
+		return nil
+	}
+
 	cmd = exec.Command("docker", "rmi", "-f", imageId)
 
 	err = cmd.Run()
