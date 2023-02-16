@@ -2,10 +2,12 @@ package lambda
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aws/aws-sdk-go/aws"
@@ -15,12 +17,92 @@ import (
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/dropbox/godropbox/errors"
 	log "github.com/sirupsen/logrus"
+	"golang.org/x/sync/errgroup"
 )
 
 type EcrAuth struct {
 	Username      string
 	Password      string
 	ProxyEndpoint string
+}
+
+const (
+	MaxConcurrentDownload = 3
+	MaxConcurrentUpload   = 5
+)
+
+func CreateLambdaFunction(ctx context.Context, functionsToShip []LambdaFunctionType, roleArn string) error {
+	// For each lambda function we create, we take the following steps:
+	// 1. Pull the image from the public ECR repository on a concurrency of `MaxConcurrentDownload`.
+	// 2. Create the private ECR repo if it doesn't exist.
+	// 3. Get the ECR auth token and log in the docker client.
+	// 4. Push the image to the private ECR repo on a concurrency of `MaxConcurrentUpload`.
+	// 5. Create the lambda function using the private ECR repo as the code.
+
+	errGroup, errGroupCtx := errgroup.WithContext(ctx)
+
+	// Create a `pullImageChannel` and `pushImageChannel` and add all lambda functions to the channel.
+	pullImageChannel := make(chan LambdaFunctionType, len(functionsToShip))
+	defer close(pullImageChannel)
+	pushImageChannel := make(chan LambdaFunctionType, len(functionsToShip))
+	defer close(pushImageChannel)
+	AddFunctionTypeToChannel(functionsToShip[:], pullImageChannel)
+
+	for i := 0; i < MaxConcurrentDownload; i++ {
+		errGroup.Go(func() error {
+			for {
+				select {
+				case functionType := <-pullImageChannel:
+					lambdaFunctionType := functionType
+					err := PullImageFromPublicECR(lambdaFunctionType)
+					if err != nil {
+						return err
+					}
+					pushImageChannel <- functionType
+				case <-errGroupCtx.Done():
+					return errGroupCtx.Err()
+				default:
+					// The case should only be hit when `pullImageChannel` is empty.
+					return nil
+				}
+			}
+		})
+	}
+
+	// The `incompleteWorkChannel` is empty if and only if all the all lambda functions are successfully created.
+	incompleteWorkChannel := make(chan LambdaFunctionType, len(functionsToShip))
+	defer close(incompleteWorkChannel)
+	AddFunctionTypeToChannel(functionsToShip[:], incompleteWorkChannel)
+
+	// Receive the downloaded docker images from push channels and create lambda functions on a concurrency of "MaxConcurrentUpload".
+	for i := 0; i < MaxConcurrentUpload; i++ {
+		errGroup.Go(func() error {
+			for {
+				select {
+				case functionType := <-pushImageChannel:
+					lambdaFunctionType := functionType
+					err := PushImageToPrivateECR(lambdaFunctionType, roleArn)
+					if err != nil {
+						return err
+					}
+					<-incompleteWorkChannel
+				case <-errGroupCtx.Done():
+					return errGroupCtx.Err()
+				default:
+					time.Sleep(1 * time.Second)
+					if len(incompleteWorkChannel) == 0 {
+						return nil
+					}
+				}
+			}
+		})
+	}
+
+	if err := errGroup.Wait(); err != nil {
+		return errors.Wrap(err, "Unable to Create Lambda Function.")
+	}
+
+	return nil
 }
 
 func AuthenticateDockerToECR() error {
@@ -63,7 +145,7 @@ func AuthenticateDockerToECR() error {
 	return nil
 }
 
-func PullImageFromECR(functionType LambdaFunctionType) error {
+func PullImageFromPublicECR(functionType LambdaFunctionType) error {
 	// Pull the Image from public ECR Library.
 	lambdaImageUri, _, err := mapFunctionType(functionType)
 	if err != nil {
@@ -86,13 +168,8 @@ func PullImageFromECR(functionType LambdaFunctionType) error {
 	return nil
 }
 
-func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error {
-	// For each lambda function we create, we take the following steps:
-	// 1. Pull the image from the public ECR repository.
-	// 2. Create the private ECR repo if it doesn't exist
-	// 3. Get the ECR auth token and log in the docker client.
-	// 4. Push the image to the private ECR repo
-	// 5. Create the lambda function using the private ECR repo as the code.
+func PushImageToPrivateECR(functionType LambdaFunctionType, roleArn string) error {
+	// Push the image to the private ECR repo and create the lambda function using the private ECR repo as the code.
 	lambdaImageUri, userRepoName, err := mapFunctionType(functionType)
 	if err != nil {
 		return errors.Wrap(err, "Unable to map function type to image.")
@@ -181,12 +258,6 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 			return errors.Wrap(err, "Unable to update lambda function.")
 		}
 	}
-
-	err = DeleteDockerImage(versionedLambdaImageUri)
-	if err != nil {
-		return errors.Wrap(err, "Unable to delete downloaded Docker image.")
-	}
-
 	return nil
 }
 
@@ -244,7 +315,7 @@ func AddFunctionTypeToChannel(functionsToShip []LambdaFunctionType, channel chan
 	}
 }
 
-func DeleteAllDockerImage(functionsToShip []LambdaFunctionType) error {
+func DeleteAllDockerImages(functionsToShip []LambdaFunctionType) error {
 	for _, lambdaFunctionType := range functionsToShip {
 		lambdaImageUri, userRepoName, err := mapFunctionType(functionType)
 		if err != nil {
