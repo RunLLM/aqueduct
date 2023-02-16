@@ -36,7 +36,7 @@ demo_db = client.integration("aqueduct_demo")
 reviews_table = demo_db.sql("select * from hotel_reviews;")
 
 strlen_table = transform_data(reviews_table)
-strlen_table.save(demo_db.config(table="strlen_table", update_mode="replace")) 
+demo_db.save(strlen_table, "strlen_table", "replace)
 
 client.publish_flow(name="review_strlen", artifacts=[strlen_table])
 ```
