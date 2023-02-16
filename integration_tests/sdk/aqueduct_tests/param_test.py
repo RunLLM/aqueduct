@@ -489,7 +489,6 @@ def test_all_param_types(client, flow_name, engine):
     assert isinstance(list_output, GenericArtifact)
     assert list_output.get() == [4, 5, 6]
 
-
     @op
     def must_be_image(input):
         if not isinstance(input, Image.Image):
@@ -497,12 +496,12 @@ def test_all_param_types(client, flow_name, engine):
         return input
 
     # Current working directory is one level above.
-    # with open("aqueduct_tests/data/aqueduct.jpg", "rb") as f:
     image_data = Image.open("aqueduct_tests/data/aqueduct.jpg", "r")
 
     image_param = client.create_param("image", default=image_data)
     image_output = must_be_image(image_param)
     assert isinstance(image_output, GenericArtifact)
+    assert isinstance(image_output.get(), Image.Image)
 
     publish_flow_test(
         client,

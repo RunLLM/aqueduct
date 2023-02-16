@@ -27,8 +27,10 @@ IS_TUPLE = "_is_tuple" # otherwise, this collection was a list.
 COLLECTION_SERIALIZATION_TYPES = "_aqueduct_serialization_types"
 DATA = "_data"
 
+
 def _serialization_is_pickle(serialization_type: SerializationType) -> bool:
     return serialization_type == SerializationType.PICKLE or serialization_type == SerializationType.BSON_PICKLE
+
 
 def _read_table_content(content: bytes) -> pd.DataFrame:
     return pd.read_json(io.BytesIO(content), orient="table")
@@ -211,7 +213,6 @@ def serialize_val(val: Any, serialization_type: SerializationType, expand_collec
         }
         expanded_dict[COLLECTION_SERIALIZATION_TYPES] = elem_serialization_types
         expanded_dict[IS_TUPLE] = isinstance(val, tuple)
-        val = expanded_dict
 
     return serialization_function_mapping[serialization_type](val)
 
