@@ -34,6 +34,8 @@ export enum ExecutionStatus {
   Canceled = 'canceled',
   Registered = 'registered',
   Running = 'running',
+  // Checks can have a warning status.
+  Warning = 'warning',
 }
 
 export const stringToExecutionStatus = (status: string): ExecutionStatus => {
@@ -59,6 +61,9 @@ export const stringToExecutionStatus = (status: string): ExecutionStatus => {
       break;
     case 'running':
       executionStatus = ExecutionStatus.Running;
+      break;
+    case 'warning':
+      executionStatus = ExecutionStatus.Warning;
       break;
     default:
       executionStatus = ExecutionStatus.Unknown;

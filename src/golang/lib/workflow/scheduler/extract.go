@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/connector"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"

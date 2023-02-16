@@ -1,5 +1,6 @@
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
+import { AqueductDocsLink } from './docs';
 
 export const aqueductDemoName = 'aqueduct_demo';
 
@@ -33,6 +34,7 @@ export type SnowflakeConfig = {
   account_identifier: string;
   warehouse: string;
   database: string;
+  schema: string;
   username: string;
   password?: string;
 };
@@ -159,20 +161,23 @@ export type DatabricksConfig = {
   s3_instance_profile_arn: string;
 };
 
+export type NotificationIntegrationConfig = {
+  level: string;
+  enabled: 'true' | 'false'; // this has to be string to fit backend requirements.
+};
+
 export type EmailConfig = {
   host: string;
   port: string;
   user: string;
   password: string;
   targets_serialized: string; // This should be a serialized list
-  level: string;
-};
+} & NotificationIntegrationConfig;
 
 export type SlackConfig = {
   token: string;
   channels_serialized: string;
-  level: string;
-};
+} & NotificationIntegrationConfig;
 
 export type IntegrationConfig =
   | PostgresConfig
@@ -223,6 +228,7 @@ export type Info = {
   logo: string;
   activated: boolean;
   category: string;
+  docs: string;
 };
 
 export type ServiceInfoMap = {
@@ -274,6 +280,8 @@ const logoBucket =
 const integrationLogosBucket =
   'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations';
 
+const addingIntegrationLink = `${AqueductDocsLink}/integrations/adding-an-integration`;
+
 export const IntegrationCategories = {
   DATA: 'data',
   COMPUTE: 'compute',
@@ -311,96 +319,115 @@ export const SupportedIntegrations: ServiceInfoMap = {
     logo: ServiceLogos['Postgres'],
     activated: true,
     category: IntegrationCategories.DATA,
+    docs: addingIntegrationLink,
   },
   ['Snowflake']: {
     logo: ServiceLogos['Snowflake'],
     activated: true,
     category: IntegrationCategories.DATA,
+    docs: addingIntegrationLink,
   },
   ['Redshift']: {
     logo: ServiceLogos['Redshift'],
     activated: true,
     category: IntegrationCategories.DATA,
+    docs: addingIntegrationLink,
   },
   ['BigQuery']: {
     logo: ServiceLogos['BigQuery'],
     activated: true,
     category: IntegrationCategories.DATA,
+    docs: `${addingIntegrationLink}/connecting-to-google-bigquery`,
   },
   ['MySQL']: {
     logo: ServiceLogos['MySQL'],
     activated: true,
     category: IntegrationCategories.DATA,
+    docs: addingIntegrationLink,
   },
   ['MariaDB']: {
     logo: ServiceLogos['MariaDB'],
     activated: true,
     category: IntegrationCategories.DATA,
+    docs: addingIntegrationLink,
   },
   ['S3']: {
     logo: ServiceLogos['S3'],
     activated: true,
     category: IntegrationCategories.DATA,
+    docs: `${addingIntegrationLink}/connecting-to-aws-s3`,
   },
   ['GCS']: {
     logo: ServiceLogos['GCS'],
     activated: true,
     category: IntegrationCategories.DATA,
+    docs: `${addingIntegrationLink}/connecting-to-google-cloud-storage`,
   },
   ['Aqueduct Demo']: {
     logo: ServiceLogos['Aqueduct Demo'],
     activated: true,
     category: IntegrationCategories.DATA,
+    docs: addingIntegrationLink,
   },
   ['SQLite']: {
     logo: ServiceLogos['SQLite'],
     activated: true,
     category: IntegrationCategories.DATA,
+    docs: addingIntegrationLink,
   },
   ['Athena']: {
     logo: ServiceLogos['Athena'],
     activated: true,
     category: IntegrationCategories.DATA,
+    docs: addingIntegrationLink,
   },
   ['Airflow']: {
     logo: ServiceLogos['Airflow'],
     activated: true,
     category: IntegrationCategories.COMPUTE,
+    docs: addingIntegrationLink,
   },
   ['Kubernetes']: {
     logo: ServiceLogos['Kubernetes'],
     activated: true,
     category: IntegrationCategories.COMPUTE,
+    docs: `${addingIntegrationLink}/connecting-to-k8s-cluster`,
   },
   ['Lambda']: {
     logo: ServiceLogos['Lambda'],
     activated: true,
     category: IntegrationCategories.COMPUTE,
+    docs: `${addingIntegrationLink}/connecting-to-aws-lambda`,
   },
   ['MongoDB']: {
     logo: ServiceLogos['MongoDB'],
     activated: true,
     category: IntegrationCategories.DATA,
+    docs: addingIntegrationLink,
   },
   ['Conda']: {
     logo: ServiceLogos['Conda'],
     activated: true,
     category: IntegrationCategories.COMPUTE,
+    docs: `${addingIntegrationLink}/connecting-to-conda`,
   },
   ['Databricks']: {
     logo: ServiceLogos['Databricks'],
     activated: true,
     category: IntegrationCategories.COMPUTE,
+    docs: `${addingIntegrationLink}/connecting-to-databricks`,
   },
   ['Email']: {
     logo: ServiceLogos['Email'],
     activated: true,
     category: IntegrationCategories.NOTIFICATION,
+    docs: `${addingIntegrationLink}/connecting-to-email`,
   },
   ['Slack']: {
     logo: ServiceLogos['Slack'],
     activated: true,
     category: IntegrationCategories.NOTIFICATION,
+    docs: `${addingIntegrationLink}/connecting-to-slack`,
   },
 };
 

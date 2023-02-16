@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -159,7 +159,6 @@ func ScheduleWorkflow(
 			outputArtifacts = append(outputArtifacts, outputArtifact)
 			outputExecPaths = append(outputExecPaths, artifactIDToExecPaths[artifactId])
 		}
-
 		airflowOperator, err := operator.NewOperator(
 			ctx,
 			op,
@@ -176,6 +175,7 @@ func ScheduleWorkflow(
 			nil,              /* ExecEnv */
 			"",               /* aqPath */
 			DB,
+			nil, /* jobManager */
 		)
 		if err != nil {
 			return nil, err
@@ -257,7 +257,7 @@ func ScheduleWorkflow(
 
 	// Update the AirflowRuntimeConfig for `dag`
 	newRuntimeConfig := dag.EngineConfig
-	newRuntimeConfig.AirflowConfig.DagId = dagId
+	newRuntimeConfig.AirflowConfig.DagID = dagId
 	// The DAGs will not match until the user has copied over the newly generated `airflowDagFile`
 	newRuntimeConfig.AirflowConfig.MatchesAirflow = false
 	newRuntimeConfig.AirflowConfig.OperatorToTask = operatorToTask
@@ -290,7 +290,7 @@ func prepareStorageConfig(
 ) (shared.StorageConfig, error) {
 	emptyStorageConf := shared.StorageConfig{}
 
-	authConf, err := auth.ReadConfigFromSecret(ctx, dag.EngineConfig.AirflowConfig.IntegrationId, vault)
+	authConf, err := auth.ReadConfigFromSecret(ctx, dag.EngineConfig.AirflowConfig.IntegrationID, vault)
 	if err != nil {
 		return emptyStorageConf, err
 	}

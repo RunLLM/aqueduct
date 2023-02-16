@@ -3,15 +3,16 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import { RootState } from '../stores/store';
 import { Integration } from '../utils/integrations';
+import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 
 export interface IntegrationState {
-  thunkState: string;
+  status: LoadingStatus;
   integrations: { [id: string]: Integration };
 }
 
 const initialState: IntegrationState = {
   integrations: {},
-  thunkState: 'IDLE',
+  status: { loading: LoadingStatusEnum.Initial, err: '' },
 };
 
 export const handleLoadIntegrations = createAsyncThunk<
@@ -65,8 +66,18 @@ export const integrationsSlice = createSlice({
   initialState,
   reducers: {},
   extraReducers: (builder) => {
+    builder.addCase(handleLoadIntegrations.pending, (state) => {
+      state.status = { loading: LoadingStatusEnum.Loading, err: '' };
+    });
     builder.addCase(handleLoadIntegrations.fulfilled, (state, { payload }) => {
       state.integrations = payload;
+      state.status = { loading: LoadingStatusEnum.Succeeded, err: '' };
+    });
+    builder.addCase(handleLoadIntegrations.rejected, (state, { payload }) => {
+      state.status = {
+        loading: LoadingStatusEnum.Failed,
+        err: payload as string,
+      };
     });
   },
 });

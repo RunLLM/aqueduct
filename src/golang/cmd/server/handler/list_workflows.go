@@ -6,11 +6,11 @@ import (
 
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/logging"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	db_operator "github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
@@ -94,7 +94,7 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 	checkResults, err := h.OperatorResultRepo.GetWithOperatorByDAGResultBatch(
 		ctx,
 		dagResultIDs,
-		[]mdl_shared.OperatorType{mdl_shared.CheckType},
+		[]db_operator.Type{db_operator.CheckType},
 		h.Database,
 	)
 	if err != nil {

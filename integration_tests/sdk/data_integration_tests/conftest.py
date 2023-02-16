@@ -9,8 +9,16 @@ from aqueduct.constants.enums import ServiceType
 from sdk.data_integration_tests.flow_manager import FlowManager
 
 allowed_data_integrations_by_file = {
-    "relational_test": [ServiceType.REDSHIFT, ServiceType.SQLITE, ServiceType.SNOWFLAKE],
+    "relational_test": [
+        ServiceType.BIGQUERY,
+        ServiceType.REDSHIFT,
+        ServiceType.SQLITE,
+        ServiceType.SNOWFLAKE,
+        ServiceType.MARIADB,
+    ],
     "s3_test": [ServiceType.S3],
+    "mongo_db_test": [ServiceType.MONGO_DB],
+    "athena_test": [ServiceType.ATHENA],
 }
 
 

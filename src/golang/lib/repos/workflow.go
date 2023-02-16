@@ -3,10 +3,9 @@ package repos
 import (
 	"context"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
@@ -34,7 +33,7 @@ type workflowReader interface {
 	GetByOwnerAndName(ctx context.Context, ownerID uuid.UUID, name string, DB database.Database) (*models.Workflow, error)
 
 	// GetByScheduleTrigger returns all Workflows where Schedule.Trigger is equal to trigger.
-	GetByScheduleTrigger(ctx context.Context, trigger workflow.UpdateTrigger, DB database.Database) ([]models.Workflow, error)
+	GetByScheduleTrigger(ctx context.Context, trigger shared.UpdateTrigger, DB database.Database) ([]models.Workflow, error)
 
 	// GetTargets returns the ID of each Workflow where Schedule.SourceID
 	// is equal to ID.
@@ -61,8 +60,9 @@ type workflowWriter interface {
 		userID uuid.UUID,
 		name string,
 		description string,
-		schedule *workflow.Schedule,
-		retentionPolicy *workflow.RetentionPolicy,
+		schedule *shared.Schedule,
+		retentionPolicy *shared.RetentionPolicy,
+		notificationSettings *shared.NotificationSettings,
 		DB database.Database,
 	) (*models.Workflow, error)
 
@@ -71,4 +71,10 @@ type workflowWriter interface {
 
 	// Update applies changes to the Workflow with ID. It returns the updated Workflow.
 	Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.Workflow, error)
+
+	// RemoveNotificationFromSettings removes `notificationIntegrationID` from notification_settings
+	// field when possible.
+	// If the ID does not appear in any notification_settings field,
+	// the API simply return without error.
+	RemoveNotificationFromSettings(ctx context.Context, notificationIntegrationID uuid.UUID, DB database.Database) error
 }

@@ -7,12 +7,11 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
@@ -43,35 +42,35 @@ type EditIntegrationHandler struct {
 	IntegrationRepo repos.Integration
 }
 
-var serviceToReadOnlyFields = map[integration.Service]map[string]bool{
-	integration.Airflow:  {"host": true},
-	integration.BigQuery: {"project_id": true},
-	integration.MariaDb: {
+var serviceToReadOnlyFields = map[shared.Service]map[string]bool{
+	shared.Airflow:  {"host": true},
+	shared.BigQuery: {"project_id": true},
+	shared.MariaDb: {
 		"host":     true,
 		"port":     true,
 		"database": true,
 	},
-	integration.MySql: {
+	shared.MySql: {
 		"host":     true,
 		"port":     true,
 		"database": true,
 	},
-	integration.Postgres: {
+	shared.Postgres: {
 		"host":     true,
 		"port":     true,
 		"database": true,
 	},
-	integration.Redshift: {
+	shared.Redshift: {
 		"host":     true,
 		"port":     true,
 		"database": true,
 	},
-	integration.S3: {
+	shared.S3: {
 		"bucket":         true,
 		"region":         true,
 		"use_as_storage": true,
 	},
-	integration.Snowflake: {
+	shared.Snowflake: {
 		"account_identifier": true,
 		"warehouse":          true,
 		"database":           true,
@@ -109,7 +108,7 @@ func (*EditIntegrationHandler) Name() string {
 // `updateConfig` will return a 400 and an error.
 func updateConfig(
 	curConfigToUpdate map[string]string,
-	service integration.Service,
+	service shared.Service,
 	newConfig map[string]string,
 ) (bool, int, error) {
 	readOnlyFields := serviceToReadOnlyFields[service]
@@ -175,7 +174,7 @@ func (h *EditIntegrationHandler) Prepare(r *http.Request) (interface{}, int, err
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to edit integration.")
 	}
 
-	if name == integration.DemoDbIntegrationName {
+	if name == shared.DemoDbIntegrationName {
 		return nil, http.StatusBadRequest, errors.New("`aqueduct_demo` is reserved for demo integration. Please use another name.")
 	}
 
@@ -202,7 +201,7 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve integration")
 	}
 
-	if integrationObject.Name == integration.DemoDbIntegrationName {
+	if integrationObject.Name == shared.DemoDbIntegrationName {
 		return emptyResp, http.StatusBadRequest, errors.New("You cannot edit demo DB credentials.")
 	}
 
@@ -296,7 +295,7 @@ func UpdateIntegration(
 	if newConfig != nil {
 		// Extract non-confidential config
 		publicConfig := newConfig.PublicConfig()
-		changedFields[models.IntegrationConfig] = (*utils.Config)(&publicConfig)
+		changedFields[models.IntegrationConfig] = (*shared.IntegrationConfig)(&publicConfig)
 	}
 
 	txn, err := DB.BeginTx(ctx)

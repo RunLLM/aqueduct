@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -44,9 +44,4 @@ func opFailureError(failureType shared.FailureType, op operator.Operator) error 
 		return ErrOpExecBlockingUserFailure
 	}
 	return errors.Newf("Internal error: Unsupported failure type %v", failureType)
-}
-
-// We should only stop orchestration on system or fatal user errors.
-func shouldStopExecution(execState *shared.ExecutionState) bool {
-	return execState.Status == shared.FailedExecutionStatus && *execState.FailureType != shared.UserNonFatalFailure
 }

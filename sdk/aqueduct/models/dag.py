@@ -6,22 +6,13 @@ from aqueduct.error import (
     ArtifactNotFoundException,
     InternalAqueductError,
     InvalidUserActionException,
-    InvalidUserArgumentException,
 )
-from aqueduct.logger import logger
 from pydantic import BaseModel
 
 from .artifact import ArtifactMetadata
 from .config import EngineConfig
 from .dag_rules import check_customized_resources_are_supported
-from .operators import (
-    LAMBDA_MAX_MEMORY_MB,
-    LAMBDA_MIN_MEMORY_MB,
-    Operator,
-    OperatorSpec,
-    get_operator_type,
-    get_operator_type_from_spec,
-)
+from .operators import Operator, OperatorSpec, get_operator_type, get_operator_type_from_spec
 
 
 class Schedule(BaseModel):
@@ -239,9 +230,13 @@ class DAG(BaseModel):
         return root_operators
 
     def must_get_artifact(self, artifact_id: uuid.UUID) -> ArtifactMetadata:
-        if str(artifact_id) not in self.artifacts:
+        artifact = self.get_artifact(artifact_id)
+        if artifact is None:
             raise ArtifactNotFoundException("Unable to find artifact.")
-        return self.artifacts[str(artifact_id)]
+        return artifact
+
+    def get_artifact(self, artifact_id: uuid.UUID) -> Optional[ArtifactMetadata]:
+        return self.artifacts.get(str(artifact_id))
 
     def must_get_artifacts(self, artifact_ids: List[uuid.UUID]) -> List[ArtifactMetadata]:
         return [self.must_get_artifact(artifact_id) for artifact_id in artifact_ids]
@@ -277,24 +272,14 @@ class DAG(BaseModel):
 
         return artifacts
 
-    def get_unclaimed_op_name(self, prefix: str) -> str:
-        """Returns an operator name that is guaranteed to not collide with any existing name in the dag.
-
-        Starts with the operator name `<prefix> 1`. If it is taken, we continue to increment the suffix counter
-        until we hit an unclaimed name.
-        """
-        curr_suffix = 1
-        while True:
-            candidate_name = prefix + " %d" % curr_suffix
-            colliding_op = self.get_operator(with_name=candidate_name)
-            if colliding_op is None:
-                # We've found an unallocated name!
-                op_name = candidate_name
-                break
-            curr_suffix += 1
-
-        assert op_name is not None
-        return op_name
+    def validate_artifact_name(self, name: str) -> None:
+        """Checks that the artifact name is unique."""
+        existing = self.get_artifact_by_name(name)
+        if existing is not None:
+            raise InvalidUserActionException(
+                "Artifact with name `%s` has already been created locally. Artifact names must be unique."
+                % name,
+            )
 
     def list_metrics_for_operator(self, op: Operator) -> List[Operator]:
         """Returns all the metric operators on the given operator's outputs."""
@@ -336,6 +321,18 @@ class DAG(BaseModel):
 
     def update_artifact_type(self, artifact_id: uuid.UUID, artifact_type: ArtifactType) -> None:
         self.must_get_artifact(artifact_id).type = artifact_type
+
+    def update_artifact_name(self, artifact_id: uuid.UUID, new_name: str) -> None:
+        self.must_get_artifact(artifact_id).name = new_name
+
+    def update_operator_name(self, op_id: uuid.UUID, new_name: str) -> None:
+        # Update the name -> operator map.
+        old_name = self.must_get_operator(op_id).name
+        self.operator_by_name[new_name] = self.operator_by_name[old_name]
+        del self.operator_by_name[old_name]
+
+        # Update the name on the operator spec.
+        self.must_get_operator(op_id).name = new_name
 
     def update_operator_spec(self, name: str, spec: OperatorSpec) -> None:
         """Replaces an operator's spec in the dag.

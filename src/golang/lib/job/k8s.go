@@ -6,10 +6,9 @@ import (
 	"strconv"
 
 	"github.com/aqueducthq/aqueduct/lib"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/function"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/function"
 	"github.com/dropbox/godropbox/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
@@ -185,25 +184,12 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 		// and not the status of the pod.
 		return status, nil
 	} else {
-		pod, err := k8s.GetPod(ctx, name, j.k8sClient)
+		_, err := k8s.GetPod(ctx, name, j.k8sClient)
 		if err != nil {
 			if err == k8s.ErrNoPodExists {
 				return shared.PendingExecutionStatus, nil
 			}
 			return shared.FailedExecutionStatus, systemError(err)
-		}
-
-		if pod.Status.Phase == corev1.PodPending {
-			for _, condition := range pod.Status.Conditions {
-				// If the pod is unschedulable, fail the operator immediately with the K8s message (eg. "Insufficient CPU").
-				if condition.Type == corev1.PodScheduled &&
-					condition.Status == corev1.ConditionFalse &&
-					condition.Reason == corev1.PodReasonUnschedulable {
-					return shared.FailedExecutionStatus, userError(
-						errors.Newf("Pod could not be scheduled on Kubernetes. Reason: %s", condition.Message),
-					)
-				}
-			}
 		}
 
 		status = shared.PendingExecutionStatus
@@ -289,19 +275,19 @@ func mapJobTypeToDockerImage(spec Spec, launchGpu bool) (string, error) {
 	}
 }
 
-func mapIntegrationServiceToDockerImage(service integration.Service) (string, error) {
+func mapIntegrationServiceToDockerImage(service shared.Service) (string, error) {
 	switch service {
-	case integration.Postgres, integration.Redshift, integration.AqueductDemo:
+	case shared.Postgres, shared.Redshift, shared.AqueductDemo:
 		return PostgresConnectorDockerImage, nil
-	case integration.Snowflake:
+	case shared.Snowflake:
 		return SnowflakeConnectorDockerImage, nil
-	case integration.MySql, integration.MariaDb:
+	case shared.MySql, shared.MariaDb:
 		return MySqlConnectorDockerImage, nil
-	case integration.SqlServer:
+	case shared.SqlServer:
 		return SqlServerConnectorDockerImage, nil
-	case integration.BigQuery:
+	case shared.BigQuery:
 		return BigQueryConnectorDockerImage, nil
-	case integration.S3:
+	case shared.S3:
 		return S3ConnectorDockerImage, nil
 	default:
 		return "", errors.Newf("Unknown integration service provided %v", service)

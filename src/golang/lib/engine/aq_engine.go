@@ -9,18 +9,14 @@ import (
 
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
-	artifact_db "github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/cronjob"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
@@ -54,6 +50,7 @@ type Repos struct {
 	DAGEdgeRepo              repos.DAGEdge
 	DAGResultRepo            repos.DAGResult
 	ExecutionEnvironmentRepo repos.ExecutionEnvironment
+	IntegrationRepo          repos.Integration
 	NotificationRepo         repos.Notification
 	OperatorRepo             repos.Operator
 	OperatorResultRepo       repos.OperatorResult
@@ -62,6 +59,7 @@ type Repos struct {
 }
 
 type aqEngine struct {
+	DisplayIP      string
 	Database       database.Database
 	GithubManager  github.Manager
 	CronjobManager cronjob.CronjobManager
@@ -90,9 +88,9 @@ type WorkflowPreviewResult struct {
 }
 
 type PreviewArtifactResult struct {
-	SerializationType artifact_result.SerializationType `json:"serialization_type"`
-	ArtifactType      artifact_db.Type                  `json:"artifact_type"`
-	Content           []byte                            `json:"content"`
+	SerializationType shared.ArtifactSerializationType `json:"serialization_type"`
+	ArtifactType      shared.ArtifactType              `json:"artifact_type"`
+	Content           []byte                           `json:"content"`
 }
 
 func NewAqEngine(
@@ -100,11 +98,13 @@ func NewAqEngine(
 	githubManager github.Manager,
 	previewCacheManager preview_cache.CacheManager,
 	aqPath string,
+	displayIP string,
 	repos *Repos,
 ) (*aqEngine, error) {
 	cronjobManager := cronjob.NewProcessCronjobManager()
 
 	return &aqEngine{
+		DisplayIP:           displayIP,
 		Database:            database,
 		GithubManager:       githubManager,
 		PreviewCacheManager: previewCacheManager,
@@ -131,6 +131,7 @@ func (eng *aqEngine) ScheduleWorkflow(
 		},
 		eng.GithubManager.Config(),
 		eng.AqPath,
+		eng.DisplayIP,
 		nil,
 	)
 	err := eng.CronjobManager.DeployCronJob(
@@ -166,9 +167,9 @@ func (eng *aqEngine) ExecuteWorkflow(
 	}
 
 	pendingAt := time.Now()
-	execState := &mdl_shared.ExecutionState{
-		Status: mdl_shared.PendingExecutionStatus,
-		Timestamps: &mdl_shared.ExecutionTimestamps{
+	execState := &shared.ExecutionState{
+		Status: shared.PendingExecutionStatus,
+		Timestamps: &shared.ExecutionTimestamps{
 			PendingAt: &pendingAt,
 		},
 	}
@@ -187,7 +188,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 	defer func() {
 		if err != nil {
 			// Mark the workflow dag result as failed
-			execState.Status = mdl_shared.FailedExecutionStatus
+			execState.Status = shared.FailedExecutionStatus
 			now := time.Now()
 			execState.Timestamps.FinishedAt = &now
 		}
@@ -267,6 +268,20 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to initialize vault.")
 	}
 
+	var jobManager job.JobManager
+	if dbDAG.EngineConfig.Type == shared.DatabricksEngineType {
+		jobManager, err = job.GenerateNewJobManager(
+			ctx,
+			dbDAG.EngineConfig,
+			&dbDAG.StorageConfig,
+			eng.AqPath,
+			vaultObject,
+		)
+		if err != nil {
+			return shared.FailedExecutionStatus, err
+		}
+	}
+
 	dag, err := dag_utils.NewWorkflowDag(
 		ctx,
 		dagResult.ID,
@@ -279,7 +294,9 @@ func (eng *aqEngine) ExecuteWorkflow(
 		execEnvsByOpId,
 		operator.Publish,
 		eng.AqPath,
+		eng.DisplayIP,
 		eng.Database,
+		jobManager,
 	)
 	if err != nil {
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create NewWorkflowDag.")
@@ -305,7 +322,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to initialize dag results.")
 	}
 
-	execState.Status = mdl_shared.RunningExecutionStatus
+	execState.Status = shared.RunningExecutionStatus
 	runningAt := time.Now()
 	execState.Timestamps.RunningAt = &runningAt
 
@@ -314,19 +331,19 @@ func (eng *aqEngine) ExecuteWorkflow(
 		dag,
 		dbDAG.Metadata.Name,
 		dbDAG.EngineConfig,
-		dbDAG.StorageConfig,
 		wfRunMetadata,
 		timeConfig,
 		operator.Publish,
 		vaultObject,
+		jobManager,
 	)
 	if err != nil {
-		execState.Status = mdl_shared.FailedExecutionStatus
+		execState.Status = shared.FailedExecutionStatus
 		now := time.Now()
 		execState.Timestamps.FinishedAt = &now
 		return shared.FailedExecutionStatus, errors.Wrapf(err, "Error executing workflow")
 	} else {
-		execState.Status = mdl_shared.SucceededExecutionStatus
+		execState.Status = shared.SucceededExecutionStatus
 		now := time.Now()
 		execState.Timestamps.FinishedAt = &now
 	}
@@ -346,6 +363,20 @@ func (eng *aqEngine) PreviewWorkflow(
 		return nil, errors.Wrap(err, "Unable to initialize vault.")
 	}
 
+	var jobManager job.JobManager
+	if dbDAG.EngineConfig.Type == shared.DatabricksEngineType {
+		jobManager, err = job.GenerateNewJobManager(
+			ctx,
+			dbDAG.EngineConfig,
+			&dbDAG.StorageConfig,
+			eng.AqPath,
+			vaultObject,
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	dag, err := dag_utils.NewWorkflowDag(
 		ctx,
 		uuid.Nil, /* workflowDagResultID */
@@ -358,7 +389,9 @@ func (eng *aqEngine) PreviewWorkflow(
 		execEnvByOperatorId,
 		operator.Preview,
 		eng.AqPath,
+		eng.DisplayIP,
 		eng.Database,
+		jobManager,
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to create NewWorkflowDag.")
@@ -388,11 +421,11 @@ func (eng *aqEngine) PreviewWorkflow(
 		dag,
 		fmt.Sprintf("PREVIEW_%s", uuid.New().String()),
 		dbDAG.EngineConfig,
-		dbDAG.StorageConfig,
 		wfRunMetadata,
 		timeConfig,
 		operator.Preview,
 		vaultObject,
+		jobManager,
 	)
 	if err != nil {
 		log.Errorf("Workflow failed with error: %v", err)
@@ -486,7 +519,7 @@ func (eng *aqEngine) DeleteWorkflow(
 		var operatorId uuid.UUID
 		var artifactID uuid.UUID
 
-		if dagEdge.Type == mdl_shared.OperatorToArtifactDAGEdge {
+		if dagEdge.Type == shared.OperatorToArtifactDAGEdge {
 			operatorId = dagEdge.FromID
 			artifactID = dagEdge.ToID
 		} else {
@@ -598,7 +631,7 @@ func (eng *aqEngine) DeleteWorkflow(
 
 		schedule := targetWorkflow.Schedule
 		schedule.SourceID = uuid.Nil
-		schedule.Trigger = workflow.ManualUpdateTrigger
+		schedule.Trigger = shared.ManualUpdateTrigger
 
 		if _, err := eng.WorkflowRepo.Update(
 			ctx,
@@ -656,8 +689,9 @@ func (eng *aqEngine) EditWorkflow(
 	workflowID uuid.UUID,
 	workflowName string,
 	workflowDescription string,
-	schedule *workflow.Schedule,
-	retentionPolicy *workflow.RetentionPolicy,
+	schedule *shared.Schedule,
+	retentionPolicy *shared.RetentionPolicy,
+	notificationSettings *shared.NotificationSettings,
 ) error {
 	changes := map[string]interface{}{}
 	if workflowName != "" {
@@ -670,6 +704,10 @@ func (eng *aqEngine) EditWorkflow(
 
 	if retentionPolicy != nil {
 		changes[models.WorkflowRetentionPolicy] = retentionPolicy
+	}
+
+	if notificationSettings != nil {
+		changes[models.WorkflowNotificationSettings] = notificationSettings
 	}
 
 	if schedule.Trigger != "" {
@@ -749,6 +787,7 @@ func (eng *aqEngine) TriggerWorkflow(
 		},
 		eng.GithubManager.Config(),
 		eng.AqPath,
+		eng.DisplayIP,
 		parameters,
 	)
 
@@ -774,33 +813,17 @@ func (eng *aqEngine) executeWithEngine(
 	dag dag_utils.WorkflowDag,
 	workflowName string,
 	engineConfig shared.EngineConfig,
-	storageConfig shared.StorageConfig,
 	workflowRunMetadata *WorkflowRunMetadata,
 	timeConfig *AqueductTimeConfig,
 	opExecMode operator.ExecutionMode,
 	vaultObject vault.Vault,
+	dagJobManager job.JobManager,
 ) error {
 	switch engineConfig.Type {
 	case shared.DatabricksEngineType:
-		jobConfig, err := operator.GenerateJobManagerConfig(
-			ctx,
-			engineConfig,
-			&storageConfig,
-			eng.AqPath,
-			vaultObject,
-		)
-		if err != nil {
-			return errors.Wrap(err, "Unable to generate JobManagerConfig.")
-		}
-
-		jobManager, err := job.NewJobManager(jobConfig)
-		if err != nil {
-			return errors.Wrap(err, "Unable to create JobManager.")
-		}
-
-		databricksJobManager, ok := jobManager.(*job.DatabricksJobManager)
+		databricksJobManager, ok := dagJobManager.(*job.DatabricksJobManager)
 		if !ok {
-			return errors.Wrap(err, "Unable to create DatabricksJobManager.")
+			return errors.New("Unable to create DatabricksJobManager.")
 		}
 
 		return ExecuteDatabricks(
@@ -811,16 +834,57 @@ func (eng *aqEngine) executeWithEngine(
 			timeConfig,
 			opExecMode,
 			databricksJobManager,
+			vaultObject,
+			eng.IntegrationRepo,
+			eng.Database,
 		)
 	default:
 		return eng.execute(
-
 			ctx,
 			dag,
 			workflowRunMetadata,
 			timeConfig,
+			vaultObject,
 			opExecMode,
 		)
+	}
+}
+
+func onFinishExecution(
+	ctx context.Context,
+	inProgressOps map[uuid.UUID]operator.Operator,
+	pollInterval time.Duration,
+	cleanupTimeout time.Duration,
+	curErr error,
+	notificationContent *notificationContentStruct,
+	dag dag_utils.WorkflowDag,
+	execMode operator.ExecutionMode,
+	vaultObject vault.Vault,
+	integrationRepo repos.Integration,
+	DB database.Database,
+) {
+	// Wait a little bit for all active operators to finish before exiting on failure.
+	waitForInProgressOperators(ctx, inProgressOps, pollInterval, cleanupTimeout)
+	if curErr != nil && notificationContent == nil {
+		notificationContent = &notificationContentStruct{
+			level:            shared.ErrorNotificationLevel,
+			systemErrContext: curErr.Error(),
+		}
+	}
+
+	// Send notifications
+	if notificationContent != nil && execMode == operator.Publish {
+		err := sendNotifications(
+			ctx,
+			dag,
+			notificationContent,
+			vaultObject,
+			integrationRepo,
+			DB,
+		)
+		if err != nil {
+			log.Errorf("Error sending notifications: %s", err)
+		}
 	}
 }
 
@@ -829,13 +893,17 @@ func (eng *aqEngine) execute(
 	workflowDag dag_utils.WorkflowDag,
 	workflowRunMetadata *WorkflowRunMetadata,
 	timeConfig *AqueductTimeConfig,
+	vaultObject vault.Vault,
 	opExecMode operator.ExecutionMode,
-) error {
+) (err error) {
 	// These are the operators of immediate interest. They either need to be scheduled or polled on.
 	inProgressOps := workflowRunMetadata.InProgressOps
 	completedOps := workflowRunMetadata.CompletedOps
 	dag := workflowDag
 	opToDependencyCount := workflowRunMetadata.OpToDependencyCount
+
+	var notificationContent *notificationContentStruct = nil
+	err = nil
 
 	// Kick off execution by starting all operators that don't have any inputs.
 	for _, op := range dag.Operators() {
@@ -848,8 +916,21 @@ func (eng *aqEngine) execute(
 		return errors.Newf("No initial operators to schedule.")
 	}
 
-	// Wait a little bit for all active operators to finish before exiting on failure.
-	defer waitForInProgressOperators(ctx, inProgressOps, timeConfig.OperatorPollInterval, timeConfig.CleanupTimeout)
+	defer func() {
+		onFinishExecution(
+			ctx,
+			inProgressOps,
+			timeConfig.OperatorPollInterval,
+			timeConfig.CleanupTimeout,
+			err,
+			notificationContent,
+			workflowDag,
+			opExecMode,
+			vaultObject,
+			eng.IntegrationRepo,
+			eng.Database,
+		)
+	}()
 
 	start := time.Now()
 
@@ -888,7 +969,7 @@ func (eng *aqEngine) execute(
 
 			// We can continue orchestration on non-fatal errors; currently, this only allows through succeeded operators
 			// and check operators with warning severity.
-			if shouldStopExecution(execState) {
+			if execState.HasBlockingFailure() {
 				log.Infof("Stopping execution of operator %v", op.ID())
 				for id, dagOp := range workflowDag.Operators() {
 					log.Infof("Checking status of operator %v", id)
@@ -909,7 +990,25 @@ func (eng *aqEngine) execute(
 					}
 				}
 
+				notificationCtxMsg := ""
+				if execState.HasSystemError() {
+					if execState.Error != nil {
+						notificationCtxMsg = execState.Error.Message()
+					} else {
+						notificationCtxMsg = "This is a system error with no further context provided." + shared.TipCreateBugReport
+					}
+				}
+
+				notificationContent = &notificationContentStruct{
+					level:            shared.ErrorNotificationLevel,
+					systemErrContext: notificationCtxMsg,
+				}
+
 				return opFailureError(*execState.FailureType, op)
+			} else if execState.HasWarning() {
+				notificationContent = &notificationContentStruct{
+					level: shared.WarningNotificationLevel,
+				}
 			}
 
 			// Add the operator to the completed stack, and remove it from the in-progress one.
@@ -961,6 +1060,13 @@ func (eng *aqEngine) execute(
 			return errors.Newf("Internal error: operator %s has a non-zero dep count %d.", opID, depCount)
 		}
 	}
+
+	// avoid overriding an existing notification (in practice, this is a warning)
+	if notificationContent == nil {
+		notificationContent = &notificationContentStruct{
+			level: shared.SuccessNotificationLevel,
+		}
+	}
 	return nil
 }
 
@@ -993,7 +1099,7 @@ func (eng *aqEngine) updateWorkflowSchedule(
 	ctx context.Context,
 	workflowId uuid.UUID,
 	cronjobName string,
-	newSchedule *workflow.Schedule,
+	newSchedule *shared.Schedule,
 ) error {
 	// How we update the workflow schedule depends on whether a cron job already exists.
 	// A manually triggered workflow does not have a cron job. If we're editing it to have a periodic
@@ -1035,6 +1141,7 @@ func (eng *aqEngine) updateWorkflowSchedule(
 			},
 			eng.GithubManager.Config(),
 			eng.AqPath,
+			eng.DisplayIP,
 			nil,
 		)
 

@@ -7,6 +7,7 @@ from aqueduct.models.dag import DAG
 from aqueduct.models.integration import IntegrationInfo
 from aqueduct.models.operators import LoadSpec, Operator, OperatorSpec, UnionLoadParams
 from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.naming import resolve_op_and_artifact_names
 from aqueduct.utils.utils import generate_uuid
 
 
@@ -64,7 +65,12 @@ def _save_artifact(
     # If the name is not set yet, we know we have to make a new load operator, so bump the
     # suffix until a unique name is found.
     if load_op_name is None:
-        load_op_name = dag.get_unclaimed_op_name(prefix="save to %s" % integration_info.name)
+        load_op_name, _ = resolve_op_and_artifact_names(
+            dag,
+            "save to %s" % integration_info.name,
+            overwrite_existing_op_name=False,
+            only_resolve_op_name=True,
+        )
 
     apply_deltas_to_dag(
         dag,

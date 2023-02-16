@@ -3,7 +3,7 @@ package _000019_add_serialization_value_to_param_op
 import (
 	"database/sql/driver"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
 )
 
 type Spec struct {
@@ -12,9 +12,9 @@ type Spec struct {
 }
 
 func (m *Spec) Value() (driver.Value, error) {
-	return utils.ValueJsonB(*m)
+	return utils.ValueJSONB(*m)
 }
 
 func (m *Spec) Scan(value interface{}) error {
-	return utils.ScanJsonB(value, m)
+	return utils.ScanJSONB(value, m)
 }

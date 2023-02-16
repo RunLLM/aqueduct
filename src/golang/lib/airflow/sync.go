@@ -86,7 +86,7 @@ func syncWorkflowDag(
 	// Read Airflow credentials from vault
 	authConf, err := auth.ReadConfigFromSecret(
 		ctx,
-		dag.EngineConfig.AirflowConfig.IntegrationId,
+		dag.EngineConfig.AirflowConfig.IntegrationID,
 		vault,
 	)
 	if err != nil {
@@ -116,7 +116,7 @@ func syncWorkflowDag(
 	}
 
 	// Get all Airflow DAG runs for `dag`
-	dagRuns, err := cli.getDagRuns(dag.EngineConfig.AirflowConfig.DagId)
+	dagRuns, err := cli.getDagRuns(dag.EngineConfig.AirflowConfig.DagID)
 	if err != nil {
 		return err
 	}
@@ -257,7 +257,7 @@ func checkForDAGMatch(
 		return true, nil
 	}
 
-	airflowDag, err := cli.getDag(dag.EngineConfig.AirflowConfig.DagId)
+	airflowDag, err := cli.getDag(dag.EngineConfig.AirflowConfig.DagID)
 	if err != nil {
 		return false, err
 	}

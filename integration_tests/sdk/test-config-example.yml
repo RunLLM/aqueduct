@@ -1,35 +1,34 @@
-apikey: <APIKEY>
-address: <SERVER ADDRESS>
+address: <SERVER_ADDRESS>
 
-# Each integration entry starts with the name of the integration, followed
-# by the list of credentials needed to connect to it.
-data:
-  test_redshift:
-    type: Redshift
-    username:
-    password:
-    database:
-    host:
-    port: # 5439 is the default port since that is what Redshift defaults to
-  test_snowflake:
-    type: Snowflake
-    username:
-    password:
-    account_identifier:
-    database:
-    warehouse:
+# A test run will cover the cross-product of each of the sections below.
+
+# OPTIONAL: If set, this can alter the metadata store of the server, so use
+# with care.
+metadata:
+  # If `must_migrate` is set, we will error unless the server is in local metadata mode.
+  # This ensures that a metadata migration is performed. Otherwise, the server
+  # is allowed to be using the appropriate metadata store already.
+  must_migrate: true
   test_s3:
-    type: S3
 
-    # Access Key Credentials
-    access_key_id:
-    secret_access_key:
-    # (Alternative) Config File Credentials
-    # config_file_path:
-    # config_file_profile:
+# REQUIRED: All the data integrations to run the test suite against.
+# All entries here must be present in `test-credentials.yml`, except
+# `aqueduct_demo`, which is built-in.
+data:
+  aqueduct_demo:
+  test_athena:
+  test_bigquery:
+  test_mariadb:
+  test_mongo_db:
+  test_mysql:
+  test_postgres:
+  test_redshift:
+  test_s3:
+  test_snowflake:
+  test_sqlite:
 
-    bucket:
-    region:
-
-    # Whether to configure this integration as the metadata store too.
-    # use_as_storage:
+# REQUIRED: All the compute integrations to run the test suite against.
+# All entries here must be present in `test-credentials.yml`, except
+# `aqueduct_engine`, which is our native orchestration engine.
+compute:
+  aqueduct_engine:

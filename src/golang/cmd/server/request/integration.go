@@ -5,15 +5,15 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/dropbox/godropbox/errors"
 )
 
 // ParseIntegrationServiceFromRequest parses the integration service, and whether the
 // service is user only.
-func ParseIntegrationServiceFromRequest(r *http.Request) (integration.Service, bool, error) {
+func ParseIntegrationServiceFromRequest(r *http.Request) (shared.Service, bool, error) {
 	serviceStr := r.Header.Get(routes.IntegrationServiceHeader)
-	service, err := integration.ParseService(serviceStr)
+	service, err := shared.ParseService(serviceStr)
 	if err != nil {
 		return "", false, err
 	}
@@ -42,11 +42,13 @@ func ParseIntegrationConfigFromRequest(r *http.Request) (string, map[string]stri
 }
 
 // isUserOnlyIntegration returns whether the specified service is only accessible by the user.
-func isUserOnlyIntegration(svc integration.Service) bool {
-	userSpecific := []integration.Service{
-		integration.GoogleSheets,
-		integration.Github,
-		integration.Conda,
+func isUserOnlyIntegration(svc shared.Service) bool {
+	userSpecific := []shared.Service{
+		shared.GoogleSheets,
+		shared.Github,
+		shared.Conda,
+		shared.Email,
+		shared.Slack,
 	}
 	for _, s := range userSpecific {
 		if s == svc {

@@ -3,7 +3,7 @@ package vault
 import (
 	"path/filepath"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 )
 

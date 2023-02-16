@@ -11,11 +11,15 @@ def _execute_command(args, cwd=None) -> None:
             raise Exception("Error executing command: %s" % args)
 
 
-def _run_tests(dir_name: str, concurrency: int, rerun_failed: bool) -> None:
+def _run_tests(dir_name: str, test_case: str, concurrency: int, rerun_failed: bool) -> None:
+    """Either test_case or rerun_failed can be set, but not both."""
+    cmd = ["pytest", dir_name, "-rP", "-vv", "-n", str(concurrency)]
     if rerun_failed:
-        _execute_command(["pytest", dir_name, "-lf", "-rP", "-vv", "-n", str(concurrency)])
-    else:
-        _execute_command(["pytest", dir_name, "-rP", "-vv", "-n", str(concurrency)])
+        cmd.append("-lf")
+    if len(test_case) > 0:
+        cmd += ["-k", test_case]
+
+    _execute_command(cmd)
 
 
 if __name__ == "__main__":
@@ -38,6 +42,14 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "-k",
+        dest="test_case",
+        default="",
+        action="store",
+        help="Only runs tests that match this argument",
+    )
+
+    parser.add_argument(
         "-lf",
         dest="rerun_failed",
         default=False,
@@ -54,10 +66,13 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-
     if not (args.aqueduct_tests or args.data_integration_tests):
         args.aqueduct_tests = True
         args.data_integration_tests = True
+
+    assert not (
+        args.rerun_failed and len(args.test_case) > 0
+    ), "Either -k or -lf can be set, but not both."
 
     cwd = os.getcwd()
     if not cwd.endswith("integration_tests/sdk"):
@@ -67,8 +82,8 @@ if __name__ == "__main__":
 
     if args.aqueduct_tests:
         print("Running Aqueduct Tests...")
-        _run_tests("aqueduct_tests/", args.concurrency, args.rerun_failed)
+        _run_tests("aqueduct_tests/", args.test_case, args.concurrency, args.rerun_failed)
 
     if args.data_integration_tests:
         print("Running Data Integration Tests...")
-        _run_tests("data_integration_tests/", args.concurrency, args.rerun_failed)
+        _run_tests("data_integration_tests/", args.test_case, args.concurrency, args.rerun_failed)

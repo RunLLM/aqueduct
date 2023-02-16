@@ -45,6 +45,7 @@ import MenuSidebar, {
 } from './components/layouts/menuSidebar';
 import LogViewer from './components/LogViewer';
 import MultiFileViewer from './components/MultiFileViewer';
+import AccountNotificationSettingsSelector from './components/notifications/AccountNotificationSettingsSelector';
 import NotificationLevelSelector from './components/notifications/NotificationLevelSelector';
 import { NotificationListItem } from './components/notifications/NotificationListItem';
 import NotificationsPopover from './components/notifications/NotificationsPopover';
@@ -64,9 +65,9 @@ import WorkflowsPage from './components/pages/workflows';
 import { Button } from './components/primitives/Button.styles';
 import { IconButton } from './components/primitives/IconButton.styles';
 import { LoadingButton } from './components/primitives/LoadingButton.styles';
-import { Tab, Tabs } from './components/primitives/Tabs.styles';
 import { OperatorExecStateTableType } from './components/tables/OperatorExecStateTable';
 import PaginatedTable from './components/tables/PaginatedTable';
+import { Tab, Tabs } from './components/Tabs/Tabs.styles';
 import LogBlock, { LogLevel } from './components/text/LogBlock';
 import getUniqueListBy from './components/utils/list_utils';
 import AqueductBezier from './components/workflows/edges/AqueductBezier';
@@ -202,6 +203,7 @@ import {
 } from './utils/workflows';
 
 export {
+  AccountNotificationSettingsSelector,
   AccountPage,
   AddIntegrations,
   addTable,

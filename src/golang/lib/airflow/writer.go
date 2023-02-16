@@ -5,11 +5,9 @@ import (
 	"fmt"
 
 	"github.com/apache/airflow-client-go/airflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
@@ -24,8 +22,8 @@ func createDAGResult(
 	DB database.Database,
 ) (*models.DAGResult, error) {
 	dagStatus := mapDagStateToStatus(*run.State)
-	if dagStatus != mdl_shared.SucceededExecutionStatus &&
-		dagStatus != mdl_shared.FailedExecutionStatus {
+	if dagStatus != shared.SucceededExecutionStatus &&
+		dagStatus != shared.FailedExecutionStatus {
 		// Do not create WorkflowDagResult for Airflow DAG runs that have not finished
 		return nil, errors.New("Cannot create WorkflowDagResult for in progress Airflow DAG Run.")
 	}
@@ -33,9 +31,9 @@ func createDAGResult(
 	return dagResultRepo.Create(
 		ctx,
 		dag.ID,
-		&mdl_shared.ExecutionState{
+		&shared.ExecutionState{
 			Status: dagStatus,
-			Timestamps: &mdl_shared.ExecutionTimestamps{
+			Timestamps: &shared.ExecutionTimestamps{
 				PendingAt:  run.StartDate.Get(),
 				RunningAt:  run.StartDate.Get(),
 				FinishedAt: run.EndDate.Get(),
@@ -114,7 +112,7 @@ func createArtifactResult(
 	}
 	metadataPath := getArtifactMetadataPath(metadataPathPrefix, dagRunId)
 
-	var metadata artifact_result.Metadata
+	var metadata shared.ArtifactResultMetadata
 	if utils.ObjectExistsInStorage(ctx, &dag.StorageConfig, metadataPath) {
 		if err := utils.ReadFromStorage(
 			ctx,

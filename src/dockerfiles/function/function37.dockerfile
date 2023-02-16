@@ -16,7 +16,7 @@ boto3==1.18.0 \
 pydantic==1.9.0 \
 scikit_learn==1.0.2 \
 typing_extensions==4.3.0 \
-aqueduct-ml==0.2.0
+aqueduct-ml==0.2.2
 
 
 ENV PYTHONUNBUFFERED 1

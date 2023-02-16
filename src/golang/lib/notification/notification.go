@@ -2,27 +2,86 @@ package notification
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
+	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
+	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/google/uuid"
 )
+
+const localHostIP = "localhost"
 
 var ErrIntegrationTypeIsNotNotification = errors.New("Integration type is not a notification.")
 
 type Notification interface {
-	// `Send()` sends a notification with `level`, and the content is `msg`.
+	// `ID()` is the unique identifier, typically mapped to the integration ID.
+	ID() uuid.UUID
+
+	// `Level()` is the global default severity level threshold beyond which a notification should send.
+	// For example, 'warning' threshold allows 'error' and 'warning' level notifications,
+	// but blocking 'success' notifications.
 	//
-	// The caller always call `Send()` when a notification is generated.
-	// There could be a level preference associated with the notification integration.
-	// For example, slack and email has `level` field in config,
-	// and only notifications beyond this level will be sent.
-	// In such cases, the implementation of `Send()` should reflect the level preference.
-	Send(msg string, level shared.NotificationLevel) error
+	// This behavior is controlled by caller calling `ShouldSend()` function.
+	// This field is a 'global default' as we allow overriding this behavior in,
+	// for example, workflow specific settings.
+	Level() shared.NotificationLevel
+
+	// `Enabled()` specifies if the notification is enabled by default.
+	// We allow overriding this behavior in, for example, workflow specific settings.
+	// As a result, a notification can be disabled for all workflows (`Enabled()` returns false),
+	// with a few exceptions (overrided in workflow's `NotificationSettings` field.)
+	Enabled() bool
+
+	// `SendForDag()` sends a notification for a workflow execution.
+	SendForDag(
+		ctx context.Context,
+		wfDag dag.WorkflowDag,
+		level shared.NotificationLevel,
+		systemErrContext string,
+	) error
+}
+
+func GetNotificationsFromUser(
+	ctx context.Context,
+	userID uuid.UUID,
+	integrationRepo repos.Integration,
+	vaultObject vault.Vault,
+	DB database.Database,
+) ([]Notification, error) {
+	emailIntegrations, err := integrationRepo.GetByServiceAndUser(ctx, shared.Email, userID, DB)
+	if err != nil {
+		return nil, err
+	}
+
+	slackIntegrations, err := integrationRepo.GetByServiceAndUser(ctx, shared.Slack, userID, DB)
+	if err != nil {
+		return nil, err
+	}
+
+	allIntegrations := make([]models.Integration, 0, len(emailIntegrations)+len(slackIntegrations))
+	allIntegrations = append(allIntegrations, emailIntegrations...)
+	allIntegrations = append(allIntegrations, slackIntegrations...)
+	notifications := make([]Notification, 0, len(allIntegrations))
+	for _, integrationObj := range allIntegrations {
+		integrationCopied := integrationObj
+		notification, err := NewNotificationFromIntegration(ctx, &integrationCopied, vaultObject)
+		if err != nil {
+			return nil, err
+		}
+
+		notifications = append(notifications, notification)
+	}
+
+	return notifications, nil
 }
 
 func NewNotificationFromIntegration(
@@ -30,7 +89,7 @@ func NewNotificationFromIntegration(
 	integrationObject *models.Integration,
 	vaultObject vault.Vault,
 ) (Notification, error) {
-	if integrationObject.Service == integration.Email {
+	if integrationObject.Service == shared.Email {
 		conf, err := auth.ReadConfigFromSecret(ctx, integrationObject.ID, vaultObject)
 		if err != nil {
 			return nil, err
@@ -41,10 +100,10 @@ func NewNotificationFromIntegration(
 			return nil, err
 		}
 
-		return newEmailNotification(emailConf), nil
+		return newEmailNotification(integrationObject, emailConf), nil
 	}
 
-	if integrationObject.Service == integration.Slack {
+	if integrationObject.Service == shared.Slack {
 		conf, err := auth.ReadConfigFromSecret(ctx, integrationObject.ID, vaultObject)
 		if err != nil {
 			return nil, err
@@ -55,8 +114,84 @@ func NewNotificationFromIntegration(
 			return nil, err
 		}
 
-		return newSlackNotification(slackConf), nil
+		return newSlackNotification(integrationObject, slackConf), nil
 	}
 
 	return nil, ErrIntegrationTypeIsNotNotification
+}
+
+// constructDisplayedOperatorType returns the 'user facing' message included
+// in notifications. Typically it's used in messages like
+// <Type> opertor <Name> has failed / succeeded / ...
+//
+// For example:
+// Check my_check has a warning.
+// Operator my_func has failed.
+func constructDisplayedOperatorType(t operator.Type) string {
+	if t == operator.CheckType {
+		return "Check"
+	}
+
+	return "Operator"
+}
+
+func summarize(wfDag dag.WorkflowDag, level shared.NotificationLevel) string {
+	// TODO (ENG-2423): This summary is generated by both wfDag and level.
+	// Ideally, it can strictly depend on wfDag if wfDag tracks its exec state.
+	statusMsg := "has an update."
+	if level == shared.SuccessNotificationLevel {
+		statusMsg = "succeeded."
+	} else if level == shared.WarningNotificationLevel {
+		statusMsg = "succeeded but had warnings."
+	} else if level == shared.ErrorNotificationLevel {
+		failedOps := wfDag.OperatorsWithError()
+		failedChecksCount := 0
+		for _, op := range failedOps {
+			if op.Type() == operator.CheckType {
+				failedChecksCount += 1
+			}
+		}
+
+		if failedChecksCount > 0 {
+			statusMsg = "had failed checks."
+		} else {
+			statusMsg = "errored."
+		}
+	}
+
+	return fmt.Sprintf("Aqueduct: Workflow %s %s", wfDag.Name(), statusMsg)
+}
+
+// `constructLinkWarning` generates any warning for a given string, assuming it's a link.
+// Typically, it warns about 'localhost' only works on server's machine.
+func constructLinkWarning(link string) string {
+	if strings.Contains(link, localHostIP) {
+		return "This link only works if you are on the same machine of your server"
+	}
+
+	return ""
+}
+
+// `ShouldSend` determines if a notification at 'level' passes configuration
+// specified by `thresholdLevel`.
+// 'info' and 'neutral' will get through regardless of threshold.
+// And 'info' or 'neutral' threshold lets everything through.
+// Other states will follow the severity ordering.
+func ShouldSend(
+	thresholdLevel shared.NotificationLevel,
+	level shared.NotificationLevel,
+) bool {
+	if thresholdLevel == shared.InfoNotificationLevel || thresholdLevel == shared.NeutralNotificationLevel {
+		return true
+	}
+
+	levelSeverityMap := map[shared.NotificationLevel]int{
+		shared.SuccessNotificationLevel: 0,
+		shared.WarningNotificationLevel: 1,
+		shared.ErrorNotificationLevel:   2,
+		shared.InfoNotificationLevel:    3,
+		shared.NeutralNotificationLevel: 3,
+	}
+
+	return levelSeverityMap[level] >= levelSeverityMap[thresholdLevel]
 }

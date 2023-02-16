@@ -28,12 +28,17 @@ def test_multiple_outputs(client, flow_name, engine):
     assert str_output.get() == "hello world."
     assert int_output.get() == 2468
 
-    publish_flow_test(
+    flow = publish_flow_test(
         client,
         name=flow_name(),
         artifacts=[str_output, int_output],
         engine=engine,
     )
+
+    # Check the default naming of multi-output functions.
+    flow_run = flow.latest()
+    assert flow_run.artifact("generate_two_outputs artifact").get() == "hello"
+    assert flow_run.artifact("generate_two_outputs artifact (1)").get() == 1234
 
 
 def test_multiple_outputs_user_failure(client):

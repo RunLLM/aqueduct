@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
 )
 
@@ -31,13 +30,13 @@ const (
 
 // An ArtifactResult maps to the artifact_result table.
 type ArtifactResult struct {
-	ID          uuid.UUID                    `db:"id" json:"id"`
-	DAGResultID uuid.UUID                    `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
-	ArtifactID  uuid.UUID                    `db:"artifact_id" json:"artifact_id"`
-	ContentPath string                       `db:"content_path" json:"content_path"`
-	Status      shared.ExecutionStatus       `db:"status" json:"status"`
-	ExecState   shared.NullExecutionState    `db:"execution_state" json:"execution_state"`
-	Metadata    artifact_result.NullMetadata `db:"metadata" json:"metadata"`
+	ID          uuid.UUID                         `db:"id" json:"id"`
+	DAGResultID uuid.UUID                         `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
+	ArtifactID  uuid.UUID                         `db:"artifact_id" json:"artifact_id"`
+	ContentPath string                            `db:"content_path" json:"content_path"`
+	Status      shared.ExecutionStatus            `db:"status" json:"status"`
+	ExecState   shared.NullExecutionState         `db:"execution_state" json:"execution_state"`
+	Metadata    shared.NullArtifactResultMetadata `db:"metadata" json:"metadata"`
 }
 
 // ArtifactResultCols returns a comma-separated string of all ArtifactResult columns.

@@ -4,10 +4,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/google/uuid"
@@ -46,6 +46,7 @@ func NewWorkflowExecutor(spec *job.WorkflowSpec, base *BaseExecutor) (*WorkflowE
 		githubManager,
 		nil, /* PreviewCacheManager */
 		spec.AqPath,
+		spec.DisplayIP,
 		engineRepos,
 	)
 	if err != nil {

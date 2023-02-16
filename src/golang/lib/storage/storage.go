@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/dropbox/godropbox/errors"
 )
 
@@ -15,6 +15,7 @@ type Storage interface {
 	Get(ctx context.Context, key string) ([]byte, error)
 	Put(ctx context.Context, key string, value []byte) error
 	Delete(ctx context.Context, key string) error
+	Exists(ctx context.Context, key string) bool
 }
 
 func NewStorage(config *shared.StorageConfig) Storage {

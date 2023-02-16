@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	log "github.com/sirupsen/logrus"
@@ -73,13 +72,13 @@ func RunCmd(command string, arg ...string) (string, string, error) {
 
 // ParseK8sConfig takes in an auth.Config and parses into a K8s config.
 // It also returns an error, if any.
-func ParseK8sConfig(conf auth.Config) (*integration.K8sIntegrationConfig, error) {
+func ParseK8sConfig(conf auth.Config) (*shared.K8sIntegrationConfig, error) {
 	data, err := conf.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	var c integration.K8sIntegrationConfig
+	var c shared.K8sIntegrationConfig
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
 	}
@@ -87,13 +86,13 @@ func ParseK8sConfig(conf auth.Config) (*integration.K8sIntegrationConfig, error)
 	return &c, nil
 }
 
-func ParseLambdaConfig(conf auth.Config) (*integration.LambdaIntegrationConfig, error) {
+func ParseLambdaConfig(conf auth.Config) (*shared.LambdaIntegrationConfig, error) {
 	data, err := conf.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	var c integration.LambdaIntegrationConfig
+	var c shared.LambdaIntegrationConfig
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
 	}
@@ -101,13 +100,13 @@ func ParseLambdaConfig(conf auth.Config) (*integration.LambdaIntegrationConfig, 
 	return &c, nil
 }
 
-func ParseDatabricksConfig(conf auth.Config) (*integration.DatabricksIntegrationConfig, error) {
+func ParseDatabricksConfig(conf auth.Config) (*shared.DatabricksIntegrationConfig, error) {
 	data, err := conf.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	var c integration.DatabricksIntegrationConfig
+	var c shared.DatabricksIntegrationConfig
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
 	}
@@ -128,6 +127,7 @@ func ParseEmailConfig(conf auth.Config) (*shared.EmailConfig, error) {
 		Port              string                   `json:"port"`
 		TargetsSerialized string                   `json:"targets_serialized"`
 		Level             shared.NotificationLevel `json:"level"`
+		Enabled           string                   `json:"enabled"`
 	}
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
@@ -144,6 +144,8 @@ func ParseEmailConfig(conf auth.Config) (*shared.EmailConfig, error) {
 		Host:     c.Host,
 		Port:     c.Port,
 		Targets:  targets,
+		Level:    c.Level,
+		Enabled:  c.Enabled == "true",
 	}, nil
 }
 
@@ -157,6 +159,7 @@ func ParseSlackConfig(conf auth.Config) (*shared.SlackConfig, error) {
 		Token              string                   `json:"token"`
 		ChannelsSerialized string                   `json:"channels_serialized"`
 		Level              shared.NotificationLevel `json:"level"`
+		Enabled            string                   `json:"enabled"`
 	}
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
@@ -171,5 +174,6 @@ func ParseSlackConfig(conf auth.Config) (*shared.SlackConfig, error) {
 		Token:    c.Token,
 		Channels: channels,
 		Level:    c.Level,
+		Enabled:  c.Enabled == "true",
 	}, nil
 }

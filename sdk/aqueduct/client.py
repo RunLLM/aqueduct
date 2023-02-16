@@ -9,10 +9,17 @@ import __main__ as main
 import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
-from aqueduct.artifacts.create import create_param_artifact
+from aqueduct.artifacts.create import check_explicit_param_name, create_param_artifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.backend.response_models import SavedObjectUpdate
-from aqueduct.constants.enums import ExecutionStatus, RelationalDBServices, RuntimeType, ServiceType
+from aqueduct.constants.enums import (
+    ArtifactType,
+    ExecutionStatus,
+    OperatorType,
+    RelationalDBServices,
+    RuntimeType,
+    ServiceType,
+)
 from aqueduct.error import (
     InvalidIntegrationException,
     InvalidUserActionException,
@@ -25,6 +32,7 @@ from aqueduct.integrations.connect_config import (
     BaseConnectionConfig,
     IntegrationConfig,
     convert_dict_to_integration_connect_config,
+    prepare_integration_config,
 )
 from aqueduct.integrations.databricks_integration import DatabricksIntegration
 from aqueduct.integrations.google_sheets_integration import GoogleSheetsIntegration
@@ -35,29 +43,46 @@ from aqueduct.integrations.s3_integration import S3Integration
 from aqueduct.integrations.salesforce_integration import SalesforceIntegration
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
 from aqueduct.logger import logger
-from aqueduct.models.config import EngineConfig, FlowConfig
+from aqueduct.models.config import FlowConfig
 from aqueduct.models.dag import Metadata, RetentionPolicy
 from aqueduct.models.integration import Integration, IntegrationInfo
 from aqueduct.models.operators import ParamSpec
 from aqueduct.utils.dag_deltas import (
+    RemoveOperatorDelta,
     SubgraphDAGDelta,
     apply_deltas_to_dag,
     validate_overwriting_parameters,
 )
 from aqueduct.utils.function_packaging import infer_requirements_from_env
-from aqueduct.utils.type_inference import infer_artifact_type
+from aqueduct.utils.serialization import deserialize
+from aqueduct.utils.type_inference import _base64_string_to_bytes, infer_artifact_type
 from aqueduct.utils.utils import (
     construct_param_spec,
+    find_flow_with_user_supplied_id_and_name,
     generate_engine_config,
     generate_flow_schedule,
     generate_ui_url,
-    parse_user_supplied_id,
 )
 
 from aqueduct import globals
 
 
 def global_config(config_dict: Dict[str, Any]) -> None:
+    """Sets any global configuration variables in the current Aqueduct context.
+
+    Args:
+        config_dict:
+            A dict from the configuration key to its new value.
+
+    Available configuration keys:
+        "lazy":
+            A boolean indicating whether any new functions will be constructed lazily (True) or eagerly (False).
+        "engine":
+            The name of the default compute integration to run all functions against.
+            This can still be overriden by the `engine` argument in `client.publish_flow()` or
+            on the @op spec. To set this to run against the Aqueduct engine, use "aqueduct" (case-insensitive).
+    """
+
     if globals.GLOBAL_LAZY_KEY in config_dict:
         lazy_val = config_dict[globals.GLOBAL_LAZY_KEY]
         if not isinstance(lazy_val, bool):
@@ -192,7 +217,55 @@ class Client:
         Returns:
             A parameter artifact.
         """
+        check_explicit_param_name(self._dag, name)
         return create_param_artifact(self._dag, name, default, description)
+
+    def list_params(self) -> Dict[str, Any]:
+        """Lists all the currently tracked parameters.
+
+        Returns:
+            A dict where the keys are the existing parameter names and the values
+            are the default values.
+        """
+        param_ops = globals.__GLOBAL_DAG__.list_operators(filter_to=[OperatorType.PARAM])
+
+        param_dict = {}
+        for op in param_ops:
+            assert op.spec.param is not None
+            param_dict[op.name] = deserialize(
+                op.spec.param.serialization_type,
+                ArtifactType.UNTYPED,  # This argument is irrelevant, as long as it's not TUPLE.
+                _base64_string_to_bytes(op.spec.param.val),
+            )
+
+        return param_dict
+
+    def delete_param(self, name: str, force: bool = False) -> None:
+        """Deletes the given parameter from client's context.
+
+        Args:
+            name:
+                The name of the parameter to delete.
+            force:
+                If set, we will delete the parameter and any operators that it is dependency of.
+                Otherwise, we will error if it is a dependency of any operator.
+        """
+        param_op = self._dag.get_operator(with_name=name)
+        if param_op is None:
+            raise InvalidUserArgumentException(
+                "Unable to delete parameter %s. Not such parameter exists." % name
+            )
+
+        if not force:
+            assert len(param_op.outputs) == 1, "Parameter operators only have one output."
+            downstream_ops = self._dag.list_operators(on_artifact_id=param_op.outputs[0])
+            if len(downstream_ops) > 0:
+                raise InvalidUserActionException(
+                    "Cannot delete parameter %s because operator %s uses it. If you would like to "
+                    "delete the parameter and it's dependents anyways, set `force=True`."
+                )
+
+        apply_deltas_to_dag(self._dag, [RemoveOperatorDelta(param_op.id)])
 
     def connect_integration(
         self, name: str, service: ServiceType, config: Union[Dict[str, str], IntegrationConfig]
@@ -229,6 +302,8 @@ class Client:
         if isinstance(config, dict):
             config = convert_dict_to_integration_connect_config(service, config)
         assert isinstance(config, BaseConnectionConfig)
+
+        config = prepare_integration_config(service, config)
 
         globals.__GLOBAL_API_CLIENT__.connect_integration(name, service, config)
         logger().info("Successfully connected to new %s integration `%s`." % (service, name))
@@ -336,24 +411,31 @@ class Client:
             for workflow_resp in globals.__GLOBAL_API_CLIENT__.list_workflows()
         ]
 
-    def flow(self, flow_id: Union[str, uuid.UUID]) -> Flow:
+    def flow(
+        self,
+        flow_id: Optional[Union[str, uuid.UUID]] = None,
+        flow_name: Optional[str] = None,
+    ) -> Flow:
         """Fetches a flow corresponding to the given flow id.
 
         Args:
-             flow_id:
+            flow_id:
+                Used to identify the flow to fetch from the system.
+                Between `flow_id` and `flow_name`, at least one must be provided.
+                If both are specified, they must correspond to the same flow.
+            flow_name:
                 Used to identify the flow to fetch from the system.
 
         Raises:
             InvalidUserArgumentException:
-                If the provided flow id does not correspond to a flow the client knows about.
+                If the provided flow id or name does not correspond to a flow the client knows about.
         """
-        flow_id = parse_user_supplied_id(flow_id)
-
-        if all(
-            uuid.UUID(flow_id) != workflow.id
-            for workflow in globals.__GLOBAL_API_CLIENT__.list_workflows()
-        ):
-            raise InvalidUserArgumentException("Unable to find a flow with id %s" % flow_id)
+        flows = [(flow.id, flow.name) for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()]
+        flow_id = find_flow_with_user_supplied_id_and_name(
+            flows,
+            flow_id,
+            flow_name,
+        )
 
         return Flow(
             flow_id,
@@ -604,14 +686,19 @@ class Client:
 
     def trigger(
         self,
-        flow_id: Union[str, uuid.UUID],
+        flow_id: Optional[Union[str, uuid.UUID]] = None,
+        flow_name: Optional[str] = None,
         parameters: Optional[Dict[str, Any]] = None,
     ) -> None:
         """Immediately triggers another run of the provided flow.
 
         Args:
             flow_id:
-                The id of the workflow to delete (not the name)
+                The id of the flow to delete.
+                Between `flow_id` and `flow_name`, at least one must be provided.
+                If both are specified, they must correspond to the same flow.
+            flow_name:
+                The name of the flow to delete.
             parameters:
                 A map containing custom values to use for the designated parameters. The mapping
                 is expected to be from parameter name to the custom value. These custom values
@@ -642,12 +729,18 @@ class Client:
                 artifact_type = infer_artifact_type(new_val)
                 param_specs[name] = construct_param_spec(new_val, artifact_type)
 
-        flow_id = parse_user_supplied_id(flow_id)
+        flows = [(flow.id, flow.name) for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()]
+        flow_id = find_flow_with_user_supplied_id_and_name(
+            flows,
+            flow_id,
+            flow_name,
+        )
         globals.__GLOBAL_API_CLIENT__.refresh_workflow(flow_id, param_specs)
 
     def delete_flow(
         self,
-        flow_id: Union[str, uuid.UUID],
+        flow_id: Optional[Union[str, uuid.UUID]] = None,
+        flow_name: Optional[str] = None,
         saved_objects_to_delete: Optional[
             DefaultDict[Union[str, Integration], List[SavedObjectUpdate]]
         ] = None,
@@ -657,7 +750,11 @@ class Client:
 
         Args:
             flow_id:
-                The id of the workflow to delete (not the name)
+                The id of the flow to delete.
+                Between `flow_id` and `flow_name`, at least one must be provided.
+                If both are specified, they must correspond to the same flow.
+            flow_name:
+                The name of the flow to delete.
             saved_objects_to_delete:
                 The tables or storage paths to delete grouped by integration name.
             force:
@@ -672,7 +769,13 @@ class Client:
         """
         if saved_objects_to_delete is None:
             saved_objects_to_delete = defaultdict()
-        flow_id = parse_user_supplied_id(flow_id)
+
+        flows = [(flow.id, flow.name) for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()]
+        flow_id = find_flow_with_user_supplied_id_and_name(
+            flows,
+            flow_id,
+            flow_name,
+        )
 
         # TODO(ENG-410): This method gives no indication as to whether the flow
         #  was successfully deleted.

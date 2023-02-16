@@ -188,6 +188,12 @@ class ParamSpec(BaseModel):
     val: str
     serialization_type: SerializationType
 
+    # Records whether the parameter was implicitly created or not.
+    implicitly_created: bool = False
+
+    class Config:
+        fields = {"implicitly_created": {"exclude": ...}}
+
 
 # https://docs.aws.amazon.com/lambda/latest/operatorguide/computing-power.html
 LAMBDA_MIN_MEMORY_MB = 128

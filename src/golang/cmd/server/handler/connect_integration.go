@@ -14,9 +14,6 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	col_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
@@ -24,6 +21,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/notification"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -76,11 +74,11 @@ func (*ConnectIntegrationHandler) Headers() []string {
 
 type ConnectIntegrationArgs struct {
 	*aq_context.AqContext
-	Name         string              // User specified name for the integration
-	Service      integration.Service // Name of the service to connect (e.g. Snowflake, Postgres)
-	Config       auth.Config         // Integration config
-	UserOnly     bool                // Whether the integration is only accessible by the user or the entire org
-	SetAsStorage bool                // Whether the integration should be used as the storage layer
+	Name         string         // User specified name for the integration
+	Service      shared.Service // Name of the service to connect (e.g. Snowflake, Postgres)
+	Config       auth.Config    // Integration config
+	UserOnly     bool           // Whether the integration is only accessible by the user or the entire org
+	SetAsStorage bool           // Whether the integration should be used as the storage layer
 }
 
 type ConnectIntegrationResponse struct{}
@@ -109,7 +107,7 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 		return nil, http.StatusBadRequest, errors.New("Integration name is not provided")
 	}
 
-	if service == integration.Github || service == integration.GoogleSheets {
+	if service == shared.Github || service == shared.GoogleSheets {
 		return nil, http.StatusBadRequest, errors.Newf("%s integration type is currently not supported", service)
 	}
 
@@ -240,7 +238,7 @@ func ConnectIntegration(
 			args.ID,
 			args.Service,
 			args.Name,
-			(*col_utils.Config)(&publicConfig),
+			(*shared.IntegrationConfig)(&publicConfig),
 			true,
 			DB,
 		)
@@ -250,7 +248,7 @@ func ConnectIntegration(
 			args.OrgID,
 			args.Service,
 			args.Name,
-			(*col_utils.Config)(&publicConfig),
+			(*shared.IntegrationConfig)(&publicConfig),
 			true,
 			DB,
 		)
@@ -275,7 +273,7 @@ func ConnectIntegration(
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
-	if args.Service == integration.Conda {
+	if args.Service == shared.Conda {
 		go func() {
 			DB, err = database.NewDatabase(DB.Config())
 			if err != nil {
@@ -301,44 +299,44 @@ func ValidateConfig(
 	ctx context.Context,
 	requestId string,
 	config auth.Config,
-	service integration.Service,
+	service shared.Service,
 	jobManager job.JobManager,
 	storageConfig *shared.StorageConfig,
 ) (int, error) {
-	if service == integration.Airflow {
+	if service == shared.Airflow {
 		// Airflow authentication is performed via the Go client
 		// instead of the Python client, so we don't launch a job for it.
 		return validateAirflowConfig(ctx, config)
 	}
 
-	if service == integration.Kubernetes {
+	if service == shared.Kubernetes {
 		// Kuerbnetes authentication is performed via initializing a k8s client
 		// instead of the Python client, so we don't launch a job for it.
 		return validateKubernetesConfig(ctx, config)
 	}
 
-	if service == integration.Lambda {
+	if service == shared.Lambda {
 		// Lambda authentication is performed by creating Lambda jobs
 		// instead of the Python client, so we don't launch a job for it.
 		return validateLambdaConfig(ctx, config)
 	}
 
-	if service == integration.Databricks {
+	if service == shared.Databricks {
 		// Databricks authentication is performed by posting a ListJobs
 		// request, so we don't launch a job for it.
 		return validateDatabricksConfig(ctx, config)
 	}
 
-	if service == integration.Email {
+	if service == shared.Email {
 		return validateEmailConfig(config)
 	}
 
-	if service == integration.Slack {
+	if service == shared.Slack {
 		return validateSlackConfig(config)
 	}
 
 	jobName := fmt.Sprintf("authenticate-operator-%s", uuid.New().String())
-	if service == integration.Conda {
+	if service == shared.Conda {
 		return validateConda()
 	}
 
@@ -410,8 +408,8 @@ func validateAirflowConfig(
 }
 
 // checkIntegrationSetStorage returns whether this integration should be used as the storage layer.
-func checkIntegrationSetStorage(svc integration.Service, conf auth.Config) (bool, error) {
-	if svc != integration.S3 && svc != integration.GCS {
+func checkIntegrationSetStorage(svc shared.Service, conf auth.Config) (bool, error) {
+	if svc != shared.S3 && svc != shared.GCS {
 		// Only S3 and GCS can be used for storage
 		return false, nil
 	}
@@ -422,14 +420,14 @@ func checkIntegrationSetStorage(svc integration.Service, conf auth.Config) (bool
 	}
 
 	switch svc {
-	case integration.S3:
-		var c integration.S3Config
+	case shared.S3:
+		var c shared.S3IntegrationConfig
 		if err := json.Unmarshal(data, &c); err != nil {
 			return false, err
 		}
 		return bool(c.UseAsStorage), nil
-	case integration.GCS:
-		var c integration.GCSConfig
+	case shared.GCS:
+		var c shared.GCSIntegrationConfig
 		if err := json.Unmarshal(data, &c); err != nil {
 			return false, err
 		}
@@ -444,7 +442,7 @@ func checkIntegrationSetStorage(svc integration.Service, conf auth.Config) (bool
 // storage layer.
 func setIntegrationAsStorage(
 	ctx context.Context,
-	svc integration.Service,
+	svc shared.Service,
 	conf auth.Config,
 	orgID string,
 	dagRepo repos.DAG,
@@ -462,8 +460,8 @@ func setIntegrationAsStorage(
 	var storageConfig *shared.StorageConfig
 
 	switch svc {
-	case integration.S3:
-		var c integration.S3Config
+	case shared.S3:
+		var c shared.S3IntegrationConfig
 		if err := json.Unmarshal(data, &c); err != nil {
 			return err
 		}
@@ -472,8 +470,8 @@ func setIntegrationAsStorage(
 		if err != nil {
 			return err
 		}
-	case integration.GCS:
-		var c integration.GCSConfig
+	case shared.GCS:
+		var c shared.GCSIntegrationConfig
 		if err := json.Unmarshal(data, &c); err != nil {
 			return err
 		}
@@ -505,7 +503,7 @@ func setIntegrationAsStorage(
 	return config.UpdateStorage(storageConfig)
 }
 
-func convertS3IntegrationtoStorageConfig(c *integration.S3Config) (*shared.StorageConfig, error) {
+func convertS3IntegrationtoStorageConfig(c *shared.S3IntegrationConfig) (*shared.StorageConfig, error) {
 	// Users provide AWS credentials for an S3 integration via one of the following:
 	//  1. AWS Access Key and Secret Key
 	//  2. Credentials file content
@@ -520,7 +518,7 @@ func convertS3IntegrationtoStorageConfig(c *integration.S3Config) (*shared.Stora
 		},
 	}
 	switch c.Type {
-	case integration.AccessKeyS3ConfigType:
+	case shared.AccessKeyS3ConfigType:
 		// AWS access and secret keys need to be written to a credentials file
 		path := filepath.Join(config.AqueductPath(), "storage", uuid.NewString())
 		f, err := os.Create(path)
@@ -540,7 +538,7 @@ func convertS3IntegrationtoStorageConfig(c *integration.S3Config) (*shared.Stora
 
 		storageConfig.S3Config.CredentialsPath = path
 		storageConfig.S3Config.CredentialsProfile = "default"
-	case integration.ConfigFileContentS3ConfigType:
+	case shared.ConfigFileContentS3ConfigType:
 		// The credentials content needs to be written to a credentials file
 		path := filepath.Join(config.AqueductPath(), "storage", uuid.NewString())
 		f, err := os.Create(path)
@@ -568,7 +566,7 @@ func convertS3IntegrationtoStorageConfig(c *integration.S3Config) (*shared.Stora
 
 		storageConfig.S3Config.CredentialsPath = path
 		storageConfig.S3Config.CredentialsProfile = profileName
-	case integration.ConfigFilePathS3ConfigType:
+	case shared.ConfigFilePathS3ConfigType:
 		// The credentials are already in the form of a filepath and profile, so no changes
 		// need to be made
 		storageConfig.S3Config.CredentialsPath = c.ConfigFilePath
@@ -580,7 +578,7 @@ func convertS3IntegrationtoStorageConfig(c *integration.S3Config) (*shared.Stora
 	return storageConfig, nil
 }
 
-func convertGCSIntegrationtoStorageConfig(c *integration.GCSConfig) *shared.StorageConfig {
+func convertGCSIntegrationtoStorageConfig(c *shared.GCSIntegrationConfig) *shared.StorageConfig {
 	return &shared.StorageConfig{
 		Type: shared.GCSStorageType,
 		GCSConfig: &shared.GCSConfig{
@@ -654,12 +652,12 @@ func validateSlackConfig(config auth.Config) (int, error) {
 // conda, email, and slack.
 func ValidatePrerequisites(
 	ctx context.Context,
-	svc integration.Service,
+	svc shared.Service,
 	userID uuid.UUID,
 	integrationRepo repos.Integration,
 	DB database.Database,
 ) (int, error) {
-	if svc == integration.Conda {
+	if svc == shared.Conda {
 		condaIntegration, err := exec_env.GetCondaIntegration(
 			ctx, userID, integrationRepo, DB,
 		)
@@ -685,7 +683,7 @@ func ValidatePrerequisites(
 	}
 
 	// These integrations should be unique.
-	if svc == integration.Email || svc == integration.Slack {
+	if svc == shared.Email || svc == shared.Slack {
 		integrations, err := integrationRepo.GetByServiceAndUser(ctx, svc, userID, DB)
 		if err != nil {
 			return http.StatusInternalServerError, errors.Wrap(err, "Unable to verify if email is connected.")

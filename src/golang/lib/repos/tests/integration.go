@@ -1,8 +1,8 @@
 package tests
 
 import (
-	col_utils "github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -105,7 +105,7 @@ func (ts *TestSuite) TestIntegration_ValidateOwnership() {
 
 func (ts *TestSuite) TestIntegration_Create() {
 	name := randString(10)
-	config := make(col_utils.Config)
+	config := make(shared.IntegrationConfig)
 	config[randString(10)] = randString(10)
 	valid := true
 
@@ -136,7 +136,7 @@ func (ts *TestSuite) TestIntegration_CreateForUser() {
 		IsNull: false,
 	}
 	name := randString(10)
-	config := make(col_utils.Config)
+	config := make(shared.IntegrationConfig)
 	config[randString(10)] = randString(10)
 	valid := true
 
@@ -149,7 +149,16 @@ func (ts *TestSuite) TestIntegration_CreateForUser() {
 		Validated: valid,
 	}
 
-	actualIntegration, err := ts.integration.CreateForUser(ts.ctx, expectedIntegration.OrgID, expectedIntegration.UserID.UUID, expectedIntegration.Service, expectedIntegration.Name, &expectedIntegration.Config, expectedIntegration.Validated, ts.DB)
+	actualIntegration, err := ts.integration.CreateForUser(
+		ts.ctx,
+		expectedIntegration.OrgID,
+		expectedIntegration.UserID.UUID,
+		expectedIntegration.Service,
+		expectedIntegration.Name,
+		&expectedIntegration.Config,
+		expectedIntegration.Validated,
+		ts.DB,
+	)
 	require.Nil(ts.T(), err)
 
 	require.NotEqual(ts.T(), uuid.Nil, actualIntegration.ID)
@@ -172,7 +181,7 @@ func (ts *TestSuite) TestIntegration_Update() {
 	integration := integrations[0]
 
 	name := randString(10)
-	config := make(col_utils.Config)
+	config := make(shared.IntegrationConfig)
 	config[randString(10)] = randString(10)
 
 	changes := map[string]interface{}{

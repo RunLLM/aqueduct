@@ -8,6 +8,7 @@ from aqueduct.artifacts.preview import preview_artifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, LoadUpdateMode, ServiceType
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
+from aqueduct.integrations.naming import _resolve_op_and_artifact_name_for_extract
 from aqueduct.integrations.save import _save_artifact
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
@@ -20,13 +21,15 @@ from aqueduct.models.operators import (
     RelationalDBLoadParams,
 )
 from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.utils.utils import artifact_name_from_op_name, generate_uuid
+from aqueduct.utils.utils import generate_uuid
 
 from aqueduct import globals
 
 LIST_TABLES_QUERY_PG = "SELECT tablename, tableowner FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema';"
 LIST_TABLES_QUERY_SNOWFLAKE = "SELECT table_name AS \"tablename\", table_owner AS \"tableowner\" FROM information_schema.tables WHERE table_schema != 'INFORMATION_SCHEMA' AND table_type = 'BASE TABLE';"
 LIST_TABLES_QUERY_MYSQL = "SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('mysql', 'sys', 'performance_schema');"
+LIST_TABLES_QUERY_MARIADB = "SELECT table_name AS \"tablename\" FROM INFORMATION_SCHEMA.TABLES WHERE table_type = 'BASE TABLE' AND table_schema NOT IN ('mysql', 'sys', 'performance_schema');"
+
 LIST_TABLES_QUERY_SQLSERVER = (
     "SELECT table_name FROM INFORMATION_SCHEMA.TABLES WHERE table_type = 'BASE TABLE';"
 )
@@ -41,6 +44,7 @@ TAG_PATTERN = r"{{\s*[\w-]+\s*}}"
 
 # The TAG for 'previous table' when the user specifies a chained query.
 PREV_TABLE_TAG = "$"
+
 
 # A dictionary of built-in tags to their replacement string functions.
 def replace_today() -> str:
@@ -114,8 +118,10 @@ class RelationalDBIntegration(Integration):
             list_tables_query = LIST_TABLES_QUERY_PG
         elif self.type() == ServiceType.SNOWFLAKE:
             list_tables_query = LIST_TABLES_QUERY_SNOWFLAKE
-        elif self.type() in [ServiceType.MYSQL, ServiceType.MARIADB]:
+        elif self.type() == ServiceType.MYSQL:
             list_tables_query = LIST_TABLES_QUERY_MYSQL
+        elif self.type() == ServiceType.MARIADB:
+            list_tables_query = LIST_TABLES_QUERY_MARIADB
         elif self.type() == ServiceType.SQLSERVER:
             list_tables_query = LIST_TABLES_QUERY_SQLSERVER
         elif self.type() == ServiceType.SQLITE:
@@ -144,6 +150,7 @@ class RelationalDBIntegration(Integration):
         self,
         query: Union[str, List[str], RelationalDBExtractParams],
         name: Optional[str] = None,
+        output: Optional[str] = None,
         description: str = "",
         lazy: bool = False,
     ) -> TableArtifact:
@@ -156,6 +163,8 @@ class RelationalDBIntegration(Integration):
                 in a chain and return the result of the final query.
             name:
                 Name of the query.
+            output:
+                Name to assign the output artifact. If not set, the default naming scheme will be used.
             description:
                 Description of the query.
             lazy:
@@ -169,13 +178,12 @@ class RelationalDBIntegration(Integration):
 
         execution_mode = ExecutionMode.LAZY if lazy else ExecutionMode.EAGER
 
-        # The sql operator name defaults to "[integration name] query 1". If another
-        # sql operator already exists with that name, we'll continue bumping the suffix
-        # until the sql operator is unique. If an explicit name is provided, we will
-        # overwrite the existing one.
-        sql_op_name = name
-        if sql_op_name is None:
-            sql_op_name = self._dag.get_unclaimed_op_name(prefix="%s query" % self.name())
+        op_name, artifact_name = _resolve_op_and_artifact_name_for_extract(
+            dag=self._dag,
+            op_name=name,
+            default_op_name="%s query" % self.name(),
+            artifact_name=output,
+        )
 
         extract_params = query
         if isinstance(extract_params, str):
@@ -235,7 +243,7 @@ class RelationalDBIntegration(Integration):
                 AddOrReplaceOperatorDelta(
                     op=Operator(
                         id=sql_operator_id,
-                        name=sql_op_name,
+                        name=op_name,
                         description=description,
                         spec=OperatorSpec(
                             extract=ExtractSpec(
@@ -250,7 +258,7 @@ class RelationalDBIntegration(Integration):
                     output_artifacts=[
                         ArtifactMetadata(
                             id=sql_output_artifact_id,
-                            name=artifact_name_from_op_name(sql_op_name),
+                            name=artifact_name,
                             type=ArtifactType.TABLE,
                         ),
                     ],
@@ -279,6 +287,10 @@ class RelationalDBIntegration(Integration):
                 Defines the semantics of the save if a table already exists.
                 Options are "replace", "append" (row-wise), or "fail" (if table already exists).
         """
+        if self.type() == ServiceType.ATHENA:
+            raise InvalidUserActionException(
+                "Save operation not supported for %s." % self.type().value
+            )
         # Non-tabular data cannot be saved into relational data stores.
         if artifact.type() not in [ArtifactType.UNTYPED, ArtifactType.TABLE]:
             raise InvalidUserActionException(

@@ -5,6 +5,7 @@ from aqueduct.models.dag import DAG, Metadata
 from aqueduct import Client, globals
 from sdk.setup_integration import (
     get_aqueduct_config,
+    list_compute_integrations,
     list_data_integrations,
     setup_data_integrations,
 )
@@ -33,6 +34,10 @@ def pytest_configure(config):
     """This is just to prevent warnings around our custom markers. eg. `pytest.mark.enable_only_for_engine`."""
     config.addinivalue_line(
         "markers", "enable_only_for_engine_type: runs the test only for the supplied engines."
+    )
+    config.addinivalue_line(
+        "markers",
+        "enable_only_for_external_compute: runs the test only for external compute engines.",
     )
     config.addinivalue_line(
         "markers",
@@ -75,14 +80,25 @@ def data_integration(request, pytestconfig, client):
     cmdline_data_flag = pytestconfig.getoption("data")
     if cmdline_data_flag is not None:
         if request.param != cmdline_data_flag:
-            pytest.skip("Skipped. Tests are only running against %s." % cmdline_data_flag)
+            pytest.skip(
+                "Skipped. Tests are only running against data integration %s." % cmdline_data_flag
+            )
 
     return client.integration(request.param)
 
 
-@pytest.fixture(scope="session")
-def engine(pytestconfig):
-    return pytestconfig.getoption("engine")
+@pytest.fixture(scope="function", params=list_compute_integrations())
+def engine(request, pytestconfig):
+    cmdline_compute_flag = pytestconfig.getoption("engine")
+    if cmdline_compute_flag is not None:
+        if request.param != cmdline_compute_flag:
+            pytest.skip(
+                "Skipped. Tests are only running against compute %s." % cmdline_compute_flag
+            )
+
+    # Test cases process the aqueduct engine as None. We do the conversion here
+    # because fixture parameters are printed as part of test execution.
+    return request.param if request.param != "aqueduct_engine" else None
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -91,6 +107,8 @@ def use_deprecated(pytestconfig):
 
 
 def _type_from_engine_name(client, engine: str) -> ServiceType:
+    assert engine != "aqueduct_engine"
+
     integration_info_by_name = client.list_integrations()
     if engine not in integration_info_by_name.keys():
         raise Exception("Server is not connected to integration `%s`." % engine)
@@ -133,6 +151,14 @@ def enable_only_for_engine_type(request, client, engine):
 
 
 @pytest.fixture(autouse=True)
+def enable_only_for_external_compute(request, client, engine):
+    """When a test is marked with this, it will run for all engine types EXCEPT Aqueduct!"""
+    if request.node.get_closest_marker("enable_only_for_external_compute"):
+        if engine is None:
+            pytest.skip("Skipped. This test only runs against external compute integrations.")
+
+
+@pytest.fixture(autouse=True)
 def must_have_gpu(pytestconfig, request, client, engine):
     """When a test is marked with this, all it means that it will only be executed if the --gpu flag is
     passed into command line.
@@ -171,17 +197,17 @@ def flow_name(client, request, pytestconfig):
     def cleanup_flows():
         if not pytestconfig.getoption("keep_flows"):
             for flow_name in flow_names:
-                flow_id = test_globals.flow_name_to_id[flow_name]
-
                 try:
                     client.delete_flow(
-                        str(flow_id),
-                        saved_objects_to_delete=client.flow(flow_id).list_saved_objects(),
+                        flow_name=flow_name,
+                        saved_objects_to_delete=client.flow(
+                            flow_name=flow_name
+                        ).list_saved_objects(),
                     )
                 except Exception as e:
-                    print("Error deleting workflow %s with exception: %s" % (flow_id, e))
+                    print("Error deleting workflow %s with exception: %s" % (flow_name, e))
                 else:
-                    print("Successfully deleted workflow %s" % flow_id)
+                    print("Successfully deleted workflow %s" % flow_name)
 
     request.addfinalizer(cleanup_flows)
     return get_new_flow_name

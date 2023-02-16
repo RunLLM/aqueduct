@@ -28,6 +28,10 @@ export const SnowflakeCard: React.FC<Props> = ({ integration }) => {
         <strong>Database: </strong>
         {config.database}
       </Typography>
+      <Typography variant="body2">
+        <strong>Schema: </strong>
+        {config.schema ? config.schema : 'public'}
+      </Typography>
     </Box>
   );
 };

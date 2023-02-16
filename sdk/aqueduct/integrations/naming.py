@@ -1,38 +1,26 @@
-from typing import Optional
+from typing import Optional, Tuple
 
 from aqueduct.models.dag import DAG
+from aqueduct.utils.naming import resolve_op_and_artifact_names
 
 
-def _generate_extract_op_name(
+def _resolve_op_and_artifact_name_for_extract(
     dag: DAG,
-    integration_name: str,
-    name: Optional[str],
-) -> str:
+    op_name: Optional[str],
+    default_op_name: str,
+    artifact_name: Optional[str],
+) -> Tuple[str, str]:
+    """For extract operators, if an explicit name is provided, we will overwrite the existing one.
+
+    Otherwise, we'll deduplicate the default operator names.
     """
-    Generates name for extract operators to avoid operators with the same name.
-
-    Arguments:
-        dag:
-            DAG that operator will be a part of.
-        integration_name:
-            Name of integration to run extract on.
-        name:
-            Optinally provided operator name.
-    Returns:
-        Name for extract operator.
-    """
-
-    op_name = name
-
-    default_op_prefix = "%s query" % integration_name
-    default_op_index = 1
-    while op_name is None:
-        candidate_op_name = default_op_prefix + " %d" % default_op_index
-        colliding_op = dag.get_operator(with_name=candidate_op_name)
-        if colliding_op is None:
-            op_name = candidate_op_name  # break out of the loop!
-        default_op_index += 1
-
-    assert op_name is not None
-
-    return op_name
+    candidate_op_name = op_name or default_op_name
+    overwrite_existing_op_name = op_name is not None
+    op_name, artifact_names = resolve_op_and_artifact_names(
+        dag,
+        candidate_op_name,
+        overwrite_existing_op_name=overwrite_existing_op_name,
+        candidate_artifact_names=artifact_name,
+    )
+    assert len(artifact_names) == 1
+    return op_name, artifact_names[0]

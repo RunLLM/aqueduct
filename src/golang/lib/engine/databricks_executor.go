@@ -5,8 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/vault"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/databricks/databricks-sdk-go/service/jobs"
@@ -28,9 +31,14 @@ func ExecuteDatabricks(
 	timeConfig *AqueductTimeConfig,
 	opExecMode operator.ExecutionMode,
 	databricksJobManager *job.DatabricksJobManager,
-) error {
+	vaultObject vault.Vault,
+	integrationRepo repos.Integration,
+	DB database.Database,
+) (err error) {
 	inProgressOps := workflowRunMetadata.InProgressOps
 	completedOps := workflowRunMetadata.CompletedOps
+	var notificationContent *notificationContentStruct = nil
+	err = nil
 
 	// Convert the operators into tasks
 	taskList, err := CreateTaskList(ctx, dag, workflowName, databricksJobManager)
@@ -56,8 +64,21 @@ func ExecuteDatabricks(
 		return errors.Newf("No initial operators to schedule.")
 	}
 
-	// Wait a little bit for all active operators to finish before exiting on failure.
-	defer waitForInProgressOperators(ctx, inProgressOps, timeConfig.OperatorPollInterval, timeConfig.CleanupTimeout)
+	defer func() {
+		onFinishExecution(
+			ctx,
+			inProgressOps,
+			timeConfig.OperatorPollInterval,
+			timeConfig.CleanupTimeout,
+			err,
+			notificationContent,
+			dag,
+			opExecMode,
+			vaultObject,
+			integrationRepo,
+			DB,
+		)
+	}()
 
 	start := time.Now()
 	var operatorError error
@@ -81,10 +102,26 @@ func ExecuteDatabricks(
 					return errors.Wrapf(err, "Error when finishing execution of operator %s", op.Name())
 				}
 			}
-			// Capture the first failed operator.
 
-			if shouldStopExecution(execState) && operatorError == nil {
-				operatorError = opFailureError(*execState.FailureType, op)
+			// Capture the first failed operator.
+			if execState.HasBlockingFailure() {
+				if operatorError == nil {
+					operatorError = opFailureError(*execState.FailureType, op)
+				}
+
+				notificationCtxMsg := ""
+				if execState.Error != nil {
+					notificationCtxMsg = execState.Error.Message()
+				}
+
+				notificationContent = &notificationContentStruct{
+					level:            shared.ErrorNotificationLevel,
+					systemErrContext: notificationCtxMsg,
+				}
+			} else if execState.HasWarning() {
+				notificationContent = &notificationContentStruct{
+					level: shared.WarningNotificationLevel,
+				}
 			}
 
 			// Add the operator to the completed stack, and remove it from the in-progress one.
@@ -100,9 +137,18 @@ func ExecuteDatabricks(
 	if len(completedOps) != len(dag.Operators()) {
 		return errors.Newf("Internal error: %d operators were provided but only %d completed.", len(dag.Operators()), len(completedOps))
 	}
+
 	if operatorError != nil {
 		return operatorError
 	}
+
+	// avoid overriding an existing notification (in practice, this is a warning)
+	if notificationContent == nil {
+		notificationContent = &notificationContentStruct{
+			level: shared.SuccessNotificationLevel,
+		}
+	}
+
 	return nil
 }
 

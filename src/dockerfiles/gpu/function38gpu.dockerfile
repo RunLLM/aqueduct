@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.8.0-runtime-ubuntu22.04
+FROM nvidia/cuda:11.4.1-runtime-ubuntu20.04
 
 MAINTAINER Aqueduct <hello@aqueducthq.com> version: 0.0.1
 

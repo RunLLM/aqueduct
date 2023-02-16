@@ -6,6 +6,7 @@ from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, LoadUpdateMode
 from aqueduct.error import InvalidUserArgumentException
+from aqueduct.integrations.naming import _resolve_op_and_artifact_name_for_extract
 from aqueduct.integrations.save import _save_artifact
 from aqueduct.integrations.sql_integration import find_parameter_artifacts, find_parameter_names
 from aqueduct.models.artifact import ArtifactMetadata
@@ -19,7 +20,7 @@ from aqueduct.models.operators import (
     RelationalDBLoadParams,
 )
 from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.utils.utils import artifact_name_from_op_name, generate_uuid
+from aqueduct.utils.utils import generate_uuid
 
 from aqueduct import globals
 
@@ -37,6 +38,7 @@ class MongoDBCollectionIntegration(Integration):
         self,
         *args: List[Any],
         name: Optional[str] = None,
+        output: Optional[str] = None,
         description: str = "",
         lazy: bool = False,
         **kwargs: Dict[str, Any],
@@ -53,10 +55,18 @@ class MongoDBCollectionIntegration(Integration):
                 Name of the query.
             description:
                 Description of the query.
+            output:
+                Name to assign the output artifact. If not set, the default naming scheme will be used.
             lazy:
                 Whether to run this operator lazily. See https://docs.aqueducthq.com/operators/lazy-vs.-eager-execution .
         """
-        op_name = name or self._dag.get_unclaimed_op_name(prefix="%s query" % self.name())
+        op_name, artifact_name = _resolve_op_and_artifact_name_for_extract(
+            dag=self._dag,
+            op_name=name,
+            default_op_name="%s query" % self.name(),
+            artifact_name=output,
+        )
+
         if globals.__GLOBAL_CONFIG__.lazy:
             lazy = True
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
@@ -111,7 +121,7 @@ class MongoDBCollectionIntegration(Integration):
                     output_artifacts=[
                         ArtifactMetadata(
                             id=output_artf_id,
-                            name=artifact_name_from_op_name(op_name),
+                            name=artifact_name,
                             type=ArtifactType.TABLE,
                         ),
                     ],

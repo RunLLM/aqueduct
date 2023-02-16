@@ -1,0 +1,24 @@
+name: Upload Artifact
+description: "Uploads an artifact with the supplied prefix."
+
+inputs:
+  prefix:
+    description: "A prefix used to deduplicate artifact names when multiple jobs the upload artifacts are run in the same workflow."
+    required: true
+runs:
+  using: composite
+  steps:
+    - uses: actions/upload-artifact@v3
+      with:
+        name: ${{ inputs.prefix }} - Test Config File
+        path: integration_tests/sdk/test-config.yml
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: ${{ inputs.prefix }} - Server Logs
+        path: logs/
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: ${{ inputs.prefix }} - Executor Logs
+        path: ~/.aqueduct/server/logs/*

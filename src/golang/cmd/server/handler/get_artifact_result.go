@@ -5,13 +5,12 @@ import (
 	"encoding/json"
 	"mime/multipart"
 	"net/http"
+	"strconv"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact"
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/dropbox/godropbox/errors"
@@ -43,8 +42,9 @@ const (
 //		metadata and content of the result of `artifactId` on the given workflow_dag_result object.
 type getArtifactResultArgs struct {
 	*aq_context.AqContext
-	dagResultID uuid.UUID
-	artifactID  uuid.UUID
+	dagResultID  uuid.UUID
+	artifactID   uuid.UUID
+	metadataOnly bool
 }
 
 type artifactResultMetadata struct {
@@ -53,12 +53,12 @@ type artifactResultMetadata struct {
 	// `Status` is redundant due to `ExecState`. Avoid consuming `Status` in new code.
 	// We are incurring this tech debt right now since there are quite a few usages of
 	// `status` in the UI.
-	Status            shared.ExecutionStatus            `json:"status"`
-	ExecState         shared.ExecutionState             `json:"exec_state"`
-	Schema            []map[string]string               `json:"schema"`
-	SerializationType artifact_result.SerializationType `json:"serialization_type"`
-	ArtifactType      artifact.Type                     `json:"artifact_type"`
-	PythonType        string                            `json:"python_type"`
+	Status            shared.ExecutionStatus           `json:"status"`
+	ExecState         shared.ExecutionState            `json:"exec_state"`
+	Schema            []map[string]string              `json:"schema"`
+	SerializationType shared.ArtifactSerializationType `json:"serialization_type"`
+	ArtifactType      shared.ArtifactType              `json:"artifact_type"`
+	PythonType        string                           `json:"python_type"`
 }
 
 type getArtifactResultResponse struct {
@@ -81,6 +81,10 @@ type GetArtifactResultHandler struct {
 
 func (*GetArtifactResultHandler) Name() string {
 	return "GetArtifactResult"
+}
+
+func (*GetArtifactResultHandler) Headers() []string {
+	return []string{routes.MetadataOnlyHeader}
 }
 
 // This custom implementation of SendResponse constructs a multipart form response with two fields:
@@ -159,10 +163,21 @@ func (h *GetArtifactResultHandler) Prepare(r *http.Request) (interface{}, int, e
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this artifact.")
 	}
 
+	metadataOnlyString := r.Header.Get(routes.MetadataOnlyHeader)
+	if metadataOnlyString == "" {
+		metadataOnlyString = "false"
+	}
+
+	metadataOnly, err := strconv.ParseBool(metadataOnlyString)
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error when converting metadata-only header to bool.")
+	}
+
 	return &getArtifactResultArgs{
-		AqContext:   aqContext,
-		dagResultID: dagResultID,
-		artifactID:  artifactID,
+		AqContext:    aqContext,
+		dagResultID:  dagResultID,
+		artifactID:   artifactID,
+		metadataOnly: metadataOnly,
 	}, http.StatusOK, nil
 }
 
@@ -202,7 +217,7 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact result.")
 		}
 		// ArtifactResult was never created, so we use the WorkflowDagResult's status as this ArtifactResult's status
-		execState.Status = shared.ExecutionStatus(dagResult.Status)
+		execState.Status = dagResult.Status
 	} else {
 		execState.Status = dbArtifactResult.Status
 	}
@@ -228,6 +243,10 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 
 	response := &getArtifactResultResponse{
 		Metadata: &metadata,
+	}
+
+	if args.metadataOnly {
+		return response, http.StatusOK, nil
 	}
 
 	data, err := storage.NewStorage(&dag.StorageConfig).Get(ctx, dbArtifactResult.ContentPath)

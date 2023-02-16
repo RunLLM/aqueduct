@@ -3,6 +3,7 @@ import json
 import os
 import shutil
 import sys
+import time
 import tracemalloc
 import uuid
 from typing import Any, Callable, Dict, List, Tuple
@@ -20,6 +21,7 @@ from aqueduct_executor.operators.utils.enums import (
     ExecutionStatus,
     FailureType,
     OperatorType,
+    PrintColorType,
     SerializationType,
 )
 from aqueduct_executor.operators.utils.execution import (
@@ -34,7 +36,9 @@ from aqueduct_executor.operators.utils.execution import (
     exception_traceback,
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
+from aqueduct_executor.operators.utils.storage.storage import Storage
 from aqueduct_executor.operators.utils.timer import Timer
+from aqueduct_executor.operators.utils.utils import time_it
 
 
 def get_py_import_path(spec: FunctionSpec) -> str:
@@ -104,7 +108,7 @@ def _execute_function(
     spec: FunctionSpec,
     inputs: List[Any],
     exec_state: ExecutionState,
-) -> Tuple[List[Any], List[ArtifactType], Dict[str, str]]:
+) -> Tuple[List[Any], Dict[str, str]]:
     """
     Invokes the given function on the input data. Does not raise an exception on any
     user function errors, but instead annotates the given exec state with the error.
@@ -114,7 +118,6 @@ def _execute_function(
 
     invoke = import_invoke_method(spec)
     timer = Timer()
-    print("Invoking the function...")
     timer.start()
     tracemalloc.start()
 
@@ -123,20 +126,8 @@ def _execute_function(
         return invoke(*inputs)
 
     results = _invoke()
-
-    # We only validate the number of results if multiple outputs are expected.
-    # Otherwise, we treat the results as a single object.
-    if len(spec.output_content_paths) > 1 and len(spec.output_content_paths) != len(results):
-        raise ExecFailureException(
-            failure_type=FailureType.USER_FATAL,
-            tip="Expected function to have %s outputs, but instead it had %s."
-            % (len(spec.output_content_paths), len(results)),
-        )
-
     if len(spec.output_content_paths) == 1:
         results = [results]
-
-    inferred_result_types = [infer_artifact_type(res) for res in results]
 
     elapsedTime = timer.stop()
     _, peak = tracemalloc.get_traced_memory()
@@ -146,7 +137,56 @@ def _execute_function(
     }
 
     sys.path.pop(0)
-    return results, inferred_result_types, system_metadata
+    return results, system_metadata
+
+
+def _validate_result_count_and_infer_type(
+    spec: FunctionSpec,
+    results: List[Any],
+) -> List[ArtifactType]:
+    """
+    Validates that the expected number of results were returned by the Function
+    and infers the ArtifactType of each result.
+
+    Args:
+        spec: The FunctionSpec for the Function
+        results: The results returned by the Function
+
+    Returns:
+        The ArtifactType of each result
+
+    Raises:
+        ExecFailureException: If the expected number of results were not returned
+    """
+    if len(spec.output_content_paths) > 1 and len(spec.output_content_paths) != len(results):
+        raise ExecFailureException(
+            failure_type=FailureType.USER_FATAL,
+            tip="Expected function to have %s outputs, but instead it had %s."
+            % (len(spec.output_content_paths), len(results)),
+        )
+
+    return [infer_artifact_type(res) for res in results]
+
+
+def _write_artifacts(
+    results: Any,
+    result_types: List[ArtifactType],
+    derived_from_bson: bool,
+    output_content_paths: List[str],
+    output_metadata_paths: List[str],
+    system_metadata: Any,
+    storage: Storage,
+) -> None:
+    for i, result in enumerate(results):
+        utils.write_artifact(
+            storage,
+            result_types[i],
+            derived_from_bson,
+            output_content_paths[i],
+            output_metadata_paths[i],
+            result,
+            system_metadata=system_metadata,
+        )
 
 
 def validate_spec(spec: FunctionSpec) -> None:
@@ -200,27 +240,30 @@ def run(spec: FunctionSpec) -> None:
     """
     Executes a function operator.
     """
-    print("Started %s job: %s" % (spec.type, spec.name))
-
     exec_state = ExecutionState(user_logs=Logs())
     storage = parse_storage(spec.storage_config)
     try:
         validate_spec(spec)
 
         # Read the input data from intermediate storage.
-        inputs, _, serialization_types = utils.read_artifacts(
-            storage, spec.input_content_paths, spec.input_metadata_paths
-        )
+        inputs, _, serialization_types = time_it(
+            job_name=spec.name, job_type=spec.type.value, step="Reading Inputs"
+        )(utils.read_artifacts)(storage, spec.input_content_paths, spec.input_metadata_paths)
 
         derived_from_bson = SerializationType.BSON_TABLE in serialization_types
-        print("Invoking the function...")
-        results, result_types, system_metadata = _execute_function(spec, inputs, exec_state)
+
+        results, system_metadata = time_it(
+            job_name=spec.name, job_type=spec.type.value, step="Running Function"
+        )(_execute_function)(spec, inputs, exec_state)
+
         if exec_state.status == ExecutionStatus.FAILED:
             # user failure
             utils.write_exec_state(storage, spec.metadata_path, exec_state)
             sys.exit(1)
 
         print("Function invoked successfully!")
+
+        result_types = _validate_result_count_and_infer_type(spec, results)
 
         # Perform type checking on the function output.
         if spec.operator_type == OperatorType.METRIC:
@@ -290,14 +333,6 @@ def run(spec: FunctionSpec) -> None:
             result_types[0] = ArtifactType.BOOL
             results[0] = True
         else:
-            # Error if the number of expected outputs is not what was returned by the user's function.
-            if len(results) != len(spec.expected_output_artifact_types):
-                raise ExecFailureException(
-                    failure_type=FailureType.USER_FATAL,
-                    tip="Expected function to return %d outputs, but instead got %d."
-                    % (len(spec.expected_output_artifact_types), len(results)),
-                )
-
             for i, expected_output_type in enumerate(spec.expected_output_artifact_types):
                 if (
                     expected_output_type != ArtifactType.UNTYPED
@@ -309,16 +344,17 @@ def run(spec: FunctionSpec) -> None:
                         % (expected_output_type, i, result_types[i]),
                     )
 
-        for i, result in enumerate(results):
-            utils.write_artifact(
-                storage,
-                result_types[i],
-                derived_from_bson,
-                spec.output_content_paths[i],
-                spec.output_metadata_paths[i],
-                result,
-                system_metadata=system_metadata,
-            )
+        time_it(job_name=spec.name, job_type=spec.type.value, step="Writing Outputs")(
+            _write_artifacts
+        )(
+            results,
+            result_types,
+            derived_from_bson,
+            spec.output_content_paths,
+            spec.output_metadata_paths,
+            system_metadata,
+            storage,
+        )
 
         # If we made it here, then the operator has succeeded.
         exec_state.status = ExecutionStatus.SUCCEEDED

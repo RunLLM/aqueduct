@@ -76,6 +76,8 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     CONDA = "Conda"
     AQUEDUCT_ENGINE = "Aqueduct Engine"
     DATABRICKS = "Databricks"
+    EMAIL = "Email"
+    SLACK = "Slack"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):

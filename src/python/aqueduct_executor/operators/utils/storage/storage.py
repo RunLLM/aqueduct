@@ -9,3 +9,7 @@ class Storage(ABC):
     @abstractmethod
     def get(self, key: str) -> bytes:
         pass
+
+    @abstractmethod
+    def exists(self, key: str) -> bool:
+        pass

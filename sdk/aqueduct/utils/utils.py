@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from aqueduct.constants.enums import ArtifactType, RuntimeType, ServiceType, TriggerType
 from aqueduct.error import *
@@ -87,10 +87,6 @@ def generate_flow_schedule(
     return Schedule(trigger=TriggerType.PERIODIC, cron_schedule=schedule_str)
 
 
-def artifact_name_from_op_name(op_name: str) -> str:
-    return op_name + " artifact"
-
-
 def human_readable_timestamp(ts: int) -> str:
     format = "%Y-%m-%d %H:%M:%S"
     return datetime.utcfromtimestamp(ts).strftime(format)
@@ -111,7 +107,9 @@ def parse_user_supplied_id(id: Union[str, uuid.UUID]) -> str:
     return id
 
 
-def construct_param_spec(val: Any, artifact_type: ArtifactType) -> ParamSpec:
+def construct_param_spec(
+    val: Any, artifact_type: ArtifactType, is_implicit: bool = False
+) -> ParamSpec:
     serialization_type = artifact_type_to_serialization_type(
         artifact_type,
         # Not derived from bson.
@@ -126,14 +124,18 @@ def construct_param_spec(val: Any, artifact_type: ArtifactType) -> ParamSpec:
     return ParamSpec(
         val=_bytes_to_base64_string(serialize_val(val, serialization_type)),
         serialization_type=serialization_type,
+        implicitly_created=is_implicit,
     )
 
 
 def generate_engine_config(
     integrations: Dict[str, IntegrationInfo], integration_name: Optional[str]
 ) -> Optional[EngineConfig]:
-    """Generates an EngineConfig from an integration info object."""
-    if integration_name is None:
+    """Generates an EngineConfig from an integration info object.
+
+    Both None and "Aqueduct" (case-insensitive) map to the Aqueduct Engine.
+    """
+    if integration_name is None or integration_name.lower() == "aqueduct":
         return None
 
     if integration_name not in integrations.keys():
@@ -176,3 +178,46 @@ def generate_engine_config(
         )
     else:
         raise AqueductError("Unsupported engine configuration.")
+
+
+def find_flow_with_user_supplied_id_and_name(
+    flows: List[Tuple[uuid.UUID, str]],
+    flow_id: Optional[Union[str, uuid.UUID]] = None,
+    flow_name: Optional[str] = None,
+) -> str:
+    """Verifies that the user supplied flow id and name correspond
+    to an actual flow in `flows`. Only one of `flow_id` and `flow_name` is necessary,
+    but if both are provided, they must match to the same flow. It returns the
+    string version of the matching flow's id.
+    """
+    if not flow_id and not flow_name:
+        raise InvalidUserArgumentException(
+            "Must supply at least one of the following:`flow_id` or `flow_name`"
+        )
+
+    if flow_id:
+        flow_id_str = parse_user_supplied_id(flow_id)
+        if all(uuid.UUID(flow_id_str) != flow[0] for flow in flows):
+            raise InvalidUserArgumentException("Unable to find a flow with id %s" % flow_id)
+
+    if flow_name:
+        flow_id_str_from_name = None
+        for flow in flows:
+            if flow[1] == flow_name:
+                flow_id_str_from_name = str(flow[0])
+                break
+
+        if not flow_id_str_from_name:
+            raise InvalidUserArgumentException("Unable to find a flow with name %s" % flow_name)
+
+        if flow_id and flow_id_str != flow_id_str_from_name:
+            # User supplied both flow_id and flow_name, but they do not
+            # correspond to the same flow
+            raise InvalidUserArgumentException(
+                "The flow with id %s does not correspond to the flow with name %s"
+                % (flow_id, flow_name)
+            )
+
+        return flow_id_str_from_name
+
+    return flow_id_str

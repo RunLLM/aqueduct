@@ -7,7 +7,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 )
 
 const (
@@ -51,6 +51,14 @@ func (f *fileStorage) Put(ctx context.Context, key string, value []byte) error {
 
 func (f *fileStorage) Delete(ctx context.Context, key string) error {
 	return os.Remove(f.getFullPath(key))
+}
+
+func (f *fileStorage) Exists(ctx context.Context, key string) bool {
+	path := f.getFullPath(key)
+	_, err := os.Stat(path)
+	// TODO: ENG-2428 we should explicitly surface other error types to the caller
+	// instead of just returning `false` for non os.ErrNotExist errors.
+	return !errors.Is(err, os.ErrNotExist)
 }
 
 func (f *fileStorage) getFullPath(key string) string {

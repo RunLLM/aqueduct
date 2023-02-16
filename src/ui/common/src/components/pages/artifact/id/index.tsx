@@ -1,8 +1,7 @@
-import { CircularProgress, Divider } from '@mui/material';
+import { CircularProgress } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
@@ -22,7 +21,6 @@ import ExecutionStatus, {
   isSucceeded,
 } from '../../../../utils/shared';
 import DefaultLayout, { SidesheetContentWidth } from '../../../layouts/default';
-import ArtifactContent from '../../../workflows/artifact/content';
 import CsvExporter from '../../../workflows/artifact/csvExporter';
 import {
   ChecksOverview,
@@ -31,6 +29,7 @@ import {
 import OperatorSummaryList from '../../../workflows/operator/summaryList';
 import DetailsPageHeader from '../../components/DetailsPageHeader';
 import { LayoutProps } from '../../types';
+import Preview from './components/Preview';
 
 type ArtifactDetailsPageProps = {
   user: UserProfile;
@@ -205,6 +204,16 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   const inputs = mapOperators([artifact.from]);
   const outputs = mapOperators(artifact.to ? artifact.to : []);
 
+  let upstreamPending = false;
+  inputs.some((operator) => {
+    const operator_pending =
+      operator.result.exec_state.status === ExecutionStatus.Pending;
+    if (operator_pending) {
+      upstreamPending = operator_pending;
+    }
+    return operator_pending;
+  });
+
   const artifactStatus = artifact?.result?.exec_state?.status;
   const previewAvailable =
     artifactStatus && artifactStatus !== ExecutionStatus.Canceled;
@@ -250,38 +259,12 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
             )}
           </Box>
 
-          {previewAvailable ? (
-            <>
-              <Divider sx={{ marginY: '32px' }} />
-              <Box width="100%" marginTop="12px">
-                <Typography
-                  variant="h6"
-                  component="div"
-                  marginBottom="8px"
-                  fontWeight="normal"
-                >
-                  Preview
-                </Typography>
-                <ArtifactContent
-                  artifact={artifact}
-                  contentWithLoadingStatus={contentWithLoadingStatus}
-                />
-              </Box>
-
-              <Divider sx={{ marginY: '32px' }} />
-            </>
-          ) : (
-            <>
-              <Divider sx={{ marginY: '32px' }} />
-
-              <Box marginBottom="32px">
-                <Alert severity="warning">
-                  An upstream operator failed, causing this artifact to not be
-                  created.
-                </Alert>
-              </Box>
-            </>
-          )}
+          <Preview
+            upstreamPending={upstreamPending}
+            previewAvailable={previewAvailable}
+            artifact={artifact}
+            contentWithLoadingStatus={contentWithLoadingStatus}
+          />
 
           <Box display="flex" width="100%">
             <MetricsOverview metrics={metrics} />

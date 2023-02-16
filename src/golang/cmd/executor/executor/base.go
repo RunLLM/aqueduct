@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/aqueducthq/aqueduct/config"
-	"github.com/aqueducthq/aqueduct/lib/collections"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/repos/sqlite"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/dropbox/godropbox/errors"
@@ -23,24 +23,24 @@ type BaseExecutor struct {
 }
 
 func NewBaseExecutor(conf *job.ExecutorConfiguration) (*BaseExecutor, error) {
-	db, err := database.NewDatabase(conf.Database)
+	DB, err := database.NewDatabase(conf.Database)
 	if err != nil {
 		return nil, err
 	}
 
 	defer func() {
 		if err != nil {
-			db.Close()
+			DB.Close()
 		}
 	}()
 
 	schemaVersionRepo := sqlite.NewSchemaVersionRepo()
 
-	if err := collections.RequireSchemaVersion(
+	if err := requireSchemaVersion(
 		context.Background(),
 		models.CurrentSchemaVersion,
 		schemaVersionRepo,
-		db,
+		DB,
 	); err != nil {
 		return nil, errors.Wrap(err, "Found incompatible database schema version.")
 	}
@@ -59,11 +59,34 @@ func NewBaseExecutor(conf *job.ExecutorConfiguration) (*BaseExecutor, error) {
 	return &BaseExecutor{
 		JobManager: jobManager,
 		Vault:      vault,
-		Database:   db,
+		Database:   DB,
 		Repos:      createRepos(),
 	}, nil
 }
 
 func (ex *BaseExecutor) Close() {
 	ex.Database.Close()
+}
+
+// requireSchemaVersion returns an error if the database schema version is
+// not at least version.
+func requireSchemaVersion(
+	ctx context.Context,
+	version int64,
+	schemaVersionRepo repos.SchemaVersion,
+	DB database.Database,
+) error {
+	currentVersion, err := schemaVersionRepo.GetCurrent(ctx, DB)
+	if err != nil {
+		return err
+	}
+
+	if currentVersion.Version < version {
+		return errors.Newf(
+			"Current version is %d, but %d is required.",
+			currentVersion.Version,
+			version,
+		)
+	}
+	return nil
 }

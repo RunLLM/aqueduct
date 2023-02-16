@@ -6,11 +6,11 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
-	"github.com/aqueducthq/aqueduct/lib/collections/integration"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/dropbox/godropbox/errors"
@@ -43,6 +43,7 @@ type DeleteIntegrationHandler struct {
 	ExecutionEnvironmentRepo repos.ExecutionEnvironment
 	IntegrationRepo          repos.Integration
 	OperatorRepo             repos.Operator
+	WorkflowRepo             repos.Workflow
 }
 
 func (*DeleteIntegrationHandler) Name() string {
@@ -124,6 +125,7 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 		ctx,
 		integrationObject,
 		h.ExecutionEnvironmentRepo,
+		h.WorkflowRepo,
 		vaultObject,
 		txn,
 	); err != nil {
@@ -176,26 +178,34 @@ func validateNoActiveWorkflowOnIntegration(
 }
 
 // cleanUpIntegration deletes any side effects of an integration
-// in Aqueduct system, other than DB records.
+// in Aqueduct system.
 // For example, credentials stored in vault or base conda environments
 // created.
 func cleanUpIntegration(
 	ctx context.Context,
 	integrationObject *models.Integration,
 	execEnvRepo repos.ExecutionEnvironment,
+	workflowRepo repos.Workflow,
 	vaultObject vault.Vault,
-	db database.Database,
+	DB database.Database,
 ) error {
-	if integrationObject.Service == integration.Conda {
+	if integrationObject.Service == shared.Conda {
 		// Best effort to clean up
 		err := exec_env.CleanupUnusedEnvironments(
-			ctx, execEnvRepo, db,
+			ctx, execEnvRepo, DB,
 		)
 		if err != nil {
 			return err
 		}
 
 		return exec_env.DeleteBaseEnvs()
+	}
+
+	if integrationObject.Service == shared.Email || integrationObject.Service == shared.Slack {
+		err := workflowRepo.RemoveNotificationFromSettings(ctx, integrationObject.ID, DB)
+		if err != nil {
+			return err
+		}
 	}
 
 	return vaultObject.Delete(ctx, integrationObject.ID.String())

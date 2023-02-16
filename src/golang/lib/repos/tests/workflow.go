@@ -1,7 +1,6 @@
 package tests
 
 import (
-	"github.com/aqueducthq/aqueduct/lib/collections/workflow"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
@@ -53,13 +52,14 @@ func (ts *TestSuite) TestWorkflow_GetByScheduleTrigger() {
 			triggerWorkflow.UserID,
 			randString(10),
 			randString(15),
-			&workflow.Schedule{
-				Trigger:  workflow.CascadingUpdateTrigger,
+			&shared.Schedule{
+				Trigger:  shared.CascadingUpdateTrigger,
 				SourceID: triggerWorkflow.ID,
 			},
-			&workflow.RetentionPolicy{
+			&shared.RetentionPolicy{
 				KLatestRuns: 5,
 			},
+			&shared.NotificationSettings{},
 			ts.DB,
 		)
 		require.Nil(ts.T(), err)
@@ -67,7 +67,7 @@ func (ts *TestSuite) TestWorkflow_GetByScheduleTrigger() {
 		expectedWorkflows = append(expectedWorkflows, *workflow)
 	}
 
-	actualWorkflows, err := ts.workflow.GetByScheduleTrigger(ts.ctx, workflow.CascadingUpdateTrigger, ts.DB)
+	actualWorkflows, err := ts.workflow.GetByScheduleTrigger(ts.ctx, shared.CascadingUpdateTrigger, ts.DB)
 	require.Nil(ts.T(), err)
 	requireDeepEqualWorkflows(ts.T(), expectedWorkflows, actualWorkflows)
 }
@@ -84,13 +84,14 @@ func (ts *TestSuite) TestWorkflow_GetTargets() {
 			triggerWorkflow.UserID,
 			randString(10),
 			randString(15),
-			&workflow.Schedule{
-				Trigger:  workflow.CascadingUpdateTrigger,
+			&shared.Schedule{
+				Trigger:  shared.CascadingUpdateTrigger,
 				SourceID: triggerWorkflow.ID,
 			},
-			&workflow.RetentionPolicy{
+			&shared.RetentionPolicy{
 				KLatestRuns: 5,
 			},
+			&shared.NotificationSettings{},
 			ts.DB,
 		)
 		require.Nil(ts.T(), err)
@@ -130,22 +131,26 @@ func (ts *TestSuite) TestWorkflow_ValidateOrg() {
 func (ts *TestSuite) TestWorkflow_Create() {
 	users := ts.seedUser(1)
 	user := users[0]
+	notificationIntegrationID := uuid.New()
 
 	expectedWorkflow := &models.Workflow{
 		UserID:      user.ID,
 		Name:        randString(10),
 		Description: randString(20),
-		Schedule: workflow.Schedule{
-			Trigger:              workflow.PeriodicUpdateTrigger,
+		Schedule: shared.Schedule{
+			Trigger:              shared.PeriodicUpdateTrigger,
 			CronSchedule:         "* * * * *",
 			DisableManualTrigger: false,
 			Paused:               false,
 		},
-		RetentionPolicy: workflow.RetentionPolicy{
+		RetentionPolicy: shared.RetentionPolicy{
 			KLatestRuns: 10,
 		},
-		// Explicitly set `IsNull` to true, otherwise it will be false by default.
-		NotificationSettings: shared.NullNotificationSettings{IsNull: true},
+		NotificationSettings: shared.NotificationSettings{
+			Settings: map[uuid.UUID]shared.NotificationLevel{
+				notificationIntegrationID: shared.ErrorNotificationLevel,
+			},
+		},
 	}
 
 	actualWorkflow, err := ts.workflow.Create(
@@ -155,6 +160,7 @@ func (ts *TestSuite) TestWorkflow_Create() {
 		expectedWorkflow.Description,
 		&expectedWorkflow.Schedule,
 		&expectedWorkflow.RetentionPolicy,
+		&expectedWorkflow.NotificationSettings,
 		ts.DB,
 	)
 	require.Nil(ts.T(), err)
@@ -177,18 +183,26 @@ func (ts *TestSuite) TestWorkflow_Delete() {
 func (ts *TestSuite) TestWorkflow_Update() {
 	workflows := ts.seedWorkflow(1)
 	oldWorkflow := workflows[0]
+	notificationIntegrationID := uuid.New()
 
 	newName := "new_workflow_name"
-	newSchedule := workflow.Schedule{
-		Trigger:              workflow.ManualUpdateTrigger,
+	newSchedule := shared.Schedule{
+		Trigger:              shared.ManualUpdateTrigger,
 		CronSchedule:         "0 0 0 0 0",
 		DisableManualTrigger: true,
 		Paused:               true,
 	}
 
+	newNotificationSettings := shared.NotificationSettings{
+		Settings: map[uuid.UUID]shared.NotificationLevel{
+			notificationIntegrationID: shared.ErrorNotificationLevel,
+		},
+	}
+
 	changes := map[string]interface{}{
-		models.WorkflowName:     newName,
-		models.WorkflowSchedule: &newSchedule,
+		models.WorkflowName:                 newName,
+		models.WorkflowSchedule:             &newSchedule,
+		models.WorkflowNotificationSettings: &newNotificationSettings,
 	}
 
 	newWorkflow, err := ts.workflow.Update(ts.ctx, oldWorkflow.ID, changes, ts.DB)
@@ -196,4 +210,46 @@ func (ts *TestSuite) TestWorkflow_Update() {
 
 	requireDeepEqual(ts.T(), newSchedule, newWorkflow.Schedule)
 	require.Equal(ts.T(), newName, newWorkflow.Name)
+	requireDeepEqual(ts.T(), newWorkflow.NotificationSettings, newNotificationSettings)
+}
+
+func (ts *TestSuite) TestWorkflow_RemoveNotificationFromSettings() {
+	users := ts.seedUser(1)
+	user := users[0]
+	notificationToRemove := uuid.New()
+	notificationToKeep := uuid.New()
+
+	workflow := &models.Workflow{
+		UserID: user.ID,
+		NotificationSettings: shared.NotificationSettings{
+			Settings: map[uuid.UUID]shared.NotificationLevel{
+				notificationToRemove: shared.ErrorNotificationLevel,
+				notificationToKeep:   shared.SuccessNotificationLevel,
+			},
+		},
+	}
+
+	workflowCreated, err := ts.workflow.Create(
+		ts.ctx,
+		workflow.UserID,
+		workflow.Name,
+		workflow.Description,
+		&workflow.Schedule,
+		&workflow.RetentionPolicy,
+		&workflow.NotificationSettings,
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+
+	err = ts.workflow.RemoveNotificationFromSettings(ts.ctx, notificationToRemove, ts.DB)
+	require.Nil(ts.T(), err)
+	expectedSettings := shared.NotificationSettings{
+		Settings: map[uuid.UUID]shared.NotificationLevel{
+			notificationToKeep: shared.SuccessNotificationLevel,
+		},
+	}
+
+	actualWorkflow, err := ts.workflow.Get(ts.ctx, workflowCreated.ID, ts.DB)
+	require.Nil(ts.T(), err)
+	requireDeepEqual(ts.T(), expectedSettings, actualWorkflow.NotificationSettings)
 }

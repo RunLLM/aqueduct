@@ -3,7 +3,7 @@ package models
 import (
 	"strings"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/operator"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/google/uuid"
 )

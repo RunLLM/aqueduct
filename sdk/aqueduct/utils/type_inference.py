@@ -61,3 +61,8 @@ def _bytes_to_base64_string(content: bytes) -> str:
     such bytes to string, we must use this function.
     """
     return base64.b64encode(content).decode(DEFAULT_ENCODING)
+
+
+def _base64_string_to_bytes(content: str) -> bytes:
+    """Helpers to convert base64-string back to bytes."""
+    return base64.b64decode(content)

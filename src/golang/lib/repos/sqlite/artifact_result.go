@@ -4,13 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/artifact_result"
-	"github.com/aqueducthq/aqueduct/lib/collections/shared"
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	mdl_shared "github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
@@ -190,7 +188,7 @@ func (*artifactResultReader) GetWithArtifactOfMetricsByDAGResultBatch(
 			AND json_extract(operator.spec, '$.type') = '%s'
 			AND artifact_result.artifact_id = artifact.id
 			AND artifact_result.workflow_dag_result_id IN (%s);`,
-		mdl_shared.MetricType,
+		operator.MetricType,
 		stmt_preparers.GenerateArgsList(len(dagResultIDs), 1),
 	)
 
@@ -217,7 +215,7 @@ func (*artifactResultWriter) Create(
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.ArtifactResultTable, cols, models.ArtifactResultCols())
 
-	ID, err := utils.GenerateUniqueUUID(ctx, models.ArtifactResultTable, DB)
+	ID, err := GenerateUniqueUUID(ctx, models.ArtifactResultTable, DB)
 	if err != nil {
 		return nil, err
 	}
@@ -238,7 +236,7 @@ func (*artifactResultWriter) CreateWithExecStateAndMetadata(
 	artifactID uuid.UUID,
 	contentPath string,
 	execState *shared.ExecutionState,
-	metadata *artifact_result.Metadata,
+	metadata *shared.ArtifactResultMetadata,
 	DB database.Database,
 ) (*models.ArtifactResult, error) {
 	cols := []string{
@@ -252,7 +250,7 @@ func (*artifactResultWriter) CreateWithExecStateAndMetadata(
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.ArtifactResultTable, cols, models.ArtifactResultCols())
 
-	ID, err := utils.GenerateUniqueUUID(ctx, models.ArtifactResultTable, DB)
+	ID, err := GenerateUniqueUUID(ctx, models.ArtifactResultTable, DB)
 	if err != nil {
 		return nil, err
 	}
@@ -279,7 +277,7 @@ func (*artifactResultWriter) DeleteBatch(ctx context.Context, IDs []uuid.UUID, D
 
 func (*artifactResultWriter) Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.ArtifactResult, error) {
 	var artifactResult models.ArtifactResult
-	err := utils.UpdateRecordToDest(
+	err := repos.UpdateRecordToDest(
 		ctx,
 		&artifactResult,
 		changes,

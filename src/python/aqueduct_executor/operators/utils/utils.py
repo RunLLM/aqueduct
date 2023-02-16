@@ -1,5 +1,6 @@
 import io
 import json
+import time
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
@@ -13,6 +14,7 @@ from aqueduct_executor.operators.utils.enums import (
     ArtifactType,
     ExecutionStatus,
     FailureType,
+    PrintColorType,
     SerializationType,
 )
 from aqueduct_executor.operators.utils.exceptions import MissingInputPathsException
@@ -66,11 +68,11 @@ def read_artifacts(
     artifact_types: List[ArtifactType] = []
     serialization_types: List[SerializationType] = []
 
-    for (input_path, input_metadata_path) in zip(input_paths, input_metadata_paths):
+    for input_path, input_metadata_path in zip(input_paths, input_metadata_paths):
         # Make sure that the input paths exist.
         try:
-            _ = storage.get(input_path)
-            _ = storage.get(input_metadata_path)
+            _ = storage.exists(input_path)
+            _ = storage.exists(input_metadata_path)
         except Exception as e:
             # TODO(ENG-1627): think about retrying the parent operator in such instances.
             raise MissingInputPathsException(
@@ -215,3 +217,35 @@ def write_compile_airflow_output(storage: Storage, path: str, dag_file: bytes) -
     Writes the provided Airflow DAG file to storage.
     """
     storage.put(path, dag_file)
+
+
+def print_with_color(log: str, color: PrintColorType = PrintColorType.YELLOW) -> None:
+    assert color in PrintColorType
+    CEND = "\33[0m"
+    print(color + log + CEND)
+
+
+def time_it(
+    job_name: str, job_type: str, step: str
+) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
+    def decorator(func: Callable[..., Any]) -> Callable[..., Any]:
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
+            print_with_color(
+                "%s for %s job: %s" % (step, job_type, job_name),
+                color=PrintColorType.GREEN,
+            )
+            begin = time.time()
+            result = func(*args, **kwargs)
+            end = time.time()
+            performance = {
+                "job": job_name,
+                "type": job_type,
+                "step": step,
+                "latency(s)": (end - begin),
+            }
+            print_with_color(json.dumps(performance, indent=4))
+            return result
+
+        return wrapper
+
+    return decorator

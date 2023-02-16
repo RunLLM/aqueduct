@@ -7,7 +7,6 @@ from aqueduct.constants.enums import ExecutionStatus
 
 import aqueduct
 from aqueduct import Flow
-from sdk.shared.globals import flow_name_to_id
 
 
 def publish_flow_test(
@@ -80,9 +79,6 @@ def publish_flow_test(
         source_flow=source_flow,
     )
     print("Workflow registration succeeded. Workflow ID %s. Name: %s" % (flow.id(), name))
-
-    # Necessary so that the flow is cleaned up at the end of the test.
-    flow_name_to_id[name] = flow.id()
 
     if should_block:
         wait_for_flow_runs(

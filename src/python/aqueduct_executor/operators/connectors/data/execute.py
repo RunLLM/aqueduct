@@ -47,8 +47,6 @@ def run(spec: Spec) -> None:
     Arguments:
     - spec: The spec provided for this operator.
     """
-    print("Started %s job: %s" % (spec.type, spec.name))
-
     storage = parse_storage(spec.storage_config)
     exec_state = ExecutionState(user_logs=Logs())
 
@@ -258,7 +256,7 @@ def setup_connector(
                 "Unable to initialize the Redshift connector. Have you run `aqueduct install redshift`?"
             )
 
-        from aqueduct_executor.operators.connectors.data.redshift import (  # type: ignore
+        from aqueduct_executor.operators.connectors.data.redshift import (
             RedshiftConnector as OpConnector,
         )
     elif connector_name == common.Name.SQL_SERVER:

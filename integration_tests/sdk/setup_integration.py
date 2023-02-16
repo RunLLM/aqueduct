@@ -5,6 +5,7 @@ import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ServiceType
+from aqueduct.integrations.mongodb_integration import MongoDBIntegration
 from aqueduct.integrations.s3_integration import S3Integration
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
 from aqueduct.models.integration import Integration
@@ -15,9 +16,11 @@ from sdk.shared.demo_db import demo_db_tables
 from sdk.shared.flow_helpers import delete_flow, publish_flow_test
 from sdk.shared.naming import generate_object_name
 
+TEST_CREDENTIALS_FILE: str = "test-credentials.yml"
 TEST_CONFIG_FILE: str = "test-config.yml"
 
-# We only cache the config for the lifecycle of a single test run.
+# We only cache these files for the lifecycle of a single test run.
+CACHED_CREDENTIALS: Optional[Dict[str, Any]] = None
 CACHED_CONFIG: Optional[Dict[str, Any]] = None
 
 
@@ -28,6 +31,15 @@ def _parse_config_file() -> Dict[str, Any]:
             CACHED_CONFIG = yaml.safe_load(f)
 
     return CACHED_CONFIG
+
+
+def _parse_credentials_file() -> Dict[str, Any]:
+    global CACHED_CREDENTIALS
+    if CACHED_CREDENTIALS is None:
+        with open(TEST_CREDENTIALS_FILE) as f:
+            CACHED_CREDENTIALS = yaml.safe_load(f)
+
+    return CACHED_CREDENTIALS
 
 
 def _fetch_demo_data(demo: RelationalDBIntegration, table_name: str) -> pd.DataFrame:
@@ -105,11 +117,19 @@ def _add_missing_artifacts(
     )
 
 
-def _setup_redshift_data(client: Client, redshift: RelationalDBIntegration) -> None:
-    # Find all the tables that already exist.
-    existing_table_names = set(redshift.list_tables()["tablename"])
+def _setup_mongo_db_data(client: Client, mongo_db: MongoDBIntegration) -> None:
+    # Find all the objects that already exist.
+    existing_names = set()
+    for object_name in demo_db_tables():
+        try:
+            data = mongo_db.collection(object_name).find({}).get()
+            if len(data) > 0:
+                existing_names.add(object_name)
+        except Exception:
+            # Failing to fetch simply means we will need to populate this data.
+            pass
 
-    _add_missing_artifacts(client, redshift, existing_table_names)
+    _add_missing_artifacts(client, mongo_db, existing_names)
 
 
 def _setup_snowflake_data(client: Client, snowflake: RelationalDBIntegration) -> None:
@@ -119,8 +139,14 @@ def _setup_snowflake_data(client: Client, snowflake: RelationalDBIntegration) ->
     _add_missing_artifacts(client, snowflake, existing_table_names)
 
 
-def _setup_s3_data(client: Client, s3: S3Integration):
+def _setup_relational_data(client: Client, db: RelationalDBIntegration) -> None:
+    # Find all the tables that already exist.
+    existing_table_names = set(db.list_tables()["tablename"])
 
+    _add_missing_artifacts(client, db, existing_table_names)
+
+
+def _setup_s3_data(client: Client, s3: S3Integration):
     # Find all the objects that already exist.
     existing_names = set()
     for object_name in demo_db_tables():
@@ -153,8 +179,15 @@ def setup_data_integrations(filter_to: Optional[str] = None) -> None:
     if len(data_integrations) == 0:
         return
 
-    test_config = _parse_config_file()
-    assert "data" in test_config
+    test_credentials = _parse_credentials_file()
+
+    # Check that all data integrations in the test config have credentials.
+    assert "data" in test_credentials
+    for integration_name in data_integrations:
+        assert integration_name in test_credentials["data"], (
+            "Data integration `%s` needs to have credentials in test-credentials.yml."
+            % integration_name
+        )
 
     client = Client(*get_aqueduct_config())
     for integration_name in data_integrations:
@@ -162,12 +195,7 @@ def setup_data_integrations(filter_to: Optional[str] = None) -> None:
 
         # Only connect to integrations that don't already exist.
         if integration_name not in connected_integrations.keys():
-            assert integration_name in test_config["data"], (
-                "Data integration `%s` needs to exist in the test configuration file."
-                % integration_name
-            )
-
-            integration_config = test_config["data"][integration_name]
+            integration_config = test_credentials["data"][integration_name]
             service_type = integration_config["type"]
 
             # Modifying the config dictionary should be ok, since we only ever process
@@ -177,12 +205,15 @@ def setup_data_integrations(filter_to: Optional[str] = None) -> None:
 
         # Setup the data in each of these integrations.
         integration = client.integration(integration_name)
-        if integration.type() == ServiceType.REDSHIFT:
-            _setup_redshift_data(client, integration)
-        elif integration.type() == ServiceType.SNOWFLAKE:
-            _setup_snowflake_data(client, integration)
+        if isinstance(integration, RelationalDBIntegration):
+            _setup_relational_data(client, integration)
         elif integration.type() == ServiceType.S3:
             _setup_s3_data(client, integration)
+        elif integration.type() == ServiceType.MONGO_DB:
+            _setup_mongo_db_data(client, integration)
+        elif integration.type() == ServiceType.ATHENA:
+            # We only support reading from Athena, so no setup is necessary.
+            pass
         else:
             raise Exception("Test suite does not yet support %s." % integration.type())
 
@@ -191,16 +222,23 @@ def list_data_integrations() -> List[str]:
     """Get the list of data integrations from the config file."""
     test_config = _parse_config_file()
 
-    data_integrations = ["aqueduct_demo"]
-    if "data" in test_config:
-        data_integrations += list(test_config["data"].keys())
-    return data_integrations
+    assert "data" in test_config, "test-config.yml must have a data section."
+    return list(test_config["data"].keys())
+
+
+def list_compute_integrations() -> List[str]:
+    """Get the list of compute integrations from the config file."""
+    test_config = _parse_config_file()
+
+    assert "compute" in test_config, "test-config.yml must have a compute section."
+    return list(test_config["compute"].keys())
 
 
 def get_aqueduct_config() -> Tuple[str, str]:
     # Returns the apikey and server address.
     test_config = _parse_config_file()
+    test_credentials = _parse_credentials_file()
     assert (
-        "apikey" in test_config and "address" in test_config
-    ), "apikey and address must be set in test-config.yml."
-    return test_config["apikey"], test_config["address"]
+        "apikey" in test_credentials and "address" in test_config
+    ), "apikey and address must be set in test-credentials.yml and test-config.yml, respectively."
+    return test_credentials["apikey"], test_config["address"]

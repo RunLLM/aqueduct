@@ -9,12 +9,12 @@ from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.enums import FailureType
 from aqueduct_executor.operators.utils.execution import ExecFailureException, ExecutionState, Logs
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
+from aqueduct_executor.operators.utils.utils import time_it
 
 
 def install_missing_packages(
     missing_path: str, spec: FunctionSpec, conda_env: Optional[str]
 ) -> None:
-
     if conda_env:
         install_output = subprocess.run(
             [
@@ -93,4 +93,6 @@ if __name__ == "__main__":
     spec_json = base64.b64decode(args.spec)
     spec = parse_spec(spec_json)
 
-    run(args.local_path, args.requirements_path, args.missing_path, spec, args.conda_env)
+    time_it(job_name=spec.name, job_type=spec.type.value, step="Installing Dependencies")(run)(
+        args.local_path, args.requirements_path, args.missing_path, spec, args.conda_env
+    )

@@ -1,5 +1,6 @@
 import { Artifact } from './artifacts';
 import { EngineConfig } from './engine';
+import { NotificationLogLevel } from './notifications';
 import {
   Load,
   normalizeOperator,
@@ -97,6 +98,10 @@ export type WorkflowDagResultSummary = {
   workflow_dag_id: string;
 };
 
+export type NotificationSettingsMap = { [id: string]: NotificationLogLevel };
+
+export type NotificationSettings = { settings: NotificationSettingsMap };
+
 export type Workflow = {
   id: string;
   user_id: string;
@@ -105,6 +110,7 @@ export type Workflow = {
   schedule: WorkflowSchedule;
   created_at: number;
   retention_policy?: RetentionPolicy;
+  notification_settings?: NotificationSettings;
 };
 
 export type WorkflowDag = {

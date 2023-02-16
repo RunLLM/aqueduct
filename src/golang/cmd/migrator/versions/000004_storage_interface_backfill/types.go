@@ -4,7 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 
-	"github.com/aqueducthq/aqueduct/lib/collections/utils"
+	"github.com/aqueducthq/aqueduct/lib/models/utils"
 )
 
 type storageType string
@@ -24,11 +24,11 @@ type fileConfig struct {
 }
 
 func (s *storageConfig) Scan(value interface{}) error {
-	return utils.ScanJsonB(value, s)
+	return utils.ScanJSONB(value, s)
 }
 
 func (s *storageConfig) Value() (driver.Value, error) {
-	return utils.ValueJsonB(*s)
+	return utils.ValueJSONB(*s)
 }
 
 type s3Config struct {
@@ -37,11 +37,11 @@ type s3Config struct {
 }
 
 func (s *s3Config) Value() (driver.Value, error) {
-	return utils.ValueJsonB(*s)
+	return utils.ValueJSONB(*s)
 }
 
 func (s *s3Config) Scan(value interface{}) error {
-	return utils.ScanJsonB(value, s)
+	return utils.ScanJSONB(value, s)
 }
 
 type specType string
@@ -128,11 +128,11 @@ func (s *spec) UnmarshalJSON(rawMessage []byte) error {
 }
 
 func (s *spec) Value() (driver.Value, error) {
-	return utils.ValueJsonB(*s)
+	return utils.ValueJSONB(*s)
 }
 
 func (s *spec) Scan(value interface{}) error {
-	return utils.ScanJsonB(value, s)
+	return utils.ScanJSONB(value, s)
 }
 
 type function struct {
