@@ -99,7 +99,11 @@ func CreateLambdaFunction(ctx context.Context, functionsToShip []LambdaFunctionT
 	}
 
 	if err := errGroup.Wait(); err != nil {
-		return errors.Wrap(err, "Unable to Create Lambda Function.")
+		err = DeleteAllDockerImages(functionsToShip[:])
+		if err != nil {
+			return errors.Wrap(err, "Unable to delete lambda functions.")
+		}
+		return errors.Wrap(err, "Unable to Create lambda functions.")
 	}
 
 	return nil
@@ -257,6 +261,11 @@ func PushImageToPrivateECR(functionType LambdaFunctionType, roleArn string) erro
 		if err != nil {
 			return errors.Wrap(err, "Unable to update lambda function.")
 		}
+	}
+
+	err = DeleteDockerImage(versionedLambdaImageUri)
+	if err != nil {
+		return errors.Wrap(err, "Unable to delete lambda function.")
 	}
 	return nil
 }
