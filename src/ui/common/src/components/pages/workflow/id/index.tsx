@@ -74,6 +74,9 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     (state: RootState) => state.nodeSelectionReducer.selected
   );
   const workflow = useSelector((state: RootState) => state.workflowReducer);
+
+  console.log('workflow: ', workflow);
+
   const switchSideSheet = sideSheetSwitcher(dispatch);
 
   const dagName = workflow.selectedDag?.metadata?.name;
@@ -324,8 +327,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             onClick={() => {
               // All we're really doing here is adding the artifactId onto the end of the URL.
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/artifact/${currentNode.id}`
               );
             }}
@@ -364,8 +366,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/metric/${currentNode.id}`
               );
             }}
@@ -384,8 +385,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/operator/${currentNode.id}`
               );
             }}
@@ -404,8 +404,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             style={buttonStyle}
             onClick={() => {
               navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
+                `${getPathPrefix()}/workflow/${workflowId}/result/${workflow.selectedResult.id
                 }/check/${currentNode.id}`
               );
             }}

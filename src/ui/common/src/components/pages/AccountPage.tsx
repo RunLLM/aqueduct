@@ -32,6 +32,55 @@ type AccountPageProps = {
   Layout?: React.FC<LayoutProps>;
 };
 
+/*
+Storage configuration for local storage:
+{
+    "aqPath": "/Users/andre/.aqueduct/server",
+    "encryptionKey": "GTM30RA8PJVE4INYDZFSO6C2QW1XL9KH",
+    "retentionJobPeriod": "0 * * * *",
+    "apiKey": "6DG5FHRVISALQNTK1MUECZ3782PW4Y9X",
+    "storageConfig": {
+        "type": "file",
+        "file_config": {
+            "directory": "/Users/andre/.aqueduct/server/storage"
+        }
+    }
+}
+*/
+
+type ServerConfig = {
+  aqPath: string;
+  encryptionKey: string;
+  retentionJobPeriod: string;
+  apiKey: string;
+  storageConfig: {
+    type: string,
+    file_config: {
+      directory: string
+    }
+  }
+}
+
+async function getServerConfig(apiAddress: string, apiKey: string): Promise<ServerConfig> {
+  try {
+    const configRequest = await fetch(`${apiAddress}/api/config`, {
+      method: 'GET', headers: {
+        'api-key': apiKey
+      }
+    });
+
+    const responseBody = await configRequest.json();
+
+    if (!configRequest.ok) {
+      console.log('Error fetching config')
+    }
+    console.log('config response: ', responseBody)
+    return responseBody as ServerConfig;
+  } catch (error) {
+    console.log('config fetch error: ', error);
+  }
+}
+
 // `UpdateNotifications` attempts to update all notification integration by calling
 // `integration/<id>/edit` route separately. It returns an error message if any error occurs.
 // Otherwise, the message will be empty.
@@ -92,6 +141,9 @@ client = aqueduct.Client(
   const integrationsReducer = useSelector(
     (state: RootState) => state.integrationsReducer
   );
+
+  const [serverConfig, setServerConfig] = useState<ServerConfig>();
+  console.log('Integrations Reducer: ', integrationsReducer);
   const notifications = Object.values(integrationsReducer.integrations).filter(
     (x) =>
       SupportedIntegrations[x.service].category ===
@@ -102,6 +154,17 @@ client = aqueduct.Client(
   const [notificationUpdateError, setNotificationUpdateError] = useState('');
   const [showNotificationUpdateSnackbar, setShowNotificationUpdateSnackbar] =
     useState(false);
+
+  useEffect(() => {
+    async function fetchServerConfig() {
+      const serverConfig = await getServerConfig(apiAddress, user.apiKey);
+      console.log('serverconfig: ', serverConfig);
+      setServerConfig(serverConfig);
+    }
+
+    fetchServerConfig()
+  }, [])
+
 
   useEffect(() => {
     if (!updatingNotifications) {
@@ -184,6 +247,14 @@ client = aqueduct.Client(
         </Typography>
       )}
       {notificationSection}
+
+      <Box>
+        <Typography variant="h5" sx={{ mt: 3 }}>
+          Metadata Storage
+        </Typography>
+        <Typography variant="body1">Storage Config Type: {serverConfig?.storageConfig?.type || 'loading ...'}</Typography>
+        <Typography variant="body1">Location: {serverConfig?.storageConfig?.file_config?.directory || 'loading ...'}</Typography>
+      </Box>
 
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
