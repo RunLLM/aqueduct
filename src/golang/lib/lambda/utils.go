@@ -186,7 +186,7 @@ func CreateLambdaFunction(functionType LambdaFunctionType, roleArn string) error
 	if err != nil {
 		return errors.Wrap(err, "Unable to delete downloaded docker image.")
 	}
-  
+
 	return nil
 }
 
@@ -249,14 +249,33 @@ func DeleteDockerImage(versionedLambdaImageUri string) error {
 
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
-	cmd := exec.Command("/bin/sh", "-c", fmt.Sprintf("docker rmi -f $(docker images --filter=reference='%s' -q)", versionedLambdaImageUri))
+
+	cmd := exec.Command(
+		"docker",
+		"images",
+		fmt.Sprintf("--filter=reference=%s", versionedLambdaImageUri),
+		"-q")
+
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
 
 	err := cmd.Run()
-
 	if err != nil {
-		return errors.Wrap(err, "Unable to delete docker image.")
+		stdoutString := strings.TrimSpace(stdout.String())
+		stderrString := strings.TrimSpace(stderr.String())
+		return errors.Wrap(err,
+			fmt.Sprintf("Unable to find the docker image. Stdout: %s. Stderr: %s.", stdoutString, stderrString))
+		return nil
+	}
+
+	imageId := strings.TrimSpace(stdout.String())
+	cmd = exec.Command("docker", "rmi", "-f", imageId)
+
+	err = cmd.Run()
+	if err != nil {
+		stdoutString := strings.TrimSpace(stdout.String())
+		stderrString := strings.TrimSpace(stderr.String())
+		return errors.Wrap(err, fmt.Sprintf("Unable to delete docker image. Stdout: %s. Stderr: %s.", stdoutString, stderrString))
 	}
 
 	return nil
