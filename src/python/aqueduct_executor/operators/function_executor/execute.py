@@ -3,7 +3,6 @@ import json
 import os
 import shutil
 import sys
-import time
 import tracemalloc
 import uuid
 from typing import Any, Callable, Dict, List, Tuple
@@ -21,7 +20,6 @@ from aqueduct_executor.operators.utils.enums import (
     ExecutionStatus,
     FailureType,
     OperatorType,
-    PrintColorType,
     SerializationType,
 )
 from aqueduct_executor.operators.utils.execution import (
@@ -236,6 +234,7 @@ def cleanup(spec: FunctionSpec) -> None:
         shutil.rmtree(spec.function_extract_path)
 
 
+
 def run(spec: FunctionSpec) -> None:
     """
     Executes a function operator.
@@ -251,6 +250,8 @@ def run(spec: FunctionSpec) -> None:
         )(utils.read_artifacts)(storage, spec.input_content_paths, spec.input_metadata_paths)
 
         derived_from_bson = SerializationType.BSON_TABLE in serialization_types
+        # for i, input in enumerate(inputs):
+        #     if was_serialized_as_expanded_collection(serialization_types[i], input):
 
         results, system_metadata = time_it(
             job_name=spec.name, job_type=spec.type.value, step="Running Function"

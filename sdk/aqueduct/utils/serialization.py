@@ -2,10 +2,12 @@ import io
 import json
 import os
 import shutil
-from typing import Any, Callable, Dict, List, cast
+from typing import Any, Callable, Dict, List, cast, Optional
 
 import cloudpickle as pickle
 import pandas as pd
+from pydantic import BaseModel, Extra
+
 from aqueduct.constants.enums import ArtifactType, SerializationType
 from aqueduct.utils.type_inference import infer_artifact_type
 from bson import json_util as bson_json_util
@@ -26,6 +28,15 @@ IS_TUPLE = "_is_tuple"  # otherwise, this collection was a list.
 COLLECTION_SERIALIZATION_TYPES = "_aqueduct_serialization_types"
 DATA = "_data"
 
+
+class PickledCollectionSerializationFormat(BaseModel):
+    # TODO: documentation
+    is_tuple: bool
+    aqueduct_serialization_types: List[SerializationType]
+    data: List[bytes]
+
+    class Config:
+        extra = Extra.forbid
 
 def _serialization_is_pickle(serialization_type: SerializationType) -> bool:
     return (
@@ -94,6 +105,21 @@ __deserialization_function_mapping: Dict[str, Callable[[bytes], Any]] = {
 }
 
 
+def check_and_fetch_pickled_collection_format(
+    serialization_type: SerializationType,
+    deserialized_val: Any,
+) -> Optional[PickledCollectionSerializationFormat]:
+    """TODO
+
+    Returns whether the bytes we are deserializing are list/tuples that requiring additional
+    serialization for each element."""
+    if _serialization_is_pickle(serialization_type) and isinstance(deserialized_val, dict):
+        try:
+            return PickledCollectionSerializationFormat(**deserialized_val)
+        except Exception:
+            return None
+
+
 def deserialize(
     serialization_type: SerializationType, artifact_type: ArtifactType, content: bytes
 ) -> Any:
@@ -104,27 +130,20 @@ def deserialize(
     deserialized_val = __deserialization_function_mapping[serialization_type](content)
 
     # Check if the type is an expanded collection and resolve the content for that special case.
-    if _serialization_is_pickle(serialization_type):
-        if (
-            isinstance(deserialized_val, dict)
-            and COLLECTION_SERIALIZATION_TYPES in deserialized_val
-            and DATA in deserialized_val
-            and IS_TUPLE in deserialized_val
-        ):
-            collection_serialization_types = deserialized_val[COLLECTION_SERIALIZATION_TYPES]
-            data = deserialized_val[DATA]
-            is_tuple = deserialized_val[IS_TUPLE]
-            assert isinstance(collection_serialization_types, list)
-            assert isinstance(data, list)
+    pickled_collection_data = check_and_fetch_pickled_collection_format(serialization_type, deserialized_val)
+    if pickled_collection_data is not None:
+        collection_serialization_types = pickled_collection_data.aqueduct_serialization_types
+        data = pickled_collection_data.data
+        is_tuple = pickled_collection_data.is_tuple
 
-            deserialized_val = [
-                __deserialization_function_mapping[collection_serialization_types[i]](data[i])
-                for i in range(len(collection_serialization_types))
-            ]
+        deserialized_val = [
+            __deserialization_function_mapping[collection_serialization_types[i]](data[i])
+            for i in range(len(collection_serialization_types))
+        ]
 
-            if is_tuple:
-                return tuple(deserialized_val)
-            return deserialized_val
+        if is_tuple:
+            return tuple(deserialized_val)
+        return deserialized_val
 
     # Because both list and tuple objects are json-serialized, they will have the same bytes representation.
     # We wanted to keep the readability of json, particularly for the UI, so we decided to distinguish
@@ -211,16 +230,19 @@ def serialize_val(
                 )
             )
 
-        expanded_dict: Dict[str, Any] = {
-            DATA: [
+        pickled_collection_data = PickledCollectionSerializationFormat(
+            data=[
                 serialize_val(
                     val[i], elem_serialization_types[i], expand_collections=False
-                ),  # do not recursively expand.
-            ]
-            for i in range(len(elem_serialization_types))
-        }
-        expanded_dict[COLLECTION_SERIALIZATION_TYPES] = elem_serialization_types
-        expanded_dict[IS_TUPLE] = isinstance(val, tuple)
+                )  # do not recursively expand.
+                for i in range(len(elem_serialization_types))
+            ],
+            aqueduct_serialization_types=elem_serialization_types,
+            is_tuple=isinstance(val, tuple),
+        )
+
+        # The value we end up serializing is a dictionary.
+        val = pickled_collection_data.dict()
 
     return serialization_function_mapping[serialization_type](val)
 
@@ -247,7 +269,7 @@ def artifact_type_to_serialization_type(
         serialization_type = SerializationType.JSON
     elif artifact_type == ArtifactType.PICKLABLE:
         serialization_type = (
-            SerializationType.PICKLE if derived_from_bson else SerializationType.PICKLE
+            SerializationType.BSON_PICKLE if derived_from_bson else SerializationType.PICKLE
         )
     elif (
         artifact_type == ArtifactType.DICT
