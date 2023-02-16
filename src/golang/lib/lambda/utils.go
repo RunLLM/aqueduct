@@ -263,8 +263,7 @@ func DeleteDockerImage(versionedLambdaImageUri string) error {
 	if err != nil {
 		stdoutString := strings.TrimSpace(stdout.String())
 		stderrString := strings.TrimSpace(stderr.String())
-		return errors.Wrap(err,
-			fmt.Sprintf("Unable to find the docker image. Stdout: %s. Stderr: %s.", stdoutString, stderrString))
+		return errors.Wrapf(err, "Unable to find the docker image. Stdout: %s. Stderr: %s.", stdoutString, stderrString)
 		return nil
 	}
 
@@ -275,7 +274,7 @@ func DeleteDockerImage(versionedLambdaImageUri string) error {
 	if err != nil {
 		stdoutString := strings.TrimSpace(stdout.String())
 		stderrString := strings.TrimSpace(stderr.String())
-		return errors.Wrap(err, fmt.Sprintf("Unable to delete docker image. Stdout: %s. Stderr: %s.", stdoutString, stderrString))
+		return errors.Wrapf(err, "Unable to delete docker image. Stdout: %s. Stderr: %s.", stdoutString, stderrString)
 	}
 
 	return nil
