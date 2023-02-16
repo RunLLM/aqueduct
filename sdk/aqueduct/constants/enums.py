@@ -186,3 +186,9 @@ class RuntimeType(Enum, metaclass=MetaEnum):
     K8S = "k8s"
     LAMBDA = "lambda"
     DATABRICKS = "databricks"
+
+
+class NotificationLevel(Enum, metaclass=MetaEnum):
+    SUCCESS = "success"
+    WARNING = "warning"
+    ERROR = "error"
