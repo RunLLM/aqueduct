@@ -13,9 +13,11 @@ def _execute_command(args, cwd=None) -> None:
 
 def _run_tests(dir_name: str, test_case: str, concurrency: int, rerun_failed: bool) -> None:
     """Either test_case or rerun_failed can be set, but not both."""
-    cmd = ["pytest", dir_name, "-rP", "-vv", "-n", str(concurrency)]
     if rerun_failed:
-        cmd.append("-lf")
+        cmd = ["pytest", dir_name, "-rP", "-vv", "--lf", "-n", str(concurrency)]
+    else:
+        cmd = ["pytest", dir_name, "-rP", "-vv", "-n", str(concurrency)]
+
     if len(test_case) > 0:
         cmd += ["-k", test_case]
 
@@ -50,7 +52,7 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "-lf",
+        "--lf",
         dest="rerun_failed",
         default=False,
         action="store_true",

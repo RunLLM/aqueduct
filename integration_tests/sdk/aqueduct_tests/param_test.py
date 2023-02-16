@@ -2,6 +2,8 @@ from typing import Dict, List
 
 import pandas as pd
 import pytest
+from PIL import Image
+
 from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.constants.enums import ExecutionStatus
@@ -487,10 +489,25 @@ def test_all_param_types(client, flow_name, engine):
     assert isinstance(list_output, GenericArtifact)
     assert list_output.get() == [4, 5, 6]
 
+
+    @op
+    def must_be_image(input):
+        if not isinstance(input, Image.Image):
+            raise Exception("Expected image.")
+        return input
+
+    # Current working directory is one level above.
+    # with open("aqueduct_tests/data/aqueduct.jpg", "rb") as f:
+    image_data = Image.open("aqueduct_tests/data/aqueduct.jpg", "r")
+
+    image_param = client.create_param("image", default=image_data)
+    image_output = must_be_image(image_param)
+    assert isinstance(image_output, GenericArtifact)
+
     publish_flow_test(
         client,
         name=flow_name(),
-        artifacts=[pickle_output, bytes_output, string_output, tuple_output, list_output],
+        artifacts=[pickle_output, bytes_output, string_output, tuple_output, list_output, image_output],
         engine=engine,
     )
 

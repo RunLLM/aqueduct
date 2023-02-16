@@ -4,11 +4,11 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
 from aqueduct.utils.serialization import (
-    DEFAULT_ENCODING,
     artifact_type_to_serialization_type,
     deserialize,
     serialize_val,
 )
+from aqueduct.utils.format import DEFAULT_ENCODING
 from aqueduct_executor.operators.utils.enums import (
     ArtifactType,
     ExecutionStatus,
