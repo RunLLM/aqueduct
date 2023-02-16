@@ -32,9 +32,10 @@ export const ShowMore: React.FC<ShowMoreProps> = ({
     return null;
   }
 
-  let prompt = `Show ${totalItems - numPreviewItems} More`;
+  //let prompt = `Show ${totalItems - numPreviewItems} More`;
+  let prompt = 'Show Details';
   if (expanded) {
-    prompt = `Show Less`;
+    prompt = 'Hide Details';
   }
 
   return (

@@ -131,11 +131,15 @@ type IndicatorProps = {
   /**
    * Size of the Indicator.
    */
-  size: string;
+  size?: string;
   /**
    * False if use default colors. Otherwise, specify the color.
    */
-  monochrome: string | false;
+  monochrome?: string | false;
+  /**
+   * Text to show in tooltip. by default, the execution status is shown.
+   */
+  tooltipText?: string;
 };
 
 /**
@@ -145,6 +149,7 @@ export const StatusIndicator: React.FC<IndicatorProps> = ({
   status,
   size = '20px',
   monochrome = false,
+  tooltipText,
 }) => {
   const getIcon = (status: ExecutionStatus) => {
     let indicator = null;
@@ -300,8 +305,14 @@ export const StatusIndicator: React.FC<IndicatorProps> = ({
     return indicator;
   };
 
+  const tooltipTitle = tooltipText || getExecutionStatusLabel(status);
+
   return (
-    <Tooltip title={getExecutionStatusLabel(status)} placement="bottom" arrow>
+    <Tooltip
+      title={tooltipTitle}
+      placement={tooltipText ? 'top' : 'bottom'}
+      arrow
+    >
       <Box
         sx={{
           width: size,

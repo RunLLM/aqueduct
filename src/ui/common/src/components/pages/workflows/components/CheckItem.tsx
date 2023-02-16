@@ -1,42 +1,12 @@
-import {
-  faCircleCheck,
-  faCircleExclamation,
-  faTriangleExclamation,
-} from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Box, Tooltip, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import React from 'react';
 import { useState } from 'react';
 
 import { StatusIndicator } from '../../../../components/workflows/workflowStatus';
-import { theme } from '../../../../styles/theme/theme';
 import { CheckLevel } from '../../../../utils/operators';
 import { ExecutionStatus, showMorePadding } from '../../../../utils/shared';
+import { ChecksListPreview } from './ChecksListPreview';
 import { ShowMore } from './MetricItem';
-
-const errorIcon = (
-  <Tooltip title="Error" placement="bottom" arrow>
-    <Box sx={{ fontSize: '20px', color: theme.palette.Error }}>
-      <FontAwesomeIcon icon={faCircleExclamation} />
-    </Box>
-  </Tooltip>
-);
-
-const warningIcon = (
-  <Tooltip title="Warning" placement="bottom" arrow>
-    <Box sx={{ fontSize: '20px', color: theme.palette.Warning }}>
-      <FontAwesomeIcon icon={faTriangleExclamation} />
-    </Box>
-  </Tooltip>
-);
-
-const successIcon = (
-  <Tooltip title="Success" placement="bottom" arrow>
-    <Box sx={{ fontSize: '20px', color: theme.palette.Success }}>
-      <FontAwesomeIcon icon={faCircleCheck} />
-    </Box>
-  </Tooltip>
-);
 
 export interface CheckPreview {
   checkId: string;
@@ -52,50 +22,89 @@ interface CheckItemProps {
   checks: CheckPreview[];
 }
 
+export const getCheckStatusIcon = (
+  check: CheckPreview,
+  tooltipText?: string
+): JSX.Element => {
+  let statusIcon = (
+    <StatusIndicator
+      status={ExecutionStatus.Succeeded}
+      tooltipText={tooltipText}
+    />
+  );
+
+  switch (check.status) {
+    case ExecutionStatus.Succeeded: {
+      // now we check the value to see if we should show warning or error icon
+      if (check.value === 'False') {
+        if (check.level === CheckLevel.Error) {
+          statusIcon = (
+            <StatusIndicator
+              status={ExecutionStatus.Failed}
+              tooltipText={tooltipText}
+            />
+          );
+        } else {
+          statusIcon = (
+            <StatusIndicator
+              status={ExecutionStatus.Warning}
+              tooltipText={tooltipText}
+            />
+          );
+        }
+      }
+      break;
+    }
+    default: {
+      statusIcon = (
+        <StatusIndicator status={check.status} tooltipText={tooltipText} />
+      );
+      break;
+    }
+  }
+  return statusIcon;
+};
+
 export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
   const [expanded, setExpanded] = useState(false);
-  const checksList = [];
+  let checksList = null;
   let checksToShow = checks.length;
+  let statusIcon = <StatusIndicator status={ExecutionStatus.Succeeded} />;
 
   if (checks.length > 0) {
     if (!expanded) {
       checksToShow = 1;
+    } else {
+      // Initialize empty array to populate checks list.
+      checksList = [];
     }
 
     for (let i = 0; i < checksToShow; i++) {
-      let statusIcon = successIcon;
+      statusIcon = getCheckStatusIcon(checks[i]);
 
-      switch (checks[i].status) {
-        case ExecutionStatus.Succeeded: {
-          // now we check the value to see if we should show warning or error icon
-          if (checks[i].value === 'False') {
-            if (checks[i].level === CheckLevel.Error) {
-              statusIcon = errorIcon;
-            } else {
-              statusIcon = warningIcon;
-            }
-          }
-          break;
+      // Show list of checks when expanded.
+      // Just show check details if there is one check.
+      if (expanded || checks.length === 1) {
+        if (checks.length === 1) {
+          checksList = [];
         }
-        default: {
-          statusIcon = <StatusIndicator status={checks[i].status} />;
-          break;
-        }
+        checksList.push(
+          <Box
+            display="flex"
+            key={checks[i].checkId}
+            justifyContent="space-between"
+            alignItems="center"
+          >
+            <Typography variant="body1" sx={{ fontWeight: 400 }}>
+              {checks[i].name}
+            </Typography>
+            {statusIcon}
+          </Box>
+        );
+      } else {
+        // if contracted, show preview of all checks for the workflow.
+        checksList = <ChecksListPreview checks={checks} />;
       }
-
-      checksList.push(
-        <Box
-          display="flex"
-          key={checks[i].checkId}
-          justifyContent="space-between"
-          alignItems="center"
-        >
-          <Typography variant="body1" sx={{ fontWeight: 400 }}>
-            {checks[i].name}
-          </Typography>
-          {statusIcon}
-        </Box>
-      );
     }
   }
 
@@ -106,6 +115,7 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
   const cellStyling = {
     width: '100%',
   };
+
   if (checks.length === 1) {
     cellStyling['padding'] = showMorePadding;
   }
@@ -116,6 +126,7 @@ export const CheckItem: React.FC<CheckItemProps> = ({ checks }) => {
         display: 'flex',
         alignItems: 'center',
         minHeight: '48px',
+        minWidth: '150px',
       }}
     >
       {checks.length > 0 ? (
