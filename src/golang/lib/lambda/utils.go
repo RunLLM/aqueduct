@@ -326,14 +326,14 @@ func AddFunctionTypeToChannel(functionsToShip []LambdaFunctionType, channel chan
 
 func DeleteAllDockerImages(functionsToShip []LambdaFunctionType) error {
 	for _, lambdaFunctionType := range functionsToShip {
-		lambdaImageUri, userRepoName, err := mapFunctionType(functionType)
+		lambdaImageUri, _, err := mapFunctionType(lambdaFunctionType)
 		if err != nil {
 			return errors.Wrap(err, "Unable to map function type to image.")
 		}
 		versionedLambdaImageUri := fmt.Sprintf("%s:%s", lambdaImageUri, lib.ServerVersionNumber)
-		err := DeleteDockerImage(versionedLambdaImageUri)
+		err = DeleteDockerImage(versionedLambdaImageUri)
 		if err != nil {
-			return errors.Wrapf(err, "Unable to delete docker image of %s",versionedLambdaImageUri)
+			return errors.Wrapf(err, "Unable to delete docker image of %s", versionedLambdaImageUri)
 		}
 	}
 	return nil
