@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import warnings
-from typing import Any, Optional
+from typing import Any
 
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.transform import to_artifact_class
@@ -22,7 +21,7 @@ def _operator_is_implicitly_created_param(op: Operator) -> bool:
     return op.spec.param.implicitly_created
 
 
-def _resolve_implicit_param_name(dag: DAG, candidate_name: str, op_name: str) -> bool:
+def check_implicit_param_name(dag: DAG, candidate_name: str, op_name: str) -> bool:
     """We will either error or overwrite the colliding parameter, if it is consumed by the same op_name.
 
     Returns whether this is a new parameter or we're overwriting an existing one.
@@ -53,62 +52,36 @@ def _resolve_implicit_param_name(dag: DAG, candidate_name: str, op_name: str) ->
     )
 
 
+def check_explicit_param_name(dag: DAG, candidate_name: str) -> None:
+    colliding_op = dag.get_operator(with_name=candidate_name)
+    if colliding_op is not None and _operator_is_implicitly_created_param(colliding_op):
+        raise InvalidUserActionException(
+            """Unable to create parameter `%s`, since there is an implicitly created parameter with the same name. If the old parameter is not longer relevant, you can remove it with `client.delete_param()` and rerun this operation. Otherwise, you'll need to rename one of the two. """
+            % candidate_name,
+        )
+
+
 def create_param_artifact(
     dag: DAG,
-    candidate_name: str,
+    param_name: str,
     default: Any,
     description: str = "",
-    op_name_for_implicit_param: Optional[str] = None,
+    is_implicit: bool = False,
 ) -> BaseArtifact:
     """Creates a parameter operator and return an artifact that can be fed into other operators.
-
-    For implicitly created parameters, the naming collision policy is as follows: we will error
-    if there exists other operators or artifacts with the same name, unless we are overwriting
-    another implicit parameter being used by the same operator. An implicit parameter is named
-    "<op_name>:<param_name>".
 
     Args:
         dag:
             The dag to check for collisions against.
-        candidate_name:
-            The suggested name for the parameter.
+        param_name:
+            The name for the parameter.
         default:
             The default value for the new parameter.
         description:
             A description for the parameter.
-        op_name_for_implicit_param:
-            Only set for implicit parameters - the name of the operator that will consume
-            this parameter as input.
     """
     if default is None:
         raise InvalidUserArgumentException("Parameter default value cannot be None.")
-
-    param_name = candidate_name
-
-    # Check if the parameter is being created implicitly. An implicit parameter will have the operator
-    # name prepended to it.
-    is_implicit = op_name_for_implicit_param is not None
-    if is_implicit:
-        assert op_name_for_implicit_param is not None  # for mypy
-
-        param_name = op_name_for_implicit_param + ":" + param_name
-        is_overwrite = _resolve_implicit_param_name(
-            dag,
-            param_name,
-            op_name_for_implicit_param,
-        )
-        if not is_overwrite:
-            warnings.warn(
-                """Input to function argument `%s` is not an artifact type. We have implicitly created a parameter named `%s` and your input will be used as its default value. This parameter will be used when running the function."""
-                % (param_name, param_name)
-            )
-    else:
-        colliding_op = dag.get_operator(with_name=param_name)
-        if colliding_op is not None and _operator_is_implicitly_created_param(colliding_op):
-            raise InvalidUserActionException(
-                """Unable to create parameter `%s`, since there is an implicitly created parameter with the same name. If the old parameter is not longer relevant, you can remove it with `client.delete_param()` and rerun this operation. Otherwise, you'll need to rename one of the two. """
-                % param_name,
-            )
 
     artifact_type = infer_artifact_type(default)
     param_spec = construct_param_spec(default, artifact_type, is_implicit=is_implicit)

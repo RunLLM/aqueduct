@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Union, cast
 import numpy as np
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
-from aqueduct.artifacts.create import create_param_artifact
+from aqueduct.artifacts.create import check_implicit_param_name, create_param_artifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.artifacts.preview import preview_artifacts
 from aqueduct.artifacts.transform import to_artifact_class
@@ -240,6 +240,11 @@ def _convert_input_arguments_to_parameters(
 
     Errors if the function has a variable-length parameter, since we don't know what name to attribute to those.
 
+    For parameters created this way, the naming collision policy is as follows: we will error
+    if there exists other operators or artifacts with the same name, unless we are overwriting
+    another implicit parameter being used by the same operator. An implicit parameter is named
+    "<op_name>:<param_name>".
+
     Args:
         input_artifacts:
             Entries in this list are not artifacts if the corresponding argument was supplied as an
@@ -260,13 +265,15 @@ def _convert_input_arguments_to_parameters(
     )
 
     dag = globals.__GLOBAL_DAG__
-    param_names = list(func_params.keys())
+    fn_param_names = list(func_params.keys())
 
+    # For each implicit parameter, record it's input index and parameter name after validation.
+    implicit_param_name_by_index: Dict[int, str] = {}
+
+    # The first pass just checks that new implicit parameters have a valid name.
     artifacts = list(input_artifacts)
     for idx, artifact in enumerate(artifacts):
         if not isinstance(artifact, BaseArtifact):
-            default = artifact
-
             if implicit_params_disallowed:
                 raise InvalidUserArgumentException(
                     """Input at index %d to function is not an artifact. Creating an Aqueduct parameter implicitly for a """
@@ -274,13 +281,33 @@ def _convert_input_arguments_to_parameters(
                     % idx
                 )
 
-            # We assume that the parameter name exists here, since we've disallowed any variable-length parameters.
-            arg_name = param_names[idx]
+            # We assume that the user-function's parameter name exists here, since we've disallowed any variable-length parameters.
+            # An implicit parameter will have the operator name prepended to it.
+            param_name = op_name + ":" + fn_param_names[idx]
+            is_overwrite = check_implicit_param_name(
+                dag,
+                param_name,
+                op_name,
+            )
+            if is_overwrite:
+                warnings.warn(
+                    """Input to function argument `%s` is not an artifact type. We have implicitly created a parameter named `%s` and your input will be used as its default value. This parameter will be used when running the function."""
+                    % (param_name, param_name)
+                )
+
+            implicit_param_name_by_index[idx] = param_name
+
+    # Take a second pass to actually create the artifacts and modify the DAG.
+    for idx, artifact in enumerate(artifacts):
+        if idx in implicit_param_name_by_index.keys():
+            assert not isinstance(artifact, BaseArtifact)
+            default = artifact
+
             artifacts[idx] = create_param_artifact(
                 dag=dag,
-                candidate_name=arg_name,
+                param_name=implicit_param_name_by_index[idx],
                 default=default,
-                op_name_for_implicit_param=op_name,
+                is_implicit=True,
             )
     return artifacts
 
