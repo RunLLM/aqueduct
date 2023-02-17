@@ -13,6 +13,9 @@ To run with more flexibility, configure the following commandline flags:
 * `--data-integration`: the data integration name. The data integration need to be pre-configured before running the script.
 * `--api-key`: the API key if different from `aqueduct.api_key()` by any reason.
 * `--example-notebooks`: also run all example notebooks
+* `--slack-token`: The Slack App bot token to integrate with slack notifications.
+* `--slack-channel`: The channel to send Slack notifications.
+* `--notification-level`: The notification threshold level. (e.g. 'Success' to receive all notifications, 'Warning' to recieve for warning / failed workflows, and 'Error' for failed workflows only.)
 
 ## Checklist
 * **Workflows** Page: There should be **4** workflows. **3** Succeeded and **1** Failed.
@@ -26,6 +29,15 @@ To run with more flexibility, configure the following commandline flags:
     * There should be **4** workflows in **Workflows** section.
     * If you are using `aqueduct_demo`, there should be **8** tables in **Data** section.
 * **Data** Page: There should be **1** data available.
+* Slack channel:
+    * There should be **4** new notifications.
+    * Each notification should have the following aspects:
+        * A title including the workflow's name and status
+        * Workflow name
+        * ID
+        * Result ID
+        * If the workflow has check failures, it should list all failed checks with correct error or warning state.
+        * A link to the workflow result's UI page.
 
 ## Keep It Up to Date
 * The scripts and **Checklist** should be focused on features that:

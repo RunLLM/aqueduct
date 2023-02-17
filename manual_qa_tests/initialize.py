@@ -1,6 +1,8 @@
 import argparse
 
 import deploy_example
+from aqueduct.constants.enums import NotificationLevel
+from notification import connect_spark
 from workflows import fail_bad_check, succeed_complex, succeed_parameters, warning_bad_check
 
 import aqueduct as aq
@@ -33,10 +35,21 @@ if __name__ == "__main__":
     parser.add_argument("--api-key", default="")
     # parser.add_argument("-q", "--quiet", action="store_true")
     parser.add_argument("--example-notebooks", action="store_true")
+    parser.add_argument("--slack-token", default="")
+    parser.add_argument("--slack-channel", default="")
+    parser.add_argument("--notification-level", default="success")
     args = parser.parse_args()
 
     api_key = args.api_key if args.api_key else aq.get_apikey()
     client = aq.Client(api_key, args.addr)
+
+    if args.slack_token and args.slack_channel:
+        connect_spark(
+            client,
+            args.slack_token,
+            args.slack_channel,
+            NotificationLevel(args.notification_level),
+        )
 
     if args.example_notebooks:
         for example_path in EXAMPLE_NOTEBOOKS_PATHS:
