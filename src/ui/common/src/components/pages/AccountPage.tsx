@@ -32,49 +32,41 @@ type AccountPageProps = {
   Layout?: React.FC<LayoutProps>;
 };
 
-/*
-Storage configuration for local storage:
-{
-    "aqPath": "/Users/andre/.aqueduct/server",
-    "encryptionKey": "GTM30RA8PJVE4INYDZFSO6C2QW1XL9KH",
-    "retentionJobPeriod": "0 * * * *",
-    "apiKey": "6DG5FHRVISALQNTK1MUECZ3782PW4Y9X",
-    "storageConfig": {
-        "type": "file",
-        "file_config": {
-            "directory": "/Users/andre/.aqueduct/server/storage"
-        }
-    }
-}
-*/
-
 type ServerConfig = {
   aqPath: string;
   encryptionKey: string;
   retentionJobPeriod: string;
   apiKey: string;
   storageConfig: {
-    type: string,
-    file_config: {
-      directory: string
-    }
-  }
-}
+    type: string;
+    file_config?: {
+      directory: string;
+    };
+    gcs_config?: {
+      bucket: string;
+      service_account_credentials: string;
+    };
+  };
+};
 
-async function getServerConfig(apiAddress: string, apiKey: string): Promise<ServerConfig> {
+async function getServerConfig(
+  apiAddress: string,
+  apiKey: string
+): Promise<ServerConfig> {
   try {
     const configRequest = await fetch(`${apiAddress}/api/config`, {
-      method: 'GET', headers: {
-        'api-key': apiKey
-      }
+      method: 'GET',
+      headers: {
+        'api-key': apiKey,
+      },
     });
 
     const responseBody = await configRequest.json();
 
     if (!configRequest.ok) {
-      console.log('Error fetching config')
+      console.log('Error fetching config');
     }
-    console.log('config response: ', responseBody)
+    console.log('config response: ', responseBody);
     return responseBody as ServerConfig;
   } catch (error) {
     console.log('config fetch error: ', error);
@@ -120,6 +112,64 @@ async function UpdateNotifications(
   return results.filter((x) => !!x).join('\n');
 }
 
+interface MetadataStorageInfoProps {
+  serverConfig?: ServerConfig;
+}
+
+const MetadataStorageInfo: React.FC<MetadataStorageInfoProps> = ({
+  serverConfig,
+}) => {
+  // TODO: Show the loading text string here.
+  if (!serverConfig) {
+    return null;
+  }
+
+  let storageInfo;
+  const fileMetadataStorageInfo = (
+    <>
+      <Typography variant="body1">
+        Location:{' '}
+        {serverConfig?.storageConfig?.file_config?.directory || 'loading ...'}
+      </Typography>
+    </>
+  );
+
+  // Should we show service credentials here?
+  // Probs not, we're sending private key over the wire, not so good of an idea.
+  // gcs_config.service_account_credentials - json string, so going to need to parse it
+  const gcsMetadataStorageInfo = (
+    <>
+      <Typography variant="body1">
+        Bucket:{' '}
+        {serverConfig?.storageConfig?.gcs_config?.bucket || 'loading ...'}
+      </Typography>
+    </>
+  );
+
+  switch (serverConfig.storageConfig.type) {
+    case 'file': {
+      storageInfo = fileMetadataStorageInfo;
+    }
+    case 'gcs': {
+      storageInfo = gcsMetadataStorageInfo;
+    }
+  }
+
+  return (
+    <Box>
+      <Typography variant="h5" sx={{ mt: 3 }}>
+        Metadata Storage
+      </Typography>
+      <Typography variant="body1">
+        Storage Config Type:{' '}
+        {serverConfig?.storageConfig?.type || 'loading ...'}
+      </Typography>
+
+      {storageInfo}
+    </Box>
+  );
+};
+
 const AccountPage: React.FC<AccountPageProps> = ({
   user,
   Layout = DefaultLayout,
@@ -142,7 +192,7 @@ client = aqueduct.Client(
     (state: RootState) => state.integrationsReducer
   );
 
-  const [serverConfig, setServerConfig] = useState<ServerConfig>();
+  const [serverConfig, setServerConfig] = useState<ServerConfig | null>(null);
   console.log('Integrations Reducer: ', integrationsReducer);
   const notifications = Object.values(integrationsReducer.integrations).filter(
     (x) =>
@@ -162,9 +212,8 @@ client = aqueduct.Client(
       setServerConfig(serverConfig);
     }
 
-    fetchServerConfig()
-  }, [])
-
+    fetchServerConfig();
+  }, []);
 
   useEffect(() => {
     if (!updatingNotifications) {
@@ -248,13 +297,16 @@ client = aqueduct.Client(
       )}
       {notificationSection}
 
-      <Box>
+      <MetadataStorageInfo serverConfig={serverConfig ? serverConfig : null} />
+
+      {/* <Box>
         <Typography variant="h5" sx={{ mt: 3 }}>
           Metadata Storage
         </Typography>
         <Typography variant="body1">Storage Config Type: {serverConfig?.storageConfig?.type || 'loading ...'}</Typography>
         <Typography variant="body1">Location: {serverConfig?.storageConfig?.file_config?.directory || 'loading ...'}</Typography>
-      </Box>
+        <MetadataStorageInfo serverConfig={serverConfig} />
+      </Box> */}
 
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}

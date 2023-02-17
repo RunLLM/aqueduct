@@ -263,7 +263,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
   console.log('workflowDag: ', workflowDag);
   console.log('engine: ', workflowDag.engine_config);
-  console.log('storageConfig: ', workflowDag.storage_config)
+  console.log('storageConfig: ', workflowDag.storage_config);
   // storage_config.file_config.directory gets us the directory where storage is located.
   // storage_config.file_config.type gets us the type of storage that we are currently using.
 
@@ -431,7 +431,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   let nextUpdateComponent;
   if (
     workflowDag.metadata?.schedule?.trigger ===
-    WorkflowUpdateTrigger.Periodic &&
+      WorkflowUpdateTrigger.Periodic &&
     !workflowDag.metadata?.schedule?.paused
   ) {
     const nextUpdateTime = getNextUpdateTime(
@@ -822,7 +822,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
                   <ListItem key={`${integrationName}-${objectResult.name}`}>
                     <ListItemIcon style={{ minWidth: '30px' }}>
                       {objectResult.exec_state.status ===
-                        ExecutionStatus.Succeeded ? (
+                      ExecutionStatus.Succeeded ? (
                         <FontAwesomeIcon
                           icon={faCircleCheck}
                           style={{
@@ -848,13 +848,13 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
                   </ListItem>
                   {objectResult.exec_state.status ===
                     ExecutionStatus.Failed && (
-                      <Alert icon={false} severity="error">
-                        <AlertTitle>
-                          Failed to delete {objectResult.name}.
-                        </AlertTitle>
-                        <pre>{objectResult.exec_state.error.context}</pre>
-                      </Alert>
-                    )}
+                    <Alert icon={false} severity="error">
+                      <AlertTitle>
+                        Failed to delete {objectResult.name}.
+                      </AlertTitle>
+                      <pre>{objectResult.exec_state.error.context}</pre>
+                    </Alert>
+                  )}
                 </>
               ))
             )
