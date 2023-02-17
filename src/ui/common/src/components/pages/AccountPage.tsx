@@ -46,6 +46,12 @@ type ServerConfig = {
       bucket: string;
       service_account_credentials: string;
     };
+    s3_config?: {
+      region: string;
+      bucket: string;
+      credentials_path: string;
+      credentials_profile: string;
+    };
   };
 };
 
@@ -146,12 +152,38 @@ const MetadataStorageInfo: React.FC<MetadataStorageInfoProps> = ({
     </>
   );
 
+  const s3MetadataStorageInfo = (
+    <>
+      <Typography variant="body1">
+        Region:{' '}
+        {serverConfig?.storageConfig?.s3_config?.region || 'loading ...'}
+      </Typography>
+      <Typography variant="body1">
+        Bucket:{' '}
+        {serverConfig?.storageConfig?.s3_config?.bucket || 'loading ...'}
+      </Typography>
+      <Typography variant="body1">
+        Credential Type:{' '}
+        {serverConfig?.storageConfig?.s3_config?.credentials_profile ||
+          'loading ...'}
+      </Typography>
+      <Typography variant="body1">
+        Credentials Path:{' '}
+        {serverConfig?.storageConfig?.s3_config?.credentials_path ||
+          'loading ...'}
+      </Typography>
+    </>
+  );
+
   switch (serverConfig.storageConfig.type) {
     case 'file': {
       storageInfo = fileMetadataStorageInfo;
     }
     case 'gcs': {
       storageInfo = gcsMetadataStorageInfo;
+    }
+    case 's3': {
+      storageInfo = s3MetadataStorageInfo;
     }
   }
 
@@ -297,16 +329,7 @@ client = aqueduct.Client(
       )}
       {notificationSection}
 
-      <MetadataStorageInfo serverConfig={serverConfig ? serverConfig : null} />
-
-      {/* <Box>
-        <Typography variant="h5" sx={{ mt: 3 }}>
-          Metadata Storage
-        </Typography>
-        <Typography variant="body1">Storage Config Type: {serverConfig?.storageConfig?.type || 'loading ...'}</Typography>
-        <Typography variant="body1">Location: {serverConfig?.storageConfig?.file_config?.directory || 'loading ...'}</Typography>
-        <MetadataStorageInfo serverConfig={serverConfig} />
-      </Box> */}
+      <MetadataStorageInfo serverConfig={serverConfig} />
 
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
