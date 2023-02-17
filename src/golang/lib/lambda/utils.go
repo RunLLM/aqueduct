@@ -370,7 +370,12 @@ func DeleteDockerImage(versionedLambdaImageUri string) error {
 
 	cmd = exec.Command("docker", "rmi", "-f", imageId)
 
+	stdout.Reset()
+	stderr.Reset()
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
 	err = cmd.Run()
+
 	if err != nil {
 		stdoutString := strings.TrimSpace(stdout.String())
 		stderrString := strings.TrimSpace(stderr.String())
