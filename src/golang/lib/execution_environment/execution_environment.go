@@ -89,7 +89,7 @@ func (e *ExecutionEnvironment) Name() string {
 	return fmt.Sprintf("aqueduct_%s", e.ID.String())
 }
 
-func (e *ExecutionEnvironment) CreateEnv() error {
+func (e *ExecutionEnvironment) CreateCondaEnv() error {
 	// First, we create a conda env with the env object's Python version.
 	createArgs := []string{
 		"create",
@@ -152,7 +152,7 @@ func deleteCondaEnv(name string) error {
 }
 
 // DeleteEnv deletes the Conda environment if it exists.
-func (e *ExecutionEnvironment) DeleteEnv() error {
+func (e *ExecutionEnvironment) DeleteCondaEnv() error {
 	return deleteCondaEnv(e.Name())
 }
 
