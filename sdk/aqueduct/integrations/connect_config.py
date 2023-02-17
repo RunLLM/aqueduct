@@ -1,7 +1,8 @@
+import json
 from enum import Enum
-from typing import Any, Dict, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union, cast
 
-from aqueduct.constants.enums import MetaEnum, ServiceType
+from aqueduct.constants.enums import MetaEnum, NotificationLevel, ServiceType
 from aqueduct.error import InternalAqueductError, InvalidUserArgumentException
 from pydantic import BaseModel, Extra, Field
 
@@ -132,8 +133,44 @@ class SQLiteConfig(BaseConnectionConfig):
     database: str
 
 
+class SlackConfig(BaseConnectionConfig):
+    token: str
+    channels: List[str]
+    level: Optional[NotificationLevel] = None
+    enabled: bool
+
+
+class _SlackConfigWithStringField(BaseConnectionConfig):
+    token: str
+    channels_serialized: str
+    level: str
+    enabled: str
+
+
+class EmailConfig(BaseConnectionConfig):
+    user: str
+    password: str
+    host: str
+    port: int
+    targets: List[str]
+    level: Optional[NotificationLevel] = None
+    enabled: bool
+
+
+class _EmailConfigWithStringField(BaseConnectionConfig):
+    user: str
+    password: str
+    host: str
+    port: str
+    targets_serialized: str
+    level: str
+    enabled: str
+
+
 IntegrationConfig = Union[
     BigQueryConfig,
+    EmailConfig,
+    _EmailConfigWithStringField,
     MySQLConfig,
     MongoDBConfig,
     PostgresConfig,
@@ -142,6 +179,8 @@ IntegrationConfig = Union[
     SnowflakeConfig,
     SqlServerConfig,
     SQLiteConfig,
+    SlackConfig,
+    _SlackConfigWithStringField,
 ]
 
 
@@ -168,6 +207,10 @@ def convert_dict_to_integration_connect_config(
         return SQLiteConfig(**config_dict)
     elif service == ServiceType.REDSHIFT:
         return RedshiftConfig(**config_dict)
+    elif service == ServiceType.SLACK:
+        return SlackConfig(**config_dict)
+    elif service == ServiceType.EMAIL:
+        return EmailConfig(**config_dict)
     raise InternalAqueductError("Unexpected Service Type: %s" % service)
 
 
@@ -179,7 +222,35 @@ def prepare_integration_config(
     """
     if service == ServiceType.BIGQUERY:
         return _prepare_big_query_config(cast(BigQueryConfig, config))
+
+    if service == ServiceType.SLACK:
+        return _prepare_slack_config(cast(SlackConfig, config))
+
+    if service == ServiceType.EMAIL:
+        return _prepare_email_config(cast(EmailConfig, config))
+
     return config
+
+
+def _prepare_email_config(config: EmailConfig) -> _EmailConfigWithStringField:
+    return _EmailConfigWithStringField(
+        user=config.user,
+        password=config.password,
+        host=config.host,
+        port=str(config.port),
+        targets_serialized=json.dumps(config.targets),
+        level=config.level.value if config.level else "",
+        enabled="true" if config.enabled else "false",
+    )
+
+
+def _prepare_slack_config(config: SlackConfig) -> _SlackConfigWithStringField:
+    return _SlackConfigWithStringField(
+        token=config.token,
+        channels_serialized=json.dumps(config.channels),
+        level=config.level.value if config.level else "",
+        enabled="true" if config.enabled else "false",
+    )
 
 
 def _prepare_big_query_config(config: BigQueryConfig) -> BigQueryConfig:
