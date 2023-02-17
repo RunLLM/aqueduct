@@ -7,7 +7,7 @@ from aqueduct.constants.enums import ArtifactType
 from aqueduct.error import AqueductError, InvalidUserArgumentException
 from aqueduct.integrations.mongodb_integration import MongoDBIntegration
 
-from aqueduct import LoadUpdateMode
+from aqueduct import LoadUpdateMode, op
 from sdk.data_integration_tests.flow_manager import FlowManager
 from sdk.data_integration_tests.mongo_db_data_validator import MongoDBDataValidator
 from sdk.data_integration_tests.save import save
@@ -146,3 +146,28 @@ def test_mongo_artifact_with_same_op_and_artf_names(
 
     flow = flow_manager.publish_flow_test(artifacts=hotel_reviews)
     check_artifact_was_computed(flow, artf_name)
+
+
+def test_mongo_preserves_bson_table_even_with_pickled_collection_type(
+    flow_manager,
+    data_integration: MongoDBIntegration,
+):
+    """Test that bson table fidelity is preserved in the case where it is included
+    in a collection object (list, tuple).
+    """
+    hotel_reviews = data_integration.collection("hotel_reviews").find({}, {"_id": 0})
+
+    @op
+    def select_first_object_of_input_tuple(mongo_table, another_param):
+        return mongo_table
+
+    output = select_first_object_of_input_tuple(hotel_reviews, 123)
+
+    # Saving the output back to Mongo will guarantee that the table maintained fidelity
+    # across function execution.
+    table_name = generate_table_name()
+    save(data_integration, output, table_name, LoadUpdateMode.REPLACE)
+
+    flow_manager.publish_flow_test(artifacts=output)
+    saved_data = data_integration.collection(table_name).find({}, {"_id": 0}).get()
+    assert hotel_reviews.get().equals(saved_data)

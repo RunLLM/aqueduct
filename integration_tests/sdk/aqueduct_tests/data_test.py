@@ -4,7 +4,7 @@ from aqueduct import op
 from sdk.shared.flow_helpers import publish_flow_test
 
 
-def test_expanded_collection_data_type(client, flow_name, engine):
+def test_pickled_collection_data_type(client, flow_name, engine):
     """Test a list and tuple of images."""
 
     # Current working directory is one level above.
@@ -42,7 +42,7 @@ def test_expanded_collection_data_type(client, flow_name, engine):
     assert all(isinstance(elem, Image.Image) for elem in flow_tuple_output.get())
 
 
-def test_expanded_collection_data_type_mixed(client):
+def test_pickled_collection_data_type_mixed(client):
     """Check that we can handle pickled lists with a variety of data types."""
 
     # Current working directory is one level above.

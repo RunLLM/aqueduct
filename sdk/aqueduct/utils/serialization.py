@@ -1,12 +1,13 @@
 import io
 import json
+import logging
 import os
 import shutil
 from typing import Any, Callable, Dict, List, cast, Optional
 
 import cloudpickle as pickle
 import pandas as pd
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel
 
 from aqueduct.constants.enums import ArtifactType, SerializationType
 from aqueduct.utils.type_inference import infer_artifact_type
@@ -23,10 +24,16 @@ _DEFAULT_IMAGE_FORMAT = "jpeg"
 _TEMP_KERAS_MODEL_NAME = "keras_model"
 
 
-class PickledCollectionSerializationFormat(BaseModel):
-    # TODO: documentation. Underscores to are make it unlikely to hit.
-    is_tuple: bool
+class PickleableCollectionSerializationFormat(BaseModel):
+    """For data types that are destined to be pickled lists or tuples, we want to
+    first serialize each individual element before pickling, for performance reasons.
+
+    When that happens, the dictionary version of this class is what is pickle-serialized.
+    """
+    # The serialization type of each element in the collection.
     aqueduct_serialization_types: List[SerializationType]
+
+    # The actual list of serialized values.
     data: List[bytes]
 
 
@@ -100,14 +107,15 @@ __deserialization_function_mapping: Dict[str, Callable[[bytes], Any]] = {
 def check_and_fetch_pickled_collection_format(
     serialization_type: SerializationType,
     deserialized_val: Any,
-) -> Optional[PickledCollectionSerializationFormat]:
-    """TODO
-
-    Returns whether the bytes we are deserializing are list/tuples that requiring additional
-    serialization for each element."""
+) -> Optional[PickleableCollectionSerializationFormat]:
+    """If a value that has undergone one round of deserialization is in the form of a
+    `PickleableCollectionSerializationFormat`, we will load up that class and return it.
+    Otherwise, return None.
+    """
     if _serialization_is_pickle(serialization_type) and isinstance(deserialized_val, dict):
         try:
-            return PickledCollectionSerializationFormat(**deserialized_val)
+            # This will error if the appropriate dict fields do not match.
+            return PickleableCollectionSerializationFormat(**deserialized_val)
         except Exception:
             return None
 
@@ -126,14 +134,13 @@ def deserialize(
     if pickled_collection_data is not None:
         collection_serialization_types = pickled_collection_data.aqueduct_serialization_types
         data = pickled_collection_data.data
-        is_tuple = pickled_collection_data.is_tuple
 
         deserialized_val = [
             __deserialization_function_mapping[collection_serialization_types[i]](data[i])
             for i in range(len(collection_serialization_types))
         ]
 
-        if is_tuple:
+        if isinstance(data, tuple):
             return tuple(deserialized_val)
         return deserialized_val
 
@@ -222,15 +229,18 @@ def serialize_val(
                 )
             )
 
-        pickled_collection_data = PickledCollectionSerializationFormat(
-            data=[
-                serialize_val(
-                    val[i], elem_serialization_types[i], expand_collections=False
-                )  # do not recursively expand.
-                for i in range(len(elem_serialization_types))
-            ],
+        data = [
+            serialize_val(
+                val[i], elem_serialization_types[i], expand_collections=False
+            )  # do not recursively expand.
+            for i in range(len(elem_serialization_types))
+        ]
+        if isinstance(val, tuple):
+            data = tuple(data)
+
+        pickled_collection_data = PickleableCollectionSerializationFormat(
+            data=data,
             aqueduct_serialization_types=elem_serialization_types,
-            is_tuple=isinstance(val, tuple),
         )
 
         # The value we end up serializing is a dictionary.

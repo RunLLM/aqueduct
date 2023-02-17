@@ -169,8 +169,9 @@ class SerializationType(str, Enum, metaclass=MetaEnum):
     BSON_TABLE = "bson_table"
     JSON = "json"
     PICKLE = "pickle"
-    # Same as pickle. Indicates that, if the object is an expanded collection type, then
-    # tables inside the collection are serialized as BSON_TABLE.
+    # Same as pickle. Indicates that, if the object is a collection that requires
+    # additional serialization one level down, then any tables inside are serialized
+    # as BSON_TABLE.
     BSON_PICKLE = "bson_pickle"
     IMAGE = "image"
     STRING = "string"
