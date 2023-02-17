@@ -248,7 +248,10 @@ def run(spec: FunctionSpec) -> None:
             job_name=spec.name, job_type=spec.type.value, step="Reading Inputs"
         )(utils.read_artifacts)(storage, spec.input_content_paths, spec.input_metadata_paths)
 
-        derived_from_bson = any(elem in [SerializationType.BSON_PICKLE, SerializationType.BSON_TABLE] for elem in serialization_types)
+        derived_from_bson = any(
+            elem in [SerializationType.BSON_PICKLE, SerializationType.BSON_TABLE]
+            for elem in serialization_types
+        )
 
         results, system_metadata = time_it(
             job_name=spec.name, job_type=spec.type.value, step="Running Function"

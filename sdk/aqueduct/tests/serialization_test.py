@@ -1,6 +1,7 @@
 import json
 import uuid
 
+import cloudpickle as pickle
 from aqueduct.backend.response_models import ArtifactResult, Logs, OperatorResult, PreviewResponse
 from aqueduct.constants.enums import (
     ArtifactType,
@@ -33,7 +34,17 @@ from aqueduct.models.operators import (
     SalesforceLoadParams,
 )
 from aqueduct.tests.utils import _construct_dag, _construct_operator
+from aqueduct.utils.serialization import (
+    PickleableCollectionSerializationFormat,
+    _read_image_content,
+    _read_pickle_content,
+    _read_string_content,
+    artifact_type_to_serialization_type,
+    deserialize,
+    serialize_val,
+)
 from aqueduct.utils.utils import generate_uuid
+from PIL import Image
 
 
 def test_artifact_serialization():
@@ -467,3 +478,47 @@ def test_load_serialization():
             "outputs": [],
         }
     )
+
+
+def test_serialization_of_pickled_collection_types():
+    image_data = Image.open("aqueduct/tests/data/aqueduct.jpg", "r")
+    list_input = [image_data, "hello world"]
+
+    assert (
+        artifact_type_to_serialization_type(
+            ArtifactType.PICKLABLE, derived_from_bson=True, content=list_input
+        )
+        == SerializationType.BSON_PICKLE
+    )
+    assert (
+        artifact_type_to_serialization_type(
+            ArtifactType.PICKLABLE, derived_from_bson=False, content=list_input
+        )
+        == SerializationType.PICKLE
+    )
+
+    serialized = serialize_val(
+        list_input,
+        SerializationType.PICKLE,
+    )
+
+    picklable_collection = PickleableCollectionSerializationFormat(
+        **_read_pickle_content(serialized)
+    )
+    assert isinstance(picklable_collection, PickleableCollectionSerializationFormat)
+
+    assert picklable_collection.aqueduct_serialization_types == [
+        SerializationType.IMAGE,
+        SerializationType.STRING,
+    ]
+    assert _read_image_content(picklable_collection.data[0]).getbbox() == list_input[0].getbbox()
+    assert _read_string_content(picklable_collection.data[1]) == list_input[1]
+
+    original_val = deserialize(
+        serialization_type=SerializationType.PICKLE,
+        artifact_type=ArtifactType.UNTYPED,  # irrelevant.
+        content=serialized,
+    )
+    assert len(list_input) == len(original_val)
+    assert list_input[0].getbbox() == original_val[0].getbbox()
+    assert list_input[1] == original_val[1]

@@ -1,18 +1,16 @@
 import io
 import json
-import logging
 import os
 import shutil
-from typing import Any, Callable, Dict, List, cast, Optional
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 import cloudpickle as pickle
 import pandas as pd
-from pydantic import BaseModel
-
 from aqueduct.constants.enums import ArtifactType, SerializationType
 from aqueduct.utils.type_inference import infer_artifact_type
 from bson import json_util as bson_json_util
 from PIL import Image
+from pydantic import BaseModel
 
 from .format import DEFAULT_ENCODING
 from .function_packaging import _make_temp_dir
@@ -30,11 +28,12 @@ class PickleableCollectionSerializationFormat(BaseModel):
 
     When that happens, the dictionary version of this class is what is pickle-serialized.
     """
+
     # The serialization type of each element in the collection.
     aqueduct_serialization_types: List[SerializationType]
 
     # The actual list of serialized values.
-    data: List[bytes]
+    data: Union[List[bytes], Tuple[bytes]]
 
 
 def _serialization_is_pickle(serialization_type: SerializationType) -> bool:
@@ -118,6 +117,7 @@ def check_and_fetch_pickled_collection_format(
             return PickleableCollectionSerializationFormat(**deserialized_val)
         except Exception:
             return None
+    return None
 
 
 def deserialize(
@@ -130,7 +130,9 @@ def deserialize(
     deserialized_val = __deserialization_function_mapping[serialization_type](content)
 
     # Check if the type is an expanded collection and resolve the content for that special case.
-    pickled_collection_data = check_and_fetch_pickled_collection_format(serialization_type, deserialized_val)
+    pickled_collection_data = check_and_fetch_pickled_collection_format(
+        serialization_type, deserialized_val
+    )
     if pickled_collection_data is not None:
         collection_serialization_types = pickled_collection_data.aqueduct_serialization_types
         data = pickled_collection_data.data
@@ -228,15 +230,14 @@ def serialize_val(
                     elem,
                 )
             )
-
-        data = [
+        data: Union[List[bytes], Tuple[bytes]] = [
             serialize_val(
                 val[i], elem_serialization_types[i], expand_collections=False
             )  # do not recursively expand.
             for i in range(len(elem_serialization_types))
         ]
         if isinstance(val, tuple):
-            data = tuple(data)
+            data = cast(Tuple[bytes], tuple(data))
 
         pickled_collection_data = PickleableCollectionSerializationFormat(
             data=data,
