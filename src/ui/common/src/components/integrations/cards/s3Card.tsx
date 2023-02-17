@@ -17,6 +17,10 @@ export const S3Card: React.FC<Props> = ({ integration }) => {
         <strong>Bucket: </strong>
         {config.bucket}
       </Typography>
+      <Typography variant="body2">
+        <strong>Region: </strong>
+        {config.region}
+      </Typography>
     </Box>
   );
 };

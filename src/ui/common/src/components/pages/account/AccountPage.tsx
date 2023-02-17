@@ -57,6 +57,7 @@ export type ServerConfig = {
   };
 };
 
+// TODO: Deprecate this and use the getServerConfig file defined in src/handlers
 async function getServerConfig(
   apiAddress: string,
   apiKey: string
