@@ -1157,10 +1157,3 @@ func (eng *aqEngine) updateWorkflowSchedule(
 	}
 	return nil
 }
-
-func (eng *aqEngine) InitEnv(
-	ctx context.Context,
-	env *exec_env.ExecutionEnvironment,
-) error {
-	return env.CreateEnv()
-}

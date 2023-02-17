@@ -155,13 +155,18 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
-	execEnvByOpId, status, err := setupExecEnv(
+	txn, err := h.Database.BeginTx(ctx)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
+	}
+	defer database.TxnRollbackIgnoreErr(ctx, txn)
+
+	execEnvByOpId, status, err := registerDependencies(
 		ctx,
 		args.ID,
 		args.dagSummary,
-		h.IntegrationRepo,
 		h.ExecutionEnvironmentRepo,
-		h.Database,
+		txn,
 	)
 	if err != nil {
 		return emptyResp, status, err
@@ -175,12 +180,6 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 			dbWorkflowDag.Operators[opId] = op
 		}
 	}
-
-	txn, err := h.Database.BeginTx(ctx)
-	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
-	}
-	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
 	// Schedule validation needs to happen inside the `txn` to prevent
 	// concurrent requests from forming a cycle among cascading workflows

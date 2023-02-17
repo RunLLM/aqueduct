@@ -30,7 +30,6 @@ type ExecutionEnvironment struct {
 	ID            uuid.UUID `json:"id"`
 	PythonVersion string    `json:"python_version"`
 	Dependencies  []string  `json:"dependencies"`
-	CondaPath     string    `json:"-"`
 }
 
 func (e *ExecutionEnvironment) CreateDBRecord(
@@ -89,7 +88,7 @@ func (e *ExecutionEnvironment) Name() string {
 	return fmt.Sprintf("aqueduct_%s", e.ID.String())
 }
 
-func (e *ExecutionEnvironment) CreateCondaEnv() error {
+func (e *ExecutionEnvironment) CreateCondaEnv(condaPath string) error {
 	// First, we create a conda env with the env object's Python version.
 	createArgs := []string{
 		"create",
@@ -106,7 +105,7 @@ func (e *ExecutionEnvironment) CreateCondaEnv() error {
 
 	forkEnvPath := fmt.Sprintf(
 		"%s/envs/aqueduct_python%s/lib/python%s/site-packages",
-		e.CondaPath,
+		condaPath,
 		e.PythonVersion,
 		e.PythonVersion,
 	)
@@ -223,7 +222,7 @@ func DeleteBaseEnvs() error {
 // Best-effort to delete all envs and log any error
 func deleteEnvs(envs []ExecutionEnvironment) {
 	for _, env := range envs {
-		err := env.DeleteEnv()
+		err := env.DeleteCondaEnv()
 		if err != nil {
 			log.Errorf("Failed to delete env %s: %v", env.ID.String(), err)
 		}
@@ -288,9 +287,6 @@ func CreateMissingAndSyncExistingEnvs(
 	// rollback both DB records and conda envs.
 	defer func() {
 		database.TxnRollbackIgnoreErr(ctx, txn)
-		if err != nil {
-			deleteEnvs(addedEnvs)
-		}
 	}()
 
 	for key, env := range envs {
@@ -315,11 +311,6 @@ func CreateMissingAndSyncExistingEnvs(
 		// Env is missing
 		if err == database.ErrNoRows {
 			err = env.CreateDBRecord(ctx, execEnvRepo, db)
-			if err != nil {
-				return nil, err
-			}
-
-			err = env.CreateEnv()
 			if err != nil {
 				return nil, err
 			}

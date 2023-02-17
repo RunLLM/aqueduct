@@ -183,17 +183,24 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error uploading function files.")
 	}
 
-	execEnvByOpId, status, err := setupExecEnv(
+	execEnvByOpId, status, err := registerDependencies(
 		ctx,
 		args.ID,
 		args.DagSummary,
-		h.IntegrationRepo,
 		h.ExecutionEnvironmentRepo,
 		h.Database,
 	)
 	if err != nil {
 		return errorRespPtr, status, err
 	}
+
+	setupCondaEnv(
+		ctx,
+		args.ID,
+		h.IntegrationRepo,
+		execEnvByOpId,
+		h.Database,
+	)
 
 	timeConfig := &engine.AqueductTimeConfig{
 		OperatorPollInterval: engine.DefaultPollIntervalMillisec,
@@ -236,48 +243,13 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 	}, statusCode, nil
 }
 
-func setupExecEnv(
+func registerDependencies(
 	ctx context.Context,
 	userID uuid.UUID,
 	dagSummary *request.DagSummary,
-	integrationRepo repos.Integration,
 	execEnvRepo repos.ExecutionEnvironment,
 	DB database.Database,
 ) (map[uuid.UUID]exec_env.ExecutionEnvironment, int, error) {
-	condaIntegration, err := exec_env.GetCondaIntegration(ctx, userID, integrationRepo, DB)
-	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "error getting conda integration.")
-	}
-
-	// For now, do nothing if conda is not connected.
-	if condaIntegration == nil {
-		return nil, http.StatusOK, nil
-	}
-
-	condaConnectionState, err := exec_env.ExtractConnectionState(condaIntegration)
-	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve Conda connection state.")
-	}
-
-	if condaConnectionState.Status == shared.FailedExecutionStatus {
-		errMsg := "Failed to create conda environments."
-		if condaConnectionState.Error != nil {
-			errMsg = fmt.Sprintf(
-				"Failed to create conda environments: %s. %s.",
-				condaConnectionState.Error.Context,
-				condaConnectionState.Error.Tip,
-			)
-		}
-
-		return nil, http.StatusInternalServerError, errors.New(errMsg)
-	}
-
-	if condaConnectionState.Status != shared.SucceededExecutionStatus {
-		return nil, http.StatusBadRequest, errors.New(
-			"We are still creating base conda environments. This may take a few minutes.",
-		)
-	}
-
 	rawEnvByOperator := make(
 		map[uuid.UUID]exec_env.ExecutionEnvironment,
 		len(dagSummary.FileContentsByOperatorUUID),
@@ -288,8 +260,6 @@ func setupExecEnv(
 		if err != nil {
 			return nil, http.StatusInternalServerError, err
 		}
-
-		rawEnv.CondaPath = condaIntegration.Config[exec_env.CondaPathKey]
 
 		rawEnvByOperator[opId] = *rawEnv
 	}
@@ -314,7 +284,69 @@ func setupExecEnv(
 		return nil, http.StatusInternalServerError, err
 	}
 
-	return envByOperator, http.StatusOK, nil
+	return envByOperator, http.StatusOK, err
+}
+
+func setupCondaEnv(
+	ctx context.Context,
+	userID uuid.UUID,
+	integrationRepo repos.Integration,
+	envByOperator map[uuid.UUID]exec_env.ExecutionEnvironment,
+	DB database.Database,
+) (status int, err error) {
+	visitedEnvs := make([]exec_env.ExecutionEnvironment, 0, len(envByOperator))
+	defer func() {
+		if err != nil {
+			for _, env := range visitedEnvs {
+				env.DeleteCondaEnv()
+			}
+		}
+	}()
+
+	condaIntegration, err := exec_env.GetCondaIntegration(ctx, userID, integrationRepo, DB)
+	if err != nil {
+		return http.StatusInternalServerError, errors.Wrap(err, "error getting conda integration.")
+	}
+
+	// For now, do nothing if conda is not connected.
+	if condaIntegration == nil {
+		return http.StatusOK, nil
+	}
+
+	condaConnectionState, err := exec_env.ExtractConnectionState(condaIntegration)
+	if err != nil {
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve Conda connection state.")
+	}
+
+	if condaConnectionState.Status == shared.FailedExecutionStatus {
+		errMsg := "Failed to create conda environments."
+		if condaConnectionState.Error != nil {
+			errMsg = fmt.Sprintf(
+				"Failed to create conda environments: %s. %s.",
+				condaConnectionState.Error.Context,
+				condaConnectionState.Error.Tip,
+			)
+		}
+
+		return http.StatusInternalServerError, errors.New(errMsg)
+	}
+
+	if condaConnectionState.Status != shared.SucceededExecutionStatus {
+		return http.StatusBadRequest, errors.New(
+			"We are still creating base conda environments. This may take a few minutes.",
+		)
+	}
+
+	for _, env := range envByOperator {
+		err = env.CreateCondaEnv(condaIntegration.Config[exec_env.CondaPathKey])
+		if err != nil {
+			return http.StatusInternalServerError, errors.Wrap(err, "Error creating conda environment.")
+		}
+
+		visitedEnvs = append(visitedEnvs, env)
+	}
+
+	return http.StatusOK, nil
 }
 
 func removeLoadOperators(dagSummary *request.DagSummary) {
