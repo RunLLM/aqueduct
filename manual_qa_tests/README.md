@@ -15,7 +15,7 @@ To run with more flexibility, configure the following commandline flags:
 * `--example-notebooks`: also run all example notebooks
 * `--slack-token`: The Slack App bot token to integrate with slack notifications.
 * `--slack-channel`: The channel to send Slack notifications.
-* `--notification-level`: The notification threshold level. (e.g. 'Success' to recieve all notifications, 'Warning' to recieve for warning / failed workflows, and 'Error' for faile workflows only.)
+* `--notification-level`: The notification threshold level. (e.g. 'Success' to receive all notifications, 'Warning' to recieve for warning / failed workflows, and 'Error' for failed workflows only.)
 
 ## Checklist
 * **Workflows** Page: There should be **4** workflows. **3** Succeeded and **1** Failed.
