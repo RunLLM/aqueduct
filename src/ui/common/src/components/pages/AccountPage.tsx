@@ -34,23 +34,19 @@ type AccountPageProps = {
 
 type ServerConfig = {
   aqPath: string;
-  encryptionKey: string;
   retentionJobPeriod: string;
   apiKey: string;
   storageConfig: {
     type: string;
-    file_config?: {
+    fileConfig?: {
       directory: string;
     };
-    gcs_config?: {
+    gcsConfig?: {
       bucket: string;
-      service_account_credentials: string;
     };
-    s3_config?: {
+    s3Config?: {
       region: string;
       bucket: string;
-      credentials_path: string;
-      credentials_profile: string;
     };
   };
 };
@@ -135,7 +131,7 @@ const MetadataStorageInfo: React.FC<MetadataStorageInfoProps> = ({
     <>
       <Typography variant="body1">
         Location:{' '}
-        {serverConfig?.storageConfig?.file_config?.directory || 'loading ...'}
+        {serverConfig?.storageConfig?.fileConfig?.directory || 'loading ...'}
       </Typography>
     </>
   );
@@ -144,33 +140,18 @@ const MetadataStorageInfo: React.FC<MetadataStorageInfoProps> = ({
   // Probs not, we're sending private key over the wire, not so good of an idea.
   // gcs_config.service_account_credentials - json string, so going to need to parse it
   const gcsMetadataStorageInfo = (
-    <>
-      <Typography variant="body1">
-        Bucket:{' '}
-        {serverConfig?.storageConfig?.gcs_config?.bucket || 'loading ...'}
-      </Typography>
-    </>
+    <Typography variant="body1">
+      Bucket: {serverConfig?.storageConfig?.gcsConfig?.bucket || 'loading ...'}
+    </Typography>
   );
 
   const s3MetadataStorageInfo = (
     <>
       <Typography variant="body1">
-        Region:{' '}
-        {serverConfig?.storageConfig?.s3_config?.region || 'loading ...'}
+        Region: {serverConfig?.storageConfig?.s3Config?.region || 'loading ...'}
       </Typography>
       <Typography variant="body1">
-        Bucket:{' '}
-        {serverConfig?.storageConfig?.s3_config?.bucket || 'loading ...'}
-      </Typography>
-      <Typography variant="body1">
-        Credential Type:{' '}
-        {serverConfig?.storageConfig?.s3_config?.credentials_profile ||
-          'loading ...'}
-      </Typography>
-      <Typography variant="body1">
-        Credentials Path:{' '}
-        {serverConfig?.storageConfig?.s3_config?.credentials_path ||
-          'loading ...'}
+        Bucket: {serverConfig?.storageConfig?.s3Config?.bucket || 'loading ...'}
       </Typography>
     </>
   );
