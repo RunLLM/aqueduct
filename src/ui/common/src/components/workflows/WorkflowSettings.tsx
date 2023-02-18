@@ -261,12 +261,6 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
   const dispatch: AppDispatch = useDispatch();
 
-  console.log('workflowDag: ', workflowDag);
-  console.log('engine: ', workflowDag.engine_config);
-  console.log('storageConfig: ', workflowDag.storage_config);
-  // storage_config.file_config.directory gets us the directory where storage is located.
-  // storage_config.file_config.type gets us the type of storage that we are currently using.
-
   useCallback(() => {
     dispatch(
       handleListWorkflowSavedObjects({

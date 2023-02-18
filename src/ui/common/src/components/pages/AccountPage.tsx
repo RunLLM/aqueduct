@@ -68,7 +68,7 @@ async function getServerConfig(
     if (!configRequest.ok) {
       console.log('Error fetching config');
     }
-    console.log('config response: ', responseBody);
+
     return responseBody as ServerConfig;
   } catch (error) {
     console.log('config fetch error: ', error);
@@ -206,7 +206,6 @@ client = aqueduct.Client(
   );
 
   const [serverConfig, setServerConfig] = useState<ServerConfig | null>(null);
-  console.log('Integrations Reducer: ', integrationsReducer);
   const notifications = Object.values(integrationsReducer.integrations).filter(
     (x) =>
       SupportedIntegrations[x.service].category ===
@@ -221,7 +220,6 @@ client = aqueduct.Client(
   useEffect(() => {
     async function fetchServerConfig() {
       const serverConfig = await getServerConfig(apiAddress, user.apiKey);
-      console.log('serverconfig: ', serverConfig);
       setServerConfig(serverConfig);
     }
 

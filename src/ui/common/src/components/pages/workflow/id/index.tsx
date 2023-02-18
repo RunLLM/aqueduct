@@ -74,9 +74,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     (state: RootState) => state.nodeSelectionReducer.selected
   );
   const workflow = useSelector((state: RootState) => state.workflowReducer);
-
-  console.log('workflow: ', workflow);
-
   const switchSideSheet = sideSheetSwitcher(dispatch);
 
   const dagName = workflow.selectedDag?.metadata?.name;
