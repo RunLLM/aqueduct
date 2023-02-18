@@ -44,7 +44,6 @@ func (h *GetConfigHandler) Perform(ctx context.Context, interfaceArgs interface{
 	storageConfig := config.Storage()
 	storageConfigPtr := &storageConfig
 	storageConfigPublic, err := storageConfigPtr.ToPublic()
-
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve storage config.")
 	}

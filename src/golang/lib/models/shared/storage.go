@@ -65,7 +65,6 @@ func (s *StorageConfig) Value() (driver.Value, error) {
 }
 
 func (s *StorageConfig) ToPublic() (*StorageConfigPublic, error) {
-
 	storageConfigPublic := &StorageConfigPublic{
 		Type: s.Type,
 	}
