@@ -17,11 +17,11 @@ var (
 )
 
 type serverConfiguration struct {
-	AqPath             string                `yaml:"aqPath" json:"aqPath"`
-	EncryptionKey      string                `yaml:"encryptionKey" json:"encryptionKey"`
-	RetentionJobPeriod string                `yaml:"retentionJobPeriod" json:"retentionJobPeriod"`
-	ApiKey             string                `yaml:"apiKey" json:"apiKey"`
-	StorageConfig      *shared.StorageConfig `yaml:"storageConfig" json:"storageConfig"`
+	AqPath             string                `yaml:"aqPath"`
+	EncryptionKey      string                `yaml:"encryptionKey"`
+	RetentionJobPeriod string                `yaml:"retentionJobPeriod"`
+	ApiKey             string                `yaml:"apiKey"`
+	StorageConfig      *shared.StorageConfig `yaml:"storageConfig"`
 }
 
 // AqueductPath is the filepath to the Aqueduct installation.
