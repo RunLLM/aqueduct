@@ -119,11 +119,11 @@ def write_artifact_spark(
             global_view_name = convert_path_to_view_name(output_path)
             spark_df.createOrReplaceGlobalTempView(global_view_name)
             pandas_df = spark_df.limit(100).toPandas()
-            serialized_val = serialize_val_wrapper(pandas_df, serialization_type)
+            serialized_val = serialize_val_wrapper(pandas_df, serialization_type, derived_from_bson)
             storage.put(output_path, serialized_val)
 
         else:
-            serialized_val = serialize_val_wrapper(content, serialization_type)
+            serialized_val = serialize_val_wrapper(content, serialization_type, derived_from_bson)
             storage.put(output_path, serialized_val)
 
     output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = serialization_type
