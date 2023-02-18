@@ -24,10 +24,6 @@ type serverConfiguration struct {
 	StorageConfig      *shared.StorageConfig `yaml:"storageConfig" json:"storageConfig"`
 }
 
-func GetGlobalConfig() serverConfiguration {
-	return *globalConfig
-}
-
 // AqueductPath is the filepath to the Aqueduct installation.
 func AqueductPath() string {
 	return globalConfig.AqPath
