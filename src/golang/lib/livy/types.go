@@ -4,13 +4,9 @@ type StatementState string
 
 type SessionState string
 
-const (
-	Waiting        StatementState = "waiting"
-	Running        StatementState = "running"
-	Available      StatementState = "available"
-	StatementError StatementState = "error"
-	Cancelling     StatementState = "cancelling"
+type StatementOutputStatus string
 
+const (
 	NotStarted   SessionState = "not_started"
 	Starting     SessionState = "starting"
 	Idle         SessionState = "idle"
@@ -20,6 +16,15 @@ const (
 	Dead         SessionState = "dead"
 	Killed       SessionState = "killed"
 	Success      SessionState = "success"
+
+	Waiting        StatementState = "waiting"
+	Running        StatementState = "running"
+	Available      StatementState = "available"
+	StatementError StatementState = "error"
+	Cancelling     StatementState = "cancelling"
+
+	OK    StatementOutputStatus = "ok"
+	Error StatementOutputStatus = "error"
 )
 
 // Livy Session.
@@ -68,7 +73,7 @@ type Statement struct {
 }
 
 type StatementOutput struct {
-	Status         string                 `json:"status"`
+	Status         StatementOutputStatus  `json:"status"`
 	ExecutionCount int                    `json:"execution_count"`
 	Data           map[string]interface{} `json:"data"`
 }

@@ -32,6 +32,7 @@ const (
 	Databricks   Service = "Databricks"
 	Email        Service = "Email"
 	Slack        Service = "Slack"
+	Spark        Service = "Spark"
 
 	DemoDbIntegrationName = "aqueduct_demo"
 )
@@ -62,7 +63,8 @@ func ParseService(s string) (Service, error) {
 		Conda,
 		Databricks,
 		Email,
-		Slack:
+		Slack,
+		Spark:
 		return svc, nil
 	default:
 		return "", errors.Newf("Unknown service: %s", s)

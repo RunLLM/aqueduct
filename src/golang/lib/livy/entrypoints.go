@@ -20,38 +20,14 @@ from aqueduct_executor.operators.function_executor import (
 )
 from aqueduct_executor.operators.function_executor.spec import parse_spec
 
-
-def pip_freeze(local_deps_path):
-	subprocess.run([sys.executable, "-m", "pip", "freeze", ">>", local_deps_path])
-
-
-def main():
-	"""
-	1. extract function
-	2. download required packages
-	3. execute function.
-	"""
-
-	spec_json = base64.b64decode("%s")
-	spec = parse_spec(spec_json)
-
-	extract_function.run(spec)
-	open(spec.function_extract_path + "op/local_deps.txt", 'w')
-	open(spec.function_extract_path + "op/missing.txt", 'w')
-	pip_freeze(spec.function_extract_path + "op/local_deps.txt")
-	install_requirements.run(
-		spec.function_extract_path + "op/local_deps.txt",
-		spec.function_extract_path + "op/requirements.txt",
-		spec.function_extract_path + "op/missing.txt",
-		spec,
-	)
-	spark_session_obj = spark
-	run(spec, spark_session_obj)
-
-
-if __name__ == "__main__":
-	main()
-
+print("hello")
+spec_json = base64.b64decode("%s")
+spec = parse_spec(spec_json)
+print(spec)
+extract_function.run(spec)
+print(spark)
+spark_session_obj = spark
+run(spec, spark_session_obj)
 `
 	ParamEntrypoint = `import argparse
 import base64
