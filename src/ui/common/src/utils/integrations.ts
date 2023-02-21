@@ -364,7 +364,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     docs: `${addingIntegrationLink}/connecting-to-google-cloud-storage`,
   },
   ['Aqueduct Demo']: {
-    logo: ServiceLogos['Aqueduct Demo'],
+    logo: ServiceLogos['Aqueduct'],
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
