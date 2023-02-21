@@ -111,11 +111,14 @@ __s3_serialization_function_mapping: Dict[str, Callable[..., bytes]] = {
 def serialize_val_for_s3(
     val: Any,
     serialization_type: S3SerializationType,
-    format: S3TableFormat,
+    format: Optional[S3TableFormat],
 ) -> bytes:
-    """Serializes a parameter or computed value into bytes.
+    """Serializes a computed value into bytes to be uploaded to S3.
 
-    TODO: docstring
+    Unlike deserialization, the serialization of data to S3 relies on potentially
+    inferring the artifact and serialization type of elements in a list/tuple. Since
+    the artifact -> serialization mapping is different for S3, it's cleaner to just
+    implement an S3 version of serialization.
     """
     if serialization_type == S3SerializationType.PICKLE and (
         isinstance(val, list) or isinstance(val, tuple)
