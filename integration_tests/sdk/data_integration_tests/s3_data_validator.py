@@ -46,6 +46,10 @@ class S3DataValidator:
 
         if isinstance(saved_data, pd.DataFrame):
             is_equal = saved_data.equals(expected_data)
+        elif isinstance(saved_data, list) and all(
+            isinstance(elem, pd.DataFrame) for elem in saved_data
+        ):
+            is_equal = all(elem.equals(expected_data[i]) for i, elem in enumerate(saved_data))
         else:
             is_equal = saved_data == expected_data
 

@@ -131,6 +131,7 @@ def serialize_val_for_s3(
                 artifact_type_to_s3_serialization_type(
                     elem_artifact_type,
                     format,
+                    ignore_format_requirement=True,
                 )
             )
 
@@ -162,10 +163,15 @@ class S3UnknownFileFormatException(Exception):
 def artifact_type_to_s3_serialization_type(
     artifact_type: ArtifactType,
     format: Optional[S3TableFormat],
+    ignore_format_requirement: bool = False,
 ) -> S3SerializationType:
     if artifact_type == ArtifactType.TABLE:
         if format is None:
-            raise Exception("You must specify a file format for table data.")
+            if not ignore_format_requirement:
+                raise Exception("You must specify a file format for table data.")
+
+            # Default format is Parquet.
+            format = S3TableFormat.PARQUET
 
         if format == S3TableFormat.CSV:
             return S3SerializationType.CSV_TABLE
