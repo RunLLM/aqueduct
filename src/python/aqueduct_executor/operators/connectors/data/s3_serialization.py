@@ -1,8 +1,8 @@
 import io
 import json
-import cloudpickle as pickle
 from typing import Any, Callable, Dict, List, Optional
 
+import cloudpickle as pickle
 import pandas as pd
 from aqueduct.constants.enums import S3SerializationType
 from aqueduct.utils.serialization import PickleableCollectionSerializationFormat
@@ -94,7 +94,7 @@ def _write_image_content(output: Image.Image) -> bytes:
 
 
 def _write_pickle_content(output: Any) -> bytes:
-    return pickle.dumps(output)
+    return bytes(pickle.dumps(output))
 
 
 __s3_serialization_function_mapping: Dict[str, Callable[..., bytes]] = {
