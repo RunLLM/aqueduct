@@ -8,7 +8,7 @@ import {
 import React from 'react';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-
+import { handleGetServerConfig } from '../../../handlers/getServerConfig';
 import { handleLoadIntegrations } from '../../../reducers/integrations';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
@@ -37,50 +37,6 @@ type AccountPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
 };
-
-export type ServerConfig = {
-  aqPath: string;
-  retentionJobPeriod: string;
-  apiKey: string;
-  storageConfig: {
-    type: string;
-    fileConfig?: {
-      directory: string;
-    };
-    gcsConfig?: {
-      bucket: string;
-    };
-    s3Config?: {
-      region: string;
-      bucket: string;
-    };
-  };
-};
-
-// TODO: Deprecate this and use the getServerConfig file defined in src/handlers
-async function getServerConfig(
-  apiAddress: string,
-  apiKey: string
-): Promise<ServerConfig> {
-  try {
-    const configRequest = await fetch(`${apiAddress}/api/config`, {
-      method: 'GET',
-      headers: {
-        'api-key': apiKey,
-      },
-    });
-
-    const responseBody = await configRequest.json();
-
-    if (!configRequest.ok) {
-      console.log('Error fetching config');
-    }
-
-    return responseBody as ServerConfig;
-  } catch (error) {
-    console.log('config fetch error: ', error);
-  }
-}
 
 // `UpdateNotifications` attempts to update all notification integration by calling
 // `integration/<id>/edit` route separately. It returns an error message if any error occurs.
@@ -143,7 +99,9 @@ client = aqueduct.Client(
     (state: RootState) => state.integrationsReducer
   );
 
-  const [serverConfig, setServerConfig] = useState<ServerConfig | null>(null);
+  const serverConfig = useSelector(
+    (state: RootState) => state.serverConfigReducer
+  );
   const notifications = Object.values(integrationsReducer.integrations).filter(
     (x) =>
       SupportedIntegrations[x.service].category ===
@@ -157,8 +115,7 @@ client = aqueduct.Client(
 
   useEffect(() => {
     async function fetchServerConfig() {
-      const serverConfig = await getServerConfig(apiAddress, user.apiKey);
-      setServerConfig(serverConfig);
+      await dispatch(handleGetServerConfig({ apiKey: user.apiKey }));
     }
 
     fetchServerConfig();
@@ -234,9 +191,11 @@ client = aqueduct.Client(
           <CodeBlock language="python">{apiConnectionSnippet}</CodeBlock>
         </Box>
       </Box>
+
       <Typography variant="h5" sx={{ mt: 3 }}>
         Notifications
       </Typography>
+
       {notifications.length > 0 && (
         <Typography variant="body2" marginBottom={1}>
           Configure how your notification(s) apply to all workflows. You can
@@ -244,6 +203,7 @@ client = aqueduct.Client(
           settings page.
         </Typography>
       )}
+
       {notificationSection}
 
       <MetadataStorageInfo serverConfig={serverConfig} />

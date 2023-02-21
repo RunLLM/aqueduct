@@ -3,25 +3,21 @@ import { createSlice } from '@reduxjs/toolkit';
 import { handleGetServerConfig } from '../handlers/getServerConfig';
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 
-type ServerConfig = {
+export type ServerConfig = {
   aqPath: string;
-  encryptionKey: string;
   retentionJobPeriod: string;
   apiKey: string;
   storageConfig: {
     type: string;
-    file_config?: {
+    fileConfig?: {
       directory: string;
     };
-    gcs_config?: {
+    gcsConfig?: {
       bucket: string;
-      service_account_credentials: string;
     };
-    s3_config?: {
+    s3Config?: {
       region: string;
       bucket: string;
-      credentials_path: string;
-      credentials_profile: string;
     };
   };
 };
@@ -43,23 +39,22 @@ export const serverConfigSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder.addCase(handleGetServerConfig.pending, (state) => {
-      state = { status: { loading: LoadingStatusEnum.Loading, err: '' } };
+      state.status = { loading: LoadingStatusEnum.Loading, err: '' };
     });
 
     builder.addCase(
       handleGetServerConfig.fulfilled,
       (state, { meta, payload }) => {
-        state = {
-          status: { loading: LoadingStatusEnum.Succeeded, err: '' },
-          config: payload as ServerConfig,
-        };
+        state.status = { loading: LoadingStatusEnum.Succeeded, err: '' };
+        state.config = payload as ServerConfig;
       }
     );
 
     builder.addCase(handleGetServerConfig.rejected, (state, { payload }) => {
-      state = {
-        status: { loading: LoadingStatusEnum.Failed, err: payload as string },
-        config: null,
+      state.config = null;
+      state.status = {
+        loading: LoadingStatusEnum.Failed,
+        err: payload as string,
       };
     });
   },

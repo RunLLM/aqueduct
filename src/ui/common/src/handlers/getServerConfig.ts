@@ -1,7 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import { ServerConfig } from 'src/components/pages/AccountPage';
 
 import { apiAddress } from '../components/hooks/useAqueductConsts';
+import { ServerConfig } from '../reducers/serverConfig';
 
 export const handleGetServerConfig = createAsyncThunk<
   ServerConfig,
@@ -25,6 +25,7 @@ export const handleGetServerConfig = createAsyncThunk<
     });
 
     const body = await res.json();
+
     if (!res.ok) {
       return thunkAPI.rejectWithValue(body.error);
     }
