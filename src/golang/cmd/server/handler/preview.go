@@ -297,9 +297,7 @@ func setupCondaEnv(
 	visitedEnvs := make([]exec_env.ExecutionEnvironment, 0, len(envByOperator))
 	defer func() {
 		if err != nil {
-			for _, env := range visitedEnvs {
-				env.DeleteCondaEnv()
-			}
+			exec_env.DeleteCondaEnvs(visitedEnvs)
 		}
 	}()
 
@@ -338,7 +336,10 @@ func setupCondaEnv(
 	}
 
 	for _, env := range envByOperator {
-		err = env.CreateCondaEnv(condaIntegration.Config[exec_env.CondaPathKey])
+		err = exec_env.CreateCondaEnv(
+			&env,
+			condaIntegration.Config[exec_env.CondaPathKey],
+		)
 		if err != nil {
 			return http.StatusInternalServerError, errors.Wrap(err, "Error creating conda environment.")
 		}

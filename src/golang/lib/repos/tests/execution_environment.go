@@ -127,12 +127,10 @@ func (ts *TestSuite) TestExecutionEnvironment_Update() {
 		Dependencies:  []string{randString(10), randString(10), randString(10)},
 	}
 	hash := uuid.New()
-	garbageCollected := true
 
 	changes := map[string]interface{}{
-		models.ExecutionEnvironmentSpec:             &spec,
-		models.ExecutionEnvironmentHash:             hash,
-		models.ExecutionEnvironmentGarbageCollected: garbageCollected,
+		models.ExecutionEnvironmentSpec: &spec,
+		models.ExecutionEnvironmentHash: hash,
 	}
 
 	actualExecutionEnvironment, err := ts.executionEnvironment.Update(ts.ctx, expectedExecutionEnvironment.ID, changes, ts.DB)
@@ -140,7 +138,6 @@ func (ts *TestSuite) TestExecutionEnvironment_Update() {
 
 	expectedExecutionEnvironment.Spec = spec
 	expectedExecutionEnvironment.Hash = hash
-	expectedExecutionEnvironment.GarbageCollected = garbageCollected
 
 	requireDeepEqual(ts.T(), expectedExecutionEnvironment, actualExecutionEnvironment)
 }
