@@ -421,13 +421,13 @@ export const SupportedIntegrations: ServiceInfoMap = {
     logo: ServiceLogos['Email'],
     activated: true,
     category: IntegrationCategories.NOTIFICATION,
-    docs: `${addingIntegrationLink}/connecting-to-email`,
+    docs: `${AqueductDocsLink}/notifications/connecting-to-email`,
   },
   ['Slack']: {
     logo: ServiceLogos['Slack'],
     activated: true,
     category: IntegrationCategories.NOTIFICATION,
-    docs: `${addingIntegrationLink}/connecting-to-slack`,
+    docs: `${AqueductDocsLink}/notifications/connecting-to-slack`,
   },
 };
 
