@@ -56,7 +56,6 @@
     "react": "^18.2.0",
     "react-cookie": "^4.1.1",
     "react-dom": "^18.1.0",
-    "react-flow-renderer": "^10.1.0",
     "react-markdown": "^6.0.3",
     "react-plotly.js": "2.5.1",
     "react-redux": "^8.0.0",
@@ -128,5 +127,8 @@
     "vite": "^4.0.4",
     "vite-plugin-externalize-deps": "^0.4.0",
     "webpack": "^5.74.0"
+  },
+  "dependencies": {
+    "reactflow": "^11.5.6"
   }
 }

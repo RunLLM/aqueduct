@@ -2,7 +2,8 @@
 // `artifactResults` for future development.
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import ELK from 'elkjs/lib/elk.bundled.js';
-import { Edge, Node } from 'react-flow-renderer';
+import { Edge, Node } from 'reactflow';
+import 'reactflow/dist/style.css';
 
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import { RootState } from '../stores/store';

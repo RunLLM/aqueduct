@@ -1,5 +1,6 @@
 import React from 'react';
-import { EdgeProps, getBezierPath } from 'react-flow-renderer';
+import { EdgeProps, getBezierPath } from 'reactflow';
+import 'reactflow/dist/style.css';
 
 import { theme } from '../../../styles/theme/theme';
 

@@ -1,5 +1,6 @@
 import React from 'react';
-import ReactFlow, { Node as ReactFlowNode } from 'react-flow-renderer';
+import ReactFlow, { Node as ReactFlowNode } from 'reactflow';
+import 'reactflow/dist/style.css';
 import { useSelector } from 'react-redux';
 
 import { RootState } from '../../stores/store';
@@ -27,6 +28,8 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
 
   const { edges, nodes } = dagPositionState.result ?? { edges: [], nodes: [] };
 
+
+  const defaultViewport = { zoom: 1 };
   return (
     <ReactFlow
       onPaneClick={onPaneClicked}
@@ -34,10 +37,11 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
       edges={edges}
       onNodeClick={switchSideSheet}
       nodeTypes={nodeTypes}
+      panOnDrag={true}
       connectionLineStyle={connectionLineStyle}
       snapToGrid={true}
       snapGrid={snapGrid as [number, number]}
-      defaultZoom={1}
+      // defaultViewport={defaultViewport}
       edgeTypes={EdgeTypes}
       minZoom={0.25}
     />
