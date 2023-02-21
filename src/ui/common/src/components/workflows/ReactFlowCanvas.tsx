@@ -37,7 +37,6 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
       edges={edges}
       onNodeClick={switchSideSheet}
       nodeTypes={nodeTypes}
-      panOnDrag={true}
       connectionLineStyle={connectionLineStyle}
       snapToGrid={true}
       snapGrid={snapGrid as [number, number]}
