@@ -8,7 +8,7 @@ def test_pickled_collection_data_type(client, flow_name, engine):
     """Test a list and tuple of images."""
 
     # Current working directory is one level above.
-    image_data = Image.open("aqueduct_tests/data/aqueduct.jpg", "r")
+    image_data = Image.open("data/aqueduct.jpg", "r")
 
     @op(outputs=["list output"])
     def list_of_images(image: Image):
@@ -46,7 +46,7 @@ def test_pickled_collection_data_type_mixed(client):
     """Check that we can handle pickled lists with a variety of data types."""
 
     # Current working directory is one level above.
-    image_data = Image.open("aqueduct_tests/data/aqueduct.jpg", "r")
+    image_data = Image.open("data/aqueduct.jpg", "r")
 
     @op
     def foo(image: Image):

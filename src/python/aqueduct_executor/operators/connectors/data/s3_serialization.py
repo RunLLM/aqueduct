@@ -54,7 +54,7 @@ _s3_deserialization_function_mapping: Dict[str, Callable[[bytes], Any]] = {
     S3SerializationType.PARQUET_TABLE: _read_parquet_table,
     S3SerializationType.JSON: _read_json_content,
     S3SerializationType.BYTES: _read_bytes_content,
-    S3SerializationType.IMAGE: _read_json_content,
+    S3SerializationType.IMAGE: _read_image_content,
     S3SerializationType.PICKLE: _read_pickle_content,
 }
 

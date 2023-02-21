@@ -6,7 +6,9 @@ from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import ArtifactType
 from aqueduct.error import AqueductError, InvalidUserArgumentException
 from aqueduct.integrations.s3_integration import S3Integration
+from PIL import Image
 
+from aqueduct import op
 from sdk.data_integration_tests.flow_manager import FlowManager
 from sdk.data_integration_tests.s3_data_validator import S3DataValidator
 from sdk.data_integration_tests.save import save
@@ -30,6 +32,7 @@ def _save_artifact_and_check(
     artifact: BaseArtifact,
     format: Optional[str],
     object_identifier: Optional[str] = None,
+    skip_data_check: bool = False,
 ):
     """Saves the artifact by publishing a flow, and then checks that the data now exists in S3."""
     assert isinstance(artifact, BaseArtifact)
@@ -41,7 +44,12 @@ def _save_artifact_and_check(
     flow = flow_manager.publish_flow_test(artifact)
 
     S3DataValidator(flow_manager._client, data_integration).check_saved_artifact_data(
-        flow, artifact.id(), artifact.type(), format, expected_data=artifact.get()
+        flow,
+        artifact.id(),
+        artifact.type(),
+        format,
+        expected_data=artifact.get(),
+        skip_data_check=skip_data_check,
     )
 
 
@@ -51,6 +59,74 @@ def test_s3_table_fetch_and_save(flow_manager, data_integration):
     )
     check_hotel_reviews_table_artifact(hotel_reviews)
     _save_artifact_and_check(flow_manager, data_integration, artifact=hotel_reviews, format="csv")
+
+
+def test_s3_custom_pickled_dictionaries_fetch_and_save(client, flow_manager, data_integration):
+    # Current working directory is one level above.
+    image_data = Image.open("data/aqueduct.jpg", "r")
+
+    img_tuple_param = client.create_param("Image List", default=(image_data, image_data))
+    img_tuple_identifier = generate_object_name()
+
+    @op
+    def return_image_list():
+        return [image_data, image_data, image_data]
+
+    img_list_artifact = return_image_list()
+    img_list_identifier = generate_object_name()
+
+    _save_artifact_and_check(
+        flow_manager,
+        data_integration,
+        artifact=img_tuple_param,
+        format=None,
+        object_identifier=img_tuple_identifier,
+        skip_data_check=True,
+    )
+    _save_artifact_and_check(
+        flow_manager,
+        data_integration,
+        artifact=img_list_artifact,
+        format=None,
+        object_identifier=img_list_identifier,
+        skip_data_check=True,
+    )
+
+    # Check that can smoothly extract these types of objects back.
+    extracted_img_tuple = data_integration.file(
+        img_tuple_identifier,
+        ArtifactType.TUPLE,
+    )
+    assert isinstance(extracted_img_tuple.get(), tuple)
+    assert len(extracted_img_tuple.get()) == 2
+    assert all(
+        isinstance(elem, Image.Image) and elem.getbbox() == image_data.getbbox()
+        for elem in extracted_img_tuple.get()
+    )
+
+    extracted_img_list = data_integration.file(
+        img_list_identifier,
+        ArtifactType.LIST,
+    )
+    assert isinstance(extracted_img_list.get(), list)
+    assert len(extracted_img_list.get()) == 3
+    assert all(
+        isinstance(elem, Image.Image) and elem.getbbox() == image_data.getbbox()
+        for elem in extracted_img_list.get()
+    )
+
+    # As a trick, we can check that we serialized these objects in the appropriate dictionary format by deserializing them
+    # as bytes and manually unpickling in this test case.
+    img_tuple_as_bytes = data_integration.file(
+        img_tuple_identifier,
+        ArtifactType.BYTES,
+    )
+    import cloudpickle as pickle
+
+    custom_dict = pickle.loads(img_tuple_as_bytes.get())
+    assert "aqueduct_serialization_types" in custom_dict
+    assert "data" in custom_dict
+    assert "is_tuple" in custom_dict
 
 
 def test_s3_table_formats(flow_manager, data_integration):

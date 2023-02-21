@@ -495,7 +495,7 @@ def test_all_param_types(client, flow_name, engine):
         return input
 
     # Current working directory is one level above.
-    image_data = Image.open("aqueduct_tests/data/aqueduct.jpg", "r")
+    image_data = Image.open("data/aqueduct.jpg", "r")
 
     image_param = client.create_param("image", default=image_data)
     image_output = must_be_image(image_param)
