@@ -61,6 +61,32 @@ def test_s3_table_fetch_and_save(flow_manager, data_integration):
     _save_artifact_and_check(flow_manager, data_integration, artifact=hotel_reviews, format="csv")
 
 
+def test_s3_list_of_tables_fetch_and_save(client, flow_manager, data_integration):
+    hotel_reviews = data_integration.file(
+        "hotel_reviews", artifact_type=ArtifactType.TABLE, format="parquet"
+    )
+
+    @op
+    def create_list_of_tables(input_table):
+        return [input_table, input_table, input_table]
+
+    list_output = create_list_of_tables(hotel_reviews)
+    name = generate_object_name()
+    _save_artifact_and_check(
+        flow_manager,
+        data_integration,
+        artifact=list_output,
+        format=None,
+        object_identifier=name,
+    )
+
+    extracted_list_of_tables = data_integration.file(
+        name,
+        ArtifactType.LIST,
+    )
+    assert all(elem.equals(hotel_reviews.get()) for elem in extracted_list_of_tables.get())
+
+
 def test_s3_custom_pickled_dictionaries_fetch_and_save(client, flow_manager, data_integration):
     # Current working directory is one level above.
     image_data = Image.open("data/aqueduct.jpg", "r")
