@@ -158,67 +158,74 @@ def _package_files_and_requirements(
     if os.path.isdir(func_dirpath):
         os.chdir(func_dirpath)
 
-    for file_index, file_path in enumerate(file_dependencies):
-        if file_path in RESERVED_FILE_NAMES:
-            # If the user uploads a `model.py` file as a dependency, we will error out.
-            raise ReservedFileNameException(
-                "%s is a reserved file name in our system. Please rename your file. " % file_path
-            )
-        if not os.path.exists(file_path):
-            raise InvalidFunctionException("File %s does not exist" % file_path)
-
-        if not os.path.abspath(file_path).startswith(os.getcwd()):
-            raise InvalidDependencyFilePath(
-                "File %s cannot be outside of the directory containing the function" % file_path
-            )
-
-        dstfolder = os.path.dirname(os.path.join(dir_path, file_path))
-        if not os.path.exists(dstfolder):
-            os.makedirs(dstfolder)
-        shutil.copy(file_path, os.path.join(dir_path, file_path))
-
-    # This is the absolute path to the requirements file we are sending to the backend.
-    packaged_requirements_path = os.path.join(dir_path, REQUIREMENTS_FILE)
-    if requirements is not None:
-        # The operator has a custom requirements specification.
-        assert isinstance(requirements, str) or all(isinstance(req, str) for req in requirements)
-
-        if isinstance(requirements, str):
-            if os.path.exists(requirements):
-                logger().info("Installing requirements found at {path}".format(path=requirements))
-                shutil.copy(requirements, packaged_requirements_path)
-            else:
-                raise FileNotFoundError(
-                    "Requirements file provided at %s does not exist." % requirements
+    try:
+        for file_index, file_path in enumerate(file_dependencies):
+            if file_path in RESERVED_FILE_NAMES:
+                # If the user uploads a `model.py` file as a dependency, we will error out.
+                raise ReservedFileNameException(
+                    "%s is a reserved file name in our system. Please rename your file. "
+                    % file_path
                 )
+            if not os.path.exists(file_path):
+                raise InvalidFunctionException("File %s does not exist" % file_path)
+
+            if not os.path.abspath(file_path).startswith(os.getcwd()):
+                raise InvalidDependencyFilePath(
+                    "File %s cannot be outside of the directory containing the function" % file_path
+                )
+
+            dstfolder = os.path.dirname(os.path.join(dir_path, file_path))
+            if not os.path.exists(dstfolder):
+                os.makedirs(dstfolder)
+            shutil.copy(file_path, os.path.join(dir_path, file_path))
+
+        # This is the absolute path to the requirements file we are sending to the backend.
+        packaged_requirements_path = os.path.join(dir_path, REQUIREMENTS_FILE)
+        if requirements is not None:
+            # The operator has a custom requirements specification.
+            assert isinstance(requirements, str) or all(
+                isinstance(req, str) for req in requirements
+            )
+
+            if isinstance(requirements, str):
+                if os.path.exists(requirements):
+                    logger().info(
+                        "Installing requirements found at {path}".format(path=requirements)
+                    )
+                    shutil.copy(requirements, packaged_requirements_path)
+                else:
+                    raise FileNotFoundError(
+                        "Requirements file provided at %s does not exist." % requirements
+                    )
+            else:
+                # User has given us a list of pip requirement strings.
+                with open(packaged_requirements_path, "x") as f:
+                    f.write("\n".join(requirements))
+
+        elif os.path.exists(REQUIREMENTS_FILE):
+            # There exists a workflow-level requirements file (need to reside in the same directory as the function).
+            logger().info(
+                "%s: requirements.txt file detected in current directory %s, will not self-generate by inferring package dependencies."
+                % (func.__name__, os.getcwd())
+            )
+            shutil.copy(REQUIREMENTS_FILE, packaged_requirements_path)
+
         else:
-            # User has given us a list of pip requirement strings.
+            # No requirements have been provided, so we use `pip freeze` to infer.
+            logger().info(
+                "%s: No requirements.txt file detected, self-generating file by inferring package dependencies."
+                % func.__name__
+            )
             with open(packaged_requirements_path, "x") as f:
-                f.write("\n".join(requirements))
+                f.write("\n".join(infer_requirements_from_env()))
 
-    elif os.path.exists(REQUIREMENTS_FILE):
-        # There exists a workflow-level requirements file (need to reside in the same directory as the function).
-        logger().info(
-            "%s: requirements.txt file detected in current directory %s, will not self-generate by inferring package dependencies."
-            % (func.__name__, os.getcwd())
-        )
-        shutil.copy(REQUIREMENTS_FILE, packaged_requirements_path)
+        # Prune out any blacklisted requirements.
+        _filter_out_blacklisted_requirements(packaged_requirements_path)
 
-    else:
-        # No requirements have been provided, so we use `pip freeze` to infer.
-        logger().info(
-            "%s: No requirements.txt file detected, self-generating file by inferring package dependencies."
-            % func.__name__
-        )
-        with open(packaged_requirements_path, "x") as f:
-            f.write("\n".join(infer_requirements_from_env()))
+        _add_cloudpickle_to_requirements(packaged_requirements_path)
 
-    # Prune out any blacklisted requirements.
-    _filter_out_blacklisted_requirements(packaged_requirements_path)
-
-    _add_cloudpickle_to_requirements(packaged_requirements_path)
-
-    os.chdir(current_directory_path)
+    finally:
+        os.chdir(current_directory_path)
 
 
 def _filter_out_blacklisted_requirements(packaged_requirements_path: str) -> None:
