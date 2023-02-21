@@ -1,6 +1,6 @@
 import io
 import json
-import pickle
+import cloudpickle as pickle
 from typing import Any, Callable, Dict, List, Optional
 
 import pandas as pd

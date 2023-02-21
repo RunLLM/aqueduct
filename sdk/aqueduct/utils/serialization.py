@@ -108,7 +108,7 @@ def check_and_fetch_pickled_collection_format(
     Otherwise, return None.
     """
     assert SerializationType.PICKLE.value == S3SerializationType.PICKLE.value
-    if serialization_type.value == SerializationType.PICKLE.value and isinstance(
+    if serialization_type == SerializationType.PICKLE and isinstance(
         deserialized_val, dict
     ):
         try:

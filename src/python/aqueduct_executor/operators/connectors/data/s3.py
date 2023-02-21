@@ -68,9 +68,11 @@ class S3Connector(connector.DataConnector):
             )
         except Exception as e:
             print(str(e))
-            raise Exception(
-                "The file at path `%s` is not a valid %s object." % key, params.artifact_type.value
-            )
+            err_msg = "The file at path `%s` is not a valid %s object." % (key, params.artifact_type)
+            if params.artifact_type == ArtifactType.TABLE:
+                err_msg += " (with S3 file format `%s`)" % params.format.value
+
+            raise Exception(err_msg)
 
         # Perform some additional type checking after deserialization.
         if params.artifact_type == ArtifactType.STRING:
