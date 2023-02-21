@@ -20,6 +20,7 @@ import {
 } from '../../utils/shared';
 import { CodeBlock } from '../CodeBlock';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
+import IntegrationLogo from '../integrations/logo';
 import DefaultLayout from '../layouts/default';
 import { BreadcrumbLink } from '../layouts/NavBar';
 import AccountNotificationSettingsSelector, {
@@ -127,33 +128,64 @@ const MetadataStorageInfo: React.FC<MetadataStorageInfoProps> = ({
   }
 
   let storageInfo;
+  // 85px here is the logo height.
   const fileMetadataStorageInfo = (
-    <>
-      <Typography variant="body1">
-        Location:{' '}
-        {serverConfig?.storageConfig?.fileConfig?.directory || 'loading ...'}
-      </Typography>
-    </>
+    <Box sx={{ display: 'flex', height: '85px' }}>
+      <Box>
+        <IntegrationLogo
+          service={'Aqueduct Demo'}
+          size={'large'}
+          activated={true}
+        />
+      </Box>
+      <Box sx={{ alignSelf: 'center', marginLeft: 2 }}>
+        <Typography variant="body2" color={'gray.700'}>
+          Storage Type: {serverConfig?.storageConfig?.type || 'loading ...'}
+        </Typography>
+        <Typography variant="body1">
+          Location:{' '}
+          {serverConfig?.storageConfig?.fileConfig?.directory || 'loading ...'}
+        </Typography>
+      </Box>
+    </Box>
   );
 
-  // Should we show service credentials here?
-  // Probs not, we're sending private key over the wire, not so good of an idea.
-  // gcs_config.service_account_credentials - json string, so going to need to parse it
   const gcsMetadataStorageInfo = (
-    <Typography variant="body1">
-      Bucket: {serverConfig?.storageConfig?.gcsConfig?.bucket || 'loading ...'}
-    </Typography>
+    <Box sx={{ display: 'flex', height: '85px' }}>
+      <Box>
+        <IntegrationLogo service={'GCS'} size={'large'} activated={true} />
+      </Box>
+      <Box sx={{ alignSelf: 'center', marginLeft: 2 }}>
+        <Typography variant="body2" color={'gray.700'}>
+          Storage Type: {serverConfig?.storageConfig?.type || 'loading ...'}
+        </Typography>
+        <Typography variant="body1">
+          Bucket:{' '}
+          {serverConfig?.storageConfig?.gcsConfig?.bucket || 'loading ...'}
+        </Typography>
+      </Box>
+    </Box>
   );
 
   const s3MetadataStorageInfo = (
-    <>
-      <Typography variant="body1">
-        Region: {serverConfig?.storageConfig?.s3Config?.region || 'loading ...'}
-      </Typography>
-      <Typography variant="body1">
-        Bucket: {serverConfig?.storageConfig?.s3Config?.bucket || 'loading ...'}
-      </Typography>
-    </>
+    <Box sx={{ display: 'flex', height: '85px' }}>
+      <Box>
+        <IntegrationLogo service={'S3'} size={'large'} activated={true} />
+      </Box>
+      <Box sx={{ alignSelf: 'center', marginLeft: 2 }}>
+        <Typography variant="body2" color={'gray.700'}>
+          Storage Type: {serverConfig?.storageConfig?.type || 'loading ...'}
+        </Typography>
+        <Typography variant="body1">
+          Bucket:{' '}
+          {serverConfig?.storageConfig?.s3Config?.bucket || 'loading ...'}
+        </Typography>
+        <Typography variant="body1">
+          Region:{' '}
+          {serverConfig?.storageConfig?.s3Config?.region || 'loading ...'}
+        </Typography>
+      </Box>
+    </Box>
   );
 
   switch (serverConfig.storageConfig.type) {
@@ -173,11 +205,6 @@ const MetadataStorageInfo: React.FC<MetadataStorageInfoProps> = ({
       <Typography variant="h5" sx={{ mt: 3 }}>
         Metadata Storage
       </Typography>
-      <Typography variant="body1">
-        Storage Config Type:{' '}
-        {serverConfig?.storageConfig?.type || 'loading ...'}
-      </Typography>
-
       {storageInfo}
     </Box>
   );
