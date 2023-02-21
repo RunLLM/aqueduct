@@ -29,7 +29,7 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
   const { edges, nodes } = dagPositionState.result ?? { edges: [], nodes: [] };
 
 
-  const defaultViewport = { zoom: 1 };
+  const defaultViewport = { x: 0, y: 0, zoom: 1 };
   return (
     <ReactFlow
       onPaneClick={onPaneClicked}
@@ -41,7 +41,7 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
       connectionLineStyle={connectionLineStyle}
       snapToGrid={true}
       snapGrid={snapGrid as [number, number]}
-      // defaultViewport={defaultViewport}
+      defaultViewport={defaultViewport}
       edgeTypes={EdgeTypes}
       minZoom={0.25}
     />
