@@ -2,7 +2,7 @@ import io
 import json
 import os
 import shutil
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Union, cast
 
 import cloudpickle as pickle
 import pandas as pd
@@ -127,7 +127,7 @@ def deserialize(
 ) -> Any:
     """Deserializes a byte string into the appropriate python object.
 
-    Handles serialization for both the Aqueduct storage layer (default) and S3 (requires custom deserialization functions).
+    Handles serialization for both the Aqueduct storage layer (default) and S3 (requires a custom deserialization function mapping).
     """
     deserialization_function_mapping = __deserialization_function_mapping
     if custom_deserialization_function_mapping is not None:
@@ -208,7 +208,7 @@ def _write_tf_keras_model(output: Any) -> bytes:
             shutil.rmtree(temp_model_dir)
 
 
-serialization_function_mapping: Dict[str, Callable[..., bytes]] = {
+__serialization_function_mapping: Dict[str, Callable[..., bytes]] = {
     SerializationType.TABLE: _write_table_output,
     SerializationType.JSON: _write_json_output,
     SerializationType.PICKLE: _write_pickle_output,
@@ -222,21 +222,12 @@ serialization_function_mapping: Dict[str, Callable[..., bytes]] = {
 
 def serialize_val(
     val: Any,
-    serialization_type: SerializationType,
+    serialization_type: Union[SerializationType, S3SerializationType],
     derived_from_bson: bool,
-    serialize_elements_if_collection: bool = True,
 ) -> bytes:
-    """Serializes a parameter or computed value into bytes.
-
-    `serialize_elements_if_collection`:
-        Indicates that, if we mean to pickle a list/tuple of objects, we should first
-        serialize each individual object within that collection before pickling the entire
-        data structure. Only serializes down one level.
-    """
-    if (
-        serialize_elements_if_collection
-        and serialization_type == SerializationType.PICKLE
-        and (isinstance(val, list) or isinstance(val, tuple))
+    """Serializes a parameter or computed value into bytes."""
+    if serialization_type == SerializationType.PICKLE and (
+        isinstance(val, list) or isinstance(val, tuple)
     ):
         elem_serialization_types: List[SerializationType] = []
         for elem in val:
@@ -246,15 +237,11 @@ def serialize_val(
                     elem_artifact_type,
                     derived_from_bson,
                     elem,
-                )
+                ),
             )
+
         data: List[bytes] = [
-            serialize_val(
-                val[i],
-                elem_serialization_types[i],
-                derived_from_bson,
-                serialize_elements_if_collection=False,  # cut off the recursion after one layer.
-            )
+            __serialization_function_mapping[elem_serialization_types[i]](val[i])
             for i in range(len(elem_serialization_types))
         ]
 
@@ -264,10 +251,10 @@ def serialize_val(
             is_tuple=isinstance(val, tuple),
         )
 
-        # The value we end up serializing is a dictionary.
+        # The value we end up pickling is a dictionary.
         val = pickled_collection_data.dict()
 
-    return serialization_function_mapping[serialization_type](val)
+    return __serialization_function_mapping[serialization_type](val)
 
 
 def artifact_type_to_serialization_type(

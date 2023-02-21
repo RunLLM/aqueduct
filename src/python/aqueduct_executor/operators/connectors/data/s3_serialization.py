@@ -1,59 +1,18 @@
 import io
 import json
 import pickle
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, List, Optional
 
 import pandas as pd
 from aqueduct.constants.enums import S3SerializationType
-from aqueduct_executor.operators.connectors.data import common, extract
+from aqueduct.utils.serialization import PickleableCollectionSerializationFormat
+from aqueduct.utils.type_inference import infer_artifact_type
+from aqueduct_executor.operators.connectors.data.common import S3TableFormat
+from aqueduct_executor.operators.utils.enums import ArtifactType
 from PIL import Image
 
-from ...utils.enums import ArtifactType
-from .s3 import _DEFAULT_JSON_ENCODING
-
-
-def artifact_type_to_s3_serialization_type(
-    key: str,
-    params: extract.S3Params,
-) -> S3SerializationType:
-    artifact_type = params.artifact_type
-    if artifact_type == ArtifactType.TABLE:
-        if params.format is None:
-            raise Exception("You must specify a file format for table data.")
-
-        if params.format == common.S3TableFormat.CSV:
-            return S3SerializationType.CSV_TABLE
-        elif params.format == common.S3TableFormat.JSON:
-            return S3SerializationType.JSON_TABLE
-        elif params.format == common.S3TableFormat.PARQUET:
-            return S3SerializationType.PARQUET_TABLE
-        else:
-            raise Exception(
-                "Unknown S3 file format `%s` for file at path `%s`." % (params.format, key)
-            )
-    elif artifact_type == ArtifactType.JSON:
-        serialization_type = S3SerializationType.JSON
-    elif artifact_type == ArtifactType.IMAGE:
-        serialization_type = S3SerializationType.IMAGE
-    elif (
-        artifact_type == ArtifactType.STRING
-        or artifact_type == ArtifactType.BOOL
-        or artifact_type == ArtifactType.NUMERIC
-        or artifact_type == ArtifactType.DICT
-        or artifact_type == ArtifactType.LIST
-        or artifact_type == ArtifactType.TUPLE
-        or artifact_type == ArtifactType.PICKLABLE
-    ):
-        serialization_type = S3SerializationType.PICKLE
-    else:
-        raise Exception(
-            "Unsupported data type %s when fetching file at %s." % (params.artifact_type, key)
-        )
-
-    assert serialization_type is not None, (
-        "Unimplemented case for artifact type `%s`" % artifact_type
-    )
-    return serialization_type
+_DEFAULT_JSON_ENCODING = "utf8"
+_DEFAULT_IMAGE_FORMAT = "jpeg"
 
 
 def _read_csv_table(content: bytes) -> Any:
@@ -77,6 +36,10 @@ def _read_json_content(content: bytes) -> Any:
     return json_data
 
 
+def _read_bytes_content(content: bytes) -> Any:
+    return content
+
+
 def _read_image_content(content: bytes) -> Any:
     return Image.open(io.BytesIO(content))
 
@@ -90,6 +53,146 @@ _s3_deserialization_function_mapping: Dict[str, Callable[[bytes], Any]] = {
     S3SerializationType.JSON_TABLE: _read_json_table,
     S3SerializationType.PARQUET_TABLE: _read_parquet_table,
     S3SerializationType.JSON: _read_json_content,
+    S3SerializationType.BYTES: _read_bytes_content,
     S3SerializationType.IMAGE: _read_json_content,
     S3SerializationType.PICKLE: _read_pickle_content,
 }
+
+
+def _write_csv_table(output: pd.DataFrame) -> bytes:
+    buf = io.BytesIO()
+    output.to_csv(buf, index=False)
+    return buf.getvalue()
+
+
+def _write_json_table(output: pd.DataFrame) -> bytes:
+    buf = io.BytesIO()
+    # Index cannot be False for `to.json` for default orient
+    # See: https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.to_json.html
+    output.to_json(buf)
+    return buf.getvalue()
+
+
+def _write_parquet_table(output: pd.DataFrame) -> bytes:
+    buf = io.BytesIO()
+    output.to_parquet(buf, index=False)
+    return buf.getvalue()
+
+
+def _write_json_content(output: str) -> bytes:
+    return output.encode(_DEFAULT_JSON_ENCODING)
+
+
+def _write_bytes_content(output: bytes) -> bytes:
+    return output
+
+
+def _write_image_content(output: Image.Image) -> bytes:
+    img_bytes = io.BytesIO()
+    output.save(img_bytes, format=_DEFAULT_IMAGE_FORMAT)
+    return img_bytes.getvalue()
+
+
+def _write_pickle_content(output: Any) -> bytes:
+    return pickle.dumps(output)
+
+
+__s3_serialization_function_mapping: Dict[str, Callable[..., bytes]] = {
+    S3SerializationType.CSV_TABLE: _write_csv_table,
+    S3SerializationType.JSON_TABLE: _write_json_table,
+    S3SerializationType.PARQUET_TABLE: _write_parquet_table,
+    S3SerializationType.JSON: _write_json_content,
+    S3SerializationType.BYTES: _write_bytes_content,
+    S3SerializationType.IMAGE: _write_image_content,
+    S3SerializationType.PICKLE: _write_pickle_content,
+}
+
+
+def serialize_val_for_s3(
+    val: Any,
+    serialization_type: S3SerializationType,
+    format: S3TableFormat,
+) -> bytes:
+    """Serializes a parameter or computed value into bytes.
+
+    TODO: docstring
+    """
+    if serialization_type == S3SerializationType.PICKLE and (
+        isinstance(val, list) or isinstance(val, tuple)
+    ):
+        elem_serialization_types: List[S3SerializationType] = []
+        for elem in val:
+            elem_artifact_type = infer_artifact_type(elem)
+
+            elem_serialization_types.append(
+                artifact_type_to_s3_serialization_type(
+                    elem_artifact_type,
+                    format,
+                )
+            )
+
+        data: List[bytes] = [
+            __s3_serialization_function_mapping[elem_serialization_types[i]](val[i])
+            for i in range(len(elem_serialization_types))
+        ]
+
+        pickled_collection_data = PickleableCollectionSerializationFormat(
+            aqueduct_serialization_types=elem_serialization_types,
+            data=data,
+            is_tuple=isinstance(val, tuple),
+        )
+
+        # The value we end up pickling is a dictionary.
+        val = pickled_collection_data.dict()
+
+    return __s3_serialization_function_mapping[serialization_type](val)
+
+
+class S3UnsupportedArtifactTypeException(Exception):
+    pass
+
+
+class S3UnknownFileFormatException(Exception):
+    pass
+
+
+def artifact_type_to_s3_serialization_type(
+    artifact_type: ArtifactType,
+    format: Optional[S3TableFormat],
+) -> S3SerializationType:
+    if artifact_type == ArtifactType.TABLE:
+        if format is None:
+            raise Exception("You must specify a file format for table data.")
+
+        if format == S3TableFormat.CSV:
+            return S3SerializationType.CSV_TABLE
+        elif format == S3TableFormat.JSON:
+            return S3SerializationType.JSON_TABLE
+        elif format == S3TableFormat.PARQUET:
+            return S3SerializationType.PARQUET_TABLE
+        else:
+            raise S3UnknownFileFormatException("Unknown S3 file format `%s`" % format)
+    elif artifact_type == ArtifactType.JSON:
+        serialization_type = S3SerializationType.JSON
+    elif artifact_type == ArtifactType.IMAGE:
+        serialization_type = S3SerializationType.IMAGE
+    elif artifact_type == ArtifactType.BYTES:
+        serialization_type = S3SerializationType.BYTES
+
+    elif (
+        artifact_type == ArtifactType.STRING
+        or artifact_type == ArtifactType.BOOL
+        or artifact_type == ArtifactType.NUMERIC
+        or artifact_type == ArtifactType.DICT
+        or artifact_type == ArtifactType.LIST
+        or artifact_type == ArtifactType.TUPLE
+        or artifact_type == ArtifactType.PICKLABLE
+    ):
+        serialization_type = S3SerializationType.PICKLE
+    else:
+        raise S3UnsupportedArtifactTypeException("Unsupported data type %s." % artifact_type)
+
+    assert serialization_type is not None, (
+        "Unimplemented case for artifact type `%s`" % artifact_type
+    )
+    return serialization_type

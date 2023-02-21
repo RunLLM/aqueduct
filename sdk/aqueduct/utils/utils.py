@@ -16,11 +16,7 @@ from aqueduct.models.integration import IntegrationInfo
 from aqueduct.models.operators import ParamSpec
 from croniter import croniter
 
-from .serialization import (
-    artifact_type_to_serialization_type,
-    serialization_function_mapping,
-    serialize_val,
-)
+from .serialization import artifact_type_to_serialization_type, serialize_val
 from .type_inference import _bytes_to_base64_string
 
 
@@ -119,7 +115,6 @@ def construct_param_spec(
         derived_from_bson,
         val,
     )
-    assert serialization_type in serialization_function_mapping
 
     # We must base64 encode the resulting bytes, since we can't be sure
     # what encoding it was written in (eg. Image types are not encoded as "utf8").

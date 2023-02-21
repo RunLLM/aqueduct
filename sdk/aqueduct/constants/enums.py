@@ -164,11 +164,12 @@ class ArtifactType(str, Enum, metaclass=MetaEnum):
     TF_KERAS = "tensorflow-keras-model"
 
 
-class S3SerializationType(str, Enum):
+class S3SerializationType(str, Enum, metaclass=MetaEnum):
     CSV_TABLE = "csv_table"
     JSON_TABLE = "json_table"
     PARQUET_TABLE = "parquet_table"
     JSON = "json"
+    BYTES = "bytes"
     IMAGE = "image"
     PICKLE = "pickle"
 
