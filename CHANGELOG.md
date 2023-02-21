@@ -1,5 +1,28 @@
 # Changelog
 
+# 0.2.3
+Release on February 22, 2023.
+
+### Key Features
+
+### Enhancements
+* Updates workflow and data table views to show overview of all executed checks
+    rather than just one.
+* Garbages collect Lambda-specific Docker images from the Aqueduct server's
+    machine after the Lambda integration connection is finished.
+* Improves performance of the Aqueduct serialization library by looking into
+    collection types (lists, tuples) and using data-type specific serialization
+    methods for each entry.
+* On the Aqueduct settings page, adds details about what storage engine is
+    being used for metadata and version snapshot storage.
+
+### Bugfixes
+* Fixes detail header alignment on artifact and operator details pages.
+* Fixes bug where latest MariaDB and MySQL drivers were not bieng installed
+    correctly on M1 Macs.
+* Fixes bug where running the same function with multiple unnamed parameters
+    more than once would fail.
+
 ## 0.2.2
 Released on February 14, 2023.
 
