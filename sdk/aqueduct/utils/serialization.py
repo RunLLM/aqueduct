@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 import cloudpickle as pickle
 import pandas as pd
-from aqueduct.constants.enums import ArtifactType, SerializationType
+from aqueduct.constants.enums import ArtifactType, S3SerializationType, SerializationType
 from aqueduct.utils.type_inference import infer_artifact_type
 from bson import json_util as bson_json_util
 from PIL import Image
@@ -30,7 +30,7 @@ class PickleableCollectionSerializationFormat(BaseModel):
     """
 
     # The serialization type of each element in the collection.
-    aqueduct_serialization_types: List[SerializationType]
+    aqueduct_serialization_types: Union[List[SerializationType], List[S3SerializationType]]
 
     # The actual list of serialized values.
     data: List[bytes]
@@ -100,14 +100,17 @@ __deserialization_function_mapping: Dict[str, Callable[[bytes], Any]] = {
 
 
 def check_and_fetch_pickled_collection_format(
-    serialization_type: SerializationType,
+    serialization_type: Union[SerializationType, S3SerializationType],
     deserialized_val: Any,
 ) -> Optional[PickleableCollectionSerializationFormat]:
     """If a value that has undergone one round of deserialization is in the form of a
     `PickleableCollectionSerializationFormat`, we will load up that class and return it.
     Otherwise, return None.
     """
-    if serialization_type == SerializationType.PICKLE and isinstance(deserialized_val, dict):
+    assert SerializationType.PICKLE.value == S3SerializationType.PICKLE.value
+    if serialization_type.value == SerializationType.PICKLE.value and isinstance(
+        deserialized_val, dict
+    ):
         try:
             # This will error if the appropriate dict fields do not match.
             return PickleableCollectionSerializationFormat(**deserialized_val)
@@ -117,15 +120,26 @@ def check_and_fetch_pickled_collection_format(
 
 
 def deserialize(
-    serialization_type: SerializationType, artifact_type: ArtifactType, content: bytes
+    serialization_type: Union[SerializationType, S3SerializationType],
+    artifact_type: ArtifactType,
+    content: bytes,
+    custom_deserialization_function_mapping: Optional[Dict[str, Callable[[bytes], Any]]] = None,
 ) -> Any:
-    """Deserializes a byte string into the appropriate python object."""
-    if serialization_type not in __deserialization_function_mapping:
+    """Deserializes a byte string into the appropriate python object.
+
+    Handles serialization for both the Aqueduct storage layer (default) and S3 (requires custom deserialization functions).
+    """
+    deserialization_function_mapping = __deserialization_function_mapping
+    if custom_deserialization_function_mapping is not None:
+        assert isinstance(serialization_type, S3SerializationType)
+        deserialization_function_mapping = custom_deserialization_function_mapping
+
+    if serialization_type not in deserialization_function_mapping:
         raise Exception("Unsupported serialization type %s" % serialization_type)
 
-    deserialized_val = __deserialization_function_mapping[serialization_type](content)
+    deserialized_val = deserialization_function_mapping[serialization_type](content)
 
-    # Check if the type is an expanded collection and resolve the content for that special case.
+    # Check if the type is a pickled collection where each individual element needs to be deserialized.
     pickled_collection_data = check_and_fetch_pickled_collection_format(
         serialization_type, deserialized_val
     )
@@ -134,7 +148,7 @@ def deserialize(
         data = pickled_collection_data.data
 
         deserialized_val = [
-            __deserialization_function_mapping[collection_serialization_types[i]](data[i])
+            deserialization_function_mapping[collection_serialization_types[i]](data[i])
             for i in range(len(collection_serialization_types))
         ]
 

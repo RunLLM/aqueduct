@@ -5,10 +5,15 @@ from typing import Any, Dict, List, Optional
 import cloudpickle as pickle
 import numpy as np
 import pandas as pd
+from aqueduct.utils.serialization import deserialize
 from aqueduct_executor.operators.connectors.data import common, connector, extract, load
 from aqueduct_executor.operators.connectors.data.config import S3Config
+from aqueduct_executor.operators.connectors.data.s3_serialization import (
+    _s3_deserialization_function_mapping,
+    artifact_type_to_s3_serialization_type,
+)
 from aqueduct_executor.operators.connectors.data.utils import construct_boto_session
-from aqueduct_executor.operators.utils.enums import ArtifactType
+from aqueduct_executor.operators.utils.enums import ArtifactType, SerializationType
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 from aqueduct_executor.operators.utils.utils import delete_object
 from botocore.client import ClientError
@@ -41,102 +46,68 @@ class S3Connector(connector.DataConnector):
     def fetch_object(self, key: str, params: extract.S3Params) -> Any:
         response = self.s3.Object(self.bucket, key).get()
         data = response["Body"].read()
-        if params.artifact_type == ArtifactType.TABLE:
-            if params.format is None:
-                raise Exception("You must specify a file format for table data.")
-            buf = io.BytesIO(data)
 
-            try:
-                if params.format == common.S3TableFormat.CSV:
-                    return pd.read_csv(buf)
-                elif params.format == common.S3TableFormat.JSON:
-                    return pd.read_json(buf)
-                elif params.format == common.S3TableFormat.PARQUET:
-                    return pd.read_parquet(buf)
-            except Exception:
-                raise Exception(
-                    "Unable to read in table at path `%s` with S3 file format `%s`."
-                    % (key, params.format)
-                )
-            else:
-                raise Exception(
-                    "Unknown S3 file format `%s` for file at path `%s`." % (params.format, key)
-                )
+        s3_serialization_type = artifact_type_to_s3_serialization_type(
+            key,
+            params,
+        )
 
-        elif params.artifact_type == ArtifactType.JSON:
-            # This assumes that the encoding is "utf-8". May worth considering letting the user
-            # specify custom encoding in the future.
-            json_data = data.decode(_DEFAULT_JSON_ENCODING)
-            # Make sure the data is a valid json object.
-            try:
-                json.loads(json_data)
-                return json_data
-            except:
-                raise Exception("The file at path `%s` is not a valid JSON object.", key)
-        elif params.artifact_type == ArtifactType.IMAGE:
-            try:
-                return Image.open(io.BytesIO(data))
-            except:
-                raise Exception("The file at path `%s` is not a valid image object.", key)
-
-        elif params.artifact_type == ArtifactType.BYTES:
-            return data
-        elif (
-            params.artifact_type == ArtifactType.STRING
-            or params.artifact_type == ArtifactType.BOOL
-            or params.artifact_type == ArtifactType.NUMERIC
-            or params.artifact_type == ArtifactType.DICT
-            or params.artifact_type == ArtifactType.LIST
-            or params.artifact_type == ArtifactType.TUPLE
-            or params.artifact_type == ArtifactType.PICKLABLE
-        ):
-            try:
-                unpickled_data = pickle.loads(data)
-            except Exception:
-                raise Exception(
-                    "The file at path `%s` is not a valid %s object." % (key, params.artifact_type),
-                )
-
-            if params.artifact_type == ArtifactType.STRING:
-                if not isinstance(unpickled_data, str):
-                    raise Exception(
-                        "The file at path `%s` is expected to be a string, got %s."
-                        % (key, type(unpickled_data))
-                    )
-            elif params.artifact_type == ArtifactType.BOOL:
-                if not (isinstance(unpickled_data, bool) or isinstance(unpickled_data, np.bool_)):
-                    raise Exception(
-                        "The file at path `%s` is expected to be a bool, got %s."
-                        % (key, type(unpickled_data))
-                    )
-            elif params.artifact_type == ArtifactType.NUMERIC:
-                if not (
-                    isinstance(unpickled_data, int)
-                    or isinstance(unpickled_data, float)
-                    or isinstance(unpickled_data, np.number)
-                ):
-                    raise Exception(
-                        "The file at path `%s` is expected to be a numeric, got %s."
-                        % (key, type(unpickled_data))
-                    )
-            elif params.artifact_type == ArtifactType.DICT:
-                if not isinstance(unpickled_data, dict):
-                    raise Exception(
-                        "The file at path `%s` is expected to be a dictionary, got %s."
-                        % (key, type(unpickled_data))
-                    )
-            elif params.artifact_type == ArtifactType.TUPLE:
-                if not isinstance(unpickled_data, tuple):
-                    raise Exception(
-                        "The file at path `%s` is expected to be a tuple, got %s."
-                        % (key, type(unpickled_data))
-                    )
-
-            return unpickled_data
-        else:
-            raise Exception(
-                "Unsupported data type %s when fetching file at %s." % (params.artifact_type, key)
+        try:
+            deserialized_val = deserialize(
+                s3_serialization_type,
+                params.artifact_type,
+                data,
+                custom_deserialization_function_mapping=_s3_deserialization_function_mapping,
             )
+        except Exception as e:
+            print(str(e))
+            raise Exception(
+                "The file at path `%s` is not a valid %s object." % key, params.artifact_type.value
+            )
+
+        # Perform some additional type checking after deserialization.
+        if params.artifact_type == ArtifactType.STRING:
+            if not isinstance(deserialized_val, str):
+                raise Exception(
+                    "The file at path `%s` is expected to be a string, got %s."
+                    % (key, type(deserialized_val))
+                )
+        elif params.artifact_type == ArtifactType.BOOL:
+            if not (isinstance(deserialized_val, bool) or isinstance(deserialized_val, np.bool_)):
+                raise Exception(
+                    "The file at path `%s` is expected to be a bool, got %s."
+                    % (key, type(deserialized_val))
+                )
+        elif params.artifact_type == ArtifactType.NUMERIC:
+            if not (
+                isinstance(deserialized_val, int)
+                or isinstance(deserialized_val, float)
+                or isinstance(deserialized_val, np.number)
+            ):
+                raise Exception(
+                    "The file at path `%s` is expected to be a numeric, got %s."
+                    % (key, type(deserialized_val))
+                )
+        elif params.artifact_type == ArtifactType.DICT:
+            if not isinstance(deserialized_val, dict):
+                raise Exception(
+                    "The file at path `%s` is expected to be a dictionary, got %s."
+                    % (key, type(deserialized_val))
+                )
+        elif params.artifact_type == ArtifactType.TUPLE:
+            if not isinstance(deserialized_val, tuple):
+                raise Exception(
+                    "The file at path `%s` is expected to be a tuple, got %s."
+                    % (key, type(deserialized_val))
+                )
+        elif params.artifact_type == ArtifactType.LIST:
+            if not isinstance(deserialized_val, list):
+                raise Exception(
+                    "The file at path `%s` is expected to be a list, got %s."
+                    % (key, type(deserialized_val))
+                )
+
+        return deserialized_val
 
     def extract(self, params: extract.S3Params) -> Any:
         path = json.loads(params.filepath)
@@ -204,10 +175,10 @@ class S3Connector(connector.DataConnector):
             or artifact_type == ArtifactType.BOOL
             or artifact_type == ArtifactType.NUMERIC
             or artifact_type == ArtifactType.DICT
-            or artifact_type == ArtifactType.LIST
-            or artifact_type == ArtifactType.TUPLE
             or artifact_type == ArtifactType.PICKLABLE
         ):
+            serialized_data = pickle.dumps(data)
+        elif artifact_type == ArtifactType.LIST or artifact_type == ArtifactType.TUPLE:
             serialized_data = pickle.dumps(data)
         else:
             raise Exception("Unsupported data type `%s`." % artifact_type)
