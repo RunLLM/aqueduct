@@ -308,6 +308,26 @@ class Client:
         globals.__GLOBAL_API_CLIENT__.connect_integration(name, service, config)
         logger().info("Successfully connected to new %s integration `%s`." % (service, name))
 
+    def delete_integration(
+        self,
+        name: str,
+    ):
+        """Deletes the integration from Aqueduct.
+
+        Args:
+            name:
+                The name of the integration to delete.
+        """
+        existing_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
+        if name not in existing_integrations.keys():
+            raise InvalidIntegrationException("Not connected to integration %s!" % name)
+
+        globals.__GLOBAL_API_CLIENT__.delete_integration(existing_integrations[name].id)
+
+        # Update the connected integrations cached on this object.
+        self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
+        print("DELETED INTEGRATION %s: new map %s" % (name, self._connected_integrations.keys()))
+
     def list_integrations(self) -> Dict[str, IntegrationInfo]:
         """Retrieves a dictionary of integrations the client can use.
 

@@ -9,4 +9,5 @@ from aqueduct.integrations.connect_config import (
     SnowflakeConfig,
     SQLiteConfig,
     SqlServerConfig,
+    GCSConfig,
 )

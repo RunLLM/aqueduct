@@ -1,3 +1,4 @@
+import time
 from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 import pandas as pd
@@ -5,6 +6,7 @@ import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ServiceType
+from aqueduct.error import AqueductError
 from aqueduct.integrations.mongodb_integration import MongoDBIntegration
 from aqueduct.integrations.s3_integration import S3Integration
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
@@ -167,6 +169,7 @@ def setup_data_integrations(filter_to: Optional[str] = None) -> None:
     If `filter_to` is set, we only connect to that given integration name. Otherwise,
     we attempt to connect to every integration listed in the config file.
     """
+
     if filter_to is not None:
         data_integrations = [filter_to]
     else:
@@ -196,12 +199,11 @@ def setup_data_integrations(filter_to: Optional[str] = None) -> None:
         # Only connect to integrations that don't already exist.
         if integration_name not in connected_integrations.keys():
             integration_config = test_credentials["data"][integration_name]
-            service_type = integration_config["type"]
-
-            # Modifying the config dictionary should be ok, since we only ever process
-            # an entry once.
-            del integration_config["type"]
-            client.connect_integration(integration_name, service_type, integration_config)
+            connect_integration(
+                client,
+                integration_name,
+                integration_config,
+            )
 
         # Setup the data in each of these integrations.
         integration = client.integration(integration_name)
@@ -216,6 +218,44 @@ def setup_data_integrations(filter_to: Optional[str] = None) -> None:
             pass
         else:
             raise Exception("Test suite does not yet support %s." % integration.type())
+
+
+def connect_integration(client: Client, name: str, config: Dict[str, Any]):
+    """Waits until the integration is ready to be used before returning."""
+    service_type = config["type"]
+    client.connect_integration(
+        name,
+        service_type,
+        prepare_integration_config_for_connect(name, config),
+    )
+
+    # Poll on the server until the integration is ready.
+    while True:
+        try:
+            _ = client.integration(name)
+        except AqueductError as e:
+            if "The server is currently unavailable due to system maintenance." in str(e):
+                time.sleep(1)
+                continue
+            raise
+        else:
+            break
+
+
+def prepare_integration_config_for_connect(name: str, config: Dict[str, Any]) -> Dict[str, Any]:
+    """WARNING: this modifies the configuration dict."""
+    del config["type"]
+    if use_data_integration_as_storage(name):
+        config["use_as_storage"] = "true"
+    return config
+
+
+def use_data_integration_as_storage(name: str):
+    assert isinstance(name, str)
+    test_config = _parse_config_file()
+
+    assert "data" in test_config, "test-config.yml must have a data section."
+    return "use_as_storage" in test_config["data"][name]
 
 
 def list_data_integrations() -> List[str]:
