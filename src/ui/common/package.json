@@ -49,6 +49,7 @@
     "core-js": "^3.22.8",
     "cron-parser": "^4.0.0",
     "elkjs": "0.8.2",
+    "@ungap/structured-clone": "^1.0.2",
     "mui-image": "1.0.7",
     "plotly.js": "2.14.0",
     "query-string": "^7.1.1",

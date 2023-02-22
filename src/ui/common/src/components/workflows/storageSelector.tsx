@@ -14,10 +14,8 @@ export const StorageSelector: React.FC = () => {
   const workflow = useSelector((state: RootState) => state.workflowReducer);
   const dag = workflow.selectedDag;
   let selected = 'file';
-  let selectedLocation = null;
   if (dag) {
     selected = dag.storage_config.type;
-    selectedLocation = dag.storage_config.file_config.directory;
   }
 
   const getMenuItems = () => {
@@ -44,10 +42,9 @@ export const StorageSelector: React.FC = () => {
 
   return (
     <Box>
-      <Typography style={{ fontWeight: 'bold' }}>
-        {' '}
-        Metadata Storage Locationasdf {selectedLocation}
-      </Typography>
+      <Box sx={{ display: 'flex' }}>
+        <Typography style={{ fontWeight: 'bold' }}>Metadata Storage</Typography>
+      </Box>
       <Typography variant="body2">
         For more details on modifying the Aqueduct metadata store, please see{' '}
         <Link href="https://docs.aqueducthq.com/guides/changing-metadata-store">
