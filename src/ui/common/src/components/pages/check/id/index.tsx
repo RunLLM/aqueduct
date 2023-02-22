@@ -9,6 +9,7 @@ import AlertTitle from '@mui/material/AlertTitle';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
+import _ from 'lodash';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
@@ -27,6 +28,7 @@ import CheckHistory from '../../../workflows/artifact/check/history';
 import ArtifactSummaryList from '../../../workflows/artifact/summaryList';
 import DetailsPageHeader from '../../components/DetailsPageHeader';
 import { LayoutProps } from '../../types';
+import structuredClone from '@ungap/structured-clone';
 
 type CheckDetailsPageProps = {
   user: UserProfile;

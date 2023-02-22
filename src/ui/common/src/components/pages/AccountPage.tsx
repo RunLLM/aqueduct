@@ -191,12 +191,15 @@ const MetadataStorageInfo: React.FC<MetadataStorageInfoProps> = ({
   switch (serverConfig.storageConfig.type) {
     case 'file': {
       storageInfo = fileMetadataStorageInfo;
+      break;
     }
     case 'gcs': {
       storageInfo = gcsMetadataStorageInfo;
+      break;
     }
     case 's3': {
       storageInfo = s3MetadataStorageInfo;
+      break;
     }
   }
 

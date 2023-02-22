@@ -16,8 +16,23 @@ export const StorageSelector: React.FC = () => {
   let selected = 'file';
   let selectedLocation = null;
   if (dag) {
+    console.log('dag: ', dag);
     selected = dag.storage_config.type;
-    selectedLocation = dag.storage_config.file_config.directory;
+    switch (selected) {
+      case 's3': {
+        selectedLocation = dag.storage_config.s3_config.bucket;
+        break;
+      }
+      case 'gcs': {
+        selectedLocation = dag.storage_config.gcs_config.bucket;
+        break;
+      }
+      case 'file':
+      default: {
+        selectedLocation = dag.storage_config.file_config.directory;
+        break;
+      }
+    }
   }
 
   const getMenuItems = () => {
@@ -44,10 +59,12 @@ export const StorageSelector: React.FC = () => {
 
   return (
     <Box>
-      <Typography style={{ fontWeight: 'bold' }}>
-        {' '}
-        Metadata Storage Locationasdf {selectedLocation}
-      </Typography>
+      <Box sx={{ display: 'flex' }}>
+        <Typography style={{ fontWeight: 'bold' }}>
+          Metadata Storage Location:
+        </Typography>
+        <Typography sx={{ marginLeft: '8px' }}>{selectedLocation}</Typography>
+      </Box>
       <Typography variant="body2">
         For more details on modifying the Aqueduct metadata store, please see{' '}
         <Link href="https://docs.aqueducthq.com/guides/changing-metadata-store">
