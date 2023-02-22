@@ -156,7 +156,7 @@ func (c *LivyClient) RunStatement(sessionID int, statement *StatementRequest) (*
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
-		return nil, errors.Newf("Error creating statment: %v", resp.Status)
+		return nil, errors.Newf("Error creating statement: %v", resp.Status)
 	}
 
 	var s Statement
@@ -184,7 +184,7 @@ func (c *LivyClient) GetStatement(sessionID int, statementID int) (*Statement, e
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, errors.Newf("Error creating get statment: %v", resp.Status)
+		return nil, errors.Newf("Error creating get statement: %v", resp.Status)
 	}
 
 	var s Statement
