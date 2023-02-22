@@ -30,13 +30,13 @@ const (
 // Livy Session.
 type Session struct {
 	ID        int          `json:"id"`
-	AppID     string       `json:"appId"`
-	Owner     string       `json:"owner"`
-	ProxyUser string       `json:"proxyUser"`
-	Kind      string       `json:"kind"`
-	Log       []string     `json:"log"`
+	AppID     string       `json:"appId,omitempty"`
+	Owner     string       `json:"owner,omitempty"`
+	ProxyUser string       `json:"proxyUser,omitempty"`
+	Kind      string       `json:"kind,omitempty"`
+	Log       []string     `json:"log,omitempty"`
 	State     SessionState `json:"state"`
-	AppInfo   AppInfo      `json:"appInfo"`
+	AppInfo   AppInfo      `json:"appInfo,omitempty"`
 }
 
 type AppInfo struct {
@@ -73,7 +73,9 @@ type Statement struct {
 }
 
 type StatementOutput struct {
-	Status         StatementOutputStatus  `json:"status"`
+	Status StatementOutputStatus `json:"status"`
+	// Although "execution_count" doesn't follow the convention, it is correct
+	// https://livy.incubator.apache.org/docs/latest/rest-api.html
 	ExecutionCount int                    `json:"execution_count"`
 	Data           map[string]interface{} `json:"data"`
 }

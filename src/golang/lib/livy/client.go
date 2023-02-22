@@ -55,23 +55,6 @@ func (c *LivyClient) CreateSession(sessionReq *CreateSessionRequest) (*Session, 
 		return nil, errors.Wrap(err, "Error decoding session response.")
 	}
 
-	start := time.Now()
-	for {
-		if time.Since(start) > time.Minute {
-			return nil, errors.New("Timed out waiting for SparkSession to create.")
-		}
-		s, err := c.GetSession(session.ID)
-		if err != nil {
-			return nil, errors.Wrap(err, "Error retrieving session while waiting for creation.")
-		}
-
-		if s.State == Idle {
-			break
-		}
-
-		time.Sleep(time.Second * 1)
-	}
-
 	return &session, nil
 }
 
@@ -131,6 +114,25 @@ func (c *LivyClient) GetSessions() ([]Session, error) {
 	}
 
 	return getSessionsResponse.Sessions, nil
+}
+
+func (c *LivyClient) WaitForSession(sessionID int, timeout time.Duration) error {
+	start := time.Now()
+	for {
+		if time.Since(start) > timeout {
+			return errors.New("Timed out waiting for SparkSession to create.")
+		}
+		s, err := c.GetSession(sessionID)
+		if err != nil {
+			return errors.Wrap(err, "Error retrieving session while waiting for creation.")
+		}
+		if s.State == Idle {
+			break
+		}
+
+		time.Sleep(time.Second * 1)
+	}
+	return nil
 }
 
 // RunStatement creates a new statement for a given batch

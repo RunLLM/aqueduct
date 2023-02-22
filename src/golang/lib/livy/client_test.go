@@ -1,10 +1,10 @@
 package livy
 
 import (
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -31,14 +31,10 @@ func TestCreateSession(t *testing.T) {
 	defer cleanup()
 
 	mux.HandleFunc("/sessions", func(w http.ResponseWriter, r *http.Request) {
-		respSession := &Session{
-			ID:    1,
-			State: Idle,
-		}
-		resp, _ := json.Marshal(respSession)
+		jsonResp := `{"id": 1, "state": "idle"}`
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusCreated)
-		w.Write(resp)
+		w.Write([]byte(jsonResp))
 	})
 
 	// Call CreateSession with expected
@@ -60,17 +56,16 @@ func TestGetSession(t *testing.T) {
 	cleanup := setup()
 	defer cleanup()
 
+	mux.HandleFunc("/sessions/1", func(w http.ResponseWriter, r *http.Request) {
+		jsonResp := `{"id": 1, "state": "idle"}`
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(jsonResp))
+	})
 	expectedSession := &Session{
 		ID:    1,
 		State: Idle,
 	}
-	mux.HandleFunc("/sessions/1", func(w http.ResponseWriter, r *http.Request) {
-		resp, _ := json.Marshal(expectedSession)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(resp)
-	})
-
 	// Call GetSession with session ID 1
 	session, err := client.GetSession(1)
 
@@ -82,18 +77,18 @@ func TestRunStatement(t *testing.T) {
 	cleanup := setup()
 	defer cleanup()
 
+	mux.HandleFunc("/sessions/1/statements", func(w http.ResponseWriter, r *http.Request) {
+		jsonResp := `{"id": 1, "state": "running", "output": {}}`
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte(jsonResp))
+	})
+
 	expectedStatement := &Statement{
 		ID:     1,
 		State:  Running,
 		Output: StatementOutput{},
 	}
-
-	mux.HandleFunc("/sessions/1/statements", func(w http.ResponseWriter, r *http.Request) {
-		resp, _ := json.Marshal(expectedStatement)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
-		w.Write(resp)
-	})
 
 	// Call RunStatement with session ID 1 and code "print('hello world')"
 	statementReq := &StatementRequest{
@@ -109,6 +104,13 @@ func TestGetStatement(t *testing.T) {
 	cleanup := setup()
 	defer cleanup()
 
+	mux.HandleFunc("/sessions/1/statements/1", func(w http.ResponseWriter, r *http.Request) {
+		jsonResp := `{"id": 1, "state": "available", "output": {"status": "ok", "execution_count": 1, "data": {}}}`
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(jsonResp))
+	})
+
 	expectedStatement := &Statement{
 		ID:    1,
 		State: Available,
@@ -118,13 +120,6 @@ func TestGetStatement(t *testing.T) {
 			Data:           map[string]interface{}{},
 		},
 	}
-
-	mux.HandleFunc("/sessions/1/statements/1", func(w http.ResponseWriter, r *http.Request) {
-		resp, _ := json.Marshal(expectedStatement)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(resp)
-	})
 
 	// Call GetStatement with session ID 1 and statement ID 1
 	statement, err := client.GetStatement(1, 1)
@@ -138,22 +133,41 @@ func TestGetSessions(t *testing.T) {
 	defer cleanup()
 
 	// Define expected result
-	expectedSessions := []*Session{
+
+	mux.HandleFunc("/sessions", func(w http.ResponseWriter, r *http.Request) {
+		jsonResp := `{"sessions": [{"id": 1, "state": "starting"}, {"id": 2, "state": "idle"}, {"id": 3, "state": "busy"}]}`
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(jsonResp))
+	})
+
+	expectedSessions := []Session{
 		{ID: 1, State: Starting},
 		{ID: 2, State: Idle},
 		{ID: 3, State: Busy},
 	}
-
-	mux.HandleFunc("/sessions", func(w http.ResponseWriter, r *http.Request) {
-		resp, _ := json.Marshal(expectedSessions)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(resp)
-	})
 
 	// Call GetSessions with expected
 	sessions, err := client.GetSessions()
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedSessions, sessions)
+}
+
+func TestWaitForSession(t *testing.T) {
+	cleanup := setup()
+	defer cleanup()
+
+	mux.HandleFunc("/sessions/1", func(w http.ResponseWriter, r *http.Request) {
+		jsonResp := `{"id": 1, "state": "not_started"}`
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(jsonResp))
+	})
+
+	err := client.WaitForSession(1, time.Second*2)
+	expectedErrorMsg := "Timed out waiting for SparkSession to create."
+
+	assert.NotEmpty(t, err)
+	assert.Containsf(t, err.Error(), expectedErrorMsg, "expected error containing %q, got %s", expectedErrorMsg, err)
 }
