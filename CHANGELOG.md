@@ -22,6 +22,8 @@ Release on February 22, 2023.
     correctly on M1 Macs.
 * Fixes bug where running the same function with multiple unnamed parameters
     more than once would fail.
+* Fixes bug where Aqueduct Docker images running for save operators were missing
+    dependencies for certain data types.
 
 ## 0.2.2
 Released on February 14, 2023.
