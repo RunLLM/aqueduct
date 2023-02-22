@@ -311,7 +311,7 @@ class Client:
     def delete_integration(
         self,
         name: str,
-    ):
+    ) -> None:
         """Deletes the integration from Aqueduct.
 
         Args:
@@ -326,7 +326,6 @@ class Client:
 
         # Update the connected integrations cached on this object.
         self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
-        print("DELETED INTEGRATION %s: new map %s" % (name, self._connected_integrations.keys()))
 
     def list_integrations(self) -> Dict[str, IntegrationInfo]:
         """Retrieves a dictionary of integrations the client can use.
