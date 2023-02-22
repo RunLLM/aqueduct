@@ -6,4 +6,4 @@ pydantic==1.9.0
 pyyaml
 SQLAlchemy==1.4.30
 typing_extensions==4.3.0
-aqueduct-ml==0.2.2
+aqueduct-ml==0.2.3
