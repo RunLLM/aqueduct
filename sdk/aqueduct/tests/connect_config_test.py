@@ -1,4 +1,4 @@
-from aqueduct.integrations import S3Config, GCSConfig
+from aqueduct.integrations import GCSConfig, S3Config
 
 
 def test_consistent_use_as_storage_field_name_for_storage_layer_integrations():
