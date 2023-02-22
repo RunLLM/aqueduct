@@ -169,7 +169,6 @@ def setup_data_integrations(filter_to: Optional[str] = None) -> None:
     If `filter_to` is set, we only connect to that given integration name. Otherwise,
     we attempt to connect to every integration listed in the config file.
     """
-
     if filter_to is not None:
         data_integrations = [filter_to]
     else:
