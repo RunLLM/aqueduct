@@ -89,6 +89,12 @@ class S3Config(BaseConnectionConfig):
     use_as_storage: str = "false"
 
 
+class GCSConfig(BaseConnectionConfig):
+    bucket: str
+    service_account_credentials: str
+    use_as_storage: str = "false"
+
+
 class AthenaConfig(BaseConnectionConfig):
     # default type to ACCESS_KEY mainly for backward compatibility
     type: AWSCredentialType = AWSCredentialType.ACCESS_KEY

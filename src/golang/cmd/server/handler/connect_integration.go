@@ -137,7 +137,9 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	statusCode, err := ValidatePrerequisites(
 		ctx,
 		args.Service,
+		args.Name,
 		args.ID,
+		args.OrgID,
 		h.IntegrationRepo,
 		h.Database,
 	)
@@ -648,15 +650,26 @@ func validateSlackConfig(config auth.Config) (int, error) {
 }
 
 // ValidatePrerequisites validates if the integration for the given service can be connected at all.
-// For now, it checks if an integration already exists for unique integrations including
-// conda, email, and slack.
+// 1) Checks if an integration already exists for unique integrations including conda, email, and slack.
+// 2) Checks if the name has already been taken.
 func ValidatePrerequisites(
 	ctx context.Context,
 	svc shared.Service,
+	name string,
 	userID uuid.UUID,
+	orgID string,
 	integrationRepo repos.Integration,
 	DB database.Database,
 ) (int, error) {
+	// We expect the new name to be unique.
+	_, err := integrationRepo.GetByNameAndUser(ctx, name, userID, orgID, DB)
+	if err == nil {
+		return http.StatusBadRequest, errors.Newf("Cannot connect to an integration %s, since it already exists.", name)
+	}
+	if err != database.ErrNoRows {
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to query for existing integrations.")
+	}
+
 	if svc == shared.Conda {
 		condaIntegration, err := exec_env.GetCondaIntegration(
 			ctx, userID, integrationRepo, DB,
