@@ -16,7 +16,6 @@ export const StorageSelector: React.FC = () => {
   let selected = 'file';
   let selectedLocation = null;
   if (dag) {
-    console.log('dag: ', dag);
     selected = dag.storage_config.type;
     switch (selected) {
       case 's3': {
