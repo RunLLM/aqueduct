@@ -21,3 +21,5 @@ import { Typography } from '@mui/material';
      </Box>
    );
  };
+
+ export default SparkCard;
