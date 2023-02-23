@@ -438,8 +438,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
   },
   ['Spark']: {
     logo: ServiceLogos['Spark'],
-    activated: true,
+    activated: false,
     category: IntegrationCategories.COMPUTE,
+    docs: addingIntegrationLink,
   },
 };
 
