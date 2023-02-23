@@ -167,6 +167,10 @@ class _EmailConfigWithStringField(BaseConnectionConfig):
     enabled: str
 
 
+class SparkConfig(BaseConnectionConfig):
+    livy_server_url: str
+
+
 IntegrationConfig = Union[
     BigQueryConfig,
     EmailConfig,
@@ -179,8 +183,12 @@ IntegrationConfig = Union[
     SnowflakeConfig,
     SqlServerConfig,
     SQLiteConfig,
+<<<<<<< HEAD
     SlackConfig,
     _SlackConfigWithStringField,
+=======
+    SparkConfig,
+>>>>>>> address comments + add test for subset enum
 ]
 
 
@@ -207,10 +215,15 @@ def convert_dict_to_integration_connect_config(
         return SQLiteConfig(**config_dict)
     elif service == ServiceType.REDSHIFT:
         return RedshiftConfig(**config_dict)
+<<<<<<< HEAD
     elif service == ServiceType.SLACK:
         return SlackConfig(**config_dict)
     elif service == ServiceType.EMAIL:
         return EmailConfig(**config_dict)
+=======
+    elif service == ServiceType.SPARK:
+        return SparkConfig(**config_dict)
+>>>>>>> address comments + add test for subset enum
     raise InternalAqueductError("Unexpected Service Type: %s" % service)
 
 
