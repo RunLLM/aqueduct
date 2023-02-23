@@ -17,7 +17,7 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
         run: |
-          aws configure set aws_access_key_id value $AWS_ACCESS_KEY
+          aws configure set aws_access_key_id value $AWS_ACCESS_KEY_ID
           aws configure set aws_secret_access_key value $AWS_SECRET_ACCESS_KEY
 
       - name: Fetch test config
