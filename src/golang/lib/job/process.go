@@ -63,9 +63,10 @@ type ProcessJobManager struct {
 	cmds          map[string]*Command
 	cronScheduler *gocron.Scheduler
 	// A mapping from cron job name to cron job object pointer.
-	cronMapping map[string]*cronMetadata
-	cmdMutex    *sync.RWMutex
-	cronMutex   *sync.RWMutex
+	cronMapping  map[string]*cronMetadata
+	condaEnvName string
+	cmdMutex     *sync.RWMutex
+	cronMutex    *sync.RWMutex
 }
 
 func (j *ProcessJobManager) getCmd(key string) (*Command, bool) {
@@ -129,6 +130,7 @@ func NewProcessJobManager(conf *ProcessConfig) (*ProcessJobManager, error) {
 		cronMapping:   map[string]*cronMetadata{},
 		cmdMutex:      &sync.RWMutex{},
 		cronMutex:     &sync.RWMutex{},
+		condaEnvName:  conf.CondaEnvName,
 	}, nil
 }
 
@@ -188,12 +190,12 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			return nil, err
 		}
 
-		if functionSpec.ExecEnv != nil {
+		if j.condaEnvName != "" {
 			cmd = exec.Command(
 				"conda",
 				"run",
 				"-n",
-				functionSpec.ExecEnv.Name(),
+				j.condaEnvName,
 				"bash",
 				filepath.Join(j.conf.BinaryDir, functionExecutorBashScript),
 				specStr,

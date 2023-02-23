@@ -412,7 +412,6 @@ func (bfo *baseFunctionOperator) jobSpec(
 		ExpectedOutputArtifactTypes: expectedOutputTypes,
 		OperatorType:                bfo.Type(),
 		CheckSeverity:               checkSeverity,
-		ExecEnv:                     bfo.execEnv,
 		Resources:                   bfo.dbOperator.Spec.Resources(),
 	}
 }
