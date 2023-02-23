@@ -197,18 +197,16 @@ class RuntimeType(str, Enum, metaclass=MetaEnum):
     K8S = "k8s"
     LAMBDA = "lambda"
     DATABRICKS = "databricks"
-<<<<<<< HEAD
+    SPARK = "spark"
 
 
 class NotificationLevel(Enum, metaclass=MetaEnum):
     SUCCESS = "success"
     WARNING = "warning"
     ERROR = "error"
-=======
     SPARK = "spark"
 
 
 class SparkRuntimeType(str, Enum, metaclass=MetaEnum):
     DATABRICKS = "databricks"
     SPARK = "spark"
->>>>>>> Use Spark integration on SDK
