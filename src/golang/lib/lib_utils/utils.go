@@ -178,13 +178,13 @@ func ParseSlackConfig(conf auth.Config) (*shared.SlackConfig, error) {
 	}, nil
 }
 
-func ParseSparkConfig(conf auth.Config) (*integration.SparkIntegrationConfig, error) {
+func ParseSparkConfig(conf auth.Config) (*shared.SparkIntegrationConfig, error) {
 	data, err := conf.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	var c integration.SparkIntegrationConfig
+	var c shared.SparkIntegrationConfig
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
 	}
