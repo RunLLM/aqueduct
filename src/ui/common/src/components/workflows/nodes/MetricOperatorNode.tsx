@@ -6,8 +6,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { memo } from 'react';
-import { Handle, Position } from 'reactflow';
 import { useSelector } from 'react-redux';
+import { Handle, Position } from 'reactflow';
 
 import { RootState } from '../../../stores/store';
 import { theme } from '../../../styles/theme/theme';

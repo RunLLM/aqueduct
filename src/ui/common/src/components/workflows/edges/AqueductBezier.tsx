@@ -14,7 +14,7 @@ export const AqueductBezier: React.FC<EdgeProps> = ({
   style = {},
 }) => {
   // path, labelX, labelY, offsetX, offsetY
-  const edgePathData= getBezierPath({
+  const edgePathData = getBezierPath({
     sourceX,
     sourceY,
     sourcePosition,

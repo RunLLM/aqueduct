@@ -7,9 +7,9 @@ import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import { parse } from 'query-string';
 import React, { useCallback, useEffect } from 'react';
-import { ReactFlowProvider } from 'reactflow';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { ReactFlowProvider } from 'reactflow';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';

@@ -1,7 +1,8 @@
-import React from 'react';
-import ReactFlow, { Node as ReactFlowNode } from 'reactflow';
 import 'reactflow/dist/style.css';
+
+import React from 'react';
 import { useSelector } from 'react-redux';
+import ReactFlow, { Node as ReactFlowNode } from 'reactflow';
 
 import { RootState } from '../../stores/store';
 import { EdgeTypes, ReactFlowNodeData } from '../../utils/reactflow';
