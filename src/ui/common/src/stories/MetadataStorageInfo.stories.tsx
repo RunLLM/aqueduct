@@ -3,6 +3,8 @@ import React from 'react';
 import { ServerConfig } from '../components/pages/account/AccountPage';
 import MetadataStorageInfo, {
   FileMetadataStorageInfo,
+  GCSMetadataStorageInfo,
+  S3MetadataStorageInfo,
 } from '../components/pages/account/MetadataStorageInfo';
 
 const mockServerConfig: ServerConfig = {
@@ -10,7 +12,7 @@ const mockServerConfig: ServerConfig = {
   retentionJobPeriod: 'mockRetentionPeriod',
   apiKey: 'mockApiKey',
   storageConfig: {
-    type: 'gcs',
+    type: 'file',
     fileConfig: {
       directory: '/storybook/metadataStorageInfoStory.tsx',
     },
@@ -23,6 +25,7 @@ const mockServerConfig: ServerConfig = {
     },
   },
 };
+
 export const MetadataStorageInfoStory: React.FC = () => {
   return <MetadataStorageInfo serverConfig={mockServerConfig} />;
 };
@@ -36,9 +39,31 @@ export const FileMetadataStorageInfoStory: React.FC = () => {
     },
   };
 
-  console.log('mockFileConfig: ', mockFileConfig);
-
   return <FileMetadataStorageInfo serverConfig={mockFileConfig} />;
+};
+
+export const S3MetadataStorageInfoStory: React.FC = () => {
+  const mockFileConfig = {
+    ...mockServerConfig,
+    storageConfig: {
+      type: 's3',
+      ...mockServerConfig.storageConfig,
+    },
+  };
+
+  return <S3MetadataStorageInfo serverConfig={mockFileConfig} />;
+};
+
+export const GCSMetadataStorageInfoStory: React.FC = () => {
+  const mockFileConfig = {
+    ...mockServerConfig,
+    storageConfig: {
+      type: 'gcs',
+      ...mockServerConfig.storageConfig,
+    },
+  };
+
+  return <GCSMetadataStorageInfo serverConfig={mockFileConfig} />;
 };
 
 export default MetadataStorageInfoStory;

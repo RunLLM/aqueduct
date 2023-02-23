@@ -21,16 +21,23 @@ export const FileMetadataStorageInfo: React.FC<MetadataPreviewProps> = ({
         />
       </Box>
       <Box sx={{ alignSelf: 'center', marginLeft: 2 }}>
-        <Typography variant="body1" color={'gray.700'}>
-          Storage Type: File
+        <Typography
+          variant="body1"
+          color={'gray.700'}
+          fontWeight="fontWeightMedium"
+        >
+          Storage Type:{' '}
+          <Box component="span" fontWeight="fontWeightRegular">
+            File
+          </Box>
         </Typography>
-        <Box sx={{ display: 'flex' }}>
-          <Typography variant="body2">
-            Location:{' '}
+        <Typography variant="body2" fontWeight="fontWeightMedium">
+          Location:{' '}
+          <Box component="span" fontWeight="fontWeightRegular">
             {serverConfig?.storageConfig?.fileConfig?.directory ||
               'loading ...'}
-          </Typography>
-        </Box>
+          </Box>
+        </Typography>
       </Box>
     </Box>
   );
@@ -45,12 +52,21 @@ export const GCSMetadataStorageInfo: React.FC<MetadataPreviewProps> = ({
         <IntegrationLogo service={'GCS'} size={'large'} activated={true} />
       </Box>
       <Box sx={{ alignSelf: 'center', marginLeft: 2 }}>
-        <Typography variant="body1" color={'gray.700'}>
-          Storage Type: Google Cloud Storage
+        <Typography
+          variant="body1"
+          color={'gray.700'}
+          fontWeight="fontWeightMedium"
+        >
+          Storage Type:{' '}
+          <Box component="span" fontWeight="fontWeightRegular">
+            Google Cloud Storage
+          </Box>
         </Typography>
-        <Typography variant="body2">
+        <Typography variant="body2" fontWeight="fontWeightMedium">
           Bucket:{' '}
-          {serverConfig?.storageConfig?.gcsConfig?.bucket || 'loading ...'}
+          <Box component="span" fontWeight="fontWeightRegular">
+            {serverConfig?.storageConfig?.gcsConfig?.bucket || 'loading ...'}
+          </Box>
         </Typography>
       </Box>
     </Box>
@@ -66,18 +82,27 @@ export const S3MetadataStorageInfo: React.FC<MetadataPreviewProps> = ({
         <IntegrationLogo service={'S3'} size={'large'} activated={true} />
       </Box>
       <Box sx={{ alignSelf: 'center', marginLeft: 2 }}>
-        <Typography variant="body1" color={'gray.700'}>
-          Storage Type: S3
+        <Typography
+          variant="body1"
+          color={'gray.700'}
+          fontWeight="fontWeightBold"
+        >
+          Storage Type:{' '}
+          <Box component="span" fontWeight="fontWeightRegular">
+            Amazon S3
+          </Box>
         </Typography>
-        <Box sx={{ display: 'flex' }}>
-          <Typography variant="body2">
-            Bucket:{' '}
+        <Typography variant="body2" fontWeight="fontWeightMedium">
+          Bucket:{' '}
+          <Box component="span" fontWeight="fontWeightRegular">
             {serverConfig?.storageConfig?.s3Config?.bucket || 'loading ...'}
-          </Typography>
-        </Box>
-        <Typography variant="body2">
+          </Box>
+        </Typography>
+        <Typography variant="body2" fontWeight="fontWeightMedium">
           Region:{' '}
-          {serverConfig?.storageConfig?.s3Config?.region || 'loading ...'}
+          <Box component="span" fontWeight="fontWeightRegular">
+            {serverConfig?.storageConfig?.s3Config?.region || 'loading ...'}
+          </Box>
         </Typography>
       </Box>
     </Box>
@@ -99,18 +124,21 @@ export const MetadataStorageInfo: React.FC<MetadataStorageInfoProps> = ({
   switch (serverConfig.storageConfig.type) {
     case 'file': {
       storageInfo = <FileMetadataStorageInfo serverConfig={serverConfig} />;
+      break;
     }
     case 'gcs': {
       storageInfo = <GCSMetadataStorageInfo serverConfig={serverConfig} />;
+      break;
     }
     case 's3': {
       storageInfo = <S3MetadataStorageInfo serverConfig={serverConfig} />;
+      break;
     }
   }
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mt: 3 }}>
+      <Typography variant="h5" sx={{ mt: 3, mb: 2 }}>
         Metadata Storage
       </Typography>
       {storageInfo}
