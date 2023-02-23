@@ -163,6 +163,10 @@ class EmailConfig(BaseConnectionConfig):
     enabled: bool
 
 
+class CondaConfig(BaseConnectionConfig):
+    pass
+
+
 class _EmailConfigWithStringField(BaseConnectionConfig):
     user: str
     password: str
@@ -217,6 +221,8 @@ def convert_dict_to_integration_connect_config(
         return SlackConfig(**config_dict)
     elif service == ServiceType.EMAIL:
         return EmailConfig(**config_dict)
+    elif service == ServiceType.CONDA:
+        return CondaConfig(**config_dict)
     raise InternalAqueductError("Unexpected Service Type: %s" % service)
 
 

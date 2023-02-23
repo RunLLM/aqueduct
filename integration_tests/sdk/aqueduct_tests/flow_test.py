@@ -15,6 +15,7 @@ from aqueduct.models.integration import IntegrationInfo
 
 import aqueduct
 from aqueduct import check, metric, op
+from .test_functions.simple.op_with_args import foo_with_args
 
 from ..shared.data_objects import DataObject
 from ..shared.flow_helpers import publish_flow_test, trigger_flow_test, wait_for_flow_runs
@@ -445,11 +446,6 @@ def test_flow_with_args(client):
     str_val = "this is a string"
     num_val = 1234
 
-    @op
-    def foo_with_args(*args):
-        args_list = list(args)
-        assert args_list == [str_val, num_val]
-        return args_list
 
     @op
     def generate_str():

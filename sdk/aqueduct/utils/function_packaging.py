@@ -187,6 +187,9 @@ def _package_files_and_requirements(
                 isinstance(req, str) for req in requirements
             )
 
+            if len(requirements) > 0:
+                raise Exception("Requirements: %s" % requirements)
+
             if isinstance(requirements, str):
                 if os.path.exists(requirements):
                     logger().info(
@@ -208,6 +211,11 @@ def _package_files_and_requirements(
                 "%s: requirements.txt file detected in current directory %s, will not self-generate by inferring package dependencies."
                 % (func.__name__, os.getcwd())
             )
+            with open(REQUIREMENTS_FILE, "r") as f:
+                content = f.readlines()
+                if len(content) > 0 and content != ["nltk"]:
+                    raise Exception("Requirements: %s" % content)
+
             shutil.copy(REQUIREMENTS_FILE, packaged_requirements_path)
 
         else:
@@ -216,8 +224,10 @@ def _package_files_and_requirements(
                 "%s: No requirements.txt file detected, self-generating file by inferring package dependencies."
                 % func.__name__
             )
-            with open(packaged_requirements_path, "x") as f:
-                f.write("\n".join(infer_requirements_from_env()))
+            raise Exception("Pip freeze!")
+
+            # with open(packaged_requirements_path, "x") as f:
+            #     f.write("\n".join(infer_requirements_from_env()))
 
         # Prune out any blacklisted requirements.
         _filter_out_blacklisted_requirements(packaged_requirements_path)

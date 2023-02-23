@@ -55,6 +55,7 @@ def pytest_cmdline_main(config):
     if should_skip:
         return
 
+    # TODO: create client here.
     data_integration = config.getoption(f"--data")
     if data_integration is not None:
         setup_data_integrations(filter_to=data_integration)

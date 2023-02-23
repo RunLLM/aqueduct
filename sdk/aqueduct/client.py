@@ -268,7 +268,7 @@ class Client:
         apply_deltas_to_dag(self._dag, [RemoveOperatorDelta(param_op.id)])
 
     def connect_integration(
-        self, name: str, service: ServiceType, config: Union[Dict[str, str], IntegrationConfig]
+        self, name: str, service: ServiceType, config: Union[Dict[str, str], BaseConnectionConfig]
     ) -> None:
         """Connects the Aqueduct server to an integration.
 
@@ -279,7 +279,7 @@ class Client:
             service:
                 The type of integration to connect to.
             config:
-                Either a dictionary or an IntegrationConnectConfig object that contains the
+                Either a dictionary or an ConnectConfig object that contains the
                 configuration credentials needed to connect.
         """
         if service not in ServiceType:
@@ -296,7 +296,7 @@ class Client:
 
         if not isinstance(config, dict) and not isinstance(config, BaseConnectionConfig):
             raise InvalidUserArgumentException(
-                "`config` argument must be either a dict or IntegrationConnectConfig."
+                "`config` argument must be either a dict or ConnectConfig."
             )
 
         if isinstance(config, dict):

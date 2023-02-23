@@ -35,3 +35,4 @@ data:
 # `aqueduct_engine`, which is our native orchestration engine.
 compute:
   aqueduct_engine:
+    conda: test_conda

@@ -6,7 +6,7 @@ import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ServiceType
-from aqueduct.error import AqueductError
+from aqueduct.error import AqueductError, InvalidRequestError
 from aqueduct.integrations.mongodb_integration import MongoDBIntegration
 from aqueduct.integrations.s3_integration import S3Integration
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
@@ -183,8 +183,11 @@ def setup_data_integrations(filter_to: Optional[str] = None) -> None:
 
     test_credentials = _parse_credentials_file()
 
+    if "data" not in test_credentials:
+        print("No data credentials given. Skipping data integration setup.")
+        return
+
     # Check that all data integrations in the test config have credentials.
-    assert "data" in test_credentials
     for integration_name in data_integrations:
         assert integration_name in test_credentials["data"], (
             "Data integration `%s` needs to have credentials in test-credentials.yml."
@@ -219,6 +222,36 @@ def setup_data_integrations(filter_to: Optional[str] = None) -> None:
             raise Exception("Test suite does not yet support %s." % integration.type())
 
 
+def setup_compute_integrations(filter_to: Optional[str]) -> None:
+    """Currently only sets up the Conda integration for the Aqueduct engine."""
+    if filter_to is not None:
+        compute_integrations = [filter_to]
+    else:
+        compute_integrations = list_compute_integrations()
+
+    client = Client(*get_aqueduct_config())
+
+    # Check if conda integration must be setup.
+    if "aqueduct_engine" in compute_integrations:
+        aq_engine_entry = _parse_config_file()["compute"]["aqueduct_engine"]
+        if "conda" in aq_engine_entry:
+            conda_integration_name = aq_engine_entry["conda"]
+            connect_integration(client, conda_integration_name, {"type": ServiceType.CONDA})
+
+
+def connect_conda_integration(client: Client, name: str):
+    client.connect_integration(name, ServiceType.CONDA, config={})
+
+    # Try to preview a test function integration it completes successfully.
+    from aqueduct import op
+    @op
+    def test_conda_fn():
+       return 123
+
+    while True:
+        _ = test_conda_fn()
+
+
 def connect_integration(client: Client, name: str, config: Dict[str, Any]):
     """Waits until the integration is ready to be used before returning."""
     service_type = config["type"]
@@ -237,6 +270,9 @@ def connect_integration(client: Client, name: str, config: Dict[str, Any]):
                 time.sleep(1)
                 continue
             raise
+        except InvalidRequestError as e:
+            if "We are still creating base conda environments. This may take a few minutes." in str(e):
+                time.sleep(5)
         else:
             break
 
@@ -247,7 +283,6 @@ def prepare_integration_config_for_connect(name: str, config: Dict[str, Any]) ->
     if use_data_integration_as_storage(name):
         config["use_as_storage"] = "true"
     return config
-
 
 def use_data_integration_as_storage(name: str):
     assert isinstance(name, str)
