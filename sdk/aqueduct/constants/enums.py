@@ -204,7 +204,6 @@ class NotificationLevel(Enum, metaclass=MetaEnum):
     SUCCESS = "success"
     WARNING = "warning"
     ERROR = "error"
-    SPARK = "spark"
 
 
 class SparkRuntimeType(str, Enum, metaclass=MetaEnum):
