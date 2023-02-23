@@ -6,7 +6,7 @@ import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: SparkConfig = {
-    livy_server_url: '',
+  livy_server_url: '',
 };
 
 type Props = {
@@ -28,7 +28,9 @@ export const SparkDialog: React.FC<Props> = ({
         spellCheck={false}
         required={true}
         placeholder={Placeholders.livy_server_url}
-        onChange={(event) => onUpdateField('livy_server_url', event.target.value)}
+        onChange={(event) =>
+          onUpdateField('livy_server_url', event.target.value)
+        }
         value={value?.livy_server_url ?? null}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
@@ -39,7 +41,5 @@ export const SparkDialog: React.FC<Props> = ({
 };
 
 export function isDatabricksConfigComplete(config: SparkConfig): boolean {
-  return (
-    !!config.livy_server_url
-  );
+  return !!config.livy_server_url;
 }

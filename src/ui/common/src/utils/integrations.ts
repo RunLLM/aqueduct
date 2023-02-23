@@ -181,7 +181,7 @@ export type SlackConfig = {
 
 export type SparkConfig = {
   livy_server_url: string;
-}
+};
 
 export type IntegrationConfig =
   | PostgresConfig
