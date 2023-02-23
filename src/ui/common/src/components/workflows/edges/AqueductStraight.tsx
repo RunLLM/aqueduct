@@ -1,6 +1,5 @@
 import React from 'react';
 import { EdgeProps } from 'reactflow';
-import 'reactflow/dist/style.css';
 
 import { theme } from '../../../styles/theme/theme';
 

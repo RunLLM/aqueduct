@@ -8,7 +8,6 @@ import Typography from '@mui/material/Typography';
 import { parse } from 'query-string';
 import React, { useCallback, useEffect } from 'react';
 import { ReactFlowProvider } from 'reactflow';
-import 'reactflow/dist/style.css';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 

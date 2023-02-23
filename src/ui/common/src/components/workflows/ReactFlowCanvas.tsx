@@ -28,15 +28,12 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
 
   const { edges, nodes } = dagPositionState.result ?? { edges: [], nodes: [] };
 
-  console.log("edges", edges);
-  console.log("problem edges", edges[0], edges[1], edges[3], edges[6]);
-
   const defaultViewport = { x: 0, y: 0, zoom: 1 };
   return (
     <ReactFlow
       onPaneClick={onPaneClicked}
       nodes={nodes}
-      edges={[edges[2], edges[4], edges[5]]} // Error: 0, 1, 3, 6
+      edges={edges}
       onNodeClick={switchSideSheet}
       nodeTypes={nodeTypes}
       connectionLineStyle={connectionLineStyle}
