@@ -12,6 +12,12 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: Check
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
+        run: echo $AWS_ACCESS_KEY_ID
+
       - name: Configure aws credentials
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
