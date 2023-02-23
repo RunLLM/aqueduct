@@ -10,6 +10,7 @@ from aqueduct.models.config import (
     EngineConfig,
     K8sEngineConfig,
     LambdaEngineConfig,
+    SparkEngineConfig,
 )
 from aqueduct.models.dag import Schedule
 from aqueduct.models.integration import IntegrationInfo
@@ -170,6 +171,14 @@ def generate_engine_config(
             type=RuntimeType.DATABRICKS,
             name=integration_name,
             databricks_config=DatabricksEngineConfig(
+                integration_id=integration.id,
+            ),
+        )
+    elif integration.service == ServiceType.SPARK:
+        return EngineConfig(
+            type=RuntimeType.SPARK,
+            name=integration_name,
+            spark_config=SparkEngineConfig(
                 integration_id=integration.id,
             ),
         )

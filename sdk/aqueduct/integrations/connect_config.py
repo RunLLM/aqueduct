@@ -167,6 +167,10 @@ class _EmailConfigWithStringField(BaseConnectionConfig):
     enabled: str
 
 
+class SparkConfig(BaseConnectionConfig):
+    livy_server_url: str
+
+
 IntegrationConfig = Union[
     BigQueryConfig,
     EmailConfig,
@@ -181,6 +185,7 @@ IntegrationConfig = Union[
     SQLiteConfig,
     SlackConfig,
     _SlackConfigWithStringField,
+    SparkConfig,
 ]
 
 
@@ -211,6 +216,8 @@ def convert_dict_to_integration_connect_config(
         return SlackConfig(**config_dict)
     elif service == ServiceType.EMAIL:
         return EmailConfig(**config_dict)
+    elif service == ServiceType.SPARK:
+        return SparkConfig(**config_dict)
     raise InternalAqueductError("Unexpected Service Type: %s" % service)
 
 
