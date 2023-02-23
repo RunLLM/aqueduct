@@ -77,10 +77,7 @@ import {
   SlackDialog,
 } from './slackDialog';
 import { SnowflakeDialog } from './snowflakeDialog';
-import { 
-  SparkDialog,
-  isSparkConfigComplete, 
-} from './sparkDialog';
+import { isSparkConfigComplete, SparkDialog } from './sparkDialog';
 import { SQLiteDialog } from './sqliteDialog';
 
 type Props = {
