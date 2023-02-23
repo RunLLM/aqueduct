@@ -1,0 +1,12 @@
+name: Setup AWS Credentials
+description: "Sets up and configures the AWS credentials locally at ~/.aws/credentials."
+
+runs:
+  using: composite
+  steps:
+    - name: Configure aws credentials
+      shell: bash
+      run: |
+        aws configure set aws_access_key_id ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
+        aws configure set aws_secret_access_key ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
+

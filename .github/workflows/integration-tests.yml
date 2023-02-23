@@ -16,13 +16,22 @@ jobs:
       - uses: ./.github/actions/setup-server
         timeout-minutes: 5
 
+      - name: Configure aws credentials
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
+
+      - name: Fetch test config
+        working-directory: integration_tests/sdk
+        run: aws s3 cp s3://aqueduct-assets/premerge-basic-test-config.yml ./test-config.yml
+
       - name: Set up the SDK Integration Tests
         working-directory: integration_tests/sdk
         run: |
           echo "apikey: $(aqueduct apikey)" >> test-credentials.yml
-          printf "address: localhost:8080" >> test-config.yml
-          printf "\ndata:\n  aqueduct_demo:" >> test-config.yml
-          printf "\ncompute:\n  aqueduct_engine:" >> test-config.yml
+#          printf "address: localhost:8080" >> test-config.yml
+#          printf "\ndata:\n  aqueduct_demo:" >> test-config.yml
+#          printf "\ncompute:\n  aqueduct_engine:" >> test-config.yml
 
       - name: Run the SDK Integration Tests
         timeout-minutes: 10
