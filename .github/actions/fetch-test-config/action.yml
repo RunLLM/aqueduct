@@ -24,7 +24,7 @@ runs:
         aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
 
     - name: Fetch the Test Config
-      shell: basha
+      shell: bash
       working-directory: integration_tests/sdk
       run: aws s3 cp s3://aqueduct-assets/${{ inputs.s3_test_config_path }} ./test-config.yml
 
