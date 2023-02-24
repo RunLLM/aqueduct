@@ -31,11 +31,14 @@ runs:
     - name: Fetch the Test Credentials
       working-directory: integration_tests/sdk
       shell: bash
-      run: aws s3 cp s3://aqueduct-assets/test-credentials.yml ./test-credentials.yml
+      run: aws s3 cp s3://aqueduct-assets/test-credentials-send.yml ./test-credentials.yml
 
     - name: Update the apikey in credentials
       working-directory: integration_tests/sdk
       shell: bash
       run: sed -i '1s/.*/$(aqueduct apikey)/' ./test-credentials.yml
 
-
+    - name: Echo
+      working-directory: integration_tests/sdk
+      shell: bash
+      cat: test-credentials.yml
