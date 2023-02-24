@@ -43,6 +43,7 @@ import {
   Service,
   SlackConfig,
   SnowflakeConfig,
+  SparkConfig,
   SQLiteConfig,
   SupportedIntegrations,
 } from '../../../utils/integrations';
@@ -76,6 +77,7 @@ import {
   SlackDialog,
 } from './slackDialog';
 import { SnowflakeDialog } from './snowflakeDialog';
+import { isSparkConfigComplete, SparkDialog } from './sparkDialog';
 import { SQLiteDialog } from './sqliteDialog';
 
 type Props = {
@@ -356,6 +358,15 @@ const IntegrationDialog: React.FC<Props> = ({
         />
       );
       break;
+    case 'Spark':
+      serviceDialog = (
+        <SparkDialog
+          onUpdateField={setConfigField}
+          value={config as SparkConfig}
+          editMode={editMode}
+        />
+      );
+      break;
     default:
       return null;
   }
@@ -485,6 +496,8 @@ export function isConfigComplete(
       return isEmailConfigComplete(config as EmailConfig);
     case 'Slack':
       return isSlackConfigComplete(config as SlackConfig);
+    case 'Spark':
+      return isSparkConfigComplete(config as SparkConfig);
 
     default:
       // Make sure config is not empty and all fields are not empty as well.

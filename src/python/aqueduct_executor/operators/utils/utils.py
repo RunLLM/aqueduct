@@ -4,8 +4,8 @@ import time
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
+from aqueduct.utils.format import DEFAULT_ENCODING
 from aqueduct.utils.serialization import (
-    DEFAULT_ENCODING,
     artifact_type_to_serialization_type,
     deserialize,
     serialize_val,
@@ -109,7 +109,9 @@ def _read_metadata_key(
     return [metadata[key_name] for metadata in metadata_inputs]
 
 
-def serialize_val_wrapper(val: Any, serialization_type: SerializationType) -> bytes:
+def serialize_val_wrapper(
+    val: Any, serialization_type: SerializationType, derived_from_bson: bool
+) -> bytes:
     """Wrapper around `serialize_val()` to perform additional checks that are specific to the executor."""
     if serialization_type == SerializationType.TABLE:
         # We cannot serialize integer column names into json.
@@ -121,7 +123,7 @@ def serialize_val_wrapper(val: Any, serialization_type: SerializationType) -> by
                 % (", ".join(violating_col_names)),
             )
 
-    serialized_val = serialize_val(val, serialization_type)
+    serialized_val = serialize_val(val, serialization_type, derived_from_bson)
     assert isinstance(serialized_val, bytes)  # Necessary for mypy
     return serialized_val
 
@@ -153,7 +155,7 @@ def write_artifact(
     ).value
 
     if output_path is not None:
-        serialized_val = serialize_val_wrapper(content, serialization_type)
+        serialized_val = serialize_val_wrapper(content, serialization_type, derived_from_bson)
         storage.put(output_path, serialized_val)
 
     output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = serialization_type

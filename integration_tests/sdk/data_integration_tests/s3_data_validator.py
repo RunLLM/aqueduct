@@ -4,6 +4,7 @@ from typing import Any, Optional
 import pandas as pd
 from aqueduct.constants.enums import ArtifactType
 from aqueduct.integrations.s3_integration import S3Integration
+from PIL import Image
 
 from aqueduct import Client, Flow
 from sdk.shared.validation import fetch_and_validate_saved_object_identifier
@@ -24,7 +25,8 @@ class S3DataValidator:
         artifact_type: ArtifactType,
         format: Optional[str],
         expected_data: Any,
-    ):
+        skip_data_check: bool,
+    ) -> None:
         assert expected_data is not None
 
         saved_object_identifier = fetch_and_validate_saved_object_identifier(
@@ -39,8 +41,15 @@ class S3DataValidator:
             type(saved_data),
         )
 
+        if skip_data_check:
+            return
+
         if isinstance(saved_data, pd.DataFrame):
             is_equal = saved_data.equals(expected_data)
+        elif isinstance(saved_data, list) and all(
+            isinstance(elem, pd.DataFrame) for elem in saved_data
+        ):
+            is_equal = all(elem.equals(expected_data[i]) for i, elem in enumerate(saved_data))
         else:
             is_equal = saved_data == expected_data
 

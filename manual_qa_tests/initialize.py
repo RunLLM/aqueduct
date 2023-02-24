@@ -2,7 +2,7 @@ import argparse
 
 import deploy_example
 from aqueduct.constants.enums import NotificationLevel
-from notification import connect_spark
+from notification import connect_slack
 from workflows import fail_bad_check, succeed_complex, succeed_parameters, warning_bad_check
 
 import aqueduct as aq
@@ -44,7 +44,7 @@ if __name__ == "__main__":
     client = aq.Client(api_key, args.addr)
 
     if args.slack_token and args.slack_channel:
-        connect_spark(
+        connect_slack(
             client,
             args.slack_token,
             args.slack_channel,
