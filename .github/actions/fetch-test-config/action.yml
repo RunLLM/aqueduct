@@ -37,8 +37,7 @@ runs:
       working-directory: integration_tests/sdk
       shell: bash
       run: |
-        echo "API_KEY=$(aqueduct apikey)" 
-        sed -i '1s/.*/$API_KEY/' ./test-credentials.yml
+        sed -i "1s/.*/$(aqueduct apikey)/" ./test-credentials.yml
 
     - name: Echo
       working-directory: integration_tests/sdk
