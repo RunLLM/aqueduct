@@ -26,6 +26,7 @@ import { RedshiftCard } from './redshiftCard';
 import { S3Card } from './s3Card';
 import { SlackCard } from './slackCard';
 import { SnowflakeCard } from './snowflakeCard';
+import { SparkCard } from './sparkCard';
 
 type DataProps = {
   dataPreviewInfo: DataPreviewInfo;
@@ -145,6 +146,9 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
       break;
     case 'Slack':
       serviceCard = <SlackCard integration={integration} />;
+      break;
+    case 'Spark':
+      serviceCard = <SparkCard integration={integration} />;
       break;
     default:
       serviceCard = null;

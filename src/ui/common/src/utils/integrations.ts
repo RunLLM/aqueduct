@@ -179,6 +179,10 @@ export type SlackConfig = {
   channels_serialized: string;
 } & NotificationIntegrationConfig;
 
+export type SparkConfig = {
+  livy_server_url: string;
+};
+
 export type IntegrationConfig =
   | PostgresConfig
   | SnowflakeConfig
@@ -199,7 +203,8 @@ export type IntegrationConfig =
   | CondaConfig
   | DatabricksConfig
   | EmailConfig
-  | SlackConfig;
+  | SlackConfig
+  | SparkConfig;
 
 export type Service =
   | 'Postgres'
@@ -222,7 +227,8 @@ export type Service =
   | 'Conda'
   | 'Databricks'
   | 'Email'
-  | 'Slack';
+  | 'Slack'
+  | 'Spark';
 
 export type Info = {
   logo: string;
@@ -309,6 +315,7 @@ export const ServiceLogos: ServiceLogo = {
   ['Databricks']: `${integrationLogosBucket}/databricks_logo.png`,
   ['Email']: `${integrationLogosBucket}/email.png`,
   ['Slack']: `${integrationLogosBucket}/slack.png`,
+  ['Spark']: `${integrationLogosBucket}/spark-logo-trademark.png`,
 
   // TODO(ENG-2301): Once task is addressed, remove this duplicate entry.
   ['K8s']: `${integrationLogosBucket}/kubernetes.png`,
@@ -364,7 +371,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     docs: `${addingIntegrationLink}/connecting-to-google-cloud-storage`,
   },
   ['Aqueduct Demo']: {
-    logo: ServiceLogos['Aqueduct Demo'],
+    logo: ServiceLogos['Aqueduct'],
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
@@ -421,13 +428,19 @@ export const SupportedIntegrations: ServiceInfoMap = {
     logo: ServiceLogos['Email'],
     activated: true,
     category: IntegrationCategories.NOTIFICATION,
-    docs: `${addingIntegrationLink}/connecting-to-email`,
+    docs: `${AqueductDocsLink}/notifications/connecting-to-email`,
   },
   ['Slack']: {
     logo: ServiceLogos['Slack'],
     activated: true,
     category: IntegrationCategories.NOTIFICATION,
-    docs: `${addingIntegrationLink}/connecting-to-slack`,
+    docs: `${AqueductDocsLink}/notifications/connecting-to-slack`,
+  },
+  ['Spark']: {
+    logo: ServiceLogos['Spark'],
+    activated: false,
+    category: IntegrationCategories.COMPUTE,
+    docs: addingIntegrationLink,
   },
 };
 

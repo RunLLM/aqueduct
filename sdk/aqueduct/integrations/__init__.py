@@ -7,6 +7,7 @@ from aqueduct.integrations.connect_config import (
     PostgresConfig,
     S3Config,
     SnowflakeConfig,
+    SparkConfig,
     SQLiteConfig,
     SqlServerConfig,
 )
