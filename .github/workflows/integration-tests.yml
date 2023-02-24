@@ -68,12 +68,12 @@ jobs:
           aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
           s3_test_config_path: premerge-s3-storage-test-config.yml
 
-    - name: Run the SDK Integration Aqueduct Tests
-      timeout-minutes: 10
-      working-directory: integration_tests/sdk
-      run: python3 run_tests.py --aqueduct -n 8
+      - name: Run the SDK Integration Aqueduct Tests
+        timeout-minutes: 10
+        working-directory: integration_tests/sdk
+        run: python3 run_tests.py --aqueduct -n 8
 
-    - uses: ./.github/actions/upload-artifacts
-      if: always()
-      with:
-        prefix: S3StorageLayer
+      - uses: ./.github/actions/upload-artifacts
+        if: always()
+        with:
+          prefix: S3StorageLayer
