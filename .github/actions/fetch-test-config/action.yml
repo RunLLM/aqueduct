@@ -41,5 +41,5 @@ runs:
     - name: sdklf
       working-directory: integration_tests/sdk
       shell: bash
-      run: head 2 ./test-credentials.yml
+      run: head -n 2 ./test-credentials.yml
 
