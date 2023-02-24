@@ -8,7 +8,7 @@ from aqueduct.constants.enums import ArtifactType
 from pandas import DataFrame
 from PIL import Image
 
-from .serialization import DEFAULT_ENCODING
+from .format import DEFAULT_ENCODING
 
 
 def infer_artifact_type(value: Any) -> ArtifactType:

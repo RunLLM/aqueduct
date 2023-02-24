@@ -42,10 +42,9 @@ export const StorageSelector: React.FC = () => {
 
   return (
     <Box>
-      <Typography style={{ fontWeight: 'bold' }}>
-        {' '}
-        Metadata Storage Location{' '}
-      </Typography>
+      <Box sx={{ display: 'flex' }}>
+        <Typography style={{ fontWeight: 'bold' }}>Metadata Storage</Typography>
+      </Box>
       <Typography variant="body2">
         For more details on modifying the Aqueduct metadata store, please see{' '}
         <Link href="https://docs.aqueducthq.com/guides/changing-metadata-store">

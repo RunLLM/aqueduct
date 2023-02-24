@@ -4,7 +4,7 @@ from aqueduct.integrations.connect_config import ServiceType, SlackConfig
 import aqueduct as aq
 
 
-def connect_spark(
+def connect_slack(
     client: aq.Client,
     token: str,
     channel: str,

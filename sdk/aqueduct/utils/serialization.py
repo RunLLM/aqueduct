@@ -2,22 +2,42 @@ import io
 import json
 import os
 import shutil
-from typing import Any, Callable, Dict, cast
+from typing import Any, Callable, Dict, List, Optional, Union, cast
 
 import cloudpickle as pickle
 import pandas as pd
-from aqueduct.constants.enums import ArtifactType, SerializationType
+from aqueduct.constants.enums import ArtifactType, S3SerializationType, SerializationType
+from aqueduct.utils.type_inference import infer_artifact_type
 from bson import json_util as bson_json_util
 from PIL import Image
+from pydantic import BaseModel
 
+from .format import DEFAULT_ENCODING
 from .function_packaging import _make_temp_dir
 
-DEFAULT_ENCODING = "utf8"
 _DEFAULT_IMAGE_FORMAT = "jpeg"
 
 # The temporary file name that a Tensorflow keras model will be dumped into before we read/write it from storage.
 # This will be cleaned up within the serialization logic.
 _TEMP_KERAS_MODEL_NAME = "keras_model"
+
+
+class PickleableCollectionSerializationFormat(BaseModel):
+    """For data types that are destined to be pickled lists or tuples, we want to
+    first serialize each individual element before pickling, for performance reasons.
+
+    When that happens, the dictionary version of this class is what is pickle-serialized.
+    """
+
+    # The serialization type of each element in the collection.
+    aqueduct_serialization_types: Union[List[SerializationType], List[S3SerializationType]]
+
+    # The actual list of serialized values.
+    data: List[bytes]
+
+    # Due to limitations of pydantic models with tuples, we need to have an explicit field
+    # for this.
+    is_tuple: bool
 
 
 def _read_table_content(content: bytes) -> pd.DataFrame:
@@ -79,14 +99,60 @@ __deserialization_function_mapping: Dict[str, Callable[[bytes], Any]] = {
 }
 
 
+def check_and_fetch_pickled_collection_format(
+    serialization_type: Union[SerializationType, S3SerializationType],
+    deserialized_val: Any,
+) -> Optional[PickleableCollectionSerializationFormat]:
+    """If a value that has undergone one round of deserialization is in the form of a
+    `PickleableCollectionSerializationFormat`, we will load up that class and return it.
+    Otherwise, return None.
+    """
+    assert SerializationType.PICKLE.value == S3SerializationType.PICKLE.value
+    if serialization_type == SerializationType.PICKLE and isinstance(deserialized_val, dict):
+        try:
+            # This will error if the appropriate dict fields do not match.
+            return PickleableCollectionSerializationFormat(**deserialized_val)
+        except Exception:
+            return None
+    return None
+
+
 def deserialize(
-    serialization_type: SerializationType, artifact_type: ArtifactType, content: bytes
+    serialization_type: Union[SerializationType, S3SerializationType],
+    artifact_type: ArtifactType,
+    content: bytes,
+    custom_deserialization_function_mapping: Optional[Dict[str, Callable[[bytes], Any]]] = None,
 ) -> Any:
-    """Deserializes a byte string into the appropriate python object."""
-    if serialization_type not in __deserialization_function_mapping:
+    """Deserializes a byte string into the appropriate python object.
+
+    Handles serialization for both the Aqueduct storage layer (default) and S3 (requires a custom deserialization function mapping).
+    """
+    deserialization_function_mapping = __deserialization_function_mapping
+    if custom_deserialization_function_mapping is not None:
+        assert isinstance(serialization_type, S3SerializationType)
+        deserialization_function_mapping = custom_deserialization_function_mapping
+
+    if serialization_type not in deserialization_function_mapping:
         raise Exception("Unsupported serialization type %s" % serialization_type)
 
-    deserialized_val = __deserialization_function_mapping[serialization_type](content)
+    deserialized_val = deserialization_function_mapping[serialization_type](content)
+
+    # Check if the type is a pickled collection where each individual element needs to be deserialized.
+    pickled_collection_data = check_and_fetch_pickled_collection_format(
+        serialization_type, deserialized_val
+    )
+    if pickled_collection_data is not None:
+        collection_serialization_types = pickled_collection_data.aqueduct_serialization_types
+        data = pickled_collection_data.data
+
+        deserialized_val = [
+            deserialization_function_mapping[collection_serialization_types[i]](data[i])
+            for i in range(len(collection_serialization_types))
+        ]
+
+        if pickled_collection_data.is_tuple:
+            return tuple(deserialized_val)
+        return deserialized_val
 
     # Because both list and tuple objects are json-serialized, they will have the same bytes representation.
     # We wanted to keep the readability of json, particularly for the UI, so we decided to distinguish
@@ -140,7 +206,7 @@ def _write_tf_keras_model(output: Any) -> bytes:
             shutil.rmtree(temp_model_dir)
 
 
-serialization_function_mapping: Dict[str, Callable[..., bytes]] = {
+__serialization_function_mapping: Dict[str, Callable[..., bytes]] = {
     SerializationType.TABLE: _write_table_output,
     SerializationType.JSON: _write_json_output,
     SerializationType.PICKLE: _write_pickle_output,
@@ -152,9 +218,41 @@ serialization_function_mapping: Dict[str, Callable[..., bytes]] = {
 }
 
 
-def serialize_val(val: Any, serialization_type: SerializationType) -> bytes:
+def serialize_val(
+    val: Any,
+    serialization_type: Union[SerializationType, S3SerializationType],
+    derived_from_bson: bool,
+) -> bytes:
     """Serializes a parameter or computed value into bytes."""
-    return serialization_function_mapping[serialization_type](val)
+    if serialization_type == SerializationType.PICKLE and (
+        isinstance(val, list) or isinstance(val, tuple)
+    ):
+        elem_serialization_types: List[SerializationType] = []
+        for elem in val:
+            elem_artifact_type = infer_artifact_type(elem)
+            elem_serialization_types.append(
+                artifact_type_to_serialization_type(
+                    elem_artifact_type,
+                    derived_from_bson,
+                    elem,
+                ),
+            )
+
+        data: List[bytes] = [
+            __serialization_function_mapping[elem_serialization_types[i]](val[i])
+            for i in range(len(elem_serialization_types))
+        ]
+
+        pickled_collection_data = PickleableCollectionSerializationFormat(
+            aqueduct_serialization_types=elem_serialization_types,
+            data=data,
+            is_tuple=isinstance(val, tuple),
+        )
+
+        # The value we end up pickling is a dictionary.
+        val = pickled_collection_data.dict()
+
+    return __serialization_function_mapping[serialization_type](val)
 
 
 def artifact_type_to_serialization_type(
