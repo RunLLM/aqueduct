@@ -59,7 +59,7 @@ func MigrateStorageAndVault(
 	toDelete := []string{}
 
 	for _, dag := range dags {
-		log.Infof("Migrating artifact and operator content for DAG and workflow %v: %v", dag.ID, dag.Metadata.Name)
+		log.Infof("Migrating artifact and operator content for DAG and workflow %v", dag.ID)
 		if dag.EngineConfig.Type == shared.AirflowEngineType {
 			// We cannot migrate content for Airflow workflows
 			continue
