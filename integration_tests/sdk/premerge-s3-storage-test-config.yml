@@ -1,0 +1,10 @@
+address: localhost:8080
+
+storage:
+  test_s3:
+
+data:
+  aqueduct_demo:
+
+compute:
+  aqueduct_engine:
