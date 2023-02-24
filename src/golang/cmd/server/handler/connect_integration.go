@@ -327,6 +327,10 @@ func ValidateConfig(
 		return validateDatabricksConfig(ctx, config)
 	}
 
+	if service == shared.Spark {
+		return validateSparkConfig(ctx, config)
+	}
+
 	if service == shared.Email {
 		return validateEmailConfig(config)
 	}
@@ -615,6 +619,17 @@ func validateDatabricksConfig(
 	config auth.Config,
 ) (int, error) {
 	if err := engine.AuthenticateDatabricksConfig(ctx, config); err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	return http.StatusOK, nil
+}
+
+func validateSparkConfig(
+	ctx context.Context,
+	config auth.Config,
+) (int, error) {
+	if err := engine.AuthenticateSparkConfig(ctx, config); err != nil {
 		return http.StatusBadRequest, err
 	}
 

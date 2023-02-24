@@ -1,7 +1,13 @@
 import uuid
 from typing import Dict, List, Optional
 
-from aqueduct.constants.enums import ArtifactType, OperatorType, RuntimeType, TriggerType
+from aqueduct.constants.enums import (
+    ArtifactType,
+    OperatorType,
+    RuntimeType,
+    SparkRuntimeType,
+    TriggerType,
+)
 from aqueduct.error import (
     ArtifactNotFoundException,
     InternalAqueductError,
@@ -87,24 +93,24 @@ class DAG(BaseModel):
                         "All operators must run on Airflow. Operator %s is designated to run on custom engine `%s`."
                         % (op.name, op.spec.engine_config.name),
                     )
-                # DAG's expected to run on Databricks cannot have different Operator specs.
+                # DAG's expected to run on Spark cannot have different Operator specs.
                 if (
-                    dag_engine_config.type == RuntimeType.DATABRICKS
-                    and op.spec.engine_config.type != RuntimeType.DATABRICKS
+                    dag_engine_config.type in SparkRuntimeType
+                    and op.spec.engine_config.type not in SparkRuntimeType
                 ):
                     raise InvalidUserActionException(
-                        "All operators must run on Databricks. Operator %s is designated to run on custom engine `%s`."
+                        "All operators must run on Spark Type Engine. Operator %s is designated to run on custom engine `%s`."
                         % (op.name, op.spec.engine_config.name),
                     )
                 # We don't allow individual operators to set Databricks as an engine spec without setting it globally.
                 if (
-                    dag_engine_config.type != RuntimeType.DATABRICKS
-                    and op.spec.engine_config.type == RuntimeType.DATABRICKS
+                    dag_engine_config.type not in SparkRuntimeType
+                    and op.spec.engine_config.type in SparkRuntimeType
                 ):
                     raise InvalidUserActionException(
-                        """In order to use 
-                        Databricks while previewing operators, please set 
-                        aqueduct.global_config({'engine': '<databricks_integration>'})""",
+                        """In order to use a Spark type engine
+                        while previewing operators, please set 
+                        aqueduct.global_config({'engine': '<spark_type_engine_name>'})""",
                     )
 
                 op_engine_config = op.spec.engine_config

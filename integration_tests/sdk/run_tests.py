@@ -11,13 +11,20 @@ def _execute_command(args, cwd=None) -> None:
             raise Exception("Error executing command: %s" % args)
 
 
-def _run_tests(dir_name: str, test_case: str, concurrency: int, rerun_failed: bool) -> None:
+def _run_tests(
+    dir_name: str, test_case: str, concurrency: int, rerun_failed: bool, skip_data_setup: bool
+) -> None:
     """Either test_case or rerun_failed can be set, but not both."""
-    cmd = ["pytest", dir_name, "-rP", "-vv", "-n", str(concurrency)]
     if rerun_failed:
-        cmd.append("-lf")
+        cmd = ["pytest", dir_name, "-rP", "-vv", "--lf", "-n", str(concurrency)]
+    else:
+        cmd = ["pytest", dir_name, "-rP", "-vv", "-n", str(concurrency)]
+
     if len(test_case) > 0:
         cmd += ["-k", test_case]
+
+    if skip_data_setup:
+        cmd.append("--skip-data-setup")
 
     _execute_command(cmd)
 
@@ -50,11 +57,19 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "-lf",
+        "--lf",
         dest="rerun_failed",
         default=False,
         action="store_true",
         help="Run only the tests in the suite that failed during the last run.",
+    )
+
+    parser.add_argument(
+        "--skip-data-setup",
+        dest="skip_data_setup",
+        default=False,
+        action="store_true",
+        help="If set, skips any data integration setup to speed up testing.",
     )
 
     parser.add_argument(
@@ -82,8 +97,20 @@ if __name__ == "__main__":
 
     if args.aqueduct_tests:
         print("Running Aqueduct Tests...")
-        _run_tests("aqueduct_tests/", args.test_case, args.concurrency, args.rerun_failed)
+        _run_tests(
+            "aqueduct_tests/",
+            args.test_case,
+            args.concurrency,
+            args.rerun_failed,
+            args.skip_data_setup,
+        )
 
     if args.data_integration_tests:
         print("Running Data Integration Tests...")
-        _run_tests("data_integration_tests/", args.test_case, args.concurrency, args.rerun_failed)
+        _run_tests(
+            "data_integration_tests/",
+            args.test_case,
+            args.concurrency,
+            args.rerun_failed,
+            args.skip_data_setup,
+        )
