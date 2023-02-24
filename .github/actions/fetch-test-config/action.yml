@@ -36,7 +36,9 @@ runs:
     - name: Update the apikey in credentials
       working-directory: integration_tests/sdk
       shell: bash
-      run: sed -i '1s/.*/$(aqueduct apikey)/' ./test-credentials.yml
+      run: |
+        echo "API_KEY=$(aqueduct apikey)" 
+        sed -i '1s/.*/$API_KEY/' ./test-credentials.yml
 
     - name: Echo
       working-directory: integration_tests/sdk
