@@ -24,20 +24,22 @@ runs:
         aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
 
     - name: Fetch the Test Config
-      shell: bash
       working-directory: integration_tests/sdk
+      shell: bash
       run: aws s3 cp s3://aqueduct-assets/${{ inputs.s3_test_config_path }} ./test-config.yml
 
     - name: Fetch the Test Credentials
-      shell: bash
       working-directory: integration_tests/sdk
+      shell: bash
       run: aws s3 cp s3://aqueduct-assets/test-credentials.yml ./test-credentials.yml
 
     - name: Update the apikey in credentials
+      working-directory: integration_tests/sdk
       shell: bash
       run: sed -i '1s/.*/New first line/' ./test-credentials.yml
 
     - name: sdklf
+      working-directory: integration_tests/sdk
       shell: bash
       run: head 2 ./test-credentials.yml
 
