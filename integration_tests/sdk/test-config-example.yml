@@ -4,15 +4,8 @@ address: <SERVER_ADDRESS>
 
 # OPTIONAL: If set, this can alter the metadata store of the server, so use
 # with care.
-metadata:
-  # If `must_migrate` is set, we will error unless the server is in local metadata mode.
-  # This ensures that a metadata migration is performed. Otherwise, the server
-  # is allowed to be using the appropriate metadata store already.
-  must_migrate: true
+storage:
   test_s3:
-    # If included, will wait until migration is completed before starting the test.
-    # Will be ignored if the server is already connected to an integration with the same name.
-    use_as_storage:
 
 # REQUIRED: All the data integrations to run the test suite against.
 # All entries here must be present in `test-credentials.yml`, except

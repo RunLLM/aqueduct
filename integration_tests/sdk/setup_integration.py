@@ -162,7 +162,7 @@ def _setup_s3_data(client: Client, s3: S3Integration):
     _add_missing_artifacts(client, s3, existing_names)
 
 
-def setup_data_integrations(filter_to: Optional[str] = None) -> None:
+def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> None:
     """Connects to the given integration name if the server hasn't yet. It also ensures
     that the appropriate data is populated.
 
@@ -181,27 +181,16 @@ def setup_data_integrations(filter_to: Optional[str] = None) -> None:
     if len(data_integrations) == 0:
         return
 
-    test_credentials = _parse_credentials_file()
-
-    # Check that all data integrations in the test config have credentials.
-    assert "data" in test_credentials
+    connected_integrations = client.list_integrations()
     for integration_name in data_integrations:
-        assert integration_name in test_credentials["data"], (
-            "Data integration `%s` needs to have credentials in test-credentials.yml."
-            % integration_name
-        )
-
-    client = Client(*get_aqueduct_config())
-    for integration_name in data_integrations:
-        connected_integrations = client.list_integrations()
-
         # Only connect to integrations that don't already exist.
         if integration_name not in connected_integrations.keys():
-            integration_config = test_credentials["data"][integration_name]
-            connect_integration(
-                client,
+            integration_config = _fetch_data_integration_credentials(integration_name)
+
+            client.connect_integration(
                 integration_name,
-                integration_config,
+                integration_config["type"],
+                _sanitize_integration_config_for_connect(integration_config),
             )
 
         # Setup the data in each of these integrations.
@@ -219,42 +208,55 @@ def setup_data_integrations(filter_to: Optional[str] = None) -> None:
             raise Exception("Test suite does not yet support %s." % integration.type())
 
 
-def connect_integration(client: Client, name: str, config: Dict[str, Any]):
-    """Waits until the integration is ready to be used before returning."""
-    service_type = config["type"]
-    client.connect_integration(
-        name,
-        service_type,
-        prepare_integration_config_for_connect(name, config),
-    )
+def setup_storage_layer(client: Client) -> None:
+    """If a storage data integration is specified, perform a migration if we aren't already connected to it."""
+    test_config = _parse_config_file()
+    if "storage" not in test_config:
+        return
 
-    # Poll on the server until the integration is ready.
-    while True:
-        try:
-            _ = client.integration(name)
-        except AqueductError as e:
-            if "The server is currently unavailable due to system maintenance." in str(e):
-                time.sleep(1)
-                continue
-            raise
-        else:
-            break
+    assert (
+        len(test_config["storage"]) == 1
+    ), "Only one data integration can be set as storage layer."
+    name = list(test_config["storage"].keys())[0]
+
+    connected_integrations = client.list_integrations()
+    if name not in connected_integrations.keys():
+        integration_config = _fetch_data_integration_credentials(name)
+        integration_config["use_as_storage"] = "true"
+
+        client.connect_integration(
+            name,
+            integration_config["type"],
+            _sanitize_integration_config_for_connect(integration_config),
+        )
+
+        # Poll on the server until the integration is ready.
+        while True:
+            try:
+                _ = client.integration(name)
+            except AqueductError as e:
+                if "The server is currently unavailable due to system maintenance." in str(e):
+                    time.sleep(1)
+                    continue
+                raise
+            else:
+                break
 
 
-def prepare_integration_config_for_connect(name: str, config: Dict[str, Any]) -> Dict[str, Any]:
+def _sanitize_integration_config_for_connect(config: Dict[str, Any]) -> Dict[str, Any]:
     """WARNING: this modifies the configuration dict."""
     del config["type"]
-    if use_data_integration_as_storage(name):
-        config["use_as_storage"] = "true"
     return config
 
 
-def use_data_integration_as_storage(name: str):
-    assert isinstance(name, str)
-    test_config = _parse_config_file()
+def _fetch_data_integration_credentials(name: str) -> Dict[str, Any]:
+    test_credentials = _parse_credentials_file()
+    assert "data" in test_credentials
 
-    assert "data" in test_config, "test-config.yml must have a data section."
-    return "use_as_storage" in test_config["data"][name]
+    assert name in test_credentials["data"], (
+        "Data integration `%s` needs to have credentials in test-credentials.yml." % name
+    )
+    return test_credentials["data"][name]
 
 
 def list_data_integrations() -> List[str]:
