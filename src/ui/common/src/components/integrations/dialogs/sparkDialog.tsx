@@ -40,6 +40,6 @@ export const SparkDialog: React.FC<Props> = ({
   );
 };
 
-export function isDatabricksConfigComplete(config: SparkConfig): boolean {
+export function isSparkConfigComplete(config: SparkConfig): boolean {
   return !!config.livy_server_url;
 }
