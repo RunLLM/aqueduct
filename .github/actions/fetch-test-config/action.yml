@@ -2,9 +2,16 @@ name: Fetch test configurations
 description: "Fetches both test-config.yml and test-credentials.yml, the former being configurable."
 
 inputs:
+  aws_access_key_id:
+    description: "The AWS Access ID from our Github Secrets."
+    required: true
+  aws_secret_access_key:
+    description: "The AWS Access Key from our Github Secrets."
+    required: true
   s3_test_config_path:
     description: "The path in our assets bucket to the test-config.yml file to download."
     required: true
+
 
 runs:
   using: composite
@@ -13,8 +20,8 @@ runs:
       uses: aws-actions/configure-aws-credentials@v1
       with:
         aws-region: us-east-2
-        aws-access-key-id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
+        aws-access-key-id: ${{ inputs.aws_access_key_id }}
+        aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
 
     - name: Fetch the Test Config
       shell: bash
