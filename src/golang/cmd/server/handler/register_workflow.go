@@ -172,6 +172,18 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		return emptyResp, status, err
 	}
 
+	status, err = setupCondaEnv(
+		ctx,
+		args.ID,
+		args.dagSummary,
+		h.IntegrationRepo,
+		execEnvByOpId,
+		h.Database,
+	)
+	if err != nil {
+		return emptyResp, status, err
+	}
+
 	for opId, op := range args.dagSummary.Dag.Operators {
 		if env, ok := execEnvByOpId[opId]; ok {
 			// Note: this is the canotical way to assign a struct field of a map

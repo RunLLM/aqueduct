@@ -194,13 +194,17 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		return errorRespPtr, status, err
 	}
 
-	setupCondaEnv(
+	status, err = setupCondaEnv(
 		ctx,
 		args.ID,
+		args.DagSummary,
 		h.IntegrationRepo,
 		execEnvByOpId,
 		h.Database,
 	)
+	if err != nil {
+		return errorRespPtr, status, err
+	}
 
 	timeConfig := &engine.AqueductTimeConfig{
 		OperatorPollInterval: engine.DefaultPollIntervalMillisec,
@@ -290,6 +294,7 @@ func registerDependencies(
 func setupCondaEnv(
 	ctx context.Context,
 	userID uuid.UUID,
+	dagSummary *request.DagSummary,
 	integrationRepo repos.Integration,
 	envByOperator map[uuid.UUID]exec_env.ExecutionEnvironment,
 	DB database.Database,
@@ -335,13 +340,28 @@ func setupCondaEnv(
 		)
 	}
 
-	for _, env := range envByOperator {
-		err = exec_env.CreateCondaEnv(
+	existingEnvs, err := exec_env.ListCondaEnvs()
+	if err != nil {
+		return http.StatusInternalServerError, errors.Wrap(err, "Error retrieving existing conda environments.")
+	}
+
+	for opId, env := range envByOperator {
+		err = exec_env.CreateCondaEnvIfExists(
 			&env,
 			condaIntegration.Config[exec_env.CondaPathKey],
+			existingEnvs,
 		)
 		if err != nil {
 			return http.StatusInternalServerError, errors.Wrap(err, "Error creating conda environment.")
+		}
+
+		op, ok := dagSummary.Dag.Operators[opId]
+		if ok && op.Spec.IsFunction() {
+			engineConfig := op.Spec.EngineConfig()
+			engineConfig.Type = shared.AqueductCondaEngineType
+			engineConfig.AqueductCondaConfig = &shared.AqueductCondaConfig{
+				Env: env.Name(),
+			}
 		}
 
 		visitedEnvs = append(visitedEnvs, env)
