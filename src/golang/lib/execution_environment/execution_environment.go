@@ -77,7 +77,7 @@ func (e *ExecutionEnvironment) Hash() (uuid.UUID, error) {
 }
 
 func (e *ExecutionEnvironment) Name() string {
-	return fmt.Sprintf("aqueduct_%s", e.ID.String())
+	return fmt.Sprintf("%s%s", aqueductEnvNamePrefix, e.ID.String())
 }
 
 // GetExecEnvFromDB returns an exec env object from DB by its hash.

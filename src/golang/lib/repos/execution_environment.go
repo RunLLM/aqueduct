@@ -29,8 +29,8 @@ type executionEnvironmentReader interface {
 	// This is done in key-value format where the key is the operator ID and the value is the environment.
 	GetActiveByOperatorBatch(ctx context.Context, opIDs []uuid.UUID, DB database.Database) (map[uuid.UUID]models.ExecutionEnvironment, error)
 
-	// GetUnused returns the environments which aren't used by operators in the latest DAG of a workflow.
-	GetUnused(ctx context.Context, DB database.Database) ([]models.ExecutionEnvironment, error)
+	// GetActiveCondaEnvNames returns all active conda environments which aren't used by operators in the latest DAG of a workflow.
+	GetActiveCondaEnvNames(ctx context.Context, DB database.Database) ([]models.ExecutionEnvironment, error)
 }
 
 type executionEnvironmentWriter interface {

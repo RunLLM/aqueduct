@@ -98,7 +98,7 @@ func (*executionEnvironmentReader) GetActiveByOperatorBatch(ctx context.Context,
 	return resultMap, nil
 }
 
-func (*executionEnvironmentReader) GetUnused(ctx context.Context, DB database.Database) ([]models.ExecutionEnvironment, error) {
+func (*executionEnvironmentReader) GetUnusedCondaEnvNames(ctx context.Context, DB database.Database) ([]models.ExecutionEnvironment, error) {
 	// Note that we use `OperatorToArtifactType` as the filtering condition because an operator
 	// is guaranteed to generate at least one artifact, so this filter is guaranteed to capture
 	// all operators involved in a workflow DAG.

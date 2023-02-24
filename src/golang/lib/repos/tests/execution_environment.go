@@ -62,16 +62,16 @@ func (ts *TestSuite) TestExecutionEnvironment_GetActiveByOperatorBatch() {
 		})
 }
 
-func (ts *TestSuite) TestExecutionEnvironment_GetUnused() {
+func (ts *TestSuite) TestExecutionEnvironment_GetUnusedCondaEnvNames() {
 	ts.seedUsedExecutionEnvironment(3)
 
-	noNewExecutionEnvironments, err := ts.executionEnvironment.GetUnused(ts.ctx, ts.DB)
+	noNewExecutionEnvironments, err := ts.executionEnvironment.GetUnusedCondaEnvNames(ts.ctx, ts.DB)
 	require.Nil(ts.T(), err)
 	require.Equal(ts.T(), 0, len(noNewExecutionEnvironments))
 
 	expectedExecutionEnvironments := ts.seedUnusedExecutionEnvironment(3)
 
-	actualExecutionEnvironments, err := ts.executionEnvironment.GetUnused(ts.ctx, ts.DB)
+	actualExecutionEnvironments, err := ts.executionEnvironment.GetUnusedCondaEnvNames(ts.ctx, ts.DB)
 	require.Nil(ts.T(), err)
 	require.Equal(ts.T(), 3, len(actualExecutionEnvironments))
 	requireDeepEqualExecutionEnvironment(ts.T(), expectedExecutionEnvironments, actualExecutionEnvironments)
