@@ -59,6 +59,7 @@ func MigrateStorageAndVault(
 	toDelete := []string{}
 
 	for _, dag := range dags {
+		log.Infof("Migrating artifact and operator content for DAG and workflow %v: %v", dag.ID, dag.Metadata.Name)
 		if dag.EngineConfig.Type == shared.AirflowEngineType {
 			// We cannot migrate content for Airflow workflows
 			continue
@@ -71,6 +72,7 @@ func MigrateStorageAndVault(
 		}
 
 		for _, artifact := range artifacts {
+			log.Infof("Migrating artifact %v", artifact.ID)
 			artifactResults, err := artifactResultRepo.GetByArtifact(ctx, artifact.ID, txn)
 			if err != nil {
 				return err
@@ -80,10 +82,12 @@ func MigrateStorageAndVault(
 			for _, artifactResult := range artifactResults {
 				val, err := oldStore.Get(ctx, artifactResult.ContentPath)
 				if err != nil {
+					log.Errorf("Unable to get artifact result %v from old store: %v", artifactResult.ID, err)
 					return err
 				}
 
 				if err := newStore.Put(ctx, artifactResult.ContentPath, val); err != nil {
+					log.Errorf("Unable to write artifact result %v to new store: %v", artifactResult.ID, err)
 					return err
 				}
 
@@ -113,10 +117,12 @@ func MigrateStorageAndVault(
 
 			val, err := oldStore.Get(ctx, operatorCodePath)
 			if err != nil {
+				log.Errorf("Unable to get operator code %v from old store: %v", operator.ID, err)
 				return err
 			}
 
 			if err := newStore.Put(ctx, operatorCodePath, val); err != nil {
+				log.Errorf("Unable to write operator code %v to new store: %v", operator.ID, err)
 				return err
 			}
 
@@ -193,15 +199,18 @@ func MigrateVault(
 
 	// For each connected integration, migrate its credentials
 	for _, integrationDB := range integrations {
+		log.Infof("Starting migration for integration %v %v", integrationDB.ID, integrationDB.Name)
 		// The vault key for the credentials is the integration record's ID
 		key := integrationDB.ID.String()
 
 		val, err := oldVault.Get(ctx, key)
 		if err != nil {
+			log.Errorf("Unable to get integration credentials %v from old vault: %v", integrationDB.ID, err)
 			return nil, err
 		}
 
 		if err := newVault.Put(ctx, key, val); err != nil {
+			log.Errorf("Unable to write integration credentials %v to new vault: %v", integrationDB.ID, err)
 			return nil, err
 		}
 
