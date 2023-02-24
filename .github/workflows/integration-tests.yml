@@ -15,6 +15,7 @@ jobs:
       - uses: ./.github/actions/setup-server
         timeout-minutes: 5
 
+      # TODO(ENG-2537): Use our separate GH actions credentials.
       - uses: ./.github/actions/fetch-test-config
         with:
           aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
