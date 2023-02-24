@@ -36,10 +36,6 @@ runs:
     - name: Update the apikey in credentials
       working-directory: integration_tests/sdk
       shell: bash
-      run: sed -i '1s/.*/New first line/' ./test-credentials.yml
+      run: sed -i '1s/.*/$(aqueduct apikey)/' ./test-credentials.yml
 
-    - name: sdklf
-      working-directory: integration_tests/sdk
-      shell: bash
-      run: head -n 2 ./test-credentials.yml
 
