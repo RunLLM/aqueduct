@@ -1,13 +1,6 @@
 package livy
 
 const (
-	InstallAqueductEntrypoint = `import sys
-import subprocess
-
-print(1)
-subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'aqueduct-ml==0.2.1'])
-`
-
 	FunctionEntrypoint = `import base64
 import argparse
 import subprocess
@@ -20,12 +13,9 @@ from aqueduct_executor.operators.function_executor import (
 )
 from aqueduct_executor.operators.function_executor.spec import parse_spec
 
-print("hello")
 spec_json = base64.b64decode("%s")
 spec = parse_spec(spec_json)
-print(spec)
 extract_function.run(spec)
-print(spark)
 spark_session_obj = spark
 run(spec, spark_session_obj)
 `
