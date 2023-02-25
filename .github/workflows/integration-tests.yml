@@ -84,7 +84,7 @@ jobs:
 
   # TODO: Change this to ubuntu-latest to see how slow.
   run-tests-data-integrations:
-    run-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-latest-8-cores
     timeout-minutes: 20
     name: Data Integration Tests
     steps:
