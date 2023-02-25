@@ -27,11 +27,36 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
 
   const { edges, nodes } = dagPositionState.result ?? { edges: [], nodes: [] };
 
+  const canvasEdges = edges.map((edge) => {
+    return {
+      id: edge.id,
+      source: edge.source,
+      target: edge.target,
+      type: edge.type,
+      container: 'root'
+    }
+  })
+
+  const canvasNodes = nodes.map((node) => {
+    return {
+      id: node.id,
+      type: node.type,
+      data: node.data,
+      position: node.position,
+    }
+  })
+
+  //console.log('ReactFlowCanvas Nodes: ', nodes);
+  //console.log('ReactFlowCanvas edges: ', edges);
+
+  console.log('canvasEdges: ', canvasEdges);
+  console.log('canvasNodes: ', canvasNodes);
+
   return (
     <ReactFlow
       onPaneClick={onPaneClicked}
-      nodes={nodes}
-      edges={edges}
+      nodes={canvasNodes}
+      edges={canvasEdges}
       onNodeClick={switchSideSheet}
       nodeTypes={nodeTypes}
       connectionLineStyle={connectionLineStyle}

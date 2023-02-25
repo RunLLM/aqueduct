@@ -10,9 +10,10 @@ const BaseNode = styled(Box)({
   borderStyle: 'solid',
   borderWidth: '2px',
   padding: '10px',
-  maxWidth: '250px',
-  minHeight: '140px',
-  maxHeight: '250px',
+  width: '300px',
+  height: '150px',
+  maxWidth: '300px',
+  maxHeight: '150px',
 });
 
 export { BaseNode };

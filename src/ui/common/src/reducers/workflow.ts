@@ -484,11 +484,10 @@ export const handleGetSelectDagPosition = createAsyncThunk<
       const mappedNodes = collapsedPosition.nodes.map((node) => {
         return {
           id: node.id,
-          // Width and height set not only the node width/height, but also how far apart we want to position these nodes.
-          // So using a value of just the width and the height of the node will result in no spacing in between.
-          // Elk (eclipse layout kernel) also provides many knobs to tweak this as well.
+          // width of the node in px.
           width: 300,
-          height: 300,
+          // height of the node in px.
+          height: 150,
         };
       });
 
@@ -499,7 +498,7 @@ export const handleGetSelectDagPosition = createAsyncThunk<
           'elk.direction': 'RIGHT',
           'elk.alignment': 'CENTER',
           'elk.spacing.nodeNode': '80',
-          'elk.layered.spacing.nodeNodeBetweenLayers': '80',
+          'elk.layered.spacing.nodeNodeBetweenLayers': '100',
           // https://www.eclipse.org/elk/reference/options/org-eclipse-elk-layered-nodePlacement-strategy.html
           'nodePlacement.strategy': 'NETWORK_SIMPLEX',
           'org.eclipse.elk.edgeRouting': 'SPLINES',
@@ -568,6 +567,7 @@ export const workflowSlice = createSlice({
         loading: LoadingStatusEnum.Succeeded,
         err: '',
       };
+      console.log('selectedDagPositionResult: ', response);
       state.selectedDagPosition.result = response;
     });
     builder.addCase(handleGetSelectDagPosition.rejected, (state, action) => {
