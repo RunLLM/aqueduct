@@ -23,7 +23,6 @@ runs:
         aws-access-key-id: ${{ inputs.aws_access_key_id }}
         aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
 
-    # TODO(add task for not having to do this, maybe we can use the aws cli if it exists?)
     # The credentials are configured for the AWS CLI, but we still need to write them somewhere
     # for our AWS-based integrations to use.
     - name: Save Credentials
