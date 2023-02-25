@@ -68,7 +68,7 @@ jobs:
           aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
           s3_test_config_path: premerge-s3-storage-test-config.yml
 
-      # The S3 connector requires this.
+      # For the S3 connector requires this.
       - name: Install any additional Python dependencies
         run: pip3 install pyarrow
 
