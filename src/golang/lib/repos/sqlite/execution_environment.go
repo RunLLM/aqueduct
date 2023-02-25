@@ -50,9 +50,9 @@ func (*executionEnvironmentReader) GetBatch(ctx context.Context, IDs []uuid.UUID
 	return getExecutionEnvironments(ctx, DB, query, args...)
 }
 
-func (*executionEnvironmentReader) GetActiveByHash(ctx context.Context, hash uuid.UUID, DB database.Database) (*models.ExecutionEnvironment, error) {
+func (*executionEnvironmentReader) GetByHash(ctx context.Context, hash uuid.UUID, DB database.Database) (*models.ExecutionEnvironment, error) {
 	query := fmt.Sprintf(
-		`SELECT %s FROM execution_environment WHERE hash = $1 AND garbage_collected = FALSE;`,
+		`SELECT %s FROM execution_environment WHERE hash = $1;`,
 		models.ExecutionEnvironmentCols(),
 	)
 	args := []interface{}{hash}
@@ -60,7 +60,7 @@ func (*executionEnvironmentReader) GetActiveByHash(ctx context.Context, hash uui
 	return getExecutionEnvironment(ctx, DB, query, args...)
 }
 
-func (*executionEnvironmentReader) GetActiveByOperatorBatch(ctx context.Context, opIDs []uuid.UUID, DB database.Database) (map[uuid.UUID]models.ExecutionEnvironment, error) {
+func (*executionEnvironmentReader) GetByOperatorBatch(ctx context.Context, opIDs []uuid.UUID, DB database.Database) (map[uuid.UUID]models.ExecutionEnvironment, error) {
 	type resultRow struct {
 		ID               uuid.UUID                       `db:"id"`
 		OpID             uuid.UUID                       `db:"operator_id"`
@@ -73,8 +73,7 @@ func (*executionEnvironmentReader) GetActiveByOperatorBatch(ctx context.Context,
 		`SELECT operator.id AS operator_id, %s
 		FROM execution_environment, operator
 		WHERE operator.execution_environment_id = execution_environment.id
-		AND operator.id IN (%s)
-		AND execution_environment.garbage_collected = FALSE;`,
+		AND operator.id IN (%s);`,
 		models.ExecutionEnvironmentColsWithPrefix(),
 		stmt_preparers.GenerateArgsList(len(opIDs), 1),
 	)
@@ -96,57 +95,6 @@ func (*executionEnvironmentReader) GetActiveByOperatorBatch(ctx context.Context,
 	}
 
 	return resultMap, nil
-}
-
-func (*executionEnvironmentReader) GetUnusedCondaEnvNames(ctx context.Context, DB database.Database) ([]models.ExecutionEnvironment, error) {
-	// Note that we use `OperatorToArtifactType` as the filtering condition because an operator
-	// is guaranteed to generate at least one artifact, so this filter is guaranteed to capture
-	// all operators involved in a workflow DAG.
-	query := fmt.Sprintf(`
-	WITH latest_workflow_dag AS
-	(
-		SELECT 
-			workflow_dag.id 
-		FROM
-			workflow_dag 
-		WHERE 
-			created_at IN (
-				SELECT 
-					MAX(workflow_dag.created_at) 
-				FROM 
-					workflow, workflow_dag 
-				WHERE 
-					workflow.id = workflow_dag.workflow_id 
-				GROUP BY 
-					workflow.id
-			)
-	),
-	active_execution_environment AS
-	(
-		SELECT DISTINCT
-			operator.execution_environment_id AS id
-		FROM 
-			latest_workflow_dag, workflow_dag_edge, operator
-		WHERE
-			latest_workflow_dag.id = workflow_dag_edge.workflow_dag_id 
-			AND 
-			workflow_dag_edge.type = '%s' 
-			AND 
-			workflow_dag_edge.from_id = operator.id
-	)
-	SELECT 
-		%s
-	FROM 
-		execution_environment LEFT JOIN active_execution_environment 
-		ON execution_environment.id = active_execution_environment.id
-	WHERE 
-		execution_environment.garbage_collected = FALSE 
-		AND 
-		active_execution_environment.id IS NULL;`,
-		shared.OperatorToArtifactDAGEdge,
-		models.ExecutionEnvironmentColsWithPrefix())
-
-	return getExecutionEnvironments(ctx, DB, query)
 }
 
 func (*executionEnvironmentWriter) Create(

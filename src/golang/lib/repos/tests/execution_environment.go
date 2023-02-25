@@ -29,19 +29,19 @@ func (ts *TestSuite) TestExecutionEnvironment_GetBatch() {
 	requireDeepEqualExecutionEnvironment(ts.T(), expectedExecutionEnvironments, actualExecutionEnvironments)
 }
 
-func (ts *TestSuite) TestExecutionEnvironment_GetActiveByHash() {
+func (ts *TestSuite) TestExecutionEnvironment_GetByHash() {
 	executionEnvironments := ts.seedUnusedExecutionEnvironment(1)
 	expectedExecutionEnvironment := &executionEnvironments[0]
 
-	actualExecutionEnvironment, err := ts.executionEnvironment.GetActiveByHash(ts.ctx, expectedExecutionEnvironment.Hash, ts.DB)
+	actualExecutionEnvironment, err := ts.executionEnvironment.GetByHash(ts.ctx, expectedExecutionEnvironment.Hash, ts.DB)
 	require.Nil(ts.T(), err)
 	requireDeepEqual(ts.T(), expectedExecutionEnvironment, actualExecutionEnvironment)
 }
 
-func (ts *TestSuite) TestExecutionEnvironment_GetActiveByOperatorBatch() {
+func (ts *TestSuite) TestExecutionEnvironment_GetByOperatorBatch() {
 	expectedExecutionEnvironments, operators := ts.seedUsedExecutionEnvironment(6)
 
-	actualExecutionEnvironments, err := ts.executionEnvironment.GetActiveByOperatorBatch(
+	actualExecutionEnvironments, err := ts.executionEnvironment.GetByOperatorBatch(
 		ts.ctx,
 		[]uuid.UUID{operators[0].ID, operators[2].ID, operators[4].ID},
 		ts.DB,
@@ -60,21 +60,6 @@ func (ts *TestSuite) TestExecutionEnvironment_GetActiveByOperatorBatch() {
 			actualExecutionEnvironments[operators[2].ID],
 			actualExecutionEnvironments[operators[4].ID],
 		})
-}
-
-func (ts *TestSuite) TestExecutionEnvironment_GetUnusedCondaEnvNames() {
-	ts.seedUsedExecutionEnvironment(3)
-
-	noNewExecutionEnvironments, err := ts.executionEnvironment.GetUnusedCondaEnvNames(ts.ctx, ts.DB)
-	require.Nil(ts.T(), err)
-	require.Equal(ts.T(), 0, len(noNewExecutionEnvironments))
-
-	expectedExecutionEnvironments := ts.seedUnusedExecutionEnvironment(3)
-
-	actualExecutionEnvironments, err := ts.executionEnvironment.GetUnusedCondaEnvNames(ts.ctx, ts.DB)
-	require.Nil(ts.T(), err)
-	require.Equal(ts.T(), 3, len(actualExecutionEnvironments))
-	requireDeepEqualExecutionEnvironment(ts.T(), expectedExecutionEnvironments, actualExecutionEnvironments)
 }
 
 func (ts *TestSuite) TestExecutionEnvironment_Create() {

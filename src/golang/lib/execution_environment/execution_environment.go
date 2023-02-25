@@ -88,7 +88,7 @@ func GetExecEnvFromDB(
 	execEnvRepo repos.ExecutionEnvironment,
 	db database.Database,
 ) (*ExecutionEnvironment, error) {
-	dbExecEnv, err := execEnvRepo.GetActiveByHash(ctx, hash, db)
+	dbExecEnv, err := execEnvRepo.GetByHash(ctx, hash, db)
 	if err != nil {
 		return nil, err
 	}
@@ -106,13 +106,13 @@ func newFromDBExecutionEnvironment(
 	}
 }
 
-func GetActiveExecutionEnvironmentsByOperatorIDs(
+func GetExecutionEnvironmentsByOperatorIDs(
 	ctx context.Context,
 	opIDs []uuid.UUID,
 	execEnvRepo repos.ExecutionEnvironment,
 	db database.Database,
 ) (map[uuid.UUID]ExecutionEnvironment, error) {
-	dbEnvMap, err := execEnvRepo.GetActiveByOperatorBatch(
+	dbEnvMap, err := execEnvRepo.GetByOperatorBatch(
 		ctx, opIDs, db,
 	)
 	if err != nil {
@@ -205,34 +205,14 @@ func CreateMissingAndSyncExistingEnvs(
 	return results, nil
 }
 
-func GetUnusedExecutionEnvironmentIDs(
-	ctx context.Context,
-	execEnvRepo repos.ExecutionEnvironment,
-	db database.Database,
-) ([]uuid.UUID, error) {
-	dbEnvs, err := execEnvRepo.GetUnused(
-		ctx, db,
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	results := make([]uuid.UUID, 0, len(dbEnvs))
-	for _, dbEnv := range dbEnvs {
-		results = append(results, dbEnv.ID)
-	}
-
-	return results, nil
-}
-
 // CleanupUnusedEnvironments is executed in a best-effort fashion, and we log all the errors within
 // the function and return an error object signaling whether there is at least one error occurred.
 func CleanupUnusedEnvironments(
 	ctx context.Context,
-	execEnvRepo repos.ExecutionEnvironment,
+	operatorRepo repos.Operator,
 	db database.Database,
 ) error {
-	envIDs, err := GetUnusedExecutionEnvironmentIDs(ctx, execEnvRepo, db)
+	envNames, err := operatorRepo.GetUnusedCondaEnvNames(ctx, db)
 	if err != nil {
 		log.Errorf("Error getting unused execution environments: %v", err)
 		return err
@@ -240,29 +220,18 @@ func CleanupUnusedEnvironments(
 
 	hasError := false
 
-	for _, envID := range envIDs {
-		envName := fmt.Sprintf("%s_%s", "aqueduct", envID.String())
+	for _, name := range envNames {
 		deleteArgs := []string{
 			"env",
 			"remove",
 			"-n",
-			envName,
+			name,
 		}
 
 		_, _, err := lib_utils.RunCmd(CondaCmdPrefix, deleteArgs...)
 		if err != nil {
 			hasError = true
-			log.Errorf("Error garbage collecting conda environment %s: %v", envID, err)
-		} else {
-			_, err = execEnvRepo.Update(
-				ctx,
-				envID,
-				map[string]interface{}{
-					"garbage_collected": true,
-				},
-				db,
-			)
-			log.Errorf("Error updating the garbage collection column of conda environment %s: %v", envID, err)
+			log.Errorf("Error garbage collecting conda environment %s: %v", name, err)
 		}
 	}
 
