@@ -321,7 +321,8 @@ func (*operatorReader) GetUnusedCondaEnvNames(ctx context.Context, DB database.D
 	),
 	active_env_names AS
 	(
-		SELECT DISTINCT name
+		SELECT DISTINCT
+			all_env_names.name AS name
 		FROM 
 			all_env_names, latest_workflow_dag, workflow_dag_edge
 		WHERE
@@ -330,7 +331,7 @@ func (*operatorReader) GetUnusedCondaEnvNames(ctx context.Context, DB database.D
 			workflow_dag_edge.type = '%s' 
 			AND 
 			workflow_dag_edge.from_id = all_env_names.op_id
-	),
+	)
 	SELECT 
 		all_env_names.name AS name
 	FROM 

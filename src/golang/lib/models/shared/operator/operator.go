@@ -259,3 +259,8 @@ func (s *Spec) Value() (driver.Value, error) {
 func (s *Spec) Scan(value interface{}) error {
 	return utils.ScanJSONB(value, s)
 }
+
+func (s *Spec) SetEngineConfig(engineConfig *shared.EngineConfig) *Spec {
+	s.spec.EngineConfig = engineConfig
+	return s
+}
