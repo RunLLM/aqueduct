@@ -8,7 +8,6 @@ type Props = {
   execState: ExecState;
 };
 
-
 // This component seems to be unused. Let's remove it
 export const NodeStatus: React.FC<Props> = ({ execState }) => {
   let statusIcon = null;
