@@ -79,11 +79,11 @@ jobs:
 #      - uses: ./.github/actions/upload-artifacts
 #        if: always()
 #        with:
-#          prefix: S3StorageLayer
+#          prefix: S3 Storage
 
   # TODO: Change this to ubuntu-latest to see how slow.
   run-tests-data-integrations:
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     name: Data Integration Tests
     steps:
@@ -108,9 +108,9 @@ jobs:
       - name: Run the SDK Integration Aqueduct Tests
         timeout-minutes: 20
         working-directory: integration_tests/sdk
-        run: python3 run_tests.py --data-integration -n 8
+        run: python3 run_tests.py --data-integration -n 2
 
       - uses: ./.github/actions/upload-artifacts
         if: always()
         with:
-          prefix: DataIntegrations
+          prefix: Data Integrations
