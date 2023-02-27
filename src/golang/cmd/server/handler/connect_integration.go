@@ -182,14 +182,12 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		// the connect integration request has succeeded and that the migration is now
 		// under way.
 		go func() {
-			log.Info("Starting storage migration process")
-			log.Info("Waiting for server to be paused...")
+			log.Info("Starting storage migration process...")
 			// Wait until the server is paused
 			h.PauseServer()
 			// Makes sure that the server is restarted
 			defer h.RestartServer()
 
-			log.Info("Waiting to acquire workflow execution lock...")
 			// Wait until there are no more workflow runs in progress
 			lock := utils.NewExecutionLock()
 			if err := lock.Lock(); err != nil {
@@ -201,7 +199,6 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 					log.Errorf("Unexpected error when unlocking workflow execution lock: %v", err)
 				}
 			}()
-			log.Info("Acquired workflow execution lock")
 
 			if err := setIntegrationAsStorage(
 				context.Background(),
@@ -217,6 +214,8 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 			); err != nil {
 				log.Errorf("Unexpected error when setting the new storage layer: %v", err)
 			}
+
+			log.Info("Successfully migrated the storage layer!")
 		}()
 	}
 
