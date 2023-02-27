@@ -33,9 +33,9 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
       source: edge.source,
       target: edge.target,
       type: edge.type,
-      container: 'root'
-    }
-  })
+      container: 'root',
+    };
+  });
 
   const canvasNodes = nodes.map((node) => {
     return {
@@ -43,8 +43,8 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
       type: node.type,
       data: node.data,
       position: node.position,
-    }
-  })
+    };
+  });
 
   //console.log('ReactFlowCanvas Nodes: ', nodes);
   //console.log('ReactFlowCanvas edges: ', edges);
