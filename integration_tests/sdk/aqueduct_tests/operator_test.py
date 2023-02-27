@@ -42,7 +42,7 @@ def test_operator_reuse(data_integration):
 
     noop_artifact_1 = noop(sentiment_artifact).get()
     noop_artifact_2 = noop(wine_artifact).get()
-    
+
     assert noop_artifact_1.name() == "noop artifact"
     assert noop_artifact_2.name() == "noop (1) artifact"
 
@@ -110,6 +110,31 @@ def test_operator_overwrite(data_integration):
     _ = double_args_new.get()
 
     assert double_args_new.name() == "double_args artifact"
+
+
+def test_operator_reuse_chain(data_integration):
+    """Tests reusing the same operator when it is chained together by a dependency."""
+    wine_artifact = extract(data_integration, DataObject.WINE)
+
+    @op
+    def noop_1(df):
+        return df
+
+    @op
+    def noop_2(df):
+        return df
+
+    a = noop_1(wine_artifact)
+    b = noop_2(a)
+    c = noop_1(b)
+
+    _ = a.get()
+    _ = b.get()
+    _ = c.get()
+
+    assert a.name() == "noop_1 artifact"
+    assert b.name() == "noop_2 artifact"
+    assert c.name() == "noop_1 (1) artifact"
 
 
 # TODO(ENG-1470): This doesn't work in pytest, but is fine in a jupyter notebook.
