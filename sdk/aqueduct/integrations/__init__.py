@@ -1,6 +1,7 @@
 from aqueduct.integrations.connect_config import (
     AthenaConfig,
     BigQueryConfig,
+    GCSConfig,
     IntegrationConfig,
     MongoDBConfig,
     MySQLConfig,
