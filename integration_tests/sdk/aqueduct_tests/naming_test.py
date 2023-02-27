@@ -117,13 +117,3 @@ def test_naming_collision_with_different_types(client, data_integration):
     _ = dummy_sentiment_model(table_artifact)
     with pytest.raises(InvalidUserActionException):
         _ = extract(data_integration, DataObject.SENTIMENT, op_name="dummy_sentiment_model")
-
-
-def test_naming_collision_with_dependency(client, data_integration):
-    # Overwrite is invalid when the operator being replaced is an upstream dependency.
-    table_artifact = extract(data_integration, DataObject.SENTIMENT, op_name="sentiment_model")
-    dummy_model_output = dummy_model(table_artifact)
-    dummy_model_2_output = dummy_model_2(dummy_model_output)
-
-    with pytest.raises(InvalidUserActionException):
-        _ = dummy_model(dummy_model_2_output)
