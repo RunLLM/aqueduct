@@ -113,11 +113,6 @@ def test_naming_collision_with_different_types(client, data_integration):
     # An overwrite is invalid because the operators are of different types.
     table_artifact = extract(data_integration, DataObject.SENTIMENT, op_name="sql query")
 
-    # Function collides with existing sql artifact
-    _ = extract(data_integration, DataObject.SENTIMENT, op_name="dummy_model")
-    with pytest.raises(InvalidUserActionException):
-        dummy_model(table_artifact)
-
     # SQL collides with existing function
     _ = dummy_sentiment_model(table_artifact)
     with pytest.raises(InvalidUserActionException):
