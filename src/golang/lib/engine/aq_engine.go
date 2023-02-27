@@ -1157,3 +1157,81 @@ func (eng *aqEngine) updateWorkflowSchedule(
 	}
 	return nil
 }
+
+func (eng *aqEngine) createWorklfowEnv(
+	execEnvironments map[uuid.UUID]exec_env.ExecutionEnvironment,
+) (*exec_env.ExecutionEnvironment, error) {
+
+	combinedDependenciesMap := make(map[string]bool)
+	pythonVersion := ""
+	for _, env := range execEnvironments {
+		for _, dep := range env.Dependencies {
+			combinedDependenciesMap[dep] = true
+		}
+
+		if pythonVersion != "" && pythonVersion != env.PythonVersion {
+			return nil, errors.New("Multiple python versions provided for different operators.")
+		} else {
+			pythonVersion = env.PythonVersion
+		}
+	}
+	if pythonVersion == "" {
+		return nil, errors.New("Error identifying python version.")
+	}
+
+	workflowDependencies := make([]string, 0, len(combinedDependenciesMap))
+	for dep := range combinedDependenciesMap {
+		workflowDependencies = append(workflowDependencies, dep)
+	}
+
+	rawEnv := &exec_env.ExecutionEnvironment{}
+	rawEnv.Dependencies = workflowDependencies
+	rawEnv.PythonVersion = pythonVersion
+
+	return rawEnv, nil
+}
+
+func (eng *aqEngine) setupSparkJobManager(
+	ctx context.Context,
+	dbDAG *models.DAG,
+	vaultObject vault.Vault,
+	execEnvironments map[uuid.UUID]exec_env.ExecutionEnvironment,
+) (job.JobManager, error) {
+
+	log.Info("IN SETUPSPARKJOBMANAGER")
+
+	rawEnv, err := eng.createWorklfowEnv(execEnvironments)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to combine environments for workflow.")
+	}
+	log.Info("CREATED WORKFLOW ENV")
+
+	existingEnvs, err := exec_env.ListCondaEnvs()
+	if err != nil {
+		return nil, errors.Wrap(err, "Error retrieving existing conda environments.")
+	}
+
+	err = exec_env.CreateCondaEnvIfExists(
+		rawEnv,
+		"/home/ubuntu/anaconda3/",
+		existingEnvs,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "Error creating conda environment.")
+	}
+	log.Info("CREATING CONDA ENV")
+
+	// Pack env into archive and ship to S3. Put S3 URI into config.
+
+	jobManager, err := job.GenerateNewJobManager(
+		ctx,
+		dbDAG.EngineConfig,
+		&dbDAG.StorageConfig,
+		eng.AqPath,
+		vaultObject,
+	)
+	if err != nil {
+		return nil, err
+	}
+	return jobManager, nil
+}
