@@ -68,8 +68,8 @@ jobs:
           aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
           s3_test_config_path: premerge-s3-storage-test-config.yml
 
-       - name: Install any data connector packages
-         run: aqueduct install s3
+      - name: Install any data connector packages
+        run: aqueduct install s3
 
       - name: Run the SDK Integration Aqueduct Tests
         timeout-minutes: 10
