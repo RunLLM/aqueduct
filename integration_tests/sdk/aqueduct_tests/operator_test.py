@@ -40,11 +40,14 @@ def test_operator_reuse(data_integration):
     def noop(df):
         return df
 
-    noop_artifact_1 = noop(sentiment_artifact).get()
-    noop_artifact_2 = noop(wine_artifact).get()
+    noop_artifact_1 = noop(sentiment_artifact)
+    noop_artifact_2 = noop(wine_artifact)
 
     assert noop_artifact_1.name() == "noop artifact"
     assert noop_artifact_2.name() == "noop (1) artifact"
+
+    _ = noop_artifact_1.get()
+    _ = noop_artifact_2.get()
 
     @op
     def noop_multiple(df1, df2):
