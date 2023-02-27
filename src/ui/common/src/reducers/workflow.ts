@@ -504,11 +504,7 @@ export const handleGetSelectDagPosition = createAsyncThunk<
           'org.eclipse.elk.edgeRouting': 'SPLINES',
           //https://www.eclipse.org/elk/reference/options/org-eclipse-elk-layered-nodePlacement-strategy.html
           'crossingMinimization.strategy': 'INTERACTIVE',
-          //'crossingMinimization.strategy': 'LAYER_SWEEP',
-          //'crossingMinimization.semiInteractive': true,
           'crossingMinimization.forceNodeModelOrder': true,
-          //'crossingMinimization.positionChoiceConstraint': 1,
-          //'crossingMinimization.hierarchicalSweepiness': 1
         },
         children: mappedNodes,
         edges: collapsedPosition.edges,
