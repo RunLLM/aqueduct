@@ -40,8 +40,11 @@ def test_operator_reuse(data_integration):
     def noop(df):
         return df
 
-    _ = noop(sentiment_artifact).get()
-    _ = noop(wine_artifact).get()
+    noop_artifact_1 = noop(sentiment_artifact).get()
+    noop_artifact_2 = noop(wine_artifact).get()
+    
+    assert noop_artifact_1.name() == "noop artifact"
+    assert noop_artifact_2.name() == "noop (1) artifact"
 
     @op
     def noop_multiple(df1, df2):
@@ -90,6 +93,8 @@ def test_operator_overwrite(data_integration):
 
     _ = single_args_new.get()
 
+    assert single_args_new.name() == "single_args artifact"
+
     @op
     def double_args(df1, df2):
         return df1
@@ -103,6 +108,8 @@ def test_operator_overwrite(data_integration):
         double_args_old.get()
 
     _ = double_args_new.get()
+
+    assert double_args_new.name() == "double_args artifact"
 
 
 # TODO(ENG-1470): This doesn't work in pytest, but is fine in a jupyter notebook.
