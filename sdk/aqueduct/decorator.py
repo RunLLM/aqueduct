@@ -122,6 +122,7 @@ def wrap_spec(
         if input_artifact_ids != colliding_op.inputs:
             overwrite_existing_op = False
 
+    original_op_name = op_name
     op_name, artifact_names = resolve_op_and_artifact_names(
         dag,
         op_name,
@@ -129,6 +130,12 @@ def wrap_spec(
         candidate_artifact_names=output_artifact_names,
         num_outputs=len(output_artifact_ids),
     )
+
+    if colliding_op is not None and op_name != original_op_name:
+        print(
+            "Warning: There is already an operator named %s so this operator is being renamed to %s"
+            % (original_op_name, op_name)
+        )
 
     apply_deltas_to_dag(
         dag,
