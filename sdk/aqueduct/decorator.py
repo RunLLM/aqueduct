@@ -111,9 +111,9 @@ def wrap_spec(
     operator_id = generate_uuid()
     output_artifact_ids = [generate_uuid() for _ in output_artifact_type_hints]
 
-    print('Adding Operator: ', op_name)
-    print('Got inputs: ', input_artifacts)
-    print('Input IDs: ', [x.id() for x in input_artifacts])
+    print("Adding Operator: ", op_name)
+    print("Got inputs: ", input_artifacts)
+    print("Input IDs: ", [x.id() for x in input_artifacts])
 
     # Cases for should de-duplicate
     # 1. Clashing op does not exist --> FALSE
@@ -122,17 +122,17 @@ def wrap_spec(
     overwrite_existing_op = True
     colliding_op = dag.get_operator(with_name=op_name)
     if colliding_op is not None:
-        print('There is a clashing operator that we need to resolve')
-        print('It has inputs: ', colliding_op.inputs)
+        print("There is a clashing operator that we need to resolve")
+        print("It has inputs: ", colliding_op.inputs)
         # There is already an operator with the same name.
         # If the input artifacts are different for this new operator
         # and the existing operator, then a new operator should be added.
         # Otherwise, the existing operator should be overwritten.
         input_artifact_ids = [input_artf.id() for input_artf in input_artifacts]
         if input_artifact_ids != colliding_op.inputs:
-            print('The inputs are NOT the same, so we do not overwrite')
+            print("The inputs are NOT the same, so we do not overwrite")
             overwrite_existing_op = False
-    
+
     op_name, artifact_names = resolve_op_and_artifact_names(
         dag,
         op_name,
