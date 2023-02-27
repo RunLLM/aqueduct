@@ -5,83 +5,82 @@ on:
   workflow_dispatch:
 
 jobs:
-#  run-tests-basic:
-#    runs-on: ubuntu-latest-8-cores
-#    timeout-minutes: 20
-#    name: All Integration Tests with Basic Config
-#    steps:
-#      - uses: actions/checkout@v2
-#
-#      - uses: ./.github/actions/setup-server
-#        timeout-minutes: 5
-#
-#      # TODO(ENG-2537): Use our separate GH actions credentials.
-#      - uses: ./.github/actions/fetch-test-config
-#        with:
-#          aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
-#          aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
-#          s3_test_config_path: premerge-basic-test-config.yml
-#
-#      - name: Run the SDK Integration Tests
-#        timeout-minutes: 10
-#        working-directory: integration_tests/sdk
-#        run: python3 run_tests.py -n 8
-#
-#      - name: Set the API key as an env variable.
-#        run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
-#
-#      - name: Run the No-Concurrency Integration Tests
-#        timeout-minutes: 10
-#        working-directory: integration_tests/no_concurrency
-#        env:
-#          SERVER_ADDRESS: localhost:8080
-#          INTEGRATION: aqueduct_demo
-#        run: pytest . -rP
-#
-#      - name: Run the Backend Integration Tests
-#        timeout-minutes: 10
-#        working-directory: integration_tests/backend
-#        env:
-#          SERVER_ADDRESS: localhost:8080
-#          INTEGRATION: aqueduct_demo
-#        run: pytest . -rP -n 1
-#
-#      - uses: ./.github/actions/upload-artifacts
-#        if: always()
-#        with:
-#          prefix: Basic
-#
-#  run-tests-s3-storage:
-#    runs-on: ubuntu-latest-8-cores
-#    timeout-minutes: 20
-#    name: SDK Integration Tests with S3 Storage Layer
-#    steps:
-#      - uses: actions/checkout@v2
-#
-#      - uses: ./.github/actions/setup-server
-#        timeout-minutes: 5
-#
-#      # TODO(ENG-2537): Use our separate GH actions credentials.
-#      - uses: ./.github/actions/fetch-test-config
-#        with:
-#          aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
-#          aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
-#          s3_test_config_path: premerge-s3-storage-test-config.yml
-#
-#       - name: Install any data connector packages
-#         run: aqueduct install s3
-#
-#      - name: Run the SDK Integration Aqueduct Tests
-#        timeout-minutes: 10
-#        working-directory: integration_tests/sdk
-#        run: python3 run_tests.py --aqueduct -n 8
-#
-#      - uses: ./.github/actions/upload-artifacts
-#        if: always()
-#        with:
-#          prefix: S3 Storage
+  run-tests-basic:
+    runs-on: ubuntu-latest-8-cores
+    timeout-minutes: 20
+    name: All Integration Tests with Basic Config
+    steps:
+      - uses: actions/checkout@v2
 
-  # TODO: Change this to ubuntu-latest to see how slow.
+      - uses: ./.github/actions/setup-server
+        timeout-minutes: 5
+
+      # TODO(ENG-2537): Use our separate GH actions credentials.
+      - uses: ./.github/actions/fetch-test-config
+        with:
+          aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
+          s3_test_config_path: premerge-basic-test-config.yml
+
+      - name: Run the SDK Integration Tests
+        timeout-minutes: 10
+        working-directory: integration_tests/sdk
+        run: python3 run_tests.py -n 8
+
+      - name: Set the API key as an env variable.
+        run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
+
+      - name: Run the No-Concurrency Integration Tests
+        timeout-minutes: 10
+        working-directory: integration_tests/no_concurrency
+        env:
+          SERVER_ADDRESS: localhost:8080
+          INTEGRATION: aqueduct_demo
+        run: pytest . -rP
+
+      - name: Run the Backend Integration Tests
+        timeout-minutes: 10
+        working-directory: integration_tests/backend
+        env:
+          SERVER_ADDRESS: localhost:8080
+          INTEGRATION: aqueduct_demo
+        run: pytest . -rP -n 1
+
+      - uses: ./.github/actions/upload-artifacts
+        if: always()
+        with:
+          prefix: Basic
+
+  run-tests-s3-storage:
+    runs-on: ubuntu-latest-8-cores
+    timeout-minutes: 20
+    name: SDK Integration Tests with S3 Storage Layer
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: ./.github/actions/setup-server
+        timeout-minutes: 5
+
+      # TODO(ENG-2537): Use our separate GH actions credentials.
+      - uses: ./.github/actions/fetch-test-config
+        with:
+          aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
+          s3_test_config_path: premerge-s3-storage-test-config.yml
+
+       - name: Install any data connector packages
+         run: aqueduct install s3
+
+      - name: Run the SDK Integration Aqueduct Tests
+        timeout-minutes: 10
+        working-directory: integration_tests/sdk
+        run: python3 run_tests.py --aqueduct -n 8
+
+      - uses: ./.github/actions/upload-artifacts
+        if: always()
+        with:
+          prefix: S3 Storage
+
   run-tests-data-integrations:
     runs-on: ubuntu-latest
     timeout-minutes: 20
