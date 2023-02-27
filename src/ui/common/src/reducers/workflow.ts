@@ -496,15 +496,9 @@ export const handleGetSelectDagPosition = createAsyncThunk<
         layoutOptions: {
           'elk.algorithm': 'layered',
           'elk.direction': 'RIGHT',
-          'elk.alignment': 'CENTER',
-          'elk.spacing.nodeNode': '80',
-          'elk.layered.spacing.nodeNodeBetweenLayers': '100',
-          // https://www.eclipse.org/elk/reference/options/org-eclipse-elk-layered-nodePlacement-strategy.html
-          'nodePlacement.strategy': 'NETWORK_SIMPLEX',
-          'org.eclipse.elk.edgeRouting': 'SPLINES',
-          //https://www.eclipse.org/elk/reference/options/org-eclipse-elk-layered-nodePlacement-strategy.html
-          'crossingMinimization.strategy': 'INTERACTIVE',
-          'crossingMinimization.forceNodeModelOrder': true,
+          'elk.spacing.nodeNode': '300',
+          'elk.layered.spacing.nodeNodeBetweenLayers': '300',
+          'elk.layered.nodePlacement.strategy': 'INTERACTIVE',
         },
         children: mappedNodes,
         edges: collapsedPosition.edges,
