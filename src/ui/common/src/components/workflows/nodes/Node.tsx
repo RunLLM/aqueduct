@@ -84,7 +84,12 @@ export const Node: React.FC<Props> = ({
         '&:hover': { backgroundColor: hoverColor },
       }}
     >
-      <Box display="flex" justifyContent="center" alignItems="center" sx={{ width: '100%' }}>
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        sx={{ width: '100%' }}
+      >
         {icon && (
           <Box sx={{ fontSize: '32px', ml: '8px', mr: '8px' }}>
             <FontAwesomeIcon icon={icon} />
