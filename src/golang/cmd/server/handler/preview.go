@@ -12,6 +12,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
+	exec_state "github.com/aqueducthq/aqueduct/lib/execution_state"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
@@ -254,7 +255,7 @@ func setupExecEnv(
 		return nil, http.StatusOK, nil
 	}
 
-	condaConnectionState, err := exec_env.ExtractConnectionState(condaIntegration)
+	condaConnectionState, err := exec_state.ExtractConnectionState(condaIntegration)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve Conda connection state.")
 	}
