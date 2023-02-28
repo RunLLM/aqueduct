@@ -24,7 +24,7 @@ server:
 migrator-release:
 	cd golang/cmd/migrator && go install -ldflags="-s -w" -trimpath
 	mkdir -p build # Make the build directory if it doesn't exist
-	mv $$GOPATH/bin/migrator build/migrator
+	cp $$GOPATH/bin/migrator build/migrator
 
 executor-release:
 	cd golang/cmd/executor && go install -ldflags="-s -w" -trimpath
