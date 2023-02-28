@@ -90,11 +90,11 @@ func ListCondaEnvs() (map[string]bool, error) {
 	return results, nil
 }
 
-// `CreateConddaEnvIfExists` creates an conda env corresponding to
+// `CreateCondaEnvIfNotExists` creates an conda env corresponding to
 // an ExecEnv `e`'s python version and dependencies.
-// It only creates the new env if it exists, otherwise the step is skipped
+// It only creates the new env if it doesn't exist, otherwise the step is skipped
 // assuming the existing env already matches all required dependencies.
-func CreateCondaEnvIfExists(
+func CreateCondaEnvIfNotExists(
 	e *ExecutionEnvironment,
 	condaPath string,
 	existingEnvs map[string]bool,

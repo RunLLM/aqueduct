@@ -143,7 +143,6 @@ func CreateMissingAndSyncExistingEnvs(
 	// visitedResults tracks already visited env.
 	// This helps reduce the number of DB access.
 	visitedResults := make(map[uuid.UUID]ExecutionEnvironment, len(envs))
-	addedEnvs := make([]ExecutionEnvironment, 0, len(envs))
 	results := make(map[uuid.UUID]ExecutionEnvironment, len(envs))
 	var err error = nil
 	txn, err := db.BeginTx(ctx)
@@ -184,7 +183,6 @@ func CreateMissingAndSyncExistingEnvs(
 
 			results[key] = env
 			visitedResults[hash] = env
-			addedEnvs = append(addedEnvs, env)
 			continue
 		}
 

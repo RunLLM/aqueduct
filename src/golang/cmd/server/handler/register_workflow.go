@@ -163,7 +163,6 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 
 	execEnvByOpId, status, err := registerDependencies(
 		ctx,
-		args.ID,
 		args.dagSummary,
 		h.ExecutionEnvironmentRepo,
 		txn,

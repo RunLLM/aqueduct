@@ -185,7 +185,6 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 
 	execEnvByOpId, status, err := registerDependencies(
 		ctx,
-		args.ID,
 		args.DagSummary,
 		h.ExecutionEnvironmentRepo,
 		h.Database,
@@ -249,7 +248,6 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 
 func registerDependencies(
 	ctx context.Context,
-	userID uuid.UUID,
 	dagSummary *request.DagSummary,
 	execEnvRepo repos.ExecutionEnvironment,
 	DB database.Database,
@@ -346,7 +344,7 @@ func setupCondaEnv(
 	}
 
 	for opId, env := range envByOperator {
-		err = exec_env.CreateCondaEnvIfExists(
+		err = exec_env.CreateCondaEnvIfNotExists(
 			&env,
 			condaIntegration.Config[exec_env.CondaPathKey],
 			existingEnvs,
