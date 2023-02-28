@@ -35,6 +35,7 @@ type ProcessConfig struct {
 	LogsDir               string `yaml:"logsDir" json:"logs_dir"`
 	PythonExecutorPackage string `yaml:"pythonExecutorPackage" json:"python_executor_package"`
 	OperatorStorageDir    string `yaml:"operatorStorageDir" json:"operator_storage_dir"`
+	CondaEnvName          string `yaml:"condaEnvName" json:"conda_env_name"`
 }
 
 type K8sJobManagerConfig struct {
@@ -135,6 +136,12 @@ func GenerateJobManagerConfig(
 		return &ProcessConfig{
 			BinaryDir:          path.Join(aqPath, BinaryDir),
 			OperatorStorageDir: path.Join(aqPath, OperatorStorageDir),
+		}, nil
+	case shared.AqueductCondaEngineType:
+		return &ProcessConfig{
+			BinaryDir:          path.Join(aqPath, BinaryDir),
+			OperatorStorageDir: path.Join(aqPath, OperatorStorageDir),
+			CondaEnvName:       engineConfig.AqueductCondaConfig.Env,
 		}, nil
 	case shared.K8sEngineType:
 		if storageConfig.Type != shared.S3StorageType && storageConfig.Type != shared.GCSStorageType {
