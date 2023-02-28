@@ -84,9 +84,9 @@ export const Node: React.FC<Props> = ({
         '&:hover': { backgroundColor: hoverColor },
       }}
     >
-      <Box display="flex" justifyContent="center" alignItems="center">
+      <Box display="flex" justifyContent="center" alignItems="center" sx={{ width: '100%' }}>
         {icon && (
-          <Box sx={{ fontSize: '24px', mr: '8px' }}>
+          <Box sx={{ fontSize: '32px', ml: '8px', mr: '8px' }}>
             <FontAwesomeIcon icon={icon} />
           </Box>
         )}
@@ -94,11 +94,11 @@ export const Node: React.FC<Props> = ({
         <Typography
           sx={{
             fontSize: '18px',
-            maxWidth: '200px',
-            minWidth: '140px',
-            overflow: 'clip',
-            overflowWrap: 'break-word',
-            textAlign: 'center',
+            maxWidth: '80%',
+            width: '80%',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
           }}
         >
           {label}
