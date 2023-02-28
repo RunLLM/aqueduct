@@ -12,7 +12,9 @@ def _execute_command(args, cwd=None) -> None:
 
 
 def _run_tests(
-    dir_name: str, test_case: str, concurrency: int, rerun_failed: bool, skip_data_setup: bool
+    dir_name: str,
+    test_case: str,
+    concurrency: int, rerun_failed: bool, skip_data_setup: bool, skip_engine_setup: bool,
 ) -> None:
     """Either test_case or rerun_failed can be set, but not both."""
     if rerun_failed:
@@ -25,6 +27,8 @@ def _run_tests(
 
     if skip_data_setup:
         cmd.append("--skip-data-setup")
+    if skip_engine_setup:
+        cmd.append("--skip-engine-setup")
 
     _execute_command(cmd)
 
@@ -73,6 +77,14 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "--skip-engine-setup",
+        dest="skip_engine_setup",
+        default=False,
+        action="store_true",
+        help="If set, skips any engine integration setup to speed up testing.",
+    )
+
+    parser.add_argument(
         "-n",
         dest="concurrency",
         default=8,
@@ -103,6 +115,7 @@ if __name__ == "__main__":
             args.concurrency,
             args.rerun_failed,
             args.skip_data_setup,
+            args.skip_engine_setup,
         )
 
     if args.data_integration_tests:
@@ -113,4 +126,5 @@ if __name__ == "__main__":
             args.concurrency,
             args.rerun_failed,
             args.skip_data_setup,
+            args.skip_engine_setup,
         )

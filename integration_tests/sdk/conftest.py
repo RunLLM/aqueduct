@@ -7,6 +7,7 @@ from sdk.setup_integration import (
     get_aqueduct_config,
     list_compute_integrations,
     list_data_integrations,
+    setup_compute_integrations,
     setup_data_integrations,
     setup_storage_layer,
 )
@@ -23,9 +24,10 @@ def pytest_addoption(parser):
     # Sets a global flag that can be toggled if we want to check that a deprecated code path still works.
     parser.addoption(f"--deprecated", action="store_true", default=False)
 
-    # Skips the setup of any data integrations for faster testing. Best used as an optimization after first
+    # Skips the setup of data/compute integrations for faster testing. Best used as an optimization after first
     # test run of a debugging session.
     parser.addoption(f"--skip-data-setup", action="store_true", default=False)
+    parser.addoption(f"--skip-engine-setup", action="store_true", default=False)
 
     # Allows any tests that rely on a K8s cluster with a GPU setup to run.
     parser.addoption(f"--gpu", action="store_true", default=False)
@@ -55,6 +57,11 @@ def pytest_cmdline_main(config):
     client = Client(*get_aqueduct_config())
     setup_storage_layer(client)
 
+    _parse_flags_and_setup_data_integrations(config, client)
+    _parse_flags_and_setup_compute_integrations(config, client)
+
+
+def _parse_flags_and_setup_data_integrations(config, client: Client):
     should_skip = config.getoption(f"--skip-data-setup")
     if should_skip:
         return
@@ -64,6 +71,18 @@ def pytest_cmdline_main(config):
         setup_data_integrations(client, filter_to=data_integration)
     else:
         setup_data_integrations(client)
+
+
+def _parse_flags_and_setup_compute_integrations(config, client: Client):
+    should_skip = config.getoption(f"--skip-engine-setup")
+    if should_skip:
+        return
+
+    engine = config.getoption(f"--engine")
+    if engine is not None:
+        setup_compute_integrations(client, filter_to=engine)
+    else:
+        setup_compute_integrations(client)
 
 
 @pytest.fixture(scope="function")
@@ -169,7 +188,7 @@ def must_have_gpu(pytestconfig, request, client, engine):
 
     The user is responsible for supplying a K8s integration with an available GPU.
     """
-    if not request.node.get_closest_marker("gpu"):
+    if not request.node.get_closest_marker("must_have_gpu"):
         return
 
     if pytestconfig.getoption("gpu"):

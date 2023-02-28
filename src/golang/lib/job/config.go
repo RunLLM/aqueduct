@@ -4,12 +4,15 @@ import (
 	"context"
 	"encoding/gob"
 	"path"
+	"regexp"
+	"strings"
 
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type ManagerType string
@@ -186,6 +189,7 @@ func GenerateJobManagerConfig(
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to parse k8s config.")
 		}
+
 		return &K8sJobManagerConfig{
 			KubeconfigPath:     k8sConfig.KubeconfigPath,
 			ClusterName:        k8sConfig.ClusterName,

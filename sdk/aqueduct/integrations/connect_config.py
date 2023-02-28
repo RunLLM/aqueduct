@@ -114,17 +114,19 @@ class AthenaConfig(BaseConnectionConfig):
 
 
 class SnowflakeConfig(BaseConnectionConfig):
+    """Must be dumped to JSON with the `exclude_none` and `by_alias` flags."""
     username: str
     password: str
     account_identifier: str
     database: str
     warehouse: str
     db_schema: Optional[str] = Field("public", alias="schema")  # schema is a Pydantic keyword
-    role: Optional[str] = None
+    role: Optional[str] = None  # we must exclude this field if None when dumping to json.
 
     class Config:
         # Ensures that Pydantic parses JSON keys named "schema" or "db_schema" to
-        # the `db_schema` field
+        # the `db_schema` field. This is only for converting dict -> pydantic object.
+        # When dumping this config to a dictionary, be sure to use `SnowflakeConfig.json(by_alias=True)`.
         allow_population_by_field_name = True
 
 
@@ -183,6 +185,14 @@ class SparkConfig(BaseConnectionConfig):
     livy_server_url: str
 
 
+class K8sConfig(BaseConnectionConfig):
+    kubeconfig_path: str
+    cluster_name: str
+    use_same_cluster: str = "false"
+    dynamic: str = "false"
+    cloud_integration_id: str = ""
+
+
 IntegrationConfig = Union[
     BigQueryConfig,
     EmailConfig,
@@ -199,6 +209,7 @@ IntegrationConfig = Union[
     AWSConfig,
     _SlackConfigWithStringField,
     SparkConfig,
+    K8sConfig,
 ]
 
 
@@ -233,6 +244,8 @@ def convert_dict_to_integration_connect_config(
         return SparkConfig(**config_dict)
     elif service == ServiceType.AWS:
         return AWSConfig(**config_dict)
+    elif service == ServiceType.K8S:
+        return K8sConfig(**config_dict)
     raise InternalAqueductError("Unexpected Service Type: %s" % service)
 
 
