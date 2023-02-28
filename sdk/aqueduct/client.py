@@ -42,6 +42,7 @@ from aqueduct.integrations.mongodb_integration import MongoDBIntegration
 from aqueduct.integrations.s3_integration import S3Integration
 from aqueduct.integrations.salesforce_integration import SalesforceIntegration
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
+from aqueduct.integrations.aws_integration import AWSIntegration
 from aqueduct.logger import logger
 from aqueduct.models.config import FlowConfig
 from aqueduct.models.dag import Metadata, RetentionPolicy
@@ -329,6 +330,7 @@ class Client:
         LambdaIntegration,
         MongoDBIntegration,
         DatabricksIntegration,
+        AWSIntegration,
     ]:
         """Retrieves a connected integration object.
 
@@ -391,6 +393,13 @@ class Client:
         elif integration_info.service == ServiceType.DATABRICKS:
             return DatabricksIntegration(
                 metadata=integration_info,
+            )
+        elif integration_info.service == ServiceType.AWS:
+            dynamic_k8s_integration_name = "%s:k8s" % name
+            dynamic_k8s_integration_info = self._connected_integrations[dynamic_k8s_integration_name]
+            return AWSIntegration(
+                metadata=integration_info,
+                k8s_integration_metadata=dynamic_k8s_integration_info,
             )
         else:
             raise InvalidIntegrationException(

@@ -36,10 +36,25 @@ type GCSIntegrationConfig struct {
 	UseAsStorage ConfigBool `json:"use_as_storage"`
 }
 
+type K8sClusterStatusType string
+
+const (
+	K8sClusterCreatingStatus    K8sClusterStatusType = "Creating"
+	K8sClusterActiveStatus      K8sClusterStatusType = "Active"
+	K8sClusterTerminatingStatus K8sClusterStatusType = "Terminating"
+	K8sClusterTerminatedStatus  K8sClusterStatusType = "Terminated"
+)
+
 type K8sIntegrationConfig struct {
-	KubeconfigPath string     `json:"kubeconfig_path" yaml:"kubeconfigPath"`
-	ClusterName    string     `json:"cluster_name"  yaml:"clusterName"`
-	UseSameCluster ConfigBool `json:"use_same_cluster"  yaml:"useSameCluster"`
+	KubeconfigPath     string     `json:"kubeconfig_path" yaml:"kubeconfigPath"`
+	ClusterName        string     `json:"cluster_name"  yaml:"clusterName"`
+	UseSameCluster     ConfigBool `json:"use_same_cluster"  yaml:"useSameCluster"`
+	Dynamic            ConfigBool `json:"dynamic"  yaml:"dynamic"`
+	CloudIntegrationId string     `json:"cloud_integration_id"  yaml:"cloud_integration_id"`
+	// ClusterStatus       K8sClusterStatusType
+	// LastUsedTimestamp  time.Time
+	// KeepAlivePeriod    int // in seconds
+	// cgwu: add resource config field
 }
 
 type LambdaIntegrationConfig struct {
@@ -75,6 +90,14 @@ type SlackConfig struct {
 	Channels []string          `json:"channels"`
 	Level    NotificationLevel `json:"level"`
 	Enabled  bool              `json:"enabled"`
+}
+
+type AWSConfig struct {
+	AccessKeyId     string `json:"access_key_id"`
+	SecretAccessKey string `json:"secret_access_key"`
+	// ConfigFilePath    string `json:"config_file_path"`
+	// ConfigFileContent string `json:"config_file_content"`
+	// ConfigFileProfile string `json:"config_file_profile"`
 }
 
 func (c *EmailConfig) FullHost() string {

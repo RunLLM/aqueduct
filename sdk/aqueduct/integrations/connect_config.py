@@ -140,6 +140,11 @@ class SlackConfig(BaseConnectionConfig):
     enabled: bool
 
 
+class AWSConfig(BaseConnectionConfig):
+    access_key_id: str
+    secret_access_key: str
+
+
 class _SlackConfigWithStringField(BaseConnectionConfig):
     token: str
     channels_serialized: str
@@ -180,6 +185,7 @@ IntegrationConfig = Union[
     SqlServerConfig,
     SQLiteConfig,
     SlackConfig,
+    AWSConfig,
     _SlackConfigWithStringField,
 ]
 
@@ -211,6 +217,8 @@ def convert_dict_to_integration_connect_config(
         return SlackConfig(**config_dict)
     elif service == ServiceType.EMAIL:
         return EmailConfig(**config_dict)
+    elif service == ServiceType.AWS:
+        return AWSConfig(**config_dict)
     raise InternalAqueductError("Unexpected Service Type: %s" % service)
 
 

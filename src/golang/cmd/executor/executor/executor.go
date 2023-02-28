@@ -38,6 +38,17 @@ func NewExecutor(spec job.Spec) (Executor, error) {
 		}
 
 		return NewWorkflowRetentionExecutor(base), nil
+	case job.DynamicTeardownType:
+		dynamicTeardownSpec, ok := spec.(*job.DynamicTeardownSpec)
+		if !ok {
+			return nil, job.ErrInvalidJobSpec
+		}
+		base, err := NewBaseExecutor(dynamicTeardownSpec.ExecutorConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		return NewDynamicTeardownExecutor(base), nil
 	default:
 		return nil, errors.New("Unsupported JobType")
 	}

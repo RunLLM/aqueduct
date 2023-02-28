@@ -168,6 +168,53 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		return emptyResp, statusCode, err
 	}
 
+	if args.Service == shared.AWS {
+		cloudIntegration, err := h.IntegrationRepo.GetByNameAndUser(
+			ctx,
+			args.Name,
+			uuid.Nil,
+			args.OrgID,
+			txn,
+		)
+		if err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve cloud integration.")
+		}
+
+		// Register a dynamic k8s integration.
+		connectIntegrationArgs := &ConnectIntegrationArgs{
+			AqContext: args.AqContext,
+			Name:      fmt.Sprintf("%s:%s", args.Name, "k8s"),
+			Service:   shared.Kubernetes,
+			Config: auth.NewStaticConfig(
+				map[string]string{
+					"kubeconfig_path":      "/home/ubuntu/.kube/config", // cgwu: make this configurable
+					"cluster_name":         "aqueduct_k8s",              // cgwu: make this configurable
+					"dynamic":              "true",
+					"cloud_integration_id": cloudIntegration.ID.String(),
+					"use_same_cluster":     "false",
+					"status":               string(shared.K8sClusterTerminatedStatus),
+					"keepalive":            "1200",
+				},
+			),
+			UserOnly:     false,
+			SetAsStorage: false,
+		}
+
+		_, _, err = (&ConnectIntegrationHandler{
+			Database:   txn,
+			JobManager: h.JobManager,
+
+			ArtifactRepo:       h.ArtifactRepo,
+			ArtifactResultRepo: h.ArtifactResultRepo,
+			DAGRepo:            h.DAGRepo,
+			IntegrationRepo:    h.IntegrationRepo,
+			OperatorRepo:       h.OperatorRepo,
+		}).Perform(ctx, connectIntegrationArgs)
+		if err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to register dynamic k8s integration.")
+		}
+	}
+
 	if err := txn.Commit(ctx); err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
@@ -273,6 +320,7 @@ func ConnectIntegration(
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
+	// cgwu: consider moving this outside of connectintegration.
 	if args.Service == shared.Conda {
 		go func() {
 			DB, err = database.NewDatabase(DB.Config())
@@ -333,6 +381,10 @@ func ValidateConfig(
 
 	if service == shared.Slack {
 		return validateSlackConfig(config)
+	}
+
+	if service == shared.AWS {
+		return validateAWSConfig(config)
 	}
 
 	jobName := fmt.Sprintf("authenticate-operator-%s", uuid.New().String())
@@ -641,6 +693,16 @@ func validateSlackConfig(config auth.Config) (int, error) {
 	}
 
 	if err := notification.AuthenticateSlack(slackConfig); err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	return http.StatusOK, nil
+}
+
+func validateAWSConfig(
+	config auth.Config,
+) (int, error) {
+	if err := engine.AuthenticateAWSConfig(config); err != nil {
 		return http.StatusBadRequest, err
 	}
 

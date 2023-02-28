@@ -10,6 +10,7 @@ const (
 	IntegrationNameHeader    = "integration-name"
 	IntegrationServiceHeader = "integration-service"
 	IntegrationConfigHeader  = "integration-config"
+	IntegrationIDsHeader     = "integration-ids"
 
 	// Export Function headers
 	ExportFnUserFriendlyHeader = "user-friendly"
@@ -17,4 +18,6 @@ const (
 	TableNameHeader = "table-name"
 
 	MetadataOnlyHeader = "metadata-only"
+
+	EngineActionHeader = "action"
 )

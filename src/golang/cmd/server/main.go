@@ -116,6 +116,13 @@ func main() {
 		log.Fatalf("Failed to start workflow retention cronjob: %v", err)
 	}
 
+	err = s.StartDynamicTeardownJob()
+	if err != nil {
+		log.Fatalf("Failed to deployed dynamic teardown cronjob: %v", err)
+	} else {
+		log.Info("Successfully deployed dynamic teardown cron job!")
+	}
+
 	err = s.RunMissedCronJobs()
 	if err != nil {
 		log.Errorf("Failed to run missed workflows: %v", err)

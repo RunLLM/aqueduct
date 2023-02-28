@@ -54,6 +54,10 @@ type baseOperator struct {
 	// Otherwise, it will switch to the appropriate Conda environment before running the operator.
 	// This only applies to operators running with the Aqueduct engine.
 	execEnv *exec_env.ExecutionEnvironment
+
+	// Used for dynamic integration.
+	dynamic           bool
+	dynamicProperties *dynamicProperties
 }
 
 func (bo *baseOperator) Type() operator.Type {
@@ -66,6 +70,31 @@ func (bo *baseOperator) Name() string {
 
 func (bo *baseOperator) ID() uuid.UUID {
 	return bo.dbOperator.ID
+}
+
+func (bo *baseOperator) Dynamic() bool {
+	return bo.dynamic
+}
+
+func (bo *baseOperator) GetDynamicProperties() *dynamicProperties {
+	return bo.dynamicProperties
+}
+
+type dynamicProperties struct {
+	engineIntegrationId uuid.UUID
+	prepared            bool
+}
+
+func (dp *dynamicProperties) GetEngineIntegrationId() uuid.UUID {
+	return dp.engineIntegrationId
+}
+
+func (dp *dynamicProperties) Prepared() bool {
+	return dp.prepared
+}
+
+func (dp *dynamicProperties) SetPrepared() {
+	dp.prepared = true
 }
 
 // A catch-all for execution states that are the system's fault.

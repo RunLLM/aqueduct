@@ -368,7 +368,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		jobManager, err = job.GenerateNewJobManager(
 			ctx,
 			dbDAG.EngineConfig,
-			&dbDAG.StorageConfig,
+			&dbDAG.StorageConfig, // cgwu: is this a bug?
 			eng.AqPath,
 			vaultObject,
 		)
@@ -863,6 +863,7 @@ func onFinishExecution(
 	integrationRepo repos.Integration,
 	DB database.Database,
 ) {
+	log.Infof("curErr is %v", curErr)
 	// Wait a little bit for all active operators to finish before exiting on failure.
 	waitForInProgressOperators(ctx, inProgressOps, pollInterval, cleanupTimeout)
 	if curErr != nil && notificationContent == nil {
@@ -940,6 +941,15 @@ func (eng *aqEngine) execute(
 		}
 
 		for _, op := range inProgressOps {
+			if op.Dynamic() && !op.GetDynamicProperties().Prepared() {
+				err = eng.prepareEngine(ctx, op.GetDynamicProperties().GetEngineIntegrationId(), vaultObject)
+				if err != nil {
+					return err
+				}
+
+				op.GetDynamicProperties().SetPrepared()
+			}
+
 			execState, err := op.Poll(ctx)
 			if err != nil {
 				return err
@@ -1017,6 +1027,18 @@ func (eng *aqEngine) execute(
 			}
 			completedOps[op.ID()] = op
 			delete(inProgressOps, op.ID())
+
+			if op.Dynamic() {
+				_, err = UpdateEngineLastUsedTimestamp(
+					ctx,
+					op.GetDynamicProperties().GetEngineIntegrationId(),
+					eng.IntegrationRepo,
+					eng.Database,
+				)
+				if err != nil {
+					return err
+				}
+			}
 
 			outputArtifacts, err := dag.OperatorOutputs(op)
 			if err != nil {
@@ -1163,4 +1185,50 @@ func (eng *aqEngine) InitEnv(
 	env *exec_env.ExecutionEnvironment,
 ) error {
 	return env.CreateEnv()
+}
+
+func (eng *aqEngine) prepareEngine(
+	ctx context.Context,
+	engineIntegrationId uuid.UUID,
+	vaultObject vault.Vault,
+) error {
+	// cgwu: wrap all db state update into a transaction..Or not because we want to see intermediate state.
+	log.Info("Preparing engine...")
+	engineIntegration, err := UpdateEngineLastUsedTimestamp(
+		ctx,
+		engineIntegrationId,
+		eng.IntegrationRepo,
+		eng.Database,
+	)
+	if err != nil {
+		return errors.Wrap(err, "Failed to update engine last used timestamp")
+	}
+
+	for {
+		if engineIntegration.Config["status"] == string(shared.K8sClusterTerminatedStatus) {
+			log.Info("engine is currently terminated, starting...")
+			return CreateDynamicEngine(
+				ctx,
+				engineIntegration,
+				eng.IntegrationRepo,
+				vaultObject,
+				eng.Database,
+			)
+		} else if engineIntegration.Config["status"] == string(shared.K8sClusterActiveStatus) {
+			log.Info("engine is currently active, proceeding...")
+			return nil
+		} else {
+			log.Infof("Kubernetes cluster is currently in %s status. Waiting for 30 seconds before checking again...", engineIntegration.Config["status"])
+			time.Sleep(30 * time.Second)
+
+			engineIntegration, err = eng.IntegrationRepo.Get(
+				ctx,
+				engineIntegrationId,
+				eng.Database,
+			)
+			if err != nil {
+				return errors.Wrap(err, "Failed to retrieve engine integration")
+			}
+		}
+	}
 }

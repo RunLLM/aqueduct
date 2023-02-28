@@ -21,19 +21,15 @@ const (
 )
 
 type k8sJobManager struct {
-	k8sClient *kubernetes.Clientset
-	conf      *K8sJobManagerConfig
+	k8sClient   *kubernetes.Clientset
+	conf        *K8sJobManagerConfig
+	initialized bool
 }
 
-func NewK8sJobManager(conf *K8sJobManagerConfig) (*k8sJobManager, error) {
-	k8sClient, err := k8s.CreateK8sClient(conf.KubeconfigPath, conf.UseSameCluster)
+func setupNamespaceAndSecrets(k8sClient *kubernetes.Clientset, conf *K8sJobManagerConfig) error {
+	err := k8s.CreateNamespaces(k8sClient)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error while creating K8sClient")
-	}
-
-	err = k8s.CreateNamespaces(k8sClient)
-	if err != nil {
-		return nil, errors.Wrap(err, "Error while creating K8s Namespaces")
+		return errors.Wrap(err, "Error while creating K8s Namespaces")
 	}
 
 	secretsMap := map[string]string{}
@@ -41,12 +37,52 @@ func NewK8sJobManager(conf *K8sJobManagerConfig) (*k8sJobManager, error) {
 	secretsMap[k8s.AwsAccessKeyName] = conf.AwsSecretAccessKey
 	err = k8s.CreateSecret(context.TODO(), k8s.AwsCredentialsSecretName, secretsMap, k8sClient)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error while creating K8s Secrets")
+		return errors.Wrap(err, "Error while creating K8s Secrets")
+	}
+
+	return nil
+}
+
+func (j *k8sJobManager) initialize() error {
+	k8sClient, err := k8s.CreateK8sClient(j.conf.KubeconfigPath, j.conf.UseSameCluster)
+	if err != nil {
+		return errors.Wrap(err, "Error while creating K8sClient")
+	}
+
+	err = setupNamespaceAndSecrets(k8sClient, j.conf)
+	if err != nil {
+		return err
+	}
+
+	j.k8sClient = k8sClient
+	j.initialized = true
+
+	return nil
+}
+
+func NewK8sJobManager(conf *K8sJobManagerConfig) (*k8sJobManager, error) {
+	k8sClient, err := k8s.CreateK8sClient(conf.KubeconfigPath, conf.UseSameCluster)
+	if err != nil {
+		if conf.Dynamic {
+			return &k8sJobManager{
+				k8sClient:   nil,
+				conf:        conf,
+				initialized: false,
+			}, nil
+		} else {
+			return nil, errors.Wrap(err, "Error while creating K8sClient")
+		}
+	}
+
+	err = setupNamespaceAndSecrets(k8sClient, conf)
+	if err != nil {
+		return nil, err
 	}
 
 	return &k8sJobManager{
-		k8sClient: k8sClient,
-		conf:      conf,
+		k8sClient:   k8sClient,
+		conf:        conf,
+		initialized: true,
 	}, nil
 }
 
@@ -55,6 +91,12 @@ func (j *k8sJobManager) Config() Config {
 }
 
 func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobError {
+	if !j.initialized {
+		if err := j.initialize(); err != nil {
+			return systemError(err)
+		}
+	}
+
 	launchGpu := false
 	resourceRequest := map[string]string{
 		k8s.PodResourceCPUKey:    k8s.DefaultCPURequest,
@@ -152,6 +194,12 @@ func containerStatusFromPod(pod *corev1.Pod, name string) (*corev1.ContainerStat
 }
 
 func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, JobError) {
+	if !j.initialized {
+		if err := j.initialize(); err != nil {
+			return shared.UnknownExecutionStatus, systemError(err)
+		}
+	}
+
 	job, err := k8s.GetJob(ctx, name, j.k8sClient)
 	if err != nil {
 		return shared.UnknownExecutionStatus, jobMissingError(err)

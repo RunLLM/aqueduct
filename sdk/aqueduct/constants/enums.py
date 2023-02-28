@@ -78,6 +78,7 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     DATABRICKS = "Databricks"
     EMAIL = "Email"
     SLACK = "Slack"
+    AWS = "AWS"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
@@ -192,3 +193,10 @@ class NotificationLevel(Enum, metaclass=MetaEnum):
     SUCCESS = "success"
     WARNING = "warning"
     ERROR = "error"
+
+
+class K8sClusterStatusType(str, Enum, metaclass=MetaEnum):
+    CREATING = "Creating"
+    ACTIVE = "Active"
+    TERMINATING = "Terminating"
+    TERMINATED = "Terminated"

@@ -16,7 +16,8 @@ from aqueduct.error import (
 )
 from aqueduct.logger import logger
 from aqueduct.models.dag import DAG
-from aqueduct.models.integration import Integration, IntegrationInfo
+from aqueduct.constants.enums import RuntimeType
+from aqueduct.models.integration import Integration, IntegrationInfo, EngineStatus
 from aqueduct.models.operators import LoadSpec, ParamSpec, RelationalDBLoadParams, S3LoadParams
 from aqueduct.utils.serialization import deserialize
 from pkg_resources import parse_version, require
@@ -66,6 +67,9 @@ class APIClient:
     LIST_GITHUB_BRANCH_ROUTE = "/api/integrations/github/branches"
     NODE_POSITION_ROUTE = "/api/positioning"
     EXPORT_FUNCTION_ROUTE = "/api/function/%s/export"
+
+    GET_ENGINE_STATUS_ROUTE = "/api/integration/engine/status"
+    ENGINE_ROUTE_TEMPLATE = "/api/integration/engine/%s"
 
     # Auth header
     API_KEY_HEADER = "api-key"
@@ -270,11 +274,87 @@ class APIClient:
         resp = requests.post(url, url, headers=headers)
         self.raise_errors(resp)
 
+    def get_dag_engine_status(
+        self,
+        dag: DAG,
+    ) -> Dict[str, EngineStatus]:
+        """Makes a request against the /api/integration/engine/status endpoint.
+
+        Args:
+            dag:
+                The DAG object. We will extract the engine integration IDs and send them
+                to the backend to retrieve their status. Currently, we are only interested in
+                the status of dynamic engines.
+
+        Returns:
+            A EngineStatusResponse object, parsed from the backend endpoint's response.
+        """
+        engine_integration_ids = set()
+
+        dag_engine_config = dag.engine_config
+        if dag_engine_config.type == RuntimeType.K8S:
+            engine_integration_ids.add(str(dag_engine_config.k8s_config.integration_id))
+        for op in dag.operators.values():
+            if op.spec.engine_config and op.spec.engine_config.type == RuntimeType.K8S:
+                engine_integration_ids.add(str(op.spec.engine_config.k8s_config.integration_id))
+
+        return self.get_engine_status(list(engine_integration_ids))
+
+    def get_engine_status(
+        self,
+        engine_integration_ids: List[str],
+    ) -> Dict[str, EngineStatus]:
+        """Makes a request against the /api/integration/engine/status endpoint.
+
+        Args:
+            engine_integration_ids:
+                A list of engine integration IDs. Currently, we are only interested in
+                the status of dynamic engines.
+
+        Returns:
+            A EngineStatusResponse object, parsed from the backend endpoint's response.
+        """
+        headers = self._generate_auth_headers()
+        headers["integration-ids"] = json.dumps(engine_integration_ids)
+
+        url = self.construct_full_url(self.GET_ENGINE_STATUS_ROUTE)
+        resp = requests.get(url, headers=headers)
+        self.raise_errors(resp)
+
+        return {
+            engine_status["name"]: EngineStatus(**engine_status)
+            for engine_status in resp.json()
+        }
+
+    def modify_engine(
+        self,
+        action: str,
+        integration_id: str,
+    ) -> None:
+        """Makes a request against the /api/integration/engine/{integrationId} endpoint.
+
+        Args:
+            integration_id:
+                The engine integration ID.
+        """
+        headers = self._generate_auth_headers()
+        headers["action"] = action
+
+        url = self.construct_full_url(self.ENGINE_ROUTE_TEMPLATE % integration_id)
+
+        if action == "create" or action == "delete":
+            resp = requests.post(url, headers=headers)
+        else:
+            raise InvalidRequestError("Invalid action %s for interacting with dynamic engine." % action)
+
+        self.raise_errors(resp)
+        return
+
     def preview(
         self,
         dag: DAG,
     ) -> PreviewResponse:
-        """Makes a request against the /preview endpoint.
+        """Makes a request against the /api/preview endpoint.
 
         Args:
             dag:

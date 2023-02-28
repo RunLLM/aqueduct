@@ -58,3 +58,19 @@ func (e *EngineConfig) Scan(value interface{}) error {
 func (e *EngineConfig) Value() (driver.Value, error) {
 	return utils.ValueJSONB(*e)
 }
+
+/*func (e *EngineConfig) GetIntegrationId() uuid.UUID {
+	switch e.Type {
+	case AirflowEngineType:
+		return e.AirflowConfig.IntegrationID
+	case K8sEngineType:
+		return e.K8sConfig.IntegrationID
+	case LambdaEngineType:
+		return e.LambdaConfig.IntegrationID
+	case DatabricksEngineType:
+		return e.DatabricksConfig.IntegrationID
+	default:
+		return uuid.Nil
+	}
+}
+*/
