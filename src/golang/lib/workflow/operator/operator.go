@@ -138,7 +138,6 @@ func NewOperator(
 		jobManager = dagJobManager
 	}
 
-	dynamic := false
 	var dProperties *dynamicProperties
 
 	if opEngineConfig.Type == shared.K8sEngineType {
@@ -153,7 +152,6 @@ func NewOperator(
 		}
 
 		if k8sConfig.Dynamic {
-			dynamic = true
 			dProperties = &dynamicProperties{
 				engineIntegrationId: k8sIntegrationId,
 				prepared:            false,
@@ -193,9 +191,7 @@ func NewOperator(
 		// These fields may be set dynamically during orchestration.
 		resultsPersisted:  false,
 		execEnv:           execEnv,
-		dynamic:           dynamic,
 		dynamicProperties: dProperties,
-		//engineIntegrationId: opEngineConfig.GetIntegrationId(),
 	}
 
 	if dbOperator.Spec.IsFunction() {

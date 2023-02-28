@@ -1,5 +1,5 @@
-from aqueduct.models.integration import Integration, IntegrationInfo
 from aqueduct.integrations.dynamic_k8s_integration import DynamicK8sIntegration
+from aqueduct.models.integration import Integration, IntegrationInfo
 
 
 class AWSIntegration(Integration):

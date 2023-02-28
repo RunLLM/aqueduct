@@ -43,6 +43,16 @@ const (
 	K8sClusterActiveStatus      K8sClusterStatusType = "Active"
 	K8sClusterTerminatingStatus K8sClusterStatusType = "Terminating"
 	K8sClusterTerminatedStatus  K8sClusterStatusType = "Terminated"
+
+	K8sKubeconfigPathKey     string = "kubeconfig_path"
+	K8sClusterNameKey        string = "cluster_name"
+	K8sDynamicKey            string = "dynamic"
+	K8sCloudIntegrationIdKey string = "cloud_integration_id"
+	K8sUseSameClusterKey     string = "use_same_cluster"
+	K8sStatusKey             string = "status"
+	K8sKeepaliveKey          string = "keepalive"
+	DynamicK8sClusterName    string = "aqueduct_k8s"
+	DefaultKeepalive         int    = 1200
 )
 
 type K8sIntegrationConfig struct {
@@ -51,10 +61,6 @@ type K8sIntegrationConfig struct {
 	UseSameCluster     ConfigBool `json:"use_same_cluster"  yaml:"useSameCluster"`
 	Dynamic            ConfigBool `json:"dynamic"  yaml:"dynamic"`
 	CloudIntegrationId string     `json:"cloud_integration_id"  yaml:"cloud_integration_id"`
-	// ClusterStatus       K8sClusterStatusType
-	// LastUsedTimestamp  time.Time
-	// KeepAlivePeriod    int // in seconds
-	// cgwu: add resource config field
 }
 
 type LambdaIntegrationConfig struct {

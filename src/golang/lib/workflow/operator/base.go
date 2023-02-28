@@ -56,7 +56,6 @@ type baseOperator struct {
 	execEnv *exec_env.ExecutionEnvironment
 
 	// Used for dynamic integration.
-	dynamic           bool
 	dynamicProperties *dynamicProperties
 }
 
@@ -73,7 +72,7 @@ func (bo *baseOperator) ID() uuid.UUID {
 }
 
 func (bo *baseOperator) Dynamic() bool {
-	return bo.dynamic
+	return bo.dynamicProperties != nil
 }
 
 func (bo *baseOperator) GetDynamicProperties() *dynamicProperties {
@@ -82,7 +81,8 @@ func (bo *baseOperator) GetDynamicProperties() *dynamicProperties {
 
 type dynamicProperties struct {
 	engineIntegrationId uuid.UUID
-	prepared            bool
+	// prepared indicates whether the dynamic engine this operator relies on is ready.
+	prepared bool
 }
 
 func (dp *dynamicProperties) GetEngineIntegrationId() uuid.UUID {

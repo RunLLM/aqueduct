@@ -114,7 +114,7 @@ func NewAqServer(environment string, externalIP string, port int, disableUsageSt
 	corsMiddleware := cors.New(cors.Options{
 		AllowedOrigins: allowedOrigins,
 		AllowedHeaders: GetAllHeaders(s),
-		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedMethods: []string{"GET", "POST"},
 	})
 	s.Router.Use(corsMiddleware.Handler)
 	s.Router.Use(middleware.Logger)

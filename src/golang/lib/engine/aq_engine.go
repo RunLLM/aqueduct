@@ -11,6 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	"github.com/aqueducthq/aqueduct/lib/cronjob"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/dynamic"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
@@ -942,7 +943,13 @@ func (eng *aqEngine) execute(
 
 		for _, op := range inProgressOps {
 			if op.Dynamic() && !op.GetDynamicProperties().Prepared() {
-				err = eng.prepareEngine(ctx, op.GetDynamicProperties().GetEngineIntegrationId(), vaultObject)
+				err = dynamic.PrepareEngine(
+					ctx,
+					op.GetDynamicProperties().GetEngineIntegrationId(),
+					eng.IntegrationRepo,
+					vaultObject,
+					eng.Database,
+				)
 				if err != nil {
 					return err
 				}
@@ -1029,7 +1036,7 @@ func (eng *aqEngine) execute(
 			delete(inProgressOps, op.ID())
 
 			if op.Dynamic() {
-				_, err = UpdateEngineLastUsedTimestamp(
+				_, err = dynamic.UpdateEngineLastUsedTimestamp(
 					ctx,
 					op.GetDynamicProperties().GetEngineIntegrationId(),
 					eng.IntegrationRepo,
@@ -1185,50 +1192,4 @@ func (eng *aqEngine) InitEnv(
 	env *exec_env.ExecutionEnvironment,
 ) error {
 	return env.CreateEnv()
-}
-
-func (eng *aqEngine) prepareEngine(
-	ctx context.Context,
-	engineIntegrationId uuid.UUID,
-	vaultObject vault.Vault,
-) error {
-	// cgwu: wrap all db state update into a transaction..Or not because we want to see intermediate state.
-	log.Info("Preparing engine...")
-	engineIntegration, err := UpdateEngineLastUsedTimestamp(
-		ctx,
-		engineIntegrationId,
-		eng.IntegrationRepo,
-		eng.Database,
-	)
-	if err != nil {
-		return errors.Wrap(err, "Failed to update engine last used timestamp")
-	}
-
-	for {
-		if engineIntegration.Config["status"] == string(shared.K8sClusterTerminatedStatus) {
-			log.Info("engine is currently terminated, starting...")
-			return CreateDynamicEngine(
-				ctx,
-				engineIntegration,
-				eng.IntegrationRepo,
-				vaultObject,
-				eng.Database,
-			)
-		} else if engineIntegration.Config["status"] == string(shared.K8sClusterActiveStatus) {
-			log.Info("engine is currently active, proceeding...")
-			return nil
-		} else {
-			log.Infof("Kubernetes cluster is currently in %s status. Waiting for 30 seconds before checking again...", engineIntegration.Config["status"])
-			time.Sleep(30 * time.Second)
-
-			engineIntegration, err = eng.IntegrationRepo.Get(
-				ctx,
-				engineIntegrationId,
-				eng.Database,
-			)
-			if err != nil {
-				return errors.Wrap(err, "Failed to retrieve engine integration")
-			}
-		}
-	}
 }

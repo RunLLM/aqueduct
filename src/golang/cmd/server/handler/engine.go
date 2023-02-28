@@ -10,7 +10,7 @@ import (
 	"github.com/aqueducthq/aqueduct/config"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/engine"
+	"github.com/aqueducthq/aqueduct/lib/dynamic"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -21,7 +21,7 @@ import (
 )
 
 // Route: /api/integration/engine/{integrationId}
-// Method: POST/DELETE
+// Method: POST
 // Params:
 //
 //	`integrationId`: ID of the dynamic engine integration
@@ -30,6 +30,7 @@ import (
 //
 //	Headers:
 //		`api-key`: user's API Key
+//		`action`: indicates whether this is a creation or deletion request
 //
 // Response: serialized `GetEngineStatusResponse`.
 type EngineHandler struct {
@@ -56,6 +57,11 @@ func (*EngineHandler) Headers() []string {
 	}
 }
 
+const (
+	createAction string = "create"
+	deleteAction string = "delete"
+)
+
 func (*EngineHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
@@ -68,17 +74,20 @@ func (*EngineHandler) Prepare(r *http.Request) (interface{}, int, error) {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed engine integration ID.")
 	}
 
+	action := r.Header.Get("action")
+	if action == "" {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "No action specified by the request.")
+	}
+
 	return &engineArgs{
 		AqContext:     aqContext,
-		action:        r.Header.Get("action"),
+		action:        action,
 		integrationId: integrationId,
 	}, http.StatusOK, nil
 }
 
 func (h *EngineHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*engineArgs)
-	log.Infof("!!!!!!!Method is %s!!!!!!", args.action)
-
 	emptyResponse := response.EmptyResponse{}
 
 	engineIntegration, err := h.IntegrationRepo.Get(
@@ -90,13 +99,13 @@ func (h *EngineHandler) Perform(ctx context.Context, interfaceArgs interface{}) 
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get engine integration.")
 	}
 
-	if _, ok := engineIntegration.Config["dynamic"]; !ok {
+	if _, ok := engineIntegration.Config[shared.K8sDynamicKey]; !ok {
 		return emptyResponse, http.StatusBadRequest, errors.New("This is not a dynamic engine integration.")
 	}
 
-	if args.action == "create" {
+	if args.action == createAction {
 		// This is a cluster creation request.
-		engineIntegration, err := engine.UpdateEngineLastUsedTimestamp(
+		engineIntegration, err := dynamic.UpdateEngineLastUsedTimestamp(
 			ctx,
 			args.integrationId,
 			h.IntegrationRepo,
@@ -113,9 +122,9 @@ func (h *EngineHandler) Perform(ctx context.Context, interfaceArgs interface{}) 
 		}
 
 		for {
-			if engineIntegration.Config["status"] == string(shared.K8sClusterTerminatedStatus) {
+			if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
 				log.Info("engine is currently terminated, starting...")
-				err = engine.CreateDynamicEngine(
+				err = dynamic.CreateDynamicEngine(
 					ctx,
 					engineIntegration,
 					h.IntegrationRepo,
@@ -126,10 +135,10 @@ func (h *EngineHandler) Perform(ctx context.Context, interfaceArgs interface{}) 
 					return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to create dynamic engine")
 				}
 				return emptyResponse, http.StatusOK, nil
-			} else if engineIntegration.Config["status"] == string(shared.K8sClusterActiveStatus) {
+			} else if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
 				return emptyResponse, http.StatusOK, nil
 			} else {
-				log.Infof("Kubernetes cluster is currently in %s status. Waiting for 30 seconds before checking again...", engineIntegration.Config["status"])
+				log.Infof("Kubernetes cluster is currently in %s status. Waiting for 30 seconds before checking again...", engineIntegration.Config[shared.K8sStatusKey])
 				time.Sleep(30 * time.Second)
 
 				engineIntegration, err = h.IntegrationRepo.Get(
@@ -142,12 +151,12 @@ func (h *EngineHandler) Perform(ctx context.Context, interfaceArgs interface{}) 
 				}
 			}
 		}
-	} else if args.action == "delete" {
+	} else if args.action == deleteAction {
 		// This is a cluster deletion request.
 		for {
-			if engineIntegration.Config["status"] == string(shared.K8sClusterActiveStatus) {
+			if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
 				log.Info("Tearing down the cluster...")
-				if err = engine.DeleteDynamicEngine(
+				if err = dynamic.DeleteDynamicEngine(
 					ctx,
 					engineIntegration,
 					h.IntegrationRepo,
@@ -157,10 +166,10 @@ func (h *EngineHandler) Perform(ctx context.Context, interfaceArgs interface{}) 
 				}
 
 				return emptyResponse, http.StatusOK, nil
-			} else if engineIntegration.Config["status"] == string(shared.K8sClusterTerminatedStatus) {
+			} else if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
 				return emptyResponse, http.StatusOK, nil
 			} else {
-				log.Infof("Kubernetes cluster is currently in %s status. Waiting for 30 seconds before checking again...", engineIntegration.Config["status"])
+				log.Infof("Kubernetes cluster is currently in %s status. Waiting for 30 seconds before checking again...", engineIntegration.Config[shared.K8sStatusKey])
 				time.Sleep(30 * time.Second)
 
 				engineIntegration, err = h.IntegrationRepo.Get(

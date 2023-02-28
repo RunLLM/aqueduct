@@ -63,9 +63,15 @@ def preview_artifacts(
     for name in engine_statuses:
         engine_status = engine_statuses[name]
         if engine_status.status != K8sClusterStatusType.ACTIVE:
-            print("Your preview request makes use of dynamic k8s integration %s, but the k8s cluster is in %s state. It could take 12-15 minutes for the cluster to be ready..." % (engine_status.name, engine_status.status))
+            print(
+                "Your preview request makes use of dynamic k8s integration %s, but the k8s cluster is in %s state. It could take 12-15 minutes for the cluster to be ready..."
+                % (engine_status.name, engine_status.status)
+            )
         else:
-            print("Your preview request makes use of dynamic k8s integration %s and the k8s cluster is in %s state, so you are good to go!" % (engine_status.name, engine_status.status))
+            print(
+                "Your preview request makes use of dynamic k8s integration %s and the k8s cluster is in %s state, so you are good to go!"
+                % (engine_status.name, engine_status.status)
+            )
 
     preview_resp = globals.__GLOBAL_API_CLIENT__.preview(dag=subgraph)
 

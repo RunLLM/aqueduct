@@ -64,6 +64,10 @@ func NewK8sJobManager(conf *K8sJobManagerConfig) (*k8sJobManager, error) {
 	k8sClient, err := k8s.CreateK8sClient(conf.KubeconfigPath, conf.UseSameCluster)
 	if err != nil {
 		if conf.Dynamic {
+			// For dynamic k8s integration, when we initialize the job manager, the cluster and its
+			// kubeconfig file may not be ready yet, which is fine and we expect them to be ready when
+			// the job manager is actually used (by calling Launch and Poll). So here, we set the
+			// initialized flag to false and return.
 			return &k8sJobManager{
 				k8sClient:   nil,
 				conf:        conf,

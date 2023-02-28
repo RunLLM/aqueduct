@@ -3,7 +3,7 @@ import json
 from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import requests
-from aqueduct.constants.enums import ExecutionStatus, ServiceType
+from aqueduct.constants.enums import ExecutionStatus, RuntimeType, ServiceType
 from aqueduct.error import (
     AqueductError,
     ClientValidationError,
@@ -16,8 +16,7 @@ from aqueduct.error import (
 )
 from aqueduct.logger import logger
 from aqueduct.models.dag import DAG
-from aqueduct.constants.enums import RuntimeType
-from aqueduct.models.integration import Integration, IntegrationInfo, EngineStatus
+from aqueduct.models.integration import EngineStatus, Integration, IntegrationInfo
 from aqueduct.models.operators import LoadSpec, ParamSpec, RelationalDBLoadParams, S3LoadParams
 from aqueduct.utils.serialization import deserialize
 from pkg_resources import parse_version, require
@@ -322,8 +321,7 @@ class APIClient:
         self.raise_errors(resp)
 
         return {
-            engine_status["name"]: EngineStatus(**engine_status)
-            for engine_status in resp.json()
+            engine_status["name"]: EngineStatus(**engine_status) for engine_status in resp.json()
         }
 
     def modify_engine(
@@ -345,7 +343,9 @@ class APIClient:
         if action == "create" or action == "delete":
             resp = requests.post(url, headers=headers)
         else:
-            raise InvalidRequestError("Invalid action %s for interacting with dynamic engine." % action)
+            raise InvalidRequestError(
+                "Invalid action %s for interacting with dynamic engine." % action
+            )
 
         self.raise_errors(resp)
         return

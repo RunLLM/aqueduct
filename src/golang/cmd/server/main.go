@@ -119,8 +119,6 @@ func main() {
 	err = s.StartDynamicTeardownJob()
 	if err != nil {
 		log.Fatalf("Failed to deployed dynamic teardown cronjob: %v", err)
-	} else {
-		log.Info("Successfully deployed dynamic teardown cron job!")
 	}
 
 	err = s.RunMissedCronJobs()

@@ -1,10 +1,10 @@
-package engine
+package dynamic
 
 import (
-	"bufio"
 	"context"
 	"fmt"
-	"os/exec"
+	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -21,6 +21,56 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var terraformDir = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "dynamic", "terraform")
+
+func PrepareEngine(
+	ctx context.Context,
+	engineIntegrationId uuid.UUID,
+	integrationRepo repos.Integration,
+	vaultObject vault.Vault,
+	db database.Database,
+) error {
+	// cgwu: wrap all db state update into a transaction..Or not because we want to see intermediate state.
+	log.Info("Preparing engine...")
+	engineIntegration, err := UpdateEngineLastUsedTimestamp(
+		ctx,
+		engineIntegrationId,
+		integrationRepo,
+		db,
+	)
+	if err != nil {
+		return errors.Wrap(err, "Failed to update engine last used timestamp")
+	}
+
+	for {
+		if engineIntegration.Config["status"] == string(shared.K8sClusterTerminatedStatus) {
+			log.Info("engine is currently terminated, starting...")
+			return CreateDynamicEngine(
+				ctx,
+				engineIntegration,
+				integrationRepo,
+				vaultObject,
+				db,
+			)
+		} else if engineIntegration.Config["status"] == string(shared.K8sClusterActiveStatus) {
+			log.Info("engine is currently active, proceeding...")
+			return nil
+		} else {
+			log.Infof("Kubernetes cluster is currently in %s status. Waiting for 30 seconds before checking again...", engineIntegration.Config["status"])
+			time.Sleep(30 * time.Second)
+
+			engineIntegration, err = integrationRepo.Get(
+				ctx,
+				engineIntegrationId,
+				db,
+			)
+			if err != nil {
+				return errors.Wrap(err, "Failed to retrieve engine integration")
+			}
+		}
+	}
+}
+
 func CreateDynamicEngine(
 	ctx context.Context,
 	engineIntegration *models.Integration,
@@ -28,9 +78,7 @@ func CreateDynamicEngine(
 	vaultObject vault.Vault,
 	db database.Database,
 ) error {
-	dir := "/home/ubuntu/terraform/cgwu/learn-terraform-provision-eks-cluster"
-
-	engineIntegration.Config["status"] = string(shared.K8sClusterCreatingStatus)
+	engineIntegration.Config[shared.K8sStatusKey] = string(shared.K8sClusterCreatingStatus)
 	_, err := integrationRepo.Update(
 		ctx,
 		engineIntegration.ID,
@@ -40,11 +88,11 @@ func CreateDynamicEngine(
 		db,
 	)
 	if err != nil {
-		return errors.Wrapf(err, "Failed to update Kubernetes cluster status to %s", engineIntegration.Config["status"])
+		return errors.Wrapf(err, "Failed to update Kubernetes cluster status to %s", engineIntegration.Config[shared.K8sStatusKey])
 	}
 
 	log.Info("Running Terraform init...")
-	if err := RunCmd("terraform", []string{"init"}, dir); err != nil {
+	if _, _, err := lib_utils.RunCmd("terraform", []string{"init"}, terraformDir, true); err != nil {
 		return errors.Wrap(err, "Terraform init failed")
 	}
 
@@ -71,15 +119,16 @@ func CreateDynamicEngine(
 	secretAccessKeyVar := fmt.Sprintf("-var=secret_key=%s", awsConfig.SecretAccessKey)
 
 	log.Info("Running Terraform apply...")
-	if err := RunCmd(
+	if _, _, err := lib_utils.RunCmd(
 		"terraform",
 		[]string{"apply", "-auto-approve", accessKeyVar, secretAccessKeyVar},
-		dir,
+		terraformDir,
+		true,
 	); err != nil {
 		return errors.Wrap(err, "Terraform apply failed")
 	}
 
-	if err := RunCmd(
+	if _, _, err := lib_utils.RunCmd(
 		"aws",
 		[]string{
 			"eks",
@@ -87,14 +136,17 @@ func CreateDynamicEngine(
 			"--region",
 			job.DefaultAwsRegion,
 			"--name",
-			engineIntegration.Config["cluster_name"],
+			engineIntegration.Config[shared.K8sClusterNameKey],
+			"--kubeconfig",
+			engineIntegration.Config[shared.K8sKubeconfigPathKey],
 		},
-		dir,
+		terraformDir,
+		true,
 	); err != nil {
 		return errors.Wrap(err, "Failed to update Kubeconfig")
 	}
 
-	engineIntegration.Config["status"] = string(shared.K8sClusterActiveStatus)
+	engineIntegration.Config[shared.K8sStatusKey] = string(shared.K8sClusterActiveStatus)
 	_, err = integrationRepo.Update(
 		ctx,
 		engineIntegration.ID,
@@ -104,7 +156,7 @@ func CreateDynamicEngine(
 		db,
 	)
 	if err != nil {
-		return errors.Wrapf(err, "Failed to update Kubernetes cluster status to %s", engineIntegration.Config["status"])
+		return errors.Wrapf(err, "Failed to update Kubernetes cluster status to %s", engineIntegration.Config[shared.K8sStatusKey])
 	}
 
 	return nil
@@ -116,7 +168,7 @@ func DeleteDynamicEngine(
 	integrationRepo repos.Integration,
 	db database.Database,
 ) error {
-	engineIntegration.Config["status"] = string(shared.K8sClusterTerminatingStatus)
+	engineIntegration.Config[shared.K8sStatusKey] = string(shared.K8sClusterTerminatingStatus)
 	if _, err := integrationRepo.Update(
 		ctx,
 		engineIntegration.ID,
@@ -125,11 +177,10 @@ func DeleteDynamicEngine(
 		},
 		db,
 	); err != nil {
-		return errors.Wrapf(err, "Failed to update Kubernetes cluster status to %s", engineIntegration.Config["status"])
+		return errors.Wrapf(err, "Failed to update Kubernetes cluster status to %s", engineIntegration.Config[shared.K8sStatusKey])
 	}
 
-	dir := "/home/ubuntu/terraform/cgwu/learn-terraform-provision-eks-cluster"
-	if err := RunCmd(
+	if _, _, err := lib_utils.RunCmd(
 		"terraform",
 		[]string{
 			"destroy",
@@ -137,16 +188,22 @@ func DeleteDynamicEngine(
 			"-var=access_key=",
 			"-var=secret_key=",
 		},
-		dir,
+		terraformDir,
+		true,
 	); err != nil {
 		return errors.Wrap(err, "Unable to destroy k8s cluster")
 	}
 
-	if err := RunCmd("rm", []string{engineIntegration.Config["kubeconfig_path"]}, "."); err != nil {
+	if _, _, err := lib_utils.RunCmd(
+		"rm",
+		[]string{engineIntegration.Config[shared.K8sKubeconfigPathKey]},
+		".",
+		true,
+	); err != nil {
 		return errors.Wrap(err, "Unable to delete kubeconfig file")
 	}
 
-	engineIntegration.Config["status"] = string(shared.K8sClusterTerminatedStatus)
+	engineIntegration.Config[shared.K8sStatusKey] = string(shared.K8sClusterTerminatedStatus)
 	if _, err := integrationRepo.Update(
 		ctx,
 		engineIntegration.ID,
@@ -155,7 +212,7 @@ func DeleteDynamicEngine(
 		},
 		db,
 	); err != nil {
-		return errors.Wrapf(err, "Failed to update Kubernetes cluster status to %s", engineIntegration.Config["status"])
+		return errors.Wrapf(err, "Failed to update Kubernetes cluster status to %s", engineIntegration.Config[shared.K8sStatusKey])
 	}
 
 	return nil
@@ -191,48 +248,4 @@ func UpdateEngineLastUsedTimestamp(
 	}
 
 	return engineIntegration, nil
-}
-
-func RunCmd(command string, args []string, dir string) error {
-	// create a new command
-	cmd := exec.Command(command, args...)
-	cmd.Dir = dir
-
-	// create pipes for the command's standard output and standard error
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return errors.Wrap(err, "Error creating stdout pipe")
-	}
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		return errors.Wrap(err, "Error creating stderr pipe")
-	}
-
-	// start the command
-	if err := cmd.Start(); err != nil {
-		return errors.Wrap(err, "Error starting command")
-	}
-
-	// create scanners to read from the pipes
-	stdoutScanner := bufio.NewScanner(stdout)
-	stderrScanner := bufio.NewScanner(stderr)
-
-	// start separate goroutines to stream the output from each scanner
-	go func() {
-		for stdoutScanner.Scan() {
-			log.Infof("stdout: %s", stdoutScanner.Text())
-		}
-	}()
-	go func() {
-		for stderrScanner.Scan() {
-			log.Errorf("stderr: %s", stderrScanner.Text())
-		}
-	}()
-
-	// wait for the command to complete
-	if err := cmd.Wait(); err != nil {
-		return errors.Wrap(err, "Error waiting for command to complete")
-	}
-
-	return nil
 }

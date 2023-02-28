@@ -113,7 +113,7 @@ func ValidateCondaDevelop() error {
 		"develop",
 		"--help",
 	}
-	_, _, err := lib_utils.RunCmd(CondaCmdPrefix, args...)
+	_, _, err := lib_utils.RunCmd(CondaCmdPrefix, args, "", false)
 	return err
 }
 
@@ -139,7 +139,7 @@ func InitializeConda(
 		return
 	}
 
-	out, _, err := lib_utils.RunCmd(CondaCmdPrefix, "info", "--base")
+	out, _, err := lib_utils.RunCmd(CondaCmdPrefix, []string{"info", "--base"}, "", false)
 	if err != nil {
 		updateOnFailure(
 			ctx,

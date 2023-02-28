@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -61,7 +63,7 @@ func (*GetEngineStatusHandler) Prepare(r *http.Request) (interface{}, int, error
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Error unmarshalling integration IDs.")
 	}
 
-	var integrationIds []uuid.UUID
+	integrationIds := make([]uuid.UUID, 0, len(integrationIdsStr))
 	for _, integrationIdStr := range integrationIdsStr {
 		integrationId, err := uuid.Parse(integrationIdStr)
 		if err != nil {
@@ -92,12 +94,12 @@ func (h *GetEngineStatusHandler) Perform(ctx context.Context, interfaceArgs inte
 
 	responses := make([]engineStatusResponse, 0, len(integrations))
 	for _, integrationObject := range integrations {
-		if _, ok := integrationObject.Config["dynamic"]; ok {
-			if integrationObject.Config["dynamic"] == "true" {
+		if _, ok := integrationObject.Config[shared.K8sDynamicKey]; ok {
+			if integrationObject.Config[shared.K8sDynamicKey] == strconv.FormatBool(true) {
 				response := engineStatusResponse{
 					ID:     integrationObject.ID,
 					Name:   integrationObject.Name,
-					Status: integrationObject.Config["status"],
+					Status: integrationObject.Config[shared.K8sStatusKey],
 				}
 				responses = append(responses, response)
 			}

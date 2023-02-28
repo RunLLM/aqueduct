@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -180,6 +181,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve cloud integration.")
 		}
 
+		kubeconfigPath := filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "dynamic", "kube_config")
 		// Register a dynamic k8s integration.
 		connectIntegrationArgs := &ConnectIntegrationArgs{
 			AqContext: args.AqContext,
@@ -187,13 +189,13 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 			Service:   shared.Kubernetes,
 			Config: auth.NewStaticConfig(
 				map[string]string{
-					"kubeconfig_path":      "/home/ubuntu/.kube/config", // cgwu: make this configurable
-					"cluster_name":         "aqueduct_k8s",              // cgwu: make this configurable
-					"dynamic":              "true",
-					"cloud_integration_id": cloudIntegration.ID.String(),
-					"use_same_cluster":     "false",
-					"status":               string(shared.K8sClusterTerminatedStatus),
-					"keepalive":            "1200",
+					shared.K8sKubeconfigPathKey:     kubeconfigPath,
+					shared.K8sClusterNameKey:        shared.DynamicK8sClusterName,
+					shared.K8sDynamicKey:            strconv.FormatBool(true),
+					shared.K8sCloudIntegrationIdKey: cloudIntegration.ID.String(),
+					shared.K8sUseSameClusterKey:     strconv.FormatBool(false),
+					shared.K8sStatusKey:             string(shared.K8sClusterTerminatedStatus),
+					shared.K8sKeepaliveKey:          strconv.FormatInt(int64(shared.DefaultKeepalive), 10),
 				},
 			),
 			UserOnly:     false,
@@ -320,7 +322,7 @@ func ConnectIntegration(
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
-	// cgwu: consider moving this outside of connectintegration.
+	// TODO ENG-2523: move this outside of connectintegration.
 	if args.Service == shared.Conda {
 		go func() {
 			DB, err = database.NewDatabase(DB.Config())
@@ -767,7 +769,7 @@ func ValidatePrerequisites(
 
 func validateConda() (int, error) {
 	errMsg := "Unable to validate conda installation. Do you have conda installed?"
-	_, _, err := lib_utils.RunCmd(exec_env.CondaCmdPrefix, "--version")
+	_, _, err := lib_utils.RunCmd(exec_env.CondaCmdPrefix, []string{"--version"}, "", false)
 	if err != nil {
 		return http.StatusBadRequest, errors.Wrap(err, errMsg)
 	}

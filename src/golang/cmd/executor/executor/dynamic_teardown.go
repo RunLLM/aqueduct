@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/engine"
+	"github.com/aqueducthq/aqueduct/lib/dynamic"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/dropbox/godropbox/errors"
 	log "github.com/sirupsen/logrus"
@@ -22,7 +22,7 @@ func NewDynamicTeardownExecutor(base *BaseExecutor) *DynamicTeardownExecutor {
 func (ex *DynamicTeardownExecutor) Run(ctx context.Context) error {
 	log.Info("Starting dynamic teardown.")
 
-	dynamicIntegrations, err := ex.IntegrationRepo.GetByConfigField(ctx, "dynamic", "true", ex.Database)
+	dynamicIntegrations, err := ex.IntegrationRepo.GetByConfigField(ctx, shared.K8sDynamicKey, strconv.FormatBool(true), ex.Database)
 	if err != nil {
 		return errors.Wrap(err, "Unable to get dynamic integration.")
 	}
@@ -37,7 +37,7 @@ func (ex *DynamicTeardownExecutor) Run(ctx context.Context) error {
 	}
 
 	dynamicIntegration := dynamicIntegrations[0]
-	if dynamicIntegration.Config["status"] == string(shared.K8sClusterActiveStatus) {
+	if dynamicIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
 		lastUsedTimestampStr := dynamicIntegration.Config["last_used_timestamp"]
 		lastUsedTimestamp, err := strconv.ParseInt(lastUsedTimestampStr, 10, 64)
 		if err != nil {
@@ -53,7 +53,7 @@ func (ex *DynamicTeardownExecutor) Run(ctx context.Context) error {
 		currTimestamp := time.Now().Unix()
 		if (currTimestamp - lastUsedTimestamp) > keepalive {
 			log.Info("Reached keepalive threshold, tearing down the cluster...")
-			if err = engine.DeleteDynamicEngine(
+			if err = dynamic.DeleteDynamicEngine(
 				ctx,
 				&dynamicIntegration,
 				ex.IntegrationRepo,
