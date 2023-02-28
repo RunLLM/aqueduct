@@ -561,7 +561,6 @@ export const workflowSlice = createSlice({
         loading: LoadingStatusEnum.Succeeded,
         err: '',
       };
-      console.log('selectedDagPositionResult: ', response);
       state.selectedDagPosition.result = response;
     });
     builder.addCase(handleGetSelectDagPosition.rejected, (state, action) => {

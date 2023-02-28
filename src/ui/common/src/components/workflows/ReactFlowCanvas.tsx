@@ -46,12 +46,6 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
     };
   });
 
-  //console.log('ReactFlowCanvas Nodes: ', nodes);
-  //console.log('ReactFlowCanvas edges: ', edges);
-
-  console.log('canvasEdges: ', canvasEdges);
-  console.log('canvasNodes: ', canvasNodes);
-
   return (
     <ReactFlow
       onPaneClick={onPaneClicked}
@@ -65,6 +59,7 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
       defaultZoom={1}
       edgeTypes={EdgeTypes}
       minZoom={0.25}
+      fitView={true}
     />
   );
 };
