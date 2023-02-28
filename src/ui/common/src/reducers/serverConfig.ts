@@ -44,7 +44,7 @@ export const serverConfigSlice = createSlice({
 
     builder.addCase(
       handleGetServerConfig.fulfilled,
-      (state, { meta, payload }) => {
+      (state, { payload }) => {
         state.status = { loading: LoadingStatusEnum.Succeeded, err: '' };
         state.config = payload as ServerConfig;
       }
