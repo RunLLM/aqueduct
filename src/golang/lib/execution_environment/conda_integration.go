@@ -12,7 +12,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -124,7 +123,6 @@ func InitializeConda(
 	integrationRepo repos.Integration,
 	DB database.Database,
 ) {
-	logrus.Info("INITIALIZECONDA")
 	now := time.Now()
 	_, err := integrationRepo.Update(
 		ctx,
@@ -140,7 +138,7 @@ func InitializeConda(
 		log.Errorf("Failed to update conda integration: %v", err)
 		return
 	}
-	logrus.Info("TRYING CONDA")
+
 	out, _, err := lib_utils.RunCmd(CondaCmdPrefix, "info", "--base")
 	if err != nil {
 		updateOnFailure(
@@ -158,7 +156,7 @@ func InitializeConda(
 	}
 
 	condaPath := strings.TrimSpace(out)
-	logrus.Info("CONDA PATH")
+
 	err = createBaseEnvs()
 	if err != nil {
 		updateOnFailure(

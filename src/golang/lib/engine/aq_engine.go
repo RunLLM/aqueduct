@@ -1222,7 +1222,7 @@ func (eng *aqEngine) setupSparkJobManager(
 		}
 
 		// Create the conda environment for the workflow.
-		err = exec_env.CreateCondaEnvIfExists(
+		err = exec_env.CreateCondaEnvIfNotExists(
 			rawEnv,
 			condaPath,
 			existingEnvs,
