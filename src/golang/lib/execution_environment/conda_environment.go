@@ -139,7 +139,10 @@ func CreateCondaEnvIfNotExists(
 	}
 
 	// Then, we use pip3 to install dependencies inside this new Conda env.
+<<<<<<< HEAD
 	log.Info(e.Dependencies)
+=======
+>>>>>>> working
 	if len(e.Dependencies) > 0 {
 		installArgs := append([]string{
 			"run",

@@ -85,9 +85,6 @@ type SparkIntegrationConfig struct {
 	AwsAccessKeyID string `yaml:"awsAccessKeyId" json:"aws_access_key_id"`
 	// AWS Secret Access Key is passed from the StorageConfig.
 	AwsSecretAccessKey string `yaml:"awsSecretAccessKey" json:"aws_secret_access_key"`
-	// URI to the packaged environment. This is passed when creating and uploading the
-	// environment during execution.
-	EnvironmentPathURI string `yaml:"environmentPathUri" json:"environment_path_uri"`
 }
 
 func (c *EmailConfig) FullHost() string {
