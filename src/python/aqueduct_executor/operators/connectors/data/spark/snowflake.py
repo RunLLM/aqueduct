@@ -1,18 +1,15 @@
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from aqueduct_executor.operators.connectors.data import (
     common,
     config,
-    connector,
     extract,
     load,
     relational,
     snowflake,
-    utils,
 )
 from aqueduct_executor.operators.utils.enums import ArtifactType
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import col
 from pyspark.sql.types import FloatType
 
 
