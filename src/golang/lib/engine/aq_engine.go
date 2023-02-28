@@ -864,7 +864,6 @@ func onFinishExecution(
 	integrationRepo repos.Integration,
 	DB database.Database,
 ) {
-	log.Infof("curErr is %v", curErr)
 	// Wait a little bit for all active operators to finish before exiting on failure.
 	waitForInProgressOperators(ctx, inProgressOps, pollInterval, cleanupTimeout)
 	if curErr != nil && notificationContent == nil {

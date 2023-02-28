@@ -20,7 +20,7 @@ func NewDynamicTeardownExecutor(base *BaseExecutor) *DynamicTeardownExecutor {
 }
 
 func (ex *DynamicTeardownExecutor) Run(ctx context.Context) error {
-	log.Info("Starting dynamic teardown.")
+	log.Info("Starting dynamic integration teardown.")
 
 	dynamicIntegrations, err := ex.IntegrationRepo.GetByConfigField(ctx, shared.K8sDynamicKey, strconv.FormatBool(true), ex.Database)
 	if err != nil {

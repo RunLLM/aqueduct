@@ -30,8 +30,6 @@ func PrepareEngine(
 	vaultObject vault.Vault,
 	db database.Database,
 ) error {
-	// cgwu: wrap all db state update into a transaction..Or not because we want to see intermediate state.
-	log.Info("Preparing engine...")
 	engineIntegration, err := UpdateEngineLastUsedTimestamp(
 		ctx,
 		engineIntegrationId,
@@ -44,7 +42,7 @@ func PrepareEngine(
 
 	for {
 		if engineIntegration.Config["status"] == string(shared.K8sClusterTerminatedStatus) {
-			log.Info("engine is currently terminated, starting...")
+			log.Info("Kubernetes cluster is currently terminated, starting...")
 			return CreateDynamicEngine(
 				ctx,
 				engineIntegration,
@@ -53,7 +51,7 @@ func PrepareEngine(
 				db,
 			)
 		} else if engineIntegration.Config["status"] == string(shared.K8sClusterActiveStatus) {
-			log.Info("engine is currently active, proceeding...")
+			log.Info("Kubernetes cluster is currently active, proceeding...")
 			return nil
 		} else {
 			log.Infof("Kubernetes cluster is currently in %s status. Waiting for 30 seconds before checking again...", engineIntegration.Config["status"])
@@ -91,7 +89,6 @@ func CreateDynamicEngine(
 		return errors.Wrapf(err, "Failed to update Kubernetes cluster status to %s", engineIntegration.Config[shared.K8sStatusKey])
 	}
 
-	log.Info("Running Terraform init...")
 	if _, _, err := lib_utils.RunCmd("terraform", []string{"init"}, terraformDir, true); err != nil {
 		return errors.Wrap(err, "Terraform init failed")
 	}
@@ -118,7 +115,6 @@ func CreateDynamicEngine(
 	accessKeyVar := fmt.Sprintf("-var=access_key=%s", awsConfig.AccessKeyId)
 	secretAccessKeyVar := fmt.Sprintf("-var=secret_key=%s", awsConfig.SecretAccessKey)
 
-	log.Info("Running Terraform apply...")
 	if _, _, err := lib_utils.RunCmd(
 		"terraform",
 		[]string{"apply", "-auto-approve", accessKeyVar, secretAccessKeyVar},

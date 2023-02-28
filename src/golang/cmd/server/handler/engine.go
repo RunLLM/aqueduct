@@ -123,7 +123,7 @@ func (h *EngineHandler) Perform(ctx context.Context, interfaceArgs interface{}) 
 
 		for {
 			if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
-				log.Info("engine is currently terminated, starting...")
+				log.Info("Kubernetes cluster is currently terminated, starting...")
 				err = dynamic.CreateDynamicEngine(
 					ctx,
 					engineIntegration,
@@ -155,7 +155,7 @@ func (h *EngineHandler) Perform(ctx context.Context, interfaceArgs interface{}) 
 		// This is a cluster deletion request.
 		for {
 			if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
-				log.Info("Tearing down the cluster...")
+				log.Info("Tearing down the Kubernetes cluster...")
 				if err = dynamic.DeleteDynamicEngine(
 					ctx,
 					engineIntegration,
