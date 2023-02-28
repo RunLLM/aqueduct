@@ -120,6 +120,7 @@ class SnowflakeConfig(BaseConnectionConfig):
     database: str
     warehouse: str
     db_schema: Optional[str] = Field("public", alias="schema")  # schema is a Pydantic keyword
+    role: Optional[str] = None
 
     class Config:
         # Ensures that Pydantic parses JSON keys named "schema" or "db_schema" to
