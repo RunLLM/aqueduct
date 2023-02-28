@@ -17,7 +17,7 @@ const (
 	ExecStateKey = "exec_state"
 )
 
-func SerializeExecStateAndLogFailure(execState *shared.ExecutionState) string {
+func serializeExecStateAndLogFailure(execState *shared.ExecutionState) string {
 	serializedState, err := json.Marshal(execState)
 	if err != nil {
 		// We should never hit this
@@ -28,7 +28,7 @@ func SerializeExecStateAndLogFailure(execState *shared.ExecutionState) string {
 	return string(serializedState)
 }
 
-func SerializedFailure(
+func serializedFailure(
 	outputs string,
 	msg string,
 	runningAt *time.Time,
@@ -51,10 +51,10 @@ func SerializedFailure(
 		},
 	}
 
-	return SerializeExecStateAndLogFailure(execState)
+	return serializeExecStateAndLogFailure(execState)
 }
 
-func SerializedRunning(runningAt *time.Time) string {
+func serializedRunning(runningAt *time.Time) string {
 	execState := &shared.ExecutionState{
 		Status: shared.RunningExecutionStatus,
 		Timestamps: &shared.ExecutionTimestamps{
@@ -62,10 +62,10 @@ func SerializedRunning(runningAt *time.Time) string {
 		},
 	}
 
-	return SerializeExecStateAndLogFailure(execState)
+	return serializeExecStateAndLogFailure(execState)
 }
 
-func SerializedSuccess(runningAt *time.Time) string {
+func serializedSuccess(runningAt *time.Time) string {
 	now := time.Now()
 	execState := &shared.ExecutionState{
 		Status: shared.SucceededExecutionStatus,
@@ -75,10 +75,10 @@ func SerializedSuccess(runningAt *time.Time) string {
 		},
 	}
 
-	return SerializeExecStateAndLogFailure(execState)
+	return serializeExecStateAndLogFailure(execState)
 }
 
-func UpdateOnFailure(
+func updateOnFailure(
 	ctx context.Context,
 	outputs string,
 	msg string,
@@ -89,7 +89,11 @@ func UpdateOnFailure(
 	DB database.Database,
 ) {
 	integrationConfigMap := (map[string]string)(*integrationConfig)
+<<<<<<< HEAD:src/golang/lib/execution_state/integration.go
 	integrationConfigMap[ExecStateKey] = SerializedFailure(outputs, msg, runningAt)
+=======
+	integrationConfigMap[ExecStateKey] =  serializedFailure(outputs, msg, runningAt)
+>>>>>>> 0cee46c8 (init commit refactor):src/golang/lib/execution_state/utils.go
 	updatedIntegrationConfig := (*shared.IntegrationConfig)(&integrationConfigMap)
 
 	_, err := integrationRepo.Update(

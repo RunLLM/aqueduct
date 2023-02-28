@@ -37,6 +37,7 @@ func InitializeConda(
 	DB database.Database,
 ) {
 	now := time.Now()
+	x :=serializedRunning(&now)
 	_, err := integrationRepo.Update(
 		ctx,
 		integrationID,
@@ -58,7 +59,7 @@ func InitializeConda(
 			CondaPathKey: "",
 		})
 
-		execution_state.UpdateOnFailure(
+		updateOnFailure(
 			ctx,
 			out,
 			err.Error(),
@@ -79,7 +80,7 @@ func InitializeConda(
 		integrationConfig := (*shared.IntegrationConfig)(&map[string]string{
 			CondaPathKey: condaPath,
 		})
-		execution_state.UpdateOnFailure(
+		updateOnFailure(
 			ctx,
 			out,
 			err.Error(),
