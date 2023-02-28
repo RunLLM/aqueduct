@@ -13,8 +13,10 @@ from pydantic import BaseModel
 class AqueductEngineConfig(BaseModel):
     pass
 
+
 class AqueductCondaEngineConfig(BaseModel):
     env: str
+
 
 class AirflowEngineConfig(BaseModel):
     integration_id: uuid.UUID
