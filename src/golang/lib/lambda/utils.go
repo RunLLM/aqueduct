@@ -99,7 +99,11 @@ func CreateLambdaFunction(ctx context.Context, functionsToShip []LambdaFunctionT
 	}
 
 	if err := errGroup.Wait(); err != nil {
-		return errors.Wrap(err, "Unable to Create Lambda Function.")
+		err = DeleteAllDockerImages(functionsToShip[:])
+		if err != nil {
+			return errors.Wrap(err, "Unable to delete lambda functions.")
+		}
+		return errors.Wrap(err, "Unable to Create lambda functions.")
 	}
 
 	return nil
@@ -258,6 +262,11 @@ func PushImageToPrivateECR(functionType LambdaFunctionType, roleArn string) erro
 			return errors.Wrap(err, "Unable to update lambda function.")
 		}
 	}
+
+	err = DeleteDockerImage(versionedLambdaImageUri)
+	if err != nil {
+		return errors.Wrap(err, "Unable to delete lambda function.")
+	}
 	return nil
 }
 
@@ -313,4 +322,65 @@ func AddFunctionTypeToChannel(functionsToShip []LambdaFunctionType, channel chan
 		lambdaFunctionTypeToPass := lambdaFunctionType
 		channel <- lambdaFunctionTypeToPass
 	}
+}
+
+func DeleteAllDockerImages(functionsToShip []LambdaFunctionType) error {
+	for _, lambdaFunctionType := range functionsToShip {
+		lambdaImageUri, _, err := mapFunctionType(lambdaFunctionType)
+		if err != nil {
+			return errors.Wrap(err, "Unable to map function type to image.")
+		}
+		versionedLambdaImageUri := fmt.Sprintf("%s:%s", lambdaImageUri, lib.ServerVersionNumber)
+		err = DeleteDockerImage(versionedLambdaImageUri)
+		if err != nil {
+			return errors.Wrapf(err, "Unable to delete docker image of %s", versionedLambdaImageUri)
+		}
+	}
+	return nil
+}
+
+func DeleteDockerImage(versionedLambdaImageUri string) error {
+	// Remove Docker Image after finish creating Lambda functions.
+
+	stdout := &bytes.Buffer{}
+	stderr := &bytes.Buffer{}
+
+	cmd := exec.Command(
+		"docker",
+		"images",
+		fmt.Sprintf("--filter=reference=%s", versionedLambdaImageUri),
+		"-q")
+
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+
+	err := cmd.Run()
+	if err != nil {
+		stdoutString := strings.TrimSpace(stdout.String())
+		stderrString := strings.TrimSpace(stderr.String())
+		return errors.Wrapf(err, "Unable to find the docker image. Stdout: %s. Stderr: %s.", stdoutString, stderrString)
+	}
+
+	imageId := strings.TrimSpace(stdout.String())
+
+	// The docker image does not exist or has been deleted so we can't delete it again.
+	if imageId == "" {
+		return nil
+	}
+
+	cmd = exec.Command("docker", "rmi", "-f", imageId)
+
+	stdout.Reset()
+	stderr.Reset()
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
+	err = cmd.Run()
+
+	if err != nil {
+		stdoutString := strings.TrimSpace(stdout.String())
+		stderrString := strings.TrimSpace(stderr.String())
+		return errors.Wrapf(err, "Unable to delete docker image. Stdout: %s. Stderr: %s.", stdoutString, stderrString)
+	}
+
+	return nil
 }

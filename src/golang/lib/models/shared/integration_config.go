@@ -101,9 +101,16 @@ type SlackConfig struct {
 type AWSConfig struct {
 	AccessKeyId     string `json:"access_key_id"`
 	SecretAccessKey string `json:"secret_access_key"`
-	// ConfigFilePath    string `json:"config_file_path"`
-	// ConfigFileContent string `json:"config_file_content"`
-	// ConfigFileProfile string `json:"config_file_profile"`
+}
+
+type SparkIntegrationConfig struct {
+	// LivyServerURL is the URL of the Livy server that sits in front of the Spark cluster.
+	// This URL is assumed to be accessible by the machine running the Aqueduct server.
+	LivyServerURL string `yaml:"baseUrl" json:"base_url"`
+	// AWS Access Key ID is passed from the StorageConfig.
+	AwsAccessKeyID string `yaml:"awsAccessKeyId" json:"aws_access_key_id"`
+	// AWS Secret Access Key is passed from the StorageConfig.
+	AwsSecretAccessKey string `yaml:"awsSecretAccessKey" json:"aws_secret_access_key"`
 }
 
 func (c *EmailConfig) FullHost() string {

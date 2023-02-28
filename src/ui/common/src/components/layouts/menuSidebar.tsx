@@ -230,7 +230,12 @@ const MenuSidebar: React.FC<{
       <Box style={menuSidebarFooter}>
         <Divider sx={{ width: '64px', backgroundColor: 'white' }} />
         <Box sx={{ my: 2 }}>
-          <Link href="https://docs.aqueducthq.com" underline="none">
+          <Link
+            href="https://docs.aqueducthq.com"
+            underline="none"
+            target="_blank"
+            rel="noreferrer noopener"
+          >
             <SidebarButton
               onClick={() => {
                 if (onSidebarItemClicked) {
@@ -244,7 +249,12 @@ const MenuSidebar: React.FC<{
         </Box>
         <Divider sx={{ width: '64px', backgroundColor: 'white' }} />
         <Box sx={{ my: 2 }}>
-          <Link href="mailto:support@aqueducthq.com" underline="none">
+          <Link
+            href="mailto:support@aqueducthq.com"
+            underline="none"
+            target="_blank"
+            rel="noreferrer noopener"
+          >
             <SidebarButton
               onClick={() => {
                 if (onSidebarItemClicked) {

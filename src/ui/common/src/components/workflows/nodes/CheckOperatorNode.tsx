@@ -51,7 +51,7 @@ const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
       <Box sx={{ fontSize: '24px' }}>
         <FontAwesomeIcon icon={icon} />
       </Box>
-      <Typography variant="body1" sx={{ pl: 1 }}>
+      <Typography variant="body1" sx={{ marginLeft: '8px' }}>
         {result === 'true' ? 'passed' : 'failed'}
       </Typography>
     </Box>

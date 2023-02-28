@@ -18,19 +18,22 @@ To run with more flexibility, configure the following commandline flags:
 * `--notification-level`: The notification threshold level. (e.g. 'Success' to receive all notifications, 'Warning' to recieve for warning / failed workflows, and 'Error' for failed workflows only.)
 
 ## Checklist
-* **Workflows** Page: There should be **4** workflows. **3** Succeeded and **1** Failed.
-    * If you are running with `--example-notebooks`, all of them should also succeed.
+* **Workflows** Page: 
+    * There should be **5** workflows. **4** Succeeded and **1** Failed if using `--example-notebooks`
+    * There should be **4** workflows. **3** Succeeded and **1** Failed if **not** using `--example-notebooks`
 * **Notifications**: There should be **1** notification for failed workflow.
 * **Workflow Details** Page: Each page should reflect the **workflow description**. Pay extra attention to **Workflow Status Bar** and any noted **sidesheets** in the description.
 * **Integration** Page:
-    * There should be **11** *Data* integrations and **4** *Compute* integrations.
+    * There should be **11** *Data* integrations, **5** *Compute* integrations, and **2** *Notifications* integrations.
     * If you are not using additional integration, `aqueduct_demo` should be the only available one.
 * **Integration Details** Page:
-    * There should be **4** workflows in **Workflows** section.
+    * In the **Workflows** section of the `aqueduct_demo` page:
+        * There should be **10** workflows if using `--example-notebooks`
+        * Ther should be **4** workflows if **not** using `--example-notebooks`
     * If you are using `aqueduct_demo`, there should be **8** tables in **Data** section.
-* **Data** Page: There should be **1** data available.
+* **Data** Page: There should be **5** data rows available.
 * Slack channel:
-    * There should be **4** new notifications.
+    * There should be **15** new notifications.
     * Each notification should have the following aspects:
         * A title including the workflow's name and status
         * Workflow name

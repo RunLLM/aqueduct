@@ -32,6 +32,8 @@ func MigrateStorageAndVault(
 	integrationRepo repos.Integration,
 	DB database.Database,
 ) error {
+	log.Infof("Migrating from %v to %v", *oldConf, *newConf)
+
 	oldStore := storage.NewStorage(oldConf)
 	newStore := storage.NewStorage(newConf)
 
@@ -58,9 +60,14 @@ func MigrateStorageAndVault(
 
 	toDelete := []string{}
 
+	log.Infof("There are %v DAGs to migrate", len(dags))
+
 	for _, dag := range dags {
+		log.Infof("Starting migration for DAG %v", dag.ID)
+
 		if dag.EngineConfig.Type == shared.AirflowEngineType {
 			// We cannot migrate content for Airflow workflows
+			log.Info("This DAG's engine is Airflow, so its migration will be skipped.")
 			continue
 		}
 
@@ -70,21 +77,39 @@ func MigrateStorageAndVault(
 			return err
 		}
 
+		log.Infof("There are %v artifacts to migrate for DAG %v", len(artifacts), dag.ID)
+
 		for _, artifact := range artifacts {
+			log.Infof("Starting migration for artifact %v of DAG %v", artifact.ID, dag.ID)
+
 			artifactResults, err := artifactResultRepo.GetByArtifact(ctx, artifact.ID, txn)
 			if err != nil {
 				return err
 			}
 
+			log.Infof("There are %v artifact results to migrate for artifact %v", len(artifactResults), artifact.ID)
+
 			// For each artifact result, move the content from `oldStore` to `newStore`
 			for _, artifactResult := range artifactResults {
+				log.Infof("Starting migration for artifact result %v of artifact %v", artifactResult.ID, artifact.ID)
+
 				val, err := oldStore.Get(ctx, artifactResult.ContentPath)
-				if err != nil {
+				if err != nil &&
+					!artifactResult.ExecState.IsNull &&
+					artifactResult.ExecState.Status == shared.SucceededExecutionStatus {
+					// Return an error because the artifact result is successful,
+					// but not found in current storage.
+					log.Errorf("Unable to get artifact result %v from old store: %v", artifactResult.ID, err)
 					return err
 				}
 
-				if err := newStore.Put(ctx, artifactResult.ContentPath, val); err != nil {
-					return err
+				if err != nil {
+					// Only try to migrate artifact result if there was no issue reading
+					// it from the `oldStore`
+					if err := newStore.Put(ctx, artifactResult.ContentPath, val); err != nil {
+						log.Errorf("Unable to write artifact result %v to new store: %v", artifactResult.ID, err)
+						return err
+					}
 				}
 
 				toDelete = append(toDelete, artifactResult.ContentPath)
@@ -97,7 +122,11 @@ func MigrateStorageAndVault(
 			return err
 		}
 
+		log.Infof("There are %v operators to migrate for DAG %v", len(operators), dag.ID)
+
 		for _, operator := range operators {
+			log.Infof("Starting migration for operator %v of DAG %v", operator.ID, dag.ID)
+
 			var operatorCodePath string
 			switch {
 			case operator.Spec.IsFunction():
@@ -113,10 +142,12 @@ func MigrateStorageAndVault(
 
 			val, err := oldStore.Get(ctx, operatorCodePath)
 			if err != nil {
+				log.Errorf("Unable to get operator code %v from old store: %v", operator.ID, err)
 				return err
 			}
 
 			if err := newStore.Put(ctx, operatorCodePath, val); err != nil {
+				log.Errorf("Unable to write operator code %v to new store: %v", operator.ID, err)
 				return err
 			}
 
@@ -191,17 +222,22 @@ func MigrateVault(
 
 	keys := []string{}
 
+	log.Infof("There are %v integrations to migrate", len(integrations))
+
 	// For each connected integration, migrate its credentials
 	for _, integrationDB := range integrations {
+		log.Infof("Starting migration for integration %v %v", integrationDB.ID, integrationDB.Name)
 		// The vault key for the credentials is the integration record's ID
 		key := integrationDB.ID.String()
 
 		val, err := oldVault.Get(ctx, key)
 		if err != nil {
+			log.Errorf("Unable to get integration credentials %v from old vault: %v", integrationDB.ID, err)
 			return nil, err
 		}
 
 		if err := newVault.Put(ctx, key, val); err != nil {
+			log.Errorf("Unable to write integration credentials %v to new vault: %v", integrationDB.ID, err)
 			return nil, err
 		}
 

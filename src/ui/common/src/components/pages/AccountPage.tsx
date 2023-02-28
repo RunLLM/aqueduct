@@ -20,6 +20,7 @@ import {
 } from '../../utils/shared';
 import { CodeBlock } from '../CodeBlock';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
+import IntegrationLogo from '../integrations/logo';
 import DefaultLayout from '../layouts/default';
 import { BreadcrumbLink } from '../layouts/NavBar';
 import AccountNotificationSettingsSelector, {
@@ -31,6 +32,49 @@ type AccountPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
 };
+
+type ServerConfig = {
+  aqPath: string;
+  retentionJobPeriod: string;
+  apiKey: string;
+  storageConfig: {
+    type: string;
+    fileConfig?: {
+      directory: string;
+    };
+    gcsConfig?: {
+      bucket: string;
+    };
+    s3Config?: {
+      region: string;
+      bucket: string;
+    };
+  };
+};
+
+async function getServerConfig(
+  apiAddress: string,
+  apiKey: string
+): Promise<ServerConfig> {
+  try {
+    const configRequest = await fetch(`${apiAddress}/api/config`, {
+      method: 'GET',
+      headers: {
+        'api-key': apiKey,
+      },
+    });
+
+    const responseBody = await configRequest.json();
+
+    if (!configRequest.ok) {
+      console.log('Error fetching config');
+    }
+
+    return responseBody as ServerConfig;
+  } catch (error) {
+    console.log('config fetch error: ', error);
+  }
+}
 
 // `UpdateNotifications` attempts to update all notification integration by calling
 // `integration/<id>/edit` route separately. It returns an error message if any error occurs.
@@ -71,6 +115,104 @@ async function UpdateNotifications(
   return results.filter((x) => !!x).join('\n');
 }
 
+interface MetadataStorageInfoProps {
+  serverConfig?: ServerConfig;
+}
+
+const MetadataStorageInfo: React.FC<MetadataStorageInfoProps> = ({
+  serverConfig,
+}) => {
+  // TODO: Show the loading text string here.
+  if (!serverConfig) {
+    return null;
+  }
+
+  let storageInfo;
+  // 85px here is the logo height.
+  const fileMetadataStorageInfo = (
+    <Box sx={{ display: 'flex', height: '85px' }}>
+      <Box>
+        <IntegrationLogo
+          service={'Aqueduct Demo'}
+          size={'large'}
+          activated={true}
+        />
+      </Box>
+      <Box sx={{ alignSelf: 'center', marginLeft: 2 }}>
+        <Typography variant="body2" color={'gray.700'}>
+          Storage Type: {serverConfig?.storageConfig?.type || 'loading ...'}
+        </Typography>
+        <Typography variant="body1">
+          Location:{' '}
+          {serverConfig?.storageConfig?.fileConfig?.directory || 'loading ...'}
+        </Typography>
+      </Box>
+    </Box>
+  );
+
+  const gcsMetadataStorageInfo = (
+    <Box sx={{ display: 'flex', height: '85px' }}>
+      <Box>
+        <IntegrationLogo service={'GCS'} size={'large'} activated={true} />
+      </Box>
+      <Box sx={{ alignSelf: 'center', marginLeft: 2 }}>
+        <Typography variant="body2" color={'gray.700'}>
+          Storage Type: {serverConfig?.storageConfig?.type || 'loading ...'}
+        </Typography>
+        <Typography variant="body1">
+          Bucket:{' '}
+          {serverConfig?.storageConfig?.gcsConfig?.bucket || 'loading ...'}
+        </Typography>
+      </Box>
+    </Box>
+  );
+
+  const s3MetadataStorageInfo = (
+    <Box sx={{ display: 'flex', height: '85px' }}>
+      <Box>
+        <IntegrationLogo service={'S3'} size={'large'} activated={true} />
+      </Box>
+      <Box sx={{ alignSelf: 'center', marginLeft: 2 }}>
+        <Typography variant="body2" color={'gray.700'}>
+          Storage Type: {serverConfig?.storageConfig?.type || 'loading ...'}
+        </Typography>
+        <Typography variant="body1">
+          Bucket:{' '}
+          {serverConfig?.storageConfig?.s3Config?.bucket || 'loading ...'}
+        </Typography>
+        <Typography variant="body1">
+          Region:{' '}
+          {serverConfig?.storageConfig?.s3Config?.region || 'loading ...'}
+        </Typography>
+      </Box>
+    </Box>
+  );
+
+  switch (serverConfig.storageConfig.type) {
+    case 'file': {
+      storageInfo = fileMetadataStorageInfo;
+      break;
+    }
+    case 'gcs': {
+      storageInfo = gcsMetadataStorageInfo;
+      break;
+    }
+    case 's3': {
+      storageInfo = s3MetadataStorageInfo;
+      break;
+    }
+  }
+
+  return (
+    <Box>
+      <Typography variant="h5" sx={{ mt: 3 }}>
+        Metadata Storage
+      </Typography>
+      {storageInfo}
+    </Box>
+  );
+};
+
 const AccountPage: React.FC<AccountPageProps> = ({
   user,
   Layout = DefaultLayout,
@@ -92,6 +234,8 @@ client = aqueduct.Client(
   const integrationsReducer = useSelector(
     (state: RootState) => state.integrationsReducer
   );
+
+  const [serverConfig, setServerConfig] = useState<ServerConfig | null>(null);
   const notifications = Object.values(integrationsReducer.integrations).filter(
     (x) =>
       SupportedIntegrations[x.service].category ===
@@ -102,6 +246,15 @@ client = aqueduct.Client(
   const [notificationUpdateError, setNotificationUpdateError] = useState('');
   const [showNotificationUpdateSnackbar, setShowNotificationUpdateSnackbar] =
     useState(false);
+
+  useEffect(() => {
+    async function fetchServerConfig() {
+      const serverConfig = await getServerConfig(apiAddress, user.apiKey);
+      setServerConfig(serverConfig);
+    }
+
+    fetchServerConfig();
+  }, []);
 
   useEffect(() => {
     if (!updatingNotifications) {
@@ -184,6 +337,8 @@ client = aqueduct.Client(
         </Typography>
       )}
       {notificationSection}
+
+      <MetadataStorageInfo serverConfig={serverConfig} />
 
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}

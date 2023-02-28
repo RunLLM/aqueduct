@@ -32,6 +32,7 @@ const (
 	Databricks   Service = "Databricks"
 	Email        Service = "Email"
 	Slack        Service = "Slack"
+	Spark        Service = "Spark"
 
 	// Cloud integrations
 	AWS Service = "AWS"
@@ -66,6 +67,7 @@ func ParseService(s string) (Service, error) {
 		Databricks,
 		Email,
 		Slack,
+		Spark,
 		AWS:
 		return svc, nil
 	default:

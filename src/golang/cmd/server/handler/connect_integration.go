@@ -138,7 +138,9 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	statusCode, err := ValidatePrerequisites(
 		ctx,
 		args.Service,
+		args.Name,
 		args.ID,
+		args.OrgID,
 		h.IntegrationRepo,
 		h.Database,
 	)
@@ -229,6 +231,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		// the connect integration request has succeeded and that the migration is now
 		// under way.
 		go func() {
+			log.Info("Starting storage migration process...")
 			// Wait until the server is paused
 			h.PauseServer()
 			// Makes sure that the server is restarted
@@ -260,6 +263,8 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 			); err != nil {
 				log.Errorf("Unexpected error when setting the new storage layer: %v", err)
 			}
+
+			log.Info("Successfully migrated the storage layer!")
 		}()
 	}
 
@@ -375,6 +380,10 @@ func ValidateConfig(
 		// Databricks authentication is performed by posting a ListJobs
 		// request, so we don't launch a job for it.
 		return validateDatabricksConfig(ctx, config)
+	}
+
+	if service == shared.Spark {
+		return validateSparkConfig(ctx, config)
 	}
 
 	if service == shared.Email {
@@ -675,6 +684,17 @@ func validateDatabricksConfig(
 	return http.StatusOK, nil
 }
 
+func validateSparkConfig(
+	ctx context.Context,
+	config auth.Config,
+) (int, error) {
+	if err := engine.AuthenticateSparkConfig(ctx, config); err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	return http.StatusOK, nil
+}
+
 func validateEmailConfig(config auth.Config) (int, error) {
 	emailConfig, err := lib_utils.ParseEmailConfig(config)
 	if err != nil {
@@ -712,15 +732,26 @@ func validateAWSConfig(
 }
 
 // ValidatePrerequisites validates if the integration for the given service can be connected at all.
-// For now, it checks if an integration already exists for unique integrations including
-// conda, email, and slack.
+// 1) Checks if an integration already exists for unique integrations including conda, email, and slack.
+// 2) Checks if the name has already been taken.
 func ValidatePrerequisites(
 	ctx context.Context,
 	svc shared.Service,
+	name string,
 	userID uuid.UUID,
+	orgID string,
 	integrationRepo repos.Integration,
 	DB database.Database,
 ) (int, error) {
+	// We expect the new name to be unique.
+	_, err := integrationRepo.GetByNameAndUser(ctx, name, userID, orgID, DB)
+	if err == nil {
+		return http.StatusBadRequest, errors.Newf("Cannot connect to an integration %s, since it already exists.", name)
+	}
+	if err != database.ErrNoRows {
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to query for existing integrations.")
+	}
+
 	if svc == shared.Conda {
 		condaIntegration, err := exec_env.GetCondaIntegration(
 			ctx, userID, integrationRepo, DB,

@@ -1,0 +1,50 @@
+name: Fetch test config files
+description: "Fetches both test-config.yml and test-credentials.yml, the former being configurable."
+
+inputs:
+  aws_access_key_id:
+    description: "The AWS Access ID from our Github Secrets."
+    required: true
+  aws_secret_access_key:
+    description: "The AWS Access Key from our Github Secrets."
+    required: true
+  s3_test_config_path:
+    description: "The path in our assets bucket to the test-config.yml file to download."
+    required: true
+
+
+runs:
+  using: composite
+  steps:
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-region: us-east-2
+        aws-access-key-id: ${{ inputs.aws_access_key_id }}
+        aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
+
+    # The credentials are configured for the AWS CLI, but we still need to write them somewhere
+    # for our AWS-based integrations to use.
+    - name: Save Credentials
+      shell: bash
+      run: |
+        mkdir ~/.aws
+        printf "[default]\n" >> ~/.aws/credentials
+        printf "aws_access_key_id=%s\n" "$AWS_ACCESS_KEY_ID" >> ~/.aws/credentials
+        printf "aws_secret_access_key=%s\n" "$AWS_SECRET_ACCESS_KEY" >> ~/.aws/credentials
+
+    - name: Fetch the Test Config
+      working-directory: integration_tests/sdk
+      shell: bash
+      run: aws s3 cp s3://aqueduct-assets/${{ inputs.s3_test_config_path }} ./test-config.yml
+
+    - name: Fetch the Test Credentials
+      working-directory: integration_tests/sdk
+      shell: bash
+      run: aws s3 cp s3://aqueduct-assets/test-credentials.yml ./test-credentials.yml
+
+    - name: Update the apikey in credentials
+      working-directory: integration_tests/sdk
+      shell: bash
+      run: |
+        sed -i "1s/.*/apikey: $(aqueduct apikey)/" ./test-credentials.yml
