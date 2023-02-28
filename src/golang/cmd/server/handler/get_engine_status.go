@@ -22,9 +22,9 @@ import (
 //
 //		Headers:
 //			`api-key`: user's API Key
-//	     	`integration_ids` json serialized list of engine integration IDs
+//	     	`integration_ids`: json serialized list of engine integration IDs
 //
-// Response: serialized `GetEngineStatusResponse`.
+// Response: serialized `getEngineStatusResponse` which contains one entry per dynamic engine.
 type GetEngineStatusHandler struct {
 	GetHandler
 
