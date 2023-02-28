@@ -89,7 +89,7 @@ jobs:
           prefix: S3 Storage
 
   run-tests-data-integrations:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest-4-cores
     timeout-minutes: 20
     name: SDK Data Integration Tests
     steps:
@@ -112,9 +112,9 @@ jobs:
           aqueduct install snowflake
 
       - name: Run the SDK Integration Aqueduct Tests
-        timeout-minutes: 20
+        timeout-minutes: 30
         working-directory: integration_tests/sdk
-        run: python3 run_tests.py --data-integration -n 2
+        run: python3 run_tests.py --data-integration -n 4
 
       - uses: ./.github/actions/upload-artifacts
         if: always()
