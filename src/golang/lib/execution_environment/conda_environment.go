@@ -1,7 +1,10 @@
 package execution_environment
 
 import (
+	"encoding/json"
 	"fmt"
+	"path"
+	"strings"
 
 	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
@@ -16,7 +19,7 @@ var pythonVersions = [...]string{
 }
 
 func baseEnvNameByVersion(pythonVersion string) string {
-	return fmt.Sprintf("aqueduct_python%s", pythonVersion)
+	return fmt.Sprintf("%s%s", aqueductPythonBaseEnvNamePrefix, pythonVersion)
 }
 
 // createBaseEnvs creates base python environments.
@@ -52,7 +55,54 @@ func createBaseEnvs() error {
 	return nil
 }
 
-func CreateCondaEnv(e *ExecutionEnvironment, condaPath string) error {
+func ListCondaEnvs() (map[string]bool, error) {
+	listArgs := []string{
+		"env",
+		"list",
+		"--json",
+	}
+
+	stdout, _, err := lib_utils.RunCmd(CondaCmdPrefix, listArgs...)
+	if err != nil {
+		return nil, err
+	}
+
+	type listEnvResult struct {
+		Envs []string `json:"envs"`
+	}
+
+	var envs listEnvResult
+	err = json.Unmarshal([]byte(stdout), &envs)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make(map[string]bool, len(envs.Envs))
+	for _, env := range envs.Envs {
+		envName := path.Base(env)
+
+		// only include aq envs and exclude base envs.
+		if strings.HasPrefix(envName, aqueductEnvNamePrefix) && !strings.HasPrefix(envName, aqueductPythonBaseEnvNamePrefix) {
+			results[envName] = true
+		}
+	}
+
+	return results, nil
+}
+
+// `CreateConddaEnvIfExists` creates an conda env corresponding to
+// an ExecEnv `e`'s python version and dependencies.
+// It only creates the new env if it exists, otherwise the step is skipped
+// assuming the existing env already matches all required dependencies.
+func CreateCondaEnvIfExists(
+	e *ExecutionEnvironment,
+	condaPath string,
+	existingEnvs map[string]bool,
+) error {
+	if _, ok := existingEnvs[e.Name()]; ok {
+		return nil
+	}
+
 	// First, we create a conda env with the env object's Python version.
 	createArgs := []string{
 		"create",

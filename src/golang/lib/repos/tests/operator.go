@@ -2,6 +2,7 @@ package tests
 
 import (
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/function"
@@ -151,6 +152,53 @@ func (ts *TestSuite) TestOperator_ValidateOrg() {
 	invalid, invalidErr := ts.operator.ValidateOrg(ts.ctx, operator.ID, randString(10), ts.DB)
 	require.Nil(ts.T(), invalidErr)
 	require.False(ts.T(), invalid)
+}
+
+func (ts *TestSuite) TestOperator_GetUnusedCondaEnvNames() {
+	artifactID := uuid.New()
+	users := ts.seedUser(1)
+	userIDs := sampleUserIDs(1, users)
+	workflows := ts.seedWorkflowWithUser(1, userIDs)
+	workflowIDs := sampleWorkflowIDs(1, workflows)
+	dags := ts.seedDAGWithWorkflow(2, []uuid.UUID{workflowIDs[0], workflowIDs[0]})
+	historicalOp := ts.seedOperatorAndDAG(artifactID, dags[0].ID, users[0].ID, operator.FunctionType)
+	historicalOp.Spec.SetEngineConfig(&shared.EngineConfig{
+		Type: shared.AqueductCondaEngineType,
+		AqueductCondaConfig: &shared.AqueductCondaConfig{
+			Env: "historical",
+		},
+	})
+	_, err := ts.operator.Update(
+		ts.ctx,
+		historicalOp.ID,
+		map[string]interface{}{
+			"spec": &historicalOp.Spec,
+		},
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+
+	latestOp := ts.seedOperatorAndDAG(artifactID, dags[1].ID, users[0].ID, operator.FunctionType)
+	latestOp.Spec.SetEngineConfig(&shared.EngineConfig{
+		Type: shared.AqueductCondaEngineType,
+		AqueductCondaConfig: &shared.AqueductCondaConfig{
+			Env: "latest",
+		},
+	})
+	_, err = ts.operator.Update(
+		ts.ctx,
+		latestOp.ID,
+		map[string]interface{}{
+			"spec": &latestOp.Spec,
+		},
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+
+	names, err := ts.operator.GetUnusedCondaEnvNames(ts.ctx, ts.DB)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), len(names), 1)
+	require.Equal(ts.T(), names[0], "historical")
 }
 
 func (ts *TestSuite) TestOperator_Create() {

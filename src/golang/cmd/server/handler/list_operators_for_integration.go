@@ -79,7 +79,7 @@ func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interf
 
 	// Fetch all operators on this integration.
 	if integrationObject.Service == shared.Conda {
-		operators, err = h.OperatorRepo.GetWithExecEnv(ctx, h.Database)
+		operators, err = h.OperatorRepo.GetByEngineType(ctx, shared.AqueductCondaEngineType, h.Database)
 	} else {
 		// TODO (ENG-2068): current implementation only works for data integrations.
 		// We should fix this to work against compute integrations as well.

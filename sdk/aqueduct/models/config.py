@@ -13,6 +13,8 @@ from pydantic import BaseModel
 class AqueductEngineConfig(BaseModel):
     pass
 
+class AqueductCondaEngineConfig(BaseModel):
+    env: str
 
 class AirflowEngineConfig(BaseModel):
     integration_id: uuid.UUID
@@ -39,6 +41,7 @@ class EngineConfig(BaseModel):
     # We default to the AqueductEngine.
     type: RuntimeType = RuntimeType.AQUEDUCT
     aqueduct_config: Optional[AqueductEngineConfig]
+    aqueduct_conda_config: Optional[AqueductCondaEngineConfig]
     airflow_config: Optional[AirflowEngineConfig]
     k8s_config: Optional[K8sEngineConfig]
     lambda_config: Optional[LambdaEngineConfig]
