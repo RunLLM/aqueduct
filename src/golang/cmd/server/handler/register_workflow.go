@@ -311,7 +311,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 
 		err = exec_env.CleanupUnusedEnvironments(
 			context.Background(),
-			h.ExecutionEnvironmentRepo,
+			h.OperatorRepo,
 			db,
 		)
 		if err != nil {

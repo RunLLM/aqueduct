@@ -21,7 +21,7 @@ const (
 type EngineConfig struct {
 	Type                EngineType           `yaml:"type" json:"type"`
 	AqueductConfig      *AqueductConfig      `yaml:"aqueductConfig" json:"aqueduct_config,omitempty"`
-	AqueductCondaConfig *AqueductCondaConfig `yaml:"aqueductCondaConfig" json:"aqueductCondaConfig,omitempty"`
+	AqueductCondaConfig *AqueductCondaConfig `yaml:"aqueductCondaConfig" json:"aqueduct_conda_config,omitempty"`
 	AirflowConfig       *AirflowConfig       `yaml:"airflowConfig" json:"airflow_config,omitempty"`
 	K8sConfig           *K8sConfig           `yaml:"k8sConfig" json:"k8s_config,omitempty"`
 	LambdaConfig        *LambdaConfig        `yaml:"lambdaConfig" json:"lambda_config,omitempty"`

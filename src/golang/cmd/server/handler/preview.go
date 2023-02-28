@@ -356,12 +356,14 @@ func setupCondaEnv(
 		}
 
 		op, ok := dagSummary.Dag.Operators[opId]
-		if ok && op.Spec.IsFunction() {
-			engineConfig := op.Spec.EngineConfig()
-			engineConfig.Type = shared.AqueductCondaEngineType
-			engineConfig.AqueductCondaConfig = &shared.AqueductCondaConfig{
-				Env: env.Name(),
-			}
+		if ok && op.Spec.HasFunction() {
+			op.Spec.SetEngineConfig(&shared.EngineConfig{
+				Type: shared.AqueductCondaEngineType,
+				AqueductCondaConfig: &shared.AqueductCondaConfig{
+					Env: env.Name(),
+				},
+			})
+			dagSummary.Dag.Operators[opId] = op
 		}
 
 		visitedEnvs = append(visitedEnvs, env)

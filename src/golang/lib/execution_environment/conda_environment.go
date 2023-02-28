@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
+	"strings"
 
 	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
@@ -18,7 +19,7 @@ var pythonVersions = [...]string{
 }
 
 func baseEnvNameByVersion(pythonVersion string) string {
-	return fmt.Sprintf("aqueduct_python%s", pythonVersion)
+	return fmt.Sprintf("%s%s", aqueductPythonBaseEnvNamePrefix, pythonVersion)
 }
 
 // createBaseEnvs creates base python environments.
@@ -78,7 +79,12 @@ func ListCondaEnvs() (map[string]bool, error) {
 
 	results := make(map[string]bool, len(envs.Envs))
 	for _, env := range envs.Envs {
-		results[path.Base(env)] = true
+		envName := path.Base(env)
+
+		// only include aq envs and exclude base envs.
+		if strings.HasPrefix(envName, aqueductEnvNamePrefix) && !strings.HasPrefix(envName, aqueductPythonBaseEnvNamePrefix) {
+			results[envName] = true
+		}
 	}
 
 	return results, nil
