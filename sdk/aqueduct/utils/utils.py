@@ -10,17 +10,14 @@ from aqueduct.models.config import (
     EngineConfig,
     K8sEngineConfig,
     LambdaEngineConfig,
+    SparkEngineConfig,
 )
 from aqueduct.models.dag import Schedule
 from aqueduct.models.integration import IntegrationInfo
 from aqueduct.models.operators import ParamSpec
 from croniter import croniter
 
-from .serialization import (
-    artifact_type_to_serialization_type,
-    serialization_function_mapping,
-    serialize_val,
-)
+from .serialization import artifact_type_to_serialization_type, serialize_val
 from .type_inference import _bytes_to_base64_string
 
 
@@ -110,19 +107,20 @@ def parse_user_supplied_id(id: Union[str, uuid.UUID]) -> str:
 def construct_param_spec(
     val: Any, artifact_type: ArtifactType, is_implicit: bool = False
 ) -> ParamSpec:
+    # Not derived from bson.
+    # For now, bson_table applies only to tables read from mongo.
+    derived_from_bson = False
+
     serialization_type = artifact_type_to_serialization_type(
         artifact_type,
-        # Not derived from bson.
-        # For now, bson_table applies only to tables read from mongo.
-        False,
+        derived_from_bson,
         val,
     )
-    assert serialization_type in serialization_function_mapping
 
     # We must base64 encode the resulting bytes, since we can't be sure
     # what encoding it was written in (eg. Image types are not encoded as "utf8").
     return ParamSpec(
-        val=_bytes_to_base64_string(serialize_val(val, serialization_type)),
+        val=_bytes_to_base64_string(serialize_val(val, serialization_type, derived_from_bson)),
         serialization_type=serialization_type,
         implicitly_created=is_implicit,
     )
@@ -173,6 +171,14 @@ def generate_engine_config(
             type=RuntimeType.DATABRICKS,
             name=integration_name,
             databricks_config=DatabricksEngineConfig(
+                integration_id=integration.id,
+            ),
+        )
+    elif integration.service == ServiceType.SPARK:
+        return EngineConfig(
+            type=RuntimeType.SPARK,
+            name=integration_name,
+            spark_config=SparkEngineConfig(
                 integration_id=integration.id,
             ),
         )

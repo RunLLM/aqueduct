@@ -3,13 +3,13 @@ import json
 import os
 import shutil
 import sys
-import time
 import tracemalloc
 import uuid
 from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
+from aqueduct.utils.serialization import check_and_fetch_pickled_collection_format
 from aqueduct.utils.type_inference import infer_artifact_type
 from aqueduct_executor.operators.function_executor import extract_function, get_extract_path
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec
@@ -21,7 +21,6 @@ from aqueduct_executor.operators.utils.enums import (
     ExecutionStatus,
     FailureType,
     OperatorType,
-    PrintColorType,
     SerializationType,
 )
 from aqueduct_executor.operators.utils.execution import (
@@ -250,7 +249,20 @@ def run(spec: FunctionSpec) -> None:
             job_name=spec.name, job_type=spec.type.value, step="Reading Inputs"
         )(utils.read_artifacts)(storage, spec.input_content_paths, spec.input_metadata_paths)
 
+        # We need to check for BSON_TABLE serialization type at both the top level
+        # and within any serialized pickled collection (if it exists).
         derived_from_bson = SerializationType.BSON_TABLE in serialization_types
+        if not derived_from_bson:
+            for i, serialization_type in enumerate(serialization_types):
+                collection_data = check_and_fetch_pickled_collection_format(
+                    serialization_type, inputs[i]
+                )
+                if (
+                    collection_data is not None
+                    and SerializationType.BSON_TABLE in collection_data.aqueduct_serialization_types
+                ):
+                    derived_from_bson = True
+                    break
 
         results, system_metadata = time_it(
             job_name=spec.name, job_type=spec.type.value, step="Running Function"

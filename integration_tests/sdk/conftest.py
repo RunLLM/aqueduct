@@ -8,6 +8,7 @@ from sdk.setup_integration import (
     list_compute_integrations,
     list_data_integrations,
     setup_data_integrations,
+    setup_storage_layer,
 )
 from sdk.shared import globals as test_globals
 from sdk.shared.utils import generate_new_flow_name
@@ -51,15 +52,18 @@ def pytest_configure(config):
 
 def pytest_cmdline_main(config):
     """Gets all the integrations ready for the tests to run. Should only run once, before we even collect any tests."""
+    client = Client(*get_aqueduct_config())
+    setup_storage_layer(client)
+
     should_skip = config.getoption(f"--skip-data-setup")
     if should_skip:
         return
 
     data_integration = config.getoption(f"--data")
     if data_integration is not None:
-        setup_data_integrations(filter_to=data_integration)
+        setup_data_integrations(client, filter_to=data_integration)
     else:
-        setup_data_integrations()
+        setup_data_integrations(client)
 
 
 @pytest.fixture(scope="function")

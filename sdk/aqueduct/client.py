@@ -41,6 +41,7 @@ from aqueduct.integrations.lambda_integration import LambdaIntegration
 from aqueduct.integrations.mongodb_integration import MongoDBIntegration
 from aqueduct.integrations.s3_integration import S3Integration
 from aqueduct.integrations.salesforce_integration import SalesforceIntegration
+from aqueduct.integrations.spark_integration import SparkIntegration
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
 from aqueduct.logger import logger
 from aqueduct.models.config import FlowConfig
@@ -308,6 +309,25 @@ class Client:
         globals.__GLOBAL_API_CLIENT__.connect_integration(name, service, config)
         logger().info("Successfully connected to new %s integration `%s`." % (service, name))
 
+    def delete_integration(
+        self,
+        name: str,
+    ) -> None:
+        """Deletes the integration from Aqueduct.
+
+        Args:
+            name:
+                The name of the integration to delete.
+        """
+        existing_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
+        if name not in existing_integrations.keys():
+            raise InvalidIntegrationException("Not connected to integration %s!" % name)
+
+        globals.__GLOBAL_API_CLIENT__.delete_integration(existing_integrations[name].id)
+
+        # Update the connected integrations cached on this object.
+        self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
+
     def list_integrations(self) -> Dict[str, IntegrationInfo]:
         """Retrieves a dictionary of integrations the client can use.
 
@@ -329,6 +349,7 @@ class Client:
         LambdaIntegration,
         MongoDBIntegration,
         DatabricksIntegration,
+        SparkIntegration,
     ]:
         """Retrieves a connected integration object.
 
@@ -390,6 +411,10 @@ class Client:
             )
         elif integration_info.service == ServiceType.DATABRICKS:
             return DatabricksIntegration(
+                metadata=integration_info,
+            )
+        elif integration_info.service == ServiceType.SPARK:
+            return SparkIntegration(
                 metadata=integration_info,
             )
         else:

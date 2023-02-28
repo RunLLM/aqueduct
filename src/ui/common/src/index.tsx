@@ -19,6 +19,7 @@ import { RedshiftCard } from './components/integrations/cards/redshiftCard';
 import { S3Card } from './components/integrations/cards/s3Card';
 import { SlackCard } from './components/integrations/cards/slackCard';
 import { SnowflakeCard } from './components/integrations/cards/snowflakeCard';
+import { SparkCard } from './components/integrations/cards/sparkCard';
 import { ConnectedIntegrations } from './components/integrations/connectedIntegrations';
 import AddTableDialog from './components/integrations/dialogs/addTableDialog';
 import { BigQueryDialog } from './components/integrations/dialogs/bigqueryDialog';
@@ -38,6 +39,7 @@ import { RedshiftDialog } from './components/integrations/dialogs/redshiftDialog
 import { S3Dialog } from './components/integrations/dialogs/s3Dialog';
 import { SlackDialog } from './components/integrations/dialogs/slackDialog';
 import { SnowflakeDialog } from './components/integrations/dialogs/snowflakeDialog';
+import { SparkDialog } from './components/integrations/dialogs/sparkDialog';
 import { Card } from './components/layouts/card';
 import DefaultLayout from './components/layouts/default';
 import MenuSidebar, {
@@ -49,7 +51,7 @@ import AccountNotificationSettingsSelector from './components/notifications/Acco
 import NotificationLevelSelector from './components/notifications/NotificationLevelSelector';
 import { NotificationListItem } from './components/notifications/NotificationListItem';
 import NotificationsPopover from './components/notifications/NotificationsPopover';
-import AccountPage from './components/pages/AccountPage';
+import AccountPage from './components/pages/account/AccountPage';
 import ArtifactDetailsPage from './components/pages/artifact/id';
 import CheckDetailsPage from './components/pages/check/id';
 import DataPage from './components/pages/data';
@@ -372,6 +374,8 @@ export {
   SlackDialog,
   SnowflakeCard,
   SnowflakeDialog,
+  SparkCard,
+  SparkDialog,
   StatusChip as Status,
   StatusBarHeaderHeightInPx,
   StatusBarWidthInPx,

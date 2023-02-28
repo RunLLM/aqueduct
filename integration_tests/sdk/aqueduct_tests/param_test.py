@@ -12,6 +12,7 @@ from aqueduct.error import (
     InvalidUserArgumentException,
 )
 from pandas._testing import assert_frame_equal
+from PIL import Image
 
 from aqueduct import metric, op
 
@@ -487,10 +488,31 @@ def test_all_param_types(client, flow_name, engine):
     assert isinstance(list_output, GenericArtifact)
     assert list_output.get() == [4, 5, 6]
 
+    @op
+    def must_be_image(input):
+        if not isinstance(input, Image.Image):
+            raise Exception("Expected image.")
+        return input
+
+    # Current working directory is one level above.
+    image_data = Image.open("data/aqueduct.jpg", "r")
+
+    image_param = client.create_param("image", default=image_data)
+    image_output = must_be_image(image_param)
+    assert isinstance(image_output, GenericArtifact)
+    assert isinstance(image_output.get(), Image.Image)
+
     publish_flow_test(
         client,
         name=flow_name(),
-        artifacts=[pickle_output, bytes_output, string_output, tuple_output, list_output],
+        artifacts=[
+            pickle_output,
+            bytes_output,
+            string_output,
+            tuple_output,
+            list_output,
+            image_output,
+        ],
         engine=engine,
     )
 

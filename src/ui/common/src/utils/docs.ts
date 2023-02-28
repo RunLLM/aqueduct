@@ -1,1 +1,1 @@
-export const AqueductDocsLink = 'https://docs.aqueducthq.com/';
+export const AqueductDocsLink = 'https://docs.aqueducthq.com';

@@ -111,13 +111,31 @@ def wrap_spec(
     operator_id = generate_uuid()
     output_artifact_ids = [generate_uuid() for _ in output_artifact_type_hints]
 
+    overwrite_existing_op = True
+    colliding_op = dag.get_operator(with_name=op_name)
+    if colliding_op is not None:
+        # There is already an operator with the same name.
+        # If the input artifacts are different for this new operator
+        # and the existing operator, then a new operator should be added.
+        # Otherwise, the existing operator should be overwritten.
+        input_artifact_ids = [input_artf.id() for input_artf in input_artifacts]
+        if input_artifact_ids != colliding_op.inputs:
+            overwrite_existing_op = False
+
+    original_op_name = op_name
     op_name, artifact_names = resolve_op_and_artifact_names(
         dag,
         op_name,
-        overwrite_existing_op_name=True,
+        overwrite_existing_op_name=overwrite_existing_op,
         candidate_artifact_names=output_artifact_names,
         num_outputs=len(output_artifact_ids),
     )
+
+    if colliding_op is not None and op_name != original_op_name:
+        print(
+            "Warning: There is already an operator named %s so this operator is being renamed to %s"
+            % (original_op_name, op_name)
+        )
 
     apply_deltas_to_dag(
         dag,
