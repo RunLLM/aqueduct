@@ -112,7 +112,7 @@ jobs:
           aqueduct install snowflake
 
       - name: Run the SDK Integration Aqueduct Tests
-        timeout-minutes: 30
+        timeout-minutes: 20
         working-directory: integration_tests/sdk
         run: python3 run_tests.py --data-integration -n 4
 
