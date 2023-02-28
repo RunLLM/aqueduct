@@ -16,7 +16,7 @@ const (
 	ExecStateKey = "exec_state"
 )
 
-func serializeExecStateAndLogFailure(execState *shared.ExecutionState) string {
+func SerializeExecStateAndLogFailure(execState *shared.ExecutionState) string {
 	serializedState, err := json.Marshal(execState)
 	if err != nil {
 		// We should never hit this
@@ -27,7 +27,7 @@ func serializeExecStateAndLogFailure(execState *shared.ExecutionState) string {
 	return string(serializedState)
 }
 
-func serializedFailure(
+func SerializedFailure(
 	outputs string,
 	msg string,
 	runningAt *time.Time,
@@ -50,10 +50,10 @@ func serializedFailure(
 		},
 	}
 
-	return serializeExecStateAndLogFailure(execState)
+	return SerializeExecStateAndLogFailure(execState)
 }
 
-func serializedRunning(runningAt *time.Time) string {
+func SerializedRunning(runningAt *time.Time) string {
 	execState := &shared.ExecutionState{
 		Status: shared.RunningExecutionStatus,
 		Timestamps: &shared.ExecutionTimestamps{
@@ -61,10 +61,10 @@ func serializedRunning(runningAt *time.Time) string {
 		},
 	}
 
-	return serializeExecStateAndLogFailure(execState)
+	return SerializeExecStateAndLogFailure(execState)
 }
 
-func serializedSuccess(runningAt *time.Time) string {
+func SerializedSuccess(runningAt *time.Time) string {
 	now := time.Now()
 	execState := &shared.ExecutionState{
 		Status: shared.SucceededExecutionStatus,
@@ -74,10 +74,10 @@ func serializedSuccess(runningAt *time.Time) string {
 		},
 	}
 
-	return serializeExecStateAndLogFailure(execState)
+	return SerializeExecStateAndLogFailure(execState)
 }
 
-func updateOnFailure(
+func UpdateOnFailure(
 	ctx context.Context,
 	outputs string,
 	msg string,
@@ -88,7 +88,7 @@ func updateOnFailure(
 	DB database.Database,
 ) {
 	integrationConfigMap := (map[string]string)(*integrationConfig)
-	integrationConfigMap[ExecStateKey] =  serializedFailure(outputs, msg, runningAt)
+	integrationConfigMap[ExecStateKey] =  SerializedFailure(outputs, msg, runningAt)
 	updatedIntegrationConfig := (*shared.IntegrationConfig)(&integrationConfigMap)
 
 	_, err := integrationRepo.Update(

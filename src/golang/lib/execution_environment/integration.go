@@ -37,13 +37,12 @@ func InitializeConda(
 	DB database.Database,
 ) {
 	now := time.Now()
-	x :=serializedRunning(&now)
 	_, err := integrationRepo.Update(
 		ctx,
 		integrationID,
 		map[string]interface{}{
 			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
-				ExecStateKey: serializedRunning(&now),
+				ExecStateKey: execution_state.SerializedRunning(&now),
 			}),
 		},
 		DB,
@@ -59,7 +58,7 @@ func InitializeConda(
 			CondaPathKey: "",
 		})
 
-		updateOnFailure(
+		execution_state.UpdateOnFailure(
 			ctx,
 			out,
 			err.Error(),
@@ -80,7 +79,7 @@ func InitializeConda(
 		integrationConfig := (*shared.IntegrationConfig)(&map[string]string{
 			CondaPathKey: condaPath,
 		})
-		updateOnFailure(
+		execution_state.UpdateOnFailure(
 			ctx,
 			out,
 			err.Error(),
@@ -100,7 +99,7 @@ func InitializeConda(
 		map[string]interface{}{
 			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
 				CondaPathKey: condaPath,
-				ExecStateKey: serializedSuccess(&now),
+				ExecStateKey: execution_state.SerializedSuccess(&now),
 			}),
 		},
 		DB,
