@@ -29,6 +29,10 @@ class SparkSnowflakeConnector(relational.RelationalConnector):
             "sfSchema": config.schema,
             "sfWarehouse": config.warehouse,
         }
+
+        if config.role:
+            self.snowflake_spark_options["sfRole"] = config.role
+
         super().__init__(conn_engine)
 
     def extract_spark(

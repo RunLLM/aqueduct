@@ -26,6 +26,11 @@ def create_snowflake_engine(config: config.SnowflakeConfig) -> engine.Engine:
         schema=config.db_schema,
         warehouse=config.warehouse,
     )
+
+    if config.role:
+        url += "?role={role}"
+        url = url.format(role=config.role)
+
     return create_engine(url)
 
 
