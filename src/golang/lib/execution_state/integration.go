@@ -89,11 +89,7 @@ func updateOnFailure(
 	DB database.Database,
 ) {
 	integrationConfigMap := (map[string]string)(*integrationConfig)
-<<<<<<< HEAD:src/golang/lib/execution_state/integration.go
 	integrationConfigMap[ExecStateKey] = SerializedFailure(outputs, msg, runningAt)
-=======
-	integrationConfigMap[ExecStateKey] =  serializedFailure(outputs, msg, runningAt)
->>>>>>> 0cee46c8 (init commit refactor):src/golang/lib/execution_state/utils.go
 	updatedIntegrationConfig := (*shared.IntegrationConfig)(&integrationConfigMap)
 
 	_, err := integrationRepo.Update(
