@@ -3,7 +3,6 @@ package engine
 import (
 	"context"
 	"fmt"
-	"os"
 	"path"
 	"reflect"
 	"time"
@@ -19,7 +18,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/repos"
-	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
@@ -1158,120 +1156,4 @@ func (eng *aqEngine) updateWorkflowSchedule(
 		}
 	}
 	return nil
-}
-
-func (eng *aqEngine) createWorkflowEnv(
-	execEnvironments map[uuid.UUID]exec_env.ExecutionEnvironment,
-) (*exec_env.ExecutionEnvironment, error) {
-	combinedDependenciesMap := make(map[string]bool)
-	pythonVersion := "3.9"
-	for _, env := range execEnvironments {
-		for _, dep := range env.Dependencies {
-			combinedDependenciesMap[dep] = true
-		}
-
-		if pythonVersion != "" && pythonVersion != env.PythonVersion {
-			return nil, errors.New("Multiple python versions provided for different operators.")
-		} else {
-			pythonVersion = env.PythonVersion
-		}
-	}
-
-	workflowDependencies := make([]string, 0, len(combinedDependenciesMap))
-	for dep := range combinedDependenciesMap {
-		workflowDependencies = append(workflowDependencies, dep)
-	}
-
-	rawEnv := &exec_env.ExecutionEnvironment{ID: uuid.New()}
-	rawEnv.Dependencies = workflowDependencies
-	rawEnv.PythonVersion = pythonVersion
-
-	return rawEnv, nil
-}
-
-func (eng *aqEngine) setupSparkJobManager(
-	ctx context.Context,
-	dbDAG *models.DAG,
-	vaultObject vault.Vault,
-	execEnvironments map[uuid.UUID]exec_env.ExecutionEnvironment,
-) (job.JobManager, error) {
-	// Retrieve the SparkConfig and check whether an environment has already been uploaded.
-	storageConfig := config.Storage()
-	if storageConfig.Type != shared.S3StorageType {
-		return nil, errors.New("Must use S3 storage config for Spark engine.")
-	}
-	sparkIntegrationID := dbDAG.EngineConfig.SparkConfig.IntegrationId
-
-	if dbDAG.EngineConfig.SparkConfig.EnvironmentPathURI == "" {
-		// Get the conda path information
-		sparkIntegration, err := eng.IntegrationRepo.Get(ctx, sparkIntegrationID, eng.Database)
-		if err != nil {
-			return nil, err
-		}
-		condaPath := sparkIntegration.Config[exec_env.CondaPathKey]
-
-		// Create the environment object for entire workflow.
-		rawEnv, err := eng.createWorkflowEnv(execEnvironments)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to combine environments for workflow.")
-		}
-
-		existingEnvs, err := exec_env.ListCondaEnvs()
-		if err != nil {
-			return nil, errors.Wrap(err, "Error retrieving existing conda environments.")
-		}
-
-		// Create the conda environment for the workflow.
-		err = exec_env.CreateCondaEnvIfNotExists(
-			rawEnv,
-			condaPath,
-			existingEnvs,
-		)
-		if err != nil {
-			return nil, errors.Wrap(err, "Error creating conda environment.")
-		}
-
-		// Package the Conda environment.
-		err = exec_env.CopyBaseEnvPackages(
-			rawEnv,
-			condaPath,
-		)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to copy base env packages.")
-		}
-
-		envTarName, err := exec_env.PackCondaEnvironment(
-			rawEnv,
-		)
-		if err != nil {
-			return nil, errors.Wrap(err, "Error when packing environment.")
-		}
-
-		// Put the packaged environment into S3.
-		condaEnvPath := fmt.Sprintf("%s/%s", storageConfig.S3Config.Bucket, envTarName)
-
-		bts, err := os.ReadFile(envTarName)
-		if err != nil {
-			return nil, errors.Wrap(err, "Unable to read packaged environment.")
-		}
-
-		storageObj := storage.NewStorage(&storageConfig)
-		storageObj.Put(ctx, envTarName, bts)
-
-		// Add the S3 path to the environment to the SparkConfig.
-		dbDAG.EngineConfig.SparkConfig.EnvironmentPathURI = condaEnvPath
-	}
-
-	// Create the SparkJobManager.
-	jobManager, err := job.GenerateNewJobManager(
-		ctx,
-		dbDAG.EngineConfig,
-		&dbDAG.StorageConfig,
-		eng.AqPath,
-		vaultObject,
-	)
-	if err != nil {
-		return nil, err
-	}
-	return jobManager, nil
 }
