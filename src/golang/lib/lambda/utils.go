@@ -15,7 +15,15 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/lambda"
+	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/execution_state"
+	"github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
@@ -29,7 +37,127 @@ type EcrAuth struct {
 const (
 	MaxConcurrentDownload = 3
 	MaxConcurrentUpload   = 5
+	RoleArnKey = "role_arn"
+	ExecStateKey = "exec_state"
 )
+
+func ConnectToLambda(
+	ctx context.Context,
+	authConf auth.Config,
+	integrationID uuid.UUID,
+	integrationRepo repos.Integration,
+	DB database.Database,
+	) {
+	now := time.Now()
+	_, err := integrationRepo.Update(
+		ctx,
+		integrationID,
+		map[string]interface{}{
+			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
+				RoleArnKey: "",
+				ExecStateKey: execution_state.SerializedRunning(&now),
+			}),
+		},
+		DB,
+	)
+
+	if err != nil {
+		log.Errorf("Failed to update lambda integration: %v", err)
+		return
+	}
+
+	lambdaConf, err := lib_utils.ParseLambdaConfig(authConf)
+
+	if err != nil {
+		now = time.Now()
+		integrationConfig := (*shared.IntegrationConfig)(&map[string]string{
+			RoleArnKey: lambdaConf.RoleArn,
+		})
+
+		execution_state.UpdateOnFailure(
+			ctx,
+			"",
+			errors.Wrap(err, "Unable to parse configuration.").Error(),
+			integrationConfig,
+			&now,
+			integrationID,
+			integrationRepo,
+			DB,
+		)
+
+		return 
+	}
+	functionsToShip := [10]LambdaFunctionType{
+		FunctionExecutor37Type,
+		FunctionExecutor38Type,
+		FunctionExecutor39Type,
+		ParamExecutorType,
+		SystemMetricType,
+		AthenaConnectorType,
+		BigQueryConnectorType,
+		PostgresConnectorType,
+		S3ConnectorType,
+		SnowflakeConnectorType,
+	}
+
+	err = AuthenticateDockerToECR()
+	if err != nil {
+		now = time.Now()
+		integrationConfig := (*shared.IntegrationConfig)(&map[string]string{
+			RoleArnKey: lambdaConf.RoleArn,
+		})
+
+		execution_state.UpdateOnFailure(
+			ctx,
+			"",
+			errors.Wrap(err, "Unable to authenticate Lambda Function.").Error(),
+			integrationConfig,
+			&now,
+			integrationID,
+			integrationRepo,
+			DB,
+		)
+
+		return
+	}
+
+	err = CreateLambdaFunction(ctx, functionsToShip[:], lambdaConf.RoleArn)
+	if err != nil {
+		now = time.Now()
+		integrationConfig := (*shared.IntegrationConfig)(&map[string]string{
+			RoleArnKey: lambdaConf.RoleArn,
+		})
+
+		execution_state.UpdateOnFailure(
+			ctx,
+			"",
+			errors.Wrap(err, "Unable to create Lambda Function.").Error(),
+			integrationConfig,
+			&now,
+			integrationID,
+			integrationRepo,
+			DB,
+		)
+
+		return
+	}
+
+	_, err = integrationRepo.Update(
+		ctx,
+		integrationID,
+		map[string]interface{}{
+			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
+				RoleArnKey: lambdaConf.RoleArn,
+				ExecStateKey: execution_state.SerializedSuccess(&now),
+			}),
+		},
+		DB,
+	)
+
+	if err != nil {
+		log.Errorf("Failed to update lambda integration: ")
+	}
+}
 
 func CreateLambdaFunction(ctx context.Context, functionsToShip []LambdaFunctionType, roleArn string) error {
 	// For each lambda function we create, we take the following steps:
