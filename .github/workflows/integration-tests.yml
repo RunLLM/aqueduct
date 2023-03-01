@@ -17,7 +17,6 @@ jobs:
     name: All Integration Tests with Basic Config
     steps:
       - uses: actions/checkout@v2
-        ref: eng-2490-allow-users-to-optionally-specify-role-snowflake
 
       - uses: ./.github/actions/setup-server
         timeout-minutes: 5
