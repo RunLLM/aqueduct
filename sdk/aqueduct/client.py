@@ -288,7 +288,7 @@ class Client:
                 "Service argument must match exactly one of the enum values in ServiceType (case-sensitive)."
             )
 
-        print("HELLO WORLD")
+        print("HELLO ")
         self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
         if name in self._connected_integrations.keys():
             raise InvalidUserActionException(
