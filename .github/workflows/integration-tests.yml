@@ -2,6 +2,12 @@ name: Integration Tests
 
 on:
   workflow_call:
+    secrets:
+      KENNY_AWS_ACCESS_KEY_ID:
+        required: true
+      KENNY_AWS_SECRET_ACCESS_KEY:
+        required: true
+
   workflow_dispatch:
 
 jobs:
