@@ -7,4 +7,4 @@ on:
 jobs:
   trigger-integration-tests:
     if: contains(github.event.pull_request.labels.*.name, 'run_integration_test')
-    uses: aqueducthq/aqueduct/.github/workflows/integration-tests.yml@main
+    uses: aqueducthq/aqueduct/.github/workflows/integration-tests.yml@ca6b40b40bd57c31c0a66e3eb28894f65366ffee
