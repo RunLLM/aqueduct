@@ -58,11 +58,6 @@ class RelationalConnector(connector.DataConnector):
         return results
 
     def _map_object_dtype_to_varchar(self, df: pd.DataFrame) -> Dict[str, VARCHAR]:
-        """Given a DataFrame, for each string column (i.e. object dtype), it
-        returns a mapping of column name to the appropriate SQL type VARCHAR(N),
-        where N is large enough for all values in the column. Non-string
-        columns will not be included in the returned map.
-        """
         col_to_type = {}
         for col in df.select_dtypes(include=["object"]):
             max_size = df[col].astype(str).str.len().max()
@@ -85,7 +80,7 @@ class RelationalConnector(connector.DataConnector):
                 col_to_type[col] = VARCHAR(65535)
             else:
                 raise Exception(
-                    "Cannot support saving string columns with length greater than 65535 bytes"
+                    "(saurav) Cannot support saving string columns with length greater than 65535 bytes"
                 )
         return col_to_type
 
