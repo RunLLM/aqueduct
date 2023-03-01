@@ -99,7 +99,7 @@ jobs:
         with:
           aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
-          s3_test_config_path: premerge-s3-storage-test-config.yml
+          s3_test_config_path: premerge-data-integration-test-config.yml
 
       - uses: ./.github/actions/setup-server
         timeout-minutes: 5
