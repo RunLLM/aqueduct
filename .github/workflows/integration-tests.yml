@@ -1,7 +1,4 @@
 name: Integration Tests
-#permissions:
-#  id-token: write
-#  contents: write
 
 on:
   workflow_call:
@@ -30,19 +27,21 @@ jobs:
         working-directory: integration_tests/sdk
         run: aws s3 cp s3://aqueduct-assets/premerge-basic-test-config.yml ./test-config.yml
 
-#      - name: Configure AWS Credentials
-#        uses: aws-actions/configure-aws-credentials@v1
-#        with:
-#          aws-region: us-east-2
-#          aws-access-key-id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
-#          aws-secret-access-key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
+      - name: Fetch the Test Config
+        working-directory: integration_tests/sdk
+        shell: bash
+        run: aws s3 cp s3://aqueduct-assets/${{ inputs.s3_test_config_path }} ./test-config.yml
 
-#      # TODO(ENG-2537): Use our separate GH actions credentials.
-#      - uses: ./.github/actions/fetch-test-config
-#        with:
-#          aws_access_key_id: $AWS_ACCESS_KEY_ID
-#          aws_secret_access_key: $AWS_SECRET_ACCESS_KEY
-#          s3_test_config_path: premerge-basic-test-config.yml
+      - name: Fetch the Test Credentials
+        working-directory: integration_tests/sdk
+        shell: bash
+        run: aws s3 cp s3://aqueduct-assets/test-credentials.yml ./test-credentials.yml
+
+      - name: Update the apikey in credentials
+        working-directory: integration_tests/sdk
+        shell: bash
+        run: |
+          sed -i "1s/.*/apikey: $(aqueduct apikey)/" ./test-credentials.yml
 
       - uses: ./.github/actions/setup-server
         timeout-minutes: 5
