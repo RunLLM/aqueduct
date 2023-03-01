@@ -1,4 +1,7 @@
 name: Integration Tests
+permissions:
+  id-token: write
+  contents: write
 
 on:
   workflow_call:
@@ -18,8 +21,6 @@ jobs:
       - uses: actions/checkout@v2
 
       - name: Configure AWS Credentials
-        permissions:
-          id-token: write
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: us-east-2
