@@ -42,13 +42,10 @@ export const serverConfigSlice = createSlice({
       state.status = { loading: LoadingStatusEnum.Loading, err: '' };
     });
 
-    builder.addCase(
-      handleGetServerConfig.fulfilled,
-      (state, { payload }) => {
-        state.status = { loading: LoadingStatusEnum.Succeeded, err: '' };
-        state.config = payload as ServerConfig;
-      }
-    );
+    builder.addCase(handleGetServerConfig.fulfilled, (state, { payload }) => {
+      state.status = { loading: LoadingStatusEnum.Succeeded, err: '' };
+      state.config = payload as ServerConfig;
+    });
 
     builder.addCase(handleGetServerConfig.rejected, (state, { payload }) => {
       state.config = null;
