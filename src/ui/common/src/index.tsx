@@ -95,7 +95,6 @@ import VersionSelector from './components/workflows/version_selector';
 import WorkflowCard from './components/workflows/workflowCard';
 import WorkflowHeader from './components/workflows/workflowHeader';
 import WorkflowSettings from './components/workflows/WorkflowSettings';
-import { StatusChip } from './components/workflows/workflowStatus';
 import { handleGetArtifactResultContent } from './handlers/getArtifactResultContent';
 import { handleGetWorkflowDagResult } from './handlers/getWorkflowDagResult';
 import { handleListArtifactResults } from './handlers/listArtifactResults';
@@ -376,7 +375,6 @@ export {
   SnowflakeDialog,
   SparkCard,
   SparkDialog,
-  StatusChip as Status,
   StatusBarHeaderHeightInPx,
   StatusBarWidthInPx,
   store,

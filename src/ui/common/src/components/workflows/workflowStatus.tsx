@@ -85,44 +85,6 @@ export const getExecutionStatusLabel = (status: ExecutionStatus): string => {
   return labelText;
 };
 
-/**
- * Chip component representing an execution status.
- **/
-export const StatusChip: React.FC<Props> = ({ status }) => {
-  const statusIcons = [];
-
-  const getStatusChipTextColor = (status: ExecutionStatus): string => {
-    let textColor = theme.palette.black;
-    switch (status) {
-      case ExecutionStatus.Unknown:
-      case ExecutionStatus.Running:
-        textColor = theme.palette.black;
-        break;
-      case ExecutionStatus.Canceled:
-      default:
-        textColor = theme.palette.white;
-        break;
-    }
-
-    return textColor;
-  };
-
-  statusIcons.push();
-
-  return (
-    <Chip
-      label={getExecutionStatusLabel(status)}
-      sx={{
-        backgroundColor: getExecutionStatusColor(status),
-        color: getStatusChipTextColor(status),
-      }}
-      size="small"
-    />
-  );
-};
-
-export default StatusChip;
-
 type IndicatorProps = {
   /**
    * Execution status to render.

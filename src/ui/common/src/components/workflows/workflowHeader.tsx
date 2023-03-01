@@ -31,7 +31,7 @@ import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
 import { WorkflowStatusBar } from './StatusBar';
 import VersionSelector from './version_selector';
-import StatusChip from './workflowStatus';
+import { StatusIndicator } from './workflowStatus';
 
 export const WorkflowPageContentId = 'workflow-page-main';
 
@@ -318,12 +318,12 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
           flexDirection: narrowView ? 'column' : 'row',
         }}
       >
-        <Box sx={{ flex: 1 }}>
-          <StatusChip status={workflow.dagResults[0].status} />
+        <Box sx={{ flex: 1, display: 'flex' }}>
+          <StatusIndicator status={workflow.dagResults[0].status} />
 
           <Typography
             variant="h4"
-            sx={{ my: 1, lineHeight: 1 }}
+            sx={{ ml: 1, lineHeight: 1 }}
             fontWeight="normal"
           >
             {name}
