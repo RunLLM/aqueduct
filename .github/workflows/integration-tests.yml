@@ -21,8 +21,8 @@ jobs:
         run: |
           mkdir ~/.aws
           printf "[default]\n" >> ~/.aws/credentials
-          printf "aws_access_key_id=%s\n" "${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
-          printf "aws_secret_access_key=%s\n" "${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
+          printf "aws_access_key_id=%s\n" '${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}' >> ~/.aws/credentials
+          printf "aws_secret_access_key=%s\n" '${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}' >> ~/.aws/credentials
 
       - name: Fetch the Test Config
         working-directory: integration_tests/sdk
