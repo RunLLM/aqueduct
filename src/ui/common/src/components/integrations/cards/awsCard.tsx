@@ -12,10 +12,24 @@ export const AWSCard: React.FC<AWSCardProps> = ({ integration }) => {
   const config = integration.config as AWSConfig;
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-      <Typography variant="body2">
-        <strong>TBD: </strong>
-        {config.region}
-      </Typography>
+      {config.region !== undefined && (
+        <Typography variant="body2">
+          <strong>Region: </strong>
+          {config.region}
+        </Typography>
+      )}
+      {config.config_file_path !== undefined && (
+        <Typography variant="body2">
+          <strong>Credential File Path: </strong>
+          {config.config_file_path}
+        </Typography>
+      )}
+      {config.config_file_profile !== undefined && (
+        <Typography variant="body2">
+          <strong>Profile: </strong>
+          {config.config_file_profile}
+        </Typography>
+      )}
     </Box>
   );
 };
