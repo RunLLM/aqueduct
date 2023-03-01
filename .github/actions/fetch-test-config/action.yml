@@ -1,6 +1,8 @@
 name: Fetch test config files
 description: "Fetches both test-config.yml and test-credentials.yml, the former being configurable."
 
+# This is expected to run after setup-server.
+
 inputs:
   aws_access_key_id:
     description: "The AWS Access ID from our Github Secrets."
