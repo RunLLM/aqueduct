@@ -12,8 +12,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: ./.github/actions/setup-server
-        timeout-minutes: 5
+      - name: Echo secrets
+        run: echo ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
 
       # TODO(ENG-2537): Use our separate GH actions credentials.
       - uses: ./.github/actions/fetch-test-config
@@ -21,6 +21,10 @@ jobs:
           aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
           s3_test_config_path: premerge-basic-test-config.yml
+
+      - uses: ./.github/actions/setup-server
+        timeout-minutes: 5
+
 
       - name: Run the SDK Integration Tests
         timeout-minutes: 10
