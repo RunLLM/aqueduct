@@ -25,6 +25,8 @@ jobs:
       - name: Echo dumb 2
         run: if [ "$DUMB" == "HELLO" ]; then echo "True"; else echo "False"; fi
 
+      - name: Echo empty
+        run: [ -z "$var" ] && echo "Empty"
 
       # TODO(ENG-2537): Use our separate GH actions credentials.
       - uses: ./.github/actions/fetch-test-config
