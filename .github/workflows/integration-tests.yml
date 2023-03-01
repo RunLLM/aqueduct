@@ -16,23 +16,12 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Echo
-        run: echo ${{ secrets.DUMB_SECRET }} | sed 's/./& /g'
-
-      - name: Echo dumb
-        run: if [[ $DUMB == "HELLO" ]]; then echo "True"; else echo "False"; fi
-
-      - name: Echo dumb 2
-        run: if [ "$DUMB" == "HELLO" ]; then echo "True"; else echo "False"; fi
-
-      - name: Echo empty
-        run: if [ -z "$AWS_ACCESS_KEY_ID" ]; then echo "True"; else echo "False"; fi
-
-      - name: Echo empty secrets directly
-        run: if [ -z "${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}" ]; then echo "True"; else echo "False"; fi
-
-      - name: Echo Slack
-        run: if [ -z "${{ secrets.ACTION_MONITORING_SLACK }}" ]; then echo "True"; else echo "False"; fi
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-east-2
+          aws-access-key-id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
 
       # TODO(ENG-2537): Use our separate GH actions credentials.
       - uses: ./.github/actions/fetch-test-config
