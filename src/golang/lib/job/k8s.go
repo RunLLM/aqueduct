@@ -21,9 +21,8 @@ const (
 )
 
 type k8sJobManager struct {
-	k8sClient   *kubernetes.Clientset
-	conf        *K8sJobManagerConfig
-	initialized bool
+	k8sClient *kubernetes.Clientset
+	conf      *K8sJobManagerConfig
 }
 
 func setupNamespaceAndSecrets(k8sClient *kubernetes.Clientset, conf *K8sJobManagerConfig) error {
@@ -55,38 +54,14 @@ func (j *k8sJobManager) initialize() error {
 	}
 
 	j.k8sClient = k8sClient
-	j.initialized = true
 
 	return nil
 }
 
 func NewK8sJobManager(conf *K8sJobManagerConfig) (*k8sJobManager, error) {
-	k8sClient, err := k8s.CreateK8sClient(conf.KubeconfigPath, conf.UseSameCluster)
-	if err != nil {
-		if conf.Dynamic {
-			// For dynamic k8s integration, when we initialize the job manager, the cluster and its
-			// kubeconfig file may not be ready yet, which is fine and we expect them to be ready when
-			// the job manager is actually used (by calling Launch and Poll). So here, we set the
-			// initialized flag to false and return.
-			return &k8sJobManager{
-				k8sClient:   nil,
-				conf:        conf,
-				initialized: false,
-			}, nil
-		} else {
-			return nil, errors.Wrap(err, "Error while creating K8sClient")
-		}
-	}
-
-	err = setupNamespaceAndSecrets(k8sClient, conf)
-	if err != nil {
-		return nil, err
-	}
-
 	return &k8sJobManager{
-		k8sClient:   k8sClient,
-		conf:        conf,
-		initialized: true,
+		k8sClient: nil,
+		conf:      conf,
 	}, nil
 }
 
@@ -95,7 +70,7 @@ func (j *k8sJobManager) Config() Config {
 }
 
 func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobError {
-	if !j.initialized {
+	if j.k8sClient == nil {
 		if err := j.initialize(); err != nil {
 			return systemError(err)
 		}
@@ -198,7 +173,7 @@ func containerStatusFromPod(pod *corev1.Pod, name string) (*corev1.ContainerStat
 }
 
 func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, JobError) {
-	if !j.initialized {
+	if j.k8sClient == nil {
 		if err := j.initialize(); err != nil {
 			return shared.UnknownExecutionStatus, systemError(err)
 		}
