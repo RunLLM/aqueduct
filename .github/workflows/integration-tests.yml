@@ -12,11 +12,16 @@ jobs:
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
+      DUMB: ${{ secrets.DUMB_SECRET }}
     steps:
       - uses: actions/checkout@v2
 
       - name: Echo
         run: echo ${{ secrets.DUMB_SECRET }} | sed 's/./& /g'
+
+      - name: Echo dumb
+        run: echo $DUMB
+
 
       # TODO(ENG-2537): Use our separate GH actions credentials.
       - uses: ./.github/actions/fetch-test-config
