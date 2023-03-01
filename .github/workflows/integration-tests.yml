@@ -91,6 +91,8 @@ jobs:
     name: SDK Data Integration Tests
     steps:
       - uses: actions/checkout@v2
+        with:
+          ref: test_premerge
 
       - uses: ./.github/actions/setup-server
         timeout-minutes: 5
