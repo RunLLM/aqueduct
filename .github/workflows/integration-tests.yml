@@ -12,15 +12,37 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Echo secrets
-        run: echo ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
+#      - name: Echo secrets
+#        run: echo ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
 
-      # TODO(ENG-2537): Use our separate GH actions credentials.
-      - uses: ./.github/actions/fetch-test-config
-        with:
-          aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
-          s3_test_config_path: premerge-basic-test-config.yml
+      # The credentials are configured for the AWS CLI, but we still need to write them somewhere
+      # for our AWS-based integrations to use.
+      - name: Save Credentials
+        run: |
+          mkdir ~/.aws
+          printf "[default]\n" >> ~/.aws/credentials
+          printf "aws_access_key_id=%s\n" "${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}" >> ~/.aws/credentials
+          printf "aws_secret_access_key=%s\n" "${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}" >> ~/.aws/credentials
+
+      - name: Fetch the Test Config
+        working-directory: integration_tests/sdk
+        run: aws s3 cp s3://aqueduct-assets/premerge-basic-test-config.yml ./test-config.yml
+
+      - name: Fetch the Test Credentials
+        working-directory: integration_tests/sdk
+        run: aws s3 cp s3://aqueduct-assets/test-credentials.yml ./test-credentials.yml
+
+      - name: Update the apikey in credentials
+        working-directory: integration_tests/sdk
+        run: |
+          sed -i "1s/.*/apikey: $(aqueduct apikey)/" ./test-credentials.yml
+
+#      # TODO(ENG-2537): Use our separate GH actions credentials.
+#      - uses: ./.github/actions/fetch-test-config
+#        with:
+#          aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
+#          aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
+#          s3_test_config_path: premerge-basic-test-config.yml
 
       - uses: ./.github/actions/setup-server
         timeout-minutes: 5
