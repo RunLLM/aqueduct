@@ -20,7 +20,10 @@ jobs:
         run: echo ${{ secrets.DUMB_SECRET }} | sed 's/./& /g'
 
       - name: Echo dumb
-        run: echo $DUMB
+        run: if [[ $DUMB == "HELLO" ]]; then echo "True"; else echo "False"; fi
+
+      - name: Echo dumb 2
+        run: if [ "$DUMB" == "HELLO" ]; then echo "True"; else echo "False"; fi
 
 
       # TODO(ENG-2537): Use our separate GH actions credentials.
