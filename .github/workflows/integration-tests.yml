@@ -29,7 +29,7 @@ jobs:
         run: if [ -z "$AWS_ACCESS_KEY_ID" ]; then echo "True"; else echo "False"; fi
 
       - name: Echo empty secrets directly
-        run: if [ -z "${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}" ]; then echo "True"; else echo "False"; f
+        run: if [ -z "${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}" ]; then echo "True"; else echo "False"; fi
 
       # TODO(ENG-2537): Use our separate GH actions credentials.
       - uses: ./.github/actions/fetch-test-config
