@@ -12,7 +12,6 @@ jobs:
     env:
       AWS_ACCESS_KEY_ID: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
-      S3_TEST_CONFIG_PATH: premerge-basic-test-config.yml
     steps:
       - uses: actions/checkout@v2
 
@@ -24,7 +23,7 @@ jobs:
         with:
           aws_access_key_id: $AWS_ACCESS_KEY_ID
           aws_secret_access_key: $AWS_SECRET_ACCESS_KEY
-          s3_test_config_path: $S3_TEST_CONFIG_PATH
+          s3_test_config_path: premerge-basic-test-config.yml
 
       - name: Run the SDK Integration Tests
         timeout-minutes: 10
