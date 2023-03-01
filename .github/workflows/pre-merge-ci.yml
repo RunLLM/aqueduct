@@ -7,7 +7,7 @@ on:
 jobs:
   trigger-integration-tests:
     if: contains(github.event.pull_request.labels.*.name, 'run_integration_test')
-    uses: aqueducthq/aqueduct/.github/workflows/integration-tests.yml@test_premerge
+    uses: aqueducthq/aqueduct/.github/workflows/integration-tests.yml
     secrets:
       KENNY_AWS_ACCESS_KEY_ID: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
       KENNY_AWS_SECRET_ACCESS_KEY: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
