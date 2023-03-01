@@ -1,9 +1,9 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
+import { ServerConfig } from '../../../reducers/serverConfig';
 
 import IntegrationLogo from '../../integrations/logo';
-import { ServerConfig } from './AccountPage';
 
 interface MetadataPreviewProps {
   serverConfig: ServerConfig;

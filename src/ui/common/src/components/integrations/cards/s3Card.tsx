@@ -2,6 +2,8 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faDatabase, faTags } from '@fortawesome/free-solid-svg-icons';
 
 import { handleGetServerConfig } from '../../../handlers/getServerConfig';
 import { RootState } from '../../../stores/store';
@@ -36,13 +38,25 @@ export const S3Card: React.FC<Props> = ({ integration }) => {
     fetchServerConfig();
   }, [user]);
 
-  let metadataStorageText = null;
+  let dataStorageInfo = null;
 
   if (storageConfig && storageConfig.type === 's3') {
-    metadataStorageText = (
-      <Typography variant={'body1'}>* Set as Metadata Storage</Typography>
+    dataStorageInfo = (
+      <Box component="span">
+        <FontAwesomeIcon icon={faTags} /> Metadata
+      </Box>
+    );
+  } else {
+    dataStorageInfo = (
+      <Box component="span">
+        <FontAwesomeIcon icon={faDatabase} /> Data
+      </Box>
     );
   }
+
+  const dataStorageText = (
+    <Typography variant={'body2'}><strong>Storage Type:</strong> {dataStorageInfo}</Typography>
+  );
 
   return (
     <Box>
@@ -54,7 +68,7 @@ export const S3Card: React.FC<Props> = ({ integration }) => {
         <strong>Region: </strong>
         {config.region}
       </Typography>
-      {metadataStorageText}
+      {dataStorageText}
     </Box>
   );
 };

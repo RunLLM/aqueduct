@@ -206,7 +206,7 @@ client = aqueduct.Client(
 
       {notificationSection}
 
-      <MetadataStorageInfo serverConfig={serverConfig} />
+      <MetadataStorageInfo serverConfig={serverConfig.config} />
 
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
