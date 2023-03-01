@@ -31,6 +31,9 @@ jobs:
       - name: Echo empty secrets directly
         run: if [ -z "${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}" ]; then echo "True"; else echo "False"; fi
 
+      - name: Echo Slack
+        run: if [ -z "${{ secrets.ACTION_MONITORING_SLACK }}" ]; then echo "True"; else echo "False"; fi
+
       # TODO(ENG-2537): Use our separate GH actions credentials.
       - uses: ./.github/actions/fetch-test-config
         with:
