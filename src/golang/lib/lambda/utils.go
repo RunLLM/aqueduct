@@ -131,6 +131,19 @@ func ConnectToLambda(
 		return
 >>>>>>> 71606355 (asyn connect successful)
 	}
+
+	_, err = integrationRepo.Update(
+		ctx,
+		integrationID,
+		map[string]interface{}{
+			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
+				RoleArnKey: lambdaConf.RoleArn,
+				ExecStateKey: execution_state.SerializedRunning(&now),
+			}),
+		},
+		DB,
+	)
+
 	functionsToShip := [10]LambdaFunctionType{
 		FunctionExecutor37Type,
 		FunctionExecutor38Type,

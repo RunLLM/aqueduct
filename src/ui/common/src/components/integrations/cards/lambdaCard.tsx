@@ -12,6 +12,18 @@ type Props = {
 
 export const LambdaCard: React.FC<Props> = ({ integration }) => {
   const config = integration.config as LambdaConfig;
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+      <Typography variant="body2">
+        <strong>Lambda Role ARN: </strong>
+        {config.role_arn}
+      </Typography>
+    </Box>
+  );
+};
+
+export const LambdaDetailCard: React.FC<Props> = ({ integration }) => {
+  const config = integration.config as LambdaConfig;
   const execState = config.exec_state
   ? (JSON.parse(config.exec_state) as ExecState)
   : { status: ExecutionStatus.Unknown };
