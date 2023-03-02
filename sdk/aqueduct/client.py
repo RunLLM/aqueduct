@@ -479,6 +479,7 @@ class Client:
         k_latest_runs: Optional[int] = None,
         config: Optional[FlowConfig] = None,
         source_flow: Optional[Union[Flow, str, uuid.UUID]] = None,
+        run_now: bool = True,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
 
@@ -672,7 +673,7 @@ class Client:
 
         if dag.engine_config.type == RuntimeType.AIRFLOW:
             # This is an Airflow workflow
-            resp = globals.__GLOBAL_API_CLIENT__.register_airflow_workflow(dag)
+            resp = globals.__GLOBAL_API_CLIENT__.register_airflow_workflow(dag, run_now)
             flow_id, airflow_file = resp.id, resp.file
 
             file = "{}_airflow.py".format(name)
@@ -696,7 +697,7 @@ class Client:
                     )
                 )
         else:
-            flow_id = globals.__GLOBAL_API_CLIENT__.register_workflow(dag).id
+            flow_id = globals.__GLOBAL_API_CLIENT__.register_workflow(dag, run_now).id
 
         url = generate_ui_url(
             globals.__GLOBAL_API_CLIENT__.construct_base_url(),

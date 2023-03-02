@@ -17,4 +17,6 @@ const (
 	TableNameHeader = "table-name"
 
 	MetadataOnlyHeader = "metadata-only"
+
+	RunNowHeader = "run-now"
 )

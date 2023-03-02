@@ -318,6 +318,22 @@ def test_refresh_flow(client, flow_name, data_integration, engine):
     )
 
 
+def test_publish_flow_without_triggering(client, flow_name, data_integration, engine):
+    @op
+    def foo():
+        return "results"
+
+    output = foo()
+    flow = client.publish_flow(
+        name=flow_name(),
+        artifacts=output,
+        engine=engine,
+        run_now=False,
+    )
+
+    assert len(flow.list_runs()) == 0
+
+
 def test_get_artifact_from_flow(client, flow_name, data_integration, engine):
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
     output_artifact = dummy_sentiment_model(table_artifact)

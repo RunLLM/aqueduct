@@ -1,6 +1,6 @@
 package routes
 
-// Please sort the route by their VALUEs
+// Please sort the routes by their VALUEs
 const (
 	GetArtifactVersionsRoute = "/api/artifact/versions"
 	GetArtifactResultRoute   = "/api/artifact/{workflowDagResultId}/{artifactId}/result"

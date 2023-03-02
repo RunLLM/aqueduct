@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
+	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
@@ -59,6 +60,7 @@ type registerWorkflowArgs struct {
 
 	// Whether this is a registering a new workflow or updating an existing one.
 	isUpdate bool
+	runNow   bool
 }
 
 type registerWorkflowResponse struct {
@@ -74,6 +76,12 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
+	}
+
+	runNowStr := r.Header.Get(routes.RunNowHeader)
+	runNow := true
+	if runNowStr == "False" {
+		runNow = false
 	}
 
 	dagSummary, statusCode, err := request.ParseDagSummaryFromRequest(
@@ -137,6 +145,7 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 		AqContext:  aqContext,
 		dagSummary: dagSummary,
 		isUpdate:   isUpdate,
+		runNow:     runNow,
 	}, http.StatusOK, nil
 }
 
@@ -260,15 +269,17 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		CleanupTimeout:       engine.DefaultCleanupTimeout,
 	}
 
-	_, err = h.Engine.TriggerWorkflow(
-		ctx,
-		workflowId,
-		shared_utils.AppendPrefix(dbWorkflowDag.Metadata.ID.String()),
-		timeConfig,
-		nil, /* parameters */
-	)
-	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow.")
+	if args.runNow {
+		_, err = h.Engine.TriggerWorkflow(
+			ctx,
+			workflowId,
+			shared_utils.AppendPrefix(dbWorkflowDag.Metadata.ID.String()),
+			timeConfig,
+			nil, /* parameters */
+		)
+		if err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow.")
+		}
 	}
 
 	if !args.isUpdate {
