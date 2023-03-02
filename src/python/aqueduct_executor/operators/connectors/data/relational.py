@@ -43,12 +43,14 @@ class RelationalConnector(connector.DataConnector):
     def __init__(
         self,
         conn_engine: engine.Engine,
-        object_to_varchar_mapper: Optional[
-            Callable[[pd.DataFrame], Dict[str, VARCHAR]]
-        ] = default_map_object_dtype_to_varchar,
+        object_to_varchar_mapper: Optional[Callable[[pd.DataFrame], Dict[str, VARCHAR]]] = None,
     ):
         self.engine = conn_engine
-        self.map_object_dtype_to_varchar = object_to_varchar_mapper
+        self.map_object_dtype_to_varchar: Callable[
+            [pd.DataFrame], Dict[str, VARCHAR]
+        ] = default_map_object_dtype_to_varchar
+        if object_to_varchar_mapper is not None:
+            self.map_object_dtype_to_varchar = object_to_varchar_mapper
 
     def __del__(self) -> None:
         self.engine.dispose()
