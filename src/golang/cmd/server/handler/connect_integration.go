@@ -17,6 +17,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/dynamic"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
@@ -216,6 +217,10 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		}).Perform(ctx, connectIntegrationArgs)
 		if err != nil {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to register dynamic k8s integration.")
+		}
+
+		if _, _, err := lib_utils.RunCmd("terraform", []string{"init"}, dynamic.TerraformDir, true); err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Error initializing Terraform")
 		}
 	}
 
