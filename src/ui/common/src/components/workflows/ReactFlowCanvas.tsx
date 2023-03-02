@@ -1,5 +1,9 @@
 import React from 'react';
-import ReactFlow, { Node as ReactFlowNode } from 'react-flow-renderer';
+import ReactFlow, {
+  Controls,
+  MiniMap,
+  Node as ReactFlowNode,
+} from 'react-flow-renderer';
 import { useSelector } from 'react-redux';
 
 import { RootState } from '../../stores/store';
@@ -7,7 +11,6 @@ import { EdgeTypes, ReactFlowNodeData } from '../../utils/reactflow';
 import nodeTypes from './nodes/nodeTypes';
 
 const connectionLineStyle = { stroke: '#fff' };
-const snapGrid = [20, 20];
 
 type ReactFlowCanvasProps = {
   onPaneClicked: (event: React.MouseEvent) => void;
@@ -54,13 +57,22 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
       onNodeClick={switchSideSheet}
       nodeTypes={nodeTypes}
       connectionLineStyle={connectionLineStyle}
-      snapToGrid={true}
-      snapGrid={snapGrid as [number, number]}
-      defaultZoom={1}
       edgeTypes={EdgeTypes}
-      minZoom={0.25}
-      fitView={true}
-    />
+      onInit={(reactFlowInstance) => {
+        console.log('onInitCalled, ', reactFlowInstance);
+        //reactFlowInstance.fitBounds({ x: 0, y: 0, width: 0, height: 0 });
+        //reactFlowInstance.fitView();
+        reactFlowInstance.setViewport({ x: 50, y: 50, zoom: 0.4 });
+      }}
+      onMove={(event, viewport) => {
+        console.log('onMove viewport: ', viewport);
+      }}
+      defaultZoom={2}
+      minZoom={0.2}
+    >
+      <MiniMap />
+      <Controls />
+    </ReactFlow>
   );
 };
 

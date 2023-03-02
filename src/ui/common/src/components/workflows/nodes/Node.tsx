@@ -98,12 +98,13 @@ export const Node: React.FC<Props> = ({
 
         <Typography
           sx={{
-            fontSize: '18px',
+            fontSize: '24px',
             maxWidth: '80%',
             width: '80%',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
+            //whiteSpace: 'nowrap',
+            //overflow: 'hidden',
+            overflow: 'clip',
+            //textOverflow: 'ellipsis',
           }}
         >
           {label}
