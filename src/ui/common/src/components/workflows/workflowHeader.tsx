@@ -1,17 +1,18 @@
-import { faPlay } from '@fortawesome/free-solid-svg-icons';
+import { faCalendar, faChevronDown, faEllipsis, faMicrochip, faPlay } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Alert, Snackbar, Typography } from '@mui/material';
+import { Alert, Collapse, Snackbar, Tooltip, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import TextField from '@mui/material/TextField';
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useSelector } from 'react-redux';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { theme } from '../../styles/theme/theme';
 
 import { handleLoadIntegrations } from '../../reducers/integrations';
 import { handleGetWorkflow, selectResultIdx } from '../../reducers/workflow';
@@ -29,9 +30,9 @@ import { EngineType } from '../../utils/engine';
 import { WorkflowDag, WorkflowUpdateTrigger } from '../../utils/workflows';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
-import { WorkflowStatusBar } from './StatusBar';
 import VersionSelector from './version_selector';
 import { StatusIndicator } from './workflowStatus';
+import EngineItem from '../pages/workflows/components/EngineItem';
 
 export const WorkflowPageContentId = 'workflow-page-main';
 
@@ -70,7 +71,9 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
 
   // TODO (ENG-2302): useLayoutEffect here. May want to figure out some way to debounce as it gets called quite quickly when resizing.
   window.addEventListener('resize', getContainerSize);
+  useLayoutEffect(getContainerSize, [currentNode]);
 
+  const [showDescription, setShowDescription] = useState(false);
   const [showRunWorkflowDialog, setShowRunWorkflowDialog] = useState(false);
   const workflow = useSelector((state: RootState) => state.workflowReducer);
 
@@ -106,7 +109,7 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
   const name = workflowDag.metadata?.name ?? '';
   const description = workflowDag.metadata?.description;
 
-  let nextUpdateComponent;
+  let nextUpdate;
   if (
     workflowDag.metadata?.schedule?.trigger ===
       WorkflowUpdateTrigger.Periodic &&
@@ -115,18 +118,8 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
     const nextUpdateTime = getNextUpdateTime(
       workflowDag.metadata?.schedule?.cron_schedule
     );
-    nextUpdateComponent = (
-      <Box sx={{ mt: 1 }}>
-        <Typography variant="body2">
-          <strong> Workflow Engine: </strong>
-          {workflowDag.engine_config.type}
-        </Typography>
-        <Typography variant="body2">
-          <strong> Next Workflow Run: </strong>{' '}
-          {nextUpdateTime.toDate().toLocaleString()}
-        </Typography>
-      </Box>
-    );
+
+    nextUpdate= nextUpdateTime.toDate().toLocaleString();
   }
 
   const showAirflowUpdateWarning =
@@ -316,59 +309,110 @@ const WorkflowHeader: React.FC<Props> = ({ user, workflowDag, workflowId }) => {
           display: 'flex',
           alignItems: narrowView ? 'start' : 'center',
           flexDirection: narrowView ? 'column' : 'row',
+          transition: 'height 100ms'
         }}
       >
-        <Box sx={{ flex: 1, display: 'flex' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <StatusIndicator status={workflow.dagResults[0].status} />
 
           <Typography
-            variant="h4"
+            variant="h5"
             sx={{ ml: 1, lineHeight: 1 }}
             fontWeight="normal"
           >
             {name}
           </Typography>
+
+          {
+            workflow.dagResults && workflow.dagResults.length > 0 && (
+              <Box ml={2}>
+                <VersionSelector />
+              </Box>
+            )
+          }
         </Box>
 
-        <Box sx={{ mr: 4 }}>
-          <Button
-            color="primary"
-            sx={{ height: '100%', mr: 2, fontSize: '20px' }}
-            onClick={() => setShowRunWorkflowDialog(true)}
-            size="large"
-          >
-            <FontAwesomeIcon icon={faPlay} />
-            <Typography sx={{ ml: 1 }}>Run Workflow</Typography>
-          </Button>
+        <Button
+          color="primary"
+          onClick={() => setShowRunWorkflowDialog(true)}
+          sx={{
+            mx: narrowView ? 0 : 1,
+          }}
+        >
+          <FontAwesomeIcon icon={faPlay} />
+          <Typography sx={{ ml: 1 }}>Run Workflow</Typography>
+        </Button>
+
+        <Box
+          sx={{
+            fontSize: '20px',
+            p: 1,
+            ml: narrowView ? 0 : 1,
+            mt: narrowView ? 1 : 0,
+            borderRadius: '8px',
+            ":hover": {
+              backgroundColor: theme.palette.gray[50]
+            },
+            cursor: "pointer",
+          }}
+          onClick={() => setShowDescription(!showDescription)}
+        >
+          <Tooltip title="See more" arrow>
+            <FontAwesomeIcon
+              icon={faEllipsis}
+              style={{ transform: showDescription ? 'rotateX(180deg)' : '', transition: 'transform 200ms' }}
+            />
+          </Tooltip>
         </Box>
       </Box>
 
-      {description && (
-        <Typography variant="body1">
-          <ReactMarkdown className={style.reactMarkdown}>
-            {description}
-          </ReactMarkdown>
-        </Typography>
-      )}
 
-      {nextUpdateComponent}
+      <Collapse in={showDescription}>
+        <Box display="flex" alignItems="center" my={1}>
+          {/* Display the Workflow Engine. */}
+          <Tooltip title={"Compute Engine(s)"} arrow>
+            <Box display="flex" alignItems="center">
+              <Box mr={1}>
+                <FontAwesomeIcon icon={faMicrochip} color={theme.palette.gray[800]} />
+              </Box>
+              <EngineItem engine={workflowDag.engine_config.type} />
+          </Box>
 
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: narrowView ? 'start' : 'center',
-          my: 1,
-          flexDirection: narrowView ? 'column' : 'row',
-        }}
-      >
-        {workflow.dagResults && workflow.dagResults.length > 0 && (
-          <VersionSelector />
-        )}
 
-        <Box mx={narrowView ? 0 : 2} my={narrowView ? 1 : 0}>
-          <WorkflowStatusBar user={user} />
+          </Tooltip>
+          {/* Display the next workflow run. */}
+          {
+            nextUpdate &&
+            <Tooltip title="Next Workflow Run" arrow>
+                <Box display="flex" alignItems="center" ml={2}>
+                  <Box mr={1}>
+                    <FontAwesomeIcon icon={faCalendar} color={theme.palette.gray[800]} />
+                  </Box>
+                  <Typography>
+                    {nextUpdate}
+                  </Typography>
+                </Box>
+            </Tooltip>
+          }
         </Box>
-      </Box>
+
+        <Box
+          sx={{
+            backgroundColor: theme.palette.gray[25],
+            px: 2,
+            py: 1,
+            my: 1,
+            maxWidth: '800px',
+            borderRadius: '4px',
+          }}
+        >
+          <Typography variant="body1">
+            <ReactMarkdown className={style.reactMarkdown}>
+              {description ?? '*No description.*'}
+            </ReactMarkdown>
+          </Typography>
+        </Box>
+      </Collapse>
 
       {runWorkflowDialog}
 

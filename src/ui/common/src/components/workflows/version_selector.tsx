@@ -1,15 +1,19 @@
 import {
+  faChevronDown,
   faCircleCheck,
   faCircleXmark,
+  faClock,
   faSpinner,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Popover } from '@mui/material';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
-import React from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
@@ -21,10 +25,15 @@ import ExecutionStatus from '../../utils/shared';
 
 export const VersionSelector: React.FC = () => {
   const navigate = useNavigate();
+
   const workflow = useSelector((state: RootState) => state.workflowReducer);
   const results = workflow.dagResults;
   const selectedResult = workflow.selectedResult;
+  
   const dispatch = useDispatch();
+
+  const [menuAnchor, setMenuAnchor] = useState<HTMLButtonElement | null>(null);
+  const [menuHover, setMenuHover] = useState(false);
   const [selectedResultIdx, setSelectedResultIdx] = React.useState(0);
 
   const getMenuItems = () => {
@@ -36,24 +45,39 @@ export const VersionSelector: React.FC = () => {
       }
 
       let menuItemIcon;
+
+      let defaultBackground, hoverBackground, selectedBackground;
+
       switch (r.status) {
         case ExecutionStatus.Succeeded:
+          defaultBackground = theme.palette.green[100];
+          hoverBackground = theme.palette.green[25];
+          selectedBackground = theme.palette.green[200];
+
           menuItemIcon = (
-            <Box sx={{ fontSize: '20px', color: theme.palette.Success }}>
+            <Box sx={{ color: theme.palette.Success }}>
               <FontAwesomeIcon icon={faCircleCheck} />
             </Box>
           );
           break;
         case ExecutionStatus.Pending:
+          defaultBackground = theme.palette.gray[100];
+          hoverBackground = theme.palette.gray[25];
+          selectedBackground = theme.palette.gray[200];
+        
           menuItemIcon = (
-            <Box sx={{ fontSize: '20px', color: theme.palette.gray['700'] }}>
+            <Box sx={{ color: theme.palette.gray['700'] }}>
               <FontAwesomeIcon icon={faSpinner} spin={true} />
             </Box>
           );
           break;
         case ExecutionStatus.Failed:
+          defaultBackground = theme.palette.red[100];
+          hoverBackground = theme.palette.red[25];
+          selectedBackground = theme.palette.red[300];
+
           menuItemIcon = (
-            <Box sx={{ fontSize: '20px', color: theme.palette.Error }}>
+            <Box sx={{ color: theme.palette.Error }}>
               <FontAwesomeIcon icon={faCircleXmark} />
             </Box>
           );
@@ -68,13 +92,19 @@ export const VersionSelector: React.FC = () => {
             dispatch(selectResultIdx(idx));
             navigate(`?workflowDagResultId=${encodeURI(r.id)}`);
           }}
-          sx={{ backgroundColor: selected ? 'blueTint' : null }}
+          sx={{ 
+            backgroundColor: selected ? selectedBackground : defaultBackground,
+            ":hover": {
+              backgroundColor: hoverBackground,
+            },
+          }}
+          disableRipple
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             {menuItemIcon}
-            <Typography sx={{ ml: 1 }}>{`${dateString(
-              r.created_at
-            )}`}</Typography>
+            <Typography ml={1}>
+              {`${dateString(r.created_at)}`}
+            </Typography>
           </Box>
         </MenuItem>
       );
@@ -83,16 +113,49 @@ export const VersionSelector: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-      <FormControl sx={{ minWidth: 120 }} size="small">
-        <Select
-          sx={{ maxHeight: 48 }}
-          id="grouped-select"
-          autoWidth
-          value={selectedResultIdx}
-        >
+      <Button
+        sx={{
+          backgroundColor: !!menuAnchor ? theme.palette.gray[50] : 'white',
+          ":hover": {
+            backgroundColor: theme.palette.gray[50],
+          },
+          p: 1,
+          pr: menuHover || !!menuAnchor ? 1 : 3, // Add margin if the icon is not there, remove it when it is.
+          borderRadius: '4px',
+          fontSize: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          textTransform: 'none',
+          color: theme.palette.gray[900],
+        }}
+        onClick={(e) => setMenuAnchor(e.currentTarget)}
+        onMouseEnter={() => setMenuHover(true)}
+        onMouseLeave={() => setMenuHover(false)}
+        disableRipple
+        disableFocusRipple
+      >
+        <FontAwesomeIcon icon={faClock} color={theme.palette.gray[800]} />
+        <Box mx={1}>
+          {dateString(results[selectedResultIdx].created_at)}
+        </Box>
+
+        {
+          (menuHover || !!menuAnchor) &&
+          <FontAwesomeIcon icon={faChevronDown} />
+        }
+      </Button>
+
+      <Popover
+        open={!!menuAnchor}
+        anchorEl={menuAnchor}
+        onClose={() => setMenuAnchor(null)}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'left',
+        }}
+      >
           {getMenuItems()}
-        </Select>
-      </FormControl>
+      </Popover>
     </Box>
   );
 };

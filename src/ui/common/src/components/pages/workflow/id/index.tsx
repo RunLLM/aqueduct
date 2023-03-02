@@ -3,7 +3,6 @@ import { faCircleDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Drawer } from '@mui/material';
 import Box from '@mui/material/Box';
-import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import { parse } from 'query-string';
 import React, { useCallback, useEffect } from 'react';
@@ -468,9 +467,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Box>
         )}
 
-        <Divider />
-
-        <Tabs value={currentTab} onChange={handleTabChange}>
+        <Tabs value={currentTab} onChange={handleTabChange} sx={{ mb: 1 }}>
           <Tab value="Details" label="Details" />
           <Tab value="Settings" label="Settings" />
         </Tabs>
