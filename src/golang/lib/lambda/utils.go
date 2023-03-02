@@ -29,6 +29,11 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ecr"
+	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -45,12 +50,17 @@ const (
 	MaxConcurrentDownload = 3
 	MaxConcurrentUpload   = 5
 <<<<<<< HEAD
+<<<<<<< HEAD
 	RoleArnKey            = "role_arn"
 	ExecStateKey          = "exec_state"
 =======
 	RoleArnKey = "role_arn"
 	ExecStateKey = "exec_state"
 >>>>>>> 38a26699 (backend change for asyn connection)
+=======
+	RoleArnKey            = "role_arn"
+	ExecStateKey          = "exec_state"
+>>>>>>> 71606355 (asyn connect successful)
 )
 
 func ConnectToLambda(
@@ -60,10 +70,14 @@ func ConnectToLambda(
 	integrationRepo repos.Integration,
 	DB database.Database,
 <<<<<<< HEAD
+<<<<<<< HEAD
 ) {
 =======
 	) {
 >>>>>>> 38a26699 (backend change for asyn connection)
+=======
+) {
+>>>>>>> 71606355 (asyn connect successful)
 	now := time.Now()
 	_, err := integrationRepo.Update(
 		ctx,
@@ -71,9 +85,12 @@ func ConnectToLambda(
 		map[string]interface{}{
 			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 				RoleArnKey: "",
 >>>>>>> 38a26699 (backend change for asyn connection)
+=======
+>>>>>>> 71606355 (asyn connect successful)
 				ExecStateKey: execution_state.SerializedRunning(&now),
 			}),
 		},
@@ -105,10 +122,14 @@ func ConnectToLambda(
 		)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 		return
 =======
 		return 
 >>>>>>> 38a26699 (backend change for asyn connection)
+=======
+		return
+>>>>>>> 71606355 (asyn connect successful)
 	}
 	functionsToShip := [10]LambdaFunctionType{
 		FunctionExecutor37Type,
@@ -171,10 +192,14 @@ func ConnectToLambda(
 		map[string]interface{}{
 			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
 <<<<<<< HEAD
+<<<<<<< HEAD
 				RoleArnKey:   lambdaConf.RoleArn,
 =======
 				RoleArnKey: lambdaConf.RoleArn,
 >>>>>>> 38a26699 (backend change for asyn connection)
+=======
+				RoleArnKey:   lambdaConf.RoleArn,
+>>>>>>> 71606355 (asyn connect successful)
 				ExecStateKey: execution_state.SerializedSuccess(&now),
 			}),
 		},
