@@ -11,9 +11,44 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.types import VARCHAR
 
 
+def default_map_object_dtype_to_varchar(df: pd.DataFrame) -> Dict[str, VARCHAR]:
+    col_to_type = {}
+    for col in df.select_dtypes(include=["object"]):
+        max_size = df[col].astype(str).str.len().max()
+        # Use powers of 2 to determine how large the column needs to be
+        # in terms of number of characters
+        if max_size < 256:
+            col_to_type[col] = VARCHAR(256)
+        elif max_size < 512:
+            col_to_type[col] = VARCHAR(512)
+        elif max_size < 1024:
+            col_to_type[col] = VARCHAR(1024)
+        elif max_size < 4096:
+            col_to_type[col] = VARCHAR(4096)
+        elif max_size < 16384:
+            col_to_type[col] = VARCHAR(16384)
+        elif max_size < 32768:
+            col_to_type[col] = VARCHAR(32768)
+        elif max_size < 65536:
+            # The max VARCHAR size supported by many RDBMS is 65535 (2^16 - 1)
+            col_to_type[col] = VARCHAR(65535)
+        else:
+            raise Exception(
+                "Cannot support saving string columns with length greater than 65535 bytes"
+            )
+    return col_to_type
+
+
 class RelationalConnector(connector.DataConnector):
-    def __init__(self, conn_engine: engine.Engine):
+    def __init__(
+        self,
+        conn_engine: engine.Engine,
+        object_to_varchar_mapper: Optional[
+            Callable[[pd.DataFrame], Dict[str, VARCHAR]]
+        ] = default_map_object_dtype_to_varchar,
+    ):
         self.engine = conn_engine
+        self.map_object_dtype_to_varchar = object_to_varchar_mapper
 
     def __del__(self) -> None:
         self.engine.dispose()
@@ -57,33 +92,6 @@ class RelationalConnector(connector.DataConnector):
             )
         return results
 
-    def _map_object_dtype_to_varchar(self, df: pd.DataFrame) -> Dict[str, VARCHAR]:
-        col_to_type = {}
-        for col in df.select_dtypes(include=["object"]):
-            max_size = df[col].astype(str).str.len().max()
-            # Use powers of 2 to determine how large the column needs to be
-            # in terms of number of characters
-            if max_size < 256:
-                col_to_type[col] = VARCHAR(256)
-            elif max_size < 512:
-                col_to_type[col] = VARCHAR(512)
-            elif max_size < 1024:
-                col_to_type[col] = VARCHAR(1024)
-            elif max_size < 4096:
-                col_to_type[col] = VARCHAR(4096)
-            elif max_size < 16384:
-                col_to_type[col] = VARCHAR(16384)
-            elif max_size < 32768:
-                col_to_type[col] = VARCHAR(32768)
-            elif max_size < 65536:
-                # The max VARCHAR size supported by many RDBMS is 65535 (2^16 - 1)
-                col_to_type[col] = VARCHAR(65535)
-            else:
-                raise Exception(
-                    "(saurav) Cannot support saving string columns with length greater than 65535 bytes"
-                )
-        return col_to_type
-
     def load(
         self, params: load.RelationalParams, df: pd.DataFrame, artifact_type: ArtifactType
     ) -> None:
@@ -92,7 +100,7 @@ class RelationalConnector(connector.DataConnector):
 
         # Map of only string columns to their SQL type
         # If a column is not in this map, we rely on Panda's default mapping
-        col_to_type = self._map_object_dtype_to_varchar(df)
+        col_to_type = self.map_object_dtype_to_varchar(df)
 
         # NOTE (saurav): df._to_sql has known performance issues. Using `method="multi"` helps incrementally,
         # since pandas will pass multiple rows in a single INSERT. If this still remains an issue, we can pass in a
