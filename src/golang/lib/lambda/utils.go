@@ -441,7 +441,7 @@ func PushImageToPrivateECR(functionType LambdaFunctionType, roleArn string) erro
 
 		_, err := lambdaService.CreateFunction(createArgs)
 		if err != nil {
-			return errors.Wrap(err, "Unable to create lambda function.")
+			return errors.Wrap(err, "Unable to create lambda function with the roleArn.")
 		}
 	} else {
 		// Function does exist and needs to be updated.
