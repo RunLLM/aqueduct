@@ -1,9 +1,25 @@
 # Changelog
 
+# 0.2.4
+Release on February 28, 2023.
+
+### Enhancements
+* Opens links to docs and feedback in new tabs rather than in the existing tab
+    on the Aqueduct UI.
+* When authoring a pipeline, allows reusing the same Python function multiple
+    times in the same DAG.
+* Improves the layout of the card displaying metadata storage information on
+    the settings page.
+
+### Bugfixes
+* Fixes bug where changing the Aqueduct metadata storage layer when there was a
+    previously-failed workflow would cause the data migration process to pause.
+* Fixes bug where certain DAGs would render in a confusing fashion on the
+    workflow details page. The algorithm for DAG layouts is now signifcantly
+    more reliable.
+
 # 0.2.3
 Release on February 22, 2023.
-
-### Key Features
 
 ### Enhancements
 * Updates workflow and data table views to show overview of all executed checks

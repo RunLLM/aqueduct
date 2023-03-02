@@ -182,6 +182,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		// the connect integration request has succeeded and that the migration is now
 		// under way.
 		go func() {
+			log.Info("Starting storage migration process...")
 			// Wait until the server is paused
 			h.PauseServer()
 			// Makes sure that the server is restarted
@@ -213,6 +214,8 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 			); err != nil {
 				log.Errorf("Unexpected error when setting the new storage layer: %v", err)
 			}
+
+			log.Info("Successfully migrated the storage layer!")
 		}()
 	}
 
