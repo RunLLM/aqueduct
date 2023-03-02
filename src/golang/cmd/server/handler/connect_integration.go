@@ -360,7 +360,7 @@ func ConnectIntegration(
 			}
 
 			lambda_utils.ConnectToLambda(
-				ctx, 
+				context.Background(),
 				args.Config,
 				integrationObject.ID,
 				integrationRepo,
@@ -394,11 +394,11 @@ func ValidateConfig(
 		return validateKubernetesConfig(ctx, config)
 	}
 
-	// if service == shared.Lambda {
-	// 	// Lambda authentication is performed by creating Lambda jobs
-	// 	// instead of the Python client, so we don't launch a job for it.
-	// 	return validateLambdaConfig(ctx, config)
-	// }
+	if service == shared.Lambda {
+		// Lambda authentication is performed by creating Lambda jobs
+		// instead of the Python client, so we don't launch a job for it.
+		return http.StatusOK, nil
+	}
 
 	if service == shared.Databricks {
 		// Databricks authentication is performed by posting a ListJobs

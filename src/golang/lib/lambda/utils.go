@@ -10,11 +10,6 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ecr"
-	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/execution_state"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
@@ -22,6 +17,11 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ecr"
+	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -37,8 +37,8 @@ type EcrAuth struct {
 const (
 	MaxConcurrentDownload = 3
 	MaxConcurrentUpload   = 5
-	RoleArnKey = "role_arn"
-	ExecStateKey = "exec_state"
+	RoleArnKey            = "role_arn"
+	ExecStateKey          = "exec_state"
 )
 
 func ConnectToLambda(
@@ -47,14 +47,13 @@ func ConnectToLambda(
 	integrationID uuid.UUID,
 	integrationRepo repos.Integration,
 	DB database.Database,
-	) {
+) {
 	now := time.Now()
 	_, err := integrationRepo.Update(
 		ctx,
 		integrationID,
 		map[string]interface{}{
 			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
-				RoleArnKey: "",
 				ExecStateKey: execution_state.SerializedRunning(&now),
 			}),
 		},
@@ -85,7 +84,7 @@ func ConnectToLambda(
 			DB,
 		)
 
-		return 
+		return
 	}
 	functionsToShip := [10]LambdaFunctionType{
 		FunctionExecutor37Type,
@@ -147,7 +146,7 @@ func ConnectToLambda(
 		integrationID,
 		map[string]interface{}{
 			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
-				RoleArnKey: lambdaConf.RoleArn,
+				RoleArnKey:   lambdaConf.RoleArn,
 				ExecStateKey: execution_state.SerializedSuccess(&now),
 			}),
 		},
