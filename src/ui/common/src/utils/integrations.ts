@@ -154,6 +154,7 @@ export type KubernetesConfig = {
 
 export type LambdaConfig = {
   role_arn: string;
+  exec_state: string;
 };
 
 export type DatabricksConfig = {
