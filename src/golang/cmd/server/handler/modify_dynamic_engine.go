@@ -140,7 +140,7 @@ func (h *ModifyDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs 
 				return emptyResponse, http.StatusOK, nil
 			} else {
 				if err := dynamic.ResyncClusterState(ctx, dynamicEngineIntegration, h.IntegrationRepo, h.Database); err != nil {
-					return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Failed to resolve cluster state")
+					return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Failed to resync cluster state")
 				}
 
 				if dynamicEngineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {

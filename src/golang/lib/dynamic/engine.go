@@ -58,7 +58,7 @@ func PrepareEngine(
 			return nil
 		} else {
 			if err := ResyncClusterState(ctx, engineIntegration, integrationRepo, db); err != nil {
-				return errors.Wrap(err, "Failed to resolve cluster state")
+				return errors.Wrap(err, "Failed to resync cluster state")
 			}
 
 			if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
