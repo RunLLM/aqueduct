@@ -5,8 +5,8 @@ from aqueduct.constants.enums import (
     ArtifactType,
     ExecutionStatus,
     FailureType,
+    K8sClusterStatusType,
     SerializationType,
-    ServiceType,
 )
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import Metadata
@@ -249,3 +249,9 @@ class GetVersionResponse(BaseModel):
     """This is the response object returned by /api/version."""
 
     version: str
+
+
+class EngineStatusResponse(BaseModel):
+    id: uuid.UUID
+    name: str
+    status: K8sClusterStatusType

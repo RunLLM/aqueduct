@@ -20,8 +20,8 @@ const (
 	PreviewTableRoute                = "/api/integration/{integrationId}/preview"
 	ListOperatorsForIntegrationRoute = "/api/integration/{integrationId}/operators"
 	TestIntegrationRoute             = "/api/integration/{integrationId}/test"
-	GetEngineStatusRoute             = "/api/integration/engine/status"
-	EngineRoute                      = "/api/integration/engine/{integrationId}"
+	GetDynamicEngineStatusRoute      = "/api/integration/dynamic-engine/status"
+	ModifyDynamicEngineRoute         = "/api/integration/dynamic-engine/{integrationId}/modify"
 
 	ResetApiKeyRoute = "/api/keys/reset" // nolint:gosec
 

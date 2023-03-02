@@ -15,17 +15,17 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /api/integration/engine/status
+// Route: /api/integration/dynamic-engine/status
 // Method: GET
 // Params: None
 // Request:
 //
 //		Headers:
 //			`api-key`: user's API Key
-//	     	`integration_ids`: json serialized list of engine integration IDs
+//	     	`integration_ids`: json serialized list of dynamic engine integration IDs
 //
-// Response: serialized `getEngineStatusResponse` which contains one entry per dynamic engine.
-type GetEngineStatusHandler struct {
+// Response: serialized `getDynamicEngineStatusResponse` which contains one entry per dynamic engine.
+type GetDynamicEngineStatusHandler struct {
 	GetHandler
 
 	Database database.Database
@@ -33,24 +33,24 @@ type GetEngineStatusHandler struct {
 	IntegrationRepo repos.Integration
 }
 
-type getEngineStatusArgs struct {
+type getDynamicEngineStatusArgs struct {
 	*aq_context.AqContext
 	integrationIds []uuid.UUID
 }
 
-type getEngineStatusResponse []engineStatusResponse
+type getDynamicEngineStatusResponse []dynamicEngineStatusResponse
 
-type engineStatusResponse struct {
-	ID     uuid.UUID `json:"id"`
-	Name   string    `json:"name"`
-	Status string    `json:"status"`
+type dynamicEngineStatusResponse struct {
+	ID     uuid.UUID                   `json:"id"`
+	Name   string                      `json:"name"`
+	Status shared.K8sClusterStatusType `json:"status"`
 }
 
-func (*GetEngineStatusHandler) Name() string {
-	return "GetEngineStatus"
+func (*GetDynamicEngineStatusHandler) Name() string {
+	return "GetDynamicEngineStatus"
 }
 
-func (*GetEngineStatusHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (*GetDynamicEngineStatusHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
@@ -72,16 +72,16 @@ func (*GetEngineStatusHandler) Prepare(r *http.Request) (interface{}, int, error
 		integrationIds = append(integrationIds, integrationId)
 	}
 
-	return &getEngineStatusArgs{
+	return &getDynamicEngineStatusArgs{
 		AqContext:      aqContext,
 		integrationIds: integrationIds,
 	}, http.StatusOK, nil
 }
 
-func (h *GetEngineStatusHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*getEngineStatusArgs)
+func (h *GetDynamicEngineStatusHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*getDynamicEngineStatusArgs)
 
-	emptyResponse := getEngineStatusResponse{}
+	emptyResponse := getDynamicEngineStatusResponse{}
 
 	integrations, err := h.IntegrationRepo.GetBatch(
 		ctx,
@@ -92,14 +92,14 @@ func (h *GetEngineStatusHandler) Perform(ctx context.Context, interfaceArgs inte
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get engine integrations.")
 	}
 
-	responses := make([]engineStatusResponse, 0, len(integrations))
+	responses := make([]dynamicEngineStatusResponse, 0, len(integrations))
 	for _, integrationObject := range integrations {
 		if _, ok := integrationObject.Config[shared.K8sDynamicKey]; ok {
 			if integrationObject.Config[shared.K8sDynamicKey] == strconv.FormatBool(true) {
-				response := engineStatusResponse{
+				response := dynamicEngineStatusResponse{
 					ID:     integrationObject.ID,
 					Name:   integrationObject.Name,
-					Status: integrationObject.Config[shared.K8sStatusKey],
+					Status: shared.K8sClusterStatusType(integrationObject.Config[shared.K8sStatusKey]),
 				}
 				responses = append(responses, response)
 			}

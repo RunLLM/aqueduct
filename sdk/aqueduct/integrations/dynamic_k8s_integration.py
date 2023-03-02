@@ -22,7 +22,7 @@ class DynamicK8sIntegration(Integration):
                 "Dynamic engine %s does not exist!" % self._metadata.name
             )
 
-        return engine_statuses[self._metadata.name].status
+        return engine_statuses[self._metadata.name].status.value
 
     def create(self) -> None:
         engine_statuses = globals.__GLOBAL_API_CLIENT__.get_engine_status(
@@ -35,12 +35,12 @@ class DynamicK8sIntegration(Integration):
 
         status = engine_statuses[self._metadata.name].status
         if status == K8sClusterStatusType.ACTIVE:
-            print("Cluster is already in %s status." % status)
+            print("Cluster is already in %s status." % status.value)
             return
 
         print(
             "Cluster is currently in %s status. It could take 12-15 minutes for the cluster to be ready..."
-            % status
+            % status.value
         )
         globals.__GLOBAL_API_CLIENT__.modify_engine(
             action="create", integration_id=str(self._metadata.id)
@@ -57,12 +57,12 @@ class DynamicK8sIntegration(Integration):
 
         status = engine_statuses[self._metadata.name].status
         if status == K8sClusterStatusType.TERMINATED:
-            print("Cluster is already in %s status." % status)
+            print("Cluster is already in %s status." % status.value)
             return
 
         print(
             "Cluster is currently in %s status. It could take 6-8 minutes for the cluster to be terminated..."
-            % status
+            % status.value
         )
         globals.__GLOBAL_API_CLIENT__.modify_engine(
             action="delete", integration_id=str(self._metadata.id)

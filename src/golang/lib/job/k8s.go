@@ -21,6 +21,11 @@ const (
 )
 
 type k8sJobManager struct {
+	// When we initialize k8sJobManager, k8sClient is always set to nil. This is because
+	// in case of dynamic k8s integration, when we initialize the job manager, the k8s
+	// cluster may not exist yet, so k8s client creation will fail. We defer the initialization
+	// to Launch and Poll, at which point regardless of dynamic or static k8s integration, we expect
+	// the k8s client creation to succeed.
 	k8sClient *kubernetes.Clientset
 	conf      *K8sJobManagerConfig
 }
