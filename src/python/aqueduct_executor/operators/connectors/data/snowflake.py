@@ -32,5 +32,10 @@ def create_snowflake_engine(config: config.SnowflakeConfig) -> engine.Engine:
 def map_object_dtype_to_varchar(df: pd.DataFrame) -> Dict[str, VARCHAR]:
     col_to_type = {}
     for col in df.select_dtypes(include=["object"]):
+        # We do not need to provide an explicit size, because Snowflake
+        # will default to allowing the maximum number of characters.
+        # There is no performance difference between using the full-length VARCHAR
+        # declaration VARCHAR(16777216) and a smaller length.
+        # See: https://docs.snowflake.com/en/sql-reference/data-types-text
         col_to_type[col] = VARCHAR()
     return col_to_type
