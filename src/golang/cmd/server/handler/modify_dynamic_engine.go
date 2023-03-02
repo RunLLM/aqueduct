@@ -144,6 +144,7 @@ func (h *ModifyDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs 
 				}
 
 				if dynamicEngineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
+					// This means the cluster state is resynced to Terminated, so no need to wait 30 seconds.
 					continue
 				}
 

@@ -62,6 +62,7 @@ func PrepareEngine(
 			}
 
 			if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
+				// This means the cluster state is resynced to Terminated, so no need to wait 30 seconds.
 				continue
 			}
 
@@ -282,7 +283,7 @@ func ResyncClusterState(
 	db database.Database,
 ) error {
 	if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) || engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
-		log.Infof("No need to reset state because the cluster status is %s", engineIntegration.Config[shared.K8sStatusKey])
+		log.Infof("No need to resync state because the cluster status is %s", engineIntegration.Config[shared.K8sStatusKey])
 		return nil
 	}
 
