@@ -19,6 +19,10 @@ func NewDynamicTeardownExecutor(base *BaseExecutor) *DynamicTeardownExecutor {
 	return &DynamicTeardownExecutor{BaseExecutor: base}
 }
 
+// Run inspects each dynamic integration and teardown the cluster if it has been idle for a while.
+// This check is performed by subtracting the last-updated-timestamp from the current timestamp and
+// comparing it with the keepalive threshold. The last-used-timestamp is updated whenever an operator
+// makes uses of the dynamic integration.
 func (ex *DynamicTeardownExecutor) Run(ctx context.Context) error {
 	log.Info("Starting dynamic integration teardown.")
 
@@ -38,7 +42,7 @@ func (ex *DynamicTeardownExecutor) Run(ctx context.Context) error {
 
 	dynamicIntegration := dynamicIntegrations[0]
 	if dynamicIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
-		lastUsedTimestampStr := dynamicIntegration.Config["last_used_timestamp"]
+		lastUsedTimestampStr := dynamicIntegration.Config[shared.K8sLastUsedTimestampKey]
 		lastUsedTimestamp, err := strconv.ParseInt(lastUsedTimestampStr, 10, 64)
 		if err != nil {
 			return errors.Wrap(err, "Unable to cast last used timestamp to int64")

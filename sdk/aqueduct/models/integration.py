@@ -41,12 +41,6 @@ class IntegrationInfo(BaseModel):
         ]
 
 
-class EngineStatus(BaseModel):
-    id: uuid.UUID
-    name: str
-    status: str
-
-
 class Integration(ABC):
     """
     Base class for the various integrations Aqueduct interacts with.

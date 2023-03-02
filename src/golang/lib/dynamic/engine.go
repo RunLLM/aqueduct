@@ -41,7 +41,7 @@ func PrepareEngine(
 	}
 
 	for {
-		if engineIntegration.Config["status"] == string(shared.K8sClusterTerminatedStatus) {
+		if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
 			log.Info("Kubernetes cluster is currently terminated, starting...")
 			return CreateDynamicEngine(
 				ctx,
@@ -50,7 +50,7 @@ func PrepareEngine(
 				vaultObject,
 				db,
 			)
-		} else if engineIntegration.Config["status"] == string(shared.K8sClusterActiveStatus) {
+		} else if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
 			log.Info("Kubernetes cluster is currently active, proceeding...")
 			return nil
 		} else {
@@ -69,6 +69,12 @@ func PrepareEngine(
 	}
 }
 
+// CreateDynamicEngine does the following:
+// 1. Update the dynamic integration's DB record: set config["status"] to "Creating".
+// 2. Run Terraform to create the cluster.
+// 3. Update the kubeconfig file.
+// 4. Update the dynamic integration's DB record: set config["status"] to "Active".
+// If any step fails, it returns an error.
 func CreateDynamicEngine(
 	ctx context.Context,
 	engineIntegration *models.Integration,
@@ -94,7 +100,7 @@ func CreateDynamicEngine(
 	}
 
 	// Fetch AWS credentials.
-	if _, ok := engineIntegration.Config["cloud_integration_id"]; !ok {
+	if _, ok := engineIntegration.Config[shared.K8sCloudIntegrationIdKey]; !ok {
 		return errors.New("No cloud integration ID found in the engine integration object.")
 	}
 	cloudIntegrationId, err := uuid.Parse(engineIntegration.Config["cloud_integration_id"])
@@ -158,6 +164,12 @@ func CreateDynamicEngine(
 	return nil
 }
 
+// DeleteDynamicEngine does the following:
+// 1. Update the dynamic integration's DB record: set config["status"] to "Terminating".
+// 2. Run Terraform to delete the cluster.
+// 3. Remove the kubeconfig file.
+// 4. Update the dynamic integration's DB record: set config["status"] to "Terminated".
+// If any step fails, it returns an error.
 func DeleteDynamicEngine(
 	ctx context.Context,
 	engineIntegration *models.Integration,
@@ -214,6 +226,8 @@ func DeleteDynamicEngine(
 	return nil
 }
 
+// UpdateEngineLastUsedTimestamp updates the dynamic integration's DB record:
+// set config["last_used_timestamp"] to the current timestamp.
 func UpdateEngineLastUsedTimestamp(
 	ctx context.Context,
 	engineIntegrationId uuid.UUID,
@@ -230,7 +244,7 @@ func UpdateEngineLastUsedTimestamp(
 	}
 
 	currTimestamp := time.Now().Unix()
-	engineIntegration.Config["last_used_timestamp"] = strconv.FormatInt(currTimestamp, 10)
+	engineIntegration.Config[shared.K8sLastUsedTimestampKey] = strconv.FormatInt(currTimestamp, 10)
 	_, err = integrationRepo.Update(
 		ctx,
 		engineIntegration.ID,

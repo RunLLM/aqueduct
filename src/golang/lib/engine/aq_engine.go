@@ -369,7 +369,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		jobManager, err = job.GenerateNewJobManager(
 			ctx,
 			dbDAG.EngineConfig,
-			&dbDAG.StorageConfig, // cgwu: is this a bug?
+			&dbDAG.StorageConfig,
 			eng.AqPath,
 			vaultObject,
 		)

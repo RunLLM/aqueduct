@@ -51,6 +51,7 @@ const (
 	K8sUseSameClusterKey     string = "use_same_cluster"
 	K8sStatusKey             string = "status"
 	K8sKeepaliveKey          string = "keepalive"
+	K8sLastUsedTimestampKey  string = "last_used_timestamp"
 	DynamicK8sClusterName    string = "aqueduct_k8s"
 	DefaultKeepalive         int    = 1200
 )

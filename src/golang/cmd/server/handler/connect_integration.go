@@ -327,7 +327,7 @@ func ConnectIntegration(
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
-	// TODO ENG-2523: move this outside of connectintegration.
+	// TODO(ENG-2523): move base conda env creation outside of ConnectIntegration.
 	if args.Service == shared.Conda {
 		go func() {
 			DB, err = database.NewDatabase(DB.Config())

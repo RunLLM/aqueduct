@@ -10,15 +10,14 @@ from aqueduct.error import (
     ClientValidationError,
     InternalServerError,
     InvalidRequestError,
-    InvalidUserArgumentException,
     NoConnectedIntegrationsException,
     ResourceNotFoundError,
     UnprocessableEntityError,
 )
 from aqueduct.logger import logger
 from aqueduct.models.dag import DAG
-from aqueduct.models.integration import EngineStatus, Integration, IntegrationInfo
-from aqueduct.models.operators import LoadSpec, ParamSpec, RelationalDBLoadParams, S3LoadParams
+from aqueduct.models.integration import Integration, IntegrationInfo
+from aqueduct.models.operators import ParamSpec
 from aqueduct.utils.serialization import deserialize
 from pkg_resources import parse_version, require
 
@@ -30,6 +29,7 @@ from .response_helpers import (
 )
 from .response_models import (
     DeleteWorkflowResponse,
+    EngineStatusResponse,
     GetVersionResponse,
     GetWorkflowResponse,
     ListWorkflowResponseEntry,
@@ -69,8 +69,8 @@ class APIClient:
     NODE_POSITION_ROUTE = "/api/positioning"
     EXPORT_FUNCTION_ROUTE = "/api/function/%s/export"
 
-    GET_ENGINE_STATUS_ROUTE = "/api/integration/engine/status"
-    ENGINE_ROUTE_TEMPLATE = "/api/integration/engine/%s"
+    GET_DYNAMIC_ENGINE_STATUS_ROUTE = "/api/integration/dynamic-engine/status"
+    MODIFY_DYNAMIC_ENGINE_ROUTE_TEMPLATE = "/api/integration/dynamic-engine/%s/modify"
 
     # Auth header
     API_KEY_HEADER = "api-key"
@@ -278,7 +278,7 @@ class APIClient:
     def get_dag_engine_status(
         self,
         dag: DAG,
-    ) -> Dict[str, EngineStatus]:
+    ) -> Dict[str, EngineStatusResponse]:
         """Makes a request against the /api/integration/engine/status endpoint.
 
         Args:
@@ -306,7 +306,7 @@ class APIClient:
     def get_engine_status(
         self,
         engine_integration_ids: List[str],
-    ) -> Dict[str, EngineStatus]:
+    ) -> Dict[str, EngineStatusResponse]:
         """Makes a request against the /api/integration/engine/status endpoint.
 
         Args:
@@ -320,12 +320,13 @@ class APIClient:
         headers = self._generate_auth_headers()
         headers["integration-ids"] = json.dumps(engine_integration_ids)
 
-        url = self.construct_full_url(self.GET_ENGINE_STATUS_ROUTE)
+        url = self.construct_full_url(self.GET_DYNAMIC_ENGINE_STATUS_ROUTE)
         resp = requests.get(url, headers=headers)
         self.raise_errors(resp)
 
         return {
-            engine_status["name"]: EngineStatus(**engine_status) for engine_status in resp.json()
+            engine_status["name"]: EngineStatusResponse(**engine_status)
+            for engine_status in resp.json()
         }
 
     def modify_engine(
@@ -342,7 +343,7 @@ class APIClient:
         headers = self._generate_auth_headers()
         headers["action"] = action
 
-        url = self.construct_full_url(self.ENGINE_ROUTE_TEMPLATE % integration_id)
+        url = self.construct_full_url(self.MODIFY_DYNAMIC_ENGINE_ROUTE_TEMPLATE % integration_id)
 
         if action == "create" or action == "delete":
             resp = requests.post(url, headers=headers)

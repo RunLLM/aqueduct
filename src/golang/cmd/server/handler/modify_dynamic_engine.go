@@ -20,7 +20,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Route: /api/integration/engine/{integrationId}
+// Route: /api/integration/dynamic-engine/{integrationId}
 // Method: POST
 // Params:
 //
@@ -31,9 +31,7 @@ import (
 //	Headers:
 //		`api-key`: user's API Key
 //		`action`: indicates whether this is a creation or deletion request
-//
-// Response: serialized `GetEngineStatusResponse`.
-type EngineHandler struct {
+type ModifyDynamicEngineHandler struct {
 	PostHandler
 
 	Database database.Database
@@ -41,19 +39,19 @@ type EngineHandler struct {
 	IntegrationRepo repos.Integration
 }
 
-type engineArgs struct {
+type modifyDynamicEngineArgs struct {
 	*aq_context.AqContext
 	action        string
 	integrationId uuid.UUID
 }
 
-func (*EngineHandler) Name() string {
-	return "Engine"
+func (*ModifyDynamicEngineHandler) Name() string {
+	return "ModifyDynamicEngine"
 }
 
-func (*EngineHandler) Headers() []string {
+func (*ModifyDynamicEngineHandler) Headers() []string {
 	return []string{
-		routes.EngineActionHeader,
+		routes.DynamicEngineActionHeader,
 	}
 }
 
@@ -62,7 +60,7 @@ const (
 	deleteAction string = "delete"
 )
 
-func (*EngineHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (*ModifyDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
@@ -71,7 +69,7 @@ func (*EngineHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	integrationIdStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
 	integrationId, err := uuid.Parse(integrationIdStr)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed engine integration ID.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed dynamic engine integration ID.")
 	}
 
 	action := r.Header.Get("action")
@@ -79,40 +77,40 @@ func (*EngineHandler) Prepare(r *http.Request) (interface{}, int, error) {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "No action specified by the request.")
 	}
 
-	return &engineArgs{
+	return &modifyDynamicEngineArgs{
 		AqContext:     aqContext,
 		action:        action,
 		integrationId: integrationId,
 	}, http.StatusOK, nil
 }
 
-func (h *EngineHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*engineArgs)
+func (h *ModifyDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*modifyDynamicEngineArgs)
 	emptyResponse := response.EmptyResponse{}
 
-	engineIntegration, err := h.IntegrationRepo.Get(
+	dynamicEngineIntegration, err := h.IntegrationRepo.Get(
 		ctx,
 		args.integrationId,
 		h.Database,
 	)
 	if err != nil {
-		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get engine integration.")
+		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get dynamic engine integration.")
 	}
 
-	if _, ok := engineIntegration.Config[shared.K8sDynamicKey]; !ok {
+	if _, ok := dynamicEngineIntegration.Config[shared.K8sDynamicKey]; !ok {
 		return emptyResponse, http.StatusBadRequest, errors.New("This is not a dynamic engine integration.")
 	}
 
 	if args.action == createAction {
 		// This is a cluster creation request.
-		engineIntegration, err := dynamic.UpdateEngineLastUsedTimestamp(
+		dynamicEngineIntegration, err := dynamic.UpdateEngineLastUsedTimestamp(
 			ctx,
 			args.integrationId,
 			h.IntegrationRepo,
 			h.Database,
 		)
 		if err != nil {
-			return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Failed to update engine last used timestamp")
+			return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Failed to update dynamic engine last used timestamp")
 		}
 
 		storageConfig := config.Storage()
@@ -122,11 +120,11 @@ func (h *EngineHandler) Perform(ctx context.Context, interfaceArgs interface{}) 
 		}
 
 		for {
-			if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
+			if dynamicEngineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
 				log.Info("Kubernetes cluster is currently terminated, starting...")
 				err = dynamic.CreateDynamicEngine(
 					ctx,
-					engineIntegration,
+					dynamicEngineIntegration,
 					h.IntegrationRepo,
 					vaultObject,
 					h.Database,
@@ -135,30 +133,30 @@ func (h *EngineHandler) Perform(ctx context.Context, interfaceArgs interface{}) 
 					return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to create dynamic engine")
 				}
 				return emptyResponse, http.StatusOK, nil
-			} else if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
+			} else if dynamicEngineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
 				return emptyResponse, http.StatusOK, nil
 			} else {
-				log.Infof("Kubernetes cluster is currently in %s status. Waiting for 30 seconds before checking again...", engineIntegration.Config[shared.K8sStatusKey])
+				log.Infof("Kubernetes cluster is currently in %s status. Waiting for 30 seconds before checking again...", dynamicEngineIntegration.Config[shared.K8sStatusKey])
 				time.Sleep(30 * time.Second)
 
-				engineIntegration, err = h.IntegrationRepo.Get(
+				dynamicEngineIntegration, err = h.IntegrationRepo.Get(
 					ctx,
 					args.integrationId,
 					h.Database,
 				)
 				if err != nil {
-					return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve engine integration")
+					return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve dynamic engine integration")
 				}
 			}
 		}
 	} else if args.action == deleteAction {
 		// This is a cluster deletion request.
 		for {
-			if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
+			if dynamicEngineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
 				log.Info("Tearing down the Kubernetes cluster...")
 				if err = dynamic.DeleteDynamicEngine(
 					ctx,
-					engineIntegration,
+					dynamicEngineIntegration,
 					h.IntegrationRepo,
 					h.Database,
 				); err != nil {
@@ -166,19 +164,19 @@ func (h *EngineHandler) Perform(ctx context.Context, interfaceArgs interface{}) 
 				}
 
 				return emptyResponse, http.StatusOK, nil
-			} else if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
+			} else if dynamicEngineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
 				return emptyResponse, http.StatusOK, nil
 			} else {
-				log.Infof("Kubernetes cluster is currently in %s status. Waiting for 30 seconds before checking again...", engineIntegration.Config[shared.K8sStatusKey])
+				log.Infof("Kubernetes cluster is currently in %s status. Waiting for 30 seconds before checking again...", dynamicEngineIntegration.Config[shared.K8sStatusKey])
 				time.Sleep(30 * time.Second)
 
-				engineIntegration, err = h.IntegrationRepo.Get(
+				dynamicEngineIntegration, err = h.IntegrationRepo.Get(
 					ctx,
 					args.integrationId,
 					h.Database,
 				)
 				if err != nil {
-					return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve engine integration")
+					return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve dynamic engine integration")
 				}
 			}
 		}
