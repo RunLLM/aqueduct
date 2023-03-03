@@ -21,7 +21,7 @@ const (
 	ListOperatorsForIntegrationRoute = "/api/integration/{integrationId}/operators"
 	TestIntegrationRoute             = "/api/integration/{integrationId}/test"
 	GetDynamicEngineStatusRoute      = "/api/integration/dynamic-engine/status"
-	ModifyDynamicEngineRoute         = "/api/integration/dynamic-engine/{integrationId}/modify"
+	EditDynamicEngineRoute           = "/api/integration/dynamic-engine/{integrationId}/edit"
 
 	ResetApiKeyRoute = "/api/keys/reset" // nolint:gosec
 

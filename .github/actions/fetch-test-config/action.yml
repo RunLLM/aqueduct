@@ -1,6 +1,8 @@
 name: Fetch test config files
 description: "Fetches both test-config.yml and test-credentials.yml, the former being configurable."
 
+# This is expected to run after setup-server.
+
 inputs:
   aws_access_key_id:
     description: "The AWS Access ID from our Github Secrets."
@@ -16,22 +18,12 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Configure AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-region: us-east-2
-        aws-access-key-id: ${{ inputs.aws_access_key_id }}
-        aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
-
-    # The credentials are configured for the AWS CLI, but we still need to write them somewhere
-    # for our AWS-based integrations to use.
-    - name: Save Credentials
+    - name: AWS Configure
       shell: bash
       run: |
-        mkdir ~/.aws
-        printf "[default]\n" >> ~/.aws/credentials
-        printf "aws_access_key_id=%s\n" "$AWS_ACCESS_KEY_ID" >> ~/.aws/credentials
-        printf "aws_secret_access_key=%s\n" "$AWS_SECRET_ACCESS_KEY" >> ~/.aws/credentials
+        aws --profile default configure set aws_access_key_id ${{ inputs.aws_access_key_id }}
+        aws --profile default configure set aws_secret_access_key ${{ inputs.aws_secret_access_key }}
+        aws --profile default configure set region us-east-2 
 
     - name: Fetch the Test Config
       working-directory: integration_tests/sdk

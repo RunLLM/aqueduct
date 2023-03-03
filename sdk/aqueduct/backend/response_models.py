@@ -251,7 +251,7 @@ class GetVersionResponse(BaseModel):
     version: str
 
 
-class EngineStatusResponse(BaseModel):
+class DynamicEngineStatusResponse(BaseModel):
     id: uuid.UUID
     name: str
     status: K8sClusterStatusType
