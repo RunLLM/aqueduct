@@ -89,6 +89,12 @@ class S3Config(BaseConnectionConfig):
     use_as_storage: str = "false"
 
 
+class GCSConfig(BaseConnectionConfig):
+    bucket: str
+    service_account_credentials: str
+    use_as_storage: str = "false"
+
+
 class AthenaConfig(BaseConnectionConfig):
     # default type to ACCESS_KEY mainly for backward compatibility
     type: AWSCredentialType = AWSCredentialType.ACCESS_KEY
@@ -140,6 +146,11 @@ class SlackConfig(BaseConnectionConfig):
     enabled: bool
 
 
+class AWSConfig(BaseConnectionConfig):
+    access_key_id: str
+    secret_access_key: str
+
+
 class _SlackConfigWithStringField(BaseConnectionConfig):
     token: str
     channels_serialized: str
@@ -184,6 +195,7 @@ IntegrationConfig = Union[
     SqlServerConfig,
     SQLiteConfig,
     SlackConfig,
+    AWSConfig,
     _SlackConfigWithStringField,
     SparkConfig,
 ]
@@ -218,6 +230,8 @@ def convert_dict_to_integration_connect_config(
         return EmailConfig(**config_dict)
     elif service == ServiceType.SPARK:
         return SparkConfig(**config_dict)
+    elif service == ServiceType.AWS:
+        return AWSConfig(**config_dict)
     raise InternalAqueductError("Unexpected Service Type: %s" % service)
 
 

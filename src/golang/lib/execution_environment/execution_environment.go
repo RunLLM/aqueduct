@@ -99,7 +99,7 @@ func (e *ExecutionEnvironment) CreateEnv() error {
 		"-y",
 	}
 
-	_, _, err := lib_utils.RunCmd(CondaCmdPrefix, createArgs...)
+	_, _, err := lib_utils.RunCmd(CondaCmdPrefix, createArgs, "", false)
 	if err != nil {
 		return err
 	}
@@ -117,7 +117,7 @@ func (e *ExecutionEnvironment) CreateEnv() error {
 		forkEnvPath,
 	}
 
-	_, _, err = lib_utils.RunCmd(CondaCmdPrefix, forkArgs...)
+	_, _, err = lib_utils.RunCmd(CondaCmdPrefix, forkArgs, "", false)
 	if err != nil {
 		return err
 	}
@@ -131,7 +131,7 @@ func (e *ExecutionEnvironment) CreateEnv() error {
 		"install",
 	}, e.Dependencies...)
 
-	_, _, err = lib_utils.RunCmd(CondaCmdPrefix, installArgs...)
+	_, _, err = lib_utils.RunCmd(CondaCmdPrefix, installArgs, "", false)
 	if err != nil {
 		return err
 	}
@@ -147,7 +147,7 @@ func deleteCondaEnv(name string) error {
 		name,
 	}
 
-	_, _, err := lib_utils.RunCmd(CondaCmdPrefix, args...)
+	_, _, err := lib_utils.RunCmd(CondaCmdPrefix, args, "", false)
 	return err
 }
 
@@ -187,7 +187,7 @@ func createBaseEnvs() error {
 			fmt.Sprintf("python==%s", pythonVersion),
 			"-y",
 		}
-		_, _, err := lib_utils.RunCmd(CondaCmdPrefix, args...)
+		_, _, err := lib_utils.RunCmd(CondaCmdPrefix, args, "", false)
 		if err != nil {
 			return err
 		}
@@ -200,7 +200,7 @@ func createBaseEnvs() error {
 			"install",
 			fmt.Sprintf("aqueduct-ml==%s", lib.ServerVersionNumber),
 		}
-		_, _, err = lib_utils.RunCmd(CondaCmdPrefix, args...)
+		_, _, err = lib_utils.RunCmd(CondaCmdPrefix, args, "", false)
 		if err != nil {
 			return err
 		}
@@ -391,7 +391,7 @@ func CleanupUnusedEnvironments(
 			envName,
 		}
 
-		_, _, err := lib_utils.RunCmd(CondaCmdPrefix, deleteArgs...)
+		_, _, err := lib_utils.RunCmd(CondaCmdPrefix, deleteArgs, "", false)
 		if err != nil {
 			hasError = true
 			log.Errorf("Error garbage collecting conda environment %s: %v", envID, err)

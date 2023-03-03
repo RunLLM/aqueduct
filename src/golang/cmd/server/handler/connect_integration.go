@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -137,7 +138,9 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	statusCode, err := ValidatePrerequisites(
 		ctx,
 		args.Service,
+		args.Name,
 		args.ID,
+		args.OrgID,
 		h.IntegrationRepo,
 		h.Database,
 	)
@@ -168,6 +171,54 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		return emptyResp, statusCode, err
 	}
 
+	if args.Service == shared.AWS {
+		cloudIntegration, err := h.IntegrationRepo.GetByNameAndUser(
+			ctx,
+			args.Name,
+			uuid.Nil,
+			args.OrgID,
+			txn,
+		)
+		if err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve cloud integration.")
+		}
+
+		kubeconfigPath := filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "dynamic", "kube_config")
+		// Register a dynamic k8s integration.
+		connectIntegrationArgs := &ConnectIntegrationArgs{
+			AqContext: args.AqContext,
+			Name:      fmt.Sprintf("%s:%s", args.Name, "k8s"),
+			Service:   shared.Kubernetes,
+			Config: auth.NewStaticConfig(
+				map[string]string{
+					shared.K8sKubeconfigPathKey:     kubeconfigPath,
+					shared.K8sClusterNameKey:        shared.DynamicK8sClusterName,
+					shared.K8sDynamicKey:            strconv.FormatBool(true),
+					shared.K8sCloudIntegrationIdKey: cloudIntegration.ID.String(),
+					shared.K8sUseSameClusterKey:     strconv.FormatBool(false),
+					shared.K8sStatusKey:             string(shared.K8sClusterTerminatedStatus),
+					shared.K8sKeepaliveKey:          strconv.FormatInt(int64(shared.DefaultKeepalive), 10),
+				},
+			),
+			UserOnly:     false,
+			SetAsStorage: false,
+		}
+
+		_, _, err = (&ConnectIntegrationHandler{
+			Database:   txn,
+			JobManager: h.JobManager,
+
+			ArtifactRepo:       h.ArtifactRepo,
+			ArtifactResultRepo: h.ArtifactResultRepo,
+			DAGRepo:            h.DAGRepo,
+			IntegrationRepo:    h.IntegrationRepo,
+			OperatorRepo:       h.OperatorRepo,
+		}).Perform(ctx, connectIntegrationArgs)
+		if err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to register dynamic k8s integration.")
+		}
+	}
+
 	if err := txn.Commit(ctx); err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
@@ -180,6 +231,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		// the connect integration request has succeeded and that the migration is now
 		// under way.
 		go func() {
+			log.Info("Starting storage migration process...")
 			// Wait until the server is paused
 			h.PauseServer()
 			// Makes sure that the server is restarted
@@ -211,6 +263,8 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 			); err != nil {
 				log.Errorf("Unexpected error when setting the new storage layer: %v", err)
 			}
+
+			log.Info("Successfully migrated the storage layer!")
 		}()
 	}
 
@@ -273,6 +327,7 @@ func ConnectIntegration(
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
+	// TODO(ENG-2523): move base conda env creation outside of ConnectIntegration.
 	if args.Service == shared.Conda {
 		go func() {
 			DB, err = database.NewDatabase(DB.Config())
@@ -337,6 +392,10 @@ func ValidateConfig(
 
 	if service == shared.Slack {
 		return validateSlackConfig(config)
+	}
+
+	if service == shared.AWS {
+		return validateAWSConfig(config)
 	}
 
 	jobName := fmt.Sprintf("authenticate-operator-%s", uuid.New().String())
@@ -662,16 +721,37 @@ func validateSlackConfig(config auth.Config) (int, error) {
 	return http.StatusOK, nil
 }
 
+func validateAWSConfig(
+	config auth.Config,
+) (int, error) {
+	if err := engine.AuthenticateAWSConfig(config); err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	return http.StatusOK, nil
+}
+
 // ValidatePrerequisites validates if the integration for the given service can be connected at all.
-// For now, it checks if an integration already exists for unique integrations including
-// conda, email, and slack.
+// 1) Checks if an integration already exists for unique integrations including conda, email, and slack.
+// 2) Checks if the name has already been taken.
 func ValidatePrerequisites(
 	ctx context.Context,
 	svc shared.Service,
+	name string,
 	userID uuid.UUID,
+	orgID string,
 	integrationRepo repos.Integration,
 	DB database.Database,
 ) (int, error) {
+	// We expect the new name to be unique.
+	_, err := integrationRepo.GetByNameAndUser(ctx, name, userID, orgID, DB)
+	if err == nil {
+		return http.StatusBadRequest, errors.Newf("Cannot connect to an integration %s, since it already exists.", name)
+	}
+	if err != database.ErrNoRows {
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to query for existing integrations.")
+	}
+
 	if svc == shared.Conda {
 		condaIntegration, err := exec_env.GetCondaIntegration(
 			ctx, userID, integrationRepo, DB,
@@ -720,7 +800,7 @@ func ValidatePrerequisites(
 
 func validateConda() (int, error) {
 	errMsg := "Unable to validate conda installation. Do you have conda installed?"
-	_, _, err := lib_utils.RunCmd(exec_env.CondaCmdPrefix, "--version")
+	_, _, err := lib_utils.RunCmd(exec_env.CondaCmdPrefix, []string{"--version"}, "", false)
 	if err != nil {
 		return http.StatusBadRequest, errors.Wrap(err, errMsg)
 	}
