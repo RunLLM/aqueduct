@@ -34,6 +34,8 @@ func (sc *StaticConfig) PublicConfig() map[string]string {
 		"token",                       // slack config
 		"service_account_credentials", // S3 config.
 		"config_file_content",         // S3 config.
+		"access_key_id",               // AWS config.
+		"secret_access_key",           // AWS config.
 	}
 
 	for key, val := range sc.Conf {

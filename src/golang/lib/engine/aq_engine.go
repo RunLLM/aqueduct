@@ -11,6 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	"github.com/aqueducthq/aqueduct/lib/cronjob"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/dynamic"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
@@ -940,6 +941,21 @@ func (eng *aqEngine) execute(
 		}
 
 		for _, op := range inProgressOps {
+			if op.Dynamic() && !op.GetDynamicProperties().Prepared() {
+				err = dynamic.PrepareEngine(
+					ctx,
+					op.GetDynamicProperties().GetEngineIntegrationId(),
+					eng.IntegrationRepo,
+					vaultObject,
+					eng.Database,
+				)
+				if err != nil {
+					return err
+				}
+
+				op.GetDynamicProperties().SetPrepared()
+			}
+
 			execState, err := op.Poll(ctx)
 			if err != nil {
 				return err
@@ -1017,6 +1033,18 @@ func (eng *aqEngine) execute(
 			}
 			completedOps[op.ID()] = op
 			delete(inProgressOps, op.ID())
+
+			if op.Dynamic() {
+				_, err = dynamic.UpdateEngineLastUsedTimestamp(
+					ctx,
+					op.GetDynamicProperties().GetEngineIntegrationId(),
+					eng.IntegrationRepo,
+					eng.Database,
+				)
+				if err != nil {
+					return err
+				}
+			}
 
 			outputArtifacts, err := dag.OperatorOutputs(op)
 			if err != nil {
