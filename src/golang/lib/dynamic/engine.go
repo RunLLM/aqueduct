@@ -155,6 +155,7 @@ func CreateDynamicEngine(
 		return errors.Wrap(err, "Failed to update Kubeconfig")
 	}
 
+	// We initialize the last used timestamp after the creation succeeded.
 	if err = UpdateEngineLastUsedTimestamp(
 		ctx,
 		engineIntegration.ID,
