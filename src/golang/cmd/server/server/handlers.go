@@ -85,6 +85,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			OperatorResultRepo: s.OperatorResultRepo,
 		},
 		routes.GetConfigRoute:        &handler.GetConfigHandler{},
+		routes.ConfigureStorageRoute: &handler.ConfigureStorageHandler{},
 		routes.GetNodePositionsRoute: &handler.GetNodePositionsHandler{},
 		routes.GetOperatorResultRoute: &handler.GetOperatorResultHandler{
 			Database: s.Database,
