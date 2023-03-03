@@ -6,9 +6,9 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Link as RouterLink } from 'react-router-dom';
+
 import { handleGetServerConfig } from '../../../handlers/getServerConfig';
 import { RootState } from '../../../stores/store';
-
 import { DataPreviewInfo } from '../../../utils/data';
 import { getPathPrefix } from '../../../utils/getPathPrefix';
 import { Integration } from '../../../utils/integrations';
@@ -57,8 +57,9 @@ export const DataCard: React.FC<DataProps> = ({ dataPreviewInfo }) => {
       <Link
         underline="none"
         color="inherit"
-        to={`${getPathPrefix()}/workflow/${workflowId}/result/${latestDagResultId}/artifact/${dataPreviewInfo.artifact_id
-          }`}
+        to={`${getPathPrefix()}/workflow/${workflowId}/result/${latestDagResultId}/artifact/${
+          dataPreviewInfo.artifact_id
+        }`}
         component={RouterLink}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
@@ -103,7 +104,6 @@ type IntegrationProps = {
 export const IntegrationCard: React.FC<IntegrationProps> = ({
   integration,
 }) => {
-
   const { user } = useUser();
   const dispatch = useDispatch();
   const serverConfig = useSelector(
@@ -182,7 +182,8 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
       serviceCard = null;
   }
 
-  let dataStorageInfo, dataStorageText = null;
+  let dataStorageInfo,
+    dataStorageText = null;
   if (storageConfig && storageConfig.type === 'SQLite') {
     dataStorageInfo = (
       <Box component="span">
@@ -196,8 +197,6 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
       </Typography>
     );
   }
-
-
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>

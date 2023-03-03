@@ -4,12 +4,11 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+
 import { handleGetServerConfig } from '../../../handlers/getServerConfig';
 import { RootState } from '../../../stores/store';
-
 import {
   Integration,
-  S3Config,
   SupportedIntegrations,
 } from '../../../utils/integrations';
 import { LoadingStatus } from '../../../utils/shared';
@@ -36,7 +35,6 @@ type DetailIntegrationCardProps = {
 export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
   integration,
 }) => {
-
   const { user } = useUser();
   const dispatch = useDispatch();
   const serverConfig = useSelector(
@@ -100,7 +98,8 @@ export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
       serviceCard = null;
   }
 
-  let dataStorageInfo, dataStorageText = null;
+  let dataStorageInfo,
+    dataStorageText = null;
   if (storageConfig && storageConfig.type === 'SQLite') {
     dataStorageInfo = (
       <Box component="span">
