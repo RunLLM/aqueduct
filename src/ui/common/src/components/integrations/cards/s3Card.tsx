@@ -40,13 +40,18 @@ export const S3Card: React.FC<Props> = ({ integration }) => {
   if (storageConfig && storageConfig.type === 's3') {
     dataStorageInfo = (
       <Box component="span">
-        <FontAwesomeIcon icon={faTags} /> Metadata
+        <Box marginRight="8px" component="span">
+          <FontAwesomeIcon icon={faTags} />
+        </Box>
+        <Box component="span">
+          <FontAwesomeIcon icon={faDatabase} />
+        </Box>
       </Box>
     );
   } else {
     dataStorageInfo = (
       <Box component="span">
-        <FontAwesomeIcon icon={faDatabase} /> Data
+        <FontAwesomeIcon icon={faDatabase} />
       </Box>
     );
   }
