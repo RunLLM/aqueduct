@@ -107,12 +107,13 @@ func updateOnFailure(
 
 // ExtractConnectionState retrieves the current connection state from
 // the given integration object.
-// For non-conda integration, we assume they are always successfully connected
+// For integrations other than lambda and conda, we assume they are always successfully connected
 // since they are created in-sync in `connectIntegration` handler.
 func ExtractConnectionState(
 	integrationObject *models.Integration,
 ) (*shared.ExecutionState, error) {
-	if integrationObject.Service != shared.Conda {
+	if (integrationObject.Service != shared.Conda ||
+		 integrationObject.Service != shared.Lambda) {
 		return &shared.ExecutionState{
 			Status: shared.SucceededExecutionStatus,
 		}, nil

@@ -6,6 +6,7 @@ import (
 
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/execution_state"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -77,8 +78,11 @@ func (h *ListIntegrationsHandler) Perform(ctx context.Context, interfaceArgs int
 
 	responses := make([]integrationResponse, 0, len(integrations))
 	for _, integrationObject := range integrations {
-		response := convertIntegrationObjectToResponse(&integrationObject)
-		responses = append(responses, *response)
+		state, err := execution_state.ExtractConnectionState(&integrationObject)
+		if (err == nil && state.Status == shared.SucceededExecutionStatus){
+			response := convertIntegrationObjectToResponse(&integrationObject)
+			responses = append(responses, *response)
+		}
 	}
 
 	return responses, http.StatusOK, nil
