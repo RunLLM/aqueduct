@@ -19,7 +19,7 @@ func NewDynamicTeardownExecutor(base *BaseExecutor) *DynamicTeardownExecutor {
 	return &DynamicTeardownExecutor{BaseExecutor: base}
 }
 
-// Run inspects each dynamic integration and teardown the cluster if it has been idle for a while.
+// Run inspects each dynamic integration and tears down the cluster if it has been idle for a while.
 // This check is performed by subtracting the last-updated-timestamp from the current timestamp and
 // comparing it with the keepalive threshold. The last-used-timestamp is updated whenever an operator
 // makes uses of the dynamic integration.

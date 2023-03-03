@@ -20,7 +20,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Route: /api/integration/dynamic-engine/{integrationId}
+// Route: /api/integration/dynamic-engine/{integrationId}/edit
 // Method: POST
 // Params:
 //
@@ -31,7 +31,7 @@ import (
 //	Headers:
 //		`api-key`: user's API Key
 //		`action`: indicates whether this is a creation or deletion request
-type ModifyDynamicEngineHandler struct {
+type EditDynamicEngineHandler struct {
 	PostHandler
 
 	Database database.Database
@@ -39,17 +39,17 @@ type ModifyDynamicEngineHandler struct {
 	IntegrationRepo repos.Integration
 }
 
-type modifyDynamicEngineArgs struct {
+type editDynamicEngineArgs struct {
 	*aq_context.AqContext
 	action        string
 	integrationId uuid.UUID
 }
 
-func (*ModifyDynamicEngineHandler) Name() string {
-	return "ModifyDynamicEngine"
+func (*EditDynamicEngineHandler) Name() string {
+	return "EditDynamicEngine"
 }
 
-func (*ModifyDynamicEngineHandler) Headers() []string {
+func (*EditDynamicEngineHandler) Headers() []string {
 	return []string{
 		routes.DynamicEngineActionHeader,
 	}
@@ -60,7 +60,7 @@ const (
 	deleteAction string = "delete"
 )
 
-func (*ModifyDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
@@ -77,15 +77,15 @@ func (*ModifyDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, e
 		return nil, http.StatusBadRequest, errors.Wrap(err, "No action specified by the request.")
 	}
 
-	return &modifyDynamicEngineArgs{
+	return &editDynamicEngineArgs{
 		AqContext:     aqContext,
 		action:        action,
 		integrationId: integrationId,
 	}, http.StatusOK, nil
 }
 
-func (h *ModifyDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*modifyDynamicEngineArgs)
+func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*editDynamicEngineArgs)
 	emptyResponse := response.EmptyResponse{}
 
 	dynamicEngineIntegration, err := h.IntegrationRepo.Get(

@@ -84,25 +84,31 @@ export const Node: React.FC<Props> = ({
         '&:hover': { backgroundColor: hoverColor },
       }}
     >
-      {icon && (
-        <Box sx={{ fontSize: '50px', mb: '2px' }}>
-          <FontAwesomeIcon icon={icon} />
-        </Box>
-      )}
-
-      <Typography
-        sx={{
-          fontSize: '18px',
-          maxWidth: '200px',
-          minWidth: '140px',
-          overflow: 'clip',
-          overflowWrap: 'break-word',
-          textAlign: 'center',
-        }}
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        sx={{ width: '100%' }}
       >
-        {label}
-      </Typography>
+        {icon && (
+          <Box sx={{ fontSize: '32px', ml: '8px', mr: '8px' }}>
+            <FontAwesomeIcon icon={icon} />
+          </Box>
+        )}
 
+        <Typography
+          sx={{
+            fontSize: '18px',
+            maxWidth: '80%',
+            width: '80%',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {label}
+        </Typography>
+      </Box>
       <Handle
         type="source"
         id="db-source-id"
