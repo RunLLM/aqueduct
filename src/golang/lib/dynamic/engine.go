@@ -22,7 +22,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-const stateLockErr = "Error acquiring the state lock"
+const stateLockErrMsg = "Error acquiring the state lock"
 
 var TerraformDir = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "dynamic", "terraform")
 
@@ -297,7 +297,7 @@ func ResyncClusterState(
 	}
 
 	// Terraform does not offer an API to check if the state is locked, but we can use `terraform plan`
-	// as a workaround: we know the state is locked if the stderr contains stateLockErr.
+	// as a workaround: we know the state is locked if the stderr contains stateLockErrMsg.
 	// If the state is locked, we know there's an ongoing action (terraform apply or terraform destroy)
 	// happening, which is the expected case here and so we return with no error.
 	if _, stderr, err := lib_utils.RunCmd(
@@ -308,7 +308,7 @@ func ResyncClusterState(
 		TerraformDir,
 		false,
 	); err != nil {
-		if strings.Contains(stderr, stateLockErr) {
+		if strings.Contains(stderr, stateLockErrMsg) {
 			return nil
 		}
 	}
