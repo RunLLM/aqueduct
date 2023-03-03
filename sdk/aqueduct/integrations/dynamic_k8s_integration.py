@@ -42,7 +42,7 @@ class DynamicK8sIntegration(Integration):
             "Cluster is currently in %s status. It could take 12-15 minutes for the cluster to be ready..."
             % status.value
         )
-        globals.__GLOBAL_API_CLIENT__.update_engine(
+        globals.__GLOBAL_API_CLIENT__.edit_engine(
             action="create", integration_id=str(self._metadata.id)
         )
 
