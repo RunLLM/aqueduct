@@ -71,8 +71,8 @@ func ParseService(s string) (Service, error) {
 	}
 }
 
-func GetRelationalDatabaseIntegrations() map[Service]bool {
-	return map[Service]bool{
+func IsRelationalDatabaseIntegration(service Service) bool {
+	relationalIntegrations := map[Service]bool{
 		Postgres:     true,
 		Snowflake:    true,
 		MySql:        true,
@@ -85,6 +85,31 @@ func GetRelationalDatabaseIntegrations() map[Service]bool {
 		Athena:       true,
 		MongoDB:      true,
 	}
+
+	_, ok := relationalIntegrations[service]
+	return ok
+}
+
+func IsDatabaseIntegration(service Service) bool {
+	if IsRelationalDatabaseIntegration(service) {
+		return true
+	}
+
+	return service == MongoDB
+}
+
+func IsComputeIntegration(service Service) bool {
+	computeIntegrations := map[Service]bool{
+		Airflow:    true,
+		Lambda:     true,
+		Conda:      true,
+		Databricks: true,
+		Kubernetes: true,
+		Spark:      true,
+	}
+
+	_, ok := computeIntegrations[service]
+	return ok
 }
 
 // IsUserOnlyIntegration returns whether the specified service is only accessible by the user.

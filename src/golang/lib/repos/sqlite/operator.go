@@ -282,6 +282,46 @@ func (*operatorReader) GetRelationBatch(
 	return relations, err
 }
 
+func (*operatorReader) GetByEngineIntegrationID(
+	ctx context.Context,
+	integrationID uuid.UUID,
+	DB database.Database,
+) ([]models.Operator, error) {
+	query := fmt.Sprintf(`
+		SELECT DISTINCT %s FROM
+		operator, workflow_dag, workflow_dag_edge
+		WHERE
+		workflow_dag_edge.workflow_dag_id = workflow_dag.id
+		AND (
+			workflow_dag_edge.from_id = operator.id
+			OR workflow_dag_edge.to_id = operator.id
+		)
+		AND (
+			(
+				json_extract(operator.spec, '$.engine_config') IS NULL
+				AND (
+					json_extract(workflow_dag.engine_config, '$.airflow_config.integration_id') = $1
+					OR json_extract(workflow_dag.engine_config, '$.k8s_config.integration_id') = $1
+					OR json_extract(workflow_dag.engine_config, '$.lambda_config.integration_id') = $1
+					OR json_extract(workflow_dag.engine_config, '$.databricks_config.integration_id') = $1
+				)
+			)
+			OR (
+				json_extract(operator.spec, '$.engine_config.airflow_config.integration_id') = $1
+					OR json_extract(operator.spec, '$.engine_config.k8s_config.integration_id') = $1
+					OR json_extract(operator.spec, '$.engine_config.lambda_config.integration_id') = $1
+					OR json_extract(operator.spec, '$.engine_config.databricks_config.integration_id') = $1
+			)
+		);`,
+		models.OperatorColsWithPrefix(),
+	)
+	args := []interface{}{integrationID}
+
+	var results []models.Operator
+	err := DB.Query(ctx, &results, query, args...)
+	return results, err
+}
+
 func (*operatorReader) GetWithExecEnv(ctx context.Context, DB database.Database) ([]models.Operator, error) {
 	query := fmt.Sprintf(
 		"SELECT %s FROM operator WHERE execution_environment_id IS NOT NULL;",

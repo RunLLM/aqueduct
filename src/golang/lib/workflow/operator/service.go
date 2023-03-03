@@ -1,0 +1,40 @@
+package operator
+
+import (
+	"context"
+
+	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/dropbox/godropbox/errors"
+	"github.com/google/uuid"
+)
+
+func GetOperatorsOnIntegration(
+	ctx context.Context,
+	integrationID uuid.UUID,
+	integrationRepo repos.Integration,
+	operatorRepo repos.Operator,
+	DB database.Database,
+) ([]models.Operator, error) {
+	integrationObject, err := integrationRepo.Get(ctx, integrationID, DB)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to retrieve integration.")
+	}
+
+	if shared.IsDatabaseIntegration(integrationObject.Service) {
+		return operatorRepo.GetExtractAndLoadOPsByIntegration(ctx, integrationID, DB)
+	}
+
+	// This feature is not supported for the given service.
+	if !shared.IsComputeIntegration(integrationObject.Service) {
+		return nil, nil
+	}
+
+	if integrationObject.Service == shared.Conda {
+		return operatorRepo.GetWithExecEnv(ctx, DB)
+	}
+
+	return operatorRepo.GetByEngineIntegrationID(ctx, integrationID, DB)
+}

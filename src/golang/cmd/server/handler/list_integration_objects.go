@@ -85,7 +85,7 @@ func (h *ListIntegrationObjectsHandler) Perform(ctx context.Context, interfaceAr
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to retrieve integration.")
 	}
 
-	if _, ok := shared.GetRelationalDatabaseIntegrations()[integrationObject.Service]; !ok {
+	if shared.IsRelationalDatabaseIntegration(integrationObject.Service) {
 		return nil, http.StatusBadRequest, errors.New("List objects request is only allowed for relational databases. (Too expensive to list objects for S3)")
 	}
 
