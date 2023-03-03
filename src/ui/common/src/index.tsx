@@ -51,7 +51,7 @@ import AccountNotificationSettingsSelector from './components/notifications/Acco
 import NotificationLevelSelector from './components/notifications/NotificationLevelSelector';
 import { NotificationListItem } from './components/notifications/NotificationListItem';
 import NotificationsPopover from './components/notifications/NotificationsPopover';
-import AccountPage from './components/pages/AccountPage';
+import AccountPage from './components/pages/account/AccountPage';
 import ArtifactDetailsPage from './components/pages/artifact/id';
 import CheckDetailsPage from './components/pages/check/id';
 import DataPage from './components/pages/data';

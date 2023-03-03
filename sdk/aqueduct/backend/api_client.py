@@ -19,7 +19,7 @@ from aqueduct.models.dag import DAG
 from aqueduct.models.integration import Integration, IntegrationInfo
 from aqueduct.models.operators import ParamSpec
 from aqueduct.utils.serialization import deserialize
-from pkg_resources import parse_version, require
+from pkg_resources import get_distribution, parse_version
 
 from ..integrations.connect_config import IntegrationConfig
 from .response_helpers import (
@@ -161,7 +161,7 @@ class APIClient:
 
     def _validate_server_version(self, server_version: str) -> None:
         """Checks that the SDK and the server versions match."""
-        sdk_version = require("aqueduct-sdk")[0].version
+        sdk_version = get_distribution("aqueduct-sdk").version
         if parse_version(server_version) > parse_version(sdk_version):
             raise ClientValidationError(
                 "The SDK is outdated, it is using version %s, while the server is of version %s. "
