@@ -11,6 +11,7 @@ import ExecutionChip from '../../execution/chip';
 import IntegrationLogo from '../logo';
 import { AirflowCard } from './airflowCard';
 import { AqueductDemoCard } from './aqueductDemoCard';
+import { AWSCard } from './awsCard';
 import { BigQueryCard } from './bigqueryCard';
 import { DatabricksCard } from './databricksCard';
 import { EmailCard } from './emailCard';
@@ -149,6 +150,9 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
       break;
     case 'Spark':
       serviceCard = <SparkCard integration={integration} />;
+      break;
+    case 'AWS':
+      serviceCard = <AWSCard integration={integration} />;
       break;
     default:
       serviceCard = null;

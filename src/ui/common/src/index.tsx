@@ -5,6 +5,7 @@ import { useAqueductConsts } from './components/hooks/useAqueductConsts';
 import useUser from './components/hooks/useUser';
 import AddIntegrations from './components/integrations/addIntegrations';
 import { AqueductDemoCard } from './components/integrations/cards/aqueductDemoCard';
+import { AWSCard } from './components/integrations/cards/awsCard';
 import { BigQueryCard } from './components/integrations/cards/bigqueryCard';
 import { DataCard } from './components/integrations/cards/card';
 import { IntegrationCard } from './components/integrations/cards/card';
@@ -22,6 +23,7 @@ import { SnowflakeCard } from './components/integrations/cards/snowflakeCard';
 import { SparkCard } from './components/integrations/cards/sparkCard';
 import { ConnectedIntegrations } from './components/integrations/connectedIntegrations';
 import AddTableDialog from './components/integrations/dialogs/addTableDialog';
+import { AWSDialog } from './components/integrations/dialogs/awsDialog';
 import { BigQueryDialog } from './components/integrations/dialogs/bigqueryDialog';
 import { CondaDialog } from './components/integrations/dialogs/condaDialog';
 import { CSVDialog } from './components/integrations/dialogs/csvDialog';
@@ -220,6 +222,8 @@ export {
   artifactResults,
   ArtifactType,
   ArtifactTypeToNodeTypeMap,
+  AWSCard,
+  AWSDialog,
   BaseNode,
   BigQueryCard,
   BigQueryDialog,

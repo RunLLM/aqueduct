@@ -25,6 +25,7 @@ import {
   AirflowConfig,
   aqueductDemoName,
   AthenaConfig,
+  AWSConfig,
   BigQueryConfig,
   DatabricksConfig,
   EmailConfig,
@@ -50,6 +51,7 @@ import {
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
 import { AirflowDialog } from './airflowDialog';
 import { AthenaDialog, isAthenaConfigComplete } from './athenaDialog';
+import { AWSDialog, isAWSConfigComplete } from './awsDialog';
 import { BigQueryDialog } from './bigqueryDialog';
 import { CondaDialog } from './condaDialog';
 import {
@@ -367,6 +369,15 @@ const IntegrationDialog: React.FC<Props> = ({
         />
       );
       break;
+    case 'AWS':
+      serviceDialog = (
+        <AWSDialog
+          onUpdateField={setConfigField}
+          value={config as AWSConfig}
+          editMode={editMode}
+        />
+      );
+      break;
     default:
       return null;
   }
@@ -498,6 +509,8 @@ export function isConfigComplete(
       return isSlackConfigComplete(config as SlackConfig);
     case 'Spark':
       return isSparkConfigComplete(config as SparkConfig);
+    case 'AWS':
+      return isAWSConfigComplete(config as AWSConfig);
 
     default:
       // Make sure config is not empty and all fields are not empty as well.
