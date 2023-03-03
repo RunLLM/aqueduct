@@ -686,17 +686,6 @@ func validateKubernetesConfig(
 	return http.StatusOK, nil
 }
 
-// func validateLambdaConfig(
-// 	ctx context.Context,
-// 	config auth.Config,
-// ) (int, error) {
-// 	if err := engine.AuthenticateLambdaConfig(ctx, config); err != nil {
-// 		return http.StatusBadRequest, err
-// 	}
-
-// 	return http.StatusOK, nil
-// }
-
 func validateDatabricksConfig(
 	ctx context.Context,
 	config auth.Config,
