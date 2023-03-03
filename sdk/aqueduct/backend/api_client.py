@@ -280,6 +280,8 @@ class APIClient:
         dag: DAG,
     ) -> Dict[str, DynamicEngineStatusResponse]:
         """Makes a request against the /api/integration/dynamic-engine/status endpoint.
+           If an integration id does not correspond to a dynamic integration, the response won't
+           have an entry for that integration.
 
         Args:
             dag:
