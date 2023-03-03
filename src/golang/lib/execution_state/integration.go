@@ -112,8 +112,8 @@ func updateOnFailure(
 func ExtractConnectionState(
 	integrationObject *models.Integration,
 ) (*shared.ExecutionState, error) {
-	if (integrationObject.Service != shared.Conda ||
-		 integrationObject.Service != shared.Lambda) {
+	if integrationObject.Service != shared.Conda &&
+		integrationObject.Service != shared.Lambda {
 		return &shared.ExecutionState{
 			Status: shared.SucceededExecutionStatus,
 		}, nil

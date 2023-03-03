@@ -79,7 +79,7 @@ func (h *ListIntegrationsHandler) Perform(ctx context.Context, interfaceArgs int
 	responses := make([]integrationResponse, 0, len(integrations))
 	for _, integrationObject := range integrations {
 		state, err := execution_state.ExtractConnectionState(&integrationObject)
-		if (err == nil && state.Status == shared.SucceededExecutionStatus){
+		if err == nil && state.Status == shared.SucceededExecutionStatus {
 			response := convertIntegrationObjectToResponse(&integrationObject)
 			responses = append(responses, *response)
 		}
