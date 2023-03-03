@@ -16,11 +16,11 @@ const AqueductButton = styled(Button)(() => {
         color: theme.palette.blue[600],
         backgroundColor: 'white',
         '&:hover': {
-          backgroundColor: theme.palette.gray[50]
+          backgroundColor: theme.palette.gray[50],
         },
-        [`&.${buttonClasses.disabled}`] : {
+        [`&.${buttonClasses.disabled}`]: {
           color: theme.palette.blue[200],
-        }
+        },
       },
 
       [`&.${buttonClasses.containedPrimary}`]: {

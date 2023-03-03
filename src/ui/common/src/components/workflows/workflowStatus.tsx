@@ -10,7 +10,6 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Tooltip } from '@mui/material';
 import Box from '@mui/material/Box';
-import Chip from '@mui/material/Chip';
 import React from 'react';
 
 import { theme } from '../../styles/theme/theme';

@@ -27,7 +27,7 @@ export const VersionSelector: React.FC = () => {
   const workflow = useSelector((state: RootState) => state.workflowReducer);
   const results = workflow.dagResults;
   const selectedResult = workflow.selectedResult;
-  
+
   const dispatch = useDispatch();
 
   const [menuAnchor, setMenuAnchor] = useState<HTMLButtonElement | null>(null);
@@ -61,7 +61,7 @@ export const VersionSelector: React.FC = () => {
           defaultBackground = theme.palette.gray[100];
           hoverBackground = theme.palette.gray[25];
           selectedBackground = theme.palette.gray[200];
-        
+
           menuItemIcon = (
             <Box sx={{ color: theme.palette.gray['700'] }}>
               <FontAwesomeIcon icon={faSpinner} spin={true} />
@@ -89,9 +89,9 @@ export const VersionSelector: React.FC = () => {
             dispatch(selectResultIdx(idx));
             navigate(`?workflowDagResultId=${encodeURI(r.id)}`);
           }}
-          sx={{ 
+          sx={{
             backgroundColor: selected ? selectedBackground : defaultBackground,
-            ":hover": {
+            ':hover': {
               backgroundColor: hoverBackground,
             },
           }}
@@ -99,9 +99,7 @@ export const VersionSelector: React.FC = () => {
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             {menuItemIcon}
-            <Typography ml={1}>
-              {`${dateString(r.created_at)}`}
-            </Typography>
+            <Typography ml={1}>{`${dateString(r.created_at)}`}</Typography>
           </Box>
         </MenuItem>
       );
@@ -113,7 +111,7 @@ export const VersionSelector: React.FC = () => {
       <Button
         sx={{
           backgroundColor: !!menuAnchor ? theme.palette.gray[50] : 'white',
-          ":hover": {
+          ':hover': {
             backgroundColor: theme.palette.gray[50],
           },
           p: 1,
@@ -130,9 +128,7 @@ export const VersionSelector: React.FC = () => {
         disableFocusRipple
       >
         <FontAwesomeIcon icon={faClock} color={theme.palette.gray[800]} />
-        <Box mx={1}>
-          {dateString(results[selectedResultIdx].created_at)}
-        </Box>
+        <Box mx={1}>{dateString(results[selectedResultIdx].created_at)}</Box>
 
         <FontAwesomeIcon icon={faChevronDown} />
       </Button>
@@ -146,7 +142,7 @@ export const VersionSelector: React.FC = () => {
           horizontal: 'left',
         }}
       >
-          {getMenuItems()}
+        {getMenuItems()}
       </Popover>
     </Box>
   );

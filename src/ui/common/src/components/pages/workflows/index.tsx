@@ -6,7 +6,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { handleFetchAllWorkflowSummaries } from '../../../reducers/listWorkflowSummaries';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
-import { ServiceLogos } from '../../../utils/integrations';
 import { CheckLevel } from '../../../utils/operators';
 import ExecutionStatus, { LoadingStatusEnum } from '../../../utils/shared';
 import DefaultLayout from '../../layouts/default';
@@ -159,9 +158,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         value = row[column.name].toLocaleString();
         break;
       case 'engine': {
-        value = (
-          <EngineItem engine={value} />
-        );
+        value = <EngineItem engine={value} />;
         break;
       }
       case 'metrics': {

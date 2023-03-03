@@ -1,21 +1,24 @@
-import { faCalendar, faEllipsis, faMicrochip, faPlay } from '@fortawesome/free-solid-svg-icons';
+import {
+  faCalendar,
+  faEllipsis,
+  faMicrochip,
+} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Collapse, Tooltip, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useLayoutEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useSelector } from 'react-redux';
-import { theme } from '../../styles/theme/theme';
 
 import { RootState } from '../../stores/store';
 import style from '../../styles/markdown.module.css';
-import UserProfile from '../../utils/auth';
+import { theme } from '../../styles/theme/theme';
 import { getNextUpdateTime } from '../../utils/cron';
 import { EngineType } from '../../utils/engine';
 import { WorkflowDag, WorkflowUpdateTrigger } from '../../utils/workflows';
+import EngineItem from '../pages/workflows/components/EngineItem';
 import VersionSelector from './version_selector';
 import { StatusIndicator } from './workflowStatus';
-import EngineItem from '../pages/workflows/components/EngineItem';
 
 export const WorkflowPageContentId = 'workflow-page-main';
 
@@ -66,7 +69,7 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
       workflowDag.metadata?.schedule?.cron_schedule
     );
 
-    nextUpdate= nextUpdateTime.toDate().toLocaleString();
+    nextUpdate = nextUpdateTime.toDate().toLocaleString();
   }
 
   const showAirflowUpdateWarning =
@@ -89,7 +92,7 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
           display: 'flex',
           alignItems: narrowView ? 'start' : 'center',
           flexDirection: narrowView ? 'column' : 'row',
-          transition: 'height 100ms'
+          transition: 'height 100ms',
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -103,15 +106,13 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
             {name}
           </Typography>
 
-          {
-            workflow.dagResults && workflow.dagResults.length > 0 && (
-              <Box ml={2}>
-                <VersionSelector />
-              </Box>
-            )
-          }
+          {workflow.dagResults && workflow.dagResults.length > 0 && (
+            <Box ml={2}>
+              <VersionSelector />
+            </Box>
+          )}
         </Box>
-        
+
         <Box
           sx={{
             fontSize: '20px',
@@ -119,50 +120,53 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
             ml: narrowView ? 0 : 1,
             mt: narrowView ? 1 : 0,
             borderRadius: '8px',
-            ":hover": {
-              backgroundColor: theme.palette.gray[50]
+            ':hover': {
+              backgroundColor: theme.palette.gray[50],
             },
-            cursor: "pointer",
+            cursor: 'pointer',
           }}
           onClick={() => setShowDescription(!showDescription)}
         >
           <Tooltip title="See more" arrow>
             <FontAwesomeIcon
               icon={faEllipsis}
-              style={{ transform: showDescription ? 'rotateX(180deg)' : '', transition: 'transform 200ms' }}
+              style={{
+                transform: showDescription ? 'rotateX(180deg)' : '',
+                transition: 'transform 200ms',
+              }}
             />
           </Tooltip>
         </Box>
       </Box>
 
-
       <Collapse in={showDescription}>
         <Box display="flex" alignItems="center" my={1}>
           {/* Display the Workflow Engine. */}
-          <Tooltip title={"Compute Engine(s)"} arrow>
+          <Tooltip title={'Compute Engine(s)'} arrow>
             <Box display="flex" alignItems="center">
               <Box mr={1}>
-                <FontAwesomeIcon icon={faMicrochip} color={theme.palette.gray[800]} />
+                <FontAwesomeIcon
+                  icon={faMicrochip}
+                  color={theme.palette.gray[800]}
+                />
               </Box>
               <EngineItem engine={workflowDag.engine_config.type} />
-          </Box>
-
-
+            </Box>
           </Tooltip>
           {/* Display the next workflow run. */}
-          {
-            nextUpdate &&
+          {nextUpdate && (
             <Tooltip title="Next Workflow Run" arrow>
-                <Box display="flex" alignItems="center" ml={2}>
-                  <Box mr={1}>
-                    <FontAwesomeIcon icon={faCalendar} color={theme.palette.gray[800]} />
-                  </Box>
-                  <Typography>
-                    {nextUpdate}
-                  </Typography>
+              <Box display="flex" alignItems="center" ml={2}>
+                <Box mr={1}>
+                  <FontAwesomeIcon
+                    icon={faCalendar}
+                    color={theme.palette.gray[800]}
+                  />
                 </Box>
+                <Typography>{nextUpdate}</Typography>
+              </Box>
             </Tooltip>
-          }
+          )}
         </Box>
 
         <Box

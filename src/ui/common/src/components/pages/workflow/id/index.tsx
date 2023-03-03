@@ -1,4 +1,9 @@
-import { faArrowRotateRight, faChevronLeft, faChevronRight, faCirclePlay, faPlay } from '@fortawesome/free-solid-svg-icons';
+import {
+  faArrowRotateRight,
+  faChevronLeft,
+  faChevronRight,
+  faCirclePlay,
+} from '@fortawesome/free-solid-svg-icons';
 import { faCircleDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Drawer, Tooltip } from '@mui/material';
@@ -9,7 +14,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import workflowDagResults from 'src/reducers/workflowDagResults';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
@@ -121,7 +125,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     if (workflow.dagResults && workflow.dagResults.length > 0) {
       let workflowDagResultIndex = 0;
       const { workflowDagResultId } = urlSearchParams;
-      
+
       // Iterate through all the results and check which one's ID matches the ID of
       // the Redux store's selected DAG result.
       for (let i = 0; i < workflow.dagResults.length; i++) {
@@ -130,7 +134,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           break;
         }
       }
-     
+
       if (workflowDagResultId !== workflow.selectedResult.id) {
         dispatch(setAllSideSheetState(false));
         // this is where selectedDag gets set
@@ -168,11 +172,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
    * details.
    * @param metadataOnly if set to to true, only the status of the artifact
    * will be retrieved but the data itself will be skipped
-   * @param force whether to reload the results regardless of whether 
+   * @param force whether to reload the results regardless of whether
    * they are cached.
    */
   const getArtifactResultDetails = useCallback(
-    (nodeId: string, metadataOnly: boolean, force: boolean = false) => {
+    (nodeId: string, metadataOnly: boolean, force = false) => {
       const artf = (workflow.selectedDag?.artifacts ?? {})[nodeId];
       if (!artf || !workflow.selectedResult) {
         return;
@@ -208,11 +212,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
    *
    * @param nodeId the UUID of an artifact for which we're retrieving
    * results.
-   * @param force whether to reload the results regardless of whether 
+   * @param force whether to reload the results regardless of whether
    * they are cached.
    */
   const getOperatorResultDetails = useCallback(
-    (nodeId: string, force: boolean = false) => {
+    (nodeId: string, force = false) => {
       // Verify the node is indeed an operator, and a result is selected
       const op = (workflow.selectedDag?.operators ?? {})[nodeId];
       if (!op || !workflow.selectedResult) {
@@ -271,14 +275,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
   const selectedDag = workflow.selectedDag;
   // This function retrieves all of the node metadata in this workflow DAG result.
-  // The `force` flag forces a reload even if the data is already present. This is 
+  // The `force` flag forces a reload even if the data is already present. This is
   // used to refresh the state of a DAG that's already been loaded.
-  const getDagResultDetails = (force: boolean = false) => {
+  const getDagResultDetails = (force = false) => {
     if (
-      (
-        workflow.loadingStatus.loading === LoadingStatusEnum.Succeeded &&
-        !!selectedDag
-      ) || force
+      (workflow.loadingStatus.loading === LoadingStatusEnum.Succeeded &&
+        !!selectedDag) ||
+      force
     ) {
       for (const op of Object.values(selectedDag.operators)) {
         // We don't need to call getArtifactResultDetails because
@@ -514,39 +517,62 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
             {currentTab === 'Settings' && workflow.selectedDag && (
               <Box sx={{ paddingBottom: '24px' }}>
-                <WorkflowSettings user={user} workflowDag={workflow.selectedDag} />
+                <WorkflowSettings
+                  user={user}
+                  workflowDag={workflow.selectedDag}
+                />
               </Box>
             )}
           </Box>
 
           {/* These controls are automatically hidden when the side sheet is open. */}
-          <Box width="100px" ml={2} display={currentNode.type !== NodeType.None ? 'none' : 'block' }>
-            <Box display="flex" mb={2} pb={2} width="100%" sx={{ borderBottom: `1px solid ${theme.palette.gray[600]}` }}>
+          <Box
+            width="100px"
+            ml={2}
+            display={currentNode.type !== NodeType.None ? 'none' : 'block'}
+          >
+            <Box
+              display="flex"
+              mb={2}
+              pb={2}
+              width="100%"
+              sx={{ borderBottom: `1px solid ${theme.palette.gray[600]}` }}
+            >
               <Tooltip title="Previous Run" arrow>
-                <Button 
-                  sx={{ fontSize: '28px', px: 0, flex: 1 }} 
+                <Button
+                  sx={{ fontSize: '28px', px: 0, flex: 1 }}
                   variant="text"
                   onClick={() => {
                     // This might be confusing, but index 0 is the most recent run, so incrementing the index goes
                     // to an *earlier* run.
                     dispatch(selectResultIdx(selectedResultIdx + 1));
-                    navigate(`?workflowDagResultId=${workflow.dagResults[selectedResultIdx + 1].id}`)
+                    navigate(
+                      `?workflowDagResultId=${
+                        workflow.dagResults[selectedResultIdx + 1].id
+                      }`
+                    );
                   }}
-                  disabled={selectedResultIdx === workflow.dagResults.length - 1}
+                  disabled={
+                    selectedResultIdx === workflow.dagResults.length - 1
+                  }
                 >
                   <FontAwesomeIcon icon={faChevronLeft} />
                 </Button>
               </Tooltip>
 
               <Tooltip title="Next Run" arrow>
-                <Button 
-                  sx={{ fontSize: '28px', px: 0, flex: 1 }} 
+                <Button
+                  sx={{ fontSize: '28px', px: 0, flex: 1 }}
                   variant="text"
                   onClick={() => {
                     // This might be confusing, but index 0 is the most recent run, so decrementing the index goes
                     // to a *newer* run.
                     dispatch(selectResultIdx(selectedResultIdx - 1));
-                    navigate(`?workflowDagResultId=${workflow.dagResults[selectedResultIdx - 1].id}`)
+                    navigate(
+                      `?workflowDagResultId=${
+                        workflow.dagResults[selectedResultIdx - 1].id
+                      }`
+                    );
                   }}
                   disabled={selectedResultIdx === 0}
                 >
@@ -555,17 +581,26 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
               </Tooltip>
             </Box>
 
-            <Box mb={2} pb={2} width="100%" sx={{ borderBottom: `1px solid ${theme.palette.gray[600]}` }}>
+            <Box
+              mb={2}
+              pb={2}
+              width="100%"
+              sx={{ borderBottom: `1px solid ${theme.palette.gray[600]}` }}
+            >
               <Tooltip title="Run Workflow" arrow>
-                <Button sx={{ width: '100%', py: 1, fontSize: '32px' }} variant="text" onClick={() => setShowTriggerDialog(true)}>
+                <Button
+                  sx={{ width: '100%', py: 1, fontSize: '32px' }}
+                  variant="text"
+                  onClick={() => setShowTriggerDialog(true)}
+                >
                   <FontAwesomeIcon icon={faCirclePlay} />
                 </Button>
               </Tooltip>
             </Box>
 
             <Tooltip title="Refresh" arrow>
-              <Button 
-                sx={{ width: '100%', py: 1, fontSize: '32px' }} 
+              <Button
+                sx={{ width: '100%', py: 1, fontSize: '32px' }}
                 variant="text"
                 onClick={() => {
                   // When the button is clicked, load all of the metadata again.
@@ -578,7 +613,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Box>
         </Box>
 
-        <RunWorkflowDialog 
+        <RunWorkflowDialog
           user={user}
           workflowDag={workflow.selectedDag}
           workflowId={workflowId}

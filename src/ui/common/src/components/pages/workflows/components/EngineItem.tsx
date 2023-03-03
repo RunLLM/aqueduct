@@ -1,5 +1,6 @@
 import { Box, Typography } from '@mui/material';
 import React from 'react';
+
 import { ServiceLogos } from '../../../../utils/integrations';
 
 export interface EngineItemProps {
@@ -7,7 +8,7 @@ export interface EngineItemProps {
 }
 
 export const EngineItem: React.FC<EngineItemProps> = ({
-  // The expectation is that we get the internal representation of the engine name, 
+  // The expectation is that we get the internal representation of the engine name,
   // which is all lowercase.
   engine,
 }) => {
