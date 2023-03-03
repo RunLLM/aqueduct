@@ -141,7 +141,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 
 			IntegrationRepo: s.IntegrationRepo,
 		},
-		routes.ModifyDynamicEngineRoute: &handler.ModifyDynamicEngineHandler{
+		routes.EditDynamicEngineRoute: &handler.EditDynamicEngineHandler{
 			Database: s.Database,
 
 			IntegrationRepo: s.IntegrationRepo,

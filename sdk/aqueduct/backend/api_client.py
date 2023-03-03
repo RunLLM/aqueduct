@@ -29,7 +29,7 @@ from .response_helpers import (
 )
 from .response_models import (
     DeleteWorkflowResponse,
-    EngineStatusResponse,
+    DynamicEngineStatusResponse,
     GetVersionResponse,
     GetWorkflowResponse,
     ListWorkflowResponseEntry,
@@ -70,7 +70,7 @@ class APIClient:
     EXPORT_FUNCTION_ROUTE = "/api/function/%s/export"
 
     GET_DYNAMIC_ENGINE_STATUS_ROUTE = "/api/integration/dynamic-engine/status"
-    MODIFY_DYNAMIC_ENGINE_ROUTE_TEMPLATE = "/api/integration/dynamic-engine/%s/modify"
+    EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE = "/api/integration/dynamic-engine/%s/edit"
 
     # Auth header
     API_KEY_HEADER = "api-key"
@@ -275,11 +275,11 @@ class APIClient:
         resp = requests.post(url, url, headers=headers)
         self.raise_errors(resp)
 
-    def get_dag_engine_status(
+    def get_dynamic_engine_status_by_dag(
         self,
         dag: DAG,
-    ) -> Dict[str, EngineStatusResponse]:
-        """Makes a request against the /api/integration/engine/status endpoint.
+    ) -> Dict[str, DynamicEngineStatusResponse]:
+        """Makes a request against the /api/integration/dynamic-engine/status endpoint.
 
         Args:
             dag:
@@ -288,7 +288,7 @@ class APIClient:
                 the status of dynamic engines.
 
         Returns:
-            A EngineStatusResponse object, parsed from the backend endpoint's response.
+            A DynamicEngineStatusResponse object, parsed from the backend endpoint's response.
         """
         engine_integration_ids = set()
 
@@ -301,13 +301,15 @@ class APIClient:
                 assert op.spec.engine_config.k8s_config is not None
                 engine_integration_ids.add(str(op.spec.engine_config.k8s_config.integration_id))
 
-        return self.get_engine_status(list(engine_integration_ids))
+        return self.get_dynamic_engine_status(list(engine_integration_ids))
 
-    def get_engine_status(
+    def get_dynamic_engine_status(
         self,
         engine_integration_ids: List[str],
-    ) -> Dict[str, EngineStatusResponse]:
-        """Makes a request against the /api/integration/engine/status endpoint.
+    ) -> Dict[str, DynamicEngineStatusResponse]:
+        """Makes a request against the /api/integration/dynamic-engine/status endpoint.
+           If an integration id does not correspond to a dynamic integration, the response won't
+           have an entry for that integration.
 
         Args:
             engine_integration_ids:
@@ -315,7 +317,7 @@ class APIClient:
                 the status of dynamic engines.
 
         Returns:
-            A EngineStatusResponse object, parsed from the backend endpoint's response.
+            A DynamicEngineStatusResponse object, parsed from the backend endpoint's response.
         """
         headers = self._generate_auth_headers()
         headers["integration-ids"] = json.dumps(engine_integration_ids)
@@ -325,16 +327,16 @@ class APIClient:
         self.raise_errors(resp)
 
         return {
-            engine_status["name"]: EngineStatusResponse(**engine_status)
-            for engine_status in resp.json()
+            dynamic_engine_status["name"]: DynamicEngineStatusResponse(**dynamic_engine_status)
+            for dynamic_engine_status in resp.json()
         }
 
-    def modify_engine(
+    def edit_engine(
         self,
         action: str,
         integration_id: str,
     ) -> None:
-        """Makes a request against the /api/integration/engine/{integrationId} endpoint.
+        """Makes a request against the /api/integration/dynamic-engine/{integrationId}/edit endpoint.
 
         Args:
             integration_id:
@@ -343,7 +345,7 @@ class APIClient:
         headers = self._generate_auth_headers()
         headers["action"] = action
 
-        url = self.construct_full_url(self.MODIFY_DYNAMIC_ENGINE_ROUTE_TEMPLATE % integration_id)
+        url = self.construct_full_url(self.EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE % integration_id)
 
         if action == "create" or action == "delete":
             resp = requests.post(url, headers=headers)
@@ -353,7 +355,6 @@ class APIClient:
             )
 
         self.raise_errors(resp)
-        return
 
     def delete_integration(
         self,

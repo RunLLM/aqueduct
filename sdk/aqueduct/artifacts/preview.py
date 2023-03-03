@@ -59,7 +59,7 @@ def preview_artifacts(
         )
     subgraph.set_engine_config(global_engine_config=global_engine_config)
 
-    engine_statuses = globals.__GLOBAL_API_CLIENT__.get_dag_engine_status(dag=subgraph)
+    engine_statuses = globals.__GLOBAL_API_CLIENT__.get_dynamic_engine_status_by_dag(dag=subgraph)
     for name in engine_statuses:
         engine_status = engine_statuses[name]
         if engine_status.status != K8sClusterStatusType.ACTIVE:
