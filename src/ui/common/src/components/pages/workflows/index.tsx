@@ -150,10 +150,6 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   const onGetColumnValue = (row, column) => {
     let value = row[column.name];
 
-    if (column.name === 'engine') {
-      console.log("value is", value);
-    }
-
     switch (column.name) {
       case 'name':
         const { name, url, status } = value;

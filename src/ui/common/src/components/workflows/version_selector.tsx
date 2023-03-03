@@ -9,9 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Popover } from '@mui/material';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import FormControl from '@mui/material/FormControl';
 import MenuItem from '@mui/material/MenuItem';
-import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -33,7 +31,6 @@ export const VersionSelector: React.FC = () => {
   const dispatch = useDispatch();
 
   const [menuAnchor, setMenuAnchor] = useState<HTMLButtonElement | null>(null);
-  const [menuHover, setMenuHover] = useState(false);
   const [selectedResultIdx, setSelectedResultIdx] = React.useState(0);
 
   const getMenuItems = () => {
@@ -120,7 +117,7 @@ export const VersionSelector: React.FC = () => {
             backgroundColor: theme.palette.gray[50],
           },
           p: 1,
-          pr: menuHover || !!menuAnchor ? 1 : 3, // Add margin if the icon is not there, remove it when it is.
+          pr: 1,
           borderRadius: '4px',
           fontSize: '16px',
           display: 'flex',
@@ -129,8 +126,6 @@ export const VersionSelector: React.FC = () => {
           color: theme.palette.gray[900],
         }}
         onClick={(e) => setMenuAnchor(e.currentTarget)}
-        onMouseEnter={() => setMenuHover(true)}
-        onMouseLeave={() => setMenuHover(false)}
         disableRipple
         disableFocusRipple
       >
@@ -139,10 +134,7 @@ export const VersionSelector: React.FC = () => {
           {dateString(results[selectedResultIdx].created_at)}
         </Box>
 
-        {
-          (menuHover || !!menuAnchor) &&
-          <FontAwesomeIcon icon={faChevronDown} />
-        }
+        <FontAwesomeIcon icon={faChevronDown} />
       </Button>
 
       <Popover

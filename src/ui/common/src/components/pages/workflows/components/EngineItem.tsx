@@ -11,7 +11,6 @@ export const EngineItem: React.FC<EngineItemProps> = ({
   // which is all lowercase.
   engine,
 }) => {
-  console.log('engine is', engine)
   const engineName = engine[0].toUpperCase() + engine.substring(1);
   const iconUrl = ServiceLogos[engineName];
 
