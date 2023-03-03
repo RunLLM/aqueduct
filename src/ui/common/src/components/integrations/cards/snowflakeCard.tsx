@@ -32,6 +32,12 @@ export const SnowflakeCard: React.FC<Props> = ({ integration }) => {
         <strong>Schema: </strong>
         {config.schema ? config.schema : 'public'}
       </Typography>
+      {config.role && (
+        <Typography variant="body2">
+          <strong>Role: </strong>
+          {config.role}
+        </Typography>
+      )}
     </Box>
   );
 };
