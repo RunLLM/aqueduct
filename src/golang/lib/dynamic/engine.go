@@ -33,14 +33,13 @@ func PrepareEngine(
 	vaultObject vault.Vault,
 	db database.Database,
 ) error {
-	engineIntegration, err := UpdateEngineLastUsedTimestamp(
+	engineIntegration, err := integrationRepo.Get(
 		ctx,
 		engineIntegrationId,
-		integrationRepo,
 		db,
 	)
 	if err != nil {
-		return errors.Wrap(err, "Failed to update engine last used timestamp")
+		return errors.Wrap(err, "Failed to retrieve engine integration")
 	}
 
 	for {
@@ -156,6 +155,15 @@ func CreateDynamicEngine(
 		return errors.Wrap(err, "Failed to update Kubeconfig")
 	}
 
+	if err = UpdateEngineLastUsedTimestamp(
+		ctx,
+		engineIntegration.ID,
+		integrationRepo,
+		db,
+	); err != nil {
+		return err
+	}
+
 	engineIntegration.Config[shared.K8sStatusKey] = string(shared.K8sClusterActiveStatus)
 	_, err = integrationRepo.Update(
 		ctx,
@@ -244,14 +252,14 @@ func UpdateEngineLastUsedTimestamp(
 	engineIntegrationId uuid.UUID,
 	integrationRepo repos.Integration,
 	db database.Database,
-) (*models.Integration, error) {
+) error {
 	engineIntegration, err := integrationRepo.Get(
 		ctx,
 		engineIntegrationId,
 		db,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to retrieve engine integration")
+		return errors.Wrap(err, "Failed to retrieve engine integration")
 	}
 
 	currTimestamp := time.Now().Unix()
@@ -265,10 +273,10 @@ func UpdateEngineLastUsedTimestamp(
 		db,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to update Kubernetes cluster's last used timestamp")
+		return errors.Wrap(err, "Failed to update Kubernetes cluster's last used timestamp")
 	}
 
-	return engineIntegration, nil
+	return nil
 }
 
 // ResyncClusterState does the following: when the database state of the k8s cluster is not
