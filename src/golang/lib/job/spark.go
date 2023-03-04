@@ -59,7 +59,7 @@ func (j *SparkJobManager) Launch(
 	name string,
 	spec Spec,
 ) JobError {
-	scriptString, err := j.mapJobTypeToScript(name, spec)
+	scriptString, err := j.mapJobTypeToScript(spec)
 	if err != nil {
 		return systemError(err)
 	}
@@ -121,7 +121,7 @@ func (j *SparkJobManager) DeleteCronJob(ctx context.Context, name string) JobErr
 	return nil
 }
 
-func (j *SparkJobManager) mapJobTypeToScript(jobName string, spec Spec) (string, error) {
+func (j *SparkJobManager) mapJobTypeToScript(spec Spec) (string, error) {
 	// Add S3 Access Keys to all specs
 	storageConfig, err := spec.GetStorageConfig()
 	if err != nil {

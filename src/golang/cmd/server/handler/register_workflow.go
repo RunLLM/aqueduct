@@ -192,7 +192,6 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		status, err := createSparkWorkflowEnv(
 			ctx,
 			args.dagSummary,
-			h.IntegrationRepo,
 			h.ExecutionEnvironmentRepo,
 			execEnvByOpId,
 			txn,

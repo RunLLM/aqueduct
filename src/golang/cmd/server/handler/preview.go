@@ -213,7 +213,6 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		status, err := createSparkWorkflowEnv(
 			ctx,
 			dagSummary,
-			h.IntegrationRepo,
 			h.ExecutionEnvironmentRepo,
 			execEnvByOpId,
 			h.Database,
@@ -391,7 +390,6 @@ func setupCondaEnv(
 func createSparkWorkflowEnv(
 	ctx context.Context,
 	dagSummary *request.DagSummary,
-	integrationRepo repos.Integration,
 	execEnvRepo repos.ExecutionEnvironment,
 	envByOperator map[uuid.UUID]exec_env.ExecutionEnvironment,
 	DB database.Database,
