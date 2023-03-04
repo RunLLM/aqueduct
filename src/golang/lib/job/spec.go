@@ -25,6 +25,7 @@ type JobType string
 
 const (
 	WorkflowRetentionName = "workflowretentionjob"
+	DynamicTeardownName   = "dynamicteardownjob"
 )
 
 type SerializationType string
@@ -47,6 +48,7 @@ const (
 	DiscoverJobType           JobType = "discover"
 	WorkflowRetentionType     JobType = "workflow_retention"
 	CompileAirflowJobType     JobType = "compile_airflow"
+	DynamicTeardownType       JobType = "dynamic_teardown"
 )
 
 // `ExecutorConfiguration` represents the configuration variables that are
@@ -74,6 +76,19 @@ type BaseSpec struct {
 
 func (bs *BaseSpec) JobName() string {
 	return bs.Name
+}
+
+type DynamicTeardownSpec struct {
+	BaseSpec
+	ExecutorConfig *ExecutorConfiguration
+}
+
+func (dits *DynamicTeardownSpec) HasStorageConfig() bool {
+	return false
+}
+
+func (dits *DynamicTeardownSpec) GetStorageConfig() (*shared.StorageConfig, error) {
+	return nil, errors.New("DynamicTeardown job specs don't have a storage config.")
 }
 
 type WorkflowRetentionSpec struct {
@@ -228,6 +243,10 @@ type CompileAirflowSpec struct {
 	TaskEdges         map[string][]string `json:"task_edges"  yaml:"task_edges"`
 }
 
+func (*DynamicTeardownSpec) Type() JobType {
+	return DynamicTeardownType
+}
+
 func (*WorkflowRetentionSpec) Type() JobType {
 	return WorkflowRetentionType
 }
@@ -274,6 +293,24 @@ func (*DiscoverSpec) Type() JobType {
 
 func (*CompileAirflowSpec) Type() JobType {
 	return CompileAirflowJobType
+}
+
+// NewDynamicTeardownJobSpec constructs a Spec for a DynamicTeardownJob.
+func NewDynamicTeardownJobSpec(
+	database *database.DatabaseConfig,
+	jobManager Config,
+) Spec {
+	return &DynamicTeardownSpec{
+		BaseSpec: BaseSpec{
+			Type: DynamicTeardownType,
+			Name: DynamicTeardownName,
+		},
+
+		ExecutorConfig: &ExecutorConfiguration{
+			Database:   database,
+			JobManager: jobManager,
+		},
+	}
 }
 
 // NewWorkflowRetentionSpec constructs a Spec for a WorkflowRetentionJob.

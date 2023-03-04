@@ -36,10 +36,32 @@ type GCSIntegrationConfig struct {
 	UseAsStorage ConfigBool `json:"use_as_storage"`
 }
 
+type K8sClusterStatusType string
+
+const (
+	K8sClusterCreatingStatus    K8sClusterStatusType = "Creating"
+	K8sClusterActiveStatus      K8sClusterStatusType = "Active"
+	K8sClusterTerminatingStatus K8sClusterStatusType = "Terminating"
+	K8sClusterTerminatedStatus  K8sClusterStatusType = "Terminated"
+
+	K8sKubeconfigPathKey     string = "kubeconfig_path"
+	K8sClusterNameKey        string = "cluster_name"
+	K8sDynamicKey            string = "dynamic"
+	K8sCloudIntegrationIdKey string = "cloud_integration_id"
+	K8sUseSameClusterKey     string = "use_same_cluster"
+	K8sStatusKey             string = "status"
+	K8sKeepaliveKey          string = "keepalive"
+	K8sLastUsedTimestampKey  string = "last_used_timestamp"
+	DynamicK8sClusterName    string = "aqueduct_k8s"
+	DefaultKeepalive         int    = 1200
+)
+
 type K8sIntegrationConfig struct {
-	KubeconfigPath string     `json:"kubeconfig_path" yaml:"kubeconfigPath"`
-	ClusterName    string     `json:"cluster_name"  yaml:"clusterName"`
-	UseSameCluster ConfigBool `json:"use_same_cluster"  yaml:"useSameCluster"`
+	KubeconfigPath     string     `json:"kubeconfig_path" yaml:"kubeconfigPath"`
+	ClusterName        string     `json:"cluster_name"  yaml:"clusterName"`
+	UseSameCluster     ConfigBool `json:"use_same_cluster"  yaml:"useSameCluster"`
+	Dynamic            ConfigBool `json:"dynamic"  yaml:"dynamic"`
+	CloudIntegrationId string     `json:"cloud_integration_id"  yaml:"cloud_integration_id"`
 }
 
 type LambdaIntegrationConfig struct {
@@ -75,6 +97,11 @@ type SlackConfig struct {
 	Channels []string          `json:"channels"`
 	Level    NotificationLevel `json:"level"`
 	Enabled  bool              `json:"enabled"`
+}
+
+type AWSConfig struct {
+	AccessKeyId     string `json:"access_key_id"`
+	SecretAccessKey string `json:"secret_access_key"`
 }
 
 type SparkIntegrationConfig struct {

@@ -79,6 +79,7 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     EMAIL = "Email"
     SLACK = "Slack"
     SPARK = "Spark"
+    AWS = "AWS"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
@@ -209,3 +210,10 @@ class NotificationLevel(Enum, metaclass=MetaEnum):
 class SparkRuntimeType(str, Enum, metaclass=MetaEnum):
     DATABRICKS = "databricks"
     SPARK = "spark"
+
+
+class K8sClusterStatusType(str, Enum, metaclass=MetaEnum):
+    CREATING = "Creating"
+    ACTIVE = "Active"
+    TERMINATING = "Terminating"
+    TERMINATED = "Terminated"
