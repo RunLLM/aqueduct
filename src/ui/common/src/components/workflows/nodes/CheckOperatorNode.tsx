@@ -92,9 +92,6 @@ const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
         color: textColor,
         borderColor: borderColor,
         '&:hover': { backgroundColor: hoverColor },
-        minHeight: 'unset',
-        minWidth: '240px',
-        padding: '0px',
       }}
     >
       <Box

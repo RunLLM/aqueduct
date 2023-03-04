@@ -178,6 +178,27 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			"--logs-path",
 			logFilePath,
 		)
+	} else if spec.Type() == DynamicTeardownType {
+		dynamicTeardownSpec, ok := spec.(*DynamicTeardownSpec)
+		if !ok {
+			return nil, errors.New("Unable to cast job spec to dynamicTeardownSpec.")
+		}
+
+		specStr, err := EncodeSpec(dynamicTeardownSpec, GobSerializationType)
+		if err != nil {
+			return nil, err
+		}
+
+		logFilePath := path.Join(defaultLogsDir, jobName)
+		log.Infof("Logs for job %s are stored in %s", jobName, logFilePath)
+
+		cmd = exec.Command(
+			fmt.Sprintf("%s/%s", j.conf.BinaryDir, executorBinary),
+			"--spec",
+			specStr,
+			"--logs-path",
+			logFilePath,
+		)
 	} else if spec.Type() == FunctionJobType {
 		functionSpec, ok := spec.(*FunctionSpec)
 		if !ok {

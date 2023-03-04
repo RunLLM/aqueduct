@@ -47,6 +47,8 @@ def test_decorators_with_without_parentheses():
     artifact_class = "artifact_class"
     label = "label"
 
+    globals.__GLOBAL_API_CLIENT__.get_dynamic_engine_status = MagicMock(return_value={})
+
     decorators = {
         "op": {
             w_parentheses: op_fn_with_parentheses,

@@ -7,12 +7,14 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
@@ -69,6 +71,13 @@ type Operator interface {
 	// UpdateExecState and merge timestamps with current state based on the status of the new state.
 	// Other fields of bo.execState will be replaced.
 	UpdateExecState(execState *shared.ExecutionState)
+
+	// Dynamic returns a bool indicating whether an operator is using a dynamic engine.
+	Dynamic() bool
+
+	// GetDynamicProperties retrieves the dynamic properties of an operator, which includes its
+	// engine integration ID and its `prepared` flag.
+	GetDynamicProperties() *dynamicProperties
 }
 
 // This should only be used within the boundaries of the execution engine.
@@ -129,6 +138,27 @@ func NewOperator(
 		jobManager = dagJobManager
 	}
 
+	var dProperties *dynamicProperties
+
+	if opEngineConfig.Type == shared.K8sEngineType {
+		k8sIntegrationId := opEngineConfig.K8sConfig.IntegrationID
+		config, err := auth.ReadConfigFromSecret(ctx, k8sIntegrationId, vaultObject)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to read k8s config from vault.")
+		}
+		k8sConfig, err := lib_utils.ParseK8sConfig(config)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to parse k8s config.")
+		}
+
+		if k8sConfig.Dynamic {
+			dProperties = &dynamicProperties{
+				engineIntegrationId: k8sIntegrationId,
+				prepared:            false,
+			}
+		}
+	}
+
 	now := time.Now()
 
 	baseOp := baseOperator{
@@ -159,8 +189,9 @@ func NewOperator(
 		},
 
 		// These fields may be set dynamically during orchestration.
-		resultsPersisted: false,
-		execEnv:          execEnv,
+		resultsPersisted:  false,
+		execEnv:           execEnv,
+		dynamicProperties: dProperties,
 	}
 
 	if dbOperator.Spec.IsFunction() {

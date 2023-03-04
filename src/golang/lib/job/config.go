@@ -47,6 +47,8 @@ type K8sJobManagerConfig struct {
 
 	// System config, will have defaults
 	AwsRegion string `yaml:"awsRegion" json:"aws_region"`
+
+	Dynamic bool `yaml:"dynamic" json:"dynamic"`
 }
 
 type LambdaJobManagerConfig struct {
@@ -93,6 +95,7 @@ func RegisterGobTypes() {
 	gob.Register(&K8sJobManagerConfig{})
 	gob.Register(&WorkflowSpec{})
 	gob.Register(&WorkflowRetentionSpec{})
+	gob.Register(&DynamicTeardownSpec{})
 }
 
 func init() {
@@ -162,11 +165,11 @@ func GenerateJobManagerConfig(
 		k8sIntegrationId := engineConfig.K8sConfig.IntegrationID
 		config, err := auth.ReadConfigFromSecret(ctx, k8sIntegrationId, vault)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to read config from vault.")
+			return nil, errors.Wrap(err, "Unable to read k8s config from vault.")
 		}
 		k8sConfig, err := lib_utils.ParseK8sConfig(config)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to get integration.")
+			return nil, errors.Wrap(err, "Unable to parse k8s config.")
 		}
 		return &K8sJobManagerConfig{
 			KubeconfigPath:     k8sConfig.KubeconfigPath,
@@ -175,6 +178,7 @@ func GenerateJobManagerConfig(
 			AwsAccessKeyId:     awsAccessKeyId,
 			AwsSecretAccessKey: awsSecretAccessKey,
 			AwsRegion:          DefaultAwsRegion,
+			Dynamic:            bool(k8sConfig.Dynamic),
 		}, nil
 	case shared.LambdaEngineType:
 		if storageConfig.Type != shared.S3StorageType {

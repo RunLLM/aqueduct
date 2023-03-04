@@ -226,7 +226,7 @@ func CleanupUnusedEnvironments(
 			name,
 		}
 
-		_, _, err := lib_utils.RunCmd(CondaCmdPrefix, deleteArgs...)
+		_, _, err := lib_utils.RunCmd(CondaCmdPrefix, deleteArgs, "", false)
 		if err != nil {
 			hasError = true
 			log.Errorf("Error garbage collecting conda environment %s: %v", name, err)
