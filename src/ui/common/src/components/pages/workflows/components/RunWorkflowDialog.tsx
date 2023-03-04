@@ -273,4 +273,4 @@ const RunWorkflowDialog: React.FC<RunWorkflowDialogProps> = ({
   );
 };
 
-export { RunWorkflowDialog };
+export default RunWorkflowDialog;
