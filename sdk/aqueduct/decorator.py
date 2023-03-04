@@ -368,6 +368,62 @@ def _convert_memory_string_to_mbs(memory_str: str) -> int:
     return multiplier * int(memory_scalar_str)
 
 
+def _update_operator_spec_with_engine_and_resource(
+    spec: OperatorSpec,
+    engine: Optional[str] = None,
+    resources: Optional[Dict[str, Any]] = None,
+) -> None:
+    if resources is not None:
+        if not isinstance(resources, Dict) or any(not isinstance(k, str) for k in resources):
+            raise InvalidUserArgumentException("`resources` must be a dictionary with string keys.")
+
+        num_cpus = resources.get(NUM_CPUS_KEY)
+        memory = resources.get(MEMORY_KEY)
+        gpu_resource_name = resources.get(GPU_RESOURCE_NAME_KEY)
+
+        if num_cpus is not None and (not isinstance(num_cpus, int) or num_cpus < 0):
+            raise InvalidUserArgumentException(
+                "`num_cpus` value must be set to a positive integer."
+            )
+
+        # `memory` value can be either an int (in MBs) or a string. We will convert it into an integer
+        # representing the number of MBs.
+        if memory is not None:
+            if not isinstance(memory, int) and not isinstance(memory, str):
+                raise InvalidUserArgumentException(
+                    "`memory` value must be either an integer or string."
+                )
+
+            if isinstance(memory, int) and memory < 0:
+                raise InvalidUserArgumentException(
+                    "If `memory` value is set as an integer, it must be positive."
+                )
+
+            # We'll need to convert the string value into an integer (in MBs).
+            if isinstance(memory, str):
+                memory = _convert_memory_string_to_mbs(memory)
+
+            assert isinstance(memory, int)
+
+        if gpu_resource_name is not None and (not isinstance(gpu_resource_name, str)):
+            raise InvalidUserArgumentException("`gpu_resource_name` value must be set to a string.")
+
+        spec.resources = ResourceConfig(
+            num_cpus=num_cpus, memory_mb=memory, gpu_resource_name=gpu_resource_name
+        )
+
+    if engine is not None:
+        if globals.__GLOBAL_API_CLIENT__ is None:
+            raise InvalidUserActionException(
+                "Aqueduct Client was not instantiated! Please create a client and retry."
+            )
+
+        spec.engine_config = generate_engine_config(
+            globals.__GLOBAL_API_CLIENT__.list_integrations(),
+            engine,
+        )
+
+
 def op(
     name: Optional[Union[str, UserFunction]] = None,
     description: Optional[str] = None,
@@ -467,46 +523,6 @@ def op(
         description, file_dependencies, requirements, engine, num_outputs, outputs
     )
 
-    resource_config = None
-    if resources is not None:
-        if not isinstance(resources, Dict) or any(not isinstance(k, str) for k in resources):
-            raise InvalidUserArgumentException("`resources` must be a dictionary with string keys.")
-
-        num_cpus = resources.get(NUM_CPUS_KEY)
-        memory = resources.get(MEMORY_KEY)
-        gpu_resource_name = resources.get(GPU_RESOURCE_NAME_KEY)
-
-        if num_cpus is not None and (not isinstance(num_cpus, int) or num_cpus < 0):
-            raise InvalidUserArgumentException(
-                "`num_cpus` value must be set to a positive integer."
-            )
-
-        # `memory` value can be either an int (in MBs) or a string. We will convert it into an integer
-        # representing the number of MBs.
-        if memory is not None:
-            if not isinstance(memory, int) and not isinstance(memory, str):
-                raise InvalidUserArgumentException(
-                    "`memory` value must be either an integer or string."
-                )
-
-            if isinstance(memory, int) and memory < 0:
-                raise InvalidUserArgumentException(
-                    "If `memory` value is set as an integer, it must be positive."
-                )
-
-            # We'll need to convert the string value into an integer (in MBs).
-            if isinstance(memory, str):
-                memory = _convert_memory_string_to_mbs(memory)
-
-            assert isinstance(memory, int)
-
-        if gpu_resource_name is not None and (not isinstance(gpu_resource_name, str)):
-            raise InvalidUserArgumentException("`gpu_resource_name` value must be set to a string.")
-
-        resource_config = ResourceConfig(
-            num_cpus=num_cpus, memory_mb=memory, gpu_resource_name=gpu_resource_name
-        )
-
     def inner_decorator(func: UserFunction) -> OutputArtifactsFunction:
         nonlocal name
         nonlocal description
@@ -546,19 +562,9 @@ def op(
 
             op_spec = OperatorSpec(
                 function=function_spec,
-                resources=resource_config,
             )
 
-            if engine is not None:
-                if globals.__GLOBAL_API_CLIENT__ is None:
-                    raise InvalidUserActionException(
-                        "Aqueduct Client was not instantiated! Please create a client and retry."
-                    )
-
-                op_spec.engine_config = generate_engine_config(
-                    globals.__GLOBAL_API_CLIENT__.list_integrations(),
-                    engine,
-                )
+            _update_operator_spec_with_engine_and_resource(op_spec, engine, resources)
 
             assert isinstance(num_outputs, int)
             return wrap_spec(
@@ -604,6 +610,8 @@ def metric(
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
     output: Optional[str] = None,
+    engine: Optional[str] = None,
+    resources: Optional[Dict[str, Any]] = None,
 ) -> Union[DecoratedMetricFunction, OutputArtifactFunction]:
     """Decorator that converts regular python functions into a metric.
 
@@ -634,6 +642,28 @@ def metric(
         output:
             An optional custom name for the output metric artifact. Otherwise, the default naming scheme
             will be used.
+        engine:
+            The name of the compute integration this operator will run on.
+        resources:
+            A dictionary containing the custom resource configurations that this operator will run with.
+            These configurations are guaranteed to be followed, we will not silently ignore any of them.
+            If a resource configuration is unsupported by a particular execution engine, we will fail at
+            execution time. The supported keys are:
+
+            "num_cpus" (int):
+                The number of cpus that this operator will run with. This operator will execute with *exactly*
+                this number of cpus. If not enough cpus are available, operator execution will fail.
+            "memory" (int, str):
+                The amount of memory this operator will run with. This operator will execute with *exactly*
+                this amount of memory. If not enough memory is available, operator execution will fail.
+
+                If an integer value is supplied, the memory unit is assumed to be MB. If a string is supplied,
+                a suffix indicating the memory unit must be supplied. Supported memory units are "MB" and "GB",
+                case-insensitive.
+
+                For example, the following values are valid: 100, "100MB", "1GB", "100mb", "1gb".
+            "gpu_resource_name" (str):
+                Name of the gpu resource to use (only applicable for Kubernetes engine).
 
     Examples:
         The metric name is inferred from the function name. The description is pulled from the function
@@ -699,10 +729,12 @@ def metric(
             )
 
             metric_spec = MetricSpec(function=function_spec)
+            op_spec = OperatorSpec(metric=metric_spec)
+            _update_operator_spec_with_engine_and_resource(op_spec, engine, resources)
 
             output_names = [output] if output is not None else None
             numeric_artifact = wrap_spec(
-                OperatorSpec(metric=metric_spec),
+                op_spec,
                 *artifacts,
                 op_name=name,
                 output_artifact_names=output_names,
@@ -757,6 +789,8 @@ def check(
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
     output: Optional[str] = None,
+    engine: Optional[str] = None,
+    resources: Optional[Dict[str, Any]] = None,
 ) -> Union[DecoratedCheckFunction, OutputArtifactFunction]:
     """Decorator that converts a regular python function into a check.
 
@@ -790,6 +824,28 @@ def check(
         output:
             An optional custom name for the output metric artifact. Otherwise, the default naming scheme
             will be used.
+        engine:
+            The name of the compute integration this operator will run on.
+        resources:
+            A dictionary containing the custom resource configurations that this operator will run with.
+            These configurations are guaranteed to be followed, we will not silently ignore any of them.
+            If a resource configuration is unsupported by a particular execution engine, we will fail at
+            execution time. The supported keys are:
+
+            "num_cpus" (int):
+                The number of cpus that this operator will run with. This operator will execute with *exactly*
+                this number of cpus. If not enough cpus are available, operator execution will fail.
+            "memory" (int, str):
+                The amount of memory this operator will run with. This operator will execute with *exactly*
+                this amount of memory. If not enough memory is available, operator execution will fail.
+
+                If an integer value is supplied, the memory unit is assumed to be MB. If a string is supplied,
+                a suffix indicating the memory unit must be supplied. Supported memory units are "MB" and "GB",
+                case-insensitive.
+
+                For example, the following values are valid: 100, "100MB", "1GB", "100mb", "1gb".
+            "gpu_resource_name" (str):
+                Name of the gpu resource to use (only applicable for Kubernetes engine).
 
     Examples:
         The check name is inferred from the function name. The description is pulled from the function
@@ -854,10 +910,12 @@ def check(
                 file=zip_file,
             )
             check_spec = CheckSpec(level=severity, function=function_spec)
+            op_spec = OperatorSpec(check=check_spec)
+            _update_operator_spec_with_engine_and_resource(op_spec, engine, resources)
 
             output_names = [output] if output is not None else None
             bool_artifact = wrap_spec(
-                OperatorSpec(check=check_spec),
+                op_spec,
                 *artifacts,
                 op_name=name,
                 output_artifact_names=output_names,
