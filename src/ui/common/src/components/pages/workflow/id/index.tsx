@@ -56,7 +56,7 @@ import WorkflowHeader, {
 } from '../../../workflows/workflowHeader';
 import WorkflowSettings from '../../../workflows/WorkflowSettings';
 import { LayoutProps } from '../../types';
-import { RunWorkflowDialog } from '../../workflows/components/RunWorkflowDialog';
+import RunWorkflowDialog from '../../workflows/components/RunWorkflowDialog';
 
 type WorkflowPageProps = {
   user: UserProfile;
@@ -75,7 +75,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const path = location.pathname;
 
   const [currentTab, setCurrentTab] = useState<string>('Details');
-  const [showTriggerDialog, setShowTriggerDialog] = useState(false);
+  const [showRunWorkflowDialog, setShowRunWorkflowDialog] = useState(false);
   const [selectedResultIdx, setSelectedResultIdx] = useState(0);
 
   const currentNode = useSelector(
@@ -591,7 +591,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 <Button
                   sx={{ width: '100%', py: 1, fontSize: '32px' }}
                   variant="text"
-                  onClick={() => setShowTriggerDialog(true)}
+                  onClick={() => setShowRunWorkflowDialog(true)}
                 >
                   <FontAwesomeIcon icon={faCirclePlay} />
                 </Button>
@@ -617,8 +617,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           user={user}
           workflowDag={workflow.selectedDag}
           workflowId={workflowId}
-          open={showTriggerDialog}
-          setOpen={setShowTriggerDialog}
+          open={showRunWorkflowDialog}
+          setOpen={setShowRunWorkflowDialog}
         />
       </Box>
 
