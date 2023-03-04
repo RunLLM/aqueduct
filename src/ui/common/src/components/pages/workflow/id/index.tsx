@@ -22,9 +22,6 @@ import {
   resetSelectedNode,
 } from '../../../../reducers/nodeSelection';
 import {
-  setAllSideSheetState,
-} from '../../../../reducers/openSideSheet';
-import {
   handleGetArtifactResults,
   handleGetOperatorResults,
   handleGetSelectDagPosition,
@@ -82,6 +79,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   );
   const workflow = useSelector((state: RootState) => state.workflowReducer);
   const switchSideSheet = sideSheetSwitcher(dispatch);
+  const drawerIsOpen = currentNode.type !== NodeType.None;
 
   const dagName = workflow.selectedDag?.metadata?.name;
 
@@ -305,7 +303,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     return null;
   }
 
-  // TODO: Remove openSideSheet reducer, as it's no longer used in the ui-redesign project
   const getNodeLabel = () => {
     if (
       currentNode.type === NodeType.TableArtifact ||
@@ -466,10 +463,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           boxSizing: 'border-box',
           display: 'flex',
           // TODO: just create a state variable to reflect the open state of the drawer.
-          width:
-            currentNode.type === NodeType.None
-              ? '100%;'
-              : `calc(100% - ${SidesheetWidth});`,
+          width: !drawerIsOpen ? '100%;' : `calc(100% - ${SidesheetWidth});`,
           height: '100%',
           flexDirection: 'column',
           transition: WidthTransition,
@@ -526,7 +520,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           <Box
             width="100px"
             ml={2}
-            display={currentNode.type !== NodeType.None ? 'none' : 'block'}
+            display={drawerIsOpen ? 'none' : 'block'}
           >
             <Box
               display="flex"
@@ -619,70 +613,68 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         />
       </Box>
 
-      {currentNode.type !== NodeType.None && (
-        <Drawer
-          anchor="right"
-          variant="persistent"
-          open={true}
-          PaperProps={{
-            sx: {
-              transition: 'width 200ms ease-in-out',
-              transitionDelay: '1000ms',
-            },
-          }}
+      <Drawer
+        anchor="right"
+        variant="persistent"
+        open={drawerIsOpen}
+        PaperProps={{
+          sx: {
+            transition: 'width 200ms ease-in-out',
+            transitionDelay: '1000ms',
+          },
+        }}
+      >
+        <Box
+          width={SidesheetWidth}
+          maxWidth={SidesheetWidth}
+          minHeight="100vh"
+          display="flex"
+          flexDirection="column"
         >
           <Box
-            width={SidesheetWidth}
-            maxWidth={SidesheetWidth}
-            minHeight="100vh"
-            display="flex"
-            flexDirection="column"
+            width="100%"
+            sx={{ backgroundColor: theme.palette.gray['100'] }}
+            height={`${drawerHeaderHeightInPx}px`}
           >
-            <Box
-              width="100%"
-              sx={{ backgroundColor: theme.palette.gray['100'] }}
-              height={`${drawerHeaderHeightInPx}px`}
-            >
-              <Box display="flex">
-                <Box
-                  sx={{ cursor: 'pointer', m: 1, alignSelf: 'center' }}
-                  onClick={onPaneClicked}
+            <Box display="flex">
+              <Box
+                sx={{ cursor: 'pointer', m: 1, alignSelf: 'center' }}
+                onClick={onPaneClicked}
+              >
+                <FontAwesomeIcon icon={faChevronRight} />
+              </Box>
+              <Box maxWidth="400px">
+                <Typography
+                  variant="h5"
+                  padding="16px"
+                  textOverflow="ellipsis"
+                  overflow="hidden"
+                  whiteSpace="nowrap"
                 >
-                  <FontAwesomeIcon icon={faChevronRight} />
-                </Box>
-                <Box maxWidth="400px">
-                  <Typography
-                    variant="h5"
-                    padding="16px"
-                    textOverflow="ellipsis"
-                    overflow="hidden"
-                    whiteSpace="nowrap"
-                  >
-                    {getNodeLabel()}
-                  </Typography>
-                </Box>
-                <Box sx={{ mx: 2, alignSelf: 'center' }}>
-                  {getNodeActionButton()}
-                </Box>
+                  {getNodeLabel()}
+                </Typography>
+              </Box>
+              <Box sx={{ mx: 2, alignSelf: 'center' }}>
+                {getNodeActionButton()}
               </Box>
             </Box>
-            <Box
-              sx={{
-                overflow: 'auto',
-                flexGrow: 1,
-                marginBottom: DefaultLayoutMargin,
-              }}
-            >
-              {getDataSideSheetContent(
-                user,
-                currentNode,
-                workflowId,
-                workflow.selectedResult.id
-              )}
-            </Box>
           </Box>
-        </Drawer>
-      )}
+          <Box
+            sx={{
+              overflow: 'auto',
+              flexGrow: 1,
+              marginBottom: DefaultLayoutMargin,
+            }}
+          >
+            {getDataSideSheetContent(
+              user,
+              currentNode,
+              workflowId,
+              workflow.selectedResult.id
+            )}
+          </Box>
+        </Box>
+      </Drawer>
     </Layout>
   );
 };
