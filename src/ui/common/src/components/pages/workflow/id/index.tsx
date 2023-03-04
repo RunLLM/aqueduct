@@ -23,7 +23,6 @@ import {
 } from '../../../../reducers/nodeSelection';
 import {
   setAllSideSheetState,
-  setBottomSideSheetOpenState,
 } from '../../../../reducers/openSideSheet';
 import {
   handleGetArtifactResults,
@@ -136,7 +135,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       }
 
       if (workflowDagResultId !== workflow.selectedResult.id) {
-        dispatch(setAllSideSheetState(false));
         // this is where selectedDag gets set
         dispatch(selectResultIdx(workflowDagResultIndex));
       }
@@ -267,7 +265,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
   const onPaneClicked = (event: React.MouseEvent) => {
     event.preventDefault();
-    dispatch(setBottomSideSheetOpenState(false));
 
     // Reset selected node
     dispatch(resetSelectedNode());
