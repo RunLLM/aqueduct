@@ -13,8 +13,6 @@ from pydantic import BaseModel
 class AqueductEngineConfig(BaseModel):
     pass
 
-class AqueductCondaEngineConfig(BaseModel):
-    env: str
 
 class AqueductCondaEngineConfig(BaseModel):
     env: str
