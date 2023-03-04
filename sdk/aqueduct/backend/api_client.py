@@ -333,7 +333,7 @@ class APIClient:
             for dynamic_engine_status in resp.json()
         }
 
-    def edit_engine(
+    def edit_dynamic_engine(
         self,
         action: str,
         integration_id: str,
@@ -349,7 +349,7 @@ class APIClient:
 
         url = self.construct_full_url(self.EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE % integration_id)
 
-        if action == "create" or action == "delete":
+        if action == "create" or action == "delete" or action == "force-delete":
             resp = requests.post(url, headers=headers)
         else:
             raise InvalidRequestError(

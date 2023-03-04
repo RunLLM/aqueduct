@@ -56,8 +56,9 @@ func (*EditDynamicEngineHandler) Headers() []string {
 }
 
 const (
-	createAction string = "create"
-	deleteAction string = "delete"
+	createAction      string = "create"
+	deleteAction      string = "delete"
+	forceDeleteAction string = "force-delete"
 )
 
 func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, error) {
@@ -121,13 +122,19 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 		}
 
 		return emptyResponse, http.StatusOK, nil
-	} else if args.action == deleteAction {
+	} else if args.action == deleteAction || args.action == forceDeleteAction {
 		// This is a cluster deletion request.
+		forceDelete := false
+		if args.action == forceDeleteAction {
+			forceDelete = true
+		}
+
 		for {
 			if dynamicEngineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
 				log.Info("Tearing down the Kubernetes cluster...")
 				if err = dynamic.DeleteDynamicEngine(
 					ctx,
+					forceDelete,
 					dynamicEngineIntegration,
 					h.IntegrationRepo,
 					h.Database,

@@ -11,6 +11,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/k8s"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -20,6 +21,8 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
+	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const stateLockErrMsg = "Error acquiring the state lock"
@@ -189,10 +192,22 @@ func CreateDynamicEngine(
 // If any step fails, it returns an error.
 func DeleteDynamicEngine(
 	ctx context.Context,
+	force bool,
 	engineIntegration *models.Integration,
 	integrationRepo repos.Integration,
 	db database.Database,
 ) error {
+	if !force {
+		safe, err := safeToDeleteCluster(ctx, engineIntegration)
+		if err != nil {
+			return err
+		}
+
+		if !safe {
+			return errors.New("The k8s cluster cannot be deleted because there are pods still running.")
+		}
+	}
+
 	engineIntegration.Config[shared.K8sStatusKey] = string(shared.K8sClusterTerminatingStatus)
 	if _, err := integrationRepo.Update(
 		ctx,
@@ -318,5 +333,42 @@ func ResyncClusterState(
 	// inconsistent state between the database and terraform. In this case, we resync the state by
 	// deleting the cluster and updating the database state to be Terminated.
 	log.Error("Dynamic k8s cluster might be in an inconsistent state. Resolving state by deleting the cluster...")
-	return DeleteDynamicEngine(ctx, engineIntegration, integrationRepo, db)
+	return DeleteDynamicEngine(ctx, true, engineIntegration, integrationRepo, db)
+}
+
+// safeToDeleteCluster checks whether there are pods in the aqueduct namespace of the dynamic k8s
+// cluster that are in ContainerCreating or Running status. If so, it returns false. Otherwise it
+// returns true.
+func safeToDeleteCluster(
+	ctx context.Context,
+	engineIntegration *models.Integration,
+) (bool, error) {
+	useSameCluster, err := strconv.ParseBool(engineIntegration.Config[shared.K8sUseSameClusterKey])
+	if err != nil {
+		return false, errors.Wrap(err, "Error parsing use_same_cluster flag")
+	}
+
+	k8sClient, err := k8s.CreateK8sClient(engineIntegration.Config[shared.K8sKubeconfigPathKey], useSameCluster)
+	if err != nil {
+		return false, errors.Wrap(err, "Error while creating K8sClient")
+	}
+
+	pods, err := k8sClient.CoreV1().Pods(k8s.AqueductNamespace).List(ctx, metav1.ListOptions{})
+	if err != nil {
+		return false, errors.Wrap(err, "Error while listing pods in the aqueduct namespace")
+	}
+
+	for _, pod := range pods.Items {
+		if pod.Status.Phase == v1.PodRunning {
+			return false, nil
+		}
+
+		for _, condition := range pod.Status.Conditions {
+			if condition.Type == v1.ContainersReady && condition.Status == v1.ConditionFalse {
+				return false, nil
+			}
+		}
+	}
+
+	return true, nil
 }

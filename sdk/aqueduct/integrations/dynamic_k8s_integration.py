@@ -42,11 +42,11 @@ class DynamicK8sIntegration(Integration):
             "Cluster is currently in %s status. It could take 12-15 minutes for the cluster to be ready..."
             % status.value
         )
-        globals.__GLOBAL_API_CLIENT__.edit_engine(
+        globals.__GLOBAL_API_CLIENT__.edit_dynamic_engine(
             action="create", integration_id=str(self._metadata.id)
         )
 
-    def delete(self) -> None:
+    def delete(self, force: bool = False) -> None:
         engine_statuses = globals.__GLOBAL_API_CLIENT__.get_dynamic_engine_status(
             engine_integration_ids=[str(self._metadata.id)]
         )
@@ -64,8 +64,13 @@ class DynamicK8sIntegration(Integration):
             "Cluster is currently in %s status. It could take 6-8 minutes for the cluster to be terminated..."
             % status.value
         )
-        globals.__GLOBAL_API_CLIENT__.edit_engine(
-            action="delete", integration_id=str(self._metadata.id)
+
+        action = "delete"
+        if force:
+            action = "force-delete"
+
+        globals.__GLOBAL_API_CLIENT__.edit_dynamic_engine(
+            action=action, integration_id=str(self._metadata.id)
         )
 
     def describe(self) -> None:
