@@ -807,7 +807,7 @@ func ValidatePrerequisites(
 		}
 
 		if _, _, err := lib_utils.RunCmd("aws", []string{"--version"}, "", false); err != nil {
-			return http.StatusBadRequest, errors.Wrap(err, "aws CLI executable not found. Please go to https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html to install aws CLI")
+			return http.StatusBadRequest, errors.Wrap(err, "AWS CLI executable not found. Please go to https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html to install AWS CLI")
 		}
 	}
 
