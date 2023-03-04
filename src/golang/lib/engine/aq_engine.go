@@ -365,6 +365,7 @@ func (eng *aqEngine) PreviewWorkflow(
 	}
 
 	var jobManager job.JobManager
+	var previewCacheManager preview_cache.CacheManager
 	if dbDAG.EngineConfig.Type == shared.SparkEngineType {
 		jobManager, err = job.GenerateNewJobManager(
 			ctx,
@@ -376,6 +377,8 @@ func (eng *aqEngine) PreviewWorkflow(
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		previewCacheManager = eng.PreviewCacheManager
 	}
 
 	dag, err := dag_utils.NewWorkflowDag(
@@ -386,7 +389,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		eng.ArtifactRepo,
 		eng.ArtifactResultRepo,
 		vaultObject,
-		eng.PreviewCacheManager,
+		previewCacheManager,
 		execEnvByOperatorId,
 		operator.Preview,
 		eng.AqPath,

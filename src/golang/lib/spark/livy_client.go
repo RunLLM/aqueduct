@@ -1,4 +1,4 @@
-package livy
+package spark
 
 import (
 	"bytes"
@@ -28,8 +28,6 @@ func NewLivyClient(livyServerURL string) *LivyClient {
 // Creates a SparkSession on Spark Cluster.
 func (c *LivyClient) CreateSession(sessionReq *CreateSessionRequest) (*Session, error) {
 	url := fmt.Sprintf("%s/sessions", c.LivyServerURL)
-	logrus.Info("INSIDE CREATESESSION")
-	logrus.Info(url)
 	body, err := json.Marshal(sessionReq)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error marshaling session request.")

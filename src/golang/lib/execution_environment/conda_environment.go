@@ -3,7 +3,6 @@ package execution_environment
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"path"
 	"strings"
 
@@ -45,9 +44,7 @@ func createBaseEnvs() error {
 			envName,
 			"pip3",
 			"install",
-			// TODO() Install data integration dependencies separately.
 			fmt.Sprintf("aqueduct-ml==%s", lib.ServerVersionNumber),
-			"snowflake-sqlalchemy",
 		}
 		_, _, err = lib_utils.RunCmd(CondaCmdPrefix, args, "", false)
 		if err != nil {
@@ -139,7 +136,6 @@ func CreateCondaEnvIfNotExists(
 	}
 
 	// Then, we use pip3 to install dependencies inside this new Conda env.
-	log.Info(e.Dependencies)
 	if len(e.Dependencies) > 0 {
 		installArgs := append([]string{
 			"run",
@@ -193,64 +189,4 @@ func DeleteCondaEnvs(envs []ExecutionEnvironment) {
 			log.Errorf("Failed to delete env %s: %v", env.ID.String(), err)
 		}
 	}
-}
-
-func PackCondaEnvironment(e *ExecutionEnvironment) (string, error) {
-	tarName := fmt.Sprintf("%s.tar.gz", e.Name())
-
-	// If tar already exists don't recreate.
-	if _, err := os.Stat(tarName); err == nil {
-		return tarName, nil
-	}
-
-	pack_args := []string{
-		"pack",
-		"-n",
-		e.Name(),
-		"-o",
-		tarName,
-		"--ignore-editable-packages",
-	}
-
-	_, _, err := lib_utils.RunCmd(CondaCmdPrefix, pack_args...)
-	if err != nil {
-		return "", err
-	}
-
-	return tarName, nil
-}
-
-func CopyBaseEnvPackages(e *ExecutionEnvironment, condaPath string) error {
-	baseEnvPythonPath := fmt.Sprintf(
-		"%s/envs/aqueduct_python%s/lib/python%s/site-packages/*",
-		condaPath,
-		e.PythonVersion,
-		e.PythonVersion,
-	)
-
-	envPythonPath := fmt.Sprintf(
-		"%s/envs/%s/lib/python%s/site-packages/",
-		condaPath,
-		e.Name(),
-		e.PythonVersion,
-	)
-
-	cp_args := []string{
-		"-c",
-		fmt.Sprintf(
-			"%s %s %s %s %s",
-			"cp",
-			"-r",
-			"-n",
-			baseEnvPythonPath,
-			envPythonPath,
-		),
-	}
-
-	_, _, err := lib_utils.RunCmd("/bin/sh", cp_args...)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
