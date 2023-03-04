@@ -46,6 +46,13 @@ func NewJobManager(conf Config) (JobManager, error) {
 		}
 		return NewDatabricksJobManager(databricksConfig)
 	}
+	if conf.Type() == SparkType {
+		sparkConfig, ok := conf.(*SparkJobManagerConfig)
+		if !ok {
+			return nil, errors.New("JobManager config is not of type Spark.")
+		}
+		return NewSparkJobManager(sparkConfig)
+	}
 
 	return nil, errors.Newf("JobManager config is of unsupported type %s", conf.Type())
 }

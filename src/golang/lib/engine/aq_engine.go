@@ -24,7 +24,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
-	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -270,7 +269,8 @@ func (eng *aqEngine) ExecuteWorkflow(
 	}
 
 	var jobManager job.JobManager
-	if dbDAG.EngineConfig.Type == shared.DatabricksEngineType {
+	if dbDAG.EngineConfig.Type == shared.SparkEngineType {
+		// Create the SparkJobManager.
 		jobManager, err = job.GenerateNewJobManager(
 			ctx,
 			dbDAG.EngineConfig,
@@ -365,7 +365,7 @@ func (eng *aqEngine) PreviewWorkflow(
 	}
 
 	var jobManager job.JobManager
-	if dbDAG.EngineConfig.Type == shared.DatabricksEngineType {
+	if dbDAG.EngineConfig.Type == shared.SparkEngineType {
 		jobManager, err = job.GenerateNewJobManager(
 			ctx,
 			dbDAG.EngineConfig,
@@ -737,7 +737,7 @@ func (eng *aqEngine) TriggerWorkflow(
 	timeConfig *AqueductTimeConfig,
 	parameters map[string]param.Param,
 ) (shared.ExecutionStatus, error) {
-	dag, err := utils.ReadLatestDAGFromDatabase(
+	dag, err := workflow_utils.ReadLatestDAGFromDatabase(
 		ctx,
 		workflowID,
 		eng.WorkflowRepo,

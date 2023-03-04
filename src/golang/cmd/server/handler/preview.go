@@ -6,14 +6,17 @@ import (
 	"fmt"
 	"mime/multipart"
 	"net/http"
+	"os"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
+	"github.com/aqueducthq/aqueduct/config"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/storage"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
@@ -205,6 +208,24 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		return errorRespPtr, status, err
 	}
 
+	if dagSummary.Dag.EngineConfig.Type == shared.SparkEngineType {
+		if dagSummary.Dag.EngineConfig.SparkConfig == nil {
+			return errorRespPtr, http.StatusBadRequest, errors.New("Spark config is not provided.")
+		}
+
+		status, err := createSparkWorkflowEnv(
+			ctx,
+			dagSummary,
+			h.IntegrationRepo,
+			h.ExecutionEnvironmentRepo,
+			execEnvByOpId,
+			h.Database,
+		)
+		if err != nil {
+			return errorRespPtr, status, err
+		}
+	}
+
 	timeConfig := &engine.AqueductTimeConfig{
 		OperatorPollInterval: engine.DefaultPollIntervalMillisec,
 		ExecTimeout:          engine.DefaultExecutionTimeout,
@@ -368,6 +389,178 @@ func setupCondaEnv(
 	}
 
 	return http.StatusOK, nil
+}
+
+func createSparkWorkflowEnv(
+	ctx context.Context,
+	dagSummary *request.DagSummary,
+	integrationRepo repos.Integration,
+	execEnvRepo repos.ExecutionEnvironment,
+	envByOperator map[uuid.UUID]exec_env.ExecutionEnvironment,
+	DB database.Database,
+) (int, error) {
+	// Get the conda path information
+	sparkIntegration, err := integrationRepo.Get(
+		ctx,
+		dagSummary.Dag.EngineConfig.SparkConfig.IntegrationId,
+		DB,
+	)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	connectionState, err := exec_env.ExtractConnectionState(sparkIntegration)
+	if err != nil {
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve Conda connection state.")
+	}
+
+	if connectionState.Status == shared.FailedExecutionStatus {
+		errMsg := "Failed to create conda environments."
+		if connectionState.Error != nil {
+			errMsg = fmt.Sprintf(
+				"Failed to create conda environments: %s. %s.",
+				connectionState.Error.Context,
+				connectionState.Error.Tip,
+			)
+		}
+
+		return http.StatusInternalServerError, errors.New(errMsg)
+	}
+
+	if connectionState.Status != shared.SucceededExecutionStatus {
+		return http.StatusBadRequest, errors.New(
+			"We are still creating base conda environments. This may take a few minutes.",
+		)
+	}
+
+	condaPath := sparkIntegration.Config[exec_env.CondaPathKey]
+
+	workflowEnv, err := mergeOperatorEnv(ctx, envByOperator, execEnvRepo, DB)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+
+	sparkCondaPackPath, err := createSparkCondaPack(ctx, workflowEnv, condaPath)
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
+	dagSummary.Dag.EngineConfig.SparkConfig.EnvironmentPathURI = sparkCondaPackPath
+	return http.StatusOK, nil
+}
+
+// mergeOperatorEnv merges a set of operator envs to generate
+// one single workflow Env. This is only used for spark engine
+// for now.
+func mergeOperatorEnv(
+	ctx context.Context,
+	operatorEnvs map[uuid.UUID]exec_env.ExecutionEnvironment,
+	execEnvRepo repos.ExecutionEnvironment,
+	DB database.Database,
+) (*exec_env.ExecutionEnvironment, error) {
+	combinedDependenciesMap := make(map[string]bool)
+	pythonVersion := ""
+	for _, env := range operatorEnvs {
+		for _, dep := range env.Dependencies {
+			combinedDependenciesMap[dep] = true
+		}
+
+		if pythonVersion != "" && pythonVersion != env.PythonVersion {
+			return nil, errors.New("Multiple python versions provided for different operators.")
+		} else {
+			pythonVersion = env.PythonVersion
+		}
+	}
+
+	if pythonVersion == "" {
+		pythonVersion = "3.9"
+	}
+
+	workflowDependencies := make([]string, 0, len(combinedDependenciesMap))
+	for dep := range combinedDependenciesMap {
+		workflowDependencies = append(workflowDependencies, dep)
+	}
+	workflowDependencies = append(workflowDependencies, "snowflake-sqlalchemy")
+
+	workflowEnv := exec_env.ExecutionEnvironment{ID: uuid.New()}
+	workflowEnv.Dependencies = workflowDependencies
+	workflowEnv.PythonVersion = pythonVersion
+	envs, err := exec_env.CreateMissingAndSyncExistingEnvs(
+		ctx,
+		execEnvRepo,
+		map[uuid.UUID]exec_env.ExecutionEnvironment{
+			workflowEnv.ID: workflowEnv,
+		},
+		DB,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// CreateMissingAndSyncExistingEnvs preserves the original Key.
+	env := envs[workflowEnv.ID]
+	return &env, nil
+}
+
+func createSparkCondaPack(
+	ctx context.Context,
+	workflowEnv *exec_env.ExecutionEnvironment,
+	condaPath string,
+) (string, error) {
+	storageConfig := config.Storage()
+	if storageConfig.Type != shared.S3StorageType {
+		return "", errors.New("Must use S3 storage config for Spark engine.")
+	}
+
+	storageObj := storage.NewStorage(&storageConfig)
+
+	// We use the env name to avoid duplicated s3 file
+	s3EnvPath := fmt.Sprintf("%s.tar.gz", workflowEnv.Name())
+	sparkEnvPath := fmt.Sprintf("%s/%s", storageConfig.S3Config.Bucket, s3EnvPath)
+	if storageObj.Exists(ctx, s3EnvPath) {
+		return sparkEnvPath, nil
+	}
+
+	existingEnvs, err := exec_env.ListCondaEnvs()
+	if err != nil {
+		return "", errors.Wrap(err, "Error retrieving existing conda environments.")
+	}
+
+	// Create the conda environment for the workflow.
+	err = exec_env.CreateCondaEnvIfNotExists(
+		workflowEnv,
+		condaPath,
+		existingEnvs,
+	)
+	if err != nil {
+		return "", errors.Wrap(err, "Error creating conda environment.")
+	}
+
+	// Package the Conda environment.
+	err = exec_env.CopyBaseEnvPackages(
+		workflowEnv,
+		condaPath,
+	)
+	if err != nil {
+		return "", errors.Wrap(err, "Unable to copy base env packages.")
+	}
+
+	envTarName, err := exec_env.PackCondaEnvironment(
+		workflowEnv,
+	)
+	if err != nil {
+		return "", errors.Wrap(err, "Error when packing environment.")
+	}
+
+	bts, err := os.ReadFile(envTarName)
+	if err != nil {
+		return "", errors.Wrap(err, "Unable to read packaged environment.")
+	}
+
+	err = storageObj.Put(ctx, s3EnvPath, bts)
+	if err != nil {
+		return "", errors.Wrap(err, "Unable to put environment tar into storage.")
+	}
+	return sparkEnvPath, nil
 }
 
 func removeLoadOperators(dagSummary *request.DagSummary) {

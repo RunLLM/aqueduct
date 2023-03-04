@@ -688,6 +688,11 @@ func validateSparkConfig(
 	ctx context.Context,
 	config auth.Config,
 ) (int, error) {
+	// Validate that conda is available.
+	if _, err := validateConda(); err != nil {
+		return http.StatusBadRequest, err
+	}
+	// Validate that we are able to connect to the Spark cluster via Livy.
 	if err := engine.AuthenticateSparkConfig(ctx, config); err != nil {
 		return http.StatusBadRequest, err
 	}
