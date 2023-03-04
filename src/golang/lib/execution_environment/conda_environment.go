@@ -33,7 +33,7 @@ func createBaseEnvs() error {
 			fmt.Sprintf("python==%s", pythonVersion),
 			"-y",
 		}
-		_, _, err := lib_utils.RunCmd(CondaCmdPrefix, args...)
+		_, _, err := lib_utils.RunCmd(CondaCmdPrefix, args, "", false)
 		if err != nil {
 			return err
 		}
@@ -46,7 +46,7 @@ func createBaseEnvs() error {
 			"install",
 			fmt.Sprintf("aqueduct-ml==%s", lib.ServerVersionNumber),
 		}
-		_, _, err = lib_utils.RunCmd(CondaCmdPrefix, args...)
+		_, _, err = lib_utils.RunCmd(CondaCmdPrefix, args, "", false)
 		if err != nil {
 			return err
 		}
@@ -62,7 +62,7 @@ func ListCondaEnvs() (map[string]bool, error) {
 		"--json",
 	}
 
-	stdout, _, err := lib_utils.RunCmd(CondaCmdPrefix, listArgs...)
+	stdout, _, err := lib_utils.RunCmd(CondaCmdPrefix, listArgs, "", false)
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +112,7 @@ func CreateCondaEnvIfNotExists(
 		"-y",
 	}
 
-	_, _, err := lib_utils.RunCmd(CondaCmdPrefix, createArgs...)
+	_, _, err := lib_utils.RunCmd(CondaCmdPrefix, createArgs, "", false)
 	if err != nil {
 		return err
 	}
@@ -130,7 +130,7 @@ func CreateCondaEnvIfNotExists(
 		forkEnvPath,
 	}
 
-	_, _, err = lib_utils.RunCmd(CondaCmdPrefix, forkArgs...)
+	_, _, err = lib_utils.RunCmd(CondaCmdPrefix, forkArgs, "", false)
 	if err != nil {
 		return err
 	}
@@ -144,7 +144,7 @@ func CreateCondaEnvIfNotExists(
 		"install",
 	}, e.Dependencies...)
 
-	_, _, err = lib_utils.RunCmd(CondaCmdPrefix, installArgs...)
+	_, _, err = lib_utils.RunCmd(CondaCmdPrefix, installArgs, "", false)
 	if err != nil {
 		return err
 	}
@@ -160,7 +160,7 @@ func deleteCondaEnv(name string) error {
 		name,
 	}
 
-	_, _, err := lib_utils.RunCmd(CondaCmdPrefix, args...)
+	_, _, err := lib_utils.RunCmd(CondaCmdPrefix, args, "", false)
 	return err
 }
 
