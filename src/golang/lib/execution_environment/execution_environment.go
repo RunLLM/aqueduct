@@ -239,3 +239,56 @@ func CleanupUnusedEnvironments(
 
 	return nil
 }
+
+// MergeOperatorEnv merges a set of operator envs to generate
+// one single workflow Env. This is only used for spark engine
+// for now.
+func MergeOperatorEnv(
+	ctx context.Context,
+	operatorEnvs map[uuid.UUID]ExecutionEnvironment,
+	execEnvRepo repos.ExecutionEnvironment,
+	DB database.Database,
+) (*ExecutionEnvironment, error) {
+	combinedDependenciesMap := make(map[string]bool)
+	pythonVersion := ""
+	for _, env := range operatorEnvs {
+		for _, dep := range env.Dependencies {
+			combinedDependenciesMap[dep] = true
+		}
+
+		if pythonVersion != "" && pythonVersion != env.PythonVersion {
+			return nil, errors.New("Multiple python versions provided for different operators.")
+		} else {
+			pythonVersion = env.PythonVersion
+		}
+	}
+
+	if pythonVersion == "" {
+		pythonVersion = "3.9"
+	}
+
+	workflowDependencies := make([]string, 0, len(combinedDependenciesMap))
+	for dep := range combinedDependenciesMap {
+		workflowDependencies = append(workflowDependencies, dep)
+	}
+	workflowDependencies = append(workflowDependencies, "snowflake-sqlalchemy")
+
+	workflowEnv := ExecutionEnvironment{ID: uuid.New()}
+	workflowEnv.Dependencies = workflowDependencies
+	workflowEnv.PythonVersion = pythonVersion
+	envs, err := CreateMissingAndSyncExistingEnvs(
+		ctx,
+		execEnvRepo,
+		map[uuid.UUID]ExecutionEnvironment{
+			workflowEnv.ID: workflowEnv,
+		},
+		DB,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// CreateMissingAndSyncExistingEnvs preserves the original Key.
+	env := envs[workflowEnv.ID]
+	return &env, nil
+}

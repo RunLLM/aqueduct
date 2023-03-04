@@ -1,4 +1,4 @@
-package livy
+package spark
 
 const (
 	FunctionEntrypoint = `import base64

@@ -1,6 +1,7 @@
 package lib_utils
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
+	aq_errors "github.com/dropbox/godropbox/errors"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -197,4 +199,36 @@ func ParseSparkConfig(conf auth.Config) (*shared.SparkIntegrationConfig, error) 
 	}
 
 	return &c, nil
+}
+
+func ExtractAwsCredentials(config *shared.S3Config) (string, string, error) {
+	var awsAccessKeyId string
+	var awsSecretAccessKey string
+	profileString := fmt.Sprintf("[%s]", config.CredentialsProfile)
+
+	file, err := os.Open(config.CredentialsPath)
+	if err != nil {
+		return "", "", aq_errors.Wrap(err, "Unable to open AWS credentials file.")
+	}
+	defer file.Close()
+	fileScanner := bufio.NewScanner(file)
+	fileScanner.Split(bufio.ScanLines)
+
+	for fileScanner.Scan() {
+		if profileString == fileScanner.Text() {
+			if fileScanner.Scan() {
+				fmt.Sscanf(fileScanner.Text(), "aws_access_key_id=%v", &awsAccessKeyId)
+			} else {
+				return "", "", aq_errors.New("Unable to extract AWS credentials.")
+			}
+			if fileScanner.Scan() {
+				fmt.Sscanf(fileScanner.Text(), "aws_secret_access_key=%v", &awsSecretAccessKey)
+			} else {
+				return "", "", aq_errors.New("Unable to extract AWS credentials.")
+			}
+
+			return awsAccessKeyId, awsSecretAccessKey, nil
+		}
+	}
+	return "", "", aq_errors.New("Unable to extract AWS credentials.")
 }

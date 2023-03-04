@@ -220,7 +220,7 @@ func GetCondaIntegration(
 func ExtractConnectionState(
 	integrationObject *models.Integration,
 ) (*shared.ExecutionState, error) {
-	if integrationObject.Service != shared.Conda && integrationObject.Service != shared.Spark {
+	if integrationObject.Service != shared.Conda {
 		return &shared.ExecutionState{
 			Status: shared.SucceededExecutionStatus,
 		}, nil

@@ -7,7 +7,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
-	"github.com/aqueducthq/aqueduct/lib/livy"
+	"github.com/aqueducthq/aqueduct/lib/spark"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
 )
@@ -91,7 +91,7 @@ func AuthenticateSparkConfig(ctx context.Context, authConf auth.Config) error {
 		return errors.Wrap(err, "Unable to parse configuration.")
 	}
 
-	livyClient := livy.NewLivyClient(sparkConfig.LivyServerURL)
+	livyClient := spark.NewLivyClient(sparkConfig.LivyServerURL)
 	_, err = livyClient.GetSessions()
 	if err != nil {
 		return errors.Wrap(err, "Unable to list active Sessions on Livy Server.")

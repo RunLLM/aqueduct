@@ -45,9 +45,7 @@ func createBaseEnvs() error {
 			envName,
 			"pip3",
 			"install",
-			// TODO() Install data integration dependencies separately.
 			fmt.Sprintf("aqueduct-ml==%s", lib.ServerVersionNumber),
-			"snowflake-sqlalchemy",
 		}
 		_, _, err = lib_utils.RunCmd(CondaCmdPrefix, args...)
 		if err != nil {

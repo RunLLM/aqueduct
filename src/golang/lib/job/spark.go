@@ -6,8 +6,8 @@ import (
 	"path"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/lib/livy"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/spark"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -16,16 +16,16 @@ import (
 const defaultSparkFunctionExtractPath = "/tmp/function/"
 
 type SparkJobManager struct {
-	livyClient *livy.LivyClient
+	livyClient *spark.LivyClient
 	sessionID  int
 	conf       *SparkJobManagerConfig
 	runMap     map[string]int
 }
 
 func NewSparkJobManager(conf *SparkJobManagerConfig) (*SparkJobManager, error) {
-	livyClient := livy.NewLivyClient(conf.LivyServerURL)
+	livyClient := spark.NewLivyClient(conf.LivyServerURL)
 
-	session, err := livyClient.CreateSession(&livy.CreateSessionRequest{
+	session, err := livyClient.CreateSession(&spark.CreateSessionRequest{
 		Kind:                     "pyspark",
 		HeartbeatTimeoutInSecond: 600,
 		Archives:                 []string{fmt.Sprintf("%s#environment", conf.EnvironmentPathURI)},
@@ -35,7 +35,7 @@ func NewSparkJobManager(conf *SparkJobManagerConfig) (*SparkJobManager, error) {
 		},
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "Error creating session on Livy.")
+		return nil, errors.Wrap(err, "Error creating session on spark.")
 	}
 	err = livyClient.WaitForSession(session.ID, time.Minute*3)
 	if err != nil {
@@ -59,14 +59,12 @@ func (j *SparkJobManager) Launch(
 	name string,
 	spec Spec,
 ) JobError {
-	log.Info("In SparkJobManager.Launch()")
 	scriptString, err := j.mapJobTypeToScript(name, spec)
 	if err != nil {
 		return systemError(err)
 	}
 	log.Info(scriptString)
-	log.Info(j.sessionID)
-	statement, err := j.livyClient.RunStatement(j.sessionID, &livy.StatementRequest{
+	statement, err := j.livyClient.RunStatement(j.sessionID, &spark.StatementRequest{
 		Code: scriptString,
 	})
 	if err != nil {
@@ -84,18 +82,18 @@ func (j *SparkJobManager) Poll(ctx context.Context, name string) (shared.Executi
 	}
 	statement, err := j.livyClient.GetStatement(j.sessionID, statmentID)
 	if err != nil {
-		return shared.UnknownExecutionStatus, systemError(errors.Wrap(err, "Unable to get Session from Livy."))
+		return shared.UnknownExecutionStatus, systemError(errors.Wrap(err, "Unable to get Session from spark."))
 	}
 	switch statement.State {
-	case livy.Waiting, livy.Running, livy.Cancelling:
+	case spark.Waiting, spark.Running, spark.Cancelling:
 		return shared.RunningExecutionStatus, nil
-	case livy.StatementError:
+	case spark.StatementError:
 		return shared.FailedExecutionStatus, nil
-	case livy.Available:
+	case spark.Available:
 		switch statement.Output.Status {
-		case livy.Error:
+		case spark.Error:
 			return shared.FailedExecutionStatus, nil
-		case livy.OK:
+		case spark.OK:
 			return shared.SucceededExecutionStatus, nil
 		}
 	}
@@ -145,28 +143,28 @@ func (j *SparkJobManager) mapJobTypeToScript(jobName string, spec Spec) (string,
 			return "", err
 		}
 
-		scriptString = fmt.Sprintf(livy.FunctionEntrypoint, specStr)
+		scriptString = fmt.Sprintf(spark.FunctionEntrypoint, specStr)
 	} else if spec.Type() == ParamJobType {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
 			return "", err
 		}
 
-		scriptString = fmt.Sprintf(livy.ParamEntrypoint, specStr)
+		scriptString = fmt.Sprintf(spark.ParamEntrypoint, specStr)
 	} else if IsDataType(spec.Type()) {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
 			return "", err
 		}
 
-		scriptString = fmt.Sprintf(livy.DataEntrypoint, specStr)
+		scriptString = fmt.Sprintf(spark.DataEntrypoint, specStr)
 	} else if spec.Type() == SystemMetricJobType {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
 			return "", err
 		}
 
-		scriptString = fmt.Sprintf(livy.SystemMetricEntrypoint, specStr)
+		scriptString = fmt.Sprintf(spark.SystemMetricEntrypoint, specStr)
 	} else {
 		return "", errors.New("Unsupported JobType was passed in.")
 	}

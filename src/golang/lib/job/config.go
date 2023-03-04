@@ -1,11 +1,8 @@
 package job
 
 import (
-	"bufio"
 	"context"
 	"encoding/gob"
-	"fmt"
-	"os"
 	"path"
 
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
@@ -168,7 +165,7 @@ func GenerateJobManagerConfig(
 
 		var awsAccessKeyId, awsSecretAccessKey string
 		if storageConfig.Type == shared.S3StorageType {
-			keyId, secretKey, err := extractAwsCredentials(storageConfig.S3Config)
+			keyId, secretKey, err := lib_utils.ExtractAwsCredentials(storageConfig.S3Config)
 			if err != nil {
 				return nil, errors.Wrap(err, "Unable to extract AWS credentials from file.")
 			}
@@ -210,7 +207,7 @@ func GenerateJobManagerConfig(
 
 		var awsAccessKeyId, awsSecretAccessKey string
 		if storageConfig.Type == shared.S3StorageType {
-			keyId, secretKey, err := extractAwsCredentials(storageConfig.S3Config)
+			keyId, secretKey, err := lib_utils.ExtractAwsCredentials(storageConfig.S3Config)
 			if err != nil {
 				return nil, errors.Wrap(err, "Unable to extract AWS credentials from file.")
 			}
@@ -240,7 +237,7 @@ func GenerateJobManagerConfig(
 
 		var awsAccessKeyId, awsSecretAccessKey string
 		if storageConfig.Type == shared.S3StorageType {
-			keyId, secretKey, err := extractAwsCredentials(storageConfig.S3Config)
+			keyId, secretKey, err := lib_utils.ExtractAwsCredentials(storageConfig.S3Config)
 			if err != nil {
 				return nil, errors.Wrap(err, "Unable to extract AWS credentials from file.")
 			}
@@ -271,7 +268,7 @@ func GenerateJobManagerConfig(
 
 		var awsAccessKeyId, awsSecretAccessKey string
 		if storageConfig.Type == shared.S3StorageType {
-			keyId, secretKey, err := extractAwsCredentials(storageConfig.S3Config)
+			keyId, secretKey, err := lib_utils.ExtractAwsCredentials(storageConfig.S3Config)
 			if err != nil {
 				return nil, errors.Wrap(err, "Unable to extract AWS credentials from file.")
 			}
@@ -288,36 +285,4 @@ func GenerateJobManagerConfig(
 	default:
 		return nil, errors.New("Unsupported engine type.")
 	}
-}
-
-func extractAwsCredentials(config *shared.S3Config) (string, string, error) {
-	var awsAccessKeyId string
-	var awsSecretAccessKey string
-	profileString := fmt.Sprintf("[%s]", config.CredentialsProfile)
-
-	file, err := os.Open(config.CredentialsPath)
-	if err != nil {
-		return "", "", errors.Wrap(err, "Unable to open AWS credentials file.")
-	}
-	defer file.Close()
-	fileScanner := bufio.NewScanner(file)
-	fileScanner.Split(bufio.ScanLines)
-
-	for fileScanner.Scan() {
-		if profileString == fileScanner.Text() {
-			if fileScanner.Scan() {
-				fmt.Sscanf(fileScanner.Text(), "aws_access_key_id=%v", &awsAccessKeyId)
-			} else {
-				return "", "", errors.New("Unable to extract AWS credentials.")
-			}
-			if fileScanner.Scan() {
-				fmt.Sscanf(fileScanner.Text(), "aws_secret_access_key=%v", &awsSecretAccessKey)
-			} else {
-				return "", "", errors.New("Unable to extract AWS credentials.")
-			}
-
-			return awsAccessKeyId, awsSecretAccessKey, nil
-		}
-	}
-	return "", "", errors.New("Unable to extract AWS credentials.")
 }
