@@ -27,14 +27,15 @@ func GetOperatorsOnIntegration(
 		return operatorRepo.GetExtractAndLoadOPsByIntegration(ctx, integrationID, DB)
 	}
 
-	// This feature is not supported for the given service.
-	if !shared.IsComputeIntegration(integrationObject.Service) {
-		return nil, nil
+	if _, ok := shared.ServiceToEngineConfigIntegrationIDField[integrationObject.Service]; ok {
+		return operatorRepo.GetByEngineIntegrationID(ctx, integrationID, DB)
 	}
 
+	// Other eligible cases
 	if integrationObject.Service == shared.Conda {
 		return operatorRepo.GetWithExecEnv(ctx, DB)
 	}
 
-	return operatorRepo.GetByEngineIntegrationID(ctx, integrationID, DB)
+	// This feature is not supported for the given service.
+	return nil, nil
 }

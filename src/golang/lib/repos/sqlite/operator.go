@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
@@ -287,6 +288,33 @@ func (*operatorReader) GetByEngineIntegrationID(
 	integrationID uuid.UUID,
 	DB database.Database,
 ) ([]models.Operator, error) {
+	workflow_condition_fragments := make([]string, 0, len(shared.ServiceToEngineConfigIntegrationIDField))
+	operator_condition_fragments := make([]string, 0, len(shared.ServiceToEngineConfigIntegrationIDField))
+	for _, field := range shared.ServiceToEngineConfigIntegrationIDField {
+		workflow_condition_fragments = append(
+			workflow_condition_fragments,
+			fmt.Sprintf(
+				`json_extract(
+					workflow_dag.engine_config,
+					'$.%s.integration_id'
+				) = $1`,
+				field),
+		)
+
+		operator_condition_fragments = append(
+			operator_condition_fragments,
+			fmt.Sprintf(
+				`json_extract(
+					operator.spec,
+					'$.engine_config.%s.integration_id'
+				) = $1`,
+				field),
+		)
+	}
+
+	workflow_condition := strings.Join(workflow_condition_fragments, " OR ")
+	operator_condition := strings.Join(operator_condition_fragments, " OR ")
+
 	query := fmt.Sprintf(`
 		SELECT DISTINCT %s FROM
 		operator, workflow_dag, workflow_dag_edge
@@ -299,21 +327,13 @@ func (*operatorReader) GetByEngineIntegrationID(
 		AND (
 			(
 				json_extract(operator.spec, '$.engine_config') IS NULL
-				AND (
-					json_extract(workflow_dag.engine_config, '$.airflow_config.integration_id') = $1
-					OR json_extract(workflow_dag.engine_config, '$.k8s_config.integration_id') = $1
-					OR json_extract(workflow_dag.engine_config, '$.lambda_config.integration_id') = $1
-					OR json_extract(workflow_dag.engine_config, '$.databricks_config.integration_id') = $1
-				)
+				AND (%s)
 			)
-			OR (
-				json_extract(operator.spec, '$.engine_config.airflow_config.integration_id') = $1
-					OR json_extract(operator.spec, '$.engine_config.k8s_config.integration_id') = $1
-					OR json_extract(operator.spec, '$.engine_config.lambda_config.integration_id') = $1
-					OR json_extract(operator.spec, '$.engine_config.databricks_config.integration_id') = $1
-			)
+			OR (%s)
 		);`,
 		models.OperatorColsWithPrefix(),
+		workflow_condition,
+		operator_condition,
 	)
 	args := []interface{}{integrationID}
 

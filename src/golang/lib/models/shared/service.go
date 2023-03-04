@@ -37,6 +37,43 @@ const (
 	DemoDbIntegrationName = "aqueduct_demo"
 )
 
+var relationalDatabaseIntegrations map[Service]bool = map[Service]bool{
+	Postgres:     true,
+	Snowflake:    true,
+	MySql:        true,
+	Redshift:     true,
+	MariaDb:      true,
+	SqlServer:    true,
+	BigQuery:     true,
+	AqueductDemo: true,
+	Sqlite:       true,
+	Athena:       true,
+	MongoDB:      true,
+}
+
+var computeIntegrations map[Service]bool = map[Service]bool{
+	Airflow:    true,
+	Lambda:     true,
+	Conda:      true,
+	Databricks: true,
+	Kubernetes: true,
+	Spark:      true,
+}
+
+// ServiceToEngineConfigIntegrationIDField contains
+// all services with `integration_id` in its 'engine_config' field.
+// This is used in SQL queries to retrieve engine configs (workflow or operator)
+// based on integration ID.
+//
+// The key should be the service type, and value should be the json tag
+// for the corresponding field that contains the integration ID.
+var ServiceToEngineConfigIntegrationIDField map[Service]string = map[Service]string{
+	Lambda:     "lambda_config",
+	Airflow:    "airflow_config",
+	Kubernetes: "k8s_config",
+	Databricks: "databricks_config",
+}
+
 // ParseService decodes s into a Service or an error.
 func ParseService(s string) (Service, error) {
 	svc := Service(s)
@@ -72,21 +109,7 @@ func ParseService(s string) (Service, error) {
 }
 
 func IsRelationalDatabaseIntegration(service Service) bool {
-	relationalIntegrations := map[Service]bool{
-		Postgres:     true,
-		Snowflake:    true,
-		MySql:        true,
-		Redshift:     true,
-		MariaDb:      true,
-		SqlServer:    true,
-		BigQuery:     true,
-		AqueductDemo: true,
-		Sqlite:       true,
-		Athena:       true,
-		MongoDB:      true,
-	}
-
-	_, ok := relationalIntegrations[service]
+	_, ok := relationalDatabaseIntegrations[service]
 	return ok
 }
 
@@ -99,15 +122,6 @@ func IsDatabaseIntegration(service Service) bool {
 }
 
 func IsComputeIntegration(service Service) bool {
-	computeIntegrations := map[Service]bool{
-		Airflow:    true,
-		Lambda:     true,
-		Conda:      true,
-		Databricks: true,
-		Kubernetes: true,
-		Spark:      true,
-	}
-
 	_, ok := computeIntegrations[service]
 	return ok
 }
