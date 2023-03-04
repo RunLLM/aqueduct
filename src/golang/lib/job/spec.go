@@ -269,6 +269,19 @@ func (*CompileAirflowSpec) Type() JobType {
 	return CompileAirflowJobType
 }
 
+func IsDataType(jobType JobType) bool {
+	if jobType == AuthenticateJobType ||
+		jobType == LoadJobType ||
+		jobType == ExtractJobType ||
+		jobType == LoadTableJobType ||
+		jobType == DeleteSavedObjectsJobType ||
+		jobType == DiscoverJobType {
+		return true
+	} else {
+		return false
+	}
+}
+
 // NewWorkflowRetentionSpec constructs a Spec for a WorkflowRetentionJob.
 func NewWorkflowRetentionJobSpec(
 	database *database.DatabaseConfig,

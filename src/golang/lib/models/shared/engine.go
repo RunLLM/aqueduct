@@ -16,6 +16,7 @@ const (
 	K8sEngineType           EngineType = "k8s"
 	LambdaEngineType        EngineType = "lambda"
 	DatabricksEngineType    EngineType = "databricks"
+	SparkEngineType         EngineType = "spark"
 )
 
 type EngineConfig struct {
@@ -26,6 +27,7 @@ type EngineConfig struct {
 	K8sConfig           *K8sConfig           `yaml:"k8sConfig" json:"k8s_config,omitempty"`
 	LambdaConfig        *LambdaConfig        `yaml:"lambdaConfig" json:"lambda_config,omitempty"`
 	DatabricksConfig    *DatabricksConfig    `yaml:"databricksConfig" json:"databricks_config,omitempty"`
+	SparkConfig         *SparkConfig         `yaml:"sparkConfig" json:"spark_config,omitempty"`
 }
 
 type AqueductConfig struct{}
@@ -55,6 +57,13 @@ type LambdaConfig struct {
 
 type DatabricksConfig struct {
 	IntegrationID uuid.UUID `json:"integration_id"  yaml:"integration_id"`
+}
+
+type SparkConfig struct {
+	IntegrationId uuid.UUID `json:"integration_id"  yaml:"integration_id"`
+	// URI to the packaged environment. This is passed when creating and uploading the
+	// environment during execution.
+	EnvironmentPathURI string `yaml:"environmentPathUri" json:"environment_path_uri"`
 }
 
 func (e *EngineConfig) Scan(value interface{}) error {

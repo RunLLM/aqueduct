@@ -80,7 +80,7 @@ type SlackConfig struct {
 type SparkIntegrationConfig struct {
 	// LivyServerURL is the URL of the Livy server that sits in front of the Spark cluster.
 	// This URL is assumed to be accessible by the machine running the Aqueduct server.
-	LivyServerURL string `yaml:"baseUrl" json:"base_url"`
+	LivyServerURL string `yaml:"baseUrl" json:"livy_server_url"`
 	// AWS Access Key ID is passed from the StorageConfig.
 	AwsAccessKeyID string `yaml:"awsAccessKeyId" json:"aws_access_key_id"`
 	// AWS Secret Access Key is passed from the StorageConfig.

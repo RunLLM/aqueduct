@@ -65,7 +65,7 @@ func (e *ExecutionEnvironment) Hash() (uuid.UUID, error) {
 	sliceToHash := make([]string, 0, len(e.Dependencies)+1)
 	sliceToHash = append(sliceToHash, e.Dependencies...)
 	sliceToHash = append(sliceToHash, e.PythonVersion)
-	sort.Strings(e.Dependencies)
+	sort.Strings(sliceToHash)
 
 	buf := &bytes.Buffer{}
 	err := gob.NewEncoder(buf).Encode(sliceToHash)
@@ -171,12 +171,12 @@ func CreateMissingAndSyncExistingEnvs(
 			ctx,
 			hash,
 			execEnvRepo,
-			db,
+			txn,
 		)
 
 		// Env is missing
 		if err == database.ErrNoRows {
-			err = env.CreateDBRecord(ctx, execEnvRepo, db)
+			err = env.CreateDBRecord(ctx, execEnvRepo, txn)
 			if err != nil {
 				return nil, err
 			}

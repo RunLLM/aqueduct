@@ -16,8 +16,7 @@ import (
 )
 
 const (
-	defaultFunctionExtractPath = "/app/function/"
-	jobSpecEnvVarKey           = "JOB_SPEC"
+	jobSpecEnvVarKey = "JOB_SPEC"
 )
 
 type k8sJobManager struct {

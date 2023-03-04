@@ -11,6 +11,7 @@ import (
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	mdl_utils "github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/workflow"
@@ -177,10 +178,28 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		args.dagSummary,
 		h.IntegrationRepo,
 		execEnvByOpId,
-		h.Database,
+		txn,
 	)
 	if err != nil {
 		return emptyResp, status, err
+	}
+
+	if args.dagSummary.Dag.EngineConfig.Type == shared.SparkEngineType {
+		if args.dagSummary.Dag.EngineConfig.SparkConfig == nil {
+			return emptyResp, http.StatusBadRequest, errors.New("Spark config is not provided.")
+		}
+
+		status, err := createSparkWorkflowEnv(
+			ctx,
+			args.dagSummary,
+			h.IntegrationRepo,
+			h.ExecutionEnvironmentRepo,
+			execEnvByOpId,
+			txn,
+		)
+		if err != nil {
+			return emptyResp, status, err
+		}
 	}
 
 	for opId, op := range args.dagSummary.Dag.Operators {

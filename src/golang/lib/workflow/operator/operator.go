@@ -69,6 +69,9 @@ type Operator interface {
 	// UpdateExecState and merge timestamps with current state based on the status of the new state.
 	// Other fields of bo.execState will be replaced.
 	UpdateExecState(execState *shared.ExecutionState)
+
+	// FetchExecutionEnvironment retrieves the environment of the operator.
+	FetchExecutionEnvironment(ctx context.Context) *exec_env.ExecutionEnvironment
 }
 
 // This should only be used within the boundaries of the execution engine.
