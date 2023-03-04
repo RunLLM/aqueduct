@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	DefaultExecutionTimeout     = 15 * time.Minute
+	DefaultExecutionTimeout     = 30 * time.Minute
 	DefaultCleanupTimeout       = 2 * time.Minute
 	DefaultPollIntervalMillisec = 300
 )
