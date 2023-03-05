@@ -354,7 +354,7 @@ class APIClient:
             "config_delta": json.dumps(config_delta),
         }
 
-        if action == "create" or action == "delete" or action == "force-delete":
+        if action in ["create", "update", "delete", "force-delete"]:
             resp = requests.post(url, headers=headers, data=body)
         else:
             raise InvalidRequestError(

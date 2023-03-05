@@ -214,6 +214,7 @@ class SparkRuntimeType(str, Enum, metaclass=MetaEnum):
 
 class K8sClusterStatusType(str, Enum, metaclass=MetaEnum):
     CREATING = "Creating"
+    UPDATING = "Updating"
     ACTIVE = "Active"
     TERMINATING = "Terminating"
     TERMINATED = "Terminated"

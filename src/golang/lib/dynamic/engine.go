@@ -28,16 +28,16 @@ import (
 type k8sClusterActionType string
 
 const (
-	k8sClusterCreateAction k8sClusterActionType = "create"
-	k8sClusterUpdateAction k8sClusterActionType = "update"
+	K8sClusterCreateAction k8sClusterActionType = "create"
+	K8sClusterUpdateAction k8sClusterActionType = "update"
 )
 
 const stateLockErrMsg = "Error acquiring the state lock"
 
 var TerraformDir = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "dynamic", "terraform")
 
-// PrepareEngine
-func PrepareEngine(
+// PrepareCluster blocks until the cluster is in status "Active".
+func PrepareCluster(
 	ctx context.Context,
 	configDelta map[string]string,
 	engineIntegrationId uuid.UUID,
@@ -60,7 +60,7 @@ func PrepareEngine(
 			return CreateOrUpdateK8sCluster(
 				ctx,
 				configDelta,
-				k8sClusterCreateAction,
+				K8sClusterCreateAction,
 				engineIntegration,
 				integrationRepo,
 				vaultObject,
@@ -75,7 +75,7 @@ func PrepareEngine(
 				return CreateOrUpdateK8sCluster(
 					ctx,
 					configDelta,
-					k8sClusterUpdateAction,
+					K8sClusterUpdateAction,
 					engineIntegration,
 					integrationRepo,
 					vaultObject,
@@ -125,11 +125,11 @@ func CreateOrUpdateK8sCluster(
 	vaultObject vault.Vault,
 	db database.Database,
 ) error {
-	if !(action == k8sClusterCreateAction || action == k8sClusterUpdateAction) {
+	if !(action == K8sClusterCreateAction || action == K8sClusterUpdateAction) {
 		return errors.Newf("Unsupport action %s.", action)
 	}
 
-	if action == k8sClusterUpdateAction && len(configDelta) == 0 {
+	if action == K8sClusterUpdateAction && len(configDelta) == 0 {
 		return nil // if there is no config delta, we don't need to update anything
 	}
 
@@ -149,7 +149,7 @@ func CreateOrUpdateK8sCluster(
 	}
 
 	var clusterStatus shared.K8sClusterStatusType
-	if action == k8sClusterCreateAction {
+	if action == K8sClusterCreateAction {
 		clusterStatus = shared.K8sClusterCreatingStatus
 	} else {
 		clusterStatus = shared.K8sClusterUpdatingStatus
@@ -163,7 +163,7 @@ func CreateOrUpdateK8sCluster(
 		return err
 	}
 
-	if action == k8sClusterCreateAction {
+	if action == K8sClusterCreateAction {
 		if _, _, err := lib_utils.RunCmd(
 			"aws",
 			[]string{

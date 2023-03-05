@@ -60,6 +60,7 @@ func (*EditDynamicEngineHandler) Headers() []string {
 
 const (
 	createAction      string = "create"
+	updateAction      string = "update"
 	deleteAction      string = "delete"
 	forceDeleteAction string = "force-delete"
 	configDeltaKey    string = "config_delta"
@@ -128,15 +129,15 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResponse, http.StatusBadRequest, errors.New("This is not a dynamic engine integration.")
 	}
 
-	if args.action == createAction {
-		// This is a cluster creation request.
-		storageConfig := config.Storage()
-		vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
-		if err != nil {
-			return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
-		}
+	storageConfig := config.Storage()
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
+	}
 
-		err = dynamic.PrepareEngine(
+	if args.action == createAction {
+		log.Info("Received a cluster creation request")
+		err = dynamic.PrepareCluster(
 			ctx,
 			args.configDelta,
 			args.integrationId,
@@ -149,8 +150,36 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 		}
 
 		return emptyResponse, http.StatusOK, nil
+	} else if args.action == updateAction {
+		log.Info("Received a cluster update request")
+		if len(args.configDelta) == 0 {
+			return emptyResponse, http.StatusBadRequest, errors.New("Empty config map provided.")
+		}
+
+		if dynamicEngineIntegration.Config[shared.K8sStatusKey] != string(shared.K8sClusterActiveStatus) {
+			return emptyResponse, http.StatusUnprocessableEntity, errors.Newf(
+				"Action %s is only applicable when the cluster is in %s status, but it is now in %s status.",
+				updateAction,
+				shared.K8sClusterActiveStatus,
+				dynamicEngineIntegration.Config[shared.K8sStatusKey],
+			)
+		}
+
+		if err = dynamic.CreateOrUpdateK8sCluster(
+			ctx,
+			args.configDelta,
+			dynamic.K8sClusterUpdateAction,
+			dynamicEngineIntegration,
+			h.IntegrationRepo,
+			vaultObject,
+			h.Database,
+		); err != nil {
+			return emptyResponse, http.StatusInternalServerError, err
+		}
+
+		return emptyResponse, http.StatusOK, nil
 	} else if args.action == deleteAction || args.action == forceDeleteAction {
-		// This is a cluster deletion request.
+		log.Info("Received a cluster deletion request")
 		forceDelete := false
 		if args.action == forceDeleteAction {
 			forceDelete = true

@@ -942,7 +942,7 @@ func (eng *aqEngine) execute(
 
 		for _, op := range inProgressOps {
 			if op.Dynamic() && !op.GetDynamicProperties().Prepared() {
-				err = dynamic.PrepareEngine(
+				err = dynamic.PrepareCluster(
 					ctx,
 					map[string]string{}, // empty configDelta map
 					op.GetDynamicProperties().GetEngineIntegrationId(),
