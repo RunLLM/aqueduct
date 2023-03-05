@@ -97,6 +97,12 @@ func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, err
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to deserialize config delta map.")
 	}
 
+	for k := range configDelta {
+		if _, ok := shared.DynamicK8sAllowedConfigKey[k]; !ok {
+			return nil, http.StatusBadRequest, errors.Newf("Key %s not allowed in config delta map.", k)
+		}
+	}
+
 	return &editDynamicEngineArgs{
 		AqContext:     aqContext,
 		action:        action,

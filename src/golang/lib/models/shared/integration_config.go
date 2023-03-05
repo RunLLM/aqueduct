@@ -64,6 +64,7 @@ const (
 	K8sMaxGpuNodeKey  string = "max_gpu_node"
 
 	// Dynamic k8s cluster config default values
+	K8sMinimumKeepalive   int    = 600
 	K8sDefaultKeepalive   int    = 1200
 	K8sDefaultCpuNodeType string = "t3.xlarge"
 	K8sDefaultGpuNodeType string = "p2.xlarge"
@@ -72,6 +73,16 @@ const (
 	K8sDefaultMinGpuNode  int    = 0
 	K8sDefaultMaxGpuNode  int    = 0
 )
+
+var DynamicK8sAllowedConfigKey = map[string]bool{
+	K8sKeepaliveKey:   true,
+	K8sCpuNodeTypeKey: true,
+	K8sGpuNodeTypeKey: true,
+	K8sMinCpuNodeKey:  true,
+	K8sMaxCpuNodeKey:  true,
+	K8sMinGpuNodeKey:  true,
+	K8sMaxGpuNodeKey:  true,
+}
 
 type K8sIntegrationConfig struct {
 	KubeconfigPath     string     `json:"kubeconfig_path" yaml:"kubeconfigPath"`

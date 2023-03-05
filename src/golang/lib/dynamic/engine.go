@@ -143,7 +143,9 @@ func CreateOrUpdateK8sCluster(
 			}
 		}
 
-		// TODO: check if the new config is valid.
+		if err := checkIfValidConfig(engineIntegration.Config); err != nil {
+			return err
+		}
 	}
 
 	var clusterStatus shared.K8sClusterStatusType
@@ -517,6 +519,48 @@ func runTerraformApply(
 		true,
 	); err != nil {
 		return errors.Wrap(err, "Terraform apply failed")
+	}
+
+	return nil
+}
+
+func checkIfValidConfig(config map[string]string) error {
+	// We require a minimum keepalive period of 10min (600 seconds).
+	keepalive, err := strconv.Atoi(config[shared.K8sKeepaliveKey])
+	if err != nil {
+		return errors.Wrap(err, "Error parsing keepalive value")
+	}
+
+	if keepalive < shared.K8sMinimumKeepalive {
+		return errors.Newf("The new keepalive value %d is smaller than the minimum value %d", keepalive, shared.K8sMinimumKeepalive)
+	}
+
+	minCpuNode, err := strconv.Atoi(config[shared.K8sMinCpuNodeKey])
+	if err != nil {
+		return errors.Wrap(err, "Error parsing min CPU node value")
+	}
+
+	maxCpuNode, err := strconv.Atoi(config[shared.K8sMaxCpuNodeKey])
+	if err != nil {
+		return errors.Wrap(err, "Error parsing max CPU node value")
+	}
+
+	if maxCpuNode < minCpuNode {
+		return errors.Newf("The new max CPU node value %d is smaller than the min CPU node value %d", maxCpuNode, minCpuNode)
+	}
+
+	minGpuNode, err := strconv.Atoi(config[shared.K8sMinGpuNodeKey])
+	if err != nil {
+		return errors.Wrap(err, "Error parsing min GPU node value")
+	}
+
+	maxGpuNode, err := strconv.Atoi(config[shared.K8sMaxGpuNodeKey])
+	if err != nil {
+		return errors.Wrap(err, "Error parsing max GPU node value")
+	}
+
+	if maxGpuNode < minGpuNode {
+		return errors.Newf("The new max GPU node value %d is smaller than the min GPU node value %d", maxGpuNode, minGpuNode)
 	}
 
 	return nil
