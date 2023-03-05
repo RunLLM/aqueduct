@@ -1,3 +1,5 @@
+from typing import Dict
+
 from aqueduct.constants.enums import K8sClusterStatusType
 from aqueduct.error import InvalidIntegrationException
 from aqueduct.models.integration import Integration, IntegrationInfo
@@ -24,7 +26,7 @@ class DynamicK8sIntegration(Integration):
 
         return engine_statuses[self._metadata.name].status.value
 
-    def create(self) -> None:
+    def create(self, config_delta: Dict[str, str] = {}) -> None:
         engine_statuses = globals.__GLOBAL_API_CLIENT__.get_dynamic_engine_status(
             engine_integration_ids=[str(self._metadata.id)]
         )
@@ -34,16 +36,18 @@ class DynamicK8sIntegration(Integration):
             )
 
         status = engine_statuses[self._metadata.name].status
-        if status == K8sClusterStatusType.ACTIVE:
+        if status == K8sClusterStatusType.ACTIVE and len(config_delta) == 0:
             print("Cluster is already in %s status." % status.value)
             return
 
         print(
-            "Cluster is currently in %s status. It could take 12-15 minutes for the cluster to be ready..."
+            "Cluster is currently in %s status. It could take 12-15 minutes for the cluster to be created or updated..."
             % status.value
         )
         globals.__GLOBAL_API_CLIENT__.edit_dynamic_engine(
-            action="create", integration_id=str(self._metadata.id)
+            action="create",
+            integration_id=str(self._metadata.id),
+            config_delta=config_delta,
         )
 
     def delete(self, force: bool = False) -> None:

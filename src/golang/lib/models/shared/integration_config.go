@@ -40,6 +40,7 @@ type K8sClusterStatusType string
 
 const (
 	K8sClusterCreatingStatus    K8sClusterStatusType = "Creating"
+	K8sClusterUpdatingStatus    K8sClusterStatusType = "Updating"
 	K8sClusterActiveStatus      K8sClusterStatusType = "Active"
 	K8sClusterTerminatingStatus K8sClusterStatusType = "Terminating"
 	K8sClusterTerminatedStatus  K8sClusterStatusType = "Terminated"
@@ -50,10 +51,26 @@ const (
 	K8sCloudIntegrationIdKey string = "cloud_integration_id"
 	K8sUseSameClusterKey     string = "use_same_cluster"
 	K8sStatusKey             string = "status"
-	K8sKeepaliveKey          string = "keepalive"
 	K8sLastUsedTimestampKey  string = "last_used_timestamp"
 	DynamicK8sClusterName    string = "aqueduct_k8s"
-	DefaultKeepalive         int    = 1200
+
+	// Dynamic k8s cluster config keys
+	K8sKeepaliveKey   string = "keepalive"
+	K8sCpuNodeTypeKey string = "cpu_node_type"
+	K8sGpuNodeTypeKey string = "gpu_node_type"
+	K8sMinCpuNodeKey  string = "min_cpu_node"
+	K8sMaxCpuNodeKey  string = "max_cpu_node"
+	K8sMinGpuNodeKey  string = "min_gpu_node"
+	K8sMaxGpuNodeKey  string = "max_gpu_node"
+
+	// Dynamic k8s cluster config default values
+	K8sDefaultKeepalive   int    = 1200
+	K8sDefaultCpuNodeType string = "t3.xlarge"
+	K8sDefaultGpuNodeType string = "p2.xlarge"
+	K8sDefaultMinCpuNode  int    = 1
+	K8sDefaultMaxCpuNode  int    = 1
+	K8sDefaultMinGpuNode  int    = 0
+	K8sDefaultMaxGpuNode  int    = 0
 )
 
 type K8sIntegrationConfig struct {
@@ -102,6 +119,7 @@ type SlackConfig struct {
 type AWSConfig struct {
 	AccessKeyId     string `json:"access_key_id"`
 	SecretAccessKey string `json:"secret_access_key"`
+	Region          string `json:"region"`
 }
 
 type SparkIntegrationConfig struct {

@@ -62,7 +62,7 @@ func (ex *DynamicTeardownExecutor) Run(ctx context.Context) error {
 		currTimestamp := time.Now().Unix()
 		if (currTimestamp - lastUsedTimestamp) > keepalive {
 			log.Info("Reached keepalive threshold, tearing down the cluster...")
-			if err = dynamic.DeleteDynamicEngine(
+			if err = dynamic.DeleteK8sCluster(
 				ctx,
 				false, // don't force deletion if there're pods still running
 				&dynamicIntegration,

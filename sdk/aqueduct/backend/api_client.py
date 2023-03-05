@@ -337,6 +337,7 @@ class APIClient:
         self,
         action: str,
         integration_id: str,
+        config_delta: Dict[str, str] = {},
     ) -> None:
         """Makes a request against the /api/integration/dynamic-engine/{integrationId}/edit endpoint.
 
@@ -349,8 +350,12 @@ class APIClient:
 
         url = self.construct_full_url(self.EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE % integration_id)
 
+        body = {
+            "config_delta": json.dumps(config_delta),
+        }
+
         if action == "create" or action == "delete" or action == "force-delete":
-            resp = requests.post(url, headers=headers)
+            resp = requests.post(url, headers=headers, data=body)
         else:
             raise InvalidRequestError(
                 "Invalid action %s for interacting with dynamic engine." % action

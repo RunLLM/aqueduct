@@ -115,8 +115,8 @@ func AuthenticateAWSConfig(authConf auth.Config) error {
 		return errors.Wrap(err, "Unable to parse configuration.")
 	}
 
-	if conf.AccessKeyId == "" || conf.SecretAccessKey == "" {
-		return errors.New("AWS access key ID and secret access key must be provided.")
+	if conf.AccessKeyId == "" || conf.SecretAccessKey == "" || conf.Region == "" {
+		return errors.New("AWS access key ID, secret access key, and region must be provided.")
 	}
 
 	return nil

@@ -2,9 +2,11 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/response"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
@@ -43,6 +45,7 @@ type editDynamicEngineArgs struct {
 	*aq_context.AqContext
 	action        string
 	integrationId uuid.UUID
+	configDelta   map[string]string
 }
 
 func (*EditDynamicEngineHandler) Name() string {
@@ -59,6 +62,7 @@ const (
 	createAction      string = "create"
 	deleteAction      string = "delete"
 	forceDeleteAction string = "force-delete"
+	configDeltaKey    string = "config_delta"
 )
 
 func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, error) {
@@ -78,10 +82,26 @@ func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, err
 		return nil, http.StatusBadRequest, errors.Wrap(err, "No action specified by the request.")
 	}
 
+	configDeltaBytes, err := request.ExtractHttpPayload(
+		r.Header.Get(routes.ContentTypeHeader),
+		configDeltaKey,
+		false, // not a file
+		r,
+	)
+	if err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to extract config delta map.")
+	}
+
+	configDelta := make(map[string]string)
+	if err = json.Unmarshal(configDeltaBytes, &configDelta); err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to deserialize config delta map.")
+	}
+
 	return &editDynamicEngineArgs{
 		AqContext:     aqContext,
 		action:        action,
 		integrationId: integrationId,
+		configDelta:   configDelta,
 	}, http.StatusOK, nil
 }
 
@@ -112,6 +132,7 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 
 		err = dynamic.PrepareEngine(
 			ctx,
+			args.configDelta,
 			args.integrationId,
 			h.IntegrationRepo,
 			vaultObject,
@@ -132,7 +153,7 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 		for {
 			if dynamicEngineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
 				log.Info("Tearing down the Kubernetes cluster...")
-				if err = dynamic.DeleteDynamicEngine(
+				if err = dynamic.DeleteK8sCluster(
 					ctx,
 					forceDelete,
 					dynamicEngineIntegration,

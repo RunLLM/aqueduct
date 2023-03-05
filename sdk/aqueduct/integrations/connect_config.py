@@ -150,6 +150,7 @@ class SlackConfig(BaseConnectionConfig):
 class AWSConfig(BaseConnectionConfig):
     access_key_id: str
     secret_access_key: str
+    region: str
 
 
 class _SlackConfigWithStringField(BaseConnectionConfig):

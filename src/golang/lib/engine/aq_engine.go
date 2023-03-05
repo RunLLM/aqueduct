@@ -944,6 +944,7 @@ func (eng *aqEngine) execute(
 			if op.Dynamic() && !op.GetDynamicProperties().Prepared() {
 				err = dynamic.PrepareEngine(
 					ctx,
+					map[string]string{}, // empty configDelta map
 					op.GetDynamicProperties().GetEngineIntegrationId(),
 					eng.IntegrationRepo,
 					vaultObject,
@@ -1035,7 +1036,7 @@ func (eng *aqEngine) execute(
 			delete(inProgressOps, op.ID())
 
 			if op.Dynamic() {
-				err = dynamic.UpdateEngineLastUsedTimestamp(
+				err = dynamic.UpdateClusterLastUsedTimestamp(
 					ctx,
 					op.GetDynamicProperties().GetEngineIntegrationId(),
 					eng.IntegrationRepo,
