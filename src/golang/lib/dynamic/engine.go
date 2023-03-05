@@ -83,25 +83,9 @@ func PrepareCluster(
 				)
 			}
 		} else {
-			if err := ResyncClusterState(ctx, engineIntegration, integrationRepo, db); err != nil {
-				return errors.Wrap(err, "Failed to resync cluster state")
-			}
-
-			if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
-				// This means the cluster state is resynced to Terminated, so no need to wait 30 seconds.
-				continue
-			}
-
-			log.Infof("Kubernetes cluster is currently in %s status. Waiting for 30 seconds before checking again...", engineIntegration.Config["status"])
-			time.Sleep(30 * time.Second)
-
-			engineIntegration, err = integrationRepo.Get(
-				ctx,
-				engineIntegrationId,
-				db,
-			)
+			engineIntegration, err = PollClusterStatus(ctx, engineIntegration, integrationRepo, db)
 			if err != nil {
-				return errors.Wrap(err, "Failed to retrieve engine integration")
+				return err
 			}
 		}
 	}
@@ -143,6 +127,7 @@ func CreateOrUpdateK8sCluster(
 			}
 		}
 
+		// TODO: pull this outside of if and see if terraform plan covers a superset of the checks? also add desire size check.
 		if err := checkIfValidConfig(engineIntegration.Config); err != nil {
 			return err
 		}
@@ -233,8 +218,8 @@ func DeleteK8sCluster(
 		return err
 	}
 
-	// For deletion, we just need to initialize all variables to empty values.
-	terraformArgs := generateTerraformVariables(&shared.AWSConfig{}, map[string]string{})
+	// For deletion, the config values don't matter, so we just use the default map.
+	terraformArgs := generateTerraformVariables(&shared.AWSConfig{}, shared.DefaultDynamicK8sAllowedConfigMap)
 
 	if _, _, err := lib_utils.RunCmd(
 		"terraform",
@@ -419,6 +404,45 @@ func ResyncClusterState(
 	return DeleteK8sCluster(ctx, true, engineIntegration, integrationRepo, db)
 }
 
+func PollClusterStatus(
+	ctx context.Context,
+	engineIntegration *models.Integration,
+	integrationRepo repos.Integration,
+	db database.Database,
+) (*models.Integration, error) {
+	if err := ResyncClusterState(ctx, engineIntegration, integrationRepo, db); err != nil {
+		return nil, errors.Wrap(err, "Failed to resync cluster state")
+	}
+
+	engineIntegration, err := integrationRepo.Get(
+		ctx,
+		engineIntegration.ID,
+		db,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to retrieve engine integration")
+	}
+
+	if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
+		// This means the cluster state is resynced to Terminated, so no need to wait.
+		return engineIntegration, nil
+	}
+
+	log.Infof("Kubernetes cluster is currently in %s status. Waiting for %d seconds before checking again...", engineIntegration.Config[shared.K8sStatusKey], shared.DynamicK8sClusterStatusPollPeriod)
+	time.Sleep(shared.DynamicK8sClusterStatusPollPeriod * time.Second)
+
+	engineIntegration, err = integrationRepo.Get(
+		ctx,
+		engineIntegration.ID,
+		db,
+	)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to retrieve engine integration")
+	}
+
+	return engineIntegration, nil
+}
+
 // safeToDeleteCluster checks whether there are pods in the aqueduct namespace of the dynamic k8s
 // cluster that are in ContainerCreating or Running status. If so, it returns false. Otherwise it
 // returns true.
@@ -545,6 +569,14 @@ func checkIfValidConfig(config map[string]string) error {
 		return errors.Wrap(err, "Error parsing max CPU node value")
 	}
 
+	if maxCpuNode < 1 {
+		return errors.Newf("Max CPU node value should be at least 1, got %s", maxCpuNode)
+	}
+
+	if minCpuNode < 0 {
+		return errors.Newf("Min CPU node value should be at least 0, got %s", minCpuNode)
+	}
+
 	if maxCpuNode < minCpuNode {
 		return errors.Newf("The new max CPU node value %d is smaller than the min CPU node value %d", maxCpuNode, minCpuNode)
 	}
@@ -557,6 +589,14 @@ func checkIfValidConfig(config map[string]string) error {
 	maxGpuNode, err := strconv.Atoi(config[shared.K8sMaxGpuNodeKey])
 	if err != nil {
 		return errors.Wrap(err, "Error parsing max GPU node value")
+	}
+
+	if maxGpuNode < 1 {
+		return errors.Newf("Max GPU node value should be at least 1, got %s", maxGpuNode)
+	}
+
+	if minGpuNode < 0 {
+		return errors.Newf("Min GPU node value should be at least 0, got %s", minGpuNode)
 	}
 
 	if maxGpuNode < minGpuNode {

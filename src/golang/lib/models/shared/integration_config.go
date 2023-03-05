@@ -2,6 +2,8 @@ package shared
 
 import (
 	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/dropbox/godropbox/errors"
 )
@@ -45,6 +47,8 @@ const (
 	K8sClusterTerminatingStatus K8sClusterStatusType = "Terminating"
 	K8sClusterTerminatedStatus  K8sClusterStatusType = "Terminated"
 
+	DynamicK8sClusterStatusPollPeriod time.Duration = 10
+
 	K8sKubeconfigPathKey     string = "kubeconfig_path"
 	K8sClusterNameKey        string = "cluster_name"
 	K8sDynamicKey            string = "dynamic"
@@ -71,17 +75,17 @@ const (
 	K8sDefaultMinCpuNode  int    = 1
 	K8sDefaultMaxCpuNode  int    = 1
 	K8sDefaultMinGpuNode  int    = 0
-	K8sDefaultMaxGpuNode  int    = 0
+	K8sDefaultMaxGpuNode  int    = 1
 )
 
-var DynamicK8sAllowedConfigKey = map[string]bool{
-	K8sKeepaliveKey:   true,
-	K8sCpuNodeTypeKey: true,
-	K8sGpuNodeTypeKey: true,
-	K8sMinCpuNodeKey:  true,
-	K8sMaxCpuNodeKey:  true,
-	K8sMinGpuNodeKey:  true,
-	K8sMaxGpuNodeKey:  true,
+var DefaultDynamicK8sAllowedConfigMap = map[string]string{
+	K8sKeepaliveKey:   strconv.Itoa(K8sDefaultKeepalive),
+	K8sCpuNodeTypeKey: K8sDefaultCpuNodeType,
+	K8sGpuNodeTypeKey: K8sDefaultGpuNodeType,
+	K8sMinCpuNodeKey:  strconv.Itoa(K8sDefaultMinCpuNode),
+	K8sMaxCpuNodeKey:  strconv.Itoa(K8sDefaultMaxCpuNode),
+	K8sMinGpuNodeKey:  strconv.Itoa(K8sDefaultMinGpuNode),
+	K8sMaxGpuNodeKey:  strconv.Itoa(K8sDefaultMaxGpuNode),
 }
 
 type K8sIntegrationConfig struct {

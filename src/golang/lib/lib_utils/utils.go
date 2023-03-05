@@ -108,7 +108,6 @@ func RunCmd(command string, args []string, dir string, stream bool) (string, str
 		err := cmd.Run()
 		if err != nil {
 			errMsg := fmt.Sprintf("Error running command: %s. Stdout: %s, Stderr: %s.", command, outb.String(), errb.String())
-			log.Errorf(errMsg)
 			return outb.String(), errb.String(), errors.New(errMsg)
 		}
 

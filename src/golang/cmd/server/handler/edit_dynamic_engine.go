@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/response"
@@ -99,7 +98,7 @@ func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, err
 	}
 
 	for k := range configDelta {
-		if _, ok := shared.DynamicK8sAllowedConfigKey[k]; !ok {
+		if _, ok := shared.DefaultDynamicK8sAllowedConfigMap[k]; !ok {
 			return nil, http.StatusBadRequest, errors.Newf("Key %s not allowed in config delta map.", k)
 		}
 	}
@@ -202,25 +201,9 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 			} else if dynamicEngineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
 				return emptyResponse, http.StatusOK, nil
 			} else {
-				if err := dynamic.ResyncClusterState(ctx, dynamicEngineIntegration, h.IntegrationRepo, h.Database); err != nil {
-					return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Failed to resync cluster state")
-				}
-
-				if dynamicEngineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
-					// This means the cluster state is resynced to Terminated, so no need to wait 30 seconds.
-					continue
-				}
-
-				log.Infof("Kubernetes cluster is currently in %s status. Waiting for 30 seconds before checking again...", dynamicEngineIntegration.Config[shared.K8sStatusKey])
-				time.Sleep(30 * time.Second)
-
-				dynamicEngineIntegration, err = h.IntegrationRepo.Get(
-					ctx,
-					args.integrationId,
-					h.Database,
-				)
+				dynamicEngineIntegration, err = dynamic.PollClusterStatus(ctx, dynamicEngineIntegration, h.IntegrationRepo, h.Database)
 				if err != nil {
-					return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve dynamic engine integration")
+					return emptyResponse, http.StatusInternalServerError, err
 				}
 			}
 		}
