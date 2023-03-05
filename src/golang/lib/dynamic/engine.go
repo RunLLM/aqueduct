@@ -363,9 +363,11 @@ func safeToDeleteCluster(
 			return false, nil
 		}
 
-		for _, condition := range pod.Status.Conditions {
-			if condition.Type == v1.ContainersReady && condition.Status == v1.ConditionFalse {
-				return false, nil
+		if pod.Status.Phase == v1.PodPending {
+			for _, cs := range pod.Status.ContainerStatuses {
+				if cs.State.Waiting != nil && cs.State.Waiting.Reason == "ContainerCreating" {
+					return false, nil
+				}
 			}
 		}
 	}
