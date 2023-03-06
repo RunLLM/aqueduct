@@ -84,6 +84,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			OperatorRepo:       s.OperatorRepo,
 			OperatorResultRepo: s.OperatorResultRepo,
 		},
+		routes.GetConfigRoute:        &handler.GetConfigHandler{},
 		routes.GetNodePositionsRoute: &handler.GetNodePositionsHandler{},
 		routes.GetOperatorResultRoute: &handler.GetOperatorResultHandler{
 			Database: s.Database,
@@ -131,6 +132,16 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			DAGRepo:            s.DAGRepo,
 		},
 		routes.ListIntegrationsRoute: &handler.ListIntegrationsHandler{
+			Database: s.Database,
+
+			IntegrationRepo: s.IntegrationRepo,
+		},
+		routes.GetDynamicEngineStatusRoute: &handler.GetDynamicEngineStatusHandler{
+			Database: s.Database,
+
+			IntegrationRepo: s.IntegrationRepo,
+		},
+		routes.EditDynamicEngineRoute: &handler.EditDynamicEngineHandler{
 			Database: s.Database,
 
 			IntegrationRepo: s.IntegrationRepo,

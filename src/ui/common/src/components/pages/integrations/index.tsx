@@ -68,11 +68,11 @@ const IntegrationsPage: React.FC<Props> = ({
             Add an Integration
           </Typography>
           <Typography variant="h6" marginY={2}>
-            Data
+            Cloud
           </Typography>
           <AddIntegrations
             user={user}
-            category={IntegrationCategories.DATA}
+            category={IntegrationCategories.CLOUD}
             supportedIntegrations={SupportedIntegrations}
           />
           <Typography variant="h6" marginY={2}>
@@ -81,6 +81,14 @@ const IntegrationsPage: React.FC<Props> = ({
           <AddIntegrations
             user={user}
             category={IntegrationCategories.COMPUTE}
+            supportedIntegrations={SupportedIntegrations}
+          />
+          <Typography variant="h6" marginY={2}>
+            Data
+          </Typography>
+          <AddIntegrations
+            user={user}
+            category={IntegrationCategories.DATA}
             supportedIntegrations={SupportedIntegrations}
           />
           <Typography variant="h6" marginY={2}>

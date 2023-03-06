@@ -78,6 +78,8 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     DATABRICKS = "Databricks"
     EMAIL = "Email"
     SLACK = "Slack"
+    SPARK = "Spark"
+    AWS = "AWS"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
@@ -164,6 +166,16 @@ class ArtifactType(str, Enum, metaclass=MetaEnum):
     TF_KERAS = "tensorflow-keras-model"
 
 
+class S3SerializationType(str, Enum, metaclass=MetaEnum):
+    CSV_TABLE = "csv_table"
+    JSON_TABLE = "json_table"
+    PARQUET_TABLE = "parquet_table"
+    JSON = "json"
+    BYTES = "bytes"
+    IMAGE = "image"
+    PICKLE = "pickle"
+
+
 class SerializationType(str, Enum, metaclass=MetaEnum):
     TABLE = "table"
     BSON_TABLE = "bson_table"
@@ -180,15 +192,28 @@ class ExecutionMode(str, Enum, metaclass=MetaEnum):
     LAZY = "lazy"
 
 
-class RuntimeType(Enum, metaclass=MetaEnum):
+class RuntimeType(str, Enum, metaclass=MetaEnum):
     AQUEDUCT = "aqueduct"
     AIRFLOW = "airflow"
     K8S = "k8s"
     LAMBDA = "lambda"
     DATABRICKS = "databricks"
+    SPARK = "spark"
 
 
 class NotificationLevel(Enum, metaclass=MetaEnum):
     SUCCESS = "success"
     WARNING = "warning"
     ERROR = "error"
+
+
+class SparkRuntimeType(str, Enum, metaclass=MetaEnum):
+    DATABRICKS = "databricks"
+    SPARK = "spark"
+
+
+class K8sClusterStatusType(str, Enum, metaclass=MetaEnum):
+    CREATING = "Creating"
+    ACTIVE = "Active"
+    TERMINATING = "Terminating"
+    TERMINATED = "Terminated"

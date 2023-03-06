@@ -5,6 +5,8 @@ const (
 	GetArtifactVersionsRoute = "/api/artifact/versions"
 	GetArtifactResultRoute   = "/api/artifact/{workflowDagResultId}/{artifactId}/result"
 
+	GetConfigRoute = "/api/config"
+
 	GetFunctionRoute    = "/api/function/{functionId}"
 	ExportFunctionRoute = "/api/function/{operatorId}/export"
 
@@ -18,6 +20,8 @@ const (
 	PreviewTableRoute                = "/api/integration/{integrationId}/preview"
 	ListOperatorsForIntegrationRoute = "/api/integration/{integrationId}/operators"
 	TestIntegrationRoute             = "/api/integration/{integrationId}/test"
+	GetDynamicEngineStatusRoute      = "/api/integration/dynamic-engine/status"
+	EditDynamicEngineRoute           = "/api/integration/dynamic-engine/{integrationId}/edit"
 
 	ResetApiKeyRoute = "/api/keys/reset" // nolint:gosec
 

@@ -1,36 +1,85 @@
-import { Alert, CircularProgress, Snackbar } from '@mui/material';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import React, { useEffect, useState } from 'react';
+import {
+  Alert,
+  Box,
+  CircularProgress,
+  Snackbar,
+  Typography,
+} from '@mui/material';
+import React from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { handleLoadIntegrations } from '../../reducers/integrations';
-import { AppDispatch, RootState } from '../../stores/store';
-import UserProfile from '../../utils/auth';
+import { handleLoadIntegrations } from '../../../reducers/integrations';
+import { AppDispatch, RootState } from '../../../stores/store';
+import UserProfile from '../../../utils/auth';
 import {
   Integration,
   IntegrationCategories,
   SupportedIntegrations,
-} from '../../utils/integrations';
+} from '../../../utils/integrations';
 import {
   isFailed,
   isInitial,
   isLoading,
   isSucceeded,
-} from '../../utils/shared';
-import { CodeBlock } from '../CodeBlock';
-import { useAqueductConsts } from '../hooks/useAqueductConsts';
-import DefaultLayout from '../layouts/default';
-import { BreadcrumbLink } from '../layouts/NavBar';
+} from '../../../utils/shared';
+import CodeBlock from '../../CodeBlock';
+import { useAqueductConsts } from '../../hooks/useAqueductConsts';
+import DefaultLayout from '../../layouts/default';
+import { BreadcrumbLink } from '../../layouts/NavBar';
 import AccountNotificationSettingsSelector, {
   NotificationConfigsMap,
-} from '../notifications/AccountNotificationSettingsSelector';
-import { LayoutProps } from './types';
+} from '../../notifications/AccountNotificationSettingsSelector';
+import { LayoutProps } from '../types';
+import MetadataStorageInfo from './MetadataStorageInfo';
 
 type AccountPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
 };
+
+export type ServerConfig = {
+  aqPath: string;
+  retentionJobPeriod: string;
+  apiKey: string;
+  storageConfig: {
+    type: string;
+    fileConfig?: {
+      directory: string;
+    };
+    gcsConfig?: {
+      bucket: string;
+    };
+    s3Config?: {
+      region: string;
+      bucket: string;
+    };
+  };
+};
+
+async function getServerConfig(
+  apiAddress: string,
+  apiKey: string
+): Promise<ServerConfig> {
+  try {
+    const configRequest = await fetch(`${apiAddress}/api/config`, {
+      method: 'GET',
+      headers: {
+        'api-key': apiKey,
+      },
+    });
+
+    const responseBody = await configRequest.json();
+
+    if (!configRequest.ok) {
+      console.log('Error fetching config');
+    }
+
+    return responseBody as ServerConfig;
+  } catch (error) {
+    console.log('config fetch error: ', error);
+  }
+}
 
 // `UpdateNotifications` attempts to update all notification integration by calling
 // `integration/<id>/edit` route separately. It returns an error message if any error occurs.
@@ -92,6 +141,8 @@ client = aqueduct.Client(
   const integrationsReducer = useSelector(
     (state: RootState) => state.integrationsReducer
   );
+
+  const [serverConfig, setServerConfig] = useState<ServerConfig | null>(null);
   const notifications = Object.values(integrationsReducer.integrations).filter(
     (x) =>
       SupportedIntegrations[x.service].category ===
@@ -102,6 +153,15 @@ client = aqueduct.Client(
   const [notificationUpdateError, setNotificationUpdateError] = useState('');
   const [showNotificationUpdateSnackbar, setShowNotificationUpdateSnackbar] =
     useState(false);
+
+  useEffect(() => {
+    async function fetchServerConfig() {
+      const serverConfig = await getServerConfig(apiAddress, user.apiKey);
+      setServerConfig(serverConfig);
+    }
+
+    fetchServerConfig();
+  }, []);
 
   useEffect(() => {
     if (!updatingNotifications) {
@@ -184,6 +244,8 @@ client = aqueduct.Client(
         </Typography>
       )}
       {notificationSection}
+
+      <MetadataStorageInfo serverConfig={serverConfig} />
 
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
