@@ -41,7 +41,6 @@ import {
 } from '../../../../utils/sidesheets';
 import DefaultLayout, {
   DefaultLayoutMargin,
-  SidesheetButtonHeight,
   SidesheetWidth,
 } from '../../../layouts/default';
 import { Button } from '../../../primitives/Button.styles';
@@ -126,7 +125,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
   // EFFECT 3: Load workflow metadata.
   // This useEffect is effectively only called on component mount. It loads
-  // the base workflow metadata as well as metadata about any integrations 
+  // the base workflow metadata as well as metadata about any integrations
   // in order to populate the UI.
   useEffect(() => {
     dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
@@ -135,11 +134,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
   // EFFECT 4: Gather selected workflow index.
   // When the workflow Redux store's DAG results are populated or when we navigate
-  // to a different version, we iterate through the full list of results and set the 
+  // to a different version, we iterate through the full list of results and set the
   // index in both Redux and in our local state.
   // NOTE(vikram): There are two annoying bits of tech debt in this code:
-  // 1. It's not clear that this needs to be a different from Effect 2 the one where we 
-  // navigate to a different search param. They seem to be focused on the same bits of 
+  // 1. It's not clear that this needs to be a different from Effect 2 the one where we
+  // navigate to a different search param. They seem to be focused on the same bits of
   // functionality. (See ENG-2569.)
   // 2. Less critical, but it's annoying that we have to track selectedResultIdx in local
   // React state. This is not explicitly exposed by the Redux store, but it should be.
@@ -317,10 +316,10 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       }
     }
   };
- 
+
   // EFFECT 7: Load full DAG metadata.
   // This effect loads all of the metadata associated with a particular workflow run.
-  // Both this an Effect 6 are run on every workflow run ID change, which might be 
+  // Both this an Effect 6 are run on every workflow run ID change, which might be
   // duplicative (ENG-2569).
   useEffect(getDagResultDetails, [
     getOperatorResultDetails,
@@ -386,13 +385,19 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     }
 
     const navigateButton = (
-      <Button variant="text" sx={buttonStyle} onClick={() => { navigate(navigationUrl); }}>
+      <Button
+        variant="text"
+        sx={buttonStyle}
+        onClick={() => {
+          navigate(navigationUrl);
+        }}
+      >
         <Tooltip title="Expand Details" arrow>
           <FontAwesomeIcon icon={faUpRightAndDownLeftFromCenter} />
         </Tooltip>
       </Button>
     );
-    
+
     const operator = (workflow.selectedDag?.operators ?? {})[currentNode.id];
     const exportOpButton = (
       <Button
@@ -414,11 +419,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
     return (
       <Box display="flex" alignItems="center" flex={1} mr={3}>
-        {/* This flex grown box right aligns the bwo buttons below.*/} 
+        {/* This flex grown box right aligns the bwo buttons below.*/}
         <Box flex={1} />
         <Box display="flex" alignItems="center">
           {includeExportOpButton && exportOpButton}
-          {navigateButton} 
+          {navigateButton}
         </Box>
       </Box>
     );
@@ -503,11 +508,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Box>
 
           {/* These controls are automatically hidden when the side sheet is open. */}
-          <Box
-            width="100px"
-            ml={2}
-            display={drawerIsOpen ? 'none' : 'block'}
-          >
+          <Box width="100px" ml={2} display={drawerIsOpen ? 'none' : 'block'}>
             <Box
               display="flex"
               mb={2}
