@@ -458,7 +458,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
   },
   ['AWS']: {
     logo: ServiceLogos['AWS'],
-    activated: true,
+    activated: false,
     category: IntegrationCategories.CLOUD,
     docs: addingIntegrationLink,
   },
