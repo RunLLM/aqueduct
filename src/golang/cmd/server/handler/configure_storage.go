@@ -16,6 +16,7 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 // Route: /config/storage/{integrationID}
@@ -32,11 +33,14 @@ type ConfigureStorageHandler struct {
 	Database database.Database
 	Engine   engine.Engine
 
-	ArtifactRepo repos.Artifact
-	DAGRepo      repos.DAG
-	DAGEdgeRepo  repos.DAGEdge
-	OperatorRepo repos.Operator
-	WorkflowRepo repos.Workflow
+	ArtifactRepo       repos.Artifact
+	ArtifactResultRepo repos.ArtifactResult
+	DAGRepo            repos.DAG
+	IntegrationRepo    repos.Integration
+	OperatorRepo       repos.Operator
+
+	PauseServer   func()
+	RestartServer func()
 }
 
 type configureStorageArgs struct {
@@ -66,6 +70,7 @@ func (h *ConfigureStorageHandler) Prepare(r *http.Request) (interface{}, int, er
 	return &configureStorageArgs{
 		AqContext: aqContext,
 		// TODO: Add support for switching to non-local storage
+		storageIntegrationID:  uuid.Nil,
 		configureLocalStorage: true,
 	}, http.StatusOK, nil
 }
@@ -78,7 +83,7 @@ func (h *ConfigureStorageHandler) Perform(ctx context.Context, interfaceArgs int
 		return nil, http.StatusBadRequest, errors.New("We currently only support changing the storage layer to the local filesystem from this route.")
 	}
 
-	storageConfig := shared.StorageConfig{
+	newStorageConfig := shared.StorageConfig{
 		Type: shared.FileStorageType,
 		FileConfig: &shared.FileConfig{
 			Directory: path.Join(config.AqueductPath(), "storage"),
@@ -87,10 +92,45 @@ func (h *ConfigureStorageHandler) Perform(ctx context.Context, interfaceArgs int
 
 	currentStorageConfig := config.Storage()
 
-	utils.MigrateStorageAndVault(
+	log.Info("Starting storage migration process...")
+
+	// Wait until the server is paused
+	h.PauseServer()
+	// Makes sure that the server is restarted
+	defer h.RestartServer()
+
+	// Wait until there are no more workflow runs in progress
+	lock := utils.NewExecutionLock()
+	if err := lock.Lock(); err != nil {
+		log.Errorf("Unexpected error when acquiring workflow execution lock: %v. Aborting storage migration!", err)
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to migrate to the new storage layer")
+	}
+	defer func() {
+		if err := lock.Unlock(); err != nil {
+			log.Errorf("Unexpected error when unlocking workflow execution lock: %v", err)
+		}
+	}()
+
+	// Migrate all storage content to the new storage config
+	if err := utils.MigrateStorageAndVault(
 		ctx,
 		&currentStorageConfig,
-	)
+		&newStorageConfig,
+		args.OrgID,
+		h.DAGRepo,
+		h.ArtifactRepo,
+		h.ArtifactResultRepo,
+		h.OperatorRepo,
+		h.IntegrationRepo,
+		h.Database,
+	); err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to migrate to the new storage layer")
+	}
 
-	return nil, -1, nil
+	// Change global storage config
+	config.UpdateStorage(&newStorageConfig)
+
+	log.Info("Successfully migrated the storage layer!")
+
+	return nil, http.StatusOK, nil
 }
