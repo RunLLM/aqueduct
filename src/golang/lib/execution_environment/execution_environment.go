@@ -65,7 +65,7 @@ func (e *ExecutionEnvironment) Hash() (uuid.UUID, error) {
 	sliceToHash := make([]string, 0, len(e.Dependencies)+1)
 	sliceToHash = append(sliceToHash, e.Dependencies...)
 	sliceToHash = append(sliceToHash, e.PythonVersion)
-	sort.Strings(e.Dependencies)
+	sort.Strings(sliceToHash)
 
 	buf := &bytes.Buffer{}
 	err := gob.NewEncoder(buf).Encode(sliceToHash)
@@ -171,12 +171,12 @@ func CreateMissingAndSyncExistingEnvs(
 			ctx,
 			hash,
 			execEnvRepo,
-			db,
+			txn,
 		)
 
 		// Env is missing
 		if err == database.ErrNoRows {
-			err = env.CreateDBRecord(ctx, execEnvRepo, db)
+			err = env.CreateDBRecord(ctx, execEnvRepo, txn)
 			if err != nil {
 				return nil, err
 			}
@@ -238,4 +238,57 @@ func CleanupUnusedEnvironments(
 	}
 
 	return nil
+}
+
+// MergeOperatorEnv merges a set of operator envs to generate
+// one single workflow Env. This is only used for spark engine
+// for now.
+func MergeOperatorEnv(
+	ctx context.Context,
+	operatorEnvs map[uuid.UUID]ExecutionEnvironment,
+	execEnvRepo repos.ExecutionEnvironment,
+	DB database.Database,
+) (*ExecutionEnvironment, error) {
+	combinedDependenciesMap := make(map[string]bool)
+	pythonVersion := ""
+	for _, env := range operatorEnvs {
+		for _, dep := range env.Dependencies {
+			combinedDependenciesMap[dep] = true
+		}
+
+		if pythonVersion != "" && pythonVersion != env.PythonVersion {
+			return nil, errors.New("Multiple python versions provided for different operators.")
+		} else {
+			pythonVersion = env.PythonVersion
+		}
+	}
+
+	if pythonVersion == "" {
+		pythonVersion = "3.9"
+	}
+
+	workflowDependencies := make([]string, 0, len(combinedDependenciesMap))
+	for dep := range combinedDependenciesMap {
+		workflowDependencies = append(workflowDependencies, dep)
+	}
+	workflowDependencies = append(workflowDependencies, "snowflake-sqlalchemy")
+
+	workflowEnv := ExecutionEnvironment{ID: uuid.New()}
+	workflowEnv.Dependencies = workflowDependencies
+	workflowEnv.PythonVersion = pythonVersion
+	envs, err := CreateMissingAndSyncExistingEnvs(
+		ctx,
+		execEnvRepo,
+		map[uuid.UUID]ExecutionEnvironment{
+			workflowEnv.ID: workflowEnv,
+		},
+		DB,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// CreateMissingAndSyncExistingEnvs preserves the original Key.
+	env := envs[workflowEnv.ID]
+	return &env, nil
 }

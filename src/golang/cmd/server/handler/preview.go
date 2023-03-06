@@ -14,6 +14,7 @@ import (
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/spark"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
@@ -205,6 +206,22 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		return errorRespPtr, status, err
 	}
 
+	if dagSummary.Dag.EngineConfig.Type == shared.SparkEngineType {
+		if dagSummary.Dag.EngineConfig.SparkConfig == nil {
+			return errorRespPtr, http.StatusBadRequest, errors.New("Spark config is not provided.")
+		}
+		status, err := createSparkWorkflowEnv(
+			ctx,
+			dagSummary,
+			h.ExecutionEnvironmentRepo,
+			execEnvByOpId,
+			h.Database,
+		)
+		if err != nil {
+			return errorRespPtr, status, err
+		}
+	}
+
 	timeConfig := &engine.AqueductTimeConfig{
 		OperatorPollInterval: engine.DefaultPollIntervalMillisec,
 		ExecTimeout:          engine.DefaultExecutionTimeout,
@@ -367,6 +384,26 @@ func setupCondaEnv(
 		visitedEnvs = append(visitedEnvs, env)
 	}
 
+	return http.StatusOK, nil
+}
+
+func createSparkWorkflowEnv(
+	ctx context.Context,
+	dagSummary *request.DagSummary,
+	execEnvRepo repos.ExecutionEnvironment,
+	envByOperator map[uuid.UUID]exec_env.ExecutionEnvironment,
+	DB database.Database,
+) (int, error) {
+	workflowEnv, err := exec_env.MergeOperatorEnv(ctx, envByOperator, execEnvRepo, DB)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+	sparkCondaPackPath, err := spark.CreateSparkEnvFile(ctx, workflowEnv)
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	dagSummary.Dag.EngineConfig.SparkConfig.EnvironmentPathURI = sparkCondaPackPath
 	return http.StatusOK, nil
 }
 

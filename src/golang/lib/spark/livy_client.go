@@ -1,4 +1,4 @@
-package livy
+package spark
 
 import (
 	"bytes"
@@ -90,7 +90,6 @@ func (c *LivyClient) GetSession(id int) (*Session, error) {
 // Gets all active sessions on Spark Cluster.
 func (c *LivyClient) GetSessions() ([]Session, error) {
 	url := fmt.Sprintf("%s/sessions", c.LivyServerURL)
-
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error creating getSessions request.")
