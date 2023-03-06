@@ -395,8 +395,9 @@ func ValidateConfig(
 	}
 
 	if service == shared.Lambda {
-		// Lambda authentication is performed by creating Lambda jobs
-		// instead of the Python client, so we don't launch a job for it.
+		// Lambda authentication is performed in ConnectToLambda()
+		// by creating Lambda jobs instead of the Python client,
+		// so we don't launch a job for it.
 		return http.StatusOK, nil
 	}
 
