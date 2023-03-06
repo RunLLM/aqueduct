@@ -93,6 +93,10 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     dispatch(resetState());
   }, [dispatch]);
 
+  // This effect adds the resetWorkflowState callback to be used when the user
+  // accesses the page history. In this case, we reset the state of the Redux
+  // workflow store, so we don't accidentally cache information across workflow
+  // versions.
   useEffect(() => {
     window.onpopstate = () => {
       resetWorkflowState();
@@ -101,6 +105,10 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     resetWorkflowState();
   }, [resetWorkflowState]);
 
+  // When the selected workflow run changes, we update the URL search param accordingly.
+  // This is important for two reasons:
+  // 1. It makes the URL sharable.
+  // 2. We rely on this to track what workflow version we're currently displaying.
   useEffect(() => {
     if (
       workflow.selectedResult !== undefined &&
@@ -113,11 +121,23 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     }
   }, [workflow.selectedResult, urlSearchParams, navigate]);
 
+  // This useEffect is effectively only called on component mount. It loads
+  // the base workflow metadata as well as metadata about any integrations 
+  // in order to populate the UI.
   useEffect(() => {
     dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
     dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
   }, [dispatch, user.apiKey, workflowId]);
 
+  // When the workflow Redux store's DAG results are populated or when we navigate
+  // to a different version, we iterate through the full list of results and set the 
+  // index in both Redux and in our local state.
+  // NOTE(vikram): There are two annoying bits of tech debt in this code:
+  // 1. It's not clear that this needs to be a different effect from the one where we 
+  // navigate to a different search param. They seem to be focused on the same bits of 
+  // functionality.
+  // 2. Less critical, but it's annoying that we have to track selectedResultIdx in local
+  // React state. This is not explicitly exposed by the Redux store, but it should be.
   useEffect(() => {
     if (workflow.dagResults && workflow.dagResults.length > 0) {
       let workflowDagResultIndex = 0;
@@ -135,9 +155,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       if (workflowDagResultId !== workflow.selectedResult.id) {
         // this is where selectedDag gets set
         dispatch(selectResultIdx(workflowDagResultIndex));
+        setSelectedResultIdx(workflowDagResultIndex);
       }
-
-      setSelectedResultIdx(workflowDagResultIndex);
     }
   }, [
     workflow.dagResults,
@@ -146,6 +165,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     dispatch,
   ]);
 
+  // This effect uses the Elk algorithm to load the node positioning for the DAG.
+  // See ENG-2568 for more on how this interaction needs to be cleaned up.
   useEffect(() => {
     if (workflow.selectedDag) {
       dispatch(
