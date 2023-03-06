@@ -80,6 +80,7 @@ export const StorageConfigurationDisplay: React.FC<
             <strong>Storage Type:</strong> {dataStorageInfo}
           </Typography>
         );
+
         break;
       }
       case 'gcs': {

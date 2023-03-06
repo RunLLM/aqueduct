@@ -1,18 +1,12 @@
-import { faTags } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React from 'react';
 
-import { handleGetServerConfig } from '../../../handlers/getServerConfig';
-import { RootState } from '../../../stores/store';
 import {
   Integration,
   SupportedIntegrations,
 } from '../../../utils/integrations';
 import { LoadingStatus } from '../../../utils/shared';
-import useUser from '../../hooks/useUser';
 import StorageConfigurationDisplay from '../StorageConfiguration';
 import { AqueductDemoCard } from './aqueductDemoCard';
 import { BigQueryCard } from './bigqueryCard';
@@ -36,24 +30,6 @@ type DetailIntegrationCardProps = {
 export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
   integration,
 }) => {
-  const { user } = useUser();
-  const dispatch = useDispatch();
-  const serverConfig = useSelector(
-    (state: RootState) => state.serverConfigReducer
-  );
-
-  const storageConfig = serverConfig?.config?.storageConfig;
-
-  useEffect(() => {
-    async function fetchServerConfig() {
-      if (user) {
-        await dispatch(handleGetServerConfig({ apiKey: user.apiKey }));
-      }
-    }
-
-    fetchServerConfig();
-  }, [user]);
-
   let serviceCard;
   switch (integration.service) {
     case 'Postgres':
@@ -99,22 +75,6 @@ export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
       serviceCard = null;
   }
 
-  let dataStorageInfo,
-    dataStorageText = null;
-  if (storageConfig && storageConfig.type === 'SQLite') {
-    dataStorageInfo = (
-      <Box component="span">
-        <FontAwesomeIcon icon={faTags} />
-      </Box>
-    );
-
-    dataStorageText = (
-      <Typography variant={'body2'}>
-        <strong>Storage Type detailCard:</strong> {dataStorageInfo}
-      </Typography>
-    );
-  }
-
   let createdOnText = null;
   if (
     integration.service !== 'Kubernetes' &&
@@ -148,7 +108,6 @@ export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
           </Box>
           <Box marginBottom={1}>{createdOnText}</Box>
           <StorageConfigurationDisplay integrationName="SQLite" />
-          {dataStorageText}
           {serviceCard}
         </Box>
       </Box>

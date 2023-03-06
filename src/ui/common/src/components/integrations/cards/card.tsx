@@ -1,19 +1,13 @@
-import { faTags } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
-import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
-import { handleGetServerConfig } from '../../../handlers/getServerConfig';
-import { RootState } from '../../../stores/store';
 import { DataPreviewInfo } from '../../../utils/data';
 import { getPathPrefix } from '../../../utils/getPathPrefix';
 import { Integration } from '../../../utils/integrations';
 import ExecutionChip from '../../execution/chip';
-import useUser from '../../hooks/useUser';
 import IntegrationLogo from '../logo';
 import StorageConfigurationDisplay from '../StorageConfiguration';
 import { AirflowCard } from './airflowCard';
@@ -105,24 +99,6 @@ type IntegrationProps = {
 export const IntegrationCard: React.FC<IntegrationProps> = ({
   integration,
 }) => {
-  const { user } = useUser();
-  const dispatch = useDispatch();
-  const serverConfig = useSelector(
-    (state: RootState) => state.serverConfigReducer
-  );
-
-  const storageConfig = serverConfig?.config?.storageConfig;
-
-  useEffect(() => {
-    async function fetchServerConfig() {
-      if (user) {
-        await dispatch(handleGetServerConfig({ apiKey: user.apiKey }));
-      }
-    }
-
-    fetchServerConfig();
-  }, [user]);
-
   let serviceCard;
   switch (integration.service) {
     case 'Postgres':
@@ -183,22 +159,6 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
       serviceCard = null;
   }
 
-  let dataStorageInfo,
-    dataStorageText = null;
-  if (storageConfig && storageConfig.type === 'SQLite') {
-    dataStorageInfo = (
-      <Box component="span">
-        <FontAwesomeIcon icon={faTags} />
-      </Box>
-    );
-
-    dataStorageText = (
-      <Typography variant={'body2'}>
-        <strong>Storage Type:</strong> {dataStorageInfo}
-      </Typography>
-    );
-  }
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', flexDirection: 'row' }}>
@@ -217,7 +177,6 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
         {new Date(integration.createdAt * 1000).toLocaleString()}
       </Typography>
       <StorageConfigurationDisplay integrationName="SQLite" />
-      {dataStorageText}
     </Box>
   );
 };
