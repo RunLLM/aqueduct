@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/dropbox/godropbox/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // LivyClient represents a client for connecting to a Livy server.
@@ -91,8 +90,6 @@ func (c *LivyClient) GetSession(id int) (*Session, error) {
 // Gets all active sessions on Spark Cluster.
 func (c *LivyClient) GetSessions() ([]Session, error) {
 	url := fmt.Sprintf("%s/sessions", c.LivyServerURL)
-	logrus.Info("INSIDE GET SESSIONS")
-	logrus.Info(c.LivyServerURL)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "Error creating getSessions request.")
