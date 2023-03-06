@@ -284,6 +284,11 @@ class Client:
                 Either a dictionary or an IntegrationConnectConfig object that contains the
                 configuration credentials needed to connect.
         """
+        if service == ServiceType.AWS:
+            raise InvalidUserArgumentException(
+                "Support for service type AWS is not ready yet. Please stay tuned!"
+            )
+
         if service not in ServiceType:
             raise InvalidUserArgumentException(
                 "Service argument must match exactly one of the enum values in ServiceType (case-sensitive)."

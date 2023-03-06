@@ -17,6 +17,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/dynamic"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
@@ -216,6 +217,10 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		}).Perform(ctx, connectIntegrationArgs)
 		if err != nil {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to register dynamic k8s integration.")
+		}
+
+		if _, _, err := lib_utils.RunCmd("terraform", []string{"init"}, dynamic.TerraformDir, true); err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Error initializing Terraform")
 		}
 	}
 
@@ -771,7 +776,7 @@ func ValidatePrerequisites(
 		if err = exec_env.ValidateCondaDevelop(); err != nil {
 			return http.StatusBadRequest, errors.Wrap(
 				err,
-				"You don't seem to have `conda develop` available. We use this to help set up conda environments. Please install the dependency before connecting Aqueduct to Conda. Typically, this can be done by running `conda install conda-build`.",
+				"Failed to run `conda develop`. We use this to help set up conda environments. Please install the dependency before connecting Aqueduct to Conda. Typically, this can be done by running `conda install conda-build`.",
 			)
 		}
 
@@ -794,6 +799,17 @@ func ValidatePrerequisites(
 		}
 
 		return http.StatusOK, nil
+	}
+
+	// For AWS integration, we require the user to have AWS CLI and Terraform installed.
+	if svc == shared.AWS {
+		if _, _, err := lib_utils.RunCmd("terraform", []string{"--version"}, "", false); err != nil {
+			return http.StatusBadRequest, errors.Wrap(err, "terraform executable not found. Please go to https://developer.hashicorp.com/terraform/downloads to install terraform")
+		}
+
+		if _, _, err := lib_utils.RunCmd("aws", []string{"--version"}, "", false); err != nil {
+			return http.StatusBadRequest, errors.Wrap(err, "AWS CLI executable not found. Please go to https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html to install AWS CLI")
+		}
 	}
 
 	return http.StatusOK, nil

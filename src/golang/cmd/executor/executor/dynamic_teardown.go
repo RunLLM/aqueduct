@@ -41,6 +41,11 @@ func (ex *DynamicTeardownExecutor) Run(ctx context.Context) error {
 	}
 
 	dynamicIntegration := dynamicIntegrations[0]
+
+	if err := dynamic.ResyncClusterState(ctx, &dynamicIntegration, ex.IntegrationRepo, ex.Database); err != nil {
+		return errors.Wrap(err, "Failed to resync cluster state")
+	}
+
 	if dynamicIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
 		lastUsedTimestampStr := dynamicIntegration.Config[shared.K8sLastUsedTimestampKey]
 		lastUsedTimestamp, err := strconv.ParseInt(lastUsedTimestampStr, 10, 64)

@@ -8,10 +8,21 @@ const AqueductButton = styled(Button)(() => {
     [`&.${buttonClasses.root}`]: {
       textTransform: 'none',
       boxShadow: 'none',
-      fontSize: '16px',
       disableElevation: true,
+      minWidth: '10px', // This is to override their silly default.
 
       // Theming for primary colored buttons.
+      [`&.${buttonClasses.textPrimary}`]: {
+        color: theme.palette.blue[600],
+        backgroundColor: 'white',
+        '&:hover': {
+          backgroundColor: theme.palette.gray[50],
+        },
+        [`&.${buttonClasses.disabled}`]: {
+          color: theme.palette.blue[200],
+        },
+      },
+
       [`&.${buttonClasses.containedPrimary}`]: {
         color: 'white',
         backgroundColor: theme.palette.blue[900],

@@ -103,52 +103,24 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 
 	if args.action == createAction {
 		// This is a cluster creation request.
-		dynamicEngineIntegration, err := dynamic.UpdateEngineLastUsedTimestamp(
-			ctx,
-			args.integrationId,
-			h.IntegrationRepo,
-			h.Database,
-		)
-		if err != nil {
-			return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Failed to update dynamic engine last used timestamp")
-		}
-
 		storageConfig := config.Storage()
 		vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
 		if err != nil {
 			return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
 		}
 
-		for {
-			if dynamicEngineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
-				log.Info("Kubernetes cluster is currently terminated, starting...")
-				err = dynamic.CreateDynamicEngine(
-					ctx,
-					dynamicEngineIntegration,
-					h.IntegrationRepo,
-					vaultObject,
-					h.Database,
-				)
-				if err != nil {
-					return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to create dynamic engine")
-				}
-				return emptyResponse, http.StatusOK, nil
-			} else if dynamicEngineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
-				return emptyResponse, http.StatusOK, nil
-			} else {
-				log.Infof("Kubernetes cluster is currently in %s status. Waiting for 30 seconds before checking again...", dynamicEngineIntegration.Config[shared.K8sStatusKey])
-				time.Sleep(30 * time.Second)
-
-				dynamicEngineIntegration, err = h.IntegrationRepo.Get(
-					ctx,
-					args.integrationId,
-					h.Database,
-				)
-				if err != nil {
-					return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve dynamic engine integration")
-				}
-			}
+		err = dynamic.PrepareEngine(
+			ctx,
+			args.integrationId,
+			h.IntegrationRepo,
+			vaultObject,
+			h.Database,
+		)
+		if err != nil {
+			return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to create dynamic k8s engine.")
 		}
+
+		return emptyResponse, http.StatusOK, nil
 	} else if args.action == deleteAction {
 		// This is a cluster deletion request.
 		for {
@@ -160,13 +132,22 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 					h.IntegrationRepo,
 					h.Database,
 				); err != nil {
-					return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to delete dynamic k8s integration")
+					return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to delete dynamic k8s engine")
 				}
 
 				return emptyResponse, http.StatusOK, nil
 			} else if dynamicEngineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
 				return emptyResponse, http.StatusOK, nil
 			} else {
+				if err := dynamic.ResyncClusterState(ctx, dynamicEngineIntegration, h.IntegrationRepo, h.Database); err != nil {
+					return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Failed to resync cluster state")
+				}
+
+				if dynamicEngineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
+					// This means the cluster state is resynced to Terminated, so no need to wait 30 seconds.
+					continue
+				}
+
 				log.Infof("Kubernetes cluster is currently in %s status. Waiting for 30 seconds before checking again...", dynamicEngineIntegration.Config[shared.K8sStatusKey])
 				time.Sleep(30 * time.Second)
 
