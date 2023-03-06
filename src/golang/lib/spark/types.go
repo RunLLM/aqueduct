@@ -1,4 +1,4 @@
-package livy
+package spark
 
 type StatementState string
 

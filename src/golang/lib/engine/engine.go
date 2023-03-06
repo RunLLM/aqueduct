@@ -61,11 +61,6 @@ type Engine interface {
 		timeConfig *AqueductTimeConfig,
 		parameters map[string]param.Param,
 	) (shared.ExecutionStatus, error)
-
-	// InitEnv initialize the given environment for this engine.
-	// This typically involves time-consuming steps that we want to avoid
-	// during execution time, like creating conda or docker img.
-	InitEnv(ctx context.Context, env *exec_env.ExecutionEnvironment) error
 }
 
 // AqEngine should be implemented by aqEngine

@@ -1,4 +1,4 @@
-package livy
+package spark
 
 const (
 	FunctionEntrypoint = `import base64
@@ -19,18 +19,17 @@ extract_function.run(spec)
 spark_session_obj = spark
 run(spec, spark_session_obj)
 `
+
 	ParamEntrypoint = `import argparse
 import base64
 
 from aqueduct_executor.operators.param_executor import execute
 from aqueduct_executor.operators.param_executor.spec import parse_spec
 
-if __name__ == "__main__":
+spec_json = base64.b64decode("%s")
+spec = parse_spec(spec_json)
 
-	spec_json = base64.b64decode("%s")
-	spec = parse_spec(spec_json)
-
-	execute.run(spec)
+execute.run(spec)
 `
 
 	SystemMetricEntrypoint = `import argparse
@@ -39,12 +38,10 @@ import base64
 from aqueduct_executor.operators.system_metric_executor import execute
 from aqueduct_executor.operators.system_metric_executor.spec import parse_spec
 
-if __name__ == "__main__":
+spec_json = base64.b64decode("%s")
+spec = parse_spec(spec_json)
 
-	spec_json = base64.b64decode("%s")
-	spec = parse_spec(spec_json)
-
-	execute.run(spec)
+execute.run(spec)
 
 `
 
@@ -54,12 +51,10 @@ import base64
 from aqueduct_executor.operators.spark.execute_data import run
 from aqueduct_executor.operators.connectors.data.spec import parse_spec
 
-if __name__ == "__main__":
+spec_json = base64.b64decode("%s")
+spec = parse_spec(spec_json)
+spark_session_obj = spark
 
-	spec_json = base64.b64decode("%s")
-	spec = parse_spec(spec_json)
-	spark_session_obj = spark
-
-	run(spec, spark_session_obj)
+run(spec, spark_session_obj)
 `
 )
