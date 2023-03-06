@@ -49,18 +49,8 @@ type EcrAuth struct {
 const (
 	MaxConcurrentDownload = 3
 	MaxConcurrentUpload   = 5
-<<<<<<< HEAD
-<<<<<<< HEAD
 	RoleArnKey            = "role_arn"
 	ExecStateKey          = "exec_state"
-=======
-	RoleArnKey = "role_arn"
-	ExecStateKey = "exec_state"
->>>>>>> 38a26699 (backend change for asyn connection)
-=======
-	RoleArnKey            = "role_arn"
-	ExecStateKey          = "exec_state"
->>>>>>> 71606355 (asyn connect successful)
 )
 
 func ConnectToLambda(
@@ -69,28 +59,14 @@ func ConnectToLambda(
 	integrationID uuid.UUID,
 	integrationRepo repos.Integration,
 	DB database.Database,
-<<<<<<< HEAD
-<<<<<<< HEAD
 ) {
-=======
-	) {
->>>>>>> 38a26699 (backend change for asyn connection)
-=======
-) {
->>>>>>> 71606355 (asyn connect successful)
 	now := time.Now()
 	_, err := integrationRepo.Update(
 		ctx,
 		integrationID,
 		map[string]interface{}{
 			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
 				RoleArnKey: "",
->>>>>>> 38a26699 (backend change for asyn connection)
-=======
->>>>>>> 71606355 (asyn connect successful)
 				ExecStateKey: execution_state.SerializedRunning(&now),
 			}),
 		},
@@ -120,16 +96,7 @@ func ConnectToLambda(
 			integrationRepo,
 			DB,
 		)
-
-<<<<<<< HEAD
-<<<<<<< HEAD
 		return
-=======
-		return 
->>>>>>> 38a26699 (backend change for asyn connection)
-=======
-		return
->>>>>>> 71606355 (asyn connect successful)
 	}
 
 	_, err = integrationRepo.Update(
@@ -204,15 +171,7 @@ func ConnectToLambda(
 		integrationID,
 		map[string]interface{}{
 			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
-<<<<<<< HEAD
-<<<<<<< HEAD
 				RoleArnKey:   lambdaConf.RoleArn,
-=======
-				RoleArnKey: lambdaConf.RoleArn,
->>>>>>> 38a26699 (backend change for asyn connection)
-=======
-				RoleArnKey:   lambdaConf.RoleArn,
->>>>>>> 71606355 (asyn connect successful)
 				ExecStateKey: execution_state.SerializedSuccess(&now),
 			}),
 		},
