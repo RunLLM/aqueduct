@@ -22,18 +22,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/lambda"
-	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/execution_state"
-	"github.com/aqueducthq/aqueduct/lib/lib_utils"
-	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
-	"github.com/aqueducthq/aqueduct/lib/repos"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/ecr"
-	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
@@ -66,20 +54,18 @@ func ConnectToLambda(
 		integrationID,
 		map[string]interface{}{
 			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
-				RoleArnKey: "",
+				RoleArnKey:   "",
 				ExecStateKey: execution_state.SerializedRunning(&now),
 			}),
 		},
 		DB,
 	)
-
 	if err != nil {
 		log.Errorf("Failed to update lambda integration: %v", err)
 		return
 	}
 
 	lambdaConf, err := lib_utils.ParseLambdaConfig(authConf)
-
 	if err != nil {
 		now = time.Now()
 		integrationConfig := (*shared.IntegrationConfig)(&map[string]string{
@@ -104,12 +90,16 @@ func ConnectToLambda(
 		integrationID,
 		map[string]interface{}{
 			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
-				RoleArnKey: lambdaConf.RoleArn,
+				RoleArnKey:   lambdaConf.RoleArn,
 				ExecStateKey: execution_state.SerializedRunning(&now),
 			}),
 		},
 		DB,
 	)
+	if err != nil {
+		log.Errorf("Failed to update lambda integration: %v", err)
+		return
+	}
 
 	functionsToShip := [10]LambdaFunctionType{
 		FunctionExecutor37Type,
