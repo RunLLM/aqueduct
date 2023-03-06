@@ -288,7 +288,7 @@ class Client:
             raise InvalidUserArgumentException(
                 "Support for service type AWS is not ready yet. Please stay tuned!"
             )
-        
+
         if service not in ServiceType:
             raise InvalidUserArgumentException(
                 "Service argument must match exactly one of the enum values in ServiceType (case-sensitive)."
