@@ -118,19 +118,18 @@ func CreateOrUpdateK8sCluster(
 	}
 
 	if len(configDelta) > 0 {
-		// Update config to include the new values.
+		// Update config to reflect the new values.
 		for key, value := range configDelta {
-			if _, ok := engineIntegration.Config[key]; ok {
+			if _, ok := shared.DefaultDynamicK8sAllowedConfigMap[key]; ok {
 				engineIntegration.Config[key] = value
 			} else {
 				return errors.Newf("Config key %s is not supported.", key)
 			}
 		}
+	}
 
-		// TODO: pull this outside of if and see if terraform plan covers a superset of the checks? also add desire size check.
-		if err := checkIfValidConfig(engineIntegration.Config); err != nil {
-			return err
-		}
+	if err := checkIfValidConfig(action, engineIntegration.Config); err != nil {
+		return err
 	}
 
 	var clusterStatus shared.K8sClusterStatusType
@@ -183,7 +182,7 @@ func CreateOrUpdateK8sCluster(
 	}
 
 	// Finally, we update the database record to reflect the new config.
-	if err := updateClusterConfig(ctx, configDelta, engineIntegration.ID, integrationRepo, db); err != nil {
+	if err := updateClusterConfig(ctx, action, configDelta, engineIntegration.ID, integrationRepo, db); err != nil {
 		return err
 	}
 
@@ -321,6 +320,7 @@ func updateClusterStatus(
 // set config according to the config delta.
 func updateClusterConfig(
 	ctx context.Context,
+	action k8sClusterActionType,
 	configDelta map[string]string,
 	engineIntegrationId uuid.UUID,
 	integrationRepo repos.Integration,
@@ -341,11 +341,17 @@ func updateClusterConfig(
 
 	// Update config to include the new values.
 	for key, value := range configDelta {
-		if _, ok := engineIntegration.Config[key]; ok {
+		if _, ok := shared.DefaultDynamicK8sAllowedConfigMap[key]; ok {
 			engineIntegration.Config[key] = value
 		} else {
 			return errors.Newf("Config key %s is not supported.", key)
 		}
+	}
+
+	if action == K8sClusterCreateAction {
+		// If this is a request to create a new cluster, we need to refresh the desired node counts.
+		engineIntegration.Config[shared.K8sDesiredCpuNodeKey] = engineIntegration.Config[shared.K8sMinCpuNodeKey]
+		engineIntegration.Config[shared.K8sDesiredGpuNodeKey] = engineIntegration.Config[shared.K8sMinGpuNodeKey]
 	}
 
 	_, err = integrationRepo.Update(
@@ -548,15 +554,15 @@ func runTerraformApply(
 	return nil
 }
 
-func checkIfValidConfig(config map[string]string) error {
-	// We require a minimum keepalive period of 10min (600 seconds).
+func checkIfValidConfig(action k8sClusterActionType, config map[string]string) error {
+	// We require a minimum keepalive period of 10 min (600 seconds).
 	keepalive, err := strconv.Atoi(config[shared.K8sKeepaliveKey])
 	if err != nil {
 		return errors.Wrap(err, "Error parsing keepalive value")
 	}
 
 	if keepalive < shared.K8sMinimumKeepalive {
-		return errors.Newf("The new keepalive value %d is smaller than the minimum value %d", keepalive, shared.K8sMinimumKeepalive)
+		return errors.Newf("The new keepalive value %d is smaller than the minimum allowed value %d", keepalive, shared.K8sMinimumKeepalive)
 	}
 
 	minCpuNode, err := strconv.Atoi(config[shared.K8sMinCpuNodeKey])
@@ -601,6 +607,35 @@ func checkIfValidConfig(config map[string]string) error {
 
 	if maxGpuNode < minGpuNode {
 		return errors.Newf("The new max GPU node value %d is smaller than the min GPU node value %d", maxGpuNode, minGpuNode)
+	}
+
+	if action == K8sClusterUpdateAction {
+		// We only check the constraint below for update, because for create, we are overwriting the desired node values.
+		desiredCpuNode, err := strconv.Atoi(config[shared.K8sDesiredCpuNodeKey])
+		if err != nil {
+			return errors.Wrap(err, "Error parsing desired CPU node value")
+		}
+
+		if minCpuNode > desiredCpuNode {
+			return errors.Newf("The new min CPU node value %d is bigger than the desired CPU node value %d. To increase the min value, please delete the cluster and re-create it with the new config", minCpuNode, desiredCpuNode)
+		}
+
+		if maxCpuNode < desiredCpuNode {
+			return errors.Newf("The new max CPU node value %d is smaller than the desired CPU node value %d. To reduce the max value, please delete the cluster and re-create it with the new config", maxCpuNode, desiredCpuNode)
+		}
+
+		desiredGpuNode, err := strconv.Atoi(config[shared.K8sDesiredGpuNodeKey])
+		if err != nil {
+			return errors.Wrap(err, "Error parsing desired GPU node value")
+		}
+
+		if minGpuNode > desiredGpuNode {
+			return errors.Newf("The new min GPU node value %d is bigger than the desired GPU node value %d. To increase the min value, please delete the cluster and re-create it with the new config", minGpuNode, desiredGpuNode)
+		}
+
+		if maxGpuNode < desiredGpuNode {
+			return errors.Newf("The new max GPU node value %d is smaller than the desired GPU node value %d. To reduce the max value, please delete the cluster and re-create it with the new config", maxGpuNode, desiredGpuNode)
+		}
 	}
 
 	return nil

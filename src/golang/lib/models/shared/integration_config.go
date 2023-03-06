@@ -67,6 +67,12 @@ const (
 	K8sMinGpuNodeKey  string = "min_gpu_node"
 	K8sMaxGpuNodeKey  string = "max_gpu_node"
 
+	// Note that these are not configurable by the user. During cluster creation, We set this value
+	// to be equal to the min node count. Later on, this value is used to check if any new node count
+	// provided by the user is valid.
+	K8sDesiredCpuNodeKey string = "desired_cpu_node"
+	K8sDesiredGpuNodeKey string = "desired_gpu_node"
+
 	// Dynamic k8s cluster config default values
 	K8sMinimumKeepalive   int    = 600
 	K8sDefaultKeepalive   int    = 1200
