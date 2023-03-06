@@ -452,13 +452,13 @@ export const SupportedIntegrations: ServiceInfoMap = {
   },
   ['Spark']: {
     logo: ServiceLogos['Spark'],
-    activated: false,
+    activated: true,
     category: IntegrationCategories.COMPUTE,
     docs: addingIntegrationLink,
   },
   ['AWS']: {
     logo: ServiceLogos['AWS'],
-    activated: true,
+    activated: false,
     category: IntegrationCategories.CLOUD,
     docs: addingIntegrationLink,
   },

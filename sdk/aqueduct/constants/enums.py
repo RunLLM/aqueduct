@@ -194,6 +194,7 @@ class ExecutionMode(str, Enum, metaclass=MetaEnum):
 
 class RuntimeType(str, Enum, metaclass=MetaEnum):
     AQUEDUCT = "aqueduct"
+    AQUEDUCT_CONDA = "aqueduct_conda"
     AIRFLOW = "airflow"
     K8S = "k8s"
     LAMBDA = "lambda"
