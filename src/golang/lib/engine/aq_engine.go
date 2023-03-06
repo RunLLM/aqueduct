@@ -1035,7 +1035,7 @@ func (eng *aqEngine) execute(
 			delete(inProgressOps, op.ID())
 
 			if op.Dynamic() {
-				_, err = dynamic.UpdateEngineLastUsedTimestamp(
+				err = dynamic.UpdateEngineLastUsedTimestamp(
 					ctx,
 					op.GetDynamicProperties().GetEngineIntegrationId(),
 					eng.IntegrationRepo,

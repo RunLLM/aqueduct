@@ -89,15 +89,10 @@ import NumericArtifactNode from './components/workflows/nodes/NumericArtifactNod
 import ParameterOperatorNode from './components/workflows/nodes/ParameterOperatorNode';
 import TableArtifactNode from './components/workflows/nodes/TableArtifactNode';
 import ReactFlowCanvas from './components/workflows/ReactFlowCanvas';
-import WorkflowStatusBar, {
-  StatusBarHeaderHeightInPx,
-  StatusBarWidthInPx,
-} from './components/workflows/StatusBar';
 import VersionSelector from './components/workflows/version_selector';
 import WorkflowCard from './components/workflows/workflowCard';
 import WorkflowHeader from './components/workflows/workflowHeader';
 import WorkflowSettings from './components/workflows/WorkflowSettings';
-import { StatusChip } from './components/workflows/workflowStatus';
 import { handleGetArtifactResultContent } from './handlers/getArtifactResultContent';
 import { handleGetWorkflowDagResult } from './handlers/getWorkflowDagResult';
 import { handleListArtifactResults } from './handlers/listArtifactResults';
@@ -380,9 +375,6 @@ export {
   SnowflakeDialog,
   SparkCard,
   SparkDialog,
-  StatusChip as Status,
-  StatusBarHeaderHeightInPx,
-  StatusBarWidthInPx,
   store,
   SupportedIntegrations,
   Tab,
@@ -402,7 +394,6 @@ export {
   WorkflowSettings,
   workflowSlice,
   WorkflowsPage,
-  WorkflowStatusBar,
   workflowSummaries,
   WorkflowUpdateTrigger,
 };

@@ -78,7 +78,7 @@ import {
   SlackDefaultsOnCreate,
   SlackDialog,
 } from './slackDialog';
-import { SnowflakeDialog } from './snowflakeDialog';
+import { isSnowflakeConfigComplete, SnowflakeDialog } from './snowflakeDialog';
 import { isSparkConfigComplete, SparkDialog } from './sparkDialog';
 import { SQLiteDialog } from './sqliteDialog';
 
@@ -493,25 +493,26 @@ export function isConfigComplete(
   service: Service
 ): boolean {
   switch (service) {
-    case 'S3':
-      return isS3ConfigComplete(config as S3Config);
     case 'Athena':
       return isAthenaConfigComplete(config as AthenaConfig);
-    case 'Kubernetes':
-      return isK8sConfigComplete(config as KubernetesConfig);
+    case 'AWS':
+      return isAWSConfigComplete(config as AWSConfig);
     case 'Conda':
       return true;
     case 'Databricks':
       return isDatabricksConfigComplete(config as DatabricksConfig);
     case 'Email':
       return isEmailConfigComplete(config as EmailConfig);
+    case 'Kubernetes':
+      return isK8sConfigComplete(config as KubernetesConfig);
+    case 'S3':
+      return isS3ConfigComplete(config as S3Config);
     case 'Slack':
       return isSlackConfigComplete(config as SlackConfig);
     case 'Spark':
       return isSparkConfigComplete(config as SparkConfig);
-    case 'AWS':
-      return isAWSConfigComplete(config as AWSConfig);
-
+    case 'Snowflake':
+      return isSnowflakeConfigComplete(config as SnowflakeConfig);
     default:
       // Make sure config is not empty and all fields are not empty as well.
       return (

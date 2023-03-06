@@ -37,6 +37,7 @@ export type SnowflakeConfig = {
   schema: string;
   username: string;
   password?: string;
+  role: string;
 };
 
 export type RedshiftConfig = {
