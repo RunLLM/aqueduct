@@ -3,6 +3,7 @@ import {
   faChevronLeft,
   faChevronRight,
   faCirclePlay,
+  faUpRightAndDownLeftFromCenter,
 } from '@fortawesome/free-solid-svg-icons';
 import { faCircleDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -32,7 +33,6 @@ import {
 import { AppDispatch, RootState } from '../../../../stores/store';
 import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
-import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { handleExportFunction } from '../../../../utils/operators';
 import { LoadingStatusEnum, WidthTransition } from '../../../../utils/shared';
 import {
@@ -83,6 +83,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
   const dagName = workflow.selectedDag?.metadata?.name;
 
+  // EFFECT 0: Set document title.
   useEffect(() => {
     if (workflow.selectedDag !== undefined) {
       document.title = `${dagName} | Aqueduct`;
@@ -93,6 +94,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     dispatch(resetState());
   }, [dispatch]);
 
+  // EFFECT 1: Manage state on browser history change.
   // This effect adds the resetWorkflowState callback to be used when the user
   // accesses the page history. In this case, we reset the state of the Redux
   // workflow store, so we don't accidentally cache information across workflow
@@ -105,6 +107,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     resetWorkflowState();
   }, [resetWorkflowState]);
 
+  // EFFECT 2: Set URL search param on version change.
   // When the selected workflow run changes, we update the URL search param accordingly.
   // This is important for two reasons:
   // 1. It makes the URL sharable.
@@ -121,6 +124,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     }
   }, [workflow.selectedResult, urlSearchParams, navigate]);
 
+  // EFFECT 3: Load workflow metadata.
   // This useEffect is effectively only called on component mount. It loads
   // the base workflow metadata as well as metadata about any integrations 
   // in order to populate the UI.
@@ -129,13 +133,14 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
   }, [dispatch, user.apiKey, workflowId]);
 
+  // EFFECT 4: Gather selected workflow index.
   // When the workflow Redux store's DAG results are populated or when we navigate
   // to a different version, we iterate through the full list of results and set the 
   // index in both Redux and in our local state.
   // NOTE(vikram): There are two annoying bits of tech debt in this code:
-  // 1. It's not clear that this needs to be a different effect from the one where we 
+  // 1. It's not clear that this needs to be a different from Effect 2 the one where we 
   // navigate to a different search param. They seem to be focused on the same bits of 
-  // functionality.
+  // functionality. (See ENG-2569.)
   // 2. Less critical, but it's annoying that we have to track selectedResultIdx in local
   // React state. This is not explicitly exposed by the Redux store, but it should be.
   useEffect(() => {
@@ -165,6 +170,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     dispatch,
   ]);
 
+  // EFFECT 5: DAG positioning.
   // This effect uses the Elk algorithm to load the node positioning for the DAG.
   // See ENG-2568 for more on how this interaction needs to be cleaned up.
   useEffect(() => {
@@ -272,6 +278,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     ]
   );
 
+  // EFFECT 6: Load operator and artifact metadta.
+  // This effect loads the relevant metadata for each operator and artifact when either the
+  // selected node changes or when the selected workflow run changes. This is probably a
+  // little sloppy at the moment because we're pushing error checks into the helper functions
+  // and blindly calling them, which is opaque/confusing to read.
   useEffect(() => {
     getOperatorResultDetails(currentNode.id);
     getArtifactResultDetails(currentNode.id, true);
@@ -306,7 +317,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       }
     }
   };
-
+ 
+  // EFFECT 7: Load full DAG metadata.
+  // This effect loads all of the metadata associated with a particular workflow run.
+  // Both this an Effect 6 are run on every workflow run ID change, which might be 
+  // duplicative (ENG-2569).
   useEffect(getDagResultDetails, [
     getOperatorResultDetails,
     selectedDag,
@@ -350,34 +365,37 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
   const getNodeActionButton = () => {
     const buttonStyle = {
-      height: SidesheetButtonHeight,
-      marginRight: '16px',
+      fontSize: '20px',
+      mr: 1,
     };
 
+    let navigationUrl;
+    let includeExportOpButton = true;
+
     if (currentNode.type === NodeType.TableArtifact) {
-      return (
-        <Box>
-          <Button
-            style={buttonStyle}
-            onClick={() => {
-              // All we're really doing here is adding the artifactId onto the end of the URL.
-              navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
-                }/artifact/${currentNode.id}`
-              );
-            }}
-          >
-            View Artifact Details
-          </Button>
-        </Box>
-      );
+      navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/artifact/${currentNode.id}`;
+      includeExportOpButton = false;
+    } else if (currentNode.type === NodeType.FunctionOp) {
+      navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/operator/${currentNode.id}`;
+    } else if (currentNode.type === NodeType.MetricOp) {
+      navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/metric/${currentNode.id}`;
+    } else if (currentNode.type === NodeType.CheckOp) {
+      navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/check/${currentNode.id}`;
+    } else {
+      return null; // This is a load or save operator.
     }
 
+    const navigateButton = (
+      <Button variant="text" sx={buttonStyle} onClick={() => { navigate(navigationUrl); }}>
+        <Tooltip title="Expand Details" arrow>
+          <FontAwesomeIcon icon={faUpRightAndDownLeftFromCenter} />
+        </Tooltip>
+      </Button>
+    );
+    
     const operator = (workflow.selectedDag?.operators ?? {})[currentNode.id];
     const exportOpButton = (
       <Button
-        style={{ ...buttonStyle, maxWidth: '300px' }}
         onClick={async () => {
           await handleExportFunction(
             user,
@@ -385,77 +403,25 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             `${operator?.name ?? 'function'}.zip`
           );
         }}
-        color="primary"
+        variant="text"
+        sx={buttonStyle}
       >
-        <FontAwesomeIcon icon={faCircleDown} />
-        <Typography
-          sx={{ ml: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}
-        >{`${operator?.name ?? 'function'}.zip`}</Typography>
+        <Tooltip title="Download Code" arrow>
+          <FontAwesomeIcon icon={faCircleDown} />
+        </Tooltip>
       </Button>
     );
 
-    if (currentNode.type === NodeType.MetricOp) {
-      // Get the metrics id, and navigate to the metric details page.
-      return (
-        <Box display="flex" flexDirection="row">
-          <Button
-            style={buttonStyle}
-            onClick={() => {
-              navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
-                }/metric/${currentNode.id}`
-              );
-            }}
-          >
-            View Metric Details
-          </Button>
-          {exportOpButton}
+    return (
+      <Box display="flex" alignItems="center" flex={1} mr={3}>
+        {/* This flex grown box right aligns the bwo buttons below.*/} 
+        <Box flex={1} />
+        <Box display="flex" alignItems="center">
+          {includeExportOpButton && exportOpButton}
+          {navigateButton} 
         </Box>
-      );
-    }
-
-    if (currentNode.type === NodeType.FunctionOp) {
-      return (
-        <Box display="flex" flexDirection="row">
-          <Button
-            style={buttonStyle}
-            onClick={() => {
-              navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
-                }/operator/${currentNode.id}`
-              );
-            }}
-          >
-            View Operator Details
-          </Button>
-          {exportOpButton}
-        </Box>
-      );
-    }
-
-    if (currentNode.type === NodeType.CheckOp) {
-      return (
-        <Box display="flex" flexDirection="row">
-          <Button
-            style={buttonStyle}
-            onClick={() => {
-              navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
-                }/check/${currentNode.id}`
-              );
-            }}
-          >
-            View Check Details
-          </Button>
-          {exportOpButton}
-        </Box>
-      );
-    }
-
-    return null;
+      </Box>
+    );
   };
 
   const drawerHeaderHeightInPx = 64;
@@ -675,9 +641,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                   {getNodeLabel()}
                 </Typography>
               </Box>
-              <Box sx={{ mx: 2, alignSelf: 'center' }}>
-                {getNodeActionButton()}
-              </Box>
+
+              {getNodeActionButton()}
             </Box>
           </Box>
           <Box
