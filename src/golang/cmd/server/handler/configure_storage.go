@@ -83,14 +83,18 @@ func (h *ConfigureStorageHandler) Perform(ctx context.Context, interfaceArgs int
 		return nil, http.StatusBadRequest, errors.New("We currently only support changing the storage layer to the local filesystem from this route.")
 	}
 
+	currentStorageConfig := config.Storage()
+
+	if currentStorageConfig.Type == shared.FileStorageType {
+		return nil, http.StatusBadRequest, errors.New("The storage layer is already set to the local filesystem.")
+	}
+
 	newStorageConfig := shared.StorageConfig{
 		Type: shared.FileStorageType,
 		FileConfig: &shared.FileConfig{
 			Directory: path.Join(config.AqueductPath(), "storage"),
 		},
 	}
-
-	currentStorageConfig := config.Storage()
 
 	log.Info("Starting storage migration process...")
 
