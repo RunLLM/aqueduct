@@ -132,4 +132,3 @@ func GetCondaIntegration(
 
 	return &integrations[0], nil
 }
-

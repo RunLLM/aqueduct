@@ -1,4 +1,5 @@
 package execution_state
+
 import (
 	"context"
 	"encoding/json"
@@ -88,7 +89,7 @@ func UpdateOnFailure(
 	DB database.Database,
 ) {
 	integrationConfigMap := (map[string]string)(*integrationConfig)
-	integrationConfigMap[ExecStateKey] =  SerializedFailure(outputs, msg, runningAt)
+	integrationConfigMap[ExecStateKey] = SerializedFailure(outputs, msg, runningAt)
 	updatedIntegrationConfig := (*shared.IntegrationConfig)(&integrationConfigMap)
 
 	_, err := integrationRepo.Update(
