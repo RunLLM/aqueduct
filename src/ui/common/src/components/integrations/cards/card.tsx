@@ -15,6 +15,7 @@ import { Integration } from '../../../utils/integrations';
 import ExecutionChip from '../../execution/chip';
 import useUser from '../../hooks/useUser';
 import IntegrationLogo from '../logo';
+import StorageConfigurationDisplay from '../StorageConfiguration';
 import { AirflowCard } from './airflowCard';
 import { AqueductDemoCard } from './aqueductDemoCard';
 import { AWSCard } from './awsCard';
@@ -215,6 +216,7 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
         <strong>Connected On: </strong>
         {new Date(integration.createdAt * 1000).toLocaleString()}
       </Typography>
+      <StorageConfigurationDisplay integrationName="SQLite" />
       {dataStorageText}
     </Box>
   );

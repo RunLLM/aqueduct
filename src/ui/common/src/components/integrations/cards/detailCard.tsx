@@ -13,6 +13,7 @@ import {
 } from '../../../utils/integrations';
 import { LoadingStatus } from '../../../utils/shared';
 import useUser from '../../hooks/useUser';
+import StorageConfigurationDisplay from '../StorageConfiguration';
 import { AqueductDemoCard } from './aqueductDemoCard';
 import { BigQueryCard } from './bigqueryCard';
 import { CondaCard } from './condaCard';
@@ -109,7 +110,7 @@ export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
 
     dataStorageText = (
       <Typography variant={'body2'}>
-        <strong>Storage Type:</strong> {dataStorageInfo}
+        <strong>Storage Type detailCard:</strong> {dataStorageInfo}
       </Typography>
     );
   }
@@ -146,6 +147,7 @@ export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
             </Typography>
           </Box>
           <Box marginBottom={1}>{createdOnText}</Box>
+          <StorageConfigurationDisplay integrationName="SQLite" />
           {dataStorageText}
           {serviceCard}
         </Box>

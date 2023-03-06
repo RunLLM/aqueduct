@@ -9,6 +9,7 @@ import { handleGetServerConfig } from '../../../handlers/getServerConfig';
 import { RootState } from '../../../stores/store';
 import { GCSConfig, Integration } from '../../../utils/integrations';
 import useUser from '../../hooks/useUser';
+import StorageConfigurationDisplay from '../StorageConfiguration';
 
 type Props = {
   integration: Integration;
@@ -36,7 +37,7 @@ export const GCSCard: React.FC<Props> = ({ integration }) => {
   let dataStorageInfo,
     dataStorageText = null;
 
-  if (storageConfig && storageConfig.type == 'gcs') {
+  if (storageConfig && storageConfig.type === 'gcs') {
     dataStorageInfo = (
       <Box component="span">
         <FontAwesomeIcon icon={faTags} />
@@ -57,6 +58,7 @@ export const GCSCard: React.FC<Props> = ({ integration }) => {
         {config.bucket}
       </Typography>
       {dataStorageText}
+      <StorageConfigurationDisplay integrationName="gcs" />
     </Box>
   );
 };
