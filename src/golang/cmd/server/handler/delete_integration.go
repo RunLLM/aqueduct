@@ -124,7 +124,7 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 	if err := cleanUpIntegration(
 		ctx,
 		integrationObject,
-		h.ExecutionEnvironmentRepo,
+		h.OperatorRepo,
 		h.WorkflowRepo,
 		vaultObject,
 		txn,
@@ -184,7 +184,7 @@ func validateNoActiveWorkflowOnIntegration(
 func cleanUpIntegration(
 	ctx context.Context,
 	integrationObject *models.Integration,
-	execEnvRepo repos.ExecutionEnvironment,
+	operatorRepo repos.Operator,
 	workflowRepo repos.Workflow,
 	vaultObject vault.Vault,
 	DB database.Database,
@@ -192,7 +192,7 @@ func cleanUpIntegration(
 	if integrationObject.Service == shared.Conda {
 		// Best effort to clean up
 		err := exec_env.CleanupUnusedEnvironments(
-			ctx, execEnvRepo, DB,
+			ctx, operatorRepo, DB,
 		)
 		if err != nil {
 			return err

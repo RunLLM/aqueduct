@@ -28,6 +28,7 @@ from aqueduct.error import (
 from aqueduct.flow import Flow
 from aqueduct.github import Github
 from aqueduct.integrations.airflow_integration import AirflowIntegration
+from aqueduct.integrations.aws_integration import AWSIntegration
 from aqueduct.integrations.connect_config import (
     BaseConnectionConfig,
     IntegrationConfig,
@@ -283,6 +284,11 @@ class Client:
                 Either a dictionary or an IntegrationConnectConfig object that contains the
                 configuration credentials needed to connect.
         """
+        if service == ServiceType.AWS:
+            raise InvalidUserArgumentException(
+                "Support for service type AWS is not ready yet. Please stay tuned!"
+            )
+
         if service not in ServiceType:
             raise InvalidUserArgumentException(
                 "Service argument must match exactly one of the enum values in ServiceType (case-sensitive)."
@@ -350,6 +356,7 @@ class Client:
         MongoDBIntegration,
         DatabricksIntegration,
         SparkIntegration,
+        AWSIntegration,
     ]:
         """Retrieves a connected integration object.
 
@@ -416,6 +423,15 @@ class Client:
         elif integration_info.service == ServiceType.SPARK:
             return SparkIntegration(
                 metadata=integration_info,
+            )
+        elif integration_info.service == ServiceType.AWS:
+            dynamic_k8s_integration_name = "%s:k8s" % name
+            dynamic_k8s_integration_info = self._connected_integrations[
+                dynamic_k8s_integration_name
+            ]
+            return AWSIntegration(
+                metadata=integration_info,
+                k8s_integration_metadata=dynamic_k8s_integration_info,
             )
         else:
             raise InvalidIntegrationException(
