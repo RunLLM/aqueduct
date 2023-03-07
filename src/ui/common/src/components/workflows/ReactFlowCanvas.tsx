@@ -59,7 +59,7 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
       connectionLineStyle={connectionLineStyle}
       edgeTypes={EdgeTypes}
       onInit={(reactFlowInstance) => {
-        reactFlowInstance.setViewport({ x: 50, y: 50, zoom: 0.4 });
+        reactFlowInstance.setViewport({ x: 50, y: 50, zoom: 0.7 });
       }}
       minZoom={0.2}
     >
