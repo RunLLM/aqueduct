@@ -510,8 +510,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                     setShowUpdateMessage(true);
                     // Show toast message for a few seconds and then update the current tab.
                     setTimeout(() => {
-                      getDagResultDetails(true);
-                      setCurrentTab('Details');
+                      // Refresh the page to send user to Details tab with latest information.
+                      window.location.reload();
                     }, 3000);
                   }}
                   onSetShowUpdateMessage={(shouldShow) =>
