@@ -2,11 +2,11 @@ package execution_environment
 
 import (
 	"context"
-	"encoding/json"
 	"strings"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/execution_state"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -19,93 +19,6 @@ const (
 	CondaPathKey = "conda_path"
 	ExecStateKey = "exec_state"
 )
-
-func serializeExecStateAndLogFailure(execState *shared.ExecutionState) string {
-	serializedState, err := json.Marshal(execState)
-	if err != nil {
-		// We should never hit this
-		log.Errorf("Error marshalling serialized state: %v", err)
-		return ""
-	}
-
-	return string(serializedState)
-}
-
-func serializedFailure(
-	outputs string,
-	msg string,
-	runningAt *time.Time,
-) string {
-	failureType := shared.SystemFailure
-	now := time.Now()
-	execState := &shared.ExecutionState{
-		Status:      shared.FailedExecutionStatus,
-		FailureType: &failureType,
-		UserLogs: &shared.Logs{
-			StdErr: outputs,
-		},
-		Error: &shared.Error{
-			Context: msg,
-			Tip:     shared.TipUnknownInternalError,
-		},
-		Timestamps: &shared.ExecutionTimestamps{
-			RunningAt:  runningAt,
-			FinishedAt: &now,
-		},
-	}
-
-	return serializeExecStateAndLogFailure(execState)
-}
-
-func serializedRunning(runningAt *time.Time) string {
-	execState := &shared.ExecutionState{
-		Status: shared.RunningExecutionStatus,
-		Timestamps: &shared.ExecutionTimestamps{
-			RunningAt: runningAt,
-		},
-	}
-
-	return serializeExecStateAndLogFailure(execState)
-}
-
-func serializedSuccess(runningAt *time.Time) string {
-	now := time.Now()
-	execState := &shared.ExecutionState{
-		Status: shared.SucceededExecutionStatus,
-		Timestamps: &shared.ExecutionTimestamps{
-			RunningAt:  runningAt,
-			FinishedAt: &now,
-		},
-	}
-
-	return serializeExecStateAndLogFailure(execState)
-}
-
-func updateOnFailure(
-	ctx context.Context,
-	outputs string,
-	msg string,
-	condaPath string,
-	runningAt *time.Time,
-	integrationID uuid.UUID,
-	integrationRepo repos.Integration,
-	DB database.Database,
-) {
-	_, err := integrationRepo.Update(
-		ctx,
-		integrationID,
-		map[string]interface{}{
-			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
-				CondaPathKey: condaPath,
-				ExecStateKey: serializedFailure(outputs, msg, runningAt),
-			}),
-		},
-		DB,
-	)
-	if err != nil {
-		log.Errorf("Failed to update conda integration: %v", err)
-	}
-}
 
 func ValidateCondaDevelop() error {
 	// This is to ensure we can use `conda develop` to update the python path later on.
@@ -129,7 +42,7 @@ func InitializeConda(
 		integrationID,
 		map[string]interface{}{
 			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
-				ExecStateKey: serializedRunning(&now),
+				ExecStateKey: execution_state.SerializedRunning(&now),
 			}),
 		},
 		DB,
@@ -141,11 +54,15 @@ func InitializeConda(
 
 	out, _, err := lib_utils.RunCmd(CondaCmdPrefix, []string{"info", "--base"}, "", false)
 	if err != nil {
-		updateOnFailure(
+		integrationConfig := (*shared.IntegrationConfig)(&map[string]string{
+			CondaPathKey: "",
+		})
+
+		execution_state.UpdateOnFailure(
 			ctx,
 			out,
 			err.Error(),
-			"", /* condaPath */
+			integrationConfig,
 			&now,
 			integrationID,
 			integrationRepo,
@@ -159,11 +76,14 @@ func InitializeConda(
 
 	err = createBaseEnvs()
 	if err != nil {
-		updateOnFailure(
+		integrationConfig := (*shared.IntegrationConfig)(&map[string]string{
+			CondaPathKey: condaPath,
+		})
+		execution_state.UpdateOnFailure(
 			ctx,
 			out,
 			err.Error(),
-			condaPath,
+			integrationConfig,
 			&now,
 			integrationID,
 			integrationRepo,
@@ -179,7 +99,7 @@ func InitializeConda(
 		map[string]interface{}{
 			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
 				CondaPathKey: condaPath,
-				ExecStateKey: serializedSuccess(&now),
+				ExecStateKey: execution_state.SerializedSuccess(&now),
 			}),
 		},
 		DB,
@@ -211,33 +131,4 @@ func GetCondaIntegration(
 	}
 
 	return &integrations[0], nil
-}
-
-// ExtractConnectionState retrieves the current connection state from
-// the given integration object.
-// For non-conda integration, we assume they are always successfully connected
-// since they are created in-sync in `connectIntegration` handler.
-func ExtractConnectionState(
-	integrationObject *models.Integration,
-) (*shared.ExecutionState, error) {
-	if integrationObject.Service != shared.Conda {
-		return &shared.ExecutionState{
-			Status: shared.SucceededExecutionStatus,
-		}, nil
-	}
-
-	stateSerialized, ok := integrationObject.Config[ExecStateKey]
-	if !ok {
-		return &shared.ExecutionState{
-			Status: shared.PendingExecutionStatus,
-		}, nil
-	}
-
-	var state shared.ExecutionState
-	err := json.Unmarshal([]byte(stateSerialized), &state)
-	if err != nil {
-		return nil, err
-	}
-
-	return &state, nil
 }
