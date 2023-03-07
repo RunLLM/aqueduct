@@ -97,7 +97,7 @@ const MetricOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
     >
       <Box
         sx={{
-          height: '32px',
+          height: '36px',
           width: '100%',
           borderBottom: `1px solid ${borderColor}`,
         }}
@@ -112,7 +112,17 @@ const MetricOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
           <Box sx={{ fontSize: '24px', marginRight: '8px' }}>
             <FontAwesomeIcon icon={faHashtag} />
           </Box>
-          <Typography variant="body1">{label}</Typography>
+          <Typography
+            sx={{
+              fontSize: '24px',
+              maxWidth: '80%',
+              width: '80%',
+              overflow: 'clip',
+            }}
+            variant="body1"
+          >
+            {label}
+          </Typography>
         </Box>
       </Box>
 
