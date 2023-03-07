@@ -435,6 +435,7 @@ function collapsePosition(
   };
 }
 
+// TODO(ENG-2568): Clean this up.
 export const handleGetSelectDagPosition = createAsyncThunk<
   positionResponse,
   {
@@ -485,9 +486,9 @@ export const handleGetSelectDagPosition = createAsyncThunk<
         return {
           id: node.id,
           // width of the node in px.
-          width: 300,
+          width: 400,
           // height of the node in px.
-          height: 150,
+          height: 100,
         };
       });
 
@@ -496,8 +497,8 @@ export const handleGetSelectDagPosition = createAsyncThunk<
         layoutOptions: {
           'elk.algorithm': 'layered',
           'elk.direction': 'RIGHT',
-          'elk.spacing.nodeNode': '300',
-          'elk.layered.spacing.nodeNodeBetweenLayers': '300',
+          'elk.spacing.nodeNode': '200',
+          'elk.layered.spacing.nodeNodeBetweenLayers': '100',
           'elk.layered.nodePlacement.strategy': 'INTERACTIVE',
         },
         children: mappedNodes,

@@ -12,8 +12,10 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
+	exec_state "github.com/aqueducthq/aqueduct/lib/execution_state"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/spark"
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
@@ -183,16 +185,42 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		return errorRespPtr, http.StatusInternalServerError, errors.Wrap(err, "Error uploading function files.")
 	}
 
-	execEnvByOpId, status, err := setupExecEnv(
+	execEnvByOpId, status, err := registerDependencies(
 		ctx,
-		args.ID,
 		args.DagSummary,
-		h.IntegrationRepo,
 		h.ExecutionEnvironmentRepo,
 		h.Database,
 	)
 	if err != nil {
 		return errorRespPtr, status, err
+	}
+
+	status, err = setupCondaEnv(
+		ctx,
+		args.ID,
+		args.DagSummary,
+		h.IntegrationRepo,
+		execEnvByOpId,
+		h.Database,
+	)
+	if err != nil {
+		return errorRespPtr, status, err
+	}
+
+	if dagSummary.Dag.EngineConfig.Type == shared.SparkEngineType {
+		if dagSummary.Dag.EngineConfig.SparkConfig == nil {
+			return errorRespPtr, http.StatusBadRequest, errors.New("Spark config is not provided.")
+		}
+		status, err := createSparkWorkflowEnv(
+			ctx,
+			dagSummary,
+			h.ExecutionEnvironmentRepo,
+			execEnvByOpId,
+			h.Database,
+		)
+		if err != nil {
+			return errorRespPtr, status, err
+		}
 	}
 
 	timeConfig := &engine.AqueductTimeConfig{
@@ -236,48 +264,12 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 	}, statusCode, nil
 }
 
-func setupExecEnv(
+func registerDependencies(
 	ctx context.Context,
-	userID uuid.UUID,
 	dagSummary *request.DagSummary,
-	integrationRepo repos.Integration,
 	execEnvRepo repos.ExecutionEnvironment,
 	DB database.Database,
 ) (map[uuid.UUID]exec_env.ExecutionEnvironment, int, error) {
-	condaIntegration, err := exec_env.GetCondaIntegration(ctx, userID, integrationRepo, DB)
-	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "error getting conda integration.")
-	}
-
-	// For now, do nothing if conda is not connected.
-	if condaIntegration == nil {
-		return nil, http.StatusOK, nil
-	}
-
-	condaConnectionState, err := exec_env.ExtractConnectionState(condaIntegration)
-	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve Conda connection state.")
-	}
-
-	if condaConnectionState.Status == shared.FailedExecutionStatus {
-		errMsg := "Failed to create conda environments."
-		if condaConnectionState.Error != nil {
-			errMsg = fmt.Sprintf(
-				"Failed to create conda environments: %s. %s.",
-				condaConnectionState.Error.Context,
-				condaConnectionState.Error.Tip,
-			)
-		}
-
-		return nil, http.StatusInternalServerError, errors.New(errMsg)
-	}
-
-	if condaConnectionState.Status != shared.SucceededExecutionStatus {
-		return nil, http.StatusBadRequest, errors.New(
-			"We are still creating base conda environments. This may take a few minutes.",
-		)
-	}
-
 	rawEnvByOperator := make(
 		map[uuid.UUID]exec_env.ExecutionEnvironment,
 		len(dagSummary.FileContentsByOperatorUUID),
@@ -288,8 +280,6 @@ func setupExecEnv(
 		if err != nil {
 			return nil, http.StatusInternalServerError, err
 		}
-
-		rawEnv.CondaPath = condaIntegration.Config[exec_env.CondaPathKey]
 
 		rawEnvByOperator[opId] = *rawEnv
 	}
@@ -314,7 +304,108 @@ func setupExecEnv(
 		return nil, http.StatusInternalServerError, err
 	}
 
-	return envByOperator, http.StatusOK, nil
+	return envByOperator, http.StatusOK, err
+}
+
+func setupCondaEnv(
+	ctx context.Context,
+	userID uuid.UUID,
+	dagSummary *request.DagSummary,
+	integrationRepo repos.Integration,
+	envByOperator map[uuid.UUID]exec_env.ExecutionEnvironment,
+	DB database.Database,
+) (status int, err error) {
+	visitedEnvs := make([]exec_env.ExecutionEnvironment, 0, len(envByOperator))
+	defer func() {
+		if err != nil {
+			exec_env.DeleteCondaEnvs(visitedEnvs)
+		}
+	}()
+
+	condaIntegration, err := exec_env.GetCondaIntegration(ctx, userID, integrationRepo, DB)
+	if err != nil {
+		return http.StatusInternalServerError, errors.Wrap(err, "error getting conda integration.")
+	}
+
+	// For now, do nothing if conda is not connected.
+	if condaIntegration == nil {
+		return http.StatusOK, nil
+	}
+
+	condaConnectionState, err := exec_state.ExtractConnectionState(condaIntegration)
+	if err != nil {
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve Conda connection state.")
+	}
+
+	if condaConnectionState.Status == shared.FailedExecutionStatus {
+		errMsg := "Failed to create conda environments."
+		if condaConnectionState.Error != nil {
+			errMsg = fmt.Sprintf(
+				"Failed to create conda environments: %s. %s.",
+				condaConnectionState.Error.Context,
+				condaConnectionState.Error.Tip,
+			)
+		}
+
+		return http.StatusInternalServerError, errors.New(errMsg)
+	}
+
+	if condaConnectionState.Status != shared.SucceededExecutionStatus {
+		return http.StatusBadRequest, errors.New(
+			"We are still creating base conda environments. This may take a few minutes.",
+		)
+	}
+
+	existingEnvs, err := exec_env.ListCondaEnvs()
+	if err != nil {
+		return http.StatusInternalServerError, errors.Wrap(err, "Error retrieving existing conda environments.")
+	}
+
+	for opId, env := range envByOperator {
+		err = exec_env.CreateCondaEnvIfNotExists(
+			&env,
+			condaIntegration.Config[exec_env.CondaPathKey],
+			existingEnvs,
+		)
+		if err != nil {
+			return http.StatusInternalServerError, errors.Wrap(err, "Error creating conda environment.")
+		}
+
+		op, ok := dagSummary.Dag.Operators[opId]
+		if ok && op.Spec.HasFunction() {
+			op.Spec.SetEngineConfig(&shared.EngineConfig{
+				Type: shared.AqueductCondaEngineType,
+				AqueductCondaConfig: &shared.AqueductCondaConfig{
+					Env: env.Name(),
+				},
+			})
+			dagSummary.Dag.Operators[opId] = op
+		}
+
+		visitedEnvs = append(visitedEnvs, env)
+	}
+
+	return http.StatusOK, nil
+}
+
+func createSparkWorkflowEnv(
+	ctx context.Context,
+	dagSummary *request.DagSummary,
+	execEnvRepo repos.ExecutionEnvironment,
+	envByOperator map[uuid.UUID]exec_env.ExecutionEnvironment,
+	DB database.Database,
+) (int, error) {
+	workflowEnv, err := exec_env.MergeOperatorEnv(ctx, envByOperator, execEnvRepo, DB)
+	if err != nil {
+		return http.StatusInternalServerError, err
+	}
+	sparkCondaPackPath, err := spark.CreateSparkEnvFile(ctx, workflowEnv)
+	if err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	dagSummary.Dag.EngineConfig.SparkConfig.EnvironmentPathURI = sparkCondaPackPath
+	return http.StatusOK, nil
 }
 
 func removeLoadOperators(dagSummary *request.DagSummary) {
