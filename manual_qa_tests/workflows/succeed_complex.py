@@ -8,11 +8,10 @@ import aqueduct as aq
 NAME = "succeed_complex"
 DESCRIPTION = """* Workflows Page: should succeed.
 * Workflow Details Page: everything should be green.
-    * Workflow Status Bar: 0 error, 0 warning, 0 info, 21 success.
 * Data Page: pred_churn artifact should appears."""
 
 
-@aq.op
+@aq.op(requirements=["numpy"])
 def log_featurize(cust: pd.DataFrame) -> pd.DataFrame:
     features = cust.copy()
     skip_cols = ["cust_id", "using_deep_learning", "using_dbt"]
@@ -37,15 +36,15 @@ def deploy(client, integration):
     decision_tree_model = DecisionTreeClassifier(max_depth=10, min_samples_split=3)
     decision_tree_model.fit(features_table, churn_table["churn"])
 
-    @aq.op
+    @aq.op(requirements=["scikit-learn"])
     def predict_linear(features_table):
         return pd.DataFrame({"linear": linear_model.predict_proba(features_table)[:, 1]})
 
-    @aq.op
+    @aq.op(requirements=["scikit-learn"])
     def predict_tree(features_table):
         return pd.DataFrame({"tree": decision_tree_model.predict_proba(features_table)[:, 1]})
 
-    @aq.op
+    @aq.op(requirements=[])
     def predict_ensemble(customers_table, linear_pred_table, tree_pred_table):
         return customers_table.assign(
             prob_churn=linear_pred_table.join(tree_pred_table).mean(axis=1)
@@ -58,7 +57,7 @@ def deploy(client, integration):
     tree_pred_table = predict_tree(features_table)
     churn_table = predict_ensemble(customers_table, linear_pred_table, tree_pred_table)
 
-    @aq.check(description="Ensuring valid probabilities.")
+    @aq.check(description="Ensuring valid probabilities.", requirements=[])
     def valid_probabilities(df: pd.DataFrame):
         return (df["prob_churn"] >= 0) & (df["prob_churn"] <= 1)
 

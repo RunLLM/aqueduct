@@ -19,4 +19,6 @@ const (
 	SqlServerConnectorDockerImage = "aqueducthq/sqlserver-connector"
 	BigQueryConnectorDockerImage  = "aqueducthq/bigquery-connector"
 	S3ConnectorDockerImage        = "aqueducthq/s3-connector"
+
+	defaultFunctionExtractPath = "/app/function/"
 )

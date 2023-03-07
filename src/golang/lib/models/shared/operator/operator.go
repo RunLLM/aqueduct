@@ -53,7 +53,8 @@ type specUnion struct {
 	Param        *param.Param                `json:"param,omitempty"`
 	SystemMetric *system_metric.SystemMetric `json:"system_metric,omitempty"`
 
-	// This can currently only be set for function operators.
+	// This can currently only be set for operators that has function,
+	// including function, metric, and check.
 	Resources    *ResourceConfig      `json:"resources,omitempty"`
 	EngineConfig *shared.EngineConfig `json:"engine_config,omitempty"`
 }
@@ -258,4 +259,9 @@ func (s *Spec) Value() (driver.Value, error) {
 
 func (s *Spec) Scan(value interface{}) error {
 	return utils.ScanJSONB(value, s)
+}
+
+func (s *Spec) SetEngineConfig(engineConfig *shared.EngineConfig) *Spec {
+	s.spec.EngineConfig = engineConfig
+	return s
 }
