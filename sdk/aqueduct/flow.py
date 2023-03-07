@@ -44,7 +44,7 @@ class Flow:
         return resp
 
     def name(self) -> str:
-        """Returns the latest name of the flow."""
+        """Returns the latest name of the flows."""
         resp = self._get_workflow_resp()
         latest_result = resp.workflow_dag_results[-1]
         latest_workflow_dag = resp.workflow_dags[latest_result.workflow_dag_id]
