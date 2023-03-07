@@ -131,7 +131,14 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
           size="large"
         />
       </Box>
-      <Typography variant={'body1'} align={'center'} sx={{ marginTop: '16px' }}>
+      <Typography
+        variant={'body1'}
+        align={'center'}
+        sx={{
+          marginTop: '16px',
+          color: integration.activated ? 'inherit' : 'grey',
+        }}
+      >
         {service}
       </Typography>
     </Box>
