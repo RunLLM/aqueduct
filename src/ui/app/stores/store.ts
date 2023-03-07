@@ -4,7 +4,6 @@ import { workflowSummaries as listWorkflowReducer } from '@aqueducthq/common';
 import { integration as integrationReducer } from '@aqueducthq/common';
 import { nodeSelection as nodeSelectionReducer } from '@aqueducthq/common';
 import { notifications as notificationsReducer } from '@aqueducthq/common';
-import { openSideSheet as openSideSheetReducer } from '@aqueducthq/common';
 import { workflow as workflowReducer } from '@aqueducthq/common';
 import { workflowDagResults as workflowDagResultsReducer } from '@aqueducthq/common';
 import { artifactResultContents as artifactResultContentsReducer } from '@aqueducthq/common';
@@ -14,7 +13,6 @@ import { configureStore } from '@reduxjs/toolkit';
 export const store = configureStore({
     reducer: {
         nodeSelectionReducer,
-        openSideSheetReducer,
         notificationsReducer,
         listWorkflowReducer,
         dataPreviewReducer,

@@ -8,7 +8,6 @@ import aqueduct as aq
 NAME = "succeed_complex"
 DESCRIPTION = """* Workflows Page: should succeed.
 * Workflow Details Page: everything should be green.
-    * Workflow Status Bar: 0 error, 0 warning, 0 info, 21 success.
 * Data Page: pred_churn artifact should appears."""
 
 

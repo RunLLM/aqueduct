@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
@@ -280,6 +281,65 @@ func (*operatorReader) GetRelationBatch(
 	var relations []views.OperatorRelation
 	err := DB.Query(ctx, &relations, query, args...)
 	return relations, err
+}
+
+func (*operatorReader) GetByEngineIntegrationID(
+	ctx context.Context,
+	integrationID uuid.UUID,
+	DB database.Database,
+) ([]models.Operator, error) {
+	workflow_condition_fragments := make([]string, 0, len(shared.ServiceToEngineConfigField))
+	operator_condition_fragments := make([]string, 0, len(shared.ServiceToEngineConfigField))
+	for _, field := range shared.ServiceToEngineConfigField {
+		workflow_condition_fragments = append(
+			workflow_condition_fragments,
+			fmt.Sprintf(
+				`json_extract(
+					workflow_dag.engine_config,
+					'$.%s.integration_id'
+				) = $1`,
+				field),
+		)
+
+		operator_condition_fragments = append(
+			operator_condition_fragments,
+			fmt.Sprintf(
+				`json_extract(
+					operator.spec,
+					'$.engine_config.%s.integration_id'
+				) = $1`,
+				field),
+		)
+	}
+
+	workflow_condition := strings.Join(workflow_condition_fragments, " OR ")
+	operator_condition := strings.Join(operator_condition_fragments, " OR ")
+
+	query := fmt.Sprintf(`
+		SELECT DISTINCT %s FROM
+		operator, workflow_dag, workflow_dag_edge
+		WHERE
+		workflow_dag_edge.workflow_dag_id = workflow_dag.id
+		AND (
+			workflow_dag_edge.from_id = operator.id
+			OR workflow_dag_edge.to_id = operator.id
+		)
+		AND (
+			(
+				json_extract(operator.spec, '$.engine_config') IS NULL
+				AND (%s)
+			)
+			OR (%s)
+		);`,
+		models.OperatorColsWithPrefix(),
+		workflow_condition,
+		operator_condition,
+	)
+	args := []interface{}{integrationID}
+
+	var results []models.Operator
+	err := DB.Query(ctx, &results, query, args...)
+	return results, err
 }
 
 func (*operatorReader) GetUnusedCondaEnvNames(ctx context.Context, DB database.Database) ([]string, error) {
