@@ -252,7 +252,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 
 		err = exec_env.CleanupUnusedEnvironments(
 			context.Background(),
-			h.ExecutionEnvironmentRepo,
+			h.OperatorRepo,
 			db,
 		)
 		if err != nil {

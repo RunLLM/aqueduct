@@ -1,18 +1,15 @@
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any
 
 from aqueduct_executor.operators.connectors.data import (
     common,
     config,
-    connector,
     extract,
     load,
     relational,
     snowflake,
-    utils,
 )
 from aqueduct_executor.operators.utils.enums import ArtifactType
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import col
 from pyspark.sql.types import FloatType
 
 
@@ -32,6 +29,10 @@ class SparkSnowflakeConnector(relational.RelationalConnector):
             "sfSchema": config.schema,
             "sfWarehouse": config.warehouse,
         }
+
+        if config.role:
+            self.snowflake_spark_options["sfRole"] = config.role
+
         super().__init__(conn_engine)
 
     def extract_spark(

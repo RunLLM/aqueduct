@@ -7,7 +7,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
-	"github.com/aqueducthq/aqueduct/lib/livy"
+	"github.com/aqueducthq/aqueduct/lib/spark"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
 )
@@ -18,6 +18,15 @@ func AuthenticateK8sConfig(ctx context.Context, authConf auth.Config) error {
 	if err != nil {
 		return errors.Wrap(err, "Unable to parse configuration.")
 	}
+
+	if conf.Dynamic {
+		if conf.CloudIntegrationId == "" {
+			return errors.New("Dynamic K8s integration must have a cloud integration ID attached.")
+		} else {
+			return nil
+		}
+	}
+
 	_, err = k8s.CreateK8sClient(conf.KubeconfigPath, bool(conf.UseSameCluster))
 	if err != nil {
 		return errors.Wrap(err, "Unable to create kubernetes client.")
@@ -91,10 +100,23 @@ func AuthenticateSparkConfig(ctx context.Context, authConf auth.Config) error {
 		return errors.Wrap(err, "Unable to parse configuration.")
 	}
 
-	livyClient := livy.NewLivyClient(sparkConfig.LivyServerURL)
+	livyClient := spark.NewLivyClient(sparkConfig.LivyServerURL)
 	_, err = livyClient.GetSessions()
 	if err != nil {
 		return errors.Wrap(err, "Unable to list active Sessions on Livy Server.")
+	}
+
+	return nil
+}
+
+func AuthenticateAWSConfig(authConf auth.Config) error {
+	conf, err := lib_utils.ParseAWSConfig(authConf)
+	if err != nil {
+		return errors.Wrap(err, "Unable to parse configuration.")
+	}
+
+	if conf.AccessKeyId == "" || conf.SecretAccessKey == "" {
+		return errors.New("AWS access key ID and secret access key must be provided.")
 	}
 
 	return nil

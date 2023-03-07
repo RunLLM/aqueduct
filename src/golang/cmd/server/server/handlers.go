@@ -136,6 +136,16 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 
 			IntegrationRepo: s.IntegrationRepo,
 		},
+		routes.GetDynamicEngineStatusRoute: &handler.GetDynamicEngineStatusHandler{
+			Database: s.Database,
+
+			IntegrationRepo: s.IntegrationRepo,
+		},
+		routes.EditDynamicEngineRoute: &handler.EditDynamicEngineHandler{
+			Database: s.Database,
+
+			IntegrationRepo: s.IntegrationRepo,
+		},
 		routes.ListNotificationsRoute: &handler.ListNotificationsHandler{
 			Database: s.Database,
 
