@@ -3,17 +3,17 @@
 {
     "name": "Aqueduct Dev Container",
     "build": {
-        "dockerfile": "dockerfiles/aqueduct/aqueduct-py39.dockerfile",
+        "dockerfile": "Dockerfile",
         "context": "..",
         // To choose a particular version to run, we can pass in a VERSION flag.
         // This requires using a different docker file like the aqueduct-py39 dockerfile.
-        "args": {
-            "VERSION": "0.2.4"
-        }
+        // "args": {
+        //     "VERSION": "0.2.4"
+        // }
     },
     "forwardPorts": [
         8080
-    ]
+    ],
     // Set *default* container specific settings.json values on container create.
     // "settings": {
     //     "terminal.integrated.shell.linux": "/bin/bash",
@@ -35,7 +35,7 @@
     //     "ms-python.python"
     // ]
     // Use 'postCreateCommand' to run commands after the container is created.
-    // "postCreateCommand": "pip3 install --user -r requirements.txt",
+    "postCreateCommand": "aqueduct start",
     // Uncomment to connect as a non-root user. See https://aka.ms/vscode-remote/containers/non-root.
     // "remoteUser": "vscode"
 }
