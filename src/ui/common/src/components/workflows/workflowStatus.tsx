@@ -2,7 +2,6 @@ import {
   faCircleCheck,
   faCircleExclamation,
   faCircleQuestion,
-  faClockFour,
   faListOl,
   faSpinner,
   faTriangleExclamation,
@@ -27,7 +26,7 @@ export const getExecutionStatusColor = (status: ExecutionStatus): string => {
     case ExecutionStatus.Registered:
       return theme.palette.Default;
     case ExecutionStatus.Running:
-      return theme.palette.Running;
+      return theme.palette.Default;
     case ExecutionStatus.Succeeded:
       return theme.palette.Success;
     case ExecutionStatus.Warning:
@@ -129,6 +128,7 @@ export const StatusIndicator: React.FC<IndicatorProps> = ({
 
     case ExecutionStatus.Warning:
       icon = faTriangleExclamation;
+      break;
 
     default:
       return null; // This can never happen.
@@ -155,12 +155,15 @@ export const StatusIndicator: React.FC<IndicatorProps> = ({
         <FontAwesomeIcon
           icon={icon}
           spin={spin}
-          color={monochrome ? theme.palette.DarkContrast : getExecutionStatusColor(status)}
+          color={
+            monochrome
+              ? theme.palette.DarkContrast
+              : getExecutionStatusColor(status)
+          }
         />
       </Box>
     </Box>
-  )
-
+  );
 
   if (!includeTooltip) {
     return iconElement;

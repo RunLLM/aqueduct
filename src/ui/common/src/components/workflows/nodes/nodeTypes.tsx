@@ -1,5 +1,6 @@
 import { ArtifactType } from '../../../utils/artifacts';
 import { OperatorType } from '../../../utils/operators';
+import ExecutionStatus from '../../../utils/shared';
 import BoolArtifactNode, { boolArtifactNodeIcon } from './BoolArtifactNode';
 import CheckOperatorNode from './CheckOperatorNode';
 import { checkOperatorNodeIcon } from './CheckOperatorNode';
@@ -24,7 +25,6 @@ import StringArtifactNode, {
   stringArtifactNodeIcon,
 } from './StringArtifactNode';
 import TableArtifactNode, { tableArtifactNodeIcon } from './TableArtifactNode';
-import ExecutionStatus from '../../../utils/shared';
 
 export const nodeTypes = {
   database: DatabaseNode,
