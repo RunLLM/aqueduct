@@ -352,7 +352,7 @@ class APIClient:
 
         body = {
             "config_delta": config_delta.json(exclude_none=True),
-        }
+        }11
 
         if action in ["create", "update", "delete", "force-delete"]:
             resp = requests.post(url, headers=headers, data=body)
