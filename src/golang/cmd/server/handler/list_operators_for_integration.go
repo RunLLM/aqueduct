@@ -7,8 +7,8 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -69,22 +69,13 @@ func (*ListOperatorsForIntegrationHandler) Prepare(r *http.Request) (interface{}
 
 func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	integrationID := interfaceArgs.(uuid.UUID)
-
-	integrationObject, err := h.IntegrationRepo.Get(ctx, integrationID, h.Database)
-	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve integration.")
-	}
-
-	var operators []models.Operator
-
-	// Fetch all operators on this integration.
-	if integrationObject.Service == shared.Conda {
-		operators, err = h.OperatorRepo.GetByEngineType(ctx, shared.AqueductCondaEngineType, h.Database)
-	} else {
-		// TODO (ENG-2068): current implementation only works for data integrations.
-		// We should fix this to work against compute integrations as well.
-		operators, err = h.OperatorRepo.GetExtractAndLoadOPsByIntegration(ctx, integrationID, h.Database)
-	}
+	operators, err := operator.GetOperatorsOnIntegration(
+		ctx,
+		integrationID,
+		h.IntegrationRepo,
+		h.OperatorRepo,
+		h.Database,
+	)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve operators.")
 	}
