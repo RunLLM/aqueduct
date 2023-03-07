@@ -33,8 +33,8 @@ const LambdaConnectionStatus: React.FC<Props> = ({ state }) => {
     <Box display="flex" flexDirection="row" alignItems="center">
       <Box marginRight={1}>{chip}</Box>
       <Typography variant="body2">
-        We are still connecting Lambda for you. It usually takes a
-        few minutes to complete.
+        We are still connecting Lambda for you. It usually takes a few minutes
+        to complete.
       </Typography>
     </Box>
   );
