@@ -106,7 +106,13 @@ export const Node: React.FC<Props> = ({
       </Box>
 
       <Typography ml={1} textTransform="capitalize" fontSize="28px">
-        {preview ?? statusLabels[status]}
+        {/* Only show the preview if the status is succeeded and it exists. Otherwise,
+         * show the label that we're given. The reason for this is (eg) for a metric,
+         * if the status is either pending or failed/canceled/etc., the preview will be
+         * NaN. */}
+        {!!preview && status === ExecutionStatus.Succeeded
+          ? preview
+          : statusLabels[status]}
       </Typography>
     </Box>
   );
