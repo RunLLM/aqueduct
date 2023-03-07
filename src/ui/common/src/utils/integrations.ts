@@ -102,6 +102,10 @@ export enum AWSCredentialType {
   ConfigFileContent = 'config_file_content',
 }
 
+export enum DynamicIntegrationType {
+  K8s = 'k8s',
+}
+
 export type S3Config = {
   type: AWSCredentialType;
   bucket: string;
@@ -185,12 +189,24 @@ export type SparkConfig = {
 };
 
 export type AWSConfig = {
-  type: AWSCredentialType;
+  credential_type: AWSCredentialType;
+  integration_type: DynamicIntegrationType;
   region: string;
   access_key_id: string;
   secret_access_key: string;
   config_file_path: string;
   config_file_profile: string;
+  k8s_serialized: string;
+};
+
+export type DynamicK8sConfig = {
+  keepalive: string;
+  cpu_node_type: string;
+  gpu_node_type: string;
+  min_cpu_node: string;
+  max_cpu_node: string;
+  min_gpu_node: string;
+  max_gpu_node: string;
 };
 
 export type IntegrationConfig =
