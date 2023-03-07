@@ -84,8 +84,19 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			OperatorRepo:       s.OperatorRepo,
 			OperatorResultRepo: s.OperatorResultRepo,
 		},
-		routes.GetConfigRoute:        &handler.GetConfigHandler{},
-		routes.ConfigureStorageRoute: &handler.ConfigureStorageHandler{},
+		routes.GetConfigRoute: &handler.GetConfigHandler{},
+		routes.ConfigureStorageRoute: &handler.ConfigureStorageHandler{
+			Database: s.Database,
+
+			ArtifactRepo:       s.ArtifactRepo,
+			ArtifactResultRepo: s.ArtifactResultRepo,
+			DAGRepo:            s.DAGRepo,
+			IntegrationRepo:    s.IntegrationRepo,
+			OperatorRepo:       s.OperatorRepo,
+
+			PauseServer:   s.Pause,
+			RestartServer: s.Restart,
+		},
 		routes.GetNodePositionsRoute: &handler.GetNodePositionsHandler{},
 		routes.GetOperatorResultRoute: &handler.GetOperatorResultHandler{
 			Database: s.Database,

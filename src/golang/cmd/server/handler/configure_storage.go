@@ -9,7 +9,6 @@ import (
 	"github.com/aqueducthq/aqueduct/config"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -31,7 +30,6 @@ type ConfigureStorageHandler struct {
 	PostHandler
 
 	Database database.Database
-	Engine   engine.Engine
 
 	ArtifactRepo       repos.Artifact
 	ArtifactResultRepo repos.ArtifactResult
@@ -69,7 +67,7 @@ func (h *ConfigureStorageHandler) Prepare(r *http.Request) (interface{}, int, er
 
 	return &configureStorageArgs{
 		AqContext: aqContext,
-		// TODO: Add support for switching to non-local storage
+		// TODO ENG-2574: Add support for switching to non-local storage
 		storageIntegrationID:  uuid.Nil,
 		configureLocalStorage: true,
 	}, http.StatusOK, nil
@@ -78,7 +76,7 @@ func (h *ConfigureStorageHandler) Prepare(r *http.Request) (interface{}, int, er
 func (h *ConfigureStorageHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*configureStorageArgs)
 
-	// TODO: Remove this assumption
+	// TODO ENG-2574: Remove this assumption
 	if !args.configureLocalStorage {
 		return nil, http.StatusBadRequest, errors.New("We currently only support changing the storage layer to the local filesystem from this route.")
 	}
@@ -132,7 +130,9 @@ func (h *ConfigureStorageHandler) Perform(ctx context.Context, interfaceArgs int
 	}
 
 	// Change global storage config
-	config.UpdateStorage(&newStorageConfig)
+	if err := config.UpdateStorage(&newStorageConfig); err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to migrate to the new storage layer")
+	}
 
 	log.Info("Successfully migrated the storage layer!")
 
