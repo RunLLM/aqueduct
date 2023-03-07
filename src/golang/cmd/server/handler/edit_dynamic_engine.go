@@ -41,7 +41,7 @@ type EditDynamicEngineHandler struct {
 
 type editDynamicEngineArgs struct {
 	*aq_context.AqContext
-	action        string
+	action        dynamicEngineAction
 	integrationId uuid.UUID
 }
 
@@ -55,10 +55,12 @@ func (*EditDynamicEngineHandler) Headers() []string {
 	}
 }
 
+type dynamicEngineAction string
+
 const (
-	createAction      string = "create"
-	deleteAction      string = "delete"
-	forceDeleteAction string = "force-delete"
+	createAction      dynamicEngineAction = "create"
+	deleteAction      dynamicEngineAction = "delete"
+	forceDeleteAction dynamicEngineAction = "force-delete"
 )
 
 func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, error) {
@@ -80,7 +82,7 @@ func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, err
 
 	return &editDynamicEngineArgs{
 		AqContext:     aqContext,
-		action:        action,
+		action:        dynamicEngineAction(action),
 		integrationId: integrationId,
 	}, http.StatusOK, nil
 }

@@ -4,7 +4,7 @@ import uuid
 from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import requests
-from aqueduct.constants.enums import ExecutionStatus, RuntimeType, ServiceType
+from aqueduct.constants.enums import ExecutionStatus, K8sClusterActionType, RuntimeType, ServiceType
 from aqueduct.error import (
     AqueductError,
     ClientValidationError,
@@ -349,7 +349,11 @@ class APIClient:
 
         url = self.construct_full_url(self.EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE % integration_id)
 
-        if action == "create" or action == "delete" or action == "force-delete":
+        if action in [
+            K8sClusterActionType.CREATE,
+            K8sClusterActionType.DELETE,
+            K8sClusterActionType.FORCE_DELETE,
+        ]:
             resp = requests.post(url, headers=headers)
         else:
             raise InvalidRequestError(

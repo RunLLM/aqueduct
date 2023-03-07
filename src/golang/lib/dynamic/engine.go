@@ -21,8 +21,6 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const stateLockErrMsg = "Error acquiring the state lock"
@@ -190,15 +188,22 @@ func CreateDynamicEngine(
 // 3. Remove the kubeconfig file.
 // 4. Update the dynamic integration's DB record: set config["status"] to "Terminated".
 // If any step fails, it returns an error.
+// If skipPodsStatusCheck is set to false, it checks whether there are pods in Running or ContainerCreating
+// statue and if so, reject the deletion request.
 func DeleteDynamicEngine(
 	ctx context.Context,
-	force bool,
+	skipPodsStatusCheck bool,
 	engineIntegration *models.Integration,
 	integrationRepo repos.Integration,
 	db database.Database,
 ) error {
-	if !force {
-		safe, err := safeToDeleteCluster(ctx, engineIntegration)
+	if !skipPodsStatusCheck {
+		useSameCluster, err := strconv.ParseBool(engineIntegration.Config[shared.K8sUseSameClusterKey])
+		if err != nil {
+			return errors.Wrap(err, "Error parsing use_same_cluster flag")
+		}
+
+		safe, err := k8s.SafeToDeleteCluster(ctx, useSameCluster, engineIntegration.Config[shared.K8sKubeconfigPathKey])
 		if err != nil {
 			return err
 		}
@@ -334,43 +339,4 @@ func ResyncClusterState(
 	// deleting the cluster and updating the database state to be Terminated.
 	log.Error("Dynamic k8s cluster might be in an inconsistent state. Resolving state by deleting the cluster...")
 	return DeleteDynamicEngine(ctx, true, engineIntegration, integrationRepo, db)
-}
-
-// safeToDeleteCluster checks whether there are pods in the aqueduct namespace of the dynamic k8s
-// cluster that are in ContainerCreating or Running status. If so, it returns false. Otherwise it
-// returns true.
-func safeToDeleteCluster(
-	ctx context.Context,
-	engineIntegration *models.Integration,
-) (bool, error) {
-	useSameCluster, err := strconv.ParseBool(engineIntegration.Config[shared.K8sUseSameClusterKey])
-	if err != nil {
-		return false, errors.Wrap(err, "Error parsing use_same_cluster flag")
-	}
-
-	k8sClient, err := k8s.CreateK8sClient(engineIntegration.Config[shared.K8sKubeconfigPathKey], useSameCluster)
-	if err != nil {
-		return false, errors.Wrap(err, "Error while creating K8sClient")
-	}
-
-	pods, err := k8sClient.CoreV1().Pods(k8s.AqueductNamespace).List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return false, errors.Wrap(err, "Error while listing pods in the aqueduct namespace")
-	}
-
-	for _, pod := range pods.Items {
-		if pod.Status.Phase == v1.PodRunning {
-			return false, nil
-		}
-
-		if pod.Status.Phase == v1.PodPending {
-			for _, cs := range pod.Status.ContainerStatuses {
-				if cs.State.Waiting != nil && cs.State.Waiting.Reason == "ContainerCreating" {
-					return false, nil
-				}
-			}
-		}
-	}
-
-	return true, nil
 }

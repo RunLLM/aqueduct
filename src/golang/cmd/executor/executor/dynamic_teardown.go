@@ -64,7 +64,9 @@ func (ex *DynamicTeardownExecutor) Run(ctx context.Context) error {
 			log.Info("Reached keepalive threshold, tearing down the cluster...")
 			if err = dynamic.DeleteDynamicEngine(
 				ctx,
-				false, // don't force deletion if there're pods still running
+				// Perform pods status check because in case there are still pods running, we don't
+				// want them to be killed by the teardown cron job.
+				false,
 				&dynamicIntegration,
 				ex.IntegrationRepo,
 				ex.Database,
