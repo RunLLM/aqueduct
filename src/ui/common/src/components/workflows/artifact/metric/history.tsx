@@ -109,7 +109,7 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
             width: '100%',
             height: '100%',
             plot_bgcolor: theme.palette.gray[100],
-            margin: { b:0, t:0, l:0, r:0, pad: 8 },
+            margin: { b: 0, t: 0, l: 0, r: 0, pad: 8 },
             xaxis: { automargin: true },
             yaxis: { automargin: true, ticksuffix: ' ' },
           }}
