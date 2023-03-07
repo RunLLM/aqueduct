@@ -552,7 +552,6 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         if (res.ok) {
           onSetUpdateSucceeded(true);
           onSetUpdateMessage('Sucessfully updated your workflow.');
-          //location.reload(); // Refresh the page to reflect the updated settings.
         } else {
           onSetUpdateSucceeded(false);
           onSetUpdateMessage(
