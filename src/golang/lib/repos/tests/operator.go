@@ -136,6 +136,67 @@ func (ts *TestSuite) TestOperator_GetLoadOPsByIntegration() {
 	requireDeepEqualOperators(ts.T(), []models.Operator{operators[0]}, actualOperators)
 }
 
+func (ts *TestSuite) TestOperator_GetByEngineIntegrationID() {
+	users := ts.seedUser(1)
+	user := users[0]
+	dags := ts.seedDAGWithUser(1, user)
+	dag := dags[0]
+
+	operators := ts.seedOperatorWithDAG(2, dag.ID, user.ID, operator.FunctionType)
+	k8sOperator := operators[0]
+	lambdaOperator := operators[1]
+
+	lambdaIntegrationID := uuid.New()
+	k8sIntegrationID := uuid.New()
+	_, err := ts.dag.Update(
+		ts.ctx,
+		dag.ID,
+		map[string]interface{}{
+			models.DagEngineConfig: &shared.EngineConfig{
+				Type: shared.LambdaEngineType,
+				LambdaConfig: &shared.LambdaConfig{
+					IntegrationID: lambdaIntegrationID,
+				},
+			},
+		},
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+
+	k8sOpSpec := k8sOperator.Spec.SetEngineConfig(
+		&shared.EngineConfig{
+			Type: shared.K8sEngineType,
+			K8sConfig: &shared.K8sConfig{
+				IntegrationID: k8sIntegrationID,
+			},
+		},
+	)
+
+	_, err = ts.operator.Update(
+		ts.ctx,
+		k8sOperator.ID,
+		map[string]interface{}{
+			models.OperatorSpec: k8sOpSpec,
+		},
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+
+	operators, err = ts.operator.GetByEngineIntegrationID(
+		ts.ctx, lambdaIntegrationID, ts.DB,
+	)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), 1, len(operators))
+	require.Equal(ts.T(), lambdaOperator.ID, operators[0].ID)
+
+	operators, err = ts.operator.GetByEngineIntegrationID(
+		ts.ctx, k8sIntegrationID, ts.DB,
+	)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), 1, len(operators))
+	require.Equal(ts.T(), k8sOperator.ID, operators[0].ID)
+}
+
 func (ts *TestSuite) TestOperator_ValidateOrg() {
 	users := ts.seedUser(1)
 	user := users[0]

@@ -108,7 +108,7 @@ func (h *DiscoverHandler) Perform(
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to retrieve integration.")
 	}
 
-	if _, ok := shared.GetRelationalDatabaseIntegrations()[integrationObject.Service]; !ok {
+	if !shared.IsRelationalDatabaseIntegration(integrationObject.Service) {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "List tables request is only allowed for relational databases.")
 	}
 
