@@ -189,8 +189,7 @@ export type SparkConfig = {
 };
 
 export type AWSConfig = {
-  credential_type: AWSCredentialType;
-  engine_type: DynamicEngineType;
+  type: AWSCredentialType;
   region: string;
   access_key_id: string;
   secret_access_key: string;

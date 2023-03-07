@@ -1,6 +1,6 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import {
   AWSConfig,
@@ -12,8 +12,7 @@ import { Tab, Tabs } from '../../Tabs/Tabs.styles';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: AWSConfig = {
-  credential_type: AWSCredentialType.AccessKey,
-  engine_type: DynamicEngineType.K8s,
+  type: AWSCredentialType.AccessKey,
   region: 'us-east-2',
   access_key_id: '',
   secret_access_key: '',
@@ -38,17 +37,13 @@ type Props = {
 };
 
 export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
-  useEffect(() => {
-    if (!value?.credential_type) {
-      onUpdateField('credential_type', AWSCredentialType.AccessKey);
-    }
-  }, [onUpdateField, value?.credential_type]);
+  const [engineType, setEngineType] = useState(DynamicEngineType.K8s);
 
   useEffect(() => {
-    if (!value?.engine_type) {
-      onUpdateField('engine_type', DynamicEngineType.K8s);
+    if (!value?.type) {
+      onUpdateField('type', AWSCredentialType.AccessKey);
     }
-  }, [onUpdateField, value?.engine_type]);
+  }, [onUpdateField, value?.type]);
 
   const k8sConfigs = JSON.parse(value?.k8s_serialized ?? '{}') as {
     [key: string]: string;
@@ -230,8 +225,8 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
     <Box sx={{ mt: 2 }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tabs
-          value={value?.credential_type}
-          onChange={(_, value) => onUpdateField('credential_type', value)}
+          value={value?.type}
+          onChange={(_, value) => onUpdateField('type', value)}
         >
           <Tab value={AWSCredentialType.AccessKey} label="Enter Access Keys" />
           <Tab
@@ -240,33 +235,29 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
           />
         </Tabs>
       </Box>
-      {value?.credential_type === AWSCredentialType.AccessKey && accessKeyTab}
-      {value?.credential_type === AWSCredentialType.ConfigFilePath &&
-        configPathTab}
+      {value?.type === AWSCredentialType.AccessKey && accessKeyTab}
+      {value?.type === AWSCredentialType.ConfigFilePath && configPathTab}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-        <Tabs
-          value={value?.engine_type}
-          onChange={(_, value) => onUpdateField('engine_type', value)}
-        >
+        <Tabs value={engineType} onChange={(_, value) => setEngineType(value)}>
           <Tab
             value={DynamicEngineType.K8s}
             label="Kubernetes Cluster Config"
           />
         </Tabs>
       </Box>
-      {value?.engine_type === DynamicEngineType.K8s && k8sConfigTab}
+      {engineType === DynamicEngineType.K8s && k8sConfigTab}
     </Box>
   );
 };
 
 export function isAWSConfigComplete(config: AWSConfig): boolean {
-  if (config.credential_type === AWSCredentialType.AccessKey) {
+  if (config.type === AWSCredentialType.AccessKey) {
     return (
       !!config.access_key_id && !!config.secret_access_key && !!config.region
     );
   }
 
-  if (config.credential_type === AWSCredentialType.ConfigFilePath) {
+  if (config.type === AWSCredentialType.ConfigFilePath) {
     return !!config.config_file_profile && !!config.config_file_path;
   }
 
