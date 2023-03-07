@@ -5,7 +5,7 @@ import React, { useEffect } from 'react';
 import {
   AWSConfig,
   AWSCredentialType,
-  DynamicIntegrationType,
+  DynamicEngineType,
   DynamicK8sConfig,
 } from '../../../utils/integrations';
 import { Tab, Tabs } from '../../Tabs/Tabs.styles';
@@ -13,7 +13,7 @@ import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: AWSConfig = {
   credential_type: AWSCredentialType.AccessKey,
-  integration_type: DynamicIntegrationType.K8s,
+  engine_type: DynamicEngineType.K8s,
   region: 'us-east-2',
   access_key_id: '',
   secret_access_key: '',
@@ -45,10 +45,10 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
   }, [onUpdateField, value?.credential_type]);
 
   useEffect(() => {
-    if (!value?.integration_type) {
-      onUpdateField('integration_type', DynamicIntegrationType.K8s);
+    if (!value?.engine_type) {
+      onUpdateField('engine_type', DynamicEngineType.K8s);
     }
-  }, [onUpdateField, value?.integration_type]);
+  }, [onUpdateField, value?.engine_type]);
 
   const k8sConfigs = JSON.parse(value?.k8s_serialized ?? '{}') as {
     [key: string]: string;
@@ -245,16 +245,16 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         configPathTab}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tabs
-          value={value?.integration_type}
-          onChange={(_, value) => onUpdateField('integration_type', value)}
+          value={value?.engine_type}
+          onChange={(_, value) => onUpdateField('engine_type', value)}
         >
           <Tab
-            value={DynamicIntegrationType.K8s}
+            value={DynamicEngineType.K8s}
             label="Kubernetes Cluster Config"
           />
         </Tabs>
       </Box>
-      {k8sConfigTab}
+      {value?.engine_type === DynamicEngineType.K8s && k8sConfigTab}
     </Box>
   );
 };

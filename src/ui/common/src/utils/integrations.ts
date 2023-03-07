@@ -102,7 +102,7 @@ export enum AWSCredentialType {
   ConfigFileContent = 'config_file_content',
 }
 
-export enum DynamicIntegrationType {
+export enum DynamicEngineType {
   K8s = 'k8s',
 }
 
@@ -190,7 +190,7 @@ export type SparkConfig = {
 
 export type AWSConfig = {
   credential_type: AWSCredentialType;
-  integration_type: DynamicIntegrationType;
+  engine_type: DynamicEngineType;
   region: string;
   access_key_id: string;
   secret_access_key: string;
