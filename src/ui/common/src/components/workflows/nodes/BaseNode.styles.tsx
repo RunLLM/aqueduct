@@ -8,7 +8,7 @@ const BaseNode = styled(Box)({
   justifyContent: 'center',
   borderRadius: '8px',
   borderStyle: 'solid',
-  borderWidth: '2px',
+  borderWidth: '3px',
   width: '400px',
   height: '120px',
   maxWidth: '400px',

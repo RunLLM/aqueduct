@@ -30,7 +30,7 @@ export const getExecutionStatusColor = (status: ExecutionStatus): string => {
     case ExecutionStatus.Succeeded:
       return theme.palette.Success;
     case ExecutionStatus.Warning:
-      return theme.palette.Warning;
+      return theme.palette.yellow[500];
     case ExecutionStatus.Unknown:
     default:
       return theme.palette.Default;

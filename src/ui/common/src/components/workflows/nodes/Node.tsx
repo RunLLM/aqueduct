@@ -75,7 +75,7 @@ export const Node: React.FC<Props> = ({
     execState?.status === ExecutionStatus.Failed &&
     execState.failure_type == FailureType.UserNonFatal
   ) {
-    backgroundColor = theme.palette.orange[100];
+    backgroundColor = theme.palette.yellow[100];
   } else if (execState?.status === ExecutionStatus.Failed) {
     backgroundColor = theme.palette.red[100];
   } else if (execState?.status === ExecutionStatus.Canceled) {
@@ -90,8 +90,11 @@ export const Node: React.FC<Props> = ({
         display: 'flex',
         alignItems: 'center',
         backgroundColor: backgroundColor,
-        borderBottomRightRadius: '8px',
-        borderBottomLeftRadius: '8px',
+        // Even though the BaseNode's border radius is 8px, the differing dimensions
+        // make the same node width look funny. We set it at 5px to get rid of any
+        // whitespace.
+        borderBottomRightRadius: '5px',
+        borderBottomLeftRadius: '5px',
       }}
       flex={1}
       height="50%"
@@ -105,7 +108,12 @@ export const Node: React.FC<Props> = ({
         />
       </Box>
 
-      <Typography ml={1} textTransform="capitalize" fontSize="28px">
+      <Typography
+        ml={1}
+        textTransform="capitalize"
+        fontSize="28px"
+        fontWeight="light"
+      >
         {/* Only show the preview if the status is succeeded and it exists. Otherwise,
          * show the label that we're given. The reason for this is (eg) for a metric,
          * if the status is either pending or failed/canceled/etc., the preview will be
@@ -137,9 +145,12 @@ export const Node: React.FC<Props> = ({
           height="50%"
           flex={1}
           sx={{
-            backgroundColor: theme.palette.gray[300],
-            borderTopLeftRadius: '8px',
-            borderTopRightRadius: '8px',
+            backgroundColor: theme.palette.gray[400],
+            // Even though the BaseNode's border radius is 8px, the differing dimensions
+            // make the same node width look funny. We set it at 5px to get rid of any
+            // whitespace.
+            borderTopLeftRadius: '5px',
+            borderTopRightRadius: '5px',
           }}
         >
           {icon && (
@@ -169,8 +180,8 @@ export const Node: React.FC<Props> = ({
         type="source"
         id="db-source-id"
         style={{
-          background: theme.palette.darkGray as string,
-          border: theme.palette.darkGray as string,
+          background: theme.palette.DarkContrast,
+          border: theme.palette.DarkContrast,
         }}
         isConnectable={isConnectable}
         position={Position.Right}
@@ -180,8 +191,8 @@ export const Node: React.FC<Props> = ({
         type="target"
         id="db-target-id"
         style={{
-          background: theme.palette.darkGray as string,
-          border: theme.palette.darkGray as string,
+          background: theme.palette.DarkContrast,
+          border: theme.palette.DarkContrast,
         }}
         isConnectable={isConnectable}
         position={Position.Left}
