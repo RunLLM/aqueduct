@@ -65,7 +65,8 @@ type K8sIntegrationConfig struct {
 }
 
 type LambdaIntegrationConfig struct {
-	RoleArn string `json:"role_arn" yaml:"roleArn"`
+	RoleArn   string `json:"role_arn" yaml:"roleArn"`
+	ExecState string `json:"exec_state" yaml:"execState"`
 }
 
 type DatabricksIntegrationConfig struct {
