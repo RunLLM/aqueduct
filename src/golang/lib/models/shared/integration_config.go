@@ -2,6 +2,7 @@ package shared
 
 import (
 	"fmt"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -84,14 +85,14 @@ const (
 	K8sDefaultMaxGpuNode  int    = 1
 )
 
-var DefaultDynamicK8sAllowedConfigMap = map[string]string{
-	K8sKeepaliveKey:   strconv.Itoa(K8sDefaultKeepalive),
-	K8sCpuNodeTypeKey: K8sDefaultCpuNodeType,
-	K8sGpuNodeTypeKey: K8sDefaultGpuNodeType,
-	K8sMinCpuNodeKey:  strconv.Itoa(K8sDefaultMinCpuNode),
-	K8sMaxCpuNodeKey:  strconv.Itoa(K8sDefaultMaxCpuNode),
-	K8sMinGpuNodeKey:  strconv.Itoa(K8sDefaultMinGpuNode),
-	K8sMaxGpuNodeKey:  strconv.Itoa(K8sDefaultMaxGpuNode),
+var DefaultDynamicK8sConfig = DynamicK8sConfig{
+	Keepalive:   strconv.Itoa(K8sDefaultKeepalive),
+	CpuNodeType: K8sDefaultCpuNodeType,
+	GpuNodeType: K8sDefaultGpuNodeType,
+	MinCpuNode:  strconv.Itoa(K8sDefaultMinCpuNode),
+	MaxCpuNode:  strconv.Itoa(K8sDefaultMaxCpuNode),
+	MinGpuNode:  strconv.Itoa(K8sDefaultMinGpuNode),
+	MaxGpuNode:  strconv.Itoa(K8sDefaultMaxGpuNode),
 }
 
 type K8sIntegrationConfig struct {
@@ -137,10 +138,58 @@ type SlackConfig struct {
 	Enabled  bool              `json:"enabled"`
 }
 
+type DynamicK8sConfig struct {
+	Keepalive   string `json:"keepalive"`
+	CpuNodeType string `json:"cpu_node_type"`
+	GpuNodeType string `json:"gpu_node_type"`
+	MinCpuNode  string `json:"min_cpu_node"`
+	MaxCpuNode  string `json:"max_cpu_node"`
+	MinGpuNode  string `json:"min_gpu_node"`
+	MaxGpuNode  string `json:"max_gpu_node"`
+}
+
+func (config *DynamicK8sConfig) ToMap() map[string]string {
+	configMap := make(map[string]string)
+
+	valueOf := reflect.ValueOf(config).Elem()
+	typeOf := valueOf.Type()
+
+	for i := 0; i < valueOf.NumField(); i++ {
+		field := valueOf.Field(i)
+		fieldName := typeOf.Field(i).Tag.Get("json")
+		fieldValue := fmt.Sprintf("%v", field.Interface())
+
+		if fieldValue != "" {
+			configMap[fieldName] = fieldValue
+		}
+	}
+
+	return configMap
+}
+
+func (config *DynamicK8sConfig) Merge(newConfig *DynamicK8sConfig) {
+	if newConfig == nil {
+		return
+	}
+
+	configValue := reflect.ValueOf(config).Elem()
+	newConfigValue := reflect.ValueOf(newConfig).Elem()
+
+	for i := 0; i < configValue.NumField(); i++ {
+		field := configValue.Type().Field(i)
+		newFieldValue := newConfigValue.FieldByName(field.Name)
+
+		if !newFieldValue.IsZero() {
+			configValue.FieldByName(field.Name).Set(newFieldValue)
+		}
+	}
+}
+
 type AWSConfig struct {
-	AccessKeyId     string `json:"access_key_id"`
-	SecretAccessKey string `json:"secret_access_key"`
-	Region          string `json:"region"`
+	AccessKeyId     string            `json:"access_key_id"`
+	SecretAccessKey string            `json:"secret_access_key"`
+	Region          string            `json:"region"`
+	K8s             *DynamicK8sConfig `json:"k8s"`
 }
 
 type SparkIntegrationConfig struct {

@@ -39,7 +39,7 @@ var TerraformDir = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "dyna
 // PrepareCluster blocks until the cluster is in status "Active".
 func PrepareCluster(
 	ctx context.Context,
-	configDelta map[string]string,
+	configDelta *shared.DynamicK8sConfig,
 	engineIntegrationId uuid.UUID,
 	integrationRepo repos.Integration,
 	vaultObject vault.Vault,
@@ -67,7 +67,7 @@ func PrepareCluster(
 				db,
 			)
 		} else if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
-			if len(configDelta) == 0 {
+			if len(configDelta.ToMap()) == 0 {
 				log.Info("Kubernetes cluster is currently active, proceeding...")
 				return nil
 			} else {
@@ -102,7 +102,7 @@ func PrepareCluster(
 // If any step fails, it returns an error.
 func CreateOrUpdateK8sCluster(
 	ctx context.Context,
-	configDelta map[string]string,
+	configDelta *shared.DynamicK8sConfig,
 	action k8sClusterActionType, // can either be k8sClusterCreateAction or k8sClusterUpdateAction
 	engineIntegration *models.Integration,
 	integrationRepo repos.Integration,
@@ -113,22 +113,20 @@ func CreateOrUpdateK8sCluster(
 		return errors.Newf("Unsupport action %s.", action)
 	}
 
-	if action == K8sClusterUpdateAction && len(configDelta) == 0 {
+	configDeltaMap := configDelta.ToMap()
+
+	if action == K8sClusterUpdateAction && len(configDeltaMap) == 0 {
 		return nil // if there is no config delta, we don't need to update anything
 	}
 
-	if len(configDelta) > 0 {
+	if len(configDeltaMap) > 0 {
 		// Update config to reflect the new values.
-		for key, value := range configDelta {
-			if _, ok := shared.DefaultDynamicK8sAllowedConfigMap[key]; ok {
-				engineIntegration.Config[key] = value
-			} else {
-				return errors.Newf("Config key %s is not supported.", key)
-			}
+		for key, value := range configDeltaMap {
+			engineIntegration.Config[key] = value
 		}
 	}
 
-	if err := checkIfValidConfig(action, engineIntegration.Config); err != nil {
+	if err := CheckIfValidConfig(action, engineIntegration.Config); err != nil {
 		return err
 	}
 
@@ -182,7 +180,7 @@ func CreateOrUpdateK8sCluster(
 	}
 
 	// Finally, we update the database record to reflect the new config.
-	if err := updateClusterConfig(ctx, action, configDelta, engineIntegration.ID, integrationRepo, db); err != nil {
+	if err := updateClusterConfig(ctx, action, configDeltaMap, engineIntegration.ID, integrationRepo, db); err != nil {
 		return err
 	}
 
@@ -218,7 +216,7 @@ func DeleteK8sCluster(
 	}
 
 	// For deletion, the config values don't matter, so we just use the default map.
-	terraformArgs := generateTerraformVariables(&shared.AWSConfig{}, shared.DefaultDynamicK8sAllowedConfigMap)
+	terraformArgs := generateTerraformVariables(&shared.AWSConfig{}, shared.DefaultDynamicK8sConfig.ToMap())
 
 	if _, _, err := lib_utils.RunCmd(
 		"terraform",
@@ -321,12 +319,12 @@ func updateClusterStatus(
 func updateClusterConfig(
 	ctx context.Context,
 	action k8sClusterActionType,
-	configDelta map[string]string,
+	configDeltaMap map[string]string,
 	engineIntegrationId uuid.UUID,
 	integrationRepo repos.Integration,
 	db database.Database,
 ) error {
-	if len(configDelta) == 0 {
+	if len(configDeltaMap) == 0 {
 		return nil
 	}
 
@@ -340,12 +338,8 @@ func updateClusterConfig(
 	}
 
 	// Update config to include the new values.
-	for key, value := range configDelta {
-		if _, ok := shared.DefaultDynamicK8sAllowedConfigMap[key]; ok {
-			engineIntegration.Config[key] = value
-		} else {
-			return errors.Newf("Config key %s is not supported.", key)
-		}
+	for key, value := range configDeltaMap {
+		engineIntegration.Config[key] = value
 	}
 
 	if action == K8sClusterCreateAction {
@@ -554,7 +548,7 @@ func runTerraformApply(
 	return nil
 }
 
-func checkIfValidConfig(action k8sClusterActionType, config map[string]string) error {
+func CheckIfValidConfig(action k8sClusterActionType, config map[string]string) error {
 	// We require a minimum keepalive period of 10 min (600 seconds).
 	keepalive, err := strconv.Atoi(config[shared.K8sKeepaliveKey])
 	if err != nil {

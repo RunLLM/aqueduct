@@ -44,7 +44,7 @@ type editDynamicEngineArgs struct {
 	*aq_context.AqContext
 	action        string
 	integrationId uuid.UUID
-	configDelta   map[string]string
+	configDelta   *shared.DynamicK8sConfig
 }
 
 func (*EditDynamicEngineHandler) Name() string {
@@ -89,25 +89,19 @@ func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, err
 		r,
 	)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to extract config delta map.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to extract config delta.")
 	}
 
-	configDelta := make(map[string]string)
+	configDelta := shared.DynamicK8sConfig{}
 	if err = json.Unmarshal(configDeltaBytes, &configDelta); err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to deserialize config delta map.")
-	}
-
-	for k := range configDelta {
-		if _, ok := shared.DefaultDynamicK8sAllowedConfigMap[k]; !ok {
-			return nil, http.StatusBadRequest, errors.Newf("Key %s not allowed in config delta map.", k)
-		}
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to deserialize config delta.")
 	}
 
 	return &editDynamicEngineArgs{
 		AqContext:     aqContext,
 		action:        action,
 		integrationId: integrationId,
-		configDelta:   configDelta,
+		configDelta:   &configDelta,
 	}, http.StatusOK, nil
 }
 
@@ -151,8 +145,8 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResponse, http.StatusOK, nil
 	} else if args.action == updateAction {
 		log.Info("Received a cluster update request")
-		if len(args.configDelta) == 0 {
-			return emptyResponse, http.StatusBadRequest, errors.New("Empty config map provided.")
+		if len(args.configDelta.ToMap()) == 0 {
+			return emptyResponse, http.StatusBadRequest, errors.New("Empty config delta provided.")
 		}
 
 		if dynamicEngineIntegration.Config[shared.K8sStatusKey] != string(shared.K8sClusterActiveStatus) {

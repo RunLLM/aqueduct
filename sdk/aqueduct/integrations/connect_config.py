@@ -147,17 +147,35 @@ class SlackConfig(BaseConnectionConfig):
     enabled: bool
 
 
-class AWSConfig(BaseConnectionConfig):
-    access_key_id: str
-    secret_access_key: str
-    region: str
-
-
 class _SlackConfigWithStringField(BaseConnectionConfig):
     token: str
     channels_serialized: str
     level: str
     enabled: str
+
+
+class DynamicK8sConfig(BaseConnectionConfig):
+    keepalive: Optional[str]
+    cpu_node_type: Optional[str]
+    gpu_node_type: Optional[str]
+    min_cpu_node: Optional[str]
+    max_cpu_node: Optional[str]
+    min_gpu_node: Optional[str]
+    max_gpu_node: Optional[str]
+
+
+class AWSConfig(BaseConnectionConfig):
+    access_key_id: str
+    secret_access_key: str
+    region: str
+    k8s: Optional[DynamicK8sConfig]
+
+
+class _AWSConfigWithStringField(BaseConnectionConfig):
+    access_key_id: str
+    secret_access_key: str
+    region: str
+    k8s_serialized: Optional[str]
 
 
 class EmailConfig(BaseConnectionConfig):
@@ -198,6 +216,7 @@ IntegrationConfig = Union[
     SQLiteConfig,
     SlackConfig,
     AWSConfig,
+    _AWSConfigWithStringField,
     _SlackConfigWithStringField,
     SparkConfig,
 ]
@@ -252,6 +271,9 @@ def prepare_integration_config(
     if service == ServiceType.EMAIL:
         return _prepare_email_config(cast(EmailConfig, config))
 
+    if service == ServiceType.AWS:
+        return _prepare_aws_config(cast(AWSConfig, config))
+
     return config
 
 
@@ -273,6 +295,15 @@ def _prepare_slack_config(config: SlackConfig) -> _SlackConfigWithStringField:
         channels_serialized=json.dumps(config.channels),
         level=config.level.value if config.level else "",
         enabled="true" if config.enabled else "false",
+    )
+
+
+def _prepare_aws_config(config: AWSConfig) -> _AWSConfigWithStringField:
+    return _AWSConfigWithStringField(
+        access_key_id=config.access_key_id,
+        secret_access_key=config.secret_access_key,
+        region=config.region,
+        k8s_serialized=(None if config.k8s is None else config.k8s.json(exclude_none=True)),
     )
 
 

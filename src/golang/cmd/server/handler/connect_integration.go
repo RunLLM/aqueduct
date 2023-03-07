@@ -185,30 +185,49 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		}
 
 		kubeconfigPath := filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "dynamic", "kube_config")
+
+		awsConfig, err := lib_utils.ParseAWSConfig(args.Config)
+		if err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to parse AWS config.")
+		}
+
+		config := shared.DynamicK8sConfig{
+			Keepalive:   shared.DefaultDynamicK8sConfig.Keepalive,
+			CpuNodeType: shared.DefaultDynamicK8sConfig.CpuNodeType,
+			GpuNodeType: shared.DefaultDynamicK8sConfig.GpuNodeType,
+			MinCpuNode:  shared.DefaultDynamicK8sConfig.MinCpuNode,
+			MaxCpuNode:  shared.DefaultDynamicK8sConfig.MaxCpuNode,
+			MinGpuNode:  shared.DefaultDynamicK8sConfig.MinGpuNode,
+			MaxGpuNode:  shared.DefaultDynamicK8sConfig.MaxGpuNode,
+		}
+
+		config.Merge(awsConfig.K8s)
+
+		dynamicK8sConfig := map[string]string{
+			shared.K8sKubeconfigPathKey:     kubeconfigPath,
+			shared.K8sClusterNameKey:        shared.DynamicK8sClusterName,
+			shared.K8sDynamicKey:            strconv.FormatBool(true),
+			shared.K8sCloudIntegrationIdKey: cloudIntegration.ID.String(),
+			shared.K8sUseSameClusterKey:     strconv.FormatBool(false),
+			shared.K8sStatusKey:             string(shared.K8sClusterTerminatedStatus),
+			shared.K8sDesiredCpuNodeKey:     config.MinCpuNode,
+			shared.K8sDesiredGpuNodeKey:     config.MinGpuNode,
+		}
+
+		for k, v := range config.ToMap() {
+			dynamicK8sConfig[k] = v
+		}
+
+		if err := dynamic.CheckIfValidConfig(dynamic.K8sClusterCreateAction, dynamicK8sConfig); err != nil {
+			return emptyResp, http.StatusBadRequest, err
+		}
+
 		// Register a dynamic k8s integration.
 		connectIntegrationArgs := &ConnectIntegrationArgs{
-			AqContext: args.AqContext,
-			Name:      fmt.Sprintf("%s:%s", args.Name, "k8s"),
-			Service:   shared.Kubernetes,
-			Config: auth.NewStaticConfig(
-				map[string]string{
-					shared.K8sKubeconfigPathKey:     kubeconfigPath,
-					shared.K8sClusterNameKey:        shared.DynamicK8sClusterName,
-					shared.K8sDynamicKey:            strconv.FormatBool(true),
-					shared.K8sCloudIntegrationIdKey: cloudIntegration.ID.String(),
-					shared.K8sUseSameClusterKey:     strconv.FormatBool(false),
-					shared.K8sStatusKey:             string(shared.K8sClusterTerminatedStatus),
-					shared.K8sKeepaliveKey:          strconv.Itoa(shared.K8sDefaultKeepalive),
-					shared.K8sCpuNodeTypeKey:        shared.K8sDefaultCpuNodeType,
-					shared.K8sGpuNodeTypeKey:        shared.K8sDefaultGpuNodeType,
-					shared.K8sMinCpuNodeKey:         strconv.Itoa(shared.K8sDefaultMinCpuNode),
-					shared.K8sDesiredCpuNodeKey:     strconv.Itoa(shared.K8sDefaultMinCpuNode),
-					shared.K8sMaxCpuNodeKey:         strconv.Itoa(shared.K8sDefaultMaxCpuNode),
-					shared.K8sMinGpuNodeKey:         strconv.Itoa(shared.K8sDefaultMinGpuNode),
-					shared.K8sDesiredGpuNodeKey:     strconv.Itoa(shared.K8sDefaultMinGpuNode),
-					shared.K8sMaxGpuNodeKey:         strconv.Itoa(shared.K8sDefaultMaxGpuNode),
-				},
-			),
+			AqContext:    args.AqContext,
+			Name:         fmt.Sprintf("%s:%s", args.Name, "k8s"),
+			Service:      shared.Kubernetes,
+			Config:       auth.NewStaticConfig(dynamicK8sConfig),
 			UserOnly:     false,
 			SetAsStorage: false,
 		}

@@ -1,10 +1,26 @@
-from typing import Dict
+from typing import Dict, Union
 
 from aqueduct.constants.enums import K8sClusterStatusType
-from aqueduct.error import InvalidIntegrationException
+from aqueduct.error import InvalidIntegrationException, InvalidUserArgumentException
+from aqueduct.integrations.connect_config import DynamicK8sConfig
 from aqueduct.models.integration import Integration, IntegrationInfo
+from pydantic import Extra
 
 from aqueduct import globals
+
+
+def parse_dynamic_k8s_config(
+    config_delta: Union[Dict[str, str], DynamicK8sConfig]
+) -> DynamicK8sConfig:
+    if not isinstance(config_delta, dict) and not isinstance(config_delta, DynamicK8sConfig):
+        raise InvalidUserArgumentException(
+            "`config_delta` argument must be either a dict or DynamicK8sConfig."
+        )
+
+    if isinstance(config_delta, dict):
+        config_delta = DynamicK8sConfig(**config_delta)
+    assert isinstance(config_delta, DynamicK8sConfig)
+    return config_delta
 
 
 class DynamicK8sIntegration(Integration):
@@ -26,7 +42,9 @@ class DynamicK8sIntegration(Integration):
 
         return engine_statuses[self._metadata.name].status.value
 
-    def create(self, config_delta: Dict[str, str] = {}) -> None:
+    def create(self, config_delta: Union[Dict[str, str], DynamicK8sConfig] = {}) -> None:
+        config_delta = parse_dynamic_k8s_config(config_delta)
+
         engine_statuses = globals.__GLOBAL_API_CLIENT__.get_dynamic_engine_status(
             engine_integration_ids=[str(self._metadata.id)]
         )
@@ -36,7 +54,9 @@ class DynamicK8sIntegration(Integration):
             )
 
         status = engine_statuses[self._metadata.name].status
-        if status == K8sClusterStatusType.ACTIVE and len(config_delta) == 0:
+        if status == K8sClusterStatusType.ACTIVE and all(
+            value is None for value in config_delta.dict().values()
+        ):
             print("Cluster is already in %s status." % status.value)
             return
 
@@ -50,7 +70,9 @@ class DynamicK8sIntegration(Integration):
             config_delta=config_delta,
         )
 
-    def update(self, config_delta: Dict[str, str]) -> None:
+    def update(self, config_delta: Union[Dict[str, str], DynamicK8sConfig] = {}) -> None:
+        config_delta = parse_dynamic_k8s_config(config_delta)
+
         engine_statuses = globals.__GLOBAL_API_CLIENT__.get_dynamic_engine_status(
             engine_integration_ids=[str(self._metadata.id)]
         )

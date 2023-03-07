@@ -944,7 +944,7 @@ func (eng *aqEngine) execute(
 			if op.Dynamic() && !op.GetDynamicProperties().Prepared() {
 				err = dynamic.PrepareCluster(
 					ctx,
-					map[string]string{}, // empty configDelta map
+					&shared.DynamicK8sConfig{}, // empty configDelta map
 					op.GetDynamicProperties().GetEngineIntegrationId(),
 					eng.IntegrationRepo,
 					vaultObject,

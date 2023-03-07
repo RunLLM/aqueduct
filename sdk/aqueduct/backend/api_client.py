@@ -21,7 +21,7 @@ from aqueduct.models.operators import ParamSpec
 from aqueduct.utils.serialization import deserialize
 from pkg_resources import get_distribution, parse_version
 
-from ..integrations.connect_config import IntegrationConfig
+from ..integrations.connect_config import DynamicK8sConfig, IntegrationConfig
 from .response_helpers import (
     _construct_preview_response,
     _handle_preview_resp,
@@ -266,7 +266,7 @@ class APIClient:
             {
                 "integration-name": name,
                 "integration-service": integration_service,
-                "integration-config": config.json(),
+                "integration-config": config.json(exclude_none=True),
             }
         )
         url = self.construct_full_url(
@@ -337,7 +337,7 @@ class APIClient:
         self,
         action: str,
         integration_id: str,
-        config_delta: Dict[str, str] = {},
+        config_delta: DynamicK8sConfig = DynamicK8sConfig(),
     ) -> None:
         """Makes a request against the /api/integration/dynamic-engine/{integrationId}/edit endpoint.
 
@@ -351,7 +351,7 @@ class APIClient:
         url = self.construct_full_url(self.EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE % integration_id)
 
         body = {
-            "config_delta": json.dumps(config_delta),
+            "config_delta": config_delta.json(exclude_none=True),
         }
 
         if action in ["create", "update", "delete", "force-delete"]:
