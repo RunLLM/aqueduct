@@ -3,6 +3,7 @@ import {
   faChevronLeft,
   faChevronRight,
   faCirclePlay,
+  faUpRightAndDownLeftFromCenter,
 } from '@fortawesome/free-solid-svg-icons';
 import { faCircleDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -22,10 +23,6 @@ import {
   resetSelectedNode,
 } from '../../../../reducers/nodeSelection';
 import {
-  setAllSideSheetState,
-  setBottomSideSheetOpenState,
-} from '../../../../reducers/openSideSheet';
-import {
   handleGetArtifactResults,
   handleGetOperatorResults,
   handleGetSelectDagPosition,
@@ -36,7 +33,6 @@ import {
 import { AppDispatch, RootState } from '../../../../stores/store';
 import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
-import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { handleExportFunction } from '../../../../utils/operators';
 import { LoadingStatusEnum, WidthTransition } from '../../../../utils/shared';
 import {
@@ -45,7 +41,6 @@ import {
 } from '../../../../utils/sidesheets';
 import DefaultLayout, {
   DefaultLayoutMargin,
-  SidesheetButtonHeight,
   SidesheetWidth,
 } from '../../../layouts/default';
 import { Button } from '../../../primitives/Button.styles';
@@ -83,9 +78,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   );
   const workflow = useSelector((state: RootState) => state.workflowReducer);
   const switchSideSheet = sideSheetSwitcher(dispatch);
+  const drawerIsOpen = currentNode.type !== NodeType.None;
 
   const dagName = workflow.selectedDag?.metadata?.name;
 
+  // EFFECT 0: Set document title.
   useEffect(() => {
     if (workflow.selectedDag !== undefined) {
       document.title = `${dagName} | Aqueduct`;
@@ -96,6 +93,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     dispatch(resetState());
   }, [dispatch]);
 
+  // EFFECT 1: Manage state on browser history change.
+  // This effect adds the resetWorkflowState callback to be used when the user
+  // accesses the page history. In this case, we reset the state of the Redux
+  // workflow store, so we don't accidentally cache information across workflow
+  // versions.
   useEffect(() => {
     window.onpopstate = () => {
       resetWorkflowState();
@@ -104,6 +106,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     resetWorkflowState();
   }, [resetWorkflowState]);
 
+  // EFFECT 2: Set URL search param on version change.
+  // When the selected workflow run changes, we update the URL search param accordingly.
+  // This is important for two reasons:
+  // 1. It makes the URL sharable.
+  // 2. We rely on this to track what workflow version we're currently displaying.
   useEffect(() => {
     if (
       workflow.selectedResult !== undefined &&
@@ -116,11 +123,25 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     }
   }, [workflow.selectedResult, urlSearchParams, navigate]);
 
+  // EFFECT 3: Load workflow metadata.
+  // This useEffect is effectively only called on component mount. It loads
+  // the base workflow metadata as well as metadata about any integrations
+  // in order to populate the UI.
   useEffect(() => {
     dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
     dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
   }, [dispatch, user.apiKey, workflowId]);
 
+  // EFFECT 4: Gather selected workflow index.
+  // When the workflow Redux store's DAG results are populated or when we navigate
+  // to a different version, we iterate through the full list of results and set the
+  // index in both Redux and in our local state.
+  // NOTE(vikram): There are two annoying bits of tech debt in this code:
+  // 1. It's not clear that this needs to be a different from Effect 2 the one where we
+  // navigate to a different search param. They seem to be focused on the same bits of
+  // functionality. (See ENG-2569.)
+  // 2. Less critical, but it's annoying that we have to track selectedResultIdx in local
+  // React state. This is not explicitly exposed by the Redux store, but it should be.
   useEffect(() => {
     if (workflow.dagResults && workflow.dagResults.length > 0) {
       let workflowDagResultIndex = 0;
@@ -136,12 +157,10 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       }
 
       if (workflowDagResultId !== workflow.selectedResult.id) {
-        dispatch(setAllSideSheetState(false));
         // this is where selectedDag gets set
         dispatch(selectResultIdx(workflowDagResultIndex));
+        setSelectedResultIdx(workflowDagResultIndex);
       }
-
-      setSelectedResultIdx(workflowDagResultIndex);
     }
   }, [
     workflow.dagResults,
@@ -150,6 +169,9 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     dispatch,
   ]);
 
+  // EFFECT 5: DAG positioning.
+  // This effect uses the Elk algorithm to load the node positioning for the DAG.
+  // See ENG-2568 for more on how this interaction needs to be cleaned up.
   useEffect(() => {
     if (workflow.selectedDag) {
       dispatch(
@@ -255,6 +277,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     ]
   );
 
+  // EFFECT 6: Load operator and artifact metadta.
+  // This effect loads the relevant metadata for each operator and artifact when either the
+  // selected node changes or when the selected workflow run changes. This is probably a
+  // little sloppy at the moment because we're pushing error checks into the helper functions
+  // and blindly calling them, which is opaque/confusing to read.
   useEffect(() => {
     getOperatorResultDetails(currentNode.id);
     getArtifactResultDetails(currentNode.id, true);
@@ -267,7 +294,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
   const onPaneClicked = (event: React.MouseEvent) => {
     event.preventDefault();
-    dispatch(setBottomSideSheetOpenState(false));
 
     // Reset selected node
     dispatch(resetSelectedNode());
@@ -291,6 +317,10 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     }
   };
 
+  // EFFECT 7: Load full DAG metadata.
+  // This effect loads all of the metadata associated with a particular workflow run.
+  // Both this an Effect 6 are run on every workflow run ID change, which might be
+  // duplicative (ENG-2569).
   useEffect(getDagResultDetails, [
     getOperatorResultDetails,
     selectedDag,
@@ -308,7 +338,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     return null;
   }
 
-  // TODO: Remove openSideSheet reducer, as it's no longer used in the ui-redesign project
   const getNodeLabel = () => {
     if (
       currentNode.type === NodeType.TableArtifact ||
@@ -335,34 +364,43 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
   const getNodeActionButton = () => {
     const buttonStyle = {
-      height: SidesheetButtonHeight,
-      marginRight: '16px',
+      fontSize: '20px',
+      mr: 1,
     };
 
+    let navigationUrl;
+    let includeExportOpButton = true;
+
     if (currentNode.type === NodeType.TableArtifact) {
-      return (
-        <Box>
-          <Button
-            style={buttonStyle}
-            onClick={() => {
-              // All we're really doing here is adding the artifactId onto the end of the URL.
-              navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
-                }/artifact/${currentNode.id}`
-              );
-            }}
-          >
-            View Artifact Details
-          </Button>
-        </Box>
-      );
+      navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/artifact/${currentNode.id}`;
+      includeExportOpButton = false;
+    } else if (currentNode.type === NodeType.FunctionOp) {
+      navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/operator/${currentNode.id}`;
+    } else if (currentNode.type === NodeType.MetricOp) {
+      navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/metric/${currentNode.id}`;
+    } else if (currentNode.type === NodeType.CheckOp) {
+      navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/check/${currentNode.id}`;
+    } else {
+      return null; // This is a load or save operator.
     }
+
+    const navigateButton = (
+      <Button
+        variant="text"
+        sx={buttonStyle}
+        onClick={() => {
+          navigate(navigationUrl);
+        }}
+      >
+        <Tooltip title="Expand Details" arrow>
+          <FontAwesomeIcon icon={faUpRightAndDownLeftFromCenter} />
+        </Tooltip>
+      </Button>
+    );
 
     const operator = (workflow.selectedDag?.operators ?? {})[currentNode.id];
     const exportOpButton = (
       <Button
-        style={{ ...buttonStyle, maxWidth: '300px' }}
         onClick={async () => {
           await handleExportFunction(
             user,
@@ -370,77 +408,25 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             `${operator?.name ?? 'function'}.zip`
           );
         }}
-        color="primary"
+        variant="text"
+        sx={buttonStyle}
       >
-        <FontAwesomeIcon icon={faCircleDown} />
-        <Typography
-          sx={{ ml: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}
-        >{`${operator?.name ?? 'function'}.zip`}</Typography>
+        <Tooltip title="Download Code" arrow>
+          <FontAwesomeIcon icon={faCircleDown} />
+        </Tooltip>
       </Button>
     );
 
-    if (currentNode.type === NodeType.MetricOp) {
-      // Get the metrics id, and navigate to the metric details page.
-      return (
-        <Box display="flex" flexDirection="row">
-          <Button
-            style={buttonStyle}
-            onClick={() => {
-              navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
-                }/metric/${currentNode.id}`
-              );
-            }}
-          >
-            View Metric Details
-          </Button>
-          {exportOpButton}
+    return (
+      <Box display="flex" alignItems="center" flex={1} mr={3}>
+        {/* This flex grown box right aligns the bwo buttons below.*/}
+        <Box flex={1} />
+        <Box display="flex" alignItems="center">
+          {includeExportOpButton && exportOpButton}
+          {navigateButton}
         </Box>
-      );
-    }
-
-    if (currentNode.type === NodeType.FunctionOp) {
-      return (
-        <Box display="flex" flexDirection="row">
-          <Button
-            style={buttonStyle}
-            onClick={() => {
-              navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
-                }/operator/${currentNode.id}`
-              );
-            }}
-          >
-            View Operator Details
-          </Button>
-          {exportOpButton}
-        </Box>
-      );
-    }
-
-    if (currentNode.type === NodeType.CheckOp) {
-      return (
-        <Box display="flex" flexDirection="row">
-          <Button
-            style={buttonStyle}
-            onClick={() => {
-              navigate(
-                `${getPathPrefix()}/workflow/${workflowId}/result/${
-                  workflow.selectedResult.id
-                }/check/${currentNode.id}`
-              );
-            }}
-          >
-            View Check Details
-          </Button>
-          {exportOpButton}
-        </Box>
-      );
-    }
-
-    return null;
+      </Box>
+    );
   };
 
   const drawerHeaderHeightInPx = 64;
@@ -468,11 +454,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         sx={{
           boxSizing: 'border-box',
           display: 'flex',
-          // TODO: just create a state variable to reflect the open state of the drawer.
-          width:
-            currentNode.type === NodeType.None
-              ? '100%;'
-              : `calc(100% - ${SidesheetWidth});`,
+          width: !drawerIsOpen ? '100%;' : `calc(100% - ${SidesheetWidth});`,
           height: '100%',
           flexDirection: 'column',
           transition: WidthTransition,
@@ -526,11 +508,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Box>
 
           {/* These controls are automatically hidden when the side sheet is open. */}
-          <Box
-            width="100px"
-            ml={2}
-            display={currentNode.type !== NodeType.None ? 'none' : 'block'}
-          >
+          <Box width="100px" ml={2} display={drawerIsOpen ? 'none' : 'block'}>
             <Box
               display="flex"
               mb={2}
@@ -622,70 +600,67 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         />
       </Box>
 
-      {currentNode.type !== NodeType.None && (
-        <Drawer
-          anchor="right"
-          variant="persistent"
-          open={true}
-          PaperProps={{
-            sx: {
-              transition: 'width 200ms ease-in-out',
-              transitionDelay: '1000ms',
-            },
-          }}
+      <Drawer
+        anchor="right"
+        variant="persistent"
+        open={drawerIsOpen}
+        PaperProps={{
+          sx: {
+            transition: 'width 200ms ease-in-out',
+            transitionDelay: '1000ms',
+          },
+        }}
+      >
+        <Box
+          width={SidesheetWidth}
+          maxWidth={SidesheetWidth}
+          minHeight="100vh"
+          display="flex"
+          flexDirection="column"
         >
           <Box
-            width={SidesheetWidth}
-            maxWidth={SidesheetWidth}
-            minHeight="100vh"
-            display="flex"
-            flexDirection="column"
+            width="100%"
+            sx={{ backgroundColor: theme.palette.gray['100'] }}
+            height={`${drawerHeaderHeightInPx}px`}
           >
-            <Box
-              width="100%"
-              sx={{ backgroundColor: theme.palette.gray['100'] }}
-              height={`${drawerHeaderHeightInPx}px`}
-            >
-              <Box display="flex">
-                <Box
-                  sx={{ cursor: 'pointer', m: 1, alignSelf: 'center' }}
-                  onClick={onPaneClicked}
-                >
-                  <FontAwesomeIcon icon={faChevronRight} />
-                </Box>
-                <Box maxWidth="400px">
-                  <Typography
-                    variant="h5"
-                    padding="16px"
-                    textOverflow="ellipsis"
-                    overflow="hidden"
-                    whiteSpace="nowrap"
-                  >
-                    {getNodeLabel()}
-                  </Typography>
-                </Box>
-                <Box sx={{ mx: 2, alignSelf: 'center' }}>
-                  {getNodeActionButton()}
-                </Box>
+            <Box display="flex">
+              <Box
+                sx={{ cursor: 'pointer', m: 1, alignSelf: 'center' }}
+                onClick={onPaneClicked}
+              >
+                <FontAwesomeIcon icon={faChevronRight} />
               </Box>
-            </Box>
-            <Box
-              sx={{
-                overflow: 'auto',
-                flexGrow: 1,
-                marginBottom: DefaultLayoutMargin,
-              }}
-            >
-              {getDataSideSheetContent(
-                user,
-                currentNode,
-                workflowId,
-                workflow.selectedResult.id
-              )}
+              <Box maxWidth="400px">
+                <Typography
+                  variant="h5"
+                  padding="16px"
+                  textOverflow="ellipsis"
+                  overflow="hidden"
+                  whiteSpace="nowrap"
+                >
+                  {getNodeLabel()}
+                </Typography>
+              </Box>
+
+              {getNodeActionButton()}
             </Box>
           </Box>
-        </Drawer>
-      )}
+          <Box
+            sx={{
+              overflow: 'auto',
+              flexGrow: 1,
+              marginBottom: DefaultLayoutMargin,
+            }}
+          >
+            {getDataSideSheetContent(
+              user,
+              currentNode,
+              workflowId,
+              workflow.selectedResult.id
+            )}
+          </Box>
+        </Box>
+      </Drawer>
     </Layout>
   );
 };

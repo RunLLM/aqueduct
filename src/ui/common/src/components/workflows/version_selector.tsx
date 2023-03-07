@@ -115,7 +115,6 @@ export const VersionSelector: React.FC = () => {
             backgroundColor: theme.palette.gray[50],
           },
           p: 1,
-          pr: 1,
           borderRadius: '4px',
           fontSize: '16px',
           display: 'flex',

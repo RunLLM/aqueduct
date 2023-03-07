@@ -133,14 +133,6 @@ import notifications, {
   handleFetchNotifications,
   notificationsSlice,
 } from './reducers/notifications';
-import openSideSheet, {
-  openSideSheetSlice,
-  setAllSideSheetState,
-  setBottomSideSheetOpenState,
-  setLeftSideSheetOpenState,
-  setRightSideSheetOpenState,
-  setWorkflowStatusBarOpenState,
-} from './reducers/openSideSheet';
 import workflow, {
   handleGetArtifactResults,
   handleGetOperatorResults,
@@ -333,8 +325,6 @@ export {
   NotificationStatus,
   NumericArtifactNode,
   objectKeyFn,
-  openSideSheet,
-  openSideSheetSlice,
   OperatorDetailsPage,
   OperatorExecStateTableType,
   OperatorType,
@@ -357,17 +347,6 @@ export {
   selectResultIdx,
   ServiceLogos,
   ServiceType,
-  // TODO: Refactor to remove sidesheet state
-  setAllSideSheetState,
-  // TODO: Refactor to remove sidesheet state
-  setBottomSideSheetOpenState,
-  // TODO: Refactor to remove sidesheet state
-  setLeftSideSheetOpenState,
-  // TODO: Refactor to remove sidesheet state
-  setRightSideSheetOpenState,
-  // TODO: Refactor to remove sidesheet state
-  setWorkflowStatusBarOpenState,
-  // TODO: Refactor to remove sidesheet state
   sideSheetSwitcher,
   SlackCard,
   SlackDialog,
