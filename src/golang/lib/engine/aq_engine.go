@@ -656,7 +656,7 @@ func (eng *aqEngine) DeleteWorkflow(
 	// Delete storage files (artifact content and function files)
 	storagePaths := make([]string, 0, len(operatorIDs)+len(artifactResultIDs))
 	for _, op := range operatorsToDelete {
-		if op.Spec.IsFunction() || op.Spec.IsMetric() || op.Spec.IsCheck() {
+		if op.Spec.HasFunction() {
 			storagePaths = append(storagePaths, op.Spec.Function().StoragePath)
 		}
 	}
