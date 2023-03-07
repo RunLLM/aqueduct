@@ -546,7 +546,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                     // to an *earlier* run.
                     dispatch(selectResultIdx(selectedResultIdx + 1));
                     navigate(
-                      `?workflowDagResultId=${workflow.dagResults[selectedResultIdx + 1].id
+                      `?workflowDagResultId=${
+                        workflow.dagResults[selectedResultIdx + 1].id
                       }`
                     );
                   }}
@@ -567,7 +568,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                     // to a *newer* run.
                     dispatch(selectResultIdx(selectedResultIdx - 1));
                     navigate(
-                      `?workflowDagResultId=${workflow.dagResults[selectedResultIdx - 1].id
+                      `?workflowDagResultId=${
+                        workflow.dagResults[selectedResultIdx - 1].id
                       }`
                     );
                   }}
