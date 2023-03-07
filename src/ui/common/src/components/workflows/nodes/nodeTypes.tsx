@@ -1,5 +1,6 @@
 import { ArtifactType } from '../../../utils/artifacts';
 import { OperatorType } from '../../../utils/operators';
+import ExecutionStatus from '../../../utils/shared';
 import BoolArtifactNode, { boolArtifactNodeIcon } from './BoolArtifactNode';
 import CheckOperatorNode from './CheckOperatorNode';
 import { checkOperatorNodeIcon } from './CheckOperatorNode';
@@ -67,6 +68,40 @@ export const nodeTypeToStringLabel = {
   paramOp: 'Parameter',
 };
 
+export const artifactNodeStatusLabels = {
+  [ExecutionStatus.Succeeded]: 'Created',
+  [ExecutionStatus.Failed]: 'Failed',
+  [ExecutionStatus.Pending]: 'Pending',
+  [ExecutionStatus.Canceled]: 'Canceled',
+  [ExecutionStatus.Registered]: 'Registered',
+  [ExecutionStatus.Running]: 'Running',
+  [ExecutionStatus.Warning]: 'Warning',
+  [ExecutionStatus.Unknown]: 'Unknown',
+};
+
+export const operatorNodeStatusLabels = {
+  [ExecutionStatus.Succeeded]: 'Succeeded',
+  [ExecutionStatus.Failed]: 'Errored',
+  [ExecutionStatus.Pending]: 'Pending',
+  [ExecutionStatus.Canceled]: 'Canceled',
+  [ExecutionStatus.Registered]: 'Registered',
+  [ExecutionStatus.Running]: 'Running',
+  [ExecutionStatus.Warning]: 'Warning',
+  [ExecutionStatus.Unknown]: 'Unknown',
+};
+
+export const metricNodeStatusLabels = operatorNodeStatusLabels;
+
+export const checkNodeStatusLabels = {
+  [ExecutionStatus.Succeeded]: 'Passed',
+  [ExecutionStatus.Failed]: 'Failed',
+  [ExecutionStatus.Pending]: 'Pending',
+  [ExecutionStatus.Canceled]: 'Canceled',
+  [ExecutionStatus.Registered]: 'Registered',
+  [ExecutionStatus.Running]: 'Running',
+  [ExecutionStatus.Warning]: 'Warning',
+  [ExecutionStatus.Unknown]: 'Unknown',
+};
 export const artifactTypeToIconMapping = {
   [ArtifactType.String]: stringArtifactNodeIcon,
   [ArtifactType.Bool]: boolArtifactNodeIcon,
