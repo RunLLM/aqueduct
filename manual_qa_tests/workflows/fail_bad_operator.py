@@ -2,9 +2,12 @@ import aqueduct as aq
 
 NAME = "fail_bad_op"
 DESCRIPTION = """* Workflows Page: should fail.
-* Workflow Details Page: everything except `bad_check` artifact should succeed.
- `bad_check` artifact should fail.
-    * Workflow Status Bar: 2 error, 0 warning, 0 info, 4 success."""
+* Workflow Details Page:
+    * Everything before `bad_op` should succeed.
+    * `bad_op` and `bad_op artifact` should fail.
+    * Everything after `bad_op artifact` should be canceled.
+    * Metric and check details should show a list of canceled history, but not a plot.
+"""
 
 
 @aq.metric(requirements=[])

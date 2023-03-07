@@ -22,7 +22,7 @@ To run with more flexibility, configure the following commandline flags:
     * There should be **5** workflows. **4** Succeeded and **1** Failed if using `--example-notebooks`
     * There should be **4** workflows. **3** Succeeded and **1** Failed if **not** using `--example-notebooks`
 * **Notifications**: There should be **1** notification for failed workflow.
-* **Workflow Details** Page: Each page should reflect the **workflow description**. Pay extra attention to **Workflow Status Bar** and any noted **sidesheets** in the description.
+* **Workflow Details** Page: Each page should reflect the **workflow description**. Pay attention to any noted **sidesheets** behaviors in the description.
 * **Integration** Page:
     * There should be **11** *Data* integrations, **5** *Compute* integrations, and **2** *Notifications* integrations.
     * If you are not using additional integration, `aqueduct_demo` should be the only available one.
