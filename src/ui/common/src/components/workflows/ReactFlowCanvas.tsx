@@ -1,9 +1,5 @@
 import React from 'react';
-import ReactFlow, {
-  Controls,
-  MiniMap,
-  Node as ReactFlowNode,
-} from 'react-flow-renderer';
+import ReactFlow, { Node as ReactFlowNode } from 'react-flow-renderer';
 import { useSelector } from 'react-redux';
 
 import { RootState } from '../../stores/store';
@@ -62,10 +58,7 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
         reactFlowInstance.setViewport({ x: 50, y: 50, zoom: 0.7 });
       }}
       minZoom={0.2}
-    >
-      <MiniMap />
-      <Controls />
-    </ReactFlow>
+    />
   );
 };
 
