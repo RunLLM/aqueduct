@@ -5,6 +5,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
@@ -67,8 +68,16 @@ type operatorReader interface {
 	// GetRelationBatch returns an OperatorRelation for each Operator in IDs.
 	GetRelationBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]views.OperatorRelation, error)
 
-	// GetWithExecEnv returns all Operators that have a non-NULL ExecutionEnvironmentID.
-	GetWithExecEnv(ctx context.Context, DB database.Database) ([]models.Operator, error)
+	// GetByEngineType returns all Operators that uses the given engine type.
+	GetByEngineType(ctx context.Context, engineType shared.EngineType, DB database.Database) ([]models.Operator, error)
+
+	// GetUnusedCondaEnvNames returns all inactive conda env IDs captured in `engine_config`,
+	// if the engine type is AqueductConda.
+	GetUnusedCondaEnvNames(ctx context.Context, DB database.Database) ([]string, error)
+
+	// GetByEngineIntegrationID returns all operators executing on the given engine ID.
+	// This includes all operators with engine_config field to be this ID,
+	GetByEngineIntegrationID(ctx context.Context, integrationID uuid.UUID, DB database.Database) ([]models.Operator, error) // or those who inherit workflow's engine_config that uses this ID.
 
 	// ValidateOrg returns whether the Operator was created by the specified organization.
 	ValidateOrg(ctx context.Context, ID uuid.UUID, orgID string, DB database.Database) (bool, error)

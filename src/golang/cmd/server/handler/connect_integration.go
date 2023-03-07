@@ -21,6 +21,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -350,6 +351,24 @@ func ConnectIntegration(
 		}()
 	}
 
+	if args.Service == shared.Lambda {
+		go func() {
+			DB, err = database.NewDatabase(DB.Config())
+			if err != nil {
+				log.Errorf("Error creating DB in go routine: %v", err)
+				return
+			}
+
+			lambda_utils.ConnectToLambda(
+				context.Background(),
+				args.Config,
+				integrationObject.ID,
+				integrationRepo,
+				DB,
+			)
+		}()
+	}
+
 	return http.StatusOK, nil
 }
 
@@ -376,9 +395,10 @@ func ValidateConfig(
 	}
 
 	if service == shared.Lambda {
-		// Lambda authentication is performed by creating Lambda jobs
-		// instead of the Python client, so we don't launch a job for it.
-		return validateLambdaConfig(ctx, config)
+		// Lambda authentication is performed in ConnectToLambda()
+		// by creating Lambda jobs instead of the Python client,
+		// so we don't launch a job for it.
+		return http.StatusOK, nil
 	}
 
 	if service == shared.Databricks {
@@ -667,17 +687,6 @@ func validateKubernetesConfig(
 	return http.StatusOK, nil
 }
 
-func validateLambdaConfig(
-	ctx context.Context,
-	config auth.Config,
-) (int, error) {
-	if err := engine.AuthenticateLambdaConfig(ctx, config); err != nil {
-		return http.StatusBadRequest, err
-	}
-
-	return http.StatusOK, nil
-}
-
 func validateDatabricksConfig(
 	ctx context.Context,
 	config auth.Config,
@@ -693,6 +702,7 @@ func validateSparkConfig(
 	ctx context.Context,
 	config auth.Config,
 ) (int, error) {
+	// Validate that we are able to connect to the Spark cluster via Livy.
 	if err := engine.AuthenticateSparkConfig(ctx, config); err != nil {
 		return http.StatusBadRequest, err
 	}

@@ -873,20 +873,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
   return (
     <>
-      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="h5">
-            {' '}
-            {/* We don't use the `name` state here because it will update when the user is mid-changes, which is awkward. */}
-            <span style={{ fontFamily: 'Monospace' }}>
-              {workflowDag.metadata?.name}
-            </span>{' '}
-            Settings{' '}
-          </Typography>
-        </Box>
-      </Box>
-
-      <Box sx={{ mb: 2 }}>
+      <Box sx={{ my: 2 }}>
         <Box sx={{ mb: 2 }}>
           <Typography sx={{ fontWeight: 'bold' }} component="span">
             ID:

@@ -3,8 +3,7 @@ import aqueduct as aq
 NAME = "fail_bad_check"
 DESCRIPTION = """* Workflows Page: should fail.
 * Workflow Details Page: everything except `bad_check` artifact should succeed.
- `bad_check` artifact should fail.
-    * Workflow Status Bar: 2 error, 0 warning, 0 info, 4 success."""
+ `bad_check` artifact should fail."""
 
 
 @aq.metric(requirements=[])

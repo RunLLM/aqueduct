@@ -381,6 +381,10 @@ func (bo *baseOperator) Cancel() {
 	})
 }
 
+func (bfo *baseOperator) FetchExecutionEnvironment(ctx context.Context) *exec_env.ExecutionEnvironment {
+	return bfo.execEnv
+}
+
 // Any operator that runs a python function serialized from storage should use this instead of baseOperator.
 type baseFunctionOperator struct {
 	baseOperator
@@ -441,7 +445,6 @@ func (bfo *baseFunctionOperator) jobSpec(
 		ExpectedOutputArtifactTypes: expectedOutputTypes,
 		OperatorType:                bfo.Type(),
 		CheckSeverity:               checkSeverity,
-		ExecEnv:                     bfo.execEnv,
 		Resources:                   bfo.dbOperator.Spec.Resources(),
 	}
 }
