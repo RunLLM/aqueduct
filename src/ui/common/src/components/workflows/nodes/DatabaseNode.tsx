@@ -3,6 +3,7 @@ import React, { memo } from 'react';
 
 import { ReactFlowNodeData } from '../../../utils/reactflow';
 import Node from './Node';
+import { operatorNodeStatusLabels } from './nodeTypes';
 
 type Props = {
   data: ReactFlowNodeData;
@@ -18,6 +19,7 @@ const DatabaseNode: React.FC<Props> = ({ data, isConnectable }) => {
       data={data}
       isConnectable={isConnectable}
       defaultLabel="Database"
+      statusLabels={operatorNodeStatusLabels}
     />
   );
 };
