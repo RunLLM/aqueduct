@@ -7,7 +7,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { faCircleDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Drawer, Tooltip } from '@mui/material';
+import { Alert, Drawer, Snackbar, Tooltip } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { parse } from 'query-string';
@@ -72,6 +72,10 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const [currentTab, setCurrentTab] = useState<string>('Details');
   const [showRunWorkflowDialog, setShowRunWorkflowDialog] = useState(false);
   const [selectedResultIdx, setSelectedResultIdx] = useState(0);
+
+  const [updateMessage, setUpdateMessage] = useState<string>('');
+  const [showUpdateMessage, setShowUpdateMessage] = useState<boolean>(false);
+  const [updateSucceeded, setUpdateSucceeded] = useState<boolean>(false);
 
   const currentNode = useSelector(
     (state: RootState) => state.nodeSelectionReducer.selected
@@ -502,6 +506,23 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 <WorkflowSettings
                   user={user}
                   workflowDag={workflow.selectedDag}
+                  onSettingsSave={() => {
+                    setShowUpdateMessage(true);
+                    // Show toast message for a few seconds and then update the current tab.
+                    setTimeout(() => {
+                      getDagResultDetails(true);
+                      setCurrentTab('Details');
+                    }, 3000);
+                  }}
+                  onSetShowUpdateMessage={(shouldShow) =>
+                    setShowUpdateMessage(shouldShow)
+                  }
+                  onSetUpdateSucceeded={(isSuccessful) =>
+                    setUpdateSucceeded(isSuccessful)
+                  }
+                  onSetUpdateMessage={(updateMessage) =>
+                    setUpdateMessage(updateMessage)
+                  }
                 />
               </Box>
             )}
@@ -525,8 +546,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                     // to an *earlier* run.
                     dispatch(selectResultIdx(selectedResultIdx + 1));
                     navigate(
-                      `?workflowDagResultId=${
-                        workflow.dagResults[selectedResultIdx + 1].id
+                      `?workflowDagResultId=${workflow.dagResults[selectedResultIdx + 1].id
                       }`
                     );
                   }}
@@ -547,8 +567,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                     // to a *newer* run.
                     dispatch(selectResultIdx(selectedResultIdx - 1));
                     navigate(
-                      `?workflowDagResultId=${
-                        workflow.dagResults[selectedResultIdx - 1].id
+                      `?workflowDagResultId=${workflow.dagResults[selectedResultIdx - 1].id
                       }`
                     );
                   }}
@@ -661,6 +680,22 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Box>
         </Box>
       </Drawer>
+
+      <Snackbar
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        open={showUpdateMessage}
+        onClose={() => setShowUpdateMessage(false)}
+        key={'settingsupdate-snackbar'}
+        autoHideDuration={3000}
+      >
+        <Alert
+          onClose={() => setShowUpdateMessage(false)}
+          severity={updateSucceeded ? 'success' : 'error'}
+          sx={{ width: '100%' }}
+        >
+          {updateMessage}
+        </Alert>
+      </Snackbar>
     </Layout>
   );
 };

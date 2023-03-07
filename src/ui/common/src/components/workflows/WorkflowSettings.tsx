@@ -228,6 +228,10 @@ const RetentionPolicySelector: React.FC<RetentionPolicyProps> = ({
 type WorkflowSettingsProps = {
   user: UserProfile;
   workflowDag: WorkflowDag;
+  onSettingsSave: () => void;
+  onSetShowUpdateMessage: (shouldShow: boolean) => void;
+  onSetUpdateSucceeded: (isSuccessful: boolean) => void;
+  onSetUpdateMessage: (updateMessage: string) => void;
 };
 
 // Returns whether `updated` is different from `existing`.
@@ -255,6 +259,10 @@ function IsNotificationSettingsMapUpdated(
 const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   user,
   workflowDag,
+  onSettingsSave,
+  onSetShowUpdateMessage,
+  onSetUpdateSucceeded,
+  onSetUpdateMessage,
 }) => {
   const { apiAddress } = useAqueductConsts();
   const navigate = useNavigate();
@@ -459,9 +467,6 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   // State that controls the Snackbar for an attempted workflow settings
   // update.
   const [isUpdating, setIsUpdating] = useState<boolean>(false);
-  const [updateMessage, setUpdateMessage] = useState<string>('');
-  const [showUpdateMessage, setShowUpdateMessage] = useState<boolean>(false);
-  const [updateSucceeded, setUpdateSucceeded] = useState<boolean>(false);
   const [deleteSucceeded, setDeleteSucceeded] = useState<boolean>(false);
 
   const savedObjectsDeletionResponse = useSelector(
@@ -544,19 +549,21 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       body: JSON.stringify(changes),
     }).then((res) => {
       res.json().then((body) => {
-        setIsUpdating(false);
         if (res.ok) {
-          setUpdateSucceeded(true);
-          setUpdateMessage('Sucessfully updated your workflow.');
-          location.reload(); // Refresh the page to reflect the updated settings.
+          onSetUpdateSucceeded(true);
+          onSetUpdateMessage('Sucessfully updated your workflow.');
+          //location.reload(); // Refresh the page to reflect the updated settings.
         } else {
-          setUpdateSucceeded(false);
-          setUpdateMessage(
+          onSetUpdateSucceeded(false);
+          onSetUpdateMessage(
             `There was an unexpected error while updating your workflow: ${body.error}`
           );
         }
 
-        setShowUpdateMessage(true);
+        onSetShowUpdateMessage(true);
+        if (onSettingsSave) {
+          onSettingsSave();
+        }
       });
     });
   };
@@ -1011,22 +1018,6 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           sx={{ width: '100%' }}
         >
           {deleteMessage}
-        </Alert>
-      </Snackbar>
-
-      <Snackbar
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        open={showUpdateMessage}
-        onClose={() => setShowUpdateMessage(false)}
-        key={'settingsupdate-snackbar'}
-        autoHideDuration={6000}
-      >
-        <Alert
-          onClose={() => setShowUpdateMessage(false)}
-          severity={updateSucceeded ? 'success' : 'error'}
-          sx={{ width: '100%' }}
-        >
-          {updateMessage}
         </Alert>
       </Snackbar>
     </>
