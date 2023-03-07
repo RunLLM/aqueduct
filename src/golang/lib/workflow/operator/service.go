@@ -33,7 +33,7 @@ func GetOperatorsOnIntegration(
 
 	// Other eligible cases
 	if integrationObject.Service == shared.Conda {
-		return operatorRepo.GetWithExecEnv(ctx, DB)
+		return operatorRepo.GetByEngineType(ctx, shared.AqueductCondaEngineType, DB)
 	}
 
 	// This feature is not supported for the given service.
