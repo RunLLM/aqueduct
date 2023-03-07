@@ -510,11 +510,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
           {/* These controls are automatically hidden when the side sheet is open. */}
           {/* Tooltips don't show up if the child is disabled so we wrap the button with a Box.  */}
-          <Box
-            width="100px"
-            ml={2}
-            display={drawerIsOpen ? 'none' : 'block'}
-          >
+          <Box width="100px" ml={2} display={drawerIsOpen ? 'none' : 'block'}>
             <Box
               display="flex"
               mb={2}
@@ -549,7 +545,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
               <Tooltip title="Next Run" arrow>
                 <Box sx={{ px: 0, flex: 1 }}>
                   <Button
-                    sx={{ fontSize: '28px'}}
+                    sx={{ fontSize: '28px' }}
                     variant="text"
                     onClick={() => {
                       // This might be confusing, but index 0 is the most recent run, so decrementing the index goes

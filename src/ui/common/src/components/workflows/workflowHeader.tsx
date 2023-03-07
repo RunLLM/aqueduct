@@ -9,7 +9,7 @@ import Box from '@mui/material/Box';
 import React, { useLayoutEffect, useState } from 'react';
 import Markdown from 'react-markdown';
 import { useSelector } from 'react-redux';
-import { visitParents } from "unist-util-visit-parents";
+import { visitParents } from 'unist-util-visit-parents';
 
 import { RootState } from '../../stores/store';
 import style from '../../styles/markdown.module.css';
@@ -86,20 +86,20 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
     </Box>
   );
 
-/**
-* Wrap text in a `custom-typography` tag
-*/
-function rehypeWrapText() {
-  return function wrapTextTransform(tree) {
-    visitParents(tree, "text", (node, ancestors) => {
-      if (ancestors.at(-1).tagName !== "custom-typography") {
-        node.type = "element";
-        node.tagName = "custom-typography";
-        node.children = [{ type: "text", value: node.value }];
-      }
-    });
-  };
-}
+  /**
+   * Wrap text in a `custom-typography` tag
+   */
+  function rehypeWrapText() {
+    return function wrapTextTransform(tree) {
+      visitParents(tree, 'text', (node, ancestors) => {
+        if (ancestors.at(-1).tagName !== 'custom-typography') {
+          node.type = 'element';
+          node.tagName = 'custom-typography';
+          node.children = [{ type: 'text', value: node.value }];
+        }
+      });
+    };
+  }
 
   return (
     <Box>
@@ -195,14 +195,15 @@ function rehypeWrapText() {
             borderRadius: '4px',
           }}
         >
-          <Markdown className={style.reactMarkdown} rehypePlugins={[rehypeWrapText]}
+          <Markdown
+            className={style.reactMarkdown}
+            rehypePlugins={[rehypeWrapText]}
             components={{
-              "custom-typography": ({ children }) => (
-                <Typography variant="body1">
-                {children}
-              </Typography>
-              )
-            }} >
+              'custom-typography': ({ children }) => (
+                <Typography variant="body1">{children}</Typography>
+              ),
+            }}
+          >
             {description ?? '*No description.*'}
           </Markdown>
         </Box>
