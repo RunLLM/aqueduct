@@ -5,7 +5,6 @@ import aqueduct as aq
 NAME = "succeed_parameters"
 DESCRIPTION = """* Workflows Page: should succeed.
 * Workflow Details Page: everything should be green.
-    * Workflow Status Bar: 0 error, 0 warning, 0 info, 6 success.
     * There should be 2 versions.
     * Click into `bound` parameters, the value of the later version should be 5.
     The value of the older version should be 10."""
