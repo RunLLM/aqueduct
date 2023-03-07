@@ -24,7 +24,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          python3 -m pip install mypy pydantic pymongo
+          python3 -m pip install mypy==1.0.0 pydantic pymongo
 
       - name: Install Type Stub Libraries
         run : |
