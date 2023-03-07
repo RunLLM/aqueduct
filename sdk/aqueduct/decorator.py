@@ -368,9 +368,24 @@ def _convert_memory_string_to_mbs(memory_str: str) -> int:
     return multiplier * int(memory_scalar_str)
 
 
-def _update_operator_spec_with_engine_and_resource(
+def _update_operator_spec_with_engine(
     spec: OperatorSpec,
     engine: Optional[str] = None,
+) -> None:
+    if engine is not None:
+        if globals.__GLOBAL_API_CLIENT__ is None:
+            raise InvalidUserActionException(
+                "Aqueduct Client was not instantiated! Please create a client and retry."
+            )
+
+        spec.engine_config = generate_engine_config(
+            globals.__GLOBAL_API_CLIENT__.list_integrations(),
+            engine,
+        )
+
+
+def _update_operator_spec_with_resources(
+    spec: OperatorSpec,
     resources: Optional[Dict[str, Any]] = None,
 ) -> None:
     if resources is not None:
@@ -410,17 +425,6 @@ def _update_operator_spec_with_engine_and_resource(
 
         spec.resources = ResourceConfig(
             num_cpus=num_cpus, memory_mb=memory, gpu_resource_name=gpu_resource_name
-        )
-
-    if engine is not None:
-        if globals.__GLOBAL_API_CLIENT__ is None:
-            raise InvalidUserActionException(
-                "Aqueduct Client was not instantiated! Please create a client and retry."
-            )
-
-        spec.engine_config = generate_engine_config(
-            globals.__GLOBAL_API_CLIENT__.list_integrations(),
-            engine,
         )
 
 
@@ -564,7 +568,8 @@ def op(
                 function=function_spec,
             )
 
-            _update_operator_spec_with_engine_and_resource(op_spec, engine, resources)
+            _update_operator_spec_with_engine(op_spec, engine)
+            _update_operator_spec_with_resources(op_spec, resources)
 
             assert isinstance(num_outputs, int)
             return wrap_spec(
@@ -730,7 +735,8 @@ def metric(
 
             metric_spec = MetricSpec(function=function_spec)
             op_spec = OperatorSpec(metric=metric_spec)
-            _update_operator_spec_with_engine_and_resource(op_spec, engine, resources)
+            _update_operator_spec_with_engine(op_spec, engine)
+            _update_operator_spec_with_resources(op_spec, resources)
 
             output_names = [output] if output is not None else None
             numeric_artifact = wrap_spec(
@@ -911,7 +917,8 @@ def check(
             )
             check_spec = CheckSpec(level=severity, function=function_spec)
             op_spec = OperatorSpec(check=check_spec)
-            _update_operator_spec_with_engine_and_resource(op_spec, engine, resources)
+            _update_operator_spec_with_engine(op_spec, engine)
+            _update_operator_spec_with_resources(op_spec, resources)
 
             output_names = [output] if output is not None else None
             bool_artifact = wrap_spec(
