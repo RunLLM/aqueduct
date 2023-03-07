@@ -288,9 +288,9 @@ func (*operatorReader) GetByEngineIntegrationID(
 	integrationID uuid.UUID,
 	DB database.Database,
 ) ([]models.Operator, error) {
-	workflow_condition_fragments := make([]string, 0, len(shared.ServiceToEngineConfigIntegrationIDField))
-	operator_condition_fragments := make([]string, 0, len(shared.ServiceToEngineConfigIntegrationIDField))
-	for _, field := range shared.ServiceToEngineConfigIntegrationIDField {
+	workflow_condition_fragments := make([]string, 0, len(shared.ServiceToEngineConfigField))
+	operator_condition_fragments := make([]string, 0, len(shared.ServiceToEngineConfigField))
+	for _, field := range shared.ServiceToEngineConfigField {
 		workflow_condition_fragments = append(
 			workflow_condition_fragments,
 			fmt.Sprintf(

@@ -63,14 +63,14 @@ var computeIntegrations map[Service]bool = map[Service]bool{
 	Spark:      true,
 }
 
-// ServiceToEngineConfigIntegrationIDField contains
+// ServiceToEngineConfigField contains
 // all services with `integration_id` in its 'engine_config' field.
 // This is used in SQL queries to retrieve engine configs (workflow or operator)
 // based on integration ID.
 //
 // The key should be the service type, and value should be the json tag
 // for the corresponding field that contains the integration ID.
-var ServiceToEngineConfigIntegrationIDField map[Service]string = map[Service]string{
+var ServiceToEngineConfigField map[Service]string = map[Service]string{
 	Lambda:     "lambda_config",
 	Airflow:    "airflow_config",
 	Kubernetes: "k8s_config",

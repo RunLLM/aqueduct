@@ -27,7 +27,7 @@ func GetOperatorsOnIntegration(
 		return operatorRepo.GetExtractAndLoadOPsByIntegration(ctx, integrationID, DB)
 	}
 
-	if _, ok := shared.ServiceToEngineConfigIntegrationIDField[integrationObject.Service]; ok {
+	if _, ok := shared.ServiceToEngineConfigField[integrationObject.Service]; ok {
 		return operatorRepo.GetByEngineIntegrationID(ctx, integrationID, DB)
 	}
 
