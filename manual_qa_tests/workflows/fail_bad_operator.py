@@ -4,8 +4,8 @@ NAME = "fail_bad_op"
 DESCRIPTION = """* Workflows Page: should fail.
 * Workflow Details Page:
     * Everything before `bad_op` should succeed.
-    * `bad_op` and `bad_op artifact` should fail.
-    * Everything after `bad_op artifact` should be canceled.
+    * `bad_op` should fail.
+    * Everything after `bad_op` should be canceled.
     * Metric and check details should show a list of canceled history, but not a plot.
 """
 
