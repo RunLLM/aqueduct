@@ -5,6 +5,7 @@ import {
   faClockFour,
   faListOl,
   faSpinner,
+  faTriangleExclamation,
   faX,
 } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -15,73 +16,49 @@ import React from 'react';
 import { theme } from '../../styles/theme/theme';
 import ExecutionStatus from '../../utils/shared';
 
-type Props = {
-  /**
-   * Execution status to render.
-   */
-  status: ExecutionStatus;
-};
-
 export const getExecutionStatusColor = (status: ExecutionStatus): string => {
-  let backgroundColor = theme.palette.Primary;
   switch (status) {
     case ExecutionStatus.Canceled:
-      backgroundColor = theme.palette.Default;
-      break;
+      return theme.palette.Default;
     case ExecutionStatus.Failed:
-      backgroundColor = theme.palette.Error;
-      break;
+      return theme.palette.Error;
     case ExecutionStatus.Pending:
-      backgroundColor = theme.palette.Info;
-      break;
+      return theme.palette.Info;
     case ExecutionStatus.Registered:
-      backgroundColor = theme.palette.Default;
-      break;
+      return theme.palette.Default;
     case ExecutionStatus.Running:
-      backgroundColor = theme.palette.Running;
-      break;
+      return theme.palette.Running;
     case ExecutionStatus.Succeeded:
-      backgroundColor = theme.palette.Success;
-      break;
+      return theme.palette.Success;
+    case ExecutionStatus.Warning:
+      return theme.palette.Warning;
     case ExecutionStatus.Unknown:
     default:
-      backgroundColor = theme.palette.Default;
-      break;
+      return theme.palette.Default;
   }
-
-  return backgroundColor;
 };
 
 export const getExecutionStatusLabel = (status: ExecutionStatus): string => {
-  let labelText = 'Succeeded';
   switch (status) {
     case ExecutionStatus.Canceled:
-      labelText = 'Canceled';
-      break;
+      return 'Canceled';
     case ExecutionStatus.Failed:
-      labelText = 'Failed';
-      break;
+      return 'Failed';
     case ExecutionStatus.Pending:
-      labelText = 'Pending';
-      break;
+      return 'Pending';
     case ExecutionStatus.Registered:
-      labelText = 'Registered';
-      break;
+      return 'Registered';
     case ExecutionStatus.Running:
-      labelText = 'Running';
-      break;
+      return 'Running';
     case ExecutionStatus.Succeeded:
-      labelText = 'Succeeded';
-      break;
+      return 'Succeeded';
+    case ExecutionStatus.Warning:
+      return 'Warning';
     case ExecutionStatus.Unknown:
-      labelText = 'Unknown';
-      break;
+      return 'Unknown';
     default:
-      labelText = 'Unknown';
-      break;
+      return 'Unknown';
   }
-
-  return labelText;
 };
 
 type IndicatorProps = {
@@ -101,6 +78,10 @@ type IndicatorProps = {
    * Text to show in tooltip. by default, the execution status is shown.
    */
   tooltipText?: string;
+  /**
+   * If false, no tooltip will be shown. By default, this is true.
+   */
+  includeTooltip?: boolean;
 };
 
 /**
@@ -111,160 +92,79 @@ export const StatusIndicator: React.FC<IndicatorProps> = ({
   size = '20px',
   monochrome = false,
   tooltipText,
+  includeTooltip = true,
 }) => {
-  const getIcon = (status: ExecutionStatus) => {
-    let indicator = null;
-    switch (status) {
-      case ExecutionStatus.Running:
-        indicator = (
-          <Box
-            sx={{
-              width: '100%',
-              height: '100%',
-              fontSize: size,
-              display: 'flex',
-              alignSelf: 'center',
-            }}
-          >
-            <FontAwesomeIcon
-              icon={faSpinner}
-              color={monochrome ? monochrome : 'black'}
-            />
-          </Box>
-        );
-        break;
+  let icon;
+  let spin = false; // Whether or not to spin the icon; this is only used for the running & pending states.
+  switch (status) {
+    case ExecutionStatus.Running:
+      icon = faSpinner;
+      spin = true;
+      break;
 
-      case ExecutionStatus.Canceled:
-        indicator = (
-          <Box
-            sx={{
-              width: '100%',
-              height: '100%',
-              fontSize: size,
-              display: 'flex',
-              alignSelf: 'center',
-            }}
-          >
-            <FontAwesomeIcon
-              icon={faX}
-              color={monochrome ? monochrome : getExecutionStatusColor(status)}
-            />
-          </Box>
-        );
-        break;
-      case ExecutionStatus.Pending:
-        indicator = (
-          <Box
-            sx={{
-              width: '100%',
-              height: '100%',
-              fontSize: size,
-              display: 'flex',
-              alignSelf: 'center',
-            }}
-          >
-            <FontAwesomeIcon
-              icon={faClockFour}
-              color={monochrome ? monochrome : getExecutionStatusColor(status)}
-            />
-          </Box>
-        );
-        break;
+    case ExecutionStatus.Canceled:
+      icon = faX;
+      break;
 
-      case ExecutionStatus.Registered:
-        indicator = (
-          <Box
-            sx={{
-              width: '100%',
-              height: '100%',
-              fontSize: size,
-              display: 'flex',
-              alignSelf: 'center',
-            }}
-          >
-            <FontAwesomeIcon
-              icon={faListOl}
-              color={monochrome ? monochrome : getExecutionStatusColor(status)}
-            />
-          </Box>
-        );
-        break;
+    case ExecutionStatus.Pending:
+      icon = faSpinner;
+      spin = true;
+      break;
 
-      case ExecutionStatus.Succeeded:
-        indicator = (
-          <Box
-            sx={{
-              width: '100%',
-              height: '100%',
-              fontSize: size,
-              display: 'flex',
-              alignSelf: 'center',
-            }}
-          >
-            <FontAwesomeIcon
-              icon={faCircleCheck}
-              color={monochrome ? monochrome : getExecutionStatusColor(status)}
-            />
-          </Box>
-        );
-        break;
+    case ExecutionStatus.Registered:
+      icon = faListOl;
+      break;
 
-      case ExecutionStatus.Unknown:
-        indicator = (
-          <Box
-            sx={{
-              width: '100%',
-              height: '100%',
-              fontSize: size,
-              display: 'flex',
-              alignSelf: 'center',
-            }}
-          >
-            <FontAwesomeIcon
-              icon={faCircleQuestion}
-              color={monochrome ? monochrome : getExecutionStatusColor(status)}
-            />
-          </Box>
-        );
-        break;
+    case ExecutionStatus.Succeeded:
+      icon = faCircleCheck;
+      break;
 
-      case ExecutionStatus.Failed:
-        indicator = (
-          <Box
-            sx={{
-              width: '100%',
-              height: '100%',
-              fontSize: size,
-              display: 'flex',
-              alignSelf: 'center',
-            }}
-          >
-            <FontAwesomeIcon
-              icon={faCircleExclamation}
-              color={monochrome ? monochrome : getExecutionStatusColor(status)}
-            />
-          </Box>
-        );
-        break;
+    case ExecutionStatus.Unknown:
+      icon = faCircleQuestion;
+      break;
 
-      default:
-        // No icon, just show a color
-        indicator = (
-          <Box
-            sx={{
-              height: '100%',
-              width: '100%',
-              fontSize: size,
-              backgroundColor: getExecutionStatusColor(status),
-              borderRadius: 999,
-            }}
-          />
-        );
-        break;
-    }
+    case ExecutionStatus.Failed:
+      icon = faCircleExclamation;
+      break;
 
-    return indicator;
-  };
+    case ExecutionStatus.Warning:
+      icon = faTriangleExclamation;
+
+    default:
+      return null; // This can never happen.
+  }
+
+  const iconElement = (
+    <Box
+      sx={{
+        width: size,
+        height: size,
+        alignItems: 'center',
+        alignSelf: 'center',
+      }}
+    >
+      <Box
+        sx={{
+          width: '100%',
+          height: '100%',
+          fontSize: size,
+          display: 'flex',
+          alignSelf: 'center',
+        }}
+      >
+        <FontAwesomeIcon
+          icon={icon}
+          spin={spin}
+          color={monochrome ? theme.palette.DarkContrast : getExecutionStatusColor(status)}
+        />
+      </Box>
+    </Box>
+  )
+
+
+  if (!includeTooltip) {
+    return iconElement;
+  }
 
   const tooltipTitle = tooltipText || getExecutionStatusLabel(status);
 
@@ -274,16 +174,7 @@ export const StatusIndicator: React.FC<IndicatorProps> = ({
       placement={tooltipText ? 'top' : 'bottom'}
       arrow
     >
-      <Box
-        sx={{
-          width: size,
-          height: size,
-          alignItems: 'center',
-          alignSelf: 'center',
-        }}
-      >
-        {getIcon(status)}
-      </Box>
+      {iconElement}
     </Tooltip>
   );
 };

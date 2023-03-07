@@ -15,6 +15,8 @@ import { ReactFlowNodeData } from '../../../utils/reactflow';
 import ExecutionStatus, { ExecState, FailureType } from '../../../utils/shared';
 import { BaseNode } from './BaseNode.styles';
 import { NodeStatusIconography } from './NodeStatusIconography';
+import { metricNodeStatusLabels } from './nodeTypes';
+import Node from './Node';
 
 type Props = {
   data: ReactFlowNodeData;
@@ -37,6 +39,17 @@ export const parseMetricResult = (
 };
 
 const MetricOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
+  return (
+    <Node
+      icon={metricOperatorNodeIcon}
+      data={data}
+      isConnectable={isConnectable}
+      defaultLabel="Metric"
+      preview={parseMetricResult(data.result, 3)}
+      statusLabels={metricNodeStatusLabels}
+    />
+  );
+
   const defaultLabel = 'Metric';
   const label = data.label ? data.label : defaultLabel;
   const currentNode = useSelector(

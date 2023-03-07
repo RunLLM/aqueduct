@@ -9,10 +9,11 @@ const BaseNode = styled(Box)({
   borderRadius: '8px',
   borderStyle: 'solid',
   borderWidth: '2px',
-  width: '310px',
-  height: '160px',
-  maxWidth: '310px',
-  maxHeight: '160px',
+  width: '400px',
+  height: '120px',
+  maxWidth: '400px',
+  maxHeight: '120px',
+  textOverflow: 'ellipsis',
 });
 
 export { BaseNode };

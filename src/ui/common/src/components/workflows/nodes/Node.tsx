@@ -2,6 +2,7 @@ import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import { fontWeight } from '@mui/system';
 import React from 'react';
 import { Handle, Position } from 'react-flow-renderer';
 import { useSelector } from 'react-redux';
@@ -10,6 +11,7 @@ import { RootState } from '../../../stores/store';
 import { theme } from '../../../styles/theme/theme';
 import { ReactFlowNodeData, ReactflowNodeType } from '../../../utils/reactflow';
 import ExecutionStatus, { ExecState, FailureType } from '../../../utils/shared';
+import { StatusIndicator } from '../workflowStatus';
 import { BaseNode } from './BaseNode.styles';
 
 type Props = {
@@ -17,13 +19,22 @@ type Props = {
   defaultLabel: string;
   isConnectable: boolean;
   icon?: IconDefinition;
+  statusLabels: { [key: string]: string };
+  // The preview is only shown if the status of this node is succeeded. 
+  // If it is, then we replace the label with the preview. If the preview
+  // is null or the status is not succeeded, then we show the regular label.
+  preview?: string;
 };
+
+const iconFontSize = '32px';
 
 export const Node: React.FC<Props> = ({
   data,
   defaultLabel,
   isConnectable,
   icon,
+  statusLabels,
+  preview = null,
 }) => {
   const label = data.label ? data.label : defaultLabel;
   const currentNode = useSelector(
@@ -41,74 +52,101 @@ export const Node: React.FC<Props> = ({
     execState = workflowState.artifactResults[data.nodeId]?.result?.exec_state;
   }
 
+  if (!execState || !execState.status) {
+    return null;
+  }
+
   const textColor = selected
     ? theme.palette.DarkContrast50
     : theme.palette.DarkContrast;
   const borderColor = textColor;
 
-  let backgroundColor, hoverColor;
-  if (execState?.status === ExecutionStatus.Succeeded) {
-    backgroundColor = selected
-      ? theme.palette.DarkSuccessMain50
-      : theme.palette.DarkSuccessMain;
-    hoverColor = theme.palette.DarkSuccessMain75;
+  let status = execState?.status;
+  if (execState?.status === ExecutionStatus.Failed && execState.failure_type == FailureType.UserNonFatal) {
+    status = ExecutionStatus.Warning;
+  }
 
-    // Warning color for non-fatal errors.
+  let backgroundColor;
+  if (execState?.status === ExecutionStatus.Succeeded) {
+    backgroundColor = theme.palette.green[100];
   } else if (
     execState?.status === ExecutionStatus.Failed &&
     execState.failure_type == FailureType.UserNonFatal
   ) {
-    backgroundColor = selected
-      ? theme.palette.DarkWarningMain50
-      : theme.palette.DarkWarningMain;
-    hoverColor = theme.palette.DarkWarningMain75;
+    backgroundColor = theme.palette.orange[100];
   } else if (execState?.status === ExecutionStatus.Failed) {
-    backgroundColor = selected
-      ? theme.palette.DarkErrorMain50
-      : theme.palette.DarkErrorMain;
-    hoverColor = theme.palette.DarkErrorMain75;
+    backgroundColor = theme.palette.red[100];
   } else if (execState?.status === ExecutionStatus.Canceled) {
-    backgroundColor = selected ? 'gray.700' : 'gray.500';
-    hoverColor = 'gray.600';
+    backgroundColor = theme.palette.gray[200];
   } else if (execState?.status === ExecutionStatus.Pending) {
-    backgroundColor = selected ? 'blue.300' : 'blue.100';
-    hoverColor = 'blue.200';
+    backgroundColor = theme.palette.gray[200];
   }
+  
+  let statusIndicatorComponent = (
+    <Box 
+      sx={{ 
+        display: 'flex',
+        alignItems: 'center',
+        backgroundColor: backgroundColor,
+        borderBottomRightRadius: '8px',
+        borderBottomLeftRadius: '8px',
+      }}
+      flex={1} 
+      height="50%"
+      width="100%"
+    >
+      <Box ml={1}>
+        <StatusIndicator status={status} size={iconFontSize} includeTooltip={false} />
+      </Box>
 
+      <Typography ml={1} textTransform="capitalize" fontSize="28px">
+        {preview ?? statusLabels[status]}
+      </Typography>
+    </Box>
+  );
   return (
     <BaseNode
       sx={{
-        backgroundColor,
         color: textColor,
         borderColor: borderColor,
-        '&:hover': { backgroundColor: hoverColor },
       }}
     >
-      <Box
-        display="flex"
-        justifyContent="center"
-        alignItems="center"
-        sx={{ width: '100%' }}
-      >
-        {icon && (
-          <Box sx={{ fontSize: '32px', ml: '8px', mr: '8px' }}>
-            <FontAwesomeIcon icon={icon} />
-          </Box>
-        )}
-
-        <Typography
+      <Box display="flex" flexDirection="column" alignItems="start" width="100%" height="100%">
+        <Box
+          display="flex"
+          alignItems="center"
+          width="100%"
+          height="50%"
+          flex={1}
           sx={{
-            fontSize: '18px',
-            maxWidth: '80%',
-            width: '80%',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
+            backgroundColor: theme.palette.gray[300],
+            borderTopLeftRadius: '8px',
+            borderTopRightRadius: '8px',
           }}
         >
-          {label}
-        </Typography>
+          {icon && (
+            <Box sx={{ ml: 1, mr: 2, fontSize: iconFontSize }}>
+              <FontAwesomeIcon icon={icon} />
+            </Box>
+          )}
+
+          <Typography
+            sx={{
+              maxWidth: '80%',
+              flex: 1,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              fontSize: '32px'
+            }}
+          >
+            {label}
+          </Typography>
+        </Box>
+
+        {statusIndicatorComponent}
       </Box>
+
       <Handle
         type="source"
         id="db-source-id"
@@ -119,6 +157,7 @@ export const Node: React.FC<Props> = ({
         isConnectable={isConnectable}
         position={Position.Right}
       />
+
       <Handle
         type="target"
         id="db-target-id"

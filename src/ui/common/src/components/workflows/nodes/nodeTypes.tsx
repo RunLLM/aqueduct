@@ -24,6 +24,7 @@ import StringArtifactNode, {
   stringArtifactNodeIcon,
 } from './StringArtifactNode';
 import TableArtifactNode, { tableArtifactNodeIcon } from './TableArtifactNode';
+import ExecutionStatus from '../../../utils/shared';
 
 export const nodeTypes = {
   database: DatabaseNode,
@@ -67,6 +68,40 @@ export const nodeTypeToStringLabel = {
   paramOp: 'Parameter',
 };
 
+export const artifactNodeStatusLabels = {
+  [ExecutionStatus.Succeeded]: 'Created',
+  [ExecutionStatus.Failed]: 'Failed',
+  [ExecutionStatus.Pending]: 'Pending',
+  [ExecutionStatus.Canceled]: 'Canceled',
+  [ExecutionStatus.Registered]: 'Registered',
+  [ExecutionStatus.Running]: 'Running',
+  [ExecutionStatus.Warning]: 'Warning',
+  [ExecutionStatus.Unknown]: 'Unknown',
+};
+
+export const operatorNodeStatusLabels = {
+  [ExecutionStatus.Succeeded]: 'Succeeded',
+  [ExecutionStatus.Failed]: 'Errored',
+  [ExecutionStatus.Pending]: 'Pending',
+  [ExecutionStatus.Canceled]: 'Canceled',
+  [ExecutionStatus.Registered]: 'Registered',
+  [ExecutionStatus.Running]: 'Running',
+  [ExecutionStatus.Warning]: 'Warning',
+  [ExecutionStatus.Unknown]: 'Unknown',
+};
+
+export const metricNodeStatusLabels = operatorNodeStatusLabels;
+
+export const checkNodeStatusLabels = {
+  [ExecutionStatus.Succeeded]: 'Passed',
+  [ExecutionStatus.Failed]: 'Failed',
+  [ExecutionStatus.Pending]: 'Pending',
+  [ExecutionStatus.Canceled]: 'Canceled',
+  [ExecutionStatus.Registered]: 'Registered',
+  [ExecutionStatus.Running]: 'Running',
+  [ExecutionStatus.Warning]: 'Warning',
+  [ExecutionStatus.Unknown]: 'Unknown',
+};
 export const artifactTypeToIconMapping = {
   [ArtifactType.String]: stringArtifactNodeIcon,
   [ArtifactType.Bool]: boolArtifactNodeIcon,

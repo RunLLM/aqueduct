@@ -17,6 +17,8 @@ import { ReactFlowNodeData } from '../../../utils/reactflow';
 import ExecutionStatus, { ExecState, FailureType } from '../../../utils/shared';
 import { BaseNode } from './BaseNode.styles';
 import NodeStatusIconography from './NodeStatusIconography';
+import Node from './Node';
+import { checkNodeStatusLabels } from './nodeTypes';
 
 type Props = {
   data: ReactFlowNodeData;
@@ -26,6 +28,16 @@ type Props = {
 export const checkOperatorNodeIcon = faMagnifyingGlass;
 
 const CheckOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
+  return (
+    <Node
+      icon={checkOperatorNodeIcon}
+      data={data}
+      isConnectable={isConnectable}
+      defaultLabel="Check"
+      statusLabels={checkNodeStatusLabels}
+    />
+  );
+
   const defaultLabel = 'Check';
   const label = data.label ? data.label : defaultLabel;
   const result = data.result;
