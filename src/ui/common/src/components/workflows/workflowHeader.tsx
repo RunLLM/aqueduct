@@ -7,8 +7,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Collapse, Tooltip, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useLayoutEffect, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
+import Markdown from 'react-markdown';
 import { useSelector } from 'react-redux';
+import { visitParents } from "unist-util-visit-parents";
 
 import { RootState } from '../../stores/store';
 import style from '../../styles/markdown.module.css';
@@ -84,6 +85,21 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
       </Alert>
     </Box>
   );
+
+/**
+* Wrap text in a `custom-typography` tag
+*/
+function rehypeWrapText() {
+  return function wrapTextTransform(tree) {
+    visitParents(tree, "text", (node, ancestors) => {
+      if (ancestors.at(-1).tagName !== "custom-typography") {
+        node.type = "element";
+        node.tagName = "custom-typography";
+        node.children = [{ type: "text", value: node.value }];
+      }
+    });
+  };
+}
 
   return (
     <Box>
@@ -179,11 +195,16 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
             borderRadius: '4px',
           }}
         >
-          <Typography variant="body1">
-            <ReactMarkdown className={style.reactMarkdown}>
-              {description ?? '*No description.*'}
-            </ReactMarkdown>
-          </Typography>
+          <Markdown className={style.reactMarkdown} rehypePlugins={[rehypeWrapText]}
+            components={{
+              "custom-typography": ({ children }) => (
+                <Typography variant="body1">
+                {children}
+              </Typography>
+              )
+            }} >
+            {description ?? '*No description.*'}
+          </Markdown>
         </Box>
       </Collapse>
 
