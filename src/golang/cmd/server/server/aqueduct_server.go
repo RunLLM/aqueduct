@@ -218,6 +218,33 @@ func (s *AqServer) Init() error {
 	return nil
 }
 
+func (s *AqServer) StartDynamicTeardownJob() error {
+	name := job.DynamicTeardownName
+	ctx := context.Background()
+
+	// Delete old CronJob if it exists
+	err := s.JobManager.DeleteCronJob(ctx, name)
+	if err != nil {
+		return errors.Wrap(err, "Unable to delete existing dynamic teardown job")
+	}
+
+	spec := job.NewDynamicTeardownJobSpec(
+		s.Database.Config(),
+		s.JobManager.Config(),
+	)
+
+	err = s.JobManager.DeployCronJob(
+		ctx,
+		name,
+		"*/10 * * * *", // every 10 min
+		spec,
+	)
+	if err != nil {
+		return errors.Wrap(err, "Unable to start dynamic teardown cron job")
+	}
+	return nil
+}
+
 func (s *AqServer) StartWorkflowRetentionJob(period string) error {
 	name := job.WorkflowRetentionName
 	ctx := context.Background()

@@ -20,10 +20,10 @@ const (
 
 // A ExecutionEnvironment maps to the execution_environment table.
 type ExecutionEnvironment struct {
-	ID               uuid.UUID                       `db:"id" json:"id"`
-	Spec             shared.ExecutionEnvironmentSpec `db:"spec" json:"spec"`
-	Hash             uuid.UUID                       `db:"hash" json:"hash"`
-	GarbageCollected bool                            `db:"garbage_collected" json:"garbage_collected"`
+	ID                         uuid.UUID                       `db:"id" json:"id"`
+	Spec                       shared.ExecutionEnvironmentSpec `db:"spec" json:"spec"`
+	Hash                       uuid.UUID                       `db:"hash" json:"hash"`
+	GarbageCollectedDeprecated bool                            `db:"garbage_collected" json:"garbage_collected"`
 }
 
 // ExecutionEnvironmentCols returns a comma-separated string of all ExecutionEnvironment columns.

@@ -104,7 +104,7 @@ class RelationalDBIntegration(Integration):
         Returns:
             pd.DataFrame of available tables.
         """
-        if self.type() in [ServiceType.BIGQUERY]:
+        if self.type() in [ServiceType.BIGQUERY, ServiceType.SNOWFLAKE]:
             # Use the list integration objects endpoint instead of
             # providing a hardcoded SQL query to execute
             tables = globals.__GLOBAL_API_CLIENT__.list_tables(str(self.id()))
@@ -116,8 +116,6 @@ class RelationalDBIntegration(Integration):
             ServiceType.REDSHIFT,
         ]:
             list_tables_query = LIST_TABLES_QUERY_PG
-        elif self.type() == ServiceType.SNOWFLAKE:
-            list_tables_query = LIST_TABLES_QUERY_SNOWFLAKE
         elif self.type() == ServiceType.MYSQL:
             list_tables_query = LIST_TABLES_QUERY_MYSQL
         elif self.type() == ServiceType.MARIADB:

@@ -5,6 +5,7 @@ import { useAqueductConsts } from './components/hooks/useAqueductConsts';
 import useUser from './components/hooks/useUser';
 import AddIntegrations from './components/integrations/addIntegrations';
 import { AqueductDemoCard } from './components/integrations/cards/aqueductDemoCard';
+import { AWSCard } from './components/integrations/cards/awsCard';
 import { BigQueryCard } from './components/integrations/cards/bigqueryCard';
 import { DataCard } from './components/integrations/cards/card';
 import { IntegrationCard } from './components/integrations/cards/card';
@@ -22,6 +23,7 @@ import { SnowflakeCard } from './components/integrations/cards/snowflakeCard';
 import { SparkCard } from './components/integrations/cards/sparkCard';
 import { ConnectedIntegrations } from './components/integrations/connectedIntegrations';
 import AddTableDialog from './components/integrations/dialogs/addTableDialog';
+import { AWSDialog } from './components/integrations/dialogs/awsDialog';
 import { BigQueryDialog } from './components/integrations/dialogs/bigqueryDialog';
 import { CondaDialog } from './components/integrations/dialogs/condaDialog';
 import { CSVDialog } from './components/integrations/dialogs/csvDialog';
@@ -87,15 +89,10 @@ import NumericArtifactNode from './components/workflows/nodes/NumericArtifactNod
 import ParameterOperatorNode from './components/workflows/nodes/ParameterOperatorNode';
 import TableArtifactNode from './components/workflows/nodes/TableArtifactNode';
 import ReactFlowCanvas from './components/workflows/ReactFlowCanvas';
-import WorkflowStatusBar, {
-  StatusBarHeaderHeightInPx,
-  StatusBarWidthInPx,
-} from './components/workflows/StatusBar';
 import VersionSelector from './components/workflows/version_selector';
 import WorkflowCard from './components/workflows/workflowCard';
 import WorkflowHeader from './components/workflows/workflowHeader';
 import WorkflowSettings from './components/workflows/WorkflowSettings';
-import { StatusChip } from './components/workflows/workflowStatus';
 import { handleGetArtifactResultContent } from './handlers/getArtifactResultContent';
 import { handleGetWorkflowDagResult } from './handlers/getWorkflowDagResult';
 import { handleListArtifactResults } from './handlers/listArtifactResults';
@@ -220,6 +217,8 @@ export {
   artifactResults,
   ArtifactType,
   ArtifactTypeToNodeTypeMap,
+  AWSCard,
+  AWSDialog,
   BaseNode,
   BigQueryCard,
   BigQueryDialog,
@@ -376,9 +375,6 @@ export {
   SnowflakeDialog,
   SparkCard,
   SparkDialog,
-  StatusChip as Status,
-  StatusBarHeaderHeightInPx,
-  StatusBarWidthInPx,
   store,
   SupportedIntegrations,
   Tab,
@@ -398,7 +394,6 @@ export {
   WorkflowSettings,
   workflowSlice,
   WorkflowsPage,
-  WorkflowStatusBar,
   workflowSummaries,
   WorkflowUpdateTrigger,
 };
