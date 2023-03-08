@@ -155,12 +155,23 @@ class _SlackConfigWithStringField(BaseConnectionConfig):
 
 
 class DynamicK8sConfig(BaseConnectionConfig):
+    # How long (in seconds) does the cluster need to remain idle before it is deleted.
     keepalive: Optional[str]
+    # The EC2 instance type of the CPU node group. See https://aws.amazon.com/ec2/instance-types/
+    # for the node types available.
     cpu_node_type: Optional[str]
+    # The EC2 instance type of the GPU node group. See https://aws.amazon.com/ec2/instance-types/
+    # for the node types available.
     gpu_node_type: Optional[str]
+    # Minimum number of nodes in the CPU node group. The cluster autoscaler cannot scale below this number.
+    # This is also the initial number of CPU nodes in the cluster.
     min_cpu_node: Optional[str]
+    # Maximum number of nodes in the CPU node group. The cluster autoscaler cannot scale above this number.
     max_cpu_node: Optional[str]
+    # Minimum number of nodes in the GPU node group. The cluster autoscaler cannot scale below this number.
+    # This is also the initial number of GPU nodes in the cluster.
     min_gpu_node: Optional[str]
+    # Maximum number of nodes in the GPU node group. The cluster autoscaler cannot scale above this number.
     max_gpu_node: Optional[str]
 
 
@@ -171,11 +182,11 @@ class AWSConfig(BaseConnectionConfig):
     k8s: Optional[DynamicK8sConfig]
 
 
-class _AWSConfigWithStringField(BaseConnectionConfig):
+class _AWSConfigWithSerializedConfig(BaseConnectionConfig):
     access_key_id: str
     secret_access_key: str
     region: str
-    k8s_serialized: Optional[str]
+    k8s_serialized: Optional[str]  # this is a json-serialized string of DynamicK8sConfig
 
 
 class EmailConfig(BaseConnectionConfig):
@@ -216,7 +227,7 @@ IntegrationConfig = Union[
     SQLiteConfig,
     SlackConfig,
     AWSConfig,
-    _AWSConfigWithStringField,
+    _AWSConfigWithSerializedConfig,
     _SlackConfigWithStringField,
     SparkConfig,
 ]
@@ -298,8 +309,8 @@ def _prepare_slack_config(config: SlackConfig) -> _SlackConfigWithStringField:
     )
 
 
-def _prepare_aws_config(config: AWSConfig) -> _AWSConfigWithStringField:
-    return _AWSConfigWithStringField(
+def _prepare_aws_config(config: AWSConfig) -> _AWSConfigWithSerializedConfig:
+    return _AWSConfigWithSerializedConfig(
         access_key_id=config.access_key_id,
         secret_access_key=config.secret_access_key,
         region=config.region,

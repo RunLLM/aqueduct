@@ -65,7 +65,8 @@ const (
 	updateAction      dynamicEngineAction = "update"
 	deleteAction      dynamicEngineAction = "delete"
 	forceDeleteAction dynamicEngineAction = "force-delete"
-	configDeltaKey    string              = "config_delta"
+	// The config delta payload sent from the client is keyed under this key in the HTTP request body.
+	configDeltaKey string = "config_delta"
 )
 
 func isValidAction(action string) bool {

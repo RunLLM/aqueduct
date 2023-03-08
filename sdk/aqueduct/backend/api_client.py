@@ -337,7 +337,7 @@ class APIClient:
         self,
         action: str,
         integration_id: str,
-        config_delta: DynamicK8sConfig = DynamicK8sConfig(),
+        config_delta: Optional[DynamicK8sConfig] = None,
     ) -> None:
         """Makes a request against the /api/integration/dynamic-engine/{integrationId}/edit endpoint.
 
@@ -345,6 +345,11 @@ class APIClient:
             integration_id:
                 The engine integration ID.
         """
+        if config_delta == None:
+            config_delta = DynamicK8sConfig()
+
+        assert isinstance(config_delta, DynamicK8sConfig)
+
         headers = self._generate_auth_headers()
         headers["action"] = action
 

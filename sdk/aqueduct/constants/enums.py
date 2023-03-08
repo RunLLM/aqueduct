@@ -213,11 +213,19 @@ class SparkRuntimeType(str, Enum, metaclass=MetaEnum):
     SPARK = "spark"
 
 
+# The lifecycle of a cluster goes from Creating -> Active -> Terminating -> Terminated.
+# If an Active cluster receives an config update request, it goes from Active -> Updating -> Active.
 class K8sClusterStatusType(str, Enum, metaclass=MetaEnum):
+    # The cluster is being created (transitioning from Terminated to Active status).
     CREATING = "Creating"
+    # The cluster has been active, and it received a config update request and it's
+    # updating to the new config. After the update completes, it will be in the Active status again.
     UPDATING = "Updating"
+    # The cluster is currently active and ready to serve requests.
     ACTIVE = "Active"
+    # The cluster is being deleted.
     TERMINATING = "Terminating"
+    # The cluster is terminated.
     TERMINATED = "Terminated"
 
 
