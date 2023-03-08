@@ -7,7 +7,7 @@ on:
 
 jobs:
   run-tests:
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-latest # TODO: redo
     timeout-minutes: 180
     name: SDK Integration Tests against K8s Compute
     steps:
@@ -76,7 +76,7 @@ jobs:
         if: always()
         run: |
           aws s3 cp s3://aqueduct-assets/oncall.yml ./oncall.yml
-#          echo "ONCALL_SLACK_MEMBER_ID=$(python3 scripts/get_current_oncall.py --file ./oncall.yml) >> $GITHUB_ENV
+          echo "ONCALL_SLACK_MEMBER_ID=$(python3 scripts/get_current_oncall.py --file ./oncall.yml)" >> $GITHUB_ENV
 
       - name: Report to Slack on Failure
         if: always()

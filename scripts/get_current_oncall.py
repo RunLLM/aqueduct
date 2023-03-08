@@ -14,7 +14,7 @@ Slack Member ID:
     ...
 ```
 
-Print out Slack Member ID of the current oncall.
+Prints out Slack Member ID of the current oncall.
 """
 import argparse
 from datetime import datetime, timedelta
