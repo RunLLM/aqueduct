@@ -165,7 +165,8 @@ func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
 		}
 	}
 
-	if err := bo.jobManager.Launch(ctx, spec.JobName(), spec); err != nil {
+	err := bo.jobManager.Launch(ctx, spec.JobName(), spec)
+	if err != nil {
 		if err.Code() == job.User {
 			bo.UpdateExecState(
 				jobManagerUserFailureExecState(err, "Job manager Launch failed due to user error"),
@@ -182,7 +183,7 @@ func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
 		}
 	}
 
-	return bo.jobManager.Launch(ctx, spec.JobName(), spec)
+	return err
 }
 
 // FetchExecState assumes that the operator has been computed already.
