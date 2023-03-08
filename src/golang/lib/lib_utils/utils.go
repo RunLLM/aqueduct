@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"regexp"
+	"strings"
 
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
@@ -267,13 +269,28 @@ func ExtractAwsCredentials(config *shared.S3Config) (string, string, error) {
 
 	for fileScanner.Scan() {
 		if profileString == fileScanner.Text() {
+			// Parse `aws_access_key_id`.
 			if fileScanner.Scan() {
-				fmt.Sscanf(fileScanner.Text(), "aws_access_key_id=%v", &awsAccessKeyId)
+				accessKeyIdRegex := regexp.MustCompile(`aws_access_key_id\s*=\s*([^\n]+)`)
+				match := accessKeyIdRegex.FindStringSubmatch(fileScanner.Text())
+				if len(match) < 2 {
+					log.Errorf("Unable to scan access key id from credentials file. The file may be malformed.")
+					return "", "", errors.New("Unable to extract AWS credentials.")
+				}
+				awsAccessKeyId = strings.TrimSpace(match[1])
 			} else {
 				return "", "", errors.New("Unable to extract AWS credentials.")
 			}
+
+			// Parse `aws_secret_access_key`.
 			if fileScanner.Scan() {
-				fmt.Sscanf(fileScanner.Text(), "aws_secret_access_key=%v", &awsSecretAccessKey)
+				secretAccessKeyRegex := regexp.MustCompile(`aws_secret_access_key\s*=\s*([^\n]+)`)
+				match := secretAccessKeyRegex.FindStringSubmatch(fileScanner.Text())
+				if len(match) < 2 {
+					log.Errorf("Unable to scan access key id from credentials file. The file may be malformed.")
+					return "", "", errors.New("Unable to extract AWS credentials.")
+				}
+				awsSecretAccessKey = strings.TrimSpace(match[1])
 			} else {
 				return "", "", errors.New("Unable to extract AWS credentials.")
 			}
