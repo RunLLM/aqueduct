@@ -192,7 +192,7 @@ func CreateOrUpdateK8sCluster(
 // 4. Update the dynamic integration's DB record: set config["status"] to "Terminated".
 // If any step fails, it returns an error.
 // If skipPodsStatusCheck is set to false, it checks whether there are pods in Running or ContainerCreating
-// statue and if so, reject the deletion request.
+// status and if so, reject the deletion request.
 func DeleteK8sCluster(
 	ctx context.Context,
 	skipPodsStatusCheck bool,
@@ -406,7 +406,13 @@ func ResyncClusterState(
 	// inconsistent state between the database and terraform. In this case, we resync the state by
 	// deleting the cluster and updating the database state to be Terminated.
 	log.Error("Dynamic k8s cluster might be in an inconsistent state. Resolving state by deleting the cluster...")
-	return DeleteK8sCluster(ctx, true, engineIntegration, integrationRepo, db)
+	return DeleteK8sCluster(
+		ctx,
+		true, // skipPodsStatusCheck
+		engineIntegration,
+		integrationRepo,
+		db,
+	)
 }
 
 func PollClusterStatus(

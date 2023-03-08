@@ -60,12 +60,22 @@ func (*EditDynamicEngineHandler) Headers() []string {
 type dynamicEngineAction string
 
 const (
+	// These reflect K8sClusterActionType in Python and should be kept in sync.
 	createAction      dynamicEngineAction = "create"
 	updateAction      dynamicEngineAction = "update"
 	deleteAction      dynamicEngineAction = "delete"
 	forceDeleteAction dynamicEngineAction = "force-delete"
 	configDeltaKey    string              = "config_delta"
 )
+
+func isValidAction(action string) bool {
+	switch dynamicEngineAction(action) {
+	case createAction, updateAction, deleteAction, forceDeleteAction:
+		return true
+	default:
+		return false
+	}
+}
 
 func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
@@ -97,6 +107,10 @@ func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, err
 	configDelta := shared.DynamicK8sConfig{}
 	if err = json.Unmarshal(configDeltaBytes, &configDelta); err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to deserialize config delta.")
+	}
+
+	if !isValidAction(action) {
+		return nil, http.StatusBadRequest, errors.Newf("Unsupported action: %s.", action)
 	}
 
 	return &editDynamicEngineArgs{
