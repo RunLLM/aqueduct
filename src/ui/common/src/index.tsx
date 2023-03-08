@@ -134,14 +134,6 @@ import notifications, {
   handleFetchNotifications,
   notificationsSlice,
 } from './reducers/notifications';
-import openSideSheet, {
-  openSideSheetSlice,
-  setAllSideSheetState,
-  setBottomSideSheetOpenState,
-  setLeftSideSheetOpenState,
-  setRightSideSheetOpenState,
-  setWorkflowStatusBarOpenState,
-} from './reducers/openSideSheet';
 import serverConfig from './reducers/serverConfig';
 import workflow, {
   handleGetArtifactResults,

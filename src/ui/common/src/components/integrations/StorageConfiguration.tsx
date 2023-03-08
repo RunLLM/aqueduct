@@ -38,8 +38,9 @@ export const StorageConfigurationDisplay: React.FC<
 
   if (storageConfig) {
     switch (integrationName) {
-      case 'SQLite': {
-        if (storageConfig.type === 'SQLite') {
+      case 'file': {
+        // file is same as sqlite?
+        if (storageConfig.type === 'file') {
           dataStorageInfo = (
             <Box component="span">
               <FontAwesomeIcon icon={faTags} />
@@ -56,7 +57,7 @@ export const StorageConfigurationDisplay: React.FC<
         break;
       }
       case 's3': {
-        if (storageConfig && storageConfig.type === 's3') {
+        if (storageConfig.type === 's3') {
           dataStorageInfo = (
             <Box component="span">
               <Box marginRight="8px" component="span">
@@ -84,7 +85,7 @@ export const StorageConfigurationDisplay: React.FC<
         break;
       }
       case 'gcs': {
-        if (storageConfig && storageConfig.type === 'gcs') {
+        if (storageConfig.type === 'gcs') {
           dataStorageInfo = (
             <Box component="span">
               <FontAwesomeIcon icon={faTags} />

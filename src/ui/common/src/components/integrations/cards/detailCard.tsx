@@ -12,6 +12,7 @@ import { AqueductDemoCard } from './aqueductDemoCard';
 import { BigQueryCard } from './bigqueryCard';
 import { CondaCard } from './condaCard';
 import { EmailCard } from './emailCard';
+import { GCSCard } from './gcsCard';
 import { KubernetesCard } from './kubernetesCard';
 import { LambdaDetailCard } from './lambdaCard';
 import { MariaDbCard } from './mariadbCard';
@@ -71,6 +72,13 @@ export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
     case 'Slack':
       serviceCard = <SlackCard integration={integration} />;
       break;
+    case 'GCS':
+      serviceCard = <GCSCard integration={integration} />;
+      break;
+    case 'SQLite':
+      serviceCard = <StorageConfigurationDisplay integrationName="file" />;
+      break;
+
     default:
       serviceCard = null;
   }
@@ -107,7 +115,6 @@ export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
             </Typography>
           </Box>
           <Box marginBottom={1}>{createdOnText}</Box>
-          <StorageConfigurationDisplay integrationName="SQLite" />
           {serviceCard}
         </Box>
       </Box>

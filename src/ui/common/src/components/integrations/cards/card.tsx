@@ -176,7 +176,7 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
         <strong>Connected On: </strong>
         {new Date(integration.createdAt * 1000).toLocaleString()}
       </Typography>
-      <StorageConfigurationDisplay integrationName="SQLite" />
+      <StorageConfigurationDisplay integrationName="file" />
     </Box>
   );
 };
