@@ -61,6 +61,7 @@ var computeIntegrations map[Service]bool = map[Service]bool{
 	Databricks: true,
 	Kubernetes: true,
 	Spark:      true,
+	AWS:        true,
 }
 
 // ServiceToEngineConfigField contains
