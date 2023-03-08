@@ -266,7 +266,6 @@ class APIClient:
             {
                 "integration-name": name,
                 "integration-service": integration_service,
-
                 # `by_alias` is necessary to get this to use `schema` as a key for SnowflakeConfig.
                 # `exclude_none` is necessary to exclude `role` when None as SnowflakeConfig.
                 "integration-config": config.json(exclude_none=True, by_alias=True),

@@ -14,7 +14,10 @@ def _execute_command(args, cwd=None) -> None:
 def _run_tests(
     dir_name: str,
     test_case: str,
-    concurrency: int, rerun_failed: bool, skip_data_setup: bool, skip_engine_setup: bool,
+    concurrency: int,
+    rerun_failed: bool,
+    skip_data_setup: bool,
+    skip_engine_setup: bool,
 ) -> None:
     """Either test_case or rerun_failed can be set, but not both."""
     if rerun_failed:

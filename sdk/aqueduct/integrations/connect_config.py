@@ -115,6 +115,7 @@ class AthenaConfig(BaseConnectionConfig):
 
 class SnowflakeConfig(BaseConnectionConfig):
     """Must be dumped to JSON with the `exclude_none` and `by_alias` flags."""
+
     username: str
     password: str
     account_identifier: str
