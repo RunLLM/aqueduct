@@ -2,6 +2,8 @@
 This script prints out the Slack Member ID of the current oncall, to be consumed by our GH actions so that we tag
 the current oncall on any Slack notifications (to #eng-monitoring, for example).
 
+This script expects, as input, a filepath to a yaml in the following format.
+
 ```
 Rotation:
     <oncall name>: <start date> # the date is in the format MM/DD
@@ -14,7 +16,7 @@ Slack Member ID:
     ...
 ```
 
-Prints out Slack Member ID of the current oncall.
+It will then print out the Slack Member ID of the current oncall.
 """
 import argparse
 from datetime import datetime, timedelta
