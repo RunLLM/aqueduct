@@ -58,10 +58,20 @@ func (*EditDynamicEngineHandler) Headers() []string {
 type dynamicEngineAction string
 
 const (
+	// These reflect K8sClusterActionType in Python and should be kept in sync.
 	createAction      dynamicEngineAction = "create"
 	deleteAction      dynamicEngineAction = "delete"
 	forceDeleteAction dynamicEngineAction = "force-delete"
 )
+
+func isValidAction(action string) bool {
+	switch dynamicEngineAction(action) {
+	case createAction, deleteAction, forceDeleteAction:
+		return true
+	default:
+		return false
+	}
+}
 
 func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
@@ -78,6 +88,10 @@ func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, err
 	action := r.Header.Get("action")
 	if action == "" {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "No action specified by the request.")
+	}
+
+	if !isValidAction(action) {
+		return nil, http.StatusBadRequest, errors.Newf("Unsupported action: %s.", action)
 	}
 
 	return &editDynamicEngineArgs{
