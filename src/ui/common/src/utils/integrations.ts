@@ -37,6 +37,7 @@ export type SnowflakeConfig = {
   schema: string;
   username: string;
   password?: string;
+  role: string;
 };
 
 export type RedshiftConfig = {
@@ -153,6 +154,7 @@ export type KubernetesConfig = {
 
 export type LambdaConfig = {
   role_arn: string;
+  exec_state: string;
 };
 
 export type DatabricksConfig = {
@@ -183,6 +185,15 @@ export type SparkConfig = {
   livy_server_url: string;
 };
 
+export type AWSConfig = {
+  type: AWSCredentialType;
+  region: string;
+  access_key_id: string;
+  secret_access_key: string;
+  config_file_path: string;
+  config_file_profile: string;
+};
+
 export type IntegrationConfig =
   | PostgresConfig
   | SnowflakeConfig
@@ -204,7 +215,8 @@ export type IntegrationConfig =
   | DatabricksConfig
   | EmailConfig
   | SlackConfig
-  | SparkConfig;
+  | SparkConfig
+  | AWSConfig;
 
 export type Service =
   | 'Postgres'
@@ -228,7 +240,8 @@ export type Service =
   | 'Databricks'
   | 'Email'
   | 'Slack'
-  | 'Spark';
+  | 'Spark'
+  | 'AWS';
 
 export type Info = {
   logo: string;
@@ -291,6 +304,7 @@ const addingIntegrationLink = `${AqueductDocsLink}/integrations/adding-an-integr
 export const IntegrationCategories = {
   DATA: 'data',
   COMPUTE: 'compute',
+  CLOUD: 'cloud',
   NOTIFICATION: 'notification',
 };
 
@@ -316,6 +330,7 @@ export const ServiceLogos: ServiceLogo = {
   ['Email']: `${integrationLogosBucket}/email.png`,
   ['Slack']: `${integrationLogosBucket}/slack.png`,
   ['Spark']: `${integrationLogosBucket}/spark-logo-trademark.png`,
+  ['AWS']: `${integrationLogosBucket}/aws-logo-trademark.png`,
 
   // TODO(ENG-2301): Once task is addressed, remove this duplicate entry.
   ['K8s']: `${integrationLogosBucket}/kubernetes.png`,
@@ -438,8 +453,14 @@ export const SupportedIntegrations: ServiceInfoMap = {
   },
   ['Spark']: {
     logo: ServiceLogos['Spark'],
-    activated: false,
+    activated: true,
     category: IntegrationCategories.COMPUTE,
+    docs: addingIntegrationLink,
+  },
+  ['AWS']: {
+    logo: ServiceLogos['AWS'],
+    activated: false,
+    category: IntegrationCategories.CLOUD,
     docs: addingIntegrationLink,
   },
 };

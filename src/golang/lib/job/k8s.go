@@ -16,24 +16,23 @@ import (
 )
 
 const (
-	defaultFunctionExtractPath = "/app/function/"
-	jobSpecEnvVarKey           = "JOB_SPEC"
+	jobSpecEnvVarKey = "JOB_SPEC"
 )
 
 type k8sJobManager struct {
+	// When we initialize k8sJobManager, k8sClient is always set to nil. This is because
+	// in case of dynamic k8s integration, when we initialize the job manager, the k8s
+	// cluster may not exist yet, so k8s client creation will fail. We defer the initialization
+	// to Launch and Poll, at which point regardless of dynamic or static k8s integration, we expect
+	// the k8s client creation to succeed.
 	k8sClient *kubernetes.Clientset
 	conf      *K8sJobManagerConfig
 }
 
-func NewK8sJobManager(conf *K8sJobManagerConfig) (*k8sJobManager, error) {
-	k8sClient, err := k8s.CreateK8sClient(conf.KubeconfigPath, conf.UseSameCluster)
+func setupNamespaceAndSecrets(k8sClient *kubernetes.Clientset, conf *K8sJobManagerConfig) error {
+	err := k8s.CreateNamespaces(k8sClient)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error while creating K8sClient")
-	}
-
-	err = k8s.CreateNamespaces(k8sClient)
-	if err != nil {
-		return nil, errors.Wrap(err, "Error while creating K8s Namespaces")
+		return errors.Wrap(err, "Error while creating K8s Namespaces")
 	}
 
 	secretsMap := map[string]string{}
@@ -41,11 +40,31 @@ func NewK8sJobManager(conf *K8sJobManagerConfig) (*k8sJobManager, error) {
 	secretsMap[k8s.AwsAccessKeyName] = conf.AwsSecretAccessKey
 	err = k8s.CreateSecret(context.TODO(), k8s.AwsCredentialsSecretName, secretsMap, k8sClient)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error while creating K8s Secrets")
+		return errors.Wrap(err, "Error while creating K8s Secrets")
 	}
 
+	return nil
+}
+
+func (j *k8sJobManager) initialize() error {
+	k8sClient, err := k8s.CreateK8sClient(j.conf.KubeconfigPath, j.conf.UseSameCluster)
+	if err != nil {
+		return errors.Wrap(err, "Error while creating K8sClient")
+	}
+
+	err = setupNamespaceAndSecrets(k8sClient, j.conf)
+	if err != nil {
+		return err
+	}
+
+	j.k8sClient = k8sClient
+
+	return nil
+}
+
+func NewK8sJobManager(conf *K8sJobManagerConfig) (*k8sJobManager, error) {
 	return &k8sJobManager{
-		k8sClient: k8sClient,
+		k8sClient: nil,
 		conf:      conf,
 	}, nil
 }
@@ -55,6 +74,12 @@ func (j *k8sJobManager) Config() Config {
 }
 
 func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobError {
+	if j.k8sClient == nil {
+		if err := j.initialize(); err != nil {
+			return systemError(err)
+		}
+	}
+
 	launchGpu := false
 	resourceRequest := map[string]string{
 		k8s.PodResourceCPUKey:    k8s.DefaultCPURequest,
@@ -152,6 +177,12 @@ func containerStatusFromPod(pod *corev1.Pod, name string) (*corev1.ContainerStat
 }
 
 func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, JobError) {
+	if j.k8sClient == nil {
+		if err := j.initialize(); err != nil {
+			return shared.UnknownExecutionStatus, systemError(err)
+		}
+	}
+
 	job, err := k8s.GetJob(ctx, name, j.k8sClient)
 	if err != nil {
 		return shared.UnknownExecutionStatus, jobMissingError(err)

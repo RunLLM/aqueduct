@@ -67,6 +67,7 @@ export const theme = {
     },
     yellow: {
       800: '#66460D',
+      500: '#FFB833',
       100: '#FFEFD2',
     },
     Info: '#0288D1',

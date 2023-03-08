@@ -10,6 +10,7 @@ const (
 	IntegrationNameHeader    = "integration-name"
 	IntegrationServiceHeader = "integration-service"
 	IntegrationConfigHeader  = "integration-config"
+	IntegrationIDsHeader     = "integration-ids"
 
 	// Export Function headers
 	ExportFnUserFriendlyHeader = "user-friendly"
@@ -18,5 +19,6 @@ const (
 
 	MetadataOnlyHeader = "metadata-only"
 
-	RunNowHeader = "run-now"
+	RunNowHeader              = "run-now"
+	DynamicEngineActionHeader = "action"
 )

@@ -12,6 +12,7 @@ import (
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	mdl_utils "github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/workflow"
@@ -164,16 +165,49 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
-	execEnvByOpId, status, err := setupExecEnv(
+	txn, err := h.Database.BeginTx(ctx)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
+	}
+	defer database.TxnRollbackIgnoreErr(ctx, txn)
+
+	execEnvByOpId, status, err := registerDependencies(
+		ctx,
+		args.dagSummary,
+		h.ExecutionEnvironmentRepo,
+		txn,
+	)
+	if err != nil {
+		return emptyResp, status, err
+	}
+
+	status, err = setupCondaEnv(
 		ctx,
 		args.ID,
 		args.dagSummary,
 		h.IntegrationRepo,
-		h.ExecutionEnvironmentRepo,
-		h.Database,
+		execEnvByOpId,
+		txn,
 	)
 	if err != nil {
 		return emptyResp, status, err
+	}
+
+	if args.dagSummary.Dag.EngineConfig.Type == shared.SparkEngineType {
+		if args.dagSummary.Dag.EngineConfig.SparkConfig == nil {
+			return emptyResp, http.StatusBadRequest, errors.New("Spark config is not provided.")
+		}
+
+		status, err := createSparkWorkflowEnv(
+			ctx,
+			args.dagSummary,
+			h.ExecutionEnvironmentRepo,
+			execEnvByOpId,
+			txn,
+		)
+		if err != nil {
+			return emptyResp, status, err
+		}
 	}
 
 	for opId, op := range args.dagSummary.Dag.Operators {
@@ -184,12 +218,6 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 			dbWorkflowDag.Operators[opId] = op
 		}
 	}
-
-	txn, err := h.Database.BeginTx(ctx)
-	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
-	}
-	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
 	// Schedule validation needs to happen inside the `txn` to prevent
 	// concurrent requests from forming a cycle among cascading workflows
@@ -311,7 +339,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 
 		err = exec_env.CleanupUnusedEnvironments(
 			context.Background(),
-			h.ExecutionEnvironmentRepo,
+			h.OperatorRepo,
 			db,
 		)
 		if err != nil {

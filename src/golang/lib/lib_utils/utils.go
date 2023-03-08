@@ -1,16 +1,19 @@
 package lib_utils
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"os"
 	"os/exec"
+	"regexp"
+	"strings"
 
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
+	"github.com/dropbox/godropbox/errors"
 	log "github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -49,25 +52,70 @@ func ParseStatus(st *status.Status) (string, int) {
 	return errorMsg, errorCode
 }
 
-// RunCmd executes command with arg.
-// It returns the stdout, stderr, and an error object that contains an informative message that
-// combines stdout and stderr.
-func RunCmd(command string, arg ...string) (string, string, error) {
-	cmd := exec.Command(command, arg...)
+// RunCmd executes command with args under working directory dir.
+// If stream is set to true, it streams the stdout and stderr and returns an error object indicating
+// whether the cmd succeeded. Otherwise, it stores the stdout, stderr into buffers and returns them
+// to the caller together with an error object indicating whether the cmd succeeded.
+func RunCmd(command string, args []string, dir string, stream bool) (string, string, error) {
+	cmd := exec.Command(command, args...)
 	cmd.Env = os.Environ()
 
-	var outb, errb bytes.Buffer
-	cmd.Stdout = &outb
-	cmd.Stderr = &errb
-
-	err := cmd.Run()
-	if err != nil {
-		errMsg := fmt.Sprintf("Error running command: %s. Stdout: %s, Stderr: %s.", command, outb.String(), errb.String())
-		log.Errorf(errMsg)
-		return outb.String(), errb.String(), errors.New(errMsg)
+	if dir != "" {
+		cmd.Dir = dir
 	}
 
-	return outb.String(), errb.String(), nil
+	if stream {
+		// create pipes for the command's standard output and standard error
+		stdout, err := cmd.StdoutPipe()
+		if err != nil {
+			return "", "", errors.Wrap(err, "Error creating stdout pipe")
+		}
+		stderr, err := cmd.StderrPipe()
+		if err != nil {
+			return "", "", errors.Wrap(err, "Error creating stderr pipe")
+		}
+
+		// start the command
+		if err := cmd.Start(); err != nil {
+			return "", "", errors.Wrap(err, "Error starting command")
+		}
+
+		// create scanners to read from the pipes
+		stdoutScanner := bufio.NewScanner(stdout)
+		stderrScanner := bufio.NewScanner(stderr)
+
+		// start separate goroutines to stream the output from each scanner
+		go func() {
+			for stdoutScanner.Scan() {
+				log.Infof("stdout: %s", stdoutScanner.Text())
+			}
+		}()
+		go func() {
+			for stderrScanner.Scan() {
+				log.Errorf("stderr: %s", stderrScanner.Text())
+			}
+		}()
+
+		// wait for the command to complete
+		if err := cmd.Wait(); err != nil {
+			return "", "", errors.Wrap(err, "Error waiting for command to complete")
+		}
+
+		return "", "", nil
+	} else {
+		var outb, errb bytes.Buffer
+		cmd.Stdout = &outb
+		cmd.Stderr = &errb
+
+		err := cmd.Run()
+		if err != nil {
+			errMsg := fmt.Sprintf("Error running command: %s. Stdout: %s, Stderr: %s.", command, outb.String(), errb.String())
+			log.Errorf(errMsg)
+			return outb.String(), errb.String(), errors.New(errMsg)
+		}
+
+		return outb.String(), errb.String(), nil
+	}
 }
 
 // ParseK8sConfig takes in an auth.Config and parses into a K8s config.
@@ -190,4 +238,65 @@ func ParseSparkConfig(conf auth.Config) (*shared.SparkIntegrationConfig, error) 
 	}
 
 	return &c, nil
+}
+
+func ParseAWSConfig(conf auth.Config) (*shared.AWSConfig, error) {
+	data, err := conf.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	var c shared.AWSConfig
+	if err := json.Unmarshal(data, &c); err != nil {
+		return nil, err
+	}
+
+	return &c, nil
+}
+
+func ExtractAwsCredentials(config *shared.S3Config) (string, string, error) {
+	var awsAccessKeyId string
+	var awsSecretAccessKey string
+	profileString := fmt.Sprintf("[%s]", config.CredentialsProfile)
+
+	file, err := os.Open(config.CredentialsPath)
+	if err != nil {
+		return "", "", errors.Wrap(err, "Unable to open AWS credentials file.")
+	}
+	defer file.Close()
+	fileScanner := bufio.NewScanner(file)
+	fileScanner.Split(bufio.ScanLines)
+
+	for fileScanner.Scan() {
+		if profileString == fileScanner.Text() {
+			// Parse `aws_access_key_id`.
+			if fileScanner.Scan() {
+				accessKeyIdRegex := regexp.MustCompile(`aws_access_key_id\s*=\s*([^\n]+)`)
+				match := accessKeyIdRegex.FindStringSubmatch(fileScanner.Text())
+				if len(match) < 2 {
+					log.Errorf("Unable to scan access key id from credentials file. The file may be malformed.")
+					return "", "", errors.New("Unable to extract AWS credentials.")
+				}
+				awsAccessKeyId = strings.TrimSpace(match[1])
+			} else {
+				return "", "", errors.New("Unable to extract AWS credentials.")
+			}
+
+			// Parse `aws_secret_access_key`.
+			if fileScanner.Scan() {
+				secretAccessKeyRegex := regexp.MustCompile(`aws_secret_access_key\s*=\s*([^\n]+)`)
+				match := secretAccessKeyRegex.FindStringSubmatch(fileScanner.Text())
+				if len(match) < 2 {
+					log.Errorf("Unable to scan access key id from credentials file. The file may be malformed.")
+					return "", "", errors.New("Unable to extract AWS credentials.")
+				}
+				awsSecretAccessKey = strings.TrimSpace(match[1])
+			} else {
+				return "", "", errors.New("Unable to extract AWS credentials.")
+			}
+
+			return awsAccessKeyId, awsSecretAccessKey, nil
+		}
+	}
+	return "", "", errors.New("Unable to extract AWS credentials.")
 }
