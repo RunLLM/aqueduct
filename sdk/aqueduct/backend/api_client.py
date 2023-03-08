@@ -254,10 +254,10 @@ class APIClient:
         return [x for x in resp.json()["object_names"]]
 
     def connect_integration(
-        self, name: str, service: ServiceType, config: IntegrationConfig
+        self, name: str, service: Union[str, ServiceType], config: IntegrationConfig
     ) -> None:
         integration_service = service
-        if not isinstance(integration_service, str):
+        if isinstance(integration_service, ServiceType):
             # The enum value needs to be used
             integration_service = integration_service.value
 
