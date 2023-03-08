@@ -93,8 +93,6 @@ func MigrateStorageAndVault(
 			for _, artifactResult := range artifactResults {
 				log.Infof("Starting migration for artifact result %v of artifact %v", artifactResult.ID, artifact.ID)
 
-				log.Infof("The content path is: %v", artifactResult.ContentPath)
-
 				val, err := oldStore.Get(ctx, artifactResult.ContentPath)
 				if err != nil &&
 					!artifactResult.ExecState.IsNull &&
