@@ -96,13 +96,16 @@ func (h *ConfigureStorageHandler) Perform(ctx context.Context, interfaceArgs int
 
 	log.Info("Starting storage migration process...")
 
+	log.Info("Waiting to pause the server")
 	// Wait until the server is paused
 	h.PauseServerFn()
 	// Makes sure that the server is restarted
 	defer h.RestartServerFn()
+	log.Info("Server has been paused")
 
 	// Wait until there are no more workflow runs in progress
 	lock := utils.NewExecutionLock()
+	log.Info("Waiting for execution lock")
 	if err := lock.Lock(); err != nil {
 		log.Errorf("Unexpected error when acquiring workflow execution lock: %v. Aborting storage migration!", err)
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to migrate to the new storage layer")
@@ -112,6 +115,7 @@ func (h *ConfigureStorageHandler) Perform(ctx context.Context, interfaceArgs int
 			log.Errorf("Unexpected error when unlocking workflow execution lock: %v", err)
 		}
 	}()
+	log.Info("Execution lock has been acquired")
 
 	// Migrate all storage content to the new storage config
 	if err := utils.MigrateStorageAndVault(
