@@ -3,6 +3,7 @@ import React, { memo } from 'react';
 
 import { ReactFlowNodeData } from '../../../utils/reactflow';
 import Node from './Node';
+import { artifactNodeStatusLabels } from './nodeTypes';
 
 type Props = {
   data: ReactFlowNodeData;
@@ -18,6 +19,7 @@ const ParameterOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
       data={data}
       isConnectable={isConnectable}
       defaultLabel="Parameter"
+      statusLabels={artifactNodeStatusLabels}
     />
   );
 };

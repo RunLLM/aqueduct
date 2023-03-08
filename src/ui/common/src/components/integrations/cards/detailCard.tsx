@@ -12,7 +12,7 @@ import { BigQueryCard } from './bigqueryCard';
 import { CondaCard } from './condaCard';
 import { EmailCard } from './emailCard';
 import { KubernetesCard } from './kubernetesCard';
-import { LambdaCard } from './lambdaCard';
+import { LambdaDetailCard } from './lambdaCard';
 import { MariaDbCard } from './mariadbCard';
 import { MySqlCard } from './mysqlCard';
 import { PostgresCard } from './postgresCard';
@@ -59,7 +59,7 @@ export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
       serviceCard = <KubernetesCard integration={integration} />;
       break;
     case 'Lambda':
-      serviceCard = <LambdaCard integration={integration} />;
+      serviceCard = <LambdaDetailCard integration={integration} />;
       break;
     case 'Conda':
       serviceCard = <CondaCard integration={integration} />;

@@ -78,6 +78,8 @@ type Operator interface {
 	// GetDynamicProperties retrieves the dynamic properties of an operator, which includes its
 	// engine integration ID and its `prepared` flag.
 	GetDynamicProperties() *dynamicProperties
+	// FetchExecutionEnvironment retrieves the environment of the operator.
+	FetchExecutionEnvironment(ctx context.Context) *exec_env.ExecutionEnvironment
 }
 
 // This should only be used within the boundaries of the execution engine.

@@ -194,6 +194,7 @@ class ExecutionMode(str, Enum, metaclass=MetaEnum):
 
 class RuntimeType(str, Enum, metaclass=MetaEnum):
     AQUEDUCT = "aqueduct"
+    AQUEDUCT_CONDA = "aqueduct_conda"
     AIRFLOW = "airflow"
     K8S = "k8s"
     LAMBDA = "lambda"
@@ -218,3 +219,10 @@ class K8sClusterStatusType(str, Enum, metaclass=MetaEnum):
     ACTIVE = "Active"
     TERMINATING = "Terminating"
     TERMINATED = "Terminated"
+
+
+class K8sClusterActionType(str, Enum, metaclass=MetaEnum):
+    CREATE = "create"
+    UPDATE = "update"
+    DELETE = "delete"
+    FORCE_DELETE = "force-delete"

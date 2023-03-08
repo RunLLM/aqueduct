@@ -42,7 +42,7 @@ type EditDynamicEngineHandler struct {
 
 type editDynamicEngineArgs struct {
 	*aq_context.AqContext
-	action        string
+	action        dynamicEngineAction
 	integrationId uuid.UUID
 	configDelta   *shared.DynamicK8sConfig
 }
@@ -57,12 +57,14 @@ func (*EditDynamicEngineHandler) Headers() []string {
 	}
 }
 
+type dynamicEngineAction string
+
 const (
-	createAction      string = "create"
-	updateAction      string = "update"
-	deleteAction      string = "delete"
-	forceDeleteAction string = "force-delete"
-	configDeltaKey    string = "config_delta"
+	createAction      dynamicEngineAction = "create"
+	updateAction      dynamicEngineAction = "update"
+	deleteAction      dynamicEngineAction = "delete"
+	forceDeleteAction dynamicEngineAction = "force-delete"
+	configDeltaKey    string              = "config_delta"
 )
 
 func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, error) {
@@ -99,7 +101,7 @@ func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, err
 
 	return &editDynamicEngineArgs{
 		AqContext:     aqContext,
-		action:        action,
+		action:        dynamicEngineAction(action),
 		integrationId: integrationId,
 		configDelta:   &configDelta,
 	}, http.StatusOK, nil

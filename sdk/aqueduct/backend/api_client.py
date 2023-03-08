@@ -4,7 +4,7 @@ import uuid
 from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import requests
-from aqueduct.constants.enums import ExecutionStatus, RuntimeType, ServiceType
+from aqueduct.constants.enums import ExecutionStatus, K8sClusterActionType, RuntimeType, ServiceType
 from aqueduct.error import (
     AqueductError,
     ClientValidationError,
@@ -354,7 +354,12 @@ class APIClient:
             "config_delta": config_delta.json(exclude_none=True),
         }
 
-        if action in ["create", "update", "delete", "force-delete"]:
+        if action in [
+            K8sClusterActionType.CREATE,
+            K8sClusterActionType.UPDATE,
+            K8sClusterActionType.DELETE,
+            K8sClusterActionType.FORCE_DELETE,
+        ]:
             resp = requests.post(url, headers=headers, data=body)
         else:
             raise InvalidRequestError(

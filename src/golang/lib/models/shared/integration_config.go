@@ -104,7 +104,8 @@ type K8sIntegrationConfig struct {
 }
 
 type LambdaIntegrationConfig struct {
-	RoleArn string `json:"role_arn" yaml:"roleArn"`
+	RoleArn   string `json:"role_arn" yaml:"roleArn"`
+	ExecState string `json:"exec_state" yaml:"execState"`
 }
 
 type DatabricksIntegrationConfig struct {
@@ -195,7 +196,7 @@ type AWSConfig struct {
 type SparkIntegrationConfig struct {
 	// LivyServerURL is the URL of the Livy server that sits in front of the Spark cluster.
 	// This URL is assumed to be accessible by the machine running the Aqueduct server.
-	LivyServerURL string `yaml:"baseUrl" json:"base_url"`
+	LivyServerURL string `yaml:"baseUrl" json:"livy_server_url"`
 	// AWS Access Key ID is passed from the StorageConfig.
 	AwsAccessKeyID string `yaml:"awsAccessKeyId" json:"aws_access_key_id"`
 	// AWS Secret Access Key is passed from the StorageConfig.
