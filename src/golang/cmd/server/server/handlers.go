@@ -94,8 +94,8 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			IntegrationRepo:    s.IntegrationRepo,
 			OperatorRepo:       s.OperatorRepo,
 
-			PauseServer:   s.Pause,
-			RestartServer: s.Restart,
+			PauseServerFn:   s.Pause,
+			RestartServerFn: s.Restart,
 		},
 		routes.GetNodePositionsRoute: &handler.GetNodePositionsHandler{},
 		routes.GetOperatorResultRoute: &handler.GetOperatorResultHandler{

@@ -37,8 +37,8 @@ type ConfigureStorageHandler struct {
 	IntegrationRepo    repos.Integration
 	OperatorRepo       repos.Operator
 
-	PauseServer   func()
-	RestartServer func()
+	PauseServerFn   func()
+	RestartServerFn func()
 }
 
 type configureStorageArgs struct {
@@ -97,9 +97,9 @@ func (h *ConfigureStorageHandler) Perform(ctx context.Context, interfaceArgs int
 	log.Info("Starting storage migration process...")
 
 	// Wait until the server is paused
-	h.PauseServer()
+	h.PauseServerFn()
 	// Makes sure that the server is restarted
-	defer h.RestartServer()
+	defer h.RestartServerFn()
 
 	// Wait until there are no more workflow runs in progress
 	lock := utils.NewExecutionLock()
