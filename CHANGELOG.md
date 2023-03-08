@@ -4,7 +4,7 @@
 Released on March 7, 2023.
 
 ### Key Features
-* Users can now run Aqueduct workflows on Spark clusters on AWS EMR. With Apache Livy as an interface, Aqueduct can submit your code to your Spark cluster reliably and seamlessly. See our documentation here. TODO: Add documentation link to the word 'here'.
+* Users can now run Aqueduct workflows on Spark clusters on AWS EMR. With Apache Livy as an interface, Aqueduct can submit your code to your Spark cluster reliably and seamlessly. See our documentation [here](https://docs.aqueducthq.com/integrations/adding-an-integration/connecting-to-spark-emr.md).
 * Redesigns node layout on DAG view to improve information presentation and
     better distinguish between different node types.
 
