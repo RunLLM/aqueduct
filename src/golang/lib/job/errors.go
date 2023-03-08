@@ -25,7 +25,7 @@ const (
 	// For example, polling a Lambda JobManager will return this error because there is no concept of
 	// fetching a specific job's information from Lambda. The caller must figure out the job status
 	// through other means.
-	Noop = 2
+	Noop = 3
 )
 
 type JobError interface {

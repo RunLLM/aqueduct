@@ -153,7 +153,7 @@ def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:
         raise InternalAqueductError("Preview route should not be returning PENDING status.")
 
     if preview_resp.status == ExecutionStatus.FAILED:
-        # If non of the operators failed, this must be an issue with our
+        # If none of the operators failed, this must be an issue with our server.
         if len(op_err_msgs) == 0:
             raise InternalAqueductError(
                 f"Unexpected Server Error! If this issue persists, please file a bug report in github: "
