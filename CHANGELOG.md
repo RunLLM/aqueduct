@@ -14,7 +14,7 @@ Released on March 7, 2023.
 * Updates workflow details page header to be more compact and reduce
     information overload.
 * Adds support for specifying compute engine and resource requirements when
-    creating metrics \& checks.
+    creating metrics & checks.
 
 ### Bugfixes
 * Fixes issue where size of large rows on Snowflake was artificially limited.
@@ -24,6 +24,8 @@ Released on March 7, 2023.
     off.
 * Fixes bug where the integration details page for compute integrations would
     not list all workflows using that integration.
+* Fixes bug where metrics plot failed to render when upstream operator was 
+    cancelled.
 
 ## 0.2.4
 Released on February 28, 2023.
