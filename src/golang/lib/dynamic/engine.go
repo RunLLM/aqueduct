@@ -11,6 +11,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/k8s"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -187,12 +188,31 @@ func CreateDynamicEngine(
 // 3. Remove the kubeconfig file.
 // 4. Update the dynamic integration's DB record: set config["status"] to "Terminated".
 // If any step fails, it returns an error.
+// If skipPodsStatusCheck is set to false, it checks whether there are pods in Running or ContainerCreating
+// status and if so, reject the deletion request.
 func DeleteDynamicEngine(
 	ctx context.Context,
+	skipPodsStatusCheck bool,
 	engineIntegration *models.Integration,
 	integrationRepo repos.Integration,
 	db database.Database,
 ) error {
+	if !skipPodsStatusCheck {
+		useSameCluster, err := strconv.ParseBool(engineIntegration.Config[shared.K8sUseSameClusterKey])
+		if err != nil {
+			return errors.Wrap(err, "Error parsing use_same_cluster flag")
+		}
+
+		safe, err := k8s.SafeToDeleteCluster(ctx, useSameCluster, engineIntegration.Config[shared.K8sKubeconfigPathKey])
+		if err != nil {
+			return err
+		}
+
+		if !safe {
+			return errors.New("The k8s cluster cannot be deleted because there are pods still running.")
+		}
+	}
+
 	engineIntegration.Config[shared.K8sStatusKey] = string(shared.K8sClusterTerminatingStatus)
 	if _, err := integrationRepo.Update(
 		ctx,
@@ -318,5 +338,11 @@ func ResyncClusterState(
 	// inconsistent state between the database and terraform. In this case, we resync the state by
 	// deleting the cluster and updating the database state to be Terminated.
 	log.Error("Dynamic k8s cluster might be in an inconsistent state. Resolving state by deleting the cluster...")
-	return DeleteDynamicEngine(ctx, engineIntegration, integrationRepo, db)
+	return DeleteDynamicEngine(
+		ctx,
+		true, // skipPodsStatusCheck
+		engineIntegration,
+		integrationRepo,
+		db,
+	)
 }
