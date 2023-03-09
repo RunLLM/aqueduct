@@ -56,5 +56,5 @@ def test_invalid_connect_integration(client):
 def test_sqlite_with_k8s(data_integration, engine):
     """Tests that running an extract operator that reads data from a SQLite database using k8s should fail."""
     global_config({"engine": engine})
-    with pytest.raises(AqueductError):
+    with pytest.raises(AqueductError, match="Unknown integration service provided SQLite"):
         extract(data_integration, DataObject.SENTIMENT)
