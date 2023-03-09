@@ -1,28 +1,9 @@
 package k8s
 
 import (
-	"context"
-
-	"github.com/dropbox/godropbox/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
-// ValidateCluster checks whether a cluster is ready by querying its kube-system namespace.
-func ValidateCluster(ctx context.Context, clusterName string, kubeconfigPath string, useSameCluster bool) error {
-	k8sClient, err := CreateK8sClient(kubeconfigPath, useSameCluster)
-	if err != nil {
-		return errors.Wrap(err, "Unable to create kubernetes client.")
-	}
-
-	_, err = k8sClient.CoreV1().Namespaces().Get(ctx, "kube-system", metav1.GetOptions{})
-	if err != nil {
-		return errors.Wrapf(err, "Error validating Kubernetes cluster: cannot query namespace kube-system for cluster %s.", clusterName)
-	}
-
-	return nil
-}
 
 func generateK8sEnvVarAndResourceReq(environmentVariables *map[string]string, resourceRequests *map[string]string) ([]corev1.EnvVar, *corev1.ResourceRequirements) {
 	// Convert from a `map[string]string` to the Kubernetes representation of

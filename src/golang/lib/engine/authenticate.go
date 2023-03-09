@@ -26,7 +26,11 @@ func AuthenticateK8sConfig(ctx context.Context, authConf auth.Config) error {
 		}
 	}
 
-	return k8s.ValidateCluster(ctx, conf.ClusterName, conf.KubeconfigPath, bool(conf.UseSameCluster))
+	_, err = k8s.CreateK8sClient(conf.KubeconfigPath, bool(conf.UseSameCluster))
+	if err != nil {
+		return errors.Wrap(err, "Unable to create kubernetes client.")
+	}
+	return nil
 }
 
 func AuthenticateDatabricksConfig(ctx context.Context, authConf auth.Config) error {
