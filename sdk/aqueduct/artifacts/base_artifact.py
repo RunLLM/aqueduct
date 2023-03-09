@@ -40,6 +40,7 @@ class BaseArtifact(ABC):
         self._from_operator_type = operator_type
 
     def set_name(self, name: str) -> None:
+        # TODO: eliminate this check...
         self._dag.validate_artifact_name(name)
 
         # If this a parameter artifact, we will also need to change the name of the parameter,

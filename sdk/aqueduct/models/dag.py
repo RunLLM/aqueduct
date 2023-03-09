@@ -1,5 +1,5 @@
 import uuid
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 
 from aqueduct.constants.enums import (
     ArtifactType,
@@ -47,21 +47,12 @@ class DAG(BaseModel):
     operators: Dict[str, Operator] = {}
     artifacts: Dict[str, ArtifactMetadata] = {}
 
-    # Allows for quick operator lookup by name.
-    # Is excluded from json serialization.
-    operator_by_name: Dict[str, Operator] = {}
-
     # The field must be set when publishing the workflow.
     metadata: Metadata
 
     # Represents the default engine the DAG will be executed on. Can we overwritten
     # by individual operators.
     engine_config: EngineConfig = EngineConfig()
-
-    class Config:
-        fields = {
-            "operator_by_name": {"exclude": ...},
-        }
 
     def set_engine_config(
         self,
@@ -138,6 +129,15 @@ class DAG(BaseModel):
             )
         return op
 
+    def _get_param_op_by_name(self, op_name: str) -> Operator:
+        """Parameters are the only operator that must have name uniqueness."""
+        for op in self.operators.values():
+            if op.name == op_name:
+                return op
+        raise Exception("Unexpected error occurred: unable to find parameter.")
+
+
+    # TODO: Multiple parameters cannot be used. If a parameter is overwritten, print a helpful error message.
     def get_operator(
         self,
         with_id: Optional[uuid.UUID] = None,
@@ -319,7 +319,6 @@ class DAG(BaseModel):
     def add_operators(self, ops: List[Operator]) -> None:
         for op in ops:
             self.operators[str(op.id)] = op
-            self.operator_by_name[op.name] = op
 
     def add_artifacts(self, artifacts: List[ArtifactMetadata]) -> None:
         for artifact in artifacts:
@@ -332,21 +331,18 @@ class DAG(BaseModel):
         self.must_get_artifact(artifact_id).name = new_name
 
     def update_operator_name(self, op_id: uuid.UUID, new_name: str) -> None:
-        # Update the name -> operator map.
-        old_name = self.must_get_operator(op_id).name
-        self.operator_by_name[new_name] = self.operator_by_name[old_name]
-        del self.operator_by_name[old_name]
-
         # Update the name on the operator spec.
         self.must_get_operator(op_id).name = new_name
 
-    def update_operator_spec(self, name: str, spec: OperatorSpec) -> None:
-        """Replaces an operator's spec in the dag.
+    def update_param_val(self, name: str, new_val: Any) -> None:
+        """Assumption: the parameter already exists.
 
-        The assumption validated within the method is that the caller has already validated
-        both that the operator exists, and that the spec type will be unchanged.
+        We expect there to be exactly one unique parameter name in the dag. When updating
+        the parameter value, the type must stay the same.
         """
-        assert name in self.operator_by_name, "Operator %s does not exist." % name
+        param_op = self._get_param_op_by_name(name)
+        assert
+
         op = self.operator_by_name[name]
         assert get_operator_type(op) == get_operator_type_from_spec(
             spec

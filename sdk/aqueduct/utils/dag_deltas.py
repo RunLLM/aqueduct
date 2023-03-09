@@ -326,7 +326,7 @@ class UpdateParametersDelta(DAGDelta):
             artifact_type = infer_artifact_type(new_val)
             param_spec = construct_param_spec(new_val, artifact_type)
 
-            dag.update_operator_spec(
+            dag.update_param_val(
                 param_name,
                 OperatorSpec(
                     param=param_spec,
