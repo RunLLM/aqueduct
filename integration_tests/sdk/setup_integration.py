@@ -7,12 +7,13 @@ from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ServiceType
 from aqueduct.error import AqueductError
+from aqueduct.integrations.connect_config import AWSCredentialType
 from aqueduct.integrations.mongodb_integration import MongoDBIntegration
 from aqueduct.integrations.s3_integration import S3Integration
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
 from aqueduct.models.integration import Integration
 
-from aqueduct import Client
+from aqueduct import Client, get_apikey
 from sdk.aqueduct_tests.save import save
 from sdk.shared.demo_db import demo_db_tables
 from sdk.shared.flow_helpers import delete_flow, publish_flow_test
@@ -163,11 +164,11 @@ def _setup_s3_data(client: Client, s3: S3Integration):
 
 
 def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> None:
-    """Connects to the given integration name if the server hasn't yet. It also ensures
+    """Connects to the given data integration(s) if the server hasn't yet. It also ensures
     that the appropriate data is populated.
 
     If `filter_to` is set, we only connect to that given integration name. Otherwise,
-    we attempt to connect to every integration listed in the config file.
+    we attempt to connect to every integration listed in the test config file.
     """
     if filter_to is not None:
         data_integrations = [filter_to]
@@ -185,7 +186,7 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
     for integration_name in data_integrations:
         # Only connect to integrations that don't already exist.
         if integration_name not in connected_integrations.keys():
-            integration_config = _fetch_data_integration_credentials(integration_name)
+            integration_config = _fetch_integration_credentials("data", integration_name)
 
             client.connect_integration(
                 integration_name,
@@ -208,6 +209,38 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
             raise Exception("Test suite does not yet support %s." % integration.type())
 
 
+def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) -> None:
+    """Connects to the given compute integration(s) if the server hasn't yet. It *does not*
+    ensure that the compute resources are set up appropriately.
+
+    If `filter_to` is set, we only connect to that given integration name. Otherwise,
+    we attempt to connect to every integration listed in the test config file.
+    """
+    if filter_to is not None:
+        compute_integrations = [filter_to]
+    else:
+        compute_integrations = list_compute_integrations()
+
+    # No need to do any setup for the demo db.
+    if "aqueduct_engine" in compute_integrations:
+        compute_integrations.remove("aqueduct_engine")
+
+    if len(compute_integrations) == 0:
+        return
+
+    connected_integrations = client.list_integrations()
+    for integration_name in compute_integrations:
+        # Only connect to integrations that don't already exist.
+        if integration_name not in connected_integrations.keys():
+            integration_config = _fetch_integration_credentials("compute", integration_name)
+
+            client.connect_integration(
+                integration_name,
+                integration_config["type"],
+                _sanitize_integration_config_for_connect(integration_config),
+            )
+
+
 def setup_storage_layer(client: Client) -> None:
     """If a storage data integration is specified, perform a migration if we aren't already connected to it."""
     test_config = _parse_config_file()
@@ -221,13 +254,18 @@ def setup_storage_layer(client: Client) -> None:
 
     connected_integrations = client.list_integrations()
     if name not in connected_integrations.keys():
-        integration_config = _fetch_data_integration_credentials(name)
+        integration_config = _fetch_integration_credentials("data", name)
         integration_config["use_as_storage"] = "true"
+
+        # There is a naming collision between the "type" field in `test-credentials.yml`
+        # and the "type" field on the S3Config.
+        service_type = integration_config["type"]
+        integration_config["type"] = AWSCredentialType.CONFIG_FILE_PATH
 
         client.connect_integration(
             name,
-            integration_config["type"],
-            _sanitize_integration_config_for_connect(integration_config),
+            service_type,
+            integration_config,
         )
 
         # Poll on the server until the integration is ready.
@@ -249,14 +287,17 @@ def _sanitize_integration_config_for_connect(config: Dict[str, Any]) -> Dict[str
     return config
 
 
-def _fetch_data_integration_credentials(name: str) -> Dict[str, Any]:
+def _fetch_integration_credentials(section: str, name: str) -> Dict[str, Any]:
+    """
+    `section` can be "data" or "compute".
+    """
     test_credentials = _parse_credentials_file()
-    assert "data" in test_credentials
+    assert section in test_credentials, "%s section expected in test-credentials.yml" % section
 
-    assert name in test_credentials["data"], (
-        "Data integration `%s` needs to have credentials in test-credentials.yml." % name
-    )
-    return test_credentials["data"][name]
+    assert (
+        name in test_credentials[section]
+    ), "%s Integration `%s` must have its credentials in test-credentials.yml." % (section, name)
+    return test_credentials[section][name]
 
 
 def list_data_integrations() -> List[str]:
@@ -276,10 +317,16 @@ def list_compute_integrations() -> List[str]:
 
 
 def get_aqueduct_config() -> Tuple[str, str]:
-    # Returns the apikey and server address.
+    """
+    Returns the apikey and server address. If "apikey" does not exist in test-credentials, we will
+    assume the server is on the same machine, and will use "aqueduct apikey".
+    """
     test_config = _parse_config_file()
+
     test_credentials = _parse_credentials_file()
-    assert (
-        "apikey" in test_credentials and "address" in test_config
-    ), "apikey and address must be set in test-credentials.yml and test-config.yml, respectively."
-    return test_credentials["apikey"], test_config["address"]
+    if "apikey" in test_credentials:
+        apikey = test_credentials["apikey"]
+    else:
+        apikey = get_apikey()
+
+    return apikey, test_config["address"]

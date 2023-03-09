@@ -26,6 +26,7 @@ Both these test suites share a collection of command line flags:
 * `--keep-flows`: If set, we will not delete any flows created by the test run. This is useful for debugging.
 * `--deprecated`: Runs against any deprecated API that still exists in the SDK. Such code paths should be eventually deleted after some time, but this ensures backwards compatibility.
 * `--skip-data-setup`: Skips the checking and setup of external data integrations. Instead, assumes that all data integrations have been set up correctly with the appropriate data.
+* `--skip-engine-setup`: Skips the checking and setup of external compute integrations.
 
 For additional markers/fixtures/flags, please inspect `conftest.py` in this directory. For test-specific configurations,
 see `aqueduct_tests/conftest.py` and  `data_integration_tests/conftest.py`.
@@ -36,8 +37,8 @@ To run all SDK Integration Tests, from the `integration_tests/sdk` directory, ru
 `python3 run_tests.py [-lf] [-n CONCURRENCY]`
 
 To run just one of the test suites:
-- `python3 run_tests.py --aqueduct [-lf] [-n CONCURRENCY]`
-- `python3 run_tests.py --data-integration [-lf] [-n CONCURRENCY]`
+- `python3 run_tests.py --aqueduct [-lf] [-n CONCURRENCY] [-k TEST_CASE]`
+- `python3 run_tests.py --data-integration [-lf] [-n CONCURRENCY] [-k TEST_CASE]`
 
 To run tests with concurrency > 1, `pytest-xdist` must be installed.
 

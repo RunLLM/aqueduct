@@ -20,5 +20,5 @@ runs:
 
     - uses: actions/upload-artifact@v3
       with:
-        name: ${{ inputs.prefix }} - Executor Logs
+        name: ${{ inputs.prefix }} - Server Directory Logs
         path: ~/.aqueduct/server/logs/*
