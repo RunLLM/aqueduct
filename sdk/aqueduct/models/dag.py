@@ -118,35 +118,23 @@ class DAG(BaseModel):
     def must_get_operator(
         self,
         with_id: Optional[uuid.UUID] = None,
-        with_name: Optional[str] = None,
         with_output_artifact_id: Optional[uuid.UUID] = None,
     ) -> Operator:
-        op = self.get_operator(with_id, with_name, with_output_artifact_id)
+        op = self.get_operator(with_id, with_output_artifact_id)
         if op is None:
             raise InternalAqueductError(
-                "Unable to find operator: with_id %s, with_name %s, with_output_artifact_id %s"
-                % (str(with_id), with_name, str(with_output_artifact_id)),
+                "Unable to find operator: with_id %s, with_output_artifact_id %s"
+                % (str(with_id), str(with_output_artifact_id)),
             )
         return op
 
-    def _get_param_op_by_name(self, op_name: str) -> Operator:
-        """Parameters are the only operator that must have name uniqueness."""
-        for op in self.operators.values():
-            if op.name == op_name:
-                return op
-        raise Exception("Unexpected error occurred: unable to find parameter.")
-
-
-    # TODO: Multiple parameters cannot be used. If a parameter is overwritten, print a helpful error message.
     def get_operator(
         self,
         with_id: Optional[uuid.UUID] = None,
-        with_name: Optional[str] = None,
         with_output_artifact_id: Optional[uuid.UUID] = None,
     ) -> Optional[Operator]:
         if (
             int(with_id is not None)
-            + int(with_name is not None)
             + int(with_output_artifact_id is not None)
         ) != 1:
             raise InternalAqueductError(
@@ -155,9 +143,6 @@ class DAG(BaseModel):
 
         if with_id is not None:
             return self.operators.get(str(with_id))
-
-        elif with_name is not None:
-            return self.operator_by_name.get(with_name)
 
         # Search with output artifact id
         for _, op in self.operators.items():
@@ -311,6 +296,12 @@ class DAG(BaseModel):
             )
         return check_operators
 
+    def get_param_op_by_name(self, op_name: str) -> Optional[Operator]:
+        for op in self.operators.values():
+            if op.name == op_name and get_operator_type(op) == OperatorType.PARAM:
+                return op
+        return None
+
     ######################## DAG WRITES #############################
 
     def add_operator(self, op: Operator) -> None:
@@ -334,22 +325,20 @@ class DAG(BaseModel):
         # Update the name on the operator spec.
         self.must_get_operator(op_id).name = new_name
 
-    def update_param_val(self, name: str, new_val: Any) -> None:
-        """Assumption: the parameter already exists.
+    def update_param_spec(self, name: str, new_spec: OperatorSpec) -> None:
+        """Checks that:
+        1) The parameter already exists, and there is not more than one with the same name.
+        2) The spec is a parameter spec.
 
-        We expect there to be exactly one unique parameter name in the dag. When updating
-        the parameter value, the type must stay the same.
+        The new parameter's value must also be of the same type, but we enforce during execution.
         """
-        param_op = self._get_param_op_by_name(name)
-        assert
+        assert get_operator_type_from_spec(new_spec) == OperatorType.PARAM
+        param_op = self.get_param_op_by_name(name)
+        if param_op is None:
+            raise Exception("Unable to find parameter %s to update." % name)
+        assert get_operator_type(param_op) == OperatorType.PARAM
 
-        op = self.operator_by_name[name]
-        assert get_operator_type(op) == get_operator_type_from_spec(
-            spec
-        ), "New spec has a different type."
-
-        self.operators[str(op.id)].spec = spec
-        self.operator_by_name[op.name].spec = spec
+        self.operators[str(param_op.id)].spec = new_spec
 
     def update_operator_function(self, operator: Operator, serialized_function: bytes) -> None:
         if operator in self.operators.values():
@@ -387,4 +376,3 @@ class DAG(BaseModel):
             for artifact_id in op_to_remove.outputs:
                 del self.artifacts[str(artifact_id)]
             del self.operators[str(op_to_remove.id)]
-            del self.operator_by_name[op_to_remove.name]

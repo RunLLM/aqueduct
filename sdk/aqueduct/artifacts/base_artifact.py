@@ -43,13 +43,14 @@ class BaseArtifact(ABC):
         # TODO: eliminate this check...
         self._dag.validate_artifact_name(name)
 
-        # If this a parameter artifact, we will also need to change the name of the parameter,
-        # to preserve our invariant that a param op and its artifact always have the same name.
+        # If this a parameter artifact, we need to check that no other parameter with the same name exists.
+        # We will also need to change the name of the parameter, to preserve our invariant that a param op
+        # and its artifact always have the same name.
         op = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
         if get_operator_type(op) == OperatorType.PARAM:
-            if self._dag.get_operator(with_name=name) is not None:
+            if self._dag.get_param_op_by_name(name) is not None:
                 raise InvalidUserActionException(
-                    "Unable to change parameter name to %s, there already exists an operator with the same name. "
+                    "Unable to change parameter name to %s, there already exists a parameter with the same name. "
                     "Parameter names must be globally unique." % name,
                 )
             self._dag.update_operator_name(op.id, name)

@@ -251,7 +251,7 @@ class Client:
                 If set, we will delete the parameter and any operators that it is dependency of.
                 Otherwise, we will error if it is a dependency of any operator.
         """
-        param_op = self._dag.get_operator(with_name=name)
+        param_op = self._dag.get_param_op_by_name(name)
         if param_op is None:
             raise InvalidUserArgumentException(
                 "Unable to delete parameter %s. Not such parameter exists." % name

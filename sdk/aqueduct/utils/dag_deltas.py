@@ -30,8 +30,8 @@ class DAGDelta(ABC):
 # of resolving whether an operator already exists in the DAG or not.
 
 
-def find_duplicate_operator_by_name(dag: DAG, op: Operator) -> Optional[Operator]:
-    return dag.get_operator(with_name=op.name)
+# def find_duplicate_operator_by_name(dag: DAG, op: Operator) -> Optional[Operator]:
+#     return dag.get_operator(with_name=op.name)
 
 
 class AddOrReplaceOperatorDelta(DAGDelta):
@@ -281,7 +281,7 @@ def validate_overwriting_parameters(dag: DAG, parameters: Dict[str, Any]) -> Non
         raise InvalidUserArgumentException("Parameters must be keyed by strings.")
 
     for param_name, param_val in parameters.items():
-        param_op = dag.get_operator(with_name=param_name)
+        param_op = dag.get_param_op_by_name(param_name)
         if param_op is None:
             raise InvalidUserArgumentException(
                 "Parameter %s cannot be found, or is not utilized in the current computation."
@@ -326,7 +326,7 @@ class UpdateParametersDelta(DAGDelta):
             artifact_type = infer_artifact_type(new_val)
             param_spec = construct_param_spec(new_val, artifact_type)
 
-            dag.update_param_val(
+            dag.update_param_spec(
                 param_name,
                 OperatorSpec(
                     param=param_spec,

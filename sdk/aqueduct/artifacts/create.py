@@ -27,18 +27,18 @@ def check_implicit_param_name(dag: DAG, candidate_name: str, op_name: str) -> bo
     Returns whether this is a new parameter or we're overwriting an existing one.
     """
     colliding_artifact = dag.get_artifact_by_name(candidate_name)
-    colliding_op = dag.get_operator(with_name=candidate_name)
+    colliding_param_op = dag.get_param_op_by_name(candidate_name)
 
     # No collisions.
-    if colliding_op is None and colliding_artifact is None:
+    if colliding_param_op is None and colliding_artifact is None:
         return False
 
     # If colliding with both another operator and artifact, check whether we can overwrite.
     # This is because parameter operator-artifact pairs must have the same name.
-    elif colliding_op is not None and colliding_artifact is not None:
-        if _operator_is_implicitly_created_param(colliding_op):
-            assert len(colliding_op.outputs) == 1, "Parameter operator must have a single output."
-            ops = dag.list_operators(on_artifact_id=colliding_op.outputs[0])
+    elif colliding_param_op is not None and colliding_artifact is not None:
+        if _operator_is_implicitly_created_param(colliding_param_op):
+            assert len(colliding_param_op.outputs) == 1, "Parameter operator must have a single output."
+            ops = dag.list_operators(on_artifact_id=colliding_param_op.outputs[0])
             assert len(ops) == 1, "Implicit parameters can only be consumed by a single operator."
 
             # We only overwrite if it's an exact replacement!
@@ -53,7 +53,7 @@ def check_implicit_param_name(dag: DAG, candidate_name: str, op_name: str) -> bo
 
 
 def check_explicit_param_name(dag: DAG, candidate_name: str) -> None:
-    colliding_op = dag.get_operator(with_name=candidate_name)
+    colliding_op = dag.get_param_op_by_name(candidate_name)
     if colliding_op is not None and _operator_is_implicitly_created_param(colliding_op):
         raise InvalidUserActionException(
             """Unable to create parameter `%s`, since there is an implicitly created parameter with the same name. If the old parameter is not longer relevant, you can remove it with `client.delete_param()` and rerun this operation. Otherwise, you'll need to rename one of the two. """
