@@ -52,7 +52,7 @@ def test_invalid_connect_integration(client):
 
 
 def test_compute_integration_without_cloud_storage(client):
-    with pytest.raises(InvalidRequestError):
+    with pytest.raises(InvalidRequestError, match="You need to setup cloud storage as metadata store before registering compute integration of type Kubernetes."):
         client.connect_integration(
             name="compute integration without cloud storage",
             service=ServiceType.K8S,
