@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
+import { DagResultResponse } from '../../../../handlers/responses/dag';
 import { OperatorResultResponse } from '../../../../handlers/responses/operator';
 import { WorkflowDagResultWithLoadingStatus } from '../../../../reducers/workflowDagResults';
 import { WorkflowDagWithLoadingStatus } from '../../../../reducers/workflowDags';
@@ -27,11 +28,10 @@ export default function useOpeartor(
     operatorId = id;
   }
 
-  const operator = !!workflowDagResultWithLoadingStatus?.result
-    ? (workflowDagResultWithLoadingStatus?.result?.operators ?? {})[operatorId]
-    : ((workflowDagWithLoadingStatus?.result?.operators ?? {})[
-        operatorId
-      ] as OperatorResultResponse);
+  const dagResult =
+    workflowDagResultWithLoadingStatus?.result ??
+    (workflowDagWithLoadingStatus?.result as DagResultResponse);
+  const operator = (dagResult?.operators ?? {})[operatorId];
 
   const breadcrumbs = [
     ...workflowBreadcrumbs,

@@ -6,6 +6,7 @@ import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import { handleGetArtifactResultContent } from '../../../../handlers/getArtifactResultContent';
 import { handleListArtifactResults } from '../../../../handlers/listArtifactResults';
 import { ArtifactResultResponse } from '../../../../handlers/responses/artifact';
+import { DagResultResponse } from '../../../../handlers/responses/dag';
 import { ContentWithLoadingStatus } from '../../../../reducers/artifactResultContents';
 import { ArtifactResultsWithLoadingStatus } from '../../../../reducers/artifactResults';
 import { WorkflowDagResultWithLoadingStatus } from '../../../../reducers/workflowDagResults';
@@ -42,11 +43,10 @@ export default function useArtifact(
     (state: RootState) => state.artifactResultContentsReducer.contents
   );
 
-  const artifact = workflowDagResultWithLoadingStatus?.result
-    ? (workflowDagResultWithLoadingStatus?.result?.artifacts ?? {})[artifactId]
-    : ((workflowDagWithLoadingStatus?.result?.artifacts ?? {})[
-        artifactId
-      ] as ArtifactResultResponse);
+  const dagResult =
+    workflowDagResultWithLoadingStatus?.result ??
+    (workflowDagWithLoadingStatus?.result as DagResultResponse);
+  const artifact = (dagResult?.artifacts ?? {})[artifactId];
 
   const artifactResultId = artifact?.result?.id;
   const contentWithLoadingStatus = artifactResultId

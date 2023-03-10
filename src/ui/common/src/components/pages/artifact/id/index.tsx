@@ -2,10 +2,13 @@ import { CircularProgress } from '@mui/material';
 import Box from '@mui/material/Box';
 import React from 'react';
 
-import { getMetricsAndChecksOnArtifact } from '../../../../handlers/responses/dag';
+import {
+  DagResultResponse,
+  getMetricsAndChecksOnArtifact,
+} from '../../../../handlers/responses/dag';
 import UserProfile from '../../../../utils/auth';
 import { OperatorType } from '../../../../utils/operators';
-import ExecutionStatus, { isSucceeded } from '../../../../utils/shared';
+import ExecutionStatus from '../../../../utils/shared';
 import DefaultLayout, { SidesheetContentWidth } from '../../../layouts/default';
 import CsvExporter from '../../../workflows/artifact/csvExporter';
 import {
@@ -63,14 +66,12 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     !sideSheetMode
   );
 
-  const { metrics, checks } =
-    !!workflowDagResultWithLoadingStatus &&
-    isSucceeded(workflowDagResultWithLoadingStatus.status)
-      ? getMetricsAndChecksOnArtifact(
-          workflowDagResultWithLoadingStatus?.result,
-          artifact.id
-        )
-      : { metrics: [], checks: [] };
+  const dagResult =
+    workflowDagResultWithLoadingStatus?.result ??
+    (workflowDagWithLoadingStatus?.result as DagResultResponse);
+  const { metrics, checks } = dagResult
+    ? getMetricsAndChecksOnArtifact(dagResult, artifact.id)
+    : { metrics: [], checks: [] };
 
   if (!artifact) {
     return (
@@ -82,10 +83,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   const mapOperators = (opIds: string[]) =>
     opIds
-      .map(
-        (opId) =>
-          (workflowDagResultWithLoadingStatus.result?.operators ?? {})[opId]
-      )
+      .map((opId) => (dagResult?.operators ?? {})[opId])
       .filter((op) => !!op && op.spec?.type !== OperatorType.Param);
 
   const inputs = mapOperators([artifact.from]);
@@ -94,7 +92,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   let upstreamPending = false;
   inputs.some((operator) => {
     const operator_pending =
-      operator.result.exec_state.status === ExecutionStatus.Pending;
+      operator?.result?.exec_state?.status === ExecutionStatus.Pending;
     if (operator_pending) {
       upstreamPending = operator_pending;
     }
@@ -156,12 +154,14 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
               )}
             </Box>
 
-            <Preview
-              upstreamPending={upstreamPending}
-              previewAvailable={previewAvailable}
-              artifact={artifact}
-              contentWithLoadingStatus={contentWithLoadingStatus}
-            />
+            {workflowDagResultWithLoadingStatus && (
+              <Preview
+                upstreamPending={upstreamPending}
+                previewAvailable={previewAvailable}
+                artifact={artifact}
+                contentWithLoadingStatus={contentWithLoadingStatus}
+              />
+            )}
 
             <Box display="flex" width="100%">
               <MetricsOverview metrics={metrics} />

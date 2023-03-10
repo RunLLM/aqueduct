@@ -79,14 +79,16 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
             operator={operator}
             sideSheetMode={sideSheetMode}
           >
-            <Box
-              width={sideSheetMode ? 'auto' : '49.2%'}
-              marginTop={sideSheetMode ? '16px' : '40px'}
-            >
-              <MetricsHistory
-                historyWithLoadingStatus={artifactHistoryWithLoadingStatus}
-              />
-            </Box>
+            {workflowDagResultWithLoadingStatus && (
+              <Box
+                width={sideSheetMode ? 'auto' : '49.2%'}
+                marginTop={sideSheetMode ? '16px' : '40px'}
+              >
+                <MetricsHistory
+                  historyWithLoadingStatus={artifactHistoryWithLoadingStatus}
+                />
+              </Box>
+            )}
           </WithOperatorHeader>
         </RequireOperator>
       </RequireDagOrResult>

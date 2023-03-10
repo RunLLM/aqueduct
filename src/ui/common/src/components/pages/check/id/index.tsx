@@ -78,15 +78,17 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
             operator={operator}
             sideSheetMode={sideSheetMode}
           >
-            <Box
-              width={sideSheetMode ? 'auto' : '49.2%'}
-              marginTop={sideSheetMode ? '16px' : '40px'}
-            >
-              <CheckHistory
-                historyWithLoadingStatus={artifactHistoryWithLoadingStatus}
-                checkLevel={operator?.spec?.check?.level}
-              />
-            </Box>
+            {workflowDagResultWithLoadingStatus && (
+              <Box
+                width={sideSheetMode ? 'auto' : '49.2%'}
+                marginTop={sideSheetMode ? '16px' : '40px'}
+              >
+                <CheckHistory
+                  historyWithLoadingStatus={artifactHistoryWithLoadingStatus}
+                  checkLevel={operator?.spec?.check?.level}
+                />
+              </Box>
+            )}
           </WithOperatorHeader>
         </RequireOperator>
       </RequireDagOrResult>

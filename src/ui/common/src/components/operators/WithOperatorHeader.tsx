@@ -6,6 +6,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Box, Divider, Typography } from '@mui/material';
 import React from 'react';
 
+import { DagResultResponse } from '../../handlers/responses/dag';
 import { OperatorResultResponse } from '../../handlers/responses/operator';
 import { WorkflowDagResultWithLoadingStatus } from '../../reducers/workflowDagResults';
 import { WorkflowDagWithLoadingStatus } from '../../reducers/workflowDags';
@@ -44,18 +45,14 @@ const WithOperatorHeader: React.FC<Props> = ({
     return null;
   }
 
+  const dagResult =
+    dagResultWithLoadingStatus?.result ??
+    (dagWithLoadingStatus?.result as DagResultResponse);
+
   const operatorStatus = operator?.result?.exec_state?.status;
   const mapArtifacts = (artfIds: string[]) =>
     artfIds
-      .map((artifactId) => {
-        if (dagResultWithLoadingStatus) {
-          return (dagResultWithLoadingStatus.result?.artifacts ?? {})[
-            artifactId
-          ];
-        }
-
-        return (dagWithLoadingStatus.result?.artifacts ?? {})[artifactId];
-      })
+      .map((artifactId) => (dagResult?.artifacts ?? {})[artifactId])
       .filter((artf) => !!artf);
   const inputs = mapArtifacts(operator.inputs);
   const outputs = mapArtifacts(operator.outputs);
