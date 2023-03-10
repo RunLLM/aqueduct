@@ -235,3 +235,10 @@ class K8sClusterActionType(str, Enum, metaclass=MetaEnum):
     UPDATE = "update"
     DELETE = "delete"
     FORCE_DELETE = "force-delete"
+
+
+class CustomizableResourceType(str, Enum, metaclass=MetaEnum):
+    NUM_CPUS = "num_cpus"
+    MEMORY = "memory"
+    GPU_RESOURCE_NAME = "gpu_resource_name"
+    CUDA_VERSION = "cuda_version"

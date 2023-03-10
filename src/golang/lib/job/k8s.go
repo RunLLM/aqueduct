@@ -81,6 +81,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobE
 	}
 
 	launchGpu := false
+	var cudaVersion string
 	resourceRequest := map[string]string{
 		k8s.PodResourceCPUKey:    k8s.DefaultCPURequest,
 		k8s.PodResourceMemoryKey: k8s.DefaultMemoryRequest,
@@ -100,6 +101,12 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobE
 			if functionSpec.Resources.GPUResourceName != nil {
 				resourceRequest[k8s.GPUResourceName] = *functionSpec.Resources.GPUResourceName
 				launchGpu = true
+			}
+
+			if functionSpec.Resources.CudaVersion != nil {
+				cudaVersion = *functionSpec.Resources.CudaVersion
+			} else {
+				cudaVersion = k8s.DefaultCudaVersion
 			}
 
 			if functionSpec.Resources.NumCPU != nil {
@@ -138,7 +145,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobE
 		}
 	}
 
-	containerRepo, err := mapJobTypeToDockerImage(spec, launchGpu)
+	containerRepo, err := mapJobTypeToDockerImage(spec, launchGpu, cudaVersion)
 	if err != nil {
 		return userError(err)
 	}
@@ -246,7 +253,7 @@ func (j *k8sJobManager) DeleteCronJob(ctx context.Context, name string) JobError
 }
 
 // Maps a job Spec to Docker image.
-func mapJobTypeToDockerImage(spec Spec, launchGpu bool) (string, error) {
+func mapJobTypeToDockerImage(spec Spec, launchGpu bool, cudaVersion string) (string, error) {
 	switch spec.Type() {
 	case FunctionJobType:
 		functionSpec, ok := spec.(*FunctionSpec)
@@ -258,18 +265,7 @@ func mapJobTypeToDockerImage(spec Spec, launchGpu bool) (string, error) {
 			return "", errors.New("Unable to determine Python Version.")
 		}
 		if launchGpu {
-			switch pythonVersion {
-			case function.PythonVersion37:
-				return GpuFunction37DockerImage, nil
-			case function.PythonVersion38:
-				return GpuFunction38DockerImage, nil
-			case function.PythonVersion39:
-				return GpuFunction39DockerImage, nil
-			case function.PythonVersion310:
-				return GpuFunction310DockerImage, nil
-			default:
-				return "", errors.New("Unable to determine Python Version.")
-			}
+			return mapGpuFunctionToDockerImage(pythonVersion, cudaVersion)
 		} else {
 			switch pythonVersion {
 			case function.PythonVersion37:
@@ -323,4 +319,38 @@ func mapIntegrationServiceToDockerImage(service shared.Service) (string, error) 
 	default:
 		return "", errors.Newf("Unknown integration service provided %v", service)
 	}
+}
+
+func mapGpuFunctionToDockerImage(pythonVersion function.PythonVersion, cudaVersion string) (string, error) {
+	switch cudaVersion {
+	case k8s.Cuda11_4_1:
+		switch pythonVersion {
+		case function.PythonVersion37:
+			return GpuCuda1180Python37, nil
+		case function.PythonVersion38:
+			return GpuCuda1180Python38, nil
+		case function.PythonVersion39:
+			return GpuCuda1180Python39, nil
+		case function.PythonVersion310:
+			return GpuCuda1180Python310, nil
+		default:
+			return "", errors.New("Unable to determine Python Version.")
+		}
+	case k8s.Cuda11_8_0:
+		switch pythonVersion {
+		case function.PythonVersion37:
+			return GpuCuda1141Python37, nil
+		case function.PythonVersion38:
+			return GpuCuda1141Python38, nil
+		case function.PythonVersion39:
+			return GpuCuda1141Python39, nil
+		case function.PythonVersion310:
+			return GpuCuda1141Python310, nil
+		default:
+			return "", errors.New("Unable to determine Python Version.")
+		}
+	default:
+		return "", errors.New("Unsupported CUDA version provided. We currently only support CUDA versions 11.4.1 and 11.8.0")
+	}
+
 }

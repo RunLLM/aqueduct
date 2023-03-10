@@ -41,6 +41,7 @@ type ResourceConfig struct {
 	NumCPU          *int    `json:"num_cpus,omitempty"`
 	MemoryMB        *int    `json:"memory_mb,omitempty"`
 	GPUResourceName *string `json:"gpu_resource_name,omitempty"`
+	CudaVersion     *string `json:"cuda_version,omitempty"`
 }
 
 type specUnion struct {
