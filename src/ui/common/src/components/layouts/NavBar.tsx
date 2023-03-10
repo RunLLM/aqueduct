@@ -61,9 +61,10 @@ const NavBar: React.FC<{
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
-
-  const theme = useTheme();
   console.log('theme: ', theme);
+
+  const contextTheme = useTheme();
+  console.log('contextTheme: ', contextTheme);
 
   // const numUnreadNotifications = useSelector(
   //   (state: RootState) =>
@@ -136,7 +137,7 @@ const NavBar: React.FC<{
                 sx={{
                   width: '20px',
                   height: '20px',
-                  backgroundColor: 'palette.red.500',
+                  backgroundColor: 'red.500',
                   borderRadius: '4px',
                   mr: 1,
                   display: 'flex',
