@@ -550,7 +550,7 @@ def op(
             assert isinstance(description, str)
 
             if execution_mode == None:
-                execution_mode = _get_execution_mode()
+                execution_mode = _get_global_execution_mode()
 
             assert isinstance(execution_mode, ExecutionMode)
 
@@ -714,7 +714,7 @@ def metric(
             assert isinstance(description, str)
 
             if execution_mode == None:
-                execution_mode = _get_execution_mode()
+                execution_mode = _get_global_execution_mode()
 
             assert isinstance(execution_mode, ExecutionMode)
 
@@ -901,7 +901,7 @@ def check(
             assert isinstance(description, str)
 
             if execution_mode == None:
-                execution_mode = _get_execution_mode()
+                execution_mode = _get_global_execution_mode()
 
             assert isinstance(execution_mode, ExecutionMode)
 
@@ -1026,7 +1026,7 @@ def to_operator(
     return func_op(func)
 
 
-def _get_execution_mode() -> ExecutionMode:
+def _get_global_execution_mode() -> ExecutionMode:
     if globals.__GLOBAL_CONFIG__.lazy:
         return ExecutionMode.LAZY
     else:
