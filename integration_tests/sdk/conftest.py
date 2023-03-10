@@ -257,7 +257,7 @@ def validator(client, data_integration):
 
 
 @pytest.fixture(scope="function", autouse=True)
-def post_process():
+def post_process_reset_execution_mode_to_eager():
     # Pre-processing code
     yield
     # Post-processing code
