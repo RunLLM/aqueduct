@@ -1,7 +1,8 @@
 import { faBell, faSliders } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { AppBar, Breadcrumbs, Link, Toolbar, Typography } from '@mui/material';
+import { AppBar, Breadcrumbs, Link, Toolbar, Typography, useTheme } from '@mui/material';
 import Box from '@mui/material/Box';
+//import red from '@mui/material/colors/red';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
@@ -40,7 +41,7 @@ export class BreadcrumbLink {
     'Page Not Found'
   );
 
-  constructor(public readonly address: string, public readonly name: string) {}
+  constructor(public readonly address: string, public readonly name: string) { }
 
   toString(): string {
     return this.name;
@@ -61,14 +62,19 @@ const NavBar: React.FC<{
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
 
-  const numUnreadNotifications = useSelector(
-    (state: RootState) =>
-      state.notificationsReducer.notifications.filter(
-        (notification) =>
-          notification.level !== NotificationLogLevel.Success &&
-          notification.status === NotificationStatus.Unread
-      ).length
-  );
+  const theme = useTheme();
+  console.log('theme: ', theme);
+
+  // const numUnreadNotifications = useSelector(
+  //   (state: RootState) =>
+  //     state.notificationsReducer.notifications.filter(
+  //       (notification) =>
+  //         notification.level !== NotificationLogLevel.Success &&
+  //         notification.status === NotificationStatus.Unread
+  //     ).length
+  // );
+
+  const numUnreadNotifications = 5;
 
   const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
     setAnchorEl(event.currentTarget);
@@ -86,7 +92,7 @@ const NavBar: React.FC<{
         width: `calc(100% - ${MenuSidebarWidthNumber}px)`,
         height: '64px',
         boxShadow: 'none',
-        borderBottom: `2px solid ${theme.palette.gray[300]}`,
+        borderBottom: `2px solid ${theme.palette[300]}`,
         backgroundColor: 'white',
         color: 'black',
       }}
@@ -130,7 +136,7 @@ const NavBar: React.FC<{
                 sx={{
                   width: '20px',
                   height: '20px',
-                  backgroundColor: 'red.500',
+                  backgroundColor: 'palette.red.500',
                   borderRadius: '4px',
                   mr: 1,
                   display: 'flex',

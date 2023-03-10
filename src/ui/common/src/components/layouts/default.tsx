@@ -1,9 +1,11 @@
+import { createTheme } from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 
 import { handleFetchNotifications } from '../../reducers/notifications';
 import { AppDispatch } from '../../stores/store';
+import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
 import { breadcrumbsSize } from '../notifications/NotificationsPopover';
 import MenuSidebar, { MenuSidebarWidth } from './menuSidebar';
@@ -26,6 +28,8 @@ type Props = {
   onSidebarItemClicked?: (name: string) => void;
 };
 
+
+
 export const DefaultLayout: React.FC<Props> = ({
   user,
   children,
@@ -33,6 +37,8 @@ export const DefaultLayout: React.FC<Props> = ({
   onBreadCrumbClicked = null,
   onSidebarItemClicked = null,
 }) => {
+  const muiTheme = createTheme(theme);
+
   const dispatch: AppDispatch = useDispatch();
   useEffect(() => {
     if (user) {
