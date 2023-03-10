@@ -88,8 +88,6 @@ def test_basic_file_dependencies(client, data_integration):
 
 
 def test_invalid_file_dependencies(client, data_integration):
-    global_config({"lazy": False})
-
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
 
     with pytest.raises(AqueductError):

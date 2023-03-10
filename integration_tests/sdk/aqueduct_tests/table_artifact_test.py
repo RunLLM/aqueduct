@@ -56,8 +56,6 @@ def test_system_runtime_metric(client, data_integration):
 
 
 def test_system_max_memory_metric(client, data_integration):
-    global_config({"lazy": False})
-
     table = extract(data_integration, DataObject.SENTIMENT)
     timed_table = mem_intensive_function(table)
 
