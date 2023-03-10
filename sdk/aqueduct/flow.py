@@ -66,7 +66,6 @@ class Flow:
             raise InvalidUserArgumentException("Limit must be a positive integer.")
 
         resp = globals.__GLOBAL_API_CLIENT__.get_workflow(self._id)
-        print(resp)
         return [
             dag_result.to_readable_dict()
             for dag_result in list(reversed(resp.workflow_dag_results))[:limit]
