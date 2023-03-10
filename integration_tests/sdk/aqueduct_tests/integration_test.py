@@ -61,7 +61,7 @@ def test_sqlite_with_k8s(data_integration, engine):
     with pytest.raises(AqueductError, match="Unknown integration service provided SQLite"):
         extract(data_integration, DataObject.SENTIMENT)
 
-        
+
 @pytest.mark.enable_only_for_local_storage()
 def test_compute_integration_without_cloud_storage(client):
     with pytest.raises(
