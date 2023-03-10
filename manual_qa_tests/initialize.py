@@ -17,11 +17,11 @@ import aqueduct as aq
 # when adding new deployments, keep the order of `fail`, `warning`, and `succeed`
 # such that the UI would approximately show these workflows in reverse order.
 WORKFLOW_PKGS = [
-    #fail_bad_check,
-    #warning_bad_check,
-    #succeed_parameters,
-    #succeed_complex,
-    #fail_bad_operator,
+    fail_bad_check,
+    warning_bad_check,
+    succeed_parameters,
+    succeed_complex,
+    fail_bad_operator,
     no_run,
 ]
 
