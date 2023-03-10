@@ -74,3 +74,13 @@ def test_compute_integration_without_cloud_storage(client):
             service=ServiceType.K8S,
             config=K8sConfig(kubeconfig_path="dummy_path", cluster_name="dummy_name"),
         )
+
+
+# TODO (ENG-2593): Investigate ways to support relative kubeconfig and aws credential path
+# def test_k8s_integration_wrong_kubeconfig(client):
+#    with pytest.raises(InvalidRequestError):
+#        client.connect_integration(
+#            name="k8s integration with wrong kubeconfig",
+#            service=ServiceType.K8S,
+#            config=K8sConfig(kubeconfig_path="compute/k8s/wrong_kubeconfig", cluster_name="dummy_name"),
+#        )
