@@ -1,3 +1,5 @@
+import { Theme } from "@mui/material/styles";
+
 export const theme: Theme = {
   palette: {
     black: '#000000',
