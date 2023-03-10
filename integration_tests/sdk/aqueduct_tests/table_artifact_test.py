@@ -4,6 +4,7 @@ import time
 import pandas as pd
 
 from aqueduct import op
+from aqueduct import global_config
 
 from ..shared.data_objects import DataObject
 from .extract import extract
@@ -56,6 +57,8 @@ def test_system_runtime_metric(client, data_integration):
 
 
 def test_system_max_memory_metric(client, data_integration):
+    global_config({"lazy": False})
+
     table = extract(data_integration, DataObject.SENTIMENT)
     timed_table = mem_intensive_function(table)
 
