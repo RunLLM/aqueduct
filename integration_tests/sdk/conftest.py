@@ -5,6 +5,7 @@ from aqueduct.models.dag import DAG, Metadata
 from aqueduct import Client, globals
 from sdk.setup_integration import (
     get_aqueduct_config,
+    has_storage_config,
     list_compute_integrations,
     list_data_integrations,
     setup_compute_integrations,
@@ -48,7 +49,11 @@ def pytest_configure(config):
     )
     config.addinivalue_line(
         "markers",
-        "must_have_gpu: the K8s integration is expected to have access to a GPU",
+        "must_have_gpu: the K8s integration is expected to have access to a GPU.",
+    )
+    config.addinivalue_line(
+        "markers",
+        "enable_only_for_local_storage: the test is expected to run in an environment with local storage.",
     )
 
 
@@ -171,6 +176,16 @@ def enable_only_for_engine_type(request, client, engine):
                 "Skipped for engine integration `%s`, since it is not of type `%s`."
                 % (engine, ",".join(enabled_engine_types))
             )
+
+
+@pytest.fixture(autouse=True)
+def enable_only_for_local_storage(request, client, engine):
+    """xxx"""
+    if not request.node.get_closest_marker("enable_only_for_local_storage"):
+        return
+
+    if has_storage_config():
+        pytest.skip("Skipped since the test environment uses non-local storage.")
 
 
 @pytest.fixture(autouse=True)
