@@ -169,16 +169,16 @@ func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
 	if err != nil {
 		if err.Code() == job.User {
 			bo.UpdateExecState(
-				jobManagerUserFailureExecState(err, "Job manager Launch failed due to user error"),
+				jobManagerUserFailureExecState(err, "Job manager's Launch API failed due to user error"),
 			)
 		} else if err.Code() == job.System {
 			bo.UpdateExecState(
-				unknownSystemFailureExecState(err, "Job manager Launch failed due to system error"),
+				unknownSystemFailureExecState(err, "Job manager's Launch API failed due to system error"),
 			)
 		} else {
 			log.Errorf("Unexpected job error code %d", err.Code())
 			bo.UpdateExecState(
-				unknownSystemFailureExecState(err, "Job manager Launch failed due to system error"),
+				unknownSystemFailureExecState(err, "Job manager's Launch API failed due to system error"),
 			)
 		}
 	}
