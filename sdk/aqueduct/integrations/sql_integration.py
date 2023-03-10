@@ -8,7 +8,6 @@ from aqueduct.artifacts.preview import preview_artifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, LoadUpdateMode, ServiceType
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.integrations.naming import _resolve_op_and_artifact_name_for_extract
 from aqueduct.integrations.save import _save_artifact
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
@@ -20,7 +19,8 @@ from aqueduct.models.operators import (
     RelationalDBExtractParams,
     RelationalDBLoadParams,
 )
-from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.naming import resolve_artifact_name, default_artifact_name_from_op_name
 from aqueduct.utils.utils import generate_uuid
 
 from aqueduct import globals
@@ -176,12 +176,8 @@ class RelationalDBIntegration(Integration):
 
         execution_mode = ExecutionMode.LAZY if lazy else ExecutionMode.EAGER
 
-        op_name, artifact_name = _resolve_op_and_artifact_name_for_extract(
-            dag=self._dag,
-            op_name=name,
-            default_op_name="%s query" % self.name(),
-            artifact_name=output,
-        )
+        op_name = name or "%s query" % self.name()
+        artifact_name = output or resolve_artifact_name(self._dag, default_artifact_name_from_op_name(op_name))
 
         extract_params = query
         if isinstance(extract_params, str):
@@ -238,7 +234,7 @@ class RelationalDBIntegration(Integration):
         apply_deltas_to_dag(
             self._dag,
             deltas=[
-                AddOrReplaceOperatorDelta(
+                AddOperatorDelta(
                     op=Operator(
                         id=sql_operator_id,
                         name=op_name,

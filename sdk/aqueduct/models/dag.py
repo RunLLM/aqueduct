@@ -296,11 +296,18 @@ class DAG(BaseModel):
             )
         return check_operators
 
-    def get_param_op_by_name(self, op_name: str) -> Optional[Operator]:
+    def get_param_op_by_name(self, name: str) -> Optional[Operator]:
         for op in self.operators.values():
-            if op.name == op_name and get_operator_type(op) == OperatorType.PARAM:
+            if op.name == name and get_operator_type(op) == OperatorType.PARAM:
                 return op
         return None
+
+    def get_save_op_by_name(self, name: str) -> Optional[Operator]:
+        for op in self.operators.values():
+            if op.name == name and get_operator_type(op) == OperatorType.LOAD:
+                return op
+        return None
+
 
     ######################## DAG WRITES #############################
 

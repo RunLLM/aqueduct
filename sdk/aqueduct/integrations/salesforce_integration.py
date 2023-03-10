@@ -14,11 +14,11 @@ from aqueduct.models.operators import (
     SalesforceExtractParams,
     SalesforceLoadParams,
 )
-from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import generate_uuid
 
-from .naming import _resolve_op_and_artifact_name_for_extract
 from .save import _save_artifact
+from ..utils.naming import resolve_artifact_name, default_artifact_name_from_op_name
 
 
 class SalesforceIntegration(Integration):
@@ -54,12 +54,9 @@ class SalesforceIntegration(Integration):
             TableArtifact representing result of the SQL query.
         """
 
-        op_name, artifact_name = _resolve_op_and_artifact_name_for_extract(
-            dag=self._dag,
-            op_name=name,
-            default_op_name="%s search" % self.name(),
-            artifact_name=output,
-        )
+        op_name = name or "%s search" % self.name()
+        artifact_name = output or resolve_artifact_name(self._dag, default_artifact_name_from_op_name(op_name))
+
         output_artifact_id = self._add_extract_operation(
             op_name, artifact_name, description, search_query, SalesforceExtractType.SEARCH
         )
@@ -92,13 +89,8 @@ class SalesforceIntegration(Integration):
         Returns:
             TableArtifact representing result of the SQL query.
         """
-
-        op_name, artifact_name = _resolve_op_and_artifact_name_for_extract(
-            dag=self._dag,
-            op_name=name,
-            default_op_name="%s query" % self.name(),
-            artifact_name=output,
-        )
+        op_name = name or "%s query" % self.name()
+        artifact_name = output or resolve_artifact_name(self._dag, default_artifact_name_from_op_name(op_name))
 
         output_artifact_id = self._add_extract_operation(
             op_name, artifact_name, description, query, SalesforceExtractType.QUERY
@@ -140,7 +132,7 @@ class SalesforceIntegration(Integration):
         apply_deltas_to_dag(
             self._dag,
             deltas=[
-                AddOrReplaceOperatorDelta(
+                AddOperatorDelta(
                     op=Operator(
                         id=operator_id,
                         name=name,

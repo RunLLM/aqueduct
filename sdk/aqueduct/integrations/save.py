@@ -6,8 +6,7 @@ from aqueduct.globals import __GLOBAL_API_CLIENT__ as global_api_client
 from aqueduct.models.dag import DAG
 from aqueduct.models.integration import IntegrationInfo
 from aqueduct.models.operators import LoadSpec, Operator, OperatorSpec, UnionLoadParams
-from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
-from aqueduct.utils.naming import resolve_op_and_artifact_names
+from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import generate_uuid
 
 
@@ -48,8 +47,6 @@ def _save_artifact(
     # We currently do not allow multiple load operators on the same artifact to the same integration.
     # We do allow multiple artifacts to write to the same integration, as well as a single artifact
     # to write to multiple integrations.
-    # Multiple load operations to the same integration, of different artifacts, are guaranteed to
-    # have unique names.
     load_op_name = None
 
     # Replace any existing save operator on this artifact that goes to the same integration.
@@ -62,20 +59,13 @@ def _save_artifact(
         if op.spec.load.integration_id == integration_info.id:
             load_op_name = op.name
 
-    # If the name is not set yet, we know we have to make a new load operator, so bump the
-    # suffix until a unique name is found.
-    if load_op_name is None:
-        load_op_name, _ = resolve_op_and_artifact_names(
-            dag,
-            "save to %s" % integration_info.name,
-            overwrite_existing_op_name=False,
-            only_resolve_op_name=True,
-        )
+        # TODO: run a replace here!
+    # TODO: otherwise, run an add.
 
     apply_deltas_to_dag(
         dag,
         deltas=[
-            AddOrReplaceOperatorDelta(
+            AddOperatorDelta(
                 op=Operator(
                     id=generate_uuid(),
                     name=load_op_name,

@@ -30,9 +30,9 @@ from aqueduct.models.operators import (
     ResourceConfig,
 )
 from aqueduct.type_annotations import CheckFunction, MetricFunction, Number, UserFunction
-from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.function_packaging import serialize_function
-from aqueduct.utils.naming import resolve_op_and_artifact_names, construct_default_output_artifact_names_from_op
+from aqueduct.utils.naming import resolve_artifact_name, default_artifact_name_from_op_name
 from aqueduct.utils.utils import generate_engine_config, generate_uuid
 
 from aqueduct import globals
@@ -111,15 +111,21 @@ def wrap_spec(
 
     operator_id = generate_uuid()
     output_artifact_ids = [generate_uuid() for _ in output_artifact_type_hints]
+
     artifact_names = (
-            output_artifact_names or
-            construct_default_output_artifact_names_from_op(op_name, len(output_artifact_ids))
+        output_artifact_names or
+        [
+            resolve_artifact_name(
+                dag,
+                default_artifact_name_from_op_name(op_name)
+            ) for _ in range(len(output_artifact_ids))
+        ]
     )
 
     apply_deltas_to_dag(
         dag,
         deltas=[
-            AddOrReplaceOperatorDelta(
+            AddOperatorDelta(
                 op=Operator(
                     id=operator_id,
                     name=op_name,
@@ -286,7 +292,7 @@ def _convert_input_arguments_to_parameters(
                 param_name,
                 op_name,
             )
-            if is_overwrite:
+            if not is_overwrite:
                 warnings.warn(
                     """Input to function argument `%s` is not an artifact type. We have implicitly created a parameter named `%s` and your input will be used as its default value. This parameter will be used when running the function."""
                     % (param_name, param_name)
@@ -304,6 +310,7 @@ def _convert_input_arguments_to_parameters(
                 dag=dag,
                 param_name=implicit_param_name_by_index[idx],
                 default=default,
+
                 is_implicit=True,
             )
     return artifacts

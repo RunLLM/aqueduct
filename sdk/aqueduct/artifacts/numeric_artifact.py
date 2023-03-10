@@ -28,13 +28,13 @@ from aqueduct.models.operators import (
 )
 from aqueduct.type_annotations import Number
 from aqueduct.utils.dag_deltas import (
-    AddOrReplaceOperatorDelta,
+    AddOperatorDelta,
     RemoveCheckOperatorDelta,
     apply_deltas_to_dag,
 )
 from aqueduct.utils.describe import get_readable_description_for_metric
 from aqueduct.utils.function_packaging import serialize_function
-from aqueduct.utils.naming import resolve_op_and_artifact_names
+from aqueduct.utils.naming import resolve_artifact_name, default_artifact_name_from_op_name
 from aqueduct.utils.utils import format_header_for_print, generate_uuid
 
 from aqueduct import globals
@@ -261,22 +261,17 @@ class NumericArtifact(BaseArtifact):
         )
         op_spec = OperatorSpec(check=CheckSpec(level=severity, function=function_spec))
 
-        op_name, artifact_names = resolve_op_and_artifact_names(
-            self._dag,
-            check_name,
-            overwrite_existing_op_name=False,
-        )
-        assert len(artifact_names) == 1
+        artifact_name = resolve_artifact_name(self._dag, default_artifact_name_from_op_name(check_name))
 
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
         apply_deltas_to_dag(
             self._dag,
             deltas=[
-                AddOrReplaceOperatorDelta(
+                AddOperatorDelta(
                     op=Operator(
                         id=operator_id,
-                        name=op_name,
+                        name=check_name,
                         description=check_description,
                         spec=op_spec,
                         inputs=[self._artifact_id],
@@ -285,7 +280,7 @@ class NumericArtifact(BaseArtifact):
                     output_artifacts=[
                         ArtifactMetadata(
                             id=output_artifact_id,
-                            name=artifact_names[0],
+                            name=artifact_name,
                             type=ArtifactType.BOOL,
                         )
                     ],

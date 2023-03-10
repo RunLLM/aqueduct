@@ -9,12 +9,12 @@ from aqueduct.error import InvalidUserActionException, InvalidUserArgumentExcept
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
 from aqueduct.models.operators import Operator, OperatorSpec, get_operator_type
-from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag, ReplaceOperatorDelta
 from aqueduct.utils.type_inference import infer_artifact_type
 from aqueduct.utils.utils import construct_param_spec, generate_uuid
 
 
-def _operator_is_implicitly_created_param(op: Operator) -> bool:
+def operator_is_implicitly_created_param(op: Operator) -> bool:
     if get_operator_type(op) != OperatorType.PARAM:
         return False
     assert op.spec.param is not None
@@ -34,9 +34,7 @@ def check_implicit_param_name(dag: DAG, candidate_name: str, op_name: str) -> bo
         return False
 
     # If colliding with both another operator and artifact, check whether we can overwrite.
-    # This is because parameter operator-artifact pairs must have the same name.
-    elif colliding_param_op is not None and colliding_artifact is not None:
-        if _operator_is_implicitly_created_param(colliding_param_op):
+    if colliding_param_op is not None and operator_is_implicitly_created_param(colliding_param_op):
             assert len(colliding_param_op.outputs) == 1, "Parameter operator must have a single output."
             ops = dag.list_operators(on_artifact_id=colliding_param_op.outputs[0])
             assert len(ops) == 1, "Implicit parameters can only be consumed by a single operator."
@@ -52,19 +50,11 @@ def check_implicit_param_name(dag: DAG, candidate_name: str, op_name: str) -> bo
     )
 
 
-def check_explicit_param_name(dag: DAG, candidate_name: str) -> None:
-    colliding_op = dag.get_param_op_by_name(candidate_name)
-    if colliding_op is not None and _operator_is_implicitly_created_param(colliding_op):
-        raise InvalidUserActionException(
-            """Unable to create parameter `%s`, since there is an implicitly created parameter with the same name. If the old parameter is not longer relevant, you can remove it with `client.delete_param()` and rerun this operation. Otherwise, you'll need to rename one of the two. """
-            % candidate_name,
-        )
-
-
 def create_param_artifact(
     dag: DAG,
     param_name: str,
     default: Any,
+    overwrite: bool,
     description: str = "",
     is_implicit: bool = False,
 ) -> BaseArtifact:
@@ -75,6 +65,8 @@ def create_param_artifact(
             The dag to check for collisions against.
         param_name:
             The name for the parameter.
+        overwrite:
+            Whether to overwrite an existing parameter with the same name. If set, we assume such a parameter exists.
         default:
             The default value for the new parameter.
         description:
@@ -85,30 +77,32 @@ def create_param_artifact(
 
     artifact_type = infer_artifact_type(default)
     param_spec = construct_param_spec(default, artifact_type, is_implicit=is_implicit)
-
     operator_id = generate_uuid()
     output_artifact_id = generate_uuid()
+
+    op = Operator(
+        id=operator_id,
+        name=param_name,
+        description=description,
+        spec=OperatorSpec(param=param_spec),
+        inputs=[],
+        outputs=[output_artifact_id],
+    )
+    output_artifacts = [
+        ArtifactMetadata(
+            id=output_artifact_id,
+            name=param_name,
+            type=artifact_type,
+        ),
+    ]
+
+    if overwrite:
+        delta = ReplaceOperatorDelta(op=op, output_artifacts=output_artifacts)
+    else:
+        delta = AddOperatorDelta(op=op, output_artifacts=output_artifacts)
+
     apply_deltas_to_dag(
         dag,
-        deltas=[
-            AddOrReplaceOperatorDelta(
-                op=Operator(
-                    id=operator_id,
-                    name=param_name,
-                    description=description,
-                    spec=OperatorSpec(param=param_spec),
-                    inputs=[],
-                    outputs=[output_artifact_id],
-                ),
-                output_artifacts=[
-                    ArtifactMetadata(
-                        id=output_artifact_id,
-                        name=param_name,
-                        type=artifact_type,
-                    ),
-                ],
-            )
-        ],
+        deltas=[delta],
     )
-
     return to_artifact_class(dag, output_artifact_id, artifact_type, default)

@@ -11,7 +11,7 @@ from aqueduct.tests.utils import (
     generate_uuids,
 )
 from aqueduct.utils.dag_deltas import (
-    AddOrReplaceOperatorDelta,
+    AddOperatorDelta,
     SubgraphDAGDelta,
     apply_deltas_to_dag,
 )
@@ -81,12 +81,12 @@ def test_add_and_replace_operator_delta():
     apply_deltas_to_dag(
         dag,
         deltas=[
-            AddOrReplaceOperatorDelta(extract_op, output_artifacts=[extract_artifact]),
-            AddOrReplaceOperatorDelta(fn_op_0, output_artifacts=[fn_artifact_0]),
-            AddOrReplaceOperatorDelta(fn_op_1, output_artifacts=[fn_artifact_1]),
-            AddOrReplaceOperatorDelta(fn_op_2, output_artifacts=[fn_artifact_2]),
-            AddOrReplaceOperatorDelta(load_fn_1, output_artifacts=[]),
-            AddOrReplaceOperatorDelta(load_fn_2, output_artifacts=[]),
+            AddOperatorDelta(extract_op, output_artifacts=[extract_artifact]),
+            AddOperatorDelta(fn_op_0, output_artifacts=[fn_artifact_0]),
+            AddOperatorDelta(fn_op_1, output_artifacts=[fn_artifact_1]),
+            AddOperatorDelta(fn_op_2, output_artifacts=[fn_artifact_2]),
+            AddOperatorDelta(load_fn_1, output_artifacts=[]),
+            AddOperatorDelta(load_fn_2, output_artifacts=[]),
         ],
     )
 
@@ -110,7 +110,7 @@ def test_add_and_replace_operator_delta():
 
     apply_deltas_to_dag(
         dag,
-        deltas=[AddOrReplaceOperatorDelta(fn_op_2_replacement, output_artifacts=[fn_artifact_3])],
+        deltas=[AddOperatorDelta(fn_op_2_replacement, output_artifacts=[fn_artifact_3])],
     )
     assert dag == _construct_dag(
         operators=[extract_op, fn_op_0, fn_op_1, fn_op_2_replacement, load_fn_1],

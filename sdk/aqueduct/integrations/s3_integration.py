@@ -15,14 +15,14 @@ from aqueduct.models.operators import (
     S3ExtractParams,
     S3LoadParams,
 )
-from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import generate_uuid
 
 from aqueduct import globals
 
 from ..error import InvalidUserArgumentException
-from .naming import _resolve_op_and_artifact_name_for_extract
 from .save import _save_artifact
+from ..utils.naming import resolve_artifact_name, default_artifact_name_from_op_name
 
 
 def _convert_to_s3_table_format(format: Optional[str]) -> Optional[S3TableFormat]:
@@ -112,12 +112,8 @@ class S3Integration(Integration):
         format_enum = _convert_to_s3_table_format(format)
 
         integration_info = self._metadata
-        op_name, artifact_name = _resolve_op_and_artifact_name_for_extract(
-            dag=self._dag,
-            op_name=name,
-            default_op_name="%s query" % self.name(),
-            artifact_name=output,
-        )
+        op_name = name or "%s query" % self.name()
+        artifact_name = output or resolve_artifact_name(self._dag, default_artifact_name_from_op_name(op_name))
 
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
@@ -137,7 +133,7 @@ class S3Integration(Integration):
         apply_deltas_to_dag(
             self._dag,
             deltas=[
-                AddOrReplaceOperatorDelta(
+                AddOperatorDelta(
                     op=Operator(
                         id=operator_id,
                         name=op_name,

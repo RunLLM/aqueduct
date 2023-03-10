@@ -9,7 +9,7 @@ import __main__ as main
 import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
-from aqueduct.artifacts.create import check_explicit_param_name, create_param_artifact
+from aqueduct.artifacts.create import create_param_artifact, operator_is_implicitly_created_param
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.backend.response_models import SavedObjectUpdate
 from aqueduct.constants.enums import (
@@ -218,8 +218,21 @@ class Client:
         Returns:
             A parameter artifact.
         """
-        check_explicit_param_name(self._dag, name)
-        return create_param_artifact(self._dag, name, default, description)
+        colliding_op = self._dag.get_param_op_by_name(name)
+        if colliding_op is not None:
+            if operator_is_implicitly_created_param(colliding_op):
+                raise InvalidUserActionException(
+                    """Unable to create parameter `%s`, since there is an implicitly created parameter with the same name. If the old parameter is not longer relevant, you can remove it with `client.delete_param()` and rerun this operation. Otherwise, you'll need to rename one of the two. """
+                    % name,
+                )
+
+        return create_param_artifact(
+            self._dag,
+            name,
+            default,
+            colliding_op is not None,  # overwrite
+            description,
+        )
 
     def list_params(self) -> Dict[str, Any]:
         """Lists all the currently tracked parameters.

@@ -26,90 +26,29 @@ class DAGDelta(ABC):
         pass
 
 
-# These helpers are meant to be fed into `AddOrReplaceOperatorDelta` as different ways
-# of resolving whether an operator already exists in the DAG or not.
-
-
-# def find_duplicate_operator_by_name(dag: DAG, op: Operator) -> Optional[Operator]:
-#     return dag.get_operator(with_name=op.name)
-
-
-class AddOrReplaceOperatorDelta(DAGDelta):
+class AddOperatorDelta(DAGDelta):
     """Adds an operator and its output artifacts to the DAG.
-
-    If the operator name already exists in the dag, we will remove the old, colliding
-    operator, along with all its downstream dependencies before adding the operator.
 
     Attributes:
         op:
             The new operator to add.
         output_artifacts:
             The output artifacts for this operation.
-        find_duplicate_fn:
-            A caller-supplied function that defines when we want the new operator to replace
-            and old one. Returns the operator to replace, or None if no collision is found.
-            Defaults to replacing an operator with the same name.
     """
 
     def __init__(
         self,
         op: Operator,
         output_artifacts: List[ArtifactMetadata],
-        find_duplicate_fn: Callable[
-            [DAG, Operator], Optional[Operator]
-        ] = find_duplicate_operator_by_name,
     ):
         # Check that the operator's outputs correspond to the given output artifacts.
-        if len(op.outputs) != len(output_artifacts):
-            raise InternalAqueductError(
-                "Number of operator outputs does not match number of given artifacts."
-            )
-
-        for i, artifact_id in enumerate(op.outputs):
-            if output_artifacts[i].id != artifact_id:
-                raise InternalAqueductError(
-                    "The %dth output artifact on the operator does not match." % i
-                )
+        assert len(op.outputs) == len(output_artifacts), "Number of operator outputs does not match number of given artifacts."
+        assert all(output_artifacts[i].id == artifact_id for i, artifact_id in enumerate(op.outputs)), "The %dth output artifact on the operator does not match." % i
 
         self.op = op
         self.output_artifacts = output_artifacts
-        self.find_duplicate_fn = find_duplicate_fn
 
     def apply(self, dag: DAG) -> None:
-        # Find any colliding operator, and remove it and its dependencies first!
-        colliding_op = self.find_duplicate_fn(dag, self.op)
-        if colliding_op is not None:
-            if get_operator_type(self.op) != get_operator_type(colliding_op):
-                raise InvalidUserActionException(
-                    "Attempting to replace operator `%s` with a new operator `%s` of type %s, "
-                    "but the existing operator has type %s."
-                    % (
-                        colliding_op.name,
-                        self.op.name,
-                        get_operator_type(self.op),
-                        get_operator_type(colliding_op),
-                    ),
-                )
-
-            # The colliding operator cannot be a dependency of the new operator. Otherwise, we would
-            # not be able to remove the colliding operator.
-            downstream_op_ids = dag.list_downstream_operators(colliding_op.id)
-            for op_id in downstream_op_ids:
-                downstream_op = dag.must_get_operator(op_id)
-                if len(set(downstream_op.outputs).intersection(set(self.op.inputs))) > 0:
-                    raise InvalidUserActionException(
-                        "Attempting to replace operator `%s`, but it cannot be overwritten "
-                        "because it is an upstream dependency of the new operator `%s`."
-                        % (colliding_op.name, self.op.name)
-                    )
-
-            logger().info(
-                "The previously defined operator `%s` is being overwritten. Any downstream "
-                "artifacts of that operator will need to be recomputed and re-saved." % self.op.name
-            )
-            for op_id in downstream_op_ids:
-                dag.remove_operator(op_id)
-
         dag.add_operator(self.op)
         dag.add_artifacts(self.output_artifacts)
 
