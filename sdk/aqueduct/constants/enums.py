@@ -100,6 +100,7 @@ class RelationalDBServices(str, Enum, metaclass=MetaEnum):
 class ExecutionStatus(str, Enum, metaclass=MetaEnum):
     UNKNOWN = "unknown"
     SUCCEEDED = "succeeded"
+    RUNNING = "running"
     FAILED = "failed"
     PENDING = "pending"
     REGISTERED = "registered"
@@ -218,3 +219,9 @@ class K8sClusterStatusType(str, Enum, metaclass=MetaEnum):
     ACTIVE = "Active"
     TERMINATING = "Terminating"
     TERMINATED = "Terminated"
+
+
+class K8sClusterActionType(str, Enum, metaclass=MetaEnum):
+    CREATE = "create"
+    DELETE = "delete"
+    FORCE_DELETE = "force-delete"

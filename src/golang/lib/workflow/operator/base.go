@@ -165,7 +165,25 @@ func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
 		}
 	}
 
-	return bo.jobManager.Launch(ctx, spec.JobName(), spec)
+	err := bo.jobManager.Launch(ctx, spec.JobName(), spec)
+	if err != nil {
+		if err.Code() == job.User {
+			bo.UpdateExecState(
+				jobManagerUserFailureExecState(err, "Job manager's Launch API failed due to user error"),
+			)
+		} else if err.Code() == job.System {
+			bo.UpdateExecState(
+				unknownSystemFailureExecState(err, "Job manager's Launch API failed due to system error"),
+			)
+		} else {
+			log.Errorf("Unexpected job error code %d", err.Code())
+			bo.UpdateExecState(
+				unknownSystemFailureExecState(err, "Job manager's Launch API failed due to system error"),
+			)
+		}
+	}
+
+	return err
 }
 
 // FetchExecState assumes that the operator has been computed already.

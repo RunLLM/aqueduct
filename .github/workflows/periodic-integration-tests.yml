@@ -68,7 +68,14 @@ jobs:
         working-directory: integration_tests/sdk/compute/k8s
         run: terraform destroy --auto-approve
 
-      # TODO(ENG-2553): Notify the oncall, not just Kenny.
+
+      # Sets it as an environmental variable.
+      - name: Get the Slack ID for the current oncall
+        if: always()
+        run: |
+          aws s3 cp s3://aqueduct-assets/oncall.yml ./oncall.yml
+          echo "ONCALL_SLACK_MEMBER_ID=$(python3 scripts/get_current_oncall.py --file ./oncall.yml)" >> $GITHUB_ENV
+
       - name: Report to Slack on Failure
         if: always()
         uses: ravsamhq/notify-slack-action@v1
@@ -78,6 +85,6 @@ jobs:
           message_format: '{emoji} *{workflow}* has {status_message}'
           footer: '{run_url}'
           notify_when: 'failure,warnings'
-          mention_users: 'U025MDH5KS6'
+          mention_users: ${{ env.ONCALL_SLACK_MEMBER_ID }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}

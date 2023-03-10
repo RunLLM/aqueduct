@@ -281,6 +281,12 @@ def setup_storage_layer(client: Client) -> None:
                 break
 
 
+def has_storage_config() -> bool:
+    """Check if the test config file has a storage config section (meaning it is using non-local storage)."""
+    test_config = _parse_config_file()
+    return "storage" in test_config
+
+
 def _sanitize_integration_config_for_connect(config: Dict[str, Any]) -> Dict[str, Any]:
     """WARNING: this modifies the configuration dict."""
     del config["type"]

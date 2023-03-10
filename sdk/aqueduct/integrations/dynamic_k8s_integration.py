@@ -1,4 +1,4 @@
-from aqueduct.constants.enums import K8sClusterStatusType
+from aqueduct.constants.enums import K8sClusterActionType, K8sClusterStatusType
 from aqueduct.error import InvalidIntegrationException
 from aqueduct.models.integration import Integration, IntegrationInfo
 
@@ -25,6 +25,20 @@ class DynamicK8sIntegration(Integration):
         return engine_statuses[self._metadata.name].status.value
 
     def create(self) -> None:
+        """Creates the dynamic Kubernetes cluster, if it is not currently running.
+
+        Args:
+            force:
+                By default, if there are any pods in the "Running" or "ContainerCreating" status,
+                the deletion process will fail. However, if the flag is set to "True", this check
+                will be skipped, allowing the cluster to be deleted despite the presence of such pods.
+
+        Raises:
+            InvalidIntegrationException:
+                An error occurred when the dynamic engine doesn't exist.
+            InternalServerError:
+                An unexpected error occurred within the Aqueduct cluster.
+        """
         engine_statuses = globals.__GLOBAL_API_CLIENT__.get_dynamic_engine_status(
             engine_integration_ids=[str(self._metadata.id)]
         )
@@ -42,11 +56,25 @@ class DynamicK8sIntegration(Integration):
             "Cluster is currently in %s status. It could take 12-15 minutes for the cluster to be ready..."
             % status.value
         )
-        globals.__GLOBAL_API_CLIENT__.edit_engine(
-            action="create", integration_id=str(self._metadata.id)
+        globals.__GLOBAL_API_CLIENT__.edit_dynamic_engine(
+            action=K8sClusterActionType.CREATE, integration_id=str(self._metadata.id)
         )
 
-    def delete(self) -> None:
+    def delete(self, force: bool = False) -> None:
+        """Deletes the dynamic Kubernetes cluster if it is running, ignoring the keepalive period.
+
+        Args:
+            force:
+                By default, if there are any pods in the "Running" or "ContainerCreating" status,
+                the deletion process will fail. However, if the flag is set to "True", this check
+                will be skipped, allowing the cluster to be deleted despite the presence of such pods.
+
+        Raises:
+            InvalidIntegrationException:
+                An error occurred when the dynamic engine doesn't exist.
+            InternalServerError:
+                An unexpected error occurred within the Aqueduct cluster.
+        """
         engine_statuses = globals.__GLOBAL_API_CLIENT__.get_dynamic_engine_status(
             engine_integration_ids=[str(self._metadata.id)]
         )
@@ -64,8 +92,13 @@ class DynamicK8sIntegration(Integration):
             "Cluster is currently in %s status. It could take 6-8 minutes for the cluster to be terminated..."
             % status.value
         )
-        globals.__GLOBAL_API_CLIENT__.edit_engine(
-            action="delete", integration_id=str(self._metadata.id)
+
+        action = K8sClusterActionType.DELETE
+        if force:
+            action = K8sClusterActionType.FORCE_DELETE
+
+        globals.__GLOBAL_API_CLIENT__.edit_dynamic_engine(
+            action=action, integration_id=str(self._metadata.id)
         )
 
     def describe(self) -> None:

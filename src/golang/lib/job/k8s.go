@@ -140,7 +140,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobE
 
 	containerRepo, err := mapJobTypeToDockerImage(spec, launchGpu)
 	if err != nil {
-		return systemError(err)
+		return userError(err)
 	}
 	containerImage := fmt.Sprintf("%s:%s", containerRepo, lib.ServerVersionNumber)
 

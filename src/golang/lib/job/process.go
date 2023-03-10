@@ -319,7 +319,7 @@ func (j *ProcessJobManager) Launch(
 ) JobError {
 	log.Infof("Running %s job %s.", spec.Type(), name)
 	if _, ok := j.getCmd(name); ok {
-		return systemError(errors.Newf("Reached timeout waiting for the job %s to finish.", name))
+		return systemError(errors.Newf("A job with the same name %s already exists.", name))
 	}
 
 	cmd, err := j.mapJobTypeToCmd(name, spec)
