@@ -10,14 +10,14 @@ type JobErrorCode int
 
 const (
 	// System indicates an unexpected system issue that we cannot recover from.
-	System JobErrorCode = 0
+	System JobErrorCode = iota
 
 	// User error code indicates that the issue was the user's fault, and to surface that message
 	// to the user.
-	User = 1
+	User
 
 	// JobMissing indicates that the job manager could not find the specified job.
-	JobMissing = 2
+	JobMissing
 
 	// Noop indicates that the job manager does not have the context to make a definitive claim
 	// as to whether the job has succeeded or not. This is equivalent to saying "Do not ask me, I don't know.".
@@ -25,7 +25,7 @@ const (
 	// For example, polling a Lambda JobManager will return this error because there is no concept of
 	// fetching a specific job's information from Lambda. The caller must figure out the job status
 	// through other means.
-	Noop = 2
+	Noop
 )
 
 type JobError interface {
