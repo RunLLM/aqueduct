@@ -3,8 +3,7 @@ import time
 
 import pandas as pd
 
-from aqueduct import op
-from aqueduct import global_config
+from aqueduct import global_config, op
 
 from ..shared.data_objects import DataObject
 from .extract import extract
