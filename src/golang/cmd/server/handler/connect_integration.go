@@ -40,6 +40,13 @@ const (
 	pollAuthenticateTimeout  = 2 * time.Minute
 )
 
+var pathConfigKeys = map[string]bool{
+	"config_file_path":    true, // AWS, S3, Athena credentials path
+	"kubeconfig_path":     true, // K8s credentials path
+	"s3_credentials_path": true, // Airflow S3 credentials path
+	"database":            true, // SQLite database path
+}
+
 // Route: /integration/connect
 // Method: POST
 // Request:
@@ -112,6 +119,10 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 
 	if service == shared.Github || service == shared.GoogleSheets {
 		return nil, http.StatusBadRequest, errors.Newf("%s integration type is currently not supported", service)
+	}
+
+	if err = convertToAbsolutePath(configMap); err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Error getting server's home directory path")
 	}
 
 	config := auth.NewStaticConfig(configMap)
@@ -839,4 +850,20 @@ func validateConda() (int, error) {
 	}
 
 	return http.StatusOK, nil
+}
+
+func convertToAbsolutePath(configMap map[string]string) error {
+	for key, path := range configMap {
+		if _, ok := pathConfigKeys[key]; ok {
+			if strings.HasPrefix(path, "~") {
+				homeDir, err := os.UserHomeDir()
+				if err != nil {
+					return err
+				}
+				configMap[key] = strings.Replace(path, "~", homeDir, 1)
+			}
+		}
+	}
+
+	return nil
 }
