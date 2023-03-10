@@ -3,9 +3,11 @@ from aqueduct.constants.enums import ServiceType
 from aqueduct.error import (
     AqueductError,
     InvalidIntegrationException,
+    InvalidRequestError,
     InvalidUserActionException,
     InvalidUserArgumentException,
 )
+from aqueduct.integrations.connect_config import K8sConfig
 from pydantic import ValidationError
 
 from aqueduct import global_config
@@ -58,3 +60,16 @@ def test_sqlite_with_k8s(data_integration, engine):
     global_config({"engine": engine})
     with pytest.raises(AqueductError, match="Unknown integration service provided SQLite"):
         extract(data_integration, DataObject.SENTIMENT)
+
+        
+@pytest.mark.enable_only_for_local_storage()
+def test_compute_integration_without_cloud_storage(client):
+    with pytest.raises(
+        InvalidRequestError,
+        match="You need to setup cloud storage as metadata store before registering compute integration of type Kubernetes.",
+    ):
+        client.connect_integration(
+            name="compute integration without cloud storage",
+            service=ServiceType.K8S,
+            config=K8sConfig(kubeconfig_path="dummy_path", cluster_name="dummy_name"),
+        )

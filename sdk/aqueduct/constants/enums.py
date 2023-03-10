@@ -219,3 +219,9 @@ class K8sClusterStatusType(str, Enum, metaclass=MetaEnum):
     ACTIVE = "Active"
     TERMINATING = "Terminating"
     TERMINATED = "Terminated"
+
+
+class K8sClusterActionType(str, Enum, metaclass=MetaEnum):
+    CREATE = "create"
+    DELETE = "delete"
+    FORCE_DELETE = "force-delete"
