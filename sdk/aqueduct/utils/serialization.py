@@ -7,8 +7,8 @@ from typing import Any, Callable, Dict, List, Optional, Union, cast
 import cloudpickle as pickle
 import pandas as pd
 from aqueduct.constants.enums import ArtifactType, S3SerializationType, SerializationType,LocalDataSerializationType, LocalDataTableFormat
-from aqueduct.utils.local_data import LocalData
-from aqueduct.utils.type_inference import infer_artifact_type
+from aqueduct.models.local_data import LocalData
+from aqueduct.utils.type_inference import infer_artifact_type,_base64_string_to_bytes
 from bson import json_util as bson_json_util
 from PIL import Image
 from pydantic import BaseModel
@@ -68,16 +68,18 @@ def _read_string_content(content: bytes) -> str:
 def _read_bytes_content(content: bytes) -> bytes:
     return content
 
-def _read_csv_table_content(content: bytes) -> Any:
-    return pd.read_csv(io.BytesIO(content))
+def _read_local_csv_table_content(path: str) -> Any:
+    return pd.read_csv(path)
 
 
-def _read_json_table_content(content: bytes) -> Any:
-    return pd.read_json(io.BytesIO(content))
+def _read_local_json_table_content(path: str) -> Any:
+    return pd.read_json(path, orient="table")
 
+def _read_local_parquet_table_content(path: str) -> Any:
+    return pd.read_parquet(path)
 
-def _read_parquet_table_content(content: bytes) -> Any:
-    return pd.read_parquet(io.BytesIO(content))
+def _read_local_image_content(path: str) -> Any:
+    return Image.open(path)
 
 # Returns a tf.keras.Model type. We don't assume that every user has it installed,
 # so we return "Any" type.
@@ -111,10 +113,10 @@ __deserialization_function_mapping: Dict[str, Callable[[bytes], Any]] = {
 
 # Not intended for use outside of `deserialize()`.
 __local_data_deserialization_function_mapping: Dict[str, Callable[[bytes], Any]] = {
-    LocalDataSerializationType.CSV_TABLE: _read_csv_table_content,
-    LocalDataSerializationType.JSON_TABLE: _read_json_table_content,
-    LocalDataSerializationType.PARQUET_TABLE: _read_parquet_table_content,
-    LocalDataSerializationType.IMAGE: _read_image_content,
+    LocalDataSerializationType.CSV_TABLE: _read_local_csv_table_content,
+    LocalDataSerializationType.JSON_TABLE: _read_local_json_table_content,
+    LocalDataSerializationType.PARQUET_TABLE: _read_local_parquet_table_content,
+    LocalDataSerializationType.IMAGE: _read_local_image_content,
 }
 
 
@@ -181,6 +183,25 @@ def deserialize(
     return deserialized_val
 
 
+def deserialize_from_local_data(
+    serialization_type: LocalDataSerializationType,
+    artifact_type: ArtifactType,
+    path: str,    
+) -> Any:
+    """Deserializes a file object with specified path into the appropriate python object.
+
+    Handles serialization for local data.
+    """
+    deserialization_function_mapping = __local_data_deserialization_function_mapping
+    if serialization_type not in deserialization_function_mapping:
+        raise Exception("Unsupported serialization type %s" % serialization_type)
+
+    deserialized_val = deserialization_function_mapping[serialization_type](path)
+
+    if artifact_type == ArtifactType.TUPLE:
+        return tuple(deserialized_val)
+    return deserialized_val
+    
 def _write_table_output(output: pd.DataFrame) -> bytes:
     output_str = cast(str, output.to_json(orient="table", date_format="iso", index=False))
     return output_str.encode(DEFAULT_ENCODING)
@@ -317,20 +338,24 @@ def artifact_type_to_serialization_type(
     return serialization_type
 
 def extract_val_from_local_data(val: LocalData) -> Any:
+    """ Extract value of spcified type in LocalData."""
     artifact_type = val.as_type
-    format = val.format
-    data_file = open(val.path,"rb")
-    bytes_string = io.BytesIO(data_file)
+    local_data_path = val.path
+    local_data_format = val.format
     if artifact_type == ArtifactType.TABLE:
-        if format == LocalDataTableFormat.CSV:
-            return deserialize(LocalDataSerializationType.CSV_TABLE,artifact_type,bytes_string,__local_data_deserialization_function_mapping)
-        elif format == LocalDataTableFormat.JSON:
-            return deserialize(LocalDataSerializationType.JSON_TABLE,artifact_type,bytes_string,__local_data_deserialization_function_mapping)
-        elif format == LocalDataTableFormat.PARQUET:
-            return deserialize(LocalDataSerializationType.PARQUET_TABLE,artifact_type,bytes_string,__local_data_deserialization_function_mapping)
+        if local_data_format == LocalDataTableFormat.CSV:
+            deserialized_val = deserialize_from_local_data(LocalDataSerializationType.CSV_TABLE,artifact_type,local_data_path)
+        elif local_data_format == LocalDataTableFormat.JSON:
+            deserialized_val = deserialize_from_local_data(LocalDataSerializationType.JSON_TABLE,artifact_type,local_data_path)
+        elif local_data_format == LocalDataTableFormat.PARQUET:
+            deserialized_val = deserialize_from_local_data(LocalDataSerializationType.PARQUET_TABLE,artifact_type,local_data_path)
         else:
             raise Exception("Unsupported file format %s" % format)
     elif artifact_type == ArtifactType.IMAGE:
-        return deserialize(LocalDataSerializationType.IMAGE,artifact_type,bytes_string,__local_data_deserialization_function_mapping)
+        deserialized_val = deserialize_from_local_data(LocalDataSerializationType.IMAGE,artifact_type,local_data_path)
     else:
         raise Exception("Unsupported artifact type %s" % artifact_type)
+    return deserialized_val
+
+def extract_serialized_local_data(val: str, artifact_type : ArtifactType ,serialization_type : SerializationType) -> Any:
+    return deserialize(serialization_type,artifact_type,_base64_string_to_bytes(val))

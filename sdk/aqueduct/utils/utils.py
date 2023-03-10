@@ -15,7 +15,7 @@ from aqueduct.models.config import (
 from aqueduct.models.dag import Schedule
 from aqueduct.models.integration import IntegrationInfo
 from aqueduct.models.operators import ParamSpec
-from aqueduct.utils.local_data import LocalData
+from aqueduct.models.local_data import LocalData
 from croniter import croniter
 
 from .serialization import artifact_type_to_serialization_type, serialize_val,extract_val_from_local_data
@@ -114,6 +114,7 @@ def construct_param_spec(
 
     if isinstance(val,LocalData):
         val = extract_val_from_local_data(val)
+        
     serialization_type = artifact_type_to_serialization_type(
         artifact_type,
         derived_from_bson,

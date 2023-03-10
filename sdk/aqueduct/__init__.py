@@ -6,6 +6,7 @@ from aqueduct.constants.enums import CheckSeverity, LoadUpdateMode
 from aqueduct.decorator import check, metric, op, to_operator
 from aqueduct.flow import Flow
 from aqueduct.schedule import DayOfMonth, DayOfWeek, Hour, Minute, daily, hourly, monthly, weekly
+from aqueduct.utils.local_data import Local_Data
 
 
 # Retrieves all valid import paths for all variables in a given module, using the import path prefix

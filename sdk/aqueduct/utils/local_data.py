@@ -1,12 +1,9 @@
 import os
 from aqueduct.constants.enums import ArtifactType,LocalDataTableFormat
-from typing import Any, DefaultDict, Dict, List, Optional, Union
+from typing import Optional 
 from ..error import InvalidUserArgumentException
+from aqueduct.models.local_data import LocalData
 
-class LocalData:
-    path : str
-    as_type : Union[ArtifactType,LocalDataTableFormat]
-    format : Optional[LocalDataTableFormat]
 
 def Local_Data(path : str, artifact_type : ArtifactType, format: Optional[str] = None,) -> LocalData:
     """Identify the local data which can be passed in as a parameter.
@@ -24,19 +21,9 @@ def Local_Data(path : str, artifact_type : ArtifactType, format: Optional[str] =
     Returns
         A `LocalData` object which can be used to create a parameter.
     """
-    if path[-1] == "/":
-        raise InvalidUserArgumentException(
-            "Path argument is only applicable to file type, found directory instead."
-        )
-    
-    if format and artifact_type != ArtifactType.TABLE:
-        raise InvalidUserArgumentException(
-            "Format argument is only applicable to table artifact type, found %s instead."
-            % artifact_type
-        )
-    
+
     format_enum = _convert_to_local_data_table_format(format)
-    return LocalData(path,artifact_type,format_enum) 
+    return LocalData(path = path,as_type= artifact_type,format=format_enum) 
 
 
 def _convert_to_local_data_table_format(format: Optional[str]) -> Optional[LocalDataTableFormat]:
