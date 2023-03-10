@@ -103,7 +103,7 @@ func MigrateStorageAndVault(
 					return err
 				}
 
-				if err != nil {
+				if err == nil {
 					// Only try to migrate artifact result if there was no issue reading
 					// it from the `oldStore`
 					if err := newStore.Put(ctx, artifactResult.ContentPath, val); err != nil {

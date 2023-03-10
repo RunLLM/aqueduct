@@ -55,6 +55,7 @@ def test_invalid_connect_integration(client):
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
+@pytest.mark.enable_only_for_data_integration_type(ServiceType.SQLITE)
 def test_sqlite_with_k8s(data_integration, engine):
     """Tests that running an extract operator that reads data from a SQLite database using k8s should fail."""
     global_config({"engine": engine})
@@ -73,3 +74,13 @@ def test_compute_integration_without_cloud_storage(client):
             service=ServiceType.K8S,
             config=K8sConfig(kubeconfig_path="dummy_path", cluster_name="dummy_name"),
         )
+
+
+# TODO (ENG-2593): Investigate ways to support relative kubeconfig and aws credential path
+# def test_k8s_integration_wrong_kubeconfig(client):
+#    with pytest.raises(InvalidRequestError):
+#        client.connect_integration(
+#            name="k8s integration with wrong kubeconfig",
+#            service=ServiceType.K8S,
+#            config=K8sConfig(kubeconfig_path="compute/k8s/wrong_kubeconfig", cluster_name="dummy_name"),
+#        )
