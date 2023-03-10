@@ -28,8 +28,6 @@ type Props = {
   onSidebarItemClicked?: (name: string) => void;
 };
 
-
-
 export const DefaultLayout: React.FC<Props> = ({
   user,
   children,
@@ -57,7 +55,10 @@ export const DefaultLayout: React.FC<Props> = ({
         }}
       >
         <Box sx={{ width: '100%', height: '100%', display: 'flex', flex: 1 }}>
-          <MenuSidebar user={user} onSidebarItemClicked={onSidebarItemClicked} />
+          <MenuSidebar
+            user={user}
+            onSidebarItemClicked={onSidebarItemClicked}
+          />
           <NavBar
             user={user}
             breadcrumbs={breadcrumbs}

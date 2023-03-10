@@ -1,20 +1,21 @@
 import { faBell, faSliders } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { AppBar, Breadcrumbs, Link, Toolbar, Typography, useTheme } from '@mui/material';
+import {
+  AppBar,
+  Breadcrumbs,
+  Link,
+  Toolbar,
+  Typography,
+  useTheme,
+} from '@mui/material';
 import Box from '@mui/material/Box';
 //import red from '@mui/material/colors/red';
 import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
-import { RootState } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
 import { getPathPrefix } from '../../utils/getPathPrefix';
-import {
-  NotificationLogLevel,
-  NotificationStatus,
-} from '../../utils/notifications';
 import NotificationsPopover from '../notifications/NotificationsPopover';
 import styles from './menu-sidebar-styles.module.css';
 import { MenuSidebarWidthNumber } from './menuSidebar';
@@ -41,7 +42,7 @@ export class BreadcrumbLink {
     'Page Not Found'
   );
 
-  constructor(public readonly address: string, public readonly name: string) { }
+  constructor(public readonly address: string, public readonly name: string) {}
 
   toString(): string {
     return this.name;
