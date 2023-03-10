@@ -536,7 +536,7 @@ def op(
             description = func.__doc__ or ""
 
         def _wrapped_util(
-            *input_artifacts: BaseArtifact, execution_mode: ExecutionMode
+            *input_artifacts: BaseArtifact, execution_mode: Optional[ExecutionMode] = None
         ) -> Union[BaseArtifact, List[BaseArtifact]]:
             """
             Creates the following files in the zipped folder structure:
@@ -548,6 +548,11 @@ def op(
             """
             assert isinstance(name, str)
             assert isinstance(description, str)
+
+            if execution_mode == None:
+                execution_mode = _get_execution_mode()
+
+            assert isinstance(execution_mode, ExecutionMode)
 
             artifacts = _convert_input_arguments_to_parameters(
                 *input_artifacts,
@@ -583,7 +588,7 @@ def op(
             )
 
         def wrapped(*input_artifacts: BaseArtifact) -> Union[BaseArtifact, List[BaseArtifact]]:
-            return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.EAGER)
+            return _wrapped_util(*input_artifacts)
 
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
         def local_func(*inputs: Any) -> Any:
@@ -596,9 +601,6 @@ def op(
             return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.LAZY)
 
         setattr(wrapped, "lazy", lazy_mode)
-
-        if globals.__GLOBAL_CONFIG__.lazy:
-            return lazy_mode
 
         return wrapped
 
@@ -698,7 +700,7 @@ def metric(
             description = func.__doc__ or ""
 
         def _wrapped_util(
-            *input_artifacts: BaseArtifact, execution_mode: ExecutionMode
+            *input_artifacts: BaseArtifact, execution_mode: Optional[ExecutionMode] = None
         ) -> NumericArtifact:
             """
             Creates the following files in the zipped folder structure:
@@ -710,6 +712,11 @@ def metric(
             """
             assert isinstance(name, str)
             assert isinstance(description, str)
+
+            if execution_mode == None:
+                execution_mode = _get_execution_mode()
+
+            assert isinstance(execution_mode, ExecutionMode)
 
             if len(input_artifacts) == 0:
                 raise InvalidUserArgumentException(
@@ -762,7 +769,7 @@ def metric(
         def wrapped(
             *input_artifacts: BaseArtifact,
         ) -> NumericArtifact:
-            return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.EAGER)
+            return _wrapped_util(*input_artifacts)
 
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
         def local_func(*inputs: Any) -> Number:
@@ -775,9 +782,6 @@ def metric(
             return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.LAZY)
 
         setattr(wrapped, "lazy", lazy_mode)
-
-        if globals.__GLOBAL_CONFIG__.lazy:
-            return lazy_mode
 
         return wrapped
 
@@ -883,7 +887,7 @@ def check(
             description = func.__doc__ or ""
 
         def _wrapped_util(
-            *input_artifacts: BaseArtifact, execution_mode: ExecutionMode
+            *input_artifacts: BaseArtifact, execution_mode: Optional[ExecutionMode] = None
         ) -> BoolArtifact:
             """
             Creates the following files in the zipped folder structure:
@@ -895,6 +899,11 @@ def check(
             """
             assert isinstance(name, str)
             assert isinstance(description, str)
+
+            if execution_mode == None:
+                execution_mode = _get_execution_mode()
+
+            assert isinstance(execution_mode, ExecutionMode)
 
             if len(input_artifacts) == 0:
                 raise InvalidUserArgumentException(
@@ -945,7 +954,7 @@ def check(
         def wrapped(
             *input_artifacts: BaseArtifact,
         ) -> BoolArtifact:
-            return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.EAGER)
+            return _wrapped_util(*input_artifacts)
 
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
         def local_func(*inputs: Any) -> Union[bool, np.bool_]:
@@ -959,8 +968,6 @@ def check(
 
         setattr(wrapped, "lazy", lazy_mode)
 
-        if globals.__GLOBAL_CONFIG__.lazy:
-            return lazy_mode
         return wrapped
 
     if callable(name):
@@ -1017,3 +1024,10 @@ def to_operator(
         ),
     )
     return func_op(func)
+
+
+def _get_execution_mode() -> ExecutionMode:
+    if globals.__GLOBAL_CONFIG__.lazy:
+        return ExecutionMode.LAZY
+    else:
+        return ExecutionMode.EAGER
