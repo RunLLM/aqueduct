@@ -180,7 +180,7 @@ def enable_only_for_engine_type(request, client, engine):
 
 @pytest.fixture(autouse=True)
 def enable_only_for_local_storage(request, client, engine):
-    """xxx"""
+    """When a test is marked with this, we run it only when the local file system is used as storage."""
     if not request.node.get_closest_marker("enable_only_for_local_storage"):
         return
 

@@ -55,6 +55,7 @@ def test_invalid_connect_integration(client):
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
+@pytest.mark.enable_only_for_data_integration_type(ServiceType.SQLITE)
 def test_sqlite_with_k8s(data_integration, engine):
     """Tests that running an extract operator that reads data from a SQLite database using k8s should fail."""
     global_config({"engine": engine})
