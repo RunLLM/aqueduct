@@ -1,25 +1,11 @@
 import { CircularProgress } from '@mui/material';
-import Alert from '@mui/material/Alert';
-import AlertTitle from '@mui/material/AlertTitle';
 import Box from '@mui/material/Box';
-import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useParams } from 'react-router-dom';
+import React from 'react';
 
-import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
-import { handleGetArtifactResultContent } from '../../../../handlers/getArtifactResultContent';
-import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
 import { getMetricsAndChecksOnArtifact } from '../../../../handlers/responses/dag';
-import { AppDispatch, RootState } from '../../../../stores/store';
 import UserProfile from '../../../../utils/auth';
-import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { OperatorType } from '../../../../utils/operators';
-import ExecutionStatus, {
-  isFailed,
-  isInitial,
-  isLoading,
-  isSucceeded,
-} from '../../../../utils/shared';
+import ExecutionStatus, { isSucceeded } from '../../../../utils/shared';
 import DefaultLayout, { SidesheetContentWidth } from '../../../layouts/default';
 import CsvExporter from '../../../workflows/artifact/csvExporter';
 import {
@@ -27,16 +13,20 @@ import {
   MetricsOverview,
 } from '../../../workflows/artifact/metricsAndChecksOverview';
 import OperatorSummaryList from '../../../workflows/operator/summaryList';
+import RequireDagOrResult from '../../../workflows/RequireDagOrResult';
 import DetailsPageHeader from '../../components/DetailsPageHeader';
 import { LayoutProps } from '../../types';
+import useWorkflow from '../../workflow/id/hook';
 import Preview from './components/Preview';
+import useArtifact from './hook';
 
 type ArtifactDetailsPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
   workflowIdProp?: string;
+  workflowDagIdProp?: string;
   workflowDagResultIdProp?: string;
-  operatorIdProp?: string;
+  artifactIdProp?: string;
   sideSheetMode?: boolean;
 };
 
@@ -44,151 +34,48 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   user,
   Layout = DefaultLayout,
   workflowIdProp,
+  workflowDagIdProp,
   workflowDagResultIdProp,
-  operatorIdProp,
+  artifactIdProp,
   sideSheetMode = false,
 }) => {
-  const dispatch: AppDispatch = useDispatch();
-  let { workflowId, workflowDagResultId, artifactId } = useParams();
-  const path = useLocation().pathname;
-
-  if (workflowIdProp) {
-    workflowId = workflowIdProp;
-  }
-
-  if (workflowDagResultIdProp) {
-    workflowDagResultId = workflowDagResultIdProp;
-  }
-
-  if (operatorIdProp) {
-    artifactId = operatorIdProp;
-  }
-
-  const workflowDagResultWithLoadingStatus = useSelector(
-    (state: RootState) =>
-      state.workflowDagResultsReducer.results[workflowDagResultId]
+  const {
+    breadcrumbs: wfBreadcrumbs,
+    workflowId,
+    workflowDagId,
+    workflowDagResultId,
+    workflowDagWithLoadingStatus,
+    workflowDagResultWithLoadingStatus,
+  } = useWorkflow(
+    user.apiKey,
+    workflowIdProp,
+    workflowDagIdProp,
+    workflowDagResultIdProp
   );
 
-  const artifactContents = useSelector(
-    (state: RootState) => state.artifactResultContentsReducer.contents
+  const { breadcrumbs, artifact, contentWithLoadingStatus } = useArtifact(
+    user.apiKey,
+    artifactIdProp,
+    wfBreadcrumbs,
+    workflowDagResultId,
+    workflowDagWithLoadingStatus,
+    workflowDagResultWithLoadingStatus,
+    !sideSheetMode
   );
-
-  const artifact = (workflowDagResultWithLoadingStatus?.result?.artifacts ??
-    {})[artifactId];
-
-  const artifactResultId = artifact?.result?.id;
-  const contentWithLoadingStatus = artifactResultId
-    ? artifactContents[artifactResultId]
-    : undefined;
 
   const { metrics, checks } =
     !!workflowDagResultWithLoadingStatus &&
     isSucceeded(workflowDagResultWithLoadingStatus.status)
       ? getMetricsAndChecksOnArtifact(
           workflowDagResultWithLoadingStatus?.result,
-          artifactId
+          artifact.id
         )
       : { metrics: [], checks: [] };
-
-  const pathPrefix = getPathPrefix();
-  const workflowLink = `${pathPrefix}/workflow/${workflowId}?workflowDagResultId=${workflowDagResultId}`;
-  const breadcrumbs = [
-    BreadcrumbLink.HOME,
-    BreadcrumbLink.WORKFLOWS,
-    new BreadcrumbLink(
-      workflowLink,
-      workflowDagResultWithLoadingStatus?.result?.name ?? 'Workflow'
-    ),
-    new BreadcrumbLink(path, artifact ? artifact.name : 'Artifact'),
-  ];
-
-  useEffect(() => {
-    // Load workflow dag result if it's not cached
-    if (
-      !workflowDagResultWithLoadingStatus ||
-      isInitial(workflowDagResultWithLoadingStatus.status)
-    ) {
-      dispatch(
-        handleGetWorkflowDagResult({
-          apiKey: user.apiKey,
-          workflowId,
-          workflowDagResultId,
-        })
-      );
-    }
-  }, [
-    dispatch,
-    user.apiKey,
-    workflowDagResultId,
-    workflowDagResultWithLoadingStatus,
-    workflowId,
-  ]);
-
-  useEffect(() => {
-    if (!!artifact) {
-      if (!sideSheetMode) {
-        document.title = `${
-          artifact ? artifact.name : 'Artifact Details'
-        } | Aqueduct`;
-      }
-
-      if (
-        !!artifact.result &&
-        // intentional '==' to check undefined or null.
-        artifact.result.content_serialized == null &&
-        !contentWithLoadingStatus
-      ) {
-        dispatch(
-          handleGetArtifactResultContent({
-            apiKey: user.apiKey,
-            artifactId,
-            artifactResultId,
-            workflowDagResultId,
-          })
-        );
-      }
-    }
-  }, [
-    artifact,
-    artifactId,
-    artifactResultId,
-    contentWithLoadingStatus,
-    dispatch,
-    sideSheetMode,
-    user.apiKey,
-    workflowDagResultId,
-  ]);
-
-  if (
-    !workflowDagResultWithLoadingStatus ||
-    isInitial(workflowDagResultWithLoadingStatus.status) ||
-    isLoading(workflowDagResultWithLoadingStatus.status)
-  ) {
-    return (
-      <Layout breadcrumbs={breadcrumbs} user={user}>
-        <CircularProgress />
-      </Layout>
-    );
-  }
-
-  if (isFailed(workflowDagResultWithLoadingStatus.status)) {
-    return (
-      <Layout breadcrumbs={breadcrumbs} user={user}>
-        <Alert severity="error">
-          <AlertTitle>Failed to load workflow.</AlertTitle>
-          {workflowDagResultWithLoadingStatus.status.err}
-        </Alert>
-      </Layout>
-    );
-  }
 
   if (!artifact) {
     return (
       <Layout breadcrumbs={breadcrumbs} user={user}>
-        <Alert severity="error">
-          <AlertTitle>Failed to load artifact.</AlertTitle>
-          Artifact {artifactId} does not exist on this workflow.
-        </Alert>
+        <CircularProgress />
       </Layout>
     );
   }
@@ -220,59 +107,70 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
 
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
-      <Box width={sideSheetMode ? SidesheetContentWidth : '100%'}>
-        <Box width="100%">
-          {!sideSheetMode && (
-            <Box width="100%" display="flex" alignItems="center">
-              <DetailsPageHeader
-                name={artifact ? artifact.name : 'Artifact'}
-                status={artifactStatus}
-              />
-              <CsvExporter
-                artifact={artifact}
-                contentWithLoadingStatus={contentWithLoadingStatus}
-              />
+      <RequireDagOrResult
+        dagWithLoadingStatus={workflowDagWithLoadingStatus}
+        dagResultWithLoadingStatus={workflowDagResultWithLoadingStatus}
+      >
+        <Box width={sideSheetMode ? SidesheetContentWidth : '100%'}>
+          <Box width="100%">
+            {!sideSheetMode && (
+              <Box width="100%" display="flex" alignItems="center">
+                <DetailsPageHeader
+                  name={artifact ? artifact.name : 'Artifact'}
+                  status={artifactStatus}
+                />
+                <CsvExporter
+                  artifact={artifact}
+                  contentWithLoadingStatus={contentWithLoadingStatus}
+                />
+              </Box>
+            )}
+
+            <Box
+              display="flex"
+              width="100%"
+              mt={sideSheetMode ? '16px' : '64px'}
+            >
+              {inputs.length > 0 && (
+                <Box width="100%" mr="32px">
+                  <OperatorSummaryList
+                    title={'Generated By'}
+                    workflowId={workflowId}
+                    dagId={workflowDagId}
+                    dagResultId={workflowDagResultId}
+                    operatorResults={inputs}
+                  />
+                </Box>
+              )}
+
+              {outputs.length > 0 && (
+                <Box width="100%">
+                  <OperatorSummaryList
+                    title={'Consumed By'}
+                    workflowId={workflowId}
+                    dagId={workflowDagId}
+                    dagResultId={workflowDagResultId}
+                    operatorResults={outputs}
+                  />
+                </Box>
+              )}
             </Box>
-          )}
 
-          <Box display="flex" width="100%" mt={sideSheetMode ? '16px' : '64px'}>
-            {inputs.length > 0 && (
-              <Box width="100%" mr="32px">
-                <OperatorSummaryList
-                  title={'Generated By'}
-                  workflowId={workflowId}
-                  dagResultId={workflowDagResultId}
-                  operatorResults={inputs}
-                />
-              </Box>
-            )}
+            <Preview
+              upstreamPending={upstreamPending}
+              previewAvailable={previewAvailable}
+              artifact={artifact}
+              contentWithLoadingStatus={contentWithLoadingStatus}
+            />
 
-            {outputs.length > 0 && (
-              <Box width="100%">
-                <OperatorSummaryList
-                  title={'Consumed By'}
-                  workflowId={workflowId}
-                  dagResultId={workflowDagResultId}
-                  operatorResults={outputs}
-                />
-              </Box>
-            )}
-          </Box>
-
-          <Preview
-            upstreamPending={upstreamPending}
-            previewAvailable={previewAvailable}
-            artifact={artifact}
-            contentWithLoadingStatus={contentWithLoadingStatus}
-          />
-
-          <Box display="flex" width="100%">
-            <MetricsOverview metrics={metrics} />
-            <Box width="96px" />
-            <ChecksOverview checks={checks} />
+            <Box display="flex" width="100%">
+              <MetricsOverview metrics={metrics} />
+              <Box width="96px" />
+              <ChecksOverview checks={checks} />
+            </Box>
           </Box>
         </Box>
-      </Box>
+      </RequireDagOrResult>
     </Layout>
   );
 };

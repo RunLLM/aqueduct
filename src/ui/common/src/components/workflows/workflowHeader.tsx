@@ -96,7 +96,9 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <StatusIndicator status={workflow.dagResults[0].status} />
+          {!!workflow.dagResults && workflow.dagResults.length > 0 && (
+            <StatusIndicator status={workflow.dagResults[0].status} />
+          )}
 
           <Typography
             variant="h5"

@@ -160,7 +160,10 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         }
       }
 
-      if (workflowDagResultId !== workflow.selectedResult.id) {
+      if (
+        !!workflow.selectedResult &&
+        workflowDagResultId !== workflow.selectedResult.id
+      ) {
         // this is where selectedDag gets set
         dispatch(selectResultIdx(workflowDagResultIndex));
         setSelectedResultIdx(workflowDagResultIndex);
@@ -372,35 +375,40 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       mr: 1,
     };
 
-    let navigationUrl;
+    let navigateButton;
     let includeExportOpButton = true;
 
-    if (currentNode.type === NodeType.TableArtifact) {
-      navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/artifact/${currentNode.id}`;
-      includeExportOpButton = false;
-    } else if (currentNode.type === NodeType.FunctionOp) {
-      navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/operator/${currentNode.id}`;
-    } else if (currentNode.type === NodeType.MetricOp) {
-      navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/metric/${currentNode.id}`;
-    } else if (currentNode.type === NodeType.CheckOp) {
-      navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/check/${currentNode.id}`;
+    if (!workflow.selectedResult) {
+      return (navigateButton = null);
     } else {
-      return null; // This is a load or save operator.
-    }
+      let navigationUrl;
+      if (currentNode.type === NodeType.TableArtifact) {
+        navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/artifact/${currentNode.id}`;
+        includeExportOpButton = false;
+      } else if (currentNode.type === NodeType.FunctionOp) {
+        navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/operator/${currentNode.id}`;
+      } else if (currentNode.type === NodeType.MetricOp) {
+        navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/metric/${currentNode.id}`;
+      } else if (currentNode.type === NodeType.CheckOp) {
+        navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/check/${currentNode.id}`;
+      } else {
+        return null; // This is a load or save operator.
+      }
 
-    const navigateButton = (
-      <Button
-        variant="text"
-        sx={buttonStyle}
-        onClick={() => {
-          navigate(navigationUrl);
-        }}
-      >
-        <Tooltip title="Expand Details" arrow>
-          <FontAwesomeIcon icon={faUpRightAndDownLeftFromCenter} />
-        </Tooltip>
-      </Button>
-    );
+      navigateButton = (
+        <Button
+          variant="text"
+          sx={buttonStyle}
+          onClick={() => {
+            navigate(navigationUrl);
+          }}
+        >
+          <Tooltip title="Expand Details" arrow>
+            <FontAwesomeIcon icon={faUpRightAndDownLeftFromCenter} />
+          </Tooltip>
+        </Button>
+      );
+    }
 
     const operator = (workflow.selectedDag?.operators ?? {})[currentNode.id];
     const exportOpButton = (
@@ -530,55 +538,57 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
           {/* These controls are automatically hidden when the side sheet is open. */}
           <Box width="100px" ml={2} display={drawerIsOpen ? 'none' : 'block'}>
-            <Box
-              display="flex"
-              mb={2}
-              pb={2}
-              width="100%"
-              sx={{ borderBottom: `1px solid ${theme.palette.gray[600]}` }}
-            >
-              <Tooltip title="Previous Run" arrow>
-                <Button
-                  sx={{ fontSize: '28px', px: 0, flex: 1 }}
-                  variant="text"
-                  onClick={() => {
-                    // This might be confusing, but index 0 is the most recent run, so incrementing the index goes
-                    // to an *earlier* run.
-                    dispatch(selectResultIdx(selectedResultIdx + 1));
-                    navigate(
-                      `?workflowDagResultId=${
-                        workflow.dagResults[selectedResultIdx + 1].id
-                      }`
-                    );
-                  }}
-                  disabled={
-                    selectedResultIdx === workflow.dagResults.length - 1
-                  }
-                >
-                  <FontAwesomeIcon icon={faChevronLeft} />
-                </Button>
-              </Tooltip>
+            {workflow.dagResults && workflow.dagResults.length > 1 && (
+              <Box
+                display="flex"
+                mb={2}
+                pb={2}
+                width="100%"
+                sx={{ borderBottom: `1px solid ${theme.palette.gray[600]}` }}
+              >
+                <Tooltip title="Previous Run" arrow>
+                  <Button
+                    sx={{ fontSize: '28px', px: 0, flex: 1 }}
+                    variant="text"
+                    onClick={() => {
+                      // This might be confusing, but index 0 is the most recent run, so incrementing the index goes
+                      // to an *earlier* run.
+                      dispatch(selectResultIdx(selectedResultIdx + 1));
+                      navigate(
+                        `?workflowDagResultId=${
+                          workflow.dagResults[selectedResultIdx + 1].id
+                        }`
+                      );
+                    }}
+                    disabled={
+                      selectedResultIdx === workflow.dagResults.length - 1
+                    }
+                  >
+                    <FontAwesomeIcon icon={faChevronLeft} />
+                  </Button>
+                </Tooltip>
 
-              <Tooltip title="Next Run" arrow>
-                <Button
-                  sx={{ fontSize: '28px', px: 0, flex: 1 }}
-                  variant="text"
-                  onClick={() => {
-                    // This might be confusing, but index 0 is the most recent run, so decrementing the index goes
-                    // to a *newer* run.
-                    dispatch(selectResultIdx(selectedResultIdx - 1));
-                    navigate(
-                      `?workflowDagResultId=${
-                        workflow.dagResults[selectedResultIdx - 1].id
-                      }`
-                    );
-                  }}
-                  disabled={selectedResultIdx === 0}
-                >
-                  <FontAwesomeIcon icon={faChevronRight} />
-                </Button>
-              </Tooltip>
-            </Box>
+                <Tooltip title="Next Run" arrow>
+                  <Button
+                    sx={{ fontSize: '28px', px: 0, flex: 1 }}
+                    variant="text"
+                    onClick={() => {
+                      // This might be confusing, but index 0 is the most recent run, so decrementing the index goes
+                      // to a *newer* run.
+                      dispatch(selectResultIdx(selectedResultIdx - 1));
+                      navigate(
+                        `?workflowDagResultId=${
+                          workflow.dagResults[selectedResultIdx - 1].id
+                        }`
+                      );
+                    }}
+                    disabled={selectedResultIdx === 0}
+                  >
+                    <FontAwesomeIcon icon={faChevronRight} />
+                  </Button>
+                </Tooltip>
+              </Box>
+            )}
 
             <Box
               mb={2}
@@ -677,7 +687,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
               user,
               currentNode,
               workflowId,
-              workflow.selectedResult.id
+              selectedDag.id,
+              workflow.selectedResult?.id
             )}
           </Box>
         </Box>

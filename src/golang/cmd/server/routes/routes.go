@@ -40,6 +40,7 @@ const (
 	RegisterAirflowWorkflowRoute = "/api/workflow/register/airflow"
 	GetWorkflowRoute             = "/api/workflow/{workflowId}"
 	ListArtifactResultsRoute     = "/api/workflow/{workflowId}/artifact/{artifactId}/results"
+	GetWorkflowDAGRoute          = "/api/workflow/{workflowId}/dag/{workflowDagID}"
 	ListWorkflowObjectsRoute     = "/api/workflow/{workflowId}/objects"
 	DeleteWorkflowRoute          = "/api/workflow/{workflowId}/delete"
 	EditWorkflowRoute            = "/api/workflow/{workflowId}/edit"
