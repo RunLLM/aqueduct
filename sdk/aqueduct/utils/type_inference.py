@@ -5,6 +5,7 @@ from typing import Any
 import cloudpickle as pickle
 import numpy as np
 from aqueduct.constants.enums import ArtifactType
+from aqueduct.utils.local_data import LocalData
 from pandas import DataFrame
 from PIL import Image
 
@@ -35,6 +36,8 @@ def infer_artifact_type(value: Any) -> ArtifactType:
         return ArtifactType.TUPLE
     elif isinstance(value, list):
         return ArtifactType.LIST
+    elif isinstance(value,LocalData):
+        return LocalData.as_type
     else:
         try:
             pickle.dumps(value)

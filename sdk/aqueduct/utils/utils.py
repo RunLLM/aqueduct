@@ -15,9 +15,10 @@ from aqueduct.models.config import (
 from aqueduct.models.dag import Schedule
 from aqueduct.models.integration import IntegrationInfo
 from aqueduct.models.operators import ParamSpec
+from aqueduct.utils.local_data import LocalData
 from croniter import croniter
 
-from .serialization import artifact_type_to_serialization_type, serialize_val
+from .serialization import artifact_type_to_serialization_type, serialize_val,extract_val_from_local_data
 from .type_inference import _bytes_to_base64_string
 
 
@@ -111,6 +112,8 @@ def construct_param_spec(
     # For now, bson_table applies only to tables read from mongo.
     derived_from_bson = False
 
+    if isinstance(val,LocalData):
+        val = extract_val_from_local_data(val)
     serialization_type = artifact_type_to_serialization_type(
         artifact_type,
         derived_from_bson,

@@ -218,3 +218,14 @@ class K8sClusterStatusType(str, Enum, metaclass=MetaEnum):
     ACTIVE = "Active"
     TERMINATING = "Terminating"
     TERMINATED = "Terminated"
+
+class LocalDataTableFormat(str, Enum, metaclass=MetaEnum):
+    CSV = "CSV"
+    JSON = "JSON"
+    PARQUET = "Parquet"
+
+class LocalDataSerializationType(str, Enum, metaclass=MetaEnum):
+    CSV_TABLE = "csv_table"
+    JSON_TABLE = "json_table"
+    PARQUET_TABLE = "parquet_table"
+    IMAGE = "image"
