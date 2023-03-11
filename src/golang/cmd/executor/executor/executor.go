@@ -19,7 +19,7 @@ func NewExecutor(spec job.Spec) (Executor, error) {
 	case job.WorkflowJobType:
 		workflowSpec, ok := spec.(*job.WorkflowSpec)
 		if !ok {
-			return nil, job.ErrInvalidJobSpec
+			return nil, job.ErrInvalidJobSpec()
 		}
 
 		base, err := NewBaseExecutor(workflowSpec.ExecutorConfig)
@@ -30,7 +30,7 @@ func NewExecutor(spec job.Spec) (Executor, error) {
 	case job.WorkflowRetentionType:
 		workflowRetentionSpec, ok := spec.(*job.WorkflowRetentionSpec)
 		if !ok {
-			return nil, job.ErrInvalidJobSpec
+			return nil, job.ErrInvalidJobSpec()
 		}
 		base, err := NewBaseExecutor(workflowRetentionSpec.ExecutorConfig)
 		if err != nil {
@@ -41,7 +41,7 @@ func NewExecutor(spec job.Spec) (Executor, error) {
 	case job.DynamicTeardownType:
 		dynamicTeardownSpec, ok := spec.(*job.DynamicTeardownSpec)
 		if !ok {
-			return nil, job.ErrInvalidJobSpec
+			return nil, job.ErrInvalidJobSpec()
 		}
 		base, err := NewBaseExecutor(dynamicTeardownSpec.ExecutorConfig)
 		if err != nil {

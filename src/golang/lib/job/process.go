@@ -202,7 +202,7 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 	} else if spec.Type() == FunctionJobType {
 		functionSpec, ok := spec.(*FunctionSpec)
 		if !ok {
-			return nil, ErrInvalidJobSpec
+			return nil, ErrInvalidJobSpec()
 		}
 
 		functionSpec.FunctionExtractPath = path.Join(j.conf.OperatorStorageDir, uuid.New().String())

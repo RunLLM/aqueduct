@@ -134,7 +134,7 @@ func (j *SparkJobManager) mapJobTypeToScript(spec Spec) (string, error) {
 	if spec.Type() == FunctionJobType {
 		functionSpec, ok := spec.(*FunctionSpec)
 		if !ok {
-			return "", ErrInvalidJobSpec
+			return "", ErrInvalidJobSpec()
 		}
 
 		functionSpec.FunctionExtractPath = path.Join(defaultSparkFunctionExtractPath, uuid.New().String())

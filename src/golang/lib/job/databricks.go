@@ -187,7 +187,7 @@ func (j *DatabricksJobManager) mapJobTypeToFile(spec Spec) (string, string, erro
 	if spec.Type() == FunctionJobType {
 		functionSpec, ok := spec.(*FunctionSpec)
 		if !ok {
-			return "", "", ErrInvalidJobSpec
+			return "", "", ErrInvalidJobSpec()
 		}
 
 		functionSpec.FunctionExtractPath = defaultFunctionExtractPath
