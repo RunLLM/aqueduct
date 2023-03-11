@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/dropbox/godropbox/errors"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/go-co-op/gocron"
 )
 

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/dropbox/godropbox/errors"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )

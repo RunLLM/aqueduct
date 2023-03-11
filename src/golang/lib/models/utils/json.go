@@ -4,7 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 
-	"github.com/dropbox/godropbox/errors"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 )
 
 // ValueJSONB JSON encodes value to store into a SQL Database.

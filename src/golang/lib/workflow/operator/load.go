@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 

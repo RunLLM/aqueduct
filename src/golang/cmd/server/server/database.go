@@ -5,9 +5,9 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/repos/sqlite"
-	"github.com/dropbox/godropbox/errors"
 )
 
 type Repos struct {

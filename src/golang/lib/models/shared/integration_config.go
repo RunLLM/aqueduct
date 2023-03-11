@@ -3,7 +3,7 @@ package shared
 import (
 	"fmt"
 
-	"github.com/dropbox/godropbox/errors"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 )
 
 type S3ConfigType string

@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"reflect"
 
-	"github.com/dropbox/godropbox/errors"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	log "github.com/sirupsen/logrus"
 )
 

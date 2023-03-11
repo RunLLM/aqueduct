@@ -3,7 +3,7 @@ package auth
 import (
 	"context"
 
-	"github.com/dropbox/godropbox/errors"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 )
 
 type configType string

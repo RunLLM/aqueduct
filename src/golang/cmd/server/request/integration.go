@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
-	"github.com/dropbox/godropbox/errors"
 )
 
 // ParseIntegrationServiceFromRequest parses the integration service, and whether the

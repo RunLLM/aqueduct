@@ -3,8 +3,8 @@ package job
 import (
 	"context"
 
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
-	"github.com/dropbox/godropbox/errors"
 )
 
 type JobManager interface {

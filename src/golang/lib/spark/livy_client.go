@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/dropbox/godropbox/errors"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 )
 
 // LivyClient represents a client for connecting to a Livy server.

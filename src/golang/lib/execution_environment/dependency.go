@@ -7,7 +7,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/dropbox/godropbox/errors"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 )
 
 const (

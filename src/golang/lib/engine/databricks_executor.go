@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -13,7 +14,6 @@ import (
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/databricks/databricks-sdk-go/service/jobs"
-	"github.com/dropbox/godropbox/errors"
 )
 
 // We separate out the execution step for Databricks Jobs since

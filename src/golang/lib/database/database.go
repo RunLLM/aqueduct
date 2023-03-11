@@ -4,7 +4,7 @@ import (
 	"context"
 
 	stmt "github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
-	"github.com/dropbox/godropbox/errors"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 )
 
 const (

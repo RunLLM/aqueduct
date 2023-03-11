@@ -4,11 +4,11 @@ import (
 	"context"
 
 	databricks_lib "github.com/aqueducthq/aqueduct/lib/databricks"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/spark"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
-	"github.com/dropbox/godropbox/errors"
 )
 
 // Authenticates kubernetes configuration by trying to connect a client.

@@ -5,11 +5,11 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/param"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 

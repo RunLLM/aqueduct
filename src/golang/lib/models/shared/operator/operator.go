@@ -4,6 +4,7 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/check"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/connector"
@@ -12,7 +13,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/system_metric"
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
-	"github.com/dropbox/godropbox/errors"
 )
 
 // This file covers all operator specs.

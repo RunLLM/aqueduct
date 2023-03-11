@@ -3,8 +3,8 @@ package executor
 import (
 	"context"
 
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/dropbox/godropbox/errors"
 )
 
 type Executor interface {

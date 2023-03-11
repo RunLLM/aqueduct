@@ -7,7 +7,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
-	"github.com/dropbox/godropbox/errors"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/google/uuid"
 )
 

@@ -5,11 +5,11 @@ import (
 	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	databricks_sdk "github.com/databricks/databricks-sdk-go"
 	"github.com/databricks/databricks-sdk-go/service/clusters"
 	"github.com/databricks/databricks-sdk-go/service/jobs"
 	"github.com/databricks/databricks-sdk-go/service/libraries"
-	"github.com/dropbox/godropbox/errors"
 )
 
 func NewWorkspaceClient(

@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/aqueducthq/aqueduct/config"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/storage"
-	"github.com/dropbox/godropbox/errors"
 )
 
 func AddEntrypointFilesToStorage(ctx context.Context) error {

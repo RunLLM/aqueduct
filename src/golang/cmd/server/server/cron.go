@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	"github.com/gorhill/cronexpr"
 	log "github.com/sirupsen/logrus"

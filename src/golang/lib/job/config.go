@@ -5,11 +5,11 @@ import (
 	"encoding/gob"
 	"path"
 
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
-	"github.com/dropbox/godropbox/errors"
 )
 
 type ManagerType string

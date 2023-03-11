@@ -3,8 +3,8 @@ package shared
 import (
 	"database/sql/driver"
 
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
-	"github.com/dropbox/godropbox/errors"
 )
 
 type StorageType string

@@ -3,9 +3,9 @@ package connector
 import (
 	"encoding/json"
 
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 

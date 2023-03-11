@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/vault"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 

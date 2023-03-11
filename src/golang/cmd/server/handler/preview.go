@@ -11,6 +11,7 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	exec_state "github.com/aqueducthq/aqueduct/lib/execution_state"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -19,7 +20,6 @@ import (
 	dag_utils "github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 

@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/dropbox/godropbox/errors"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 )
 
 func UpPostgres(ctx context.Context, db database.Database) error {

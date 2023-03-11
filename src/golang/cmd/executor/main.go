@@ -9,8 +9,8 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/executor/executor"
 	"github.com/aqueducthq/aqueduct/config"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/dropbox/godropbox/errors"
 	log "github.com/sirupsen/logrus"
 )
 

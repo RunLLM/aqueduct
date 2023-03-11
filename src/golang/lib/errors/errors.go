@@ -1,8 +1,6 @@
 package errors
 
-import (
-	"github.com/dropbox/godropbox/errors"
-)
+import "github.com/dropbox/godropbox/errors"
 
 // Is reports whether err matches target
 func Is(err, target error) bool {

@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
-	"github.com/dropbox/godropbox/errors"
 	go_github "github.com/google/go-github/v40/github"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/github"

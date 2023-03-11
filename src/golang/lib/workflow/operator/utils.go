@@ -1,8 +1,8 @@
 package operator
 
 import (
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
-	"github.com/dropbox/godropbox/errors"
 )
 
 var (

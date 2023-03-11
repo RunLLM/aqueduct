@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	"github.com/slack-go/slack"
 )

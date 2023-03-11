@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/dynamic"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
-	"github.com/dropbox/godropbox/errors"
 	log "github.com/sirupsen/logrus"
 )
 

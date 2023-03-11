@@ -1,6 +1,6 @@
 package job
 
-import "github.com/dropbox/godropbox/errors"
+import "github.com/aqueducthq/aqueduct/lib/errors"
 
 // JobErrorCode come from our JobManagers when they fail to properly guide
 // their a job through its proper lifecycle. Errors surfaced this way are propagated

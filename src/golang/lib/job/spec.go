@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/check"
@@ -14,7 +15,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 

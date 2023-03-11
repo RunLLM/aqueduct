@@ -4,8 +4,8 @@ import (
 	"os"
 	"path"
 
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
-	"github.com/dropbox/godropbox/errors"
 	"gopkg.in/yaml.v2"
 )
 

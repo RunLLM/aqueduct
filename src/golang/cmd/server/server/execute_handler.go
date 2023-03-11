@@ -6,7 +6,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	"github.com/aqueducthq/aqueduct/cmd/server/response"
-	"github.com/dropbox/godropbox/errors"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	log "github.com/sirupsen/logrus"
 )
 

@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/param"
-	"github.com/dropbox/godropbox/errors"
 )
 
 // Requests that include overwriting parameters are expected to have this json format in the body.

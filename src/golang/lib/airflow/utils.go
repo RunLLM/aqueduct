@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"github.com/apache/airflow-client-go/airflow"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
-	"github.com/dropbox/godropbox/errors"
 )
 
 // generateDagId generates an Airflow DAG ID for a workflow.
