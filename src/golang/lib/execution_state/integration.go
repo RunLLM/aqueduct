@@ -82,7 +82,7 @@ func UpdateOnFailure(
 	ctx context.Context,
 	outputs string,
 	msg string,
-	integration_type string,
+	integrationType string,
 	integrationConfig *shared.IntegrationConfig,
 	runningAt *time.Time,
 	integrationID uuid.UUID,
@@ -102,7 +102,7 @@ func UpdateOnFailure(
 		DB,
 	)
 	if err != nil {
-		log.Errorf("Failed to update %s integration: %v",integration_type ,err)
+		log.Errorf("Failed to update %s integration: %v", integrationType, err)
 	}
 }
 
