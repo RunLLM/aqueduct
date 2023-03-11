@@ -2,15 +2,7 @@
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.126.0/containers/python-3
 {
     "name": "Aqueduct Dev Container",
-    "build": {
-        "dockerfile": "Dockerfile",
-        "context": "..",
-        // To choose a particular version to run, we can pass in a VERSION flag.
-        // This requires using a different docker file like the aqueduct-py39 dockerfile.
-        // "args": {
-        //     "VERSION": "0.2.4"
-        // }
-    },
+    "image": "aqueducthq/demo",
     "forwardPorts": [
         8080
     ],
