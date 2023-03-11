@@ -6,12 +6,12 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 
@@ -122,7 +122,7 @@ func extractOperatorContentsFromRequest(
 	}
 
 	isGhFunction, err := github.IsFunctionFromGithub(fn)
-	if err == github.ErrGithubMetadataMissing {
+	if errors.Is(err, github.ErrGithubMetadataMissing()) {
 		return nil, http.StatusBadRequest, err
 	}
 

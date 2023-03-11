@@ -12,7 +12,9 @@ import (
 	"github.com/google/uuid"
 )
 
-var ErrGithubMetadataMissing = errors.New("Github metadata is missing for a github function.")
+func ErrGithubMetadataMissing() error {
+	return errors.New("Github metadata is missing for a github function.")
+}
 
 func IsFunctionFromGithub(spec *function.Function) (bool, error) {
 	if spec.Type != function.GithubFunctionType {
@@ -20,7 +22,7 @@ func IsFunctionFromGithub(spec *function.Function) (bool, error) {
 	}
 
 	if spec.GithubMetadata == nil {
-		return true, ErrGithubMetadataMissing
+		return true, ErrGithubMetadataMissing()
 	}
 
 	return true, nil
