@@ -5,7 +5,8 @@ const (
 	GetArtifactVersionsRoute = "/api/artifact/versions"
 	GetArtifactResultRoute   = "/api/artifact/{workflowDagResultId}/{artifactId}/result"
 
-	GetConfigRoute = "/api/config"
+	GetConfigRoute        = "/api/config"
+	ConfigureStorageRoute = "/api/config/storage/{integrationId}"
 
 	GetFunctionRoute    = "/api/function/{functionId}"
 	ExportFunctionRoute = "/api/function/{operatorId}/export"

@@ -792,6 +792,13 @@ func ValidatePrerequisites(
 		return http.StatusOK, nil
 	}
 
+	if svc != shared.Conda && shared.IsComputeIntegration(svc) {
+		// For all non-conda compute integrations, we require the metadata store to be cloud storage.
+		if config.Storage().Type == shared.FileStorageType {
+			return http.StatusBadRequest, errors.Newf("You need to setup cloud storage as metadata store before registering compute integration of type %s.", svc)
+		}
+	}
+
 	// These integrations should be unique.
 	if svc == shared.Email || svc == shared.Slack {
 		integrations, err := integrationRepo.GetByServiceAndUser(ctx, svc, userID, DB)
