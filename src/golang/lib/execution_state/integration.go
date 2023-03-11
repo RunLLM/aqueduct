@@ -82,7 +82,7 @@ func UpdateOnFailure(
 	ctx context.Context,
 	outputs string,
 	msg string,
-	integration_type, string
+	integration_type string,
 	integrationConfig *shared.IntegrationConfig,
 	runningAt *time.Time,
 	integrationID uuid.UUID,
