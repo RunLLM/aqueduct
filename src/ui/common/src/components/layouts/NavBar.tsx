@@ -9,13 +9,17 @@ import {
   useTheme,
 } from '@mui/material';
 import Box from '@mui/material/Box';
-//import red from '@mui/material/colors/red';
 import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
-import { theme } from '../../styles/theme/theme';
+import { RootState } from '../../stores/store';
 import UserProfile from '../../utils/auth';
 import { getPathPrefix } from '../../utils/getPathPrefix';
+import {
+  NotificationLogLevel,
+  NotificationStatus,
+} from '../../utils/notifications';
 import NotificationsPopover from '../notifications/NotificationsPopover';
 import styles from './menu-sidebar-styles.module.css';
 import { MenuSidebarWidthNumber } from './menuSidebar';
@@ -62,21 +66,17 @@ const NavBar: React.FC<{
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
-  console.log('theme: ', theme);
 
   const contextTheme = useTheme();
-  console.log('contextTheme: ', contextTheme);
 
-  // const numUnreadNotifications = useSelector(
-  //   (state: RootState) =>
-  //     state.notificationsReducer.notifications.filter(
-  //       (notification) =>
-  //         notification.level !== NotificationLogLevel.Success &&
-  //         notification.status === NotificationStatus.Unread
-  //     ).length
-  // );
-
-  const numUnreadNotifications = 5;
+  const numUnreadNotifications = useSelector(
+    (state: RootState) =>
+      state.notificationsReducer.notifications.filter(
+        (notification) =>
+          notification.level !== NotificationLogLevel.Success &&
+          notification.status === NotificationStatus.Unread
+      ).length
+  );
 
   const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
     setAnchorEl(event.currentTarget);
@@ -94,7 +94,7 @@ const NavBar: React.FC<{
         width: `calc(100% - ${MenuSidebarWidthNumber}px)`,
         height: '64px',
         boxShadow: 'none',
-        borderBottom: `2px solid ${theme.palette[300]}`,
+        borderBottom: `2px solid ${contextTheme.palette.gray[300]}`,
         backgroundColor: 'white',
         color: 'black',
       }}
