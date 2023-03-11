@@ -9,7 +9,7 @@ import __main__ as main
 import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
-from aqueduct.artifacts.create import create_param_artifact, operator_is_implicitly_created_param
+from aqueduct.artifacts.create import create_param_artifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.backend.response_models import SavedObjectUpdate
 from aqueduct.constants.enums import (
@@ -55,6 +55,7 @@ from aqueduct.utils.dag_deltas import (
     validate_overwriting_parameters,
 )
 from aqueduct.utils.function_packaging import infer_requirements_from_env
+from aqueduct.utils.naming import operator_is_implicitly_created_param, resolve_param_name
 from aqueduct.utils.serialization import deserialize
 from aqueduct.utils.type_inference import _base64_string_to_bytes, infer_artifact_type
 from aqueduct.utils.utils import (
@@ -218,19 +219,24 @@ class Client:
         Returns:
             A parameter artifact.
         """
-        colliding_op = self._dag.get_param_op_by_name(name)
-        if colliding_op is not None:
-            if operator_is_implicitly_created_param(colliding_op):
-                raise InvalidUserActionException(
-                    """Unable to create parameter `%s`, since there is an implicitly created parameter with the same name. If the old parameter is not longer relevant, you can remove it with `client.delete_param()` and rerun this operation. Otherwise, you'll need to rename one of the two. """
-                    % name,
-                )
+        param_name = resolve_param_name(self._dag, name, is_implicit=False)
+
+        # We replace any existing explicitly created parameter with the same name.
+        colliding_param = self._dag.get_param_op_by_name(param_name)
+        if colliding_param is not None and operator_is_implicitly_created_param(colliding_param):
+            apply_deltas_to_dag(
+                self._dag,
+                deltas=[
+                    RemoveOperatorDelta(
+                        colliding_param.id,
+                    ),
+                ],
+            )
 
         return create_param_artifact(
             self._dag,
             name,
             default,
-            colliding_op is not None,  # overwrite
             description,
         )
 
@@ -241,12 +247,15 @@ class Client:
             A dict where the keys are the existing parameter names and the values
             are the default values.
         """
-        param_ops = globals.__GLOBAL_DAG__.list_operators(filter_to=[OperatorType.PARAM])
+        param_ops = self._dag.list_operators(filter_to=[OperatorType.PARAM])
 
         param_dict = {}
         for op in param_ops:
             assert op.spec.param is not None
-            param_dict[op.name] = deserialize(
+            assert len(op.outputs) == 1
+            param_artifact = self._dag.must_get_artifact(op.outputs[0])
+
+            param_dict[param_artifact.name] = deserialize(
                 op.spec.param.serialization_type,
                 ArtifactType.UNTYPED,  # This argument is irrelevant, as long as it's not TUPLE.
                 _base64_string_to_bytes(op.spec.param.val),

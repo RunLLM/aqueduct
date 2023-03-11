@@ -21,8 +21,8 @@ from aqueduct.utils.utils import generate_uuid
 from aqueduct import globals
 
 from ..error import InvalidUserArgumentException
+from ..utils.naming import default_artifact_name_from_op_name, resolve_artifact_name
 from .save import _save_artifact
-from ..utils.naming import resolve_artifact_name, default_artifact_name_from_op_name
 
 
 def _convert_to_s3_table_format(format: Optional[str]) -> Optional[S3TableFormat]:
@@ -113,7 +113,9 @@ class S3Integration(Integration):
 
         integration_info = self._metadata
         op_name = name or "%s query" % self.name()
-        artifact_name = output or resolve_artifact_name(self._dag, default_artifact_name_from_op_name(op_name))
+        artifact_name = output or resolve_artifact_name(
+            self._dag, default_artifact_name_from_op_name(op_name)
+        )
 
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()

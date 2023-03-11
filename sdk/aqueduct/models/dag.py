@@ -1,5 +1,5 @@
 import uuid
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
 from aqueduct.constants.enums import (
     ArtifactType,
@@ -133,10 +133,7 @@ class DAG(BaseModel):
         with_id: Optional[uuid.UUID] = None,
         with_output_artifact_id: Optional[uuid.UUID] = None,
     ) -> Optional[Operator]:
-        if (
-            int(with_id is not None)
-            + int(with_output_artifact_id is not None)
-        ) != 1:
+        if (int(with_id is not None) + int(with_output_artifact_id is not None)) != 1:
             raise InternalAqueductError(
                 "Cannot fetch operator with multiple search parameters set."
             )
@@ -263,15 +260,6 @@ class DAG(BaseModel):
 
         return artifacts
 
-    def validate_artifact_name(self, name: str) -> None:
-        """Checks that the artifact name is unique."""
-        existing = self.get_artifact_by_name(name)
-        if existing is not None:
-            raise InvalidUserActionException(
-                "Artifact with name `%s` has already been created locally. Artifact names must be unique."
-                % name,
-            )
-
     def list_metrics_for_operator(self, op: Operator) -> List[Operator]:
         """Returns all the metric operators on the given operator's outputs."""
         metric_operators = []
@@ -301,13 +289,6 @@ class DAG(BaseModel):
             if op.name == name and get_operator_type(op) == OperatorType.PARAM:
                 return op
         return None
-
-    def get_save_op_by_name(self, name: str) -> Optional[Operator]:
-        for op in self.operators.values():
-            if op.name == name and get_operator_type(op) == OperatorType.LOAD:
-                return op
-        return None
-
 
     ######################## DAG WRITES #############################
 

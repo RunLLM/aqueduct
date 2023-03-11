@@ -42,8 +42,14 @@ class AddOperatorDelta(DAGDelta):
         output_artifacts: List[ArtifactMetadata],
     ):
         # Check that the operator's outputs correspond to the given output artifacts.
-        assert len(op.outputs) == len(output_artifacts), "Number of operator outputs does not match number of given artifacts."
-        assert all(output_artifacts[i].id == artifact_id for i, artifact_id in enumerate(op.outputs)), "The %dth output artifact on the operator does not match." % i
+        assert len(op.outputs) == len(
+            output_artifacts
+        ), "Number of operator outputs does not match number of given artifacts."
+
+        for i, artifact_id in enumerate(op.outputs):
+            assert output_artifacts[i].id == artifact_id, (
+                "The %dth output artifact on the operator does not match." % i
+            )
 
         self.op = op
         self.output_artifacts = output_artifacts
@@ -51,6 +57,21 @@ class AddOperatorDelta(DAGDelta):
     def apply(self, dag: DAG) -> None:
         dag.add_operator(self.op)
         dag.add_artifacts(self.output_artifacts)
+
+
+class RemoveOperatorDelta(DAGDelta):
+    """Removes a given operator, along with all it's downstream dependencies."""
+
+    def __init__(
+        self,
+        op_id: uuid.UUID,
+    ):
+        self.op_id = op_id
+
+    def apply(self, dag: DAG) -> None:
+        dag.remove_operators(
+            operator_ids=dag.list_downstream_operators(op_id=self.op_id),
+        )
 
 
 class SubgraphDAGDelta(DAGDelta):
@@ -187,21 +208,6 @@ class RemoveCheckOperatorDelta(DAGDelta):
             raise InvalidUserActionException(
                 "No check with name %s exists on artifact!" % self.check_name
             )
-
-
-class RemoveOperatorDelta(DAGDelta):
-    """Removes a given operator, along with all it's downstream dependencies."""
-
-    def __init__(
-        self,
-        op_id: uuid.UUID,
-    ):
-        self.op_id = op_id
-
-    def apply(self, dag: DAG) -> None:
-        dag.remove_operators(
-            operator_ids=dag.list_downstream_operators(op_id=self.op_id),
-        )
 
 
 def validate_overwriting_parameters(dag: DAG, parameters: Dict[str, Any]) -> None:

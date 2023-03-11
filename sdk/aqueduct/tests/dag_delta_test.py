@@ -10,11 +10,7 @@ from aqueduct.tests.utils import (
     default_artifact,
     generate_uuids,
 )
-from aqueduct.utils.dag_deltas import (
-    AddOperatorDelta,
-    SubgraphDAGDelta,
-    apply_deltas_to_dag,
-)
+from aqueduct.utils.dag_deltas import AddOperatorDelta, SubgraphDAGDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import generate_uuid
 
 

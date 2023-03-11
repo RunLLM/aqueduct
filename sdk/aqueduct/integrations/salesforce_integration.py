@@ -17,8 +17,8 @@ from aqueduct.models.operators import (
 from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import generate_uuid
 
+from ..utils.naming import default_artifact_name_from_op_name, resolve_artifact_name
 from .save import _save_artifact
-from ..utils.naming import resolve_artifact_name, default_artifact_name_from_op_name
 
 
 class SalesforceIntegration(Integration):
@@ -55,7 +55,9 @@ class SalesforceIntegration(Integration):
         """
 
         op_name = name or "%s search" % self.name()
-        artifact_name = output or resolve_artifact_name(self._dag, default_artifact_name_from_op_name(op_name))
+        artifact_name = output or resolve_artifact_name(
+            self._dag, default_artifact_name_from_op_name(op_name)
+        )
 
         output_artifact_id = self._add_extract_operation(
             op_name, artifact_name, description, search_query, SalesforceExtractType.SEARCH
@@ -90,7 +92,9 @@ class SalesforceIntegration(Integration):
             TableArtifact representing result of the SQL query.
         """
         op_name = name or "%s query" % self.name()
-        artifact_name = output or resolve_artifact_name(self._dag, default_artifact_name_from_op_name(op_name))
+        artifact_name = output or resolve_artifact_name(
+            self._dag, default_artifact_name_from_op_name(op_name)
+        )
 
         output_artifact_id = self._add_extract_operation(
             op_name, artifact_name, description, query, SalesforceExtractType.QUERY

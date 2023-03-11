@@ -19,7 +19,7 @@ from aqueduct.models.operators import (
     RelationalDBLoadParams,
 )
 from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
-from aqueduct.utils.naming import resolve_artifact_name, default_artifact_name_from_op_name
+from aqueduct.utils.naming import default_artifact_name_from_op_name, resolve_artifact_name
 from aqueduct.utils.utils import generate_uuid
 
 from aqueduct import globals
@@ -61,7 +61,9 @@ class MongoDBCollectionIntegration(Integration):
                 Whether to run this operator lazily. See https://docs.aqueducthq.com/operators/lazy-vs.-eager-execution .
         """
         op_name = name or "%s query" % self.name()
-        artifact_name = output or resolve_artifact_name(self._dag, default_artifact_name_from_op_name(op_name))
+        artifact_name = output or resolve_artifact_name(
+            self._dag, default_artifact_name_from_op_name(op_name)
+        )
 
         if globals.__GLOBAL_CONFIG__.lazy:
             lazy = True
