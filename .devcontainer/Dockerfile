@@ -7,5 +7,10 @@ USER root
 ENV PYTHONUNBUFFERED 1
 
 RUN pip install aqueduct-ml
+RUN pip install scikit-learn
 
-RUN deploy_demo_workflow.sh
+COPY ./.devcontainer/deploy_demo_workflow.sh /
+
+COPY ./manual_qa_tests /manual_qa_tests
+
+RUN bash /deploy_demo_workflow.sh
