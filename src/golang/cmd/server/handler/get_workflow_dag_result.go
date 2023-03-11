@@ -7,12 +7,12 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
@@ -175,7 +175,7 @@ func getArtifactContents(
 				path := artfResult.ContentPath
 				// Read data from storage and deserialize payload to `container`.
 				contentBytes, err := storageObj.Get(ctx, path)
-				if err == storage.ErrObjectDoesNotExist {
+				if errors.Is(err, storage.ErrObjectDoesNotExist()) {
 					// If the data does not exist, skip the fetch.
 					continue
 				}
