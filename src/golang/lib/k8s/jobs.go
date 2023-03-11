@@ -12,7 +12,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 )
 
-var ErrNoPodExists = errors.New("No pod exists")
+func ErrNoPodExists() error {
+	return errors.New("No pod exists")
+}
 
 // A helper function that takes in the name of a job, a container image, and
 // other configuration parameters. It uses this information to generate a new
@@ -114,7 +116,7 @@ func GetPod(ctx context.Context, name string, k8sClient *kubernetes.Clientset) (
 
 	if len(podList.Items) == 0 {
 		log.Infof("No pod has been created from job %s yet...", name)
-		return nil, ErrNoPodExists
+		return nil, ErrNoPodExists()
 	}
 
 	if len(podList.Items) != 1 {

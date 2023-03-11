@@ -6,10 +6,10 @@ import (
 	"strconv"
 
 	"github.com/aqueducthq/aqueduct/lib"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/function"
-	"github.com/dropbox/godropbox/errors"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -217,7 +217,7 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 	} else {
 		_, err := k8s.GetPod(ctx, name, j.k8sClient)
 		if err != nil {
-			if err == k8s.ErrNoPodExists {
+			if errors.Is(err, k8s.ErrNoPodExists()) {
 				return shared.PendingExecutionStatus, nil
 			}
 			return shared.FailedExecutionStatus, systemError(err)
