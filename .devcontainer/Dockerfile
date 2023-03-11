@@ -8,4 +8,6 @@ ENV PYTHONUNBUFFERED 1
 
 RUN pip install aqueduct-ml
 
-CMD aqueduct start --expose
+RUN deploy_demo_workflow.sh
+
+RUN aqueduct start --expose
