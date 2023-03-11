@@ -38,24 +38,24 @@ export const StorageConfigurationDisplay: React.FC<
 
   if (storageConfig) {
     switch (integrationName) {
-      case 'file': {
-        // file is same as sqlite?
-        if (storageConfig.type === 'file') {
-          dataStorageInfo = (
-            <Box component="span">
-              <FontAwesomeIcon icon={faTags} />
-            </Box>
-          );
+      // case 'file': {
+      //   // file is same as sqlite?
+      //   if (storageConfig.type === 'file') {
+      //     dataStorageInfo = (
+      //       <Box component="span">
+      //         <FontAwesomeIcon icon={faTags} />
+      //       </Box>
+      //     );
 
-          dataStorageText = (
-            <Typography variant={'body2'}>
-              <strong>Storage Type:</strong> {dataStorageInfo}
-            </Typography>
-          );
-        }
+      //     dataStorageText = (
+      //       <Typography variant={'body2'}>
+      //         <strong>Storage Type:</strong> {dataStorageInfo}
+      //       </Typography>
+      //     );
+      //   }
 
-        break;
-      }
+      //   break;
+      // }
       case 's3': {
         if (storageConfig.type === 's3') {
           dataStorageInfo = (

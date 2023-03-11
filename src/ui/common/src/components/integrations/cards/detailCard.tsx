@@ -7,7 +7,6 @@ import {
   SupportedIntegrations,
 } from '../../../utils/integrations';
 import { LoadingStatus } from '../../../utils/shared';
-import StorageConfigurationDisplay from '../StorageConfiguration';
 import { AqueductDemoCard } from './aqueductDemoCard';
 import { BigQueryCard } from './bigqueryCard';
 import { CondaCard } from './condaCard';
@@ -74,9 +73,6 @@ export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
       break;
     case 'GCS':
       serviceCard = <GCSCard integration={integration} />;
-      break;
-    case 'SQLite':
-      serviceCard = <StorageConfigurationDisplay integrationName="file" />;
       break;
 
     default:
