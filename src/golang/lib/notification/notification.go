@@ -20,7 +20,9 @@ import (
 
 const localHostIP = "localhost"
 
-var ErrIntegrationTypeIsNotNotification = errors.New("Integration type is not a notification.")
+func ErrIntegrationTypeIsNotNotification() error {
+	return errors.New("Integration type is not a notification.")
+}
 
 type Notification interface {
 	// `ID()` is the unique identifier, typically mapped to the integration ID.
@@ -117,7 +119,7 @@ func NewNotificationFromIntegration(
 		return newSlackNotification(integrationObject, slackConf), nil
 	}
 
-	return nil, ErrIntegrationTypeIsNotNotification
+	return nil, ErrIntegrationTypeIsNotNotification()
 }
 
 // constructDisplayedOperatorType returns the 'user facing' message included
