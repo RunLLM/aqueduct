@@ -16,6 +16,7 @@ from aqueduct.models.dag import Schedule
 from aqueduct.models.integration import IntegrationInfo
 from aqueduct.models.operators import ParamSpec
 from aqueduct.models.local_data import LocalData
+from aqueduct.utils.local_data import validate_local_data
 from croniter import croniter
 
 from .serialization import artifact_type_to_serialization_type, serialize_val,extract_val_from_local_data
@@ -113,6 +114,7 @@ def construct_param_spec(
     derived_from_bson = False
 
     if isinstance(val,LocalData):
+        validate_local_data(val)
         val = extract_val_from_local_data(val)
         
     serialization_type = artifact_type_to_serialization_type(
