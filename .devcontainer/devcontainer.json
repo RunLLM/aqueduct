@@ -2,7 +2,7 @@
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.126.0/containers/python-3
 {
     "name": "Aqueduct Dev Container",
-    "image": "aqueducthq/demo",
+    "image": "aqueducthq/demo:latest",
     "forwardPorts": [
         8080
     ],
