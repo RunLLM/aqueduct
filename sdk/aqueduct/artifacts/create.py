@@ -114,7 +114,7 @@ def create_param_artifact(
     )
 
     if isinstance(default,LocalData):
-        deserialized_val = extract_serialized_local_data(param_spec.val,default.as_type,param_spec.serialization_type)
+        deserialized_val = extract_serialized_local_data(param_spec.val,default.artifact_type,param_spec.serialization_type)
         return to_artifact_class(dag, output_artifact_id, artifact_type, deserialized_val)
     else:
         return to_artifact_class(dag, output_artifact_id, artifact_type, default)

@@ -4,7 +4,8 @@ from typing import Optional
 from ..error import InvalidUserArgumentException
 from aqueduct.models.local_data import LocalData
 
-SIZE_OF_MEGABYTE = 1000000
+# The current local data maximum is temporarily set to 1MB.
+MAXIMUM_LOCAL_DATA_SIZE = 1000000
 
 def Local_Data(path : str, artifact_type : ArtifactType, format: Optional[str] = None,) -> LocalData:
     """Identify the local data which can be passed in as a parameter.
@@ -12,7 +13,7 @@ def Local_Data(path : str, artifact_type : ArtifactType, format: Optional[str] =
     Args:
         path:
             The path to the data.
-        as_type:
+        artifact_type:
                 The expected type of the data. The `ArtifactType` class in `enums.py` contains all
                 supported types, except for ArtifactType.UNTYPED. 
         format:
@@ -20,22 +21,22 @@ def Local_Data(path : str, artifact_type : ArtifactType, format: Optional[str] =
                 We currently support JSON, CSV, and Parquet.
     
     Returns
-        A `LocalData` object which can be used to create a parameter.
+        A `LocalData` object which contains necessary information to create a parameter artifact.
     """
 
     format_enum = _convert_to_local_data_table_format(format)
-    return LocalData(path = path,as_type= artifact_type,format=format_enum) 
+    return LocalData(path = path,artifact_type= artifact_type,format=format_enum) 
 
 def validate_local_data(val : LocalData):
     """Validate LocalData on its file path and types. """
     file_path = val.path
-    artifact_type = val.as_type
+    artifact_type = val.artifact_type
     file_format = val.format
 
     if not os.path.isfile(file_path):
-        raise InvalidUserArgumentException("Given path file %s to local data does not exist.",val.path)
+        raise InvalidUserArgumentException("Given path file %s to local data does not exist.".format(file_path))
 
-    if os.path.getsize(file_path) > SIZE_OF_MEGABYTE:
+    if os.path.getsize(file_path) > MAXIMUM_LOCAL_DATA_SIZE:
         raise InvalidUserArgumentException("Currently, the maximum local data size is 1 MB")
     
     if artifact_type == ArtifactType.TABLE and file_format is None:

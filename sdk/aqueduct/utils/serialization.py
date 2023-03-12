@@ -339,7 +339,7 @@ def artifact_type_to_serialization_type(
 
 def extract_val_from_local_data(val: LocalData) -> Any:
     """ Extract value of spcified type in LocalData."""
-    artifact_type = val.as_type
+    artifact_type = val.artifact_type
     local_data_path = val.path
     local_data_format = val.format
     if artifact_type == ArtifactType.TABLE:

@@ -6,5 +6,5 @@ from aqueduct.constants.enums import (
 )
 class LocalData(BaseModel):
     path : str
-    as_type : ArtifactType
+    artifact_type : ArtifactType
     format : Optional[LocalDataTableFormat]
