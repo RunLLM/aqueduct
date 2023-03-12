@@ -6,9 +6,15 @@ from typing import Any, Callable, Dict, List, Optional, Union, cast
 
 import cloudpickle as pickle
 import pandas as pd
-from aqueduct.constants.enums import ArtifactType, S3SerializationType, SerializationType,LocalDataSerializationType, LocalDataTableFormat
+from aqueduct.constants.enums import (
+    ArtifactType,
+    LocalDataSerializationType,
+    LocalDataTableFormat,
+    S3SerializationType,
+    SerializationType,
+)
 from aqueduct.models.local_data import LocalData
-from aqueduct.utils.type_inference import infer_artifact_type,_base64_string_to_bytes
+from aqueduct.utils.type_inference import _base64_string_to_bytes, infer_artifact_type
 from bson import json_util as bson_json_util
 from PIL import Image
 from pydantic import BaseModel
@@ -68,6 +74,7 @@ def _read_string_content(content: bytes) -> str:
 def _read_bytes_content(content: bytes) -> bytes:
     return content
 
+
 def _read_local_csv_table_content(path: str) -> Any:
     return pd.read_csv(path)
 
@@ -75,11 +82,14 @@ def _read_local_csv_table_content(path: str) -> Any:
 def _read_local_json_table_content(path: str) -> Any:
     return pd.read_json(path, orient="table")
 
+
 def _read_local_parquet_table_content(path: str) -> Any:
     return pd.read_parquet(path)
 
+
 def _read_local_image_content(path: str) -> Any:
     return Image.open(path)
+
 
 # Returns a tf.keras.Model type. We don't assume that every user has it installed,
 # so we return "Any" type.
@@ -186,7 +196,7 @@ def deserialize(
 def deserialize_from_local_data(
     serialization_type: LocalDataSerializationType,
     artifact_type: ArtifactType,
-    path: str,    
+    path: str,
 ) -> Any:
     """Deserializes a file object with specified path into the appropriate python object.
 
@@ -201,7 +211,8 @@ def deserialize_from_local_data(
     if artifact_type == ArtifactType.TUPLE:
         return tuple(deserialized_val)
     return deserialized_val
-    
+
+
 def _write_table_output(output: pd.DataFrame) -> bytes:
     output_str = cast(str, output.to_json(orient="table", date_format="iso", index=False))
     return output_str.encode(DEFAULT_ENCODING)
@@ -337,25 +348,37 @@ def artifact_type_to_serialization_type(
     )
     return serialization_type
 
+
 def extract_val_from_local_data(val: LocalData) -> Any:
-    """ Extract value of spcified type in LocalData."""
+    """Extract value of spcified type in LocalData."""
     artifact_type = val.artifact_type
     local_data_path = val.path
     local_data_format = val.format
     if artifact_type == ArtifactType.TABLE:
         if local_data_format == LocalDataTableFormat.CSV:
-            deserialized_val = deserialize_from_local_data(LocalDataSerializationType.CSV_TABLE,artifact_type,local_data_path)
+            deserialized_val = deserialize_from_local_data(
+                LocalDataSerializationType.CSV_TABLE, artifact_type, local_data_path
+            )
         elif local_data_format == LocalDataTableFormat.JSON:
-            deserialized_val = deserialize_from_local_data(LocalDataSerializationType.JSON_TABLE,artifact_type,local_data_path)
+            deserialized_val = deserialize_from_local_data(
+                LocalDataSerializationType.JSON_TABLE, artifact_type, local_data_path
+            )
         elif local_data_format == LocalDataTableFormat.PARQUET:
-            deserialized_val = deserialize_from_local_data(LocalDataSerializationType.PARQUET_TABLE,artifact_type,local_data_path)
+            deserialized_val = deserialize_from_local_data(
+                LocalDataSerializationType.PARQUET_TABLE, artifact_type, local_data_path
+            )
         else:
             raise Exception("Unsupported file format %s" % format)
     elif artifact_type == ArtifactType.IMAGE:
-        deserialized_val = deserialize_from_local_data(LocalDataSerializationType.IMAGE,artifact_type,local_data_path)
+        deserialized_val = deserialize_from_local_data(
+            LocalDataSerializationType.IMAGE, artifact_type, local_data_path
+        )
     else:
         raise Exception("Unsupported artifact type %s" % artifact_type)
     return deserialized_val
 
-def extract_serialized_local_data(val: str, artifact_type : ArtifactType ,serialization_type : SerializationType) -> Any:
-    return deserialize(serialization_type,artifact_type,_base64_string_to_bytes(val))
+
+def extract_serialized_local_data(
+    val: str, artifact_type: ArtifactType, serialization_type: SerializationType
+) -> Any:
+    return deserialize(serialization_type, artifact_type, _base64_string_to_bytes(val))

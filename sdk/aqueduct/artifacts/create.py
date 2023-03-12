@@ -8,12 +8,12 @@ from aqueduct.constants.enums import OperatorType
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
-from aqueduct.models.operators import Operator, OperatorSpec, get_operator_type
 from aqueduct.models.local_data import LocalData
+from aqueduct.models.operators import Operator, OperatorSpec, get_operator_type
 from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.serialization import extract_serialized_local_data
 from aqueduct.utils.type_inference import infer_artifact_type
 from aqueduct.utils.utils import construct_param_spec, generate_uuid
-from aqueduct.utils.serialization import extract_serialized_local_data
 
 
 def _operator_is_implicitly_created_param(op: Operator) -> bool:
@@ -113,8 +113,10 @@ def create_param_artifact(
         ],
     )
 
-    if isinstance(default,LocalData):
-        deserialized_val = extract_serialized_local_data(param_spec.val,default.artifact_type,param_spec.serialization_type)
+    if isinstance(default, LocalData):
+        deserialized_val = extract_serialized_local_data(
+            param_spec.val, default.artifact_type, param_spec.serialization_type
+        )
         return to_artifact_class(dag, output_artifact_id, artifact_type, deserialized_val)
     else:
         return to_artifact_class(dag, output_artifact_id, artifact_type, default)

@@ -36,7 +36,7 @@ def infer_artifact_type(value: Any) -> ArtifactType:
         return ArtifactType.TUPLE
     elif isinstance(value, list):
         return ArtifactType.LIST
-    elif isinstance(value,LocalData):
+    elif isinstance(value, LocalData):
         return value.artifact_type
     else:
         try:

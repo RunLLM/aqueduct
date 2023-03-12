@@ -1,11 +1,11 @@
+import os
 from typing import Dict, List
 
 import pandas as pd
-import os
 import pytest
 from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
-from aqueduct.constants.enums import ExecutionStatus,ArtifactType
+from aqueduct.constants.enums import ArtifactType, ExecutionStatus
 from aqueduct.error import (
     AqueductError,
     ArtifactNeverComputedException,
@@ -15,7 +15,7 @@ from aqueduct.error import (
 from pandas._testing import assert_frame_equal
 from PIL import Image
 
-from aqueduct import metric, op, Local_Data
+from aqueduct import Local_Data, metric, op
 
 from ..shared.data_objects import DataObject
 from ..shared.flow_helpers import publish_flow_test, trigger_flow_test
@@ -588,23 +588,29 @@ def test_param_management(client):
     with pytest.raises(Exception):
         bar_output.get()
 
-def test_local_table_data_parameter(client,flow_name,engine):
-    @op(outputs = ["output"])
+
+def test_local_table_data_parameter(client, flow_name, engine):
+    @op(outputs=["output"])
     def append_row_to_df(df, row):
         """`row` is a list of values to append to the input dataframe."""
         df.loc[len(df.index)] = row
         return df
+
     row_to_add = ["new hotel", "09-28-1996", "US", "It was new."]
 
-    file_type = ["csv","json","parquet"]
+    file_type = ["csv", "json", "parquet"]
     for extension in file_type:
-        local_data = Local_Data(path="data/hotel_reviews." + extension,artifact_type = ArtifactType.TABLE, format = extension)
-        data_param = client.create_param(name = "data_"+extension, default = local_data)
+        local_data = Local_Data(
+            path="data/hotel_reviews." + extension,
+            artifact_type=ArtifactType.TABLE,
+            format=extension,
+        )
+        data_param = client.create_param(name="data_" + extension, default=local_data)
 
         if extension == "csv":
             input_df = pd.read_csv("data/hotel_reviews." + extension)
-        elif extension == "json": 
-            input_df = pd.read_json("data/hotel_reviews." + extension,orient="table")
+        elif extension == "json":
+            input_df = pd.read_json("data/hotel_reviews." + extension, orient="table")
         else:
             input_df = pd.read_parquet("data/hotel_reviews." + extension)
         assert input_df.equals(data_param.get())
@@ -614,36 +620,37 @@ def test_local_table_data_parameter(client,flow_name,engine):
         output_df = output.get()
         assert output_df.equals(input_df)
 
-    flow = publish_flow_test(
-        client, artifacts=[output], name=flow_name(), engine=engine
-    )
+    flow = publish_flow_test(client, artifacts=[output], name=flow_name(), engine=engine)
     flow_run = flow.latest()
     assert flow_run.artifact("output").get().equals(input_df)
+
 
 def test_invalid_local_data(client):
     # check Local Data with file path that does not exist will fail
     with pytest.raises(InvalidUserArgumentException):
-        local_data = Local_Data(path="data/hotel_reviews",artifact_type = ArtifactType.IMAGE)
-        client.create_param(name = "data", default = local_data)
+        local_data = Local_Data(path="data/hotel_reviews", artifact_type=ArtifactType.IMAGE)
+        client.create_param(name="data", default=local_data)
 
     # Check that format is supplied when Artifact type is table
     with pytest.raises(InvalidUserArgumentException):
-        local_data = Local_Data(path="data/hotel_reviews.json",artifact_type = ArtifactType.TABLE)
-        client.create_param(name = "data", default = local_data)
+        local_data = Local_Data(path="data/hotel_reviews.json", artifact_type=ArtifactType.TABLE)
+        client.create_param(name="data", default=local_data)
 
-def test_local_image_data_parameter(client,flow_name,engine):
+
+def test_local_image_data_parameter(client, flow_name, engine):
     @op
     def must_be_image(input):
         if not isinstance(input, Image.Image):
             raise Exception("Expected image.")
         return input
-    local_data = Local_Data(path="data/aqueduct.jpg",artifact_type = ArtifactType.IMAGE)
-    image_param = client.create_param(name = "data", default = local_data)
-    
+
+    local_data = Local_Data(path="data/aqueduct.jpg", artifact_type=ArtifactType.IMAGE)
+    image_param = client.create_param(name="data", default=local_data)
+
     image_output = must_be_image(image_param)
-    assert isinstance(image_output,GenericArtifact)
+    assert isinstance(image_output, GenericArtifact)
     assert isinstance(image_output.get(), Image.Image)
-    
+
     publish_flow_test(
         client,
         name=flow_name(),

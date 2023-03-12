@@ -219,10 +219,12 @@ class K8sClusterStatusType(str, Enum, metaclass=MetaEnum):
     TERMINATING = "Terminating"
     TERMINATED = "Terminated"
 
+
 class LocalDataTableFormat(str, Enum, metaclass=MetaEnum):
     CSV = "CSV"
     JSON = "JSON"
     PARQUET = "Parquet"
+
 
 class LocalDataSerializationType(str, Enum, metaclass=MetaEnum):
     CSV_TABLE = "csv_table"
