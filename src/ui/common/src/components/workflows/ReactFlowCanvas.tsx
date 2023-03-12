@@ -1,6 +1,8 @@
+import 'reactflow/dist/style.css';
+
 import React from 'react';
-import ReactFlow, { Node as ReactFlowNode } from 'react-flow-renderer';
 import { useSelector } from 'react-redux';
+import ReactFlow, { Node as ReactFlowNode } from 'reactflow';
 
 import { RootState } from '../../stores/store';
 import { EdgeTypes, ReactFlowNodeData } from '../../utils/reactflow';
@@ -26,6 +28,8 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
   );
 
   const { edges, nodes } = dagPositionState.result ?? { edges: [], nodes: [] };
+
+  const defaultViewport = { x: 0, y: 0, zoom: 1 };
 
   const canvasEdges = edges.map((edge) => {
     return {
@@ -56,7 +60,7 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
       connectionLineStyle={connectionLineStyle}
       snapToGrid={true}
       snapGrid={snapGrid as [number, number]}
-      defaultZoom={1}
+      defaultViewport={defaultViewport}
       edgeTypes={EdgeTypes}
       minZoom={0.25}
       fitView={true}

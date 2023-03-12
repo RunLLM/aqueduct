@@ -41,7 +41,7 @@ type EditDynamicEngineHandler struct {
 
 type editDynamicEngineArgs struct {
 	*aq_context.AqContext
-	action        string
+	action        dynamicEngineAction
 	integrationId uuid.UUID
 }
 
@@ -55,10 +55,23 @@ func (*EditDynamicEngineHandler) Headers() []string {
 	}
 }
 
+type dynamicEngineAction string
+
 const (
-	createAction string = "create"
-	deleteAction string = "delete"
+	// These reflect K8sClusterActionType in Python and should be kept in sync.
+	createAction      dynamicEngineAction = "create"
+	deleteAction      dynamicEngineAction = "delete"
+	forceDeleteAction dynamicEngineAction = "force-delete"
 )
+
+func isValidAction(action string) bool {
+	switch dynamicEngineAction(action) {
+	case createAction, deleteAction, forceDeleteAction:
+		return true
+	default:
+		return false
+	}
+}
 
 func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
@@ -77,9 +90,13 @@ func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, err
 		return nil, http.StatusBadRequest, errors.Wrap(err, "No action specified by the request.")
 	}
 
+	if !isValidAction(action) {
+		return nil, http.StatusBadRequest, errors.Newf("Unsupported action: %s.", action)
+	}
+
 	return &editDynamicEngineArgs{
 		AqContext:     aqContext,
-		action:        action,
+		action:        dynamicEngineAction(action),
 		integrationId: integrationId,
 	}, http.StatusOK, nil
 }
@@ -121,13 +138,19 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 		}
 
 		return emptyResponse, http.StatusOK, nil
-	} else if args.action == deleteAction {
+	} else if args.action == deleteAction || args.action == forceDeleteAction {
 		// This is a cluster deletion request.
+		forceDelete := false
+		if args.action == forceDeleteAction {
+			forceDelete = true
+		}
+
 		for {
 			if dynamicEngineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
 				log.Info("Tearing down the Kubernetes cluster...")
 				if err = dynamic.DeleteDynamicEngine(
 					ctx,
+					forceDelete,
 					dynamicEngineIntegration,
 					h.IntegrationRepo,
 					h.Database,

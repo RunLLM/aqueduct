@@ -1,5 +1,5 @@
 import React from 'react';
-import { EdgeProps, getBezierPath } from 'react-flow-renderer';
+import { EdgeProps, getBezierPath } from 'reactflow';
 
 import { theme } from '../../../styles/theme/theme';
 
@@ -13,7 +13,8 @@ export const AqueductBezier: React.FC<EdgeProps> = ({
   targetPosition,
   style = {},
 }) => {
-  const edgePath = getBezierPath({
+  // path, labelX, labelY, offsetX, offsetY
+  const edgePathData = getBezierPath({
     sourceX,
     sourceY,
     sourcePosition,
@@ -21,6 +22,7 @@ export const AqueductBezier: React.FC<EdgeProps> = ({
     targetY,
     targetPosition,
   });
+  const edgePath = edgePathData[0];
   const color: string = style['color'] ?? (theme.palette.darkGray as string);
 
   return (

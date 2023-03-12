@@ -26,8 +26,8 @@ func waitForInProgressOperators(
 		for opID, op := range inProgressOps {
 			execState, err := op.Poll(ctx)
 
-			// Resolve any jobs that aren't actively running or failed. We don't are if they succeeded or failed,
-			// since this is called after engestration exits.
+			// Resolve any jobs that aren't actively running or failed. We don't care if they succeeded or failed,
+			// since this is called after orchestration exits.
 			if err != nil || execState.Status != shared.RunningExecutionStatus {
 				delete(inProgressOps, opID)
 			}
