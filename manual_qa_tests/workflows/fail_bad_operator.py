@@ -33,7 +33,7 @@ def deploy(client, integration_name):
     row_count_artf = row_count.lazy(bad_op_artf)
     # using lazy() to bypass preview
     check_artf = check.lazy(row_count_artf)
-    client.publish_flow(
+    flow = client.publish_flow(
         artifacts=[check_artf],
         name=NAME,
         description=DESCRIPTION,
