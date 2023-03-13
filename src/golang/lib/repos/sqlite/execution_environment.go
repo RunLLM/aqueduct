@@ -160,7 +160,7 @@ func getExecutionEnvironment(ctx context.Context, DB database.Database, query st
 	}
 
 	if len(executionEnvironments) == 0 {
-		return nil, database.ErrNoRows
+		return nil, database.ErrNoRows()
 	}
 
 	if len(executionEnvironments) != 1 {
