@@ -270,7 +270,10 @@ class Client:
         apply_deltas_to_dag(self._dag, [RemoveOperatorDelta(param_op.id)])
 
     def connect_integration(
-        self, name: str, service: ServiceType, config: Union[Dict[str, str], IntegrationConfig]
+        self,
+        name: str,
+        service: Union[str, ServiceType],
+        config: Union[Dict[str, str], IntegrationConfig],
     ) -> None:
         """Connects the Aqueduct server to an integration.
 
@@ -284,6 +287,11 @@ class Client:
                 Either a dictionary or an IntegrationConnectConfig object that contains the
                 configuration credentials needed to connect.
         """
+        if service == ServiceType.AWS:
+            raise InvalidUserArgumentException(
+                "Support for service type AWS is not ready yet. Please stay tuned!"
+            )
+
         if service not in ServiceType:
             raise InvalidUserArgumentException(
                 "Service argument must match exactly one of the enum values in ServiceType (case-sensitive)."

@@ -6,7 +6,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { handleFetchAllWorkflowSummaries } from '../../../reducers/listWorkflowSummaries';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
-import { ServiceLogos } from '../../../utils/integrations';
 import { CheckLevel } from '../../../utils/operators';
 import ExecutionStatus, { LoadingStatusEnum } from '../../../utils/shared';
 import DefaultLayout from '../../layouts/default';
@@ -68,10 +67,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
    * Iterate through workflows array and map each element to a WorkflowTableRow object.
    */
   const workflowElements: PaginatedSearchTableRow[] = workflows.map((value) => {
-    const engineName =
-      value.engine[0].toUpperCase() + value.engine.substring(1);
-    const engineIconUrl =
-      ServiceLogos[value.engine[0].toUpperCase() + value.engine.substring(1)];
+    const engine = value.engine;
 
     let metrics = [];
     if (value?.metrics) {
@@ -109,10 +105,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         status: value.status,
       },
       last_run: new Date(value.last_run_at * 1000),
-      engine: {
-        engineName,
-        engineIconUrl: engineIconUrl,
-      },
+      engine,
       metrics,
       checks,
     };
@@ -165,10 +158,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         value = row[column.name].toLocaleString();
         break;
       case 'engine': {
-        const { engineName, engineIconUrl } = value;
-        value = (
-          <EngineItem engineName={engineName} engineIconUrl={engineIconUrl} />
-        );
+        value = <EngineItem engine={value} />;
         break;
       }
       case 'metrics': {

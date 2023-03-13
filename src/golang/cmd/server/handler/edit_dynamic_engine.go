@@ -42,7 +42,7 @@ type EditDynamicEngineHandler struct {
 
 type editDynamicEngineArgs struct {
 	*aq_context.AqContext
-	action        string
+	action        dynamicEngineAction
 	integrationId uuid.UUID
 	configDelta   *shared.DynamicK8sConfig
 }
@@ -57,13 +57,26 @@ func (*EditDynamicEngineHandler) Headers() []string {
 	}
 }
 
+type dynamicEngineAction string
+
 const (
-	createAction      string = "create"
-	updateAction      string = "update"
-	deleteAction      string = "delete"
-	forceDeleteAction string = "force-delete"
-	configDeltaKey    string = "config_delta"
+	// These reflect K8sClusterActionType in Python and should be kept in sync.
+	createAction      dynamicEngineAction = "create"
+	updateAction      dynamicEngineAction = "update"
+	deleteAction      dynamicEngineAction = "delete"
+	forceDeleteAction dynamicEngineAction = "force-delete"
+	// The config delta payload sent from the client is keyed under this key in the HTTP request body.
+	configDeltaKey string = "config_delta"
 )
+
+func isValidAction(action string) bool {
+	switch dynamicEngineAction(action) {
+	case createAction, updateAction, deleteAction, forceDeleteAction:
+		return true
+	default:
+		return false
+	}
+}
 
 func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
@@ -97,9 +110,13 @@ func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, err
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to deserialize config delta.")
 	}
 
+	if !isValidAction(action) {
+		return nil, http.StatusBadRequest, errors.Newf("Unsupported action: %s.", action)
+	}
+
 	return &editDynamicEngineArgs{
 		AqContext:     aqContext,
-		action:        action,
+		action:        dynamicEngineAction(action),
 		integrationId: integrationId,
 		configDelta:   &configDelta,
 	}, http.StatusOK, nil

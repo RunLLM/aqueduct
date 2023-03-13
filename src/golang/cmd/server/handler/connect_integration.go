@@ -19,8 +19,10 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/dynamic"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -29,7 +31,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
@@ -38,6 +39,13 @@ const (
 	pollAuthenticateInterval = 500 * time.Millisecond
 	pollAuthenticateTimeout  = 2 * time.Minute
 )
+
+var pathConfigKeys = map[string]bool{
+	"config_file_path":    true, // AWS, S3, Athena credentials path
+	"kubeconfig_path":     true, // K8s credentials path
+	"s3_credentials_path": true, // Airflow S3 credentials path
+	"database":            true, // SQLite database path
+}
 
 // Route: /integration/connect
 // Method: POST
@@ -111,6 +119,10 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 
 	if service == shared.Github || service == shared.GoogleSheets {
 		return nil, http.StatusBadRequest, errors.Newf("%s integration type is currently not supported", service)
+	}
+
+	if err = convertToAbsolutePath(configMap); err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Error getting server's home directory path")
 	}
 
 	config := auth.NewStaticConfig(configMap)
@@ -201,7 +213,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 			MaxGpuNode:  shared.DefaultDynamicK8sConfig.MaxGpuNode,
 		}
 
-		config.Merge(awsConfig.K8s)
+		config.Update(awsConfig.K8s)
 
 		dynamicK8sConfig := map[string]string{
 			shared.K8sKubeconfigPathKey:     kubeconfigPath,
@@ -377,6 +389,24 @@ func ConnectIntegration(
 		}()
 	}
 
+	if args.Service == shared.Lambda {
+		go func() {
+			DB, err = database.NewDatabase(DB.Config())
+			if err != nil {
+				log.Errorf("Error creating DB in go routine: %v", err)
+				return
+			}
+
+			lambda_utils.ConnectToLambda(
+				context.Background(),
+				args.Config,
+				integrationObject.ID,
+				integrationRepo,
+				DB,
+			)
+		}()
+	}
+
 	return http.StatusOK, nil
 }
 
@@ -403,9 +433,10 @@ func ValidateConfig(
 	}
 
 	if service == shared.Lambda {
-		// Lambda authentication is performed by creating Lambda jobs
-		// instead of the Python client, so we don't launch a job for it.
-		return validateLambdaConfig(ctx, config)
+		// Lambda authentication is performed in ConnectToLambda()
+		// by creating Lambda jobs instead of the Python client,
+		// so we don't launch a job for it.
+		return http.StatusOK, nil
 	}
 
 	if service == shared.Databricks {
@@ -694,17 +725,6 @@ func validateKubernetesConfig(
 	return http.StatusOK, nil
 }
 
-func validateLambdaConfig(
-	ctx context.Context,
-	config auth.Config,
-) (int, error) {
-	if err := engine.AuthenticateLambdaConfig(ctx, config); err != nil {
-		return http.StatusBadRequest, err
-	}
-
-	return http.StatusOK, nil
-}
-
 func validateDatabricksConfig(
 	ctx context.Context,
 	config auth.Config,
@@ -720,6 +740,7 @@ func validateSparkConfig(
 	ctx context.Context,
 	config auth.Config,
 ) (int, error) {
+	// Validate that we are able to connect to the Spark cluster via Livy.
 	if err := engine.AuthenticateSparkConfig(ctx, config); err != nil {
 		return http.StatusBadRequest, err
 	}
@@ -780,7 +801,7 @@ func ValidatePrerequisites(
 	if err == nil {
 		return http.StatusBadRequest, errors.Newf("Cannot connect to an integration %s, since it already exists.", name)
 	}
-	if err != database.ErrNoRows {
+	if !errors.Is(err, database.ErrNoRows()) {
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to query for existing integrations.")
 	}
 
@@ -807,6 +828,13 @@ func ValidatePrerequisites(
 		}
 
 		return http.StatusOK, nil
+	}
+
+	if svc != shared.Conda && shared.IsComputeIntegration(svc) {
+		// For all non-conda compute integrations, we require the metadata store to be cloud storage.
+		if config.Storage().Type == shared.FileStorageType {
+			return http.StatusBadRequest, errors.Newf("You need to setup cloud storage as metadata store before registering compute integration of type %s.", svc)
+		}
 	}
 
 	// These integrations should be unique.
@@ -849,4 +877,20 @@ func validateConda() (int, error) {
 	}
 
 	return http.StatusOK, nil
+}
+
+func convertToAbsolutePath(configMap map[string]string) error {
+	for key, path := range configMap {
+		if _, ok := pathConfigKeys[key]; ok {
+			if strings.HasPrefix(path, "~") {
+				homeDir, err := os.UserHomeDir()
+				if err != nil {
+					return err
+				}
+				configMap[key] = strings.Replace(path, "~", homeDir, 1)
+			}
+		}
+	}
+
+	return nil
 }

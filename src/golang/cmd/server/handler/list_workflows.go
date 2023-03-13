@@ -8,6 +8,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	db_operator "github.com/aqueducthq/aqueduct/lib/models/shared/operator"
@@ -17,7 +18,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 
@@ -158,7 +158,7 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 					if err == nil {
 						content := string(contentBytes)
 						contentPtr = &content
-					} else if err != storage.ErrObjectDoesNotExist {
+					} else if !errors.Is(err, storage.ErrObjectDoesNotExist()) {
 						return nil, http.StatusInternalServerError, errors.Wrap(
 							err, "Unable to get metric content from storage",
 						)

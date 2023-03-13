@@ -89,15 +89,10 @@ import NumericArtifactNode from './components/workflows/nodes/NumericArtifactNod
 import ParameterOperatorNode from './components/workflows/nodes/ParameterOperatorNode';
 import TableArtifactNode from './components/workflows/nodes/TableArtifactNode';
 import ReactFlowCanvas from './components/workflows/ReactFlowCanvas';
-import WorkflowStatusBar, {
-  StatusBarHeaderHeightInPx,
-  StatusBarWidthInPx,
-} from './components/workflows/StatusBar';
 import VersionSelector from './components/workflows/version_selector';
 import WorkflowCard from './components/workflows/workflowCard';
 import WorkflowHeader from './components/workflows/workflowHeader';
 import WorkflowSettings from './components/workflows/WorkflowSettings';
-import { StatusChip } from './components/workflows/workflowStatus';
 import { handleGetArtifactResultContent } from './handlers/getArtifactResultContent';
 import { handleGetWorkflowDagResult } from './handlers/getWorkflowDagResult';
 import { handleListArtifactResults } from './handlers/listArtifactResults';
@@ -138,14 +133,6 @@ import notifications, {
   handleFetchNotifications,
   notificationsSlice,
 } from './reducers/notifications';
-import openSideSheet, {
-  openSideSheetSlice,
-  setAllSideSheetState,
-  setBottomSideSheetOpenState,
-  setLeftSideSheetOpenState,
-  setRightSideSheetOpenState,
-  setWorkflowStatusBarOpenState,
-} from './reducers/openSideSheet';
 import workflow, {
   handleGetArtifactResults,
   handleGetOperatorResults,
@@ -338,8 +325,6 @@ export {
   NotificationStatus,
   NumericArtifactNode,
   objectKeyFn,
-  openSideSheet,
-  openSideSheetSlice,
   OperatorDetailsPage,
   OperatorExecStateTableType,
   OperatorType,
@@ -362,17 +347,6 @@ export {
   selectResultIdx,
   ServiceLogos,
   ServiceType,
-  // TODO: Refactor to remove sidesheet state
-  setAllSideSheetState,
-  // TODO: Refactor to remove sidesheet state
-  setBottomSideSheetOpenState,
-  // TODO: Refactor to remove sidesheet state
-  setLeftSideSheetOpenState,
-  // TODO: Refactor to remove sidesheet state
-  setRightSideSheetOpenState,
-  // TODO: Refactor to remove sidesheet state
-  setWorkflowStatusBarOpenState,
-  // TODO: Refactor to remove sidesheet state
   sideSheetSwitcher,
   SlackCard,
   SlackDialog,
@@ -380,9 +354,6 @@ export {
   SnowflakeDialog,
   SparkCard,
   SparkDialog,
-  StatusChip as Status,
-  StatusBarHeaderHeightInPx,
-  StatusBarWidthInPx,
   store,
   SupportedIntegrations,
   Tab,
@@ -402,7 +373,6 @@ export {
   WorkflowSettings,
   workflowSlice,
   WorkflowsPage,
-  WorkflowStatusBar,
   workflowSummaries,
   WorkflowUpdateTrigger,
 };

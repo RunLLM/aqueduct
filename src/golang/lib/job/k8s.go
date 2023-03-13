@@ -16,8 +16,7 @@ import (
 )
 
 const (
-	defaultFunctionExtractPath = "/app/function/"
-	jobSpecEnvVarKey           = "JOB_SPEC"
+	jobSpecEnvVarKey = "JOB_SPEC"
 )
 
 type k8sJobManager struct {
@@ -141,7 +140,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobE
 
 	containerRepo, err := mapJobTypeToDockerImage(spec, launchGpu)
 	if err != nil {
-		return systemError(err)
+		return userError(err)
 	}
 	containerImage := fmt.Sprintf("%s:%s", containerRepo, lib.ServerVersionNumber)
 

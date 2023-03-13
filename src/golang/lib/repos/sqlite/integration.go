@@ -242,7 +242,7 @@ func getIntegration(ctx context.Context, DB database.Database, query string, arg
 	}
 
 	if len(integrations) == 0 {
-		return nil, database.ErrNoRows
+		return nil, database.ErrNoRows()
 	}
 
 	if len(integrations) != 1 {

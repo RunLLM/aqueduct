@@ -1,5 +1,5 @@
 .DEFAULT_GOAL = all
-VERSION = 0.2.4
+VERSION = 0.2.5
 
 # By default, turn off the Makefile practice of printing each command before
 # you run it.
@@ -131,7 +131,6 @@ publish-lambda:
 	docker push aqueducthq/lambda-snowflake-connector:$(VERSION)
 
 # Building GPU Images
-
 build-function-gpu:
 	docker build . -t aqueducthq/function37gpu:$(VERSION) -f gpu/function37gpu.dockerfile
 	docker build . -t aqueducthq/function38gpu:$(VERSION) -f gpu/function38gpu.dockerfile
@@ -143,6 +142,19 @@ publish-gpu:
 	docker push aqueducthq/function38gpu:$(VERSION)
 	docker push aqueducthq/function39gpu:$(VERSION)
 	docker push aqueducthq/function310gpu:$(VERSION)
+
+# Building Spark Conda env images
+build-spark-conda:
+	docker build . -t aqueducthq/spark-py37-env:$(VERSION) -f spark/spark-py37-env.dockerfile
+	docker build . -t aqueducthq/spark-py38-env:$(VERSION) -f spark/spark-py38-env.dockerfile
+	docker build . -t aqueducthq/spark-py39-env:$(VERSION) -f spark/spark-py39-env.dockerfile
+	docker build . -t aqueducthq/spark-py310-env:$(VERSION) -f spark/spark-py310-env.dockerfile
+
+publish-spark-conda:
+	docker push aqueducthq/spark-py37-env:$(VERSION)
+	docker push aqueducthq/spark-py38-env:$(VERSION)
+	docker push aqueducthq/spark-py39-env:$(VERSION)
+	docker push aqueducthq/spark-py310-env:$(VERSION)
 
 .PHONY:
 

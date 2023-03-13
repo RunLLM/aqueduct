@@ -5,9 +5,8 @@ import (
 
 	databricks_lib "github.com/aqueducthq/aqueduct/lib/databricks"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
-	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
-	"github.com/aqueducthq/aqueduct/lib/livy"
+	"github.com/aqueducthq/aqueduct/lib/spark"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
 )
@@ -27,42 +26,7 @@ func AuthenticateK8sConfig(ctx context.Context, authConf auth.Config) error {
 		}
 	}
 
-	_, err = k8s.CreateK8sClient(conf.KubeconfigPath, bool(conf.UseSameCluster))
-	if err != nil {
-		return errors.Wrap(err, "Unable to create kubernetes client.")
-	}
-	return nil
-}
-
-func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
-	lambdaConf, err := lib_utils.ParseLambdaConfig(authConf)
-	if err != nil {
-		return errors.Wrap(err, "Unable to parse configuration.")
-	}
-	functionsToShip := [10]lambda_utils.LambdaFunctionType{
-		lambda_utils.FunctionExecutor37Type,
-		lambda_utils.FunctionExecutor38Type,
-		lambda_utils.FunctionExecutor39Type,
-		lambda_utils.ParamExecutorType,
-		lambda_utils.SystemMetricType,
-		lambda_utils.AthenaConnectorType,
-		lambda_utils.BigQueryConnectorType,
-		lambda_utils.PostgresConnectorType,
-		lambda_utils.S3ConnectorType,
-		lambda_utils.SnowflakeConnectorType,
-	}
-
-	err = lambda_utils.AuthenticateDockerToECR()
-	if err != nil {
-		return errors.Wrap(err, "Unable to authenticate Lambda Function.")
-	}
-
-	err = lambda_utils.CreateLambdaFunction(ctx, functionsToShip[:], lambdaConf.RoleArn)
-	if err != nil {
-		return errors.Wrap(err, "Unable to create Lambda Function.")
-	}
-
-	return nil
+	return k8s.ValidateCluster(ctx, conf.ClusterName, conf.KubeconfigPath, bool(conf.UseSameCluster))
 }
 
 func AuthenticateDatabricksConfig(ctx context.Context, authConf auth.Config) error {
@@ -100,7 +64,7 @@ func AuthenticateSparkConfig(ctx context.Context, authConf auth.Config) error {
 		return errors.Wrap(err, "Unable to parse configuration.")
 	}
 
-	livyClient := livy.NewLivyClient(sparkConfig.LivyServerURL)
+	livyClient := spark.NewLivyClient(sparkConfig.LivyServerURL)
 	_, err = livyClient.GetSessions()
 	if err != nil {
 		return errors.Wrap(err, "Unable to list active Sessions on Livy Server.")

@@ -50,8 +50,12 @@ func HandleSuccess(
 
 func ExecuteHandler(server *AqServer, handlerObj handler.Handler) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		server.RequestMutex.RLock()
-		defer server.RequestMutex.RUnlock()
+		if handlerObj.Name() != new(handler.ConfigureStorageHandler).Name() {
+			// ConfigureStorageHandler requests an exclusive Lock on RequestMutex,
+			// so there would be dead-lock if this request first acquired a shared lock
+			server.RequestMutex.RLock()
+			defer server.RequestMutex.RUnlock()
+		}
 
 		args, statusCode, err := handlerObj.Prepare(r)
 		ctx := r.Context()

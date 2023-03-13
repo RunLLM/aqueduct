@@ -100,6 +100,7 @@ class RelationalDBServices(str, Enum, metaclass=MetaEnum):
 class ExecutionStatus(str, Enum, metaclass=MetaEnum):
     UNKNOWN = "unknown"
     SUCCEEDED = "succeeded"
+    RUNNING = "running"
     FAILED = "failed"
     PENDING = "pending"
     REGISTERED = "registered"
@@ -194,6 +195,7 @@ class ExecutionMode(str, Enum, metaclass=MetaEnum):
 
 class RuntimeType(str, Enum, metaclass=MetaEnum):
     AQUEDUCT = "aqueduct"
+    AQUEDUCT_CONDA = "aqueduct_conda"
     AIRFLOW = "airflow"
     K8S = "k8s"
     LAMBDA = "lambda"
@@ -212,9 +214,24 @@ class SparkRuntimeType(str, Enum, metaclass=MetaEnum):
     SPARK = "spark"
 
 
+# The lifecycle of a cluster goes from Creating -> Active -> Terminating -> Terminated.
+# If an Active cluster receives an config update request, it goes from Active -> Updating -> Active.
 class K8sClusterStatusType(str, Enum, metaclass=MetaEnum):
+    # The cluster is being created (transitioning from Terminated to Active status).
     CREATING = "Creating"
+    # The cluster has been active, and it received a config update request and it's
+    # updating to the new config. After the update completes, it will be in the Active status again.
     UPDATING = "Updating"
+    # The cluster is currently active and ready to serve requests.
     ACTIVE = "Active"
+    # The cluster is being deleted.
     TERMINATING = "Terminating"
+    # The cluster is terminated.
     TERMINATED = "Terminated"
+
+
+class K8sClusterActionType(str, Enum, metaclass=MetaEnum):
+    CREATE = "create"
+    UPDATE = "update"
+    DELETE = "delete"
+    FORCE_DELETE = "force-delete"

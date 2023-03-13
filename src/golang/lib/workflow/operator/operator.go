@@ -78,6 +78,8 @@ type Operator interface {
 	// GetDynamicProperties retrieves the dynamic properties of an operator, which includes its
 	// engine integration ID and its `prepared` flag.
 	GetDynamicProperties() *dynamicProperties
+	// FetchExecutionEnvironment retrieves the environment of the operator.
+	FetchExecutionEnvironment(ctx context.Context) *exec_env.ExecutionEnvironment
 }
 
 // This should only be used within the boundaries of the execution engine.
@@ -127,7 +129,10 @@ func NewOperator(
 	var jobManager job.JobManager
 	var err error
 
-	if dagJobManager == nil {
+	if dagJobManager == nil && opEngineConfig.Type != shared.AirflowEngineType {
+		// There is no global job manager for the DAG, so we create the operator
+		// specific one. If a workflow is running on Airflow, we do not need to
+		// create a job manager for it
 		jobManager, err = job.GenerateNewJobManager(
 			ctx, opEngineConfig, storageConfig, aqPath, vaultObject,
 		)

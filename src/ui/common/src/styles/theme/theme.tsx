@@ -1,4 +1,6 @@
-export const theme = {
+import { Theme } from '@mui/material/styles';
+
+export const theme: Theme = {
   palette: {
     black: '#000000',
     white: '#ffffff',
@@ -67,6 +69,7 @@ export const theme = {
     },
     yellow: {
       800: '#66460D',
+      500: '#FFB833',
       100: '#FFEFD2',
     },
     Info: '#0288D1',

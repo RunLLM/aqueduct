@@ -1,7 +1,34 @@
 # Changelog
 
-# 0.2.4
-Release on February 28, 2023.
+## 0.2.5
+Released on March 7, 2023.
+
+### Key Features
+* Users can now run Aqueduct workflows on Spark clusters on AWS EMR. With Apache Livy as an interface, Aqueduct can submit your code to your Spark cluster reliably and seamlessly. See our documentation [here](https://docs.aqueducthq.com/integrations/adding-an-integration/connecting-to-spark-emr.md).
+* Redesigns node layout on DAG view to improve information presentation and
+    better distinguish between different node types.
+
+### Enhancements
+* Enables specification of Snowflake role when connecting the Snowflake
+    integration.
+* Updates workflow details page header to be more compact and reduce
+    information overload.
+* Adds support for specifying compute engine and resource requirements when
+    creating metrics & checks.
+
+### Bugfixes
+* Fixes issue where size of large rows on Snowflake was artificially limited.
+* Resolves requirement mismatches that would occur on the latest versions of
+    Ubuntu 22.
+* Fixes layout issue where dates on metric history graph could have been cut
+    off.
+* Fixes bug where the integration details page for compute integrations would
+    not list all workflows using that integration.
+* Fixes bug where metrics plot failed to render when upstream operator was 
+    cancelled.
+
+## 0.2.4
+Released on February 28, 2023.
 
 ### Enhancements
 * Opens links to docs and feedback in new tabs rather than in the existing tab
@@ -18,8 +45,8 @@ Release on February 28, 2023.
     workflow details page. The algorithm for DAG layouts is now signifcantly
     more reliable.
 
-# 0.2.3
-Release on February 22, 2023.
+## 0.2.3
+Released on February 22, 2023.
 
 ### Enhancements
 * Updates workflow and data table views to show overview of all executed checks

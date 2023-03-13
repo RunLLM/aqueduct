@@ -26,7 +26,7 @@ server_directory = join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = join(os.environ["HOME"], ".aqueduct", "ui")
 
 # Make sure to update this if there is any schema change we want to include in the upgrade.
-SCHEMA_VERSION = "23"
+SCHEMA_VERSION = "24"
 
 
 def execute_command(args, cwd=None):
@@ -119,17 +119,21 @@ if __name__ == "__main__":
         execute_command(["pip", "install", "."], cwd=join(cwd, "src", "python"))
         os.environ["PWD"] = prev_pwd
 
-        execute_command([
-            "cp",
-            "./src/python/aqueduct_executor/start-function-executor.sh",
-            join(server_directory, "bin")
-        ])
+        execute_command(
+            [
+                "cp",
+                "./src/python/aqueduct_executor/start-function-executor.sh",
+                join(server_directory, "bin"),
+            ]
+        )
 
-        execute_command([
-            "cp",
-            "./src/python/aqueduct_executor/operators/airflow/dag.template",
-            join(server_directory, "bin")
-        ])
+        execute_command(
+            [
+                "cp",
+                "./src/python/aqueduct_executor/operators/airflow/dag.template",
+                join(server_directory, "bin"),
+            ]
+        )
 
     # Build and replace backend binaries.
     if args.update_go_binary:
@@ -183,7 +187,9 @@ if __name__ == "__main__":
         # To prevent unnecessary files from getting into our releases
         # Will replace the react-code-block component soon (next week) to avoid this concern completely
         files = [f for f in listdir(ui_directory) if isfile(join(ui_directory, f))]
-        fileNameRegex = re.compile(r'^(python|core|markup|clike|javascript|css|index|favicon)\..*(html|js|css|map|ico)$')
+        fileNameRegex = re.compile(
+            r"^(python|core|markup|clike|javascript|css|index|favicon)\..*(html|js|css|map|ico)$"
+        )
         for f in files:
             if not fileNameRegex.search(f) and not f == "__version__":
                 execute_command(["rm", f], cwd=ui_directory)

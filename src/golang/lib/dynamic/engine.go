@@ -21,8 +21,6 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
-	v1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 type k8sClusterActionType string
@@ -193,21 +191,28 @@ func CreateOrUpdateK8sCluster(
 // 3. Remove the kubeconfig file.
 // 4. Update the dynamic integration's DB record: set config["status"] to "Terminated".
 // If any step fails, it returns an error.
+// If skipPodsStatusCheck is set to false, it checks whether there are pods in Running or ContainerCreating
+// status and if so, reject the deletion request.
 func DeleteK8sCluster(
 	ctx context.Context,
-	force bool,
+	skipPodsStatusCheck bool,
 	engineIntegration *models.Integration,
 	integrationRepo repos.Integration,
 	db database.Database,
 ) error {
-	if !force {
-		safe, err := safeToDeleteCluster(ctx, engineIntegration)
+	if !skipPodsStatusCheck {
+		useSameCluster, err := strconv.ParseBool(engineIntegration.Config[shared.K8sUseSameClusterKey])
 		if err != nil {
-			log.Errorf("We ran into an unexpected error: %v. Since the cluster might be in a bad state, we are force deleting it to be safe.", err)
-		} else {
-			if !safe {
-				return errors.New("The k8s cluster cannot be deleted because there are pods still running.")
-			}
+			return errors.Wrap(err, "Error parsing use_same_cluster flag")
+		}
+
+		safe, err := k8s.SafeToDeleteCluster(ctx, useSameCluster, engineIntegration.Config[shared.K8sKubeconfigPathKey])
+		if err != nil {
+			return err
+		}
+
+		if !safe {
+			return errors.New("The k8s cluster cannot be deleted because there are pods still running.")
 		}
 	}
 
@@ -401,7 +406,13 @@ func ResyncClusterState(
 	// inconsistent state between the database and terraform. In this case, we resync the state by
 	// deleting the cluster and updating the database state to be Terminated.
 	log.Error("Dynamic k8s cluster might be in an inconsistent state. Resolving state by deleting the cluster...")
-	return DeleteK8sCluster(ctx, true, engineIntegration, integrationRepo, db)
+	return DeleteK8sCluster(
+		ctx,
+		true, // skipPodsStatusCheck
+		engineIntegration,
+		integrationRepo,
+		db,
+	)
 }
 
 func PollClusterStatus(
@@ -441,45 +452,6 @@ func PollClusterStatus(
 	}
 
 	return engineIntegration, nil
-}
-
-// safeToDeleteCluster checks whether there are pods in the aqueduct namespace of the dynamic k8s
-// cluster that are in ContainerCreating or Running status. If so, it returns false. Otherwise it
-// returns true.
-func safeToDeleteCluster(
-	ctx context.Context,
-	engineIntegration *models.Integration,
-) (bool, error) {
-	useSameCluster, err := strconv.ParseBool(engineIntegration.Config[shared.K8sUseSameClusterKey])
-	if err != nil {
-		return false, errors.Wrap(err, "Error parsing use_same_cluster flag")
-	}
-
-	k8sClient, err := k8s.CreateK8sClient(engineIntegration.Config[shared.K8sKubeconfigPathKey], useSameCluster)
-	if err != nil {
-		return false, errors.Wrap(err, "Error while creating K8sClient")
-	}
-
-	pods, err := k8sClient.CoreV1().Pods(k8s.AqueductNamespace).List(ctx, metav1.ListOptions{})
-	if err != nil {
-		return false, errors.Wrap(err, "Error while listing pods in the aqueduct namespace")
-	}
-
-	for _, pod := range pods.Items {
-		if pod.Status.Phase == v1.PodRunning {
-			return false, nil
-		}
-
-		if pod.Status.Phase == v1.PodPending {
-			for _, cs := range pod.Status.ContainerStatuses {
-				if cs.State.Waiting != nil && cs.State.Waiting.Reason == "ContainerCreating" {
-					return false, nil
-				}
-			}
-		}
-	}
-
-	return true, nil
 }
 
 func generateTerraformVariables(
@@ -570,11 +542,11 @@ func CheckIfValidConfig(action k8sClusterActionType, config map[string]string) e
 	}
 
 	if maxCpuNode < 1 {
-		return errors.Newf("Max CPU node value should be at least 1, got %s", maxCpuNode)
+		return errors.Newf("Max CPU node value should be at least 1, got %d", maxCpuNode)
 	}
 
 	if minCpuNode < 0 {
-		return errors.Newf("Min CPU node value should be at least 0, got %s", minCpuNode)
+		return errors.Newf("Min CPU node value should be at least 0, got %d", minCpuNode)
 	}
 
 	if maxCpuNode < minCpuNode {
@@ -592,11 +564,11 @@ func CheckIfValidConfig(action k8sClusterActionType, config map[string]string) e
 	}
 
 	if maxGpuNode < 1 {
-		return errors.Newf("Max GPU node value should be at least 1, got %s", maxGpuNode)
+		return errors.Newf("Max GPU node value should be at least 1, got %d", maxGpuNode)
 	}
 
 	if minGpuNode < 0 {
-		return errors.Newf("Min GPU node value should be at least 0, got %s", minGpuNode)
+		return errors.Newf("Min GPU node value should be at least 0, got %d", minGpuNode)
 	}
 
 	if maxGpuNode < minGpuNode {

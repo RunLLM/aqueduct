@@ -3,7 +3,13 @@ import argparse
 import deploy_example
 from aqueduct.constants.enums import NotificationLevel
 from notification import connect_slack
-from workflows import fail_bad_check, succeed_complex, succeed_parameters, warning_bad_check
+from workflows import (
+    fail_bad_check,
+    fail_bad_operator,
+    succeed_complex,
+    succeed_parameters,
+    warning_bad_check,
+)
 
 import aqueduct as aq
 
@@ -14,6 +20,7 @@ WORKFLOW_PKGS = [
     warning_bad_check,
     succeed_parameters,
     succeed_complex,
+    fail_bad_operator,
 ]
 
 EXAMPLE_NOTEBOOKS_PATHS = [

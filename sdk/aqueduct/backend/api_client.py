@@ -4,7 +4,7 @@ import uuid
 from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import requests
-from aqueduct.constants.enums import ExecutionStatus, RuntimeType, ServiceType
+from aqueduct.constants.enums import ExecutionStatus, K8sClusterActionType, RuntimeType, ServiceType
 from aqueduct.error import (
     AqueductError,
     ClientValidationError,
@@ -254,10 +254,10 @@ class APIClient:
         return [x for x in resp.json()["object_names"]]
 
     def connect_integration(
-        self, name: str, service: ServiceType, config: IntegrationConfig
+        self, name: str, service: Union[str, ServiceType], config: IntegrationConfig
     ) -> None:
         integration_service = service
-        if not isinstance(integration_service, str):
+        if isinstance(integration_service, ServiceType):
             # The enum value needs to be used
             integration_service = integration_service.value
 
@@ -266,7 +266,9 @@ class APIClient:
             {
                 "integration-name": name,
                 "integration-service": integration_service,
-                "integration-config": config.json(exclude_none=True),
+                # `by_alias` is necessary to get this to use `schema` as a key for SnowflakeConfig.
+                # `exclude_none` is necessary to exclude `role` when None as SnowflakeConfig.
+                "integration-config": config.json(exclude_none=True, by_alias=True),
             }
         )
         url = self.construct_full_url(
@@ -335,9 +337,9 @@ class APIClient:
 
     def edit_dynamic_engine(
         self,
-        action: str,
+        action: K8sClusterActionType,
         integration_id: str,
-        config_delta: DynamicK8sConfig = DynamicK8sConfig(),
+        config_delta: Optional[DynamicK8sConfig] = None,
     ) -> None:
         """Makes a request against the /api/integration/dynamic-engine/{integrationId}/edit endpoint.
 
@@ -345,8 +347,23 @@ class APIClient:
             integration_id:
                 The engine integration ID.
         """
+        if action not in [
+            K8sClusterActionType.CREATE,
+            K8sClusterActionType.UPDATE,
+            K8sClusterActionType.DELETE,
+            K8sClusterActionType.FORCE_DELETE,
+        ]:
+            raise InvalidRequestError(
+                "Invalid action %s for interacting with dynamic engine." % action
+            )
+
+        if config_delta == None:
+            config_delta = DynamicK8sConfig()
+
+        assert isinstance(config_delta, DynamicK8sConfig)
+
         headers = self._generate_auth_headers()
-        headers["action"] = action
+        headers["action"] = action.value
 
         url = self.construct_full_url(self.EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE % integration_id)
 
@@ -354,12 +371,7 @@ class APIClient:
             "config_delta": config_delta.json(exclude_none=True),
         }
 
-        if action in ["create", "update", "delete", "force-delete"]:
-            resp = requests.post(url, headers=headers, data=body)
-        else:
-            raise InvalidRequestError(
-                "Invalid action %s for interacting with dynamic engine." % action
-            )
+        resp = requests.post(url, headers=headers, data=body)
 
         self.raise_errors(resp)
 

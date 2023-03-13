@@ -24,7 +24,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
-	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -253,7 +252,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		opIds = append(opIds, op.ID)
 	}
 
-	execEnvsByOpId, err := exec_env.GetActiveExecutionEnvironmentsByOperatorIDs(
+	execEnvsByOpId, err := exec_env.GetExecutionEnvironmentsByOperatorIDs(
 		ctx,
 		opIds,
 		eng.ExecutionEnvironmentRepo,
@@ -270,7 +269,8 @@ func (eng *aqEngine) ExecuteWorkflow(
 	}
 
 	var jobManager job.JobManager
-	if dbDAG.EngineConfig.Type == shared.DatabricksEngineType {
+	if dbDAG.EngineConfig.Type == shared.SparkEngineType {
+		// Create the SparkJobManager.
 		jobManager, err = job.GenerateNewJobManager(
 			ctx,
 			dbDAG.EngineConfig,
@@ -365,7 +365,8 @@ func (eng *aqEngine) PreviewWorkflow(
 	}
 
 	var jobManager job.JobManager
-	if dbDAG.EngineConfig.Type == shared.DatabricksEngineType {
+	var previewCacheManager preview_cache.CacheManager
+	if dbDAG.EngineConfig.Type == shared.SparkEngineType {
 		jobManager, err = job.GenerateNewJobManager(
 			ctx,
 			dbDAG.EngineConfig,
@@ -376,6 +377,8 @@ func (eng *aqEngine) PreviewWorkflow(
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		previewCacheManager = eng.PreviewCacheManager
 	}
 
 	dag, err := dag_utils.NewWorkflowDag(
@@ -386,7 +389,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		eng.ArtifactRepo,
 		eng.ArtifactResultRepo,
 		vaultObject,
-		eng.PreviewCacheManager,
+		previewCacheManager,
 		execEnvByOperatorId,
 		operator.Preview,
 		eng.AqPath,
@@ -653,7 +656,7 @@ func (eng *aqEngine) DeleteWorkflow(
 	// Delete storage files (artifact content and function files)
 	storagePaths := make([]string, 0, len(operatorIDs)+len(artifactResultIDs))
 	for _, op := range operatorsToDelete {
-		if op.Spec.IsFunction() || op.Spec.IsMetric() || op.Spec.IsCheck() {
+		if op.Spec.HasFunction() {
 			storagePaths = append(storagePaths, op.Spec.Function().StoragePath)
 		}
 	}
@@ -737,7 +740,7 @@ func (eng *aqEngine) TriggerWorkflow(
 	timeConfig *AqueductTimeConfig,
 	parameters map[string]param.Param,
 ) (shared.ExecutionStatus, error) {
-	dag, err := utils.ReadLatestDAGFromDatabase(
+	dag, err := workflow_utils.ReadLatestDAGFromDatabase(
 		ctx,
 		workflowID,
 		eng.WorkflowRepo,
@@ -1185,11 +1188,4 @@ func (eng *aqEngine) updateWorkflowSchedule(
 		}
 	}
 	return nil
-}
-
-func (eng *aqEngine) InitEnv(
-	ctx context.Context,
-	env *exec_env.ExecutionEnvironment,
-) error {
-	return env.CreateEnv()
 }
