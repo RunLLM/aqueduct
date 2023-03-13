@@ -80,7 +80,6 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   );
 
   const selectedIntegration = integrations[integrationId];
-
   // Using the ListIntegrationsRoute.
   // ENG-1036: We should create a route where we can pass in the integrationId and get the associated metadata and switch to using that.
   useEffect(() => {
@@ -169,6 +168,8 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             user={user}
             integrationId={selectedIntegration.id}
             integrationName={selectedIntegration.name}
+            integrationType={selectedIntegration.service}
+            config={selectedIntegration.config}
             onCloseDialog={() => setShowDeleteTableDialog(false)}
           />
         )}

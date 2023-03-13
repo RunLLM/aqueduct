@@ -5,6 +5,9 @@ import Dialog from '@mui/material/Dialog';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { isEqual } from 'lodash';
+import { convertIntegrationConfigToMetadataStorageConfig, getMetadataStorageConfig, MetadataStorageConfig } from '../../../utils/storage';
+import { useAqueductConsts } from '../../../components/hooks/useAqueductConsts';
 
 import {
   handleDeleteIntegration,
@@ -13,11 +16,14 @@ import {
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
+import { IntegrationConfig, Service } from '../../../utils/integrations';
 
 type Props = {
   user: UserProfile;
   integrationId: string;
   integrationName: string;
+  integrationType: Service;
+  config: IntegrationConfig;
   onCloseDialog: () => void;
 };
 
@@ -25,11 +31,26 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
   user,
   integrationId,
   integrationName,
+  integrationType,
+  config,
   onCloseDialog,
 }) => {
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
   const [isConnecting, setIsConnecting] = useState(false);
+
+  const { apiAddress } = useAqueductConsts();
+  
+  const [metadataStorageConfig, setMetadataStorageConfig] = useState<MetadataStorageConfig | null>(null);
+
+  useEffect(() => {
+    async function fetchMetadataStorageConfig() {
+      const metadataStorageConfig = await getMetadataStorageConfig(apiAddress, user.apiKey);
+      setMetadataStorageConfig(metadataStorageConfig);
+    }
+
+    fetchMetadataStorageConfig();
+  }, []);
 
   const deleteIntegrationStatus = useSelector(
     (state: RootState) => state.integrationReducer.deletionStatus
@@ -64,9 +85,37 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
     return state.integrationReducer.operators;
   });
 
-  if (
-    isSucceeded(operatorsState.status) &&
-    !operatorsState.operators.some((op) => op.is_active)
+  const isStorage = config.use_as_storage;
+  console.log("isStorage", isStorage);
+  let isCurrentStorage = true;
+  console.log("metadataStorageConfig", metadataStorageConfig)
+  if (isStorage && metadataStorageConfig) {
+    const storageConfig = convertIntegrationConfigToMetadataStorageConfig(config, metadataStorageConfig, integrationType);
+    // Check deep equality
+    console.log("storageConfig", storageConfig);
+    console.log("metadataStorageConfig", metadataStorageConfig);
+    isCurrentStorage = isEqual(storageConfig, metadataStorageConfig);
+    console.log("isCurrentStorage", isCurrentStorage);
+  }
+
+  if(isCurrentStorage) {
+    return (
+      <Dialog
+        open={!deleteIntegrationStatus || !isFailed(deleteIntegrationStatus)}
+        onClose={onCloseDialog}
+        maxWidth="lg"
+      >
+        <DialogContent>
+          We cannot delete this integration because it is acting as the metadata storage location.
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onCloseDialog}>Dismiss</Button>
+        </DialogActions>
+      </Dialog>
+    );
+  } else if (
+      isSucceeded(operatorsState.status) &&
+      !operatorsState.operators.some((op) => op.is_active)
   ) {
     return (
       <>

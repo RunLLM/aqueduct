@@ -8,6 +8,7 @@ import {
 import React from 'react';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { getMetadataStorageConfig, MetadataStorageConfig } from '../../../utils/storage';
 
 import { handleLoadIntegrations } from '../../../reducers/integrations';
 import { AppDispatch, RootState } from '../../../stores/store';
@@ -37,49 +38,6 @@ type AccountPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
 };
-
-export type ServerConfig = {
-  aqPath: string;
-  retentionJobPeriod: string;
-  apiKey: string;
-  storageConfig: {
-    type: string;
-    fileConfig?: {
-      directory: string;
-    };
-    gcsConfig?: {
-      bucket: string;
-    };
-    s3Config?: {
-      region: string;
-      bucket: string;
-    };
-  };
-};
-
-async function getServerConfig(
-  apiAddress: string,
-  apiKey: string
-): Promise<ServerConfig> {
-  try {
-    const configRequest = await fetch(`${apiAddress}/api/config`, {
-      method: 'GET',
-      headers: {
-        'api-key': apiKey,
-      },
-    });
-
-    const responseBody = await configRequest.json();
-
-    if (!configRequest.ok) {
-      console.log('Error fetching config');
-    }
-
-    return responseBody as ServerConfig;
-  } catch (error) {
-    console.log('config fetch error: ', error);
-  }
-}
 
 // `UpdateNotifications` attempts to update all notification integration by calling
 // `integration/<id>/edit` route separately. It returns an error message if any error occurs.
@@ -142,7 +100,7 @@ client = aqueduct.Client(
     (state: RootState) => state.integrationsReducer
   );
 
-  const [serverConfig, setServerConfig] = useState<ServerConfig | null>(null);
+  const [metadataStorageConfig, setMetadataStorageConfig] = useState<MetadataStorageConfig | null>(null);
   const notifications = Object.values(integrationsReducer.integrations).filter(
     (x) =>
       SupportedIntegrations[x.service].category ===
@@ -155,12 +113,12 @@ client = aqueduct.Client(
     useState(false);
 
   useEffect(() => {
-    async function fetchServerConfig() {
-      const serverConfig = await getServerConfig(apiAddress, user.apiKey);
-      setServerConfig(serverConfig);
+    async function fetchMetadataStorageConfig() {
+      const metadataStorageConfig = await getMetadataStorageConfig(apiAddress, user.apiKey);
+      setMetadataStorageConfig(metadataStorageConfig);
     }
 
-    fetchServerConfig();
+    fetchMetadataStorageConfig();
   }, []);
 
   useEffect(() => {
@@ -245,7 +203,7 @@ client = aqueduct.Client(
       )}
       {notificationSection}
 
-      <MetadataStorageInfo serverConfig={serverConfig} />
+      <MetadataStorageInfo serverConfig={metadataStorageConfig} />
 
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
