@@ -1,39 +1,45 @@
 package errors
 
 import (
-	"fmt"
-
 	"github.com/dropbox/godropbox/errors"
-	"google.golang.org/grpc/codes"
 )
 
-type grpcError struct {
-	errors.DropboxError
-	Code codes.Code
+// Is reports whether err matches target
+func Is(err, target error) bool {
+	dboxErr, isErrDbox := err.(errors.DropboxError)
+	dboxTarget, isTargetDbox := target.(errors.DropboxError)
+
+	if !isErrDbox && !isTargetDbox {
+		// Neither error is a DropboxError
+		return errors.IsError(err, target)
+	}
+
+	if isErrDbox && isTargetDbox {
+		// Both errors are a DropBoxError, so we can only check the outermost
+		// error message, without the stack trace.
+		return dboxErr.GetMessage() == dboxTarget.GetMessage()
+	}
+
+	return false
 }
 
-func (e *grpcError) Error() string {
-	return fmt.Sprintf("rpc error: code = %s desc = %s", e.Code, e.DropboxError.Error())
+// This returns a new DropboxError initialized with the given message and
+// the current stack trace.
+func New(msg string) errors.DropboxError {
+	return errors.New(msg)
 }
 
-func NewGRPCError(code codes.Code, errMsg string) error {
-	return &grpcError{
-		DropboxError: errors.New(errMsg),
-		Code:         code,
-	}
+// Same as New, but with fmt.Printf-style parameters.
+func Newf(format string, args ...interface{}) errors.DropboxError {
+	return errors.Newf(format, args...)
 }
 
-// Wrap a given error with a grpc error code.
-// If the error is not a DropboxError, we'll convert it into one.
-func WrapInGRPCError(code codes.Code, err error) error {
-	if dropboxErr, ok := err.(errors.DropboxError); ok {
-		return &grpcError{
-			DropboxError: dropboxErr,
-			Code:         code,
-		}
-	}
-	return &grpcError{
-		DropboxError: errors.New(err.Error()),
-		Code:         code,
-	}
+// Wraps another error in a new DropboxError.
+func Wrap(err error, msg string) errors.DropboxError {
+	return errors.Wrap(err, msg)
+}
+
+// Same as Wrap, but with fmt.Printf-style parameters.
+func Wrapf(err error, format string, args ...interface{}) errors.DropboxError {
+	return errors.Wrapf(err, format, args...)
 }

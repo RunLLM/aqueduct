@@ -15,6 +15,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { ReactFlowProvider } from 'reactflow';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
@@ -379,7 +380,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     let includeExportOpButton = true;
 
     if (!workflow.selectedResult) {
-      return (navigateButton = null);
+      return null;
     } else {
       let navigationUrl;
       if (currentNode.type === NodeType.TableArtifact) {
@@ -495,7 +496,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                   display: 'flex',
                   flexGrow: 1,
                   height: '100%',
-                  backgroundColor: theme.palette.gray[50],
+                  backgroundColor: theme.palette.grey[50],
                 }}
               >
                 <ReactFlowProvider>
@@ -537,18 +538,19 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Box>
 
           {/* These controls are automatically hidden when the side sheet is open. */}
+          {/* Tooltips don't show up if the child is disabled so we wrap the button with a Box.  */}
           <Box width="100px" ml={2} display={drawerIsOpen ? 'none' : 'block'}>
-            {workflow.dagResults && workflow.dagResults.length > 1 && (
-              <Box
-                display="flex"
-                mb={2}
-                pb={2}
-                width="100%"
-                sx={{ borderBottom: `1px solid ${theme.palette.gray[600]}` }}
-              >
-                <Tooltip title="Previous Run" arrow>
+          {workflow.dagResults && workflow.dagResults.length > 1 && <Box
+              display="flex"
+              mb={2}
+              pb={2}
+              width="100%"
+              sx={{ borderBottom: `1px solid ${theme.palette.grey[600]}` }}
+            >
+              <Tooltip title="Previous Run" arrow>
+                <Box sx={{ px: 0, flex: 1 }}>
                   <Button
-                    sx={{ fontSize: '28px', px: 0, flex: 1 }}
+                    sx={{ fontSize: '28px' }}
                     variant="text"
                     onClick={() => {
                       // This might be confusing, but index 0 is the most recent run, so incrementing the index goes
@@ -566,11 +568,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                   >
                     <FontAwesomeIcon icon={faChevronLeft} />
                   </Button>
-                </Tooltip>
+                </Box>
+              </Tooltip>
 
-                <Tooltip title="Next Run" arrow>
+              <Tooltip title="Next Run" arrow>
+                <Box sx={{ px: 0, flex: 1 }}>
                   <Button
-                    sx={{ fontSize: '28px', px: 0, flex: 1 }}
+                    sx={{ fontSize: '28px' }}
                     variant="text"
                     onClick={() => {
                       // This might be confusing, but index 0 is the most recent run, so decrementing the index goes
@@ -586,15 +590,15 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                   >
                     <FontAwesomeIcon icon={faChevronRight} />
                   </Button>
-                </Tooltip>
-              </Box>
-            )}
+                </Box>
+              </Tooltip>
+            </Box>}
 
             <Box
               mb={2}
               pb={2}
               width="100%"
-              sx={{ borderBottom: `1px solid ${theme.palette.gray[600]}` }}
+              sx={{ borderBottom: `1px solid ${theme.palette.grey[600]}` }}
             >
               <Tooltip title="Run Workflow" arrow>
                 <Button
@@ -651,7 +655,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         >
           <Box
             width="100%"
-            sx={{ backgroundColor: theme.palette.gray['100'] }}
+            sx={{ backgroundColor: theme.palette.grey['100'] }}
             height={`${drawerHeaderHeightInPx}px`}
           >
             <Box display="flex">

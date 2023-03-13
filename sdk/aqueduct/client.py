@@ -270,7 +270,10 @@ class Client:
         apply_deltas_to_dag(self._dag, [RemoveOperatorDelta(param_op.id)])
 
     def connect_integration(
-        self, name: str, service: ServiceType, config: Union[Dict[str, str], IntegrationConfig]
+        self,
+        name: str,
+        service: Union[str, ServiceType],
+        config: Union[Dict[str, str], IntegrationConfig],
     ) -> None:
         """Connects the Aqueduct server to an integration.
 
@@ -495,7 +498,7 @@ class Client:
         k_latest_runs: Optional[int] = None,
         config: Optional[FlowConfig] = None,
         source_flow: Optional[Union[Flow, str, uuid.UUID]] = None,
-        run_now: bool = True,
+        run_now: Optional[bool] = None,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
 
@@ -547,6 +550,9 @@ class Client:
             source_flow:
                 Used to identify the source flow for this flow. This can be identified
                 via an object (Flow), name (str), or id (str or uuid).
+            run_now:
+                Used to specify if the flow should run immediately at publish time. The default
+                behavior is 'True'.
 
         Raises:
             InvalidUserArgumentException:
@@ -688,8 +694,12 @@ class Client:
         )
 
         if dag.engine_config.type == RuntimeType.AIRFLOW:
+            if run_now is not None:
+                raise InvalidUserArgumentException(
+                    "run_now parameter is not supported for Airflow engine."
+                )
             # This is an Airflow workflow
-            resp = globals.__GLOBAL_API_CLIENT__.register_airflow_workflow(dag, run_now)
+            resp = globals.__GLOBAL_API_CLIENT__.register_airflow_workflow(dag)
             flow_id, airflow_file = resp.id, resp.file
 
             file = "{}_airflow.py".format(name)
@@ -713,6 +723,8 @@ class Client:
                     )
                 )
         else:
+            if run_now is None:
+                run_now = True
             flow_id = globals.__GLOBAL_API_CLIENT__.register_workflow(dag, run_now).id
 
         url = generate_ui_url(
@@ -757,15 +769,15 @@ class Client:
         param_specs: Dict[str, ParamSpec] = {}
         if parameters is not None:
             flow = self.flow(flow_id)
-            runs = flow.list_runs(limit=1)
+            latest_run = flow.latest()
 
             # NOTE: this is a defense check against triggering runs that haven't run yet.
             # We may want to revisit this in the future if more nuanced constraints are necessary.
-            if len(runs) == 0:
+            if not latest_run:
                 raise InvalidUserActionException(
                     "Cannot trigger a workflow that hasn't already run at least once."
                 )
-            validate_overwriting_parameters(flow.latest()._dag, parameters)
+            validate_overwriting_parameters(latest_run._dag, parameters)
 
             for name, new_val in parameters.items():
                 artifact_type = infer_artifact_type(new_val)

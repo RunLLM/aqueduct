@@ -4,7 +4,7 @@ import uuid
 from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import requests
-from aqueduct.constants.enums import ExecutionStatus, RuntimeType, ServiceType
+from aqueduct.constants.enums import ExecutionStatus, K8sClusterActionType, RuntimeType, ServiceType
 from aqueduct.error import (
     AqueductError,
     ClientValidationError,
@@ -254,10 +254,10 @@ class APIClient:
         return [x for x in resp.json()["object_names"]]
 
     def connect_integration(
-        self, name: str, service: ServiceType, config: IntegrationConfig
+        self, name: str, service: Union[str, ServiceType], config: IntegrationConfig
     ) -> None:
         integration_service = service
-        if not isinstance(integration_service, str):
+        if isinstance(integration_service, ServiceType):
             # The enum value needs to be used
             integration_service = integration_service.value
 
@@ -335,7 +335,7 @@ class APIClient:
             for dynamic_engine_status in resp.json()
         }
 
-    def edit_engine(
+    def edit_dynamic_engine(
         self,
         action: str,
         integration_id: str,
@@ -351,7 +351,11 @@ class APIClient:
 
         url = self.construct_full_url(self.EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE % integration_id)
 
-        if action == "create" or action == "delete":
+        if action in [
+            K8sClusterActionType.CREATE,
+            K8sClusterActionType.DELETE,
+            K8sClusterActionType.FORCE_DELETE,
+        ]:
             resp = requests.post(url, headers=headers)
         else:
             raise InvalidRequestError(
@@ -417,9 +421,8 @@ class APIClient:
     def register_airflow_workflow(
         self,
         dag: DAG,
-        run_now: bool,
     ) -> RegisterAirflowWorkflowResponse:
-        headers, body, files = self._construct_register_workflow_request(dag, run_now)
+        headers, body, files = self._construct_register_workflow_request(dag, False)
         url = self.construct_full_url(self.REGISTER_AIRFLOW_WORKFLOW_ROUTE, self.use_https)
         resp = requests.post(url, headers=headers, data=body, files=files)
         self.raise_errors(resp)

@@ -317,7 +317,7 @@ func getArtifactResult(ctx context.Context, DB database.Database, query string, 
 	}
 
 	if len(artifactResults) == 0 {
-		return nil, database.ErrNoRows
+		return nil, database.ErrNoRows()
 	}
 
 	if len(artifactResults) != 1 {

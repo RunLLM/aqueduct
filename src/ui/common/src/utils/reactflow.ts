@@ -1,5 +1,5 @@
-import { Edge, Node } from 'react-flow-renderer';
-import { Position } from 'react-flow-renderer';
+import { Edge, Node } from 'reactflow';
+import { Position } from 'reactflow';
 
 import AqueductBezier from '../components/workflows/edges/AqueductBezier';
 import AqueductQuadratic from '../components/workflows/edges/AqueductQuadratic';

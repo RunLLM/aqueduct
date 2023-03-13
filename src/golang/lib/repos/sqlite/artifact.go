@@ -236,7 +236,7 @@ func getArtifact(ctx context.Context, DB database.Database, query string, args .
 	}
 
 	if len(artifacts) == 0 {
-		return nil, database.ErrNoRows
+		return nil, database.ErrNoRows()
 	}
 
 	if len(artifacts) != 1 {

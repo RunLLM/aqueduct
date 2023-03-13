@@ -215,7 +215,7 @@ IntegrationConfig = Union[
 
 
 def convert_dict_to_integration_connect_config(
-    service: ServiceType, config_dict: Dict[str, str]
+    service: Union[str, ServiceType], config_dict: Dict[str, str]
 ) -> IntegrationConfig:
     if service == ServiceType.BIGQUERY:
         return BigQueryConfig(**config_dict)
@@ -251,7 +251,7 @@ def convert_dict_to_integration_connect_config(
 
 
 def prepare_integration_config(
-    service: ServiceType, config: IntegrationConfig
+    service: Union[str, ServiceType], config: IntegrationConfig
 ) -> IntegrationConfig:
     """Prepares the IntegrationConfig object to be sent to the backend
     as part of a request to connect a new integration.
