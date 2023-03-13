@@ -2,7 +2,7 @@ import json
 import textwrap
 import uuid
 from collections import defaultdict
-from typing import DefaultDict, Dict, List, Union
+from typing import DefaultDict, Dict, List, Optional, Union
 
 from aqueduct.backend.response_models import (
     GetWorkflowResponse,
@@ -92,8 +92,11 @@ class Flow:
             status=dag_result.status,
         )
 
-    def latest(self) -> FlowRun:
+    def latest(self) -> Optional[FlowRun]:
         resp = self._get_workflow_resp()
+        if not resp.workflow_dag_results:
+            return None
+
         latest_result = resp.workflow_dag_results[-1]
         latest_workflow_dag = resp.workflow_dags[latest_result.workflow_dag_id]
         return self._construct_flow_run(latest_result, latest_workflow_dag)

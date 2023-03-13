@@ -421,9 +421,8 @@ class APIClient:
     def register_airflow_workflow(
         self,
         dag: DAG,
-        run_now: bool,
     ) -> RegisterAirflowWorkflowResponse:
-        headers, body, files = self._construct_register_workflow_request(dag, run_now)
+        headers, body, files = self._construct_register_workflow_request(dag, False)
         url = self.construct_full_url(self.REGISTER_AIRFLOW_WORKFLOW_ROUTE, self.use_https)
         resp = requests.post(url, headers=headers, data=body, files=files)
         self.raise_errors(resp)

@@ -332,6 +332,7 @@ def test_publish_flow_without_triggering(client, flow_name, data_integration, en
     )
 
     assert len(flow.list_runs()) == 0
+    assert flow.latest() is None
 
 
 def test_get_artifact_from_flow(client, flow_name, data_integration, engine):

@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
@@ -80,9 +81,16 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 	}
 
 	runNowStr := r.Header.Get(routes.RunNowHeader)
-	runNow := true
-	if runNowStr == "False" {
-		runNow = false
+	runNow := false
+	if runNowStr != "" {
+		runNow, err = strconv.ParseBool(runNowStr)
+		if err != nil {
+			return nil, http.StatusBadRequest, errors.Newf(
+				"Invalid header %s: %s. It must be either 'True' or 'False'.",
+				routes.RunNowHeader,
+				runNowStr,
+			)
+		}
 	}
 
 	dagSummary, statusCode, err := request.ParseDagSummaryFromRequest(
