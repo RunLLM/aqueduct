@@ -422,6 +422,10 @@ def test_s3_basic_fetch_failure(client, data_integration):
     with pytest.raises(AqueductError, match="The specified key does not exist."):
         data_integration.file("asdlkf", artifact_type=ArtifactType.TABLE, format="parquet")
 
+    # Fetch a path to directoy that does not exist will fail.
+    with pytest.raises(AqueductError, match="Given path to S3 directory 'asdlkf/' does not exist."):
+        data_integration.file("asdlkf/", artifact_type="bytes")
+
     # Fetch an artifact with the wrong artifact type.
     with pytest.raises(
         AqueductError, match="The file at path `.*` is not a valid ArtifactType.DICT object."

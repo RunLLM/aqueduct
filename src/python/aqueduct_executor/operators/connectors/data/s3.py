@@ -135,7 +135,7 @@ class S3Connector(connector.DataConnector):
                     Bucket=self.bucket, Prefix=path[:-1], Delimiter="/", MaxKeys=2
                 )
                 if "CommonPrefixes" not in list_object_dic:
-                    raise Exception("Given S3 directory path '%s' does not exist" % (path))
+                    raise Exception("Given path to S3 directory '%s' does not exist." % (path))
                 # This means the path is a valid directory, and we will do a prefix search.
                 files = []
                 for obj in self.s3.Bucket(self.bucket).objects.filter(Prefix=path):
