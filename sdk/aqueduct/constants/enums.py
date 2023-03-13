@@ -100,6 +100,7 @@ class RelationalDBServices(str, Enum, metaclass=MetaEnum):
 class ExecutionStatus(str, Enum, metaclass=MetaEnum):
     UNKNOWN = "unknown"
     SUCCEEDED = "succeeded"
+    RUNNING = "running"
     FAILED = "failed"
     PENDING = "pending"
     REGISTERED = "registered"
@@ -231,3 +232,8 @@ class LocalDataSerializationType(str, Enum, metaclass=MetaEnum):
     JSON_TABLE = "json_table"
     PARQUET_TABLE = "parquet_table"
     IMAGE = "image"
+
+class K8sClusterActionType(str, Enum, metaclass=MetaEnum):
+    CREATE = "create"
+    DELETE = "delete"
+    FORCE_DELETE = "force-delete"
