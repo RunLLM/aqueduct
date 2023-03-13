@@ -202,7 +202,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 			MaxGpuNode:  shared.DefaultDynamicK8sConfig.MaxGpuNode,
 		}
 
-		config.Merge(awsConfig.K8s)
+		config.Update(awsConfig.K8s)
 
 		dynamicK8sConfig := map[string]string{
 			shared.K8sKubeconfigPathKey:     kubeconfigPath,

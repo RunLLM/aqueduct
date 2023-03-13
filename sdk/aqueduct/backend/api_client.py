@@ -337,7 +337,7 @@ class APIClient:
 
     def edit_dynamic_engine(
         self,
-        action: str,
+        action: K8sClusterActionType,
         integration_id: str,
         config_delta: Optional[DynamicK8sConfig] = None,
     ) -> None:
@@ -347,13 +347,23 @@ class APIClient:
             integration_id:
                 The engine integration ID.
         """
+        if action not in [
+            K8sClusterActionType.CREATE,
+            K8sClusterActionType.UPDATE,
+            K8sClusterActionType.DELETE,
+            K8sClusterActionType.FORCE_DELETE,
+        ]:
+            raise InvalidRequestError(
+                "Invalid action %s for interacting with dynamic engine." % action
+            )
+
         if config_delta == None:
             config_delta = DynamicK8sConfig()
 
         assert isinstance(config_delta, DynamicK8sConfig)
 
         headers = self._generate_auth_headers()
-        headers["action"] = action
+        headers["action"] = action.value
 
         url = self.construct_full_url(self.EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE % integration_id)
 
@@ -361,17 +371,7 @@ class APIClient:
             "config_delta": config_delta.json(exclude_none=True),
         }
 
-        if action in [
-            K8sClusterActionType.CREATE,
-            K8sClusterActionType.UPDATE,
-            K8sClusterActionType.DELETE,
-            K8sClusterActionType.FORCE_DELETE,
-        ]:
-            resp = requests.post(url, headers=headers, data=body)
-        else:
-            raise InvalidRequestError(
-                "Invalid action %s for interacting with dynamic engine." % action
-            )
+        resp = requests.post(url, headers=headers, data=body)
 
         self.raise_errors(resp)
 

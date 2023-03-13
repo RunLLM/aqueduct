@@ -542,11 +542,11 @@ func CheckIfValidConfig(action k8sClusterActionType, config map[string]string) e
 	}
 
 	if maxCpuNode < 1 {
-		return errors.Newf("Max CPU node value should be at least 1, got %s", maxCpuNode)
+		return errors.Newf("Max CPU node value should be at least 1, got %d", maxCpuNode)
 	}
 
 	if minCpuNode < 0 {
-		return errors.Newf("Min CPU node value should be at least 0, got %s", minCpuNode)
+		return errors.Newf("Min CPU node value should be at least 0, got %d", minCpuNode)
 	}
 
 	if maxCpuNode < minCpuNode {
@@ -564,11 +564,11 @@ func CheckIfValidConfig(action k8sClusterActionType, config map[string]string) e
 	}
 
 	if maxGpuNode < 1 {
-		return errors.Newf("Max GPU node value should be at least 1, got %s", maxGpuNode)
+		return errors.Newf("Max GPU node value should be at least 1, got %d", maxGpuNode)
 	}
 
 	if minGpuNode < 0 {
-		return errors.Newf("Min GPU node value should be at least 0, got %s", minGpuNode)
+		return errors.Newf("Min GPU node value should be at least 0, got %d", minGpuNode)
 	}
 
 	if maxGpuNode < minGpuNode {

@@ -10,7 +10,7 @@ from aqueduct import globals
 
 
 def parse_dynamic_k8s_config(
-    config_delta: Union[Dict[str, str], DynamicK8sConfig]
+    config_delta: Union[Dict[str, Union[int, str]], DynamicK8sConfig]
 ) -> DynamicK8sConfig:
     if not isinstance(config_delta, dict) and not isinstance(config_delta, DynamicK8sConfig):
         raise InvalidUserArgumentException(
@@ -50,7 +50,9 @@ class DynamicK8sIntegration(Integration):
 
         return engine_statuses[self._metadata.name].status.value
 
-    def create(self, config_delta: Union[Dict[str, str], DynamicK8sConfig] = {}) -> None:
+    def create(
+        self, config_delta: Union[Dict[str, Union[int, str]], DynamicK8sConfig] = {}
+    ) -> None:
         """Creates the dynamic Kubernetes cluster, if it is not currently running.
 
         Args:
@@ -90,7 +92,7 @@ class DynamicK8sIntegration(Integration):
             config_delta=config_delta,
         )
 
-    def update(self, config_delta: Union[Dict[str, str], DynamicK8sConfig]) -> None:
+    def update(self, config_delta: Union[Dict[str, Union[int, str]], DynamicK8sConfig]) -> None:
         """Update the dynamic Kubernetes cluster. This can only be done when the cluster is in
             Active status.
 

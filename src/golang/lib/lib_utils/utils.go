@@ -252,14 +252,12 @@ func ParseAWSConfig(conf auth.Config) (*shared.AWSConfig, error) {
 		K8sSerialized   string `json:"k8s_serialized"`
 	}
 	if err := json.Unmarshal(data, &c); err != nil {
-		log.Error("failed the first unmarshal")
 		return nil, err
 	}
 
 	var dynamicK8sConfig shared.DynamicK8sConfig
 	if len(c.K8sSerialized) > 0 {
 		if err := json.Unmarshal([]byte(c.K8sSerialized), &dynamicK8sConfig); err != nil {
-			log.Error("failed the second unmarshal")
 			return nil, err
 		}
 	}

@@ -177,6 +177,11 @@ class DynamicK8sConfig(BaseConnectionConfig):
     # Maximum number of nodes in the GPU node group. The cluster autoscaler cannot scale above this number.
     max_gpu_node: Optional[str]
 
+    # This converts all int fields to string during json serialization. We need to do this becasue our
+    # backend assumes all config fields must be string.
+    class Config:
+        json_encoders = {int: str}
+
 
 class AWSConfig(BaseConnectionConfig):
     access_key_id: str
@@ -189,7 +194,9 @@ class _AWSConfigWithSerializedConfig(BaseConnectionConfig):
     access_key_id: str
     secret_access_key: str
     region: str
-    k8s_serialized: Optional[str]  # this is a json-serialized string of DynamicK8sConfig
+    k8s_serialized: Optional[
+        str
+    ]  # this is a json-serialized string of AWSConfig.k8s, which is of type DynamicK8sConfig
 
 
 class EmailConfig(BaseConnectionConfig):
