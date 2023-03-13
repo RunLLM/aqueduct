@@ -159,7 +159,7 @@ class _SlackConfigWithStringField(BaseConnectionConfig):
 
 class DynamicK8sConfig(BaseConnectionConfig):
     # How long (in seconds) does the cluster need to remain idle before it is deleted.
-    keepalive: Optional[str]
+    keepalive: Optional[Union[str, int]]
     # The EC2 instance type of the CPU node group. See https://aws.amazon.com/ec2/instance-types/
     # for the node types available.
     cpu_node_type: Optional[str]
@@ -168,14 +168,14 @@ class DynamicK8sConfig(BaseConnectionConfig):
     gpu_node_type: Optional[str]
     # Minimum number of nodes in the CPU node group. The cluster autoscaler cannot scale below this number.
     # This is also the initial number of CPU nodes in the cluster.
-    min_cpu_node: Optional[str]
+    min_cpu_node: Optional[Union[str, int]]
     # Maximum number of nodes in the CPU node group. The cluster autoscaler cannot scale above this number.
-    max_cpu_node: Optional[str]
+    max_cpu_node: Optional[Union[str, int]]
     # Minimum number of nodes in the GPU node group. The cluster autoscaler cannot scale below this number.
     # This is also the initial number of GPU nodes in the cluster.
-    min_gpu_node: Optional[str]
+    min_gpu_node: Optional[Union[str, int]]
     # Maximum number of nodes in the GPU node group. The cluster autoscaler cannot scale above this number.
-    max_gpu_node: Optional[str]
+    max_gpu_node: Optional[Union[str, int]]
 
     # This converts all int fields to string during json serialization. We need to do this becasue our
     # backend assumes all config fields must be string.
