@@ -32,7 +32,7 @@ const RequireDagOrResult: React.FC<Props> = ({
 
     if (isFailed(dagResultWithLoadingStatus.status)) {
       <Alert severity="error">
-        <AlertTitle>Failed to dag reult.</AlertTitle>
+        <AlertTitle>Failed to load dag reult.</AlertTitle>
         {dagResultWithLoadingStatus.status.err}
       </Alert>;
     }
@@ -52,7 +52,7 @@ const RequireDagOrResult: React.FC<Props> = ({
 
     if (isFailed(dagWithLoadingStatus.status)) {
       <Alert severity="error">
-        <AlertTitle>Failed to dag.</AlertTitle>
+        <AlertTitle>Failed to load dag.</AlertTitle>
         {dagWithLoadingStatus.status.err}
       </Alert>;
     }
