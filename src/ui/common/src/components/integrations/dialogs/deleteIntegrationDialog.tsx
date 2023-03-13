@@ -93,7 +93,7 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
     return state.integrationReducer.operators;
   });
 
-  const isStorage = config.use_as_storage === true;
+  const isStorage = config.use_as_storage === 'true';
   let isCurrentStorage = isStorage;
   if (isStorage && metadataStorageConfig) {
     const storageConfig = convertIntegrationConfigToMetadataStorageConfig(
