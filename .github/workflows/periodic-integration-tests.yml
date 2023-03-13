@@ -2,43 +2,80 @@ name: Periodic Integration Tests
 
 on:
   schedule:
-     - cron: '0 15 * * 1-5' # Run at 7AM PST on every weekday
+     - cron: '0 12 * * 1-5' # Run at 4AM PST on every weekday
   workflow_dispatch:
 
 jobs:
   run-tests:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    strategy:
-      matrix:
-        concurrency: [ 2, 5 ]
-
-    name: Run Integration Tests with Python Version ${{ matrix.python-version }} Concurrency ${{ matrix.concurrency }}
+    runs-on: ubuntu-latest-8-cores
+    timeout-minutes: 180
+    name: SDK Integration Tests against K8s Compute
     steps:
       - uses: actions/checkout@v2
 
       - uses: ./.github/actions/setup-server
         timeout-minutes: 5
 
-      - name: Set up the SDK Integration Tests
-        working-directory: integration_tests/sdk
+      # TODO(ENG-2537): Use our separate GH actions credentials.
+      - uses: ./.github/actions/fetch-test-config
+        with:
+          aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
+          s3_test_config_path: periodic-compute-test-config.yml
+
+      - name: Install Terraform
         run: |
-          echo "apikey: $(aqueduct apikey)" >> test-credentials.yml
-          printf "address: localhost:8080" >> test-config.yml
-          printf "\ndata:\n  aqueduct_demo:" >> test-config.yml
-          printf "\ncompute:\n  aqueduct_engine:" >> test-config.yml
+          wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+          sudo apt update && sudo apt install terraform
+
+      - name: Create K8s Cluster
+        working-directory: integration_tests/sdk/compute/k8s
+        run: |
+          terraform init
+          terraform apply --auto-approve
+
+      - name: Update the Kubeconfig file
+        working-directory: integration_tests/sdk/compute/k8s
+        run: aws eks --region $(terraform output -raw region) update-kubeconfig --name $(terraform output -raw cluster_name)
+
+      - name: Update the test-config file with the appropriate cluster name
+        working-directory: integration_tests/sdk
+        run: sed -i "s/\(cluster_name:\s*\).*/\1 "$(terraform -chdir=compute/k8s/ output -raw cluster_name)"/" test-credentials.yml
+
+      - name: Install any data connector packages
+        run: |
+          aqueduct install s3
+          aqueduct install snowflake
 
       - name: Run the SDK Integration Tests
-        timeout-minutes: 30
         working-directory: integration_tests/sdk
-        run: python3 run_tests.py -n 5
+        run: pytest aqueduct_tests/ -rP -vv -n 4
+
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: Terraform State
+          path: integration_tests/sdk/compute/k8s/*.tf
 
       - uses: ./.github/actions/upload-artifacts
         if: always()
         with:
-          prefix: Aqueduct Engine and DB
+          prefix: K8s Compute
 
-      # Notifies Kenny, Suresh.
+      - name: Teardown K8s Cluster
+        if: always()
+        working-directory: integration_tests/sdk/compute/k8s
+        run: terraform destroy --auto-approve
+
+
+      # Sets it as an environmental variable.
+      - name: Get the Slack ID for the current oncall
+        if: always()
+        run: |
+          aws s3 cp s3://aqueduct-assets/oncall.yml ./oncall.yml
+          echo "ONCALL_SLACK_MEMBER_ID=$(python3 scripts/get_current_oncall.py --file ./oncall.yml)" >> $GITHUB_ENV
+
       - name: Report to Slack on Failure
         if: always()
         uses: ravsamhq/notify-slack-action@v1
@@ -48,6 +85,6 @@ jobs:
           message_format: '{emoji} *{workflow}* has {status_message}'
           footer: '{run_url}'
           notify_when: 'failure,warnings'
-          mention_users: 'U025MDH5KS6,U04CRDACQMQ'
+          mention_users: ${{ env.ONCALL_SLACK_MEMBER_ID }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}

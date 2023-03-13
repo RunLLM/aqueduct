@@ -208,11 +208,11 @@ func DeleteK8sCluster(
 
 		safe, err := k8s.SafeToDeleteCluster(ctx, useSameCluster, engineIntegration.Config[shared.K8sKubeconfigPathKey])
 		if err != nil {
-			log.Errorf("We ran into an unexpected error: %v. Since the cluster might be in a bad state, we are force deleting it to be safe.", err)
-		} else {
-			if !safe {
-				return errors.New("The k8s cluster cannot be deleted because there are pods still running.")
-			}
+			return err
+		}
+
+		if !safe {
+			return errors.New("The k8s cluster cannot be deleted because there are pods still running.")
 		}
 	}
 

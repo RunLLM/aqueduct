@@ -7,7 +7,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { faCircleDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Drawer, Tooltip } from '@mui/material';
+import { Alert, Drawer, Snackbar, Tooltip } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { parse } from 'query-string';
@@ -15,6 +15,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { ReactFlowProvider } from 'reactflow';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
@@ -72,6 +73,10 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const [currentTab, setCurrentTab] = useState<string>('Details');
   const [showRunWorkflowDialog, setShowRunWorkflowDialog] = useState(false);
   const [selectedResultIdx, setSelectedResultIdx] = useState(0);
+
+  const [updateMessage, setUpdateMessage] = useState<string>('');
+  const [showUpdateMessage, setShowUpdateMessage] = useState<boolean>(false);
+  const [updateSucceeded, setUpdateSucceeded] = useState<boolean>(false);
 
   const currentNode = useSelector(
     (state: RootState) => state.nodeSelectionReducer.selected
@@ -502,12 +507,30 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 <WorkflowSettings
                   user={user}
                   workflowDag={workflow.selectedDag}
+                  onSettingsSave={() => {
+                    setShowUpdateMessage(true);
+                    // Show toast message for a few seconds and then update the current tab.
+                    setTimeout(() => {
+                      // Refresh the page to send user to Details tab with latest information.
+                      window.location.reload();
+                    }, 3000);
+                  }}
+                  onSetShowUpdateMessage={(shouldShow) =>
+                    setShowUpdateMessage(shouldShow)
+                  }
+                  onSetUpdateSucceeded={(isSuccessful) =>
+                    setUpdateSucceeded(isSuccessful)
+                  }
+                  onSetUpdateMessage={(updateMessage) =>
+                    setUpdateMessage(updateMessage)
+                  }
                 />
               </Box>
             )}
           </Box>
 
           {/* These controls are automatically hidden when the side sheet is open. */}
+          {/* Tooltips don't show up if the child is disabled so we wrap the button with a Box.  */}
           <Box width="100px" ml={2} display={drawerIsOpen ? 'none' : 'block'}>
             <Box
               display="flex"
@@ -517,45 +540,49 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
               sx={{ borderBottom: `1px solid ${theme.palette.gray[600]}` }}
             >
               <Tooltip title="Previous Run" arrow>
-                <Button
-                  sx={{ fontSize: '28px', px: 0, flex: 1 }}
-                  variant="text"
-                  onClick={() => {
-                    // This might be confusing, but index 0 is the most recent run, so incrementing the index goes
-                    // to an *earlier* run.
-                    dispatch(selectResultIdx(selectedResultIdx + 1));
-                    navigate(
-                      `?workflowDagResultId=${
-                        workflow.dagResults[selectedResultIdx + 1].id
-                      }`
-                    );
-                  }}
-                  disabled={
-                    selectedResultIdx === workflow.dagResults.length - 1
-                  }
-                >
-                  <FontAwesomeIcon icon={faChevronLeft} />
-                </Button>
+                <Box sx={{ px: 0, flex: 1 }}>
+                  <Button
+                    sx={{ fontSize: '28px' }}
+                    variant="text"
+                    onClick={() => {
+                      // This might be confusing, but index 0 is the most recent run, so incrementing the index goes
+                      // to an *earlier* run.
+                      dispatch(selectResultIdx(selectedResultIdx + 1));
+                      navigate(
+                        `?workflowDagResultId=${
+                          workflow.dagResults[selectedResultIdx + 1].id
+                        }`
+                      );
+                    }}
+                    disabled={
+                      selectedResultIdx === workflow.dagResults.length - 1
+                    }
+                  >
+                    <FontAwesomeIcon icon={faChevronLeft} />
+                  </Button>
+                </Box>
               </Tooltip>
 
               <Tooltip title="Next Run" arrow>
-                <Button
-                  sx={{ fontSize: '28px', px: 0, flex: 1 }}
-                  variant="text"
-                  onClick={() => {
-                    // This might be confusing, but index 0 is the most recent run, so decrementing the index goes
-                    // to a *newer* run.
-                    dispatch(selectResultIdx(selectedResultIdx - 1));
-                    navigate(
-                      `?workflowDagResultId=${
-                        workflow.dagResults[selectedResultIdx - 1].id
-                      }`
-                    );
-                  }}
-                  disabled={selectedResultIdx === 0}
-                >
-                  <FontAwesomeIcon icon={faChevronRight} />
-                </Button>
+                <Box sx={{ px: 0, flex: 1 }}>
+                  <Button
+                    sx={{ fontSize: '28px' }}
+                    variant="text"
+                    onClick={() => {
+                      // This might be confusing, but index 0 is the most recent run, so decrementing the index goes
+                      // to a *newer* run.
+                      dispatch(selectResultIdx(selectedResultIdx - 1));
+                      navigate(
+                        `?workflowDagResultId=${
+                          workflow.dagResults[selectedResultIdx - 1].id
+                        }`
+                      );
+                    }}
+                    disabled={selectedResultIdx === 0}
+                  >
+                    <FontAwesomeIcon icon={faChevronRight} />
+                  </Button>
+                </Box>
               </Tooltip>
             </Box>
 
@@ -661,6 +688,22 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Box>
         </Box>
       </Drawer>
+
+      <Snackbar
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        open={showUpdateMessage}
+        onClose={() => setShowUpdateMessage(false)}
+        key={'settingsupdate-snackbar'}
+        autoHideDuration={3000}
+      >
+        <Alert
+          onClose={() => setShowUpdateMessage(false)}
+          severity={updateSucceeded ? 'success' : 'error'}
+          sx={{ width: '100%' }}
+        >
+          {updateMessage}
+        </Alert>
+      </Snackbar>
     </Layout>
   );
 };

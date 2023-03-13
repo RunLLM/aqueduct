@@ -1,6 +1,6 @@
 import Box from '@mui/material/Box';
 import React from 'react';
-import { Node } from 'react-flow-renderer';
+import { Node } from 'reactflow';
 
 import ArtifactDetailsPage from '../components/pages/artifact/id';
 import CheckDetailsPage from '../components/pages/check/id';

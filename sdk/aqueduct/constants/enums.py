@@ -100,6 +100,7 @@ class RelationalDBServices(str, Enum, metaclass=MetaEnum):
 class ExecutionStatus(str, Enum, metaclass=MetaEnum):
     UNKNOWN = "unknown"
     SUCCEEDED = "succeeded"
+    RUNNING = "running"
     FAILED = "failed"
     PENDING = "pending"
     REGISTERED = "registered"
