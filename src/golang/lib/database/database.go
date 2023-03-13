@@ -4,7 +4,7 @@ import (
 	"context"
 
 	stmt "github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
-	"github.com/dropbox/godropbox/errors"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 )
 
 const (
@@ -12,10 +12,13 @@ const (
 	ErrCodeTableDoesNotExist = "SQLSTATE 42P01"
 )
 
-var (
-	ErrNoRows            = errors.New("Query returned no rows.")
-	ErrUnsupportedDbType = errors.New("DB Type is not supported")
-)
+func ErrNoRows() error {
+	return errors.New("Query returned no rows.")
+}
+
+func ErrUnsupportedDbType() error {
+	return errors.New("DB Type is not supported")
+}
 
 // Database is the interface that must be implemented by any database driver.
 type Database interface {
@@ -83,5 +86,5 @@ func NewDatabase(conf *DatabaseConfig) (Database, error) {
 		return NewSqliteDatabase(sqliteConf)
 	}
 
-	return nil, ErrUnsupportedDbType
+	return nil, ErrUnsupportedDbType()
 }

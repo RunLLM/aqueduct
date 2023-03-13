@@ -213,7 +213,7 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 		h.Database,
 	)
 	if err != nil {
-		if err != database.ErrNoRows {
+		if !errors.Is(err, database.ErrNoRows()) {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact result.")
 		}
 		// ArtifactResult was never created, so we use the WorkflowDagResult's status as this ArtifactResult's status
