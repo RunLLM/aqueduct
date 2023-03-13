@@ -1,5 +1,5 @@
 import { Artifact } from './artifacts';
-import { EngineConfig } from './engine';
+import { EngineConfig, EngineType } from './engine';
 import { NotificationLogLevel } from './notifications';
 import {
   Load,
@@ -202,3 +202,23 @@ export function normalizeGetWorkflowResponse(
 export type ListWorkflowResponse = {
   workflows: ListWorkflowSummary[];
 };
+
+export function getWorkflowEngineTypes(dag: WorkflowDag): EngineType[] {
+  const dagType = dag.engine_config.type;
+  const allOpTypes = Array.from(
+    new Set(
+      Object.values(dag.operators)
+        .map((op) => op.spec.engine_config?.type)
+        .filter((t) => !!t) ?? []
+    )
+  );
+  if (
+    dagType === EngineType.Aqueduct &&
+    allOpTypes.length > 0 &&
+    allOpTypes.every((t) => t !== EngineType.Aqueduct)
+  ) {
+    return allOpTypes;
+  }
+
+  return Array.from(new Set([dagType].concat(allOpTypes)));
+}

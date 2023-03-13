@@ -219,6 +219,7 @@ export type IntegrationConfig =
   | AWSConfig;
 
 export type Service =
+  | 'Aqueduct'
   | 'Postgres'
   | 'Snowflake'
   | 'Redshift'
