@@ -7,9 +7,9 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
@@ -119,7 +119,7 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 		h.Database,
 	)
 	if err != nil {
-		if err != database.ErrNoRows {
+		if !errors.Is(err, database.ErrNoRows()) {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving operator result.")
 		}
 		// OperatorResult was never created, so we use the WorkflowDagResult's status as this OperatorResult's status

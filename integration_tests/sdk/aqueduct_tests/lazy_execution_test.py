@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.generic_artifact import GenericArtifact
+from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.constants.enums import ArtifactType
 from aqueduct.error import InvalidUserArgumentException
 
@@ -238,3 +239,21 @@ def test_lazy_artifact_with_save(client, flow_name, data_integration, engine, da
     data_validator.check_saved_artifact_data(
         flow, review_copied.id(), expected_data=copy_field.local(reviews)
     )
+
+
+def test_eager_then_lazy(client):
+    """For an operator, checks that we can switch its execution mode from eager to lazy."""
+
+    @op
+    def number():
+        return 1
+
+    result = number()
+    assert isinstance(result, NumericArtifact)
+    assert result.get() == 1
+
+    global_config({"lazy": True})
+
+    result = number()
+    assert isinstance(result, GenericArtifact)
+    assert result.get() == 1

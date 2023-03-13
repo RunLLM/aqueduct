@@ -19,6 +19,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/dynamic"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
@@ -30,7 +31,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
@@ -774,7 +774,7 @@ func ValidatePrerequisites(
 	if err == nil {
 		return http.StatusBadRequest, errors.Newf("Cannot connect to an integration %s, since it already exists.", name)
 	}
-	if err != database.ErrNoRows {
+	if !errors.Is(err, database.ErrNoRows()) {
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to query for existing integrations.")
 	}
 

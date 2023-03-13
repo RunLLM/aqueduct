@@ -2,7 +2,7 @@ import pytest
 from aqueduct.constants.enums import ServiceType
 from aqueduct.models.dag import DAG, Metadata
 
-from aqueduct import Client, globals
+from aqueduct import Client, global_config, globals
 from sdk.setup_integration import (
     get_aqueduct_config,
     has_storage_config,
@@ -180,7 +180,7 @@ def enable_only_for_engine_type(request, client, engine):
 
 @pytest.fixture(autouse=True)
 def enable_only_for_local_storage(request, client, engine):
-    """xxx"""
+    """When a test is marked with this, we run it only when the local file system is used as storage."""
     if not request.node.get_closest_marker("enable_only_for_local_storage"):
         return
 
@@ -254,3 +254,11 @@ def flow_name(client, request, pytestconfig):
 @pytest.fixture(scope="function")
 def validator(client, data_integration):
     return Validator(client, data_integration)
+
+
+@pytest.fixture(scope="function", autouse=True)
+def post_process_reset_execution_mode_to_eager():
+    # Pre-processing code
+    yield
+    # Post-processing code
+    global_config({"lazy": False})

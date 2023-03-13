@@ -185,7 +185,7 @@ func getDAGResult(ctx context.Context, DB database.Database, query string, args 
 	}
 
 	if len(dagResults) == 0 {
-		return nil, database.ErrNoRows
+		return nil, database.ErrNoRows()
 	}
 
 	if len(dagResults) != 1 {

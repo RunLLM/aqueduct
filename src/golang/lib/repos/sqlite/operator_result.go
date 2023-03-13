@@ -256,7 +256,7 @@ func getOperatorResult(ctx context.Context, DB database.Database, query string, 
 	}
 
 	if len(operatorResults) == 0 {
-		return nil, database.ErrNoRows
+		return nil, database.ErrNoRows()
 	}
 
 	if len(operatorResults) != 1 {
