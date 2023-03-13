@@ -252,7 +252,6 @@ func ParseAWSConfig(conf auth.Config) (*shared.AWSConfig, error) {
 		K8sSerialized   string `json:"k8s_serialized"`
 	}
 	if err := json.Unmarshal(data, &c); err != nil {
-		log.Error("failed the first unmarshal")
 		return nil, err
 	}
 

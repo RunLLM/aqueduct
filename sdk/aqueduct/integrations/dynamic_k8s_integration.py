@@ -5,7 +5,6 @@ from aqueduct.constants.enums import K8sClusterActionType, K8sClusterStatusType
 from aqueduct.error import InvalidIntegrationException, InvalidUserArgumentException
 from aqueduct.integrations.connect_config import DynamicK8sConfig
 from aqueduct.models.integration import Integration, IntegrationInfo
-from pydantic import Extra
 
 from aqueduct import globals
 
