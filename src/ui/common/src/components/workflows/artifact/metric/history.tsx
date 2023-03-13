@@ -120,9 +120,6 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
       )}
 
       <Box mt="32px">
-        <Typography variant="h6" fontWeight="normal" marginBottom={2}>
-          History
-        </Typography>
         {dataSortedByLatest.map((entry, index) => {
           let backgroundColor, hoverColor;
           if (entry.status === ExecutionStatus.Succeeded) {
