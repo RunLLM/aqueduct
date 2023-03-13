@@ -124,7 +124,7 @@ export const AthenaDialog: React.FC<Props> = ({
         spellCheck={false}
         required={true}
         label="AWS Credentials File Path*"
-        description={'The absolute path to the credentials file'}
+        description={'The path to the credentials file'}
         placeholder={Placeholders.config_file_path}
         onChange={(event) =>
           onUpdateField('config_file_path', event.target.value)
