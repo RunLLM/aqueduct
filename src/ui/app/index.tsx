@@ -5,9 +5,6 @@ import { HomePage, DataPage, IntegrationsPage, IntegrationDetailsPage, WorkflowP
 import { store } from './stores/store';
 import { Provider } from 'react-redux';
 import { useUser, UserProfile } from '@aqueducthq/common';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-
-import { theme } from '@aqueducthq/common/src/styles/theme/theme';
 import { getPathPrefix } from '@aqueducthq/common/src/utils/getPathPrefix';
 import '@aqueducthq/common/src/styles/globals.css';
 
@@ -48,14 +45,10 @@ const App = () => {
     </Routes>
   );
 
-  const muiTheme = createTheme(theme);
   return (
-    <ThemeProvider theme={muiTheme}>
-      <BrowserRouter>{routesContent}</BrowserRouter>
-    </ThemeProvider>
+    <BrowserRouter>{routesContent}</BrowserRouter>
   );
 };
-
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -65,4 +58,4 @@ root.render(
   <Provider store={store}>
     <App />
   </Provider>
-)
+);
