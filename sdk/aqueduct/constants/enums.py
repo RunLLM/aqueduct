@@ -233,6 +233,7 @@ class LocalDataSerializationType(str, Enum, metaclass=MetaEnum):
     PARQUET_TABLE = "parquet_table"
     IMAGE = "image"
 
+
 class K8sClusterActionType(str, Enum, metaclass=MetaEnum):
     CREATE = "create"
     DELETE = "delete"

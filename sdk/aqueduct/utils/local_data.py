@@ -35,7 +35,7 @@ def Local_Data(
     return LocalData(path=path, artifact_type=artifact_type, format=format_enum)
 
 
-def validate_local_data(val: LocalData):
+def validate_local_data(val: LocalData) -> None:
     """Validate LocalData on its file path and types."""
     file_path = val.path
     artifact_type = val.artifact_type
@@ -43,12 +43,11 @@ def validate_local_data(val: LocalData):
 
     if not os.path.isfile(file_path):
         raise InvalidUserArgumentException(
-            "Given path file %s to local data does not exist.".format(file_path)
+            "Given path file %s to local data does not exist." % file_path
         )
 
     if os.path.getsize(file_path) > MAXIMUM_LOCAL_DATA_SIZE:
-        raise InvalidUserArgumentException("Currently, the maximum local data size is 1 MB")
-
+        raise InvalidUserArgumentException("Currently, the maximum local data size is 1 MB.")
     if artifact_type == ArtifactType.TABLE and file_format is None:
         raise InvalidUserArgumentException(
             "Specify format in order to use local data as TableArtifact."
