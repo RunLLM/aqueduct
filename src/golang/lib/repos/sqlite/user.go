@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 
@@ -114,7 +114,7 @@ func getUser(ctx context.Context, DB database.Database, query string, args ...in
 	}
 
 	if len(users) == 0 {
-		return nil, database.ErrNoRows
+		return nil, database.ErrNoRows()
 	}
 
 	if len(users) != 1 {
@@ -136,7 +136,7 @@ func generateAPIKey(ctx context.Context, DB database.Database) (string, error) {
 
 		r := &userReader{}
 		_, err = r.GetByAPIKey(ctx, apiKey, DB)
-		if err != nil && errors.IsError(err, database.ErrNoRows) {
+		if err != nil && errors.Is(err, database.ErrNoRows()) {
 			// No row with this API key was found
 			return apiKey, nil
 		}

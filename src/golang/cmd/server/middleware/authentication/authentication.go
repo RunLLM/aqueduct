@@ -8,6 +8,7 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 )
 
@@ -21,7 +22,7 @@ func RequireApiKey(userRepo repos.User, db database.Database) func(http.Handler)
 			apiKey := r.Header.Get(routes.ApiKeyHeader)
 
 			user, err := userRepo.GetByAPIKey(r.Context(), apiKey, db)
-			if err == database.ErrNoRows {
+			if errors.Is(err, database.ErrNoRows()) {
 				response.SendErrorResponse(w, "Invalid API key credentials.", http.StatusForbidden)
 			} else if err != nil {
 				// Something went wrong with accessing the database

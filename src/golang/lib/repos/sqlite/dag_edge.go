@@ -141,7 +141,7 @@ func getDAGEdge(ctx context.Context, DB database.Database, query string, args ..
 	}
 
 	if len(edges) == 0 {
-		return nil, database.ErrNoRows
+		return nil, database.ErrNoRows()
 	}
 
 	if len(edges) != 1 {
