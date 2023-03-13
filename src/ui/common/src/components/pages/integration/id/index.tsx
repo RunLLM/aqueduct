@@ -80,6 +80,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   );
 
   const selectedIntegration = integrations[integrationId];
+
   // Using the ListIntegrationsRoute.
   // ENG-1036: We should create a route where we can pass in the integrationId and get the associated metadata and switch to using that.
   useEffect(() => {

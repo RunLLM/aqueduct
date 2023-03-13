@@ -94,9 +94,7 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
   });
 
   const isStorage = config.use_as_storage;
-  console.log('isStorage', isStorage);
   let isCurrentStorage = true;
-  console.log('metadataStorageConfig', metadataStorageConfig);
   if (isStorage && metadataStorageConfig) {
     const storageConfig = convertIntegrationConfigToMetadataStorageConfig(
       config,
@@ -104,10 +102,7 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
       integrationType
     );
     // Check deep equality
-    console.log('storageConfig', storageConfig);
-    console.log('metadataStorageConfig', metadataStorageConfig);
     isCurrentStorage = isEqual(storageConfig, metadataStorageConfig);
-    console.log('isCurrentStorage', isCurrentStorage);
   }
 
   if (isCurrentStorage) {
