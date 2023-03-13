@@ -270,7 +270,10 @@ class Client:
         apply_deltas_to_dag(self._dag, [RemoveOperatorDelta(param_op.id)])
 
     def connect_integration(
-        self, name: str, service: ServiceType, config: Union[Dict[str, str], IntegrationConfig]
+        self,
+        name: str,
+        service: Union[str, ServiceType],
+        config: Union[Dict[str, str], IntegrationConfig],
     ) -> None:
         """Connects the Aqueduct server to an integration.
 

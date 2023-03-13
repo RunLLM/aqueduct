@@ -9,6 +9,7 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
@@ -20,7 +21,6 @@ import (
 	operator_utils "github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
@@ -120,7 +120,7 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 		h.Database,
 	)
 	if err != nil {
-		if err != database.ErrNoRows {
+		if !errors.Is(err, database.ErrNoRows()) {
 			return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when checking for existing workflows.")
 		}
 		// A colliding workflow does not exist, so this is not an update

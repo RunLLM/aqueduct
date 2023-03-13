@@ -15,6 +15,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ReactFlowProvider } from 'react-flow-renderer';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { ReactFlowProvider } from 'reactflow';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
@@ -529,6 +530,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Box>
 
           {/* These controls are automatically hidden when the side sheet is open. */}
+          {/* Tooltips don't show up if the child is disabled so we wrap the button with a Box.  */}
           <Box width="100px" ml={2} display={drawerIsOpen ? 'none' : 'block'}>
             <Box
               display="flex"
@@ -538,45 +540,49 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
               sx={{ borderBottom: `1px solid ${theme.palette.gray[600]}` }}
             >
               <Tooltip title="Previous Run" arrow>
-                <Button
-                  sx={{ fontSize: '28px', px: 0, flex: 1 }}
-                  variant="text"
-                  onClick={() => {
-                    // This might be confusing, but index 0 is the most recent run, so incrementing the index goes
-                    // to an *earlier* run.
-                    dispatch(selectResultIdx(selectedResultIdx + 1));
-                    navigate(
-                      `?workflowDagResultId=${
-                        workflow.dagResults[selectedResultIdx + 1].id
-                      }`
-                    );
-                  }}
-                  disabled={
-                    selectedResultIdx === workflow.dagResults.length - 1
-                  }
-                >
-                  <FontAwesomeIcon icon={faChevronLeft} />
-                </Button>
+                <Box sx={{ px: 0, flex: 1 }}>
+                  <Button
+                    sx={{ fontSize: '28px' }}
+                    variant="text"
+                    onClick={() => {
+                      // This might be confusing, but index 0 is the most recent run, so incrementing the index goes
+                      // to an *earlier* run.
+                      dispatch(selectResultIdx(selectedResultIdx + 1));
+                      navigate(
+                        `?workflowDagResultId=${
+                          workflow.dagResults[selectedResultIdx + 1].id
+                        }`
+                      );
+                    }}
+                    disabled={
+                      selectedResultIdx === workflow.dagResults.length - 1
+                    }
+                  >
+                    <FontAwesomeIcon icon={faChevronLeft} />
+                  </Button>
+                </Box>
               </Tooltip>
 
               <Tooltip title="Next Run" arrow>
-                <Button
-                  sx={{ fontSize: '28px', px: 0, flex: 1 }}
-                  variant="text"
-                  onClick={() => {
-                    // This might be confusing, but index 0 is the most recent run, so decrementing the index goes
-                    // to a *newer* run.
-                    dispatch(selectResultIdx(selectedResultIdx - 1));
-                    navigate(
-                      `?workflowDagResultId=${
-                        workflow.dagResults[selectedResultIdx - 1].id
-                      }`
-                    );
-                  }}
-                  disabled={selectedResultIdx === 0}
-                >
-                  <FontAwesomeIcon icon={faChevronRight} />
-                </Button>
+                <Box sx={{ px: 0, flex: 1 }}>
+                  <Button
+                    sx={{ fontSize: '28px' }}
+                    variant="text"
+                    onClick={() => {
+                      // This might be confusing, but index 0 is the most recent run, so decrementing the index goes
+                      // to a *newer* run.
+                      dispatch(selectResultIdx(selectedResultIdx - 1));
+                      navigate(
+                        `?workflowDagResultId=${
+                          workflow.dagResults[selectedResultIdx - 1].id
+                        }`
+                      );
+                    }}
+                    disabled={selectedResultIdx === 0}
+                  >
+                    <FontAwesomeIcon icon={faChevronRight} />
+                  </Button>
+                </Box>
               </Tooltip>
             </Box>
 

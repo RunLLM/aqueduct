@@ -13,7 +13,7 @@ from aqueduct.integrations.s3_integration import S3Integration
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
 from aqueduct.models.integration import Integration
 
-from aqueduct import Client
+from aqueduct import Client, get_apikey
 from sdk.aqueduct_tests.save import save
 from sdk.shared.demo_db import demo_db_tables
 from sdk.shared.flow_helpers import delete_flow, publish_flow_test
@@ -281,6 +281,12 @@ def setup_storage_layer(client: Client) -> None:
                 break
 
 
+def has_storage_config() -> bool:
+    """Check if the test config file has a storage config section (meaning it is using non-local storage)."""
+    test_config = _parse_config_file()
+    return "storage" in test_config
+
+
 def _sanitize_integration_config_for_connect(config: Dict[str, Any]) -> Dict[str, Any]:
     """WARNING: this modifies the configuration dict."""
     del config["type"]
@@ -317,10 +323,16 @@ def list_compute_integrations() -> List[str]:
 
 
 def get_aqueduct_config() -> Tuple[str, str]:
-    # Returns the apikey and server address.
+    """
+    Returns the apikey and server address. If "apikey" does not exist in test-credentials, we will
+    assume the server is on the same machine, and will use "aqueduct apikey".
+    """
     test_config = _parse_config_file()
+
     test_credentials = _parse_credentials_file()
-    assert (
-        "apikey" in test_credentials and "address" in test_config
-    ), "apikey and address must be set in test-credentials.yml and test-config.yml, respectively."
-    return test_credentials["apikey"], test_config["address"]
+    if "apikey" in test_credentials:
+        apikey = test_credentials["apikey"]
+    else:
+        apikey = get_apikey()
+
+    return apikey, test_config["address"]

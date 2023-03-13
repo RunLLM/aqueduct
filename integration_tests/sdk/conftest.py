@@ -2,9 +2,10 @@ import pytest
 from aqueduct.constants.enums import ServiceType
 from aqueduct.models.dag import DAG, Metadata
 
-from aqueduct import Client, globals
+from aqueduct import Client, global_config, globals
 from sdk.setup_integration import (
     get_aqueduct_config,
+    has_storage_config,
     list_compute_integrations,
     list_data_integrations,
     setup_compute_integrations,
@@ -48,7 +49,11 @@ def pytest_configure(config):
     )
     config.addinivalue_line(
         "markers",
-        "must_have_gpu: the K8s integration is expected to have access to a GPU",
+        "must_have_gpu: the K8s integration is expected to have access to a GPU.",
+    )
+    config.addinivalue_line(
+        "markers",
+        "enable_only_for_local_storage: the test is expected to run in an environment with local storage.",
     )
 
 
@@ -174,6 +179,16 @@ def enable_only_for_engine_type(request, client, engine):
 
 
 @pytest.fixture(autouse=True)
+def enable_only_for_local_storage(request, client, engine):
+    """When a test is marked with this, we run it only when the local file system is used as storage."""
+    if not request.node.get_closest_marker("enable_only_for_local_storage"):
+        return
+
+    if has_storage_config():
+        pytest.skip("Skipped since the test environment uses non-local storage.")
+
+
+@pytest.fixture(autouse=True)
 def enable_only_for_external_compute(request, client, engine):
     """When a test is marked with this, it will run for all engine types EXCEPT Aqueduct!"""
     if request.node.get_closest_marker("enable_only_for_external_compute"):
@@ -239,3 +254,11 @@ def flow_name(client, request, pytestconfig):
 @pytest.fixture(scope="function")
 def validator(client, data_integration):
     return Validator(client, data_integration)
+
+
+@pytest.fixture(scope="function", autouse=True)
+def post_process_reset_execution_mode_to_eager():
+    # Pre-processing code
+    yield
+    # Post-processing code
+    global_config({"lazy": False})
