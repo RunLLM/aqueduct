@@ -2,21 +2,25 @@ import { LoadingButton } from '@mui/lab';
 import { Alert, DialogActions, DialogContent } from '@mui/material';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
+import { isEqual } from 'lodash';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { isEqual } from 'lodash';
-import { convertIntegrationConfigToMetadataStorageConfig, getMetadataStorageConfig, MetadataStorageConfig } from '../../../utils/storage';
-import { useAqueductConsts } from '../../../components/hooks/useAqueductConsts';
 
+import { useAqueductConsts } from '../../../components/hooks/useAqueductConsts';
 import {
   handleDeleteIntegration,
   resetDeletionStatus,
 } from '../../../reducers/integration';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
-import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
 import { IntegrationConfig, Service } from '../../../utils/integrations';
+import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
+import {
+  convertIntegrationConfigToMetadataStorageConfig,
+  getMetadataStorageConfig,
+  MetadataStorageConfig,
+} from '../../../utils/storage';
 
 type Props = {
   user: UserProfile;
@@ -40,12 +44,16 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
   const [isConnecting, setIsConnecting] = useState(false);
 
   const { apiAddress } = useAqueductConsts();
-  
-  const [metadataStorageConfig, setMetadataStorageConfig] = useState<MetadataStorageConfig | null>(null);
+
+  const [metadataStorageConfig, setMetadataStorageConfig] =
+    useState<MetadataStorageConfig | null>(null);
 
   useEffect(() => {
     async function fetchMetadataStorageConfig() {
-      const metadataStorageConfig = await getMetadataStorageConfig(apiAddress, user.apiKey);
+      const metadataStorageConfig = await getMetadataStorageConfig(
+        apiAddress,
+        user.apiKey
+      );
       setMetadataStorageConfig(metadataStorageConfig);
     }
 
@@ -86,19 +94,23 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
   });
 
   const isStorage = config.use_as_storage;
-  console.log("isStorage", isStorage);
+  console.log('isStorage', isStorage);
   let isCurrentStorage = true;
-  console.log("metadataStorageConfig", metadataStorageConfig)
+  console.log('metadataStorageConfig', metadataStorageConfig);
   if (isStorage && metadataStorageConfig) {
-    const storageConfig = convertIntegrationConfigToMetadataStorageConfig(config, metadataStorageConfig, integrationType);
+    const storageConfig = convertIntegrationConfigToMetadataStorageConfig(
+      config,
+      metadataStorageConfig,
+      integrationType
+    );
     // Check deep equality
-    console.log("storageConfig", storageConfig);
-    console.log("metadataStorageConfig", metadataStorageConfig);
+    console.log('storageConfig', storageConfig);
+    console.log('metadataStorageConfig', metadataStorageConfig);
     isCurrentStorage = isEqual(storageConfig, metadataStorageConfig);
-    console.log("isCurrentStorage", isCurrentStorage);
+    console.log('isCurrentStorage', isCurrentStorage);
   }
 
-  if(isCurrentStorage) {
+  if (isCurrentStorage) {
     return (
       <Dialog
         open={!deleteIntegrationStatus || !isFailed(deleteIntegrationStatus)}
@@ -106,7 +118,8 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
         maxWidth="lg"
       >
         <DialogContent>
-          We cannot delete this integration because it is acting as the metadata storage location.
+          We cannot delete this integration because it is acting as the metadata
+          storage location.
         </DialogContent>
         <DialogActions>
           <Button onClick={onCloseDialog}>Dismiss</Button>
@@ -114,8 +127,8 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
       </Dialog>
     );
   } else if (
-      isSucceeded(operatorsState.status) &&
-      !operatorsState.operators.some((op) => op.is_active)
+    isSucceeded(operatorsState.status) &&
+    !operatorsState.operators.some((op) => op.is_active)
   ) {
     return (
       <>

@@ -1,5 +1,4 @@
-import { IntegrationConfig, Service } from "./integrations";
-import { ServiceType } from "./operators";
+import { IntegrationConfig, Service } from './integrations';
 
 export enum StorageType {
   S3 = 's3',
@@ -81,8 +80,11 @@ export async function getMetadataStorageConfig(
   }
 }
 
-function convertS3IntegrationtoStorageConfig(storage: S3Config, metadataStorage: MetadataStorageConfig): MetadataStorageConfig {
-	return {
+function convertS3IntegrationtoStorageConfig(
+  storage: S3Config,
+  metadataStorage: MetadataStorageConfig
+): MetadataStorageConfig {
+  return {
     aqPath: metadataStorage.aqPath,
     retentionJobPeriod: metadataStorage.retentionJobPeriod,
     apiKey: metadataStorage.apiKey,
@@ -90,14 +92,17 @@ function convertS3IntegrationtoStorageConfig(storage: S3Config, metadataStorage:
       type: StorageType.S3,
       s3Config: {
         region: storage.region,
-        bucket: "s3://" + storage.bucket,
-      }
-    }
-	}
+        bucket: 's3://' + storage.bucket,
+      },
+    },
+  };
 }
 
-function convertGCSIntegrationtoStorageConfig(storage: GCSConfig, metadataStorage: MetadataStorageConfig): MetadataStorageConfig {
-	return {
+function convertGCSIntegrationtoStorageConfig(
+  storage: GCSConfig,
+  metadataStorage: MetadataStorageConfig
+): MetadataStorageConfig {
+  return {
     aqPath: metadataStorage.aqPath,
     retentionJobPeriod: metadataStorage.retentionJobPeriod,
     apiKey: metadataStorage.apiKey,
@@ -105,21 +110,27 @@ function convertGCSIntegrationtoStorageConfig(storage: GCSConfig, metadataStorag
       type: StorageType.GCS,
       gcsConfig: {
         bucket: storage.bucket,
-      }
-    }
-	}
+      },
+    },
+  };
 }
 
 export function convertIntegrationConfigToMetadataStorageConfig(
   storage: IntegrationConfig,
   metadataStorage: MetadataStorageConfig,
-  service: Service,
+  service: Service
 ): MetadataStorageConfig {
   switch (service) {
     case 'S3':
-      return convertS3IntegrationtoStorageConfig(storage as S3Config, metadataStorage);
+      return convertS3IntegrationtoStorageConfig(
+        storage as S3Config,
+        metadataStorage
+      );
     case 'GCS':
-      return convertGCSIntegrationtoStorageConfig(storage as GCSConfig, metadataStorage);
+      return convertGCSIntegrationtoStorageConfig(
+        storage as GCSConfig,
+        metadataStorage
+      );
     default:
       return null;
   }

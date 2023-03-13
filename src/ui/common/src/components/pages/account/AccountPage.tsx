@@ -8,7 +8,6 @@ import {
 import React from 'react';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getMetadataStorageConfig, MetadataStorageConfig } from '../../../utils/storage';
 
 import { handleLoadIntegrations } from '../../../reducers/integrations';
 import { AppDispatch, RootState } from '../../../stores/store';
@@ -24,6 +23,10 @@ import {
   isLoading,
   isSucceeded,
 } from '../../../utils/shared';
+import {
+  getMetadataStorageConfig,
+  MetadataStorageConfig,
+} from '../../../utils/storage';
 import CodeBlock from '../../CodeBlock';
 import { useAqueductConsts } from '../../hooks/useAqueductConsts';
 import DefaultLayout from '../../layouts/default';
@@ -100,7 +103,8 @@ client = aqueduct.Client(
     (state: RootState) => state.integrationsReducer
   );
 
-  const [metadataStorageConfig, setMetadataStorageConfig] = useState<MetadataStorageConfig | null>(null);
+  const [metadataStorageConfig, setMetadataStorageConfig] =
+    useState<MetadataStorageConfig | null>(null);
   const notifications = Object.values(integrationsReducer.integrations).filter(
     (x) =>
       SupportedIntegrations[x.service].category ===
@@ -114,7 +118,10 @@ client = aqueduct.Client(
 
   useEffect(() => {
     async function fetchMetadataStorageConfig() {
-      const metadataStorageConfig = await getMetadataStorageConfig(apiAddress, user.apiKey);
+      const metadataStorageConfig = await getMetadataStorageConfig(
+        apiAddress,
+        user.apiKey
+      );
       setMetadataStorageConfig(metadataStorageConfig);
     }
 
