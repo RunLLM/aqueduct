@@ -29,13 +29,13 @@ const (
 )
 
 type JobError interface {
-	errors.DropboxError
+	errors.AqError
 
 	Code() JobErrorCode
 }
 
 type jobErrorImpl struct {
-	errors.DropboxError
+	errors.AqError
 	code JobErrorCode
 }
 
@@ -44,16 +44,16 @@ func (je *jobErrorImpl) Code() JobErrorCode {
 }
 
 func wrapInJobError(code JobErrorCode, err error) JobError {
-	if dropboxErr, ok := err.(errors.DropboxError); ok {
+	if aqErr, ok := err.(errors.AqError); ok {
 		return &jobErrorImpl{
-			DropboxError: dropboxErr,
-			code:         code,
+			AqError: aqErr,
+			code:    code,
 		}
 	}
 
 	return &jobErrorImpl{
-		DropboxError: errors.New(err.Error()),
-		code:         code,
+		AqError: errors.New(err.Error()),
+		code:    code,
 	}
 }
 

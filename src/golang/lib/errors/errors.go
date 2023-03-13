@@ -2,6 +2,11 @@ package errors
 
 import "github.com/dropbox/godropbox/errors"
 
+// AqError exposes additional information about an error
+type AqError interface {
+	errors.DropboxError
+}
+
 // Is reports whether err matches target
 func Is(err, target error) bool {
 	dboxErr, isErrDbox := err.(errors.DropboxError)

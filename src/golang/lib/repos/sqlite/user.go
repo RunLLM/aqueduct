@@ -136,7 +136,7 @@ func generateAPIKey(ctx context.Context, DB database.Database) (string, error) {
 
 		r := &userReader{}
 		_, err = r.GetByAPIKey(ctx, apiKey, DB)
-		if err != nil && errors.IsError(err, database.ErrNoRows) {
+		if err != nil && errors.Is(err, database.ErrNoRows) {
 			// No row with this API key was found
 			return apiKey, nil
 		}
