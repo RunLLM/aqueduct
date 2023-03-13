@@ -19,6 +19,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/dynamic"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
@@ -30,7 +31,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
@@ -39,6 +39,13 @@ const (
 	pollAuthenticateInterval = 500 * time.Millisecond
 	pollAuthenticateTimeout  = 2 * time.Minute
 )
+
+var pathConfigKeys = map[string]bool{
+	"config_file_path":    true, // AWS, S3, Athena credentials path
+	"kubeconfig_path":     true, // K8s credentials path
+	"s3_credentials_path": true, // Airflow S3 credentials path
+	"database":            true, // SQLite database path
+}
 
 // Route: /integration/connect
 // Method: POST
@@ -112,6 +119,10 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 
 	if service == shared.Github || service == shared.GoogleSheets {
 		return nil, http.StatusBadRequest, errors.Newf("%s integration type is currently not supported", service)
+	}
+
+	if err = convertToAbsolutePath(configMap); err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Error getting server's home directory path")
 	}
 
 	config := auth.NewStaticConfig(configMap)
@@ -790,7 +801,7 @@ func ValidatePrerequisites(
 	if err == nil {
 		return http.StatusBadRequest, errors.Newf("Cannot connect to an integration %s, since it already exists.", name)
 	}
-	if err != database.ErrNoRows {
+	if !errors.Is(err, database.ErrNoRows()) {
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to query for existing integrations.")
 	}
 
@@ -866,4 +877,20 @@ func validateConda() (int, error) {
 	}
 
 	return http.StatusOK, nil
+}
+
+func convertToAbsolutePath(configMap map[string]string) error {
+	for key, path := range configMap {
+		if _, ok := pathConfigKeys[key]; ok {
+			if strings.HasPrefix(path, "~") {
+				homeDir, err := os.UserHomeDir()
+				if err != nil {
+					return err
+				}
+				configMap[key] = strings.Replace(path, "~", homeDir, 1)
+			}
+		}
+	}
+
+	return nil
 }
