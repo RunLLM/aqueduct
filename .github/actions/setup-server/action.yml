@@ -38,6 +38,10 @@ runs:
       shell: bash
       run: pip3 install SQLAlchemy==1.4.46
 
+    - name: Install pyArrow for reading parquet table
+      shell: bash
+      run: pip3 install pyarrow==7.0.0
+
     - name: Start the server
       shell: bash
       run: (aqueduct start --verbose > $SERVER_LOGS_FILE 2>&1 &)
