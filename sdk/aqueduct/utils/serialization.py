@@ -378,7 +378,3 @@ def extract_val_from_local_data(val: LocalData) -> Any:
     return deserialized_val
 
 
-def extract_serialized_local_data(
-    val: str, artifact_type: ArtifactType, serialization_type: SerializationType
-) -> Any:
-    return deserialize(serialization_type, artifact_type, _base64_string_to_bytes(val))

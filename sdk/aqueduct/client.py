@@ -56,7 +56,7 @@ from aqueduct.utils.dag_deltas import (
     validate_overwriting_parameters,
 )
 from aqueduct.utils.function_packaging import infer_requirements_from_env
-from aqueduct.utils.serialization import deserialize
+from aqueduct.utils.serialization import deserialize, extract_val_from_local_data
 from aqueduct.utils.type_inference import _base64_string_to_bytes, infer_artifact_type
 from aqueduct.utils.utils import (
     construct_param_spec,
@@ -220,6 +220,7 @@ class Client:
             A parameter artifact.
         """
         check_explicit_param_name(self._dag, name)
+        default = extract_val_from_local_data(default)
         return create_param_artifact(self._dag, name, default, description)
 
     def list_params(self) -> Dict[str, Any]:

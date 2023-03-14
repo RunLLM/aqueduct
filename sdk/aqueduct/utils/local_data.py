@@ -21,18 +21,20 @@ def local_data(
         path:
             The path to the data.
         artifact_type:
-                The expected type of the data. The `ArtifactType` class in `enums.py` contains all
-                supported types, except for ArtifactType.UNTYPED.
+                The expected type of the data. Currently local_data has support for ArtifactType.TABLE
+                and ArtifactType.IMAGE
         format:
                 If the artifact type is ArtifactType.TABLE, the user has to specify the table format.
-                We currently support JSON, CSV, and Parquet.
+                We currently support "JSON", "CSV", and "Parquet".
 
     Returns
-        A `LocalData` object which contains necessary information to create a parameter artifact.
+        A configuration object which you can use to reference data in the local filesystem.
     """
 
     format_enum = _convert_to_local_data_table_format(format)
-    return LocalData(path=path, artifact_type=artifact_type, format=format_enum)
+    local_data = LocalData(path=path, artifact_type=artifact_type, format=format_enum)
+    validate_local_data(local_data)
+    return local_data
 
 
 def validate_local_data(val: LocalData) -> None:
@@ -43,7 +45,7 @@ def validate_local_data(val: LocalData) -> None:
 
     if not os.path.isfile(file_path):
         raise InvalidUserArgumentException(
-            "Given path file %s to local data does not exist." % file_path
+            "Given path file '%s' to local data does not exist." % file_path
         )
 
     if os.path.getsize(file_path) > MAXIMUM_LOCAL_DATA_SIZE:

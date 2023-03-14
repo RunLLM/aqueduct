@@ -590,22 +590,18 @@ def test_param_management(client):
 
 
 def test_local_table_data_parameter(client, flow_name, engine):
-    @op(outputs=["output"])
-    def append_row_to_df(df, row):
-        """`row` is a list of values to append to the input dataframe."""
-        df.loc[len(df.index)] = row
-        return df
-
     row_to_add = ["new hotel", "09-28-1996", "US", "It was new."]
 
     file_type = ["csv", "json", "parquet"]
+    output_artifact_list = []
+    input_data_list =[]
     for extension in file_type:
-        local_data = local_data(
+        local_table_data = local_data(
             path="data/hotel_reviews." + extension,
             artifact_type=ArtifactType.TABLE,
             format=extension,
         )
-        data_param = client.create_param(name="data_" + extension, default=local_data)
+        data_param = client.create_param(name="data_" + extension, default=local_table_data)
 
         if extension == "csv":
             input_df = pd.read_csv("data/hotel_reviews." + extension)
@@ -615,26 +611,37 @@ def test_local_table_data_parameter(client, flow_name, engine):
             input_df = pd.read_parquet("data/hotel_reviews." + extension)
         assert input_df.equals(data_param.get())
 
+        @op(name= extension,outputs=["output_"+ extension])
+        def append_row_to_df(df, row):
+            """`row` is a list of values to append to the input dataframe."""
+            df.loc[len(df.index)] = row
+            return df
+        
         output = append_row_to_df(data_param, row_to_add)
         input_df.loc[len(input_df.index)] = row_to_add
         output_df = output.get()
         assert output_df.equals(input_df)
 
-    flow = publish_flow_test(client, artifacts=[output], name=flow_name(), engine=engine)
+        output_artifact_list.append(output)
+        input_data_list.append(input_df)
+
+    flow = publish_flow_test(client, artifacts= output_artifact_list, name=flow_name(), engine=engine)
     flow_run = flow.latest()
-    assert flow_run.artifact("output").get().equals(input_df)
+    assert flow_run.artifact("output_csv").get().equals(input_data_list[0])
+    assert flow_run.artifact("output_json").get().equals(input_data_list[1])
+    assert flow_run.artifact("output_parquet").get().equals(input_data_list[2])
 
 
 def test_invalid_local_data(client):
     # check Local Data with file path that does not exist will fail
-    with pytest.raises(InvalidUserArgumentException):
-        local_data = local_data(path="data/hotel_reviews", artifact_type=ArtifactType.IMAGE)
-        client.create_param(name="data", default=local_data)
+    with pytest.raises(InvalidUserArgumentException, match="Given path file 'data/hotel_reviews' to local data does not exist."):
+        local_table_data = local_data(path="data/hotel_reviews", artifact_type=ArtifactType.IMAGE)
+        client.create_param(name="data", default=local_table_data)
 
     # Check that format is supplied when Artifact type is table
-    with pytest.raises(InvalidUserArgumentException):
-        local_data = local_data(path="data/hotel_reviews.json", artifact_type=ArtifactType.TABLE)
-        client.create_param(name="data", default=local_data)
+    with pytest.raises(InvalidUserArgumentException, match="Specify format in order to use local data as TableArtifact."):
+        local_table_data = local_data(path="data/hotel_reviews.json", artifact_type=ArtifactType.TABLE)
+        client.create_param(name="data", default=local_table_data)
 
 
 def test_local_image_data_parameter(client, flow_name, engine):
@@ -644,8 +651,8 @@ def test_local_image_data_parameter(client, flow_name, engine):
             raise Exception("Expected image.")
         return input
 
-    local_data = local_data(path="data/aqueduct.jpg", artifact_type=ArtifactType.IMAGE)
-    image_param = client.create_param(name="data", default=local_data)
+    local_image_data = local_data(path="data/aqueduct.jpg", artifact_type=ArtifactType.IMAGE)
+    image_param = client.create_param(name="data", default=local_image_data)
 
     image_output = must_be_image(image_param)
     assert isinstance(image_output, GenericArtifact)

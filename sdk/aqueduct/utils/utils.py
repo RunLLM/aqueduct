@@ -21,7 +21,6 @@ from croniter import croniter
 
 from .serialization import (
     artifact_type_to_serialization_type,
-    extract_val_from_local_data,
     serialize_val,
 )
 from .type_inference import _bytes_to_base64_string
@@ -116,10 +115,6 @@ def construct_param_spec(
     # Not derived from bson.
     # For now, bson_table applies only to tables read from mongo.
     derived_from_bson = False
-
-    if isinstance(val, LocalData):
-        validate_local_data(val)
-        val = extract_val_from_local_data(val)
 
     serialization_type = artifact_type_to_serialization_type(
         artifact_type,
