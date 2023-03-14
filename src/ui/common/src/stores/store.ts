@@ -11,6 +11,7 @@ import notificationsReducer from '../reducers/notifications';
 import serverConfigReducer from '../reducers/serverConfig';
 import workflowReducer from '../reducers/workflow';
 import workflowDagResultsReducer from '../reducers/workflowDagResults';
+import workflowDagsReducer from '../reducers/workflowDags';
 
 export const store = configureStore({
   reducer: {
@@ -23,6 +24,7 @@ export const store = configureStore({
     integrationReducer,
     serverConfigReducer,
     workflowReducer,
+    workflowDagsReducer,
     workflowDagResultsReducer,
     artifactResultsReducer,
   },

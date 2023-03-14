@@ -53,8 +53,12 @@ import AccountNotificationSettingsSelector from './components/notifications/Acco
 import NotificationLevelSelector from './components/notifications/NotificationLevelSelector';
 import { NotificationListItem } from './components/notifications/NotificationListItem';
 import NotificationsPopover from './components/notifications/NotificationsPopover';
+import RequireOperator from './components/operators/RequireOperator';
 import AccountPage from './components/pages/account/AccountPage';
 import ArtifactDetailsPage from './components/pages/artifact/id';
+import useArtifact, {
+  useArtifactHistory,
+} from './components/pages/artifact/id/hook';
 import CheckDetailsPage from './components/pages/check/id';
 import DataPage from './components/pages/data';
 import ErrorPage from './components/pages/ErrorPage';
@@ -64,7 +68,9 @@ import IntegrationsPage from './components/pages/integrations';
 import LoginPage from './components/pages/LoginPage';
 import MetricDetailsPage from './components/pages/metric/id';
 import OperatorDetailsPage from './components/pages/operator/id';
+import useOpeartor from './components/pages/operator/id/hook';
 import WorkflowPage from './components/pages/workflow/id';
+import useWorkflow from './components/pages/workflow/id/hook';
 import WorkflowsPage from './components/pages/workflows';
 import { Button } from './components/primitives/Button.styles';
 import { IconButton } from './components/primitives/IconButton.styles';
@@ -89,12 +95,14 @@ import NumericArtifactNode from './components/workflows/nodes/NumericArtifactNod
 import ParameterOperatorNode from './components/workflows/nodes/ParameterOperatorNode';
 import TableArtifactNode from './components/workflows/nodes/TableArtifactNode';
 import ReactFlowCanvas from './components/workflows/ReactFlowCanvas';
+import RequireDagOrResult from './components/workflows/RequireDagOrResult';
 import VersionSelector from './components/workflows/version_selector';
 import WorkflowCard from './components/workflows/workflowCard';
 import WorkflowHeader from './components/workflows/workflowHeader';
 import WorkflowSettings from './components/workflows/WorkflowSettings';
 import { handleGetArtifactResultContent } from './handlers/getArtifactResultContent';
 import { handleGetServerConfig } from './handlers/getServerConfig';
+import { handleGetWorkflowDag } from './handlers/getWorkflowDag';
 import { handleGetWorkflowDagResult } from './handlers/getWorkflowDagResult';
 import { handleListArtifactResults } from './handlers/listArtifactResults';
 import artifactResultContents from './reducers/artifactResultContents';
@@ -144,6 +152,7 @@ import workflow, {
   workflowSlice,
 } from './reducers/workflow';
 import workflowDagResults from './reducers/workflowDagResults';
+import workflowDags from './reducers/workflowDags';
 import { store } from './stores/store';
 import { theme } from './styles/theme/theme';
 import { ArtifactType } from './utils/artifacts';
@@ -270,6 +279,7 @@ export {
   handleGetOperatorResults,
   handleGetServerConfig,
   handleGetWorkflow,
+  handleGetWorkflowDag,
   handleGetWorkflowDagResult,
   handleListArtifactResults,
   handleListIntegrationObjects,
@@ -340,6 +350,8 @@ export {
   ReactflowNodeType,
   RedshiftCard,
   RedshiftDialog,
+  RequireDagOrResult,
+  RequireOperator,
   resetConnectNewStatus,
   resetSelectedNode,
   resetTestConnectStatus,
@@ -364,13 +376,18 @@ export {
   Tabs,
   theme,
   useAqueductConsts,
+  useArtifact,
+  useArtifactHistory,
+  useOpeartor,
   UserProfile,
   useUser,
+  useWorkflow,
   VersionSelector,
   WidthTransition,
   workflow,
   WorkflowCard,
   workflowDagResults,
+  workflowDags,
   WorkflowHeader,
   WorkflowPage,
   WorkflowSettings,

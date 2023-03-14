@@ -2,37 +2,38 @@
 // only used for operator and artifact details page.
 import { createSlice } from '@reduxjs/toolkit';
 
-import { handleGetWorkflowDagResult } from '../handlers/getWorkflowDagResult';
-import { DagResultResponse } from '../handlers/responses/dag';
+import { handleGetWorkflowDag } from '../handlers/getWorkflowDag';
+import { DagResponse } from '../handlers/responses/dag';
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 
-export type WorkflowDagResultWithLoadingStatus = {
+export type WorkflowDagWithLoadingStatus = {
   status: LoadingStatus;
-  result?: DagResultResponse;
+  result?: DagResponse;
 };
-export interface WorkflowDagResultsState {
+
+export interface WorkflowDagsState {
   results: {
-    [id: string]: WorkflowDagResultWithLoadingStatus;
+    [id: string]: WorkflowDagWithLoadingStatus;
   };
 }
 
-const initialState: WorkflowDagResultsState = { results: {} };
+const initialState: WorkflowDagsState = { results: {} };
 
-export const workflowDagResultsSlice = createSlice({
-  name: 'workflowDagResultsReducer',
+export const workflowDagsSlice = createSlice({
+  name: 'workflowDagsReducer',
   initialState: initialState,
   reducers: {},
   extraReducers: (builder) => {
-    builder.addCase(handleGetWorkflowDagResult.pending, (state, { meta }) => {
-      const id = meta.arg.workflowDagResultId;
+    builder.addCase(handleGetWorkflowDag.pending, (state, { meta }) => {
+      const id = meta.arg.workflowDagId;
       state.results[id] = {
         status: { loading: LoadingStatusEnum.Loading, err: '' },
       };
     });
     builder.addCase(
-      handleGetWorkflowDagResult.fulfilled,
+      handleGetWorkflowDag.fulfilled,
       (state, { meta, payload }) => {
-        const id = meta.arg.workflowDagResultId;
+        const id = meta.arg.workflowDagId;
         state.results[id] = {
           result: payload,
           status: { loading: LoadingStatusEnum.Succeeded, err: '' },
@@ -40,9 +41,9 @@ export const workflowDagResultsSlice = createSlice({
       }
     );
     builder.addCase(
-      handleGetWorkflowDagResult.rejected,
+      handleGetWorkflowDag.rejected,
       (state, { meta, payload }) => {
-        const id = meta.arg.workflowDagResultId;
+        const id = meta.arg.workflowDagId;
 
         state.results[id] = {
           status: { loading: LoadingStatusEnum.Failed, err: payload as string },
@@ -52,4 +53,4 @@ export const workflowDagResultsSlice = createSlice({
   },
 });
 
-export default workflowDagResultsSlice.reducer;
+export default workflowDagsSlice.reducer;

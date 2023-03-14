@@ -27,7 +27,8 @@ export function getDataSideSheetContent(
   user: UserProfile,
   currentNode: SelectedNode,
   workflowIdProp: string,
-  workflowDagResultIdProp: string
+  workflowDagIdProp: string | undefined,
+  workflowDagResultIdProp: string | undefined
 ): React.ReactElement {
   const SideSheetLayout = ({ children }) => {
     return (
@@ -51,7 +52,8 @@ export function getDataSideSheetContent(
         <ArtifactDetailsPage
           user={user}
           Layout={SideSheetLayout}
-          operatorIdProp={currentNode.id}
+          artifactIdProp={currentNode.id}
+          workflowDagIdProp={workflowDagIdProp}
           workflowDagResultIdProp={workflowDagResultIdProp}
           workflowIdProp={workflowIdProp}
           sideSheetMode={true}
@@ -63,6 +65,7 @@ export function getDataSideSheetContent(
           user={user}
           Layout={SideSheetLayout}
           operatorIdProp={currentNode.id}
+          workflowDagIdProp={workflowDagIdProp}
           workflowDagResultIdProp={workflowDagResultIdProp}
           workflowIdProp={workflowIdProp}
           sideSheetMode={true}
@@ -74,6 +77,7 @@ export function getDataSideSheetContent(
           user={user}
           Layout={SideSheetLayout}
           operatorIdProp={currentNode.id}
+          workflowDagIdProp={workflowDagIdProp}
           workflowDagResultIdProp={workflowDagResultIdProp}
           workflowIdProp={workflowIdProp}
           sideSheetMode={true}
@@ -87,6 +91,7 @@ export function getDataSideSheetContent(
           user={user}
           Layout={SideSheetLayout}
           operatorIdProp={currentNode.id}
+          workflowDagIdProp={workflowDagIdProp}
           workflowDagResultIdProp={workflowDagResultIdProp}
           workflowIdProp={workflowIdProp}
           sideSheetMode={true}

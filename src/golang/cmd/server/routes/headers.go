@@ -19,5 +19,6 @@ const (
 
 	MetadataOnlyHeader = "metadata-only"
 
+	RunNowHeader              = "run-now"
 	DynamicEngineActionHeader = "action"
 )

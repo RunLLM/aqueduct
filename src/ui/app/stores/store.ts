@@ -6,6 +6,7 @@ import { nodeSelection as nodeSelectionReducer } from '@aqueducthq/common';
 import { notifications as notificationsReducer } from '@aqueducthq/common';
 import { workflow as workflowReducer } from '@aqueducthq/common';
 import { workflowDagResults as workflowDagResultsReducer } from '@aqueducthq/common';
+import { workflowDags as workflowDagsReducer } from '@aqueducthq/common';
 import { artifactResultContents as artifactResultContentsReducer } from '@aqueducthq/common';
 import { artifactResults as artifactResultsReducer } from '@aqueducthq/common';
 import { serverConfig as serverConfigReducer } from '@aqueducthq/common';
@@ -20,6 +21,7 @@ export const store = configureStore({
         integrationReducer,
         integrationsReducer,
         workflowReducer,
+        workflowDagsReducer,
         workflowDagResultsReducer,
         artifactResultsReducer,
         artifactResultContentsReducer,
