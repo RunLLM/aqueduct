@@ -19,6 +19,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/dynamic"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
@@ -30,7 +31,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
@@ -39,6 +39,13 @@ const (
 	pollAuthenticateInterval = 500 * time.Millisecond
 	pollAuthenticateTimeout  = 2 * time.Minute
 )
+
+var pathConfigKeys = map[string]bool{
+	"config_file_path":    true, // AWS, S3, Athena credentials path
+	"kubeconfig_path":     true, // K8s credentials path
+	"s3_credentials_path": true, // Airflow S3 credentials path
+	"database":            true, // SQLite database path
+}
 
 // Route: /integration/connect
 // Method: POST
@@ -114,6 +121,10 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 		return nil, http.StatusBadRequest, errors.Newf("%s integration type is currently not supported", service)
 	}
 
+	if err = convertToAbsolutePath(configMap); err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Error getting server's home directory path")
+	}
+
 	config := auth.NewStaticConfig(configMap)
 
 	// Check if this integration should be used as the new storage layer
@@ -186,22 +197,49 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		}
 
 		kubeconfigPath := filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "dynamic", "kube_config")
+
+		awsConfig, err := lib_utils.ParseAWSConfig(args.Config)
+		if err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to parse AWS config.")
+		}
+
+		config := shared.DynamicK8sConfig{
+			Keepalive:   shared.DefaultDynamicK8sConfig.Keepalive,
+			CpuNodeType: shared.DefaultDynamicK8sConfig.CpuNodeType,
+			GpuNodeType: shared.DefaultDynamicK8sConfig.GpuNodeType,
+			MinCpuNode:  shared.DefaultDynamicK8sConfig.MinCpuNode,
+			MaxCpuNode:  shared.DefaultDynamicK8sConfig.MaxCpuNode,
+			MinGpuNode:  shared.DefaultDynamicK8sConfig.MinGpuNode,
+			MaxGpuNode:  shared.DefaultDynamicK8sConfig.MaxGpuNode,
+		}
+
+		config.Update(awsConfig.K8s)
+
+		dynamicK8sConfig := map[string]string{
+			shared.K8sKubeconfigPathKey:     kubeconfigPath,
+			shared.K8sClusterNameKey:        shared.DynamicK8sClusterName,
+			shared.K8sDynamicKey:            strconv.FormatBool(true),
+			shared.K8sCloudIntegrationIdKey: cloudIntegration.ID.String(),
+			shared.K8sUseSameClusterKey:     strconv.FormatBool(false),
+			shared.K8sStatusKey:             string(shared.K8sClusterTerminatedStatus),
+			shared.K8sDesiredCpuNodeKey:     config.MinCpuNode,
+			shared.K8sDesiredGpuNodeKey:     config.MinGpuNode,
+		}
+
+		for k, v := range config.ToMap() {
+			dynamicK8sConfig[k] = v
+		}
+
+		if err := dynamic.CheckIfValidConfig(dynamic.K8sClusterCreateAction, dynamicK8sConfig); err != nil {
+			return emptyResp, http.StatusBadRequest, err
+		}
+
 		// Register a dynamic k8s integration.
 		connectIntegrationArgs := &ConnectIntegrationArgs{
-			AqContext: args.AqContext,
-			Name:      fmt.Sprintf("%s:%s", args.Name, "k8s"),
-			Service:   shared.Kubernetes,
-			Config: auth.NewStaticConfig(
-				map[string]string{
-					shared.K8sKubeconfigPathKey:     kubeconfigPath,
-					shared.K8sClusterNameKey:        shared.DynamicK8sClusterName,
-					shared.K8sDynamicKey:            strconv.FormatBool(true),
-					shared.K8sCloudIntegrationIdKey: cloudIntegration.ID.String(),
-					shared.K8sUseSameClusterKey:     strconv.FormatBool(false),
-					shared.K8sStatusKey:             string(shared.K8sClusterTerminatedStatus),
-					shared.K8sKeepaliveKey:          strconv.FormatInt(int64(shared.DefaultKeepalive), 10),
-				},
-			),
+			AqContext:    args.AqContext,
+			Name:         fmt.Sprintf("%s:%s", args.Name, "k8s"),
+			Service:      shared.Kubernetes,
+			Config:       auth.NewStaticConfig(dynamicK8sConfig),
 			UserOnly:     false,
 			SetAsStorage: false,
 		}
@@ -763,7 +801,7 @@ func ValidatePrerequisites(
 	if err == nil {
 		return http.StatusBadRequest, errors.Newf("Cannot connect to an integration %s, since it already exists.", name)
 	}
-	if err != database.ErrNoRows {
+	if !errors.Is(err, database.ErrNoRows()) {
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to query for existing integrations.")
 	}
 
@@ -839,4 +877,20 @@ func validateConda() (int, error) {
 	}
 
 	return http.StatusOK, nil
+}
+
+func convertToAbsolutePath(configMap map[string]string) error {
+	for key, path := range configMap {
+		if _, ok := pathConfigKeys[key]; ok {
+			if strings.HasPrefix(path, "~") {
+				homeDir, err := os.UserHomeDir()
+				if err != nil {
+					return err
+				}
+				configMap[key] = strings.Replace(path, "~", homeDir, 1)
+			}
+		}
+	}
+
+	return nil
 }

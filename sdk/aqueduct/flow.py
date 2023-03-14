@@ -2,7 +2,7 @@ import json
 import textwrap
 import uuid
 from collections import defaultdict
-from typing import DefaultDict, Dict, List, Union
+from typing import DefaultDict, Dict, List, Optional, Union
 
 from aqueduct.backend.response_models import (
     GetWorkflowResponse,
@@ -39,15 +39,11 @@ class Flow:
 
     def _get_workflow_resp(self) -> GetWorkflowResponse:
         resp = globals.__GLOBAL_API_CLIENT__.get_workflow(self._id)
-        if len(resp.workflow_dag_results) == 0:
-            raise InvalidUserActionException("This flow has not been run yet.")
         return resp
 
     def name(self) -> str:
         """Returns the latest name of the flow."""
-        resp = self._get_workflow_resp()
-        latest_result = resp.workflow_dag_results[-1]
-        latest_workflow_dag = resp.workflow_dags[latest_result.workflow_dag_id]
+        latest_workflow_dag = self._get_latest_dag_resp()
         assert latest_workflow_dag.metadata.name is not None
         return latest_workflow_dag.metadata.name
 
@@ -92,8 +88,20 @@ class Flow:
             status=dag_result.status,
         )
 
-    def latest(self) -> FlowRun:
+    def _get_latest_dag_resp(self) -> WorkflowDagResponse:
         resp = self._get_workflow_resp()
+        if not resp.workflow_dag_results:
+            assert bool(resp.workflow_dags)
+            return list(resp.workflow_dags.values())[0]
+
+        latest_result = resp.workflow_dag_results[-1]
+        return resp.workflow_dags[latest_result.workflow_dag_id]
+
+    def latest(self) -> Optional[FlowRun]:
+        resp = self._get_workflow_resp()
+        if not resp.workflow_dag_results:
+            return None
+
         latest_result = resp.workflow_dag_results[-1]
         latest_workflow_dag = resp.workflow_dags[latest_result.workflow_dag_id]
         return self._construct_flow_run(latest_result, latest_workflow_dag)
@@ -136,9 +144,7 @@ class Flow:
 
     def describe(self) -> None:
         """Prints out a human-readable description of the flow."""
-        resp = self._get_workflow_resp()
-        latest_result = resp.workflow_dag_results[-1]
-        latest_workflow_dag = resp.workflow_dags[latest_result.workflow_dag_id]
+        latest_workflow_dag = self._get_latest_dag_resp()
 
         latest_metadata = latest_workflow_dag.metadata
         assert latest_metadata.schedule is not None, "A flow must have a schedule."
@@ -155,8 +161,11 @@ class Flow:
             UI: {url}
             Schedule: {latest_metadata.schedule.json(exclude_none=True)}
             RetentionPolicy: {latest_metadata.retention_policy.json(exclude_none=True)}
-            Runs:
             """
             )
         )
-        print(json.dumps(self.list_runs(), sort_keys=False, indent=4))
+
+        runs = self.list_runs()
+        if runs:
+            print("Runs:")
+            print(json.dumps(runs, sort_keys=False, indent=4))

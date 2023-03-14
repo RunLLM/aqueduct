@@ -945,8 +945,9 @@ func (eng *aqEngine) execute(
 
 		for _, op := range inProgressOps {
 			if op.Dynamic() && !op.GetDynamicProperties().Prepared() {
-				err = dynamic.PrepareEngine(
+				err = dynamic.PrepareCluster(
 					ctx,
+					&shared.DynamicK8sConfig{}, // empty configDelta map
 					op.GetDynamicProperties().GetEngineIntegrationId(),
 					eng.IntegrationRepo,
 					vaultObject,
@@ -1038,7 +1039,7 @@ func (eng *aqEngine) execute(
 			delete(inProgressOps, op.ID())
 
 			if op.Dynamic() {
-				err = dynamic.UpdateEngineLastUsedTimestamp(
+				err = dynamic.UpdateClusterLastUsedTimestamp(
 					ctx,
 					op.GetDynamicProperties().GetEngineIntegrationId(),
 					eng.IntegrationRepo,

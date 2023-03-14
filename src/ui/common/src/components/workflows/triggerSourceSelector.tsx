@@ -4,7 +4,8 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
 import React from 'react';
-import { ListWorkflowSummary } from 'src/utils/workflows';
+
+import { ListWorkflowSummary } from '../../utils/workflows';
 
 type Props = {
   sourceId: string;
