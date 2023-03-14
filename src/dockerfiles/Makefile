@@ -132,15 +132,15 @@ publish-lambda:
 
 # Building GPU Images
 build-function-gpu:
-	docker build . -t aqueducthq/gpu_cuda1141_py37:$(VERSION) -f gpu/cuda_11_4_1/function37gpu.dockerfile
-	docker build . -t aqueducthq/gpu_cuda1141_py38:$(VERSION) -f gpu/cuda_11_4_1/function38gpu.dockerfile
-	docker build . -t aqueducthq/gpu_cuda1141_py39:$(VERSION) -f gpu/cuda_11_4_1/function39gpu.dockerfile
-	docker build . -t aqueducthq/gpu_cuda1141_py310:$(VERSION) -f gpu/cuda_11_4_1/function310gpu.dockerfile
+	docker build . -t aqueducthq/gpu_cuda1141_py37:$(VERSION) -f gpu/cuda_11_4_1/cuda_1141_py37.dockerfile
+	docker build . -t aqueducthq/gpu_cuda1141_py38:$(VERSION) -f gpu/cuda_11_4_1/cuda_1141_py38.dockerfile
+	docker build . -t aqueducthq/gpu_cuda1141_py39:$(VERSION) -f gpu/cuda_11_4_1/cuda_1141_py39.dockerfile
+	docker build . -t aqueducthq/gpu_cuda1141_py310:$(VERSION) -f gpu/cuda_11_4_1/cuda_1141_py310.dockerfile
 
-	docker build . -t aqueducthq/gpu_cuda1180_py37:$(VERSION) -f gpu/cuda_11_8_0/function37gpu.dockerfile
-	docker build . -t aqueducthq/gpu_cuda1180_py38:$(VERSION) -f gpu/cuda_11_8_0/function38gpu.dockerfile
-	docker build . -t aqueducthq/gpu_cuda1180_py39:$(VERSION) -f gpu/cuda_11_8_0/function39gpu.dockerfile
-	docker build . -t aqueducthq/gpu_cuda1180_py310:$(VERSION) -f gpu/cuda_11_8_0/function310gpu.dockerfile
+	docker build . -t aqueducthq/gpu_cuda1180_py37:$(VERSION) -f gpu/cuda_11_8_0/cuda_1180_py37.dockerfile
+	docker build . -t aqueducthq/gpu_cuda1180_py38:$(VERSION) -f gpu/cuda_11_8_0/cuda_1180_py38.dockerfile
+	docker build . -t aqueducthq/gpu_cuda1180_py39:$(VERSION) -f gpu/cuda_11_8_0/cuda_1180_py39.dockerfile
+	docker build . -t aqueducthq/gpu_cuda1180_py310:$(VERSION) -f gpu/cuda_11_8_0/cuda_1180_py310.dockerfile
 
 publish-gpu:
 	docker push aqueducthq/gpu_cuda1141_py37:$(VERSION)
