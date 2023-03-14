@@ -4,9 +4,8 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional
 
 from aqueduct.constants.enums import ArtifactType, OperatorType
-from aqueduct.logger import logger
 from aqueduct.models.dag import DAG
-from aqueduct.utils.naming import resolve_artifact_name
+from aqueduct.utils.naming import sanitize_artifact_name
 
 
 class BaseArtifact(ABC):
@@ -40,14 +39,7 @@ class BaseArtifact(ABC):
         self._from_operator_type = operator_type
 
     def set_name(self, name: str) -> None:
-        resolved_name = resolve_artifact_name(self._dag, name)
-        if resolved_name != name:
-            logger().warning(
-                "Artifact name %s is already taken. We will use %s instead." % (name, resolved_name)
-            )
-
-        # Update the name of the artifact.
-        self._dag.update_artifact_name(self._artifact_id, name)
+        self._dag.update_artifact_name(self._artifact_id, sanitize_artifact_name(name))
 
     def _describe(self) -> Dict[str, Any]:
         input_operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)

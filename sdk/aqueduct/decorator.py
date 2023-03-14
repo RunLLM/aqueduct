@@ -32,11 +32,7 @@ from aqueduct.models.operators import (
 from aqueduct.type_annotations import CheckFunction, MetricFunction, Number, UserFunction
 from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.function_packaging import serialize_function
-from aqueduct.utils.naming import (
-    default_artifact_name_from_op_name,
-    resolve_artifact_name,
-    resolve_param_name,
-)
+from aqueduct.utils.naming import default_artifact_name_from_op_name, sanitize_artifact_name
 from aqueduct.utils.utils import generate_engine_config, generate_uuid
 
 from aqueduct import globals
@@ -116,9 +112,10 @@ def wrap_spec(
     operator_id = generate_uuid()
     output_artifact_ids = [generate_uuid() for _ in output_artifact_type_hints]
 
+    # Even if there are multiple outputs, we give them all the same artifact names.
+    # These will be deduplicated at publish time.
     artifact_names = output_artifact_names or [
-        resolve_artifact_name(dag, default_artifact_name_from_op_name(op_name))
-        for _ in range(len(output_artifact_ids))
+        default_artifact_name_from_op_name(op_name) for _ in range(len(output_artifact_ids))
     ]
 
     apply_deltas_to_dag(
@@ -136,8 +133,9 @@ def wrap_spec(
                 output_artifacts=[
                     ArtifactMetadata(
                         id=output_artifact_id,
-                        name=artifact_names[i],
+                        name=sanitize_artifact_name(artifact_names[i]),
                         type=output_artifact_type_hints[i],
+                        explicitly_named=output_artifact_names is not None,
                     )
                     for i, output_artifact_id in enumerate(output_artifact_ids)
                 ],
@@ -281,8 +279,7 @@ def _convert_input_arguments_to_parameters(
 
             # We assume that the user-function's parameter name exists here, since we've disallowed any variable-length parameters.
             # An implicit parameter will have the operator name prepended to it.
-            candidate_param_name = op_name + ":" + fn_param_names[idx]
-            param_name = resolve_param_name(dag, candidate_param_name, is_implicit=True)
+            param_name = op_name + ":" + fn_param_names[idx]
 
             # Implicit parameters are only ever created (or error). They never replace anything.
             warnings.warn(
@@ -293,7 +290,9 @@ def _convert_input_arguments_to_parameters(
                 dag=dag,
                 param_name=param_name,
                 default=artifact,
-                is_implicit=True,
+                description="Implicitly created parameter corresponding argument `%s` to function `%s`."
+                % (fn_param_names[idx], op_name),
+                explicitly_named=False,
             )
 
     return artifacts

@@ -1,7 +1,7 @@
 import copy
 import uuid
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from aqueduct.constants.enums import OperatorType
 from aqueduct.error import (
@@ -9,7 +9,6 @@ from aqueduct.error import (
     InvalidUserActionException,
     InvalidUserArgumentException,
 )
-from aqueduct.logger import logger
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
 from aqueduct.models.operators import Operator, OperatorSpec, get_operator_type
@@ -214,7 +213,7 @@ def validate_overwriting_parameters(dag: DAG, parameters: Dict[str, Any]) -> Non
     """Validates any parameters the user supplies that override the default value.
 
     The following checks are performed:
-    - every parameter corresponds to a parameter artifact in the dag.
+    - every parameter corresponds to a single parameter artifact in the dag.
     - every parameter name is a string.
     - any parameter feeding into a sql query must have a string value (to resolve tags within the query).
 

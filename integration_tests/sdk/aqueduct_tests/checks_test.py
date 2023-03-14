@@ -102,9 +102,8 @@ def test_edit_check(client, data_integration):
     success_check = check_op(table_artifact)
     assert success_check.get()
 
-    # Attempting to fetch the previous check artifact should fail, since its been overwritten!
-    with pytest.raises(ArtifactNotFoundException):
-        failed_check.get()
+    assert failed_check.name() == "check_op artifact"
+    assert success_check.name() == "check_op artifact (1)"
 
 
 def test_delete_check(client, data_integration):

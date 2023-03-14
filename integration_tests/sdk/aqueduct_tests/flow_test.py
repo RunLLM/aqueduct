@@ -538,9 +538,10 @@ def test_operators_with_custom_output_names(client, flow_name, engine):
     c = passed(output2)
     assert c.name() == "check output"
 
-    # Fail if the name collides with another artifact in the dag.
-    with pytest.raises(InvalidUserActionException, match="has already been created locally"):
-        output1.set_name("metric output")
+    # If the name collides with another artifact in the dag, it will be deduplicated.
+    output1.set_name("metric output")
+    assert output1.name() == "metric output (1)"
+    output1.set_name("output1")  # set the name back
 
     flow = publish_flow_test(
         client,

@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 from aqueduct.constants.enums import (
     ArtifactType,
@@ -15,6 +15,7 @@ from aqueduct.error import (
 )
 from pydantic import BaseModel
 
+from ..utils.naming import bump_artifact_suffix
 from .artifact import ArtifactMetadata
 from .config import EngineConfig
 from .dag_rules import check_customized_resources_are_supported
@@ -50,9 +51,50 @@ class DAG(BaseModel):
     # The field must be set when publishing the workflow.
     metadata: Metadata
 
-    # Represents the default engine the DAG will be executed on. Can we overwritten
+    # Represents the default engine the DAG will be executed on. Can be overwritten
     # by individual operators.
     engine_config: EngineConfig = EngineConfig()
+
+    def validate_and_resolve_artifact_names(self) -> None:
+        """To be called by publish_flow() only.
+
+        Checks that all explicitly named artifacts are unique.
+
+        For implicitly named artifacts that collide, bumps their names using the `(num)` suffix.
+        The index is grouped by the input operator, so an operator with multiple output artifacts
+        that use our default naming scheme will always have consecutive numbers. Eg. (1), (2), (3)
+        """
+        reserved_artifact_names: Set[str] = set()
+
+        # In the first pass, check that there aren't any explicitly named artifacts that collide with each other.
+        for artifact in self.artifacts.values():
+            if artifact.explicitly_named:
+                if artifact.name in reserved_artifact_names:
+                    raise InvalidUserActionException(
+                        "Unable to publish flow. You are attempting to publish multiple artifacts explcitly named `%s`."
+                        "Please use `artifact.set_name(<new name>)` to resolve this naming collision. Or rerun with "
+                        "different output artifact names."
+                        "" % artifact.name
+                    )
+                reserved_artifact_names.add(artifact.name)
+
+        # In the second pass, resolve the names of any implicitly named artifacts that collide.
+        # Loop through the operators in rough execution order so that output artifacts are always numbered consecutively.
+        q: List[Operator] = [op for op in self.operators.values() if len(op.inputs) == 0]
+        while True:
+            curr_op = q.pop(0)
+            for output_artifact_id in curr_op.outputs:
+                output_artifact = self.must_get_artifact(output_artifact_id)
+                if output_artifact.explicitly_named:
+                    continue
+
+                while output_artifact.name in reserved_artifact_names:
+                    output_artifact.name = bump_artifact_suffix(output_artifact.name)
+                reserved_artifact_names.add(output_artifact.name)
+
+                q.extend(
+                    self.list_operators(on_artifact_id=output_artifact_id),
+                )
 
     def set_engine_config(
         self,
@@ -307,11 +349,10 @@ class DAG(BaseModel):
         self.must_get_artifact(artifact_id).type = artifact_type
 
     def update_artifact_name(self, artifact_id: uuid.UUID, new_name: str) -> None:
-        self.must_get_artifact(artifact_id).name = new_name
-
-    def update_operator_name(self, op_id: uuid.UUID, new_name: str) -> None:
-        # Update the name on the operator spec.
-        self.must_get_operator(op_id).name = new_name
+        """Assumption: the artifact being altered is being explicitly named."""
+        artifact = self.must_get_artifact(artifact_id)
+        artifact.name = new_name
+        artifact.explicitly_named = True
 
     def update_param_spec(self, name: str, new_spec: OperatorSpec) -> None:
         """Checks that:
@@ -327,10 +368,6 @@ class DAG(BaseModel):
         assert get_operator_type(param_op) == OperatorType.PARAM
 
         self.operators[str(param_op.id)].spec = new_spec
-
-    def update_operator_function(self, operator: Operator, serialized_function: bytes) -> None:
-        if operator in self.operators.values():
-            operator.update_serialized_function(serialized_function)
 
     def remove_operator(
         self,

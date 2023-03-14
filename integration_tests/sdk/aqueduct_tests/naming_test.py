@@ -35,13 +35,13 @@ def test_extract_with_default_name_collision(client, data_integration):
 
 
 def test_extract_with_explicit_name_collision(client, data_integration):
-    # In the case where an explicit name is supplied, we will overwrite any colliding ops.
+    # In the case where an explicit name is supplied twice, we will still deduplicate.
     table_artifact_1 = extract(data_integration, DataObject.SENTIMENT, op_name="sql query")
 
     fn_artifact = dummy_sentiment_model(table_artifact_1)
 
     table_artifact_2 = extract(data_integration, DataObject.SENTIMENT, op_name="sql query")
-    assert table_artifact_2.name() == "sql query artifact"
+    assert table_artifact_2.name() == "sql query artifact (1)"
 
     # Cannot preview an artifact with a dependency that has been deleted,
     # since it itself would have been removed from the dag.

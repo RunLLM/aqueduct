@@ -38,7 +38,7 @@ from aqueduct.utils.describe import (
     get_readable_description_for_metric,
 )
 from aqueduct.utils.function_packaging import serialize_function
-from aqueduct.utils.naming import default_artifact_name_from_op_name, resolve_artifact_name
+from aqueduct.utils.naming import default_artifact_name_from_op_name
 from aqueduct.utils.utils import format_header_for_print, generate_uuid
 from ruamel import yaml
 
@@ -637,9 +637,7 @@ class TableArtifact(BaseArtifact):
 
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
-        artifact_name = resolve_artifact_name(
-            self._dag, default_artifact_name_from_op_name(op_name)
-        )
+        artifact_name = default_artifact_name_from_op_name(op_name)
 
         apply_deltas_to_dag(
             self._dag,
@@ -658,6 +656,7 @@ class TableArtifact(BaseArtifact):
                             id=output_artifact_id,
                             name=artifact_name,
                             type=output_artifact_type_hint,
+                            explicitly_named=False,
                         )
                     ],
                 ),

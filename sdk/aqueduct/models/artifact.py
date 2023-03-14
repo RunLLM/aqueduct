@@ -8,3 +8,10 @@ class ArtifactMetadata(BaseModel):
     id: uuid.UUID
     name: str
     type: ArtifactType
+
+    # Whether this artifact was given a name explicitly by the user.
+    # If true, this artifact name is expected to be unique in the DAG.
+    explicitly_named: bool
+
+    class Config:
+        fields = {"explicitly_named": {"exclude": ...}}

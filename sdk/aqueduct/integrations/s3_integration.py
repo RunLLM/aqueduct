@@ -21,7 +21,7 @@ from aqueduct.utils.utils import generate_uuid
 from aqueduct import globals
 
 from ..error import InvalidUserArgumentException
-from ..utils.naming import default_artifact_name_from_op_name, resolve_artifact_name
+from ..utils.naming import default_artifact_name_from_op_name, sanitize_artifact_name
 from .save import _save_artifact
 
 
@@ -113,9 +113,7 @@ class S3Integration(Integration):
 
         integration_info = self._metadata
         op_name = name or "%s query" % self.name()
-        artifact_name = output or resolve_artifact_name(
-            self._dag, default_artifact_name_from_op_name(op_name)
-        )
+        artifact_name = output or default_artifact_name_from_op_name(op_name)
 
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
@@ -157,8 +155,9 @@ class S3Integration(Integration):
                     output_artifacts=[
                         ArtifactMetadata(
                             id=output_artifact_id,
-                            name=artifact_name,
+                            name=sanitize_artifact_name(artifact_name),
                             type=output_artifact_type,
+                            explicitly_named=output is not None,
                         ),
                     ],
                 )

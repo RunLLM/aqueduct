@@ -105,7 +105,8 @@ def parse_user_supplied_id(id: Union[str, uuid.UUID]) -> str:
 
 
 def construct_param_spec(
-    val: Any, artifact_type: ArtifactType, is_implicit: bool = False
+    val: Any,
+    artifact_type: ArtifactType,
 ) -> ParamSpec:
     # Not derived from bson.
     # For now, bson_table applies only to tables read from mongo.
@@ -122,7 +123,6 @@ def construct_param_spec(
     return ParamSpec(
         val=_bytes_to_base64_string(serialize_val(val, serialization_type, derived_from_bson)),
         serialization_type=serialization_type,
-        implicitly_created=is_implicit,
     )
 
 

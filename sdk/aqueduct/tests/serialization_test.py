@@ -50,7 +50,12 @@ from PIL import Image
 def test_artifact_serialization():
     artifact_id = uuid.uuid4()
     artifact_name = "Extract Artifact"
-    extract_artifact = ArtifactMetadata(id=artifact_id, name=artifact_name, type=ArtifactType.TABLE)
+    extract_artifact = ArtifactMetadata(
+        id=artifact_id,
+        name=artifact_name,
+        type=ArtifactType.TABLE,
+        explicitly_named=True,
+    )
 
     assert extract_artifact.json() == json.dumps(
         {

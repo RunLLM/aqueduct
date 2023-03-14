@@ -1,60 +1,33 @@
-from aqueduct.constants.enums import OperatorType
-from aqueduct.error import InvalidUserActionException
-from aqueduct.models.dag import DAG
-from aqueduct.models.operators import Operator, get_operator_type
+import re
+
+from aqueduct.error import InvalidUserArgumentException
+
+
+def sanitize_artifact_name(name: str) -> str:
+    """Strip out whitespace before and after user-supplied artifact names."""
+    if len(name) == 0:
+        raise InvalidUserArgumentException("Artifact name cannot be empty.")
+    return name.strip()
 
 
 def default_artifact_name_from_op_name(op_name: str) -> str:
     return op_name + " artifact"
 
 
-def resolve_artifact_name(dag: DAG, name: str) -> str:
-    """TODO: DOCUMENTATION"""
-    candidate_name = name
-    suffix = 1
-    while True:
-        colliding_artifact = dag.get_artifact_by_name(candidate_name)
-        if colliding_artifact is None:
-            break
-        candidate_name = name + " (%d)" % suffix
-        suffix += 1
+def bump_artifact_suffix(artifact_name: str) -> str:
+    # TODO: Add some unit tests.
+    """Assumption: the artifact name has been sanitized already."""
 
-    return candidate_name
+    # No need to do any fancy regex parsing if the artifact name doesn't end with a ')'.
+    if artifact_name[-1] != ")":
+        return artifact_name + " (1)"
 
+    # Check if the last few characters of artifact_name match the pattern "([0-9]+)"
+    suffix_match = re.findall(r"\([0-9]+\)$", artifact_name)
+    suffix_idx = 1
+    if len(suffix_match) > 0:
+        val_with_parens = suffix_match[-1]
+        val = val_with_parens[1:-1]
+        suffix_idx = int(val) + 1
 
-def operator_is_implicitly_created_param(op: Operator) -> bool:
-    if get_operator_type(op) != OperatorType.PARAM:
-        return False
-    assert op.spec.param is not None
-    return op.spec.param.implicitly_created
-
-
-def resolve_param_name(dag: DAG, name: str, is_implicit: bool) -> str:
-    """
-    Collision policy:
-    - When an implicitly created parameter collides with any artifact, we bump the name with (idx) suffix.
-    - When an explicitly created parameter collides:
-        - with an existing explicit parameter, we replace it.
-        - with an existing implicit parameter, we error.
-        - with an existing artifact, we error.
-    """
-    if is_implicit:
-        return resolve_artifact_name(dag, name)
-    else:
-        # Error if the colliding parameter is implicitly created.
-        colliding_param = dag.get_param_op_by_name(name)
-        if colliding_param is not None and operator_is_implicitly_created_param(colliding_param):
-            raise InvalidUserActionException(
-                """Unable to create parameter `%s`, since there is an existing implicit parameter with the same name."""
-                % name
-            )
-
-        # Error if there are any other artifact name collisions.
-        colliding_artifact = dag.get_artifact_by_name(name)
-        if colliding_artifact is not None:
-            raise InvalidUserActionException(
-                """Unable to create parameter `%s`, since there is an existing artifact with the same name."""
-                % name
-            )
-
-        return name
+    return artifact_name + f" ({suffix_idx})"
