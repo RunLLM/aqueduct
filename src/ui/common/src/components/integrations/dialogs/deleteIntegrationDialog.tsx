@@ -5,8 +5,8 @@ import Dialog from '@mui/material/Dialog';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { handleGetServerConfig } from '../../../handlers/getServerConfig';
 
+import { handleGetServerConfig } from '../../../handlers/getServerConfig';
 import {
   handleDeleteIntegration,
   resetDeletionStatus,
@@ -17,16 +17,21 @@ import { IntegrationConfig, Service } from '../../../utils/integrations';
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
 import { convertIntegrationConfigToServerConfig } from '../../../utils/storage';
 
-var isEqual = function (x, y) {
+const isEqual = function (x, y) {
   if (x === y) {
     return true;
-  } else if ((typeof x == "object" && x != null) && (typeof y == "object" && y != null)) {
+  } else if (
+    typeof x == 'object' &&
+    x != null &&
+    typeof y == 'object' &&
+    y != null
+  ) {
     if (Object.keys(x).length != Object.keys(y).length) {
       return false;
     }
 
-    for (var prop in x) {
-      if (y.hasOwnProperty(prop)) {  
+    for (const prop in x) {
+      if (y.hasOwnProperty(prop)) {
         if (!isEqual(x[prop], y[prop])) {
           return false;
         }
@@ -38,7 +43,7 @@ var isEqual = function (x, y) {
   } else {
     return false;
   }
-}
+};
 
 type Props = {
   user: UserProfile;
@@ -64,7 +69,7 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
   const serverConfig = useSelector(
     (state: RootState) => state.serverConfigReducer
   );
-  
+
   useEffect(() => {
     async function fetchServerConfig() {
       await dispatch(handleGetServerConfig({ apiKey: user.apiKey }));

@@ -51,17 +51,21 @@ export type ServerConfig = {
   storageConfig: MetadataStorageConfig;
 };
 
-function convertS3IntegrationtoMetadataStorageConfig(storage: S3Config): MetadataStorageConfig {
+function convertS3IntegrationtoMetadataStorageConfig(
+  storage: S3Config
+): MetadataStorageConfig {
   return {
     type: StorageType.S3,
     s3Config: {
       region: storage.region,
       bucket: 's3://' + storage.bucket,
-    }
+    },
   };
 }
 
-function convertGCSIntegrationtoMetadataStorageConfig(storage: GCSConfig): MetadataStorageConfig {
+function convertGCSIntegrationtoMetadataStorageConfig(
+  storage: GCSConfig
+): MetadataStorageConfig {
   return {
     type: StorageType.GCS,
     gcsConfig: {
@@ -91,9 +95,9 @@ export function convertIntegrationConfigToServerConfig(
       return null;
   }
   return {
-      aqPath: metadataStorage.aqPath,
-      retentionJobPeriod: metadataStorage.retentionJobPeriod,
-      apiKey: metadataStorage.apiKey,
-      storageConfig: storageConfig,
+    aqPath: metadataStorage.aqPath,
+    retentionJobPeriod: metadataStorage.retentionJobPeriod,
+    apiKey: metadataStorage.apiKey,
+    storageConfig: storageConfig,
   };
 }
