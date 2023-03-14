@@ -2,7 +2,6 @@ import { LoadingButton } from '@mui/lab';
 import { Alert, DialogActions, DialogContent } from '@mui/material';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
-import { isEqual } from 'lodash';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -21,6 +20,29 @@ import {
   getMetadataStorageConfig,
   MetadataStorageConfig,
 } from '../../../utils/storage';
+
+var isEqual = function (x, y) {
+  if (x === y) {
+    return true;
+  } else if ((typeof x == "object" && x != null) && (typeof y == "object" && y != null)) {
+    if (Object.keys(x).length != Object.keys(y).length) {
+      return false;
+    }
+
+    for (var prop in x) {
+      if (y.hasOwnProperty(prop)) {  
+        if (!isEqual(x[prop], y[prop])) {
+          return false;
+        }
+      } else {
+        return false;
+      }
+    }
+    return true;
+  } else {
+    return false;
+  }
+}
 
 type Props = {
   user: UserProfile;
