@@ -9,6 +9,7 @@ import { workflowDagResults as workflowDagResultsReducer } from '@aqueducthq/com
 import { workflowDags as workflowDagsReducer } from '@aqueducthq/common';
 import { artifactResultContents as artifactResultContentsReducer } from '@aqueducthq/common';
 import { artifactResults as artifactResultsReducer } from '@aqueducthq/common';
+import { serverConfig as serverConfigReducer } from '@aqueducthq/common';
 import { configureStore } from '@reduxjs/toolkit';
 
 export const store = configureStore({
@@ -24,6 +25,7 @@ export const store = configureStore({
         workflowDagResultsReducer,
         artifactResultsReducer,
         artifactResultContentsReducer,
+        serverConfigReducer,
     },
 });
 

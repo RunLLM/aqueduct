@@ -102,6 +102,7 @@ import WorkflowHeader from './components/workflows/workflowHeader';
 import WorkflowSettings from './components/workflows/WorkflowSettings';
 import { handleGetArtifactResultContent } from './handlers/getArtifactResultContent';
 import { handleGetWorkflowDag } from './handlers/getWorkflowDag';
+import { handleGetServerConfig } from './handlers/getServerConfig';
 import { handleGetWorkflowDagResult } from './handlers/getWorkflowDagResult';
 import { handleListArtifactResults } from './handlers/listArtifactResults';
 import artifactResultContents from './reducers/artifactResultContents';
@@ -141,6 +142,7 @@ import notifications, {
   handleFetchNotifications,
   notificationsSlice,
 } from './reducers/notifications';
+import serverConfig from './reducers/serverConfig';
 import workflow, {
   handleGetArtifactResults,
   handleGetOperatorResults,
@@ -275,6 +277,7 @@ export {
   handleGetArtifactResultContent,
   handleGetArtifactResults,
   handleGetOperatorResults,
+  handleGetServerConfig,
   handleGetWorkflow,
   handleGetWorkflowDag,
   handleGetWorkflowDagResult,
@@ -356,6 +359,7 @@ export {
   S3Dialog,
   selectNode,
   selectResultIdx,
+  serverConfig,
   ServiceLogos,
   ServiceType,
   sideSheetSwitcher,
