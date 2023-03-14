@@ -111,11 +111,11 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
   if (isStorage && serverConfig) {
     const storageConfig = convertIntegrationConfigToServerConfig(
       config,
-      serverConfig,
+      serverConfig.config,
       integrationType
     );
     // Check deep equality
-    isCurrentStorage = isEqual(storageConfig, serverConfig);
+    isCurrentStorage = isEqual(storageConfig, serverConfig.config);
   }
 
   if (isCurrentStorage) {
