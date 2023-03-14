@@ -376,5 +376,3 @@ def extract_val_from_local_data(val: LocalData) -> Any:
     else:
         raise Exception("Unsupported artifact type %s" % artifact_type)
     return deserialized_val
-
-

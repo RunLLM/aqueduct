@@ -594,7 +594,7 @@ def test_local_table_data_parameter(client, flow_name, engine):
 
     file_type = ["csv", "json", "parquet"]
     output_artifact_list = []
-    input_data_list =[]
+    input_data_list = []
     for extension in file_type:
         local_table_data = local_data(
             path="data/hotel_reviews." + extension,
@@ -611,12 +611,12 @@ def test_local_table_data_parameter(client, flow_name, engine):
             input_df = pd.read_parquet("data/hotel_reviews." + extension)
         assert input_df.equals(data_param.get())
 
-        @op(name= extension,outputs=["output_"+ extension])
+        @op(name=extension, outputs=["output_" + extension])
         def append_row_to_df(df, row):
             """`row` is a list of values to append to the input dataframe."""
             df.loc[len(df.index)] = row
             return df
-        
+
         output = append_row_to_df(data_param, row_to_add)
         input_df.loc[len(input_df.index)] = row_to_add
         output_df = output.get()
@@ -625,7 +625,9 @@ def test_local_table_data_parameter(client, flow_name, engine):
         output_artifact_list.append(output)
         input_data_list.append(input_df)
 
-    flow = publish_flow_test(client, artifacts= output_artifact_list, name=flow_name(), engine=engine)
+    flow = publish_flow_test(
+        client, artifacts=output_artifact_list, name=flow_name(), engine=engine
+    )
     flow_run = flow.latest()
     assert flow_run.artifact("output_csv").get().equals(input_data_list[0])
     assert flow_run.artifact("output_json").get().equals(input_data_list[1])
@@ -634,13 +636,21 @@ def test_local_table_data_parameter(client, flow_name, engine):
 
 def test_invalid_local_data(client):
     # check Local Data with file path that does not exist will fail
-    with pytest.raises(InvalidUserArgumentException, match="Given path file 'data/hotel_reviews' to local data does not exist."):
+    with pytest.raises(
+        InvalidUserArgumentException,
+        match="Given path file 'data/hotel_reviews' to local data does not exist.",
+    ):
         local_table_data = local_data(path="data/hotel_reviews", artifact_type=ArtifactType.IMAGE)
         client.create_param(name="data", default=local_table_data)
 
     # Check that format is supplied when Artifact type is table
-    with pytest.raises(InvalidUserArgumentException, match="Specify format in order to use local data as TableArtifact."):
-        local_table_data = local_data(path="data/hotel_reviews.json", artifact_type=ArtifactType.TABLE)
+    with pytest.raises(
+        InvalidUserArgumentException,
+        match="Specify format in order to use local data as TableArtifact.",
+    ):
+        local_table_data = local_data(
+            path="data/hotel_reviews.json", artifact_type=ArtifactType.TABLE
+        )
         client.create_param(name="data", default=local_table_data)
 
 

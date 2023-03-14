@@ -19,10 +19,7 @@ from aqueduct.models.operators import ParamSpec
 from aqueduct.utils.local_data import validate_local_data
 from croniter import croniter
 
-from .serialization import (
-    artifact_type_to_serialization_type,
-    serialize_val,
-)
+from .serialization import artifact_type_to_serialization_type, serialize_val
 from .type_inference import _bytes_to_base64_string
 
 
