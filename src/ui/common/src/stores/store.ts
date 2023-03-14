@@ -8,8 +8,10 @@ import integrationsReducer from '../reducers/integrations';
 import listWorkflowReducer from '../reducers/listWorkflowSummaries';
 import nodeSelectionReducer from '../reducers/nodeSelection';
 import notificationsReducer from '../reducers/notifications';
+import serverConfigReducer from '../reducers/serverConfig';
 import workflowReducer from '../reducers/workflow';
 import workflowDagResultsReducer from '../reducers/workflowDagResults';
+import workflowDagsReducer from '../reducers/workflowDags';
 
 export const store = configureStore({
   reducer: {
@@ -20,7 +22,9 @@ export const store = configureStore({
     dataPreviewReducer,
     integrationsReducer,
     integrationReducer,
+    serverConfigReducer,
     workflowReducer,
+    workflowDagsReducer,
     workflowDagResultsReducer,
     artifactResultsReducer,
   },

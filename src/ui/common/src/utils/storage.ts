@@ -15,10 +15,10 @@ export const StorageTypeNames = {
 export type S3Config = {
   region: string;
   bucket: string;
-  credentials_path: string;
-  credentials_profile: string;
-  aws_access_key_id: string;
-  aws_secret_access_key: string;
+  credentials_path?: string;
+  credentials_profile?: string;
+  aws_access_key_id?: string;
+  aws_secret_access_key?: string;
 };
 
 export type FileConfig = {
@@ -27,7 +27,7 @@ export type FileConfig = {
 
 export type GCSConfig = {
   bucket: string;
-  service_account_credentials: string;
+  service_account_credentials?: string;
 };
 
 export type StorageConfig = {
@@ -38,100 +38,62 @@ export type StorageConfig = {
 };
 
 export type MetadataStorageConfig = {
+  type: StorageType;
+  s3Config?: S3Config;
+  fileConfig?: FileConfig;
+  gcsConfig?: GCSConfig;
+};
+
+export type ServerConfig = {
   aqPath: string;
   retentionJobPeriod: string;
   apiKey: string;
-  storageConfig: {
-    type: StorageType;
-    fileConfig?: {
-      directory: string;
-    };
-    gcsConfig?: {
-      bucket: string;
-    };
-    s3Config?: {
-      region: string;
-      bucket: string;
-    };
-  };
+  storageConfig: MetadataStorageConfig;
 };
 
-export async function getMetadataStorageConfig(
-  apiAddress: string,
-  apiKey: string
-): Promise<MetadataStorageConfig> {
-  try {
-    const configRequest = await fetch(`${apiAddress}/api/config`, {
-      method: 'GET',
-      headers: {
-        'api-key': apiKey,
-      },
-    });
-
-    const responseBody = await configRequest.json();
-
-    if (!configRequest.ok) {
-      console.log('Error fetching config');
+function convertS3IntegrationtoMetadataStorageConfig(storage: S3Config): MetadataStorageConfig {
+  return {
+    type: StorageType.S3,
+    s3Config: {
+      region: storage.region,
+      bucket: 's3://' + storage.bucket,
     }
-
-    return responseBody as MetadataStorageConfig;
-  } catch (error) {
-    console.log('config fetch error: ', error);
-  }
+  };
 }
 
-function convertS3IntegrationtoStorageConfig(
-  storage: S3Config,
-  metadataStorage: MetadataStorageConfig
-): MetadataStorageConfig {
+function convertGCSIntegrationtoMetadataStorageConfig(storage: GCSConfig): MetadataStorageConfig {
   return {
-    aqPath: metadataStorage.aqPath,
-    retentionJobPeriod: metadataStorage.retentionJobPeriod,
-    apiKey: metadataStorage.apiKey,
-    storageConfig: {
-      type: StorageType.S3,
-      s3Config: {
-        region: storage.region,
-        bucket: 's3://' + storage.bucket,
-      },
+    type: StorageType.GCS,
+    gcsConfig: {
+      bucket: storage.bucket,
     },
   };
 }
 
-function convertGCSIntegrationtoStorageConfig(
-  storage: GCSConfig,
-  metadataStorage: MetadataStorageConfig
-): MetadataStorageConfig {
-  return {
-    aqPath: metadataStorage.aqPath,
-    retentionJobPeriod: metadataStorage.retentionJobPeriod,
-    apiKey: metadataStorage.apiKey,
-    storageConfig: {
-      type: StorageType.GCS,
-      gcsConfig: {
-        bucket: storage.bucket,
-      },
-    },
-  };
-}
-
-export function convertIntegrationConfigToMetadataStorageConfig(
+export function convertIntegrationConfigToServerConfig(
   storage: IntegrationConfig,
-  metadataStorage: MetadataStorageConfig,
+  metadataStorage: ServerConfig,
   service: Service
-): MetadataStorageConfig {
+): ServerConfig {
+  let storageConfig;
   switch (service) {
     case 'S3':
-      return convertS3IntegrationtoStorageConfig(
-        storage as S3Config,
-        metadataStorage
+      storageConfig = convertS3IntegrationtoMetadataStorageConfig(
+        storage as S3Config
       );
+      break;
     case 'GCS':
-      return convertGCSIntegrationtoStorageConfig(
-        storage as GCSConfig,
-        metadataStorage
+      storageConfig = convertGCSIntegrationtoMetadataStorageConfig(
+        storage as GCSConfig
       );
+      break;
     default:
       return null;
   }
+  return {
+      aqPath: metadataStorage.aqPath,
+      retentionJobPeriod: metadataStorage.retentionJobPeriod,
+      apiKey: metadataStorage.apiKey,
+      storageConfig: storageConfig,
+  };
 }

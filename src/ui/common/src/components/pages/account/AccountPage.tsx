@@ -9,6 +9,7 @@ import React from 'react';
 import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
+import { handleGetServerConfig } from '../../../handlers/getServerConfig';
 import { handleLoadIntegrations } from '../../../reducers/integrations';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
@@ -23,10 +24,6 @@ import {
   isLoading,
   isSucceeded,
 } from '../../../utils/shared';
-import {
-  getMetadataStorageConfig,
-  MetadataStorageConfig,
-} from '../../../utils/storage';
 import CodeBlock from '../../CodeBlock';
 import { useAqueductConsts } from '../../hooks/useAqueductConsts';
 import DefaultLayout from '../../layouts/default';
@@ -103,8 +100,9 @@ client = aqueduct.Client(
     (state: RootState) => state.integrationsReducer
   );
 
-  const [metadataStorageConfig, setMetadataStorageConfig] =
-    useState<MetadataStorageConfig | null>(null);
+  const serverConfig = useSelector(
+    (state: RootState) => state.serverConfigReducer
+  );
   const notifications = Object.values(integrationsReducer.integrations).filter(
     (x) =>
       SupportedIntegrations[x.service].category ===
@@ -117,15 +115,11 @@ client = aqueduct.Client(
     useState(false);
 
   useEffect(() => {
-    async function fetchMetadataStorageConfig() {
-      const metadataStorageConfig = await getMetadataStorageConfig(
-        apiAddress,
-        user.apiKey
-      );
-      setMetadataStorageConfig(metadataStorageConfig);
+    async function fetchServerConfig() {
+      await dispatch(handleGetServerConfig({ apiKey: user.apiKey }));
     }
 
-    fetchMetadataStorageConfig();
+    fetchServerConfig();
   }, []);
 
   useEffect(() => {
@@ -198,9 +192,11 @@ client = aqueduct.Client(
           <CodeBlock language="python">{apiConnectionSnippet}</CodeBlock>
         </Box>
       </Box>
+
       <Typography variant="h5" sx={{ mt: 3 }}>
         Notifications
       </Typography>
+
       {notifications.length > 0 && (
         <Typography variant="body2" marginBottom={1}>
           Configure how your notification(s) apply to all workflows. You can
@@ -208,9 +204,10 @@ client = aqueduct.Client(
           settings page.
         </Typography>
       )}
+
       {notificationSection}
 
-      <MetadataStorageInfo serverConfig={metadataStorageConfig} />
+      <MetadataStorageInfo serverConfig={serverConfig.config} />
 
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}

@@ -32,6 +32,9 @@ export const VersionSelector: React.FC = () => {
 
   const [menuAnchor, setMenuAnchor] = useState<HTMLButtonElement | null>(null);
   const [selectedResultIdx, setSelectedResultIdx] = React.useState(0);
+  if (!selectedResult) {
+    return null;
+  }
 
   const getMenuItems = () => {
     return results.map((r, idx) => {

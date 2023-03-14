@@ -5,6 +5,7 @@ import Dialog from '@mui/material/Dialog';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { handleGetServerConfig } from '../../../handlers/getServerConfig';
 
 import { useAqueductConsts } from '../../../components/hooks/useAqueductConsts';
 import {
@@ -15,11 +16,7 @@ import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import { IntegrationConfig, Service } from '../../../utils/integrations';
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
-import {
-  convertIntegrationConfigToMetadataStorageConfig,
-  getMetadataStorageConfig,
-  MetadataStorageConfig,
-} from '../../../utils/storage';
+import { convertIntegrationConfigToServerConfig } from '../../../utils/storage';
 
 var isEqual = function (x, y) {
   if (x === y) {
@@ -65,21 +62,16 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
   const navigate = useNavigate();
   const [isConnecting, setIsConnecting] = useState(false);
 
-  const { apiAddress } = useAqueductConsts();
-
-  const [metadataStorageConfig, setMetadataStorageConfig] =
-    useState<MetadataStorageConfig | null>(null);
-
+  const serverConfig = useSelector(
+    (state: RootState) => state.serverConfigReducer
+  );
+  
   useEffect(() => {
-    async function fetchMetadataStorageConfig() {
-      const metadataStorageConfig = await getMetadataStorageConfig(
-        apiAddress,
-        user.apiKey
-      );
-      setMetadataStorageConfig(metadataStorageConfig);
+    async function fetchServerConfig() {
+      await dispatch(handleGetServerConfig({ apiKey: user.apiKey }));
     }
 
-    fetchMetadataStorageConfig();
+    fetchServerConfig();
   }, []);
 
   const deleteIntegrationStatus = useSelector(
@@ -117,14 +109,14 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
 
   const isStorage = config.use_as_storage === 'true';
   let isCurrentStorage = isStorage;
-  if (isStorage && metadataStorageConfig) {
-    const storageConfig = convertIntegrationConfigToMetadataStorageConfig(
+  if (isStorage && serverConfig) {
+    const storageConfig = convertIntegrationConfigToServerConfig(
       config,
-      metadataStorageConfig,
+      serverConfig,
       integrationType
     );
     // Check deep equality
-    isCurrentStorage = isEqual(storageConfig, metadataStorageConfig);
+    isCurrentStorage = isEqual(storageConfig, serverConfig);
   }
 
   if (isCurrentStorage) {
