@@ -15,7 +15,7 @@ from aqueduct.error import (
 from pandas._testing import assert_frame_equal
 from PIL import Image
 
-from aqueduct import Local_Data, metric, op
+from aqueduct import local_data, metric, op
 
 from ..shared.data_objects import DataObject
 from ..shared.flow_helpers import publish_flow_test, trigger_flow_test
@@ -600,7 +600,7 @@ def test_local_table_data_parameter(client, flow_name, engine):
 
     file_type = ["csv", "json", "parquet"]
     for extension in file_type:
-        local_data = Local_Data(
+        local_data = local_data(
             path="data/hotel_reviews." + extension,
             artifact_type=ArtifactType.TABLE,
             format=extension,
@@ -628,12 +628,12 @@ def test_local_table_data_parameter(client, flow_name, engine):
 def test_invalid_local_data(client):
     # check Local Data with file path that does not exist will fail
     with pytest.raises(InvalidUserArgumentException):
-        local_data = Local_Data(path="data/hotel_reviews", artifact_type=ArtifactType.IMAGE)
+        local_data = local_data(path="data/hotel_reviews", artifact_type=ArtifactType.IMAGE)
         client.create_param(name="data", default=local_data)
 
     # Check that format is supplied when Artifact type is table
     with pytest.raises(InvalidUserArgumentException):
-        local_data = Local_Data(path="data/hotel_reviews.json", artifact_type=ArtifactType.TABLE)
+        local_data = local_data(path="data/hotel_reviews.json", artifact_type=ArtifactType.TABLE)
         client.create_param(name="data", default=local_data)
 
 
@@ -644,7 +644,7 @@ def test_local_image_data_parameter(client, flow_name, engine):
             raise Exception("Expected image.")
         return input
 
-    local_data = Local_Data(path="data/aqueduct.jpg", artifact_type=ArtifactType.IMAGE)
+    local_data = local_data(path="data/aqueduct.jpg", artifact_type=ArtifactType.IMAGE)
     image_param = client.create_param(name="data", default=local_data)
 
     image_output = must_be_image(image_param)

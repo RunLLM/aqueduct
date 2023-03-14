@@ -10,7 +10,7 @@ from ..error import InvalidUserArgumentException
 MAXIMUM_LOCAL_DATA_SIZE = 1000000
 
 
-def Local_Data(
+def local_data(
     path: str,
     artifact_type: ArtifactType,
     format: Optional[str] = None,
