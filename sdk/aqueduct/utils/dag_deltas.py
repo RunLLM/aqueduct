@@ -252,7 +252,7 @@ def validate_overwriting_parameters(dag: DAG, parameters: Dict[str, Any]) -> Non
 class UpdateParametersDelta(DAGDelta):
     """Updates the values of the given parameters in the DAG to the given values. No-ops if no parameters provided.
 
-    The parameters are expected to have already been serialized into strings, and validated.
+    The parameters are expected to have already been serialized into strings.
     """
 
     def __init__(

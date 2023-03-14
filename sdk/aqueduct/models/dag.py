@@ -72,14 +72,14 @@ class DAG(BaseModel):
                 if artifact.name in reserved_artifact_names:
                     raise InvalidUserActionException(
                         "Unable to publish flow. You are attempting to publish multiple artifacts explcitly named `%s`."
-                        "Please use `artifact.set_name(<new name>)` to resolve this naming collision. Or rerun with "
-                        "different output artifact names."
-                        "" % artifact.name
+                        "Please use `artifact.set_name(<new name>)` to resolve this naming collision. Or rerun the operators "
+                        "with different output artifact names." % artifact.name
                     )
                 reserved_artifact_names.add(artifact.name)
 
         # In the second pass, resolve the names of any implicitly named artifacts that collide.
-        # Loop through the operators in rough execution order so that output artifacts are always numbered consecutively.
+        # Loop through the operators in topological order so that numbers are assigned in a reasonable fashion.
+        # Output artifacts of the same operator are always numbered consecutively.
         q: List[Operator] = [op for op in self.operators.values() if len(op.inputs) == 0]
         while True:
             curr_op = q.pop(0)
@@ -363,8 +363,7 @@ class DAG(BaseModel):
         """
         assert get_operator_type_from_spec(new_spec) == OperatorType.PARAM
         param_op = self.get_param_op_by_name(name)
-        if param_op is None:
-            raise Exception("Unable to find parameter %s to update." % name)
+        assert param_op is not None
         assert get_operator_type(param_op) == OperatorType.PARAM
 
         self.operators[str(param_op.id)].spec = new_spec

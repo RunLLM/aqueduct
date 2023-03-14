@@ -49,14 +49,12 @@ from aqueduct.models.dag import Metadata, RetentionPolicy
 from aqueduct.models.integration import Integration, IntegrationInfo
 from aqueduct.models.operators import ParamSpec
 from aqueduct.utils.dag_deltas import (
-    RemoveOperatorDelta,
     SubgraphDAGDelta,
     apply_deltas_to_dag,
     validate_overwriting_parameters,
 )
 from aqueduct.utils.function_packaging import infer_requirements_from_env
-from aqueduct.utils.serialization import deserialize
-from aqueduct.utils.type_inference import _base64_string_to_bytes, infer_artifact_type
+from aqueduct.utils.type_inference import infer_artifact_type
 from aqueduct.utils.utils import (
     construct_param_spec,
     find_flow_with_user_supplied_id_and_name,

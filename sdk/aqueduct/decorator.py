@@ -112,7 +112,7 @@ def wrap_spec(
     operator_id = generate_uuid()
     output_artifact_ids = [generate_uuid() for _ in output_artifact_type_hints]
 
-    # Even if there are multiple outputs, we give them all the same artifact names.
+    # Even if there are multiple outputs, we give them all the same artifact names (in the default case).
     # These will be deduplicated at publish time.
     artifact_names = output_artifact_names or [
         default_artifact_name_from_op_name(op_name) for _ in range(len(output_artifact_ids))
@@ -290,7 +290,7 @@ def _convert_input_arguments_to_parameters(
                 dag=dag,
                 param_name=param_name,
                 default=artifact,
-                description="Implicitly created parameter corresponding argument `%s` to function `%s`."
+                description="Parameter corresponding to argument `%s` of function `%s`."
                 % (fn_param_names[idx], op_name),
                 explicitly_named=False,
             )
