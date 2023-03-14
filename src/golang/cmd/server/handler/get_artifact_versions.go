@@ -6,13 +6,13 @@ import (
 
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 
@@ -347,7 +347,7 @@ func (h *GetArtifactVersionsHandler) updateVersionsWithChecksAndMetrics(
 						if err == nil {
 							content := string(contentBytes)
 							contentPtr = &content
-						} else if err != storage.ErrObjectDoesNotExist {
+						} else if !errors.Is(err, storage.ErrObjectDoesNotExist()) {
 							return errors.Wrap(err, "Unable to get artifact content from storage")
 						}
 					}

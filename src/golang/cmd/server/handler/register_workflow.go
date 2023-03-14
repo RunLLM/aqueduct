@@ -3,11 +3,14 @@ package handler
 import (
 	"context"
 	"net/http"
+	"strconv"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
+	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
@@ -19,7 +22,6 @@ import (
 	operator_utils "github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
@@ -60,6 +62,7 @@ type registerWorkflowArgs struct {
 
 	// Whether this is a registering a new workflow or updating an existing one.
 	isUpdate bool
+	runNow   bool
 }
 
 type registerWorkflowResponse struct {
@@ -75,6 +78,19 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
+	}
+
+	runNowStr := r.Header.Get(routes.RunNowHeader)
+	runNow := false
+	if runNowStr != "" {
+		runNow, err = strconv.ParseBool(runNowStr)
+		if err != nil {
+			return nil, http.StatusBadRequest, errors.Newf(
+				"Invalid header %s: %s. It must be either 'True' or 'False'.",
+				routes.RunNowHeader,
+				runNowStr,
+			)
+		}
 	}
 
 	dagSummary, statusCode, err := request.ParseDagSummaryFromRequest(
@@ -112,7 +128,7 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 		h.Database,
 	)
 	if err != nil {
-		if err != database.ErrNoRows {
+		if !errors.Is(err, database.ErrNoRows()) {
 			return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when checking for existing workflows.")
 		}
 		// A colliding workflow does not exist, so this is not an update
@@ -138,6 +154,7 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 		AqContext:  aqContext,
 		dagSummary: dagSummary,
 		isUpdate:   isUpdate,
+		runNow:     runNow,
 	}, http.StatusOK, nil
 }
 
@@ -288,15 +305,17 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		CleanupTimeout:       engine.DefaultCleanupTimeout,
 	}
 
-	_, err = h.Engine.TriggerWorkflow(
-		ctx,
-		workflowId,
-		shared_utils.AppendPrefix(dbWorkflowDag.Metadata.ID.String()),
-		timeConfig,
-		nil, /* parameters */
-	)
-	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow.")
+	if args.runNow {
+		_, err = h.Engine.TriggerWorkflow(
+			ctx,
+			workflowId,
+			shared_utils.AppendPrefix(dbWorkflowDag.Metadata.ID.String()),
+			timeConfig,
+			nil, /* parameters */
+		)
+		if err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow.")
+		}
 	}
 
 	if !args.isUpdate {

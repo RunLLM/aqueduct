@@ -150,16 +150,53 @@ class SlackConfig(BaseConnectionConfig):
     enabled: bool
 
 
-class AWSConfig(BaseConnectionConfig):
-    access_key_id: str
-    secret_access_key: str
-
-
 class _SlackConfigWithStringField(BaseConnectionConfig):
     token: str
     channels_serialized: str
     level: str
     enabled: str
+
+
+class DynamicK8sConfig(BaseConnectionConfig):
+    # How long (in seconds) does the cluster need to remain idle before it is deleted.
+    keepalive: Optional[Union[str, int]]
+    # The EC2 instance type of the CPU node group. See https://aws.amazon.com/ec2/instance-types/
+    # for the node types available.
+    cpu_node_type: Optional[str]
+    # The EC2 instance type of the GPU node group. See https://aws.amazon.com/ec2/instance-types/
+    # for the node types available.
+    gpu_node_type: Optional[str]
+    # Minimum number of nodes in the CPU node group. The cluster autoscaler cannot scale below this number.
+    # This is also the initial number of CPU nodes in the cluster.
+    min_cpu_node: Optional[Union[str, int]]
+    # Maximum number of nodes in the CPU node group. The cluster autoscaler cannot scale above this number.
+    max_cpu_node: Optional[Union[str, int]]
+    # Minimum number of nodes in the GPU node group. The cluster autoscaler cannot scale below this number.
+    # This is also the initial number of GPU nodes in the cluster.
+    min_gpu_node: Optional[Union[str, int]]
+    # Maximum number of nodes in the GPU node group. The cluster autoscaler cannot scale above this number.
+    max_gpu_node: Optional[Union[str, int]]
+
+    # This converts all int fields to string during json serialization. We need to do this becasue our
+    # backend assumes all config fields must be string.
+    class Config:
+        json_encoders = {int: str}
+
+
+class AWSConfig(BaseConnectionConfig):
+    access_key_id: str
+    secret_access_key: str
+    region: str
+    k8s: Optional[DynamicK8sConfig]
+
+
+class _AWSConfigWithSerializedConfig(BaseConnectionConfig):
+    access_key_id: str
+    secret_access_key: str
+    region: str
+    k8s_serialized: Optional[
+        str
+    ]  # this is a json-serialized string of AWSConfig.k8s, which is of type DynamicK8sConfig
 
 
 class EmailConfig(BaseConnectionConfig):
@@ -208,6 +245,7 @@ IntegrationConfig = Union[
     SQLiteConfig,
     SlackConfig,
     AWSConfig,
+    _AWSConfigWithSerializedConfig,
     _SlackConfigWithStringField,
     SparkConfig,
     K8sConfig,
@@ -265,6 +303,9 @@ def prepare_integration_config(
     if service == ServiceType.EMAIL:
         return _prepare_email_config(cast(EmailConfig, config))
 
+    if service == ServiceType.AWS:
+        return _prepare_aws_config(cast(AWSConfig, config))
+
     return config
 
 
@@ -286,6 +327,15 @@ def _prepare_slack_config(config: SlackConfig) -> _SlackConfigWithStringField:
         channels_serialized=json.dumps(config.channels),
         level=config.level.value if config.level else "",
         enabled="true" if config.enabled else "false",
+    )
+
+
+def _prepare_aws_config(config: AWSConfig) -> _AWSConfigWithSerializedConfig:
+    return _AWSConfigWithSerializedConfig(
+        access_key_id=config.access_key_id,
+        secret_access_key=config.secret_access_key,
+        region=config.region,
+        k8s_serialized=(None if config.k8s is None else config.k8s.json(exclude_none=True)),
     )
 
 

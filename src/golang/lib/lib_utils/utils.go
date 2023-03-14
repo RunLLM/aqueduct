@@ -110,7 +110,6 @@ func RunCmd(command string, args []string, dir string, stream bool) (string, str
 		err := cmd.Run()
 		if err != nil {
 			errMsg := fmt.Sprintf("Error running command: %s. Stdout: %s, Stderr: %s.", command, outb.String(), errb.String())
-			log.Errorf(errMsg)
 			return outb.String(), errb.String(), errors.New(errMsg)
 		}
 
@@ -246,12 +245,29 @@ func ParseAWSConfig(conf auth.Config) (*shared.AWSConfig, error) {
 		return nil, err
 	}
 
-	var c shared.AWSConfig
+	var c struct {
+		AccessKeyId     string `json:"access_key_id"`
+		SecretAccessKey string `json:"secret_access_key"`
+		Region          string `json:"region"`
+		K8sSerialized   string `json:"k8s_serialized"`
+	}
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
 	}
 
-	return &c, nil
+	var dynamicK8sConfig shared.DynamicK8sConfig
+	if len(c.K8sSerialized) > 0 {
+		if err := json.Unmarshal([]byte(c.K8sSerialized), &dynamicK8sConfig); err != nil {
+			return nil, err
+		}
+	}
+
+	return &shared.AWSConfig{
+		AccessKeyId:     c.AccessKeyId,
+		SecretAccessKey: c.SecretAccessKey,
+		Region:          c.Region,
+		K8s:             &dynamicK8sConfig,
+	}, nil
 }
 
 func ExtractAwsCredentials(config *shared.S3Config) (string, string, error) {

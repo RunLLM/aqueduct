@@ -11,6 +11,7 @@ import { AqueductDemoCard } from './aqueductDemoCard';
 import { BigQueryCard } from './bigqueryCard';
 import { CondaCard } from './condaCard';
 import { EmailCard } from './emailCard';
+import { GCSCard } from './gcsCard';
 import { KubernetesCard } from './kubernetesCard';
 import { LambdaDetailCard } from './lambdaCard';
 import { MariaDbCard } from './mariadbCard';
@@ -70,6 +71,10 @@ export const DetailIntegrationCard: React.FC<DetailIntegrationCardProps> = ({
     case 'Slack':
       serviceCard = <SlackCard integration={integration} />;
       break;
+    case 'GCS':
+      serviceCard = <GCSCard integration={integration} />;
+      break;
+
     default:
       serviceCard = null;
   }

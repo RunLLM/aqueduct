@@ -47,13 +47,7 @@ type ResultResponse struct {
 	Artifacts map[uuid.UUID]artifact.ResultResponse `json:"artifacts"`
 }
 
-func NewResultResponseFromDbObjects(
-	dag *models.DAG,
-	dagResult *models.DAGResult,
-	dbOperatorResults []models.OperatorResult,
-	dbArtifactResults []models.ArtifactResult,
-	contents map[string]string,
-) *ResultResponse {
+func NewResponseFromDbObjects(dag *models.DAG) *Response {
 	metadataResponse := MetadataResponse{
 		DagId:         dag.ID,
 		DagCreatedAt:  dag.CreatedAt,
@@ -63,15 +57,10 @@ func NewResultResponseFromDbObjects(
 		WorkflowId: dag.WorkflowID,
 	}
 
-	rawResultResponse := RawResultResponse{
-		Id: dagResult.ID,
-	}
-
-	if !dagResult.ExecState.IsNull {
-		// make a value copy of execState
-		execStateVal := dagResult.ExecState.ExecutionState
-		rawResultResponse.ExecState = &execStateVal
-	}
+	operatorsResponse := make(map[uuid.UUID]operator.Response, len(dag.Operators))
+	artifactsResponse := make(map[uuid.UUID]artifact.Response, len(dag.Artifacts))
+	artifactToUpstreamOpId := make(map[uuid.UUID]uuid.UUID, len(dag.Artifacts))
+	artifactToDownstreamOpIds := make(map[uuid.UUID][]uuid.UUID, len(dag.Artifacts))
 
 	if dag.Metadata != nil {
 		wfMetadata := dag.Metadata
@@ -83,10 +72,57 @@ func NewResultResponseFromDbObjects(
 		metadataResponse.RetentionPolicy = wfMetadata.RetentionPolicy
 	}
 
+	// Handle operators without results and update artifact maps
+	for id, op := range dag.Operators {
+		if _, ok := operatorsResponse[id]; !ok {
+			operatorsResponse[id] = *(operator.NewResponseFromDbObject(&op))
+		}
+
+		for _, id := range op.Outputs {
+			artifactToUpstreamOpId[id] = op.ID
+		}
+
+		for _, id := range op.Inputs {
+			artifactToDownstreamOpIds[id] = append(artifactToDownstreamOpIds[id], op.ID)
+		}
+	}
+
+	// Handle artifacts without results
+	for id, artf := range dag.Artifacts {
+		artifactsResponse[id] = *(artifact.NewResponseFromDbObject(
+			&artf,
+			artifactToUpstreamOpId[artf.ID],
+			artifactToDownstreamOpIds[artf.ID],
+		))
+	}
+
+	return &Response{
+		MetadataResponse: metadataResponse,
+		Operators:        operatorsResponse,
+		Artifacts:        artifactsResponse,
+	}
+}
+
+func NewResultResponseFromDbObjects(
+	dag *models.DAG,
+	dagResult *models.DAGResult,
+	dbOperatorResults []models.OperatorResult,
+	dbArtifactResults []models.ArtifactResult,
+	contents map[string]string,
+) *ResultResponse {
+	resp := NewResponseFromDbObjects(dag)
+	rawResultResponse := RawResultResponse{
+		Id: dagResult.ID,
+	}
+
+	if !dagResult.ExecState.IsNull {
+		// make a value copy of execState
+		execStateVal := dagResult.ExecState.ExecutionState
+		rawResultResponse.ExecState = &execStateVal
+	}
+
 	operatorsResponse := make(map[uuid.UUID]operator.ResultResponse, len(dag.Operators))
 	artifactsResponse := make(map[uuid.UUID]artifact.ResultResponse, len(dag.Artifacts))
-	artifactToUpstreamOpId := make(map[uuid.UUID]uuid.UUID, len(dag.Artifacts))
-	artifactToDownstreamOpIds := make(map[uuid.UUID][]uuid.UUID, len(dag.Artifacts))
 
 	for _, opResult := range dbOperatorResults {
 		if op, ok := dag.Operators[opResult.OperatorID]; ok {
@@ -99,14 +135,6 @@ func NewResultResponseFromDbObjects(
 	for id, op := range dag.Operators {
 		if _, ok := operatorsResponse[id]; !ok {
 			operatorsResponse[id] = *(operator.NewResultResponseFromDbObjects(&op, nil))
-		}
-
-		for _, id := range op.Outputs {
-			artifactToUpstreamOpId[id] = op.ID
-		}
-
-		for _, id := range op.Inputs {
-			artifactToDownstreamOpIds[id] = append(artifactToDownstreamOpIds[id], op.ID)
 		}
 	}
 
@@ -122,8 +150,8 @@ func NewResultResponseFromDbObjects(
 				&artf,
 				&artfResult,
 				contentPtr,
-				artifactToUpstreamOpId[artf.ID],
-				artifactToDownstreamOpIds[artf.ID],
+				resp.Artifacts[artf.ID].From,
+				resp.Artifacts[artf.ID].To,
 			)
 			artifactsResponse[artf.ID] = *artfResultResponse
 		}
@@ -136,14 +164,14 @@ func NewResultResponseFromDbObjects(
 				&artf,
 				nil,
 				nil,
-				artifactToUpstreamOpId[artf.ID],
-				artifactToDownstreamOpIds[artf.ID],
+				resp.Artifacts[artf.ID].From,
+				resp.Artifacts[artf.ID].To,
 			))
 		}
 	}
 
 	return &ResultResponse{
-		MetadataResponse: metadataResponse,
+		MetadataResponse: resp.MetadataResponse,
 		Result:           &rawResultResponse,
 		Operators:        operatorsResponse,
 		Artifacts:        artifactsResponse,

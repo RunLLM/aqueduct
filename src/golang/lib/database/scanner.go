@@ -39,7 +39,7 @@ func scanRows(rows *sql.Rows, dest interface{}) error {
 			}
 
 			// No rows to scan
-			return ErrNoRows
+			return ErrNoRows()
 		}
 		return scanRow(rows, dest)
 	case reflect.Slice:

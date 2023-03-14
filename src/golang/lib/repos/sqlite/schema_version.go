@@ -101,7 +101,7 @@ func getSchemaVersion(ctx context.Context, DB database.Database, query string, a
 	}
 
 	if len(schemaVersions) == 0 {
-		return nil, database.ErrNoRows
+		return nil, database.ErrNoRows()
 	}
 
 	if len(schemaVersions) != 1 {

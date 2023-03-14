@@ -129,7 +129,10 @@ func NewOperator(
 	var jobManager job.JobManager
 	var err error
 
-	if dagJobManager == nil {
+	if dagJobManager == nil && opEngineConfig.Type != shared.AirflowEngineType {
+		// There is no global job manager for the DAG, so we create the operator
+		// specific one. If a workflow is running on Airflow, we do not need to
+		// create a job manager for it
 		jobManager, err = job.GenerateNewJobManager(
 			ctx, opEngineConfig, storageConfig, aqPath, vaultObject,
 		)

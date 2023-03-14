@@ -6,6 +6,7 @@ from notification import connect_slack
 from workflows import (
     fail_bad_check,
     fail_bad_operator,
+    no_run,
     succeed_complex,
     succeed_parameters,
     warning_bad_check,
@@ -21,6 +22,7 @@ WORKFLOW_PKGS = [
     succeed_parameters,
     succeed_complex,
     fail_bad_operator,
+    no_run,
 ]
 
 EXAMPLE_NOTEBOOKS_PATHS = [

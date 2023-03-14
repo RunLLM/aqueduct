@@ -54,7 +54,7 @@ func (g *gcsStorage) Get(ctx context.Context, key string) ([]byte, error) {
 	_, err = client.Bucket(bucket).Object(key).Attrs(ctx)
 	if err != nil {
 		if err == storage.ErrObjectNotExist {
-			return nil, ErrObjectDoesNotExist
+			return nil, ErrObjectDoesNotExist()
 		}
 		return nil, err
 	}

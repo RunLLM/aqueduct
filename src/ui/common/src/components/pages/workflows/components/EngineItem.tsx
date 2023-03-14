@@ -1,6 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import React from 'react';
 
+import { EngineTypeToService } from '../../../../utils/engine';
 import { ServiceLogos } from '../../../../utils/integrations';
 
 export interface EngineItemProps {
@@ -12,8 +13,8 @@ export const EngineItem: React.FC<EngineItemProps> = ({
   // which is all lowercase.
   engine,
 }) => {
-  const engineName = engine[0].toUpperCase() + engine.substring(1);
-  const iconUrl = ServiceLogos[engineName];
+  const engineName = EngineTypeToService[engine];
+  const iconUrl = ServiceLogos[EngineTypeToService[engine]];
 
   return (
     <Box display="flex" alignItems="left" justifyContent="left">
