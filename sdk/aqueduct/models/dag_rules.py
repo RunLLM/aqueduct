@@ -54,7 +54,10 @@ def check_customized_resources_are_supported(
             "Customizing memory for a AWS Lambda operator will add about a minute to its runtime, per operator."
         )
 
-    if not allowed_customizable_resources[CustomizableResourceType.GPU_RESOURCE_NAME] and resources.gpu_resource_name:
+    if (
+        not allowed_customizable_resources[CustomizableResourceType.GPU_RESOURCE_NAME]
+        and resources.gpu_resource_name
+    ):
         raise InvalidUserArgumentException(
             "Operator `%s` cannot configure gpus, since it is not supported when running on %s."
             % (op_name, engine_config.type)

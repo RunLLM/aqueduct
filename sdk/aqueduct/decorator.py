@@ -418,12 +418,14 @@ def _update_operator_spec_with_resources(
 
         if gpu_resource_name is not None and (not isinstance(gpu_resource_name, str)):
             raise InvalidUserArgumentException("`gpu_resource_name` value must be set to a string.")
-        
+
         if cuda_version is not None and (not isinstance(cuda_version, str)):
             raise InvalidUserArgumentException("`cuda_version` value must be set to a string.")
-        
+
         if cuda_version is not None and gpu_resource_name is None:
-            raise InvalidUserArgumentException("`cuda_version` can only be set if a `gpu_resource_name` is specified.")
+            raise InvalidUserArgumentException(
+                "`cuda_version` can only be set if a `gpu_resource_name` is specified."
+            )
 
         spec.resources = ResourceConfig(
             num_cpus=num_cpus, memory_mb=memory, gpu_resource_name=gpu_resource_name
@@ -493,8 +495,11 @@ def op(
                 For example, the following values are valid: 100, "100MB", "1GB", "100mb", "1gb".
             "gpu_resource_name" (str):
                 Name of the gpu resource to use (only applicable for Kubernetes engine).
+
+                For example, the following value is valid: "nvidia.com/gpu".
             "cuda_version" (str):
-                Version of CUDA to use with GPU (only applicable for Kubernetes engine).
+                Version of CUDA to use with GPU (only applicable for Kubernetes engine). The currently supported
+                values are "11.4.1" and "11.8.0".
 
     Examples:
         The op name is inferred from the function name. The description is pulled from the function

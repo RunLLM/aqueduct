@@ -27,6 +27,8 @@ import (
 
 type Type string
 
+type CudaVersionNumber string
+
 const (
 	FunctionType     Type = "function"
 	MetricType       Type = "metric"
@@ -35,13 +37,16 @@ const (
 	LoadType         Type = "load"
 	ParamType        Type = "param"
 	SystemMetricType Type = "system_metric"
+
+	Cuda11_4_1 CudaVersionNumber = "11.4.1"
+	Cuda11_8_0 CudaVersionNumber = "11.8.0"
 )
 
 type ResourceConfig struct {
-	NumCPU          *int    `json:"num_cpus,omitempty"`
-	MemoryMB        *int    `json:"memory_mb,omitempty"`
-	GPUResourceName *string `json:"gpu_resource_name,omitempty"`
-	CudaVersion     *string `json:"cuda_version,omitempty"`
+	NumCPU          *int               `json:"num_cpus,omitempty"`
+	MemoryMB        *int               `json:"memory_mb,omitempty"`
+	GPUResourceName *string            `json:"gpu_resource_name,omitempty"`
+	CudaVersion     *CudaVersionNumber `json:"cuda_version,omitempty"`
 }
 
 type specUnion struct {

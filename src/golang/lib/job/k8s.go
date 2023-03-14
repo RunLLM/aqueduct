@@ -8,6 +8,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/function"
 	"github.com/dropbox/godropbox/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -81,7 +82,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobE
 	}
 
 	launchGpu := false
-	var cudaVersion string
+	var cudaVersion operator.CudaVersionNumber
 	resourceRequest := map[string]string{
 		k8s.PodResourceCPUKey:    k8s.DefaultCPURequest,
 		k8s.PodResourceMemoryKey: k8s.DefaultMemoryRequest,
@@ -253,7 +254,7 @@ func (j *k8sJobManager) DeleteCronJob(ctx context.Context, name string) JobError
 }
 
 // Maps a job Spec to Docker image.
-func mapJobTypeToDockerImage(spec Spec, launchGpu bool, cudaVersion string) (string, error) {
+func mapJobTypeToDockerImage(spec Spec, launchGpu bool, cudaVersion operator.CudaVersionNumber) (string, error) {
 	switch spec.Type() {
 	case FunctionJobType:
 		functionSpec, ok := spec.(*FunctionSpec)
@@ -321,9 +322,9 @@ func mapIntegrationServiceToDockerImage(service shared.Service) (string, error) 
 	}
 }
 
-func mapGpuFunctionToDockerImage(pythonVersion function.PythonVersion, cudaVersion string) (string, error) {
+func mapGpuFunctionToDockerImage(pythonVersion function.PythonVersion, cudaVersion operator.CudaVersionNumber) (string, error) {
 	switch cudaVersion {
-	case k8s.Cuda11_4_1:
+	case operator.Cuda11_8_0:
 		switch pythonVersion {
 		case function.PythonVersion37:
 			return GpuCuda1180Python37, nil
@@ -336,7 +337,7 @@ func mapGpuFunctionToDockerImage(pythonVersion function.PythonVersion, cudaVersi
 		default:
 			return "", errors.New("Unable to determine Python Version.")
 		}
-	case k8s.Cuda11_8_0:
+	case operator.Cuda11_4_1:
 		switch pythonVersion {
 		case function.PythonVersion37:
 			return GpuCuda1141Python37, nil
@@ -352,5 +353,4 @@ func mapGpuFunctionToDockerImage(pythonVersion function.PythonVersion, cudaVersi
 	default:
 		return "", errors.New("Unsupported CUDA version provided. We currently only support CUDA versions 11.4.1 and 11.8.0")
 	}
-
 }

@@ -237,6 +237,8 @@ class K8sClusterActionType(str, Enum, metaclass=MetaEnum):
     FORCE_DELETE = "force-delete"
 
 
+# These are keys for resources that users can customize for operators.
+# They are used as dict keys, eg @op(resources={'num_cpus': 1, ...})
 class CustomizableResourceType(str, Enum, metaclass=MetaEnum):
     NUM_CPUS = "num_cpus"
     MEMORY = "memory"
