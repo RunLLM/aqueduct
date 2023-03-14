@@ -11,4 +11,5 @@ from aqueduct.integrations.connect_config import (
     SparkConfig,
     SQLiteConfig,
     SqlServerConfig,
+    K8sConfig,
 )
