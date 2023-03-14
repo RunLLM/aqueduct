@@ -7,7 +7,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { handleGetServerConfig } from '../../../handlers/getServerConfig';
 
-import { useAqueductConsts } from '../../../components/hooks/useAqueductConsts';
 import {
   handleDeleteIntegration,
   resetDeletionStatus,
