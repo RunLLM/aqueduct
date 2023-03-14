@@ -20,7 +20,7 @@ To run with more flexibility, configure the following commandline flags:
 ## Checklist
 * **Workflows** Page: 
     * There should be **5** workflows. **4** Succeeded and **1** Failed if using `--example-notebooks`
-    * There should be **5** workflows. **3** Succeeded and **2** Failed if **not** using `--example-notebooks`
+    * There should be **6** workflows. **3** Succeeded, **2** Failed, and **1** Registered if **not** using `--example-notebooks`
 * **Notifications**: There should be **2** notifications for failed workflow.
 * **Workflow Details** Page: Each page should reflect the **workflow description**. Pay attention to any noted **sidesheets** behaviors in the description.
 * **Integration** Page:

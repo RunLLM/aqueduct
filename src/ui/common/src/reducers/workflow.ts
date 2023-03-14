@@ -695,7 +695,13 @@ export const workflowSlice = createSlice({
         if (!state.selectedResult) {
           state.selectedResult = state.dagResults[0];
         }
-        state.selectedDag = state.dags[state.selectedResult.workflow_dag_id];
+
+        if (state.selectedResult) {
+          state.selectedDag = state.dags[state.selectedResult.workflow_dag_id];
+        } else {
+          state.selectedDag = Object.values(state.dags)[0];
+        }
+
         state.loadingStatus = { loading: LoadingStatusEnum.Succeeded, err: '' };
       }
     );

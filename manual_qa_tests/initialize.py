@@ -9,6 +9,7 @@ from workflows import (
     succeed_complex,
     succeed_parameters,
     warning_bad_check,
+    no_run,
 )
 
 import aqueduct as aq
@@ -21,6 +22,7 @@ WORKFLOW_PKGS = [
     succeed_parameters,
     succeed_complex,
     fail_bad_operator,
+    no_run,
 ]
 
 EXAMPLE_NOTEBOOKS_PATHS = [
