@@ -6,10 +6,10 @@ from notification import connect_slack
 from workflows import (
     fail_bad_check,
     fail_bad_operator,
+    no_run,
     succeed_complex,
     succeed_parameters,
     warning_bad_check,
-    no_run,
 )
 
 import aqueduct as aq

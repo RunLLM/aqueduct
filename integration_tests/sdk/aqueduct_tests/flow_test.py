@@ -324,15 +324,19 @@ def test_publish_flow_without_triggering(client, flow_name, data_integration, en
         return "results"
 
     output = foo()
+    name = flow_name()
     flow = client.publish_flow(
-        name=flow_name(),
+        name=name,
         artifacts=output,
         engine=engine,
         run_now=False,
     )
 
+    # flow.describe() should run without issue.
+    flow.describe()
     assert len(flow.list_runs()) == 0
     assert flow.latest() is None
+    assert flow.name() == name
 
 
 def test_get_artifact_from_flow(client, flow_name, data_integration, engine):
