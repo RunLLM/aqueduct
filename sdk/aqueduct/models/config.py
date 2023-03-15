@@ -58,21 +58,3 @@ class EngineConfig(BaseModel):
         fields = {
             "name": {"exclude": ...},
         }
-
-
-# TODO(ENG-2511): this is deprecated.
-class FlowConfig(BaseModel):
-    engine: Optional[
-        Union[
-            AirflowIntegration,
-            K8sIntegration,
-            LambdaIntegration,
-            DatabricksIntegration,
-            SparkIntegration,
-        ]
-    ]
-    k_latest_runs: int = -1
-
-    class Config:
-        # Necessary to allow an engine field
-        arbitrary_types_allowed = True
