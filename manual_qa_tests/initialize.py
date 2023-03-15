@@ -11,6 +11,7 @@ from workflows import (
     succeed_parameters,
     warning_bad_check,
 )
+from wait_for_flows import wait_for_all_flows_to_complete
 
 import aqueduct as aq
 
@@ -26,12 +27,12 @@ WORKFLOW_PKGS = [
 ]
 
 EXAMPLE_NOTEBOOKS_PATHS = [
+    ["examples/sentiment-analysis/", "Sentiment Model.ipynb"],
+    ["examples/wine-ratings-prediction/", "Predict Missing Wine Ratings.ipynb"],
     ["examples/churn_prediction/", "Customer Churn Prediction.ipynb"],
     ["examples/diabetes-classifier/", "Classifying Diabetes Risk.ipynb"],
     ["examples/house-price-prediction/", "House Price Prediction.ipynb"],
     ["examples/mpg-regressor/", "Predicting MPG.ipynb"],
-    ["examples/sentiment-analysis/", "Sentiment Model.ipynb"],
-    ["examples/wine-ratings-prediction/", "Predict Missing Wine Ratings.ipynb"],
 ]
 
 TEMP_NOTEBOOK_PATH = "temp.py"
@@ -44,9 +45,11 @@ if __name__ == "__main__":
     parser.add_argument("--api-key", default="")
     # parser.add_argument("-q", "--quiet", action="store_true")
     parser.add_argument("--example-notebooks", action="store_true")
+    parser.add_argument("--example-notebooks-only", action="store_true")
     parser.add_argument("--slack-token", default="")
     parser.add_argument("--slack-channel", default="")
     parser.add_argument("--notification-level", default="success")
+    parser.add_argument("--wait-to-complete", action="store_true")
     args = parser.parse_args()
 
     api_key = args.api_key if args.api_key else aq.get_apikey()
@@ -60,7 +63,7 @@ if __name__ == "__main__":
             NotificationLevel(args.notification_level),
         )
 
-    if args.example_notebooks:
+    if args.example_notebooks or args.example_notebooks_only:
         for example_path in EXAMPLE_NOTEBOOKS_PATHS:
             print(f"Deploying example notebooks {example_path[1]}...")
             deploy_example.deploy(
@@ -71,6 +74,10 @@ if __name__ == "__main__":
                 api_key,
             )
 
-    for pkg in WORKFLOW_PKGS:
-        print(f"Deploying {pkg.NAME}...")
-        pkg.deploy(client, args.data_integration)
+    if not args.example_notebooks_only:
+        for pkg in WORKFLOW_PKGS:
+            print(f"Deploying {pkg.NAME}...")
+            pkg.deploy(client, args.data_integration)
+    
+    if args.wait_to_complete:
+        wait_for_all_flows_to_complete(client)
