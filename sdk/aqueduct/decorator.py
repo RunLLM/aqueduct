@@ -741,7 +741,6 @@ def metric(
             _update_operator_spec_with_resources(op_spec, resources)
 
             output_names = [output] if output is not None else None
-
             numeric_artifact = wrap_spec(
                 op_spec,
                 *artifacts,
@@ -754,6 +753,7 @@ def metric(
             assert isinstance(numeric_artifact, NumericArtifact)
 
             numeric_artifact.set_operator_type(OperatorType.METRIC)
+
             return numeric_artifact
 
         """
@@ -925,7 +925,6 @@ def check(
             _update_operator_spec_with_resources(op_spec, resources)
 
             output_names = [output] if output is not None else None
-
             bool_artifact = wrap_spec(
                 op_spec,
                 *artifacts,
@@ -935,6 +934,7 @@ def check(
                 description=description,
                 execution_mode=execution_mode,
             )
+
             assert isinstance(bool_artifact, BoolArtifact)
 
             bool_artifact.set_operator_type(OperatorType.CHECK)

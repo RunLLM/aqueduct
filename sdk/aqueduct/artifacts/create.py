@@ -11,6 +11,7 @@ from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
 from aqueduct.models.operators import Operator, OperatorSpec
 from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.naming import sanitize_artifact_name
 from aqueduct.utils.type_inference import infer_artifact_type
 from aqueduct.utils.utils import construct_param_spec, generate_uuid
 
@@ -79,7 +80,7 @@ def create_param_artifact(
                 output_artifacts=[
                     ArtifactMetadata(
                         id=output_artifact_id,
-                        name=param_name,
+                        name=sanitize_artifact_name(param_name),
                         type=artifact_type,
                         explicitly_named=explicitly_named,
                     ),

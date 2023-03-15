@@ -14,6 +14,35 @@ from .test_functions.simple.model import (
 )
 
 
+def test_artifact_name_sanitization(client, data_integration):
+    "Checks that whitespace in the beginning or end of artifact names is removed."
+    param = client.create_param("   whitespace around me  ", default=123)
+    assert param.name() == "whitespace around me"
+
+    table = extract(data_integration, DataObject.SENTIMENT, output_name="   whitespace around me  ")
+    assert table.name() == "whitespace around me"
+
+    @op(outputs=["  whitespace around me  "])
+    def foo():
+        return 123
+    output = foo()
+    assert output.name() == "whitespace around me"
+
+    # Not even .set_name() can save you.
+    output.set_name("   whitespace around me  ")
+    assert output.name() == "whitespace around me"
+
+    @metric(output="  whitespace around me  ")
+    def m(input):
+        return 100
+    assert m(output).name() == "whitespace around me"
+
+    @check(output="  whitespace around me  ")
+    def c(input):
+        return True
+    assert c(output).name() == "whitespace around me"
+
+
 def test_extract_with_default_name_collision(client, flow_name, engine, data_integration):
     # In the case where no explicit name is supplied, we expect new extract
     # operators to always be created.
