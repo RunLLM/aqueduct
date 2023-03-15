@@ -107,6 +107,9 @@ def test_edit_metric(client, data_integration, engine, flow_name):
     assert output2.get() == 100  # the previous metric with the same name still exists.
     assert output3.get() == 6497
 
+    # For deterministic ordering, have the previous metric claim "foo artifact".
+    output2.set_name("foo artifact")
+
     flow = publish_flow_test(client, artifacts=[output2, output3], engine=engine, name=flow_name())
     flow_run = flow.latest()
     assert flow_run.artifact("foo artifact").get() == 100

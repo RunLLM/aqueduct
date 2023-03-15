@@ -25,6 +25,7 @@ def test_artifact_name_sanitization(client, data_integration):
     @op(outputs=["  whitespace around me  "])
     def foo():
         return 123
+
     output = foo()
     assert output.name() == "whitespace around me"
 
@@ -35,11 +36,13 @@ def test_artifact_name_sanitization(client, data_integration):
     @metric(output="  whitespace around me  ")
     def m(input):
         return 100
+
     assert m(output).name() == "whitespace around me"
 
     @check(output="  whitespace around me  ")
     def c(input):
         return True
+
     assert c(output).name() == "whitespace around me"
 
 

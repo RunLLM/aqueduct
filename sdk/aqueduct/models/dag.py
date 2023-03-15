@@ -1,6 +1,6 @@
 import copy
 import uuid
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional, Set
 
 from aqueduct.constants.enums import (
     ArtifactType,
@@ -57,21 +57,15 @@ class DAG(BaseModel):
     # by individual operators.
     engine_config: EngineConfig = EngineConfig()
 
-    # TODO: refactor the traversal
-    def validate_and_resolve_artifact_names(self) -> None:
-        """To be called from publish_flow() only.
-
-        Checks that all explicitly named artifacts are unique.
-
-        For implicitly named artifacts that collide, bumps their names using the `(num)` suffix.
-        The index is grouped by the input operator, so an operator with multiple output artifacts
-        that use our default naming scheme will always have consecutive numbers. Eg. (1), (2), (3)
+    def _validate_explicitly_named_artifacts(
+        self, starting_ops: List[Operator], seen_artifact_names: Set[str]
+    ) -> None:
         """
-        seen_artifact_names: Set[str] = set()
+        In the first BFS pass, check that there aren't any explicitly named artifacts that collide with each other.
 
-        # In the first pass, check that there aren't any explicitly named artifacts that collide with each other.
-        # We use the same breadth first search each time so that there is some determinism.
-        q: List[Operator] = [op for op in self.operators.values() if len(op.inputs) == 0]
+        Add any explicitly named artifacts to `seen_artifact_names`. Those names are now completely claimed.
+        """
+        q: List[Operator] = copy.copy(starting_ops)
         seen_op_ids: List[uuid.UUID] = []
         while len(q) > 0:
             curr_op = q.pop(0)
@@ -96,11 +90,19 @@ class DAG(BaseModel):
                     self.list_operators(on_artifact_id=artifact.id),
                 )
 
-        # In the second pass, resolve the names of any implicitly named artifacts that collide.
-        # Loop through the operators in topological order so that numbers are assigned in a reasonable fashion.
-        # Output artifacts of the same operator are always numbered consecutively.
-        seen_op_ids = []
-        q = [op for op in self.operators.values() if len(op.inputs) == 0]
+    def _resolve_artifact_names(
+        self, starting_ops: List[Operator], seen_artifact_names: Set[str]
+    ) -> None:
+        """
+        In the second BFS pass, resolve the names of any implicitly named artifacts that collide. Loop through
+        the operators in topological order so that numbers are assigned in a reasonable fashion. Output artifacts
+        of the same operator are always numbered consecutively.
+
+        `seen_artifact_names` should have already been updated by `_validate_explicitly_named_artifacts`.
+        """
+        q: List[Operator] = copy.copy(starting_ops)
+        seen_op_ids: List[uuid.UUID] = []
+
         any_op_was_renamed = False
         while len(q) > 0:
             curr_op = q.pop(0)
@@ -110,33 +112,51 @@ class DAG(BaseModel):
                 continue
             seen_op_ids.append(curr_op.id)
 
-            for output_artifact_id in curr_op.outputs:
-                output_artifact = self.must_get_artifact(output_artifact_id)
-
+            output_artifacts = self.must_get_artifacts(curr_op.outputs)
+            for artifact in output_artifacts:
                 # Skip name resolution for explicitly named artifacts.
                 # We've already checked in the first pass.
-                if not output_artifact.explicitly_named:
+                if not artifact.explicitly_named:
                     # Find an unallocated name for each artifact.
-                    original_name = output_artifact.name
-                    while output_artifact.name in seen_artifact_names:
-                        output_artifact.name = bump_artifact_suffix(output_artifact.name)
+                    original_name = artifact.name
+                    while artifact.name in seen_artifact_names:
+                        artifact.name = bump_artifact_suffix(artifact.name)
 
-                    if original_name != output_artifact.name:
+                    if original_name != artifact.name:
                         logger().warning(
                             "Multiple artifacts were named `%s`. Since artifact names must be unique, "
-                            "we renamed one of them to `%s`."
-                            % (original_name, output_artifact.name)
+                            "we renamed one of them to `%s`." % (original_name, artifact.name)
                         )
                         any_op_was_renamed = True
 
-                    seen_artifact_names.add(output_artifact.name)
+                    seen_artifact_names.add(artifact.name)
 
-                q.extend(self.list_operators(on_artifact_id=output_artifact_id))
+                q.extend(self.list_operators(on_artifact_id=artifact.id))
 
         if any_op_was_renamed:
             logger().warning(
                 "Note that any artifacts you explicitly gave a name to were not renamed."
             )
+
+    def validate_and_resolve_artifact_names(self) -> None:
+        """To be called from publish_flow() only.
+
+        Checks that all explicitly named artifacts are unique.
+
+        For implicitly named artifacts that collide, bumps their names using the `(num)` suffix.
+        The index is grouped by the input operator, so an operator with multiple output artifacts
+        that use our default naming scheme will always have consecutive numbers. Eg. (1), (2), (3)
+        """
+
+        # For some determinism around naming, we sort the starting operators by name and then id.
+        starting_ops: List[Operator] = sorted(
+            [op for op in self.operators.values() if len(op.inputs) == 0],
+            key=lambda op: (op.name, op.id),
+        )
+
+        seen_artifact_names: Set[str] = set()
+        self._validate_explicitly_named_artifacts(starting_ops, seen_artifact_names)
+        self._resolve_artifact_names(starting_ops, seen_artifact_names)
 
     def set_engine_config(
         self,
