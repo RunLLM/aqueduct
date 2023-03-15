@@ -2,8 +2,9 @@ package dynamic
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -31,8 +32,10 @@ const (
 	K8sClusterUpdateAction k8sClusterActionType = "update"
 )
 
-const stateLockErrMsg = "Error acquiring the state lock"
-const K8sClusterNameSuffix = "aqueduct_ondemand_k8s"
+const (
+	stateLockErrMsg      = "Error acquiring the state lock"
+	K8sClusterNameSuffix = "aqueduct_ondemand_k8s"
+)
 
 var TerraformTemplateDir = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "template", "aws", "eks")
 
@@ -631,15 +634,17 @@ func CheckIfValidConfig(action k8sClusterActionType, config map[string]string) e
 
 // GenerateClusterName generates a EKS cluster name by concatenating aqueduct with a
 // random string of length 16.
-func GenerateClusterName() string {
-	rand.Seed(time.Now().UnixNano())
-
+func GenerateClusterName() (string, error) {
 	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 	b := make([]byte, 16)
 	for i := range b {
-		b[i] = letterBytes[rand.Intn(len(letterBytes))]
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(letterBytes))))
+		if err != nil {
+			return "", err
+		}
+		b[i] = letterBytes[n.Int64()]
 	}
 
-	return fmt.Sprintf("%s_%s", "aqueduct", string(b))
+	return fmt.Sprintf("%s_%s", "aqueduct", string(b)), nil
 }

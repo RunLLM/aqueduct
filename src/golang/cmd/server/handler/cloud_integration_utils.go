@@ -60,10 +60,15 @@ func setupCloudIntegration(
 
 	config.Update(awsConfig.K8s)
 
+	clusterName, err := dynamic.GenerateClusterName()
+	if err != nil {
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to generate k8s cluster name.")
+	}
+
 	dynamicK8sConfig := map[string]string{
 		shared.K8sTerraformPathKey:      terraformPath,
 		shared.K8sKubeconfigPathKey:     kubeconfigPath,
-		shared.K8sClusterNameKey:        dynamic.GenerateClusterName(),
+		shared.K8sClusterNameKey:        clusterName,
 		shared.K8sDynamicKey:            strconv.FormatBool(true),
 		shared.K8sCloudIntegrationIdKey: cloudIntegration.ID.String(),
 		shared.K8sUseSameClusterKey:     strconv.FormatBool(false),
@@ -115,7 +120,7 @@ func setupCloudIntegration(
 // cloud integration's destination directory.
 func setupTerraformDirectory(dst string) error {
 	// Create the destination directory if it doesn't exist.
-	if err := os.MkdirAll(dst, 0755); err != nil {
+	if err := os.MkdirAll(dst, 0o755); err != nil {
 		return err
 	}
 
