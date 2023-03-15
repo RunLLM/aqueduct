@@ -625,8 +625,15 @@ def test_local_table_data_parameter(client, flow_name, engine):
         output_artifact_list.append(output)
         input_data_list.append(input_df)
 
+    with pytest.raises(
+        InvalidUserActionException,
+        match="Cannot create a flow with local data."
+    ):
+        flow = publish_flow_test(
+            client, artifacts=output_artifact_list, name=flow_name(), engine=engine
+        )
     flow = publish_flow_test(
-        client, artifacts=output_artifact_list, name=flow_name(), engine=engine
+        client, artifacts=output_artifact_list, name=flow_name(), engine=engine, use_local = True
     )
     flow_run = flow.latest()
     assert flow_run.artifact("output_csv").get().equals(input_data_list[0])
@@ -675,4 +682,5 @@ def test_local_image_data_parameter(client, flow_name, engine):
             image_output,
         ],
         engine=engine,
+        use_local = True
     )

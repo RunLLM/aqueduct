@@ -223,6 +223,9 @@ class Client:
         check_explicit_param_name(self._dag, name)
         if isinstance(default, LocalData):
             default = extract_val_from_local_data(default)
+            artifact = create_param_artifact(self._dag, name, default, description)
+            artifact._from_local_data = True
+            return artifact
         return create_param_artifact(self._dag, name, default, description)
 
     def list_params(self) -> Dict[str, Any]:
@@ -501,6 +504,7 @@ class Client:
         k_latest_runs: Optional[int] = None,
         config: Optional[FlowConfig] = None,
         source_flow: Optional[Union[Flow, str, uuid.UUID]] = None,
+        use_local: Optional[bool] = False
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
 
@@ -552,6 +556,9 @@ class Client:
             source_flow:
                 Used to identify the source flow for this flow. This can be identified
                 via an object (Flow), name (str), or id (str or uuid).
+            use_local:
+                Used to identify if local data is used. In order to use `LocalData`, this has to be set
+                explicitly to True in order to publish a workflow with local data.
 
         Raises:
             InvalidUserArgumentException:
@@ -599,6 +606,10 @@ class Client:
                 "`artifacts` argument must either be an artifact or a list of artifacts."
             )
 
+        if not use_local and any(artifact._from_local_data for artifact in artifacts):
+            raise InvalidUserActionException(
+                "Cannot create a flow with local data."
+            )
         if source_flow and schedule != "":
             raise InvalidUserArgumentException(
                 "Cannot create a flow with both a schedule and a source flow, pick one."
