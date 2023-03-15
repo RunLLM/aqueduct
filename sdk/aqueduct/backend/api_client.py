@@ -420,8 +420,9 @@ class APIClient:
     def register_workflow(
         self,
         dag: DAG,
+        run_now: bool,
     ) -> RegisterWorkflowResponse:
-        headers, body, files = self._construct_register_workflow_request(dag)
+        headers, body, files = self._construct_register_workflow_request(dag, run_now)
         url = self.construct_full_url(self.REGISTER_WORKFLOW_ROUTE)
         resp = requests.post(url, headers=headers, data=body, files=files)
         self.raise_errors(resp)
@@ -432,7 +433,7 @@ class APIClient:
         self,
         dag: DAG,
     ) -> RegisterAirflowWorkflowResponse:
-        headers, body, files = self._construct_register_workflow_request(dag)
+        headers, body, files = self._construct_register_workflow_request(dag, False)
         url = self.construct_full_url(self.REGISTER_AIRFLOW_WORKFLOW_ROUTE, self.use_https)
         resp = requests.post(url, headers=headers, data=body, files=files)
         self.raise_errors(resp)
@@ -442,8 +443,11 @@ class APIClient:
     def _construct_register_workflow_request(
         self,
         dag: DAG,
+        run_now: bool,
     ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, IO[Any]]]:
         headers = self._generate_auth_headers()
+        # This header value will be string "True" or "False"
+        headers.update({"run-now": str(run_now)})
         body = {
             "dag": dag.json(exclude_none=True),
         }

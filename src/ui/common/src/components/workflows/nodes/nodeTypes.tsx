@@ -117,6 +117,7 @@ export const artifactTypeToIconMapping = {
   [ArtifactType.Image]: imageArtifactNodeIcon,
   // TODO: Figure out what to show for Picklable
   [ArtifactType.Picklable]: dictArtifactNodeIcon,
+  [ArtifactType.Untyped]: jsonArtifactNodeIcon,
 };
 
 export const operatorTypeToIconMapping = {

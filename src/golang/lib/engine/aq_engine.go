@@ -366,7 +366,7 @@ func (eng *aqEngine) PreviewWorkflow(
 
 	var jobManager job.JobManager
 	var previewCacheManager preview_cache.CacheManager
-	if dbDAG.EngineConfig.Type == shared.SparkEngineType {
+	if dbDAG.EngineConfig.Type == shared.SparkEngineType || dbDAG.EngineConfig.Type == shared.DatabricksEngineType {
 		jobManager, err = job.GenerateNewJobManager(
 			ctx,
 			dbDAG.EngineConfig,
