@@ -8,7 +8,6 @@ from aqueduct.constants.enums import OperatorType
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
-from aqueduct.models.local_data import LocalData
 from aqueduct.models.operators import Operator, OperatorSpec, get_operator_type
 from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.type_inference import infer_artifact_type

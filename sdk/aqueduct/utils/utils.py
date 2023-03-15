@@ -14,9 +14,7 @@ from aqueduct.models.config import (
 )
 from aqueduct.models.dag import Schedule
 from aqueduct.models.integration import IntegrationInfo
-from aqueduct.models.local_data import LocalData
 from aqueduct.models.operators import ParamSpec
-from aqueduct.utils.local_data import validate_local_data
 from croniter import croniter
 
 from .serialization import artifact_type_to_serialization_type, serialize_val

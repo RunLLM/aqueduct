@@ -15,7 +15,7 @@ from aqueduct.error import (
 from pandas._testing import assert_frame_equal
 from PIL import Image
 
-from aqueduct import local_data, metric, op
+from aqueduct import LocalData, metric, op
 
 from ..shared.data_objects import DataObject
 from ..shared.flow_helpers import publish_flow_test, trigger_flow_test
@@ -596,7 +596,7 @@ def test_local_table_data_parameter(client, flow_name, engine):
     output_artifact_list = []
     input_data_list = []
     for extension in file_type:
-        local_table_data = local_data(
+        local_table_data = LocalData(
             path="data/hotel_reviews." + extension,
             artifact_type=ArtifactType.TABLE,
             format=extension,
@@ -640,7 +640,7 @@ def test_invalid_local_data(client):
         InvalidUserArgumentException,
         match="Given path file 'data/hotel_reviews' to local data does not exist.",
     ):
-        local_table_data = local_data(path="data/hotel_reviews", artifact_type=ArtifactType.IMAGE)
+        local_table_data = LocalData(path="data/hotel_reviews", artifact_type=ArtifactType.IMAGE)
         client.create_param(name="data", default=local_table_data)
 
     # Check that format is supplied when Artifact type is table
@@ -648,7 +648,7 @@ def test_invalid_local_data(client):
         InvalidUserArgumentException,
         match="Specify format in order to use local data as TableArtifact.",
     ):
-        local_table_data = local_data(
+        local_table_data = LocalData(
             path="data/hotel_reviews.json", artifact_type=ArtifactType.TABLE
         )
         client.create_param(name="data", default=local_table_data)
@@ -661,7 +661,7 @@ def test_local_image_data_parameter(client, flow_name, engine):
             raise Exception("Expected image.")
         return input
 
-    local_image_data = local_data(path="data/aqueduct.jpg", artifact_type=ArtifactType.IMAGE)
+    local_image_data = LocalData(path="data/aqueduct.jpg", artifact_type=ArtifactType.IMAGE)
     image_param = client.create_param(name="data", default=local_image_data)
 
     image_output = must_be_image(image_param)

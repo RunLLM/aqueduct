@@ -5,7 +5,6 @@ from typing import Any
 import cloudpickle as pickle
 import numpy as np
 from aqueduct.constants.enums import ArtifactType
-from aqueduct.models.local_data import LocalData
 from pandas import DataFrame
 from PIL import Image
 

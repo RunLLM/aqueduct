@@ -14,7 +14,8 @@ from aqueduct.constants.enums import (
     SerializationType,
 )
 from aqueduct.models.local_data import LocalData
-from aqueduct.utils.type_inference import _base64_string_to_bytes, infer_artifact_type
+from aqueduct.utils.local_data import _convert_to_local_data_table_format
+from aqueduct.utils.type_inference import infer_artifact_type
 from bson import json_util as bson_json_util
 from PIL import Image
 from pydantic import BaseModel
@@ -350,10 +351,10 @@ def artifact_type_to_serialization_type(
 
 
 def extract_val_from_local_data(val: LocalData) -> Any:
-    """Extract value of spcified type in LocalData."""
+    """Extract value of specified type in LocalData."""
     artifact_type = val.artifact_type
     local_data_path = val.path
-    local_data_format = val.format
+    local_data_format = _convert_to_local_data_table_format(val.format)
     if artifact_type == ArtifactType.TABLE:
         if local_data_format == LocalDataTableFormat.CSV:
             deserialized_val = deserialize_from_local_data(
