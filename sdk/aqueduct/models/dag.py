@@ -16,6 +16,7 @@ from aqueduct.error import (
 )
 from pydantic import BaseModel
 
+from ..logger import logger
 from ..utils.naming import bump_artifact_suffix
 from .artifact import ArtifactMetadata
 from .config import EngineConfig
@@ -92,7 +93,7 @@ class DAG(BaseModel):
         # Output artifacts of the same operator are always numbered consecutively.
         seen_op_ids: List[uuid.UUID] = []
         q = [op for op in self.operators.values() if len(op.inputs) == 0]
-        print("SEEN:", seen_artifact_names)
+        any_op_was_renamed = False
         while len(q) > 0:
             curr_op = q.pop(0)
 
@@ -101,24 +102,36 @@ class DAG(BaseModel):
                 continue
             seen_op_ids.append(curr_op.id)
 
-            print("Operator: ", curr_op.name)
             for output_artifact_id in curr_op.outputs:
                 output_artifact = self.must_get_artifact(output_artifact_id)
 
-                print("HELLO: ", output_artifact.name)
+                # Skip name resolution for explicitly named artifacts.
+                # We've already checked in the first pass.
                 if output_artifact.explicitly_named:
-                    print("CONTINUING")
                     continue
 
+                # Find an unallocated name for each artifact.
+                original_name= output_artifact.name
                 while output_artifact.name in seen_artifact_names:
-                    print("HELLO: bumping ", output_artifact.name)
                     output_artifact.name = bump_artifact_suffix(output_artifact.name)
-                seen_artifact_names.add(output_artifact.name)
-                print("SEEN:", seen_artifact_names)
 
+                if original_name != output_artifact.name:
+                    logger().warning(
+                        "Multiple artifacts were named `%s`. Since artifact names must be unique, "
+                        "we renamed one of them to `%s`." % (original_name, output_artifact.name)
+                    )
+                    any_op_was_renamed = True
+
+
+                seen_artifact_names.add(output_artifact.name)
                 q.extend(
                     op for op in self.list_operators(on_artifact_id=output_artifact_id)
                 )
+
+        if any_op_was_renamed:
+            logger().warning(
+                "Note that any artifacts that you explicitly gave a name were not renamed."
+            )
 
     def set_engine_config(
         self,
