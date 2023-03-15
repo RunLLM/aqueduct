@@ -57,6 +57,7 @@ class DAG(BaseModel):
     # by individual operators.
     engine_config: EngineConfig = EngineConfig()
 
+    # TODO: refactor the traversal
     def validate_and_resolve_artifact_names(self) -> None:
         """To be called from publish_flow() only.
 
@@ -71,14 +72,21 @@ class DAG(BaseModel):
         # In the first pass, check that there aren't any explicitly named artifacts that collide with each other.
         # We use the same breadth first search each time so that there is some determinism.
         q: List[Operator] = [op for op in self.operators.values() if len(op.inputs) == 0]
+        seen_op_ids: List[uuid.UUID] = []
         while len(q) > 0:
             curr_op = q.pop(0)
+
+            # Only traverse operators you haven't seen before.
+            if curr_op.id in seen_op_ids:
+                continue
+            seen_op_ids.append(curr_op.id)
+
             output_artifacts = self.must_get_artifacts(curr_op.outputs)
             for artifact in output_artifacts:
                 if artifact.explicitly_named:
                     if artifact.name in seen_artifact_names:
                         raise InvalidUserActionException(
-                            "Unable to publish flow. You are attempting to publish multiple artifacts explicitly named `%s`."
+                            "Unable to publish flow. You are attempting to publish multiple artifacts explicitly named `%s`. "
                             "Please use `artifact.set_name(<new name>)` to resolve this naming collision. Or rerun the operators "
                             "with different output artifact names." % artifact.name
                         )
@@ -88,10 +96,12 @@ class DAG(BaseModel):
                     self.list_operators(on_artifact_id=artifact.id),
                 )
 
+        print(seen_artifact_names)
+
         # In the second pass, resolve the names of any implicitly named artifacts that collide.
         # Loop through the operators in topological order so that numbers are assigned in a reasonable fashion.
         # Output artifacts of the same operator are always numbered consecutively.
-        seen_op_ids: List[uuid.UUID] = []
+        seen_op_ids = []
         q = [op for op in self.operators.values() if len(op.inputs) == 0]
         any_op_was_renamed = False
         while len(q) > 0:
@@ -107,30 +117,26 @@ class DAG(BaseModel):
 
                 # Skip name resolution for explicitly named artifacts.
                 # We've already checked in the first pass.
-                if output_artifact.explicitly_named:
-                    continue
+                if not output_artifact.explicitly_named:
+                    # Find an unallocated name for each artifact.
+                    original_name = output_artifact.name
+                    while output_artifact.name in seen_artifact_names:
+                        output_artifact.name = bump_artifact_suffix(output_artifact.name)
 
-                # Find an unallocated name for each artifact.
-                original_name= output_artifact.name
-                while output_artifact.name in seen_artifact_names:
-                    output_artifact.name = bump_artifact_suffix(output_artifact.name)
+                    if original_name != output_artifact.name:
+                        logger().warning(
+                            "Multiple artifacts were named `%s`. Since artifact names must be unique, "
+                            "we renamed one of them to `%s`." % (original_name, output_artifact.name)
+                        )
+                        any_op_was_renamed = True
 
-                if original_name != output_artifact.name:
-                    logger().warning(
-                        "Multiple artifacts were named `%s`. Since artifact names must be unique, "
-                        "we renamed one of them to `%s`." % (original_name, output_artifact.name)
-                    )
-                    any_op_was_renamed = True
+                    seen_artifact_names.add(output_artifact.name)
 
-
-                seen_artifact_names.add(output_artifact.name)
-                q.extend(
-                    op for op in self.list_operators(on_artifact_id=output_artifact_id)
-                )
+                q.extend(self.list_operators(on_artifact_id=output_artifact_id))
 
         if any_op_was_renamed:
             logger().warning(
-                "Note that any artifacts that you explicitly gave a name were not renamed."
+                "Note that any artifacts you explicitly gave a name to were not renamed."
             )
 
     def set_engine_config(

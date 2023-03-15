@@ -23,8 +23,6 @@ def bump_artifact_suffix(artifact_name: str) -> str:
 
     # Check if the last few characters of artifact_name match the pattern "([0-9]+)"
     suffix_match = re.findall(r" \([0-9]+\)$", artifact_name)
-
-    print(suffix_match)
     suffix_idx = 1
     if len(suffix_match) > 0:
         val_with_parens = suffix_match[-1][1:]  # cut off the leading space

@@ -113,65 +113,6 @@ def test_implicitly_created_parameter(client, flow_name, engine):
     assert flow_run.artifact("output2").get() == 200
 
 
-def test_implicitly_created_param_overwrites(client, flow_name, engine):
-    @op
-    def foo(param):
-        return param
-
-    # Test that two implicit parameters colliding will result in an override if they
-    # are used by the same function.
-    foo_output = foo(123)
-    assert foo_output.get() == 123
-
-    foo_output = foo("hello")
-    assert foo_output.get() == "hello"
-    assert foo_output.get({"foo:param": "custom val"}) == "custom val"
-
-    # Test that two implicit parameters colliding with NOT result in an override if
-    # they are used by different functions. In this case, is it because the names are
-    # resolved to different values.
-    @op
-    def different_fn(param):
-        return param
-
-    different_fn_output = different_fn("different value")
-    assert different_fn_output.get() == "different value"
-    assert different_fn_output.get({"different_fn:param": "another val"}) == "another val"
-
-    # Publish and validate the final value of each parameter.
-    flow = publish_flow_test(
-        client,
-        artifacts=[foo_output, different_fn_output],
-        name=flow_name(),
-        engine=engine,
-    )
-    flow_run = flow.latest()
-
-    assert flow_run.artifact("foo:param").get() == "hello"
-    assert flow_run.artifact("different_fn:param").get() == "different value"
-
-
-def test_change_param_artifact_name(client, flow_name, engine):
-    """Test that changing a parameter artifact name is possible."""
-    param = client.create_param("param", default=123)
-    param.set_name("new param name")
-    new_param = param  # Move the parameter to a different variable
-
-    # The operator name collides with the old param name, but we already moved it out.
-    @op
-    def param():
-        return "value"
-
-    fn_output = param()
-
-    flow = publish_flow_test(
-        client, artifacts=[new_param, fn_output], name=flow_name(), engine=engine
-    )
-    flow_run = flow.latest()
-    assert flow_run.artifact("new param name").get() == 123
-    assert flow_run.artifact("param artifact").get() == "value"
-
-
 @op
 def append_row_to_df(df, row):
     """`row` is a list of values to append to the input dataframe."""
