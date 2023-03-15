@@ -486,11 +486,11 @@ class Client:
                 to be computed. Additional artifacts may also be computed if they are upstream
                 dependencies.
             metrics:
-                All the metrics that you would like to compute. If not supplied, we will implicitly
-                include all metrics computed on artifacts in the flow.
+                All the metrics that you would like to compute. If not supplied, we include by default
+                all metrics computed on artifacts in the flow.
             checks:
-                All the checks that you would like to compute. If not supplied, we will implicitly
-                include all checks computed on artifacts in the flow.
+                All the checks that you would like to compute. If not supplied, we will by default
+                all checks computed on artifacts in the flow.
             k_latest_runs:
                 Number of most-recent runs of this flow that Aqueduct should keep. Runs outside of
                 this bound are garbage collected. Defaults to persisting all runs.
@@ -621,6 +621,7 @@ class Client:
             ),
             publish_flow_engine_config=generate_engine_config(self._connected_integrations, engine),
         )
+        dag.validate_and_resolve_artifact_names()
 
         if dag.engine_config.type == RuntimeType.AIRFLOW:
             if run_now is not None:

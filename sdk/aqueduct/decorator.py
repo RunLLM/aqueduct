@@ -1,15 +1,16 @@
 import inspect
+import uuid
 import warnings
 from functools import wraps
 from typing import Any, Callable, Dict, List, Mapping, Optional, Union, cast
 
 import numpy as np
+from aqueduct.artifacts._create import create_metric_or_check_artifact
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
-from aqueduct.artifacts.create import create_param_artifact
+from aqueduct.artifacts.create import create_param_artifact, to_artifact_class
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.artifacts.preview import preview_artifacts
-from aqueduct.artifacts.transform import to_artifact_class
 from aqueduct.constants.enums import (
     ArtifactType,
     CheckSeverity,
@@ -28,9 +29,15 @@ from aqueduct.models.operators import (
     Operator,
     OperatorSpec,
     ResourceConfig,
+    get_operator_type,
 )
 from aqueduct.type_annotations import CheckFunction, MetricFunction, Number, UserFunction
-from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.dag_deltas import (
+    AddOperatorDelta,
+    DAGDelta,
+    RemoveOperatorDelta,
+    apply_deltas_to_dag,
+)
 from aqueduct.utils.function_packaging import serialize_function
 from aqueduct.utils.naming import default_artifact_name_from_op_name, sanitize_artifact_name
 from aqueduct.utils.utils import generate_engine_config, generate_uuid
@@ -88,6 +95,10 @@ def wrap_spec(
             The artifact types that the function is expected to output, in the correct order.
         description:
             The description for this operator.
+        execution_mode:
+            Whether the operator should be executed eagerly or lazily.
+        overwrite_op:
+            The operator to overwrite, if any. Should only be set for metrics and checks.
 
     Returns:
         A list of artifacts, representing the outputs of the function.
@@ -118,30 +129,38 @@ def wrap_spec(
         default_artifact_name_from_op_name(op_name) for _ in range(len(output_artifact_ids))
     ]
 
-    apply_deltas_to_dag(
-        dag,
-        deltas=[
-            AddOperatorDelta(
-                op=Operator(
-                    id=operator_id,
-                    name=op_name,
-                    description=description,
-                    spec=spec,
-                    inputs=[artifact.id() for artifact in input_artifacts],
-                    outputs=output_artifact_ids,
-                ),
-                output_artifacts=[
-                    ArtifactMetadata(
-                        id=output_artifact_id,
-                        name=sanitize_artifact_name(artifact_names[i]),
-                        type=output_artifact_type_hints[i],
-                        explicitly_named=output_artifact_names is not None,
-                    )
-                    for i, output_artifact_id in enumerate(output_artifact_ids)
-                ],
-            ),
-        ],
+    new_op = Operator(
+        id=operator_id,
+        name=op_name,
+        description=description,
+        spec=spec,
+        inputs=[artifact.id() for artifact in input_artifacts],
+        outputs=output_artifact_ids,
     )
+
+    new_output_artifacts = [
+        ArtifactMetadata(
+            id=output_artifact_id,
+            name=sanitize_artifact_name(artifact_names[i]),
+            type=output_artifact_type_hints[i],
+            explicitly_named=output_artifact_names is not None,
+        )
+        for i, output_artifact_id in enumerate(output_artifact_ids)
+    ]
+
+    # Update the dag to reflect the newly created operator.
+    if get_operator_type(new_op) in [OperatorType.METRIC, OperatorType.CHECK]:
+        create_metric_or_check_artifact(dag, new_op, new_output_artifacts)
+    else:
+        apply_deltas_to_dag(
+            dag,
+            deltas=[
+                AddOperatorDelta(
+                    op=new_op,
+                    output_artifacts=new_output_artifacts,
+                )
+            ],
+        )
 
     if execution_mode == ExecutionMode.EAGER:
         # Issue preview request since this is an eager execution.
@@ -722,6 +741,7 @@ def metric(
             _update_operator_spec_with_resources(op_spec, resources)
 
             output_names = [output] if output is not None else None
+
             numeric_artifact = wrap_spec(
                 op_spec,
                 *artifacts,
@@ -734,7 +754,6 @@ def metric(
             assert isinstance(numeric_artifact, NumericArtifact)
 
             numeric_artifact.set_operator_type(OperatorType.METRIC)
-
             return numeric_artifact
 
         """
@@ -906,6 +925,7 @@ def check(
             _update_operator_spec_with_resources(op_spec, resources)
 
             output_names = [output] if output is not None else None
+
             bool_artifact = wrap_spec(
                 op_spec,
                 *artifacts,
@@ -915,7 +935,6 @@ def check(
                 description=description,
                 execution_mode=execution_mode,
             )
-
             assert isinstance(bool_artifact, BoolArtifact)
 
             bool_artifact.set_operator_type(OperatorType.CHECK)

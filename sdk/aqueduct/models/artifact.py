@@ -11,7 +11,7 @@ class ArtifactMetadata(BaseModel):
 
     # Whether this artifact was given a name explicitly by the user.
     # If true, this artifact name is expected to be unique in the DAG.
-    explicitly_named: bool
+    explicitly_named: bool = False
 
     class Config:
         fields = {"explicitly_named": {"exclude": ...}}

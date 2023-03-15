@@ -31,7 +31,7 @@ def bump_artifact_suffix(artifact_name: str) -> str:
         val = val_with_parens[1:-1]  # cut off the parens
 
         # Remove the suffix to replace it with the new one.
-        artifact_name = artifact_name[:-len(suffix_match[-1])]
+        artifact_name = artifact_name[: -len(suffix_match[-1])]
         print(artifact_name)
         suffix_idx = int(val) + 1
 

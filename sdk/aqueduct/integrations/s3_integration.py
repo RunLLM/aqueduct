@@ -3,7 +3,6 @@ from typing import List, Optional, Union
 
 from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.artifacts.transform import to_artifact_class
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, S3TableFormat
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
@@ -20,6 +19,7 @@ from aqueduct.utils.utils import generate_uuid
 
 from aqueduct import globals
 
+from ..artifacts.create import to_artifact_class
 from ..error import InvalidUserArgumentException
 from ..utils.naming import default_artifact_name_from_op_name, sanitize_artifact_name
 from .save import _save_artifact

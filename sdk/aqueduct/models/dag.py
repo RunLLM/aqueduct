@@ -1,3 +1,4 @@
+import copy
 import uuid
 from typing import Any, Dict, List, Optional, Set
 
@@ -56,7 +57,7 @@ class DAG(BaseModel):
     engine_config: EngineConfig = EngineConfig()
 
     def validate_and_resolve_artifact_names(self) -> None:
-        """To be called by publish_flow() only.
+        """To be called from publish_flow() only.
 
         Checks that all explicitly named artifacts are unique.
 
@@ -64,36 +65,59 @@ class DAG(BaseModel):
         The index is grouped by the input operator, so an operator with multiple output artifacts
         that use our default naming scheme will always have consecutive numbers. Eg. (1), (2), (3)
         """
-        reserved_artifact_names: Set[str] = set()
+        seen_artifact_names: Set[str] = set()
 
         # In the first pass, check that there aren't any explicitly named artifacts that collide with each other.
-        for artifact in self.artifacts.values():
-            if artifact.explicitly_named:
-                if artifact.name in reserved_artifact_names:
-                    raise InvalidUserActionException(
-                        "Unable to publish flow. You are attempting to publish multiple artifacts explcitly named `%s`."
-                        "Please use `artifact.set_name(<new name>)` to resolve this naming collision. Or rerun the operators "
-                        "with different output artifact names." % artifact.name
-                    )
-                reserved_artifact_names.add(artifact.name)
+        # We use the same breadth first search each time so that there is some determinism.
+        q: List[Operator] = [op for op in self.operators.values() if len(op.inputs) == 0]
+        while len(q) > 0:
+            curr_op = q.pop(0)
+            output_artifacts = self.must_get_artifacts(curr_op.outputs)
+            for artifact in output_artifacts:
+                if artifact.explicitly_named:
+                    if artifact.name in seen_artifact_names:
+                        raise InvalidUserActionException(
+                            "Unable to publish flow. You are attempting to publish multiple artifacts explicitly named `%s`."
+                            "Please use `artifact.set_name(<new name>)` to resolve this naming collision. Or rerun the operators "
+                            "with different output artifact names." % artifact.name
+                        )
+                    seen_artifact_names.add(artifact.name)
+
+                q.extend(
+                    self.list_operators(on_artifact_id=artifact.id),
+                )
 
         # In the second pass, resolve the names of any implicitly named artifacts that collide.
         # Loop through the operators in topological order so that numbers are assigned in a reasonable fashion.
         # Output artifacts of the same operator are always numbered consecutively.
-        q: List[Operator] = [op for op in self.operators.values() if len(op.inputs) == 0]
-        while True:
+        seen_op_ids: List[uuid.UUID] = []
+        q = [op for op in self.operators.values() if len(op.inputs) == 0]
+        print("SEEN:", seen_artifact_names)
+        while len(q) > 0:
             curr_op = q.pop(0)
+
+            # Only traverse operators you haven't seen before.
+            if curr_op.id in seen_op_ids:
+                continue
+            seen_op_ids.append(curr_op.id)
+
+            print("Operator: ", curr_op.name)
             for output_artifact_id in curr_op.outputs:
                 output_artifact = self.must_get_artifact(output_artifact_id)
+
+                print("HELLO: ", output_artifact.name)
                 if output_artifact.explicitly_named:
+                    print("CONTINUING")
                     continue
 
-                while output_artifact.name in reserved_artifact_names:
+                while output_artifact.name in seen_artifact_names:
+                    print("HELLO: bumping ", output_artifact.name)
                     output_artifact.name = bump_artifact_suffix(output_artifact.name)
-                reserved_artifact_names.add(output_artifact.name)
+                seen_artifact_names.add(output_artifact.name)
+                print("SEEN:", seen_artifact_names)
 
                 q.extend(
-                    self.list_operators(on_artifact_id=output_artifact_id),
+                    op for op in self.list_operators(on_artifact_id=output_artifact_id)
                 )
 
     def set_engine_config(
@@ -174,20 +198,52 @@ class DAG(BaseModel):
         self,
         with_id: Optional[uuid.UUID] = None,
         with_output_artifact_id: Optional[uuid.UUID] = None,
+        with_input_artifact_ids: Optional[List[uuid.UUID]] = None,
     ) -> Optional[Operator]:
-        if (int(with_id is not None) + int(with_output_artifact_id is not None)) != 1:
+        if (int(with_id is not None) + int(with_output_artifact_id is not None)) + int(
+            with_input_artifact_ids is not None
+        ) != 1:
             raise InternalAqueductError(
-                "Cannot fetch operator with multiple search parameters set."
+                "Cannot fetch operator with zero or multiple search parameters set."
             )
 
         if with_id is not None:
             return self.operators.get(str(with_id))
+        elif with_output_artifact_id:
+            # Search with output artifact id
+            for _, op in self.operators.items():
+                if with_output_artifact_id in op.outputs:
+                    return op
+        elif with_input_artifact_ids:
+            for _, op in self.operators.items():
+                if set(with_input_artifact_ids) == set(op.inputs):
+                    return op
 
-        # Search with output artifact id
-        for _, op in self.operators.items():
-            if with_output_artifact_id in op.outputs:
-                return op
         return None
+
+    def get_colliding_metric_or_check(self, candidate_op: Operator) -> Optional[Operator]:
+        """A metric or check is considered to be colliding only if it has the same name and input artifacts
+        as another metric or check. Metrics can only collide with other metrics, and checks can only collide
+        with checks.
+
+        Assumes that only one of these collisions exists.
+        """
+        assert get_operator_type(candidate_op) in [OperatorType.CHECK, OperatorType.METRIC, OperatorType.SYSTEM_METRIC]
+
+        match = [
+            op
+            for op in self.operators.values()
+            if (
+                get_operator_type(op) == get_operator_type(candidate_op)
+                and set(op.inputs) == set(candidate_op.inputs)
+                and op.name == candidate_op.name
+            )
+        ]
+        assert len(match) <= 2, (
+            "We should not be having multiple %s's with the same name and input artifacts."
+            % get_operator_type(candidate_op)
+        )
+        return match[0] if len(match) == 1 else None
 
     def list_operators(
         self,

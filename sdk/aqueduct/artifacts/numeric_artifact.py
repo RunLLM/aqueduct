@@ -7,6 +7,7 @@ from typing import Any, Callable, Dict, List, Optional
 import numpy as np
 from aqueduct.artifacts import bool_artifact
 from aqueduct.artifacts import preview as artifact_utils
+from aqueduct.artifacts._create import create_metric_or_check_artifact
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import (
     ArtifactType,
@@ -264,27 +265,24 @@ class NumericArtifact(BaseArtifact):
 
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
-        apply_deltas_to_dag(
-            self._dag,
-            deltas=[
-                AddOperatorDelta(
-                    op=Operator(
-                        id=operator_id,
-                        name=check_name,
-                        description=check_description,
-                        spec=op_spec,
-                        inputs=[self._artifact_id],
-                        outputs=[output_artifact_id],
-                    ),
-                    output_artifacts=[
-                        ArtifactMetadata(
-                            id=output_artifact_id,
-                            name=artifact_name,
-                            type=ArtifactType.BOOL,
-                            explicitly_named=False,
-                        )
-                    ],
-                ),
+
+        create_metric_or_check_artifact(
+            dag=self._dag,
+            op=Operator(
+                id=operator_id,
+                name=check_name,
+                description=check_description,
+                spec=op_spec,
+                inputs=[self._artifact_id],
+                outputs=[output_artifact_id],
+            ),
+            output_artifacts=[
+                ArtifactMetadata(
+                    id=output_artifact_id,
+                    name=artifact_name,
+                    type=ArtifactType.BOOL,
+                    explicitly_named=False,
+                )
             ],
         )
 

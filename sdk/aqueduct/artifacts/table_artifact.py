@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional, Union
 import pandas as pd
 from aqueduct.artifacts import bool_artifact, numeric_artifact
 from aqueduct.artifacts import preview as artifact_utils
+from aqueduct.artifacts._create import create_metric_or_check_artifact
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import (
     ArtifactType,
@@ -30,7 +31,9 @@ from aqueduct.models.operators import (
 )
 from aqueduct.utils.dag_deltas import (
     AddOperatorDelta,
+    DAGDelta,
     RemoveCheckOperatorDelta,
+    RemoveOperatorDelta,
     apply_deltas_to_dag,
 )
 from aqueduct.utils.describe import (
@@ -639,27 +642,23 @@ class TableArtifact(BaseArtifact):
         output_artifact_id = generate_uuid()
         artifact_name = default_artifact_name_from_op_name(op_name)
 
-        apply_deltas_to_dag(
-            self._dag,
-            deltas=[
-                AddOperatorDelta(
-                    op=Operator(
-                        id=operator_id,
-                        name=op_name,
-                        description=op_description,
-                        spec=op_spec,
-                        inputs=[self._artifact_id],
-                        outputs=[output_artifact_id],
-                    ),
-                    output_artifacts=[
-                        ArtifactMetadata(
-                            id=output_artifact_id,
-                            name=artifact_name,
-                            type=output_artifact_type_hint,
-                            explicitly_named=False,
-                        )
-                    ],
-                ),
+        create_metric_or_check_artifact(
+            dag=self._dag,
+            op=Operator(
+                id=operator_id,
+                name=op_name,
+                description=op_description,
+                spec=op_spec,
+                inputs=[self._artifact_id],
+                outputs=[output_artifact_id],
+            ),
+            output_artifacts=[
+                ArtifactMetadata(
+                    id=output_artifact_id,
+                    name=artifact_name,
+                    type=output_artifact_type_hint,
+                    explicitly_named=False,
+                )
             ],
         )
 

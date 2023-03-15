@@ -103,7 +103,7 @@ def test_edit_check(client, data_integration):
     assert success_check.get()
 
     assert failed_check.name() == "check_op artifact"
-    assert success_check.name() == "check_op artifact (1)"
+    assert success_check.name() == "check_op artifact"
 
 
 def test_delete_check(client, data_integration):

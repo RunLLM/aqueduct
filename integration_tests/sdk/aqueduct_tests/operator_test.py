@@ -29,10 +29,7 @@ def test_to_operator_local_function(client, data_integration):
     assert df_normal["positivity"].equals(df_func["positivity"])
 
 
-def test_operator_reuse(data_integration):
-    """Tests reusing the same operator multiple times in a workflow with different
-    input artifacts.
-    """
+def test_operator_reuse(client, data_integration, engine, flow_name):
     sentiment_artifact = extract(data_integration, DataObject.SENTIMENT)
     wine_artifact = extract(data_integration, DataObject.WINE)
 
@@ -44,10 +41,10 @@ def test_operator_reuse(data_integration):
     noop_artifact_2 = noop(wine_artifact)
 
     assert noop_artifact_1.name() == "noop artifact"
-    assert noop_artifact_2.name() == "noop (1) artifact"
+    assert noop_artifact_2.name() == "noop artifact"
 
-    _ = noop_artifact_1.get()
-    _ = noop_artifact_2.get()
+    assert noop_artifact_1.get().equals(sentiment_artifact.get())
+    assert noop_artifact_2.get().equals(wine_artifact.get())
 
     @op
     def noop_multiple(df1, df2):
@@ -55,8 +52,10 @@ def test_operator_reuse(data_integration):
 
     # Tests to check that 2 operators are created because the order of
     # the input artifacts are different
-    _ = noop_multiple(sentiment_artifact, wine_artifact).get()
-    _ = noop_multiple(wine_artifact, sentiment_artifact).get()
+    noop_multiple_artifact_1 = noop_multiple(sentiment_artifact, wine_artifact).get()
+    noop_multiple_artifact_2 = noop_multiple(wine_artifact, sentiment_artifact).get()
+    assert noop_multiple_artifact_1.name() == "noop_multiple artifact"
+    assert noop_multiple_artifact_2.name() == "noop_multiple artifact"
 
 
 def test_operator_overwrite(data_integration):
