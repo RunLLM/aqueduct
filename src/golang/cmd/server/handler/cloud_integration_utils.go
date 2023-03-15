@@ -17,6 +17,8 @@ import (
 	"github.com/google/uuid"
 )
 
+// setupCloudIntegration sets up the cloud integration's Terraform directory, registers a k8s
+// integration and run `terraform init` to initialize the Terraform workspace.
 func setupCloudIntegration(
 	ctx context.Context,
 	args *ConnectIntegrationArgs,
@@ -109,6 +111,8 @@ func setupCloudIntegration(
 	return http.StatusOK, nil
 }
 
+// setupTerraformDirectory copies all files and folders in the Terraform template directory to the
+// cloud integration's destination directory.
 func setupTerraformDirectory(dst string) error {
 	// Create the destination directory if it doesn't exist.
 	if err := os.MkdirAll(dst, 0755); err != nil {
