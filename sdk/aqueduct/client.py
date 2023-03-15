@@ -48,8 +48,8 @@ from aqueduct.logger import logger
 from aqueduct.models.config import FlowConfig
 from aqueduct.models.dag import Metadata, RetentionPolicy
 from aqueduct.models.integration import Integration, IntegrationInfo
-from aqueduct.models.operators import ParamSpec
 from aqueduct.models.local_data import LocalData
+from aqueduct.models.operators import ParamSpec
 from aqueduct.utils.dag_deltas import (
     RemoveOperatorDelta,
     SubgraphDAGDelta,
@@ -221,7 +221,7 @@ class Client:
             A parameter artifact.
         """
         check_explicit_param_name(self._dag, name)
-        if isinstance(default,LocalData):
+        if isinstance(default, LocalData):
             default = extract_val_from_local_data(default)
         return create_param_artifact(self._dag, name, default, description)
 

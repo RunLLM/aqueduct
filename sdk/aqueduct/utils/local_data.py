@@ -1,7 +1,9 @@
 from typing import Optional
 
 from aqueduct.constants.enums import LocalDataTableFormat
+
 from ..error import InvalidUserArgumentException
+
 
 def _convert_to_local_data_table_format(format: Optional[str]) -> Optional[LocalDataTableFormat]:
     """A simple string -> enum conversion. Returns None if no format provided."""

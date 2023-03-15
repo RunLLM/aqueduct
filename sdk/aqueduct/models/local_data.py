@@ -1,11 +1,13 @@
 import os
-from typing import Optional, Any
+from typing import Any, Optional
 
 from aqueduct.constants.enums import ArtifactType
-from ..error import InvalidUserArgumentException
 from pydantic import BaseModel
 
+from ..error import InvalidUserArgumentException
+
 MAXIMUM_LOCAL_DATA_SIZE = 1000000
+
 
 class LocalData(BaseModel):
     path: str
@@ -15,7 +17,7 @@ class LocalData(BaseModel):
     # Override Pydantic `init` with validation
     def __init__(__pydantic_self__, **data: Any) -> None:
         """Identify the local data which can be passed in as a parameter.
-        
+
         Args:
             path:
                 The path to the data.
