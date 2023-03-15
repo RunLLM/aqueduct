@@ -96,8 +96,6 @@ class DAG(BaseModel):
                     self.list_operators(on_artifact_id=artifact.id),
                 )
 
-        print(seen_artifact_names)
-
         # In the second pass, resolve the names of any implicitly named artifacts that collide.
         # Loop through the operators in topological order so that numbers are assigned in a reasonable fashion.
         # Output artifacts of the same operator are always numbered consecutively.
@@ -126,7 +124,8 @@ class DAG(BaseModel):
                     if original_name != output_artifact.name:
                         logger().warning(
                             "Multiple artifacts were named `%s`. Since artifact names must be unique, "
-                            "we renamed one of them to `%s`." % (original_name, output_artifact.name)
+                            "we renamed one of them to `%s`."
+                            % (original_name, output_artifact.name)
                         )
                         any_op_was_renamed = True
 
@@ -247,7 +246,11 @@ class DAG(BaseModel):
 
         Assumes that only one of these collisions exists.
         """
-        assert get_operator_type(candidate_op) in [OperatorType.CHECK, OperatorType.METRIC, OperatorType.SYSTEM_METRIC]
+        assert get_operator_type(candidate_op) in [
+            OperatorType.CHECK,
+            OperatorType.METRIC,
+            OperatorType.SYSTEM_METRIC,
+        ]
 
         match = [
             op
@@ -337,7 +340,11 @@ class DAG(BaseModel):
     def must_get_artifact(self, artifact_id: uuid.UUID) -> ArtifactMetadata:
         artifact = self.get_artifact(artifact_id)
         if artifact is None:
-            raise ArtifactNotFoundException("Unable to find artifact.")
+            raise ArtifactNotFoundException(
+                "Artifact has been overwritten and no longer exists. This happens with "
+                "metrics and checks when a metric/check with the same name is run on the "
+                "same input artifacts. If this is not the case, please file a bug on us!"
+            )
         return artifact
 
     def get_artifact(self, artifact_id: uuid.UUID) -> Optional[ArtifactMetadata]:

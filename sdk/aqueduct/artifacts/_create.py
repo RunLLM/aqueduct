@@ -23,7 +23,11 @@ def create_metric_or_check_artifact(
 
     Replaces an existing metric/check iff they have the same name, type, and input artifacts.
     """
-    assert get_operator_type(op) in [OperatorType.METRIC, OperatorType.CHECK, OperatorType.SYSTEM_METRIC]
+    assert get_operator_type(op) in [
+        OperatorType.METRIC,
+        OperatorType.CHECK,
+        OperatorType.SYSTEM_METRIC,
+    ]
 
     deltas: List[DAGDelta] = []
     op_to_overwrite = dag.get_colliding_metric_or_check(op)
@@ -34,12 +38,13 @@ def create_metric_or_check_artifact(
             ),
         )
 
+    deltas.append(
+        AddOperatorDelta(
+            op=op,
+            output_artifacts=output_artifacts,
+        )
+    )
     apply_deltas_to_dag(
         dag,
-        deltas=[
-            AddOperatorDelta(
-                op=op,
-                output_artifacts=output_artifacts,
-            ),
-        ],
+        deltas=deltas,
     )

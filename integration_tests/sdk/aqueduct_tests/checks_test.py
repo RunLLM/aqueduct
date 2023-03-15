@@ -1,7 +1,11 @@
-import pandas as pd
 import pytest
 from aqueduct.constants.enums import CheckSeverity
-from aqueduct.error import AqueductError, ArtifactNotFoundException, InvalidUserActionException
+from aqueduct.error import (
+    AqueductError,
+    ArtifactNeverComputedException,
+    ArtifactNotFoundException,
+    InvalidUserActionException,
+)
 
 from aqueduct import check
 
@@ -84,26 +88,43 @@ def test_check_on_multiple_mixed_inputs(client, flow_name, data_integration, eng
     )
 
 
-def test_edit_check(client, data_integration):
-    """Test that checks can be edited by replacing with the same name."""
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+def test_edit_check(client, data_integration, engine, flow_name):
+    """Test that running the same check (by name) twice on the same artifact will result in last-run-wins behavior."""
+    table = extract(data_integration, DataObject.SENTIMENT)
 
-    @check()
-    def check_op(df):
-        return False
+    @check
+    def foo(table):
+        return len(table) < 200
 
-    failed_check = check_op(table_artifact)
-    assert not failed_check.get()
+    pass1 = foo(table)
+    pass2 = foo(table)
+    with pytest.raises(
+        ArtifactNotFoundException, match="Artifact has been overwritten and no longer exists"
+    ):
+        pass1.get()
+    assert pass2.get()
 
-    @check()
-    def check_op(df):
-        return True
+    flow = publish_flow_test(client, artifacts=table, engine=engine, name=flow_name())
+    flow_run = flow.latest()
+    assert flow_run.artifact("foo artifact").get()
 
-    success_check = check_op(table_artifact)
-    assert success_check.get()
+    # We do not overwrite check with the same name that run on other artifacts.
+    # Instead, we deduplicate with suffix (1).
+    table2 = extract(data_integration, DataObject.WINE)
+    fail = foo(table2)
+    assert pass2.get()  # the previous check with the same name still exists.
+    assert not fail.get()
 
-    assert failed_check.name() == "check_op artifact"
-    assert success_check.name() == "check_op artifact"
+    flow = publish_flow_test(client, artifacts=[pass2, fail], engine=engine, name=flow_name())
+    flow_run = flow.latest()
+    assert flow_run.artifact("foo artifact").get()
+
+    # TODO(2629): Fetching a warning check should not raise an exception.
+    with pytest.raises(
+        ArtifactNeverComputedException,
+        match="This artifact was part of an existing flow run but was never computed successfully",
+    ):
+        assert not flow_run.artifact("foo artifact (1)").get()
 
 
 def test_delete_check(client, data_integration):

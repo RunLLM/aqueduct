@@ -1,7 +1,7 @@
 import pytest
-
-from aqueduct import op, metric, check
 from aqueduct.error import ArtifactNotFoundException, InvalidUserActionException
+
+from aqueduct import check, metric, op
 
 from ..shared.data_objects import DataObject
 from ..shared.flow_helpers import publish_flow_test
@@ -91,6 +91,8 @@ def test_extract_with_artifact_name_collision(client, data_integration, engine, 
 
 
 def test_operator_with_default_artifact_naming_collision(client, engine, flow_name):
+    """Also tests that reusing the same operator twice in a flow works as expected."""
+
     @op(num_outputs=2)
     def foo():
         return 123, "hello"
@@ -102,7 +104,9 @@ def test_operator_with_default_artifact_naming_collision(client, engine, flow_na
     assert output3.name() == "foo artifact"
     assert output4.name() == "foo artifact"
 
-    flow = publish_flow_test(client, artifacts=[output1, output2, output3, output4], engine=engine, name=flow_name())
+    flow = publish_flow_test(
+        client, artifacts=[output1, output2, output3, output4], engine=engine, name=flow_name()
+    )
     flow_run = flow.latest()
     assert flow_run.artifact("foo artifact").get() == 123
     assert flow_run.artifact("foo artifact (1)").get() == "hello"
@@ -118,7 +122,10 @@ def test_operator_with_explicit_artifact_naming_collision(client, engine, flow_n
     output1, output2 = foo()
     output3, output4 = foo()
 
-    with pytest.raises(InvalidUserActionException, match="Unable to publish flow. You are attempting to publish multiple artifacts explicitly named `output1`"):
+    with pytest.raises(
+        InvalidUserActionException,
+        match="Unable to publish flow. You are attempting to publish multiple artifacts explicitly named `output1`",
+    ):
         client.publish_flow("Test", artifacts=[output1, output2, output3, output4], engine=engine)
 
     # Trigger another collision case with the artifact.set_name() method.
@@ -128,12 +135,16 @@ def test_operator_with_explicit_artifact_naming_collision(client, engine, flow_n
 
     bar_output = bar()
     bar_output.set_name("output1")
-    with pytest.raises(InvalidUserActionException, match="Unable to publish flow. You are attempting to publish multiple artifacts explicitly named `output1`"):
+    with pytest.raises(
+        InvalidUserActionException,
+        match="Unable to publish flow. You are attempting to publish multiple artifacts explicitly named `output1`",
+    ):
         client.publish_flow("Test", artifacts=[output1, bar_output], engine=engine)
 
 
 def test_explicit_and_implicit_artifact_name_collisions(client, engine, flow_name):
     """Test that if such a collision occurs, the explicit name always wins."""
+
     @op
     def foo():
         return 123
@@ -146,42 +157,54 @@ def test_explicit_and_implicit_artifact_name_collisions(client, engine, flow_nam
     bar_output = bar()
 
     # Regardless of which order we publish them, the explicit name should always win.
-    flow = publish_flow_test(client, artifacts=[foo_output, bar_output], engine=engine, name=flow_name())
+    flow = publish_flow_test(
+        client, artifacts=[foo_output, bar_output], engine=engine, name=flow_name()
+    )
     flow_run = flow.latest()
-    assert flow_run.artifact("foo artifact").get() == "hello" # bar's output
-    assert flow_run.artifact("foo artifact (1)").get() == 123   # foo's output
+    assert flow_run.artifact("foo artifact").get() == "hello"  # bar's output
+    assert flow_run.artifact("foo artifact (1)").get() == 123  # foo's output
 
-    flow = publish_flow_test(client, artifacts=[bar_output, foo_output], engine=engine, name=flow_name())
+    flow = publish_flow_test(
+        client, artifacts=[bar_output, foo_output], engine=engine, name=flow_name()
+    )
     flow_run = flow.latest()
-    assert flow_run.artifact("foo artifact").get() == "hello" # bar's output
-    assert flow_run.artifact("foo artifact (1)").get() == 123   # foo's output
+    assert flow_run.artifact("foo artifact").get() == "hello"  # bar's output
+    assert flow_run.artifact("foo artifact (1)").get() == 123  # foo's output
 
 
 def _run_noop_op(table_output):
     """Returns artifact with name `foo artifact`"""
+
     @op
     def foo(table):
         return table
+
     return foo(table_output)
 
 
 def _run_noop_metric(input):
     """Returns artifact with name `foo artifact`"""
+
     @metric
     def foo(input):
         return 100
+
     return foo(input)
 
 
 def _run_noop_check(input):
     """Returns artifact with name `foo artifact`"""
+
     @check
     def foo(input):
         return True
+
     return foo(input)
 
 
-def test_artifact_name_collisions_across_operator_types(client, data_integration, engine, flow_name):
+def test_artifact_name_collisions_across_operator_types(
+    client, data_integration, engine, flow_name
+):
     """Tests that the same naming policy holds regardless of the operator type."""
     extract_output = extract(data_integration, DataObject.SENTIMENT, output_name="foo artifact")
     op_output = _run_noop_op(extract_output)
@@ -203,7 +226,10 @@ def test_artifact_name_collisions_across_operator_types(client, data_integration
 
     # Making any of the downstream operators explicit should error at publish time due to new collision against the extract artifact.
     metric_output.set_name("foo artifact")
-    with pytest.raises(InvalidUserActionException, match="Unable to publish flow. You are attempting to publish multiple artifacts explicitly named `foo artifact`"):
+    with pytest.raises(
+        InvalidUserActionException,
+        match="Unable to publish flow. You are attempting to publish multiple artifacts explicitly named `foo artifact`",
+    ):
         client.publish_flow("Test", artifacts=op_output, engine=engine)
 
 
@@ -212,16 +238,22 @@ def test_param_naming_collisions(client, engine, flow_name):
     param1 = client.create_param("foo:param", default=123)
     param2 = client.create_param("foo:param", default="hello")
 
-    with pytest.raises(InvalidUserActionException, match="Unable to publish flow. You are attempting to publish multiple artifacts explicitly named `foo:param`"):
+    with pytest.raises(
+        InvalidUserActionException,
+        match="Unable to publish flow. You are attempting to publish multiple artifacts explicitly named `foo:param`",
+    ):
         client.publish_flow("Test", artifacts=[param1, param2], engine=engine)
 
     # An implicit parameter is allowed to collide with an explicit one, however.
     @op
     def foo(param):
         return param
-    foo_output = foo("hello") # creates an implicit parameter named "foo:param"
 
-    flow = publish_flow_test(client, artifacts=[foo_output, param1], engine=engine, name=flow_name())
+    foo_output = foo("hello")  # creates an implicit parameter named "foo:param"
+
+    flow = publish_flow_test(
+        client, artifacts=[foo_output, param1], engine=engine, name=flow_name()
+    )
     flow_run = flow.latest()
     assert flow_run.artifact("foo:param").get() == 123
     assert flow_run.artifact("foo:param (1)").get() == "hello"
@@ -258,4 +290,3 @@ def test_change_param_artifact_name(client, flow_name, engine):
     flow_run = flow.latest()
     assert flow_run.artifact("new param name").get() == 123
     assert flow_run.artifact("param artifact").get() == "value"
-

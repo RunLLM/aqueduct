@@ -28,11 +28,7 @@ from aqueduct.models.operators import (
     get_operator_type,
 )
 from aqueduct.type_annotations import Number
-from aqueduct.utils.dag_deltas import (
-    AddOperatorDelta,
-    RemoveCheckOperatorDelta,
-    apply_deltas_to_dag,
-)
+from aqueduct.utils.dag_deltas import RemoveCheckOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.describe import get_readable_description_for_metric
 from aqueduct.utils.function_packaging import serialize_function
 from aqueduct.utils.naming import default_artifact_name_from_op_name
