@@ -83,4 +83,4 @@ def test_extract_with_custom_artifact(client, data_integration, engine, flow_nam
         InvalidUserActionException,
         match="Unable to publish flow. You are attempting to publish multiple artifacts explicitly named",
     ):
-        client.publish("Test", artifacts=[output, output2], engine=engine)
+        client.publish_flow("Test", artifacts=[output, output2], engine=engine)

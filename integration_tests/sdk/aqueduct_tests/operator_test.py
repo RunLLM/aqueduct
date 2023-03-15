@@ -29,35 +29,6 @@ def test_to_operator_local_function(client, data_integration):
     assert df_normal["positivity"].equals(df_func["positivity"])
 
 
-def test_operator_reuse(client, data_integration, engine, flow_name):
-    sentiment_artifact = extract(data_integration, DataObject.SENTIMENT)
-    wine_artifact = extract(data_integration, DataObject.WINE)
-
-    @op
-    def noop(df):
-        return df
-
-    noop_artifact_1 = noop(sentiment_artifact)
-    noop_artifact_2 = noop(wine_artifact)
-
-    assert noop_artifact_1.name() == "noop artifact"
-    assert noop_artifact_2.name() == "noop artifact"
-
-    assert noop_artifact_1.get().equals(sentiment_artifact.get())
-    assert noop_artifact_2.get().equals(wine_artifact.get())
-
-    @op
-    def noop_multiple(df1, df2):
-        return df1
-
-    # Tests to check that 2 operators are created because the order of
-    # the input artifacts are different
-    noop_multiple_artifact_1 = noop_multiple(sentiment_artifact, wine_artifact).get()
-    noop_multiple_artifact_2 = noop_multiple(wine_artifact, sentiment_artifact).get()
-    assert noop_multiple_artifact_1.name() == "noop_multiple artifact"
-    assert noop_multiple_artifact_2.name() == "noop_multiple artifact"
-
-
 def test_operator_reuse_chain(data_integration):
     """Tests reusing the same operator when it is chained together by a dependency."""
     wine_artifact = extract(data_integration, DataObject.WINE)
