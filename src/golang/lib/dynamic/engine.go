@@ -164,6 +164,7 @@ func CreateOrUpdateK8sCluster(
 			return errors.Wrap(err, "Failed to update Kubeconfig")
 		}
 
+		// TODO (ENG-2572): Move this step to Terraform code.
 		nvidiaPluginUrl := "https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.9.0/nvidia-device-plugin.yml"
 		if _, _, err := lib_utils.RunCmd(
 			"kubectl",
