@@ -21,6 +21,7 @@ from aqueduct.constants.enums import (
     OperatorType,
 )
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
+from aqueduct.logger import logger
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.operators import (
     CheckSpec,
@@ -301,7 +302,7 @@ def _convert_input_arguments_to_parameters(
             param_name = op_name + ":" + fn_param_names[idx]
 
             # Implicit parameters are only ever created (or error). They never replace anything.
-            warnings.warn(
+            logger().warning(
                 """Operator `%s`'s argument `%s` is not an artifact type. We have implicitly created a parameter named `%s` and your input will be used as its default value. This parameter will be used when running the function."""
                 % (op_name, fn_param_names[idx], param_name)
             )
