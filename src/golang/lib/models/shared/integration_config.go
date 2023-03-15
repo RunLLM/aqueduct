@@ -50,6 +50,7 @@ const (
 
 	DynamicK8sClusterStatusPollPeriod time.Duration = 10
 
+	K8sTerraformPathKey      string = "terraform_path"
 	K8sKubeconfigPathKey     string = "kubeconfig_path"
 	K8sClusterNameKey        string = "cluster_name"
 	K8sDynamicKey            string = "dynamic"
@@ -57,7 +58,6 @@ const (
 	K8sUseSameClusterKey     string = "use_same_cluster"
 	K8sStatusKey             string = "status"
 	K8sLastUsedTimestampKey  string = "last_used_timestamp"
-	DynamicK8sClusterName    string = "aqueduct_k8s"
 
 	// Dynamic k8s cluster config keys
 	K8sKeepaliveKey   string = "keepalive"
