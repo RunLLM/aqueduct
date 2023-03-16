@@ -283,7 +283,7 @@ func DeleteSavedObject(
 
 	defer func() {
 		// Delete storage files created for delete saved objects job metadata
-		go workflow_utils.CleanupStorageFiles(ctx, storageConfig, []string{jobMetadataPath, contentPath})
+		go workflow_utils.CleanupStorageFiles(context.Background(), storageConfig, []string{jobMetadataPath, contentPath})
 	}()
 
 	integrationConfigs := make(map[string]auth.Config, len(integrationNameToID))
