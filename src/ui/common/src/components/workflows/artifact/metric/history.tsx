@@ -52,10 +52,31 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
         let timestamp = new Date(
           artifactStatusResult.exec_state?.timestamps?.finished_at
         ).toLocaleString();
+        if (
+          artifactStatusResult.exec_state?.status === ExecutionStatus.Pending
+        ) {
+          timestamp = new Date(
+            artifactStatusResult.exec_state?.timestamps?.pending_at
+          ).toLocaleString();
+        }
 
         // Metrics that are canceled / fail to execute have no exec_state, and thus no date.
         if (timestamp === 'Invalid Date') {
-          timestamp = 'Unknown';
+          const all_times = [
+            artifactStatusResult.exec_state?.timestamps?.finished_at,
+            artifactStatusResult.exec_state?.timestamps?.pending_at,
+            artifactStatusResult.exec_state?.timestamps?.registered_at,
+            artifactStatusResult.exec_state?.timestamps?.running_at,
+          ];
+
+          const timesOrNull = all_times.map((x) =>
+            typeof x === 'string' ? new Date(x) : null
+          );
+
+          const maxTime = Math.max.apply(null, timesOrNull);
+
+          timestamp =
+            maxTime > 0 ? new Date(maxTime).toLocaleString() : 'Unknown';
         }
 
         return {
