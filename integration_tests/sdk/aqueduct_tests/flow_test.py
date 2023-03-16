@@ -10,7 +10,6 @@ from aqueduct.error import (
     InvalidUserArgumentException,
 )
 from aqueduct.integrations.airflow_integration import AirflowIntegration
-from aqueduct.models.config import FlowConfig
 from aqueduct.models.integration import IntegrationInfo
 
 import aqueduct
@@ -486,41 +485,6 @@ def test_flow_with_args(client):
     # Implicit parameter creation is disallowed for variable-length parameters.
     with pytest.raises(InvalidUserArgumentException):
         foo_with_args(*[str_val, num_val])
-
-
-def test_publish_with_redundant_config_fields(client):
-    """Once the user-facing `FlowConfig` struct is deprecated, we can get rid of this test."""
-
-    @op
-    def noop():
-        return 123
-
-    output = noop()
-
-    # Test redundant engine field.
-    dummy_integration_info = IntegrationInfo(
-        id=uuid.uuid4(),
-        name="dummy",
-        service=ServiceType.LAMBDA,
-        createdAt=123,
-        validated=True,
-    )
-    with pytest.raises(InvalidUserArgumentException):
-        client.publish_flow(
-            generate_new_flow_name(),
-            artifacts=[output],
-            engine="something",
-            config=FlowConfig(engine=AirflowIntegration(dummy_integration_info)),
-        )
-
-    # Test redundant `k_latest_runs` field.
-    with pytest.raises(InvalidUserArgumentException):
-        client.publish_flow(
-            generate_new_flow_name(),
-            artifacts=[output],
-            k_latest_runs=10,
-            config=FlowConfig(k_latest_runs=123),
-        )
 
 
 def test_flow_list_saved_objects_none(client, flow_name, engine):

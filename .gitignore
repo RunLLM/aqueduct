@@ -98,4 +98,4 @@ integration_tests/sdk/test-credentials.yml
 integration_tests/sdk/test-config.yml
 integration_tests/sdk/test-config-run.yml
 
-
+**/.devcontainer/
