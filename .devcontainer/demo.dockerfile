@@ -17,6 +17,7 @@ COPY ./.devcontainer/demo_setup.py /
 COPY ./.devcontainer/deploy_example.py /
 
 COPY ./.devcontainer/demo.ipynb /notebook/demo.ipynb
+COPY ./.devcontainer/MMasseyOrdinals.csv /MMasseyOrdinals.csv
 
 RUN bash /deploy_demo_workflow.sh
 

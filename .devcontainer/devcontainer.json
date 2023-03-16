@@ -2,9 +2,17 @@
 // https://github.com/microsoft/vscode-dev-containers/tree/v0.126.0/containers/python-3
 {
     "name": "Aqueduct Demo Container",
-    "image": "aqueducthq/demo:latest",
+    "image": "aqueducthq/ncaa:latest",
     "forwardPorts": [
         8080
     ],
-    "postAttachCommand": "aqueduct start --disable-usage-stats"
+    "postAttachCommand": "aqueduct start --disable-usage-stats",
+    "customizations": {
+        "codespaces": {
+            "openFiles": [
+                "README.md",
+                "examples/MarchMadnessWorkflow.ipynb"
+            ]
+        }
+    }
 }

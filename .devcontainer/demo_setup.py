@@ -46,7 +46,7 @@ deploy_example.deploy(
     "/notebook/", "demo.ipynb", "temp.py", "localhost:8080", aq.get_apikey()
 )
 
-flow = client.flow(flow_name="Demo Churn Ensemble")
+flow = client.flow(flow_name="MarchMadnessWorkflow")
 
 polling(
     lambda: stop_condition(flow),
