@@ -1,5 +1,39 @@
 # Changelog
 
+## 0.2.6
+
+Released on March 14, 2023.
+
+### Key Features
+* Enables registering a workflow without immediately triggering a run of that
+    workflow. When calling `publish_flow` the `run_now` parameter can be set to
+    `False`, which will tell the Aqueduct server to wait until the next
+    scheduled (or triggered) run. In the interim, only the DAG's structure will
+    be shown without any execution metadata.
+
+### Enhancements
+* Adds error checking to ensure that a remote compute engine is paired with a
+    remote artifact store.
+* Adds error checking to ensure that a valid `kubeconfig` is provided when
+    connecting Aqueduct to Kubernetes.
+* Enables using `~` to refer to the home directory when specifying a path to
+    AWS credentials or a `kubeconfig`.
+* Adds icons to integration details views to indicate when an object store (AWS
+    S3, GCS) are being used for metadata storage.
+* Allows specifying the specific library version of CUDA when requesting GPU
+    resources; v11.4.1 is the current default because that is what EKS clusters
+    use by default.
+
+### Bugfixes
+* Fixes bug where certain errors occurring during task launch weren't clearly 
+    surfaced in the Aqueduct stack.
+* Fixes bug where, within a Python process, executing an operator in lazy mode
+    precluded users from later executing it in eager mode (or vice versa).
+* Fixes bug where notification count wasn't being shown.
+* Fixes bug where the notice for an ongoing metadata migration would run off
+    the end of the screen.
+* Removes duplicate "History" header on metric details page.
+
 ## 0.2.5
 Released on March 7, 2023.
 

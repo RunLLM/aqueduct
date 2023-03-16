@@ -216,7 +216,7 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
               ),
             }}
           >
-            {description ?? '*No description.*'}
+            {description === '' ? '*No description.*' : description}
           </Markdown>
         </Box>
       </Collapse>
