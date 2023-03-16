@@ -88,7 +88,7 @@ func setupCloudIntegration(
 	// Register a dynamic k8s integration.
 	connectIntegrationArgs := &ConnectIntegrationArgs{
 		AqContext:    args.AqContext,
-		Name:         fmt.Sprintf("%s:%s", args.Name, dynamic.K8sClusterNameSuffix),
+		Name:         fmt.Sprintf("%s:%s", args.Name, dynamic.K8sIntegrationNameSuffix),
 		Service:      shared.Kubernetes,
 		Config:       auth.NewStaticConfig(dynamicK8sConfig),
 		UserOnly:     false,
@@ -117,7 +117,7 @@ func setupCloudIntegration(
 }
 
 // setupTerraformDirectory copies all files and folders in the Terraform template directory to the
-// cloud integration's destination directory.
+// cloud integration's destination directory, which is ~/.aqueduct/server/cloud_integration/<name>/eks.
 func setupTerraformDirectory(dst string) error {
 	// Create the destination directory if it doesn't exist.
 	if err := os.MkdirAll(dst, 0o755); err != nil {

@@ -25,6 +25,7 @@ func HandleError(
 	}
 	server.Log(ctx, handlerName, r, statusCode, err)
 
+	// errors.GetMessage(err) returns both the outer and the inner error messages, excluding stack trace.
 	response.SendErrorResponse(w, errors.GetMessage(err), statusCode)
 }
 
