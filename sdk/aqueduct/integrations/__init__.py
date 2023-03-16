@@ -3,6 +3,7 @@ from aqueduct.integrations.connect_config import (
     BigQueryConfig,
     GCSConfig,
     IntegrationConfig,
+    K8sConfig,
     MongoDBConfig,
     MySQLConfig,
     PostgresConfig,
@@ -11,5 +12,4 @@ from aqueduct.integrations.connect_config import (
     SparkConfig,
     SQLiteConfig,
     SqlServerConfig,
-    K8sConfig,
 )
