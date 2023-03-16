@@ -151,7 +151,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 	workflowID uuid.UUID,
 	timeConfig *AqueductTimeConfig,
 	parameters map[string]param.Param,
-) (shared.ExecutionStatus, error) {
+) (_ shared.ExecutionStatus, err error) {
 	dbDAG, err := workflow_utils.ReadLatestDAGFromDatabase(
 		ctx,
 		workflowID,
@@ -189,6 +189,11 @@ func (eng *aqEngine) ExecuteWorkflow(
 		if err != nil {
 			// Mark the workflow dag result as failed
 			execState.Status = shared.FailedExecutionStatus
+			execState.Error = &shared.Error{
+				Context: err.Error(),
+				Tip:     "The following workflow error occurred!",
+			}
+
 			now := time.Now()
 			execState.Timestamps.FinishedAt = &now
 		}
