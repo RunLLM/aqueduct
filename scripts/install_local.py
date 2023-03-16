@@ -108,7 +108,7 @@ if __name__ == "__main__":
         print("Updating the Python SDK...")
         prev_pwd = os.environ["PWD"]
         os.environ["PWD"] = join(os.environ["PWD"], "sdk")
-        execute_command(["pip", "install", "."], cwd=join(cwd, "sdk"))
+        execute_command(["python3", "-m", "pip", "install", "."], cwd=join(cwd, "sdk"))
         os.environ["PWD"] = prev_pwd
 
     # Install the local python operators.
@@ -116,7 +116,7 @@ if __name__ == "__main__":
         print("Updating the Python executor...")
         prev_pwd = os.environ["PWD"]
         os.environ["PWD"] = join(os.environ["PWD"], "src/python")
-        execute_command(["pip", "install", "."], cwd=join(cwd, "src", "python"))
+        execute_command(["python3", "-m", "pip", "install", "."], cwd=join(cwd, "src", "python"))
         os.environ["PWD"] = prev_pwd
 
         execute_command(

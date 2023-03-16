@@ -45,7 +45,6 @@ from aqueduct.integrations.salesforce_integration import SalesforceIntegration
 from aqueduct.integrations.spark_integration import SparkIntegration
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
 from aqueduct.logger import logger
-from aqueduct.models.config import FlowConfig
 from aqueduct.models.dag import Metadata, RetentionPolicy
 from aqueduct.models.integration import Integration, IntegrationInfo
 from aqueduct.models.operators import ParamSpec
@@ -496,7 +495,6 @@ class Client:
         metrics: Optional[List[NumericArtifact]] = None,
         checks: Optional[List[BoolArtifact]] = None,
         k_latest_runs: Optional[int] = None,
-        config: Optional[FlowConfig] = None,
         source_flow: Optional[Union[Flow, str, uuid.UUID]] = None,
         run_now: Optional[bool] = None,
     ) -> Flow:
@@ -540,13 +538,6 @@ class Client:
             k_latest_runs:
                 Number of most-recent runs of this flow that Aqueduct should keep. Runs outside of
                 this bound are garbage collected. Defaults to persisting all runs.
-            config:
-                This field will be deprecated. Please use `engine` and `k_latest_runs` instead.
-
-                An optional set of config fields for this flow.
-                - engine: Specify where this flow should run with one of your connected integrations.
-                - k_latest_runs: Number of most-recent runs of this flow that Aqueduct should store.
-                    Runs outside of this bound are deleted. Defaults to persisting all runs.
             source_flow:
                 Used to identify the source flow for this flow. This can be identified
                 via an object (Flow), name (str), or id (str or uuid).
@@ -573,16 +564,6 @@ class Client:
         if engine is not None and not isinstance(engine, str):
             raise InvalidUserArgumentException(
                 "`engine` parameter must be a string, got %s." % type(engine)
-            )
-
-        if config and config.engine:
-            raise InvalidUserArgumentException(
-                "The `config` parameter is deprecated. Please use `engine` instead."
-            )
-
-        if config is not None:
-            logger().warning(
-                "`config` is deprecated, please use the `engine` or `k_latest_runs` fields directly."
             )
 
         if artifacts is None or artifacts == []:
@@ -649,14 +630,6 @@ class Client:
             implicitly_include_checks = False
 
         flow_schedule = generate_flow_schedule(schedule, source_flow_id)
-
-        k_latest_runs_from_flow_config = config.k_latest_runs if config else None
-        if k_latest_runs and k_latest_runs_from_flow_config:
-            raise InvalidUserArgumentException(
-                "Cannot set `k_latest_runs` in two places, pick one. Note that use of `FlowConfig` will be deprecated soon."
-            )
-        if k_latest_runs is None and k_latest_runs_from_flow_config:
-            k_latest_runs = k_latest_runs_from_flow_config
 
         if k_latest_runs is None:
             retention_policy = RetentionPolicy(k_latest_runs=-1)
