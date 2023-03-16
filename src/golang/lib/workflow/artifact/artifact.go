@@ -349,14 +349,14 @@ func (a *ArtifactImpl) SampleContent(ctx context.Context) ([]byte, bool, error) 
 		return nil, false, err
 	}
 
-	content, err := a.GetContent(ctx)
-	if err != nil {
-		return nil, false, err
-	}
-
 	// For 'compiled' types, we simply ignore the content as they won't be used by client.
 	if metadata.SerializationType == shared.BytesSerialization || metadata.SerializationType == shared.PicklableSerialization {
 		return nil, false, nil
+	}
+
+	content, err := a.GetContent(ctx)
+	if err != nil {
+		return nil, false, err
 	}
 
 	// For table types, we returns a down-sampled table when possible
