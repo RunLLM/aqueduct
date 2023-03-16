@@ -1,4 +1,4 @@
-import { AlertTitle, CircularProgress } from '@mui/material';
+import { AlertTitle, Box, CircularProgress } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Typography from '@mui/material/Typography';
 import Image from 'mui-image';
@@ -56,6 +56,7 @@ const ArtifactContent: React.FC<Props> = ({
     );
   }
 
+  let contentCompoent = null;
   switch (artifact.result.serialization_type) {
     case SerializationType.Table:
     case SerializationType.BsonTable:
@@ -67,10 +68,14 @@ const ArtifactContent: React.FC<Props> = ({
           const rows = rawData as TableRow[];
           // bson table does not include schema when serialized.
           const schema = inferSchema(rows);
-          return <PaginatedTable data={{ schema: schema, data: rows }} />;
+          contentCompoent = (
+            <PaginatedTable data={{ schema: schema, data: rows }} />
+          );
+          break;
         }
 
-        return <PaginatedTable data={rawData as Data} />;
+        contentCompoent = <PaginatedTable data={rawData as Data} />;
+        break;
       } catch (err) {
         return (
           <Alert severity="error" title="Cannot parse table data.">
@@ -82,7 +87,7 @@ const ArtifactContent: React.FC<Props> = ({
       try {
         const srcFromBase64 =
           'data:image/png;base64,' + contentWithLoadingStatus.data;
-        return (
+        contentCompoent = (
           <Image
             src={srcFromBase64}
             duration={0}
@@ -90,6 +95,7 @@ const ArtifactContent: React.FC<Props> = ({
             width="fit-content"
           />
         );
+        break;
       } catch (err) {
         return (
           <Alert severity="error" title="Cannot parse image data.">
@@ -105,11 +111,12 @@ const ArtifactContent: React.FC<Props> = ({
           null,
           2
         );
-        return (
+        contentCompoent = (
           <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
             {prettyJson}
           </Typography>
         );
+        break;
       } catch (err) {
         return (
           <Alert severity="error" title="Cannot parse json data.">
@@ -118,11 +125,12 @@ const ArtifactContent: React.FC<Props> = ({
         );
       }
     case SerializationType.String:
-      return (
+      contentCompoent = (
         <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
           {contentWithLoadingStatus.data}
         </Typography>
       );
+      break;
     case SerializationType.Bytes:
     case SerializationType.Pickle:
       return (
@@ -142,6 +150,20 @@ const ArtifactContent: React.FC<Props> = ({
         </Alert>
       );
   }
+
+  if (!contentWithLoadingStatus.is_downsampled) {
+    return contentCompoent;
+  }
+
+  return (
+    <Box>
+      <Alert severity="info" sx={{ marginBottom: 1 }}>
+        The original content is too large. We only load a subset of data for
+        preview.
+      </Alert>
+      {contentCompoent}
+    </Box>
+  );
 };
 
 export default ArtifactContent;

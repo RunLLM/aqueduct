@@ -14,6 +14,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
+	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
@@ -59,6 +60,7 @@ type artifactResultMetadata struct {
 	SerializationType shared.ArtifactSerializationType `json:"serialization_type"`
 	ArtifactType      shared.ArtifactType              `json:"artifact_type"`
 	PythonType        string                           `json:"python_type"`
+	IsDownsampled     bool                             `json:"is_downsampled"`
 }
 
 type getArtifactResultResponse struct {
@@ -200,7 +202,7 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow result.")
 	}
 
-	artifact, err := h.ArtifactRepo.Get(ctx, args.artifactID, h.Database)
+	dbArtifact, err := h.ArtifactRepo.Get(ctx, args.artifactID, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact result.")
 	}
@@ -228,17 +230,33 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 		execState.UserLogs = dbArtifactResult.ExecState.UserLogs
 	}
 
+	artifactObject := artifact.NewArtifactFromDBObjects(
+		uuid.UUID{}, /* signature */
+		dbArtifact,
+		dbArtifactResult,
+		h.ArtifactRepo,
+		h.ArtifactResultRepo,
+		&dag.StorageConfig,
+		nil, /* previewCacheManager */
+		h.Database,
+	)
+
 	metadata := artifactResultMetadata{
 		Status:    execState.Status,
 		ExecState: execState,
-		Name:      artifact.Name,
+		Name:      dbArtifact.Name,
 	}
 
-	if !dbArtifactResult.Metadata.IsNull {
-		metadata.Schema = dbArtifactResult.Metadata.Schema
-		metadata.ArtifactType = dbArtifactResult.Metadata.ArtifactType
-		metadata.SerializationType = dbArtifactResult.Metadata.SerializationType
-		metadata.PythonType = dbArtifactResult.Metadata.PythonType
+	resultMetadata, err := artifactObject.GetMetadata(ctx)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve artifact result metadata.")
+	}
+
+	if resultMetadata != nil {
+		metadata.Schema = resultMetadata.Schema
+		metadata.ArtifactType = resultMetadata.ArtifactType
+		metadata.SerializationType = resultMetadata.SerializationType
+		metadata.PythonType = resultMetadata.PythonType
 	}
 
 	response := &getArtifactResultResponse{
@@ -246,12 +264,15 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 	}
 
 	if args.metadataOnly {
-		return response, http.StatusOK, nil
+		return &getArtifactResultResponse{
+			Metadata: &metadata,
+		}, http.StatusOK, nil
 	}
 
-	data, err := storage.NewStorage(&dag.StorageConfig).Get(ctx, dbArtifactResult.ContentPath)
+	data, isDownsampled, err := artifactObject.SampleContent(ctx)
 	if err == nil {
 		response.Data = data
+		metadata.IsDownsampled = isDownsampled
 	} else if !errors.Is(err, storage.ErrObjectDoesNotExist()) {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve data for the artifact result.")
 	}

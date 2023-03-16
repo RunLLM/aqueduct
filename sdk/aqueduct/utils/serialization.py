@@ -163,11 +163,15 @@ def deserialize(
 
 
 def _write_table_output(output: pd.DataFrame) -> bytes:
+    # This serialization format should also be consistent with go code in
+    # src/golang/lib/workflow/artifact/artifact.go SampleContent() method.
     output_str = cast(str, output.to_json(orient="table", date_format="iso", index=False))
     return output_str.encode(DEFAULT_ENCODING)
 
 
 def _write_bson_table_output(output: pd.DataFrame) -> bytes:
+    # This serialization format should also be consistent with go code in
+    # src/golang/lib/workflow/artifact/artifact.go SampleContent() method.
     return bson_json_util.dumps(output.to_dict(orient="records")).encode(DEFAULT_ENCODING)
 
 
