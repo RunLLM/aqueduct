@@ -29,8 +29,7 @@ import (
 // The `DeleteIntegrationHandler` does a best effort at deleting an integration.
 type deleteIntegrationArgs struct {
 	*aq_context.AqContext
-	integrationObject            *models.Integration
-	skipActiveWorkflowValidation bool
+	integrationID uuid.UUID
 }
 
 type deleteIntegrationResponse struct{}
@@ -63,17 +62,6 @@ func (h *DeleteIntegrationHandler) Prepare(r *http.Request) (interface{}, int, e
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
 	}
 
-	integrationObject, err := h.IntegrationRepo.Get(r.Context(), integrationID, h.Database)
-	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Failed to retrieve integration object.")
-	}
-
-	if integrationObject.Service == shared.Kubernetes {
-		if _, ok := integrationObject.Config[shared.K8sCloudIntegrationIdKey]; ok {
-			return nil, http.StatusUnprocessableEntity, errors.Wrap(err, "Cannot delete implicitly created k8s integration.")
-		}
-	}
-
 	ok, err := h.IntegrationRepo.ValidateOwnership(
 		r.Context(),
 		integrationID,
@@ -90,9 +78,8 @@ func (h *DeleteIntegrationHandler) Prepare(r *http.Request) (interface{}, int, e
 	}
 
 	return &deleteIntegrationArgs{
-		AqContext:                    aqContext,
-		integrationObject:            integrationObject,
-		skipActiveWorkflowValidation: false,
+		AqContext:     aqContext,
+		integrationID: integrationID,
 	}, http.StatusOK, nil
 }
 
@@ -100,23 +87,21 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 	args := interfaceArgs.(*deleteIntegrationArgs)
 	emptyResp := deleteIntegrationResponse{}
 
-	if args.integrationObject.Service == shared.AWS {
-		if statusCode, err := deleteCloudIntegrationHelper(ctx, args, h); err != nil {
-			return emptyResp, statusCode, err
-		}
+	code, err := validateNoActiveWorkflowOnIntegration(
+		ctx,
+		args.integrationID,
+		h.OperatorRepo,
+		h.DAGRepo,
+		h.IntegrationRepo,
+		h.Database,
+	)
+	if err != nil {
+		return emptyResp, code, err
 	}
 
-	if !args.skipActiveWorkflowValidation {
-		if statusCode, err := validateNoActiveWorkflowOnIntegration(
-			ctx,
-			args.integrationObject.ID,
-			h.OperatorRepo,
-			h.DAGRepo,
-			h.IntegrationRepo,
-			h.Database,
-		); err != nil {
-			return emptyResp, statusCode, err
-		}
+	integrationObject, err := h.IntegrationRepo.Get(ctx, args.integrationID, h.Database)
+	if err != nil {
+		return emptyResp, http.StatusBadRequest, errors.Wrap(err, "failed to retrieve the given integration.")
 	}
 
 	txn, err := h.Database.BeginTx(ctx)
@@ -125,7 +110,7 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	err = h.IntegrationRepo.Delete(ctx, args.integrationObject.ID, txn)
+	err = h.IntegrationRepo.Delete(ctx, args.integrationID, txn)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting integration.")
 	}
@@ -138,7 +123,7 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 
 	if err := cleanUpIntegration(
 		ctx,
-		args.integrationObject,
+		integrationObject,
 		h.OperatorRepo,
 		h.WorkflowRepo,
 		vaultObject,
