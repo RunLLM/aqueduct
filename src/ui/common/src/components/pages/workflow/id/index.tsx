@@ -551,7 +551,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 <Tooltip title="Previous Run" arrow>
                   <Box sx={{ px: 0, flex: 1 }}>
                     <Button
-                      sx={{ fontSize: '28px' }}
+                      sx={{ fontSize: '28px', width: '100%' }}
                       variant="text"
                       onClick={() => {
                         // This might be confusing, but index 0 is the most recent run, so incrementing the index goes
@@ -575,7 +575,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 <Tooltip title="Next Run" arrow>
                   <Box sx={{ px: 0, flex: 1 }}>
                     <Button
-                      sx={{ fontSize: '28px' }}
+                      sx={{ fontSize: '28px', width: '100%' }}
                       variant="text"
                       onClick={() => {
                         // This might be confusing, but index 0 is the most recent run, so decrementing the index goes
