@@ -54,6 +54,11 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
         let timestamp = new Date(
           artifactStatusResult.exec_state?.timestamps?.finished_at
         ).toLocaleString();
+        if (artifactStatusResult.exec_state?.status === ExecutionStatus.Pending) {
+          timestamp = new Date(
+            artifactStatusResult.exec_state?.timestamps?.pending_at
+          ).toLocaleString();
+        }
 
         // Checks that are canceled / fail to execute have no exec_state or finished_at time.
         if (timestamp === 'Invalid Date') {
