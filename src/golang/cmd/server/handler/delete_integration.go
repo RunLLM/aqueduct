@@ -101,6 +101,8 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 	emptyResp := deleteIntegrationResponse{}
 
 	if args.integrationObject.Service == shared.AWS {
+		// Note that this will make a call to DeleteIntegrationHandler.Perform() to delete the
+		// Aqueduct-generated dynamic k8s integration.
 		if statusCode, err := deleteCloudIntegrationHelper(ctx, args, h); err != nil {
 			return emptyResp, statusCode, err
 		}

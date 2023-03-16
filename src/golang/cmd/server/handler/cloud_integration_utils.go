@@ -145,7 +145,7 @@ func deleteCloudIntegrationHelper(
 ) (int, error) {
 	k8sIntegration, err := h.IntegrationRepo.GetByNameAndUser(
 		ctx,
-		fmt.Sprintf("%s:%s", args.integrationObject.Name, dynamic.K8sClusterNameSuffix),
+		fmt.Sprintf("%s:%s", args.integrationObject.Name, dynamic.K8sIntegrationNameSuffix),
 		uuid.Nil,
 		args.OrgID,
 		h.Database,
