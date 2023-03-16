@@ -45,7 +45,7 @@ import DefaultLayout, {
   SidesheetWidth,
 } from '../../../layouts/default';
 import { Button } from '../../../primitives/Button.styles';
-import { Tab, Tabs } from '../../../Tabs/Tabs.styles';
+import { Tab, Tabs } from '../../../primitives/Tabs.styles';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowHeader, {
   WorkflowPageContentId,
