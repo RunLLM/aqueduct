@@ -54,7 +54,9 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
         let timestamp = new Date(
           artifactStatusResult.exec_state?.timestamps?.finished_at
         ).toLocaleString();
-        if (artifactStatusResult.exec_state?.status === ExecutionStatus.Pending) {
+        if (
+          artifactStatusResult.exec_state?.status === ExecutionStatus.Pending
+        ) {
           timestamp = new Date(
             artifactStatusResult.exec_state?.timestamps?.pending_at
           ).toLocaleString();
