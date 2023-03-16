@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strconv"
 
@@ -130,4 +131,77 @@ func setupTerraformDirectory(dst string) error {
 	}
 
 	return nil
+}
+
+func deleteCloudIntegrationHelper(
+	ctx context.Context,
+	args *deleteIntegrationArgs,
+	h *DeleteIntegrationHandler,
+) (int, error) {
+	k8sIntegration, err := h.IntegrationRepo.GetByNameAndUser(
+		ctx,
+		fmt.Sprintf("%s:%s", args.integrationObject.Name, dynamic.K8sClusterNameSuffix),
+		uuid.Nil,
+		args.OrgID,
+		h.Database,
+	)
+	if err != nil {
+		return http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve the implicitly created k8s integration.")
+	}
+
+	// If there are active workflows using the dynamic k8s integration, we need to reject the
+	// deletion request immediately, without deleting the cluster and Terraform directories.
+	if statusCode, err := validateNoActiveWorkflowOnIntegration(
+		ctx,
+		k8sIntegration.ID,
+		h.OperatorRepo,
+		h.DAGRepo,
+		h.IntegrationRepo,
+		h.Database,
+	); err != nil {
+		return statusCode, err
+	}
+
+	// Delete the EKS cluster
+	editDynamicEngineArgs := &editDynamicEngineArgs{
+		AqContext:     args.AqContext,
+		action:        forceDeleteAction,
+		integrationId: k8sIntegration.ID,
+		configDelta:   &shared.DynamicK8sConfig{},
+	}
+	_, statusCode, err := (&EditDynamicEngineHandler{
+		Database:        h.Database,
+		IntegrationRepo: h.IntegrationRepo,
+	}).Perform(ctx, editDynamicEngineArgs)
+	if err != nil {
+		return statusCode, errors.Wrap(err, "Failed to delete the dynamic k8s cluster.")
+	}
+
+	// Clean up the cloud integration directory
+	_, stdErr, err := lib_utils.RunCmd("rm", []string{
+		"-rf",
+		path.Dir(k8sIntegration.Config[shared.K8sTerraformPathKey])}, // get the parent dir of Terraform path
+		"",
+		false,
+	)
+	if err != nil {
+		return http.StatusInternalServerError, errors.New(stdErr)
+	}
+
+	deleteK8sIntegrationArgs := &deleteIntegrationArgs{
+		AqContext:         args.AqContext,
+		integrationObject: k8sIntegration,
+		// We already validated this above, so we skip the validation during the deletion of the
+		// dynamic k8s integration. There may be race conditions where new workflows are deployed
+		// while we clean up the EKS cluster, but in these rare cases we just let the user delete
+		// the broken workflows themselves afterwards.
+		skipActiveWorkflowValidation: true,
+	}
+
+	_, statusCode, err = h.Perform(ctx, deleteK8sIntegrationArgs)
+	if err != nil {
+		return statusCode, errors.Wrap(err, "Failed to delete the implicitly created k8s integration.")
+	}
+
+	return http.StatusOK, nil
 }
