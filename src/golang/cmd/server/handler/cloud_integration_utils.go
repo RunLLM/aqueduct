@@ -133,6 +133,11 @@ func setupTerraformDirectory(dst string) error {
 	return nil
 }
 
+// deleteCloudIntegrationHelper does the following:
+// 1. Verifies that there is no workflow using the dynamic k8s integration.
+// 2. Deletes the EKS cluster if it's running.
+// 3. Deletes the cloud integration directory.
+// 4. Deletes the implicitly created dynamic k8s integration.
 func deleteCloudIntegrationHelper(
 	ctx context.Context,
 	args *deleteIntegrationArgs,
