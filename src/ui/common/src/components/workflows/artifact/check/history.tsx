@@ -64,18 +64,21 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
 
         // Checks that are canceled / fail to execute have no exec_state or finished_at time.
         if (timestamp === 'Invalid Date') {
-          let all_times = [
-            artifactStatusResult.exec_state?.timestamps?.finished_at, 
+          const all_times = [
+            artifactStatusResult.exec_state?.timestamps?.finished_at,
             artifactStatusResult.exec_state?.timestamps?.pending_at,
             artifactStatusResult.exec_state?.timestamps?.registered_at,
-            artifactStatusResult.exec_state?.timestamps?.running_at
+            artifactStatusResult.exec_state?.timestamps?.running_at,
           ];
 
-          const timesOrNull = all_times.map(x => typeof(x) === 'string'? new Date(x) : null);
-          
+          const timesOrNull = all_times.map((x) =>
+            typeof x === 'string' ? new Date(x) : null
+          );
+
           const maxTime = Math.max.apply(null, timesOrNull);
 
-          timestamp = maxTime > 0? new Date(maxTime).toLocaleString() : 'Unknown';
+          timestamp =
+            maxTime > 0 ? new Date(maxTime).toLocaleString() : 'Unknown';
         }
 
         return {
