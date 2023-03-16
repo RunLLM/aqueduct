@@ -92,7 +92,7 @@ func (h *ListOperatorsForIntegrationHandler) Prepare(r *http.Request) (interface
 func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*listOperatorsForIntegrationArgs)
 
-	integrationId := args.integrationObject.ID
+	integrationID := args.integrationObject.ID
 
 	if args.integrationObject.Service == shared.AWS {
 		// If the requested integration is a cloud integration, substitute the cloud integration ID
@@ -108,12 +108,12 @@ func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interf
 			return nil, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve the implicitly created k8s integration.")
 		}
 
-		integrationId = k8sIntegration.ID
+		integrationID = k8sIntegration.ID
 	}
 
 	operators, err := operator.GetOperatorsOnIntegration(
 		ctx,
-		integrationId,
+		integrationID,
 		h.IntegrationRepo,
 		h.OperatorRepo,
 		h.Database,
