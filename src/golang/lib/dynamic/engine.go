@@ -33,8 +33,8 @@ const (
 )
 
 const (
-	stateLockErrMsg      = "Error acquiring the state lock"
-	K8sClusterNameSuffix = "aqueduct_ondemand_k8s"
+	stateLockErrMsg          = "Error acquiring the state lock"
+	K8sIntegrationNameSuffix = "aqueduct_ondemand_k8s"
 )
 
 var TerraformTemplateDir = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "template", "aws", "eks")
