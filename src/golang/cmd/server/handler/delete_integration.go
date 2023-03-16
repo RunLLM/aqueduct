@@ -65,7 +65,7 @@ func (h *DeleteIntegrationHandler) Prepare(r *http.Request) (interface{}, int, e
 
 	integrationObject, err := h.IntegrationRepo.Get(r.Context(), integrationID, h.Database)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Failed to retrieve integration object.")
+		return nil, http.StatusNotFound, errors.Wrap(err, "Failed to retrieve integration object.")
 	}
 
 	if integrationObject.Service == shared.Kubernetes {
