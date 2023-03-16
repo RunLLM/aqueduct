@@ -105,7 +105,7 @@ func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interf
 			h.Database,
 		)
 		if err != nil {
-			return nil, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve the implicitly created k8s integration.")
+			return nil, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve the Aqueduct-generated k8s integration.")
 		}
 
 		integrationID = k8sIntegration.ID

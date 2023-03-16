@@ -70,7 +70,7 @@ func (h *DeleteIntegrationHandler) Prepare(r *http.Request) (interface{}, int, e
 
 	if integrationObject.Service == shared.Kubernetes {
 		if _, ok := integrationObject.Config[shared.K8sCloudIntegrationIdKey]; ok {
-			return nil, http.StatusUnprocessableEntity, errors.Wrap(err, "Cannot delete implicitly created k8s integration.")
+			return nil, http.StatusUnprocessableEntity, errors.Wrap(err, "Cannot delete the Aqueduct-generated k8s integration. Please delete the corresponding cloud integration instead.")
 		}
 	}
 
@@ -100,21 +100,22 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 	args := interfaceArgs.(*deleteIntegrationArgs)
 	emptyResp := deleteIntegrationResponse{}
 
-	if args.integrationObject.Service == shared.AWS {
-		if statusCode, err := deleteCloudIntegrationHelper(ctx, args, h); err != nil {
-			return emptyResp, statusCode, err
-		}
-	}
-
 	if !args.skipActiveWorkflowValidation {
 		if statusCode, err := validateNoActiveWorkflowOnIntegration(
 			ctx,
-			args.integrationObject.ID,
+			args.AqContext,
+			args.integrationObject,
 			h.OperatorRepo,
 			h.DAGRepo,
 			h.IntegrationRepo,
 			h.Database,
 		); err != nil {
+			return emptyResp, statusCode, err
+		}
+	}
+
+	if args.integrationObject.Service == shared.AWS {
+		if statusCode, err := deleteCloudIntegrationHelper(ctx, args, h); err != nil {
 			return emptyResp, statusCode, err
 		}
 	}
@@ -160,7 +161,8 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 // using that integration.
 func validateNoActiveWorkflowOnIntegration(
 	ctx context.Context,
-	id uuid.UUID,
+	aqContext *aq_context.AqContext,
+	integrationObject *models.Integration,
 	operatorRepo repos.Operator,
 	dagRepo repos.DAG,
 	integrationRepo repos.Integration,
@@ -172,7 +174,7 @@ func validateNoActiveWorkflowOnIntegration(
 		DAGRepo:         dagRepo,
 		IntegrationRepo: integrationRepo,
 		OperatorRepo:    operatorRepo,
-	}).Perform(ctx, id)
+	}).Perform(ctx, &listOperatorsForIntegrationArgs{AqContext: aqContext, integrationObject: integrationObject})
 	if err != nil {
 		return code, errors.Wrap(err, "Error getting operators on this integration.")
 	}
