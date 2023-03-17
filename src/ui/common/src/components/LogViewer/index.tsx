@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 
 import { theme } from '../../styles/theme/theme';
 import { Error, Logs } from '../../utils/shared';
-import { Tab, Tabs } from '../Tabs/Tabs.styles';
+import { Tab, Tabs } from '../primitives/Tabs.styles';
 
 type Props = {
   logs?: Logs;

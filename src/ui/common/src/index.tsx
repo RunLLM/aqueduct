@@ -73,13 +73,10 @@ import WorkflowPage from './components/pages/workflow/id';
 import useWorkflow from './components/pages/workflow/id/hook';
 import WorkflowsPage from './components/pages/workflows';
 import { Button } from './components/primitives/Button.styles';
-import { IconButton } from './components/primitives/IconButton.styles';
 import { LoadingButton } from './components/primitives/LoadingButton.styles';
+import { Tab, Tabs } from './components/primitives/Tabs.styles';
 import { OperatorExecStateTableType } from './components/tables/OperatorExecStateTable';
 import PaginatedTable from './components/tables/PaginatedTable';
-import { Tab, Tabs } from './components/Tabs/Tabs.styles';
-import LogBlock, { LogLevel } from './components/text/LogBlock';
-import getUniqueListBy from './components/utils/list_utils';
 import AqueductBezier from './components/workflows/edges/AqueductBezier';
 import AqueductQuadratic from './components/workflows/edges/AqueductQuadratic';
 import AqueductStraight from './components/workflows/edges/AqueductStraight';
@@ -97,7 +94,6 @@ import TableArtifactNode from './components/workflows/nodes/TableArtifactNode';
 import ReactFlowCanvas from './components/workflows/ReactFlowCanvas';
 import RequireDagOrResult from './components/workflows/RequireDagOrResult';
 import VersionSelector from './components/workflows/version_selector';
-import WorkflowCard from './components/workflows/workflowCard';
 import WorkflowHeader from './components/workflows/workflowHeader';
 import WorkflowSettings from './components/workflows/WorkflowSettings';
 import { handleGetArtifactResultContent } from './handlers/getArtifactResultContent';
@@ -266,7 +262,6 @@ export {
   getDataSideSheetContent,
   getNextUpdateTime,
   GettingStartedTutorial,
-  getUniqueListBy,
   handleArchiveAllNotifications,
   handleArchiveNotification,
   handleConnectToNewIntegration,
@@ -289,7 +284,6 @@ export {
   handleLoadIntegrations,
   handleTestConnectIntegration,
   HomePage,
-  IconButton,
   integration,
   IntegrationCard,
   IntegrationDetailsPage,
@@ -305,9 +299,7 @@ export {
   LoadingButton,
   LoadingStatusEnum,
   LoadSpecsCard,
-  LogBlock,
   LoginPage,
-  LogLevel,
   LogViewer,
   MariaDbCard,
   MariaDbDialog,
@@ -385,7 +377,6 @@ export {
   VersionSelector,
   WidthTransition,
   workflow,
-  WorkflowCard,
   workflowDagResults,
   workflowDags,
   WorkflowHeader,
