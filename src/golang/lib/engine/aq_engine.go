@@ -344,7 +344,6 @@ func (eng *aqEngine) ExecuteWorkflow(
 		jobManager,
 	)
 	if err != nil {
-		log.Errorf("FAILED")
 		execState.Status = shared.FailedExecutionStatus
 		now := time.Now()
 		execState.Timestamps.FinishedAt = &now

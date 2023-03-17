@@ -166,7 +166,7 @@ class WorkflowDagResultResponse(BaseModel):
     id: uuid.UUID
     created_at: int
 
-    # TODO: remove status field.
+    # TODO(ENG-2665): remove the status field.
     status: ExecutionStatus
     exec_state: ExecutionState
     workflow_dag_id: uuid.UUID

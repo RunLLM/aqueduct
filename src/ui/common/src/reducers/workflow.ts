@@ -238,9 +238,7 @@ export const handleGetWorkflow = createAsyncThunk<
       return thunkAPI.rejectWithValue(body.error);
     }
 
-    const val = normalizeGetWorkflowResponse(body);
-    console.log("handleGetWorkflow: ", val);
-    return val as GetWorkflowResponse;
+    return normalizeGetWorkflowResponse(body);
   }
 );
 
@@ -546,10 +544,6 @@ export const workflowSlice = createSlice({
 
       state.selectedResult = state.dagResults[payload];
       // check if we have a currently selectedResult. If not, then set to a value like 0 so that we don't cause an error due to state.selectedResult being undefined.
-      console.log(state.selectedResult)
-      console.log(payload)
-      console.log(state.dagResults)
-
       const workflowDagId = state.selectedResult?.workflow_dag_id
         ? state.selectedResult.workflow_dag_id
         : 0;

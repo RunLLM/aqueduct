@@ -48,7 +48,7 @@ type workflowDagResult struct {
 	Id        uuid.UUID `json:"id"`
 	CreatedAt int64     `json:"created_at"`
 
-	// TODO: remove the status field in favor of ExecutionState.
+	// TODO(ENG-2665): remove the status field.
 	Status        shared.ExecutionStatus `json:"status"`
 	ExecState     shared.ExecutionState  `json:"exec_state"`
 	WorkflowDagId uuid.UUID              `json:"workflow_dag_id"`
