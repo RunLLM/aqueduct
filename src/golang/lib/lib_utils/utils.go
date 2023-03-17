@@ -98,6 +98,7 @@ func RunCmd(command string, args []string, dir string, stream bool) (string, str
 		go func() {
 			var sb strings.Builder
 			for stderrScanner.Scan() {
+				log.Errorf("stderr: %s", stderrScanner.Text())
 				sb.WriteString(stderrScanner.Text())
 				sb.WriteString("\n")
 			}
