@@ -38,7 +38,7 @@ type workflowResponse struct {
 	CreatedAt   int64                     `json:"created_at"`
 	LastRunAt   int64                     `json:"last_run_at"`
 	Status      shared.ExecutionStatus    `json:"status"`
-	Engine      string                    `json:"engine"`
+	Engines     []shared.EngineType       `json:"engines"`
 	Checks      []operator.ResultResponse `json:"checks"`
 	Metrics     []artifact.ResultResponse `json:"metrics"`
 }
@@ -86,9 +86,16 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to list workflows.")
 	}
 
+	dagIDs := make([]uuid.UUID, 0, len(latestStatuses))
 	dagResultIDs := make([]uuid.UUID, 0, len(latestStatuses))
 	for _, status := range latestStatuses {
+		dagIDs = append(dagIDs, status.DagID)
 		dagResultIDs = append(dagResultIDs, status.ResultID)
+	}
+
+	engineTypesByDagID, err := h.OperatorRepo.GetEngineTypesMapByDagIDs(ctx, dagIDs, h.Database)
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to get engine types.")
 	}
 
 	checkResults, err := h.OperatorResultRepo.GetWithOperatorByDAGResultBatch(
@@ -134,12 +141,17 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 	workflowResponses := make([]workflowResponse, 0, len(latestStatuses))
 	if len(workflowIDs) > 0 {
 		for _, latestStatus := range latestStatuses {
+			engineTypes := engineTypesByDagID[latestStatus.DagID]
+			if engineTypes == nil {
+				engineTypes = []shared.EngineType{latestStatus.Engine}
+			}
+
 			response := workflowResponse{
 				Id:          latestStatus.ID,
 				Name:        latestStatus.Name,
 				Description: latestStatus.Description,
 				CreatedAt:   latestStatus.CreatedAt.Unix(),
-				Engine:      latestStatus.Engine,
+				Engines:     engineTypes,
 			}
 
 			for _, checkResult := range checkResultsByDAGResultID[latestStatus.ResultID] {
