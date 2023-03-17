@@ -258,10 +258,12 @@ func ParseAWSConfig(conf auth.Config) (*shared.AWSConfig, error) {
 	}
 
 	var c struct {
-		AccessKeyId     string `json:"access_key_id"`
-		SecretAccessKey string `json:"secret_access_key"`
-		Region          string `json:"region"`
-		K8sSerialized   string `json:"k8s_serialized"`
+		AccessKeyId       string `json:"access_key_id"`
+		SecretAccessKey   string `json:"secret_access_key"`
+		Region            string `json:"region"`
+		ConfigFilePath    string `json:"config_file_path"`
+		ConfigFileProfile string `json:"config_file_profile"`
+		K8sSerialized     string `json:"k8s_serialized"`
 	}
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
@@ -275,10 +277,12 @@ func ParseAWSConfig(conf auth.Config) (*shared.AWSConfig, error) {
 	}
 
 	return &shared.AWSConfig{
-		AccessKeyId:     c.AccessKeyId,
-		SecretAccessKey: c.SecretAccessKey,
-		Region:          c.Region,
-		K8s:             &dynamicK8sConfig,
+		AccessKeyId:       c.AccessKeyId,
+		SecretAccessKey:   c.SecretAccessKey,
+		Region:            c.Region,
+		ConfigFilePath:    c.ConfigFilePath,
+		ConfigFileProfile: c.ConfigFileProfile,
+		K8s:               &dynamicK8sConfig,
 	}, nil
 }
 
