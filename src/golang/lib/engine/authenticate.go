@@ -79,17 +79,16 @@ func AuthenticateAWSConfig(authConf auth.Config) error {
 		return errors.Wrap(err, "Unable to parse configuration.")
 	}
 
-	accessKeyCredentialType := false
-	filePathCredentialType := false
 	if conf.AccessKeyId != "" && conf.SecretAccessKey != "" && conf.Region != "" {
-		accessKeyCredentialType = true
-	}
-	if conf.ConfigFilePath != "" && conf.ConfigFileProfile != "" {
-		filePathCredentialType = true
-	}
-
-	if accessKeyCredentialType == filePathCredentialType {
-		return errors.New("Either 1) AWS access key ID, secret access key, region, or 2) credential file path, profile must be provided, but not both.")
+		if conf.ConfigFilePath != "" || conf.ConfigFileProfile != "" {
+			return errors.New("When authenticating via access keys, credential file path and profile must be empty.")
+		}
+	} else if conf.ConfigFilePath != "" && conf.ConfigFileProfile != "" {
+		if conf.AccessKeyId != "" || conf.SecretAccessKey != "" || conf.Region != "" {
+			return errors.New("When authenticating via credential file, access key fields must be empty.")
+		}
+	} else {
+		return errors.New("Either 1) AWS access key ID, secret access key, region, or 2) credential file path, profile must be provided.")
 	}
 
 	return nil
