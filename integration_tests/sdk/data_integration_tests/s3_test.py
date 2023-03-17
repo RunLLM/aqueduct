@@ -332,13 +332,14 @@ def test_s3_fetch_directory_with_delete(flow_manager, data_integration):
         force=True,
     )
     # Check if the directory is an empty directory.
-    dir_contents = data_integration.file(
-        dir_name + "/",
-        artifact_type=ArtifactType.TABLE,
-        format="parquet",
-    )
-    assert dir_contents.type() == ArtifactType.TUPLE
-    assert len(dir_contents.get()) == 0
+    with pytest.raises(
+        AqueductError, match="Given path to S3 directory '%s/' does not exist." % dir_name
+    ):
+        dir_contents = data_integration.file(
+            dir_name + "/",
+            artifact_type=ArtifactType.TABLE,
+            format="parquet",
+        )
 
 
 def test_s3_non_tabular_fetch(client, flow_manager, data_integration):
