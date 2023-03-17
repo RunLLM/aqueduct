@@ -260,7 +260,7 @@ class TestBackend:
             if "query" in name:
                 assert_exec_state(exec_state, "succeeded")
             elif name == "sleeping_op artifact":
-                assert exec_state is None
+                assert_exec_state(exec_state, "pending")
             else:
                 raise Exception(f"unexpected operator name {name}")
 
