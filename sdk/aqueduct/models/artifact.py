@@ -8,4 +8,4 @@ class ArtifactMetadata(BaseModel):
     id: uuid.UUID
     name: str
     type: ArtifactType
-    from_local_data : bool = False
+    from_local_data: bool = False

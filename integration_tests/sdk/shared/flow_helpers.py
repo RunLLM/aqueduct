@@ -21,7 +21,7 @@ def publish_flow_test(
     schedule: str = "",
     source_flow: Optional[Union[Flow, str, uuid.UUID]] = None,
     should_block: bool = True,
-    use_local: bool = False
+    use_local: bool = False,
 ) -> Flow:
     """Publishes a flow and waits for a specified number of runs with specified statuses to complete.
 

@@ -223,7 +223,13 @@ class Client:
         check_explicit_param_name(self._dag, name)
         if isinstance(default, LocalData):
             default = extract_val_from_local_data(default)
-            return create_param_artifact(dag=self._dag,param_name=name, default=default, description=description,is_local_data =True)
+            return create_param_artifact(
+                dag=self._dag,
+                param_name=name,
+                default=default,
+                description=description,
+                is_local_data=True,
+            )
         return create_param_artifact(self._dag, name, default, description)
 
     def list_params(self) -> Dict[str, Any]:
@@ -502,7 +508,7 @@ class Client:
         k_latest_runs: Optional[int] = None,
         config: Optional[FlowConfig] = None,
         source_flow: Optional[Union[Flow, str, uuid.UUID]] = None,
-        use_local: Optional[bool] = False
+        use_local: Optional[bool] = False,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
 
@@ -602,7 +608,7 @@ class Client:
             raise InvalidUserArgumentException(
                 "`artifacts` argument must either be an artifact or a list of artifacts."
             )
-        
+
         if source_flow and schedule != "":
             raise InvalidUserArgumentException(
                 "Cannot create a flow with both a schedule and a source flow, pick one."
@@ -682,10 +688,10 @@ class Client:
             ],
             make_copy=True,
         )
-        if not use_local and any(artifact_metadata.from_local_data for artifact_metadata in list(dag.artifacts.values())):
-            raise InvalidUserActionException(
-                "Cannot create a flow with local data."
-            )
+        if not use_local and any(
+            artifact_metadata.from_local_data for artifact_metadata in list(dag.artifacts.values())
+        ):
+            raise InvalidUserActionException("Cannot create a flow with local data.")
         dag.metadata = Metadata(
             name=name,
             description=description,

@@ -67,7 +67,7 @@ def create_param_artifact(
     default: Any,
     description: str = "",
     is_implicit: bool = False,
-    is_local_data: bool =False,
+    is_local_data: bool = False,
 ) -> BaseArtifact:
     """Creates a parameter operator and return an artifact that can be fed into other operators.
 
