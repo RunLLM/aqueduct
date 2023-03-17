@@ -57,6 +57,7 @@ def test_artifact_serialization():
             "id": str(artifact_id),
             "name": artifact_name,
             "type": ArtifactType.TABLE,
+            "from_local_data": bool
         }
     )
 
