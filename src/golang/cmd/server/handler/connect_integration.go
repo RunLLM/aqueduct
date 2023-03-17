@@ -471,7 +471,7 @@ func ValidateConfig(
 
 	defer func() {
 		// Delete storage files created for authenticate job metadata
-		go utils.CleanupStorageFiles(ctx, storageConfig, []string{jobMetadataPath})
+		go utils.CleanupStorageFiles(context.Background(), storageConfig, []string{jobMetadataPath})
 	}()
 
 	jobSpec := job.NewAuthenticateSpec(
