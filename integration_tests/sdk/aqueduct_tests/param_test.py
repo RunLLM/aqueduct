@@ -629,8 +629,10 @@ def test_local_table_data_parameter(client, flow_name, engine):
         InvalidUserActionException,
         match="Cannot create a flow with local data."
     ):
-        flow = publish_flow_test(
-            client, artifacts=output_artifact_list, name=flow_name(), engine=engine
+        flow = client.publish_flow(
+            name=flow_name(),
+            artifacts=output_artifact_list,
+            engine=engine,
         )
     flow = publish_flow_test(
         client, artifacts=output_artifact_list, name=flow_name(), engine=engine, use_local = True

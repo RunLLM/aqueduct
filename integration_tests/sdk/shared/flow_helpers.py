@@ -21,6 +21,7 @@ def publish_flow_test(
     schedule: str = "",
     source_flow: Optional[Union[Flow, str, uuid.UUID]] = None,
     should_block: bool = True,
+    use_local: bool = False
 ) -> Flow:
     """Publishes a flow and waits for a specified number of runs with specified statuses to complete.
 
@@ -77,6 +78,7 @@ def publish_flow_test(
         schedule=schedule,
         engine=engine,
         source_flow=source_flow,
+        use_local=use_local,
     )
     print("Workflow registration succeeded. Workflow ID %s. Name: %s" % (flow.id(), name))
 

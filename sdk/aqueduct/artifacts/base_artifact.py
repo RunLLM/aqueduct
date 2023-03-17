@@ -14,7 +14,6 @@ class BaseArtifact(ABC):
     _dag: DAG
     _content: Any
     _from_flow_run: bool
-    _from_local_data: bool = False
     _from_operator_type: Optional[OperatorType] = None
 
     def id(self) -> uuid.UUID:
