@@ -432,7 +432,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
     return (
       <Box display="flex" alignItems="center" flex={1} mr={3}>
-        {/* This flex grown box right aligns the bwo buttons below.*/}
+        {/* This flex grown box right aligns the two buttons below.*/}
         <Box flex={1} />
         <Box display="flex" alignItems="center">
           {includeExportOpButton && exportOpButton}
@@ -482,7 +482,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Box>
         )}
 
-        {/*Show any workflow-level errors at the top.*/}
+        {/*Show any workflow-level errors at the top of the workflow details page.*/}
         {workflow.selectedResult.exec_state.error !== null && (
           <Box
             sx={{
@@ -497,7 +497,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           >
             <pre
               style={{ margin: '0px' }}
-            >{`${workflow.selectedResult.exec_state.error.tip}\n${workflow.selectedResult.exec_state.error.context}`}</pre>
+            >{`${workflow.selectedResult.exec_state.error.tip}\n\n${workflow.selectedResult.exec_state.error.context}`}</pre>
           </Box>
         )}
 

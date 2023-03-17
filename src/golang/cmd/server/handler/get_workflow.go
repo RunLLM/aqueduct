@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
@@ -18,6 +17,7 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 // Route: /workflow/{workflowId}
@@ -50,7 +50,7 @@ type workflowDagResult struct {
 
 	// TODO: remove the status field in favor of ExecutionState.
 	Status        shared.ExecutionStatus `json:"status"`
-	ExecState     *shared.ExecutionState `json:"exec_state"`
+	ExecState     shared.ExecutionState  `json:"exec_state"`
 	WorkflowDagId uuid.UUID              `json:"workflow_dag_id"`
 }
 
@@ -191,11 +191,20 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 
 	workflowDagResults := make([]workflowDagResult, 0, len(dagResults))
 	for _, dagResult := range dagResults {
-		var dagExecState *shared.ExecutionState
+		var dagExecState shared.ExecutionState
 		if !dagResult.ExecState.IsNull {
-			dagExecState = &dagResult.ExecState.ExecutionState
+			dagExecState = dagResult.ExecState.ExecutionState
 			if dagExecState.Status != dagResult.Status {
 				log.Errorf("DAG result %s has inconsistent status and execution state: %s vs %s", dagResult.ID, dagResult.Status, dagExecState.Status)
+			}
+		} else {
+			// The execution state being null is unexpected, so we error the dag.
+			dagExecState = shared.ExecutionState{
+				Status: shared.FailedExecutionStatus,
+				Error: &shared.Error{
+					Context: "",
+					Tip:     "Unexpected internal error occurred when fetching this workflow execution! Execution state was not populated appropriately.",
+				},
 			}
 		}
 

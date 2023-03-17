@@ -184,7 +184,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Error initializing workflowDagResult.")
 	}
 
-	// Any errors after this point should be persisted to the WorkflowDagResult created above
+	// Any errors after this point should be persisted to the WorkflowDagResult created above.
 	defer func() {
 		if err != nil {
 			// Mark the workflow dag result as failed
@@ -344,6 +344,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		jobManager,
 	)
 	if err != nil {
+		log.Errorf("FAILED")
 		execState.Status = shared.FailedExecutionStatus
 		now := time.Now()
 		execState.Timestamps.FinishedAt = &now

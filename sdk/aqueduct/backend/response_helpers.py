@@ -10,7 +10,7 @@ from aqueduct.models.operators import Operator
 from aqueduct.utils.utils import indent_multiline_string, is_string_valid_uuid
 from requests_toolbelt.multipart import decoder
 
-from .response_models import ArtifactResult, Logs, ExecutionState, PreviewResponse
+from .response_models import ArtifactResult, ExecutionState, Logs, PreviewResponse
 
 
 def _parse_artifact_result_response(response: requests.Response) -> Dict[str, Any]:
