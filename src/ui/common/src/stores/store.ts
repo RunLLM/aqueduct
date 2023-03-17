@@ -12,6 +12,7 @@ import serverConfigReducer from '../reducers/serverConfig';
 import workflowReducer from '../reducers/workflow';
 import workflowDagResultsReducer from '../reducers/workflowDagResults';
 import workflowDagsReducer from '../reducers/workflowDags';
+import workflowHistoryReducer from '../reducers/workflowHistory';
 
 export const store = configureStore({
   reducer: {
@@ -27,6 +28,7 @@ export const store = configureStore({
     workflowDagsReducer,
     workflowDagResultsReducer,
     artifactResultsReducer,
+    workflowHistoryReducer,
   },
 });
 

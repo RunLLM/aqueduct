@@ -19,7 +19,7 @@ import { selectResultIdx } from '../../reducers/workflow';
 import { RootState } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import { dateString } from '../../utils/metadata';
-import ExecutionStatus from '../../utils/shared';
+import ExecutionStatus, { LoadingStatusEnum } from '../../utils/shared';
 
 export const VersionSelector: React.FC = () => {
   const navigate = useNavigate();
@@ -28,17 +28,27 @@ export const VersionSelector: React.FC = () => {
   const results = workflow.dagResults;
   const selectedResult = workflow.selectedResult;
 
+  const workflowHistory = useSelector(
+    (state: RootState) => state.workflowHistoryReducer
+  );
   const dispatch = useDispatch();
 
   const [menuAnchor, setMenuAnchor] = useState<HTMLButtonElement | null>(null);
-  const [selectedResultIdx, setSelectedResultIdx] = React.useState(0);
+  const [selectedResultIdx, setSelectedResultIdx] = useState(0);
   if (!selectedResult) {
     return null;
   }
 
+  if (
+    workflowHistory.status.loading === LoadingStatusEnum.Loading ||
+    workflowHistory.status.loading === LoadingStatusEnum.Initial
+  ) {
+    return null;
+  }
+
   const getMenuItems = () => {
-    return results.map((r, idx) => {
-      const selected = selectedResult && selectedResult.id === r.id;
+    return workflowHistory.history.versions.map((r, idx) => {
+      const selected = selectedResult && selectedResult.id === r.versionId;
 
       if (selected && idx !== selectedResultIdx) {
         setSelectedResultIdx(idx);
@@ -48,7 +58,7 @@ export const VersionSelector: React.FC = () => {
 
       let defaultBackground, hoverBackground, selectedBackground;
 
-      switch (r.status) {
+      switch (r.exec_state.status) {
         case ExecutionStatus.Succeeded:
           defaultBackground = theme.palette.green[100];
           hoverBackground = theme.palette.green[25];
@@ -90,7 +100,7 @@ export const VersionSelector: React.FC = () => {
           key={r.id}
           onClick={() => {
             dispatch(selectResultIdx(idx));
-            navigate(`?workflowDagResultId=${encodeURI(r.id)}`);
+            navigate(`?workflowDagResultId=${encodeURI(r.versionId)}`);
           }}
           sx={{
             backgroundColor: selected ? selectedBackground : defaultBackground,
