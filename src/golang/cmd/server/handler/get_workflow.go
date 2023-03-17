@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
@@ -44,9 +45,12 @@ type getWorkflowResponse struct {
 }
 
 type workflowDagResult struct {
-	Id            uuid.UUID              `json:"id"`
-	CreatedAt     int64                  `json:"created_at"`
+	Id        uuid.UUID `json:"id"`
+	CreatedAt int64     `json:"created_at"`
+
+	// TODO: remove the status field in favor of ExecutionState.
 	Status        shared.ExecutionStatus `json:"status"`
+	ExecState     *shared.ExecutionState `json:"exec_state"`
 	WorkflowDagId uuid.UUID              `json:"workflow_dag_id"`
 }
 
@@ -187,10 +191,19 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 
 	workflowDagResults := make([]workflowDagResult, 0, len(dagResults))
 	for _, dagResult := range dagResults {
+		var dagExecState *shared.ExecutionState
+		if !dagResult.ExecState.IsNull {
+			dagExecState = &dagResult.ExecState.ExecutionState
+			if dagExecState.Status != dagResult.Status {
+				log.Errorf("DAG result %s has inconsistent status and execution state: %s vs %s", dagResult.ID, dagResult.Status, dagExecState.Status)
+			}
+		}
+
 		workflowDagResults = append(workflowDagResults, workflowDagResult{
 			Id:            dagResult.ID,
 			CreatedAt:     dagResult.CreatedAt.Unix(),
 			Status:        dagResult.Status,
+			ExecState:     dagExecState,
 			WorkflowDagId: dagResult.DagID,
 		})
 	}

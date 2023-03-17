@@ -2,7 +2,7 @@ import json
 import uuid
 
 import cloudpickle as pickle
-from aqueduct.backend.response_models import ArtifactResult, Logs, OperatorResult, PreviewResponse
+from aqueduct.backend.response_models import ArtifactResult, Logs, ExecutionState, PreviewResponse
 from aqueduct.constants.enums import (
     ArtifactType,
     ExecutionStatus,
@@ -98,7 +98,7 @@ def test_operator_serialization():
 
 def test_preview_response_loading():
     op_id = uuid.uuid4()
-    op_result = OperatorResult(
+    op_result = ExecutionState(
         status=ExecutionStatus.SUCCEEDED,
         user_logs=Logs(stdout="These are the operator logs"),
     )

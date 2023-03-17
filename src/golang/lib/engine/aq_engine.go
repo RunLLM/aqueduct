@@ -191,7 +191,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 			execState.Status = shared.FailedExecutionStatus
 			execState.Error = &shared.Error{
 				Context: err.Error(),
-				Tip:     "The following workflow error occurred!",
+				Tip:     "A workflow-level error occurred!",
 			}
 
 			now := time.Now()

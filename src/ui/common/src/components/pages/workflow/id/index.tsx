@@ -482,6 +482,25 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Box>
         )}
 
+        {/*Show any workflow-level errors at the top.*/}
+        {workflow.selectedResult.exec_state.error !== null && (
+          <Box
+            sx={{
+              backgroundColor: theme.palette.red[100],
+              color: theme.palette.red[600],
+              p: 2,
+              paddingBottom: '16px',
+              paddingTop: '16px',
+              height: 'fit-content',
+              width: !drawerIsOpen ? `calc(100% - 148px)` : 'calc(100% - 32px)',
+            }}
+          >
+            <pre
+              style={{ margin: '0px' }}
+            >{`${workflow.selectedResult.exec_state.error.tip}\n${workflow.selectedResult.exec_state.error.context}`}</pre>
+          </Box>
+        )}
+
         <Tabs value={currentTab} onChange={handleTabChange} sx={{ mb: 1 }}>
           <Tab value="Details" label="Details" />
           <Tab value="Settings" label="Settings" />

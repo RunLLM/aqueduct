@@ -94,7 +94,10 @@ export type ListWorkflowSummary = {
 export type WorkflowDagResultSummary = {
   id: string;
   created_at: number;
+
+  // TODO: remove the status field.
   status: ExecutionStatus;
+  exec_state?: ExecState;
   workflow_dag_id: string;
 };
 
