@@ -84,6 +84,11 @@ func RunCmd(command string, args []string, dir string, stream bool) (string, str
 		stdoutScanner := bufio.NewScanner(stdout)
 		stderrScanner := bufio.NewScanner(stderr)
 
+		var stderrMsg string
+		// Create a channel to communicate between the main process and the goroutine to exchange
+		// the stderr message.
+		ch := make(chan string)
+
 		// start separate goroutines to stream the output from each scanner
 		go func() {
 			for stdoutScanner.Scan() {
@@ -91,14 +96,20 @@ func RunCmd(command string, args []string, dir string, stream bool) (string, str
 			}
 		}()
 		go func() {
+			var sb strings.Builder
 			for stderrScanner.Scan() {
-				log.Errorf("stderr: %s", stderrScanner.Text())
+				sb.WriteString(stderrScanner.Text())
+				sb.WriteString("\n")
 			}
+			ch <- sb.String()
 		}()
 
-		// wait for the command to complete
+		// Wait for the stderr goroutine to finish and receive the stderr from the channel.
+		stderrMsg = <-ch
+
+		// Wait for the command to complete.
 		if err := cmd.Wait(); err != nil {
-			return "", "", errors.Wrap(err, "Error waiting for command to complete")
+			return "", stderrMsg, errors.New(stderrMsg)
 		}
 
 		return "", "", nil
