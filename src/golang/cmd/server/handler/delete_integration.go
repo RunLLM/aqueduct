@@ -100,14 +100,6 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 	args := interfaceArgs.(*deleteIntegrationArgs)
 	emptyResp := deleteIntegrationResponse{}
 
-	if args.integrationObject.Service == shared.AWS {
-		// Note that this will make a call to DeleteIntegrationHandler.Perform() to delete the
-		// Aqueduct-generated dynamic k8s integration.
-		if statusCode, err := deleteCloudIntegrationHelper(ctx, args, h); err != nil {
-			return emptyResp, statusCode, err
-		}
-	}
-
 	if !args.skipActiveWorkflowValidation {
 		if statusCode, err := validateNoActiveWorkflowOnIntegration(
 			ctx,
@@ -118,6 +110,14 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 			h.IntegrationRepo,
 			h.Database,
 		); err != nil {
+			return emptyResp, statusCode, err
+		}
+	}
+
+	if args.integrationObject.Service == shared.AWS {
+		// Note that this will make a call to DeleteIntegrationHandler.Perform() to delete the
+		// Aqueduct-generated dynamic k8s integration.
+		if statusCode, err := deleteCloudIntegrationHelper(ctx, args, h); err != nil {
 			return emptyResp, statusCode, err
 		}
 	}
