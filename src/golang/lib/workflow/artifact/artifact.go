@@ -318,7 +318,8 @@ func (a *ArtifactImpl) Finish(ctx context.Context) {
 func (a *ArtifactImpl) GetMetadata(ctx context.Context) (*shared.ArtifactResultMetadata, error) {
 	if a.resultMetadata == nil {
 		if !a.Computed(ctx) {
-			return nil, errors.Newf("Cannot get metadata of Artifact %s, it has not yet been computed.", a.Name())
+			// metadata is not ready yet.
+			return nil, nil
 		}
 
 		var metadata shared.ArtifactResultMetadata
@@ -347,6 +348,13 @@ func (a *ArtifactImpl) SampleContent(ctx context.Context) ([]byte, bool, error) 
 	metadata, err := a.GetMetadata(ctx)
 	if err != nil {
 		return nil, false, err
+	}
+
+	// Ignore if artifact is not computed.
+	// Ideally we should use a.Computed() but that involves a potential API call to storage.
+	// So here we use metadata which is also sufficient.
+	if metadata == nil {
+		return nil, false, nil
 	}
 
 	// For 'compiled' types, we simply ignore the content as they won't be used by client.
