@@ -56,7 +56,7 @@ const ArtifactContent: React.FC<Props> = ({
     );
   }
 
-  let contentCompoent = null;
+  let contentComponent = null;
   switch (artifact.result.serialization_type) {
     case SerializationType.Table:
     case SerializationType.BsonTable:
@@ -68,13 +68,13 @@ const ArtifactContent: React.FC<Props> = ({
           const rows = rawData as TableRow[];
           // bson table does not include schema when serialized.
           const schema = inferSchema(rows);
-          contentCompoent = (
+          contentComponent = (
             <PaginatedTable data={{ schema: schema, data: rows }} />
           );
           break;
         }
 
-        contentCompoent = <PaginatedTable data={rawData as Data} />;
+        contentComponent = <PaginatedTable data={rawData as Data} />;
         break;
       } catch (err) {
         return (
@@ -87,7 +87,7 @@ const ArtifactContent: React.FC<Props> = ({
       try {
         const srcFromBase64 =
           'data:image/png;base64,' + contentWithLoadingStatus.data;
-        contentCompoent = (
+        contentComponent = (
           <Image
             src={srcFromBase64}
             duration={0}
@@ -111,7 +111,7 @@ const ArtifactContent: React.FC<Props> = ({
           null,
           2
         );
-        contentCompoent = (
+        contentComponent = (
           <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
             {prettyJson}
           </Typography>
@@ -125,7 +125,7 @@ const ArtifactContent: React.FC<Props> = ({
         );
       }
     case SerializationType.String:
-      contentCompoent = (
+      contentComponent = (
         <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
           {contentWithLoadingStatus.data}
         </Typography>
@@ -152,16 +152,15 @@ const ArtifactContent: React.FC<Props> = ({
   }
 
   if (!contentWithLoadingStatus.is_downsampled) {
-    return contentCompoent;
+    return contentComponent;
   }
 
   return (
     <Box>
       <Alert severity="info" sx={{ marginBottom: 1 }}>
-        The original content is too large. We only load a subset of data for
-        preview.
+        Original content too large. Loading subset of data for preview.
       </Alert>
-      {contentCompoent}
+      {contentComponent}
     </Box>
   );
 };
