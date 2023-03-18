@@ -483,7 +483,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         )}
 
         {/*Show any workflow-level errors at the top of the workflow details page.*/}
-        {workflow.selectedResult.exec_state.error !== null && (
+        {workflow.selectedResult.exec_state.error && (
           <Box
             sx={{
               backgroundColor: theme.palette.red[100],
@@ -492,6 +492,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
               paddingBottom: '16px',
               paddingTop: '16px',
               height: 'fit-content',
+
+              // When the sidesheet is not open, we want to align the right side with the
+              // dag viewer. This means taking off 100px (the width of the right control column)
+              // + 16px the left margin of the control column
+              // + 32px the additional width to the end of the screen.
+              // When the sidesheet is open, the control plane disappears, so we just need
+              // the last adjustment of 32px.
               width: !drawerIsOpen ? `calc(100% - 148px)` : 'calc(100% - 32px)',
             }}
           >
