@@ -194,6 +194,8 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 		var dagExecState shared.ExecutionState
 		if !dagResult.ExecState.IsNull {
 			dagExecState = dagResult.ExecState.ExecutionState
+
+			// TODO(ENG-2665): Remove this defensive check.
 			if dagExecState.Status != dagResult.Status {
 				log.Errorf("DAG result %s has inconsistent status and execution state: %s vs %s", dagResult.ID, dagResult.Status, dagExecState.Status)
 			}
