@@ -192,10 +192,12 @@ func (config *DynamicK8sConfig) Update(newConfig *DynamicK8sConfig) {
 }
 
 type AWSConfig struct {
-	AccessKeyId     string            `json:"access_key_id"`
-	SecretAccessKey string            `json:"secret_access_key"`
-	Region          string            `json:"region"`
-	K8s             *DynamicK8sConfig `json:"k8s"`
+	AccessKeyId       string            `json:"access_key_id"`
+	SecretAccessKey   string            `json:"secret_access_key"`
+	Region            string            `json:"region"`
+	ConfigFilePath    string            `json:"config_file_path"`
+	ConfigFileProfile string            `json:"config_file_profile"`
+	K8s               *DynamicK8sConfig `json:"k8s"`
 }
 
 type SparkIntegrationConfig struct {

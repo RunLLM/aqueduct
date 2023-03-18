@@ -84,21 +84,37 @@ func RunCmd(command string, args []string, dir string, stream bool) (string, str
 		stdoutScanner := bufio.NewScanner(stdout)
 		stderrScanner := bufio.NewScanner(stderr)
 
+		var stderrMsg string
+		// Create a channel to communicate between the main process and the goroutine to exchange
+		// the stderr message.
+		ch := make(chan string)
+
 		// start separate goroutines to stream the output from each scanner
 		go func() {
+			// When the cmd exits, the scanner will break out of the loop.
 			for stdoutScanner.Scan() {
 				log.Infof("stdout: %s", stdoutScanner.Text())
 			}
 		}()
 		go func() {
+			var sb strings.Builder
+			// When the cmd exits, the scanner will break out of the loop.
 			for stderrScanner.Scan() {
 				log.Errorf("stderr: %s", stderrScanner.Text())
+				sb.WriteString(stderrScanner.Text())
+				sb.WriteString("\n")
 			}
+			ch <- sb.String()
 		}()
 
-		// wait for the command to complete
+		// Wait for the stderr goroutine to finish and receive the stderr from the channel.
+		// Even if there is no stderr message and we send an empty string to the channel,
+		// we will still be unblocked.
+		stderrMsg = <-ch
+
+		// Wait for the command to complete.
 		if err := cmd.Wait(); err != nil {
-			return "", "", errors.Wrap(err, "Error waiting for command to complete")
+			return "", stderrMsg, errors.New(stderrMsg)
 		}
 
 		return "", "", nil
@@ -246,10 +262,12 @@ func ParseAWSConfig(conf auth.Config) (*shared.AWSConfig, error) {
 	}
 
 	var c struct {
-		AccessKeyId     string `json:"access_key_id"`
-		SecretAccessKey string `json:"secret_access_key"`
-		Region          string `json:"region"`
-		K8sSerialized   string `json:"k8s_serialized"`
+		AccessKeyId       string `json:"access_key_id"`
+		SecretAccessKey   string `json:"secret_access_key"`
+		Region            string `json:"region"`
+		ConfigFilePath    string `json:"config_file_path"`
+		ConfigFileProfile string `json:"config_file_profile"`
+		K8sSerialized     string `json:"k8s_serialized"`
 	}
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
@@ -263,10 +281,12 @@ func ParseAWSConfig(conf auth.Config) (*shared.AWSConfig, error) {
 	}
 
 	return &shared.AWSConfig{
-		AccessKeyId:     c.AccessKeyId,
-		SecretAccessKey: c.SecretAccessKey,
-		Region:          c.Region,
-		K8s:             &dynamicK8sConfig,
+		AccessKeyId:       c.AccessKeyId,
+		SecretAccessKey:   c.SecretAccessKey,
+		Region:            c.Region,
+		ConfigFilePath:    c.ConfigFilePath,
+		ConfigFileProfile: c.ConfigFileProfile,
+		K8s:               &dynamicK8sConfig,
 	}, nil
 }
 
