@@ -222,7 +222,7 @@ func (ts *TestSuite) TestOperator_GetUnusedCondaEnvNames() {
 	workflows := ts.seedWorkflowWithUser(1, userIDs)
 	workflowIDs := sampleWorkflowIDs(1, workflows)
 	dags := ts.seedDAGWithWorkflow(2, []uuid.UUID{workflowIDs[0], workflowIDs[0]})
-	historicalOp := ts.seedOperatorAndDAG(artifactID, dags[0].ID, users[0].ID, operator.FunctionType)
+	historicalOp := ts.seedOperatorAndDAGOperatorToArtifact(artifactID, dags[0].ID, operator.FunctionType)
 	historicalOp.Spec.SetEngineConfig(&shared.EngineConfig{
 		Type: shared.AqueductCondaEngineType,
 		AqueductCondaConfig: &shared.AqueductCondaConfig{
@@ -239,7 +239,7 @@ func (ts *TestSuite) TestOperator_GetUnusedCondaEnvNames() {
 	)
 	require.Nil(ts.T(), err)
 
-	latestOp := ts.seedOperatorAndDAG(artifactID, dags[1].ID, users[0].ID, operator.FunctionType)
+	latestOp := ts.seedOperatorAndDAGOperatorToArtifact(artifactID, dags[1].ID, operator.FunctionType)
 	latestOp.Spec.SetEngineConfig(&shared.EngineConfig{
 		Type: shared.AqueductCondaEngineType,
 		AqueductCondaConfig: &shared.AqueductCondaConfig{

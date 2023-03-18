@@ -32,15 +32,16 @@ import (
 //		serialized `listWorkflowsResponse`, a list of workflow information in the user's org
 
 type workflowResponse struct {
-	Id          uuid.UUID                 `json:"id"`
-	Name        string                    `json:"name"`
-	Description string                    `json:"description"`
-	CreatedAt   int64                     `json:"created_at"`
-	LastRunAt   int64                     `json:"last_run_at"`
-	Status      shared.ExecutionStatus    `json:"status"`
-	Engines     []shared.EngineType       `json:"engines"`
-	Checks      []operator.ResultResponse `json:"checks"`
-	Metrics     []artifact.ResultResponse `json:"metrics"`
+	Id              uuid.UUID                 `json:"id"`
+	Name            string                    `json:"name"`
+	Description     string                    `json:"description"`
+	CreatedAt       int64                     `json:"created_at"`
+	LastRunAt       int64                     `json:"last_run_at"`
+	Status          shared.ExecutionStatus    `json:"status"`
+	Engine          shared.EngineType         `json:"engine"`
+	OperatorEngines []shared.EngineType       `json:"operator_engines"`
+	Checks          []operator.ResultResponse `json:"checks"`
+	Metrics         []artifact.ResultResponse `json:"metrics"`
 }
 
 type ListWorkflowsHandler struct {
@@ -141,17 +142,13 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 	workflowResponses := make([]workflowResponse, 0, len(latestStatuses))
 	if len(workflowIDs) > 0 {
 		for _, latestStatus := range latestStatuses {
-			engineTypes := engineTypesByDagID[latestStatus.DagID]
-			if engineTypes == nil {
-				engineTypes = []shared.EngineType{latestStatus.Engine}
-			}
-
 			response := workflowResponse{
-				Id:          latestStatus.ID,
-				Name:        latestStatus.Name,
-				Description: latestStatus.Description,
-				CreatedAt:   latestStatus.CreatedAt.Unix(),
-				Engines:     engineTypes,
+				Id:              latestStatus.ID,
+				Name:            latestStatus.Name,
+				Description:     latestStatus.Description,
+				CreatedAt:       latestStatus.CreatedAt.Unix(),
+				Engine:          latestStatus.Engine,
+				OperatorEngines: engineTypesByDagID[latestStatus.DagID],
 			}
 
 			for _, checkResult := range checkResultsByDAGResultID[latestStatus.ResultID] {

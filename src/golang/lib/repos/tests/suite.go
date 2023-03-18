@@ -105,6 +105,7 @@ func (ts *TestSuite) TearDownTest() {
 	DELETE FROM app_user;
 	DELETE FROM artifact;
 	DELETE FROM artifact_result;
+	DELETE FROM execution_environment;
 	DELETE FROM integration;
 	DELETE FROM notification;
 	DELETE FROM operator;
@@ -114,7 +115,6 @@ func (ts *TestSuite) TearDownTest() {
 	DELETE FROM workflow_dag;
 	DELETE FROM workflow_dag_edge;
 	DELETE FROM workflow_dag_result;
-	DELETE FROM execution_environment;
 	;
 	`
 	if err := ts.DB.Execute(ts.ctx, query); err != nil {
