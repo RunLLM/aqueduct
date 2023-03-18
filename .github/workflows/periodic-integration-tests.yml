@@ -56,7 +56,10 @@ jobs:
         if: always()
         with:
           name: Terraform State
-          path: integration_tests/sdk/compute/k8s/*.tf
+          path: |
+            integration_tests/sdk/compute/k8s/*.tf
+            integration_tests/sdk/compute/k8s/*.tfstate
+            integration_tests/sdk/compute/k8s/*.tfstate.backup
 
       - uses: ./.github/actions/upload-artifacts
         if: always()
