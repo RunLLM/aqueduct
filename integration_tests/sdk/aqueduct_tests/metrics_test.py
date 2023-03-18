@@ -1,6 +1,6 @@
 import pandas as pd
 import pytest
-from aqueduct.error import AqueductError, ArtifactNeverComputedException, ArtifactNotFoundException
+from aqueduct.error import AqueductError, ArtifactNotFoundException
 
 from aqueduct import metric
 

@@ -57,50 +57,37 @@ class DAG(BaseModel):
     # by individual operators.
     engine_config: EngineConfig = EngineConfig()
 
-    def _validate_explicitly_named_artifacts(
-        self, starting_ops: List[Operator], seen_artifact_names: Set[str]
-    ) -> None:
+    def validate_and_resolve_artifact_names(self) -> None:
+        """To be called from publish_flow() only.
+
+        Checks that all explicitly named artifacts are unique.
+
+        For implicitly named artifacts that collide, bumps their names using the `(num)` suffix.
+        The index is grouped by the input operator, so an operator with multiple output artifacts
+        that use our default naming scheme will always have consecutive numbers. Eg. (1), (2), (3)
         """
-        In the first BFS pass, check that there aren't any explicitly named artifacts that collide with each other.
 
-        Add any explicitly named artifacts to `seen_artifact_names`. Those names are now completely claimed.
-        """
-        q: List[Operator] = copy.copy(starting_ops)
-        seen_op_ids: List[uuid.UUID] = []
-        while len(q) > 0:
-            curr_op = q.pop(0)
+        # In the first pass, check that there aren't any explicitly named artifacts that collide with each other.
+        # Add any explicitly named artifacts to `seen_artifact_names`. Those names are now completely claimed.
+        seen_artifact_names: Set[str] = set()
+        for artifact in self.artifacts.values():
+            if artifact.explicitly_named:
+                if artifact.name in seen_artifact_names:
+                    raise InvalidUserActionException(
+                        "Unable to publish flow. You are attempting to publish multiple artifacts explicitly named `%s`. "
+                        "Please use `artifact.set_name(<new name>)` to resolve this naming collision. Or rerun the operators "
+                        "with different output artifact names." % artifact.name
+                    )
+                seen_artifact_names.add(artifact.name)
 
-            # Only traverse operators you haven't seen before.
-            if curr_op.id in seen_op_ids:
-                continue
-            seen_op_ids.append(curr_op.id)
-
-            output_artifacts = self.must_get_artifacts(curr_op.outputs)
-            for artifact in output_artifacts:
-                if artifact.explicitly_named:
-                    if artifact.name in seen_artifact_names:
-                        raise InvalidUserActionException(
-                            "Unable to publish flow. You are attempting to publish multiple artifacts explicitly named `%s`. "
-                            "Please use `artifact.set_name(<new name>)` to resolve this naming collision. Or rerun the operators "
-                            "with different output artifact names." % artifact.name
-                        )
-                    seen_artifact_names.add(artifact.name)
-
-                q.extend(
-                    self.list_operators(on_artifact_id=artifact.id),
-                )
-
-    def _resolve_artifact_names(
-        self, starting_ops: List[Operator], seen_artifact_names: Set[str]
-    ) -> None:
-        """
-        In the second BFS pass, resolve the names of any implicitly named artifacts that collide. Loop through
-        the operators in topological order so that numbers are assigned in a reasonable fashion. Output artifacts
-        of the same operator are always numbered consecutively.
-
-        `seen_artifact_names` should have already been updated by `_validate_explicitly_named_artifacts`.
-        """
-        q: List[Operator] = copy.copy(starting_ops)
+        # In the second pass, resolve the names of any implicitly named artifacts that collide. Loop through
+        # the operators in topological order so that numbers are assigned in a reasonable fashion. Output artifacts
+        # of the same operator are always numbered consecutively.
+        # For some determinism around naming, we sort the starting operators by name and then id.
+        q: List[Operator] = sorted(
+            [op for op in self.operators.values() if len(op.inputs) == 0],
+            key=lambda op: (op.name, op.id),
+        )
         seen_op_ids: List[uuid.UUID] = []
 
         any_op_was_renamed = False
@@ -137,26 +124,6 @@ class DAG(BaseModel):
             logger().warning(
                 "Note that any artifacts you explicitly gave a name to were not renamed."
             )
-
-    def validate_and_resolve_artifact_names(self) -> None:
-        """To be called from publish_flow() only.
-
-        Checks that all explicitly named artifacts are unique.
-
-        For implicitly named artifacts that collide, bumps their names using the `(num)` suffix.
-        The index is grouped by the input operator, so an operator with multiple output artifacts
-        that use our default naming scheme will always have consecutive numbers. Eg. (1), (2), (3)
-        """
-
-        # For some determinism around naming, we sort the starting operators by name and then id.
-        starting_ops: List[Operator] = sorted(
-            [op for op in self.operators.values() if len(op.inputs) == 0],
-            key=lambda op: (op.name, op.id),
-        )
-
-        seen_artifact_names: Set[str] = set()
-        self._validate_explicitly_named_artifacts(starting_ops, seen_artifact_names)
-        self._resolve_artifact_names(starting_ops, seen_artifact_names)
 
     def set_engine_config(
         self,
@@ -281,7 +248,7 @@ class DAG(BaseModel):
                 and op.name == candidate_op.name
             )
         ]
-        assert len(match) <= 2, (
+        assert len(match) < 2, (
             "We should not be having multiple %s's with the same name and input artifacts."
             % get_operator_type(candidate_op)
         )
@@ -451,7 +418,9 @@ class DAG(BaseModel):
         self.must_get_artifact(artifact_id).type = artifact_type
 
     def update_artifact_name(self, artifact_id: uuid.UUID, new_name: str) -> None:
-        """Assumption: the artifact being altered is being explicitly named."""
+        """Updates an artifact to have a user-specified name. THis means the artifact is
+        now explicitly named.
+        """
         artifact = self.must_get_artifact(artifact_id)
         artifact.name = new_name
         artifact.explicitly_named = True

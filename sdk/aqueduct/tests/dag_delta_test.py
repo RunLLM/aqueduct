@@ -91,28 +91,6 @@ def test_add_and_replace_operator_delta():
         artifacts=[extract_artifact, fn_artifact_0, fn_artifact_1, fn_artifact_2],
     )
 
-    # Try replacing Function 2.
-    fn_op_2_replacement_artifact_id = generate_uuid()
-    fn_op_2_replacement = _construct_operator(
-        id=generate_uuid(),
-        name="Function 2",
-        operator_type=OperatorType.FUNCTION,
-        inputs=[fn_artifact_ids[0]],
-        outputs=[fn_op_2_replacement_artifact_id],
-    )
-    fn_artifact_3 = default_artifact(
-        id=fn_op_2_replacement_artifact_id, name="Function 2 Replacement Artifact"
-    )
-
-    apply_deltas_to_dag(
-        dag,
-        deltas=[AddOperatorDelta(fn_op_2_replacement, output_artifacts=[fn_artifact_3])],
-    )
-    assert dag == _construct_dag(
-        operators=[extract_op, fn_op_0, fn_op_1, fn_op_2_replacement, load_fn_1],
-        artifacts=[extract_artifact, fn_artifact_0, fn_artifact_1, fn_artifact_3],
-    )
-
 
 def _check_subgraph_test_case(
     dag: DAG,

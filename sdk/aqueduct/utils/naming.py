@@ -30,7 +30,6 @@ def bump_artifact_suffix(artifact_name: str) -> str:
 
         # Remove the suffix to replace it with the new one.
         artifact_name = artifact_name[: -len(suffix_match[-1])]
-        print(artifact_name)
         suffix_idx = int(val) + 1
 
     return artifact_name + f" ({suffix_idx})"
