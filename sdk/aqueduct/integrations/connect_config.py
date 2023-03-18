@@ -184,6 +184,9 @@ class DynamicK8sConfig(BaseConnectionConfig):
 
 
 class AWSConfig(BaseConnectionConfig):
+    # Either 1) all of access_key_id, secret_access_key, region, or 2) both config_file_path and
+    # config_file_profile need to be specified. Any other cases will be rejected by the server's
+    # config validation process.
     access_key_id: str = ""
     secret_access_key: str = ""
     region: str = ""
