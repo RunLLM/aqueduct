@@ -96,12 +96,7 @@ func (h *GetWorkflowHistoryHandler) Perform(ctx context.Context, interfaceArgs i
 	}
 
 	results, err := h.DAGResultRepo.GetByWorkflow(ctx, args.workflowId, h.Database)
-	if err != nil {
-		if err == database.ErrNoRows() {
-			// TODO(vikram): Come back to dealing with the case where there are no workflow runs yet.
-			return nil, http.StatusBadRequest, errors.Wrap(err, "There are no workflow runs.")
-		}
-
+	if err != nil && err != database.ErrNoRows() { // Don't return an error if there are just no rows.
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while retrieving workflow runs.")
 	}
 
