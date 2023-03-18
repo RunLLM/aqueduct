@@ -91,12 +91,14 @@ func RunCmd(command string, args []string, dir string, stream bool) (string, str
 
 		// start separate goroutines to stream the output from each scanner
 		go func() {
+			// When the cmd exits, the scanner will break out of the loop.
 			for stdoutScanner.Scan() {
 				log.Infof("stdout: %s", stdoutScanner.Text())
 			}
 		}()
 		go func() {
 			var sb strings.Builder
+			// When the cmd exits, the scanner will break out of the loop.
 			for stderrScanner.Scan() {
 				log.Errorf("stderr: %s", stderrScanner.Text())
 				sb.WriteString(stderrScanner.Text())
@@ -106,6 +108,8 @@ func RunCmd(command string, args []string, dir string, stream bool) (string, str
 		}()
 
 		// Wait for the stderr goroutine to finish and receive the stderr from the channel.
+		// Even if there is no stderr message and we send an empty string to the channel,
+		// we will still be unblocked.
 		stderrMsg = <-ch
 
 		// Wait for the command to complete.
