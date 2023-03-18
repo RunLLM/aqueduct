@@ -184,16 +184,23 @@ class DynamicK8sConfig(BaseConnectionConfig):
 
 
 class AWSConfig(BaseConnectionConfig):
-    access_key_id: str
-    secret_access_key: str
-    region: str
+    # Either 1) all of access_key_id, secret_access_key, region, or 2) both config_file_path and
+    # config_file_profile need to be specified. Any other cases will be rejected by the server's
+    # config validation process.
+    access_key_id: str = ""
+    secret_access_key: str = ""
+    region: str = ""
+    config_file_path: str = ""
+    config_file_profile: str = ""
     k8s: Optional[DynamicK8sConfig]
 
 
 class _AWSConfigWithSerializedConfig(BaseConnectionConfig):
-    access_key_id: str
-    secret_access_key: str
-    region: str
+    access_key_id: str = ""
+    secret_access_key: str = ""
+    region: str = ""
+    config_file_path: str = ""
+    config_file_profile: str = ""
     k8s_serialized: Optional[
         str
     ]  # this is a json-serialized string of AWSConfig.k8s, which is of type DynamicK8sConfig
@@ -335,6 +342,8 @@ def _prepare_aws_config(config: AWSConfig) -> _AWSConfigWithSerializedConfig:
         access_key_id=config.access_key_id,
         secret_access_key=config.secret_access_key,
         region=config.region,
+        config_file_path=config.config_file_path,
+        config_file_profile=config.config_file_profile,
         k8s_serialized=(None if config.k8s is None else config.k8s.json(exclude_none=True)),
     )
 
