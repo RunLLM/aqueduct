@@ -137,7 +137,7 @@ func setupTerraformDirectory(dst string) error {
 // 1. Verifies that there is no workflow using the dynamic k8s integration.
 // 2. Deletes the EKS cluster if it's running.
 // 3. Deletes the cloud integration directory.
-// 4. Deletes the implicitly created dynamic k8s integration.
+// 4. Deletes the Aqueduct-generated dynamic k8s integration.
 func deleteCloudIntegrationHelper(
 	ctx context.Context,
 	args *deleteIntegrationArgs,
@@ -151,20 +151,7 @@ func deleteCloudIntegrationHelper(
 		h.Database,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve the implicitly created k8s integration.")
-	}
-
-	// If there are active workflows using the dynamic k8s integration, we need to reject the
-	// deletion request immediately, without deleting the cluster and Terraform directories.
-	if statusCode, err := validateNoActiveWorkflowOnIntegration(
-		ctx,
-		k8sIntegration.ID,
-		h.OperatorRepo,
-		h.DAGRepo,
-		h.IntegrationRepo,
-		h.Database,
-	); err != nil {
-		return statusCode, err
+		return http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve the Aqueduct-generated k8s integration.")
 	}
 
 	// Delete the EKS cluster
@@ -206,7 +193,7 @@ func deleteCloudIntegrationHelper(
 
 	_, statusCode, err = h.Perform(ctx, deleteK8sIntegrationArgs)
 	if err != nil {
-		return statusCode, errors.Wrap(err, "Failed to delete the implicitly created k8s integration.")
+		return statusCode, errors.Wrap(err, "Failed to delete the Aqueduct-generated k8s integration.")
 	}
 
 	return http.StatusOK, nil

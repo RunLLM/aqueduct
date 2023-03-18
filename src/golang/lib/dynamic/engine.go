@@ -483,6 +483,8 @@ func generateTerraformVariables(
 	accessKeyVar := fmt.Sprintf("-var=access_key=%s", awsConfig.AccessKeyId)
 	secretAccessKeyVar := fmt.Sprintf("-var=secret_key=%s", awsConfig.SecretAccessKey)
 	regionVar := fmt.Sprintf("-var=region=%s", awsConfig.Region)
+	credentialPathVar := fmt.Sprintf("-var=credentials_file=%s", awsConfig.ConfigFilePath)
+	profileVar := fmt.Sprintf("-var=profile=%s", awsConfig.ConfigFileProfile)
 
 	cpuNodeTypeVar := fmt.Sprintf("-var=cpu_node_type=%s", engineConfig[shared.K8sCpuNodeTypeKey])
 	gpuNodeTypeVar := fmt.Sprintf("-var=gpu_node_type=%s", engineConfig[shared.K8sGpuNodeTypeKey])
@@ -497,6 +499,8 @@ func generateTerraformVariables(
 		accessKeyVar,
 		secretAccessKeyVar,
 		regionVar,
+		credentialPathVar,
+		profileVar,
 		cpuNodeTypeVar,
 		gpuNodeTypeVar,
 		minCpuNodeVar,
