@@ -172,7 +172,3 @@ module "vpc" {
 
   tags = local.tags
 }
-
-//resource "kubectl_manifest" "nvidia-device-plugin" {
-//  yaml_body = "${file("nvidia-device-plugin.yml")}"
-//}
