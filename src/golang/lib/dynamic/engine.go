@@ -2,7 +2,9 @@ package dynamic
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
+	"math/big"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -30,9 +32,12 @@ const (
 	K8sClusterUpdateAction k8sClusterActionType = "update"
 )
 
-const stateLockErrMsg = "Error acquiring the state lock"
+const (
+	stateLockErrMsg          = "Error acquiring the state lock"
+	K8sIntegrationNameSuffix = "aqueduct_ondemand_k8s"
+)
 
-var TerraformDir = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "dynamic", "terraform")
+var TerraformTemplateDir = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "template", "aws", "eks")
 
 // PrepareCluster blocks until the cluster is in status "Active".
 func PrepareCluster(
@@ -156,10 +161,27 @@ func CreateOrUpdateK8sCluster(
 				"--kubeconfig",
 				engineIntegration.Config[shared.K8sKubeconfigPathKey],
 			},
-			TerraformDir,
+			engineIntegration.Config[shared.K8sTerraformPathKey],
 			true,
 		); err != nil {
 			return errors.Wrap(err, "Failed to update Kubeconfig")
+		}
+
+		// TODO (ENG-2572): Move this step to Terraform code.
+		nvidiaPluginUrl := "https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.9.0/nvidia-device-plugin.yml"
+		if _, _, err := lib_utils.RunCmd(
+			"kubectl",
+			[]string{
+				"apply",
+				"-f",
+				nvidiaPluginUrl,
+				"--kubeconfig",
+				engineIntegration.Config[shared.K8sKubeconfigPathKey],
+			},
+			"",
+			true,
+		); err != nil {
+			return errors.Wrap(err, "Failed to create nvidia plugin")
 		}
 	}
 
@@ -220,13 +242,13 @@ func DeleteK8sCluster(
 		return err
 	}
 
-	// For deletion, the config values don't matter, so we just use the default map.
-	terraformArgs := generateTerraformVariables(&shared.AWSConfig{}, shared.DefaultDynamicK8sConfig.ToMap())
+	// For deletion, the config values don't matter, so we just use an empty AWSConfig.
+	terraformArgs := generateTerraformVariables(&shared.AWSConfig{}, engineIntegration.Config)
 
 	if _, _, err := lib_utils.RunCmd(
 		"terraform",
 		append([]string{"destroy", "-auto-approve"}, terraformArgs...),
-		TerraformDir,
+		engineIntegration.Config[shared.K8sTerraformPathKey],
 		true,
 	); err != nil {
 		return errors.Wrap(err, "Unable to destroy k8s cluster")
@@ -393,7 +415,7 @@ func ResyncClusterState(
 		[]string{
 			"plan",
 		},
-		TerraformDir,
+		engineIntegration.Config[shared.K8sTerraformPathKey],
 		false,
 	); err != nil {
 		if strings.Contains(stderr, stateLockErrMsg) {
@@ -461,6 +483,8 @@ func generateTerraformVariables(
 	accessKeyVar := fmt.Sprintf("-var=access_key=%s", awsConfig.AccessKeyId)
 	secretAccessKeyVar := fmt.Sprintf("-var=secret_key=%s", awsConfig.SecretAccessKey)
 	regionVar := fmt.Sprintf("-var=region=%s", awsConfig.Region)
+	credentialPathVar := fmt.Sprintf("-var=credentials_file=%s", awsConfig.ConfigFilePath)
+	profileVar := fmt.Sprintf("-var=profile=%s", awsConfig.ConfigFileProfile)
 
 	cpuNodeTypeVar := fmt.Sprintf("-var=cpu_node_type=%s", engineConfig[shared.K8sCpuNodeTypeKey])
 	gpuNodeTypeVar := fmt.Sprintf("-var=gpu_node_type=%s", engineConfig[shared.K8sGpuNodeTypeKey])
@@ -469,16 +493,21 @@ func generateTerraformVariables(
 	minGpuNodeVar := fmt.Sprintf("-var=min_gpu_node=%s", engineConfig[shared.K8sMinGpuNodeKey])
 	maxGpuNodeVar := fmt.Sprintf("-var=max_gpu_node=%s", engineConfig[shared.K8sMaxGpuNodeKey])
 
+	clusterNameVar := fmt.Sprintf("-var=cluster_name=%s", engineConfig[shared.K8sClusterNameKey])
+
 	return []string{
 		accessKeyVar,
 		secretAccessKeyVar,
 		regionVar,
+		credentialPathVar,
+		profileVar,
 		cpuNodeTypeVar,
 		gpuNodeTypeVar,
 		minCpuNodeVar,
 		maxCpuNodeVar,
 		minGpuNodeVar,
 		maxGpuNodeVar,
+		clusterNameVar,
 	}
 }
 
@@ -511,7 +540,7 @@ func runTerraformApply(
 	if _, _, err := lib_utils.RunCmd(
 		"terraform",
 		append([]string{"apply", "-auto-approve"}, terraformArgs...),
-		TerraformDir,
+		engineIntegration.Config[shared.K8sTerraformPathKey],
 		true,
 	); err != nil {
 		return errors.Wrap(err, "Terraform apply failed")
@@ -605,4 +634,21 @@ func CheckIfValidConfig(action k8sClusterActionType, config map[string]string) e
 	}
 
 	return nil
+}
+
+// GenerateClusterName generates a EKS cluster name by concatenating aqueduct with a
+// random string of length 16.
+func GenerateClusterName() (string, error) {
+	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+	b := make([]byte, 16)
+	for i := range b {
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(letterBytes))))
+		if err != nil {
+			return "", err
+		}
+		b[i] = letterBytes[n.Int64()]
+	}
+
+	return fmt.Sprintf("%s_%s", "aqueduct", string(b)), nil
 }
