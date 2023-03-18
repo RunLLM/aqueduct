@@ -786,13 +786,18 @@ func ValidatePrerequisites(
 	}
 
 	// For AWS integration, we require the user to have AWS CLI and Terraform installed.
+	// We also require env (GNU coreutils) executable to set the env variables when using the AWS CLI.
 	if svc == shared.AWS {
 		if _, _, err := lib_utils.RunCmd("terraform", []string{"--version"}, "", false); err != nil {
-			return http.StatusBadRequest, errors.Wrap(err, "terraform executable not found. Please go to https://developer.hashicorp.com/terraform/downloads to install terraform")
+			return http.StatusNotFound, errors.Wrap(err, "terraform executable not found. Please go to https://developer.hashicorp.com/terraform/downloads to install terraform")
 		}
 
 		if _, _, err := lib_utils.RunCmd("aws", []string{"--version"}, "", false); err != nil {
-			return http.StatusBadRequest, errors.Wrap(err, "AWS CLI executable not found. Please go to https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html to install AWS CLI")
+			return http.StatusNotFound, errors.Wrap(err, "AWS CLI executable not found. Please go to https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html to install AWS CLI")
+		}
+
+		if _, _, err := lib_utils.RunCmd("env", []string{"--version"}, "", false); err != nil {
+			return http.StatusNotFound, errors.Wrap(err, "env (GNU coreutils) executable not found.")
 		}
 	}
 

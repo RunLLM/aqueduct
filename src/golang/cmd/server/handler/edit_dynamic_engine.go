@@ -203,6 +203,7 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 					forceDelete,
 					dynamicEngineIntegration,
 					h.IntegrationRepo,
+					vaultObject,
 					h.Database,
 				); err != nil {
 					return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to delete dynamic k8s engine")
@@ -212,7 +213,7 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 			} else if dynamicEngineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
 				return emptyResponse, http.StatusOK, nil
 			} else {
-				dynamicEngineIntegration, err = dynamic.PollClusterStatus(ctx, dynamicEngineIntegration, h.IntegrationRepo, h.Database)
+				dynamicEngineIntegration, err = dynamic.PollClusterStatus(ctx, dynamicEngineIntegration, h.IntegrationRepo, vaultObject, h.Database)
 				if err != nil {
 					return emptyResponse, http.StatusInternalServerError, err
 				}
