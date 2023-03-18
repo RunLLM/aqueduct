@@ -27,7 +27,7 @@ export const store = configureStore({
         artifactResultsReducer,
         artifactResultContentsReducer,
         serverConfigReducer,
-        workflowHistoryReducer, 
+        workflowHistoryReducer,
     },
 });
 
