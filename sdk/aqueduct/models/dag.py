@@ -418,7 +418,7 @@ class DAG(BaseModel):
         self.must_get_artifact(artifact_id).type = artifact_type
 
     def update_artifact_name(self, artifact_id: uuid.UUID, new_name: str) -> None:
-        """Updates an artifact to have a user-specified name. THis means the artifact is
+        """Updates an artifact to have a user-specified name. This means the artifact is
         now explicitly named.
         """
         artifact = self.must_get_artifact(artifact_id)

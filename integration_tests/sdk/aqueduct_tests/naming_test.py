@@ -203,6 +203,21 @@ def test_explicit_and_implicit_artifact_name_collisions(client, engine, flow_nam
     assert flow_run.artifact("foo artifact").get() == "hello"  # bar's output
     assert flow_run.artifact("foo artifact (1)").get() == 123  # foo's output
 
+    # Check that explicitly claiming `foo_artifact (1)` will bump the implicit name to `foo_artifact (2)`.
+    @op(outputs=["foo artifact (1)"])
+    def razz():
+        return 333
+
+    razz_output = razz()
+
+    flow = publish_flow_test(
+        client, artifacts=[foo_output, bar_output, razz_output], engine=engine, name=flow_name()
+    )
+    flow_run = flow.latest()
+    assert flow_run.artifact("foo artifact").get() == "hello"  # bar's output
+    assert flow_run.artifact("foo artifact (1)").get() == 333  # razz's output
+    assert flow_run.artifact("foo artifact (2)").get() == 123  # foo's output
+
 
 def _run_noop_op(table_output):
     """Returns artifact with name `foo artifact`"""
