@@ -131,7 +131,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
   const k8sConfigTab = (
     <Box>
       <Typography variant="body2" color="gray.700">
-        Optionally configure dynamic Kubernetes cluster parameters.
+        Optionally configure on-demand Kubernetes cluster parameters.
       </Typography>
       <IntegrationTextInputField
         spellCheck={false}
