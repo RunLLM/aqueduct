@@ -458,7 +458,6 @@ export const handleGetSelectDagPosition = createAsyncThunk<
     const { apiKey, operators, artifacts, onChange, onConnect } = args;
     // NOTE: This should get us better line drawing in terms of less edge overlaps.
     // You will still notice that edges are too long where we collapse nodes
-
     // ... the positioning code on our backend only takes into account a uuid:operator and uuid:artifact mapping
     // so it's not so easy to check an operator/artifact's spec type on the backend since we're just dealing
     // with a map of UUIds.
@@ -482,7 +481,9 @@ export const handleGetSelectDagPosition = createAsyncThunk<
       .filter((op) => {
         return op.spec.type != OperatorType.Param;
       })
-      .map((op) => getOperatorNode(op, opPositions[op.id], onChange, onConnect));
+      .map((op) =>
+        getOperatorNode(op, opPositions[op.id], onChange, onConnect)
+      );
     const artfNodes = Object.values(artifacts).map((artf) =>
       getArtifactNode(artf, artfPositions[artf.id], onChange, onConnect)
     );
@@ -494,7 +495,6 @@ export const handleGetSelectDagPosition = createAsyncThunk<
     const dag = thunkAPI.getState().workflowReducer.selectedDag;
     const artifactResults =
       thunkAPI.getState().workflowReducer.artifactResults ?? {};
-
 
     if (!!dag) {
       return collapsePosition(allNodes, dag, artifactResults);
