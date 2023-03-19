@@ -241,7 +241,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         <Tabs value={engineType} onChange={(_, value) => setEngineType(value)}>
           <Tab
             value={DynamicEngineType.K8s}
-            label="Kubernetes Cluster Config"
+            label="On-demand Kubernetes Cluster Config"
           />
         </Tabs>
       </Box>
