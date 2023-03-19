@@ -2,11 +2,11 @@ package engine
 
 import (
 	"context"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
@@ -36,6 +36,8 @@ func waitForInProgressOperators(
 	}
 }
 
+// The two error types returned here indicate that the issue happened within the context
+// of the operator.
 func opFailureError(failureType shared.FailureType, op operator.Operator) error {
 	if failureType == shared.SystemFailure {
 		return ErrOpExecSystemFailure
@@ -44,4 +46,8 @@ func opFailureError(failureType shared.FailureType, op operator.Operator) error 
 		return ErrOpExecBlockingUserFailure
 	}
 	return errors.Newf("Internal error: Unsupported failure type %v", failureType)
+}
+
+func isOpFailureError(err error) bool {
+	return errors.Is(err, ErrOpExecSystemFailure) || errors.Is(err, ErrOpExecBlockingUserFailure)
 }

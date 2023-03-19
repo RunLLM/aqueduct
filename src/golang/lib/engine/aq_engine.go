@@ -189,9 +189,14 @@ func (eng *aqEngine) ExecuteWorkflow(
 		if err != nil {
 			// Mark the workflow dag result as failed
 			execState.Status = shared.FailedExecutionStatus
-			execState.Error = &shared.Error{
-				Context: err.Error(),
-				Tip:     "A workflow-level error occurred!",
+
+			// Only set the workflow-level error if the error occurred outside the context
+			// of any single operator's execution. (eg. workflow timed out)
+			if !isOpFailureError(err) {
+				execState.Error = &shared.Error{
+					Context: err.Error(),
+					Tip:     "A workflow-level error occurred!",
+				}
 			}
 
 			now := time.Now()

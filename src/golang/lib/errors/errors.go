@@ -4,23 +4,31 @@ import (
 	"github.com/dropbox/godropbox/errors"
 )
 
-// Is reports whether err matches target
+// TODO: Same as Dropbox's IsError(), but ...
+func getMessage(err error) string {
+	if dbxErr, isDbxErr := err.(errors.DropboxError); isDbxErr {
+		return dbxErr.GetMessage()
+	} else {
+		return err.Error()
+	}
+}
+
+// TODO: Is() is our custom error comparison method.
 func Is(err, target error) bool {
-	dboxErr, isErrDbox := err.(errors.DropboxError)
-	dboxTarget, isTargetDbox := target.(errors.DropboxError)
-
-	if !isErrDbox && !isTargetDbox {
-		// Neither error is a DropboxError
-		return errors.IsError(err, target)
+	// If the errors, directly match, we're done.
+	if err == target {
+		return true
 	}
 
-	if isErrDbox && isTargetDbox {
-		// Both errors are a DropBoxError, so we can only check the outermost
-		// error message, without the stack trace.
-		return dboxErr.GetMessage() == dboxTarget.GetMessage()
+	// Otherwise, we'll have to perform a comparison of the error strings.
+	rootErrStr := ""
+	rootErr := errors.RootError(err)
+	if rootErr != nil {
+		rootErrStr = getMessage(rootErr)
 	}
 
-	return false
+	targetMsg := getMessage(target)
+	return rootErrStr == targetMsg
 }
 
 // This returns a new DropboxError initialized with the given message and
