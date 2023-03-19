@@ -91,7 +91,10 @@ def test_check_on_multiple_mixed_inputs(client, flow_name, data_integration, eng
 
 def test_edit_check(client, data_integration, engine, flow_name):
     """Test that running the same check (by name) twice on the same artifact will result in last-run-wins behavior."""
-    table = extract(data_integration, DataObject.SENTIMENT)
+
+    # NOTE: we explicitly name these extracts operators so that the check on the sentiment table
+    # always claims names before the wine table, since we sort alphabetically!
+    table = extract(data_integration, DataObject.SENTIMENT, op_name="sentiment query")
 
     @check
     def foo(table):
@@ -111,7 +114,7 @@ def test_edit_check(client, data_integration, engine, flow_name):
 
     # We do not overwrite check with the same name that run on other artifacts.
     # Instead, we deduplicate with suffix (1).
-    table2 = extract(data_integration, DataObject.WINE)
+    table2 = extract(data_integration, DataObject.WINE, op_name="wine query")
     fail = foo(table2)
     assert pass2.get()  # the previous check with the same name still exists.
     assert not fail.get()
