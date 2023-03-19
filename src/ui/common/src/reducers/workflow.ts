@@ -1,7 +1,6 @@
 // This is being deprecated. Please use `workflowDagResults` combining with
 // `artifactResults` for future development.
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import ELK from 'elkjs/lib/elk.bundled.js';
 import { Edge, Node } from 'reactflow';
 
 import { apiAddress } from '../components/hooks/useAqueductConsts';
@@ -457,11 +456,12 @@ export const handleGetSelectDagPosition = createAsyncThunk<
     thunkAPI
   ) => {
     const { apiKey, operators, artifacts, onChange, onConnect } = args;
-    // Remove the nodes that we don't want.
-    // positioning only takes in the operators.
-    // Backend will look up the operators and their results.
-    // TODO: Add that filter on the backend.
+    // NOTE: This should get us better line drawing in terms of less edge overlaps.
+    // You will still notice that edges are too long where we collapse nodes
 
+    // ... the positioning code on our backend only takes into account a uuid:operator and uuid:artifact mapping
+    // so it's not so easy to check an operator/artifact's spec type on the backend since we're just dealing
+    // with a map of UUIds.
     const res = await fetch(`${apiAddress}/api/positioning`, {
       method: 'POST',
       headers: {
@@ -477,8 +477,6 @@ export const handleGetSelectDagPosition = createAsyncThunk<
 
     const opPositions = position.operator_positions;
     const artfPositions = position.artifact_positions;
-
-    console.log('Dag positions from API: ', opPositions, artfPositions);
 
     const opNodes = Object.values(operators)
       .filter((op) => {
@@ -497,73 +495,9 @@ export const handleGetSelectDagPosition = createAsyncThunk<
     const artifactResults =
       thunkAPI.getState().workflowReducer.artifactResults ?? {};
 
-    // problem: DAG line is too long, but that's because we collapse nodes at the very end, but don't update
-    // removed nodes and their edges. 
-    // Instead, we should pass the graph with the desired nodes into the positioning algorithm.
 
     if (!!dag) {
-      console.log('beforeCollapsedPosition allNodes: ', allNodes);
-      console.log('before collapsedPosition dag: ', dag);
-
-      const collapsedPosition = collapsePosition(allNodes, dag, artifactResults);
-
-      console.log('after Collapse: ', collapsedPosition);
-
-      return collapsedPosition;
-      /*
-      const collapsedPosition = collapsePosition(
-        allNodes,
-        dag,
-        artifactResults
-      );
-
-      const elk = new ELK();
-      const mappedNodes = collapsedPosition.nodes.map((node) => {
-        return {
-          id: node.id,
-          // width of the node in px.
-          width: 400,
-          // height of the node in px.
-          height: 100,
-        };
-      });
-
-      const graph = {
-        id: 'root',
-        layoutOptions: {
-          'elk.algorithm': 'layered',
-          'elk.direction': 'RIGHT',
-          'elk.spacing.nodeNode': '200',
-          'elk.layered.spacing.nodeNodeBetweenLayers': '100',
-          'elk.layered.nodePlacement.strategy': 'INTERACTIVE',
-        },
-        children: mappedNodes,
-        edges: collapsedPosition.edges,
-      };
-
-      try {
-        const positionedLayout = await elk.layout(graph);
-        collapsedPosition.nodes = collapsedPosition.nodes.map((node) => {
-          for (let i = 0; i < positionedLayout.children.length; i++) {
-            if (node.id === positionedLayout.children[i].id) {
-              node.position = {
-                x: positionedLayout.children[i].x,
-                y: positionedLayout.children[i].y,
-              };
-
-              // TODO (ENG-2305): Handle mapping elk edge sections to react-flow edges
-            }
-          }
-
-          return node;
-        });
-      } catch (error) {
-        // TODO (ENG-2304): Show alert box when positioned layout fails to be retrieved.
-        console.log('error getting PositionedLayout: ', error);
-      }
-
-      return collapsedPosition;
-      */
+      return collapsePosition(allNodes, dag, artifactResults);
     }
 
     return allNodes;
