@@ -456,14 +456,37 @@ export const handleGetSelectDagPosition = createAsyncThunk<
     },
     thunkAPI
   ) => {
-    const { operators, artifacts, onChange, onConnect } = args;
+    const { apiKey, operators, artifacts, onChange, onConnect } = args;
+    // Remove the nodes that we don't want.
+    // positioning only takes in the operators.
+    // Backend will look up the operators and their results.
+    // TODO: Add that filter on the backend.
+
+    const res = await fetch(`${apiAddress}/api/positioning`, {
+      method: 'POST',
+      headers: {
+        'api-key': apiKey,
+      },
+      body: JSON.stringify(operators),
+    });
+
+    const position = await res.json();
+    if (!res.ok) {
+      return thunkAPI.rejectWithValue(position.error);
+    }
+
+    const opPositions = position.operator_positions;
+    const artfPositions = position.artifact_positions;
+
+    console.log('Dag positions from API: ', opPositions, artfPositions);
+
     const opNodes = Object.values(operators)
       .filter((op) => {
         return op.spec.type != OperatorType.Param;
       })
-      .map((op) => getOperatorNode(op, onChange, onConnect));
+      .map((op) => getOperatorNode(op, opPositions[op.id], onChange, onConnect));
     const artfNodes = Object.values(artifacts).map((artf) =>
-      getArtifactNode(artf, onChange, onConnect)
+      getArtifactNode(artf, artfPositions[artf.id], onChange, onConnect)
     );
     const edges = getEdges(operators);
     const allNodes = {
@@ -474,7 +497,20 @@ export const handleGetSelectDagPosition = createAsyncThunk<
     const artifactResults =
       thunkAPI.getState().workflowReducer.artifactResults ?? {};
 
+    // problem: DAG line is too long, but that's because we collapse nodes at the very end, but don't update
+    // removed nodes and their edges. 
+    // Instead, we should pass the graph with the desired nodes into the positioning algorithm.
+
     if (!!dag) {
+      console.log('beforeCollapsedPosition allNodes: ', allNodes);
+      console.log('before collapsedPosition dag: ', dag);
+
+      const collapsedPosition = collapsePosition(allNodes, dag, artifactResults);
+
+      console.log('after Collapse: ', collapsedPosition);
+
+      return collapsedPosition;
+      /*
       const collapsedPosition = collapsePosition(
         allNodes,
         dag,
@@ -527,6 +563,7 @@ export const handleGetSelectDagPosition = createAsyncThunk<
       }
 
       return collapsedPosition;
+      */
     }
 
     return allNodes;
