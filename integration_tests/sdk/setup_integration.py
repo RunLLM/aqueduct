@@ -150,6 +150,7 @@ def _setup_snowflake_data(client: Client, snowflake: RelationalDBIntegration) ->
 
 
 def _setup_external_sqlite_db(path: str):
+    """Spins up an external SQLite database at 'path'."""
     assert path[-1] != '/', "Path must point to a file"
 
     from pathlib import Path
@@ -159,20 +160,11 @@ def _setup_external_sqlite_db(path: str):
     db_dirpath = Path((os.path.dirname(db_abspath)))
     db_dirpath.mkdir(parents=True, exist_ok=True)
 
-    print("HELLO: creating sqlite3 database at ", db_abspath)
-
     # Create the SQLite database.
     _execute_command(["sqlite3", db_abspath, "VACUUM;"])
 
-    # TODO: REMOVE
-    _execute_command(["ls", "-l", db_dirpath])
 
-
-def _setup_relational_data(client: Client, db: RelationalDBIntegration, integration_config: Dict[str, Any]) -> None:
-    # Stand up the external database.
-    if integration_config["type"] == ServiceType.SQLITE:
-        _setup_external_sqlite_db(integration_config["database"])
-
+def _setup_relational_data(client: Client, db: RelationalDBIntegration) -> None:
     # Find all the tables that already exist.
     existing_table_names = set(db.list_tables()["tablename"])
     _add_missing_artifacts(client, db, existing_table_names)
@@ -216,10 +208,15 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
 
     connected_integrations = client.list_integrations()
     for integration_name in data_integrations:
-        integration_config = _fetch_integration_credentials("data", integration_name)
 
         # Only connect to integrations that don't already exist.
         if integration_name not in connected_integrations.keys():
+            integration_config = _fetch_integration_credentials("data", integration_name)
+
+            # Stand up the external integration first.
+            if integration_config["type"] == ServiceType.SQLITE:
+                _setup_external_sqlite_db(integration_config["database"])
+
             client.connect_integration(
                 integration_name,
                 integration_config["type"],
@@ -229,7 +226,7 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
         # Setup the data in each of these integrations.
         integration = client.integration(integration_name)
         if isinstance(integration, RelationalDBIntegration):
-            _setup_relational_data(client, integration, integration_config)
+            _setup_relational_data(client, integration)
         elif integration.type() == ServiceType.S3:
             _setup_s3_data(client, integration)
         elif integration.type() == ServiceType.MONGO_DB:
