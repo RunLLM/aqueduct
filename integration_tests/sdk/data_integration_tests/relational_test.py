@@ -168,6 +168,7 @@ def test_sql_today_tag(client, data_integration):
 #         _ = table_artifact.get(parameters={"non-existant parameter": "blah"})
 #
 
+
 def test_sql_query_with_multiple_parameters(client, flow_manager, data_integration):
     _ = client.create_param("table_name", default="hotel_reviews")
     nationality = client.create_param(
