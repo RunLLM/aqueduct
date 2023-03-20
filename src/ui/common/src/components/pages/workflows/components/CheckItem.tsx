@@ -52,18 +52,6 @@ export const getCheckStatusIcon = (
   switch (check.status) {
     case ExecutionStatus.Succeeded: {
       statusIcon = successIcon;
-
-      // now we check the value to see if we should show warning or error icon
-      // Can this case even happen, or is the ExecutionState always going to be failed in this case?
-      // I thought ExecutionState of failed meant there was a runtime error ...
-      // May not need this if statement after all.
-      if (check.value === 'False') {
-        if (check.level === CheckLevel.Error) {
-          statusIcon = errorIcon;
-        } else {
-          statusIcon = warningIcon;
-        }
-      }
       break;
     }
     case ExecutionStatus.Failed: {
