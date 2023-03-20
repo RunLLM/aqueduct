@@ -427,7 +427,7 @@ class Client:
                 metadata=integration_info,
             )
         elif integration_info.service == ServiceType.AWS:
-            dynamic_k8s_integration_name = "%s:k8s" % name
+            dynamic_k8s_integration_name = "%s:aqueduct_ondemand_k8s" % name
             dynamic_k8s_integration_info = self._connected_integrations[
                 dynamic_k8s_integration_name
             ]

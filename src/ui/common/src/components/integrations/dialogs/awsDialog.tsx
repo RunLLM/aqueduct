@@ -8,7 +8,7 @@ import {
   DynamicEngineType,
   DynamicK8sConfig,
 } from '../../../utils/integrations';
-import { Tab, Tabs } from '../../Tabs/Tabs.styles';
+import { Tab, Tabs } from '../../primitives/Tabs.styles';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: AWSConfig = {
