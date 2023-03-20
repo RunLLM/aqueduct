@@ -167,8 +167,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       ) {
         // this is where selectedDag gets set
         dispatch(selectResultIdx(workflowDagResultIndex));
-        setSelectedResultIdx(workflowDagResultIndex);
       }
+
+      // This is outside the if statement because this is not automatically kept in sync with
+      // the Redux store.
+      setSelectedResultIdx(workflowDagResultIndex);
     }
   }, [
     workflow.dagResults,
@@ -483,7 +486,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         )}
 
         {/*Show any workflow-level errors at the top of the workflow details page.*/}
-        {workflow.selectedResult.exec_state.error && (
+        {workflow.selectedResult?.exec_state?.error && (
           <Box
             sx={{
               backgroundColor: theme.palette.red[100],
