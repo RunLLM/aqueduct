@@ -61,7 +61,6 @@ export const getCheckStatusIcon = (
         if (check.level === CheckLevel.Error) {
           statusIcon = errorIcon;
         } else {
-          console.log('made it to warning case');
           statusIcon = warningIcon;
         }
       }
