@@ -950,7 +950,7 @@ func (eng *aqEngine) execute(
 
 	for len(inProgressOps) > 0 {
 		if time.Since(start) > timeConfig.ExecTimeout {
-			return errors.New("Reached timeout waiting for workflow to complete.")
+			return errors.Newf("Reached timeout %s waiting for workflow to complete.", timeConfig.ExecTimeout)
 		}
 
 		for _, op := range inProgressOps {
