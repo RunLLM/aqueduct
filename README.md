@@ -1,6 +1,6 @@
 [<img src="https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/aqueduct-logo-two-tone/1x/aqueduct-logo-two-tone-1x.png" width= "35%" />](https://www.aqueducthq.com)
 
-## Aqueduct: The easiest way to run ML on any cloud infrastructure
+## Aqueduct: The easiest way to run ML on any cloud
 
 [![Downloads](https://pepy.tech/badge/aqueduct-ml/month)](https://pypi.org/project/aqueduct-ml/)
 [![Slack](https://img.shields.io/static/v1.svg?label=chat&message=on%20slack&color=27b1ff&style=flat)](https://join.slack.com/t/aqueductusers/shared_invite/zt-11hby91cx-cpmgfK0qfXqEYXv25hqD6A)
@@ -8,51 +8,71 @@
 [![PyPI version](https://badge.fury.io/py/aqueduct-ml.svg)](https://pypi.org/project/aqueduct-ml/)
 [![Tests](https://github.com/aqueducthq/aqueduct/actions/workflows/integration-tests.yml/badge.svg)](https://github.com/aqueducthq/aqueduct/actions/workflows/integration-tests.yml)
 
-**Aqueduct enables you to define, deploy and monitor robust ML pipelines on any cloud infrastructure.** Check out our [quickstart guide](https://docs.aqueducthq.com/quickstart-guide)!
+**Aqueduct enables you to run machine learning tasks on any cloud infrastructure. [Check out our quickstart guide! →](https://docs.aqueducthq.com/quickstart-guide)**
 
-Aqueduct gives you a simple Python-native API to define machine learning pipelines, the ability to deploy those pipelines on your existing infrastructure (e.g., Spark, Kubernetes, Lambda), and visibility into the code, data, and metadata associated with your workflows. 
-Aqueduct is fully open-source and runs securely in your cloud.
+Aqueduct is a MLOps framework that allows you to define ML tasks in vanilla Python, run those tasks on any infrastructure you'd like to use, and gain visibility into the execution and performance of your ML. **[See what tools Aqueduct works with. →](https://aqueducthq.com/integrations/)**
 
-You can install Aqueduct via `pip`:
+Here's how you can get started: 
+
 ```bash
 pip3 install aqueduct-ml
 aqueduct start
 ```
 
-Now, we can create our first workflow:
+### How it works
 
+Aqueduct's Python native API allows you to define ML tasks in regular Python code. You can connect Aqueduct to your existing cloud infrastructure from the Aqueduct UI or SDK ([docs](**TODO ADD LINK**)), and you can instruct Aqueduct to use different tools for different stages of your workflow. 
+
+<!--- TODO(vikram): Modify this once we add support for switching into/out of Databricks in a single workflow. --->
+For example, we can define a pipeline that trains a model on Kubernetes using a GPU and validates that model in AWS Lambda.
+
+**TODO(vikram): Make this example a little more real.**
 ```python
-from aqueduct import Client, op, metric
+from aqueduct import op
 
-client = Client()
+@op(
+    engine='eks-us-east-2',
+    resources={
+        'gpu_resource_name': 'nvidia.com/gpu' # Aqueduct automatically installs Nvidia drivers for you.
+    }
+)
+def train_model(raw_data):
+    # Define your model...
+    model.fit(features, labels)
+    return model
 
-@op
-def transform_data(reviews):
-    reviews['strlen'] = reviews['review'].str.len()
-    return reviews
+@metric(engine='lambda-us-east-2')
+def validate(model, validation_set):
+    # Validate your model...
+    return validation_score
+    
+# Load data to plumb our workflow.
+client = aq.Client()
+snowflake = client.integration('snowflake')
+raw_data = snowflake.sql('SELECT * FROM raw_data;);
+validation_set = snowflake.SQL('SELECT * FROM validation_set;')
 
+model = train_model(raw_data)
+validation_score = validate(model, validation_set);
 
-demo_db = client.integration("aqueduct_demo")
-reviews_table = demo_db.sql("select * from hotel_reviews;")
-
-strlen_table = transform_data(reviews_table)
-demo_db.save(strlen_table, "strlen_table", "replace)
-
-client.publish_flow(name="review_strlen", artifacts=[strlen_table])
+model.save('my_s3_bucket', 'models/model.pkl')
+client.publish_flow('Model Training', artifacts=[model])
 ```
 
-Once we've created a workflow, we can view that workflow in the Aqueduct UI: 
+Once you publish this workflow to Aqueduct, you can see it on the UI: 
 
-![image](https://user-images.githubusercontent.com/867892/196529730-3c9582d5-8692-495d-a7df-8eb62ddf305f.png)
+**TODO(vikram): Insert screenshot.**
 
 ## Why Aqueduct?
 
-The engineering required to get data science & machine learning projects in production slows down data teams. Aqueduct automates away that engineering and allows you to define robust data & ML pipelines in a few lines of code and run them anywhere.
+MLOps has become a [tangled mess of siloed infrastructure](https://aqueducthq.com/post/the-mlops-knot/). Most teams need to set up and operate many different cloud infrastructure tools to run ML effectively, but these tools have disparate APIs and interoperate poorly.
+
+Aqueduct provides a single interface to running machine learning tasks on your existing cloud infrastructure — Kubernetes, Spark, Lambda, etc. From the same Python API, you can run code in the across any or all of these systems seamlessly and gain visibility into how your code is performing.
 
 * **Python-native pipeline API**: Aqueduct’s API allows you define your workflows in vanilla Python, so you can get code into production quickly and effectively. No more DSLs or YAML configs to worry about.
 * **Integrated with your infrastructure**: Workflows defined in Aqueduct can run on any cloud infrastructure you use, like Kubernetes, Spark, Airflow, or AWS Lambda. You can get all the benefits of Aqueduct without having to rip-and-replace your existing tooling.
 * **Centralized visibility into code, data, & metadata**: Once your workflows are in production, you need to know what’s running, whether it’s working, and when it breaks. Aqueduct gives you visibility into what code, data, metrics, and metadata are generated by each workflow run, so you can have confidence that your pipelines work as expected — and know immediately when they don’t.
-* **Runs securely in your cloud**: Aqueduct is fully open-source and runs in any Unix environment. It runs entirely in your cloud and on your infrastructure, so you can be confident that nothing is ever leaving your cloud.
+* **Runs securely in your cloud**: Aqueduct is fully open-source and runs in any Unix environment. It runs entirely in your cloud and on your infrastructure, so you can be confident that your data and code are secure.
 
 ## Overview & Examples
 
