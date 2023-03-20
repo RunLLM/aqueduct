@@ -26,33 +26,54 @@ export const getCheckStatusIcon = (
   check: CheckPreview,
   tooltipText?: string
 ): JSX.Element => {
-  let statusIcon = (
+  const successIcon = (
     <StatusIndicator
       status={ExecutionStatus.Succeeded}
       tooltipText={tooltipText}
     />
   );
 
+  const errorIcon = (
+    <StatusIndicator
+      status={ExecutionStatus.Failed}
+      tooltipText={tooltipText}
+    />
+  );
+
+  const warningIcon = (
+    <StatusIndicator
+      status={ExecutionStatus.Warning}
+      tooltipText={tooltipText}
+    />
+  );
+
+  let statusIcon = successIcon;
+
   switch (check.status) {
     case ExecutionStatus.Succeeded: {
+      statusIcon = successIcon;
+
       // now we check the value to see if we should show warning or error icon
+      // Can this case even happen, or is the ExecutionState always going to be failed in this case?
+      // I thought ExecutionState of failed meant there was a runtime error ...
+      // May not need this if statement after all.      
       if (check.value === 'False') {
         if (check.level === CheckLevel.Error) {
-          statusIcon = (
-            <StatusIndicator
-              status={ExecutionStatus.Failed}
-              tooltipText={tooltipText}
-            />
-          );
+          statusIcon = errorIcon;
         } else {
-          statusIcon = (
-            <StatusIndicator
-              status={ExecutionStatus.Warning}
-              tooltipText={tooltipText}
-            />
-          );
+          console.log('made it to warning case')
+          statusIcon = warningIcon;
         }
       }
+      break;
+    }
+    case ExecutionStatus.Failed: {
+      if (check.level === CheckLevel.Error) {
+        statusIcon = errorIcon;
+      } else { // CheckLevel.Warning
+        statusIcon = warningIcon;
+      }
+
       break;
     }
     default: {
