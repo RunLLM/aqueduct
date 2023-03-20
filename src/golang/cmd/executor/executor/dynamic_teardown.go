@@ -48,7 +48,7 @@ func (ex *DynamicTeardownExecutor) Run(ctx context.Context) error {
 			log.Infof("Checking dynamic integration %s, whose terraform directory is %s", dynamicIntegration.Name, dynamicIntegration.Config[shared.K8sTerraformPathKey])
 			defer wg.Done() // decrement the WaitGroup counter when the goroutine completes
 
-			if err := dynamic.ResyncClusterState(ctx, dynamicIntegration, ex.IntegrationRepo, ex.Database); err != nil {
+			if err := dynamic.ResyncClusterState(ctx, dynamicIntegration, ex.IntegrationRepo, ex.Vault, ex.Database); err != nil {
 				log.Error(errors.Wrap(err, "Failed to resync cluster state"))
 				return
 			}
@@ -78,6 +78,7 @@ func (ex *DynamicTeardownExecutor) Run(ctx context.Context) error {
 						false,
 						dynamicIntegration,
 						ex.IntegrationRepo,
+						ex.Vault,
 						ex.Database,
 					); err != nil {
 						log.Error(errors.Wrap(err, "Unable to delete dynamic k8s integration"))

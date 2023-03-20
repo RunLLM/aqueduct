@@ -20,8 +20,6 @@ const (
 	LambdaType     ManagerType = "lambda"
 	DatabricksType ManagerType = "databricks"
 	SparkType      ManagerType = "spark"
-
-	DefaultAwsRegion = "us-east-2"
 )
 
 type Config interface {
@@ -193,7 +191,6 @@ func GenerateJobManagerConfig(
 			UseSameCluster:     bool(k8sConfig.UseSameCluster),
 			AwsAccessKeyId:     awsAccessKeyId,
 			AwsSecretAccessKey: awsSecretAccessKey,
-			AwsRegion:          DefaultAwsRegion,
 			Dynamic:            bool(k8sConfig.Dynamic),
 		}, nil
 	case shared.LambdaEngineType:
