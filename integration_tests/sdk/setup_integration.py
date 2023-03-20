@@ -159,8 +159,13 @@ def _setup_external_sqlite_db(path: str):
     db_dirpath = Path((os.path.dirname(db_abspath)))
     db_dirpath.mkdir(parents=True, exist_ok=True)
 
+    print("HELLO: creating sqlite3 database at ", db_abspath)
+
     # Create the SQLite database.
     _execute_command(["sqlite3", db_abspath, "VACUUM;"])
+
+    # TODO: REMOVE
+    _execute_command(["ls", "-l", db_dirpath])
 
 
 def _setup_relational_data(client: Client, db: RelationalDBIntegration, integration_config: Dict[str, Any]) -> None:
