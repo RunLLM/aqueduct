@@ -9,3 +9,6 @@ class ArtifactMetadata(BaseModel):
     name: str
     type: ArtifactType
     from_local_data: bool = False
+
+    class Config:
+        fields = {"from_local_data": {"exclude": ...}}

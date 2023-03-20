@@ -24,7 +24,6 @@ type Artifact struct {
 	Name          string              `db:"name" json:"name"`
 	Description   string              `db:"description" json:"description"`
 	Type          shared.ArtifactType `db:"type" json:"type"`
-	FromLocalData bool                `db:"from_local_data" json:"from_local_data"`
 }
 
 // ArtifactCols returns a comma-separated string of all Artifact columns.
