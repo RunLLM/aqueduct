@@ -52,7 +52,7 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
     schema: checkHistorySchema,
     data: (historyWithLoadingStatus.results?.results ?? []).map(
       (artifactStatusResult) => {
-        let resultRow = getArtifactExecStateAsTableRow(artifactStatusResult);
+        const resultRow = getArtifactExecStateAsTableRow(artifactStatusResult);
         resultRow.level = checkLevel ? checkLevel : 'undefined';
         return resultRow;
       }

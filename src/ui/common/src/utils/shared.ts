@@ -1,5 +1,6 @@
+import { ArtifactResultMetadataResponse } from 'src/handlers/responses/artifact';
+
 import { TableRow } from './data';
-import { ArtifactResultMetadataResponse } from "src/handlers/responses/artifact";
 
 export enum LoadingStatusEnum {
   Initial = 'initial',
@@ -41,7 +42,9 @@ export enum ExecutionStatus {
   Warning = 'warning',
 }
 
-export const getArtifactExecStateAsTableRow = (artifactStatusResult: ArtifactResultMetadataResponse): TableRow => {
+export const getArtifactExecStateAsTableRow = (
+  artifactStatusResult: ArtifactResultMetadataResponse
+): TableRow => {
   const all_times = [
     artifactStatusResult.exec_state?.timestamps?.finished_at,
     artifactStatusResult.exec_state?.timestamps?.pending_at,
@@ -49,20 +52,22 @@ export const getArtifactExecStateAsTableRow = (artifactStatusResult: ArtifactRes
     artifactStatusResult.exec_state?.timestamps?.running_at,
   ];
 
-  const times = all_times.filter((x) => typeof x === 'string').map((x) => new Date(x)); // Convert from string to time
+  const times = all_times
+    .filter((x) => typeof x === 'string')
+    .map((x) => new Date(x)); // Convert from string to time
 
   const maxTime = Math.max.apply(null, times); // Returns -Infinity if times is an empty list
-  
+
   // Need to convert back to Date because math.max changes the time to Unix time (number)
-  const timestamp = 
-    maxTime > 0? new Date(maxTime).toLocaleString() : 'Unknown'; 
-    
+  const timestamp =
+    maxTime > 0 ? new Date(maxTime).toLocaleString() : 'Unknown';
+
   return {
     timestamp,
     status: artifactStatusResult.exec_state?.status ?? 'Unknown',
     value: artifactStatusResult.content_serialized,
-  }
-}
+  };
+};
 
 export const stringToExecutionStatus = (status: string): ExecutionStatus => {
   let executionStatus = ExecutionStatus.Unknown;
