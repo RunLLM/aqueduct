@@ -2,9 +2,10 @@ package engine
 
 import (
 	"context"
-	"github.com/aqueducthq/aqueduct/lib/errors"
 	"time"
 
+
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/google/uuid"
