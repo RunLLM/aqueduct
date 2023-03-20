@@ -64,7 +64,8 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
 
         const maxTime = Math.max.apply(null, timesOrNull);
 
-        let timestamp = maxTime > 0 ? new Date(maxTime).toLocaleString() : 'Unknown';
+        const timestamp =
+          maxTime > 0 ? new Date(maxTime).toLocaleString() : 'Unknown';
 
         return {
           status: artifactStatusResult.exec_state?.status ?? 'Unknown',
