@@ -153,8 +153,7 @@ def _setup_snowflake_data(client: Client, snowflake: RelationalDBIntegration) ->
 
 def _setup_external_sqlite_db(path: str):
     """Spins up an external SQLite database at 'path'."""
-    assert path[-1] != "/", "Path must point to a file"
-
+    assert path[-1] != "/", "Path must point to a file, not a directory."
     import os
     from pathlib import Path
 
