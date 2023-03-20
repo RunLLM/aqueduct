@@ -4,19 +4,10 @@ import (
 	"github.com/dropbox/godropbox/errors"
 )
 
-// Fetches the error message from the error. For Dropbox errors, we exclude the stack trace.
-func getMessage(err error) string {
-	if dbxErr, isDbxErr := err.(errors.DropboxError); isDbxErr {
-		return dbxErr.GetMessage()
-	} else {
-		return err.Error()
-	}
-}
-
 // Is is our custom error comparison method. The candidate error can be arbitrarily wrapped,
 // but the root error is one we care about and want to compare.
 //
-// The assumption for the target error is that it unwrapped, hence why we do no such unwrapping
+// The assumption for the target error is that it is unwrapped, hence why we do no such unwrapping
 // for that error. This is because the target error is expected to be simple. Eg. `db.ErrNotFound`.
 //
 // To compare errors, we compare the root error message with the target error message. Any stack traces
@@ -27,14 +18,14 @@ func Is(err, target error) bool {
 		return true
 	}
 
-	// Otherwise, we'll have to perform a comparison of the error strings.
+	// Otherwise, we must perform a comparison of the error strings.
 	rootErrStr := ""
 	rootErr := errors.RootError(err)
 	if rootErr != nil {
-		rootErrStr = getMessage(rootErr)
+		rootErrStr = errors.GetMessage(rootErr)
 	}
 
-	targetMsg := getMessage(target)
+	targetMsg := errors.GetMessage(target)
 	return rootErrStr == targetMsg
 }
 
