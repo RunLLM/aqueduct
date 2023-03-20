@@ -1,3 +1,5 @@
+import subprocess
+import sys
 import time
 from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
@@ -26,6 +28,11 @@ TEST_CONFIG_FILE: str = "test-config.yml"
 CACHED_CREDENTIALS: Optional[Dict[str, Any]] = None
 CACHED_CONFIG: Optional[Dict[str, Any]] = None
 
+def _execute_command(args, cwd=None):
+    with subprocess.Popen(args, stdout=sys.stdout, stderr=sys.stderr, cwd=cwd) as proc:
+        proc.communicate()
+        if proc.returncode != 0:
+            raise Exception("Error executing command: %s" % args)
 
 def _parse_config_file() -> Dict[str, Any]:
     global CACHED_CONFIG
@@ -142,10 +149,27 @@ def _setup_snowflake_data(client: Client, snowflake: RelationalDBIntegration) ->
     _add_missing_artifacts(client, snowflake, existing_table_names)
 
 
-def _setup_relational_data(client: Client, db: RelationalDBIntegration) -> None:
+def _setup_external_sqlite_db(path: str):
+    assert path[-1] != '/', "Path must point to a file"
+
+    from pathlib import Path
+    import os
+    # Create the parent directories if they don't already exist.
+    db_abspath = os.path.expanduser(path)
+    db_dirpath = Path((os.path.dirname(db_abspath)))
+    db_dirpath.mkdir(parents=True, exist_ok=True)
+
+    # Create the SQLite database.
+    _execute_command(["sqlite3", db_abspath, "VACUUM;"])
+
+
+def _setup_relational_data(client: Client, db: RelationalDBIntegration, integration_config: Dict[str, Any]) -> None:
+    # Stand up the external database.
+    if integration_config["type"] == ServiceType.SQLITE:
+        _setup_external_sqlite_db(integration_config["database"])
+
     # Find all the tables that already exist.
     existing_table_names = set(db.list_tables()["tablename"])
-
     _add_missing_artifacts(client, db, existing_table_names)
 
 
@@ -164,8 +188,11 @@ def _setup_s3_data(client: Client, s3: S3Integration):
 
 
 def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> None:
-    """Connects to the given data integration(s) if the server hasn't yet. It also ensures
-    that the appropriate data is populated.
+    """Connects to the given data integration(s) if the server hasn't yet.
+
+    If the data integration is not connected, we ensure that it is spun up properly
+    and that the appropriate starting data is populated. We assume that if the integration
+    already exists, then all external resources have already been set up.
 
     If `filter_to` is set, we only connect to that given integration name. Otherwise,
     we attempt to connect to every integration listed in the test config file.
@@ -184,10 +211,10 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
 
     connected_integrations = client.list_integrations()
     for integration_name in data_integrations:
+        integration_config = _fetch_integration_credentials("data", integration_name)
+
         # Only connect to integrations that don't already exist.
         if integration_name not in connected_integrations.keys():
-            integration_config = _fetch_integration_credentials("data", integration_name)
-
             client.connect_integration(
                 integration_name,
                 integration_config["type"],
@@ -197,7 +224,7 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
         # Setup the data in each of these integrations.
         integration = client.integration(integration_name)
         if isinstance(integration, RelationalDBIntegration):
-            _setup_relational_data(client, integration)
+            _setup_relational_data(client, integration, integration_config)
         elif integration.type() == ServiceType.S3:
             _setup_s3_data(client, integration)
         elif integration.type() == ServiceType.MONGO_DB:
@@ -207,6 +234,8 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
             pass
         else:
             raise Exception("Test suite does not yet support %s." % integration.type())
+
+
 
 
 def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) -> None:
