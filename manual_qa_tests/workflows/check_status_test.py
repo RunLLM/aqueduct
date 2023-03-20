@@ -73,4 +73,5 @@ def deploy(client, integration_name):
             failure_level_warning_arf,
             pass_level_error_artf,
             # failure_level_error_artifact
-        ])
+        ],
+    )

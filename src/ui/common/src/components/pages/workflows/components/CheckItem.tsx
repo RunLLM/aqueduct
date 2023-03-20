@@ -56,12 +56,12 @@ export const getCheckStatusIcon = (
       // now we check the value to see if we should show warning or error icon
       // Can this case even happen, or is the ExecutionState always going to be failed in this case?
       // I thought ExecutionState of failed meant there was a runtime error ...
-      // May not need this if statement after all.      
+      // May not need this if statement after all.
       if (check.value === 'False') {
         if (check.level === CheckLevel.Error) {
           statusIcon = errorIcon;
         } else {
-          console.log('made it to warning case')
+          console.log('made it to warning case');
           statusIcon = warningIcon;
         }
       }
@@ -70,7 +70,8 @@ export const getCheckStatusIcon = (
     case ExecutionStatus.Failed: {
       if (check.level === CheckLevel.Error) {
         statusIcon = errorIcon;
-      } else { // CheckLevel.Warning
+      } else {
+        // CheckLevel.Warning
         statusIcon = warningIcon;
       }
 
