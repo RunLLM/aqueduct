@@ -185,23 +185,6 @@ func CreateOrUpdateK8sCluster(
 		); err != nil {
 			return errors.Wrap(err, "Failed to update Kubeconfig")
 		}
-
-		// TODO (ENG-2572): Move this step to Terraform code.
-		nvidiaPluginUrl := "https://raw.githubusercontent.com/NVIDIA/k8s-device-plugin/v0.9.0/nvidia-device-plugin.yml"
-		if _, _, err := lib_utils.RunCmd(
-			"kubectl",
-			[]string{
-				"apply",
-				"-f",
-				nvidiaPluginUrl,
-				"--kubeconfig",
-				engineIntegration.Config[shared.K8sKubeconfigPathKey],
-			},
-			"",
-			true,
-		); err != nil {
-			return errors.Wrap(err, "Failed to create nvidia plugin")
-		}
 	}
 
 	// We initialize the last used timestamp after the creation succeeded.
@@ -584,7 +567,10 @@ func runTerraformApply(
 		engineIntegration.Config[shared.K8sTerraformPathKey],
 		true,
 	); err != nil {
-		return errors.Wrap(err, "Terraform apply failed")
+		errMsg := `Terraform apply failed. Note that if the error has to do with insufficient 
+		permissions, you will need to delete the cloud integration and re-connect with an account 
+		that has sufficient permissions.`
+		return errors.Wrap(err, errMsg)
 	}
 
 	return nil
