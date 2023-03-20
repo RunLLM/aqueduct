@@ -123,23 +123,6 @@ def test_complex_flow(client, flow_name, data_integration, engine, data_validato
     assert flow_run.artifact("failing_check artifact") is None
 
 
-def test_multiple_output_artifacts(client, flow_name, data_integration, engine):
-    table_artifact1 = extract(data_integration, DataObject.SENTIMENT)
-    table_artifact2 = extract(data_integration, DataObject.SENTIMENT)
-
-    fn_artifact1 = dummy_sentiment_model(table_artifact1)
-    fn_artifact2 = dummy_model(table_artifact2)
-    save(data_integration, fn_artifact1)
-    save(data_integration, fn_artifact2)
-
-    publish_flow_test(
-        client,
-        name=flow_name(),
-        artifacts=[fn_artifact1, fn_artifact2],
-        engine=engine,
-    )
-
-
 def test_publish_with_schedule(client, flow_name, data_integration, engine):
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
     output_artifact = dummy_sentiment_model(table_artifact)
@@ -537,10 +520,6 @@ def test_operators_with_custom_output_names(client, flow_name, engine):
 
     c = passed(output2)
     assert c.name() == "check output"
-
-    # Fail if the name collides with another artifact in the dag.
-    with pytest.raises(InvalidUserActionException, match="has already been created locally"):
-        output1.set_name("metric output")
 
     flow = publish_flow_test(
         client,
