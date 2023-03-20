@@ -9,6 +9,7 @@ import { ArtifactResultsWithLoadingStatus } from '../../../../reducers/artifactR
 import { theme } from '../../../../styles/theme/theme';
 import { Data, DataSchema } from '../../../../utils/data';
 import ExecutionStatus, {
+  getArtifactExecStateAsTableRow,
   isFailed,
   isInitial,
   isLoading,
@@ -49,27 +50,7 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
     schema: metricHistorySchema,
     data: (historyWithLoadingStatus.results?.results ?? []).map(
       (artifactStatusResult) => {
-        const all_times = [
-          artifactStatusResult.exec_state?.timestamps?.finished_at,
-          artifactStatusResult.exec_state?.timestamps?.pending_at,
-          artifactStatusResult.exec_state?.timestamps?.registered_at,
-          artifactStatusResult.exec_state?.timestamps?.running_at,
-        ];
-
-        const timesOrNull = all_times.map((x) =>
-          typeof x === 'string' ? new Date(x) : null
-        );
-
-        const maxTime = Math.max.apply(null, timesOrNull);
-
-        const timestamp =
-          maxTime > 0 ? new Date(maxTime).toLocaleString() : 'Unknown';
-
-        return {
-          status: artifactStatusResult.exec_state?.status ?? 'Unknown',
-          timestamp,
-          value: artifactStatusResult.content_serialized,
-        };
+        return getArtifactExecStateAsTableRow(artifactStatusResult);
       }
     ),
   };

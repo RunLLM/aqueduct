@@ -6,6 +6,7 @@ import { ArtifactResultsWithLoadingStatus } from '../../../../reducers/artifactR
 import { theme } from '../../../../styles/theme/theme';
 import { Data, DataSchema } from '../../../../utils/data';
 import ExecutionStatus, {
+  getArtifactExecStateAsTableRow,
   stringToExecutionStatus,
 } from '../../../../utils/shared';
 import { isFailed, isInitial, isLoading } from '../../../../utils/shared';
@@ -51,28 +52,9 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
     schema: checkHistorySchema,
     data: (historyWithLoadingStatus.results?.results ?? []).map(
       (artifactStatusResult) => {
-        const all_times = [
-          artifactStatusResult.exec_state?.timestamps?.finished_at,
-          artifactStatusResult.exec_state?.timestamps?.pending_at,
-          artifactStatusResult.exec_state?.timestamps?.registered_at,
-          artifactStatusResult.exec_state?.timestamps?.running_at,
-        ];
-
-        const timesOrNull = all_times.map((x) =>
-          typeof x === 'string' ? new Date(x) : null
-        );
-
-        const maxTime = Math.max.apply(null, timesOrNull);
-
-        const timestamp =
-          maxTime > 0 ? new Date(maxTime).toLocaleString() : 'Unknown';
-
-        return {
-          status: artifactStatusResult.exec_state?.status ?? 'Unknown',
-          level: checkLevel ? checkLevel : 'undefined',
-          value: artifactStatusResult.content_serialized,
-          timestamp,
-        };
+        let resultRow = getArtifactExecStateAsTableRow(artifactStatusResult);
+        resultRow.level = checkLevel ? checkLevel : 'undefined';
+        return resultRow;
       }
     ),
   };
