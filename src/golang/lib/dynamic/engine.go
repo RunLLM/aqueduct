@@ -567,7 +567,10 @@ func runTerraformApply(
 		engineIntegration.Config[shared.K8sTerraformPathKey],
 		true,
 	); err != nil {
-		return errors.Wrap(err, "Terraform apply failed")
+		errMsg := `Terraform apply failed. Note that if the error has to do with insufficient 
+		permissions, you will need to delete the cloud integration and re-connect with an account 
+		that has sufficient permissions.`
+		return errors.Wrap(err, errMsg)
 	}
 
 	return nil
