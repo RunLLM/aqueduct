@@ -28,11 +28,13 @@ TEST_CONFIG_FILE: str = "test-config.yml"
 CACHED_CREDENTIALS: Optional[Dict[str, Any]] = None
 CACHED_CONFIG: Optional[Dict[str, Any]] = None
 
+
 def _execute_command(args, cwd=None):
     with subprocess.Popen(args, stdout=sys.stdout, stderr=sys.stderr, cwd=cwd) as proc:
         proc.communicate()
         if proc.returncode != 0:
             raise Exception("Error executing command: %s" % args)
+
 
 def _parse_config_file() -> Dict[str, Any]:
     global CACHED_CONFIG
@@ -151,10 +153,11 @@ def _setup_snowflake_data(client: Client, snowflake: RelationalDBIntegration) ->
 
 def _setup_external_sqlite_db(path: str):
     """Spins up an external SQLite database at 'path'."""
-    assert path[-1] != '/', "Path must point to a file"
+    assert path[-1] != "/", "Path must point to a file"
 
-    from pathlib import Path
     import os
+    from pathlib import Path
+
     # Create the parent directories if they don't already exist.
     db_abspath = os.path.expanduser(path)
     db_dirpath = Path((os.path.dirname(db_abspath)))
@@ -208,7 +211,6 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
 
     connected_integrations = client.list_integrations()
     for integration_name in data_integrations:
-
         # Only connect to integrations that don't already exist.
         if integration_name not in connected_integrations.keys():
             integration_config = _fetch_integration_credentials("data", integration_name)
@@ -236,8 +238,6 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
             pass
         else:
             raise Exception("Test suite does not yet support %s." % integration.type())
-
-
 
 
 def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) -> None:
