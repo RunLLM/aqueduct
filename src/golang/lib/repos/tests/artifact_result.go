@@ -1,6 +1,8 @@
 package tests
 
 import (
+	"time"
+
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
@@ -85,13 +87,20 @@ func (ts *TestSuite) TestArtifactResult_GetByDAGResults() {
 }
 
 func (ts *TestSuite) TestArtifactResult_Create() {
+	tmpTime := time.Now()
 	expectedArtifactResult := &models.ArtifactResult{
 		DAGResultID: uuid.New(),
 		ArtifactID:  uuid.New(),
 		ContentPath: randString(10),
 		Status:      shared.PendingExecutionStatus,
 		ExecState: shared.NullExecutionState{
-			IsNull: true,
+			ExecutionState: shared.ExecutionState{
+				Status: shared.PendingExecutionStatus,
+				Timestamps: &shared.ExecutionTimestamps{
+					PendingAt: &tmpTime,
+				},
+			},
+			IsNull: false,
 		},
 		Metadata: shared.NullArtifactResultMetadata{
 			IsNull: true,
@@ -104,6 +113,7 @@ func (ts *TestSuite) TestArtifactResult_Create() {
 	require.NotEqual(ts.T(), uuid.Nil, actualArtifactResult.ID)
 
 	expectedArtifactResult.ID = actualArtifactResult.ID
+	expectedArtifactResult.ExecState.ExecutionState.Timestamps.PendingAt = actualArtifactResult.ExecState.ExecutionState.Timestamps.PendingAt
 
 	requireDeepEqual(ts.T(), expectedArtifactResult, actualArtifactResult)
 }
