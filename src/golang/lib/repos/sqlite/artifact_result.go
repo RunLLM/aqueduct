@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
@@ -212,6 +213,7 @@ func (*artifactResultWriter) Create(
 		models.ArtifactResultArtifactID,
 		models.ArtifactResultContentPath,
 		models.ArtifactResultStatus,
+		models.ArtifactResultExecState,
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.ArtifactResultTable, cols, models.ArtifactResultCols())
 
@@ -220,12 +222,21 @@ func (*artifactResultWriter) Create(
 		return nil, err
 	}
 
+	now := time.Now()
+	execState := shared.ExecutionState{
+		Status: shared.PendingExecutionStatus,
+		Timestamps: &shared.ExecutionTimestamps{
+			PendingAt: &now,
+		},
+	}
+
 	args := []interface{}{
 		ID,
 		dagResultID,
 		artifactID,
 		contentPath,
 		shared.PendingExecutionStatus,
+		&execState,
 	}
 	return getArtifactResult(ctx, DB, query, args...)
 }

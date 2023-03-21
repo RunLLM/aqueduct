@@ -14,10 +14,10 @@ from aqueduct.models.operators import (
     SalesforceExtractParams,
     SalesforceLoadParams,
 )
-from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import generate_uuid
 
-from .naming import _resolve_op_and_artifact_name_for_extract
+from ..utils.naming import default_artifact_name_from_op_name, sanitize_artifact_name
 from .save import _save_artifact
 
 
@@ -54,14 +54,14 @@ class SalesforceIntegration(Integration):
             TableArtifact representing result of the SQL query.
         """
 
-        op_name, artifact_name = _resolve_op_and_artifact_name_for_extract(
-            dag=self._dag,
-            op_name=name,
-            default_op_name="%s search" % self.name(),
-            artifact_name=output,
-        )
+        op_name = name or "%s search" % self.name()
+
         output_artifact_id = self._add_extract_operation(
-            op_name, artifact_name, description, search_query, SalesforceExtractType.SEARCH
+            op_name,
+            output,
+            description,
+            search_query,
+            SalesforceExtractType.SEARCH,
         )
 
         return TableArtifact(
@@ -92,16 +92,9 @@ class SalesforceIntegration(Integration):
         Returns:
             TableArtifact representing result of the SQL query.
         """
-
-        op_name, artifact_name = _resolve_op_and_artifact_name_for_extract(
-            dag=self._dag,
-            op_name=name,
-            default_op_name="%s query" % self.name(),
-            artifact_name=output,
-        )
-
+        op_name = name or "%s query" % self.name()
         output_artifact_id = self._add_extract_operation(
-            op_name, artifact_name, description, query, SalesforceExtractType.QUERY
+            op_name, output, description, query, SalesforceExtractType.QUERY
         )
 
         return TableArtifact(
@@ -127,23 +120,24 @@ class SalesforceIntegration(Integration):
 
     def _add_extract_operation(
         self,
-        name: Optional[str],
-        artifact_name: str,
+        op_name: str,
+        output: Optional[str],
         description: str,
         query: str,
         extract_type: SalesforceExtractType,
     ) -> uuid.UUID:
         integration_info = self._metadata
 
+        artifact_name = output or default_artifact_name_from_op_name(op_name)
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
         apply_deltas_to_dag(
             self._dag,
             deltas=[
-                AddOrReplaceOperatorDelta(
+                AddOperatorDelta(
                     op=Operator(
                         id=operator_id,
-                        name=name,
+                        name=op_name,
                         description=description,
                         spec=OperatorSpec(
                             extract=ExtractSpec(
@@ -157,8 +151,9 @@ class SalesforceIntegration(Integration):
                     output_artifacts=[
                         ArtifactMetadata(
                             id=output_artifact_id,
-                            name=artifact_name,
+                            name=sanitize_artifact_name(artifact_name),
                             type=ArtifactType.TABLE,
+                            explicitly_named=output is not None,
                         ),
                     ],
                 )
