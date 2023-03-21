@@ -204,7 +204,7 @@ func ScheduleWorkflow(
 	operatorOutputPath := fmt.Sprintf("compile-airflow-output-%s", uuid.New().String())
 
 	defer func() {
-		go utils.CleanupStorageFiles(ctx, &dag.StorageConfig, []string{operatorMetadataPath, operatorOutputPath})
+		go utils.CleanupStorageFiles(context.Background(), &dag.StorageConfig, []string{operatorMetadataPath, operatorOutputPath})
 	}()
 
 	jobName := fmt.Sprintf("compile-airflow-operator-%s", uuid.New().String())

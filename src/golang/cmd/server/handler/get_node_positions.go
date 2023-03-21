@@ -141,8 +141,8 @@ func orderNodes(operatorIdToInputOutput map[uuid.UUID]request.OperatorMapping) (
 func positionNodes(operators map[uuid.UUID]request.OperatorMapping) (map[uuid.UUID]nodePositions, map[uuid.UUID]nodePositions) {
 	NodeBaseX := 100
 	NodeBaseY := 200
-	IndentX := 325
-	IndentY := 300
+	IndentX := 500
+	IndentY := 250
 
 	layers, activeLayerEdges := orderNodes(operators)
 

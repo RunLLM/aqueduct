@@ -2,7 +2,7 @@ import json
 import uuid
 
 import cloudpickle as pickle
-from aqueduct.backend.response_models import ArtifactResult, Logs, OperatorResult, PreviewResponse
+from aqueduct.backend.response_models import ArtifactResult, ExecutionState, Logs, PreviewResponse
 from aqueduct.constants.enums import (
     ArtifactType,
     ExecutionStatus,
@@ -50,7 +50,12 @@ from PIL import Image
 def test_artifact_serialization():
     artifact_id = uuid.uuid4()
     artifact_name = "Extract Artifact"
-    extract_artifact = ArtifactMetadata(id=artifact_id, name=artifact_name, type=ArtifactType.TABLE)
+    extract_artifact = ArtifactMetadata(
+        id=artifact_id,
+        name=artifact_name,
+        type=ArtifactType.TABLE,
+        explicitly_named=True,
+    )
 
     assert extract_artifact.json() == json.dumps(
         {
@@ -98,7 +103,7 @@ def test_operator_serialization():
 
 def test_preview_response_loading():
     op_id = uuid.uuid4()
-    op_result = OperatorResult(
+    op_result = ExecutionState(
         status=ExecutionStatus.SUCCEEDED,
         user_logs=Logs(stdout="These are the operator logs"),
     )

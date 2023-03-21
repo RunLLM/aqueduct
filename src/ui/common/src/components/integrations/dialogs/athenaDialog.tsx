@@ -7,7 +7,7 @@ import {
   AWSCredentialType,
   FileData,
 } from '../../../utils/integrations';
-import { Tab, Tabs } from '../../Tabs/Tabs.styles';
+import { Tab, Tabs } from '../../primitives/Tabs.styles';
 import { readCredentialsFile } from './bigqueryDialog';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';

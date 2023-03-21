@@ -9,6 +9,7 @@ import { ArtifactResultsWithLoadingStatus } from '../../../../reducers/artifactR
 import { theme } from '../../../../styles/theme/theme';
 import { Data, DataSchema } from '../../../../utils/data';
 import ExecutionStatus, {
+  getArtifactExecStateAsTableRow,
   isFailed,
   isInitial,
   isLoading,
@@ -49,20 +50,7 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
     schema: metricHistorySchema,
     data: (historyWithLoadingStatus.results?.results ?? []).map(
       (artifactStatusResult) => {
-        let timestamp = new Date(
-          artifactStatusResult.exec_state?.timestamps?.finished_at
-        ).toLocaleString();
-
-        // Metrics that are canceled / fail to execute have no exec_state, and thus no date.
-        if (timestamp === 'Invalid Date') {
-          timestamp = 'Unknown';
-        }
-
-        return {
-          status: artifactStatusResult.exec_state?.status ?? 'Unknown',
-          timestamp,
-          value: artifactStatusResult.content_serialized,
-        };
+        return getArtifactExecStateAsTableRow(artifactStatusResult);
       }
     ),
   };

@@ -144,7 +144,6 @@ func CreateMissingAndSyncExistingEnvs(
 	// This helps reduce the number of DB access.
 	visitedResults := make(map[uuid.UUID]ExecutionEnvironment, len(envs))
 	results := make(map[uuid.UUID]ExecutionEnvironment, len(envs))
-	var err error = nil
 	txn, err := db.BeginTx(ctx)
 	if err != nil {
 		return nil, err

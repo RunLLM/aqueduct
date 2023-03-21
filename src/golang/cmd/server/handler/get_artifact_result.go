@@ -197,11 +197,6 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow dag.")
 	}
 
-	dagResult, err := h.DAGResultRepo.Get(ctx, args.dagResultID, h.Database)
-	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow result.")
-	}
-
 	dbArtifact, err := h.ArtifactRepo.Get(ctx, args.artifactID, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact result.")
@@ -218,13 +213,14 @@ func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs in
 		if !errors.Is(err, database.ErrNoRows()) {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact result.")
 		}
-		// ArtifactResult was never created, so we use the WorkflowDagResult's status as this ArtifactResult's status
-		execState.Status = dagResult.Status
+		// ArtifactResult was never created, so we mark the artifact as cancelled.
+		execState.Status = shared.CanceledExecutionStatus
 	} else {
 		execState.Status = dbArtifactResult.Status
 	}
 
-	if !dbArtifactResult.ExecState.IsNull {
+	// `dbArtifactResult` is not guaranteed to be non-nil here.
+	if dbArtifactResult != nil && !dbArtifactResult.ExecState.IsNull {
 		execState.FailureType = dbArtifactResult.ExecState.FailureType
 		execState.Error = dbArtifactResult.ExecState.Error
 		execState.UserLogs = dbArtifactResult.ExecState.UserLogs

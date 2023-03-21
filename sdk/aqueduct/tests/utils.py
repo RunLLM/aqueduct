@@ -134,7 +134,7 @@ def default_load_spec() -> OperatorSpec:
 
 
 def default_artifact(id: uuid.UUID, name: str) -> ArtifactMetadata:
-    return ArtifactMetadata(id=id, name=name, type=ArtifactType.TABLE)
+    return ArtifactMetadata(id=id, name=name, type=ArtifactType.TABLE, explicitly_named=True)
 
 
 def default_table_artifact(
@@ -147,7 +147,9 @@ def default_table_artifact(
         operator_id = generate_uuid()
     if not artifact_id:
         artifact_id = generate_uuid()
-    artifact = ArtifactMetadata(id=artifact_id, name=artifact_name, type=ArtifactType.TABLE)
+    artifact = ArtifactMetadata(
+        id=artifact_id, name=artifact_name, type=ArtifactType.TABLE, explicitly_named=True
+    )
     op = _construct_operator(
         id=operator_id,
         name=operator_name,

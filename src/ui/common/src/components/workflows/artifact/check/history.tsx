@@ -6,6 +6,7 @@ import { ArtifactResultsWithLoadingStatus } from '../../../../reducers/artifactR
 import { theme } from '../../../../styles/theme/theme';
 import { Data, DataSchema } from '../../../../utils/data';
 import ExecutionStatus, {
+  getArtifactExecStateAsTableRow,
   stringToExecutionStatus,
 } from '../../../../utils/shared';
 import { isFailed, isInitial, isLoading } from '../../../../utils/shared';
@@ -51,21 +52,9 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
     schema: checkHistorySchema,
     data: (historyWithLoadingStatus.results?.results ?? []).map(
       (artifactStatusResult) => {
-        let timestamp = new Date(
-          artifactStatusResult.exec_state?.timestamps?.finished_at
-        ).toLocaleString();
-
-        // Checks that are canceled / fail to execute have no exec_state or finished_at time.
-        if (timestamp === 'Invalid Date') {
-          timestamp = 'Unknown';
-        }
-
-        return {
-          status: artifactStatusResult.exec_state?.status ?? 'Unknown',
-          level: checkLevel ? checkLevel : 'undefined',
-          value: artifactStatusResult.content_serialized,
-          timestamp,
-        };
+        const resultRow = getArtifactExecStateAsTableRow(artifactStatusResult);
+        resultRow.level = checkLevel ? checkLevel : 'undefined';
+        return resultRow;
       }
     ),
   };

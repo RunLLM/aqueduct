@@ -59,7 +59,7 @@ class RelationalConnector(connector.DataConnector):
         try:
             self.engine.connect()
         except SQLAlchemyError as e:
-            raise ConnectionError("Unable to connect.") from e
+            raise ConnectionError("Unable to connect: %s" % str(e)) from e
 
     def discover(self) -> List[str]:
         return inspect(self.engine).get_table_names()  # type: ignore

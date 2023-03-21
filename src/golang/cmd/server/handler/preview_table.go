@@ -127,7 +127,7 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 
 	defer func() {
 		// Delete storage files created for preview table data
-		go workflow_utils.CleanupStorageFiles(ctx, args.StorageConfig, []string{operatorMetadataPath, artifactMetadataPath, artifactContentPath})
+		go workflow_utils.CleanupStorageFiles(context.Background(), args.StorageConfig, []string{operatorMetadataPath, artifactMetadataPath, artifactContentPath})
 	}()
 
 	var queryParams connector.ExtractParams
