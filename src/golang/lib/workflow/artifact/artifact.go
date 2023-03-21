@@ -2,6 +2,7 @@ package artifact
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -14,6 +15,8 @@ import (
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
+
+const sampleTableRow = 500
 
 // Artifact is an interface for managing and inspect the lifecycle of an artifact
 // produced by a workflow run.
@@ -47,6 +50,13 @@ type Artifact interface {
 	// GetContent fetches the content of this artifact.
 	// Errors if the artifact has not yet been computed.
 	GetContent(ctx context.Context) ([]byte, error)
+
+	// SampleContent works similar to GetContent but takes only
+	// a sample of data if it's too large to fit client.
+	//
+	// For now, it's primarily used for table artifact to limit
+	// the number of rows sent to client.
+	SampleContent(ctx context.Context) ([]byte, bool, error)
 }
 
 type ArtifactImpl struct {
@@ -65,9 +75,10 @@ type ArtifactImpl struct {
 
 	execPaths *utils.ExecPaths
 
-	repo       repos.Artifact
-	resultRepo repos.ArtifactResult
-	resultID   uuid.UUID
+	repo           repos.Artifact
+	resultRepo     repos.ArtifactResult
+	resultID       uuid.UUID
+	resultMetadata *shared.ArtifactResultMetadata
 
 	// If this is not nil, this artifact should be written to the cache.
 	// An artifact cannot be both cache-aware and persisted.
@@ -102,11 +113,47 @@ func NewArtifact(
 		repo:                artifactRepo,
 		resultRepo:          artifactResultRepo,
 		resultID:            uuid.Nil,
+		resultMetadata:      nil,
 		previewCacheManager: previewCacheManager,
 		resultsPersisted:    false,
 		storageConfig:       storageConfig,
 		db:                  db,
 	}, nil
+}
+
+func NewArtifactFromDBObjects(
+	signature uuid.UUID,
+	dbArtifact *models.Artifact,
+	dbArtifactResult *models.ArtifactResult,
+	artifactRepo repos.Artifact,
+	artifactResultRepo repos.ArtifactResult,
+	storageConfig *shared.StorageConfig,
+	previewCacheManager preview_cache.CacheManager,
+	DB database.Database,
+) Artifact {
+	var resultMetadata *shared.ArtifactResultMetadata
+	if !dbArtifactResult.Metadata.IsNull {
+		resultMetadata = &dbArtifactResult.Metadata.ArtifactResultMetadata
+	}
+
+	return &ArtifactImpl{
+		id:           dbArtifact.ID,
+		signature:    signature,
+		name:         dbArtifact.Name,
+		description:  dbArtifact.Description,
+		artifactType: dbArtifact.Type,
+		execPaths: &utils.ExecPaths{
+			ArtifactContentPath: dbArtifactResult.ContentPath,
+		},
+		repo:                artifactRepo,
+		resultRepo:          artifactResultRepo,
+		resultID:            dbArtifactResult.ID,
+		resultMetadata:      resultMetadata,
+		previewCacheManager: previewCacheManager,
+		resultsPersisted:    true,
+		storageConfig:       storageConfig,
+		db:                  DB,
+	}
 }
 
 func (a *ArtifactImpl) ID() uuid.UUID {
@@ -269,16 +316,21 @@ func (a *ArtifactImpl) Finish(ctx context.Context) {
 }
 
 func (a *ArtifactImpl) GetMetadata(ctx context.Context) (*shared.ArtifactResultMetadata, error) {
-	if !a.Computed(ctx) {
-		return nil, errors.Newf("Cannot get metadata of Artifact %s, it has not yet been computed.", a.Name())
+	if a.resultMetadata == nil {
+		if !a.Computed(ctx) {
+			// metadata is not ready yet.
+			return nil, nil
+		}
+
+		var metadata shared.ArtifactResultMetadata
+		err := utils.ReadFromStorage(ctx, a.storageConfig, a.execPaths.ArtifactMetadataPath, &metadata)
+		if err != nil {
+			return nil, err
+		}
+		a.resultMetadata = &metadata
 	}
 
-	var metadata shared.ArtifactResultMetadata
-	err := utils.ReadFromStorage(ctx, a.storageConfig, a.execPaths.ArtifactMetadataPath, &metadata)
-	if err != nil {
-		return nil, err
-	}
-	return &metadata, nil
+	return a.resultMetadata, nil
 }
 
 func (a *ArtifactImpl) GetContent(ctx context.Context) ([]byte, error) {
@@ -290,4 +342,82 @@ func (a *ArtifactImpl) GetContent(ctx context.Context) ([]byte, error) {
 		return nil, err
 	}
 	return content, nil
+}
+
+func (a *ArtifactImpl) SampleContent(ctx context.Context) ([]byte, bool, error) {
+	metadata, err := a.GetMetadata(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// Ignore if artifact is not computed.
+	// Ideally we should use a.Computed() but that involves a potential API call to storage.
+	// So here we use metadata which is also sufficient.
+	if metadata == nil {
+		return nil, false, nil
+	}
+
+	// For 'compiled' types, we simply ignore the content as they won't be used by client.
+	if metadata.SerializationType == shared.BytesSerialization || metadata.SerializationType == shared.PicklableSerialization {
+		return nil, false, nil
+	}
+
+	content, err := a.GetContent(ctx)
+	if err != nil {
+		return nil, false, err
+	}
+
+	// For table types, we returns a down-sampled table when possible
+	if metadata.SerializationType == shared.TableSerialization {
+		// The over-simplified type for table orient.
+		type table struct {
+			Schema map[string]interface{} `json:"schema"`
+			Data   []interface{}          `json:"data"`
+		}
+
+		var t table
+
+		err := json.Unmarshal(content, &t)
+		if err != nil {
+			return nil, false, err
+		}
+
+		if len(t.Data) <= sampleTableRow {
+			// If the table is small, return the original content
+			return content, false, nil
+		}
+
+		t.Data = t.Data[:sampleTableRow]
+		downsampledContent, err := json.Marshal(t)
+		if err != nil {
+			return nil, false, err
+		}
+
+		return downsampledContent, true, nil
+	}
+
+	if metadata.SerializationType == shared.BsonTableSerialization {
+		// The over-simplified type for record orient.
+		var t []interface{}
+
+		err := json.Unmarshal(content, &t)
+		if err != nil {
+			return nil, false, err
+		}
+
+		if len(t) <= sampleTableRow {
+			// If the table is small, return the original content
+			return content, false, nil
+		}
+
+		t = t[:sampleTableRow]
+		downsampledContent, err := json.Marshal(t)
+		if err != nil {
+			return nil, false, err
+		}
+
+		return downsampledContent, true, nil
+	}
+
+	return content, false, nil
 }

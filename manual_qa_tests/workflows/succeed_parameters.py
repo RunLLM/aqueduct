@@ -15,9 +15,11 @@ DESCRIPTION = """* Workflows Page: should succeed.
 def check(df, bound):
     return df.shape[0] > bound
 
+
 @aq.check(requirements=[])
 def empty_str_check(df, empty_str):
     return len(empty_str) == 0
+
 
 def deploy(client, integration_name):
     integration = client.integration(integration_name)
