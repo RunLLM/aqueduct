@@ -71,7 +71,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     (workflow) => {
       const engines = reduceEngineTypes(
         workflow.engine,
-        workflow.operator_engines.filter((x) => !!x)
+        workflow.operator_engines.map((x) => (x ? x : workflow.engine))
       );
 
       let metrics = [];
