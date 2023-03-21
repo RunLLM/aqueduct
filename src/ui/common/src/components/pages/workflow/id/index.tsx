@@ -18,6 +18,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ReactFlowProvider } from 'reactflow';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
+import { handleGetWorkflowHistory } from '../../../../handlers/getWorkflowHistory';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import {
   NodeType,
@@ -339,6 +340,15 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     workflow.selectedResult?.id,
   ]);
 
+  useEffect(() => {
+    dispatch(
+      handleGetWorkflowHistory({
+        apiKey: user.apiKey,
+        workflowId: workflowId,
+      })
+    );
+  }, [user.apiKey]);
+
   // This workflow doesn't exist.
   if (workflow.loadingStatus.loading === LoadingStatusEnum.Failed) {
     navigate('/404');
@@ -372,7 +382,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       return 'Operator Node';
     }
   };
-
   const getNodeActionButton = () => {
     const buttonStyle = {
       fontSize: '20px',

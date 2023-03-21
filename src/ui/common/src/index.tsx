@@ -149,6 +149,7 @@ import workflow, {
 } from './reducers/workflow';
 import workflowDagResults from './reducers/workflowDagResults';
 import workflowDags from './reducers/workflowDags';
+import workflowHistory from './reducers/workflowHistory';
 import { store } from './stores/store';
 import { theme } from './styles/theme/theme';
 import { ArtifactType } from './utils/artifacts';
@@ -380,6 +381,7 @@ export {
   workflowDagResults,
   workflowDags,
   WorkflowHeader,
+  workflowHistory,
   WorkflowPage,
   WorkflowSettings,
   workflowSlice,
