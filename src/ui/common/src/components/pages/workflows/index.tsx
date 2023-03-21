@@ -94,9 +94,13 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           const value =
             check.result?.exec_state.status === 'succeeded' ? 'True' : 'False';
           const level = check.spec?.check?.level ?? CheckLevel.Warning;
-          const status = check.result?.exec_state?.status ?? ExecutionStatus.Unknown;
+          const status =
+            check.result?.exec_state?.status ?? ExecutionStatus.Unknown;
 
-          if (status === ExecutionStatus.Failed && level === CheckLevel.Warning) {
+          if (
+            status === ExecutionStatus.Failed &&
+            level === CheckLevel.Warning
+          ) {
             containsWarning = true;
           }
 
