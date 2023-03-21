@@ -17,9 +17,9 @@ import {
 } from '../../tables/PaginatedSearchTable';
 import { LayoutProps } from '../types';
 import CheckItem from './components/CheckItem';
-import EngineItem from './components/EngineItem';
 import ExecutionStatusLink from './components/ExecutionStatusLink';
 import MetricItem from './components/MetricItem';
+import ResourceItem from './components/ResourceItem';
 
 type Props = {
   user: UserProfile;
@@ -158,7 +158,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         value = row[column.name].toLocaleString();
         break;
       case 'engine': {
-        value = <EngineItem engine={value} />;
+        value = <ResourceItem engine={value} />;
         break;
       }
       case 'metrics': {

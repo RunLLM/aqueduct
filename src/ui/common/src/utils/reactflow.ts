@@ -9,7 +9,8 @@ import {
   OperatorTypeToNodeTypeMap,
 } from '../reducers/nodeSelection';
 import { Artifact } from './artifacts';
-import { Operator } from './operators';
+import { EngineConfig } from './engine';
+import { Operator, OperatorSpec } from './operators';
 
 export const EdgeTypes = {
   quadratic: AqueductQuadratic,
@@ -31,6 +32,9 @@ export type ReactFlowNodeData = {
   label?: string;
   // Used to present metric or check results inside the node
   result?: string;
+  spec?: OperatorSpec;
+  dagEngineConfig?: EngineConfig;
+  artifactType?: string;
 };
 
 export type GetPositionResponse = {
