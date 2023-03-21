@@ -82,7 +82,7 @@ if __name__ == "__main__":
                 api_key,
             )
 
-    if not args.example_notebooks_only and not args.demo_ontainer_notebooks_only:
+    if not args.example_notebooks_only and not args.demo_container_notebooks_only:
         for pkg in WORKFLOW_PKGS:
             print(f"Deploying {pkg.NAME}...")
             pkg.deploy(client, args.data_integration)
