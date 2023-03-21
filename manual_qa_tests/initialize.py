@@ -67,7 +67,7 @@ if __name__ == "__main__":
             NotificationLevel(args.notification_level),
         )
 
-    if args.example_notebooks or args.example_notebooks_only or args.demo_ontainer_notebooks_only:
+    if args.example_notebooks or args.example_notebooks_only or args.demo_container_notebooks_only:
         notebooks = DEMO_NOTEBOOKS_PATHS
         if not args.demo_container_notebooks_only:
             notebooks += ADDITIONAL_EXAMPLE_NOTEBOOKS_PATHS
