@@ -27,8 +27,10 @@ import (
 //		serialized `workflowHistoryResponse`, a list of all the versions of this workflow, their timestamps, and their statuses
 
 type getWorkflowHistoryResponse struct {
-	Id       uuid.UUID                 `json:"id"`
-	Name     string                    `json:"name"`
+	Id   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+	// The versions here will be returned in order of creation. The oldest version will be first and the most recent version will be
+	// last.
 	Versions []workflowVersionResponse `json:"versions"`
 }
 

@@ -34,7 +34,7 @@ export const VersionSelector: React.FC = () => {
   const dispatch = useDispatch();
 
   const [menuAnchor, setMenuAnchor] = useState<HTMLButtonElement | null>(null);
-  const [selectedResultIdx, setSelectedResultIdx] = useState(0);
+  const [selectedResultIdx, setSelectedResultIdx] = useState<number>(0);
   if (!selectedResult) {
     return null;
   }
