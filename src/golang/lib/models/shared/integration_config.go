@@ -3,7 +3,6 @@ package shared
 import (
 	"fmt"
 	"reflect"
-	"strconv"
 	"time"
 
 	"github.com/dropbox/godropbox/errors"
@@ -84,16 +83,6 @@ const (
 	K8sDefaultMinGpuNode  int    = 0
 	K8sDefaultMaxGpuNode  int    = 1
 )
-
-var DefaultDynamicK8sConfig = DynamicK8sConfig{
-	Keepalive:   strconv.Itoa(K8sDefaultKeepalive),
-	CpuNodeType: K8sDefaultCpuNodeType,
-	GpuNodeType: K8sDefaultGpuNodeType,
-	MinCpuNode:  strconv.Itoa(K8sDefaultMinCpuNode),
-	MaxCpuNode:  strconv.Itoa(K8sDefaultMaxCpuNode),
-	MinGpuNode:  strconv.Itoa(K8sDefaultMinGpuNode),
-	MaxGpuNode:  strconv.Itoa(K8sDefaultMaxGpuNode),
-}
 
 type K8sIntegrationConfig struct {
 	KubeconfigPath     string     `json:"kubeconfig_path" yaml:"kubeconfigPath"`

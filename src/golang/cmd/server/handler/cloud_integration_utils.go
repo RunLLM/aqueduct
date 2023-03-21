@@ -50,13 +50,13 @@ func setupCloudIntegration(
 	}
 
 	config := shared.DynamicK8sConfig{
-		Keepalive:   shared.DefaultDynamicK8sConfig.Keepalive,
-		CpuNodeType: shared.DefaultDynamicK8sConfig.CpuNodeType,
-		GpuNodeType: shared.DefaultDynamicK8sConfig.GpuNodeType,
-		MinCpuNode:  shared.DefaultDynamicK8sConfig.MinCpuNode,
-		MaxCpuNode:  shared.DefaultDynamicK8sConfig.MaxCpuNode,
-		MinGpuNode:  shared.DefaultDynamicK8sConfig.MinGpuNode,
-		MaxGpuNode:  shared.DefaultDynamicK8sConfig.MaxGpuNode,
+		Keepalive:   strconv.Itoa(shared.K8sDefaultKeepalive),
+		CpuNodeType: shared.K8sDefaultCpuNodeType,
+		GpuNodeType: shared.K8sDefaultGpuNodeType,
+		MinCpuNode:  strconv.Itoa(shared.K8sDefaultMinCpuNode),
+		MaxCpuNode:  strconv.Itoa(shared.K8sDefaultMaxCpuNode),
+		MinGpuNode:  strconv.Itoa(shared.K8sDefaultMinGpuNode),
+		MaxGpuNode:  strconv.Itoa(shared.K8sDefaultMaxGpuNode),
 	}
 
 	config.Update(awsConfig.K8s)
