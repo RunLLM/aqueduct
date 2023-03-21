@@ -1,5 +1,7 @@
-from aqueduct.constants.enums import ExecutionStatus
 import time
+
+from aqueduct.constants.enums import ExecutionStatus
+
 
 def _polling(
     stop_condition_fn,
@@ -19,7 +21,10 @@ def _polling(
 
 
 def _stop_condition(client):
-    return all(map(lambda x: not x['last_run_status'] == str(ExecutionStatus.PENDING), client.list_flows()))
+    return all(
+        map(lambda x: not x["last_run_status"] == str(ExecutionStatus.PENDING), client.list_flows())
+    )
+
 
 def wait_for_all_flows_to_complete(client):
     _polling(

@@ -6,7 +6,7 @@ USER root
 
 ENV PYTHONUNBUFFERED 1
 
-RUN pip install aqueduct-ml scikit-learn transformers torch
+RUN pip install aqueduct-ml scikit-learn transformers
 
 COPY ./manual_qa_tests /deploy_notebooks
 COPY ./.devcontainer/deploy_demo_workflow.sh /
