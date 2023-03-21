@@ -11,12 +11,12 @@ def setup_flow_with_failure(client: aqueduct.Client, integration_name: str) -> s
     n_runs = 1
     integration = client.integration(name=integration_name)
 
-    @aqueduct.op()
+    @aqueduct.op
     def bad_op(df):
         x = y  # intentional buggy code
         df["new"] = df["review"]
 
-    @aqueduct.op()
+    @aqueduct.op
     def bad_op_downstream(df):
         return df
 

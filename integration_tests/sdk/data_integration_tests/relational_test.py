@@ -189,7 +189,7 @@ def test_sql_query_with_multiple_parameters(client, flow_manager, data_integrati
     )
 
     # Use the parameters in another operator.
-    @metric
+    @metric(requirements=[])
     def noop(sql_output, param):
         return len(param)
 
@@ -232,7 +232,7 @@ def test_sql_integration_save_wrong_data_type(client, flow_manager, data_integra
 
     # Save a generic artifact that is actually a string. This won't fail at save() time,
     # but instead when the flow is published.
-    @op
+    @op(requirements=[])
     def foo():
         return "asdf"
 

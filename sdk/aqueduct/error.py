@@ -130,3 +130,8 @@ class InvalidGithubQueryError(Error):
 # Exception raised when client fails to validate the server.
 class ClientValidationError(Error):
     pass
+
+
+# Exception raised when requirements.txt file is missing
+class RequirementsMissingError(Error):
+    pass

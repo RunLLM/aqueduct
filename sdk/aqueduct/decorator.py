@@ -453,8 +453,7 @@ def op(
             Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
             (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
             look for a `requirements.txt` file in the same directory as the decorated function
-            and install those. Otherwise, we'll attempt to infer the requirements with
-            `pip freeze`.
+            and install those. Otherwise, the method raises RequirementsMissingError exception.
         num_outputs:
             The number of outputs the decorated function is expected to return.
             Will fail at runtime if a different number of outputs is returned by the function.
@@ -640,8 +639,7 @@ def metric(
             Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
             (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
             look for a `requirements.txt` file in the same directory as the decorated function
-            and install those. Otherwise, we'll attempt to infer the requirements with
-            `pip freeze`.
+            and install those. Otherwise, the method raises RequirementsMissingError exception.
         output:
             An optional custom name for the output metric artifact. Otherwise, the default naming scheme
             will be used.
@@ -825,8 +823,7 @@ def check(
             Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
             (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
             look for a `requirements.txt` file in the same directory as the decorated function
-            and install those. Otherwise, we'll attempt to infer the requirements with
-            `pip freeze`.
+            and install those. Otherwise, the method raises RequirementsMissingError exception.
         output:
             An optional custom name for the output metric artifact. Otherwise, the default naming scheme
             will be used.
