@@ -8,7 +8,11 @@ A few minutes after the codespace get connected, we automatically start Aqueduct
 
 <img src="terminal.png" width= "80%" />
 
-You can also manually access the endpoint by 
+You can also manually access the endpoint by using the link in `PORTS` tab. You may be asked for an API Key. In such case, you can open up a terminal and copy over the output of `aqueduct apikey`.
+
+<img src="port.png" width= "80%" />
 
 ### Run Notebooks
-You can find the original notebooks for all example workflows in 
+You can find the original notebooks for all example workflows in `examples` directory in the file explorer. To try out a notebook, simply open your faviourite one and run the notebook with the integrated plugin.
+
+<img src="files.png" width= "60%" />
