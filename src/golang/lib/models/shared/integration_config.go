@@ -50,6 +50,7 @@ const (
 
 	DynamicK8sClusterStatusPollPeriod time.Duration = 10
 
+	K8sTerraformPathKey      string = "terraform_path"
 	K8sKubeconfigPathKey     string = "kubeconfig_path"
 	K8sClusterNameKey        string = "cluster_name"
 	K8sDynamicKey            string = "dynamic"
@@ -57,7 +58,6 @@ const (
 	K8sUseSameClusterKey     string = "use_same_cluster"
 	K8sStatusKey             string = "status"
 	K8sLastUsedTimestampKey  string = "last_used_timestamp"
-	DynamicK8sClusterName    string = "aqueduct_k8s"
 
 	// Dynamic k8s cluster config keys
 	K8sKeepaliveKey   string = "keepalive"
@@ -192,10 +192,12 @@ func (config *DynamicK8sConfig) Update(newConfig *DynamicK8sConfig) {
 }
 
 type AWSConfig struct {
-	AccessKeyId     string            `json:"access_key_id"`
-	SecretAccessKey string            `json:"secret_access_key"`
-	Region          string            `json:"region"`
-	K8s             *DynamicK8sConfig `json:"k8s"`
+	AccessKeyId       string            `json:"access_key_id"`
+	SecretAccessKey   string            `json:"secret_access_key"`
+	Region            string            `json:"region"`
+	ConfigFilePath    string            `json:"config_file_path"`
+	ConfigFileProfile string            `json:"config_file_profile"`
+	K8s               *DynamicK8sConfig `json:"k8s"`
 }
 
 type SparkIntegrationConfig struct {

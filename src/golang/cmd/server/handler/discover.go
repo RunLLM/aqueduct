@@ -117,7 +117,7 @@ func (h *DiscoverHandler) Perform(
 
 	defer func() {
 		// Delete storage files created for list tables job metadata
-		go workflow_utils.CleanupStorageFiles(ctx, args.StorageConfig, []string{jobMetadataPath, jobResultPath})
+		go workflow_utils.CleanupStorageFiles(context.Background(), args.StorageConfig, []string{jobMetadataPath, jobResultPath})
 	}()
 
 	storageConfig := config.Storage()

@@ -35,13 +35,17 @@ export type Artifact = {
 
 export type Schema = { [col_name: string]: string }[];
 
-export type GetArtifactResultResponse = {
+export type ArtifactResultContent = {
+  data?: string;
+  is_downsampled: boolean;
+};
+
+export type GetArtifactResultResponse = ArtifactResultContent & {
   name: string;
   // `status` is technically redundant due to `execState`. Avoid using `status` in new code.
   status: ExecutionStatus;
   exec_state: ExecState;
   schema: Schema;
-  data: string;
   artifact_type: ArtifactType;
   serialization_type: SerializationType;
   // TODO: python_type goes here.

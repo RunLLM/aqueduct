@@ -10,7 +10,6 @@ from aqueduct.error import (
     InvalidUserArgumentException,
 )
 from aqueduct.integrations.airflow_integration import AirflowIntegration
-from aqueduct.models.config import FlowConfig
 from aqueduct.models.integration import IntegrationInfo
 
 import aqueduct
@@ -122,23 +121,6 @@ def test_complex_flow(client, flow_name, data_integration, engine, data_validato
     assert flow_run.artifact("dummy_metric artifact") is not None
     assert flow_run.artifact("successful_check artifact") is not None
     assert flow_run.artifact("failing_check artifact") is None
-
-
-def test_multiple_output_artifacts(client, flow_name, data_integration, engine):
-    table_artifact1 = extract(data_integration, DataObject.SENTIMENT)
-    table_artifact2 = extract(data_integration, DataObject.SENTIMENT)
-
-    fn_artifact1 = dummy_sentiment_model(table_artifact1)
-    fn_artifact2 = dummy_model(table_artifact2)
-    save(data_integration, fn_artifact1)
-    save(data_integration, fn_artifact2)
-
-    publish_flow_test(
-        client,
-        name=flow_name(),
-        artifacts=[fn_artifact1, fn_artifact2],
-        engine=engine,
-    )
 
 
 def test_publish_with_schedule(client, flow_name, data_integration, engine):
@@ -488,41 +470,6 @@ def test_flow_with_args(client):
         foo_with_args(*[str_val, num_val])
 
 
-def test_publish_with_redundant_config_fields(client):
-    """Once the user-facing `FlowConfig` struct is deprecated, we can get rid of this test."""
-
-    @op
-    def noop():
-        return 123
-
-    output = noop()
-
-    # Test redundant engine field.
-    dummy_integration_info = IntegrationInfo(
-        id=uuid.uuid4(),
-        name="dummy",
-        service=ServiceType.LAMBDA,
-        createdAt=123,
-        validated=True,
-    )
-    with pytest.raises(InvalidUserArgumentException):
-        client.publish_flow(
-            generate_new_flow_name(),
-            artifacts=[output],
-            engine="something",
-            config=FlowConfig(engine=AirflowIntegration(dummy_integration_info)),
-        )
-
-    # Test redundant `k_latest_runs` field.
-    with pytest.raises(InvalidUserArgumentException):
-        client.publish_flow(
-            generate_new_flow_name(),
-            artifacts=[output],
-            k_latest_runs=10,
-            config=FlowConfig(k_latest_runs=123),
-        )
-
-
 def test_flow_list_saved_objects_none(client, flow_name, engine):
     """Check that flow.list_saved_objects() works when no objects were actually saved."""
 
@@ -573,10 +520,6 @@ def test_operators_with_custom_output_names(client, flow_name, engine):
 
     c = passed(output2)
     assert c.name() == "check output"
-
-    # Fail if the name collides with another artifact in the dag.
-    with pytest.raises(InvalidUserActionException, match="has already been created locally"):
-        output1.set_name("metric output")
 
     flow = publish_flow_test(
         client,

@@ -2,7 +2,9 @@ package dynamic
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
+	"math/big"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -10,7 +12,6 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -30,9 +31,12 @@ const (
 	K8sClusterUpdateAction k8sClusterActionType = "update"
 )
 
-const stateLockErrMsg = "Error acquiring the state lock"
+const (
+	stateLockErrMsg          = "Error acquiring the state lock"
+	K8sIntegrationNameSuffix = "aqueduct_ondemand_k8s"
+)
 
-var TerraformDir = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "dynamic", "terraform")
+var TerraformTemplateDir = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "template", "aws", "eks")
 
 // PrepareCluster blocks until the cluster is in status "Active".
 func PrepareCluster(
@@ -81,7 +85,7 @@ func PrepareCluster(
 				)
 			}
 		} else {
-			engineIntegration, err = PollClusterStatus(ctx, engineIntegration, integrationRepo, db)
+			engineIntegration, err = PollClusterStatus(ctx, engineIntegration, integrationRepo, vaultObject, db)
 			if err != nil {
 				return err
 			}
@@ -139,24 +143,44 @@ func CreateOrUpdateK8sCluster(
 		return err
 	}
 
-	if err := runTerraformApply(ctx, engineIntegration, vaultObject); err != nil {
+	awsConfig, err := fetchAWSCredential(ctx, engineIntegration, vaultObject)
+	if err != nil {
+		return err
+	}
+
+	if err := runTerraformApply(awsConfig, engineIntegration); err != nil {
 		return err
 	}
 
 	if action == K8sClusterCreateAction {
+		var envVars []string
+		if awsConfig.AccessKeyId != "" && awsConfig.SecretAccessKey != "" && awsConfig.Region != "" {
+			// If we enter here, it means the authentication mode is access key.
+			envVars = []string{
+				fmt.Sprintf("AWS_ACCESS_KEY_ID=%s", awsConfig.AccessKeyId),
+				fmt.Sprintf("AWS_SECRET_ACCESS_KEY=%s", awsConfig.SecretAccessKey),
+				fmt.Sprintf("AWS_REGION=%s", awsConfig.Region),
+			}
+		} else {
+			// If we enter here, it means the authentication mode is credential file.
+			envVars = []string{
+				fmt.Sprintf("AWS_CONFIG_FILE=%s", awsConfig.ConfigFilePath),
+				fmt.Sprintf("AWS_PROFILE=%s", awsConfig.ConfigFileProfile),
+			}
+		}
 		if _, _, err := lib_utils.RunCmd(
-			"aws",
-			[]string{
+			"env",
+			append(
+				envVars,
+				"aws",
 				"eks",
 				"update-kubeconfig",
-				"--region",
-				job.DefaultAwsRegion,
 				"--name",
 				engineIntegration.Config[shared.K8sClusterNameKey],
 				"--kubeconfig",
 				engineIntegration.Config[shared.K8sKubeconfigPathKey],
-			},
-			TerraformDir,
+			),
+			engineIntegration.Config[shared.K8sTerraformPathKey],
 			true,
 		); err != nil {
 			return errors.Wrap(err, "Failed to update Kubeconfig")
@@ -198,6 +222,7 @@ func DeleteK8sCluster(
 	skipPodsStatusCheck bool,
 	engineIntegration *models.Integration,
 	integrationRepo repos.Integration,
+	vaultObject vault.Vault,
 	db database.Database,
 ) error {
 	if !skipPodsStatusCheck {
@@ -220,13 +245,22 @@ func DeleteK8sCluster(
 		return err
 	}
 
-	// For deletion, the config values don't matter, so we just use the default map.
-	terraformArgs := generateTerraformVariables(&shared.AWSConfig{}, shared.DefaultDynamicK8sConfig.ToMap())
+	// Even for deletion, we need to specify the AWS region, so we need to pass in the actual AWS
+	// config instead of a dummy one to generateTerraformVariables.
+	awsConfig, err := fetchAWSCredential(ctx, engineIntegration, vaultObject)
+	if err != nil {
+		return err
+	}
+
+	terraformArgs, err := generateTerraformVariables(awsConfig, engineIntegration.Config)
+	if err != nil {
+		return err
+	}
 
 	if _, _, err := lib_utils.RunCmd(
 		"terraform",
 		append([]string{"destroy", "-auto-approve"}, terraformArgs...),
-		TerraformDir,
+		engineIntegration.Config[shared.K8sTerraformPathKey],
 		true,
 	); err != nil {
 		return errors.Wrap(err, "Unable to destroy k8s cluster")
@@ -377,6 +411,7 @@ func ResyncClusterState(
 	ctx context.Context,
 	engineIntegration *models.Integration,
 	integrationRepo repos.Integration,
+	vaultObject vault.Vault,
 	db database.Database,
 ) error {
 	if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) || engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
@@ -393,7 +428,7 @@ func ResyncClusterState(
 		[]string{
 			"plan",
 		},
-		TerraformDir,
+		engineIntegration.Config[shared.K8sTerraformPathKey],
 		false,
 	); err != nil {
 		if strings.Contains(stderr, stateLockErrMsg) {
@@ -411,6 +446,7 @@ func ResyncClusterState(
 		true, // skipPodsStatusCheck
 		engineIntegration,
 		integrationRepo,
+		vaultObject,
 		db,
 	)
 }
@@ -419,9 +455,10 @@ func PollClusterStatus(
 	ctx context.Context,
 	engineIntegration *models.Integration,
 	integrationRepo repos.Integration,
+	vaultObject vault.Vault,
 	db database.Database,
 ) (*models.Integration, error) {
-	if err := ResyncClusterState(ctx, engineIntegration, integrationRepo, db); err != nil {
+	if err := ResyncClusterState(ctx, engineIntegration, integrationRepo, vaultObject, db); err != nil {
 		return nil, errors.Wrap(err, "Failed to resync cluster state")
 	}
 
@@ -457,10 +494,38 @@ func PollClusterStatus(
 func generateTerraformVariables(
 	awsConfig *shared.AWSConfig,
 	engineConfig map[string]string,
-) []string {
+) ([]string, error) {
 	accessKeyVar := fmt.Sprintf("-var=access_key=%s", awsConfig.AccessKeyId)
 	secretAccessKeyVar := fmt.Sprintf("-var=secret_key=%s", awsConfig.SecretAccessKey)
 	regionVar := fmt.Sprintf("-var=region=%s", awsConfig.Region)
+	credentialPathVar := fmt.Sprintf("-var=credentials_file=%s", awsConfig.ConfigFilePath)
+	profileVar := fmt.Sprintf("-var=profile=%s", awsConfig.ConfigFileProfile)
+
+	if awsConfig.ConfigFilePath != "" && awsConfig.ConfigFileProfile != "" {
+		// If the authentication mode is credential file, we need to retrieve the AWS region via
+		// `aws configure get region` and explicitly pass it to Terraform.
+		region, stderr, err := lib_utils.RunCmd(
+			"env",
+			[]string{
+				fmt.Sprintf("AWS_CONFIG_FILE=%s", awsConfig.ConfigFilePath),
+				fmt.Sprintf("AWS_PROFILE=%s", awsConfig.ConfigFileProfile),
+				"aws",
+				"configure",
+				"get",
+				"region",
+			},
+			"",
+			false,
+		)
+		// We need to check if stderr is empty because when the region is not specified in the
+		// profile, the cmd will error and it will produce an empty stdout and stderr. In this case,
+		// we should just set the region to an empty string, which means using the default region.
+		if err != nil && stderr != "" {
+			return nil, err
+		}
+
+		regionVar = fmt.Sprintf("-var=region=%s", strings.TrimRight(region, "\n"))
+	}
 
 	cpuNodeTypeVar := fmt.Sprintf("-var=cpu_node_type=%s", engineConfig[shared.K8sCpuNodeTypeKey])
 	gpuNodeTypeVar := fmt.Sprintf("-var=gpu_node_type=%s", engineConfig[shared.K8sGpuNodeTypeKey])
@@ -469,52 +534,43 @@ func generateTerraformVariables(
 	minGpuNodeVar := fmt.Sprintf("-var=min_gpu_node=%s", engineConfig[shared.K8sMinGpuNodeKey])
 	maxGpuNodeVar := fmt.Sprintf("-var=max_gpu_node=%s", engineConfig[shared.K8sMaxGpuNodeKey])
 
+	clusterNameVar := fmt.Sprintf("-var=cluster_name=%s", engineConfig[shared.K8sClusterNameKey])
+
 	return []string{
 		accessKeyVar,
 		secretAccessKeyVar,
 		regionVar,
+		credentialPathVar,
+		profileVar,
 		cpuNodeTypeVar,
 		gpuNodeTypeVar,
 		minCpuNodeVar,
 		maxCpuNodeVar,
 		minGpuNodeVar,
 		maxGpuNodeVar,
-	}
+		clusterNameVar,
+	}, nil
 }
 
 func runTerraformApply(
-	ctx context.Context,
+	awsConfig *shared.AWSConfig,
 	engineIntegration *models.Integration,
-	vaultObject vault.Vault,
 ) error {
-	// Fetch AWS credentials.
-	if _, ok := engineIntegration.Config[shared.K8sCloudIntegrationIdKey]; !ok {
-		return errors.New("No cloud integration ID found in the engine integration object.")
-	}
-	cloudIntegrationId, err := uuid.Parse(engineIntegration.Config[shared.K8sCloudIntegrationIdKey])
+	terraformArgs, err := generateTerraformVariables(awsConfig, engineIntegration.Config)
 	if err != nil {
-		return errors.Wrap(err, "Failed to parse cloud integration ID")
+		return err
 	}
-
-	config, err := auth.ReadConfigFromSecret(ctx, cloudIntegrationId, vaultObject)
-	if err != nil {
-		return errors.Wrap(err, "Unable to read cloud integration config from vault.")
-	}
-
-	awsConfig, err := lib_utils.ParseAWSConfig(config)
-	if err != nil {
-		return errors.Wrap(err, "Unable to parse AWS config.")
-	}
-
-	terraformArgs := generateTerraformVariables(awsConfig, engineIntegration.Config)
 
 	if _, _, err := lib_utils.RunCmd(
 		"terraform",
 		append([]string{"apply", "-auto-approve"}, terraformArgs...),
-		TerraformDir,
+		engineIntegration.Config[shared.K8sTerraformPathKey],
 		true,
 	); err != nil {
-		return errors.Wrap(err, "Terraform apply failed")
+		errMsg := `Terraform apply failed. Note that if the error has to do with insufficient 
+		permissions, you will need to delete the cloud integration and re-connect with an account 
+		that has sufficient permissions.`
+		return errors.Wrap(err, errMsg)
 	}
 
 	return nil
@@ -605,4 +661,47 @@ func CheckIfValidConfig(action k8sClusterActionType, config map[string]string) e
 	}
 
 	return nil
+}
+
+// GenerateClusterName generates a EKS cluster name by concatenating aqueduct with a
+// random string of length 16.
+func GenerateClusterName() (string, error) {
+	const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+	b := make([]byte, 16)
+	for i := range b {
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(letterBytes))))
+		if err != nil {
+			return "", err
+		}
+		b[i] = letterBytes[n.Int64()]
+	}
+
+	return fmt.Sprintf("%s_%s", "aqueduct", string(b)), nil
+}
+
+func fetchAWSCredential(
+	ctx context.Context,
+	engineIntegration *models.Integration,
+	vaultObject vault.Vault,
+) (*shared.AWSConfig, error) {
+	if _, ok := engineIntegration.Config[shared.K8sCloudIntegrationIdKey]; !ok {
+		return nil, errors.New("No cloud integration ID found in the engine integration object.")
+	}
+	cloudIntegrationId, err := uuid.Parse(engineIntegration.Config[shared.K8sCloudIntegrationIdKey])
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to parse cloud integration ID")
+	}
+
+	config, err := auth.ReadConfigFromSecret(ctx, cloudIntegrationId, vaultObject)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to read cloud integration config from vault.")
+	}
+
+	awsConfig, err := lib_utils.ParseAWSConfig(config)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to parse AWS config.")
+	}
+
+	return awsConfig, nil
 }

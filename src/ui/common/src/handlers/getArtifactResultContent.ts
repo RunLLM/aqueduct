@@ -2,12 +2,13 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import {
+  ArtifactResultContent,
   GetArtifactResultResponse,
   SerializationType,
 } from '../utils/artifacts';
 
 export const handleGetArtifactResultContent = createAsyncThunk<
-  string,
+  ArtifactResultContent,
   {
     apiKey: string;
     artifactId: string;
@@ -78,9 +79,12 @@ export const handleGetArtifactResultContent = createAsyncThunk<
 
         artifactResult.data = await toBase64(formData.get('data') as File);
       }
-      return artifactResult.data;
+      return {
+        data: artifactResult.data,
+        is_downsampled: artifactResult.is_downsampled,
+      };
     }
 
-    return undefined;
+    return { is_downsampled: artifactResult.is_downsampled };
   }
 );

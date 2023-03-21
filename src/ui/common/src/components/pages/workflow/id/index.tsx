@@ -45,7 +45,7 @@ import DefaultLayout, {
   SidesheetWidth,
 } from '../../../layouts/default';
 import { Button } from '../../../primitives/Button.styles';
-import { Tab, Tabs } from '../../../Tabs/Tabs.styles';
+import { Tab, Tabs } from '../../../primitives/Tabs.styles';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowHeader, {
   WorkflowPageContentId,
@@ -167,8 +167,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       ) {
         // this is where selectedDag gets set
         dispatch(selectResultIdx(workflowDagResultIndex));
-        setSelectedResultIdx(workflowDagResultIndex);
       }
+
+      // This is outside the if statement because this is not automatically kept in sync with
+      // the Redux store.
+      setSelectedResultIdx(workflowDagResultIndex);
     }
   }, [
     workflow.dagResults,
@@ -432,7 +435,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
     return (
       <Box display="flex" alignItems="center" flex={1} mr={3}>
-        {/* This flex grown box right aligns the bwo buttons below.*/}
+        {/* This flex grown box right aligns the two buttons below.*/}
         <Box flex={1} />
         <Box display="flex" alignItems="center">
           {includeExportOpButton && exportOpButton}
@@ -479,6 +482,32 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         {workflow.selectedDag && (
           <Box marginBottom={1}>
             <WorkflowHeader workflowDag={workflow.selectedDag} />
+          </Box>
+        )}
+
+        {/*Show any workflow-level errors at the top of the workflow details page.*/}
+        {workflow.selectedResult?.exec_state?.error && (
+          <Box
+            sx={{
+              backgroundColor: theme.palette.red[100],
+              color: theme.palette.red[600],
+              p: 2,
+              paddingBottom: '16px',
+              paddingTop: '16px',
+              height: 'fit-content',
+
+              // When the sidesheet is not open, we want to align the right side with the
+              // dag viewer. This means taking off 100px (the width of the right control column)
+              // + 16px the left margin of the control column
+              // + 32px the additional width to the end of the screen.
+              // When the sidesheet is open, the control plane disappears, so we just need
+              // the last adjustment of 32px.
+              width: !drawerIsOpen ? `calc(100% - 148px)` : 'calc(100% - 32px)',
+            }}
+          >
+            <pre
+              style={{ margin: '0px' }}
+            >{`${workflow.selectedResult.exec_state.error.tip}\n\n${workflow.selectedResult.exec_state.error.context}`}</pre>
           </Box>
         )}
 
@@ -551,7 +580,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 <Tooltip title="Previous Run" arrow>
                   <Box sx={{ px: 0, flex: 1 }}>
                     <Button
-                      sx={{ fontSize: '28px' }}
+                      sx={{ fontSize: '28px', width: '100%' }}
                       variant="text"
                       onClick={() => {
                         // This might be confusing, but index 0 is the most recent run, so incrementing the index goes
@@ -575,7 +604,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 <Tooltip title="Next Run" arrow>
                   <Box sx={{ px: 0, flex: 1 }}>
                     <Button
-                      sx={{ fontSize: '28px' }}
+                      sx={{ fontSize: '28px', width: '100%' }}
                       variant="text"
                       onClick={() => {
                         // This might be confusing, but index 0 is the most recent run, so decrementing the index goes

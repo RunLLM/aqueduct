@@ -8,7 +8,7 @@ import {
   DynamicEngineType,
   DynamicK8sConfig,
 } from '../../../utils/integrations';
-import { Tab, Tabs } from '../../Tabs/Tabs.styles';
+import { Tab, Tabs } from '../../primitives/Tabs.styles';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: AWSConfig = {
@@ -131,7 +131,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
   const k8sConfigTab = (
     <Box>
       <Typography variant="body2" color="gray.700">
-        Optionally configure dynamic Kubernetes cluster parameters.
+        Optionally configure on-demand Kubernetes cluster parameters.
       </Typography>
       <IntegrationTextInputField
         spellCheck={false}
@@ -241,7 +241,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         <Tabs value={engineType} onChange={(_, value) => setEngineType(value)}>
           <Tab
             value={DynamicEngineType.K8s}
-            label="Kubernetes Cluster Config"
+            label="On-demand Kubernetes Cluster Config"
           />
         </Tabs>
       </Box>
