@@ -3,7 +3,6 @@ from typing import List, Optional, Union
 
 from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.artifacts.transform import to_artifact_class
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, S3TableFormat
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
@@ -15,13 +14,14 @@ from aqueduct.models.operators import (
     S3ExtractParams,
     S3LoadParams,
 )
-from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import generate_uuid
 
 from aqueduct import globals
 
+from ..artifacts.create import to_artifact_class
 from ..error import InvalidUserArgumentException
-from .naming import _resolve_op_and_artifact_name_for_extract
+from ..utils.naming import default_artifact_name_from_op_name, sanitize_artifact_name
 from .save import _save_artifact
 
 
@@ -112,12 +112,8 @@ class S3Integration(Integration):
         format_enum = _convert_to_s3_table_format(format)
 
         integration_info = self._metadata
-        op_name, artifact_name = _resolve_op_and_artifact_name_for_extract(
-            dag=self._dag,
-            op_name=name,
-            default_op_name="%s query" % self.name(),
-            artifact_name=output,
-        )
+        op_name = name or "%s query" % self.name()
+        artifact_name = output or default_artifact_name_from_op_name(op_name)
 
         operator_id = generate_uuid()
         output_artifact_id = generate_uuid()
@@ -137,7 +133,7 @@ class S3Integration(Integration):
         apply_deltas_to_dag(
             self._dag,
             deltas=[
-                AddOrReplaceOperatorDelta(
+                AddOperatorDelta(
                     op=Operator(
                         id=operator_id,
                         name=op_name,
@@ -159,8 +155,9 @@ class S3Integration(Integration):
                     output_artifacts=[
                         ArtifactMetadata(
                             id=output_artifact_id,
-                            name=artifact_name,
+                            name=sanitize_artifact_name(artifact_name),
                             type=output_artifact_type,
+                            explicitly_named=output is not None,
                         ),
                     ],
                 )

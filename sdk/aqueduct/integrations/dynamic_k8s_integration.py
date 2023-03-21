@@ -42,6 +42,7 @@ class DynamicK8sIntegration(Integration):
         self._metadata = metadata
 
     def status(self) -> str:
+        """Get the current status of the dynamic Kubernetes cluster."""
         engine_statuses = globals.__GLOBAL_API_CLIENT__.get_dynamic_engine_status(
             engine_integration_ids=[str(self._metadata.id)]
         )

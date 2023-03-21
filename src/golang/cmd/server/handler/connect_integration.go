@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -17,7 +16,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/dynamic"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/errors"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
@@ -185,81 +183,13 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	}
 
 	if args.Service == shared.AWS {
-		cloudIntegration, err := h.IntegrationRepo.GetByNameAndUser(
+		if statusCode, err := setupCloudIntegration(
 			ctx,
-			args.Name,
-			uuid.Nil,
-			args.OrgID,
+			args,
+			h,
 			txn,
-		)
-		if err != nil {
-			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve cloud integration.")
-		}
-
-		kubeconfigPath := filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "dynamic", "kube_config")
-
-		awsConfig, err := lib_utils.ParseAWSConfig(args.Config)
-		if err != nil {
-			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to parse AWS config.")
-		}
-
-		config := shared.DynamicK8sConfig{
-			Keepalive:   shared.DefaultDynamicK8sConfig.Keepalive,
-			CpuNodeType: shared.DefaultDynamicK8sConfig.CpuNodeType,
-			GpuNodeType: shared.DefaultDynamicK8sConfig.GpuNodeType,
-			MinCpuNode:  shared.DefaultDynamicK8sConfig.MinCpuNode,
-			MaxCpuNode:  shared.DefaultDynamicK8sConfig.MaxCpuNode,
-			MinGpuNode:  shared.DefaultDynamicK8sConfig.MinGpuNode,
-			MaxGpuNode:  shared.DefaultDynamicK8sConfig.MaxGpuNode,
-		}
-
-		config.Update(awsConfig.K8s)
-
-		dynamicK8sConfig := map[string]string{
-			shared.K8sKubeconfigPathKey:     kubeconfigPath,
-			shared.K8sClusterNameKey:        shared.DynamicK8sClusterName,
-			shared.K8sDynamicKey:            strconv.FormatBool(true),
-			shared.K8sCloudIntegrationIdKey: cloudIntegration.ID.String(),
-			shared.K8sUseSameClusterKey:     strconv.FormatBool(false),
-			shared.K8sStatusKey:             string(shared.K8sClusterTerminatedStatus),
-			shared.K8sDesiredCpuNodeKey:     config.MinCpuNode,
-			shared.K8sDesiredGpuNodeKey:     config.MinGpuNode,
-		}
-
-		for k, v := range config.ToMap() {
-			dynamicK8sConfig[k] = v
-		}
-
-		if err := dynamic.CheckIfValidConfig(dynamic.K8sClusterCreateAction, dynamicK8sConfig); err != nil {
-			return emptyResp, http.StatusBadRequest, err
-		}
-
-		// Register a dynamic k8s integration.
-		connectIntegrationArgs := &ConnectIntegrationArgs{
-			AqContext:    args.AqContext,
-			Name:         fmt.Sprintf("%s:%s", args.Name, "k8s"),
-			Service:      shared.Kubernetes,
-			Config:       auth.NewStaticConfig(dynamicK8sConfig),
-			UserOnly:     false,
-			SetAsStorage: false,
-		}
-
-		_, _, err = (&ConnectIntegrationHandler{
-			Database:   txn,
-			JobManager: h.JobManager,
-
-			ArtifactRepo:       h.ArtifactRepo,
-			ArtifactResultRepo: h.ArtifactResultRepo,
-			DAGRepo:            h.DAGRepo,
-			IntegrationRepo:    h.IntegrationRepo,
-			OperatorRepo:       h.OperatorRepo,
-		}).Perform(ctx, connectIntegrationArgs)
-		if err != nil {
-			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to register dynamic k8s integration.")
-		}
-
-		if _, _, err := lib_utils.RunCmd("terraform", []string{"init"}, dynamic.TerraformDir, true); err != nil {
-			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Error initializing Terraform")
+		); err != nil {
+			return emptyResp, statusCode, err
 		}
 	}
 
@@ -471,7 +401,7 @@ func ValidateConfig(
 
 	defer func() {
 		// Delete storage files created for authenticate job metadata
-		go utils.CleanupStorageFiles(ctx, storageConfig, []string{jobMetadataPath})
+		go utils.CleanupStorageFiles(context.Background(), storageConfig, []string{jobMetadataPath})
 	}()
 
 	jobSpec := job.NewAuthenticateSpec(
@@ -856,13 +786,18 @@ func ValidatePrerequisites(
 	}
 
 	// For AWS integration, we require the user to have AWS CLI and Terraform installed.
+	// We also require env (GNU coreutils) executable to set the env variables when using the AWS CLI.
 	if svc == shared.AWS {
 		if _, _, err := lib_utils.RunCmd("terraform", []string{"--version"}, "", false); err != nil {
-			return http.StatusBadRequest, errors.Wrap(err, "terraform executable not found. Please go to https://developer.hashicorp.com/terraform/downloads to install terraform")
+			return http.StatusNotFound, errors.Wrap(err, "terraform executable not found. Please go to https://developer.hashicorp.com/terraform/downloads to install terraform")
 		}
 
 		if _, _, err := lib_utils.RunCmd("aws", []string{"--version"}, "", false); err != nil {
-			return http.StatusBadRequest, errors.Wrap(err, "AWS CLI executable not found. Please go to https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html to install AWS CLI")
+			return http.StatusNotFound, errors.Wrap(err, "AWS CLI executable not found. Please go to https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html to install AWS CLI")
+		}
+
+		if _, _, err := lib_utils.RunCmd("env", []string{"--version"}, "", false); err != nil {
+			return http.StatusNotFound, errors.Wrap(err, "env (GNU coreutils) executable not found.")
 		}
 	}
 

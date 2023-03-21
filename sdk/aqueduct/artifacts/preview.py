@@ -4,7 +4,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.artifacts.transform import to_artifact_class
+from aqueduct.artifacts.create import to_artifact_class
 from aqueduct.backend.response_models import ArtifactResult
 from aqueduct.constants.enums import ArtifactType, K8sClusterStatusType
 from aqueduct.error import InvalidArtifactTypeException, InvalidIntegrationException

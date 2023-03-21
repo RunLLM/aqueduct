@@ -8,6 +8,7 @@ import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import { CheckLevel } from '../../../utils/operators';
 import ExecutionStatus, { LoadingStatusEnum } from '../../../utils/shared';
+import { reduceEngineTypes } from '../../../utils/workflows';
 import DefaultLayout from '../../layouts/default';
 import { BreadcrumbLink } from '../../layouts/NavBar';
 import {
@@ -66,52 +67,58 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   /**
    * Iterate through workflows array and map each element to a WorkflowTableRow object.
    */
-  const workflowElements: PaginatedSearchTableRow[] = workflows.map((value) => {
-    const engine = value.engine;
+  const workflowElements: PaginatedSearchTableRow[] = workflows.map(
+    (workflow) => {
+      const engines = reduceEngineTypes(
+        workflow.engine,
+        workflow.operator_engines.map((x) => (x ? x : workflow.engine))
+      );
 
-    let metrics = [];
-    if (value?.metrics) {
-      metrics = value.metrics.map((metric) => {
-        return {
-          metricId: metric.id,
-          name: metric.name,
-          value: metric.result?.content_serialized ?? '',
-          status: metric.result?.exec_state?.status ?? ExecutionStatus.Unknown,
-        };
-      });
+      let metrics = [];
+      if (workflow?.metrics) {
+        metrics = workflow.metrics.map((metric) => {
+          return {
+            metricId: metric.id,
+            name: metric.name,
+            value: metric.result?.content_serialized ?? '',
+            status:
+              metric.result?.exec_state?.status ?? ExecutionStatus.Unknown,
+          };
+        });
+      }
+
+      let checks = [];
+      if (workflow.checks) {
+        checks = workflow.checks.map((check) => {
+          const value =
+            check.result?.exec_state.status === 'succeeded' ? 'True' : 'False';
+
+          return {
+            checkId: check.id,
+            name: check.name,
+            level: check.spec?.check?.level ?? CheckLevel.Warning,
+            timestamp: check.result?.exec_state?.timestamps?.finished_at ?? '',
+            value,
+            status: check.result?.exec_state?.status ?? ExecutionStatus.Unknown,
+          };
+        });
+      }
+
+      const workflowTableRow: PaginatedSearchTableRow = {
+        name: {
+          name: workflow.name,
+          url: `/workflow/${workflow.id}`,
+          status: workflow.status,
+        },
+        last_run: new Date(workflow.last_run_at * 1000),
+        engines,
+        metrics,
+        checks,
+      };
+
+      return workflowTableRow;
     }
-
-    let checks = [];
-    if (value.checks) {
-      checks = value.checks.map((check) => {
-        const value =
-          check.result?.exec_state.status === 'succeeded' ? 'True' : 'False';
-
-        return {
-          checkId: check.id,
-          name: check.name,
-          level: check.spec?.check?.level ?? CheckLevel.Warning,
-          timestamp: check.result?.exec_state?.timestamps?.finished_at ?? '',
-          value,
-          status: check.result?.exec_state?.status ?? ExecutionStatus.Unknown,
-        };
-      });
-    }
-
-    const workflowTableRow: PaginatedSearchTableRow = {
-      name: {
-        name: value.name,
-        url: `/workflow/${value.id}`,
-        status: value.status,
-      },
-      last_run: new Date(value.last_run_at * 1000),
-      engine,
-      metrics,
-      checks,
-    };
-
-    return workflowTableRow;
-  });
+  );
 
   const sortColumns = [
     {
@@ -124,7 +131,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     },
     {
       name: 'Engine',
-      sortAccessPath: ['engine', 'engineName'],
+      sortAccessPath: ['engines', 'engineName'],
     },
     {
       name: 'Status',
@@ -137,7 +144,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       fields: [
         { name: 'name', type: 'varchar' },
         { name: 'last_run', displayName: 'Last Run', type: 'varchar' },
-        { name: 'engine', type: 'varchar' },
+        { name: 'engines', type: 'varchar' },
         { name: 'metrics', type: 'varchar' },
         { name: 'checks', type: 'varchar' },
       ],
@@ -157,8 +164,14 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       case 'last_run':
         value = row[column.name].toLocaleString();
         break;
-      case 'engine': {
-        value = <EngineItem engine={value} />;
+      case 'engines': {
+        value = (
+          <Box>
+            {value.map((v) => (
+              <EngineItem key={v} engine={v} />
+            ))}
+          </Box>
+        );
         break;
       }
       case 'metrics': {

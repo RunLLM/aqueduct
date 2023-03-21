@@ -11,13 +11,10 @@ output:
 linters:
   disable-all: true
   enable:
-    - deadcode
     - errcheck
     - gosimple
     - staticcheck
-    - structcheck
     - unused
-    - varcheck
     - bidichk
     - decorder
     - exhaustive
