@@ -8,6 +8,7 @@ import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 export type ContentWithLoadingStatus = {
   status: LoadingStatus;
   data?: string;
+  is_downsampled?: boolean;
 };
 export interface ArtifactResultContentState {
   contents: {
@@ -36,7 +37,8 @@ export const artifactResultContentsSlice = createSlice({
       (state, { meta, payload }) => {
         const id = meta.arg.artifactResultId;
         state.contents[id] = {
-          data: payload,
+          data: payload.data,
+          is_downsampled: payload.is_downsampled,
           status: { loading: LoadingStatusEnum.Succeeded, err: '' },
         };
       }
