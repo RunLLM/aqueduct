@@ -86,7 +86,8 @@ export type ListWorkflowSummary = {
   created_at: number;
   last_run_at: number;
   status: ExecutionStatus;
-  engine: string;
+  engine: EngineType;
+  operator_engines: EngineType[];
   metrics: WorkflowMetrics[];
   checks: WorkflowChecks[];
 };
@@ -215,13 +216,21 @@ export function getWorkflowEngineTypes(dag: WorkflowDag): EngineType[] {
         .filter((t) => !!t) ?? []
     )
   );
+
+  return reduceEngineTypes(dagType, allOpTypes);
+}
+
+export function reduceEngineTypes(
+  dagType: EngineType,
+  opTypes: EngineType[]
+): EngineType[] {
   if (
     dagType === EngineType.Aqueduct &&
-    allOpTypes.length > 0 &&
-    allOpTypes.every((t) => t !== EngineType.Aqueduct)
+    opTypes.length > 0 &&
+    opTypes.every((t) => t !== EngineType.Aqueduct)
   ) {
-    return allOpTypes;
+    return opTypes;
   }
 
-  return Array.from(new Set([dagType].concat(allOpTypes)));
+  return Array.from(new Set([dagType].concat(opTypes)));
 }

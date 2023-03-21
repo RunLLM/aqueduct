@@ -19,7 +19,7 @@ type LatestWorkflowStatus struct {
 	CreatedAt   time.Time                  `db:"created_at" json:"created_at"`
 	LastRunAt   utils.NullTime             `db:"last_run_at" json:"last_run_at"`
 	Status      shared.NullExecutionStatus `db:"status" json:"status"`
-	Engine      string                     `db:"engine" json:"engine"`
+	Engine      shared.EngineType          `db:"engine" json:"engine"`
 }
 
 // WorkflowLastRun is a wrapper around the last run at time for a Workflow
