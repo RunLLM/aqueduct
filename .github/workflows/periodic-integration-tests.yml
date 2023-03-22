@@ -52,7 +52,7 @@ jobs:
         working-directory: integration_tests/sdk
         run: pytest aqueduct_tests/ -rP -vv -n 4
 
-     - name: Teardown K8s Cluster
+      - name: Teardown K8s Cluster
         if: always()
         uses: nick-fields/retry@v2
         with:
