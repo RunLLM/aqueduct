@@ -249,9 +249,9 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 		spec.Type() == DiscoverJobType {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
-			return nil, err
+		return nil, err
 		}
-
+		
 		cmd = exec.Command(
 			"python3",
 			"-m",

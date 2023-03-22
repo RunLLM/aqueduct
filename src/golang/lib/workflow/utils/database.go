@@ -349,6 +349,8 @@ func UpdateDAGResultMetadata(
 	dagResultID uuid.UUID,
 	execState *shared.ExecutionState,
 	dagResultRepo repos.DAGResult,
+	artifactResultRepo repos.ArtifactResult,
+	operatorResultRepo repos.OperatorResult,
 	workflowRepo repos.Workflow,
 	notificationRepo repos.Notification,
 	DB database.Database,
@@ -372,6 +374,51 @@ func UpdateDAGResultMetadata(
 	)
 	if err != nil {
 		return err
+	}
+
+	// Check if DAG has finished running.
+	if (execState.Status == shared.CanceledExecutionStatus || execState.Status == shared.FailedExecutionStatus || execState.Status == shared.SucceededExecutionStatus) {
+		// Cancel all running or pending nodes in the DAG.
+
+		// ARTIFACTS
+		// Get all artifact results for the DAG
+		artifactsForDAG, err := artifactResultRepo.GetByDAGResults(ctx, []uuid.UUID{dagResultID}, txn)
+		if err != nil {
+			return err
+		}
+		// Filter by running or pending status
+		for _, artifact := range artifactsForDAG {
+			if (artifact.Status == shared.PendingExecutionStatus || artifact.Status == shared.RunningExecutionStatus) {
+				// Update status to cancelled
+				changes := map[string]interface{}{
+					models.ArtifactResultStatus: shared.CanceledExecutionStatus,
+				}
+				_, err := artifactResultRepo.Update(ctx, artifact.ID, changes, txn)
+				if err != nil {
+					return err
+				}
+			}
+		}
+
+		// OPERATORS
+		// Get all operator results for the DAG
+		operatorsForDAG, err := operatorResultRepo.GetByDAGResultBatch(ctx, []uuid.UUID{dagResultID}, txn)
+		if err != nil {
+			return err
+		}
+		// Filter by running or pending status
+		for _, operator := range operatorsForDAG {
+			if (operator.Status == shared.PendingExecutionStatus || operator.Status == shared.RunningExecutionStatus) {
+				// Update status to cancelled
+				changes := map[string]interface{}{
+					models.OperatorResultStatus: shared.CanceledExecutionStatus,
+				}
+				_, err := operatorResultRepo.Update(ctx, operator.ID, changes, txn)
+				if err != nil {
+					return err
+				}
+			}
+		}
 	}
 
 	if err := createDAGResultNotification(
