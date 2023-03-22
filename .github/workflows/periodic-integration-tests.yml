@@ -52,8 +52,21 @@ jobs:
         working-directory: integration_tests/sdk
         run: pytest aqueduct_tests/ -rP -vv -n 4
 
-      - uses: actions/upload-artifact@v3
+     - name: Teardown K8s Cluster
         if: always()
+        uses: nick-fields/retry@v2
+        with:
+          max_attempts: 2
+          retry_on: error
+          timeout-minutes: 20
+          retry_wait_seconds: 300
+          command: |
+            cd integration_tests/sdk/compute/k8s
+            terraform destroy --auto-approve
+
+      # This directory is quite large, so we only upload it on failure.
+      - uses: actions/upload-artifact@v3
+        if: ${{ failure() }}
         with:
           name: Terraform State
           path: |
@@ -63,16 +76,6 @@ jobs:
         if: always()
         with:
           prefix: K8s Compute
-
-      - name: Teardown K8s Cluster
-        if: always()
-        uses: nick-fields/retry@v2
-        with:
-          max_attempts: 2
-          retry_on: error
-          command: |
-            cd integration_tests/sdk/compute/k8s
-            terraform destroy --auto-approve
 
       # Sets it as an environmental variable.
       - name: Get the Slack ID for the current oncall
