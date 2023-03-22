@@ -58,7 +58,7 @@ jobs:
         with:
           max_attempts: 2
           retry_on: error
-          timeout-minutes: 20
+          timeout_minutes: 20
           retry_wait_seconds: 300
           command: |
             cd integration_tests/sdk/compute/k8s
