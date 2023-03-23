@@ -166,7 +166,7 @@ func CreateOrUpdateK8sCluster(
 		} else {
 			// If we enter here, it means the authentication mode is credential file.
 			envVars = []string{
-				fmt.Sprintf("AWS_CONFIG_FILE=%s", awsConfig.ConfigFilePath),
+				fmt.Sprintf("AWS_SHARED_CREDENTIALS_FILE=%s", awsConfig.ConfigFilePath),
 				fmt.Sprintf("AWS_PROFILE=%s", awsConfig.ConfigFileProfile),
 			}
 		}
@@ -209,7 +209,7 @@ func CreateOrUpdateK8sCluster(
 				})
 			} else {
 				authInfo.Exec.Env = append(authInfo.Exec.Env, api.ExecEnvVar{
-					Name:  "AWS_CONFIG_FILE",
+					Name:  "AWS_SHARED_CREDENTIALS_FILE",
 					Value: awsConfig.ConfigFilePath,
 				})
 				authInfo.Exec.Env = append(authInfo.Exec.Env, api.ExecEnvVar{
@@ -545,7 +545,7 @@ func generateTerraformVariables(
 		region, stderr, err := lib_utils.RunCmd(
 			"env",
 			[]string{
-				fmt.Sprintf("AWS_CONFIG_FILE=%s", awsConfig.ConfigFilePath),
+				fmt.Sprintf("AWS_SHARED_CREDENTIALS_FILE=%s", awsConfig.ConfigFilePath),
 				fmt.Sprintf("AWS_PROFILE=%s", awsConfig.ConfigFileProfile),
 				"aws",
 				"configure",
