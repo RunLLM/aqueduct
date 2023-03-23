@@ -561,7 +561,7 @@ class Client:
                 Used to identify the source flow for this flow. This can be identified
                 via an object (Flow), name (str), or id (str or uuid).
             use_local:
-                Used to identify if local data is used. Must be set if any artifact in the flow is derived from local data.
+                Must be set if any artifact in the flow is derived from local data.
 
         Raises:
             InvalidUserArgumentException:
