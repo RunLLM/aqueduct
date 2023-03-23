@@ -6,6 +6,7 @@ from notification import connect_slack
 from wait_for_flows import wait_for_all_flows_to_complete
 from workflows import (
     dag_layout_test,
+    march_madness_dag_layout_test,
     # check_status_test,
     # fail_bad_check,
     # fail_bad_operator,
@@ -20,7 +21,8 @@ import aqueduct as aq
 # when adding new deployments, keep the order of `fail`, `warning`, and `succeed`
 # such that the UI would approximately show these workflows in reverse order.
 WORKFLOW_PKGS = [
-    dag_layout_test
+    dag_layout_test,
+    march_madness_dag_layout_test,
     # check_status_test,
     # fail_bad_check,
     # warning_bad_check,
