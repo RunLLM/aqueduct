@@ -6,6 +6,7 @@ import React from 'react';
 import DefaultLayout from '../../../../components/layouts/default';
 import LogViewer from '../../../../components/LogViewer';
 import WithOperatorHeader from '../../../../components/operators/WithOperatorHeader';
+import { useGetDagResultQuery } from '../../../../handlers/AqueductApi';
 import RequireOperator from '../../../operators/RequireOperator';
 import OperatorSpecDetails from '../../../workflows/operator/specDetails';
 import RequireDagOrResult from '../../../workflows/RequireDagOrResult';
@@ -46,6 +47,19 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     workflowDagIdProp,
     workflowDagResultIdProp
   );
+
+  const { data, error, isLoading } = useGetDagResultQuery(
+    {
+      apiKey: user.apiKey,
+      workflowId,
+      dagResultId: workflowDagResultId,
+    },
+    { pollingInterval: 5000 }
+  );
+
+  console.log(data);
+  console.log(error);
+  console.log(isLoading);
 
   const { breadcrumbs, operator } = useOpeartor(
     operatorIdProp,

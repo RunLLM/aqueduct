@@ -96,6 +96,11 @@ import RequireDagOrResult from './components/workflows/RequireDagOrResult';
 import VersionSelector from './components/workflows/version_selector';
 import WorkflowHeader from './components/workflows/workflowHeader';
 import WorkflowSettings from './components/workflows/WorkflowSettings';
+import {
+  aqueductApi,
+  useGetDagQuery,
+  useGetDagResultQuery,
+} from './handlers/AqueductApi';
 import { handleGetArtifactResultContent } from './handlers/getArtifactResultContent';
 import { handleGetServerConfig } from './handlers/getServerConfig';
 import { handleGetWorkflowDag } from './handlers/getWorkflowDag';
@@ -206,6 +211,7 @@ export {
   AddIntegrations,
   addTable,
   AddTableDialog,
+  aqueductApi,
   AqueductBezier,
   AqueductDemoCard,
   AqueductQuadratic,
@@ -371,6 +377,8 @@ export {
   useAqueductConsts,
   useArtifact,
   useArtifactHistory,
+  useGetDagQuery,
+  useGetDagResultQuery,
   useOpeartor,
   UserProfile,
   useUser,
