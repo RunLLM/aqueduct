@@ -55,7 +55,8 @@ func ExtractHttpPayload(contentType, fileName string, isFile bool, r *http.Reque
 		} else {
 			// If we reach here, it means the value is sent as `String` instead of `File`,
 			// so we use `FormValue` to extract the payload and return its byte form.
-			// The caller can later parse the returned value to string.
+			// The caller can later parse the returned value to string. By default, the 
+			// request's body size is capped at 32MB.
 			value := r.FormValue(fileName)
 			payload = []byte(value)
 		}
