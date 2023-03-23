@@ -6,8 +6,6 @@ from pydantic import BaseModel
 
 from ..error import InvalidUserArgumentException
 
-MAXIMUM_LOCAL_DATA_SIZE = 1000000
-
 
 class LocalData(BaseModel):
     path: str
@@ -45,8 +43,6 @@ class LocalData(BaseModel):
                 "Given path file '%s' to local data does not exist." % file_path
             )
 
-        if os.path.getsize(file_path) > MAXIMUM_LOCAL_DATA_SIZE:
-            raise InvalidUserArgumentException("Currently, the maximum local data size is 1 MB.")
         if artifact_type == ArtifactType.TABLE and file_format is None:
             raise InvalidUserArgumentException(
                 "Specify format in order to use local data as TableArtifact."

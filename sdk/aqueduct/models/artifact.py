@@ -14,4 +14,4 @@ class ArtifactMetadata(BaseModel):
     from_local_data: bool = False
 
     class Config:
-        fields = {"explicitly_named": {"exclude": ...},"from_local_data": {"exclude": ...}}
+        fields = {"explicitly_named": {"exclude": ...}, "from_local_data": {"exclude": ...}}

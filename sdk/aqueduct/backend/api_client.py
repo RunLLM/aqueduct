@@ -10,6 +10,7 @@ from aqueduct.error import (
     ClientValidationError,
     InternalServerError,
     InvalidRequestError,
+    InvalidUserActionException,
     NoConnectedIntegrationsException,
     ResourceNotFoundError,
     UnprocessableEntityError,
@@ -39,6 +40,8 @@ from .response_models import (
     RegisterWorkflowResponse,
     SavedObjectUpdate,
 )
+
+MAX_REQUEST_BODY_SIZE = 32 << 20
 
 
 class APIClient:
@@ -403,6 +406,14 @@ class APIClient:
             "dag": dag.json(exclude_none=True),
         }
 
+        if len(body["dag"]) > MAX_REQUEST_BODY_SIZE and any(
+            artifact_metadata.from_local_data for artifact_metadata in list(dag.artifacts.values())
+        ):
+            raise InvalidUserActionException(
+                "Local Data after serialization are too large. Aqueduct uses json serialization. The maximum size of workflow with local data is %sMB, the current size is %sMB."
+                % (MAX_REQUEST_BODY_SIZE, len(body["dag"]))
+            )
+
         files: Dict[str, IO[Any]] = {}
         for op in dag.list_operators():
             file = op.file()
@@ -451,6 +462,14 @@ class APIClient:
         body = {
             "dag": dag.json(exclude_none=True),
         }
+
+        if len(body["dag"]) > MAX_REQUEST_BODY_SIZE and any(
+            artifact_metadata.from_local_data for artifact_metadata in list(dag.artifacts.values())
+        ):
+            raise InvalidUserActionException(
+                "Local Data after serialization are too large. Aqueduct uses json serialization. The maximum size of workflow with local data is %sMB, the current size is %sMB."
+                % (MAX_REQUEST_BODY_SIZE, len(body["dag"]))
+            )
 
         files: Dict[str, IO[Any]] = {}
         for op in dag.list_operators():

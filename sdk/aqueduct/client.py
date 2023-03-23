@@ -218,7 +218,6 @@ class Client:
         Returns:
             A parameter artifact.
         """
-        check_explicit_param_name(self._dag, name)
         if isinstance(default, LocalData):
             default = extract_val_from_local_data(default)
             return create_param_artifact(
