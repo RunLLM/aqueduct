@@ -805,7 +805,7 @@ func ValidatePrerequisites(
 
 		requiredVersion, _ := version.NewVersion("2.11.5")
 		if awsVersion.LessThan(requiredVersion) {
-			return http.StatusUnprocessableEntity, errors.Wrapf(err, "AWS CLI version 2.11.5 and above is required, but you got %s. Please update", awsVersion.String())
+			return http.StatusUnprocessableEntity, errors.Wrapf(err, "AWS CLI version 2.11.5 and above is required, but you got %s. Please update!", awsVersion.String())
 		}
 
 		if _, _, err := lib_utils.RunCmd("env", []string{"--version"}, "", false); err != nil {
