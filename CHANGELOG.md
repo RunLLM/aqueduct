@@ -9,7 +9,7 @@ Released on March 22, 2023.
     AWS account via the cloud integration feature. Once connected, you can use
     this cloud integration to ask Aqueduct to automatically create a Kubernetes
     cluster for you. See the documentation
-    [here](https://docs.aqueducthq.com/integrations/on-demand-resources/on-demand-aws-eks-clusters)
+    [here](https://docs.aqueducthq.com/integrations/on-demand-aws-eks-clusters)
     for how to create an operator that uses on-demand Kubernetes.
 
 ### Enhancements
