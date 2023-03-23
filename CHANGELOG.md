@@ -1,7 +1,7 @@
 # Changelog
 
 ## 0.2.7
-Released on March 21, 2023.
+Released on March 22, 2023.
 
 ### Key Features
 * [Beta] Aqueduct now has support for on-demand Kubernetes cluster creation and
