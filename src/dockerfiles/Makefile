@@ -1,5 +1,5 @@
 .DEFAULT_GOAL = all
-VERSION = 0.2.6
+VERSION = 0.2.7
 
 # By default, turn off the Makefile practice of printing each command before
 # you run it.

@@ -1,5 +1,53 @@
 # Changelog
 
+## 0.2.7
+Released on March 22, 2023.
+
+### Key Features
+* [Beta] Aqueduct now has support for on-demand Kubernetes cluster creation and
+    management on AWS. From the Aqueduct UI, you can connect Aqueduct to your
+    AWS account via the cloud integration feature. Once connected, you can use
+    this cloud integration to ask Aqueduct to automatically create a Kubernetes
+    cluster for you. See the documentation
+    [here](https://docs.aqueducthq.com/integrations/on-demand-resources/on-demand-aws-eks-clusters)
+    for how to create an operator that uses on-demand Kubernetes.
+
+### Enhancements
+* Improves error handling to return more detailed error messages from errors
+    occuring during execution.
+* Improves error handling by surfacing errors that occur outside of the
+    execution of an indvidual function as workflow-level errors; these errors
+    could occur for example if a compute system was misconfigured.
+* Improves handling of artifact name conflicts in the Python SDK. Explicitly
+    named artifacts (using either the `outputs` argument to the `@op` decorator
+    or the `.set_name()` function) will immediately flag and prevent conflicts
+    in artifact names. Automatically named artifacts will error if multiple
+    artifacts with the same name are included in a single `publish_flow` call.
+* Displays all compute engines associated with a workflow on the workflows list
+    page.
+* Improves efficiency when previewing large objects on the UI by retrieving a
+    sample of the data instead of the full data object and noting that the
+    displayed data is a sample.
+
+### Bugfixes
+* Fixes bug where an S3 or GCS bucket being used as the Aqueduct artifact store
+    could possibly be deleted from the UI.
+* Fixes bug that caused navigation buttons to be misaligned with other buttons
+    on the action bar on the workflow details page.
+* Fixes bug where navigating to the next most recent run on the workflow
+    details page would not work correctly.
+* Fixes bug pending or errored metric would show as "Unknown" on the UI instead
+    of with the correct status.
+* Fixes bug where warning-level checks were being shown as failures on the
+    workflows list page.
+* Fixes bug where certain DAG layouts would continue to show a layout with
+    overlapping and crossing edges.
+
+### Note
+* The parameterization of SQL queries may have unexpected behavior if you accidentally define a 
+    parameter with the same name twice. The parameter value will be chosen at random in such a case.
+    This bug will be fixed in the next release.
+
 ## 0.2.6
 
 Released on March 14, 2023.
