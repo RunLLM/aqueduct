@@ -8,3 +8,7 @@ class ArtifactMetadata(BaseModel):
     id: uuid.UUID
     name: str
     type: ArtifactType
+    from_local_data: bool = False
+
+    class Config:
+        fields = {"from_local_data": {"exclude": ...}}
