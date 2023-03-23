@@ -8,7 +8,7 @@ Released on March 22, 2023.
     management on AWS. From the Aqueduct UI, you can connect Aqueduct to your
     AWS account via the cloud integration feature. Once connected, you can use
     this cloud integration to ask Aqueduct to automatically create a Kubernetes
-    cluster for you. See the documentation [here]. **TODO: Add docs link.**
+    cluster for you. See the documentation [here](https://docs.aqueducthq.com/integrations/on-demand-resources/on-demand-aws-eks-clusters).
 
     **TODO: Add code snippet showing how to create an operator using on-demand
     k8s**
