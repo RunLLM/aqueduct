@@ -9,13 +9,13 @@ import (
 	"github.com/aqueducthq/aqueduct/config"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
@@ -193,7 +193,7 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 	emptyResp := EditIntegrationResponse{}
 
 	integrationObject, err := h.IntegrationRepo.Get(ctx, ID, h.Database)
-	if err == database.ErrNoRows {
+	if errors.Is(err, database.ErrNoRows()) {
 		return emptyResp, http.StatusBadRequest, err
 	}
 

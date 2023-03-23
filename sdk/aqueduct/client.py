@@ -9,7 +9,7 @@ import __main__ as main
 import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
-from aqueduct.artifacts.create import check_explicit_param_name, create_param_artifact
+from aqueduct.artifacts.create import create_param_artifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.backend.response_models import SavedObjectUpdate
 from aqueduct.constants.enums import (
@@ -45,20 +45,18 @@ from aqueduct.integrations.salesforce_integration import SalesforceIntegration
 from aqueduct.integrations.spark_integration import SparkIntegration
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
 from aqueduct.logger import logger
-from aqueduct.models.config import FlowConfig
 from aqueduct.models.dag import Metadata, RetentionPolicy
 from aqueduct.models.integration import Integration, IntegrationInfo
 from aqueduct.models.local_data import LocalData
 from aqueduct.models.operators import ParamSpec
 from aqueduct.utils.dag_deltas import (
-    RemoveOperatorDelta,
     SubgraphDAGDelta,
     apply_deltas_to_dag,
     validate_overwriting_parameters,
 )
 from aqueduct.utils.function_packaging import infer_requirements_from_env
-from aqueduct.utils.serialization import deserialize, extract_val_from_local_data
-from aqueduct.utils.type_inference import _base64_string_to_bytes, infer_artifact_type
+from aqueduct.utils.serialization import extract_val_from_local_data
+from aqueduct.utils.type_inference import infer_artifact_type
 from aqueduct.utils.utils import (
     construct_param_spec,
     find_flow_with_user_supplied_id_and_name,
@@ -224,60 +222,20 @@ class Client:
         if isinstance(default, LocalData):
             default = extract_val_from_local_data(default)
             return create_param_artifact(
-                dag=self._dag,
-                param_name=name,
-                default=default,
-                description=description,
+                self._dag,
+                name,
+                default,
+                description,
+                explicitly_named=True,
                 is_local_data=True,
             )
-        return create_param_artifact(self._dag, name, default, description)
-
-    def list_params(self) -> Dict[str, Any]:
-        """Lists all the currently tracked parameters.
-
-        Returns:
-            A dict where the keys are the existing parameter names and the values
-            are the default values.
-        """
-        param_ops = globals.__GLOBAL_DAG__.list_operators(filter_to=[OperatorType.PARAM])
-
-        param_dict = {}
-        for op in param_ops:
-            assert op.spec.param is not None
-            param_dict[op.name] = deserialize(
-                op.spec.param.serialization_type,
-                ArtifactType.UNTYPED,  # This argument is irrelevant, as long as it's not TUPLE.
-                _base64_string_to_bytes(op.spec.param.val),
-            )
-
-        return param_dict
-
-    def delete_param(self, name: str, force: bool = False) -> None:
-        """Deletes the given parameter from client's context.
-
-        Args:
-            name:
-                The name of the parameter to delete.
-            force:
-                If set, we will delete the parameter and any operators that it is dependency of.
-                Otherwise, we will error if it is a dependency of any operator.
-        """
-        param_op = self._dag.get_operator(with_name=name)
-        if param_op is None:
-            raise InvalidUserArgumentException(
-                "Unable to delete parameter %s. Not such parameter exists." % name
-            )
-
-        if not force:
-            assert len(param_op.outputs) == 1, "Parameter operators only have one output."
-            downstream_ops = self._dag.list_operators(on_artifact_id=param_op.outputs[0])
-            if len(downstream_ops) > 0:
-                raise InvalidUserActionException(
-                    "Cannot delete parameter %s because operator %s uses it. If you would like to "
-                    "delete the parameter and it's dependents anyways, set `force=True`."
-                )
-
-        apply_deltas_to_dag(self._dag, [RemoveOperatorDelta(param_op.id)])
+        return create_param_artifact(
+            self._dag,
+            name,
+            default,
+            description,
+            explicitly_named=True,
+        )
 
     def connect_integration(
         self,
@@ -297,11 +255,6 @@ class Client:
                 Either a dictionary or an IntegrationConnectConfig object that contains the
                 configuration credentials needed to connect.
         """
-        if service == ServiceType.AWS:
-            raise InvalidUserArgumentException(
-                "Support for service type AWS is not ready yet. Please stay tuned!"
-            )
-
         if service not in ServiceType:
             raise InvalidUserArgumentException(
                 "Service argument must match exactly one of the enum values in ServiceType (case-sensitive)."
@@ -438,7 +391,7 @@ class Client:
                 metadata=integration_info,
             )
         elif integration_info.service == ServiceType.AWS:
-            dynamic_k8s_integration_name = "%s:k8s" % name
+            dynamic_k8s_integration_name = "%s:aqueduct_ondemand_k8s" % name
             dynamic_k8s_integration_info = self._connected_integrations[
                 dynamic_k8s_integration_name
             ]
@@ -506,8 +459,8 @@ class Client:
         metrics: Optional[List[NumericArtifact]] = None,
         checks: Optional[List[BoolArtifact]] = None,
         k_latest_runs: Optional[int] = None,
-        config: Optional[FlowConfig] = None,
         source_flow: Optional[Union[Flow, str, uuid.UUID]] = None,
+        run_now: Optional[bool] = None,
         use_local: Optional[bool] = False,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
@@ -542,24 +495,20 @@ class Client:
                 to be computed. Additional artifacts may also be computed if they are upstream
                 dependencies.
             metrics:
-                All the metrics that you would like to compute. If not supplied, we will implicitly
-                include all metrics computed on artifacts in the flow.
+                All the metrics that you would like to compute. If not supplied, we include by default
+                all metrics computed on artifacts in the flow.
             checks:
-                All the checks that you would like to compute. If not supplied, we will implicitly
-                include all checks computed on artifacts in the flow.
+                All the checks that you would like to compute. If not supplied, we will by default
+                all checks computed on artifacts in the flow.
             k_latest_runs:
                 Number of most-recent runs of this flow that Aqueduct should keep. Runs outside of
                 this bound are garbage collected. Defaults to persisting all runs.
-            config:
-                This field will be deprecated. Please use `engine` and `k_latest_runs` instead.
-
-                An optional set of config fields for this flow.
-                - engine: Specify where this flow should run with one of your connected integrations.
-                - k_latest_runs: Number of most-recent runs of this flow that Aqueduct should store.
-                    Runs outside of this bound are deleted. Defaults to persisting all runs.
             source_flow:
                 Used to identify the source flow for this flow. This can be identified
                 via an object (Flow), name (str), or id (str or uuid).
+            run_now:
+                Used to specify if the flow should run immediately at publish time. The default
+                behavior is 'True'.
             use_local:
                 Must be set if any artifact in the flow is derived from local data.
 
@@ -582,16 +531,6 @@ class Client:
         if engine is not None and not isinstance(engine, str):
             raise InvalidUserArgumentException(
                 "`engine` parameter must be a string, got %s." % type(engine)
-            )
-
-        if config and config.engine:
-            raise InvalidUserArgumentException(
-                "The `config` parameter is deprecated. Please use `engine` instead."
-            )
-
-        if config is not None:
-            logger().warning(
-                "`config` is deprecated, please use the `engine` or `k_latest_runs` fields directly."
             )
 
         if artifacts is None or artifacts == []:
@@ -659,14 +598,6 @@ class Client:
 
         flow_schedule = generate_flow_schedule(schedule, source_flow_id)
 
-        k_latest_runs_from_flow_config = config.k_latest_runs if config else None
-        if k_latest_runs and k_latest_runs_from_flow_config:
-            raise InvalidUserArgumentException(
-                "Cannot set `k_latest_runs` in two places, pick one. Note that use of `FlowConfig` will be deprecated soon."
-            )
-        if k_latest_runs is None and k_latest_runs_from_flow_config:
-            k_latest_runs = k_latest_runs_from_flow_config
-
         if k_latest_runs is None:
             retention_policy = RetentionPolicy(k_latest_runs=-1)
         else:
@@ -705,8 +636,13 @@ class Client:
             ),
             publish_flow_engine_config=generate_engine_config(self._connected_integrations, engine),
         )
+        dag.validate_and_resolve_artifact_names()
 
         if dag.engine_config.type == RuntimeType.AIRFLOW:
+            if run_now is not None:
+                raise InvalidUserArgumentException(
+                    "run_now parameter is not supported for Airflow engine."
+                )
             # This is an Airflow workflow
             resp = globals.__GLOBAL_API_CLIENT__.register_airflow_workflow(dag)
             flow_id, airflow_file = resp.id, resp.file
@@ -732,7 +668,9 @@ class Client:
                     )
                 )
         else:
-            flow_id = globals.__GLOBAL_API_CLIENT__.register_workflow(dag).id
+            if run_now is None:
+                run_now = True
+            flow_id = globals.__GLOBAL_API_CLIENT__.register_workflow(dag, run_now).id
 
         url = generate_ui_url(
             globals.__GLOBAL_API_CLIENT__.construct_base_url(),
@@ -776,15 +714,15 @@ class Client:
         param_specs: Dict[str, ParamSpec] = {}
         if parameters is not None:
             flow = self.flow(flow_id)
-            runs = flow.list_runs(limit=1)
+            latest_run = flow.latest()
 
             # NOTE: this is a defense check against triggering runs that haven't run yet.
             # We may want to revisit this in the future if more nuanced constraints are necessary.
-            if len(runs) == 0:
+            if not latest_run:
                 raise InvalidUserActionException(
                     "Cannot trigger a workflow that hasn't already run at least once."
                 )
-            validate_overwriting_parameters(flow.latest()._dag, parameters)
+            validate_overwriting_parameters(latest_run._dag, parameters)
 
             for name, new_val in parameters.items():
                 artifact_type = infer_artifact_type(new_val)

@@ -26,33 +26,42 @@ export const getCheckStatusIcon = (
   check: CheckPreview,
   tooltipText?: string
 ): JSX.Element => {
-  let statusIcon = (
+  const successIcon = (
     <StatusIndicator
       status={ExecutionStatus.Succeeded}
       tooltipText={tooltipText}
     />
   );
 
+  const errorIcon = (
+    <StatusIndicator
+      status={ExecutionStatus.Failed}
+      tooltipText={tooltipText}
+    />
+  );
+
+  const warningIcon = (
+    <StatusIndicator
+      status={ExecutionStatus.Warning}
+      tooltipText={tooltipText}
+    />
+  );
+
+  let statusIcon = successIcon;
+
   switch (check.status) {
     case ExecutionStatus.Succeeded: {
-      // now we check the value to see if we should show warning or error icon
-      if (check.value === 'False') {
-        if (check.level === CheckLevel.Error) {
-          statusIcon = (
-            <StatusIndicator
-              status={ExecutionStatus.Failed}
-              tooltipText={tooltipText}
-            />
-          );
-        } else {
-          statusIcon = (
-            <StatusIndicator
-              status={ExecutionStatus.Warning}
-              tooltipText={tooltipText}
-            />
-          );
-        }
+      statusIcon = successIcon;
+      break;
+    }
+    case ExecutionStatus.Failed: {
+      if (check.level === CheckLevel.Error) {
+        statusIcon = errorIcon;
+      } else {
+        // CheckLevel.Warning
+        statusIcon = warningIcon;
       }
+
       break;
     }
     default: {

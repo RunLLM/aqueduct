@@ -9,6 +9,7 @@ import (
 	databricks_sdk "github.com/databricks/databricks-sdk-go"
 	"github.com/databricks/databricks-sdk-go/service/jobs"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -190,7 +191,7 @@ func (j *DatabricksJobManager) mapJobTypeToFile(spec Spec) (string, string, erro
 			return "", "", ErrInvalidJobSpec
 		}
 
-		functionSpec.FunctionExtractPath = defaultFunctionExtractPath
+		functionSpec.FunctionExtractPath = fmt.Sprintf("%s%s/", defaultFunctionExtractPath, uuid.New().String())
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
 			return "", "", errors.Wrap(err, "Unable to encode spec.")

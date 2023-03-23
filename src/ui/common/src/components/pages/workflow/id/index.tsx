@@ -18,6 +18,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ReactFlowProvider } from 'reactflow';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
+import { handleGetWorkflowHistory } from '../../../../handlers/getWorkflowHistory';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import {
   NodeType,
@@ -45,7 +46,7 @@ import DefaultLayout, {
   SidesheetWidth,
 } from '../../../layouts/default';
 import { Button } from '../../../primitives/Button.styles';
-import { Tab, Tabs } from '../../../Tabs/Tabs.styles';
+import { Tab, Tabs } from '../../../primitives/Tabs.styles';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowHeader, {
   WorkflowPageContentId,
@@ -161,11 +162,17 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         }
       }
 
-      if (workflowDagResultId !== workflow.selectedResult.id) {
+      if (
+        !!workflow.selectedResult &&
+        workflowDagResultId !== workflow.selectedResult.id
+      ) {
         // this is where selectedDag gets set
         dispatch(selectResultIdx(workflowDagResultIndex));
-        setSelectedResultIdx(workflowDagResultIndex);
       }
+
+      // This is outside the if statement because this is not automatically kept in sync with
+      // the Redux store.
+      setSelectedResultIdx(workflowDagResultIndex);
     }
   }, [
     workflow.dagResults,
@@ -333,6 +340,15 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     workflow.selectedResult?.id,
   ]);
 
+  useEffect(() => {
+    dispatch(
+      handleGetWorkflowHistory({
+        apiKey: user.apiKey,
+        workflowId: workflowId,
+      })
+    );
+  }, [user.apiKey]);
+
   // This workflow doesn't exist.
   if (workflow.loadingStatus.loading === LoadingStatusEnum.Failed) {
     navigate('/404');
@@ -366,42 +382,46 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       return 'Operator Node';
     }
   };
-
   const getNodeActionButton = () => {
     const buttonStyle = {
       fontSize: '20px',
       mr: 1,
     };
 
-    let navigationUrl;
+    let navigateButton;
     let includeExportOpButton = true;
 
-    if (currentNode.type === NodeType.TableArtifact) {
-      navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/artifact/${currentNode.id}`;
-      includeExportOpButton = false;
-    } else if (currentNode.type === NodeType.FunctionOp) {
-      navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/operator/${currentNode.id}`;
-    } else if (currentNode.type === NodeType.MetricOp) {
-      navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/metric/${currentNode.id}`;
-    } else if (currentNode.type === NodeType.CheckOp) {
-      navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/check/${currentNode.id}`;
+    if (!workflow.selectedResult) {
+      return null;
     } else {
-      return null; // This is a load or save operator.
-    }
+      let navigationUrl;
+      if (currentNode.type === NodeType.TableArtifact) {
+        navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/artifact/${currentNode.id}`;
+        includeExportOpButton = false;
+      } else if (currentNode.type === NodeType.FunctionOp) {
+        navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/operator/${currentNode.id}`;
+      } else if (currentNode.type === NodeType.MetricOp) {
+        navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/metric/${currentNode.id}`;
+      } else if (currentNode.type === NodeType.CheckOp) {
+        navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/check/${currentNode.id}`;
+      } else {
+        return null; // This is a load or save operator.
+      }
 
-    const navigateButton = (
-      <Button
-        variant="text"
-        sx={buttonStyle}
-        onClick={() => {
-          navigate(navigationUrl);
-        }}
-      >
-        <Tooltip title="Expand Details" arrow>
-          <FontAwesomeIcon icon={faUpRightAndDownLeftFromCenter} />
-        </Tooltip>
-      </Button>
-    );
+      navigateButton = (
+        <Button
+          variant="text"
+          sx={buttonStyle}
+          onClick={() => {
+            navigate(navigationUrl);
+          }}
+        >
+          <Tooltip title="Expand Details" arrow>
+            <FontAwesomeIcon icon={faUpRightAndDownLeftFromCenter} />
+          </Tooltip>
+        </Button>
+      );
+    }
 
     const operator = (workflow.selectedDag?.operators ?? {})[currentNode.id];
     const exportOpButton = (
@@ -424,7 +444,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
     return (
       <Box display="flex" alignItems="center" flex={1} mr={3}>
-        {/* This flex grown box right aligns the bwo buttons below.*/}
+        {/* This flex grown box right aligns the two buttons below.*/}
         <Box flex={1} />
         <Box display="flex" alignItems="center">
           {includeExportOpButton && exportOpButton}
@@ -471,6 +491,32 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         {workflow.selectedDag && (
           <Box marginBottom={1}>
             <WorkflowHeader workflowDag={workflow.selectedDag} />
+          </Box>
+        )}
+
+        {/*Show any workflow-level errors at the top of the workflow details page.*/}
+        {workflow.selectedResult?.exec_state?.error && (
+          <Box
+            sx={{
+              backgroundColor: theme.palette.red[100],
+              color: theme.palette.red[600],
+              p: 2,
+              paddingBottom: '16px',
+              paddingTop: '16px',
+              height: 'fit-content',
+
+              // When the sidesheet is not open, we want to align the right side with the
+              // dag viewer. This means taking off 100px (the width of the right control column)
+              // + 16px the left margin of the control column
+              // + 32px the additional width to the end of the screen.
+              // When the sidesheet is open, the control plane disappears, so we just need
+              // the last adjustment of 32px.
+              width: !drawerIsOpen ? `calc(100% - 148px)` : 'calc(100% - 32px)',
+            }}
+          >
+            <pre
+              style={{ margin: '0px' }}
+            >{`${workflow.selectedResult.exec_state.error.tip}\n\n${workflow.selectedResult.exec_state.error.context}`}</pre>
           </Box>
         )}
 
@@ -532,59 +578,61 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           {/* These controls are automatically hidden when the side sheet is open. */}
           {/* Tooltips don't show up if the child is disabled so we wrap the button with a Box.  */}
           <Box width="100px" ml={2} display={drawerIsOpen ? 'none' : 'block'}>
-            <Box
-              display="flex"
-              mb={2}
-              pb={2}
-              width="100%"
-              sx={{ borderBottom: `1px solid ${theme.palette.gray[600]}` }}
-            >
-              <Tooltip title="Previous Run" arrow>
-                <Box sx={{ px: 0, flex: 1 }}>
-                  <Button
-                    sx={{ fontSize: '28px' }}
-                    variant="text"
-                    onClick={() => {
-                      // This might be confusing, but index 0 is the most recent run, so incrementing the index goes
-                      // to an *earlier* run.
-                      dispatch(selectResultIdx(selectedResultIdx + 1));
-                      navigate(
-                        `?workflowDagResultId=${
-                          workflow.dagResults[selectedResultIdx + 1].id
-                        }`
-                      );
-                    }}
-                    disabled={
-                      selectedResultIdx === workflow.dagResults.length - 1
-                    }
-                  >
-                    <FontAwesomeIcon icon={faChevronLeft} />
-                  </Button>
-                </Box>
-              </Tooltip>
+            {workflow.dagResults && workflow.dagResults.length > 1 && (
+              <Box
+                display="flex"
+                mb={2}
+                pb={2}
+                width="100%"
+                sx={{ borderBottom: `1px solid ${theme.palette.gray[600]}` }}
+              >
+                <Tooltip title="Previous Run" arrow>
+                  <Box sx={{ px: 0, flex: 1 }}>
+                    <Button
+                      sx={{ fontSize: '28px', width: '100%' }}
+                      variant="text"
+                      onClick={() => {
+                        // This might be confusing, but index 0 is the most recent run, so incrementing the index goes
+                        // to an *earlier* run.
+                        dispatch(selectResultIdx(selectedResultIdx + 1));
+                        navigate(
+                          `?workflowDagResultId=${
+                            workflow.dagResults[selectedResultIdx + 1].id
+                          }`
+                        );
+                      }}
+                      disabled={
+                        selectedResultIdx === workflow.dagResults.length - 1
+                      }
+                    >
+                      <FontAwesomeIcon icon={faChevronLeft} />
+                    </Button>
+                  </Box>
+                </Tooltip>
 
-              <Tooltip title="Next Run" arrow>
-                <Box sx={{ px: 0, flex: 1 }}>
-                  <Button
-                    sx={{ fontSize: '28px' }}
-                    variant="text"
-                    onClick={() => {
-                      // This might be confusing, but index 0 is the most recent run, so decrementing the index goes
-                      // to a *newer* run.
-                      dispatch(selectResultIdx(selectedResultIdx - 1));
-                      navigate(
-                        `?workflowDagResultId=${
-                          workflow.dagResults[selectedResultIdx - 1].id
-                        }`
-                      );
-                    }}
-                    disabled={selectedResultIdx === 0}
-                  >
-                    <FontAwesomeIcon icon={faChevronRight} />
-                  </Button>
-                </Box>
-              </Tooltip>
-            </Box>
+                <Tooltip title="Next Run" arrow>
+                  <Box sx={{ px: 0, flex: 1 }}>
+                    <Button
+                      sx={{ fontSize: '28px', width: '100%' }}
+                      variant="text"
+                      onClick={() => {
+                        // This might be confusing, but index 0 is the most recent run, so decrementing the index goes
+                        // to a *newer* run.
+                        dispatch(selectResultIdx(selectedResultIdx - 1));
+                        navigate(
+                          `?workflowDagResultId=${
+                            workflow.dagResults[selectedResultIdx - 1].id
+                          }`
+                        );
+                      }}
+                      disabled={selectedResultIdx === 0}
+                    >
+                      <FontAwesomeIcon icon={faChevronRight} />
+                    </Button>
+                  </Box>
+                </Tooltip>
+              </Box>
+            )}
 
             <Box
               mb={2}
@@ -647,7 +695,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         >
           <Box
             width="100%"
-            sx={{ backgroundColor: theme.palette.gray['100'] }}
+            sx={{ backgroundColor: theme.palette.gray[100] }}
             height={`${drawerHeaderHeightInPx}px`}
           >
             <Box display="flex">
@@ -683,7 +731,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
               user,
               currentNode,
               workflowId,
-              workflow.selectedResult.id
+              selectedDag.id,
+              workflow.selectedResult?.id
             )}
           </Box>
         </Box>

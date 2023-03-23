@@ -44,6 +44,14 @@ type operatorReader interface {
 		DB database.Database,
 	) ([]models.Operator, error)
 
+	// GetEngineTypesByDagID retrieves all engine types keyed by DAG ID,
+	// based on the given list of DAG IDs.
+	GetEngineTypesMapByDagIDs(
+		ctx context.Context,
+		DagIDs []uuid.UUID,
+		DB database.Database,
+	) (map[uuid.UUID][]shared.EngineType, error)
+
 	// GetLoadOPsByWorkflowAndIntegration returns the Operators in a Workflow related to an Integration.
 	GetLoadOPsByWorkflowAndIntegration(
 		ctx context.Context,

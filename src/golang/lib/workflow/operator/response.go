@@ -29,13 +29,10 @@ type ResultResponse struct {
 	Result *RawResultResponse `json:"result"`
 }
 
-func NewResultResponseFromDbObjects(
-	dbOperator *models.Operator,
-	dbOperatorResult *models.OperatorResult,
-) *ResultResponse {
+func NewResponseFromDbObject(dbOperator *models.Operator) *Response {
 	// make a value copy of `Spec` field
 	spec := dbOperator.Spec
-	metadata := Response{
+	return &Response{
 		Id:          dbOperator.ID,
 		Name:        dbOperator.Name,
 		Description: dbOperator.Description,
@@ -43,9 +40,16 @@ func NewResultResponseFromDbObjects(
 		Inputs:      dbOperator.Inputs,
 		Outputs:     dbOperator.Outputs,
 	}
+}
+
+func NewResultResponseFromDbObjects(
+	dbOperator *models.Operator,
+	dbOperatorResult *models.OperatorResult,
+) *ResultResponse {
+	resp := NewResponseFromDbObject(dbOperator)
 
 	if dbOperatorResult == nil {
-		return &ResultResponse{Response: metadata}
+		return &ResultResponse{Response: *resp}
 	}
 
 	var execState *shared.ExecutionState = nil
@@ -56,7 +60,7 @@ func NewResultResponseFromDbObjects(
 	}
 
 	return &ResultResponse{
-		Response: metadata,
+		Response: *resp,
 		Result: &RawResultResponse{
 			Id:        dbOperatorResult.ID,
 			ExecState: execState,

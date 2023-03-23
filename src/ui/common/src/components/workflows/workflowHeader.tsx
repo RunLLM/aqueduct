@@ -16,7 +16,11 @@ import style from '../../styles/markdown.module.css';
 import { theme } from '../../styles/theme/theme';
 import { getNextUpdateTime } from '../../utils/cron';
 import { EngineType } from '../../utils/engine';
-import { WorkflowDag, WorkflowUpdateTrigger } from '../../utils/workflows';
+import {
+  getWorkflowEngineTypes,
+  WorkflowDag,
+  WorkflowUpdateTrigger,
+} from '../../utils/workflows';
 import EngineItem from '../pages/workflows/components/EngineItem';
 import VersionSelector from './version_selector';
 import { StatusIndicator } from './workflowStatus';
@@ -101,6 +105,8 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
     };
   }
 
+  const engines = getWorkflowEngineTypes(workflowDag);
+
   return (
     <Box>
       <Box
@@ -112,7 +118,9 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <StatusIndicator status={workflow.dagResults[0].status} />
+          {!!workflow.dagResults && workflow.dagResults.length > 0 && (
+            <StatusIndicator status={workflow.dagResults[0].status} />
+          )}
 
           <Typography
             variant="h5"
@@ -160,13 +168,17 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
           {/* Display the Workflow Engine. */}
           <Tooltip title={'Compute Engine(s)'} arrow>
             <Box display="flex" alignItems="center">
-              <Box mr={1}>
-                <FontAwesomeIcon
-                  icon={faMicrochip}
-                  color={theme.palette.gray[800]}
-                />
+              <FontAwesomeIcon
+                icon={faMicrochip}
+                color={theme.palette.gray[800]}
+              />
+              <Box display="flex" flexDirection="row">
+                {engines.map((engine) => (
+                  <Box ml={1} key={engine}>
+                    <EngineItem engine={engine} />
+                  </Box>
+                ))}
               </Box>
-              <EngineItem engine={workflowDag.engine_config.type} />
             </Box>
           </Tooltip>
           {/* Display the next workflow run. */}
@@ -204,7 +216,7 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
               ),
             }}
           >
-            {description ?? '*No description.*'}
+            {description === '' ? '*No description.*' : description}
           </Markdown>
         </Box>
       </Collapse>
