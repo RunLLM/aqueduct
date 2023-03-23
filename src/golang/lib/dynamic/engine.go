@@ -22,6 +22,8 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 type k8sClusterActionType string
@@ -184,6 +186,42 @@ func CreateOrUpdateK8sCluster(
 			true,
 		); err != nil {
 			return errors.Wrap(err, "Failed to update Kubeconfig")
+		}
+
+		config, err := clientcmd.LoadFromFile(engineIntegration.Config[shared.K8sKubeconfigPathKey])
+		if err != nil {
+			return errors.Wrap(err, "Failed to load Kubeconfig")
+		}
+
+		for _, authInfo := range config.AuthInfos {
+			if awsConfig.AccessKeyId != "" && awsConfig.SecretAccessKey != "" && awsConfig.Region != "" {
+				authInfo.Exec.Env = append(authInfo.Exec.Env, api.ExecEnvVar{
+					Name:  "AWS_ACCESS_KEY_ID",
+					Value: awsConfig.AccessKeyId,
+				})
+				authInfo.Exec.Env = append(authInfo.Exec.Env, api.ExecEnvVar{
+					Name:  "AWS_SECRET_ACCESS_KEY",
+					Value: awsConfig.SecretAccessKey,
+				})
+				authInfo.Exec.Env = append(authInfo.Exec.Env, api.ExecEnvVar{
+					Name:  "AWS_REGION",
+					Value: awsConfig.Region,
+				})
+			} else {
+				authInfo.Exec.Env = append(authInfo.Exec.Env, api.ExecEnvVar{
+					Name:  "AWS_CONFIG_FILE",
+					Value: awsConfig.ConfigFilePath,
+				})
+				authInfo.Exec.Env = append(authInfo.Exec.Env, api.ExecEnvVar{
+					Name:  "AWS_PROFILE",
+					Value: awsConfig.ConfigFileProfile,
+				})
+			}
+		}
+
+		err = clientcmd.WriteToFile(*config, engineIntegration.Config[shared.K8sKubeconfigPathKey])
+		if err != nil {
+			return errors.Wrap(err, "Failed to update Kubeconfig with environment variables")
 		}
 	}
 
