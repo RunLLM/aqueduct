@@ -380,20 +380,29 @@ func UpdateDAGResultMetadata(
 	if (execState.Status == shared.CanceledExecutionStatus || execState.Status == shared.FailedExecutionStatus || execState.Status == shared.SucceededExecutionStatus) {
 		// Cancel all running or pending nodes in the DAG.
 
-		// ARTIFACTS
 		// Get all artifact results for the DAG
 		artifactsForDAG, err := artifactResultRepo.GetByDAGResults(ctx, []uuid.UUID{dagResultID}, txn)
 		if err != nil {
 			return err
 		}
+
+		// Get all operator results for the DAG
+		operatorsForDAG, err := operatorResultRepo.GetByDAGResultBatch(ctx, []uuid.UUID{dagResultID}, txn)
+		if err != nil {
+			return err
+		}
+
+		// ARTIFACTS
 		// Filter by running or pending status
 		for _, artifact := range artifactsForDAG {
 			if (artifact.Status == shared.PendingExecutionStatus || artifact.Status == shared.RunningExecutionStatus) {
+				artifact.ExecState.Status = shared.CanceledExecutionStatus;
 				// Update status to cancelled
 				changes := map[string]interface{}{
 					models.ArtifactResultStatus: shared.CanceledExecutionStatus,
+					models.ArtifactResultExecState: &artifact.ExecState.ExecutionState,
 				}
-				_, err := artifactResultRepo.Update(ctx, artifact.ID, changes, txn)
+				result, err := artifactResultRepo.Update(ctx, artifact.ID, changes, txn)
 				if err != nil {
 					return err
 				}
@@ -401,19 +410,16 @@ func UpdateDAGResultMetadata(
 		}
 
 		// OPERATORS
-		// Get all operator results for the DAG
-		operatorsForDAG, err := operatorResultRepo.GetByDAGResultBatch(ctx, []uuid.UUID{dagResultID}, txn)
-		if err != nil {
-			return err
-		}
 		// Filter by running or pending status
 		for _, operator := range operatorsForDAG {
 			if (operator.Status == shared.PendingExecutionStatus || operator.Status == shared.RunningExecutionStatus) {
+				operator.ExecState.Status = shared.CanceledExecutionStatus;
 				// Update status to cancelled
 				changes := map[string]interface{}{
 					models.OperatorResultStatus: shared.CanceledExecutionStatus,
+					models.OperatorResultExecState: &operator.ExecState.ExecutionState,
 				}
-				_, err := operatorResultRepo.Update(ctx, operator.ID, changes, txn)
+				result, err := operatorResultRepo.Update(ctx, operator.ID, changes, txn)
 				if err != nil {
 					return err
 				}
