@@ -44,6 +44,11 @@ Released on March 22, 2023.
 * Fixes bug where certain DAG layouts would continue to show a layout with
     overlapping and crossing edges.
 
+### Note
+* The parameterization of SQL queries may have unexpected behavior if you accidentally define a 
+    parameter with the same name twice. The parameter value will be chosen at random in such a case.
+    This bug will be fixed in the next release.
+
 ## 0.2.6
 
 Released on March 14, 2023.
