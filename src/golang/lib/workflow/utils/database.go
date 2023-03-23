@@ -377,7 +377,7 @@ func UpdateDAGResultMetadata(
 	}
 
 	// Check if DAG has finished running.
-	if (execState.Status == shared.CanceledExecutionStatus || execState.Status == shared.FailedExecutionStatus || execState.Status == shared.SucceededExecutionStatus) {
+	if execState.Status == shared.CanceledExecutionStatus || execState.Status == shared.FailedExecutionStatus || execState.Status == shared.SucceededExecutionStatus {
 		// Cancel all running or pending nodes in the DAG.
 
 		// Get all artifact results for the DAG
@@ -395,14 +395,14 @@ func UpdateDAGResultMetadata(
 		// ARTIFACTS
 		// Filter by running or pending status
 		for _, artifact := range artifactsForDAG {
-			if (artifact.Status == shared.PendingExecutionStatus || artifact.Status == shared.RunningExecutionStatus) {
-				artifact.ExecState.Status = shared.CanceledExecutionStatus;
+			if artifact.Status == shared.PendingExecutionStatus || artifact.Status == shared.RunningExecutionStatus {
+				artifact.ExecState.Status = shared.CanceledExecutionStatus
 				// Update status to cancelled
 				changes := map[string]interface{}{
-					models.ArtifactResultStatus: shared.CanceledExecutionStatus,
+					models.ArtifactResultStatus:    shared.CanceledExecutionStatus,
 					models.ArtifactResultExecState: &artifact.ExecState.ExecutionState,
 				}
-				result, err := artifactResultRepo.Update(ctx, artifact.ID, changes, txn)
+				_, err := artifactResultRepo.Update(ctx, artifact.ID, changes, txn)
 				if err != nil {
 					return err
 				}
@@ -412,14 +412,14 @@ func UpdateDAGResultMetadata(
 		// OPERATORS
 		// Filter by running or pending status
 		for _, operator := range operatorsForDAG {
-			if (operator.Status == shared.PendingExecutionStatus || operator.Status == shared.RunningExecutionStatus) {
-				operator.ExecState.Status = shared.CanceledExecutionStatus;
+			if operator.Status == shared.PendingExecutionStatus || operator.Status == shared.RunningExecutionStatus {
+				operator.ExecState.Status = shared.CanceledExecutionStatus
 				// Update status to cancelled
 				changes := map[string]interface{}{
-					models.OperatorResultStatus: shared.CanceledExecutionStatus,
+					models.OperatorResultStatus:    shared.CanceledExecutionStatus,
 					models.OperatorResultExecState: &operator.ExecState.ExecutionState,
 				}
-				result, err := operatorResultRepo.Update(ctx, operator.ID, changes, txn)
+				_, err := operatorResultRepo.Update(ctx, operator.ID, changes, txn)
 				if err != nil {
 					return err
 				}
