@@ -14,9 +14,9 @@ Released on March 22, 2023.
 
 ### Enhancements
 * Improves error handling to return more detailed error messages from errors
-    occuring during execution.
+    occurring during execution.
 * Improves error handling by surfacing errors that occur outside of the
-    execution of an indvidual function as workflow-level errors; these errors
+    execution of an individual function as workflow-level errors; these errors
     could occur for example if a compute system was misconfigured.
 * Improves handling of artifact name conflicts in the Python SDK. Explicitly
     named artifacts (using either the `outputs` argument to the `@op` decorator
