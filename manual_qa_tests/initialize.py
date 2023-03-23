@@ -7,13 +7,13 @@ from wait_for_flows import wait_for_all_flows_to_complete
 from workflows import (
     dag_layout_test,
     march_madness_dag_layout_test,
-    # check_status_test,
-    # fail_bad_check,
-    # fail_bad_operator,
-    # no_run,
-    # succeed_complex,
-    # succeed_parameters,
-    # warning_bad_check,
+    check_status_test,
+    fail_bad_check,
+    fail_bad_operator,
+    no_run,
+    succeed_complex,
+    succeed_parameters,
+    warning_bad_check,
 )
 
 import aqueduct as aq
@@ -23,13 +23,13 @@ import aqueduct as aq
 WORKFLOW_PKGS = [
     dag_layout_test,
     march_madness_dag_layout_test,
-    # check_status_test,
-    # fail_bad_check,
-    # warning_bad_check,
-    # succeed_parameters,
-    # succeed_complex,
-    # fail_bad_operator,
-    # no_run,
+    check_status_test,
+    fail_bad_check,
+    warning_bad_check,
+    succeed_parameters,
+    succeed_complex,
+    fail_bad_operator,
+    no_run,
 ]
 
 DEMO_NOTEBOOKS_PATHS = [
