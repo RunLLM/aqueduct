@@ -144,10 +144,10 @@ jobs:
           - 5432:5432
 
       mysql:
-        image: mysql:latest
+        image: mysql:5.7
         env:
           MYSQL_ROOT_PASSWORD: secret
-          MYSQL_DB: aqueducttest
+          MYSQL_DATABASE: aqueducttest
         options: >-
           --health-cmd mysqladmin ping
           --health-interval 10s
