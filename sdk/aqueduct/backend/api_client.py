@@ -410,7 +410,7 @@ class APIClient:
             artifact_metadata.from_local_data for artifact_metadata in list(dag.artifacts.values())
         ):
             raise InvalidUserActionException(
-                "Local Data after serialization are too large. Aqueduct uses json serialization. The maximum size of workflow with local data is %sMB, the current size is %sMB."
+                "Local Data after serialization is too large. Aqueduct uses json serialization. The maximum size of workflow with local data is %sMB, the current size is %sMB."
                 % (MAX_REQUEST_BODY_SIZE, len(body["dag"]))
             )
 
@@ -467,7 +467,7 @@ class APIClient:
             artifact_metadata.from_local_data for artifact_metadata in list(dag.artifacts.values())
         ):
             raise InvalidUserActionException(
-                "Local Data after serialization are too large. Aqueduct uses json serialization. The maximum size of workflow with local data is %sMB, the current size is %sMB."
+                "Local Data after serialization is too large. Aqueduct uses json serialization. The maximum size of workflow with local data is %sMB, the current size is %sMB."
                 % (MAX_REQUEST_BODY_SIZE, len(body["dag"]))
             )
 
