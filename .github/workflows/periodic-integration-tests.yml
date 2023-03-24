@@ -147,7 +147,9 @@ jobs:
         image: mysql:5.7
         env:
           MYSQL_DATABASE: aqueducttest
-          MYSQL_ROOT_PASSWORD: secret
+          MYSQL_USER: user
+          MYSQL_PASSWORD: password
+          MYSQL_ROOT_PASSWORD: rootpassword
         ports:
           - 33306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
