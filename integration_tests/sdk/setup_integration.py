@@ -225,7 +225,7 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
                 _setup_external_sqlite_db(integration_config["database"])
 
             if integration_config["type"] == ServiceType.POSTGRES:
-                print("Postgres case hit!")
+                print("Postgres case hit!!")
                 _setup_postgres_db()
 
             client.connect_integration(
