@@ -166,6 +166,10 @@ def _setup_postgres_db():
     print("Finished installing Postgres Connector")
 
 
+def _setup_mysql_db():
+    print("Setting up MySQL database ...")
+
+
 def _setup_relational_data(client: Client, db: RelationalDBIntegration) -> None:
     # Find all the tables that already exist.
     existing_table_names = set(db.list_tables()["tablename"])
@@ -224,6 +228,10 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
             if integration_config["type"] == ServiceType.POSTGRES:
                 print("Postgres case hit!!")
                 _setup_postgres_db()
+
+            if integration_config["type"] == ServiceType.MYSQL:
+                print("MySQL case hit!")
+                _setup_mysql_db()
 
             client.connect_integration(
                 integration_name,

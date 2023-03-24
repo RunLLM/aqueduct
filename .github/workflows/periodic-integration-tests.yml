@@ -3,7 +3,7 @@ name: Periodic Integration Tests
 on:
   push:
     branches:
-      - "eng-2639-add-automated-periodic-testing-coverage"
+      - "eng-2640-add-automated-periodic-testing-coverage"
   schedule:
     - cron: "0 12 * * 1-5" # Run at 4AM PST on every weekday
   workflow_dispatch:
@@ -120,6 +120,20 @@ jobs:
         ports:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
+
+      mysql:
+        image: mysql
+        env:
+          MYSQL_ROOT_PASSWORD: secret
+          MYSQL_DB: aqueducttest
+        options: >-
+          --health-cmd mysqladmin ping
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 3306:3306
+
     steps:
       - uses: actions/checkout@v2
 
