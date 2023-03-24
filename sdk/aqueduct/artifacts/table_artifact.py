@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional, Union
 import pandas as pd
 from aqueduct.artifacts import bool_artifact, numeric_artifact
 from aqueduct.artifacts import preview as artifact_utils
+from aqueduct.artifacts import system_metric
 from aqueduct.artifacts._create import create_metric_or_check_artifact
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import (
@@ -48,7 +49,7 @@ from ruamel import yaml
 from aqueduct import globals
 
 
-class TableArtifact(BaseArtifact):
+class TableArtifact(BaseArtifact, system_metric.SystemMetricMixin):
     """This class represents a computed table within the flow's DAG.
 
     Any `@op`-annotated python function that returns a dataframe will
@@ -155,15 +156,6 @@ class TableArtifact(BaseArtifact):
             A list of available preset metrics on a table
         """
         return self.PRESET_METRIC_LIST
-
-    def list_system_metrics(self) -> List[str]:
-        """Returns a list of all system metrics available on the table artifact.
-        These system metrics can be set via the invoking the system_metric() method the table.
-
-        Returns:
-            A list of available system metrics on a table
-        """
-        return list(SYSTEM_METRICS_INFO.keys())
 
     def validate_with_expectation(
         self,
@@ -277,6 +269,8 @@ class TableArtifact(BaseArtifact):
         check_spec = OperatorSpec(check=CheckSpec(level=severity, function=function_spec))
         check_description = "Check table with built in expectations from great expectations"
         new_artifact = self._apply_operator_to_table(
+            self._dag,
+            self._artifact_id,
             check_spec,
             check_name,
             check_description,
@@ -352,6 +346,8 @@ class TableArtifact(BaseArtifact):
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
         new_artifact = self._apply_operator_to_table(
+            self._dag,
+            self._artifact_id,
             op_spec,
             metric_name,
             metric_description,
@@ -393,6 +389,8 @@ class TableArtifact(BaseArtifact):
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
         new_artifact = self._apply_operator_to_table(
+            self._dag,
+            self._artifact_id,
             op_spec,
             metric_name,
             metric_description,
@@ -439,6 +437,8 @@ class TableArtifact(BaseArtifact):
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
         new_artifact = self._apply_operator_to_table(
+            self._dag,
+            self._artifact_id,
             op_spec,
             metric_name,
             metric_description,
@@ -485,6 +485,8 @@ class TableArtifact(BaseArtifact):
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
         new_artifact = self._apply_operator_to_table(
+            self._dag,
+            self._artifact_id,
             op_spec,
             metric_name,
             metric_description,
@@ -531,6 +533,8 @@ class TableArtifact(BaseArtifact):
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
         new_artifact = self._apply_operator_to_table(
+            self._dag,
+            self._artifact_id,
             op_spec,
             metric_name,
             metric_description,
@@ -579,6 +583,8 @@ class TableArtifact(BaseArtifact):
         )
         op_spec = OperatorSpec(metric=MetricSpec(function=function_spec))
         new_artifact = self._apply_operator_to_table(
+            self._dag,
+            self._artifact_id,
             op_spec,
             metric_name,
             metric_description,
@@ -607,75 +613,8 @@ class TableArtifact(BaseArtifact):
         """
         if globals.__GLOBAL_CONFIG__.lazy:
             lazy = True
-        execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
 
-        operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)
-        system_metric_description, system_metric_unit = SYSTEM_METRICS_INFO[metric_name]
-        system_metric_name = "%s %s(%s) metric" % (operator.name, metric_name, system_metric_unit)
-        op_spec = OperatorSpec(system_metric=SystemMetricSpec(metric_name=metric_name))
-        new_artifact = self._apply_operator_to_table(
-            op_spec,
-            system_metric_name,
-            system_metric_description,
-            output_artifact_type_hint=ArtifactType.NUMERIC,
-            execution_mode=execution_mode,
-        )
-
-        assert isinstance(new_artifact, numeric_artifact.NumericArtifact)
-
-        return new_artifact
-
-    def _apply_operator_to_table(
-        self,
-        op_spec: OperatorSpec,
-        op_name: str,
-        op_description: str,
-        output_artifact_type_hint: ArtifactType,
-        execution_mode: ExecutionMode = ExecutionMode.EAGER,
-    ) -> Union[numeric_artifact.NumericArtifact, bool_artifact.BoolArtifact]:
-        assert (
-            output_artifact_type_hint == ArtifactType.NUMERIC
-            or output_artifact_type_hint == ArtifactType.BOOL
-        )
-
-        operator_id = generate_uuid()
-        output_artifact_id = generate_uuid()
-        artifact_name = default_artifact_name_from_op_name(op_name)
-
-        create_metric_or_check_artifact(
-            dag=self._dag,
-            op=Operator(
-                id=operator_id,
-                name=op_name,
-                description=op_description,
-                spec=op_spec,
-                inputs=[self._artifact_id],
-                outputs=[output_artifact_id],
-            ),
-            output_artifacts=[
-                ArtifactMetadata(
-                    id=output_artifact_id,
-                    name=artifact_name,
-                    type=output_artifact_type_hint,
-                    explicitly_named=False,
-                )
-            ],
-        )
-
-        if execution_mode == ExecutionMode.EAGER:
-            # Issue preview request since this is an eager execution.
-            artifact = artifact_utils.preview_artifact(self._dag, output_artifact_id)
-
-            assert isinstance(artifact, numeric_artifact.NumericArtifact) or isinstance(
-                artifact, bool_artifact.BoolArtifact
-            )
-            return artifact
-        else:
-            # We are in lazy mode.
-            if output_artifact_type_hint == ArtifactType.NUMERIC:
-                return numeric_artifact.NumericArtifact(self._dag, output_artifact_id)
-            else:
-                return bool_artifact.BoolArtifact(self._dag, output_artifact_id)
+        return self.system_metric_helper(self._dag, self._artifact_id, metric_name, lazy)
 
     def _get_table_name(self) -> str:
         return self._dag.must_get_artifact(self._artifact_id).name
