@@ -2,21 +2,17 @@ from __future__ import annotations
 
 import json
 import uuid
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
-from aqueduct.artifacts import bool_artifact, numeric_artifact
+from aqueduct.artifacts import numeric_artifact
 from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts import system_metric
-from aqueduct.artifacts._create import create_metric_or_check_artifact
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.constants.enums import ArtifactType, ExecutionMode, ExecutionStatus
+from aqueduct.constants.enums import ArtifactType, ExecutionStatus
 from aqueduct.constants.metrics import SYSTEM_METRICS_INFO
 from aqueduct.error import ArtifactNeverComputedException
-from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
-from aqueduct.models.operators import Operator, OperatorSpec, SystemMetricSpec
-from aqueduct.utils.naming import default_artifact_name_from_op_name
-from aqueduct.utils.utils import format_header_for_print, generate_uuid
+from aqueduct.utils.utils import format_header_for_print
 
 from aqueduct import globals
 

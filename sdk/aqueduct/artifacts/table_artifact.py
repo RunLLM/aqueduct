@@ -20,21 +20,15 @@ from aqueduct.constants.enums import (
 )
 from aqueduct.constants.metrics import SYSTEM_METRICS_INFO
 from aqueduct.error import AqueductError, ArtifactNeverComputedException
-from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
 from aqueduct.models.operators import (
     CheckSpec,
     FunctionSpec,
     MetricSpec,
-    Operator,
     OperatorSpec,
-    SystemMetricSpec,
 )
 from aqueduct.utils.dag_deltas import (
-    AddOperatorDelta,
-    DAGDelta,
     RemoveCheckOperatorDelta,
-    RemoveOperatorDelta,
     apply_deltas_to_dag,
 )
 from aqueduct.utils.describe import (
@@ -42,7 +36,6 @@ from aqueduct.utils.describe import (
     get_readable_description_for_metric,
 )
 from aqueduct.utils.function_packaging import serialize_function
-from aqueduct.utils.naming import default_artifact_name_from_op_name
 from aqueduct.utils.utils import format_header_for_print, generate_uuid
 from ruamel import yaml
 
