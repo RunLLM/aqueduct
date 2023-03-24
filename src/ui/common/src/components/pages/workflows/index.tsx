@@ -87,19 +87,30 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         });
       }
 
+      let containsWarning = false;
       let checks = [];
       if (workflow.checks) {
         checks = workflow.checks.map((check) => {
           const value =
             check.result?.exec_state.status === 'succeeded' ? 'True' : 'False';
+          const level = check.spec?.check?.level ?? CheckLevel.Warning;
+          const status =
+            check.result?.exec_state?.status ?? ExecutionStatus.Unknown;
+
+          if (
+            status === ExecutionStatus.Failed &&
+            level === CheckLevel.Warning
+          ) {
+            containsWarning = true;
+          }
 
           return {
             checkId: check.id,
             name: check.name,
-            level: check.spec?.check?.level ?? CheckLevel.Warning,
+            level,
             timestamp: check.result?.exec_state?.timestamps?.finished_at ?? '',
             value,
-            status: check.result?.exec_state?.status ?? ExecutionStatus.Unknown,
+            status,
           };
         });
       }
@@ -108,7 +119,8 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         name: {
           name: workflow.name,
           url: `/workflow/${workflow.id}`,
-          status: workflow.status,
+          // Show warning badge if there is a warning check
+          status: containsWarning ? ExecutionStatus.Warning : workflow.status,
         },
         last_run: new Date(workflow.last_run_at * 1000),
         engines,

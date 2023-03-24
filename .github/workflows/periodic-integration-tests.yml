@@ -8,7 +8,7 @@ on:
 jobs:
   run-k8s-tests:
     runs-on: ubuntu-latest-8-cores
-    timeout-minutes: 180
+    timeout-minutes: 90
     name: SDK Integration Tests against K8s Compute
     steps:
       - uses: actions/checkout@v2
@@ -52,25 +52,30 @@ jobs:
         working-directory: integration_tests/sdk
         run: pytest aqueduct_tests/ -rP -vv -n 4
 
-      - uses: actions/upload-artifact@v3
+      - name: Teardown K8s Cluster
         if: always()
+        uses: nick-fields/retry@v2
+        with:
+          max_attempts: 2
+          retry_on: error
+          timeout_minutes: 20
+          retry_wait_seconds: 300
+          command: |
+            cd integration_tests/sdk/compute/k8s
+            terraform destroy --auto-approve
+
+      # This directory is quite large, so we only upload it on failure.
+      - uses: actions/upload-artifact@v3
+        if: ${{ failure() }}
         with:
           name: Terraform State
           path: |
-            integration_tests/sdk/compute/k8s/*.tf
-            integration_tests/sdk/compute/k8s/*.tfstate
-            integration_tests/sdk/compute/k8s/*.tfstate.backup
+            integration_tests/sdk/compute/k8s/*
 
       - uses: ./.github/actions/upload-artifacts
         if: always()
         with:
           prefix: K8s Compute
-
-      - name: Teardown K8s Cluster
-        if: always()
-        working-directory: integration_tests/sdk/compute/k8s
-        run: terraform destroy --auto-approve
-
 
       # Sets it as an environmental variable.
       - name: Get the Slack ID for the current oncall

@@ -30,6 +30,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/google/uuid"
+	"github.com/hashicorp/go-version"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -792,8 +793,19 @@ func ValidatePrerequisites(
 			return http.StatusNotFound, errors.Wrap(err, "terraform executable not found. Please go to https://developer.hashicorp.com/terraform/downloads to install terraform")
 		}
 
-		if _, _, err := lib_utils.RunCmd("aws", []string{"--version"}, "", false); err != nil {
+		awsVersionString, _, err := lib_utils.RunCmd("aws", []string{"--version"}, "", false)
+		if err != nil {
 			return http.StatusNotFound, errors.Wrap(err, "AWS CLI executable not found. Please go to https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html to install AWS CLI")
+		}
+
+		awsVersion, err := version.NewVersion(strings.Split(strings.Split(awsVersionString, " ")[0], "/")[1])
+		if err != nil {
+			return http.StatusUnprocessableEntity, errors.Wrap(err, "Error parsing AWS CLI version")
+		}
+
+		requiredVersion, _ := version.NewVersion("2.11.5")
+		if awsVersion.LessThan(requiredVersion) {
+			return http.StatusUnprocessableEntity, errors.Wrapf(err, "AWS CLI version 2.11.5 and above is required, but you got %s. Please update!", awsVersion.String())
 		}
 
 		if _, _, err := lib_utils.RunCmd("env", []string{"--version"}, "", false); err != nil {

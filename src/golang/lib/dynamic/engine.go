@@ -22,6 +22,8 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
+	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 type k8sClusterActionType string
@@ -164,7 +166,7 @@ func CreateOrUpdateK8sCluster(
 		} else {
 			// If we enter here, it means the authentication mode is credential file.
 			envVars = []string{
-				fmt.Sprintf("AWS_CONFIG_FILE=%s", awsConfig.ConfigFilePath),
+				fmt.Sprintf("AWS_SHARED_CREDENTIALS_FILE=%s", awsConfig.ConfigFilePath),
 				fmt.Sprintf("AWS_PROFILE=%s", awsConfig.ConfigFileProfile),
 			}
 		}
@@ -184,6 +186,42 @@ func CreateOrUpdateK8sCluster(
 			true,
 		); err != nil {
 			return errors.Wrap(err, "Failed to update Kubeconfig")
+		}
+
+		config, err := clientcmd.LoadFromFile(engineIntegration.Config[shared.K8sKubeconfigPathKey])
+		if err != nil {
+			return errors.Wrap(err, "Failed to load Kubeconfig")
+		}
+
+		for _, authInfo := range config.AuthInfos {
+			if awsConfig.AccessKeyId != "" && awsConfig.SecretAccessKey != "" && awsConfig.Region != "" {
+				authInfo.Exec.Env = append(authInfo.Exec.Env, api.ExecEnvVar{
+					Name:  "AWS_ACCESS_KEY_ID",
+					Value: awsConfig.AccessKeyId,
+				})
+				authInfo.Exec.Env = append(authInfo.Exec.Env, api.ExecEnvVar{
+					Name:  "AWS_SECRET_ACCESS_KEY",
+					Value: awsConfig.SecretAccessKey,
+				})
+				authInfo.Exec.Env = append(authInfo.Exec.Env, api.ExecEnvVar{
+					Name:  "AWS_REGION",
+					Value: awsConfig.Region,
+				})
+			} else {
+				authInfo.Exec.Env = append(authInfo.Exec.Env, api.ExecEnvVar{
+					Name:  "AWS_SHARED_CREDENTIALS_FILE",
+					Value: awsConfig.ConfigFilePath,
+				})
+				authInfo.Exec.Env = append(authInfo.Exec.Env, api.ExecEnvVar{
+					Name:  "AWS_PROFILE",
+					Value: awsConfig.ConfigFileProfile,
+				})
+			}
+		}
+
+		err = clientcmd.WriteToFile(*config, engineIntegration.Config[shared.K8sKubeconfigPathKey])
+		if err != nil {
+			return errors.Wrap(err, "Failed to update Kubeconfig with environment variables")
 		}
 	}
 
@@ -507,7 +545,7 @@ func generateTerraformVariables(
 		region, stderr, err := lib_utils.RunCmd(
 			"env",
 			[]string{
-				fmt.Sprintf("AWS_CONFIG_FILE=%s", awsConfig.ConfigFilePath),
+				fmt.Sprintf("AWS_SHARED_CREDENTIALS_FILE=%s", awsConfig.ConfigFilePath),
 				fmt.Sprintf("AWS_PROFILE=%s", awsConfig.ConfigFileProfile),
 				"aws",
 				"configure",
@@ -567,9 +605,8 @@ func runTerraformApply(
 		engineIntegration.Config[shared.K8sTerraformPathKey],
 		true,
 	); err != nil {
-		errMsg := `Terraform apply failed. Note that if the error has to do with insufficient 
-		permissions, you will need to delete the cloud integration and re-connect with an account 
-		that has sufficient permissions.`
+		errMsg := "Terraform apply failed. Note that if the error has to do with insufficient " +
+			"permissions, you will need to add the missing permissions to your registered cloud account."
 		return errors.Wrap(err, errMsg)
 	}
 
