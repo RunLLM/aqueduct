@@ -1,7 +1,6 @@
 from typing import List
 
 from aqueduct.constants.enums import RelationalDBServices, ServiceType
-from aqueduct.constants.enums import ServiceType
 
 BIG_QUERY_TEST_DATASET = "integration_test"
 
@@ -22,4 +21,3 @@ def format_table_name(table_name: str, service: ServiceType) -> str:
         # BigQuery table names need to be prefixed with the dataset
         return BIG_QUERY_TEST_DATASET + "." + table_name
     return table_name
-

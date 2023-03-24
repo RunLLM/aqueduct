@@ -13,7 +13,7 @@ from aqueduct import LoadUpdateMode, metric, op
 
 from ..shared.demo_db import demo_db_tables
 from ..shared.naming import generate_table_name
-from ..shared.relational import SHORT_SENTIMENT_SQL_QUERY
+from ..shared.relational import SHORT_SENTIMENT_SQL_QUERY, format_table_name
 from ..shared.validation import check_artifact_was_computed
 from .relational_data_validator import RelationalDataValidator
 from .save import save
@@ -112,7 +112,7 @@ def test_sql_integration_failed_query(client, data_integration):
 
 
 def test_sql_integration_table_retrieval(client, data_integration):
-    df = data_integration.table(name="hotel_reviews")
+    df = data_integration.table(name=format_table_name("hotel_reviews", data_integration.type()))
     assert len(df) == 100
     assert list(df) == [
         "hotel_name",
@@ -131,11 +131,13 @@ def test_sql_integration_list_tables(client, data_integration):
 
 def test_sql_today_tag(client, data_integration):
     table_artifact_today = data_integration.sql(
-        query="select * from hotel_reviews where review_date = {{today}}"
+        query="select * from %s where review_date = {{today}}"
+        % format_table_name("hotel_reviews", data_integration.type())
     )
     assert table_artifact_today.get().empty
     table_artifact_not_today = data_integration.sql(
-        query="select * from hotel_reviews where review_date < {{today}}"
+        query="select * from %s where review_date < {{today}}"
+        % format_table_name("hotel_reviews", data_integration.type())
     )
     assert len(table_artifact_not_today.get()) == 100
 
