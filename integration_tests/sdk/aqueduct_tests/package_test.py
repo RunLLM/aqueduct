@@ -24,6 +24,5 @@ def test_package_methods():
 
     # notebook related
     aqueduct.get_apikey
-    aqueduct.infer_requirements
     aqueduct.global_config
     aqueduct.to_operator
