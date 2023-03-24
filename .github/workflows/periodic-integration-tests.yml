@@ -147,8 +147,6 @@ jobs:
         image: mysql:5.7
         env:
           MYSQL_DATABASE: aqueducttest
-          MYSQL_USER: root
-          MYSQL_PASSWORD: secret
           MYSQL_ROOT_PASSWORD: secret
         ports:
           - 33306:3306
