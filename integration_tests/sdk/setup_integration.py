@@ -166,8 +166,8 @@ def _setup_postgres_db():
     _execute_command(["aqueduct", "install", "postgres"])
     print("Setting up postgres docker container ...")
     # docker run --name aqueduct-postgres -e POSTGRES_PASSWORD=aqueduct -e POSTGRES_DB=aqueducttest -d -p 5432:5432 postgres
-    _execute_command(["docker", "run", "--name", "aqueduct-postgres", "-e", "POSTGRES_PASSWORD=aqueduct",
-                     "-e", "POSTGRES_DB=aqueducttest", "-d", "-p", "5432:5432", "postgres"])
+    # _execute_command(["docker", "run", "--name", "aqueduct-postgres", "-e", "POSTGRES_PASSWORD=aqueduct",
+    #                  "-e", "POSTGRES_DB=aqueducttest", "-d", "-p", "5432:5432", "postgres"])
     print("Finished setting up Postgres docker container")
 
 
