@@ -76,21 +76,41 @@ def _read_bytes_content(content: bytes) -> bytes:
     return content
 
 
-def _read_local_csv_table_content(path: str) -> Any:
+def _read_local_csv_table_content(path: str) -> pd.DataFrame:
     return pd.read_csv(path)
 
 
-def _read_local_json_table_content(path: str) -> Any:
+def _read_local_json_table_content(path: str) -> pd.DataFrame:
     return pd.read_json(path, orient="table")
 
 
-def _read_local_parquet_table_content(path: str) -> Any:
+def _read_local_parquet_table_content(path: str) -> pd.DataFrame:
     return pd.read_parquet(path)
 
 
-def _read_local_image_content(path: str) -> Any:
+def _read_local_image_content(path: str) -> Image.Image:
     return Image.open(path)
 
+def _read_local_json_content(path: str) -> Any:
+    with open(path, mode= 'rb',encoding=DEFAULT_ENCODING) as file:
+        return json.load(file.read())
+
+def _read_local_pickle_content(path: str) -> Any:
+    with open(path, mode='rb') as file:
+        return pickle.loads(file.read())
+    
+def _read_local_string_content(path: str) -> str:
+    with open(path, mode = 'r',encoding=DEFAULT_ENCODING) as file:
+        return file.read()
+
+
+def _read_local_bytes_content(path: bytes) -> bytes:
+    with open(path, mode = 'rb') as file:
+        return file.read()
+    
+def _read_local_tf_keras_model(path: bytes) -> Any:
+    from tensorflow import keras
+    return keras.saving.load_model(path)
 
 # Returns a tf.keras.Model type. We don't assume that every user has it installed,
 # so we return "Any" type.
@@ -128,6 +148,11 @@ __local_data_deserialization_function_mapping: Dict[str, Callable[[str], Any]] =
     LocalDataSerializationType.JSON_TABLE: _read_local_json_table_content,
     LocalDataSerializationType.PARQUET_TABLE: _read_local_parquet_table_content,
     LocalDataSerializationType.IMAGE: _read_local_image_content,
+    LocalDataSerializationType.JSON: _read_local_json_content,
+    LocalDataSerializationType.BYTES: _read_local_bytes_content,
+    LocalDataSerializationType.PICKLE: _read_local_pickle_content,
+    LocalDataSerializationType.STRING: _read_local_string_content,
+    LocalDataSerializationType.TF_KERAS: _read_local_tf_keras_model,
 }
 
 
@@ -361,23 +386,40 @@ def extract_val_from_local_data(val: LocalData) -> Any:
     local_data_format = _convert_to_local_data_table_format(val.format)
     if artifact_type == ArtifactType.TABLE:
         if local_data_format == LocalDataTableFormat.CSV:
-            deserialized_val = deserialize_from_local_data(
-                LocalDataSerializationType.CSV_TABLE, artifact_type, local_data_path
-            )
+            local_data_serialization_format = LocalDataSerializationType.CSV_TABLE
         elif local_data_format == LocalDataTableFormat.JSON:
-            deserialized_val = deserialize_from_local_data(
-                LocalDataSerializationType.JSON_TABLE, artifact_type, local_data_path
-            )
+            local_data_serialization_format = LocalDataSerializationType.JSON_TABLE
         elif local_data_format == LocalDataTableFormat.PARQUET:
-            deserialized_val = deserialize_from_local_data(
-                LocalDataSerializationType.PARQUET_TABLE, artifact_type, local_data_path
-            )
+            local_data_serialization_format = LocalDataSerializationType.PARQUET_TABLE
         else:
             raise Exception("Unsupported file format %s" % format)
     elif artifact_type == ArtifactType.IMAGE:
-        deserialized_val = deserialize_from_local_data(
-            LocalDataSerializationType.IMAGE, artifact_type, local_data_path
-        )
+        local_data_serialization_format = LocalDataSerializationType.IMAGE
+    elif artifact_type == ArtifactType.JSON or artifact_type == ArtifactType.STRING:
+        local_data_serialization_format = LocalDataSerializationType.STRING
+    elif artifact_type == ArtifactType.BYTES:
+        local_data_serialization_format = LocalDataSerializationType.BYTES
+    elif artifact_type == ArtifactType.BOOL or artifact_type == ArtifactType.NUMERIC:
+        local_data_serialization_format = LocalDataSerializationType.JSON
+    elif artifact_type == ArtifactType.PICKLABLE:
+        local_data_serialization_format = LocalDataSerializationType.PICKLE
+    elif (
+        artifact_type == ArtifactType.DICT
+        or artifact_type == ArtifactType.TUPLE
+        or artifact_type == ArtifactType.LIST
+    ):
+        try:
+            with open(local_data_path, mode= 'rb') as file:
+                json.dumps(file.read())
+            local_data_serialization_format = LocalDataSerializationType.JSON
+        except:
+            local_data_serialization_format = LocalDataSerializationType.PICKLE
+    elif artifact_type == ArtifactType.TF_KERAS:
+        local_data_serialization_format = LocalDataSerializationType.TF_KERAS
     else:
         raise Exception("Unsupported artifact type %s" % artifact_type)
+
+    deserialized_val = deserialize_from_local_data(
+        local_data_serialization_format, artifact_type, local_data_path
+    )
     return deserialized_val
