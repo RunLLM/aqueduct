@@ -343,7 +343,9 @@ func UpdateWorkflowDagToLatest(
 }
 
 // UpdateDAGResultMetadata updates the status and execution state of the
-// specified DAGResult. It also creates the relevant notification(s).
+// specified DAGResult. If the workflow run failed or was canceled, it 
+// also updates pending and running operator and artifact results to
+// canceled. It also creates the relevant notification(s).
 func UpdateDAGResultMetadata(
 	ctx context.Context,
 	dagResultID uuid.UUID,
@@ -377,7 +379,7 @@ func UpdateDAGResultMetadata(
 	}
 
 	// Check if DAG has finished running.
-	if execState.Status == shared.CanceledExecutionStatus || execState.Status == shared.FailedExecutionStatus || execState.Status == shared.SucceededExecutionStatus {
+	if execState.Status == shared.CanceledExecutionStatus || execState.Status == shared.FailedExecutionStatus {
 		// Cancel all running or pending nodes in the DAG.
 
 		// Get all artifact results for the DAG
