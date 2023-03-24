@@ -1,8 +1,11 @@
 name: Periodic Integration Tests
 
 on:
+  push:
+    branches:
+      - "eng-2639-add-automated-periodic-testing-coverage"
   schedule:
-     - cron: '0 12 * * 1-5' # Run at 4AM PST on every weekday
+    - cron: "0 12 * * 1-5" # Run at 4AM PST on every weekday
   workflow_dispatch:
 
 jobs:
@@ -90,10 +93,10 @@ jobs:
         uses: ravsamhq/notify-slack-action@v1
         with:
           status: ${{ job.status }}
-          notification_title: ''
-          message_format: '{emoji} *{workflow}* has {status_message}'
-          footer: '{run_url}'
-          notify_when: 'failure,warnings'
+          notification_title: ""
+          message_format: "{emoji} *{workflow}* has {status_message}"
+          footer: "{run_url}"
+          notify_when: "failure,warnings"
           mention_users: ${{ env.ONCALL_SLACK_MEMBER_ID }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
@@ -148,10 +151,10 @@ jobs:
         uses: ravsamhq/notify-slack-action@v1
         with:
           status: ${{ job.status }}
-          notification_title: ''
-          message_format: '{emoji} *{workflow}* has {status_message}'
-          footer: '{run_url}'
-          notify_when: 'failure,warnings'
+          notification_title: ""
+          message_format: "{emoji} *{workflow}* has {status_message}"
+          footer: "{run_url}"
+          notify_when: "failure,warnings"
           mention_users: ${{ env.ONCALL_SLACK_MEMBER_ID }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
