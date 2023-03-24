@@ -141,11 +141,13 @@ export type RelationalDBLoadParams = {
   table: string;
   update_mode: UpdateMode;
 };
+export const isRelationalDBLoadParams = (input: any): input is RelationalDBLoadParams => input.table !== undefined && input.update_mode !== undefined
 
 export type GoogleSheetsLoadParams = {
   filepath: string;
   save_mode: string;
 };
+export const isGoogleSheetsLoadParams = (input: any): input is GoogleSheetsLoadParams => input.filepath !== undefined && input.save_mode !== undefined
 
 export enum S3TableFormat {
   Csv = 'CSV',
@@ -157,6 +159,8 @@ export type S3LoadParams = {
   filepath: string;
   format: S3TableFormat;
 };
+export const isS3LoadParams = (input: any): input is S3LoadParams => input.filepath !== undefined && input.format !== undefined
+
 
 export type Load = {
   service: ServiceType;

@@ -14,6 +14,7 @@ import { theme } from '../../styles/theme/theme';
 import { OperatorType } from '../../utils/operators';
 import { CheckLevel } from '../../utils/operators';
 import DetailsPageHeader from '../pages/components/DetailsPageHeader';
+import SaveDetails from '../pages/components/SaveDetails';
 import ArtifactSummaryList from '../workflows/artifact/summaryList';
 
 type Props = {
@@ -97,8 +98,13 @@ const WithOperatorHeader: React.FC<Props> = ({
           )}
         </Box>
       )}
+      
       <Box width="100%" paddingTop={sideSheetMode ? '16px' : '24px'}>
         {checkLevelDisplay}
+      </Box>
+
+      <Box width="100%" paddingTop={sideSheetMode ? '16px' : '24px'}>
+        <SaveDetails parameters={operator?.spec?.load?.parameters} />
       </Box>
 
       <Box display="flex" width="100%">
