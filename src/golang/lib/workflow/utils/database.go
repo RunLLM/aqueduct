@@ -343,7 +343,7 @@ func UpdateWorkflowDagToLatest(
 }
 
 // UpdateDAGResultMetadata updates the status and execution state of the
-// specified DAGResult. If the workflow run failed or was canceled, it 
+// specified DAGResult. If the workflow run failed or was canceled, it
 // also updates pending and running operator and artifact results to
 // canceled. It also creates the relevant notification(s).
 func UpdateDAGResultMetadata(
