@@ -168,6 +168,7 @@ def _setup_postgres_db():
 
 def _setup_mysql_db():
     print("Setting up MySQL database ...")
+    _execute_command(["aqueduct", "install", "mysql"])
 
 
 def _setup_relational_data(client: Client, db: RelationalDBIntegration) -> None:
