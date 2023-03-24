@@ -162,6 +162,8 @@ def _setup_external_sqlite_db(path: str):
 
 def _setup_postgres_db():
     import os
+    print("Installing Aqueduct Postgres Connector")
+    _execute_command(["aqueduct", "install", "postgres"])
     print("Setting up postgres docker container ...")
     # docker run --name aqueduct-postgres -e POSTGRES_PASSWORD=aqueduct -e POSTGRES_DB=aqueducttest -d -p 5432:5432 postgres
     _execute_command(["docker", "run", "--name", "aqueduct-postgres", "-e", "POSTGRES_PASSWORD=aqueduct",
