@@ -208,6 +208,8 @@ func (eng *aqEngine) ExecuteWorkflow(
 			dagResult.ID,
 			execState,
 			eng.DAGResultRepo,
+			eng.ArtifactResultRepo,
+			eng.OperatorResultRepo,
 			eng.WorkflowRepo,
 			eng.NotificationRepo,
 			eng.Database,
