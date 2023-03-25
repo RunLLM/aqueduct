@@ -1,15 +1,19 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
-import { isGoogleSheetsLoadParams, isRelationalDBLoadParams, isS3LoadParams, LoadParameters } from '../../../utils/operators';
+
+import {
+  isGoogleSheetsLoadParams,
+  isRelationalDBLoadParams,
+  isS3LoadParams,
+  LoadParameters,
+} from '../../../utils/operators';
 
 type SaveDetailsProps = {
   parameters: LoadParameters;
 };
 
-export const SaveDetails: React.FC<SaveDetailsProps> = ({
-  parameters
-}) => {
+export const SaveDetails: React.FC<SaveDetailsProps> = ({ parameters }) => {
   let paramsDisplay = null;
   if (parameters) {
     if (isRelationalDBLoadParams(parameters)) {
@@ -86,7 +90,7 @@ export const SaveDetails: React.FC<SaveDetailsProps> = ({
 
         {paramsDisplay}
       </Box>
-    )
+    );
   }
 };
 

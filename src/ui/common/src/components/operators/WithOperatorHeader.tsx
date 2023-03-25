@@ -98,7 +98,7 @@ const WithOperatorHeader: React.FC<Props> = ({
           )}
         </Box>
       )}
-      
+
       <Box width="100%" paddingTop={sideSheetMode ? '16px' : '24px'}>
         {checkLevelDisplay}
       </Box>
