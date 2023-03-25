@@ -5,13 +5,13 @@ from aqueduct.constants.enums import NotificationLevel
 from notification import connect_slack
 from wait_for_flows import wait_for_all_flows_to_complete
 from workflows import (
-    dag_layout_test,
-    march_madness_dag_layout_test,
     check_status_test,
     fail_bad_check,
     fail_bad_operator,
     no_run,
     succeed_complex,
+    succeed_dag_layout_test,
+    succeed_march_madness_dag_layout_test,
     succeed_parameters,
     warning_bad_check,
 )
@@ -21,13 +21,13 @@ import aqueduct as aq
 # when adding new deployments, keep the order of `fail`, `warning`, and `succeed`
 # such that the UI would approximately show these workflows in reverse order.
 WORKFLOW_PKGS = [
-    dag_layout_test,
-    march_madness_dag_layout_test,
     check_status_test,
     fail_bad_check,
     warning_bad_check,
     succeed_parameters,
     succeed_complex,
+    succeed_dag_layout_test,
+    succeed_march_madness_dag_layout_test,
     fail_bad_operator,
     no_run,
 ]

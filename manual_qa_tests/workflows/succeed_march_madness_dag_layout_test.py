@@ -1,10 +1,11 @@
 import aqueduct as aq
-from aqueduct.decorator import op, check, metric
+from aqueduct.decorator import op
 
-NAME = "MarchMadnessDagLayoutTestWorkflow"
+NAME = "succeed_march_madness_dag_layout_test"
 DESCRIPTION = """
-    Mock of the March Madness Workflow to test out the DAG layout.
-    TODO: Add more information here on what to expect from the layout.
+    * This test is here so that we can check for DAG positioning issues and edge overlaps.
+    * Edges shuold not overlap or be minimized.
+    * Nodes should be evenly spaced out and not have extra distance for edges connecting an operator to a check/metric.
 """
 
 
@@ -20,10 +21,6 @@ def create_team_ranks(ranks):
 
 @op(requirements=[])
 def create_training_dataset(tourney_results, team_ranks, reg_season_stats):
-
-    def is_winning(wteam, lteam):
-        return 1
-
     return tourney_results
 
 
@@ -67,6 +64,7 @@ def deploy(client, integration_name):
         model, team_ranks_table, regular_season_stats_table, test_table)
 
     client.publish_flow(
-        name="MarchMadnessDagLayoutTestWorkflow",
+        name=NAME,
+        description=DESCRIPTION,
         artifacts=[submission_table]
     )
