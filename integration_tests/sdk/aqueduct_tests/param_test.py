@@ -242,8 +242,8 @@ def test_trigger_flow_with_different_param(client, flow_name, data_integration, 
 
 @pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
 def test_trigger_flow_with_different_sql_param(client, flow_name, data_integration, engine):
-    _ = client.create_param("table_name", default="hotel_reviews")
-    table_artifact = data_integration.sql(query="select * from {{ table_name}}")
+    table_name_param = client.create_param("table_name", default="hotel_reviews")
+    table_artifact = data_integration.sql(query="select * from $1", parameters=[table_name_param])
 
     flow = publish_flow_test(
         client,

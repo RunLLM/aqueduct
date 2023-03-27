@@ -37,7 +37,7 @@ def _create_successful_sql_artifacts(
     hotel_reviews_query = "SELECT * FROM hotel_reviews"
     chained_query = [
         "SELECT * FROM hotel_reviews",
-        "SELECT review, review_date FROM $ WHERE reviewer_nationality ='{{nationality}}'",
+        "SELECT review, review_date FROM $ WHERE reviewer_nationality = '$1'",
         "SELECT review FROM $",
     ]
 
@@ -50,8 +50,8 @@ def _create_successful_sql_artifacts(
     check_hotel_reviews_table_artifact(hotel_reviews_table)
 
     # Test a successful chain query.
-    client.create_param("nationality", default=" United Kingdom ")
-    chained_query_result = data_integration.sql(chained_query)
+    nationality = client.create_param("nationality", default=" United Kingdom ")
+    chained_query_result = data_integration.sql(chained_query, parameters=[nationality])
     expected_chained_query_result = data_integration.sql(
         "SELECT review FROM hotel_reviews WHERE reviewer_nationality=' United Kingdom '",
     )
@@ -140,52 +140,49 @@ def test_sql_today_tag(client, data_integration):
     assert len(table_artifact_not_today.get()) == 100
 
 
-# TODO(ENG-2674): Fix this test case.
-# def test_sql_query_with_parameter(client, data_integration):
-#     # Missing parameters.
-#     with pytest.raises(InvalidUserArgumentException):
-#         _ = data_integration.sql(query="select * from {{missing_parameter}}")
-#
-#     # The parameter is not a string type.
-#     _ = client.create_param("table_name", default=1234)
-#     with pytest.raises(InvalidUserArgumentException):
-#         _ = data_integration.sql(query="select * from {{ table_name }}")
-#
-#     client.create_param("table_name", default="hotel_reviews")
-#     table_artifact = data_integration.sql(query="select * from {{ table_name }}")
-#
-#     expected_table_artifact = data_integration.sql(query="select * from hotel_reviews")
-#     assert table_artifact.get().equals(expected_table_artifact.get())
-#     expected_table_artifact = data_integration.sql(query="select * from customer_activity")
-#     assert table_artifact.get(parameters={"table_name": "customer_activity"}).equals(
-#         expected_table_artifact.get()
-#     )
-#
-#     # Trigger the parameter with invalid values.
-#     with pytest.raises(InvalidUserArgumentException):
-#         _ = table_artifact.get(parameters={"table_name": ["this is the incorrect type"]})
-#     with pytest.raises(InvalidUserArgumentException):
-#         _ = table_artifact.get(parameters={"non-existant parameter": "blah"})
-#
+def test_sql_query_with_parameters(client, data_integration, flow_manager):
+    table_name = client.create_param("table name", default="hotel_reviews")
+    column_name = client.create_param("column name", default="reviewer_nationality")
+    column_value = client.create_param("column value", default=" United Kingdom ")
+    parameterized_output = data_integration.sql(
+        query="Select * from $1 where $2 = '$3'", parameters=[table_name, column_name, column_value]
+    )
+    expanded_output = data_integration.sql(
+        query="Select * from hotel_reviews where reviewer_nationality = ' United Kingdom '"
+    )
+    assert parameterized_output.get().equals(expanded_output.get())
 
+    # Test that .get(parameters={...}) works.
+    expanded_custom_output = data_integration.sql(
+        query="Select * from hotel_reviews where reviewer_nationality = ' Australia '"
+    )
+    assert parameterized_output.get(parameters={"column value": " Australia "}).equals(
+        expanded_custom_output.get()
+    )
 
-def test_sql_query_with_multiple_parameters(client, flow_manager, data_integration):
-    _ = client.create_param("table_name", default="hotel_reviews")
-    nationality = client.create_param(
-        "reviewer-nationality", default="United Kingdom"
-    )  # check that dashes work.
-    table_artifact = data_integration.sql(
-        query="select * from {{ table_name }} where reviewer_nationality='{{ reviewer-nationality }}' and review_date < {{ today}}"
+    # Test that publishing this sql query works.
+    parameterized_output.set_name("query output")
+    flow = flow_manager.publish_flow_test(
+        artifacts=parameterized_output,
     )
-    expected_table_artifact = data_integration.sql(
-        "select * from hotel_reviews where reviewer_nationality='United Kingdom' and review_date < {{today}}"
-    )
-    assert table_artifact.get().equals(expected_table_artifact.get())
-    expected_table_artifact = data_integration.sql(
-        "select * from hotel_reviews where reviewer_nationality='Australia' and review_date < {{today}}"
-    )
-    assert table_artifact.get(parameters={"reviewer-nationality": "Australia"}).equals(
-        expected_table_artifact.get()
+    flow_run = flow.latest()
+    flow_run.artifact("query output").get().equals(expanded_output.get())
+
+    # Test that client.trigger(parameters={...}) works.
+    flow_manager.trigger_flow_test(flow, parameters={"column value": " Australia "})
+    flow_run = flow.latest()
+    flow_run.artifact("query output").get().equals(expanded_custom_output.get())
+
+    # Check that `.get(parameters={...})` works even if the parameter is not directly fed into the operator
+    # that produces the artifact.
+    @metric
+    def count_reviews(df):
+        return len(df)
+
+    len_df = count_reviews(parameterized_output)
+    assert (
+        len_df.get(parameters={"column value": " Australia "})
+        == count_reviews(expanded_custom_output).get()
     )
 
     # Use the parameters in another operator.
@@ -193,32 +190,51 @@ def test_sql_query_with_multiple_parameters(client, flow_manager, data_integrati
     def noop(sql_output, param):
         return len(param)
 
-    result = noop(table_artifact, nationality)
-    assert result.get() == len(nationality.get())
-    assert result.get(parameters={"reviewer-nationality": "Australia"}) == len("Australia")
 
-    flow_manager.publish_flow_test(artifacts=[result])
+def test_sql_query_invalid_parameters(client, data_integration, flow_manager):
+    country = client.create_param("country", default=" United Kingdom ")
 
+    # Error if provided parameters are not all used.
+    with pytest.raises(
+        InvalidUserArgumentException,
+        match="Unused parameter `country`.* must contain the placeholder \$1",
+    ):
+        data_integration.sql(
+            query="Select * from hotel_reviews where reviewer_nationality = $2",
+            parameters=[country],
+        )
 
-def test_sql_query_user_vs_builtin_precedence(client, data_integration):
-    """If a user defines an expansion that collides with a built-in one, the user-defined one should take precedence."""
-    table_artifact = data_integration.sql(
-        query="select * from hotel_reviews where review_date > {{today}}"
+    # Error if we use the {{built-in tag}} syntax improperly.
+    with pytest.raises(
+        InvalidUserActionException, match="`something` is not a valid Aqueduct placeholder"
+    ):
+        data_integration.sql(query="Select * from {{something }}")
+
+    # Error if the parameter is not a string type.
+    num = client.create_param("num", default=1234)
+    with pytest.raises(InvalidUserArgumentException, match="must be defined as a string"):
+        data_integration.sql(
+            query="Select * from hotel_reviews where reviewer_nationality = '$1'", parameters=[num]
+        )
+
+    # Error if the parameter we attempt to set a custom parameter that is not a string.
+    output = data_integration.sql(
+        query="Select * from hotel_reviews where reviewer_nationality = '$1'", parameters=[country]
     )
-    builtin_result = table_artifact.get()
+    with pytest.raises(
+        InvalidUserArgumentException,
+        match="Parameter `country` is used by a sql query, so it must be a string type, not type int",
+    ):
+        output.get(parameters={"country": 1234})
 
-    datestring = "'2016-01-01'"
-    _ = client.create_param("today", datestring)
-    table_artifact = data_integration.sql(
-        query="select * from hotel_reviews where review_date > {{today}}"
+    flow = flow_manager.publish_flow_test(
+        artifacts=output,
     )
-    user_param_result = table_artifact.get()
-    assert not builtin_result.equals(user_param_result)
-
-    expected_table_artifact = data_integration.sql(
-        query="select * from hotel_reviews where review_date > %s" % datestring
-    )
-    assert user_param_result.equals(expected_table_artifact.get())
+    with pytest.raises(
+        InvalidUserArgumentException,
+        match="Parameter `country` is used by a sql query, so it must be a string type, not type int",
+    ):
+        client.trigger(flow.id(), parameters={"country": 1234})
 
 
 def test_sql_integration_save_wrong_data_type(client, flow_manager, data_integration):

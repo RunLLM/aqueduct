@@ -55,11 +55,6 @@ func newExtractOperator(
 func (eo *extractOperatorImpl) JobSpec() (returnedSpec job.Spec) {
 	spec := eo.dbOperator.Spec.Extract()
 
-	inputParamNames := make([]string, 0, len(eo.inputs))
-	for _, inputArtifact := range eo.inputs {
-		inputParamNames = append(inputParamNames, inputArtifact.Name())
-	}
-
 	inputContentPaths, inputMetadataPaths := unzipExecPathsToRawPaths(eo.inputExecPaths)
 	outputContentPaths, outputMetadataPaths := unzipExecPathsToRawPaths(eo.outputExecPaths)
 
@@ -70,7 +65,6 @@ func (eo *extractOperatorImpl) JobSpec() (returnedSpec job.Spec) {
 			*eo.storageConfig,
 			eo.metadataPath,
 		),
-		InputParamNames:    inputParamNames,
 		InputContentPaths:  inputContentPaths,
 		InputMetadataPaths: inputMetadataPaths,
 		ConnectorName:      spec.Service,
