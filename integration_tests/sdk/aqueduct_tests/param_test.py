@@ -15,7 +15,7 @@ from aqueduct.error import (
 from pandas._testing import assert_frame_equal
 from PIL import Image
 
-from aqueduct import LocalData, metric, op
+from aqueduct import metric, op
 
 from ..shared.data_objects import DataObject
 from ..shared.flow_helpers import publish_flow_test, trigger_flow_test
