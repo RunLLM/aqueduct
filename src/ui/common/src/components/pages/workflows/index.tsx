@@ -168,7 +168,10 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         value = (
           <Box>
             {value.map((v) => (
-              <ResourceItem key={v} resource={v} />
+              <Box m={1}>
+                {/* We need a box with margins so the chips have space between them. */}
+                <ResourceItem key={v} resource={v} />
+              </Box>
             ))}
           </Box>
         );

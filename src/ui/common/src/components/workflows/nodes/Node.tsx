@@ -99,19 +99,20 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
   }
 
   let backgroundColor;
-  if (status === ExecutionStatus.Succeeded) {
-    backgroundColor = theme.palette.green[100];
-  } else if (status === ExecutionStatus.Warning) {
-    backgroundColor = theme.palette.yellow[100];
-  } else if (status === ExecutionStatus.Failed) {
-    backgroundColor = theme.palette.red[100];
-  } else if (status === ExecutionStatus.Canceled) {
-    backgroundColor = theme.palette.gray[400];
-  } else if (status === ExecutionStatus.Pending) {
-    backgroundColor = theme.palette.gray[400];
-  } else {
-    // any other unhandled case or the status doesn't exists (e.g. when we are only rendering DAG.)
-    backgroundColor = theme.palette.gray[400];
+  switch (status) {
+    case ExecutionStatus.Succeeded: 
+      backgroundColor = theme.palette.green[100];
+      break;
+    case ExecutionStatus.Warning: 
+      backgroundColor = theme.palette.yellow[100];
+      break;
+    case ExecutionStatus.Failed: 
+      backgroundColor = theme.palette.red[100];
+      break;
+    case ExecutionStatus.Canceled: 
+    case ExecutionStatus.Pending: 
+    default:
+      backgroundColor = theme.palette.gray[400];
   }
 
   const statusIndicatorComponent = !!execState?.status && (
@@ -154,8 +155,6 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
           ? parseMetricResult(data.result, 3)
           : statusLabels[status]}
       </Typography>
-
-      <Box flex={1} />
     </Box>
   );
 
