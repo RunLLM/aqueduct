@@ -23,13 +23,13 @@ const ResourceItemBackgrounds = {
 
 const ResourceItemIcons = {
   [EngineType.Databricks]:
-    'https://www.striim.com/wp-content/uploads/2022/06/Databricks-logo-iconwhite.png',
+    'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/databricks-white.png',
   [EngineType.Spark]:
-    'https://cdn.icon-icons.com/icons2/2699/PNG/512/apache_spark_logo_icon_170560.png',
+    'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/spark-logo-only.png',
   [EngineType.K8s]:
-    'https://cncf-branding.netlify.app/img/projects/kubernetes/icon/white/kubernetes-icon-white.png',
+    'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/kubernetes-white.png',
   [EngineType.Lambda]:
-    'https://codster.io/wp-content/uploads/2020/08/lambda-y-1-300x300.png',
+    'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/lambda-white.png',
 };
 
 export const ResourceItem: React.FC<ResourceItemProps> = ({
