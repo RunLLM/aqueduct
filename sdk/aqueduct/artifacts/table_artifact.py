@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import uuid
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from aqueduct.artifacts import bool_artifact, numeric_artifact
@@ -18,7 +18,6 @@ from aqueduct.constants.enums import (
     FunctionType,
     OperatorType,
 )
-from aqueduct.constants.metrics import SYSTEM_METRICS_INFO
 from aqueduct.error import AqueductError, ArtifactNeverComputedException
 from aqueduct.models.dag import DAG
 from aqueduct.models.operators import CheckSpec, FunctionSpec, MetricSpec, OperatorSpec
@@ -28,7 +27,7 @@ from aqueduct.utils.describe import (
     get_readable_description_for_metric,
 )
 from aqueduct.utils.function_packaging import serialize_function
-from aqueduct.utils.utils import format_header_for_print, generate_uuid
+from aqueduct.utils.utils import format_header_for_print
 from ruamel import yaml
 
 from aqueduct import globals
