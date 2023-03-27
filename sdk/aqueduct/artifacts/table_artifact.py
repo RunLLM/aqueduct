@@ -21,16 +21,8 @@ from aqueduct.constants.enums import (
 from aqueduct.constants.metrics import SYSTEM_METRICS_INFO
 from aqueduct.error import AqueductError, ArtifactNeverComputedException
 from aqueduct.models.dag import DAG
-from aqueduct.models.operators import (
-    CheckSpec,
-    FunctionSpec,
-    MetricSpec,
-    OperatorSpec,
-)
-from aqueduct.utils.dag_deltas import (
-    RemoveCheckOperatorDelta,
-    apply_deltas_to_dag,
-)
+from aqueduct.models.operators import CheckSpec, FunctionSpec, MetricSpec, OperatorSpec
+from aqueduct.utils.dag_deltas import RemoveCheckOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.describe import (
     get_readable_description_for_check,
     get_readable_description_for_metric,

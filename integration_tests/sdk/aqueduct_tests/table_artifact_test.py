@@ -63,7 +63,9 @@ def test_system_max_memory_metric(client, data_integration):
     max_mem = max_mem_metric.get()
     assert max_mem > 10
 
+
 def test_system_runtime_metric_generic(client, data_integration):
+    global_config({"lazy": True})
     table = extract(data_integration, DataObject.SENTIMENT, lazy=True)
     timed_table = timed_function(table)
 
@@ -73,6 +75,7 @@ def test_system_runtime_metric_generic(client, data_integration):
 
 
 def test_system_max_memory_metric_generic(client, data_integration):
+    global_config({"lazy": True})
     table = extract(data_integration, DataObject.SENTIMENT, lazy=True)
     timed_table = mem_intensive_function(table)
 
