@@ -431,6 +431,7 @@ def test_local_table_data_parameter(client, flow_name, engine):
         data_param = client.create_param(
             name="data_" + extension,
             default="data/hotel_reviews." + extension,
+            use_local=True,
             as_type=ArtifactType.TABLE,
             format=extension,
         )
@@ -478,7 +479,9 @@ def test_invalid_local_data(client):
         InvalidUserArgumentException,
         match="Given path file 'data/hotel_reviews' to local data does not exist.",
     ):
-        client.create_param(name="data", default="data/hotel_reviews", as_type=ArtifactType.IMAGE)
+        client.create_param(
+            name="data", default="data/hotel_reviews", use_local=True, as_type=ArtifactType.IMAGE
+        )
 
     # Check that format is supplied when Artifact type is table
     with pytest.raises(
@@ -486,7 +489,10 @@ def test_invalid_local_data(client):
         match="Specify format in order to use local data as TableArtifact.",
     ):
         client.create_param(
-            name="data", default="data/hotel_reviews.json", as_type=ArtifactType.TABLE
+            name="data",
+            default="data/hotel_reviews.json",
+            use_local=True,
+            as_type=ArtifactType.TABLE,
         )
 
 
@@ -498,7 +504,7 @@ def test_local_image_data_parameter(client, flow_name, engine):
         return input
 
     image_param = client.create_param(
-        name="data", default="data/aqueduct.jpg", as_type=ArtifactType.IMAGE
+        name="data", default="data/aqueduct.jpg", use_local=True, as_type=ArtifactType.IMAGE
     )
 
     image_output = must_be_image(image_param)
