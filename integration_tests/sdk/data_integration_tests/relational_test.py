@@ -190,6 +190,7 @@ def test_sql_query_with_parameters(client, data_integration, flow_manager):
     def noop(sql_output, param):
         return len(param)
 
+
 def test_sql_query_invalid_parameters(client, data_integration, flow_manager):
     country = client.create_param("country", default=" United Kingdom ")
 
