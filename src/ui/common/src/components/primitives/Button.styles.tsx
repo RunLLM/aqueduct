@@ -13,13 +13,14 @@ const AqueductButton = styled(Button)(() => {
 
       // Theming for primary colored buttons.
       [`&.${buttonClasses.textPrimary}`]: {
-        color: theme.palette.blue[600],
+        color: theme.palette.blue[900],
         backgroundColor: 'white',
         '&:hover': {
           backgroundColor: theme.palette.gray[50],
         },
         [`&.${buttonClasses.disabled}`]: {
-          color: theme.palette.blue[200],
+          color: theme.palette.blue[900],
+          opacity: '0.5',
         },
       },
 
