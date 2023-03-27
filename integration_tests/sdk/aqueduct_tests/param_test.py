@@ -458,7 +458,10 @@ def test_local_table_data_parameter(client, flow_name, engine):
         output_artifact_list.append(output)
         input_data_list.append(input_df)
 
-    with pytest.raises(InvalidUserActionException, match="Cannot create a flow with local data."):
+    with pytest.raises(
+        InvalidUserActionException,
+        match="Cannot create a flow with local data. Consider setting `use_local` to True to publish a workflow with local data parameter(s).",
+    ):
         flow = client.publish_flow(
             name=flow_name(),
             artifacts=output_artifact_list,
