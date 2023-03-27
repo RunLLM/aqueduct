@@ -535,7 +535,7 @@ func setIntegrationAsStorage(
 
 		storageConfig = convertGCSIntegrationtoStorageConfig(&c)
 	default:
-		return errors.Newf("%v cannot be used as the metadata storage layer", svc)
+		return errors.Newf("%v cannot be used as the storage layer", svc)
 	}
 
 	currentStorageConfig := config.Storage()
