@@ -95,23 +95,3 @@ class GenericArtifact(BaseArtifact, system_metric.SystemMetricMixin):
         ]
         print(format_header_for_print(f"'{input_operator.name}' {self.type()} Artifact"))
         print(json.dumps(readable_dict, sort_keys=False, indent=4))
-
-    def system_metric(
-        self, metric_name: str, lazy: bool = False
-    ) -> numeric_artifact.NumericArtifact:
-        """Creates a system metric that represents the given system information from the previous @op that ran on the table.
-
-        Args:
-            metric_name:
-                name of system metric to retrieve for the table.
-                valid metrics are:
-                    runtime: runtime of previous @op func in seconds
-                    max_memory: maximum memory usage of previous @op func in Mb
-
-        Returns:
-            A numeric artifact that represents the requested system metric
-        """
-        if globals.__GLOBAL_CONFIG__.lazy:
-            lazy = True
-
-        return self.system_metric_helper(self._dag, self._artifact_id, metric_name, lazy)

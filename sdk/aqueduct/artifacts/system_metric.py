@@ -1,5 +1,5 @@
 import uuid
-from typing import List, Union
+from typing import Dict, Union
 
 from aqueduct.artifacts import bool_artifact, numeric_artifact
 from aqueduct.artifacts import preview as artifact_utils
@@ -12,34 +12,44 @@ from aqueduct.models.operators import Operator, OperatorSpec, SystemMetricSpec
 from aqueduct.utils.naming import default_artifact_name_from_op_name
 from aqueduct.utils.utils import generate_uuid
 
+from aqueduct import globals
+
 
 class SystemMetricMixin:
     """A mixin class for the system_metric function. This is used by GenericArtifacts and TableArtifacts."""
 
-    def list_system_metrics(self) -> List[str]:
-        """Returns a list of all system metrics available on the table artifact.
+    def list_system_metrics(self) -> Dict[str]:
+        """Returns a dictionary of all system metrics available on the table artifact.
         These system metrics can be set via the invoking the system_metric() method the table.
 
         Returns:
             A list of available system metrics on a table
         """
-        return list(SYSTEM_METRICS_INFO.keys())
+        return SYSTEM_METRICS_INFO
 
-    def system_metric_helper(
-        self, dag: DAG, artifact_id: uuid.UUID, metric_name: str, lazy: bool
+    def system_metric(
+        self, metric_name: str, lazy: bool = False
     ) -> numeric_artifact.NumericArtifact:
         """Creates a system metric that represents the given system information from the previous @op that ran on the table.
 
         Args:
             metric_name:
-                name of system metric to retrieve for the table.
-                valid metrics are:
+                Name of system metric to retrieve for the table.
+                Valid metrics are:
                     runtime: runtime of previous @op func in seconds
                     max_memory: maximum memory usage of previous @op func in Mb
 
         Returns:
             A numeric artifact that represents the requested system metric
         """
+        if globals.__GLOBAL_CONFIG__.lazy:
+            lazy = True
+
+        return self._system_metric_helper(self._dag, self._artifact_id, metric_name, lazy)
+
+    def _system_metric_helper(
+        self, dag: DAG, artifact_id: uuid.UUID, metric_name: str, lazy: bool
+    ) -> numeric_artifact.NumericArtifact:
         execution_mode = ExecutionMode.EAGER if not lazy else ExecutionMode.LAZY
 
         operator = dag.must_get_operator(with_output_artifact_id=artifact_id)

@@ -7,8 +7,8 @@ from typing import Any, DefaultDict, Dict, List, Optional, Union
 
 import __main__ as main
 import yaml
-from aqueduct.artifacts import bool_artifact
 from aqueduct.artifacts.base_artifact import BaseArtifact
+from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.create import create_param_artifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.backend.response_models import SavedObjectUpdate
@@ -444,7 +444,7 @@ class Client:
         engine: Optional[str] = None,
         artifacts: Optional[Union[BaseArtifact, List[BaseArtifact]]] = None,
         metrics: Optional[List[NumericArtifact]] = None,
-        checks: Optional[List[bool_artifact.BoolArtifact]] = None,
+        checks: Optional[List[BoolArtifact]] = None,
         k_latest_runs: Optional[int] = None,
         source_flow: Optional[Union[Flow, str, uuid.UUID]] = None,
         run_now: Optional[bool] = None,
