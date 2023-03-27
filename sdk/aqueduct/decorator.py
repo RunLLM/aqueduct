@@ -315,6 +315,8 @@ def _convert_input_arguments_to_parameters(
                 explicitly_named=False,
             )
 
+    # If the user has supplied fewer arguments than the function takes, we check if the remaining
+    # arguments have default values. If they do, we create implicit parameters for them.
     if len(artifacts) < len(fn_param_names):
         for idx in range(len(artifacts), len(fn_param_names)):
             default_value = func_params[fn_param_names[idx]].default

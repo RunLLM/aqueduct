@@ -116,6 +116,12 @@ def test_implicitly_created_parameter(client, flow_name, engine):
     def func(a, b="world"):
         return a + " " + b
 
+    with pytest.raises(
+        InvalidUserArgumentException,
+        match="No input was provided for argument `a` of function `func`, and no default value was specified.",
+    ):
+        result = func()
+
     result = func("hello")
     assert result.get() == "hello world"
 
