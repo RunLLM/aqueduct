@@ -460,7 +460,7 @@ def test_local_table_data_parameter(client, flow_name, engine):
 
     with pytest.raises(
         InvalidUserActionException,
-        match="Cannot create a flow with local data. Consider setting `use_local` to True to publish a workflow with local data parameter(s).",
+        match="Cannot create a flow with local data. Consider setting `use_local` to True to publish a workflow with local data parameters.",
     ):
         flow = client.publish_flow(
             name=flow_name(),

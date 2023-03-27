@@ -617,7 +617,7 @@ class Client:
             artifact_metadata.from_local_data for artifact_metadata in list(dag.artifacts.values())
         ):
             raise InvalidUserActionException(
-                "Cannot create a flow with local data. Consider setting `use_local` to True to publish a workflow with local data parameter(s)."
+                "Cannot create a flow with local data. Consider setting `use_local` to True to publish a workflow with local data parameters."
             )
         dag.metadata = Metadata(
             name=name,
