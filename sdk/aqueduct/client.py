@@ -54,9 +54,10 @@ from aqueduct.utils.dag_deltas import (
     apply_deltas_to_dag,
     validate_overwriting_parameters,
 )
-from aqueduct.utils.function_packaging import infer_requirements_from_env
-from aqueduct.utils.serialization import extract_val_from_local_data
-from aqueduct.utils.type_inference import infer_artifact_type
+
+from aqueduct.utils.serialization import deserialize
+from aqueduct.utils.type_inference import _base64_string_to_bytes, infer_artifact_type
+
 from aqueduct.utils.utils import (
     construct_param_spec,
     find_flow_with_user_supplied_id_and_name,
@@ -118,15 +119,6 @@ def get_apikey() -> str:
             exit(1)
 
 
-def infer_requirements() -> List[str]:
-    """Obtains the list of pip requirements specifiers from the current python environment using `pip freeze`.
-
-    Returns:
-        A list, for example, ["transformers==4.21.0", "numpy==1.22.4"].
-    """
-    return infer_requirements_from_env()
-
-
 class Client:
     """This class allows users to interact with flows on their Aqueduct cluster."""
 
@@ -170,18 +162,6 @@ class Client:
         self._in_notebook_or_console_context = (not hasattr(main, "__file__")) and (
             not "PYTEST_CURRENT_TEST" in os.environ
         )
-
-        # Check if "@ file" in pip freeze requirements and warn user.
-        if not "localhost" in aqueduct_address:
-            skipped_packages = []
-            for requirement in infer_requirements():
-                if "@ file" in requirement:
-                    skipped_packages.append(requirement.split(" ")[0])
-            if len(skipped_packages) > 0:
-                warnings.warn(
-                    "Your local Python environment contains packages installed from the local file system. The following packages won't be installed when running your workflow: "
-                    + ", ".join(skipped_packages)
-                )
 
     def github(self, repo: str, branch: str = "") -> Github:
         """Retrieves a Github object connecting to specified repos and branch.

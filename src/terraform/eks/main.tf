@@ -29,7 +29,7 @@ data "aws_availability_zones" "available" {}
 locals {
   name   = var.cluster_name
 
-  cluster_version = "1.24"
+  cluster_version = "1.25"
 
   vpc_cidr = "10.0.0.0/16"
   azs      = slice(data.aws_availability_zones.available.names, 0, min(3, length(data.aws_availability_zones.available.names)))
