@@ -23,12 +23,18 @@ def _convert_to_local_data_table_format(format: Optional[str]) -> Optional[Local
     return format_enum
 
 
-def validate_local_data(path: str, artifact_type: ArtifactType, format: str) -> None:
+def validate_local_data(
+    path: str, artifact_type: Optional[ArtifactType], format: Optional[str]
+) -> None:
     """Validate Local Data on its file path and types."""
     file_path = path
     artifact_type = artifact_type
     file_format = format
 
+    if artifact_type is None:
+        raise InvalidUserArgumentException(
+            "Specify artifact type in `as_type` field in `create_param` to use local data. "
+        )
     if not os.path.isfile(file_path):
         raise InvalidUserArgumentException(
             "Given path file '%s' to local data does not exist." % file_path
