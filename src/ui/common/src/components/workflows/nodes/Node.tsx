@@ -100,17 +100,17 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
 
   let backgroundColor;
   switch (status) {
-    case ExecutionStatus.Succeeded: 
+    case ExecutionStatus.Succeeded:
       backgroundColor = theme.palette.green[100];
       break;
-    case ExecutionStatus.Warning: 
+    case ExecutionStatus.Warning:
       backgroundColor = theme.palette.yellow[100];
       break;
-    case ExecutionStatus.Failed: 
+    case ExecutionStatus.Failed:
       backgroundColor = theme.palette.red[100];
       break;
-    case ExecutionStatus.Canceled: 
-    case ExecutionStatus.Pending: 
+    case ExecutionStatus.Canceled:
+    case ExecutionStatus.Pending:
     default:
       backgroundColor = theme.palette.gray[400];
   }
