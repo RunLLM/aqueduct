@@ -10,11 +10,7 @@ from aqueduct.tests.utils import (
     default_artifact,
     generate_uuids,
 )
-from aqueduct.utils.dag_deltas import (
-    AddOrReplaceOperatorDelta,
-    SubgraphDAGDelta,
-    apply_deltas_to_dag,
-)
+from aqueduct.utils.dag_deltas import AddOperatorDelta, SubgraphDAGDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import generate_uuid
 
 
@@ -81,40 +77,18 @@ def test_add_and_replace_operator_delta():
     apply_deltas_to_dag(
         dag,
         deltas=[
-            AddOrReplaceOperatorDelta(extract_op, output_artifacts=[extract_artifact]),
-            AddOrReplaceOperatorDelta(fn_op_0, output_artifacts=[fn_artifact_0]),
-            AddOrReplaceOperatorDelta(fn_op_1, output_artifacts=[fn_artifact_1]),
-            AddOrReplaceOperatorDelta(fn_op_2, output_artifacts=[fn_artifact_2]),
-            AddOrReplaceOperatorDelta(load_fn_1, output_artifacts=[]),
-            AddOrReplaceOperatorDelta(load_fn_2, output_artifacts=[]),
+            AddOperatorDelta(extract_op, output_artifacts=[extract_artifact]),
+            AddOperatorDelta(fn_op_0, output_artifacts=[fn_artifact_0]),
+            AddOperatorDelta(fn_op_1, output_artifacts=[fn_artifact_1]),
+            AddOperatorDelta(fn_op_2, output_artifacts=[fn_artifact_2]),
+            AddOperatorDelta(load_fn_1, output_artifacts=[]),
+            AddOperatorDelta(load_fn_2, output_artifacts=[]),
         ],
     )
 
     assert dag == _construct_dag(
         operators=[extract_op, fn_op_0, fn_op_1, fn_op_2, load_fn_1, load_fn_2],
         artifacts=[extract_artifact, fn_artifact_0, fn_artifact_1, fn_artifact_2],
-    )
-
-    # Try replacing Function 2.
-    fn_op_2_replacement_artifact_id = generate_uuid()
-    fn_op_2_replacement = _construct_operator(
-        id=generate_uuid(),
-        name="Function 2",
-        operator_type=OperatorType.FUNCTION,
-        inputs=[fn_artifact_ids[0]],
-        outputs=[fn_op_2_replacement_artifact_id],
-    )
-    fn_artifact_3 = default_artifact(
-        id=fn_op_2_replacement_artifact_id, name="Function 2 Replacement Artifact"
-    )
-
-    apply_deltas_to_dag(
-        dag,
-        deltas=[AddOrReplaceOperatorDelta(fn_op_2_replacement, output_artifacts=[fn_artifact_3])],
-    )
-    assert dag == _construct_dag(
-        operators=[extract_op, fn_op_0, fn_op_1, fn_op_2_replacement, load_fn_1],
-        artifacts=[extract_artifact, fn_artifact_0, fn_artifact_1, fn_artifact_3],
     )
 
 

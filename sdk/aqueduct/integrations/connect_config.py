@@ -114,17 +114,20 @@ class AthenaConfig(BaseConnectionConfig):
 
 
 class SnowflakeConfig(BaseConnectionConfig):
+    """Must be dumped to JSON with the `exclude_none` and `by_alias` flags."""
+
     username: str
     password: str
     account_identifier: str
     database: str
     warehouse: str
     db_schema: Optional[str] = Field("public", alias="schema")  # schema is a Pydantic keyword
-    role: Optional[str] = None
+    role: Optional[str] = None  # we must exclude this field if None when dumping to json.
 
     class Config:
         # Ensures that Pydantic parses JSON keys named "schema" or "db_schema" to
-        # the `db_schema` field
+        # the `db_schema` field. This is only for converting dict -> pydantic object.
+        # When dumping this config to a dictionary, be sure to use `SnowflakeConfig.json(by_alias=True)`.
         allow_population_by_field_name = True
 
 
@@ -147,16 +150,60 @@ class SlackConfig(BaseConnectionConfig):
     enabled: bool
 
 
-class AWSConfig(BaseConnectionConfig):
-    access_key_id: str
-    secret_access_key: str
-
-
 class _SlackConfigWithStringField(BaseConnectionConfig):
     token: str
     channels_serialized: str
     level: str
     enabled: str
+
+
+class DynamicK8sConfig(BaseConnectionConfig):
+    # How long (in seconds) does the cluster need to remain idle before it is deleted.
+    keepalive: Optional[Union[str, int]]
+    # The EC2 instance type of the CPU node group. See https://aws.amazon.com/ec2/instance-types/
+    # for the node types available.
+    cpu_node_type: Optional[str]
+    # The EC2 instance type of the GPU node group. See https://aws.amazon.com/ec2/instance-types/
+    # for the node types available.
+    gpu_node_type: Optional[str]
+    # Minimum number of nodes in the CPU node group. The cluster autoscaler cannot scale below this number.
+    # This is also the initial number of CPU nodes in the cluster.
+    min_cpu_node: Optional[Union[str, int]]
+    # Maximum number of nodes in the CPU node group. The cluster autoscaler cannot scale above this number.
+    max_cpu_node: Optional[Union[str, int]]
+    # Minimum number of nodes in the GPU node group. The cluster autoscaler cannot scale below this number.
+    # This is also the initial number of GPU nodes in the cluster.
+    min_gpu_node: Optional[Union[str, int]]
+    # Maximum number of nodes in the GPU node group. The cluster autoscaler cannot scale above this number.
+    max_gpu_node: Optional[Union[str, int]]
+
+    # This converts all int fields to string during json serialization. We need to do this becasue our
+    # backend assumes all config fields must be string.
+    class Config:
+        json_encoders = {int: str}
+
+
+class AWSConfig(BaseConnectionConfig):
+    # Either 1) all of access_key_id, secret_access_key, region, or 2) both config_file_path and
+    # config_file_profile need to be specified. Any other cases will be rejected by the server's
+    # config validation process.
+    access_key_id: str = ""
+    secret_access_key: str = ""
+    region: str = ""
+    config_file_path: str = ""
+    config_file_profile: str = ""
+    k8s: Optional[DynamicK8sConfig]
+
+
+class _AWSConfigWithSerializedConfig(BaseConnectionConfig):
+    access_key_id: str = ""
+    secret_access_key: str = ""
+    region: str = ""
+    config_file_path: str = ""
+    config_file_profile: str = ""
+    k8s_serialized: Optional[
+        str
+    ]  # this is a json-serialized string of AWSConfig.k8s, which is of type DynamicK8sConfig
 
 
 class EmailConfig(BaseConnectionConfig):
@@ -183,6 +230,14 @@ class SparkConfig(BaseConnectionConfig):
     livy_server_url: str
 
 
+class K8sConfig(BaseConnectionConfig):
+    kubeconfig_path: str
+    cluster_name: str
+    use_same_cluster: str = "false"
+    dynamic: str = "false"
+    cloud_integration_id: str = ""
+
+
 IntegrationConfig = Union[
     BigQueryConfig,
     EmailConfig,
@@ -197,13 +252,15 @@ IntegrationConfig = Union[
     SQLiteConfig,
     SlackConfig,
     AWSConfig,
+    _AWSConfigWithSerializedConfig,
     _SlackConfigWithStringField,
     SparkConfig,
+    K8sConfig,
 ]
 
 
 def convert_dict_to_integration_connect_config(
-    service: ServiceType, config_dict: Dict[str, str]
+    service: Union[str, ServiceType], config_dict: Dict[str, str]
 ) -> IntegrationConfig:
     if service == ServiceType.BIGQUERY:
         return BigQueryConfig(**config_dict)
@@ -233,11 +290,13 @@ def convert_dict_to_integration_connect_config(
         return SparkConfig(**config_dict)
     elif service == ServiceType.AWS:
         return AWSConfig(**config_dict)
+    elif service == ServiceType.K8S:
+        return K8sConfig(**config_dict)
     raise InternalAqueductError("Unexpected Service Type: %s" % service)
 
 
 def prepare_integration_config(
-    service: ServiceType, config: IntegrationConfig
+    service: Union[str, ServiceType], config: IntegrationConfig
 ) -> IntegrationConfig:
     """Prepares the IntegrationConfig object to be sent to the backend
     as part of a request to connect a new integration.
@@ -250,6 +309,9 @@ def prepare_integration_config(
 
     if service == ServiceType.EMAIL:
         return _prepare_email_config(cast(EmailConfig, config))
+
+    if service == ServiceType.AWS:
+        return _prepare_aws_config(cast(AWSConfig, config))
 
     return config
 
@@ -272,6 +334,17 @@ def _prepare_slack_config(config: SlackConfig) -> _SlackConfigWithStringField:
         channels_serialized=json.dumps(config.channels),
         level=config.level.value if config.level else "",
         enabled="true" if config.enabled else "false",
+    )
+
+
+def _prepare_aws_config(config: AWSConfig) -> _AWSConfigWithSerializedConfig:
+    return _AWSConfigWithSerializedConfig(
+        access_key_id=config.access_key_id,
+        secret_access_key=config.secret_access_key,
+        region=config.region,
+        config_file_path=config.config_file_path,
+        config_file_profile=config.config_file_profile,
+        k8s_serialized=(None if config.k8s is None else config.k8s.json(exclude_none=True)),
     )
 
 

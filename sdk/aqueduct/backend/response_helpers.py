@@ -10,7 +10,7 @@ from aqueduct.models.operators import Operator
 from aqueduct.utils.utils import indent_multiline_string, is_string_valid_uuid
 from requests_toolbelt.multipart import decoder
 
-from .response_models import ArtifactResult, Logs, OperatorResult, PreviewResponse
+from .response_models import ArtifactResult, ExecutionState, Logs, PreviewResponse
 
 
 def _parse_artifact_result_response(response: requests.Response) -> Dict[str, Any]:
@@ -84,7 +84,7 @@ def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:
     # There can be multiple operator failures, one for each entry.
     op_err_msgs: List[str] = []
 
-    def _construct_failure_error_msg(op_name: str, op_result: OperatorResult) -> str:
+    def _construct_failure_error_msg(op_name: str, op_result: ExecutionState) -> str:
         """This is the message is raised in the Exception message."""
         assert op_result.error is not None
         return (
@@ -153,7 +153,7 @@ def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:
         raise InternalAqueductError("Preview route should not be returning PENDING status.")
 
     if preview_resp.status == ExecutionStatus.FAILED:
-        # If non of the operators failed, this must be an issue with our
+        # If none of the operators failed, this must be an issue with our server.
         if len(op_err_msgs) == 0:
             raise InternalAqueductError(
                 f"Unexpected Server Error! If this issue persists, please file a bug report in github: "

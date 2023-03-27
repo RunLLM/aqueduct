@@ -1,5 +1,5 @@
-import { Edge, Node } from 'react-flow-renderer';
-import { Position } from 'react-flow-renderer';
+import { Edge, Node } from 'reactflow';
+import { Position } from 'reactflow';
 
 import AqueductBezier from '../components/workflows/edges/AqueductBezier';
 import AqueductQuadratic from '../components/workflows/edges/AqueductQuadratic';
@@ -43,6 +43,7 @@ type NodePos = { x: number; y: number };
 
 export function getOperatorNode(
   op: Operator,
+  pos: NodePos,
   onChange: () => void,
   onConnect: (any) => void
 ): Node<ReactFlowNodeData> {
@@ -57,13 +58,13 @@ export function getOperatorNode(
       nodeId: op.id,
       label: op.name,
     },
-    // Give an initial position. We will reposition this node later.
-    position: { x: 0, y: 0 },
+    position: pos,
   };
 }
 
 export function getArtifactNode(
   artf: Artifact,
+  pos: NodePos,
   onChange: () => void,
   onConnect: (any) => void
 ): Node<ReactFlowNodeData> {
@@ -78,8 +79,7 @@ export function getArtifactNode(
       nodeId: artf.id,
       label: artf.name,
     },
-    // Give an initial position. We will reposition this node later.
-    position: { x: 0, y: 0 },
+    position: pos,
   };
 }
 

@@ -20,8 +20,6 @@ const (
 	LambdaType     ManagerType = "lambda"
 	DatabricksType ManagerType = "databricks"
 	SparkType      ManagerType = "spark"
-
-	DefaultAwsRegion = "us-east-2"
 )
 
 type Config interface {
@@ -186,13 +184,13 @@ func GenerateJobManagerConfig(
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to parse k8s config.")
 		}
+
 		return &K8sJobManagerConfig{
 			KubeconfigPath:     k8sConfig.KubeconfigPath,
 			ClusterName:        k8sConfig.ClusterName,
 			UseSameCluster:     bool(k8sConfig.UseSameCluster),
 			AwsAccessKeyId:     awsAccessKeyId,
 			AwsSecretAccessKey: awsSecretAccessKey,
-			AwsRegion:          DefaultAwsRegion,
 			Dynamic:            bool(k8sConfig.Dynamic),
 		}, nil
 	case shared.LambdaEngineType:

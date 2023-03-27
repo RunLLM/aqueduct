@@ -3,8 +3,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
-import { Handle, Position } from 'react-flow-renderer';
 import { useSelector } from 'react-redux';
+import { Handle, Position } from 'reactflow';
 
 import { RootState } from '../../../stores/store';
 import { theme } from '../../../styles/theme/theme';
@@ -51,10 +51,6 @@ export const Node: React.FC<Props> = ({
     execState = workflowState.artifactResults[data.nodeId]?.result?.exec_state;
   }
 
-  if (!execState || !execState.status) {
-    return null;
-  }
-
   const textColor = selected
     ? theme.palette.DarkContrast50
     : theme.palette.DarkContrast;
@@ -82,9 +78,12 @@ export const Node: React.FC<Props> = ({
     backgroundColor = theme.palette.gray[200];
   } else if (execState?.status === ExecutionStatus.Pending) {
     backgroundColor = theme.palette.gray[200];
+  } else {
+    // any other unhandled case or the status doesn't exists (e.g. when we are only rendering DAG.)
+    backgroundColor = theme.palette.gray[200];
   }
 
-  const statusIndicatorComponent = (
+  const statusIndicatorComponent = !!execState?.status && (
     <Box
       sx={{
         display: 'flex',

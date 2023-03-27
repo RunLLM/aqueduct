@@ -25,15 +25,8 @@ func HandleError(
 	}
 	server.Log(ctx, handlerName, r, statusCode, err)
 
-	var externalMsg string
-	dbxErr, ok := err.(errors.DropboxError)
-	if ok {
-		// Only return the top-level error message to clients.
-		externalMsg = dbxErr.GetMessage()
-	} else {
-		externalMsg = err.Error()
-	}
-	response.SendErrorResponse(w, externalMsg, statusCode)
+	// errors.GetMessage(err) returns both the outer and the inner error messages, excluding stack trace.
+	response.SendErrorResponse(w, errors.GetMessage(err), statusCode)
 }
 
 func HandleSuccess(
@@ -50,8 +43,12 @@ func HandleSuccess(
 
 func ExecuteHandler(server *AqServer, handlerObj handler.Handler) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		server.RequestMutex.RLock()
-		defer server.RequestMutex.RUnlock()
+		if handlerObj.Name() != new(handler.ConfigureStorageHandler).Name() {
+			// ConfigureStorageHandler requests an exclusive Lock on RequestMutex,
+			// so there would be dead-lock if this request first acquired a shared lock
+			server.RequestMutex.RLock()
+			defer server.RequestMutex.RUnlock()
+		}
 
 		args, statusCode, err := handlerObj.Prepare(r)
 		ctx := r.Context()

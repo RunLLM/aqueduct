@@ -2,11 +2,13 @@ import pytest
 from aqueduct.constants.enums import ServiceType
 from aqueduct.models.dag import DAG, Metadata
 
-from aqueduct import Client, globals
+from aqueduct import Client, global_config, globals
 from sdk.setup_integration import (
     get_aqueduct_config,
+    has_storage_config,
     list_compute_integrations,
     list_data_integrations,
+    setup_compute_integrations,
     setup_data_integrations,
     setup_storage_layer,
 )
@@ -23,9 +25,10 @@ def pytest_addoption(parser):
     # Sets a global flag that can be toggled if we want to check that a deprecated code path still works.
     parser.addoption(f"--deprecated", action="store_true", default=False)
 
-    # Skips the setup of any data integrations for faster testing. Best used as an optimization after first
+    # Skips the setup of data/compute integrations for faster testing. Best used as an optimization after first
     # test run of a debugging session.
     parser.addoption(f"--skip-data-setup", action="store_true", default=False)
+    parser.addoption(f"--skip-engine-setup", action="store_true", default=False)
 
     # Allows any tests that rely on a K8s cluster with a GPU setup to run.
     parser.addoption(f"--gpu", action="store_true", default=False)
@@ -46,7 +49,11 @@ def pytest_configure(config):
     )
     config.addinivalue_line(
         "markers",
-        "must_have_gpu: the K8s integration is expected to have access to a GPU",
+        "must_have_gpu: the K8s integration is expected to have access to a GPU.",
+    )
+    config.addinivalue_line(
+        "markers",
+        "enable_only_for_local_storage: the test is expected to run in an environment with local storage.",
     )
 
 
@@ -55,6 +62,11 @@ def pytest_cmdline_main(config):
     client = Client(*get_aqueduct_config())
     setup_storage_layer(client)
 
+    _parse_flags_and_setup_data_integrations(config, client)
+    _parse_flags_and_setup_compute_integrations(config, client)
+
+
+def _parse_flags_and_setup_data_integrations(config, client: Client):
     should_skip = config.getoption(f"--skip-data-setup")
     if should_skip:
         return
@@ -64,6 +76,18 @@ def pytest_cmdline_main(config):
         setup_data_integrations(client, filter_to=data_integration)
     else:
         setup_data_integrations(client)
+
+
+def _parse_flags_and_setup_compute_integrations(config, client: Client):
+    should_skip = config.getoption(f"--skip-engine-setup")
+    if should_skip:
+        return
+
+    engine = config.getoption(f"--engine")
+    if engine is not None:
+        setup_compute_integrations(client, filter_to=engine)
+    else:
+        setup_compute_integrations(client)
 
 
 @pytest.fixture(scope="function")
@@ -155,6 +179,16 @@ def enable_only_for_engine_type(request, client, engine):
 
 
 @pytest.fixture(autouse=True)
+def enable_only_for_local_storage(request, client, engine):
+    """When a test is marked with this, we run it only when the local file system is used as storage."""
+    if not request.node.get_closest_marker("enable_only_for_local_storage"):
+        return
+
+    if has_storage_config():
+        pytest.skip("Skipped since the test environment uses non-local storage.")
+
+
+@pytest.fixture(autouse=True)
 def enable_only_for_external_compute(request, client, engine):
     """When a test is marked with this, it will run for all engine types EXCEPT Aqueduct!"""
     if request.node.get_closest_marker("enable_only_for_external_compute"):
@@ -169,7 +203,7 @@ def must_have_gpu(pytestconfig, request, client, engine):
 
     The user is responsible for supplying a K8s integration with an available GPU.
     """
-    if not request.node.get_closest_marker("gpu"):
+    if not request.node.get_closest_marker("must_have_gpu"):
         return
 
     if pytestconfig.getoption("gpu"):
@@ -220,3 +254,11 @@ def flow_name(client, request, pytestconfig):
 @pytest.fixture(scope="function")
 def validator(client, data_integration):
     return Validator(client, data_integration)
+
+
+@pytest.fixture(scope="function", autouse=True)
+def post_process_reset_execution_mode_to_eager():
+    # Pre-processing code
+    yield
+    # Post-processing code
+    global_config({"lazy": False})

@@ -113,7 +113,7 @@ func getNotification(ctx context.Context, DB database.Database, query string, ar
 	}
 
 	if len(notifications) == 0 {
-		return nil, database.ErrNoRows
+		return nil, database.ErrNoRows()
 	}
 
 	if len(notifications) != 1 {

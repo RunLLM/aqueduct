@@ -2,9 +2,10 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
-	"time"
 
+	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/response"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
@@ -41,8 +42,9 @@ type EditDynamicEngineHandler struct {
 
 type editDynamicEngineArgs struct {
 	*aq_context.AqContext
-	action        string
+	action        dynamicEngineAction
 	integrationId uuid.UUID
+	configDelta   *shared.DynamicK8sConfig
 }
 
 func (*EditDynamicEngineHandler) Name() string {
@@ -55,10 +57,26 @@ func (*EditDynamicEngineHandler) Headers() []string {
 	}
 }
 
+type dynamicEngineAction string
+
 const (
-	createAction string = "create"
-	deleteAction string = "delete"
+	// These reflect K8sClusterActionType in Python and should be kept in sync.
+	createAction      dynamicEngineAction = "create"
+	updateAction      dynamicEngineAction = "update"
+	deleteAction      dynamicEngineAction = "delete"
+	forceDeleteAction dynamicEngineAction = "force-delete"
+	// The config delta payload sent from the client is keyed under this key in the HTTP request body.
+	configDeltaKey string = "config_delta"
 )
+
+func isValidAction(action string) bool {
+	switch dynamicEngineAction(action) {
+	case createAction, updateAction, deleteAction, forceDeleteAction:
+		return true
+	default:
+		return false
+	}
+}
 
 func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
@@ -77,10 +95,30 @@ func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, err
 		return nil, http.StatusBadRequest, errors.Wrap(err, "No action specified by the request.")
 	}
 
+	configDeltaBytes, err := request.ExtractHttpPayload(
+		r.Header.Get(routes.ContentTypeHeader),
+		configDeltaKey,
+		false, // not a file
+		r,
+	)
+	if err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to extract config delta.")
+	}
+
+	configDelta := shared.DynamicK8sConfig{}
+	if err = json.Unmarshal(configDeltaBytes, &configDelta); err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to deserialize config delta.")
+	}
+
+	if !isValidAction(action) {
+		return nil, http.StatusBadRequest, errors.Newf("Unsupported action: %s.", action)
+	}
+
 	return &editDynamicEngineArgs{
 		AqContext:     aqContext,
-		action:        action,
+		action:        dynamicEngineAction(action),
 		integrationId: integrationId,
+		configDelta:   &configDelta,
 	}, http.StatusOK, nil
 }
 
@@ -101,16 +139,17 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResponse, http.StatusBadRequest, errors.New("This is not a dynamic engine integration.")
 	}
 
-	if args.action == createAction {
-		// This is a cluster creation request.
-		storageConfig := config.Storage()
-		vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
-		if err != nil {
-			return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
-		}
+	storageConfig := config.Storage()
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
+	}
 
-		err = dynamic.PrepareEngine(
+	if args.action == createAction {
+		log.Info("Received a cluster creation request")
+		err = dynamic.PrepareCluster(
 			ctx,
+			args.configDelta,
 			args.integrationId,
 			h.IntegrationRepo,
 			vaultObject,
@@ -121,15 +160,50 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 		}
 
 		return emptyResponse, http.StatusOK, nil
-	} else if args.action == deleteAction {
-		// This is a cluster deletion request.
+	} else if args.action == updateAction {
+		log.Info("Received a cluster update request")
+		if len(args.configDelta.ToMap()) == 0 {
+			return emptyResponse, http.StatusBadRequest, errors.New("Empty config delta provided.")
+		}
+
+		if dynamicEngineIntegration.Config[shared.K8sStatusKey] != string(shared.K8sClusterActiveStatus) {
+			return emptyResponse, http.StatusUnprocessableEntity, errors.Newf(
+				"Action %s is only applicable when the cluster is in %s status, but it is now in %s status.",
+				updateAction,
+				shared.K8sClusterActiveStatus,
+				dynamicEngineIntegration.Config[shared.K8sStatusKey],
+			)
+		}
+
+		if err = dynamic.CreateOrUpdateK8sCluster(
+			ctx,
+			args.configDelta,
+			dynamic.K8sClusterUpdateAction,
+			dynamicEngineIntegration,
+			h.IntegrationRepo,
+			vaultObject,
+			h.Database,
+		); err != nil {
+			return emptyResponse, http.StatusInternalServerError, err
+		}
+
+		return emptyResponse, http.StatusOK, nil
+	} else if args.action == deleteAction || args.action == forceDeleteAction {
+		log.Info("Received a cluster deletion request")
+		forceDelete := false
+		if args.action == forceDeleteAction {
+			forceDelete = true
+		}
+
 		for {
 			if dynamicEngineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
 				log.Info("Tearing down the Kubernetes cluster...")
-				if err = dynamic.DeleteDynamicEngine(
+				if err = dynamic.DeleteK8sCluster(
 					ctx,
+					forceDelete,
 					dynamicEngineIntegration,
 					h.IntegrationRepo,
+					vaultObject,
 					h.Database,
 				); err != nil {
 					return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to delete dynamic k8s engine")
@@ -139,25 +213,9 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 			} else if dynamicEngineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
 				return emptyResponse, http.StatusOK, nil
 			} else {
-				if err := dynamic.ResyncClusterState(ctx, dynamicEngineIntegration, h.IntegrationRepo, h.Database); err != nil {
-					return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Failed to resync cluster state")
-				}
-
-				if dynamicEngineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
-					// This means the cluster state is resynced to Terminated, so no need to wait 30 seconds.
-					continue
-				}
-
-				log.Infof("Kubernetes cluster is currently in %s status. Waiting for 30 seconds before checking again...", dynamicEngineIntegration.Config[shared.K8sStatusKey])
-				time.Sleep(30 * time.Second)
-
-				dynamicEngineIntegration, err = h.IntegrationRepo.Get(
-					ctx,
-					args.integrationId,
-					h.Database,
-				)
+				dynamicEngineIntegration, err = dynamic.PollClusterStatus(ctx, dynamicEngineIntegration, h.IntegrationRepo, vaultObject, h.Database)
 				if err != nil {
-					return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve dynamic engine integration")
+					return emptyResponse, http.StatusInternalServerError, err
 				}
 			}
 		}

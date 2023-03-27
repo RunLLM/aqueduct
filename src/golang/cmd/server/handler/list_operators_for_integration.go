@@ -2,11 +2,15 @@ package handler
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/dynamic"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/dropbox/godropbox/errors"
@@ -39,6 +43,11 @@ type listOperatorsForIntegrationItem struct {
 	IsActive      bool             `json:"is_active"`
 }
 
+type listOperatorsForIntegrationArgs struct {
+	*aq_context.AqContext
+	integrationObject *models.Integration
+}
+
 type listOperatorsForIntegrationResponse struct {
 	OperatorWithIds []listOperatorsForIntegrationItem `json:"operator_with_ids"`
 }
@@ -57,18 +66,51 @@ func (*ListOperatorsForIntegrationHandler) Name() string {
 	return "ListOperatorsForIntegration"
 }
 
-func (*ListOperatorsForIntegrationHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *ListOperatorsForIntegrationHandler) Prepare(r *http.Request) (interface{}, int, error) {
+	aqContext, statuscode, err := aq_context.ParseAqContext(r.Context())
+	if err != nil {
+		return nil, statuscode, err
+	}
+
 	integrationIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
 	integrationID, err := uuid.Parse(integrationIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
 	}
 
-	return integrationID, http.StatusOK, nil
+	integrationObject, err := h.IntegrationRepo.Get(r.Context(), integrationID, h.Database)
+	if err != nil {
+		return nil, http.StatusNotFound, errors.Wrap(err, "Failed to retrieve integration object.")
+	}
+
+	return &listOperatorsForIntegrationArgs{
+		AqContext:         aqContext,
+		integrationObject: integrationObject,
+	}, http.StatusOK, nil
 }
 
 func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	integrationID := interfaceArgs.(uuid.UUID)
+	args := interfaceArgs.(*listOperatorsForIntegrationArgs)
+
+	integrationID := args.integrationObject.ID
+
+	if args.integrationObject.Service == shared.AWS {
+		// If the requested integration is a cloud integration, substitute the cloud integration ID
+		// with the ID of the dynamic k8s integration.
+		k8sIntegration, err := h.IntegrationRepo.GetByNameAndUser(
+			ctx,
+			fmt.Sprintf("%s:%s", args.integrationObject.Name, dynamic.K8sIntegrationNameSuffix),
+			uuid.Nil,
+			args.OrgID,
+			h.Database,
+		)
+		if err != nil {
+			return nil, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve the Aqueduct-generated k8s integration.")
+		}
+
+		integrationID = k8sIntegration.ID
+	}
+
 	operators, err := operator.GetOperatorsOnIntegration(
 		ctx,
 		integrationID,

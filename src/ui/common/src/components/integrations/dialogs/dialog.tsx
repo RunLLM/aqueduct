@@ -371,11 +371,7 @@ const IntegrationDialog: React.FC<Props> = ({
       break;
     case 'AWS':
       serviceDialog = (
-        <AWSDialog
-          onUpdateField={setConfigField}
-          value={config as AWSConfig}
-          editMode={editMode}
-        />
+        <AWSDialog onUpdateField={setConfigField} value={config as AWSConfig} />
       );
       break;
     default:

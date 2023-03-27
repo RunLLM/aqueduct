@@ -9,6 +9,7 @@ import { ArtifactResultsWithLoadingStatus } from '../../../../reducers/artifactR
 import { theme } from '../../../../styles/theme/theme';
 import { Data, DataSchema } from '../../../../utils/data';
 import ExecutionStatus, {
+  getArtifactExecStateAsTableRow,
   isFailed,
   isInitial,
   isLoading,
@@ -49,20 +50,7 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
     schema: metricHistorySchema,
     data: (historyWithLoadingStatus.results?.results ?? []).map(
       (artifactStatusResult) => {
-        let timestamp = new Date(
-          artifactStatusResult.exec_state?.timestamps?.finished_at
-        ).toLocaleString();
-
-        // Metrics that are canceled / fail to execute have no exec_state, and thus no date.
-        if (timestamp === 'Invalid Date') {
-          timestamp = 'Unknown';
-        }
-
-        return {
-          status: artifactStatusResult.exec_state?.status ?? 'Unknown',
-          timestamp,
-          value: artifactStatusResult.content_serialized,
-        };
+        return getArtifactExecStateAsTableRow(artifactStatusResult);
       }
     ),
   };
@@ -80,7 +68,7 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
         Date.parse(y['timestamp'] as string)
     );
 
-  const timestamps = dataToPlot.map((x) => x['timestamp']);
+  const timestamps = dataToPlot.map((x) => new Date(x['timestamp'] as string));
   const values = dataToPlot.map((x) => x['value']);
 
   return (
@@ -112,7 +100,7 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
               height: '100%',
               plot_bgcolor: theme.palette.gray[100],
               margin: { b: 0, t: 0, l: 0, r: 0, pad: 8 },
-              xaxis: { automargin: true },
+              xaxis: { automargin: true, type: 'date' },
               yaxis: { automargin: true, ticksuffix: ' ' },
             }}
           />
@@ -120,9 +108,6 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
       )}
 
       <Box mt="32px">
-        <Typography variant="h6" fontWeight="normal" marginBottom={2}>
-          History
-        </Typography>
         {dataSortedByLatest.map((entry, index) => {
           let backgroundColor, hoverColor;
           if (entry.status === ExecutionStatus.Succeeded) {

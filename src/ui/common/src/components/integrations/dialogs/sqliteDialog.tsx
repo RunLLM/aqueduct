@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
 import React from 'react';
-import { SQLiteConfig } from 'src/utils/integrations';
 
+import { SQLiteConfig } from '../../../utils/integrations';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 

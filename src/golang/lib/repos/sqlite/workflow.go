@@ -334,7 +334,7 @@ func getWorkflow(ctx context.Context, DB database.Database, query string, args .
 	}
 
 	if len(workflows) == 0 {
-		return nil, database.ErrNoRows
+		return nil, database.ErrNoRows()
 	}
 
 	if len(workflows) != 1 {

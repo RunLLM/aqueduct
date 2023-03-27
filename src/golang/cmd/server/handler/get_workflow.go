@@ -17,6 +17,7 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 // Route: /workflow/{workflowId}
@@ -44,9 +45,12 @@ type getWorkflowResponse struct {
 }
 
 type workflowDagResult struct {
-	Id            uuid.UUID              `json:"id"`
-	CreatedAt     int64                  `json:"created_at"`
+	Id        uuid.UUID `json:"id"`
+	CreatedAt int64     `json:"created_at"`
+
+	// TODO(ENG-2665): remove the status field.
 	Status        shared.ExecutionStatus `json:"status"`
+	ExecState     shared.ExecutionState  `json:"exec_state"`
 	WorkflowDagId uuid.UUID              `json:"workflow_dag_id"`
 }
 
@@ -187,10 +191,30 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 
 	workflowDagResults := make([]workflowDagResult, 0, len(dagResults))
 	for _, dagResult := range dagResults {
+		var dagExecState shared.ExecutionState
+		if !dagResult.ExecState.IsNull {
+			dagExecState = dagResult.ExecState.ExecutionState
+
+			// TODO(ENG-2665): Remove this defensive check.
+			if dagExecState.Status != dagResult.Status {
+				log.Errorf("DAG result %s has inconsistent status and execution state: %s vs %s", dagResult.ID, dagResult.Status, dagExecState.Status)
+			}
+		} else {
+			// The execution state being null is unexpected, so we error the dag.
+			dagExecState = shared.ExecutionState{
+				Status: shared.FailedExecutionStatus,
+				Error: &shared.Error{
+					Context: "",
+					Tip:     "Unexpected internal error occurred when fetching this workflow execution! Execution state was not populated appropriately.",
+				},
+			}
+		}
+
 		workflowDagResults = append(workflowDagResults, workflowDagResult{
 			Id:            dagResult.ID,
 			CreatedAt:     dagResult.CreatedAt.Unix(),
 			Status:        dagResult.Status,
+			ExecState:     dagExecState,
 			WorkflowDagId: dagResult.DagID,
 		})
 	}

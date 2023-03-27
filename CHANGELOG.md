@@ -1,5 +1,87 @@
 # Changelog
 
+## 0.2.7
+Released on March 22, 2023.
+
+### Key Features
+* [Beta] Aqueduct now has support for on-demand Kubernetes cluster creation and
+    management on AWS. From the Aqueduct UI, you can connect Aqueduct to your
+    AWS account via the cloud integration feature. Once connected, you can use
+    this cloud integration to ask Aqueduct to automatically create a Kubernetes
+    cluster for you. See the documentation
+    [here](https://docs.aqueducthq.com/integrations/on-demand-aws-eks-clusters)
+    for how to create an operator that uses on-demand Kubernetes.
+
+### Enhancements
+* Improves error handling to return more detailed error messages from errors
+    occurring during execution.
+* Improves error handling by surfacing errors that occur outside of the
+    execution of an individual function as workflow-level errors; these errors
+    could occur for example if a compute system was misconfigured.
+* Improves handling of artifact name conflicts in the Python SDK. Explicitly
+    named artifacts (using either the `outputs` argument to the `@op` decorator
+    or the `.set_name()` function) will immediately flag and prevent conflicts
+    in artifact names. Automatically named artifacts will error if multiple
+    artifacts with the same name are included in a single `publish_flow` call.
+* Displays all compute engines associated with a workflow on the workflows list
+    page.
+* Improves efficiency when previewing large objects on the UI by retrieving a
+    sample of the data instead of the full data object and noting that the
+    displayed data is a sample.
+
+### Bugfixes
+* Fixes bug where an S3 or GCS bucket being used as the Aqueduct artifact store
+    could possibly be deleted from the UI.
+* Fixes bug that caused navigation buttons to be misaligned with other buttons
+    on the action bar on the workflow details page.
+* Fixes bug where navigating to the next most recent run on the workflow
+    details page would not work correctly.
+* Fixes bug pending or errored metric would show as "Unknown" on the UI instead
+    of with the correct status.
+* Fixes bug where warning-level checks were being shown as failures on the
+    workflows list page.
+* Fixes bug where certain DAG layouts would continue to show a layout with
+    overlapping and crossing edges.
+
+### Note
+* The parameterization of SQL queries may have unexpected behavior if you accidentally define a 
+    parameter with the same name twice. The parameter value will be chosen at random in such a case.
+    This bug will be fixed in the next release.
+
+## 0.2.6
+
+Released on March 14, 2023.
+
+### Key Features
+* Enables registering a workflow without immediately triggering a run of that
+    workflow. When calling `publish_flow` the `run_now` parameter can be set to
+    `False`, which will tell the Aqueduct server to wait until the next
+    scheduled (or triggered) run. In the interim, only the DAG's structure will
+    be shown without any execution metadata.
+
+### Enhancements
+* Adds error checking to ensure that a remote compute engine is paired with a
+    remote artifact store.
+* Adds error checking to ensure that a valid `kubeconfig` is provided when
+    connecting Aqueduct to Kubernetes.
+* Enables using `~` to refer to the home directory when specifying a path to
+    AWS credentials or a `kubeconfig`.
+* Adds icons to integration details views to indicate when an object store (AWS
+    S3, GCS) are being used for metadata storage.
+* Allows specifying the specific library version of CUDA when requesting GPU
+    resources; v11.4.1 is the current default because that is what EKS clusters
+    use by default.
+
+### Bugfixes
+* Fixes bug where certain errors occurring during task launch weren't clearly 
+    surfaced in the Aqueduct stack.
+* Fixes bug where, within a Python process, executing an operator in lazy mode
+    precluded users from later executing it in eager mode (or vice versa).
+* Fixes bug where notification count wasn't being shown.
+* Fixes bug where the notice for an ongoing metadata migration would run off
+    the end of the screen.
+* Removes duplicate "History" header on metric details page.
+
 ## 0.2.5
 Released on March 7, 2023.
 

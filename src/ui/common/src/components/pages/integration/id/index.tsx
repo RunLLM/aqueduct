@@ -169,6 +169,8 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             user={user}
             integrationId={selectedIntegration.id}
             integrationName={selectedIntegration.name}
+            integrationType={selectedIntegration.service}
+            config={selectedIntegration.config}
             onCloseDialog={() => setShowDeleteTableDialog(false)}
           />
         )}

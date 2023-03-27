@@ -38,7 +38,7 @@ const AddIntegrations: React.FC<Props> = ({
             setShowMigrationDialog(false);
           }}
           severity="info"
-          sx={{ width: '100%' }}
+          sx={{ margin: 1 }}
         >
           {`Storage migration is in progress. The server will be temporarily unavailable. Please refresh the page to check if the server is ready.`}
         </Alert>

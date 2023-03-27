@@ -1,11 +1,12 @@
 package routes
 
-// Please sort the route by their VALUEs
+// Please sort the routes by their VALUEs
 const (
 	GetArtifactVersionsRoute = "/api/artifact/versions"
 	GetArtifactResultRoute   = "/api/artifact/{workflowDagResultId}/{artifactId}/result"
 
-	GetConfigRoute = "/api/config"
+	GetConfigRoute        = "/api/config"
+	ConfigureStorageRoute = "/api/config/storage/{integrationId}"
 
 	GetFunctionRoute    = "/api/function/{functionId}"
 	ExportFunctionRoute = "/api/function/{operatorId}/export"
@@ -40,6 +41,7 @@ const (
 	RegisterAirflowWorkflowRoute = "/api/workflow/register/airflow"
 	GetWorkflowRoute             = "/api/workflow/{workflowId}"
 	ListArtifactResultsRoute     = "/api/workflow/{workflowId}/artifact/{artifactId}/results"
+	GetWorkflowDAGRoute          = "/api/workflow/{workflowId}/dag/{workflowDagID}"
 	ListWorkflowObjectsRoute     = "/api/workflow/{workflowId}/objects"
 	DeleteWorkflowRoute          = "/api/workflow/{workflowId}/delete"
 	EditWorkflowRoute            = "/api/workflow/{workflowId}/edit"
@@ -47,6 +49,7 @@ const (
 	GetWorkflowDagResultRoute    = "/api/workflow/{workflowId}/result/{workflowDagResultId}"
 	UnwatchWorkflowRoute         = "/api/workflow/{workflowId}/unwatch"
 	WatchWorkflowRoute           = "/api/workflow/{workflowId}/watch"
+	GetWorkflowHistoryRoute      = "/api/workflow/{workflowId}/history"
 
 	GetServerVersionRoute     = "/api/version"
 	GetServerEnvironmentRoute = "/api/environment"

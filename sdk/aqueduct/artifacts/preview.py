@@ -4,7 +4,7 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.artifacts.transform import to_artifact_class
+from aqueduct.artifacts.create import to_artifact_class
 from aqueduct.backend.response_models import ArtifactResult
 from aqueduct.constants.enums import ArtifactType, K8sClusterStatusType
 from aqueduct.error import InvalidArtifactTypeException, InvalidIntegrationException
@@ -65,12 +65,12 @@ def preview_artifacts(
         if engine_status.status != K8sClusterStatusType.ACTIVE:
             print(
                 "Your preview request makes use of dynamic k8s integration %s, but the k8s cluster is in %s state. It could take 12-15 minutes for the cluster to be ready..."
-                % (engine_status.name, engine_status.status)
+                % (engine_status.name, engine_status.status.value)
             )
         else:
             print(
                 "Your preview request makes use of dynamic k8s integration %s and the k8s cluster is in %s state, so you are good to go!"
-                % (engine_status.name, engine_status.status)
+                % (engine_status.name, engine_status.status.value)
             )
 
     preview_resp = globals.__GLOBAL_API_CLIENT__.preview(dag=subgraph)

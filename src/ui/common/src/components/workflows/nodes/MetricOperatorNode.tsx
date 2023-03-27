@@ -32,7 +32,9 @@ const MetricOperatorNode: React.FC<Props> = ({ data, isConnectable }) => {
       data={data}
       isConnectable={isConnectable}
       defaultLabel="Metric"
-      preview={parseMetricResult(data.result, 3)}
+      preview={
+        data.result !== undefined ? parseMetricResult(data.result, 3) : '-'
+      }
       statusLabels={metricNodeStatusLabels}
     />
   );

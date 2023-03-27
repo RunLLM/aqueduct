@@ -4,7 +4,7 @@ import uuid
 from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import requests
-from aqueduct.constants.enums import ExecutionStatus, RuntimeType, ServiceType
+from aqueduct.constants.enums import ExecutionStatus, K8sClusterActionType, RuntimeType, ServiceType
 from aqueduct.error import (
     AqueductError,
     ClientValidationError,
@@ -21,7 +21,7 @@ from aqueduct.models.operators import ParamSpec
 from aqueduct.utils.serialization import deserialize
 from pkg_resources import get_distribution, parse_version
 
-from ..integrations.connect_config import IntegrationConfig
+from ..integrations.connect_config import DynamicK8sConfig, IntegrationConfig
 from .response_helpers import (
     _construct_preview_response,
     _handle_preview_resp,
@@ -254,10 +254,10 @@ class APIClient:
         return [x for x in resp.json()["object_names"]]
 
     def connect_integration(
-        self, name: str, service: ServiceType, config: IntegrationConfig
+        self, name: str, service: Union[str, ServiceType], config: IntegrationConfig
     ) -> None:
         integration_service = service
-        if not isinstance(integration_service, str):
+        if isinstance(integration_service, ServiceType):
             # The enum value needs to be used
             integration_service = integration_service.value
 
@@ -266,7 +266,9 @@ class APIClient:
             {
                 "integration-name": name,
                 "integration-service": integration_service,
-                "integration-config": config.json(),
+                # `by_alias` is necessary to get this to use `schema` as a key for SnowflakeConfig.
+                # `exclude_none` is necessary to exclude `role` when None as SnowflakeConfig.
+                "integration-config": config.json(exclude_none=True, by_alias=True),
             }
         )
         url = self.construct_full_url(
@@ -333,10 +335,11 @@ class APIClient:
             for dynamic_engine_status in resp.json()
         }
 
-    def edit_engine(
+    def edit_dynamic_engine(
         self,
-        action: str,
+        action: K8sClusterActionType,
         integration_id: str,
+        config_delta: Optional[DynamicK8sConfig] = None,
     ) -> None:
         """Makes a request against the /api/integration/dynamic-engine/{integrationId}/edit endpoint.
 
@@ -344,17 +347,31 @@ class APIClient:
             integration_id:
                 The engine integration ID.
         """
-        headers = self._generate_auth_headers()
-        headers["action"] = action
-
-        url = self.construct_full_url(self.EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE % integration_id)
-
-        if action == "create" or action == "delete":
-            resp = requests.post(url, headers=headers)
-        else:
+        if action not in [
+            K8sClusterActionType.CREATE,
+            K8sClusterActionType.UPDATE,
+            K8sClusterActionType.DELETE,
+            K8sClusterActionType.FORCE_DELETE,
+        ]:
             raise InvalidRequestError(
                 "Invalid action %s for interacting with dynamic engine." % action
             )
+
+        if config_delta == None:
+            config_delta = DynamicK8sConfig()
+
+        assert isinstance(config_delta, DynamicK8sConfig)
+
+        headers = self._generate_auth_headers()
+        headers["action"] = action.value
+
+        url = self.construct_full_url(self.EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE % integration_id)
+
+        body = {
+            "config_delta": config_delta.json(exclude_none=True),
+        }
+
+        resp = requests.post(url, headers=headers, data=body)
 
         self.raise_errors(resp)
 
@@ -403,8 +420,9 @@ class APIClient:
     def register_workflow(
         self,
         dag: DAG,
+        run_now: bool,
     ) -> RegisterWorkflowResponse:
-        headers, body, files = self._construct_register_workflow_request(dag)
+        headers, body, files = self._construct_register_workflow_request(dag, run_now)
         url = self.construct_full_url(self.REGISTER_WORKFLOW_ROUTE)
         resp = requests.post(url, headers=headers, data=body, files=files)
         self.raise_errors(resp)
@@ -415,7 +433,7 @@ class APIClient:
         self,
         dag: DAG,
     ) -> RegisterAirflowWorkflowResponse:
-        headers, body, files = self._construct_register_workflow_request(dag)
+        headers, body, files = self._construct_register_workflow_request(dag, False)
         url = self.construct_full_url(self.REGISTER_AIRFLOW_WORKFLOW_ROUTE, self.use_https)
         resp = requests.post(url, headers=headers, data=body, files=files)
         self.raise_errors(resp)
@@ -425,8 +443,11 @@ class APIClient:
     def _construct_register_workflow_request(
         self,
         dag: DAG,
+        run_now: bool,
     ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, IO[Any]]]:
         headers = self._generate_auth_headers()
+        # This header value will be string "True" or "False"
+        headers.update({"run-now": str(run_now)})
         body = {
             "dag": dag.json(exclude_none=True),
         }
