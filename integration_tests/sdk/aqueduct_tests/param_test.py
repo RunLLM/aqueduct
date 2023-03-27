@@ -112,6 +112,19 @@ def test_implicitly_created_parameter(client, flow_name, engine):
     assert flow_run.artifact("output1").get() == 101
     assert flow_run.artifact("output2").get() == 200
 
+    @op
+    def func(a, b="world"):
+        return a + " " + b
+
+    result = func("hello")
+    assert result.get() == "hello world"
+
+    flow = publish_flow_test(client, artifacts=[result], name=flow_name(), engine=engine)
+    flow_run = flow.latest()
+    assert flow_run.artifact("func:a").get() == "hello"
+    # Test that we implicitly created a parameter called "func:b" with the default value "world".
+    assert flow_run.artifact("func:b").get() == "world"
+
 
 @op
 def append_row_to_df(df, row):
