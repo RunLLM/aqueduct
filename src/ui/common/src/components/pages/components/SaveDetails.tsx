@@ -21,10 +21,16 @@ export const SaveDetails: React.FC<SaveDetailsProps> = ({ parameters }) => {
   if (parameters) {
     switch (getLoadParametersType(parameters)) {
       case LoadParametersType.RelationalDBLoadParamsType:
-        paramsDisplay = <RelationalDBLoadParamDisplay parameters={parameters as RelationalDBLoadParams} />
+        paramsDisplay = (
+          <RelationalDBLoadParamDisplay
+            parameters={parameters as RelationalDBLoadParams}
+          />
+        );
         break;
       case LoadParametersType.S3LoadParamsType:
-        paramsDisplay = <S3LoadParamDisplay parameters={parameters as S3LoadParams} />
+        paramsDisplay = (
+          <S3LoadParamDisplay parameters={parameters as S3LoadParams} />
+        );
         break;
       default:
         return null;

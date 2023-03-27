@@ -1,6 +1,4 @@
-import {
-  faCircleDown,
-} from '@fortawesome/free-solid-svg-icons';
+import { faCircleDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -8,8 +6,8 @@ import { BlobReader, TextWriter, ZipReader } from '@zip.js/zip.js';
 import React, { useEffect, useState } from 'react';
 
 import MultiFileViewer from '../../../components/MultiFileViewer';
-import { OperatorResultResponse } from '../../../handlers/responses/operator';
 import { InfoTooltip } from '../../../components/pages/components/InfoTooltip';
+import { OperatorResultResponse } from '../../../handlers/responses/operator';
 import UserProfile from '../../../utils/auth';
 import {
   exportFunction,
@@ -174,7 +172,7 @@ const SpecDetails: React.FC<Props> = ({ user, operator }) => {
               Query Details
             </Typography>
             {tooltips && (
-              <InfoTooltip tooltipText={tooltips} placement="right" />              
+              <InfoTooltip tooltipText={tooltips} placement="right" />
             )}
           </Box>
           {content}

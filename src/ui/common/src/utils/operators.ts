@@ -169,13 +169,15 @@ export enum LoadParametersType {
   S3LoadParamsType = 'S3LoadParamsType',
 }
 
-export const getLoadParametersType = (input: LoadParameters): LoadParametersType => {
+export const getLoadParametersType = (
+  input: LoadParameters
+): LoadParametersType => {
   if (isRelationalDBLoadParams(input)) {
     return LoadParametersType.RelationalDBLoadParamsType;
   } else if (isS3LoadParams(input)) {
     return LoadParametersType.S3LoadParamsType;
   }
-}
+};
 
 export type Load = {
   service: ServiceType;
