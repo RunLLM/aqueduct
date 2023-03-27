@@ -41,6 +41,8 @@ from .response_models import (
     SavedObjectUpdate,
 )
 
+# The maximum http request size is capped at 32 MB. DAG containing
+# local data parameter(s) should not go beyond this value.
 MAX_REQUEST_BODY_SIZE = 32 << 20
 
 
@@ -410,7 +412,7 @@ class APIClient:
             artifact_metadata.from_local_data for artifact_metadata in list(dag.artifacts.values())
         ):
             raise InvalidUserActionException(
-                "Local Data after serialization is too large. Aqueduct uses json serialization. The maximum size of workflow with local data is %sMB, the current size is %sMB."
+                "Local Data after serialization is too large. Aqueduct uses json serialization. The maximum size of workflow with local data is %s in bytes, the current size is %s in bytes."
                 % (MAX_REQUEST_BODY_SIZE, len(body["dag"]))
             )
 
@@ -467,7 +469,7 @@ class APIClient:
             artifact_metadata.from_local_data for artifact_metadata in list(dag.artifacts.values())
         ):
             raise InvalidUserActionException(
-                "Local Data after serialization is too large. Aqueduct uses json serialization. The maximum size of workflow with local data is %sMB, the current size is %sMB."
+                "Local Data after serialization is too large. Aqueduct uses json serialization. The maximum size of workflow with local data is %s in bytes, the current size is %s in bytes."
                 % (MAX_REQUEST_BODY_SIZE, len(body["dag"]))
             )
 
