@@ -580,6 +580,26 @@ class TableArtifact(BaseArtifact, system_metric.SystemMetricMixin):
 
         return new_artifact
 
+    def system_metric(
+        self, metric_name: str, lazy: bool = False
+    ) -> numeric_artifact.NumericArtifact:
+        """Creates a system metric that represents the given system information from the previous @op that ran on the table.
+
+        Args:
+            metric_name:
+                Name of system metric to retrieve for the table.
+                Valid metrics are:
+                    runtime: runtime of previous @op func in seconds
+                    max_memory: maximum memory usage of previous @op func in Mb
+
+        Returns:
+            A numeric artifact that represents the requested system metric
+        """
+        if globals.__GLOBAL_CONFIG__.lazy:
+            lazy = True
+
+        return self._system_metric_helper(self._dag, self._artifact_id, metric_name, lazy)
+
     def _get_table_name(self) -> str:
         return self._dag.must_get_artifact(self._artifact_id).name
 

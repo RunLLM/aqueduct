@@ -4,14 +4,16 @@ import json
 import uuid
 from typing import Any, Dict, Optional
 
+from aqueduct.artifacts import numeric_artifact
 from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts import system_metric
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionStatus
-from aqueduct.constants.metrics import SYSTEM_METRICS_INFO
 from aqueduct.error import ArtifactNeverComputedException
 from aqueduct.models.dag import DAG
 from aqueduct.utils.utils import format_header_for_print
+
+from aqueduct import globals
 
 
 class GenericArtifact(BaseArtifact, system_metric.SystemMetricMixin):
@@ -92,3 +94,23 @@ class GenericArtifact(BaseArtifact, system_metric.SystemMetricMixin):
         ]
         print(format_header_for_print(f"'{input_operator.name}' {self.type()} Artifact"))
         print(json.dumps(readable_dict, sort_keys=False, indent=4))
+
+    def system_metric(
+        self, metric_name: str, lazy: bool = False
+    ) -> numeric_artifact.NumericArtifact:
+        """Creates a system metric that represents the given system information from the previous @op that ran on the table.
+
+        Args:
+            metric_name:
+                Name of system metric to retrieve for the table.
+                Valid metrics are:
+                    runtime: runtime of previous @op func in seconds
+                    max_memory: maximum memory usage of previous @op func in Mb
+
+        Returns:
+            A numeric artifact that represents the requested system metric
+        """
+        if globals.__GLOBAL_CONFIG__.lazy:
+            lazy = True
+
+        return self._system_metric_helper(self._dag, self._artifact_id, metric_name, lazy)

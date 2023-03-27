@@ -1,5 +1,5 @@
 import uuid
-from typing import Dict, Union
+from typing import Any, Dict, Union
 
 from aqueduct.artifacts import bool_artifact, numeric_artifact
 from aqueduct.artifacts import preview as artifact_utils
@@ -18,7 +18,7 @@ from aqueduct import globals
 class SystemMetricMixin:
     """A mixin class for the system_metric function. This is used by GenericArtifacts and TableArtifacts."""
 
-    def list_system_metrics(self) -> Dict[str]:
+    def list_system_metrics(self) -> Dict[str, Any]:
         """Returns a dictionary of all system metrics available on the table artifact.
         These system metrics can be set via the invoking the system_metric() method the table.
 
@@ -26,26 +26,6 @@ class SystemMetricMixin:
             A list of available system metrics on a table
         """
         return SYSTEM_METRICS_INFO
-
-    def system_metric(
-        self, metric_name: str, lazy: bool = False
-    ) -> numeric_artifact.NumericArtifact:
-        """Creates a system metric that represents the given system information from the previous @op that ran on the table.
-
-        Args:
-            metric_name:
-                Name of system metric to retrieve for the table.
-                Valid metrics are:
-                    runtime: runtime of previous @op func in seconds
-                    max_memory: maximum memory usage of previous @op func in Mb
-
-        Returns:
-            A numeric artifact that represents the requested system metric
-        """
-        if globals.__GLOBAL_CONFIG__.lazy:
-            lazy = True
-
-        return self._system_metric_helper(self._dag, self._artifact_id, metric_name, lazy)
 
     def _system_metric_helper(
         self, dag: DAG, artifact_id: uuid.UUID, metric_name: str, lazy: bool
