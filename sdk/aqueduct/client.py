@@ -55,7 +55,7 @@ from aqueduct.utils.dag_deltas import (
     validate_overwriting_parameters,
 )
 
-from aqueduct.utils.serialization import deserialize
+from aqueduct.utils.serialization import deserialize,extract_val_from_local_data
 from aqueduct.utils.type_inference import _base64_string_to_bytes, infer_artifact_type
 
 from aqueduct.utils.utils import (
