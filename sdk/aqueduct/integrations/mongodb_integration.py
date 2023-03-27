@@ -63,15 +63,15 @@ class MongoDBCollectionIntegration(Integration):
                 sql query operator and will fill in the placeholders in the query with the actual values.
 
                 Example:
-                    country_param = client.create_param("UK", default=" United Kingdom ")
-                    empty_param = client.create_param("Thailand", default=" Thailand ")
+                    country1 = client.create_param("UK", default=" United Kingdom ")
+                    country2 = client.create_param("Thailand", default=" Thailand ")
                     mongo_db_integration.collection("hotel_reviews").find(
                         {
                             "reviewer_nationality": {
                                 "$in": [$1, $2],
                            }
                         },
-                        parameters=[country_param, empty_param],
+                        parameters=[country1, country2],
                     )
 
                     The query will then be executed with:
