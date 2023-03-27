@@ -353,7 +353,9 @@ def artifact_type_to_serialization_type(
     return serialization_type
 
 
-def extract_val_from_local_data(path: str, as_type: ArtifactType, format: str) -> Any:
+def extract_val_from_local_data(
+    path: str, as_type: Optional[ArtifactType], format: Optional[str]
+) -> Any:
     """Extract value of specified type in Local Data."""
     artifact_type = as_type
     local_data_path = path
