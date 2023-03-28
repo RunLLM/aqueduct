@@ -2,15 +2,16 @@
 
 ## Aqueduct: The easiest way to run ML on any cloud
 
+[![Start Sandbox](https://img.shields.io/static/v1?label=%20&logo=github&message=Start%20Sandbox&color=black)](https://github.com/codespaces/new?hide_repo_select=true&ref=main&repo=496844646)
 [![Downloads](https://pepy.tech/badge/aqueduct-ml/month)](https://pypi.org/project/aqueduct-ml/)
 [![Slack](https://img.shields.io/static/v1.svg?label=chat&message=on%20slack&color=27b1ff&style=flat)](https://join.slack.com/t/aqueductusers/shared_invite/zt-11hby91cx-cpmgfK0qfXqEYXv25hqD6A)
 [![GitHub license](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/aqueducthq/aqueduct/blob/master/LICENSE)
 [![PyPI version](https://badge.fury.io/py/aqueduct-ml.svg)](https://pypi.org/project/aqueduct-ml/)
 [![Tests](https://github.com/aqueducthq/aqueduct/actions/workflows/integration-tests.yml/badge.svg)](https://github.com/aqueducthq/aqueduct/actions/workflows/integration-tests.yml)
 
-**Aqueduct enables you to run machine learning tasks on any cloud infrastructure. [Check out our quickstart guide! →](https://docs.aqueducthq.com/quickstart-guide)**
+**Aqueduct enables you to easily run machine learning tasks on any cloud infrastructure. [Check out our quickstart guide! →](https://docs.aqueducthq.com/quickstart-guide)**
 
-Aqueduct is a MLOps framework that allows you to define ML tasks in vanilla Python, run those tasks on any infrastructure you'd like to use, and gain visibility into the execution and performance of your ML. **[See what tools Aqueduct works with. →](https://aqueducthq.com/integrations/)**
+Aqueduct is an open-source MLOps framework that allows you to define ML tasks in vanilla Python, run those tasks on any infrastructure you'd like to use, and gain visibility into the execution and performance of your ML. **[See what tools Aqueduct works with. →](https://aqueducthq.com/integrations/)**
 
 Here's how you can get started: 
 
@@ -21,53 +22,37 @@ aqueduct start
 
 ### How it works
 
-Aqueduct's Python native API allows you to define ML tasks in regular Python code. You can connect Aqueduct to your existing cloud infrastructure from the Aqueduct UI or SDK ([docs](**TODO ADD LINK**)), and you can instruct Aqueduct to use different tools for different stages of your workflow. 
+Aqueduct's Python native API allows you to define ML tasks in regular Python code. You can connect Aqueduct to your existing cloud infrastructure ([docs](https://docs.aqueducthq.com/integrations)), and Aqueduct will seamlessly move your code from your laptop to the cloud or between different cloud infrastructure layers. 
 
 <!--- TODO(vikram): Modify this once we add support for switching into/out of Databricks in a single workflow. --->
-For example, we can define a pipeline that trains a model on Kubernetes using a GPU and validates that model in AWS Lambda.
+For example, we can define a pipeline that trains a model on Kubernetes using a GPU and validates that model in AWS Lambda in a few lines of Python: 
 
-**TODO(vikram): Make this example a little more real.**
 ```python
-from aqueduct import op
-
 @op(
-    engine='eks-us-east-2',
-    resources={
-        'gpu_resource_name': 'nvidia.com/gpu' # Aqueduct automatically installs Nvidia drivers for you.
-    }
+  engine='eks-us-east-2', 
+  resources={'gpu_resource_name': 'nvidia.com/gpu'}
 )
-def train_model(raw_data):
-    # Define your model...
-    model.fit(features, labels)
-    return model
+def train(features):
+  return model.train(features)
 
 @metric(engine='lambda-us-east-2')
-def validate(model, validation_set):
-    # Validate your model...
-    return validation_score
-    
-# Load data to plumb our workflow.
-client = aq.Client()
-snowflake = client.integration('snowflake')
-raw_data = snowflake.sql('SELECT * FROM raw_data;);
-validation_set = snowflake.SQL('SELECT * FROM validation_set;')
+def validate(model):
+    return validation_test(model)
 
-model = train_model(raw_data)
-validation_score = validate(model, validation_set);
-
-model.save('my_s3_bucket', 'models/model.pkl')
-client.publish_flow('Model Training', artifacts=[model])
+validate(train(features))
 ```
 
 Once you publish this workflow to Aqueduct, you can see it on the UI: 
 
-**TODO(vikram): Insert screenshot.**
+![image](https://user-images.githubusercontent.com/867892/228295996-4ba3de23-3106-431d-93a9-afd8d77a707b.png)
+
+To see how to build your first workflow, check out our **[quickstart guide! →](https://docs.aqueducthq.com/quickstart-guide)**
 
 ## Why Aqueduct?
 
 MLOps has become a [tangled mess of siloed infrastructure](https://aqueducthq.com/post/the-mlops-knot/). Most teams need to set up and operate many different cloud infrastructure tools to run ML effectively, but these tools have disparate APIs and interoperate poorly.
 
-Aqueduct provides a single interface to running machine learning tasks on your existing cloud infrastructure — Kubernetes, Spark, Lambda, etc. From the same Python API, you can run code in the across any or all of these systems seamlessly and gain visibility into how your code is performing.
+Aqueduct provides a single interface to running machine learning tasks on your existing cloud infrastructure — Kubernetes, Spark, Lambda, etc. From the same Python API, you can run code across any or all of these systems seamlessly and gain visibility into how your code is performing.
 
 * **Python-native pipeline API**: Aqueduct’s API allows you define your workflows in vanilla Python, so you can get code into production quickly and effectively. No more DSLs or YAML configs to worry about.
 * **Integrated with your infrastructure**: Workflows defined in Aqueduct can run on any cloud infrastructure you use, like Kubernetes, Spark, Airflow, or AWS Lambda. You can get all the benefits of Aqueduct without having to rip-and-replace your existing tooling.
