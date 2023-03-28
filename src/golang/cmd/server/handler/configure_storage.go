@@ -73,6 +73,7 @@ func (h *ConfigureStorageHandler) Prepare(r *http.Request) (interface{}, int, er
 	}, http.StatusOK, nil
 }
 
+// TODO: need to refactor this after testing the connect integration. Needs to update `storage_migration` table.
 func (h *ConfigureStorageHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*configureStorageArgs)
 
