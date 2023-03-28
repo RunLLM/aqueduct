@@ -263,7 +263,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 			// We let the defer() handle the failure case appropriately.
 			if err == nil {
 				log.Info("Successfully migrated the storage layer!")
-				storageMigrationObj.ExecState.Status = shared.SucceededExecutionStatus
+				execState.Status = shared.SucceededExecutionStatus
 
 				// The update of the storage config and storage migration entry should happen together.
 				// While we don't enforce this atomically, we can make the two update together to minimize the risk.
@@ -281,13 +281,19 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	return emptyResp, http.StatusOK, nil
 }
 
+// Also updates `current=True` if the execution state is marked as SUCCESS!
 func (h *ConnectIntegrationHandler) updateStorageMigrationExecState(destIntegrationID uuid.UUID, execState shared.ExecutionState) error {
+	updates := map[string]interface{}{
+		models.StorageMigrationExecutionState: execState,
+	}
+	if execState.Status == shared.SucceededExecutionStatus {
+		updates[models.StorageMigrationCurrent] = true
+	}
+
 	_, err := h.StorageMigrationRepo.Update(
 		context.Background(),
 		destIntegrationID,
-		map[string]interface{}{
-			models.StorageMigrationExecutionState: execState,
-		},
+		updates,
 		h.Database,
 	)
 	if err != nil {
