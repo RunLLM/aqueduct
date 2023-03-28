@@ -4,6 +4,8 @@ on:
   schedule:
      - cron: '0 12 * * 1-5' # Run at 4AM PST on every weekday
   workflow_dispatch:
+  push:
+    branches: [test_athena]
 
 jobs:
   run-k8s-tests:
@@ -47,6 +49,7 @@ jobs:
         run: |
           aqueduct install s3
           aqueduct install snowflake
+          aqueduct install athena
 
       - name: Run the SDK Integration Tests
         working-directory: integration_tests/sdk
