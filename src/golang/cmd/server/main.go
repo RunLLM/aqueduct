@@ -121,7 +121,7 @@ func main() {
 		log.Fatalf("Failed to deployed dynamic teardown cronjob: %v", err)
 	}
 
-	err = s.RunMissedCronJobs()
+	err = s.SyncCronJobs()
 	if err != nil {
 		log.Errorf("Failed to run missed workflows: %v", err)
 	}

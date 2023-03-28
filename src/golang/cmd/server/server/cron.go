@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
+	"github.com/aqueducthq/aqueduct/lib/database"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/dropbox/godropbox/errors"
@@ -12,6 +13,15 @@ import (
 	"github.com/gorhill/cronexpr"
 	log "github.com/sirupsen/logrus"
 )
+
+func (s *AqServer) SyncCronJobs() error {
+	ctx := context.Background()
+	if err := s.backfillKilledJobs(ctx); err != nil {
+		return err
+	}
+
+	return s.runMissedCronJobs(ctx)
+}
 
 func (s *AqServer) triggerMissedCronJobs(
 	ctx context.Context,
@@ -44,12 +54,65 @@ func (s *AqServer) triggerMissedCronJobs(
 	}
 }
 
-// RunMissedCronJobs first gets the latest workflow run timestamp of all deployed workflows that are
+// backfillKilledJobs backfills all pending and running op/artf/DAG _results
+// and mark them as canceled.
+func (s *AqServer) backfillKilledJobs(ctx context.Context) error {
+	txn, err := s.Database.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
+	defer database.TxnRollbackIgnoreErr(ctx, txn)
+
+	s.OperatorResultRepo.UpdateBatchStatusByStatus(
+		ctx,
+		shared.RunningExecutionStatus,
+		shared.CanceledExecutionStatus,
+		txn,
+	)
+
+	s.OperatorResultRepo.UpdateBatchStatusByStatus(
+		ctx,
+		shared.PendingExecutionStatus,
+		shared.CanceledExecutionStatus,
+		txn,
+	)
+
+	s.ArtifactResultRepo.UpdateBatchStatusByStatus(
+		ctx,
+		shared.RunningExecutionStatus,
+		shared.CanceledExecutionStatus,
+		txn,
+	)
+
+	s.ArtifactResultRepo.UpdateBatchStatusByStatus(
+		ctx,
+		shared.PendingExecutionStatus,
+		shared.CanceledExecutionStatus,
+		txn,
+	)
+
+	s.DAGResultRepo.UpdateBatchStatusByStatus(
+		ctx,
+		shared.RunningExecutionStatus,
+		shared.CanceledExecutionStatus,
+		txn,
+	)
+
+	s.DAGResultRepo.UpdateBatchStatusByStatus(
+		ctx,
+		shared.PendingExecutionStatus,
+		shared.CanceledExecutionStatus,
+		txn,
+	)
+
+	return nil
+}
+
+// runMissedCronJobs first gets the latest workflow run timestamp of all deployed workflows that are
 // running on Aqueduct, on a schedule, and are not paused. For each workflow, it compares the latest workflow
 // run's timestamp with the expected trigger timestamp calculated based on the cron schedule, and manually
 // triggers the workflow if the cron triggering did not happen.
-func (s *AqServer) RunMissedCronJobs() error {
-	ctx := context.Background()
+func (s *AqServer) runMissedCronJobs(ctx context.Context) error {
 	wfLastRuns, err := s.WorkflowRepo.GetLastRunByEngine(
 		ctx,
 		shared.AqueductEngineType,
