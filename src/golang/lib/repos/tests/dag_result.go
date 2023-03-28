@@ -176,3 +176,45 @@ func (ts *TestSuite) TestDAGResult_Update() {
 
 	requireDeepEqual(ts.T(), newExecState, newDAGResult.ExecState.ExecutionState)
 }
+
+func (ts *TestSuite) TestDAGResult_UpdateBatchStatusByStatus() {
+	dagResults := ts.seedDAGResult(2)
+	succeededDAGResult := dagResults[0]
+	pendingDAGResult := dagResults[1]
+
+	succeededState := shared.NullExecutionState{
+		ExecutionState: shared.ExecutionState{
+			UserLogs: &shared.Logs{
+				Stdout: randString(10),
+				StdErr: randString(10),
+			},
+			Status: shared.SucceededExecutionStatus,
+		},
+		IsNull: false,
+	}
+
+	changes := map[string]interface{}{
+		models.DAGResultExecState: &succeededState,
+	}
+
+	_, err := ts.dagResult.Update(ts.ctx, succeededDAGResult.ID, changes, ts.DB)
+	require.Nil(ts.T(), err)
+
+	updatedDAGs, err := ts.dagResult.UpdateBatchStatusByStatus(
+		ts.ctx,
+		shared.PendingExecutionStatus,
+		shared.CanceledExecutionStatus,
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), 1, len(updatedDAGs))
+
+	actualDAGResult := updatedDAGs[0]
+	require.Equal(ts.T(), pendingDAGResult.ID, actualDAGResult.ID)
+	require.Equal(ts.T(), shared.CanceledExecutionStatus, actualDAGResult.Status)
+	require.False(ts.T(), actualDAGResult.ExecState.IsNull)
+
+	execState := actualDAGResult.ExecState.ExecutionState
+	require.Equal(ts.T(), shared.CanceledExecutionStatus, execState.Status)
+	require.NotNil(ts.T(), execState.Timestamps.FinishedAt)
+}

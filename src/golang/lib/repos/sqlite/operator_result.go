@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
@@ -241,6 +242,44 @@ func (*operatorResultWriter) Update(
 		DB,
 	)
 	return &operatorResult, err
+}
+
+func (*operatorResultWriter) UpdateBatchStatusByStatus(
+	ctx context.Context,
+	from shared.ExecutionStatus,
+	to shared.ExecutionStatus,
+	DB database.Database,
+) ([]models.OperatorResult, error) {
+	setExecStateFragment, args, err := DB.PrepareUpdateExecStateStmt(
+		models.OperatorResultExecState,
+		to,
+		time.Now(),
+		0, /* offset */
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	query := fmt.Sprintf(`
+		UPDATE %s SET
+			%s,
+			status = $%d
+		WHERE
+			json_extract(%s, '$.status') = $%d
+		RETURNING %s;`,
+		models.OperatorResultTable,
+		setExecStateFragment,
+		len(args)+1,
+		models.OperatorResultExecState,
+		len(args)+2,
+		models.OperatorResultCols(),
+	)
+
+	args = append(args, to)
+	args = append(args, from)
+	var results []models.OperatorResult
+	err = DB.Query(ctx, &results, query, args...)
+	return results, err
 }
 
 func getOperatorResults(ctx context.Context, DB database.Database, query string, args ...interface{}) ([]models.OperatorResult, error) {

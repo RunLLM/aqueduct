@@ -1,5 +1,11 @@
 package stmt_preparers
 
+import (
+	"time"
+
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
+)
+
 // StmtPreparer implementation for the standard ANSI version of SQL.
 type NoopPreparer struct{}
 
@@ -58,4 +64,13 @@ func (*NoopPreparer) PrepareUpdateWhereWithReturnAllStmt(
 	allColumns string,
 ) string {
 	return ""
+}
+
+func (s *NoopPreparer) PrepareUpdateExecStateStmt(
+	columnAccessPath string,
+	status shared.ExecutionStatus,
+	timestamp time.Time,
+	offset int,
+) (fragment string, args []interface{}, err error) {
+	return "", nil, nil
 }
