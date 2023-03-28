@@ -10,6 +10,11 @@ import {
   WorkflowGetRequest,
   WorkflowGetResponse,
 } from './WorkflowGet';
+import {
+  storageMigrationListQuery,
+  storageMigrationListRequest,
+  storageMigrationListResponse
+} from "./ListStorageMigrations";
 
 const transformErrorResponse = (resp: FetchBaseQueryError) =>
   (resp.data as { error: string })?.error;
@@ -23,7 +28,11 @@ export const aqueductApi = createApi({
       query: (req) => workflowGetQuery(req),
       transformErrorResponse: transformErrorResponse,
     }),
+    storageMigrationList: builder.query<storageMigrationListResponse, storageMigrationListRequest>({
+      query: (req) => storageMigrationListQuery(req),
+      transformErrorResponse: transformErrorResponse,
+    }),
   }),
 });
 
-export const { useWorkflowGetQuery } = aqueductApi;
+export const { useWorkflowGetQuery, useStorageMigrationListQuery } = aqueductApi;

@@ -138,8 +138,8 @@ export const MetadataStorageInfo: React.FC<MetadataStorageInfoProps> = ({
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mt: 3, mb: 2 }}>
-        Metadata Storage
+      <Typography variant="h5" marginY={2}>
+        Storage Integration
       </Typography>
       {storageInfo}
     </Box>

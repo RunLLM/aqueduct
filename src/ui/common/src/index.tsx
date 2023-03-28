@@ -88,7 +88,7 @@ import RequireDagOrResult from './components/workflows/RequireDagOrResult';
 import VersionSelector from './components/workflows/version_selector';
 import WorkflowHeader from './components/workflows/workflowHeader';
 import WorkflowSettings from './components/workflows/WorkflowSettings';
-import { aqueductApi, useWorkflowGetQuery } from './handlers/AqueductApi';
+import { aqueductApi, useWorkflowGetQuery, useStorageMigrationListQuery } from './handlers/AqueductApi';
 import { handleGetArtifactResultContent } from './handlers/getArtifactResultContent';
 import { handleGetServerConfig } from './handlers/getServerConfig';
 import { handleGetWorkflowDag } from './handlers/getWorkflowDag';
@@ -362,6 +362,7 @@ export {
   useUser,
   useWorkflow,
   useWorkflowGetQuery,
+  useStorageMigrationListQuery,
   VersionSelector,
   WidthTransition,
   workflow,

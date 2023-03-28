@@ -15,6 +15,13 @@ import AddIntegrations from '../../integrations/addIntegrations';
 import { ConnectedIntegrations } from '../../integrations/connectedIntegrations';
 import DefaultLayout from '../../layouts/default';
 import { LayoutProps } from '../types';
+import MetadataStorageInfo from "../account/MetadataStorageInfo";
+import {useDispatch, useSelector} from "react-redux";
+import {RootState} from "../../../stores/store";
+import {handleGetServerConfig} from "../../../handlers/getServerConfig";
+import {useStorageMigrationListQuery} from "../../../handlers/AqueductApi";
+import {theme} from "../../../styles/theme/theme";
+import {StorageMigrationResponse} from "../../../handlers/responses/storageMigration";
 
 type Props = {
   user: UserProfile;
@@ -31,6 +38,20 @@ const IntegrationsPage: React.FC<Props> = ({
   Layout = DefaultLayout,
 }) => {
   const location = useLocation();
+
+  const serverConfig = useSelector(
+      (state: RootState) => state.serverConfigReducer
+  );
+  const dispatch = useDispatch();
+  useEffect(() => {
+    async function fetchServerConfig() {
+      if (user) {
+        await dispatch(handleGetServerConfig({ apiKey: user.apiKey }));
+      }
+    }
+
+    fetchServerConfig();
+  }, [user]);
 
   useEffect(() => {
     document.title = 'Integrations | Aqueduct';
@@ -56,6 +77,25 @@ const IntegrationsPage: React.FC<Props> = ({
     // Reload integrations because deleted
     forceLoad = true;
   }
+
+  // Check if there were any failed storage migrations recently that we should surface.
+  const now = new Date();
+  const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000); // units of getTime() are milliseconds.
+  const fiveMinutesAgoTimestamp = Math.floor(fiveMinutesAgo.getTime() / 1000);
+
+  const { data, error, isLoading } = useStorageMigrationListQuery(
+      {
+        apiKey: user.apiKey,
+        status: 'failed', // must be equivalent to ExecutionStatus.FAILED.
+        completedSince: fiveMinutesAgoTimestamp.toString(), // must be a unix timestamp.
+        limit: '1', // only fetch the latest result.
+      }
+  )
+  const recentFailedMigration = data as StorageMigrationResponse[]
+  console.log("----------------------------------")
+  console.log(recentFailedMigration);
+  console.log(error);
+  console.log(isLoading);
 
   return (
     <Layout
@@ -107,10 +147,38 @@ const IntegrationsPage: React.FC<Props> = ({
           <Divider />
         </Box>
 
+        <MetadataStorageInfo serverConfig={serverConfig.config} />
+        {!isLoading && recentFailedMigration && (
+            <Box>
+              <pre>
+                Recently Failed Storage Migration at {recentFailedMigration[0].execution_state.timestamps.finished_at}
+              </pre>
+              <Box
+                  sx={{
+                    backgroundColor: theme.palette.red[100],
+                    color: theme.palette.red[600],
+                    p: 2,
+                    paddingBottom: '16px',
+                    paddingTop: '16px',
+                    height: 'fit-content',
+                  }}
+              >
+              <pre style={{ margin: '0px' }}>
+                {`${recentFailedMigration[0].execution_state.error.tip}\n\n${recentFailedMigration[0].execution_state.error.context}`}
+              </pre>
+              </Box>
+            </Box>
+        )}
+
+        <Box marginY={3}>
+          <Divider />
+        </Box>
+
         <Box>
           <Typography variant="h5" marginY={2}>
-            Connected Integrations
+            Connected Data Integrations
           </Typography>
+
           <ConnectedIntegrations user={user} forceLoad={forceLoad} />
         </Box>
       </Box>
