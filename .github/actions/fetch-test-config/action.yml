@@ -28,7 +28,7 @@ runs:
     - name: Fetch the Test Config
       working-directory: integration_tests/sdk
       shell: bash
-      run: aws s3 cp s3://aqueduct-assets/${{ inputs.s3_test_config_path }} ./test-config.yml
+      run: aws s3 cp s3://aqueduct-assets/test-config-cgwu.yml ./test-config.yml
 
     - name: Fetch the Test Credentials
       working-directory: integration_tests/sdk
