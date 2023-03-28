@@ -8,97 +8,97 @@ on:
     branches: [test_athena]
 
 jobs:
-  run-k8s-tests:
-    runs-on: ubuntu-latest-8-cores
-    timeout-minutes: 90
-    name: SDK Integration Tests against K8s Compute
-    steps:
-      - uses: actions/checkout@v2
+  # run-k8s-tests:
+  #   runs-on: ubuntu-latest-8-cores
+  #   timeout-minutes: 90
+  #   name: SDK Integration Tests against K8s Compute
+  #   steps:
+  #     - uses: actions/checkout@v2
 
-      - uses: ./.github/actions/setup-server
-        timeout-minutes: 5
+  #     - uses: ./.github/actions/setup-server
+  #       timeout-minutes: 5
 
-      # TODO(ENG-2537): Use our separate GH actions credentials.
-      - uses: ./.github/actions/fetch-test-config
-        with:
-          aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
-          s3_test_config_path: periodic-compute-test-config.yml
+  #     # TODO(ENG-2537): Use our separate GH actions credentials.
+  #     - uses: ./.github/actions/fetch-test-config
+  #       with:
+  #         aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
+  #         aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
+  #         s3_test_config_path: periodic-compute-test-config.yml
 
-      - name: Install Terraform
-        run: |
-          wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
-          echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-          sudo apt update && sudo apt install terraform
+  #     - name: Install Terraform
+  #       run: |
+  #         wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
+  #         echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+  #         sudo apt update && sudo apt install terraform
 
-      - name: Create K8s Cluster
-        working-directory: integration_tests/sdk/compute/k8s
-        run: |
-          terraform init
-          terraform apply --auto-approve
+  #     - name: Create K8s Cluster
+  #       working-directory: integration_tests/sdk/compute/k8s
+  #       run: |
+  #         terraform init
+  #         terraform apply --auto-approve
 
-      - name: Update the Kubeconfig file
-        working-directory: integration_tests/sdk/compute/k8s
-        run: aws eks --region $(terraform output -raw region) update-kubeconfig --name $(terraform output -raw cluster_name)
+  #     - name: Update the Kubeconfig file
+  #       working-directory: integration_tests/sdk/compute/k8s
+  #       run: aws eks --region $(terraform output -raw region) update-kubeconfig --name $(terraform output -raw cluster_name)
 
-      - name: Update the test-config file with the appropriate cluster name
-        working-directory: integration_tests/sdk
-        run: sed -i "s/\(cluster_name:\s*\).*/\1 "$(terraform -chdir=compute/k8s/ output -raw cluster_name)"/" test-credentials.yml
+  #     - name: Update the test-config file with the appropriate cluster name
+  #       working-directory: integration_tests/sdk
+  #       run: sed -i "s/\(cluster_name:\s*\).*/\1 "$(terraform -chdir=compute/k8s/ output -raw cluster_name)"/" test-credentials.yml
 
-      - name: Install any data connector packages
-        run: |
-          aqueduct install s3
-          aqueduct install snowflake
-          aqueduct install athena
+  #     - name: Install any data connector packages
+  #       run: |
+  #         aqueduct install s3
+  #         aqueduct install snowflake
+  #         aqueduct install athena
 
-      - name: Run the SDK Integration Tests
-        working-directory: integration_tests/sdk
-        run: pytest aqueduct_tests/ -rP -vv -n 4
+  #     - name: Run the SDK Integration Tests
+  #       working-directory: integration_tests/sdk
+  #       run: pytest aqueduct_tests/ -rP -vv -n 4
 
-      - name: Teardown K8s Cluster
-        if: always()
-        uses: nick-fields/retry@v2
-        with:
-          max_attempts: 2
-          retry_on: error
-          timeout_minutes: 20
-          retry_wait_seconds: 300
-          command: |
-            cd integration_tests/sdk/compute/k8s
-            terraform destroy --auto-approve
+  #     - name: Teardown K8s Cluster
+  #       if: always()
+  #       uses: nick-fields/retry@v2
+  #       with:
+  #         max_attempts: 2
+  #         retry_on: error
+  #         timeout_minutes: 20
+  #         retry_wait_seconds: 300
+  #         command: |
+  #           cd integration_tests/sdk/compute/k8s
+  #           terraform destroy --auto-approve
 
-      # This directory is quite large, so we only upload it on failure.
-      - uses: actions/upload-artifact@v3
-        if: ${{ failure() }}
-        with:
-          name: Terraform State
-          path: |
-            integration_tests/sdk/compute/k8s/*
+  #     # This directory is quite large, so we only upload it on failure.
+  #     - uses: actions/upload-artifact@v3
+  #       if: ${{ failure() }}
+  #       with:
+  #         name: Terraform State
+  #         path: |
+  #           integration_tests/sdk/compute/k8s/*
 
-      - uses: ./.github/actions/upload-artifacts
-        if: always()
-        with:
-          prefix: K8s Compute
+  #     - uses: ./.github/actions/upload-artifacts
+  #       if: always()
+  #       with:
+  #         prefix: K8s Compute
 
-      # Sets it as an environmental variable.
-      - name: Get the Slack ID for the current oncall
-        if: always()
-        run: |
-          aws s3 cp s3://aqueduct-assets/oncall.yml ./oncall.yml
-          echo "ONCALL_SLACK_MEMBER_ID=$(python3 scripts/get_current_oncall.py --file ./oncall.yml)" >> $GITHUB_ENV
+  #     # Sets it as an environmental variable.
+  #     - name: Get the Slack ID for the current oncall
+  #       if: always()
+  #       run: |
+  #         aws s3 cp s3://aqueduct-assets/oncall.yml ./oncall.yml
+  #         echo "ONCALL_SLACK_MEMBER_ID=$(python3 scripts/get_current_oncall.py --file ./oncall.yml)" >> $GITHUB_ENV
 
-      - name: Report to Slack on Failure
-        if: always()
-        uses: ravsamhq/notify-slack-action@v1
-        with:
-          status: ${{ job.status }}
-          notification_title: ''
-          message_format: '{emoji} *{workflow}* has {status_message}'
-          footer: '{run_url}'
-          notify_when: 'failure,warnings'
-          mention_users: ${{ env.ONCALL_SLACK_MEMBER_ID }}
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
+  #     - name: Report to Slack on Failure
+  #       if: always()
+  #       uses: ravsamhq/notify-slack-action@v1
+  #       with:
+  #         status: ${{ job.status }}
+  #         notification_title: ''
+  #         message_format: '{emoji} *{workflow}* has {status_message}'
+  #         footer: '{run_url}'
+  #         notify_when: 'failure,warnings'
+  #         mention_users: ${{ env.ONCALL_SLACK_MEMBER_ID }}
+  #       env:
+  #         SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
 
   run-data-integration-tests:
     runs-on: ubuntu-latest
@@ -115,6 +115,12 @@ jobs:
           aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
           s3_test_config_path: periodic-data-integration-test-config.yml
+
+      - name: Install any data connector packages
+        run: |
+          aqueduct install s3
+          aqueduct install snowflake
+          aqueduct install athena
 
       - name: Run the SDK Data Integration Tests
         working-directory: integration_tests/sdk
