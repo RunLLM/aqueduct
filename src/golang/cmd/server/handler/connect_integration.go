@@ -250,7 +250,7 @@ func ConnectIntegration(
 	// Extract non-confidential config
 	publicConfig := args.Config.PublicConfig()
 
-	var integrationObject *models.Integration
+	var integrationObject *models.Integration Needs to update `storage_migration` table.
 	var err error
 	if args.UserOnly {
 		// This is a user-specific integration
