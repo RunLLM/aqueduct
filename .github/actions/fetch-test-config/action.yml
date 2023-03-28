@@ -23,7 +23,7 @@ runs:
       run: |
         aws --profile default configure set aws_access_key_id ${{ inputs.aws_access_key_id }}
         aws --profile default configure set aws_secret_access_key ${{ inputs.aws_secret_access_key }}
-        aws --profile default configure set region us-east-2 
+        aws --profile default configure set region us-west-1 
 
     - name: Fetch the Test Config
       working-directory: integration_tests/sdk
