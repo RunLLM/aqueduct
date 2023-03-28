@@ -10,6 +10,8 @@ from workflows import (
     fail_bad_operator,
     no_run,
     succeed_complex,
+    succeed_dag_layout_test,
+    succeed_march_madness_dag_layout_test,
     succeed_parameters,
     warning_bad_check,
 )
@@ -24,6 +26,8 @@ WORKFLOW_PKGS = [
     warning_bad_check,
     succeed_parameters,
     succeed_complex,
+    succeed_dag_layout_test,
+    succeed_march_madness_dag_layout_test,
     fail_bad_operator,
     no_run,
 ]

@@ -208,6 +208,8 @@ func (eng *aqEngine) ExecuteWorkflow(
 			dagResult.ID,
 			execState,
 			eng.DAGResultRepo,
+			eng.ArtifactResultRepo,
+			eng.OperatorResultRepo,
 			eng.WorkflowRepo,
 			eng.NotificationRepo,
 			eng.Database,
@@ -279,7 +281,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 	}
 
 	var jobManager job.JobManager
-	if dbDAG.EngineConfig.Type == shared.SparkEngineType {
+	if dbDAG.EngineConfig.Type == shared.SparkEngineType || dbDAG.EngineConfig.Type == shared.DatabricksEngineType {
 		// Create the SparkJobManager.
 		jobManager, err = job.GenerateNewJobManager(
 			ctx,

@@ -180,8 +180,6 @@ type ExtractSpec struct {
 	ConnectorConfig auth.Config             `json:"connector_config"  yaml:"connector_config"`
 	Parameters      connector.ExtractParams `json:"parameters"  yaml:"parameters"`
 
-	// These input fields are only used to record user-defined parameters for relational queries.
-	InputParamNames    []string `json:"input_param_names" yaml:"input_param_names"`
 	InputContentPaths  []string `json:"input_content_paths" yaml:"input_content_paths"`
 	InputMetadataPaths []string `json:"input_metadata_paths" yaml:"input_metadata_paths"`
 	OutputContentPath  string   `json:"output_content_path"  yaml:"output_content_path"`
@@ -425,7 +423,6 @@ func NewExtractSpec(
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
 		},
-		InputParamNames:    inputParamNames,
 		InputContentPaths:  inputContentPaths,
 		InputMetadataPaths: inputMetadataPaths,
 		ConnectorName:      connectorName,

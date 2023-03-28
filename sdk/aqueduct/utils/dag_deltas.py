@@ -244,7 +244,7 @@ def validate_overwriting_parameters(dag: DAG, parameters: Dict[str, Any]) -> Non
         if any(get_operator_type(op) == OperatorType.EXTRACT for op in ops_on_param):
             if not isinstance(param_val, str):
                 raise InvalidUserArgumentException(
-                    "Parameter %s is used by a sql query, so it must be a string type, not type %s."
+                    "Parameter `%s` is used by a sql query, so it must be a string type, not type %s."
                     % (param_name, type(param_val).__name__)
                 )
 

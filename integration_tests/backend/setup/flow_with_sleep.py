@@ -16,7 +16,7 @@ def setup_flow_with_sleep(client: aqueduct.Client, integration_name: str) -> str
     n_runs = 1
     integration = client.integration(name=integration_name)
 
-    @aqueduct.op()
+    @aqueduct.op
     def sleeping_op(df):
         time.sleep(60)
         return df
