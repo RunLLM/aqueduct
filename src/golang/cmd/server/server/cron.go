@@ -63,49 +63,61 @@ func (s *AqServer) backfillKilledJobs(ctx context.Context) error {
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	s.OperatorResultRepo.UpdateBatchStatusByStatus(
+	if _, err := s.OperatorResultRepo.UpdateBatchStatusByStatus(
 		ctx,
 		shared.RunningExecutionStatus,
 		shared.CanceledExecutionStatus,
 		txn,
-	)
+	); err != nil {
+		return err
+	}
 
-	s.OperatorResultRepo.UpdateBatchStatusByStatus(
+	if _, err := s.OperatorResultRepo.UpdateBatchStatusByStatus(
 		ctx,
 		shared.PendingExecutionStatus,
 		shared.CanceledExecutionStatus,
 		txn,
-	)
+	); err != nil {
+		return err
+	}
 
-	s.ArtifactResultRepo.UpdateBatchStatusByStatus(
+	if _, err := s.ArtifactResultRepo.UpdateBatchStatusByStatus(
 		ctx,
 		shared.RunningExecutionStatus,
 		shared.CanceledExecutionStatus,
 		txn,
-	)
+	); err != nil {
+		return err
+	}
 
-	s.ArtifactResultRepo.UpdateBatchStatusByStatus(
+	if _, err := s.ArtifactResultRepo.UpdateBatchStatusByStatus(
 		ctx,
 		shared.PendingExecutionStatus,
 		shared.CanceledExecutionStatus,
 		txn,
-	)
+	); err != nil {
+		return err
+	}
 
-	s.DAGResultRepo.UpdateBatchStatusByStatus(
+	if _, err := s.DAGResultRepo.UpdateBatchStatusByStatus(
 		ctx,
 		shared.RunningExecutionStatus,
 		shared.CanceledExecutionStatus,
 		txn,
-	)
+	); err != nil {
+		return err
+	}
 
-	s.DAGResultRepo.UpdateBatchStatusByStatus(
+	if _, err := s.DAGResultRepo.UpdateBatchStatusByStatus(
 		ctx,
 		shared.PendingExecutionStatus,
 		shared.CanceledExecutionStatus,
 		txn,
-	)
+	); err != nil {
+		return err
+	}
 
-	return nil
+	return txn.Commit(ctx)
 }
 
 // runMissedCronJobs first gets the latest workflow run timestamp of all deployed workflows that are
