@@ -33,6 +33,12 @@ func (e *ExecutionState) HasSystemError() bool {
 	return e.Status == FailedExecutionStatus && *e.FailureType == SystemFailure
 }
 
+func (e *ExecutionState) UpdateWithFailure(failureType FailureType, execErr *Error) {
+	e.Status = FailedExecutionStatus
+	e.FailureType = &failureType
+	e.Error = execErr
+}
+
 func (e *ExecutionState) Value() (driver.Value, error) {
 	return utils.ValueJSONB(*e)
 }

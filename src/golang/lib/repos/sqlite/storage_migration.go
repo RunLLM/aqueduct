@@ -34,13 +34,11 @@ func (*storageMigrationReader) GetCurrent(ctx context.Context) (uuid.UUID, error
 
 func (*storageMigrationWriter) Create(
 	ctx context.Context,
-	srcIntegrationID *uuid.UUID,
 	destIntegrationID *uuid.UUID,
 	DB database.Database,
 ) (*models.StorageMigration, error) {
 	cols := []string{
 		models.StorageMigrationID,
-		models.StorageMigrationSrcIntegrationID,
 		models.StorageMigrationDestIntegrationID,
 		models.StorageMigrationExecutionState,
 		models.StorageMigrationCurrent,
@@ -48,15 +46,14 @@ func (*storageMigrationWriter) Create(
 
 	query := DB.PrepareInsertWithReturnAllStmt(models.StorageMigrationTable, cols, models.StorageMigrationCols())
 
-	ID, err := GenerateUniqueUUID(ctx, models.StorageMigrationTable, DB)
+	id, err := GenerateUniqueUUID(ctx, models.StorageMigrationTable, DB)
 	if err != nil {
 		return nil, err
 	}
 
 	now := time.Now()
 	args := []interface{}{
-		ID,
-		srcIntegrationID,
+		id,
 		destIntegrationID,
 		&shared.ExecutionState{
 			Status: shared.PendingExecutionStatus,

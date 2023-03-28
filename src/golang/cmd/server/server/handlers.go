@@ -25,11 +25,12 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database:   s.Database,
 			JobManager: s.JobManager,
 
-			ArtifactRepo:       s.ArtifactRepo,
-			ArtifactResultRepo: s.ArtifactResultRepo,
-			DAGRepo:            s.DAGRepo,
-			IntegrationRepo:    s.IntegrationRepo,
-			OperatorRepo:       s.OperatorRepo,
+			ArtifactRepo:         s.ArtifactRepo,
+			ArtifactResultRepo:   s.ArtifactResultRepo,
+			DAGRepo:              s.DAGRepo,
+			IntegrationRepo:      s.IntegrationRepo,
+			StorageMigrationRepo: s.StorageMigrationRepo,
+			OperatorRepo:         s.OperatorRepo,
 
 			PauseServer:   s.Pause,
 			RestartServer: s.Restart,

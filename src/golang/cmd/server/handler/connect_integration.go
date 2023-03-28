@@ -63,11 +63,12 @@ type ConnectIntegrationHandler struct {
 	Database   database.Database
 	JobManager job.JobManager
 
-	ArtifactRepo       repos.Artifact
-	ArtifactResultRepo repos.ArtifactResult
-	DAGRepo            repos.DAG
-	IntegrationRepo    repos.Integration
-	OperatorRepo       repos.Operator
+	ArtifactRepo         repos.Artifact
+	ArtifactResultRepo   repos.ArtifactResult
+	DAGRepo              repos.DAG
+	IntegrationRepo      repos.Integration
+	StorageMigrationRepo repos.StorageMigration
+	OperatorRepo         repos.Operator
 
 	PauseServer   func()
 	RestartServer func()
@@ -179,7 +180,10 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	if statusCode, err := ConnectIntegration(ctx, args, h.IntegrationRepo, txn); err != nil {
+	// Assumption: we are always ADDING a new integration, so `integrationObj` must be a freshly created
+	// integration entry on success.
+	integrationObj, statusCode, err := ConnectIntegration(ctx, args, h.IntegrationRepo, txn)
+	if err != nil {
 		return emptyResp, statusCode, err
 	}
 
@@ -202,9 +206,20 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		// This integration should be used as the new storage layer.
 		// In order to do so, we need to migrate all content from the old store
 		// to the new store. This requires pausing the server and then restarting it.
-		// All of this logic is performed asynchronously so that the user knows that
-		// the connect integration request has succeeded and that the migration is now
-		// under way.
+
+		// The migration logic is performed asynchronously, and it's process is tracked
+		// as a new entry in the `storage_migration` table:
+		storageMigrationObj, err := h.StorageMigrationRepo.Create(
+			ctx,
+			&integrationObj.ID,
+			h.Database,
+		)
+		if err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to migrate storage.")
+		}
+
+		// If the migration is successful, the new entry is given a success execution status, along with `current=True`.
+		// If the migration is unsuccessful, the error is recorded on the new entry in `storage_migration`.
 		go func() {
 			log.Info("Starting storage migration process...")
 			// Wait until the server is paused
@@ -212,48 +227,147 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 			// Makes sure that the server is restarted
 			defer h.RestartServer()
 
-			// Wait until there are no more workflow runs in progress
-			lock := utils.NewExecutionLock()
-			if err := lock.Lock(); err != nil {
-				log.Errorf("Unexpected error when acquiring workflow execution lock: %v. Aborting storage migration!", err)
-				return
-			}
+			destIntegrationID := storageMigrationObj.DestIntegrationID
+			execState := storageMigrationObj.ExecState
+
+			var err error
 			defer func() {
-				if err := lock.Unlock(); err != nil {
-					log.Errorf("Unexpected error when unlocking workflow execution lock: %v", err)
+				if err != nil {
+					execState.UpdateWithFailure(
+						// TODO: this can be a system error too. But no one cares right now.
+						shared.UserFatalFailure,
+						&shared.Error{
+							Tip:     "Failure occurred when migrating to the new storage layer.",
+							Context: err.Error(),
+						},
+					)
+					_ = h.updateStorageMigrationExecState(destIntegrationID, execState)
 				}
 			}()
 
-			if err := setIntegrationAsStorage(
-				context.Background(),
-				args.Service,
-				args.Config,
-				args.OrgID,
-				h.DAGRepo,
-				h.ArtifactRepo,
-				h.ArtifactResultRepo,
-				h.OperatorRepo,
-				h.IntegrationRepo,
-				h.Database,
-			); err != nil {
-				log.Errorf("Unexpected error when setting the new storage layer: %v", err)
+			// Mark the migration explicitly as RUNNING.
+			runningAt := time.Now()
+			execState.Timestamps.RunningAt = &runningAt
+			err = h.updateStorageMigrationExecState(destIntegrationID, execState)
+			if err != nil {
+				return
 			}
 
-			log.Info("Successfully migrated the storage layer!")
+			// Perform the storage migration.
+			storageConfig, err := h.performStorageMigration(args.Service, args.Config, args.OrgID)
+
+			// Regardless of whether the migration succeeded, we should track the finished timestamp.
+			finishedAt := time.Now()
+			execState.Timestamps.FinishedAt = &finishedAt
+
+			// We let the defer() handle the failure case appropriately.
+			if err == nil {
+				log.Info("Successfully migrated the storage layer!")
+				storageMigrationObj.ExecState.Status = shared.SucceededExecutionStatus
+
+				// The update of the storage config and storage migration entry should happen together.
+				// While we don't enforce this atomically, we can make the two update together to minimize the risk.
+				_ = h.updateStorageMigrationExecState(destIntegrationID, execState)
+				err = config.UpdateStorage(storageConfig)
+				if err != nil {
+					log.Errorf("Unexpected error when updating the global storage layer config: %v", err)
+				} else {
+					log.Info("Successfully updated the global storage layer config!")
+				}
+			}
 		}()
 	}
 
 	return emptyResp, http.StatusOK, nil
 }
 
-// ConnectIntegration connects a new integration specified by `args`. It returns a status code for the request
-// and an error, if any.
+func (h *ConnectIntegrationHandler) updateStorageMigrationExecState(destIntegrationID uuid.UUID, execState shared.ExecutionState) error {
+	_, err := h.StorageMigrationRepo.Update(
+		context.Background(),
+		destIntegrationID,
+		map[string]interface{}{
+			models.StorageMigrationExecutionState: execState,
+		},
+		h.Database,
+	)
+	if err != nil {
+		log.Errorf("Unexpected error when updating storage migration execution state: %v", err)
+	}
+	return err
+}
+
+// Migrate the storage (and vault) context to the new storage layer. The global config for the server is *NOT* updated here.
+func (h *ConnectIntegrationHandler) performStorageMigration(
+	svc shared.Service,
+	conf auth.Config,
+	orgID string,
+) (*shared.StorageConfig, error) {
+	// Wait until there are no more workflow runs in progress
+	lock := utils.NewExecutionLock()
+	if err := lock.Lock(); err != nil {
+		return nil, errors.Wrap(err, "Unexpected error when acquiring workflow execution lock.")
+	}
+	defer func() {
+		if lockErr := lock.Unlock(); lockErr != nil {
+			log.Errorf("Unexpected error when unlocking workflow execution lock: %v", lockErr)
+		}
+	}()
+
+	data, err := conf.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	var storageConfig *shared.StorageConfig
+
+	switch svc {
+	case shared.S3:
+		var c shared.S3IntegrationConfig
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, err
+		}
+
+		storageConfig, err = convertS3IntegrationtoStorageConfig(&c)
+		if err != nil {
+			return nil, err
+		}
+	case shared.GCS:
+		var c shared.GCSIntegrationConfig
+		if err := json.Unmarshal(data, &c); err != nil {
+			return nil, err
+		}
+
+		storageConfig = convertGCSIntegrationtoStorageConfig(&c)
+	default:
+		return nil, errors.Newf("%v cannot be used as the storage layer", svc)
+	}
+
+	// Migrate all storage content to the new storage config
+	currentStorageConfig := config.Storage()
+	return storageConfig, utils.MigrateStorageAndVault(
+		context.Background(),
+		&currentStorageConfig,
+		storageConfig,
+		orgID,
+		h.DAGRepo,
+		h.ArtifactRepo,
+		h.ArtifactResultRepo,
+		h.OperatorRepo,
+		h.IntegrationRepo,
+		h.Database,
+	)
+}
+
+// ConnectIntegration connects a new integration specified by `args`.
+// It returns the integration object, the status code for the request and an error, if any.
+// If an error is returns, the integration object is guaranteed to be nil. Conversely, the integration
+// object is always well-formed on success.
 func ConnectIntegration(
 	ctx context.Context,
 	args *ConnectIntegrationArgs,
 	integrationRepo repos.Integration,
 	DB database.Database,
-) (int, error) {
+) (*models.Integration, int, error) {
 	// Extract non-confidential config
 	publicConfig := args.Config.PublicConfig()
 
@@ -283,13 +397,13 @@ func ConnectIntegration(
 		)
 	}
 	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
 	storageConfig := config.Storage()
 	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
 	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
 	}
 
 	// Store config (including confidential information) in vault
@@ -299,7 +413,7 @@ func ConnectIntegration(
 		args.Config,
 		vaultObject,
 	); err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
 	// TODO(ENG-2523): move base conda env creation outside of ConnectIntegration.
@@ -338,7 +452,7 @@ func ConnectIntegration(
 		}()
 	}
 
-	return http.StatusOK, nil
+	return integrationObject, http.StatusOK, nil
 }
 
 // ValidateConfig authenticates the config provided.
@@ -492,72 +606,6 @@ func checkIntegrationSetStorage(svc shared.Service, conf auth.Config) (bool, err
 	default:
 		return false, errors.Newf("%v cannot be used as the metadata storage layer", svc)
 	}
-}
-
-// setIntegrationAsStorage use the integration config `conf` and updates the global
-// storage config with it. This involves migrating the storage (and vault) content to the new
-// storage layer.
-func setIntegrationAsStorage(
-	ctx context.Context,
-	svc shared.Service,
-	conf auth.Config,
-	orgID string,
-	dagRepo repos.DAG,
-	artifactRepo repos.Artifact,
-	artifactResultRepo repos.ArtifactResult,
-	operatorRepo repos.Operator,
-	integrationRepo repos.Integration,
-	db database.Database,
-) error {
-	data, err := conf.Marshal()
-	if err != nil {
-		return err
-	}
-
-	var storageConfig *shared.StorageConfig
-
-	switch svc {
-	case shared.S3:
-		var c shared.S3IntegrationConfig
-		if err := json.Unmarshal(data, &c); err != nil {
-			return err
-		}
-
-		storageConfig, err = convertS3IntegrationtoStorageConfig(&c)
-		if err != nil {
-			return err
-		}
-	case shared.GCS:
-		var c shared.GCSIntegrationConfig
-		if err := json.Unmarshal(data, &c); err != nil {
-			return err
-		}
-
-		storageConfig = convertGCSIntegrationtoStorageConfig(&c)
-	default:
-		return errors.Newf("%v cannot be used as the storage layer", svc)
-	}
-
-	currentStorageConfig := config.Storage()
-
-	// Migrate all storage content to the new storage config
-	if err := utils.MigrateStorageAndVault(
-		ctx,
-		&currentStorageConfig,
-		storageConfig,
-		orgID,
-		dagRepo,
-		artifactRepo,
-		artifactResultRepo,
-		operatorRepo,
-		integrationRepo,
-		db,
-	); err != nil {
-		return err
-	}
-
-	// Change global storage config
-	return config.UpdateStorage(storageConfig)
 }
 
 func convertS3IntegrationtoStorageConfig(c *shared.S3IntegrationConfig) (*shared.StorageConfig, error) {

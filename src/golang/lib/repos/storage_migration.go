@@ -23,7 +23,6 @@ type storageMigrationWriter interface {
 	// A nil integration id refers to the local filesystem.
 	Create(
 		ctx context.Context,
-		srcIntegrationID *uuid.UUID,
 		destIntegrationID *uuid.UUID,
 		DB database.Database,
 	) (*models.StorageMigration, error)
