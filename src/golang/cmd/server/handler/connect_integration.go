@@ -18,6 +18,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/errors"
+	aq_errors "github.com/aqueducthq/aqueduct/lib/errors"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
@@ -221,13 +222,15 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		// If the migration is successful, the new entry is given a success execution status, along with `current=True`.
 		// If the migration is unsuccessful, the error is recorded on the new entry in `storage_migration`.
 		go func() {
+			// Shadows the context in the outer scope on purpose.
+			ctx := context.Background()
+
 			log.Info("Starting storage migration process...")
 			// Wait until the server is paused
 			h.PauseServer()
 			// Makes sure that the server is restarted
 			defer h.RestartServer()
 
-			destIntegrationID := storageMigrationObj.DestIntegrationID
 			execState := storageMigrationObj.ExecState
 
 			var err error
@@ -241,19 +244,25 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 							Context: err.Error(),
 						},
 					)
-					_ = h.updateStorageMigrationExecState(destIntegrationID, execState)
+					err = h.updateStorageMigrationExecState(ctx, storageMigrationObj.ID, &execState)
+					if err != nil {
+						log.Errorf("Unexpected error when updating the storage migration entry to FAILED: %v", err)
+						return
+					}
+
 				}
 			}()
 
 			// Mark the migration explicitly as RUNNING.
 			runningAt := time.Now()
 			execState.Timestamps.RunningAt = &runningAt
-			err = h.updateStorageMigrationExecState(destIntegrationID, execState)
+			err = h.updateStorageMigrationExecState(ctx, storageMigrationObj.ID, &execState)
 			if err != nil {
+				log.Errorf("Unexpected error when updating the storage migration entry to RUNNING: %v", err)
 				return
 			}
 
-			// Perform the storage migration.
+			// Actually perform the storage migration.
 			storageConfig, err := h.performStorageMigration(args.Service, args.Config, args.OrgID)
 
 			// Regardless of whether the migration succeeded, we should track the finished timestamp.
@@ -261,19 +270,26 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 			execState.Timestamps.FinishedAt = &finishedAt
 
 			// We let the defer() handle the failure case appropriately.
-			if err == nil {
-				log.Info("Successfully migrated the storage layer!")
-				execState.Status = shared.SucceededExecutionStatus
+			if err != nil {
+				return
+			}
 
-				// The update of the storage config and storage migration entry should happen together.
-				// While we don't enforce this atomically, we can make the two update together to minimize the risk.
-				_ = h.updateStorageMigrationExecState(destIntegrationID, execState)
-				err = config.UpdateStorage(storageConfig)
-				if err != nil {
-					log.Errorf("Unexpected error when updating the global storage layer config: %v", err)
-				} else {
-					log.Info("Successfully updated the global storage layer config!")
-				}
+			log.Info("Successfully migrated the storage layer!")
+			execState.Status = shared.SucceededExecutionStatus
+
+			// The update of the storage config and storage migration entry should happen together.
+			// While we don't enforce this atomically, we can make the two update together to minimize the risk.
+			err = h.updateStorageMigrationExecState(ctx, storageMigrationObj.ID, &execState)
+			if err != nil {
+				log.Errorf("Unexpected error when updating the storage migration entry to SUCCESS: %v", err)
+				return
+			}
+
+			err = config.UpdateStorage(storageConfig)
+			if err != nil {
+				log.Errorf("Unexpected error when updating the global storage layer config: %v", err)
+			} else {
+				log.Info("Successfully updated the global storage layer config!")
 			}
 		}()
 	}
@@ -282,24 +298,69 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 }
 
 // Also updates `current=True` if the execution state is marked as SUCCESS!
-func (h *ConnectIntegrationHandler) updateStorageMigrationExecState(destIntegrationID uuid.UUID, execState shared.ExecutionState) error {
+func (h *ConnectIntegrationHandler) updateStorageMigrationExecState(
+	ctx context.Context,
+	storageMigrationID uuid.UUID,
+	execState *shared.ExecutionState,
+) error {
 	updates := map[string]interface{}{
 		models.StorageMigrationExecutionState: execState,
 	}
+
+	// This is updated to a transaction if we also need to mark an old entry as current=False.
+	db := h.Database
 	if execState.Status == shared.SucceededExecutionStatus {
 		updates[models.StorageMigrationCurrent] = true
+
+		// If there was a previous storage migration, update that entry to be `current=False`.
+		oldStorageMigrationObj, err := h.StorageMigrationRepo.GetCurrent(ctx, h.Database)
+		if err == nil {
+			// Updating the old storage migration entry must be done in the same transaction
+			// as the update of the new storage migration entry, so that there is at most one
+			// current=True entry in the storage_migration table.
+			txn, err := h.Database.BeginTx(context.Background())
+			if err != nil {
+				return errors.Wrap(err, "Unable to start transaction for updating storage state.")
+			}
+			defer database.TxnRollbackIgnoreErr(ctx, txn)
+
+			db = txn
+			_, err = h.StorageMigrationRepo.Update(
+				ctx,
+				oldStorageMigrationObj.ID,
+				map[string]interface{}{
+					models.StorageMigrationCurrent: false,
+				},
+				db,
+			)
+			if err != nil {
+				return errors.Wrap(err, "Unexpected error when updating old storage migration entry to be non-current")
+			}
+		} else if !aq_errors.Is(err, database.ErrNoRows()) {
+			return errors.Wrap(err, "Unexpected error when fetching current storage state.")
+		}
+		// Continue without doing anything if there was no previous storage migration.
 	}
 
+	// Perform the actual intended execution state update.
 	_, err := h.StorageMigrationRepo.Update(
-		context.Background(),
-		destIntegrationID,
+		ctx,
+		storageMigrationID,
 		updates,
-		h.Database,
+		db,
 	)
 	if err != nil {
-		log.Errorf("Unexpected error when updating storage migration execution state: %v", err)
+		return errors.Wrap(err, "Unexpected error when updating storage migration execution state.")
 	}
-	return err
+
+	// Only need to do this if we're committing a transaction.
+	if txn, ok := db.(database.Transaction); ok {
+		err = txn.Commit(ctx)
+		if err != nil {
+			return errors.Wrap(err, "Unexpected error when committing storage migration execution state update.")
+		}
+	}
+	return nil
 }
 
 // Migrate the storage (and vault) context to the new storage layer. The global config for the server is *NOT* updated here.

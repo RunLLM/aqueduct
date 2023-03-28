@@ -15,7 +15,7 @@ type StorageMigration interface {
 
 type storageMigrationReader interface {
 	// GetCurrent returns the ID of the current integration that is being used for storage.
-	GetCurrent(ctx context.Context) (uuid.UUID, error)
+	GetCurrent(ctx context.Context, DB database.Database) (*models.StorageMigration, error)
 }
 
 type storageMigrationWriter interface {

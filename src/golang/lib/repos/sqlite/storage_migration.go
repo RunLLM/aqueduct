@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -28,8 +29,12 @@ func NewStorageMigrationRepo() repos.StorageMigration {
 	}
 }
 
-func (*storageMigrationReader) GetCurrent(ctx context.Context) (uuid.UUID, error) {
-	panic("implement me")
+func (*storageMigrationReader) GetCurrent(ctx context.Context, DB database.Database) (*models.StorageMigration, error) {
+	query := fmt.Sprintf(
+		`SELECT %s FROM storage_migration WHERE current = true;`,
+		models.StorageMigrationCols(),
+	)
+	return getStorageMigration(ctx, DB, query)
 }
 
 func (*storageMigrationWriter) Create(
@@ -105,7 +110,7 @@ func getStorageMigration(
 	}
 
 	if len(storageMigrations) > 1 {
-		return nil, errors.Newf("Expected 1 storage migration but got %v", len(storageMigrations))
+		return nil, errors.Newf("Expected 1 storage migration entry but got %v", len(storageMigrations))
 	}
 
 	return &storageMigrations[0], err
