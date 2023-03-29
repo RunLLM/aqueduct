@@ -315,6 +315,35 @@ def _convert_input_arguments_to_parameters(
                 explicitly_named=False,
             )
 
+    # If the user has supplied fewer arguments than the function takes, we check if the remaining
+    # arguments have default values. If they do, we create implicit parameters for them.
+    if len(artifacts) < len(fn_param_names):
+        for idx in range(len(artifacts), len(fn_param_names)):
+            default_value = func_params[fn_param_names[idx]].default
+            if default_value is inspect.Parameter.empty:
+                raise InvalidUserArgumentException(
+                    """No input was provided for argument `%s` of function `%s`, and no default value was specified."""
+                    % (fn_param_names[idx], op_name)
+                )
+
+            param_name = op_name + ":" + fn_param_names[idx]
+
+            # Implicit parameters are only ever created (or error). They never replace anything.
+            logger().warning(
+                """Operator `%s`'s argument `%s` is not an artifact type. We have implicitly created a parameter named `%s` and your input will be used as its default value. This parameter will be used when running the function."""
+                % (op_name, fn_param_names[idx], param_name)
+            )
+            artifacts.append(
+                create_param_artifact(
+                    dag=dag,
+                    param_name=param_name,
+                    default=default_value,
+                    description="Parameter corresponding to argument `%s` of function `%s`."
+                    % (fn_param_names[idx], op_name),
+                    explicitly_named=False,
+                )
+            )
+
     return artifacts
 
 
@@ -453,8 +482,7 @@ def op(
             Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
             (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
             look for a `requirements.txt` file in the same directory as the decorated function
-            and install those. Otherwise, we'll attempt to infer the requirements with
-            `pip freeze`.
+            and install those. Otherwise, the method raises RequirementsMissingError exception.
         num_outputs:
             The number of outputs the decorated function is expected to return.
             Will fail at runtime if a different number of outputs is returned by the function.
@@ -640,8 +668,7 @@ def metric(
             Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
             (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
             look for a `requirements.txt` file in the same directory as the decorated function
-            and install those. Otherwise, we'll attempt to infer the requirements with
-            `pip freeze`.
+            and install those. Otherwise, the method raises RequirementsMissingError exception.
         output:
             An optional custom name for the output metric artifact. Otherwise, the default naming scheme
             will be used.
@@ -825,8 +852,7 @@ def check(
             Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
             (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
             look for a `requirements.txt` file in the same directory as the decorated function
-            and install those. Otherwise, we'll attempt to infer the requirements with
-            `pip freeze`.
+            and install those. Otherwise, the method raises RequirementsMissingError exception.
         output:
             An optional custom name for the output metric artifact. Otherwise, the default naming scheme
             will be used.

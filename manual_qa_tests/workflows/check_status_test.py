@@ -23,32 +23,32 @@ DESCRIPTION = """
 """
 
 
-@aq.op
+@aq.op(requirements=[])
 def test_fail():
     return 1
 
 
-@aq.op
+@aq.op(requirements=[])
 def test_pass():
     return 0
 
 
-@aq.check(severity="warning")
+@aq.check(severity="warning", requirements=[])
 def warning_level_pass(res):
     return res == 0
 
 
-@aq.check(severity="warning")
+@aq.check(severity="warning", requirements=[])
 def warning_level_fail(res):
     return res == 0
 
 
-@aq.check(severity="error")
+@aq.check(severity="error", requirements=[])
 def error_level_pass(res):
     return res == 0
 
 
-@aq.check(severity="error")
+@aq.check(severity="error", requirements=[])
 def error_level_fail(res):
     return res == 0
 
@@ -62,7 +62,8 @@ def deploy(client, integration_name):
     pass_level_error_artf = error_level_pass(success_artf)
 
     client.publish_flow(
-        "Checks Status Test",
+        name=NAME,
+        description=DESCRIPTION,
         artifacts=[
             pass_level_warning_artf,
             failure_level_warning_arf,

@@ -81,16 +81,8 @@ import AqueductBezier from './components/workflows/edges/AqueductBezier';
 import AqueductQuadratic from './components/workflows/edges/AqueductQuadratic';
 import AqueductStraight from './components/workflows/edges/AqueductStraight';
 import { BaseNode } from './components/workflows/nodes/BaseNode.styles';
-import BoolArtifactNode from './components/workflows/nodes/BoolArtifactNode';
-import CheckOperatorNode from './components/workflows/nodes/CheckOperatorNode';
-import DatabaseNode from './components/workflows/nodes/DatabaseNode';
-import FunctionOperatorNode from './components/workflows/nodes/FunctionOperatorNode';
-import MetricOperatorNode from './components/workflows/nodes/MetricOperatorNode';
 import Node from './components/workflows/nodes/Node';
 import nodeTypes from './components/workflows/nodes/nodeTypes';
-import NumericArtifactNode from './components/workflows/nodes/NumericArtifactNode';
-import ParameterOperatorNode from './components/workflows/nodes/ParameterOperatorNode';
-import TableArtifactNode from './components/workflows/nodes/TableArtifactNode';
 import ReactFlowCanvas from './components/workflows/ReactFlowCanvas';
 import RequireDagOrResult from './components/workflows/RequireDagOrResult';
 import VersionSelector from './components/workflows/version_selector';
@@ -227,19 +219,16 @@ export {
   BaseNode,
   BigQueryCard,
   BigQueryDialog,
-  BoolArtifactNode,
   Button,
   Card,
   CheckDetailsPage,
   CheckLevel,
-  CheckOperatorNode,
   CheckStatus,
   CodeBlock,
   CondaDialog,
   ConnectedIntegrations,
   createCronString,
   CSVDialog,
-  DatabaseNode,
   DatabricksCard,
   DatabricksDialog,
   DataCard,
@@ -263,7 +252,6 @@ export {
   fetchUser,
   formatService,
   FunctionGranularity,
-  FunctionOperatorNode,
   FunctionType,
   getDataArtifactPreview,
   getDataSideSheetContent,
@@ -313,7 +301,6 @@ export {
   MenuSidebar,
   MenuSidebarWidth,
   MetricDetailsPage,
-  MetricOperatorNode,
   MongoDBCard,
   MongoDBDialog,
   MultiFileViewer,
@@ -334,14 +321,12 @@ export {
   NotificationsPopover,
   notificationsSlice,
   NotificationStatus,
-  NumericArtifactNode,
   objectKeyFn,
   OperatorDetailsPage,
   OperatorExecStateTableType,
   OperatorType,
   OperatorTypeToNodeTypeMap,
   PaginatedTable,
-  ParameterOperatorNode,
   PeriodUnit,
   PostgresCard,
   PostgresDialog,
@@ -371,7 +356,6 @@ export {
   store,
   SupportedIntegrations,
   Tab,
-  TableArtifactNode,
   Tabs,
   theme,
   useAqueductConsts,

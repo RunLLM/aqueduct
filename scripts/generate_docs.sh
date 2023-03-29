@@ -22,6 +22,7 @@ echo "### package aqueduct
 * [\`models.integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.models/aqueduct.models.integration)
 * [\`models.operators\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.models/aqueduct.models.operators)
 ### package aqueduct.integrations
+* [\`integrations.dynamic_k8s_integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.integrations/aqueduct.integrations.dynamic_k8s_integration)
 * [\`integrations.google_sheets_integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.integrations/aqueduct.integrations.google_sheets_integration)
 * [\`integrations.s3_integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.integrations/aqueduct.integrations.s3_integration)
 * [\`integrations.salesforce_integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.integrations/aqueduct.integrations.salesforce_integration)
@@ -70,11 +71,13 @@ pydoc-markdown -I . --render-toc -m aqueduct.models.operators > docs/package-aqu
 mkdir docs/package-aqueduct.integrations
 
 echo "### package aqueduct.integrations
+* [\`integrations.dynamic_k8s_integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.integrations/aqueduct.integrations.dynamic_k8s_integration)
 * [\`integrations.google_sheets_integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.integrations/aqueduct.integrations.google_sheets_integration)
 * [\`integrations.s3_integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.integrations/aqueduct.integrations.s3_integration)
 * [\`integrations.salesforce_integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.integrations/aqueduct.integrations.salesforce_integration)
 * [\`integrations.sql_integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.integrations/aqueduct.integrations.sql_integration)" > docs/package-aqueduct.integrations/README.md
 
+pydoc-markdown -I . --render-toc -m aqueduct.integrations.dynamic_k8s_integration > docs/package-aqueduct.integrations/aqueduct.integrations.dynamic_k8s_integration.md
 pydoc-markdown -I . --render-toc -m aqueduct.integrations.google_sheets_integration > docs/package-aqueduct.integrations/aqueduct.integrations.google_sheets_integration.md
 pydoc-markdown -I . --render-toc -m aqueduct.integrations.s3_integration > docs/package-aqueduct.integrations/aqueduct.integrations.s3_integration.md
 pydoc-markdown -I . --render-toc -m aqueduct.integrations.salesforce_integration > docs/package-aqueduct.integrations/aqueduct.integrations.salesforce_integration.md

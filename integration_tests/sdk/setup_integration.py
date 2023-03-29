@@ -20,6 +20,7 @@ from sdk.aqueduct_tests.save import save
 from sdk.shared.demo_db import demo_db_tables
 from sdk.shared.flow_helpers import delete_flow, publish_flow_test
 from sdk.shared.naming import generate_object_name
+from sdk.shared.relational import format_table_name
 
 TEST_CREDENTIALS_FILE: str = "test-credentials.yml"
 TEST_CONFIG_FILE: str = "test-config.yml"
@@ -118,7 +119,7 @@ def _add_missing_artifacts(
         save(
             integration,
             cast(TableArtifact, data_param),
-            name=table_name,
+            name=format_table_name(table_name, integration.type()),
         )
         artifacts.append(data_param)
 
@@ -142,13 +143,6 @@ def _setup_mongo_db_data(client: Client, mongo_db: MongoDBIntegration) -> None:
             pass
 
     _add_missing_artifacts(client, mongo_db, existing_names)
-
-
-def _setup_snowflake_data(client: Client, snowflake: RelationalDBIntegration) -> None:
-    # Find all the tables that already exist.
-    existing_table_names = set(snowflake.list_tables()["tablename"])
-
-    _add_missing_artifacts(client, snowflake, existing_table_names)
 
 
 def _setup_external_sqlite_db(path: str):

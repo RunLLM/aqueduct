@@ -3,7 +3,11 @@ import os
 import zipfile
 
 import pytest
-from aqueduct.error import InvalidDependencyFilePath, ReservedFileNameException
+from aqueduct.error import (
+    InvalidDependencyFilePath,
+    RequirementsMissingError,
+    ReservedFileNameException,
+)
 from aqueduct.utils.function_packaging import (
     _package_files_and_requirements,
     delete_zip_folder_and_file,
@@ -17,11 +21,12 @@ from .test_files.python_function.test_dependency_folder.helper_function import h
 def test_packaging_files():
     try:
         os.mkdir("test_function")
-        _package_files_and_requirements(
-            python_function,
-            dir_path=os.path.join(os.getcwd(), "test_function/"),
-            file_dependencies=["./test_dependency_folder/helper_function.py"],
-        )
+        with pytest.raises(RequirementsMissingError):
+            _package_files_and_requirements(
+                python_function,
+                dir_path=os.path.join(os.getcwd(), "test_function/"),
+                file_dependencies=["./test_dependency_folder/helper_function.py"],
+            )
 
         assert not os.path.exists("./test_function/test_function.py")
         assert os.path.exists("./test_function/test_dependency_folder/helper_function.py")
@@ -55,6 +60,14 @@ def test_handle_reserved_file_dependencies():
         )
 
 
+def test_missing_requirements_file():
+    with pytest.raises(RequirementsMissingError, match="requirements.txt"):
+        _package_files_and_requirements(
+            python_function,
+            dir_path=os.path.join(os.getcwd()),
+        )
+
+
 def test_serialize_function():
     initial_state = set(os.listdir())
     dependencies = ["./test_dependency_folder/helper_function.py"]
@@ -63,6 +76,7 @@ def test_serialize_function():
         func=python_function,
         op_name=op_name,
         file_dependencies=dependencies,
+        requirements=[],
     )
     final_state = set(os.listdir())
     assert initial_state == final_state

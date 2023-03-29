@@ -6,6 +6,7 @@ import ReactFlow, { Node as ReactFlowNode } from 'reactflow';
 
 import { RootState } from '../../stores/store';
 import { EdgeTypes, ReactFlowNodeData } from '../../utils/reactflow';
+import { ReactflowNodeType } from '../../utils/reactflow';
 import nodeTypes from './nodes/nodeTypes';
 
 const connectionLineStyle = { stroke: '#fff' };
@@ -27,6 +28,10 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
     (state: RootState) => state.workflowReducer.selectedDagPosition
   );
 
+  const selectedDag = useSelector(
+    (state: RootState) => state.workflowReducer.selectedDag
+  );
+
   const { edges, nodes } = dagPositionState.result ?? { edges: [], nodes: [] };
 
   const defaultViewport = { x: 0, y: 0, zoom: 1 };
@@ -42,10 +47,23 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
   });
 
   const canvasNodes = nodes.map((node) => {
+    // If this is an operator node (which includes metrics & checks),
+    // then we should show by default where the operator is running, so we pull
+    // that information out of the spec and pass it along.
+    const data = { ...node.data };
+    if (node.data.nodeType === ReactflowNodeType.Operator) {
+      // If an engine config exists on the operator, then that's what we use,
+      // but if none exists, we use whatever is the default on the DAG spec.
+      data.spec = selectedDag.operators[node.id]?.spec;
+      data.dagEngineConfig = selectedDag.engine_config;
+    } else {
+      data.artifactType = selectedDag.artifacts[node.id]?.type;
+    }
+
     return {
       id: node.id,
       type: node.type,
-      data: node.data,
+      data: data,
       position: node.position,
     };
   });
