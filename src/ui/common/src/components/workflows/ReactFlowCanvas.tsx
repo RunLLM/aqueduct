@@ -43,7 +43,7 @@ const ReactFlowCanvas: React.FC<ReactFlowCanvasProps> = ({
   // that we only render the graph once the two sets of Redux state are in sync before
   // proceeding; otherwise, our node IDs will be mismatched. Here, we simply check to see
   // if the UUIDs for one of the nodes exists in the selected DAG. If it doesn't, that
-  // means the state has synced yet, so we return null and wait for it to sync.
+  // means the state has not synced yet, so we return null and wait for it to sync.
   const testNode = nodes[0];
   if (
     (testNode.data.nodeType === ReactflowNodeType.Operator &&
