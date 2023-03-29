@@ -196,39 +196,33 @@ class Client:
                 The name to assign this parameter.
             default:
                 The default value to give this parameter, if no value is provided.
-                Every parameter must have a default. If decided to use local data,
+                Every parameter must have a default. If we decide to use local data,
                 a path to the local data file must be specified.
             description:
                 A description of what this parameter represents.
             use_local:
-                whether this parameter uses local data source or not.
+                Whether this parameter uses local data source or not.
             as_type:
-                The expected type of the local data. Currently Local Data has support for ArtifactType.TABLE
-                and ArtifactType.IMAGE.
+                The expected type of the local data. Only supported types are ArtifactType.TABLE and ArtifactType.IMAGE.
             format:
                 If local data type is ArtifactType.TABLE, the user has to specify the table format.
-                We currently support "JSON", "CSV", and "Parquet".
+                We currently support "json", "csv", and "parquet".
         Returns:
             A parameter artifact.
         """
         if use_local:
-            try:
-                assert type(default) == str
-            except AssertionError:
+            if not isinstance(default, str):
                 raise InvalidUserArgumentException(
                     "the default value must be a path to local data."
                 )
             default = extract_val_from_local_data(default, as_type, format)
-            is_local_data = True
-        else:
-            is_local_data = False
         return create_param_artifact(
             self._dag,
             name,
             default,
             description,
             explicitly_named=True,
-            is_local_data=is_local_data,
+            is_local_data=use_local,
         )
 
     def connect_integration(
