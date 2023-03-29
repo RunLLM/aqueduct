@@ -5,30 +5,25 @@ import {
 } from '@reduxjs/toolkit/query/react';
 
 import { apiAddress } from '../components/hooks/useAqueductConsts';
-import { getDagQuery, GetDagRequest, GetDagResponse } from './GetDag';
 import {
-  getDagResultQuery,
-  GetDagResultRequest,
-  GetDagResultResponse,
-} from './GetDagResult';
+  workflowGetQuery,
+  WorkflowGetRequest,
+  WorkflowGetResponse,
+} from './WorkflowGet';
 
 const transformErrorResponse = (resp: FetchBaseQueryError) =>
   (resp.data as { error: string })?.error;
 
 export const aqueductApi = createApi({
   reducerPath: 'aqueductApi',
-  baseQuery: fetchBaseQuery({ baseUrl: `${apiAddress}/api/` }),
+  baseQuery: fetchBaseQuery({ baseUrl: `${apiAddress}/api/v2/` }),
   keepUnusedDataFor: 60,
   endpoints: (builder) => ({
-    getDag: builder.query<GetDagResponse, GetDagRequest>({
-      query: (req) => getDagQuery(req),
-      transformErrorResponse: transformErrorResponse,
-    }),
-    getDagResult: builder.query<GetDagResultResponse, GetDagResultRequest>({
-      query: (req) => getDagResultQuery(req),
+    workflowGet: builder.query<WorkflowGetResponse, WorkflowGetRequest>({
+      query: (req) => workflowGetQuery(req),
       transformErrorResponse: transformErrorResponse,
     }),
   }),
 });
 
-export const { useGetDagQuery, useGetDagResultQuery } = aqueductApi;
+export const { useWorkflowGetQuery } = aqueductApi;
