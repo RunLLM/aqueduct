@@ -3,7 +3,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 import { handleListArtifactResults } from '../handlers/listArtifactResults';
-import { ListArtifactResultsResponse } from '../handlers/responses/artifact';
+import { ListArtifactResultsResponse } from '../handlers/responses/artifactDeprecated';
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 
 export type ArtifactResultsWithLoadingStatus = {

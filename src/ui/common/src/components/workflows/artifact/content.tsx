@@ -4,7 +4,7 @@ import Typography from '@mui/material/Typography';
 import Image from 'mui-image';
 import React from 'react';
 
-import { ArtifactResultResponse } from '../../../handlers/responses/artifact';
+import { ArtifactResultResponse } from '../../../handlers/responses/artifactDeprecated';
 import { ContentWithLoadingStatus } from '../../../reducers/artifactResultContents';
 import { SerializationType } from '../../../utils/artifacts';
 import { Data, inferSchema, TableRow } from '../../../utils/data';

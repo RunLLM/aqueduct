@@ -5,7 +5,7 @@ import React from 'react';
 import {
   DagResultResponse,
   getMetricsAndChecksOnArtifact,
-} from '../../../../handlers/responses/dag';
+} from '../../../../handlers/responses/dagDeprecated';
 import UserProfile from '../../../../utils/auth';
 import { OperatorType } from '../../../../utils/operators';
 import ExecutionStatus from '../../../../utils/shared';

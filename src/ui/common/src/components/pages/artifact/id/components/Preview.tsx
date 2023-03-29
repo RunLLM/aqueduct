@@ -2,7 +2,7 @@ import { Alert, Box, Divider, Typography } from '@mui/material';
 import React from 'react';
 
 import ArtifactContent from '../../../../../components/workflows/artifact/content';
-import { ArtifactResultResponse } from '../../../../../handlers/responses/artifact';
+import { ArtifactResultResponse } from '../../../../../handlers/responses/artifactDeprecated';
 import { ContentWithLoadingStatus } from '../../../../../reducers/artifactResultContents';
 
 type PreviewProps = {

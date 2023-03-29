@@ -5,6 +5,12 @@ import {
 } from '@reduxjs/toolkit/query/react';
 
 import { apiAddress } from '../components/hooks/useAqueductConsts';
+import { dagGetQuery, DagGetRequest, DagGetResponse } from './DagGet';
+import {
+  dagResultGetQuery,
+  DagResultGetRequest,
+  DagResultGetResponse,
+} from './DagResultGet';
 import {
   workflowGetQuery,
   WorkflowGetRequest,
@@ -19,6 +25,14 @@ export const aqueductApi = createApi({
   baseQuery: fetchBaseQuery({ baseUrl: `${apiAddress}/api/v2/` }),
   keepUnusedDataFor: 60,
   endpoints: (builder) => ({
+    dagGet: builder.query<DagGetResponse, DagGetRequest>({
+      query: (req) => dagGetQuery(req),
+      transformErrorResponse: transformErrorResponse,
+    }),
+    dagResultGet: builder.query<DagResultGetResponse, DagResultGetRequest>({
+      query: (req) => dagResultGetQuery(req),
+      transformErrorResponse: transformErrorResponse,
+    }),
     workflowGet: builder.query<WorkflowGetResponse, WorkflowGetRequest>({
       query: (req) => workflowGetQuery(req),
       transformErrorResponse: transformErrorResponse,
@@ -26,4 +40,5 @@ export const aqueductApi = createApi({
   }),
 });
 
-export const { useWorkflowGetQuery } = aqueductApi;
+export const { useDagGetQuery, useDagResultGetQuery, useWorkflowGetQuery } =
+  aqueductApi;

@@ -11,7 +11,7 @@ import { BlobReader, TextWriter, ZipReader } from '@zip.js/zip.js';
 import React, { useEffect, useState } from 'react';
 
 import MultiFileViewer from '../../../components/MultiFileViewer';
-import { OperatorResultResponse } from '../../../handlers/responses/operator';
+import { OperatorResultResponse } from '../../../handlers/responses/operatorDeprecated';
 import { theme } from '../../../styles/theme/theme';
 import UserProfile from '../../../utils/auth';
 import {

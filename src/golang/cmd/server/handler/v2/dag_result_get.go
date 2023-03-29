@@ -16,7 +16,7 @@ import (
 )
 
 // This file should map directly to
-// src/ui/common/src/handlers/WorkflowGet.tsx
+// src/ui/common/src/handlers/DagResultGet.tsx
 //
 // Route: /v2/workflow/{workflowId}
 // Method: GET
@@ -29,24 +29,26 @@ import (
 //	Body:
 //		serialized `workflow.Response`
 
-type workflowGetArgs struct {
+type dagResultGetArgs struct {
 	*aq_context.AqContext
-	workflowID uuid.UUID
+	workflowID  uuid.UUID
+	dagResultID uuid.UUID
 }
 
-type WorkflowGetHandler struct {
+type DAGResultGetHandler struct {
 	handler.GetHandler
 
 	Database database.Database
 
-	WorkflowRepo repos.Workflow
+	WorkflowRepo  repos.Workflow
+	DAGResultRepo repos.DAGResult
 }
 
-func (*WorkflowGetHandler) Name() string {
-	return "WorkflowGet"
+func (*DAGResultGetHandler) Name() string {
+	return "DAGResultGet"
 }
 
-func (h *WorkflowGetHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *DAGResultGetHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
@@ -58,14 +60,21 @@ func (h *WorkflowGetHandler) Prepare(r *http.Request) (interface{}, int, error) 
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
 	}
 
-	return &workflowGetArgs{
-		AqContext:  aqContext,
-		workflowID: workflowID,
+	dagResultIDStr := chi.URLParam(r, routes.DAGResultIDParam)
+	dagResultID, err := uuid.Parse(dagResultIDStr)
+	if err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed DAG ID.")
+	}
+
+	return &dagResultGetArgs{
+		AqContext:   aqContext,
+		workflowID:  workflowID,
+		dagResultID: dagResultID,
 	}, http.StatusOK, nil
 }
 
-func (h *WorkflowGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*workflowGetArgs)
+func (h *DAGResultGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*dagResultGetArgs)
 
 	ok, err := h.WorkflowRepo.ValidateOrg(
 		ctx,
@@ -81,10 +90,10 @@ func (h *WorkflowGetHandler) Perform(ctx context.Context, interfaceArgs interfac
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
 	}
 
-	dbWorkflow, err := h.WorkflowRepo.Get(ctx, args.workflowID, h.Database)
+	dbDAGResult, err := h.DAGResultRepo.Get(ctx, args.dagResultID, h.Database)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading workflow.")
 	}
 
-	return response.NewWorkflowFromDBObject(dbWorkflow), http.StatusOK, nil
+	return response.NewDAGResultFromDBObject(dbDAGResult), http.StatusOK, nil
 }

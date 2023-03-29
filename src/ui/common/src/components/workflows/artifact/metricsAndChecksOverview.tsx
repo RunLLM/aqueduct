@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 
-import { ArtifactResultResponse } from '../../../handlers/responses/artifact';
+import { ArtifactResultResponse } from '../../../handlers/responses/artifactDeprecated';
 import { DataSchema } from '../../../utils/data';
 import OperatorExecStateTable, {
   OperatorExecStateTableType,

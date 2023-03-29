@@ -13,6 +13,16 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database:     s.Database,
 			WorkflowRepo: s.WorkflowRepo,
 		},
+		routes.DAGRoute: &v2.DAGGetHandler{
+			Database:     s.Database,
+			WorkflowRepo: s.WorkflowRepo,
+			DAGRepo:      s.DAGRepo,
+		},
+		routes.DAGResultRoute: &v2.DAGResultGetHandler{
+			Database:      s.Database,
+			WorkflowRepo:  s.WorkflowRepo,
+			DAGResultRepo: s.DAGResultRepo,
+		},
 
 		// V1 Handlers
 		// (ENG-2715) Remove deprecated ones
