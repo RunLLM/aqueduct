@@ -57,6 +57,8 @@ def create_param_artifact(
             A description for the parameter.
         explicitly_named:
             Whether this parameter was explicitly created with `client.create_param()`.
+        is_local_data:
+            Whether this parameter comes from a local data source.
     """
     if default is None:
         raise InvalidUserArgumentException("Parameter default value cannot be None.")

@@ -47,16 +47,14 @@ from aqueduct.integrations.sql_integration import RelationalDBIntegration
 from aqueduct.logger import logger
 from aqueduct.models.dag import Metadata, RetentionPolicy
 from aqueduct.models.integration import Integration, IntegrationInfo
-from aqueduct.models.local_data import LocalData
 from aqueduct.models.operators import ParamSpec
 from aqueduct.utils.dag_deltas import (
     SubgraphDAGDelta,
     apply_deltas_to_dag,
     validate_overwriting_parameters,
 )
-from aqueduct.utils.function_packaging import infer_requirements_from_env
-from aqueduct.utils.serialization import extract_val_from_local_data
-from aqueduct.utils.type_inference import infer_artifact_type
+from aqueduct.utils.serialization import deserialize, extract_val_from_local_data
+from aqueduct.utils.type_inference import _base64_string_to_bytes, infer_artifact_type
 from aqueduct.utils.utils import (
     construct_param_spec,
     find_flow_with_user_supplied_id_and_name,
@@ -118,15 +116,6 @@ def get_apikey() -> str:
             exit(1)
 
 
-def infer_requirements() -> List[str]:
-    """Obtains the list of pip requirements specifiers from the current python environment using `pip freeze`.
-
-    Returns:
-        A list, for example, ["transformers==4.21.0", "numpy==1.22.4"].
-    """
-    return infer_requirements_from_env()
-
-
 class Client:
     """This class allows users to interact with flows on their Aqueduct cluster."""
 
@@ -171,18 +160,6 @@ class Client:
             not "PYTEST_CURRENT_TEST" in os.environ
         )
 
-        # Check if "@ file" in pip freeze requirements and warn user.
-        if not "localhost" in aqueduct_address:
-            skipped_packages = []
-            for requirement in infer_requirements():
-                if "@ file" in requirement:
-                    skipped_packages.append(requirement.split(" ")[0])
-            if len(skipped_packages) > 0:
-                warnings.warn(
-                    "Your local Python environment contains packages installed from the local file system. The following packages won't be installed when running your workflow: "
-                    + ", ".join(skipped_packages)
-                )
-
     def github(self, repo: str, branch: str = "") -> Github:
         """Retrieves a Github object connecting to specified repos and branch.
 
@@ -201,7 +178,15 @@ class Client:
         """
         return Github(repo_url=repo, branch=branch)
 
-    def create_param(self, name: str, default: Any, description: str = "") -> BaseArtifact:
+    def create_param(
+        self,
+        name: str,
+        default: Any,
+        description: str = "",
+        use_local: bool = False,
+        as_type: Optional[ArtifactType] = None,
+        format: Optional[str] = None,
+    ) -> BaseArtifact:
         """Creates a parameter artifact that can be fed into other operators.
 
         Parameter values are configurable at runtime.
@@ -211,29 +196,33 @@ class Client:
                 The name to assign this parameter.
             default:
                 The default value to give this parameter, if no value is provided.
-                Every parameter must have a default.
+                Every parameter must have a default. If we decide to use local data,
+                a path to the local data file must be specified.
             description:
                 A description of what this parameter represents.
-
+            use_local:
+                Whether this parameter uses local data source or not.
+            as_type:
+                The expected type of the local data. Only supported types are ArtifactType.TABLE and ArtifactType.IMAGE.
+            format:
+                If local data type is ArtifactType.TABLE, the user has to specify the table format.
+                We currently support "json", "csv", and "parquet".
         Returns:
             A parameter artifact.
         """
-        if isinstance(default, LocalData):
-            default = extract_val_from_local_data(default)
-            return create_param_artifact(
-                self._dag,
-                name,
-                default,
-                description,
-                explicitly_named=True,
-                is_local_data=True,
-            )
+        if use_local:
+            if not isinstance(default, str):
+                raise InvalidUserArgumentException(
+                    "the default value must be a path to local data."
+                )
+            default = extract_val_from_local_data(default, as_type, format)
         return create_param_artifact(
             self._dag,
             name,
             default,
             description,
             explicitly_named=True,
+            is_local_data=use_local,
         )
 
     def connect_integration(
@@ -621,7 +610,9 @@ class Client:
         if not use_local and any(
             artifact_metadata.from_local_data for artifact_metadata in list(dag.artifacts.values())
         ):
-            raise InvalidUserActionException("Cannot create a flow with local data.")
+            raise InvalidUserActionException(
+                "Cannot create a flow with local data. Consider setting `use_local` to True to publish a workflow with local data parameters."
+            )
         dag.metadata = Metadata(
             name=name,
             description=description,

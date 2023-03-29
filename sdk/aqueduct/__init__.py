@@ -1,11 +1,10 @@
 from typing import Any, List
 
-from aqueduct.client import Client, get_apikey, global_config, infer_requirements
+from aqueduct.client import Client, get_apikey, global_config
 from aqueduct.constants import exports
 from aqueduct.constants.enums import CheckSeverity, LoadUpdateMode
 from aqueduct.decorator import check, metric, op, to_operator
 from aqueduct.flow import Flow
-from aqueduct.models.local_data import LocalData
 from aqueduct.schedule import DayOfMonth, DayOfWeek, Hour, Minute, daily, hourly, monthly, weekly
 
 

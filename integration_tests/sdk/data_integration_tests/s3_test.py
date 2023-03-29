@@ -66,7 +66,7 @@ def test_s3_list_of_tables_fetch_and_save(client, flow_manager, data_integration
         "hotel_reviews", artifact_type=ArtifactType.TABLE, format="parquet"
     )
 
-    @op
+    @op(requirements=[])
     def create_list_of_tables(input_table):
         return [input_table, input_table, input_table]
 
@@ -94,7 +94,7 @@ def test_s3_custom_pickled_dictionaries_fetch_and_save(client, flow_manager, dat
     img_tuple_param = client.create_param("Image List", default=(image_data, image_data))
     img_tuple_identifier = generate_object_name()
 
-    @op
+    @op(requirements=[])
     def return_image_list():
         return [image_data, image_data, image_data]
 
