@@ -175,7 +175,7 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
               <Box display="flex" flexDirection="row">
                 {engines.map((engine) => (
                   <Box ml={1} key={engine}>
-                    <ResourceItem engine={engine} />
+                    <ResourceItem resource={engine} />
                   </Box>
                 ))}
               </Box>
