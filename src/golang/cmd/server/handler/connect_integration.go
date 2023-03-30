@@ -204,8 +204,6 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	}
 
 	if args.SetAsStorage {
-
-		// TODO: REMOVE AQPATH
 		confData, err := args.Config.Marshal()
 		if err != nil {
 			return nil, http.StatusInternalServerError, err

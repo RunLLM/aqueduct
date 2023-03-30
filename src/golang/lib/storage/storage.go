@@ -2,9 +2,10 @@ package storage
 
 import (
 	"context"
+	"log"
+
 	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
-	"log"
 )
 
 func ErrObjectDoesNotExist() error {

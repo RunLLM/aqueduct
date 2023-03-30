@@ -39,10 +39,17 @@ func PerformStorageMigration(
 	storageMigrationRepo repos.StorageMigration,
 	DB database.Database,
 ) error {
+	destIntegrationName := "Local Filesystem"
+	var destIntegrationID *uuid.UUID
+	if destIntegrationObj != nil {
+		destIntegrationName = destIntegrationObj.Name
+		destIntegrationID = &destIntegrationObj.ID
+	}
+
 	// Begin recording the storage migration lifecycle.
 	storageMigrationObj, err := storageMigrationRepo.Create(
 		ctx,
-		&destIntegrationObj.ID,
+		destIntegrationID,
 		DB,
 	)
 	if err != nil {
@@ -74,7 +81,7 @@ func PerformStorageMigration(
 					// TODO: this can be a system error too. But no one cares right now.
 					shared.UserFatalFailure,
 					&shared.Error{
-						Tip:     fmt.Sprintf("Failure occurred when migrating to the new storage integration %s.", destIntegrationObj.Name),
+						Tip:     fmt.Sprintf("Failure occurred when migrating to the new storage integration %s.", destIntegrationName),
 						Context: err.Error(),
 					},
 				)
@@ -97,8 +104,8 @@ func PerformStorageMigration(
 		}
 
 		// TODO: REMOVE
-		if strings.HasPrefix(destIntegrationObj.Name, "failing") {
-			err = errors.Newf("I REALLY DONT LIKE YOUR NAME %s SIR", destIntegrationObj.Name)
+		if strings.HasPrefix(destIntegrationName, "failing") {
+			err = errors.Newf("I REALLY DONT LIKE YOUR NAME %s SIR", destIntegrationName)
 			return
 		}
 
