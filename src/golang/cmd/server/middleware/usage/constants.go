@@ -12,5 +12,5 @@ const (
 	codespacesEnv            string = "CODESPACES"
 	codespacesEnvActiveValue string = "true"
 
-	codespaceNameEnv string = "CODESPACE_NAME"
+	codespaceUserEnv string = "GITHUB_USER"
 )

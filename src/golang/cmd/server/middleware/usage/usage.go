@@ -2,9 +2,7 @@ package usage
 
 import (
 	"bytes"
-	"crypto/md5"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 	"strconv"
@@ -100,7 +98,7 @@ func WithUsageStats(environment string) func(http.Handler) http.Handler {
 	// https://docs.github.com/en/codespaces/developing-in-codespaces/default-environment-variables-for-your-codespace
 	if os.Getenv(codespacesEnv) == codespacesEnvActiveValue {
 		environment = "code_space"
-		machineID = fmt.Sprintf("%x", md5.Sum([]byte(os.Getenv(codespaceNameEnv))))
+		machineID = os.Getenv(codespaceUserEnv)
 	} else {
 		// This call generates a unique hash of the host device in a privacy-preserving fashion.
 		// Details can be found here: https://github.com/denisbrodbeck/machineid
