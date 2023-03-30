@@ -33,6 +33,7 @@ import {
 import { isFailed, isLoading, isSucceeded } from '../../../../utils/shared';
 import IntegrationOptions from '../../../integrations/options';
 import { LayoutProps } from '../../types';
+import {handleGetServerConfig} from "../../../../handlers/getServerConfig";
 
 type IntegrationDetailsPageProps = {
   user: UserProfile;
@@ -77,6 +78,10 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
 
   const isListObjectsLoading = useSelector((state: RootState) =>
     isLoading(state.integrationReducer.objectNames.status)
+  );
+
+  const serverConfig = useSelector(
+      (state: RootState) => state.serverConfigReducer
   );
 
   const selectedIntegration = integrations[integrationId];
@@ -126,6 +131,17 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     }
   }, [selectedIntegration]);
 
+  // Disable deletion of a storage integration.
+  useEffect(() => {
+    async function fetchServerConfig() {
+      if (user) {
+        await dispatch(handleGetServerConfig({ apiKey: user.apiKey }));
+      }
+    }
+
+    fetchServerConfig();
+  }, [user]);
+
   if (!integrations || !selectedIntegration) {
     return null;
   }
@@ -161,6 +177,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             onDeleteIntegration={() => {
               setShowDeleteTableDialog(true);
             }}
+            allowDeletion={ serverConfig.config?.storageConfig.integration_name !== selectedIntegration.name }
           />
         </Box>
 
