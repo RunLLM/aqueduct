@@ -10,8 +10,8 @@
     "customizations": {
         "codespaces": {
             "openFiles": [
-                "README.md",
-                ".devcontainer/README.md"
+                ".devcontainer/README.md",
+                "README.md"
             ]
         }
     }
