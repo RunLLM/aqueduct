@@ -9,6 +9,10 @@ import (
 func (s *AqServer) Handlers() map[string]handler.Handler {
 	return map[string]handler.Handler{
 		// V2 Handlers
+		routes.ListStorageMigrationRoute: &v2.ListStorageMigrationsHandler{
+			Database:             s.Database,
+			StorageMigrationRepo: s.StorageMigrationRepo,
+		},
 		routes.WorkflowRoute: &v2.WorkflowGetHandler{
 			Database:     s.Database,
 			WorkflowRepo: s.WorkflowRepo,

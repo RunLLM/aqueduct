@@ -14,8 +14,18 @@ type StorageMigration interface {
 }
 
 type storageMigrationReader interface {
-	// GetCurrent returns the ID of the current integration that is being used for storage.
-	GetCurrent(ctx context.Context, DB database.Database) (*models.StorageMigration, error)
+	// List returns all the storage migration entries.
+	// The returned list is expected to be ordered in reverse chronological order (latest migrations first).
+	List(
+		ctx context.Context,
+		DB database.Database,
+	) ([]models.StorageMigration, error)
+
+	// Current returns the one storage migration entry marked `current`. Returns an ErrNoRows if it does not exist yet.
+	Current(
+		ctx context.Context,
+		DB database.Database,
+	) (*models.StorageMigration, error)
 }
 
 type storageMigrationWriter interface {

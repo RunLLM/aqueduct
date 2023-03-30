@@ -3,7 +3,8 @@ package routes
 // Please sort the routes by their VALUEs
 const (
 	// V2 routes
-	WorkflowRoute = "/api/v2/workflow/{workflowID}"
+	WorkflowRoute             = "/api/v2/workflow/{workflowID}"
+	ListStorageMigrationRoute = "/api/v2/storage-migrations"
 
 	// V1 routes
 	GetArtifactVersionsRoute = "/api/artifact/versions"
@@ -12,7 +13,6 @@ const (
 	GetConfigRoute        = "/api/config"
 	ConfigureStorageRoute = "/api/config/storage/{integrationId}"
 
-	GetFunctionRoute    = "/api/function/{functionId}"
 	ExportFunctionRoute = "/api/function/{operatorId}/export"
 
 	ListIntegrationsRoute            = "/api/integrations"
@@ -51,8 +51,6 @@ const (
 	EditWorkflowRoute            = "/api/workflow/{workflowId}/edit"
 	RefreshWorkflowRoute         = "/api/workflow/{workflowId}/refresh"
 	GetWorkflowDagResultRoute    = "/api/workflow/{workflowId}/result/{workflowDagResultId}"
-	UnwatchWorkflowRoute         = "/api/workflow/{workflowId}/unwatch"
-	WatchWorkflowRoute           = "/api/workflow/{workflowId}/watch"
 	GetWorkflowHistoryRoute      = "/api/workflow/{workflowId}/history"
 
 	GetServerVersionRoute     = "/api/version"

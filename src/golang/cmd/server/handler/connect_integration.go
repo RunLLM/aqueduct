@@ -236,11 +236,15 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 			var err error
 			defer func() {
 				if err != nil {
+					// Regardless of whether the migration succeeded, we should track the finished timestamp.
+					finishedAt := time.Now()
+					execState.Timestamps.FinishedAt = &finishedAt
+
 					execState.UpdateWithFailure(
 						// TODO: this can be a system error too. But no one cares right now.
 						shared.UserFatalFailure,
 						&shared.Error{
-							Tip:     "Failure occurred when migrating to the new storage layer.",
+							Tip:     fmt.Sprintf("Failure occurred when migrating to the new storage integration %s.", integrationObj.Name),
 							Context: err.Error(),
 						},
 					)
@@ -262,19 +266,22 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 				return
 			}
 
+			// TODO: REMOVE
+			if strings.HasPrefix(integrationObj.Name, "failing") {
+				err = errors.Newf("I REALLY DONT LIKE YOUR NAME %s SIR", integrationObj.Name)
+				return
+			}
+
 			// Actually perform the storage migration.
 			storageConfig, err := h.performStorageMigration(args.Service, args.Config, args.OrgID)
-
-			// Regardless of whether the migration succeeded, we should track the finished timestamp.
-			finishedAt := time.Now()
-			execState.Timestamps.FinishedAt = &finishedAt
-
 			// We let the defer() handle the failure case appropriately.
 			if err != nil {
 				return
 			}
 
 			log.Info("Successfully migrated the storage layer!")
+			finishedAt := time.Now()
+			execState.Timestamps.FinishedAt = &finishedAt
 			execState.Status = shared.SucceededExecutionStatus
 
 			// The update of the storage config and storage migration entry should happen together.
@@ -313,7 +320,7 @@ func (h *ConnectIntegrationHandler) updateStorageMigrationExecState(
 		updates[models.StorageMigrationCurrent] = true
 
 		// If there was a previous storage migration, update that entry to be `current=False`.
-		oldStorageMigrationObj, err := h.StorageMigrationRepo.GetCurrent(ctx, h.Database)
+		oldStorageMigrationObj, err := h.StorageMigrationRepo.Current(ctx, h.Database)
 		if err == nil {
 			// Updating the old storage migration entry must be done in the same transaction
 			// as the update of the new storage migration entry, so that there is at most one
