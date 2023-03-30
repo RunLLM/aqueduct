@@ -18,7 +18,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/errors"
-	aq_errors "github.com/aqueducthq/aqueduct/lib/errors"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
@@ -27,6 +26,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/notification"
 	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/storage_migration"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
@@ -205,254 +205,285 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	}
 
 	if args.SetAsStorage {
-		// This integration should be used as the new storage layer.
-		// In order to do so, we need to migrate all content from the old store
-		// to the new store. This requires pausing the server and then restarting it.
 
-		// The migration logic is performed asynchronously, and it's process is tracked
-		// as a new entry in the `storage_migration` table:
-		storageMigrationObj, err := h.StorageMigrationRepo.Create(
+		// TODO: REMOVE AQPATH
+		confData, err := args.Config.Marshal()
+		if err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
+
+		newStorageConfig, err := storage.ConvertIntegrationConfigToStorageConfig(args.Service, confData)
+		if err != nil {
+			return emptyResp, http.StatusBadRequest, errors.Wrap(err, "Integration config is malformed.")
+		}
+
+		err = storage_migration.PerformStorageMigration(
 			ctx,
-			&integrationObj.ID,
+			args.OrgID,
+			integrationObj,
+			newStorageConfig,
+			h.PauseServer,
+			h.RestartServer,
+			h.ArtifactRepo,
+			h.ArtifactResultRepo,
+			h.DAGRepo,
+			h.IntegrationRepo,
+			h.OperatorRepo,
+			h.StorageMigrationRepo,
 			h.Database,
 		)
 		if err != nil {
-			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to migrate storage.")
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to migrate storage layer.")
 		}
 
-		// If the migration is successful, the new entry is given a success execution status, along with `current=True`.
-		// If the migration is unsuccessful, the error is recorded on the new entry in `storage_migration`.
-		go func() {
-			// Shadows the context in the outer scope on purpose.
-			ctx := context.Background()
-
-			log.Info("Starting storage migration process...")
-			// Wait until the server is paused
-			h.PauseServer()
-			// Makes sure that the server is restarted
-			defer h.RestartServer()
-
-			execState := storageMigrationObj.ExecState
-
-			var err error
-			defer func() {
-				if err != nil {
-					// Regardless of whether the migration succeeded, we should track the finished timestamp.
-					finishedAt := time.Now()
-					execState.Timestamps.FinishedAt = &finishedAt
-
-					execState.UpdateWithFailure(
-						// TODO: this can be a system error too. But no one cares right now.
-						shared.UserFatalFailure,
-						&shared.Error{
-							Tip:     fmt.Sprintf("Failure occurred when migrating to the new storage integration %s.", integrationObj.Name),
-							Context: err.Error(),
-						},
-					)
-					err = h.updateStorageMigrationExecState(ctx, storageMigrationObj.ID, &execState)
-					if err != nil {
-						log.Errorf("Unexpected error when updating the storage migration entry to FAILED: %v", err)
-						return
-					}
-
-				}
-			}()
-
-			// Mark the migration explicitly as RUNNING.
-			runningAt := time.Now()
-			execState.Timestamps.RunningAt = &runningAt
-			err = h.updateStorageMigrationExecState(ctx, storageMigrationObj.ID, &execState)
-			if err != nil {
-				log.Errorf("Unexpected error when updating the storage migration entry to RUNNING: %v", err)
-				return
-			}
-
-			// TODO: REMOVE
-			if strings.HasPrefix(integrationObj.Name, "failing") {
-				err = errors.Newf("I REALLY DONT LIKE YOUR NAME %s SIR", integrationObj.Name)
-				return
-			}
-
-			// Actually perform the storage migration.
-			storageConfig, storageCleanupConfig, err := h.performStorageMigration(args.Service, args.Config, args.OrgID)
-			// We let the defer() handle the failure case appropriately.
-			if err != nil {
-				return
-			}
-
-			log.Info("Successfully migrated the storage layer!")
-			finishedAt := time.Now()
-			execState.Timestamps.FinishedAt = &finishedAt
-			execState.Status = shared.SucceededExecutionStatus
-
-			// The update of the storage config and storage migration entry should happen together.
-			// While we don't enforce this atomically, we can make the two update together to minimize the risk.
-			err = h.updateStorageMigrationExecState(ctx, storageMigrationObj.ID, &execState)
-			if err != nil {
-				log.Errorf("Unexpected error when updating the storage migration entry to SUCCESS: %v", err)
-				return
-			}
-
-			err = config.UpdateStorage(storageConfig)
-			if err != nil {
-				log.Errorf("Unexpected error when updating the global storage layer config: %v", err)
-				return
-			} else {
-				log.Info("Successfully updated the global storage layer config!")
-			}
-
-			// We only perform best-effort deletion the old storage layer files here, after everything else has succeede.
-			for _, key := range storageCleanupConfig.StoreKeys {
-				if err := storageCleanupConfig.Store.Delete(ctx, key); err != nil {
-					log.Errorf("Unexpected error when deleting the old storage file %s: %v", key, err)
-				}
-			}
-
-			for _, key := range storageCleanupConfig.VaultKeys {
-				if err := storageCleanupConfig.Vault.Delete(ctx, key); err != nil {
-					log.Errorf("Unexpected error when deleting the old vault file %s: %v", key, err)
-				}
-			}
-		}()
+		//// This integration should be used as the new storage layer.
+		//// In order to do so, we need to migrate all content from the old store
+		//// to the new store. This requires pausing the server and then restarting it.
+		//
+		//// The migration logic is performed asynchronously, and it's process is tracked
+		//// as a new entry in the `storage_migration` table:
+		//storageMigrationObj, err := h.StorageMigrationRepo.Create(
+		//	ctx,
+		//	&integrationObj.ID,
+		//	h.Database,
+		//)
+		//if err != nil {
+		//	return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to migrate storage.")
+		//}
+		//
+		//// If the migration is successful, the new entry is given a success execution status, along with `current=True`.
+		//// If the migration is unsuccessful, the error is recorded on the new entry in `storage_migration`.
+		//go func() {
+		//	// Shadows the context in the outer scope on purpose.
+		//	ctx := context.Background()
+		//
+		//	log.Info("Starting storage migration process...")
+		//	// Wait until the server is paused
+		//	h.PauseServer()
+		//	// Makes sure that the server is restarted
+		//	defer h.RestartServer()
+		//
+		//	execState := storageMigrationObj.ExecState
+		//
+		//	var err error
+		//	defer func() {
+		//		if err != nil {
+		//			// Regardless of whether the migration succeeded, we should track the finished timestamp.
+		//			finishedAt := time.Now()
+		//			execState.Timestamps.FinishedAt = &finishedAt
+		//
+		//			execState.UpdateWithFailure(
+		//				// TODO: this can be a system error too. But no one cares right now.
+		//				shared.UserFatalFailure,
+		//				&shared.Error{
+		//					Tip:     fmt.Sprintf("Failure occurred when migrating to the new storage integration %s.", integrationObj.Name),
+		//					Context: err.Error(),
+		//				},
+		//			)
+		//			err = h.updateStorageMigrationExecState(ctx, storageMigrationObj.ID, &execState)
+		//			if err != nil {
+		//				log.Errorf("Unexpected error when updating the storage migration entry to FAILED: %v", err)
+		//				return
+		//			}
+		//
+		//		}
+		//	}()
+		//
+		//	// Mark the migration explicitly as RUNNING.
+		//	runningAt := time.Now()
+		//	execState.Timestamps.RunningAt = &runningAt
+		//	err = h.updateStorageMigrationExecState(ctx, storageMigrationObj.ID, &execState)
+		//	if err != nil {
+		//		log.Errorf("Unexpected error when updating the storage migration entry to RUNNING: %v", err)
+		//		return
+		//	}
+		//
+		//	// TODO: REMOVE
+		//	if strings.HasPrefix(integrationObj.Name, "failing") {
+		//		err = errors.Newf("I REALLY DONT LIKE YOUR NAME %s SIR", integrationObj.Name)
+		//		return
+		//	}
+		//
+		//	// Actually perform the storage migration.
+		//	storageConfig, storageCleanupConfig, err := h.performStorageMigration(args.Service, args.Config, args.OrgID)
+		//	// We let the defer() handle the failure case appropriately.
+		//	if err != nil {
+		//		return
+		//	}
+		//
+		//	log.Info("Successfully migrated the storage layer!")
+		//	finishedAt := time.Now()
+		//	execState.Timestamps.FinishedAt = &finishedAt
+		//	execState.Status = shared.SucceededExecutionStatus
+		//
+		//	// The update of the storage config and storage migration entry should happen together.
+		//	// While we don't enforce this atomically, we can make the two update together to minimize the risk.
+		//	err = h.updateStorageMigrationExecState(ctx, storageMigrationObj.ID, &execState)
+		//	if err != nil {
+		//		log.Errorf("Unexpected error when updating the storage migration entry to SUCCESS: %v", err)
+		//		return
+		//	}
+		//
+		//	err = config.UpdateStorage(storageConfig)
+		//	if err != nil {
+		//		log.Errorf("Unexpected error when updating the global storage layer config: %v", err)
+		//		return
+		//	} else {
+		//		log.Info("Successfully updated the global storage layer config!")
+		//	}
+		//
+		//	// We only perform best-effort deletion the old storage layer files here, after everything else has succeede.
+		//	for _, key := range storageCleanupConfig.StoreKeys {
+		//		if err := storageCleanupConfig.Store.Delete(ctx, key); err != nil {
+		//			log.Errorf("Unexpected error when deleting the old storage file %s: %v", key, err)
+		//		}
+		//	}
+		//
+		//	for _, key := range storageCleanupConfig.VaultKeys {
+		//		if err := storageCleanupConfig.Vault.Delete(ctx, key); err != nil {
+		//			log.Errorf("Unexpected error when deleting the old vault file %s: %v", key, err)
+		//		}
+		//	}
+		//}()
 	}
 
 	return emptyResp, http.StatusOK, nil
 }
 
 // Also updates `current=True` if the execution state is marked as SUCCESS!
-func (h *ConnectIntegrationHandler) updateStorageMigrationExecState(
-	ctx context.Context,
-	storageMigrationID uuid.UUID,
-	execState *shared.ExecutionState,
-) error {
-	updates := map[string]interface{}{
-		models.StorageMigrationExecutionState: execState,
-	}
-
-	// This is updated to a transaction if we also need to mark an old entry as current=False.
-	db := h.Database
-	if execState.Status == shared.SucceededExecutionStatus {
-		updates[models.StorageMigrationCurrent] = true
-
-		// If there was a previous storage migration, update that entry to be `current=False`.
-		oldStorageMigrationObj, err := h.StorageMigrationRepo.Current(ctx, h.Database)
-		if err == nil {
-			// Updating the old storage migration entry must be done in the same transaction
-			// as the update of the new storage migration entry, so that there is at most one
-			// current=True entry in the storage_migration table.
-			txn, err := h.Database.BeginTx(context.Background())
-			if err != nil {
-				return errors.Wrap(err, "Unable to start transaction for updating storage state.")
-			}
-			defer database.TxnRollbackIgnoreErr(ctx, txn)
-
-			db = txn
-			_, err = h.StorageMigrationRepo.Update(
-				ctx,
-				oldStorageMigrationObj.ID,
-				map[string]interface{}{
-					models.StorageMigrationCurrent: false,
-				},
-				db,
-			)
-			if err != nil {
-				return errors.Wrap(err, "Unexpected error when updating old storage migration entry to be non-current")
-			}
-		} else if !aq_errors.Is(err, database.ErrNoRows()) {
-			return errors.Wrap(err, "Unexpected error when fetching current storage state.")
-		}
-		// Continue without doing anything if there was no previous storage migration.
-	}
-
-	// Perform the actual intended execution state update.
-	_, err := h.StorageMigrationRepo.Update(
-		ctx,
-		storageMigrationID,
-		updates,
-		db,
-	)
-	if err != nil {
-		return errors.Wrap(err, "Unexpected error when updating storage migration execution state.")
-	}
-
-	// Only need to do this if we're committing a transaction.
-	if txn, ok := db.(database.Transaction); ok {
-		err = txn.Commit(ctx)
-		if err != nil {
-			return errors.Wrap(err, "Unexpected error when committing storage migration execution state update.")
-		}
-	}
-	return nil
-}
-
-// Migrate the storage (and vault) context to the new storage layer.
-// The global config for the server is *NOT* updated here.
-// Returns the new storage config, along with any cleanup information that should be done by the caller.
-func (h *ConnectIntegrationHandler) performStorageMigration(
-	svc shared.Service,
-	conf auth.Config,
-	orgID string,
-) (*shared.StorageConfig, *storage_migration.StorageCleanupConfig, error) {
-	// Wait until there are no more workflow runs in progress
-	lock := utils.NewExecutionLock()
-	if err := lock.Lock(); err != nil {
-		return nil, nil, errors.Wrap(err, "Unexpected error when acquiring workflow execution lock.")
-	}
-	defer func() {
-		if lockErr := lock.Unlock(); lockErr != nil {
-			log.Errorf("Unexpected error when unlocking workflow execution lock: %v", lockErr)
-		}
-	}()
-
-	data, err := conf.Marshal()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	var storageConfig *shared.StorageConfig
-
-	switch svc {
-	case shared.S3:
-		var c shared.S3IntegrationConfig
-		if err := json.Unmarshal(data, &c); err != nil {
-			return nil, nil, err
-		}
-
-		storageConfig, err = convertS3IntegrationtoStorageConfig(&c)
-		if err != nil {
-			return nil, nil, err
-		}
-	case shared.GCS:
-		var c shared.GCSIntegrationConfig
-		if err := json.Unmarshal(data, &c); err != nil {
-			return nil, nil, err
-		}
-
-		storageConfig = convertGCSIntegrationtoStorageConfig(&c)
-	default:
-		return nil, nil, errors.Newf("%v cannot be used as the storage layer", svc)
-	}
-
-	// Migrate all storage content to the new storage config
-	currentStorageConfig := config.Storage()
-	storageCleanupConfig, err := storage_migration.MigrateStorageAndVault(
-		context.Background(),
-		&currentStorageConfig,
-		storageConfig,
-		orgID,
-		h.DAGRepo,
-		h.ArtifactRepo,
-		h.ArtifactResultRepo,
-		h.OperatorRepo,
-		h.IntegrationRepo,
-		h.Database,
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return storageConfig, storageCleanupConfig, nil
-}
+//func (h *ConnectIntegrationHandler) updateStorageMigrationExecState(
+//	ctx context.Context,
+//	storageMigrationID uuid.UUID,
+//	execState *shared.ExecutionState,
+//) error {
+//	updates := map[string]interface{}{
+//		models.StorageMigrationExecutionState: execState,
+//	}
+//
+//	// This is updated to a transaction if we also need to mark an old entry as current=False.
+//	db := h.Database
+//	if execState.Status == shared.SucceededExecutionStatus {
+//		updates[models.StorageMigrationCurrent] = true
+//
+//		// If there was a previous storage migration, update that entry to be `current=False`.
+//		oldStorageMigrationObj, err := h.StorageMigrationRepo.Current(ctx, h.Database)
+//		if err == nil {
+//			// Updating the old storage migration entry must be done in the same transaction
+//			// as the update of the new storage migration entry, so that there is at most one
+//			// current=True entry in the storage_migration table.
+//			txn, err := h.Database.BeginTx(context.Background())
+//			if err != nil {
+//				return errors.Wrap(err, "Unable to start transaction for updating storage state.")
+//			}
+//			defer database.TxnRollbackIgnoreErr(ctx, txn)
+//
+//			db = txn
+//			_, err = h.StorageMigrationRepo.Update(
+//				ctx,
+//				oldStorageMigrationObj.ID,
+//				map[string]interface{}{
+//					models.StorageMigrationCurrent: false,
+//				},
+//				db,
+//			)
+//			if err != nil {
+//				return errors.Wrap(err, "Unexpected error when updating old storage migration entry to be non-current")
+//			}
+//		} else if !aq_errors.Is(err, database.ErrNoRows()) {
+//			return errors.Wrap(err, "Unexpected error when fetching current storage state.")
+//		}
+//		// Continue without doing anything if there was no previous storage migration.
+//	}
+//
+//	// Perform the actual intended execution state update.
+//	_, err := h.StorageMigrationRepo.Update(
+//		ctx,
+//		storageMigrationID,
+//		updates,
+//		db,
+//	)
+//	if err != nil {
+//		return errors.Wrap(err, "Unexpected error when updating storage migration execution state.")
+//	}
+//
+//	// Only need to do this if we're committing a transaction.
+//	if txn, ok := db.(database.Transaction); ok {
+//		err = txn.Commit(ctx)
+//		if err != nil {
+//			return errors.Wrap(err, "Unexpected error when committing storage migration execution state update.")
+//		}
+//	}
+//	return nil
+//}
+//
+//// Migrate the storage (and vault) context to the new storage layer.
+//// The global config for the server is *NOT* updated here.
+//// Returns the new storage config, along with any cleanup information that should be done by the caller.
+//func (h *ConnectIntegrationHandler) performStorageMigration(
+//	svc shared.Service,
+//	conf auth.Config,
+//	orgID string,
+//) (*shared.StorageConfig, *storage_migration.StorageCleanupConfig, error) {
+//	// Wait until there are no more workflow runs in progress
+//	lock := utils.NewExecutionLock()
+//	if err := lock.Lock(); err != nil {
+//		return nil, nil, errors.Wrap(err, "Unexpected error when acquiring workflow execution lock.")
+//	}
+//	defer func() {
+//		if lockErr := lock.Unlock(); lockErr != nil {
+//			log.Errorf("Unexpected error when unlocking workflow execution lock: %v", lockErr)
+//		}
+//	}()
+//
+//	data, err := conf.Marshal()
+//	if err != nil {
+//		return nil, nil, err
+//	}
+//
+//	var storageConfig *shared.StorageConfig
+//
+//	switch svc {
+//	case shared.S3:
+//		var c shared.S3IntegrationConfig
+//		if err := json.Unmarshal(data, &c); err != nil {
+//			return nil, nil, err
+//		}
+//
+//		storageConfig, err = convertS3IntegrationtoStorageConfig(&c)
+//		if err != nil {
+//			return nil, nil, err
+//		}
+//	case shared.GCS:
+//		var c shared.GCSIntegrationConfig
+//		if err := json.Unmarshal(data, &c); err != nil {
+//			return nil, nil, err
+//		}
+//
+//		storageConfig = convertGCSIntegrationtoStorageConfig(&c)
+//	default:
+//		return nil, nil, errors.Newf("%v cannot be used as the storage layer", svc)
+//	}
+//
+//	// Migrate all storage content to the new storage config
+//	currentStorageConfig := config.Storage()
+//	storageCleanupConfig, err := storage_migration.MigrateStorageAndVault(
+//		context.Background(),
+//		&currentStorageConfig,
+//		storageConfig,
+//		orgID,
+//		h.DAGRepo,
+//		h.ArtifactRepo,
+//		h.ArtifactResultRepo,
+//		h.OperatorRepo,
+//		h.IntegrationRepo,
+//		h.Database,
+//	)
+//	if err != nil {
+//		return nil, nil, err
+//	}
+//
+//	return storageConfig, storageCleanupConfig, nil
+//}
 
 // ConnectIntegration connects a new integration specified by `args`.
 // It returns the integration object, the status code for the request and an error, if any.

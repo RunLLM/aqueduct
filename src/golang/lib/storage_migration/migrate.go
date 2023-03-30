@@ -2,17 +2,241 @@ package storage_migration
 
 import (
 	"context"
+	"fmt"
+	"strings"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	aq_errors "github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
-	"github.com/sirupsen/logrus"
+	"github.com/dropbox/godropbox/errors"
+	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
+
+// PerformStorageMigration starts and manages the storage migration process through its entire lifecycle.
+// The migration logic is performed asynchronously, and it's process is tracked as a new entry in the
+// `storage_migration` table. This method does not block on the migration process.
+// This method also pauses the server, until the migration completes or errors, wherein the server will restart.
+func PerformStorageMigration(
+	ctx context.Context,
+	orgID string,
+	destIntegrationObj *models.Integration,
+	newStorageConfig *shared.StorageConfig,
+	pauseServer func(),
+	restartServer func(),
+	artifactRepo repos.Artifact,
+	artifactResultRepo repos.ArtifactResult,
+	DAGRepo repos.DAG,
+	integrationRepo repos.Integration,
+	operatorRepo repos.Operator,
+	storageMigrationRepo repos.StorageMigration,
+	DB database.Database,
+) error {
+	// Begin recording the storage migration lifecycle.
+	storageMigrationObj, err := storageMigrationRepo.Create(
+		ctx,
+		&destIntegrationObj.ID,
+		DB,
+	)
+	if err != nil {
+		return errors.Wrap(err, "Unable to migrate storage.")
+	}
+
+	// If the migration is successful, the new entry is given a success execution status, along with `current=True`.
+	// If the migration is unsuccessful, the error is recorded on the new entry in `storage_migration`.
+	go func() {
+		// Shadows the context in the outer scope on purpose.
+		ctx := context.Background()
+
+		log.Info("Starting storage migration process...")
+		// Wait until the server is paused
+		pauseServer()
+		// Makes sure that the server is restarted
+		defer restartServer()
+
+		execState := storageMigrationObj.ExecState
+
+		var err error
+		defer func() {
+			if err != nil {
+				// Regardless of whether the migration succeeded, we should track the finished timestamp.
+				finishedAt := time.Now()
+				execState.Timestamps.FinishedAt = &finishedAt
+
+				execState.UpdateWithFailure(
+					// TODO: this can be a system error too. But no one cares right now.
+					shared.UserFatalFailure,
+					&shared.Error{
+						Tip:     fmt.Sprintf("Failure occurred when migrating to the new storage integration %s.", destIntegrationObj.Name),
+						Context: err.Error(),
+					},
+				)
+				err = updateStorageMigrationExecState(ctx, storageMigrationObj.ID, &execState, storageMigrationRepo, DB)
+				if err != nil {
+					log.Errorf("Unexpected error when updating the storage migration entry to FAILED: %v", err)
+					return
+				}
+
+			}
+		}()
+
+		// Mark the migration explicitly as RUNNING.
+		runningAt := time.Now()
+		execState.Timestamps.RunningAt = &runningAt
+		err = updateStorageMigrationExecState(ctx, storageMigrationObj.ID, &execState, storageMigrationRepo, DB)
+		if err != nil {
+			log.Errorf("Unexpected error when updating the storage migration entry to RUNNING: %v", err)
+			return
+		}
+
+		// TODO: REMOVE
+		if strings.HasPrefix(destIntegrationObj.Name, "failing") {
+			err = errors.Newf("I REALLY DONT LIKE YOUR NAME %s SIR", destIntegrationObj.Name)
+			return
+		}
+
+		// Actually perform the storage migration.
+		// Wait until there are no more workflow runs in progress
+		lock := utils.NewExecutionLock()
+		if err = lock.Lock(); err != nil {
+			err = errors.Wrap(err, "Unexpected error when acquiring workflow execution lock.")
+			return
+		}
+		defer func() {
+			if lockErr := lock.Unlock(); lockErr != nil {
+				log.Errorf("Unexpected error when unlocking workflow execution lock: %v", lockErr)
+			}
+		}()
+
+		// Migrate all storage content to the new storage config
+		currentStorageConfig := config.Storage()
+		storageCleanupConfig, err := MigrateStorageAndVault(
+			context.Background(),
+			&currentStorageConfig,
+			newStorageConfig,
+			orgID,
+			DAGRepo,
+			artifactRepo,
+			artifactResultRepo,
+			operatorRepo,
+			integrationRepo,
+			DB,
+		)
+		// We let the defer() handle the failure case appropriately.
+		if err != nil {
+			return
+		}
+
+		log.Info("Successfully migrated the storage layer!")
+		finishedAt := time.Now()
+		execState.Timestamps.FinishedAt = &finishedAt
+		execState.Status = shared.SucceededExecutionStatus
+
+		// The update of the storage config and storage migration entry should happen together.
+		// While we don't enforce this atomically, we can make the two update together to minimize the risk.
+		err = updateStorageMigrationExecState(ctx, storageMigrationObj.ID, &execState, storageMigrationRepo, DB)
+		if err != nil {
+			log.Errorf("Unexpected error when updating the storage migration entry to SUCCESS: %v", err)
+			return
+		}
+
+		err = config.UpdateStorage(newStorageConfig)
+		if err != nil {
+			log.Errorf("Unexpected error when updating the global storage layer config: %v", err)
+			return
+		} else {
+			log.Info("Successfully updated the global storage layer config!")
+		}
+
+		// We only perform best-effort deletion the old storage layer files here, after everything else has succeede.
+		for _, key := range storageCleanupConfig.StoreKeys {
+			if err := storageCleanupConfig.Store.Delete(ctx, key); err != nil {
+				log.Errorf("Unexpected error when deleting the old storage file %s: %v", key, err)
+			}
+		}
+
+		for _, key := range storageCleanupConfig.VaultKeys {
+			if err := storageCleanupConfig.Vault.Delete(ctx, key); err != nil {
+				log.Errorf("Unexpected error when deleting the old vault file %s: %v", key, err)
+			}
+		}
+	}()
+	return nil
+}
+
+// Also updates `current=True` if the execution state is marked as SUCCESS!
+func updateStorageMigrationExecState(
+	ctx context.Context,
+	storageMigrationID uuid.UUID,
+	execState *shared.ExecutionState,
+	storageMigrationRepo repos.StorageMigration,
+	db database.Database,
+) error {
+	updates := map[string]interface{}{
+		models.StorageMigrationExecutionState: execState,
+	}
+
+	// This is updated to a transaction if we also need to mark an old entry as current=False.
+	if execState.Status == shared.SucceededExecutionStatus {
+		updates[models.StorageMigrationCurrent] = true
+
+		// If there was a previous storage migration, update that entry to be `current=False`.
+		oldStorageMigrationObj, err := storageMigrationRepo.Current(ctx, db)
+		if err == nil {
+			// Updating the old storage migration entry must be done in the same transaction
+			// as the update of the new storage migration entry, so that there is at most one
+			// current=True entry in the storage_migration table.
+			txn, err := db.BeginTx(context.Background())
+			if err != nil {
+				return errors.Wrap(err, "Unable to start transaction for updating storage state.")
+			}
+			defer database.TxnRollbackIgnoreErr(ctx, txn)
+
+			db = txn
+			_, err = storageMigrationRepo.Update(
+				ctx,
+				oldStorageMigrationObj.ID,
+				map[string]interface{}{
+					models.StorageMigrationCurrent: false,
+				},
+				db,
+			)
+			if err != nil {
+				return errors.Wrap(err, "Unexpected error when updating old storage migration entry to be non-current")
+			}
+		} else if !aq_errors.Is(err, database.ErrNoRows()) {
+			return errors.Wrap(err, "Unexpected error when fetching current storage state.")
+		}
+		// Continue without doing anything if there was no previous storage migration.
+	}
+
+	// Perform the actual intended execution state update.
+	_, err := storageMigrationRepo.Update(
+		ctx,
+		storageMigrationID,
+		updates,
+		db,
+	)
+	if err != nil {
+		return errors.Wrap(err, "Unexpected error when updating storage migration execution state.")
+	}
+
+	// Only need to do this if we're committing a transaction.
+	if txn, ok := db.(database.Transaction); ok {
+		err = txn.Commit(ctx)
+		if err != nil {
+			return errors.Wrap(err, "Unexpected error when committing storage migration execution state update.")
+		}
+	}
+	return nil
+}
 
 // StorageCleanupConfig contains the fields necessary to cleanup the old storage layer.
 // Callers of `MigrateStorageAndVault` can use this config struct to perform best-effort cleanup
@@ -45,7 +269,7 @@ func MigrateStorageAndVault(
 	integrationRepo repos.Integration,
 	DB database.Database,
 ) (*StorageCleanupConfig, error) {
-	logrus.Infof("Migrating from %v to %v", *oldConf, *newConf)
+	log.Infof("Migrating from %v to %v", *oldConf, *newConf)
 
 	oldStore := storage.NewStorage(oldConf)
 	newStore := storage.NewStorage(newConf)
@@ -73,14 +297,14 @@ func MigrateStorageAndVault(
 
 	toDelete := []string{}
 
-	logrus.Infof("There are %v DAGs to migrate", len(dags))
+	log.Infof("There are %v DAGs to migrate", len(dags))
 
 	for _, dag := range dags {
-		logrus.Infof("Starting migration for DAG %v", dag.ID)
+		log.Infof("Starting migration for DAG %v", dag.ID)
 
 		if dag.EngineConfig.Type == shared.AirflowEngineType {
 			// We cannot migrate content for Airflow workflows
-			logrus.Info("This DAG's engine is Airflow, so its migration will be skipped.")
+			log.Info("This DAG's engine is Airflow, so its migration will be skipped.")
 			continue
 		}
 
@@ -90,21 +314,21 @@ func MigrateStorageAndVault(
 			return nil, err
 		}
 
-		logrus.Infof("There are %v artifacts to migrate for DAG %v", len(artifacts), dag.ID)
+		log.Infof("There are %v artifacts to migrate for DAG %v", len(artifacts), dag.ID)
 
 		for _, artifact := range artifacts {
-			logrus.Infof("Starting migration for artifact %v of DAG %v", artifact.ID, dag.ID)
+			log.Infof("Starting migration for artifact %v of DAG %v", artifact.ID, dag.ID)
 
 			artifactResults, err := artifactResultRepo.GetByArtifact(ctx, artifact.ID, txn)
 			if err != nil {
 				return nil, err
 			}
 
-			logrus.Infof("There are %v artifact results to migrate for artifact %v", len(artifactResults), artifact.ID)
+			log.Infof("There are %v artifact results to migrate for artifact %v", len(artifactResults), artifact.ID)
 
 			// For each artifact result, move the content from `oldStore` to `newStore`
 			for _, artifactResult := range artifactResults {
-				logrus.Infof("Starting migration for artifact result %v of artifact %v", artifactResult.ID, artifact.ID)
+				log.Infof("Starting migration for artifact result %v of artifact %v", artifactResult.ID, artifact.ID)
 
 				val, err := oldStore.Get(ctx, artifactResult.ContentPath)
 				if err != nil &&
@@ -112,7 +336,7 @@ func MigrateStorageAndVault(
 					artifactResult.ExecState.Status == shared.SucceededExecutionStatus {
 					// Return an error because the artifact result is successful,
 					// but not found in current storage.
-					logrus.Errorf("Unable to get artifact result %v from old store: %v", artifactResult.ID, err)
+					log.Errorf("Unable to get artifact result %v from old store: %v", artifactResult.ID, err)
 					return nil, err
 				}
 
@@ -120,7 +344,7 @@ func MigrateStorageAndVault(
 					// Only try to migrate artifact result if there was no issue reading
 					// it from the `oldStore`
 					if err := newStore.Put(ctx, artifactResult.ContentPath, val); err != nil {
-						logrus.Errorf("Unable to write artifact result %v to new store: %v", artifactResult.ID, err)
+						log.Errorf("Unable to write artifact result %v to new store: %v", artifactResult.ID, err)
 						return nil, err
 					}
 				}
@@ -135,10 +359,10 @@ func MigrateStorageAndVault(
 			return nil, err
 		}
 
-		logrus.Infof("There are %v operators to migrate for DAG %v", len(operators), dag.ID)
+		log.Infof("There are %v operators to migrate for DAG %v", len(operators), dag.ID)
 
 		for _, operator := range operators {
-			logrus.Infof("Starting migration for operator %v of DAG %v", operator.ID, dag.ID)
+			log.Infof("Starting migration for operator %v of DAG %v", operator.ID, dag.ID)
 
 			var operatorCodePath string
 			switch {
@@ -155,12 +379,12 @@ func MigrateStorageAndVault(
 
 			val, err := oldStore.Get(ctx, operatorCodePath)
 			if err != nil {
-				logrus.Errorf("Unable to get operator code %v from old store: %v", operator.ID, err)
+				log.Errorf("Unable to get operator code %v from old store: %v", operator.ID, err)
 				return nil, err
 			}
 
 			if err := newStore.Put(ctx, operatorCodePath, val); err != nil {
-				logrus.Errorf("Unable to write operator code %v to new store: %v", operator.ID, err)
+				log.Errorf("Unable to write operator code %v to new store: %v", operator.ID, err)
 				return nil, err
 			}
 
