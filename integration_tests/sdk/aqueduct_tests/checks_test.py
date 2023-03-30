@@ -122,13 +122,7 @@ def test_edit_check(client, data_integration, engine, flow_name):
     flow = publish_flow_test(client, artifacts=[pass2, fail], engine=engine, name=flow_name())
     flow_run = flow.latest()
     assert flow_run.artifact("foo artifact").get()
-
-    # TODO(ENG-2629): Fetching a warning check should not raise an exception.
-    with pytest.raises(
-        ArtifactNeverComputedException,
-        match="This artifact was part of an existing flow run but was never computed successfully",
-    ):
-        assert not flow_run.artifact("foo artifact (1)").get()
+    assert not flow_run.artifact("foo artifact (1)").get()
 
 
 def test_delete_check(client, data_integration):

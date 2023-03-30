@@ -558,13 +558,14 @@ class APIClient:
         parsed_response = _parse_artifact_result_response(resp)
         execution_status = parsed_response["metadata"]["exec_state"]["status"]
 
-        if execution_status != ExecutionStatus.SUCCEEDED:
-            print("Artifact result unavailable due to unsuccessful execution.")
-            return None, execution_status
-
         serialization_type = parsed_response["metadata"]["serialization_type"]
         artifact_type = parsed_response["metadata"]["artifact_type"]
-        return (
-            deserialize(serialization_type, artifact_type, parsed_response["data"]),
-            execution_status,
-        )
+
+        return_value = None
+        if "data" in parsed_response:
+            return_value = deserialize(serialization_type, artifact_type, parsed_response["data"])
+
+        if execution_status != ExecutionStatus.SUCCEEDED:
+            logger().warning("Artifact result unavailable due to unsuccessful execution.")
+
+        return (return_value, execution_status)
