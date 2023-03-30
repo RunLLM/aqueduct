@@ -96,7 +96,7 @@ def _read_local_json_content(path: str) -> Any:
 
 def _read_local_pickle_content(path: str) -> Any:
     with open(path, mode='rb') as file:
-        return pickle.loads(file.read())
+        return pickle.load(file)
     
 def _read_local_string_content(path: str) -> str:
     with open(path, mode = 'r',encoding=DEFAULT_ENCODING) as file:
