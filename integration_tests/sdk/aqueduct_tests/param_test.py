@@ -1,7 +1,7 @@
 import os
+import pickle
 from typing import Dict, List
 
-import pickle
 import pandas as pd
 import pytest
 from aqueduct.artifacts.generic_artifact import GenericArtifact
@@ -537,9 +537,12 @@ def test_all_local_data_types(client, flow_name, engine):
         if input != ArtifactType:
             raise Exception("Expected Class.")
         return input
-    with open("data/test.pickle","wb") as file:
-        pickle.dump(ArtifactType,file)
-    picklable_param = client.create_param("pickleable", default="data/test.pickle",use_local=True, as_type=ArtifactType.PICKLABLE)
+
+    with open("data/test.pickle", "wb") as file:
+        pickle.dump(ArtifactType, file)
+    picklable_param = client.create_param(
+        "pickleable", default="data/test.pickle", use_local=True, as_type=ArtifactType.PICKLABLE
+    )
     pickle_output = must_be_picklable(picklable_param)
 
     assert isinstance(pickle_output, GenericArtifact)
@@ -551,7 +554,9 @@ def test_all_local_data_types(client, flow_name, engine):
             raise Exception("Expected bytes")
         return input
 
-    bytes_param = client.create_param("bytes", default="data/helloworld.txt",use_local=True,as_type=ArtifactType.BYTES)
+    bytes_param = client.create_param(
+        "bytes", default="data/helloworld.txt", use_local=True, as_type=ArtifactType.BYTES
+    )
     bytes_output = must_be_bytes(bytes_param)
 
     assert isinstance(bytes_output, GenericArtifact)
@@ -563,7 +568,9 @@ def test_all_local_data_types(client, flow_name, engine):
             raise Exception("Expected string.")
         return input
 
-    string_param = client.create_param("string", default="data/helloworld.txt",use_local=True,as_type=ArtifactType.STRING)
+    string_param = client.create_param(
+        "string", default="data/helloworld.txt", use_local=True, as_type=ArtifactType.STRING
+    )
     string_output = must_be_string(string_param)
     assert isinstance(string_output, GenericArtifact)
     assert string_output.get() == "hello world"
@@ -574,10 +581,12 @@ def test_all_local_data_types(client, flow_name, engine):
             raise Exception("Expected tuple.")
         return input
 
-    tuple_param = client.create_param("tuple", default="data/helloworld_tuple",use_local=True,as_type=ArtifactType.TUPLE)
+    tuple_param = client.create_param(
+        "tuple", default="data/helloworld_tuple", use_local=True, as_type=ArtifactType.TUPLE
+    )
     tuple_output = must_be_tuple(tuple_param)
     assert isinstance(tuple_output, GenericArtifact)
-    assert tuple_output.get() == ("hello","world")
+    assert tuple_output.get() == ("hello", "world")
 
     @op
     def must_be_list(input):
@@ -585,7 +594,9 @@ def test_all_local_data_types(client, flow_name, engine):
             raise Exception("Expected list.")
         return input
 
-    list_param = client.create_param("list", default="data/helloworld_list",use_local=True,as_type=ArtifactType.LIST)
+    list_param = client.create_param(
+        "list", default="data/helloworld_list", use_local=True, as_type=ArtifactType.LIST
+    )
     list_output = must_be_list(list_param)
     assert isinstance(list_output, GenericArtifact)
     assert list_output.get() == ["hello", "world"]
@@ -596,7 +607,9 @@ def test_all_local_data_types(client, flow_name, engine):
             raise Exception("Expected image.")
         return input
 
-    image_param = client.create_param("image", default="data/aqueduct.jpg",use_local=True,as_type=ArtifactType.IMAGE)
+    image_param = client.create_param(
+        "image", default="data/aqueduct.jpg", use_local=True, as_type=ArtifactType.IMAGE
+    )
     image_output = must_be_image(image_param)
     assert isinstance(image_output, GenericArtifact)
     assert isinstance(image_output.get(), Image.Image)

@@ -90,26 +90,32 @@ def _read_local_parquet_table_content(path: str) -> pd.DataFrame:
 def _read_local_image_content(path: str) -> Image.Image:
     return Image.open(path)
 
+
 def _read_local_json_content(path: str) -> Any:
-    with open(path, mode= 'rb',encoding=DEFAULT_ENCODING) as file:
+    with open(path, mode="rb", encoding=DEFAULT_ENCODING) as file:
         return json.load(file.read())
 
+
 def _read_local_pickle_content(path: str) -> Any:
-    with open(path, mode='rb') as file:
+    with open(path, mode="rb") as file:
         return pickle.load(file)
-    
+
+
 def _read_local_string_content(path: str) -> str:
-    with open(path, mode = 'r',encoding=DEFAULT_ENCODING) as file:
+    with open(path, mode="r", encoding=DEFAULT_ENCODING) as file:
         return file.read()
 
 
 def _read_local_bytes_content(path: bytes) -> bytes:
-    with open(path, mode = 'rb') as file:
+    with open(path, mode="rb") as file:
         return file.read()
-    
+
+
 def _read_local_tf_keras_model(path: bytes) -> Any:
     from tensorflow import keras
+
     return keras.saving.load_model(path)
+
 
 # Returns a tf.keras.Model type. We don't assume that every user has it installed,
 # so we return "Any" type.
@@ -411,7 +417,7 @@ def extract_val_from_local_data(
         or artifact_type == ArtifactType.LIST
     ):
         try:
-            with open(local_data_path, mode= 'rb') as file:
+            with open(local_data_path, mode="rb") as file:
                 json.dumps(file.read())
             local_data_serialization_format = LocalDataSerializationType.JSON
         except:
