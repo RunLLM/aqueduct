@@ -27,6 +27,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/notification"
 	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/storage_migration"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -273,7 +274,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 			}
 
 			// Actually perform the storage migration.
-			storageConfig, err := h.performStorageMigration(args.Service, args.Config, args.OrgID)
+			storageConfig, storageCleanupConfig, err := h.performStorageMigration(args.Service, args.Config, args.OrgID)
 			// We let the defer() handle the failure case appropriately.
 			if err != nil {
 				return
@@ -295,8 +296,22 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 			err = config.UpdateStorage(storageConfig)
 			if err != nil {
 				log.Errorf("Unexpected error when updating the global storage layer config: %v", err)
+				return
 			} else {
 				log.Info("Successfully updated the global storage layer config!")
+			}
+
+			// We only perform best-effort deletion the old storage layer files here, after everything else has succeede.
+			for _, key := range storageCleanupConfig.StoreKeys {
+				if err := storageCleanupConfig.Store.Delete(ctx, key); err != nil {
+					log.Errorf("Unexpected error when deleting the old storage file %s: %v", key, err)
+				}
+			}
+
+			for _, key := range storageCleanupConfig.VaultKeys {
+				if err := storageCleanupConfig.Vault.Delete(ctx, key); err != nil {
+					log.Errorf("Unexpected error when deleting the old vault file %s: %v", key, err)
+				}
 			}
 		}()
 	}
@@ -370,16 +385,18 @@ func (h *ConnectIntegrationHandler) updateStorageMigrationExecState(
 	return nil
 }
 
-// Migrate the storage (and vault) context to the new storage layer. The global config for the server is *NOT* updated here.
+// Migrate the storage (and vault) context to the new storage layer.
+// The global config for the server is *NOT* updated here.
+// Returns the new storage config, along with any cleanup information that should be done by the caller.
 func (h *ConnectIntegrationHandler) performStorageMigration(
 	svc shared.Service,
 	conf auth.Config,
 	orgID string,
-) (*shared.StorageConfig, error) {
+) (*shared.StorageConfig, *storage_migration.StorageCleanupConfig, error) {
 	// Wait until there are no more workflow runs in progress
 	lock := utils.NewExecutionLock()
 	if err := lock.Lock(); err != nil {
-		return nil, errors.Wrap(err, "Unexpected error when acquiring workflow execution lock.")
+		return nil, nil, errors.Wrap(err, "Unexpected error when acquiring workflow execution lock.")
 	}
 	defer func() {
 		if lockErr := lock.Unlock(); lockErr != nil {
@@ -389,7 +406,7 @@ func (h *ConnectIntegrationHandler) performStorageMigration(
 
 	data, err := conf.Marshal()
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var storageConfig *shared.StorageConfig
@@ -398,27 +415,27 @@ func (h *ConnectIntegrationHandler) performStorageMigration(
 	case shared.S3:
 		var c shared.S3IntegrationConfig
 		if err := json.Unmarshal(data, &c); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		storageConfig, err = convertS3IntegrationtoStorageConfig(&c)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	case shared.GCS:
 		var c shared.GCSIntegrationConfig
 		if err := json.Unmarshal(data, &c); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		storageConfig = convertGCSIntegrationtoStorageConfig(&c)
 	default:
-		return nil, errors.Newf("%v cannot be used as the storage layer", svc)
+		return nil, nil, errors.Newf("%v cannot be used as the storage layer", svc)
 	}
 
 	// Migrate all storage content to the new storage config
 	currentStorageConfig := config.Storage()
-	return storageConfig, utils.MigrateStorageAndVault(
+	storageCleanupConfig, err := storage_migration.MigrateStorageAndVault(
 		context.Background(),
 		&currentStorageConfig,
 		storageConfig,
@@ -430,6 +447,11 @@ func (h *ConnectIntegrationHandler) performStorageMigration(
 		h.IntegrationRepo,
 		h.Database,
 	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return storageConfig, storageCleanupConfig, nil
 }
 
 // ConnectIntegration connects a new integration specified by `args`.

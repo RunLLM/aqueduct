@@ -2,7 +2,6 @@ package v2
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"net/http"
 	"strconv"
 	"time"
@@ -110,8 +109,5 @@ func (h *ListStorageMigrationsHandler) Perform(ctx context.Context, interfaceArg
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Failed to list storage migrations.")
 	}
-
-	// TODO: REMOVE
-	log.Errorf("HELLO: %v %v", len(migrations), migrations)
 	return migrations, http.StatusOK, nil
 }

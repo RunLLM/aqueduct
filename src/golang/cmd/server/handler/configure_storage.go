@@ -11,6 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/storage_migration"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
@@ -73,7 +74,6 @@ func (h *ConfigureStorageHandler) Prepare(r *http.Request) (interface{}, int, er
 	}, http.StatusOK, nil
 }
 
-// TODO: need to refactor this after testing the connect integration. Needs to update `storage_migration` table.
 func (h *ConfigureStorageHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*configureStorageArgs)
 
@@ -119,7 +119,7 @@ func (h *ConfigureStorageHandler) Perform(ctx context.Context, interfaceArgs int
 	log.Info("Execution lock has been acquired")
 
 	// Migrate all storage content to the new storage config
-	if err := utils.MigrateStorageAndVault(
+	if _, err := storage_migration.MigrateStorageAndVault(
 		ctx,
 		&currentStorageConfig,
 		&newStorageConfig,
