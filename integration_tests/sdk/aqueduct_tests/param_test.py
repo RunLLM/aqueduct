@@ -500,32 +500,6 @@ def test_invalid_local_data(client):
         )
 
 
-def test_local_image_data_parameter(client, flow_name, engine):
-    @op
-    def must_be_image(input):
-        if not isinstance(input, Image.Image):
-            raise Exception("Expected image.")
-        return input
-
-    image_param = client.create_param(
-        name="data", default="data/aqueduct.jpg", use_local=True, as_type=ArtifactType.IMAGE
-    )
-
-    image_output = must_be_image(image_param)
-    assert isinstance(image_output, GenericArtifact)
-    assert isinstance(image_output.get(), Image.Image)
-
-    publish_flow_test(
-        client,
-        name=flow_name(),
-        artifacts=[
-            image_output,
-        ],
-        engine=engine,
-        use_local=True,
-    )
-
-
 def test_all_local_data_types(client, flow_name, engine):
     @op
     def must_be_picklable(input):
