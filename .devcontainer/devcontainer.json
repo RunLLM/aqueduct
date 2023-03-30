@@ -6,7 +6,7 @@
     "forwardPorts": [
         8080
     ],
-    "postAttachCommand": "aqueduct start --disable-usage-stats",
+    "postAttachCommand": "aqueduct start",
     "customizations": {
         "codespaces": {
             "openFiles": [
