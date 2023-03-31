@@ -106,12 +106,12 @@ def _read_local_string_content(path: str) -> str:
         return file.read()
 
 
-def _read_local_bytes_content(path: bytes) -> bytes:
+def _read_local_bytes_content(path: str) -> bytes:
     with open(path, mode="rb") as file:
         return file.read()
 
 
-def _read_local_tf_keras_model(path: bytes) -> Any:
+def _read_local_tf_keras_model(path: str) -> Any:
     from tensorflow import keras
 
     return keras.saving.load_model(path)
@@ -148,7 +148,7 @@ __deserialization_function_mapping: Dict[str, Callable[[bytes], Any]] = {
 }
 
 # Not intended for use outside of `deserialize()`.
-__local_data_deserialization_function_mapping: Dict[str, Callable[[bytes], Any]] = {
+__local_data_deserialization_function_mapping: Dict[str, Callable[[str], Any]] = {
     LocalDataSerializationType.CSV_TABLE: _read_local_csv_table_content,
     LocalDataSerializationType.JSON_TABLE: _read_local_json_table_content,
     LocalDataSerializationType.PARQUET_TABLE: _read_local_parquet_table_content,
