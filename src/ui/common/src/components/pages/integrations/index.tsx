@@ -89,15 +89,7 @@ const IntegrationsPage: React.FC<Props> = ({
     const date = new Date(
       lastMigration[0].execution_state.timestamps.registered_at
     );
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1; // Note: getMonth() returns 0-based index
-    const day = date.getDate();
-    const hour = date.getHours() % 12; // Convert to 12-hour format
-    const minute = date.getMinutes();
-    const amPm = date.getHours() >= 12 ? 'pm' : 'am'; // Determine AM/PM based on hour
-    lastFailedFormattedTimestamp = `${year}-${month < 10 ? '0' : ''}${month}-${
-      day < 10 ? '0' : ''
-    }${day} ${hour}:${minute < 10 ? '0' : ''}${minute}${amPm}`;
+    lastFailedFormattedTimestamp = date.toLocaleString()
   }
 
   return (
@@ -187,7 +179,7 @@ const IntegrationsPage: React.FC<Props> = ({
 
         <Box>
           <Typography variant="h5" marginY={2}>
-            Connected Data Integrations
+            Connected Integrations
           </Typography>
 
           <ConnectedIntegrations user={user} forceLoad={forceLoad} />

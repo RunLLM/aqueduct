@@ -131,7 +131,8 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     }
   }, [selectedIntegration]);
 
-  // Disable deletion of a storage integration.
+  // Load the server config to check if the selected integration is currently being used as storage.
+  // If that is the case, we hide the option to delete the integration from the user.
   useEffect(() => {
     async function fetchServerConfig() {
       if (user) {
@@ -183,6 +184,13 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             }
           />
         </Box>
+
+        { serverConfig.config?.storageConfig.integration_name === selectedIntegration.name &&
+            <Alert severity="info" sx={{ marginTop: 2 }}>
+              This integration cannot be deleted because it is currently being used as artifact storage.
+              To delete this integration, please migrate your artifact storage elsewhere first.
+            </Alert>
+        }
 
         {showDeleteTableDialog && (
           <DeleteIntegrationDialog

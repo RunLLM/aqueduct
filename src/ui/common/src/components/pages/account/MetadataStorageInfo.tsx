@@ -24,14 +24,14 @@ export const FileMetadataStorageInfo: React.FC<MetadataPreviewProps> = ({
         <Typography
           variant="body1"
           color={'gray.700'}
-          fontWeight="fontWeightMedium"
+          fontWeight="fontWeightBold"
         >
           Storage Type:{' '}
           <Box component="span" fontWeight="fontWeightRegular">
             File
           </Box>
         </Typography>
-        <Typography variant="body2" fontWeight="fontWeightMedium">
+        <Typography variant="body2" fontWeight="fontWeightRegular">
           Location:{' '}
           <Box component="span" fontWeight="fontWeightRegular">
             {serverConfig?.storageConfig?.fileConfig?.directory ||
@@ -55,7 +55,7 @@ export const GCSMetadataStorageInfo: React.FC<MetadataPreviewProps> = ({
         <Typography
           variant="body1"
           color={'gray.700'}
-          fontWeight="fontWeightMedium"
+          fontWeight="fontWeightBold"
         >
           Storage Type:{' '}
           <Box component="span" fontWeight="fontWeightRegular">
@@ -63,13 +63,13 @@ export const GCSMetadataStorageInfo: React.FC<MetadataPreviewProps> = ({
           </Box>
         </Typography>
 
-        <Typography variant="body2" fontWeight="fontWeightMedium">
+        <Typography variant="body2" fontWeight="fontWeightRegular">
           Name:{' '}
           <Box component="span" fontWeight="fontWeightRegular">
             {serverConfig?.storageConfig?.integration_name || 'loading ...'}
           </Box>
         </Typography>
-        <Typography variant="body2" fontWeight="fontWeightMedium">
+        <Typography variant="body2" fontWeight="fontWeightRegular">
           Bucket:{' '}
           <Box component="span" fontWeight="fontWeightRegular">
             {serverConfig?.storageConfig?.gcsConfig?.bucket || 'loading ...'}
@@ -100,19 +100,19 @@ export const S3MetadataStorageInfo: React.FC<MetadataPreviewProps> = ({
           </Box>
         </Typography>
 
-        <Typography variant="body2" fontWeight="fontWeightMedium">
+        <Typography variant="body2" fontWeight="fontWeightRegular">
           Name:{' '}
           <Box component="span" fontWeight="fontWeightRegular">
             {serverConfig?.storageConfig?.integration_name || 'loading ...'}
           </Box>
         </Typography>
-        <Typography variant="body2" fontWeight="fontWeightMedium">
+        <Typography variant="body2" fontWeight="fontWeightRegular">
           Bucket:{' '}
           <Box component="span" fontWeight="fontWeightRegular">
             {serverConfig?.storageConfig?.s3Config?.bucket || 'loading ...'}
           </Box>
         </Typography>
-        <Typography variant="body2" fontWeight="fontWeightMedium">
+        <Typography variant="body2" fontWeight="fontWeightRegular">
           Region:{' '}
           <Box component="span" fontWeight="fontWeightRegular">
             {serverConfig?.storageConfig?.s3Config?.region || 'loading ...'}
