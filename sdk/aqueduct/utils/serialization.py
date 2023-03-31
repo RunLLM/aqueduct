@@ -13,7 +13,7 @@ from aqueduct.constants.enums import (
     S3SerializationType,
     SerializationType,
 )
-from aqueduct.utils.local_data import _convert_to_local_data_table_format, validate_local_data
+from aqueduct.utils.local_data import _convert_to_local_data_table_format
 from aqueduct.utils.type_inference import infer_artifact_type
 from bson import json_util as bson_json_util
 from PIL import Image
@@ -390,7 +390,6 @@ def extract_val_from_local_data(
     """Extract value of specified type in Local Data."""
     artifact_type = as_type
     local_data_path = path
-    validate_local_data(local_data_path, artifact_type, format)
     local_data_format = _convert_to_local_data_table_format(format)
     if artifact_type == ArtifactType.TABLE:
         if local_data_format == LocalDataTableFormat.CSV:

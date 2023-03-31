@@ -53,6 +53,7 @@ from aqueduct.utils.dag_deltas import (
     apply_deltas_to_dag,
     validate_overwriting_parameters,
 )
+from aqueduct.utils.local_data import validate_local_data
 from aqueduct.utils.serialization import deserialize, extract_val_from_local_data
 from aqueduct.utils.type_inference import _base64_string_to_bytes, infer_artifact_type
 from aqueduct.utils.utils import (
@@ -215,6 +216,7 @@ class Client:
                 raise InvalidUserArgumentException(
                     "the default value must be a path to local data."
                 )
+            validate_local_data(default, as_type, format)
             default = extract_val_from_local_data(default, as_type, format)
         return create_param_artifact(
             self._dag,
