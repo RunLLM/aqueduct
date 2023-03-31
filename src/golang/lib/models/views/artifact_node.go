@@ -21,8 +21,8 @@ type ArtifactNode struct {
 	Description string              `db:"description" json:"description"`
 	Type        shared.ArtifactType `db:"type" json:"type"`
 
-	Inputs  []uuid.UUID `db:"inputs" json:"inputs"`
-	Outputs []uuid.UUID `db:"outputs" json:"outputs"`
+	Inputs  shared.NullableList[uuid.UUID] `db:"inputs" json:"inputs"`
+	Outputs shared.NullableList[uuid.UUID] `db:"outputs" json:"outputs"`
 }
 
 // ArtifactNodeCols returns a comma-separated string of all artifact columns.

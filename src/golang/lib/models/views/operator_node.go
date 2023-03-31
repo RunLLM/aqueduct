@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/google/uuid"
@@ -24,8 +25,8 @@ type OperatorNode struct {
 	Spec                   operator.Spec  `db:"spec" json:"spec"`
 	ExecutionEnvironmentID utils.NullUUID `db:"execution_environment_id" json:"execution_environment_id"`
 
-	Inputs  []uuid.UUID `db:"inputs" json:"inputs"`
-	Outputs []uuid.UUID `db:"outputs" json:"outputs"`
+	Inputs  shared.NullableList[uuid.UUID] `db:"inputs" json:"inputs"`
+	Outputs shared.NullableList[uuid.UUID] `db:"outputs" json:"outputs"`
 }
 
 // OperatorNodeCols returns a comma-separated string of all Operator columns.
