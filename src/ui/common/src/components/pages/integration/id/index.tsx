@@ -185,12 +185,14 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           />
         </Box>
 
-        { serverConfig.config?.storageConfig.integration_name === selectedIntegration.name &&
-            <Alert severity="info" sx={{ marginTop: 2 }}>
-              This integration cannot be deleted because it is currently being used as artifact storage.
-              To delete this integration, please migrate your artifact storage elsewhere first.
-            </Alert>
-        }
+        {serverConfig.config?.storageConfig.integration_name ===
+          selectedIntegration.name && (
+          <Alert severity="info" sx={{ marginTop: 2 }}>
+            This integration cannot be deleted because it is currently being
+            used as artifact storage. To delete this integration, please migrate
+            your artifact storage elsewhere first.
+          </Alert>
+        )}
 
         {showDeleteTableDialog && (
           <DeleteIntegrationDialog

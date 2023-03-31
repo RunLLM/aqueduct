@@ -89,7 +89,7 @@ const IntegrationsPage: React.FC<Props> = ({
     const date = new Date(
       lastMigration[0].execution_state.timestamps.registered_at
     );
-    lastFailedFormattedTimestamp = date.toLocaleString()
+    lastFailedFormattedTimestamp = date.toLocaleString();
   }
 
   return (
