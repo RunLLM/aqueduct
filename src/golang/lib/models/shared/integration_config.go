@@ -2,6 +2,8 @@ package shared
 
 import (
 	"fmt"
+	"reflect"
+	"time"
 
 	"github.com/dropbox/godropbox/errors"
 )
@@ -40,20 +42,46 @@ type K8sClusterStatusType string
 
 const (
 	K8sClusterCreatingStatus    K8sClusterStatusType = "Creating"
+	K8sClusterUpdatingStatus    K8sClusterStatusType = "Updating"
 	K8sClusterActiveStatus      K8sClusterStatusType = "Active"
 	K8sClusterTerminatingStatus K8sClusterStatusType = "Terminating"
 	K8sClusterTerminatedStatus  K8sClusterStatusType = "Terminated"
 
+	DynamicK8sClusterStatusPollPeriod time.Duration = 10
+
+	K8sTerraformPathKey      string = "terraform_path"
 	K8sKubeconfigPathKey     string = "kubeconfig_path"
 	K8sClusterNameKey        string = "cluster_name"
 	K8sDynamicKey            string = "dynamic"
 	K8sCloudIntegrationIdKey string = "cloud_integration_id"
 	K8sUseSameClusterKey     string = "use_same_cluster"
 	K8sStatusKey             string = "status"
-	K8sKeepaliveKey          string = "keepalive"
 	K8sLastUsedTimestampKey  string = "last_used_timestamp"
-	DynamicK8sClusterName    string = "aqueduct_k8s"
-	DefaultKeepalive         int    = 1200
+
+	// Dynamic k8s cluster config keys
+	K8sKeepaliveKey   string = "keepalive"
+	K8sCpuNodeTypeKey string = "cpu_node_type"
+	K8sGpuNodeTypeKey string = "gpu_node_type"
+	K8sMinCpuNodeKey  string = "min_cpu_node"
+	K8sMaxCpuNodeKey  string = "max_cpu_node"
+	K8sMinGpuNodeKey  string = "min_gpu_node"
+	K8sMaxGpuNodeKey  string = "max_gpu_node"
+
+	// Note that these are not configurable by the user. During cluster creation, We set this value
+	// to be equal to the min node count. Later on, this value is used to check if any new node count
+	// provided by the user is valid.
+	K8sDesiredCpuNodeKey string = "desired_cpu_node"
+	K8sDesiredGpuNodeKey string = "desired_gpu_node"
+
+	// Dynamic k8s cluster config default values
+	K8sMinimumKeepalive   int    = 600
+	K8sDefaultKeepalive   int    = 1200
+	K8sDefaultCpuNodeType string = "t3.xlarge"
+	K8sDefaultGpuNodeType string = "p2.xlarge"
+	K8sDefaultMinCpuNode  int    = 1
+	K8sDefaultMaxCpuNode  int    = 1
+	K8sDefaultMinGpuNode  int    = 0
+	K8sDefaultMaxGpuNode  int    = 1
 )
 
 type K8sIntegrationConfig struct {
@@ -100,9 +128,65 @@ type SlackConfig struct {
 	Enabled  bool              `json:"enabled"`
 }
 
+type DynamicK8sConfig struct {
+	Keepalive   string `json:"keepalive"`
+	CpuNodeType string `json:"cpu_node_type"`
+	GpuNodeType string `json:"gpu_node_type"`
+	MinCpuNode  string `json:"min_cpu_node"`
+	MaxCpuNode  string `json:"max_cpu_node"`
+	MinGpuNode  string `json:"min_gpu_node"`
+	MaxGpuNode  string `json:"max_gpu_node"`
+}
+
+// ToMap produce a map[string]string of DynamicK8sConfig, whose keys are the json tag of each field
+// and the values are the corresponding field values. If a field value is empty, we do not include
+// the corresponding key in the map.
+func (config *DynamicK8sConfig) ToMap() map[string]string {
+	configMap := make(map[string]string)
+
+	valueOf := reflect.ValueOf(config).Elem()
+	typeOf := valueOf.Type()
+
+	for i := 0; i < valueOf.NumField(); i++ {
+		field := valueOf.Field(i)
+		fieldName := typeOf.Field(i).Tag.Get("json")
+		fieldValue := fmt.Sprintf("%v", field.Interface())
+
+		if fieldValue != "" {
+			configMap[fieldName] = fieldValue
+		}
+	}
+
+	return configMap
+}
+
+// Update takes in a new DynamicK8sConfig and update the current DynamicK8sConfig's fields for any
+// field in the new DynamicK8sConfig that is not empty.
+func (config *DynamicK8sConfig) Update(newConfig *DynamicK8sConfig) {
+	if newConfig == nil {
+		return
+	}
+
+	configValue := reflect.ValueOf(config).Elem()
+	newConfigValue := reflect.ValueOf(newConfig).Elem()
+
+	for i := 0; i < configValue.NumField(); i++ {
+		field := configValue.Type().Field(i)
+		newFieldValue := newConfigValue.FieldByName(field.Name)
+
+		if !newFieldValue.IsZero() {
+			configValue.FieldByName(field.Name).Set(newFieldValue)
+		}
+	}
+}
+
 type AWSConfig struct {
-	AccessKeyId     string `json:"access_key_id"`
-	SecretAccessKey string `json:"secret_access_key"`
+	AccessKeyId       string            `json:"access_key_id"`
+	SecretAccessKey   string            `json:"secret_access_key"`
+	Region            string            `json:"region"`
+	ConfigFilePath    string            `json:"config_file_path"`
+	ConfigFileProfile string            `json:"config_file_profile"`
+	K8s               *DynamicK8sConfig `json:"k8s"`
 }
 
 type SparkIntegrationConfig struct {

@@ -4,11 +4,11 @@ import React from 'react';
 import CheckItem, {
   CheckPreview,
 } from '../components/pages/workflows/components/CheckItem';
-import EngineItem from '../components/pages/workflows/components/EngineItem';
 import ExecutionStatusLink from '../components/pages/workflows/components/ExecutionStatusLink';
 import MetricItem, {
   MetricPreview,
 } from '../components/pages/workflows/components/MetricItem';
+import ResourceItem from '../components/pages/workflows/components/ResourceItem';
 import PaginatedSearchTable, {
   PaginatedSearchTableData,
 } from '../components/tables/PaginatedSearchTable';
@@ -187,7 +187,7 @@ export const WorkflowsTable: React.FC = () => {
       case 'engine': {
         const { engineName, engineIconUrl } = value;
         value = (
-          <EngineItem engineName={engineName} engineIconUrl={engineIconUrl} />
+          <ResourceItem engineName={engineName} engineIconUrl={engineIconUrl} />
         );
         break;
       }

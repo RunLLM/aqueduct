@@ -19,21 +19,21 @@ To run with more flexibility, configure the following commandline flags:
 
 ## Checklist
 * **Workflows** Page: 
-    * There should be **5** workflows. **4** Succeeded and **1** Failed if using `--example-notebooks`
-    * There should be **5** workflows. **3** Succeeded and **2** Failed if **not** using `--example-notebooks`
+    * There should be **15** workflows. **10** Succeeded, **2** Warning, **2** Failed, and **1** Registered if using `-example-notebooks`
+    * There should be **9** workflows. **4** Succeeded, **2** Warning, **2** Failed, and **1** Registered if **not** using `-example-notebooks`
 * **Notifications**: There should be **2** notifications for failed workflow.
 * **Workflow Details** Page: Each page should reflect the **workflow description**. Pay attention to any noted **sidesheets** behaviors in the description.
 * **Integration** Page:
-    * There should be **11** *Data* integrations, **5** *Compute* integrations, and **2** *Notifications* integrations.
-    * If you are not using additional integration, `aqueduct_demo` should be the only available one.
+    * There should be **1** *Cloud* integration, **11** *Data* integrations, **6** *Compute* integrations, and **2** *Notifications* integrations.
+    * If you are not using additional integration, `aqueduct_demo` should be the only available one. If you have passed in slack arguments to `initialize.py`, there should be two.
 * **Integration Details** Page:
     * In the **Workflows** section of the `aqueduct_demo` page:
-        * There should be **10** workflows if using `--example-notebooks`
-        * Ther should be **4** workflows if **not** using `--example-notebooks`
+        * There should be **13** workflows if using `--example-notebooks`
+        * There should be **7** workflows if **not** using `--example-notebooks`
     * If you are using `aqueduct_demo`, there should be **8** tables in **Data** section.
-* **Data** Page: There should be **5** data rows available.
+* **Data** Page: There should be **7** data rows available.
 * **Slack channel**:
-    * There should be **16** new notifications.
+    * If Slack flags are set, there should be **15** new notifications.
     * Each notification should have the following aspects:
         * A title including the workflow's name and status
         * Workflow name

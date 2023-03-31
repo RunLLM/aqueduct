@@ -430,6 +430,44 @@ func (*operatorReader) GetByEngineType(ctx context.Context, engineType shared.En
 	return getOperators(ctx, DB, query, engineType)
 }
 
+func (*operatorReader) GetEngineTypesMapByDagIDs(
+	ctx context.Context,
+	DagIDs []uuid.UUID,
+	DB database.Database,
+) (map[uuid.UUID][]shared.EngineType, error) {
+	query := fmt.Sprintf(`
+		SELECT DISTINCT
+			workflow_dag_edge.workflow_dag_id as dag_id,
+			ifnull(
+				json_extract(operator.spec, '$.engine_config.type'),
+				''
+			) as engine_type
+		FROM operator, workflow_dag_edge
+		WHERE
+			(workflow_dag_edge.from_id = operator.id
+			OR workflow_dag_edge.to_id = operator.id)
+			AND workflow_dag_edge.workflow_dag_id IN (%s);`,
+		stmt_preparers.GenerateArgsList(len(DagIDs), 1),
+	)
+	args := stmt_preparers.CastIdsListToInterfaceList(DagIDs)
+	var resultRows []struct {
+		DagID      uuid.UUID         `db:"dag_id"`
+		EngineType shared.EngineType `db:"engine_type"`
+	}
+
+	err := DB.Query(ctx, &resultRows, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make(map[uuid.UUID][]shared.EngineType, len(resultRows))
+	for _, row := range resultRows {
+		results[row.DagID] = append(results[row.DagID], row.EngineType)
+	}
+
+	return results, nil
+}
+
 func (*operatorReader) ValidateOrg(ctx context.Context, ID uuid.UUID, orgID string, DB database.Database) (bool, error) {
 	return validateNodeOwnership(ctx, orgID, ID, DB)
 }
@@ -508,7 +546,7 @@ func getOperator(ctx context.Context, DB database.Database, query string, args .
 	}
 
 	if len(operators) == 0 {
-		return nil, database.ErrNoRows
+		return nil, database.ErrNoRows()
 	}
 
 	if len(operators) != 1 {

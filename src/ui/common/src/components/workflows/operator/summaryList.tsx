@@ -14,6 +14,7 @@ import { operatorTypeToIconMapping } from '../nodes/nodeTypes';
 type Props = {
   title: string;
   workflowId: string;
+  dagId: string;
   dagResultId: string;
   operatorResults: OperatorResultResponse[];
 };
@@ -21,23 +22,25 @@ type Props = {
 const SummaryList: React.FC<Props> = ({
   title,
   workflowId,
+  dagId,
   dagResultId,
   operatorResults,
 }) => {
+  const dagLinkSegment = dagResultId ? `result/${dagResultId}` : `dag/${dagId}`;
   const items = operatorResults.map((opResult, index) => {
-    let link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/operator/${
+    let link = `${getPathPrefix()}/workflow/${workflowId}/${dagLinkSegment}/operator/${
       opResult.id
     }`;
 
     const opType = opResult.spec?.type;
     if (opType === OperatorType.SystemMetric || opType == OperatorType.Metric) {
-      link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/metric/${
+      link = `${getPathPrefix()}/workflow/${workflowId}/${dagLinkSegment}/metric/${
         opResult.id
       }`;
     }
 
     if (opType === OperatorType.Check) {
-      link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/check/${
+      link = `${getPathPrefix()}/workflow/${workflowId}/${dagLinkSegment}/check/${
         opResult.id
       }`;
     }

@@ -1,5 +1,3 @@
-import re
-from datetime import date
 from typing import List, Optional, Union
 
 import pandas as pd
@@ -8,7 +6,7 @@ from aqueduct.artifacts.preview import preview_artifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, LoadUpdateMode, ServiceType
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.integrations.naming import _resolve_op_and_artifact_name_for_extract
+from aqueduct.integrations.parameters import _validate_builtin_expansions, _validate_parameters
 from aqueduct.integrations.save import _save_artifact
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
@@ -20,7 +18,8 @@ from aqueduct.models.operators import (
     RelationalDBExtractParams,
     RelationalDBLoadParams,
 )
-from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.naming import default_artifact_name_from_op_name, sanitize_artifact_name
 from aqueduct.utils.utils import generate_uuid
 
 from aqueduct import globals
@@ -36,56 +35,6 @@ LIST_TABLES_QUERY_SQLSERVER = (
 GET_TABLE_QUERY = "select * from %s"
 LIST_TABLES_QUERY_SQLITE = "SELECT name AS tablename FROM sqlite_master WHERE type='table';"
 LIST_TABLES_QUERY_ATHENA = "AQUEDUCT_ATHENA_LIST_TABLE"
-
-# Regular Expression that matches any substring appearance with
-# "{{ }}" and a word inside with optional space in front or after
-# Potential Matches: "{{today}}", "{{ today  }}""
-TAG_PATTERN = r"{{\s*[\w-]+\s*}}"
-
-# The TAG for 'previous table' when the user specifies a chained query.
-PREV_TABLE_TAG = "$"
-
-
-# A dictionary of built-in tags to their replacement string functions.
-def replace_today() -> str:
-    return "'" + date.today().strftime("%Y-%m-%d") + "'"
-
-
-def find_parameter_names(query: str) -> List[str]:
-    matches = re.findall(TAG_PATTERN, query)
-    return [match.strip(" {}") for match in matches]
-
-
-def find_parameter_artifacts(dag: DAG, names: List[str]) -> List[ArtifactMetadata]:
-    """
-    `find_parameter_artifacts` finds all parameter artifacts corresponding to given `names`.
-    parameters:
-        names: the list of names, repeating names are allowed.
-    returns:
-        a list of unique parameter artifacts for these names. Built-in names are omitted.
-
-    raises: InvalidUserArgumentException if there's no parameter for the provided name.
-    """
-    artifacts = []
-    for name in names:
-        artf = dag.get_artifact_by_name(name)
-        if artf is None:
-            # If it is a built-in tag, we can ignore it for now, since the python operators will perform the expansion.
-            if name in BUILT_IN_EXPANSIONS:
-                continue
-
-            raise InvalidUserArgumentException(
-                "There is no parameter defined with name `%s`." % name,
-            )
-        artifacts.append(artf)
-
-    return artifacts
-
-
-# A dictionary of built-in tags to their replacement string functions.
-BUILT_IN_EXPANSIONS = {
-    "today": replace_today,
-}
 
 
 class RelationalDBIntegration(Integration):
@@ -150,6 +99,7 @@ class RelationalDBIntegration(Integration):
         name: Optional[str] = None,
         output: Optional[str] = None,
         description: str = "",
+        parameters: Optional[List[BaseArtifact]] = None,
         lazy: bool = False,
     ) -> TableArtifact:
         """
@@ -165,6 +115,17 @@ class RelationalDBIntegration(Integration):
                 Name to assign the output artifact. If not set, the default naming scheme will be used.
             description:
                 Description of the query.
+            parameters:
+                An optional list of string parameters to use in the query. We use the Postgres syntax of $1, $2 for placeholders.
+                The number denotes which parameter in the list to use (one-indexed). These parameters feed into the
+                sql query operator and will fill in the placeholders in the query with the actual values.
+
+                For example, for the following query with parameters=[param1, param2]:
+                    SELECT * FROM my_table where age = $1 and name = $2
+                Assuming default values of "18" and "John" respectively, the default query will expand into
+                    SELECT * FROM my_table where age = 18 and name = "John".
+
+                If multiple of the same placeholders are used in the same query, the same value will be supplied for each.
             lazy:
                 Whether to run this operator lazily. See https://docs.aqueducthq.com/operators/lazy-vs.-eager-execution .
 
@@ -176,12 +137,8 @@ class RelationalDBIntegration(Integration):
 
         execution_mode = ExecutionMode.LAZY if lazy else ExecutionMode.EAGER
 
-        op_name, artifact_name = _resolve_op_and_artifact_name_for_extract(
-            dag=self._dag,
-            op_name=name,
-            default_op_name="%s query" % self.name(),
-            artifact_name=output,
-        )
+        op_name = name or "%s query" % self.name()
+        artifact_name = output or default_artifact_name_from_op_name(op_name)
 
         extract_params = query
         if isinstance(extract_params, str):
@@ -209,36 +166,37 @@ class RelationalDBIntegration(Integration):
                 raise Exception(
                     "For a RelationalDBExtractParams object, exactly one of .query or .queries fields should be set."
                 )
+        assert isinstance(extract_params, RelationalDBExtractParams)
+        assert (
+            extract_params.query
+            or extract_params.queries
+            and not (extract_params.query and extract_params.queries)
+        )
 
-        # Find any tags that need to be expanded in the query, and add the parameters that correspond
-        # to these tags as inputs to this operator. The orchestration engine will perform the replacement at runtime.
+        # Perform validations on the query.
+        queries: Optional[List[str]] = (
+            [extract_params.query] if extract_params.query is not None else extract_params.queries
+        )
+        assert isinstance(queries, list)
+        _validate_builtin_expansions(queries)
+
         sql_input_artifact_ids = []
-        queries = []
-        if extract_params.query is not None:
-            queries = [extract_params.query]
-
-        if extract_params.queries is not None:
-            queries = extract_params.queries
-
-        param_names = [name for q in queries for name in find_parameter_names(q)]
-        param_artifacts = find_parameter_artifacts(self._dag, param_names)
-
-        for artf in param_artifacts:
-            # Check that the parameter corresponds to a string value.
-            if artf.type != ArtifactType.STRING:
+        if parameters is not None:
+            if not isinstance(parameters, list) and any(
+                not isinstance(param, BaseArtifact) for param in parameters
+            ):
                 raise InvalidUserArgumentException(
-                    "The parameter `%s` must be defined as a string. Instead, got type %s"
-                    % (artf.name, artf.type)
+                    "`parameters` argument must be a list of artifacts."
                 )
-
-            sql_input_artifact_ids.append(artf.id)
+            _validate_parameters(queries, parameters)
+            sql_input_artifact_ids = [param.id() for param in parameters]
 
         sql_operator_id = generate_uuid()
         sql_output_artifact_id = generate_uuid()
         apply_deltas_to_dag(
             self._dag,
             deltas=[
-                AddOrReplaceOperatorDelta(
+                AddOperatorDelta(
                     op=Operator(
                         id=sql_operator_id,
                         name=op_name,
@@ -256,8 +214,9 @@ class RelationalDBIntegration(Integration):
                     output_artifacts=[
                         ArtifactMetadata(
                             id=sql_output_artifact_id,
-                            name=artifact_name,
+                            name=sanitize_artifact_name(artifact_name),
                             type=ArtifactType.TABLE,
+                            explicitly_named=output is not None,
                         ),
                     ],
                 ),

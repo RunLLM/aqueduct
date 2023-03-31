@@ -6,12 +6,13 @@ import { handleGetWorkflowDagResult } from '../handlers/getWorkflowDagResult';
 import { DagResultResponse } from '../handlers/responses/dag';
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 
+export type WorkflowDagResultWithLoadingStatus = {
+  status: LoadingStatus;
+  result?: DagResultResponse;
+};
 export interface WorkflowDagResultsState {
   results: {
-    [id: string]: {
-      status: LoadingStatus;
-      result?: DagResultResponse;
-    };
+    [id: string]: WorkflowDagResultWithLoadingStatus;
   };
 }
 

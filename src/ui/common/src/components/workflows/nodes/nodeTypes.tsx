@@ -1,53 +1,47 @@
+import {
+  faCheck,
+  faCircleCheck,
+  faCode,
+  faDatabase,
+  faFileCode,
+  faFileText,
+  faHashtag,
+  faImage,
+  faList,
+  faPencil,
+  faSliders,
+  faTableColumns,
+  faTemperatureHalf,
+} from '@fortawesome/free-solid-svg-icons';
+
 import { ArtifactType } from '../../../utils/artifacts';
 import { OperatorType } from '../../../utils/operators';
 import ExecutionStatus from '../../../utils/shared';
-import BoolArtifactNode, { boolArtifactNodeIcon } from './BoolArtifactNode';
-import CheckOperatorNode from './CheckOperatorNode';
-import { checkOperatorNodeIcon } from './CheckOperatorNode';
-import DatabaseNode from './DatabaseNode';
-import { databaseNodeIcon } from './DatabaseNode';
-import DictArtifactNode, { dictArtifactNodeIcon } from './DictArtifactNode';
-import FunctionOperatorNode from './FunctionOperatorNode';
-import { functionOperatorNodeIcon } from './FunctionOperatorNode';
-import GenericArtifactNode from './GenericArtifactNode';
-import ImageArtifactNode, { imageArtifactNodeIcon } from './ImageArtifactNode';
-import JsonArtifactNode, { jsonArtifactNodeIcon } from './JsonArtifactNode';
-import ListArtifactNode, { listArtifactNodeIcon } from './ListArtifactNode';
-import MetricOperatorNode from './MetricOperatorNode';
-import { metricOperatorNodeIcon } from './MetricOperatorNode';
-import NumericArtifactNode, {
-  numericArtifactNodeIcon,
-} from './NumericArtifactNode';
-import ParameterOperatorNode, {
-  paramOperatorNodeIcon,
-} from './ParameterOperatorNode';
-import StringArtifactNode, {
-  stringArtifactNodeIcon,
-} from './StringArtifactNode';
-import TableArtifactNode, { tableArtifactNodeIcon } from './TableArtifactNode';
+import Node from './Node';
 
 export const nodeTypes = {
-  database: DatabaseNode,
-  tableArtifact: TableArtifactNode,
-  numericArtifact: NumericArtifactNode,
-  boolArtifact: BoolArtifactNode,
-  jsonArtifact: JsonArtifactNode,
-  stringArtifact: StringArtifactNode,
-  imageArtifact: ImageArtifactNode,
-  dictArtifact: DictArtifactNode,
-  listArtifact: ListArtifactNode,
-  genericArtifact: GenericArtifactNode,
-  function: FunctionOperatorNode,
+  database: Node,
+  tableArtifact: Node,
+  numericArtifact: Node,
+  boolArtifact: Node,
+  jsonArtifact: Node,
+  stringArtifact: Node,
+  imageArtifact: Node,
+  dictArtifact: Node,
+  listArtifact: Node,
+  genericArtifact: Node,
+  function: Node,
 
   // These are generic DAG nodes
-  functionOp: FunctionOperatorNode,
-  extractOp: DatabaseNode,
-  loadOp: DatabaseNode,
-  metricOp: MetricOperatorNode,
-  checkOp: CheckOperatorNode,
-  paramOp: ParameterOperatorNode,
+  functionOp: Node,
+  extractOp: Node,
+  loadOp: Node,
+  metricOp: Node,
+  checkOp: Node,
+  paramOp: Node,
 };
 
+// TODO: Double check that this can be deprecated.
 export const nodeTypeToStringLabel = {
   tableArtifact: 'Table Artifact',
   numericArtifact: 'Numeric Artifact',
@@ -103,30 +97,31 @@ export const checkNodeStatusLabels = {
   [ExecutionStatus.Unknown]: 'Unknown',
 };
 export const artifactTypeToIconMapping = {
-  [ArtifactType.String]: stringArtifactNodeIcon,
-  [ArtifactType.Bool]: boolArtifactNodeIcon,
-  [ArtifactType.Numeric]: numericArtifactNodeIcon,
-  [ArtifactType.Dict]: dictArtifactNodeIcon,
+  [ArtifactType.String]: faFileText,
+  [ArtifactType.Bool]: faCircleCheck,
+  [ArtifactType.Numeric]: faHashtag,
+  [ArtifactType.Dict]: faFileCode,
   // TODO: figure out if we should use other icon for tuple
-  [ArtifactType.Tuple]: dictArtifactNodeIcon,
-  [ArtifactType.List]: listArtifactNodeIcon,
-  [ArtifactType.Table]: tableArtifactNodeIcon,
-  [ArtifactType.Json]: jsonArtifactNodeIcon,
+  [ArtifactType.Tuple]: faFileCode,
+  [ArtifactType.List]: faList,
+  [ArtifactType.Table]: faTableColumns,
+  [ArtifactType.Json]: faPencil,
   // TODO: figure out what to show for bytes.
-  [ArtifactType.Bytes]: dictArtifactNodeIcon,
-  [ArtifactType.Image]: imageArtifactNodeIcon,
+  [ArtifactType.Bytes]: faFileCode,
+  [ArtifactType.Image]: faImage,
   // TODO: Figure out what to show for Picklable
-  [ArtifactType.Picklable]: dictArtifactNodeIcon,
+  [ArtifactType.Picklable]: faFileCode,
+  [ArtifactType.Untyped]: faPencil,
 };
 
 export const operatorTypeToIconMapping = {
-  [OperatorType.Param]: paramOperatorNodeIcon,
-  [OperatorType.Function]: functionOperatorNodeIcon,
-  [OperatorType.Extract]: databaseNodeIcon,
-  [OperatorType.Load]: databaseNodeIcon,
-  [OperatorType.Metric]: metricOperatorNodeIcon,
-  [OperatorType.Check]: checkOperatorNodeIcon,
-  [OperatorType.SystemMetric]: metricOperatorNodeIcon,
+  [OperatorType.Param]: faSliders,
+  [OperatorType.Function]: faCode,
+  [OperatorType.Extract]: faDatabase,
+  [OperatorType.Load]: faDatabase,
+  [OperatorType.Metric]: faTemperatureHalf,
+  [OperatorType.Check]: faCheck,
+  [OperatorType.SystemMetric]: faTemperatureHalf,
 };
 
 export default nodeTypes;

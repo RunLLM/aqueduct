@@ -1,7 +1,6 @@
 import inspect
 import os
 import shutil
-import subprocess
 import sys
 import tempfile
 import uuid
@@ -14,6 +13,7 @@ from aqueduct.error import (
     InternalAqueductError,
     InvalidDependencyFilePath,
     InvalidFunctionException,
+    RequirementsMissingError,
     ReservedFileNameException,
 )
 from aqueduct.logger import logger
@@ -30,7 +30,12 @@ RESERVED_FILE_NAMES = [
     CONDA_VERSION_FILE_NAME,
 ]
 REQUIREMENTS_FILE = "requirements.txt"
-BLACKLISTED_REQUIREMENTS = ["aqueduct_ml", "aqueduct_sdk", "aqueduct-ml", "aqueduct-sdk"]
+BLACKLISTED_REQUIREMENTS = [
+    "aqueduct_ml",
+    "aqueduct_sdk",
+    "aqueduct-ml",
+    "aqueduct-sdk",
+]
 
 DEFAULT_OP_CLASS_NAME = "Function"
 DEFAULT_OP_METHOD_NAME = "predict"
@@ -74,8 +79,7 @@ def serialize_function(
             Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
             (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
             look for a `requirements.txt` file in the same directory as the decorated function
-            and install those. Otherwise, we'll attempt to infer the requirements with
-            `pip freeze`.
+            and install those. Otherwise  RequirementsFileMissingError exception will be raised.
 
     Returns:
         filepath of zip file in string format
@@ -134,8 +138,7 @@ def _package_files_and_requirements(
             Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
             (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
             look for a `requirements.txt` file in the same directory as the decorated function
-            and install those. Otherwise, we'll attempt to infer the requirements with
-            `pip freeze`.
+            and install those.
     """
     if not file_dependencies:
         file_dependencies = []
@@ -204,20 +207,16 @@ def _package_files_and_requirements(
 
         elif os.path.exists(REQUIREMENTS_FILE):
             # There exists a workflow-level requirements file (need to reside in the same directory as the function).
-            logger().info(
-                "%s: requirements.txt file detected in current directory %s, will not self-generate by inferring package dependencies."
-                % (func.__name__, os.getcwd())
-            )
             shutil.copy(REQUIREMENTS_FILE, packaged_requirements_path)
 
         else:
-            # No requirements have been provided, so we use `pip freeze` to infer.
-            logger().info(
-                "%s: No requirements.txt file detected, self-generating file by inferring package dependencies."
-                % func.__name__
+            # Do not infer package dependencies from environment.
+            raise RequirementsMissingError(
+                "A valid requirements.txt file must be provided "
+                "and must be in the same directory as the function "
+                "definition or alternatively add the requirements "
+                "directly in the @op/@metric/@check decorator"
             )
-            with open(packaged_requirements_path, "x") as f:
-                f.write("\n".join(infer_requirements_from_env()))
 
         # Prune out any blacklisted requirements.
         _filter_out_blacklisted_requirements(packaged_requirements_path)
@@ -255,29 +254,6 @@ def _add_cloudpickle_to_requirements(packaged_requirements_path: str) -> None:
             "\ncloudpickle==%s" % pkg_resources.get_distribution("cloudpickle").version
         )
         f.write(cloudpickle_requirement)
-
-
-def infer_requirements_from_env() -> List[str]:
-    """
-    Obtains the list of pip requirements specifiers from the current python environment using `pip freeze`.
-
-    Returns:
-        A list, for example, ["transformers==4.21.0", "numpy==1.22.4"].
-    """
-    try:
-        process = subprocess.Popen(
-            f"{sys.executable} -m pip freeze",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-        )
-        stdout_raw, stderr_raw = process.communicate()
-        logger().debug("Inferred requirements raw stdout: %s", stdout_raw)
-        logger().debug("Inferred requirements raw stderr: %s", stderr_raw)
-
-        return stdout_raw.decode("utf-8").split("\n")
-    except Exception as e:
-        raise InternalAqueductError("Unable to infer requirements. Error: %s" % e)
 
 
 def get_zip_file_path(dir_name: str) -> str:

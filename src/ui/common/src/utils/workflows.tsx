@@ -1,5 +1,5 @@
 import { Artifact } from './artifacts';
-import { EngineConfig } from './engine';
+import { EngineConfig, EngineType } from './engine';
 import { NotificationLogLevel } from './notifications';
 import {
   Load,
@@ -86,7 +86,8 @@ export type ListWorkflowSummary = {
   created_at: number;
   last_run_at: number;
   status: ExecutionStatus;
-  engine: string;
+  engine: EngineType;
+  operator_engines: EngineType[];
   metrics: WorkflowMetrics[];
   checks: WorkflowChecks[];
 };
@@ -94,7 +95,10 @@ export type ListWorkflowSummary = {
 export type WorkflowDagResultSummary = {
   id: string;
   created_at: number;
+
+  // TODO(ENG-2665): remove the status field.
   status: ExecutionStatus;
+  exec_state?: ExecState;
   workflow_dag_id: string;
 };
 
@@ -202,3 +206,31 @@ export function normalizeGetWorkflowResponse(
 export type ListWorkflowResponse = {
   workflows: ListWorkflowSummary[];
 };
+
+export function getWorkflowEngineTypes(dag: WorkflowDag): EngineType[] {
+  const dagType = dag.engine_config.type;
+  const allOpTypes = Array.from(
+    new Set(
+      Object.values(dag.operators)
+        .map((op) => op.spec.engine_config?.type)
+        .filter((t) => !!t) ?? []
+    )
+  );
+
+  return reduceEngineTypes(dagType, allOpTypes);
+}
+
+export function reduceEngineTypes(
+  dagType: EngineType,
+  opTypes: EngineType[]
+): EngineType[] {
+  if (
+    dagType === EngineType.Aqueduct &&
+    opTypes.length > 0 &&
+    opTypes.every((t) => t !== EngineType.Aqueduct)
+  ) {
+    return opTypes;
+  }
+
+  return Array.from(new Set([dagType].concat(opTypes)));
+}

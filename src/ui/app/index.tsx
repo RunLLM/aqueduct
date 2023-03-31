@@ -5,9 +5,6 @@ import { HomePage, DataPage, IntegrationsPage, IntegrationDetailsPage, WorkflowP
 import { store } from './stores/store';
 import { Provider } from 'react-redux';
 import { useUser, UserProfile } from '@aqueducthq/common';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-
-import { theme } from '@aqueducthq/common/src/styles/theme/theme';
 import { getPathPrefix } from '@aqueducthq/common/src/utils/getPathPrefix';
 import '@aqueducthq/common/src/styles/globals.css';
 
@@ -41,21 +38,21 @@ const App = () => {
       <Route path={`/${pathPrefix}/workflow/:id`} element={<RequireAuth user={user}><WorkflowPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/operator/:operatorId`} element={<RequireAuth user={user}><OperatorDetailsPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/artifact/:artifactId`} element={<RequireAuth user={user}><ArtifactDetailsPage user={user} /> </RequireAuth>} />
-      <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/metric/:metricOperatorId`} element={<RequireAuth user={user}><MetricDetailsPage user={user} /> </RequireAuth>} />
-      <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/check/:checkOperatorId`} element={<RequireAuth user={user}><CheckDetailsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/metric/:operatorId`} element={<RequireAuth user={user}><MetricDetailsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflow/:workflowId/result/:workflowDagResultId/check/:operatorId`} element={<RequireAuth user={user}><CheckDetailsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflow/:workflowId/dag/:workflowDagId/operator/:operatorId`} element={<RequireAuth user={user}><OperatorDetailsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflow/:workflowId/dag/:workflowDagId/artifact/:artifactId`} element={<RequireAuth user={user}><ArtifactDetailsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflow/:workflowId/dag/:workflowDagId/metric/:operatorId`} element={<RequireAuth user={user}><MetricDetailsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflow/:workflowId/dag/:workflowDagId/check/:operatorId`} element={<RequireAuth user={user}><CheckDetailsPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/404`} element={user && user.apiKey ? <RequireAuth user={user}><ErrorPage user={user} /> </RequireAuth> : <ErrorPage />} />
       <Route path="*" element={<Navigate replace to={`/404`} />} />
     </Routes>
   );
 
-  const muiTheme = createTheme(theme);
   return (
-    <ThemeProvider theme={muiTheme}>
-      <BrowserRouter>{routesContent}</BrowserRouter>
-    </ThemeProvider>
+    <BrowserRouter>{routesContent}</BrowserRouter>
   );
 };
-
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -65,4 +62,4 @@ root.render(
   <Provider store={store}>
     <App />
   </Provider>
-)
+);

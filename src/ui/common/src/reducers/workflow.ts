@@ -1,7 +1,6 @@
 // This is being deprecated. Please use `workflowDagResults` combining with
 // `artifactResults` for future development.
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
-import ELK from 'elkjs/lib/elk.bundled.js';
 import { Edge, Node } from 'reactflow';
 
 import { apiAddress } from '../components/hooks/useAqueductConsts';
@@ -456,14 +455,37 @@ export const handleGetSelectDagPosition = createAsyncThunk<
     },
     thunkAPI
   ) => {
-    const { operators, artifacts, onChange, onConnect } = args;
+    const { apiKey, operators, artifacts, onChange, onConnect } = args;
+    // NOTE: This should get us better line drawing in terms of less edge overlaps.
+    // You will still notice that edges are too long where we collapse nodes
+    // ... the positioning code on our backend only takes into account a uuid:operator and uuid:artifact mapping
+    // so it's not so easy to check an operator/artifact's spec type on the backend since we're just dealing
+    // with a map of UUIds.
+    const res = await fetch(`${apiAddress}/api/positioning`, {
+      method: 'POST',
+      headers: {
+        'api-key': apiKey,
+      },
+      body: JSON.stringify(operators),
+    });
+
+    const position = await res.json();
+    if (!res.ok) {
+      return thunkAPI.rejectWithValue(position.error);
+    }
+
+    const opPositions = position.operator_positions;
+    const artfPositions = position.artifact_positions;
+
     const opNodes = Object.values(operators)
       .filter((op) => {
         return op.spec.type != OperatorType.Param;
       })
-      .map((op) => getOperatorNode(op, onChange, onConnect));
+      .map((op) =>
+        getOperatorNode(op, opPositions[op.id], onChange, onConnect)
+      );
     const artfNodes = Object.values(artifacts).map((artf) =>
-      getArtifactNode(artf, onChange, onConnect)
+      getArtifactNode(artf, artfPositions[artf.id], onChange, onConnect)
     );
     const edges = getEdges(operators);
     const allNodes = {
@@ -475,58 +497,7 @@ export const handleGetSelectDagPosition = createAsyncThunk<
       thunkAPI.getState().workflowReducer.artifactResults ?? {};
 
     if (!!dag) {
-      const collapsedPosition = collapsePosition(
-        allNodes,
-        dag,
-        artifactResults
-      );
-
-      const elk = new ELK();
-      const mappedNodes = collapsedPosition.nodes.map((node) => {
-        return {
-          id: node.id,
-          // width of the node in px.
-          width: 400,
-          // height of the node in px.
-          height: 100,
-        };
-      });
-
-      const graph = {
-        id: 'root',
-        layoutOptions: {
-          'elk.algorithm': 'layered',
-          'elk.direction': 'RIGHT',
-          'elk.spacing.nodeNode': '200',
-          'elk.layered.spacing.nodeNodeBetweenLayers': '100',
-          'elk.layered.nodePlacement.strategy': 'INTERACTIVE',
-        },
-        children: mappedNodes,
-        edges: collapsedPosition.edges,
-      };
-
-      try {
-        const positionedLayout = await elk.layout(graph);
-        collapsedPosition.nodes = collapsedPosition.nodes.map((node) => {
-          for (let i = 0; i < positionedLayout.children.length; i++) {
-            if (node.id === positionedLayout.children[i].id) {
-              node.position = {
-                x: positionedLayout.children[i].x,
-                y: positionedLayout.children[i].y,
-              };
-
-              // TODO (ENG-2305): Handle mapping elk edge sections to react-flow edges
-            }
-          }
-
-          return node;
-        });
-      } catch (error) {
-        // TODO (ENG-2304): Show alert box when positioned layout fails to be retrieved.
-        console.log('error getting PositionedLayout: ', error);
-      }
-
-      return collapsedPosition;
+      return collapsePosition(allNodes, dag, artifactResults);
     }
 
     return allNodes;
@@ -695,7 +666,13 @@ export const workflowSlice = createSlice({
         if (!state.selectedResult) {
           state.selectedResult = state.dagResults[0];
         }
-        state.selectedDag = state.dags[state.selectedResult.workflow_dag_id];
+
+        if (state.selectedResult) {
+          state.selectedDag = state.dags[state.selectedResult.workflow_dag_id];
+        } else {
+          state.selectedDag = Object.values(state.dags)[0];
+        }
+
         state.loadingStatus = { loading: LoadingStatusEnum.Succeeded, err: '' };
       }
     );

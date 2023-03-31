@@ -214,14 +214,33 @@ class SparkRuntimeType(str, Enum, metaclass=MetaEnum):
     SPARK = "spark"
 
 
+# The lifecycle of a cluster goes from Creating -> Active -> Terminating -> Terminated.
+# If an Active cluster receives an config update request, it goes from Active -> Updating -> Active.
 class K8sClusterStatusType(str, Enum, metaclass=MetaEnum):
+    # The cluster is being created (transitioning from Terminated to Active status).
     CREATING = "Creating"
+    # The cluster has been active, and it received a config update request and it's
+    # updating to the new config. After the update completes, it will be in the Active status again.
+    UPDATING = "Updating"
+    # The cluster is currently active and ready to serve requests.
     ACTIVE = "Active"
+    # The cluster is being deleted.
     TERMINATING = "Terminating"
+    # The cluster is terminated.
     TERMINATED = "Terminated"
 
 
 class K8sClusterActionType(str, Enum, metaclass=MetaEnum):
     CREATE = "create"
+    UPDATE = "update"
     DELETE = "delete"
     FORCE_DELETE = "force-delete"
+
+
+# These are keys for resources that users can customize for operators.
+# They are used as dict keys, eg @op(resources={'num_cpus': 1, ...})
+class CustomizableResourceType(str, Enum, metaclass=MetaEnum):
+    NUM_CPUS = "num_cpus"
+    MEMORY = "memory"
+    GPU_RESOURCE_NAME = "gpu_resource_name"
+    CUDA_VERSION = "cuda_version"

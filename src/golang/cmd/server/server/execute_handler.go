@@ -25,15 +25,8 @@ func HandleError(
 	}
 	server.Log(ctx, handlerName, r, statusCode, err)
 
-	var externalMsg string
-	dbxErr, ok := err.(errors.DropboxError)
-	if ok {
-		// Only return the top-level error message to clients.
-		externalMsg = dbxErr.GetMessage()
-	} else {
-		externalMsg = err.Error()
-	}
-	response.SendErrorResponse(w, externalMsg, statusCode)
+	// errors.GetMessage(err) returns both the outer and the inner error messages, excluding stack trace.
+	response.SendErrorResponse(w, errors.GetMessage(err), statusCode)
 }
 
 func HandleSuccess(

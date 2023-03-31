@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -17,8 +16,8 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/dynamic"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
@@ -30,8 +29,8 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
+	"github.com/hashicorp/go-version"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -39,6 +38,13 @@ const (
 	pollAuthenticateInterval = 500 * time.Millisecond
 	pollAuthenticateTimeout  = 2 * time.Minute
 )
+
+var pathConfigKeys = map[string]bool{
+	"config_file_path":    true, // AWS, S3, Athena credentials path
+	"kubeconfig_path":     true, // K8s credentials path
+	"s3_credentials_path": true, // Airflow S3 credentials path
+	"database":            true, // SQLite database path
+}
 
 // Route: /integration/connect
 // Method: POST
@@ -114,6 +120,10 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 		return nil, http.StatusBadRequest, errors.Newf("%s integration type is currently not supported", service)
 	}
 
+	if err = convertToAbsolutePath(configMap); err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Error getting server's home directory path")
+	}
+
 	config := auth.NewStaticConfig(configMap)
 
 	// Check if this integration should be used as the new storage layer
@@ -174,54 +184,13 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	}
 
 	if args.Service == shared.AWS {
-		cloudIntegration, err := h.IntegrationRepo.GetByNameAndUser(
+		if statusCode, err := setupCloudIntegration(
 			ctx,
-			args.Name,
-			uuid.Nil,
-			args.OrgID,
+			args,
+			h,
 			txn,
-		)
-		if err != nil {
-			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve cloud integration.")
-		}
-
-		kubeconfigPath := filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "dynamic", "kube_config")
-		// Register a dynamic k8s integration.
-		connectIntegrationArgs := &ConnectIntegrationArgs{
-			AqContext: args.AqContext,
-			Name:      fmt.Sprintf("%s:%s", args.Name, "k8s"),
-			Service:   shared.Kubernetes,
-			Config: auth.NewStaticConfig(
-				map[string]string{
-					shared.K8sKubeconfigPathKey:     kubeconfigPath,
-					shared.K8sClusterNameKey:        shared.DynamicK8sClusterName,
-					shared.K8sDynamicKey:            strconv.FormatBool(true),
-					shared.K8sCloudIntegrationIdKey: cloudIntegration.ID.String(),
-					shared.K8sUseSameClusterKey:     strconv.FormatBool(false),
-					shared.K8sStatusKey:             string(shared.K8sClusterTerminatedStatus),
-					shared.K8sKeepaliveKey:          strconv.FormatInt(int64(shared.DefaultKeepalive), 10),
-				},
-			),
-			UserOnly:     false,
-			SetAsStorage: false,
-		}
-
-		_, _, err = (&ConnectIntegrationHandler{
-			Database:   txn,
-			JobManager: h.JobManager,
-
-			ArtifactRepo:       h.ArtifactRepo,
-			ArtifactResultRepo: h.ArtifactResultRepo,
-			DAGRepo:            h.DAGRepo,
-			IntegrationRepo:    h.IntegrationRepo,
-			OperatorRepo:       h.OperatorRepo,
-		}).Perform(ctx, connectIntegrationArgs)
-		if err != nil {
-			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to register dynamic k8s integration.")
-		}
-
-		if _, _, err := lib_utils.RunCmd("terraform", []string{"init"}, dynamic.TerraformDir, true); err != nil {
-			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Error initializing Terraform")
+		); err != nil {
+			return emptyResp, statusCode, err
 		}
 	}
 
@@ -433,7 +402,7 @@ func ValidateConfig(
 
 	defer func() {
 		// Delete storage files created for authenticate job metadata
-		go utils.CleanupStorageFiles(ctx, storageConfig, []string{jobMetadataPath})
+		go utils.CleanupStorageFiles(context.Background(), storageConfig, []string{jobMetadataPath})
 	}()
 
 	jobSpec := job.NewAuthenticateSpec(
@@ -763,7 +732,7 @@ func ValidatePrerequisites(
 	if err == nil {
 		return http.StatusBadRequest, errors.Newf("Cannot connect to an integration %s, since it already exists.", name)
 	}
-	if err != database.ErrNoRows {
+	if !errors.Is(err, database.ErrNoRows()) {
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to query for existing integrations.")
 	}
 
@@ -818,13 +787,29 @@ func ValidatePrerequisites(
 	}
 
 	// For AWS integration, we require the user to have AWS CLI and Terraform installed.
+	// We also require env (GNU coreutils) executable to set the env variables when using the AWS CLI.
 	if svc == shared.AWS {
 		if _, _, err := lib_utils.RunCmd("terraform", []string{"--version"}, "", false); err != nil {
-			return http.StatusBadRequest, errors.Wrap(err, "terraform executable not found. Please go to https://developer.hashicorp.com/terraform/downloads to install terraform")
+			return http.StatusNotFound, errors.Wrap(err, "terraform executable not found. Please go to https://developer.hashicorp.com/terraform/downloads to install terraform")
 		}
 
-		if _, _, err := lib_utils.RunCmd("aws", []string{"--version"}, "", false); err != nil {
-			return http.StatusBadRequest, errors.Wrap(err, "AWS CLI executable not found. Please go to https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html to install AWS CLI")
+		awsVersionString, _, err := lib_utils.RunCmd("aws", []string{"--version"}, "", false)
+		if err != nil {
+			return http.StatusNotFound, errors.Wrap(err, "AWS CLI executable not found. Please go to https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html to install AWS CLI")
+		}
+
+		awsVersion, err := version.NewVersion(strings.Split(strings.Split(awsVersionString, " ")[0], "/")[1])
+		if err != nil {
+			return http.StatusUnprocessableEntity, errors.Wrap(err, "Error parsing AWS CLI version")
+		}
+
+		requiredVersion, _ := version.NewVersion("2.11.5")
+		if awsVersion.LessThan(requiredVersion) {
+			return http.StatusUnprocessableEntity, errors.Wrapf(err, "AWS CLI version 2.11.5 and above is required, but you got %s. Please update!", awsVersion.String())
+		}
+
+		if _, _, err := lib_utils.RunCmd("env", []string{"--version"}, "", false); err != nil {
+			return http.StatusNotFound, errors.Wrap(err, "env (GNU coreutils) executable not found.")
 		}
 	}
 
@@ -839,4 +824,20 @@ func validateConda() (int, error) {
 	}
 
 	return http.StatusOK, nil
+}
+
+func convertToAbsolutePath(configMap map[string]string) error {
+	for key, path := range configMap {
+		if _, ok := pathConfigKeys[key]; ok {
+			if strings.HasPrefix(path, "~") {
+				homeDir, err := os.UserHomeDir()
+				if err != nil {
+					return err
+				}
+				configMap[key] = strings.Replace(path, "~", homeDir, 1)
+			}
+		}
+	}
+
+	return nil
 }

@@ -43,6 +43,21 @@ type ResultResponse struct {
 	Result *RawResultResponse `json:"result"`
 }
 
+func NewResponseFromDbObject(
+	dbArtifact *models.Artifact,
+	from uuid.UUID,
+	to []uuid.UUID,
+) *Response {
+	return &Response{
+		Id:          dbArtifact.ID,
+		Name:        dbArtifact.Name,
+		Description: dbArtifact.Description,
+		Type:        dbArtifact.Type,
+		From:        from,
+		To:          to,
+	}
+}
+
 func NewRawResultResponseFromDbObject(
 	dbArtifactResult *models.ArtifactResult,
 	content *string,
@@ -70,21 +85,14 @@ func NewResultResponseFromDbObjects(
 	from uuid.UUID,
 	to []uuid.UUID,
 ) *ResultResponse {
-	metadata := Response{
-		Id:          dbArtifact.ID,
-		Name:        dbArtifact.Name,
-		Description: dbArtifact.Description,
-		Type:        dbArtifact.Type,
-		From:        from,
-		To:          to,
-	}
+	resp := NewResponseFromDbObject(dbArtifact, from, to)
 
 	if dbArtifactResult == nil {
-		return &ResultResponse{Response: metadata}
+		return &ResultResponse{Response: *resp}
 	}
 
 	return &ResultResponse{
-		Response: metadata,
+		Response: *resp,
 		Result:   NewRawResultResponseFromDbObject(dbArtifactResult, content),
 	}
 }

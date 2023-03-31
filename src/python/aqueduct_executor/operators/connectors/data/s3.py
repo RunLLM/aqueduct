@@ -127,9 +127,12 @@ class S3Connector(connector.DataConnector):
             if len(path) == 0:
                 raise Exception("S3 file path cannot be an empty string.")
             if path[-1] == "/":
-                # This means the path is a directory, and we will do a prefix search.
                 files = []
-                for obj in self.s3.Bucket(self.bucket).objects.filter(Prefix=path):
+                s3_file_collection = self.s3.Bucket(self.bucket).objects.filter(Prefix=path)
+                # If nothing is returned, that means the file directory does not exist.
+                if (len(list(s3_file_collection))) == 0:
+                    raise Exception("Given path to S3 directory '%s' does not exist." % (path))
+                for obj in s3_file_collection:
                     # The filter api also returns the directories, so we filter them out.
                     if (obj.key)[-1] != "/":
                         files.append(self.fetch_object(obj.key, params))

@@ -37,7 +37,7 @@ base_directory = os.path.join(os.environ["HOME"], ".aqueduct")
 server_directory = os.path.join(os.environ["HOME"], ".aqueduct", "server")
 ui_directory = os.path.join(os.environ["HOME"], ".aqueduct", "ui")
 
-package_version = "0.2.5"
+package_version = "0.2.8"
 aws_credentials_path = os.path.join(os.environ["HOME"], ".aws", "credentials")
 
 default_server_port = 8080
@@ -227,6 +227,16 @@ def setup_server_binaries():
         )
 
 
+def download_terraform_template():
+    terraform_folder = os.path.join(server_directory, "template", "aws", "eks")
+    terraform_zip_path = os.path.join(terraform_folder, "eks_terraform.zip")
+    with open(terraform_zip_path, "wb") as f:
+        _download_file(os.path.join(s3_server_prefix, "template", "aws", "eks", "eks_terraform.zip"), f)
+    with zipfile.ZipFile(terraform_zip_path, "r") as zip:
+        zip.extractall(terraform_folder)
+    os.remove(terraform_zip_path)
+
+
 def update_ui_version():
     print("Updating UI version to %s..." % package_version)
     try:
@@ -260,6 +270,8 @@ def update_server_version():
 
     setup_server_binaries()
     update_executable_permissions()
+
+    download_terraform_template()
 
     execute_command(
         [
@@ -330,6 +342,16 @@ def update():
     if os.path.isdir(preview_outputs_directory):
         shutil.rmtree(preview_outputs_directory)
     os.mkdir(preview_outputs_directory)
+
+    template_directories = [
+        os.path.join(server_directory, "template"),
+        os.path.join(server_directory, "template", "aws"),
+        os.path.join(server_directory, "template", "aws", "eks"),
+    ]
+
+    for directory in template_directories:
+        if not os.path.isdir(directory):
+            os.mkdir(directory)
 
     server_version_file = os.path.join(server_directory, "__version__")
     if require_update(server_version_file):

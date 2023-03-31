@@ -2,9 +2,7 @@ from typing import Optional
 
 import pandas as pd
 import pytest
-from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.constants.enums import ArtifactType
-from aqueduct.error import AqueductError, InvalidUserArgumentException
+from aqueduct.error import AqueductError
 from aqueduct.integrations.mongodb_integration import MongoDBIntegration
 
 from aqueduct import LoadUpdateMode, op
@@ -63,25 +61,34 @@ def test_mongo_fetch_with_filter(client, data_integration: MongoDBIntegration):
 def test_mongo_fetch_with_multiple_parametrized_filters(
     client, data_integration: MongoDBIntegration
 ):
-    client.create_param("param_1", default=" United Kingdom ")
-    client.create_param("param_2", default="")
-    actual_data = (
-        data_integration.collection("hotel_reviews")
-        .find(
-            {
-                "reviewer_nationality": {
-                    "$in": [
-                        "{{param_1}}",
-                        "{{ param_2 }}",  # ensure we can trim spaces around params properly.
-                    ]
-                }
+    country1 = client.create_param("param_1", default=" United Kingdom ")
+    country2 = client.create_param("param_2", default=" Australia ")
+    parameterized_results = data_integration.collection("hotel_reviews").find(
+        {
+            "reviewer_nationality": {
+                "$in": ["$1", "$2"],
             }
-        )
-        .get(parameters={"param_2": " Thailand "})
+        },
+        parameters=[country1, country2],
     )
-    all_data = data_integration.collection("hotel_reviews").find({}).get()
-    assert len(actual_data) == len(
-        all_data[all_data["reviewer_nationality"].isin([" United Kingdom ", " Thailand "])]
+    expanded_results = data_integration.collection("hotel_reviews").find(
+        {
+            "reviewer_nationality": {
+                "$in": [" United Kingdom ", " Australia "],
+            }
+        }
+    )
+    assert parameterized_results.get().equals(expanded_results.get())
+
+    expanded_results = data_integration.collection("hotel_reviews").find(
+        {
+            "reviewer_nationality": {
+                "$in": [" Thailand ", " Australia "],
+            }
+        }
+    )
+    assert parameterized_results.get(parameters={"param_1": " Thailand "}).equals(
+        expanded_results.get()
     )
 
 

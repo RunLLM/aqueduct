@@ -1,3 +1,5 @@
+import subprocess
+import sys
 import time
 from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
@@ -18,6 +20,7 @@ from sdk.aqueduct_tests.save import save
 from sdk.shared.demo_db import demo_db_tables
 from sdk.shared.flow_helpers import delete_flow, publish_flow_test
 from sdk.shared.naming import generate_object_name
+from sdk.shared.relational import format_table_name
 
 TEST_CREDENTIALS_FILE: str = "test-credentials.yml"
 TEST_CONFIG_FILE: str = "test-config.yml"
@@ -25,6 +28,13 @@ TEST_CONFIG_FILE: str = "test-config.yml"
 # We only cache these files for the lifecycle of a single test run.
 CACHED_CREDENTIALS: Optional[Dict[str, Any]] = None
 CACHED_CONFIG: Optional[Dict[str, Any]] = None
+
+
+def _execute_command(args, cwd=None):
+    with subprocess.Popen(args, stdout=sys.stdout, stderr=sys.stderr, cwd=cwd) as proc:
+        proc.communicate()
+        if proc.returncode != 0:
+            raise Exception("Error executing command: %s" % args)
 
 
 def _parse_config_file() -> Dict[str, Any]:
@@ -109,7 +119,7 @@ def _add_missing_artifacts(
         save(
             integration,
             cast(TableArtifact, data_param),
-            name=table_name,
+            name=format_table_name(table_name, integration.type()),
         )
         artifacts.append(data_param)
 
@@ -135,17 +145,24 @@ def _setup_mongo_db_data(client: Client, mongo_db: MongoDBIntegration) -> None:
     _add_missing_artifacts(client, mongo_db, existing_names)
 
 
-def _setup_snowflake_data(client: Client, snowflake: RelationalDBIntegration) -> None:
-    # Find all the tables that already exist.
-    existing_table_names = set(snowflake.list_tables()["tablename"])
+def _setup_external_sqlite_db(path: str):
+    """Spins up an external SQLite database at 'path'."""
+    assert path[-1] != "/", "Path must point to a file, not a directory."
+    import os
+    from pathlib import Path
 
-    _add_missing_artifacts(client, snowflake, existing_table_names)
+    # Create the parent directories if they don't already exist.
+    db_abspath = os.path.expanduser(path)
+    db_dirpath = Path((os.path.dirname(db_abspath)))
+    db_dirpath.mkdir(parents=True, exist_ok=True)
+
+    # Create the SQLite database.
+    _execute_command(["sqlite3", db_abspath, "VACUUM;"])
 
 
 def _setup_relational_data(client: Client, db: RelationalDBIntegration) -> None:
     # Find all the tables that already exist.
     existing_table_names = set(db.list_tables()["tablename"])
-
     _add_missing_artifacts(client, db, existing_table_names)
 
 
@@ -164,8 +181,11 @@ def _setup_s3_data(client: Client, s3: S3Integration):
 
 
 def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> None:
-    """Connects to the given data integration(s) if the server hasn't yet. It also ensures
-    that the appropriate data is populated.
+    """Connects to the given data integration(s) if the server hasn't yet.
+
+    If the data integration is not connected, we ensure that it is spun up properly
+    and that the appropriate starting data is populated. We assume that if the integration
+    already exists, then all external resources have already been set up.
 
     If `filter_to` is set, we only connect to that given integration name. Otherwise,
     we attempt to connect to every integration listed in the test config file.
@@ -187,6 +207,10 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
         # Only connect to integrations that don't already exist.
         if integration_name not in connected_integrations.keys():
             integration_config = _fetch_integration_credentials("data", integration_name)
+
+            # Stand up the external integration first.
+            if integration_config["type"] == ServiceType.SQLITE:
+                _setup_external_sqlite_db(integration_config["database"])
 
             client.connect_integration(
                 integration_name,

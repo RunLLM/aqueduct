@@ -1,24 +1,27 @@
 import inspect
+import uuid
 import warnings
 from functools import wraps
 from typing import Any, Callable, Dict, List, Mapping, Optional, Union, cast
 
 import numpy as np
+from aqueduct.artifacts._create import create_metric_or_check_artifact
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
-from aqueduct.artifacts.create import check_implicit_param_name, create_param_artifact
+from aqueduct.artifacts.create import create_param_artifact, to_artifact_class
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.artifacts.preview import preview_artifacts
-from aqueduct.artifacts.transform import to_artifact_class
 from aqueduct.constants.enums import (
     ArtifactType,
     CheckSeverity,
+    CustomizableResourceType,
     ExecutionMode,
     FunctionGranularity,
     FunctionType,
     OperatorType,
 )
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
+from aqueduct.logger import logger
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.operators import (
     CheckSpec,
@@ -27,11 +30,17 @@ from aqueduct.models.operators import (
     Operator,
     OperatorSpec,
     ResourceConfig,
+    get_operator_type,
 )
 from aqueduct.type_annotations import CheckFunction, MetricFunction, Number, UserFunction
-from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.dag_deltas import (
+    AddOperatorDelta,
+    DAGDelta,
+    RemoveOperatorDelta,
+    apply_deltas_to_dag,
+)
 from aqueduct.utils.function_packaging import serialize_function
-from aqueduct.utils.naming import resolve_op_and_artifact_names
+from aqueduct.utils.naming import default_artifact_name_from_op_name, sanitize_artifact_name
 from aqueduct.utils.utils import generate_engine_config, generate_uuid
 
 from aqueduct import globals
@@ -87,6 +96,10 @@ def wrap_spec(
             The artifact types that the function is expected to output, in the correct order.
         description:
             The description for this operator.
+        execution_mode:
+            Whether the operator should be executed eagerly or lazily.
+        overwrite_op:
+            The operator to overwrite, if any. Should only be set for metrics and checks.
 
     Returns:
         A list of artifacts, representing the outputs of the function.
@@ -111,55 +124,44 @@ def wrap_spec(
     operator_id = generate_uuid()
     output_artifact_ids = [generate_uuid() for _ in output_artifact_type_hints]
 
-    overwrite_existing_op = True
-    colliding_op = dag.get_operator(with_name=op_name)
-    if colliding_op is not None:
-        # There is already an operator with the same name.
-        # If the input artifacts are different for this new operator
-        # and the existing operator, then a new operator should be added.
-        # Otherwise, the existing operator should be overwritten.
-        input_artifact_ids = [input_artf.id() for input_artf in input_artifacts]
-        if input_artifact_ids != colliding_op.inputs:
-            overwrite_existing_op = False
+    # Even if there are multiple outputs, we give them all the same artifact names (in the default case).
+    # These will be deduplicated at publish time.
+    artifact_names = output_artifact_names or [
+        default_artifact_name_from_op_name(op_name) for _ in range(len(output_artifact_ids))
+    ]
 
-    original_op_name = op_name
-    op_name, artifact_names = resolve_op_and_artifact_names(
-        dag,
-        op_name,
-        overwrite_existing_op_name=overwrite_existing_op,
-        candidate_artifact_names=output_artifact_names,
-        num_outputs=len(output_artifact_ids),
+    new_op = Operator(
+        id=operator_id,
+        name=op_name,
+        description=description,
+        spec=spec,
+        inputs=[artifact.id() for artifact in input_artifacts],
+        outputs=output_artifact_ids,
     )
 
-    if colliding_op is not None and op_name != original_op_name:
-        print(
-            "Warning: There is already an operator named %s so this operator is being renamed to %s"
-            % (original_op_name, op_name)
+    new_output_artifacts = [
+        ArtifactMetadata(
+            id=output_artifact_id,
+            name=sanitize_artifact_name(artifact_names[i]),
+            type=output_artifact_type_hints[i],
+            explicitly_named=output_artifact_names is not None,
         )
+        for i, output_artifact_id in enumerate(output_artifact_ids)
+    ]
 
-    apply_deltas_to_dag(
-        dag,
-        deltas=[
-            AddOrReplaceOperatorDelta(
-                op=Operator(
-                    id=operator_id,
-                    name=op_name,
-                    description=description,
-                    spec=spec,
-                    inputs=[artifact.id() for artifact in input_artifacts],
-                    outputs=output_artifact_ids,
-                ),
-                output_artifacts=[
-                    ArtifactMetadata(
-                        id=output_artifact_id,
-                        name=artifact_names[i],
-                        type=output_artifact_type_hints[i],
-                    )
-                    for i, output_artifact_id in enumerate(output_artifact_ids)
-                ],
-            ),
-        ],
-    )
+    # Update the dag to reflect the newly created operator.
+    if get_operator_type(new_op) in [OperatorType.METRIC, OperatorType.CHECK]:
+        create_metric_or_check_artifact(dag, new_op, new_output_artifacts)
+    else:
+        apply_deltas_to_dag(
+            dag,
+            deltas=[
+                AddOperatorDelta(
+                    op=new_op,
+                    output_artifacts=new_output_artifacts,
+                )
+            ],
+        )
 
     if execution_mode == ExecutionMode.EAGER:
         # Issue preview request since this is an eager execution.
@@ -285,10 +287,6 @@ def _convert_input_arguments_to_parameters(
     dag = globals.__GLOBAL_DAG__
     fn_param_names = list(func_params.keys())
 
-    # For each implicit parameter, record it's input index and parameter name after validation.
-    implicit_param_name_by_index: Dict[int, str] = {}
-
-    # The first pass just checks that new implicit parameters have a valid name.
     artifacts = list(input_artifacts)
     for idx, artifact in enumerate(artifacts):
         if not isinstance(artifact, BaseArtifact):
@@ -302,38 +300,51 @@ def _convert_input_arguments_to_parameters(
             # We assume that the user-function's parameter name exists here, since we've disallowed any variable-length parameters.
             # An implicit parameter will have the operator name prepended to it.
             param_name = op_name + ":" + fn_param_names[idx]
-            is_overwrite = check_implicit_param_name(
-                dag,
-                param_name,
-                op_name,
+
+            # Implicit parameters are only ever created (or error). They never replace anything.
+            logger().warning(
+                """Operator `%s`'s argument `%s` is not an artifact type. We have implicitly created a parameter named `%s` and your input will be used as its default value. This parameter will be used when running the function."""
+                % (op_name, fn_param_names[idx], param_name)
             )
-            if is_overwrite:
-                warnings.warn(
-                    """Input to function argument `%s` is not an artifact type. We have implicitly created a parameter named `%s` and your input will be used as its default value. This parameter will be used when running the function."""
-                    % (param_name, param_name)
-                )
-
-            implicit_param_name_by_index[idx] = param_name
-
-    # Take a second pass to actually create the artifacts and modify the DAG.
-    for idx, artifact in enumerate(artifacts):
-        if idx in implicit_param_name_by_index.keys():
-            assert not isinstance(artifact, BaseArtifact)
-            default = artifact
-
             artifacts[idx] = create_param_artifact(
                 dag=dag,
-                param_name=implicit_param_name_by_index[idx],
-                default=default,
-                is_implicit=True,
+                param_name=param_name,
+                default=artifact,
+                description="Parameter corresponding to argument `%s` of function `%s`."
+                % (fn_param_names[idx], op_name),
+                explicitly_named=False,
             )
+
+    # If the user has supplied fewer arguments than the function takes, we check if the remaining
+    # arguments have default values. If they do, we create implicit parameters for them.
+    if len(artifacts) < len(fn_param_names):
+        for idx in range(len(artifacts), len(fn_param_names)):
+            default_value = func_params[fn_param_names[idx]].default
+            if default_value is inspect.Parameter.empty:
+                raise InvalidUserArgumentException(
+                    """No input was provided for argument `%s` of function `%s`, and no default value was specified."""
+                    % (fn_param_names[idx], op_name)
+                )
+
+            param_name = op_name + ":" + fn_param_names[idx]
+
+            # Implicit parameters are only ever created (or error). They never replace anything.
+            logger().warning(
+                """Operator `%s`'s argument `%s` is not an artifact type. We have implicitly created a parameter named `%s` and your input will be used as its default value. This parameter will be used when running the function."""
+                % (op_name, fn_param_names[idx], param_name)
+            )
+            artifacts.append(
+                create_param_artifact(
+                    dag=dag,
+                    param_name=param_name,
+                    default=default_value,
+                    description="Parameter corresponding to argument `%s` of function `%s`."
+                    % (fn_param_names[idx], op_name),
+                    explicitly_named=False,
+                )
+            )
+
     return artifacts
-
-
-# Supported resource configuration keys, supplied in the `resources` field of the decorators.
-NUM_CPUS_KEY = "num_cpus"
-MEMORY_KEY = "memory"
-GPU_RESOURCE_NAME_KEY = "gpu_resource_name"
 
 
 def _convert_memory_string_to_mbs(memory_str: str) -> int:
@@ -392,9 +403,10 @@ def _update_operator_spec_with_resources(
         if not isinstance(resources, Dict) or any(not isinstance(k, str) for k in resources):
             raise InvalidUserArgumentException("`resources` must be a dictionary with string keys.")
 
-        num_cpus = resources.get(NUM_CPUS_KEY)
-        memory = resources.get(MEMORY_KEY)
-        gpu_resource_name = resources.get(GPU_RESOURCE_NAME_KEY)
+        num_cpus = resources.get(CustomizableResourceType.NUM_CPUS)
+        memory = resources.get(CustomizableResourceType.MEMORY)
+        gpu_resource_name = resources.get(CustomizableResourceType.GPU_RESOURCE_NAME)
+        cuda_version = resources.get(CustomizableResourceType.CUDA_VERSION)
 
         if num_cpus is not None and (not isinstance(num_cpus, int) or num_cpus < 0):
             raise InvalidUserArgumentException(
@@ -422,6 +434,14 @@ def _update_operator_spec_with_resources(
 
         if gpu_resource_name is not None and (not isinstance(gpu_resource_name, str)):
             raise InvalidUserArgumentException("`gpu_resource_name` value must be set to a string.")
+
+        if cuda_version is not None and (not isinstance(cuda_version, str)):
+            raise InvalidUserArgumentException("`cuda_version` value must be set to a string.")
+
+        if cuda_version is not None and gpu_resource_name is None:
+            raise InvalidUserArgumentException(
+                "`cuda_version` can only be set if a `gpu_resource_name` is specified."
+            )
 
         spec.resources = ResourceConfig(
             num_cpus=num_cpus, memory_mb=memory, gpu_resource_name=gpu_resource_name
@@ -462,8 +482,7 @@ def op(
             Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
             (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
             look for a `requirements.txt` file in the same directory as the decorated function
-            and install those. Otherwise, we'll attempt to infer the requirements with
-            `pip freeze`.
+            and install those. Otherwise, the method raises RequirementsMissingError exception.
         num_outputs:
             The number of outputs the decorated function is expected to return.
             Will fail at runtime if a different number of outputs is returned by the function.
@@ -491,6 +510,11 @@ def op(
                 For example, the following values are valid: 100, "100MB", "1GB", "100mb", "1gb".
             "gpu_resource_name" (str):
                 Name of the gpu resource to use (only applicable for Kubernetes engine).
+
+                For example, the following value is valid: "nvidia.com/gpu".
+            "cuda_version" (str):
+                Version of CUDA to use with GPU (only applicable for Kubernetes engine). The currently supported
+                values are "11.4.1" and "11.8.0".
 
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
@@ -536,7 +560,7 @@ def op(
             description = func.__doc__ or ""
 
         def _wrapped_util(
-            *input_artifacts: BaseArtifact, execution_mode: ExecutionMode
+            *input_artifacts: BaseArtifact, execution_mode: Optional[ExecutionMode] = None
         ) -> Union[BaseArtifact, List[BaseArtifact]]:
             """
             Creates the following files in the zipped folder structure:
@@ -548,6 +572,11 @@ def op(
             """
             assert isinstance(name, str)
             assert isinstance(description, str)
+
+            if execution_mode == None:
+                execution_mode = _get_global_execution_mode()
+
+            assert isinstance(execution_mode, ExecutionMode)
 
             artifacts = _convert_input_arguments_to_parameters(
                 *input_artifacts,
@@ -583,7 +612,7 @@ def op(
             )
 
         def wrapped(*input_artifacts: BaseArtifact) -> Union[BaseArtifact, List[BaseArtifact]]:
-            return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.EAGER)
+            return _wrapped_util(*input_artifacts)
 
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
         def local_func(*inputs: Any) -> Any:
@@ -596,9 +625,6 @@ def op(
             return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.LAZY)
 
         setattr(wrapped, "lazy", lazy_mode)
-
-        if globals.__GLOBAL_CONFIG__.lazy:
-            return lazy_mode
 
         return wrapped
 
@@ -642,8 +668,7 @@ def metric(
             Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
             (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
             look for a `requirements.txt` file in the same directory as the decorated function
-            and install those. Otherwise, we'll attempt to infer the requirements with
-            `pip freeze`.
+            and install those. Otherwise, the method raises RequirementsMissingError exception.
         output:
             An optional custom name for the output metric artifact. Otherwise, the default naming scheme
             will be used.
@@ -698,7 +723,7 @@ def metric(
             description = func.__doc__ or ""
 
         def _wrapped_util(
-            *input_artifacts: BaseArtifact, execution_mode: ExecutionMode
+            *input_artifacts: BaseArtifact, execution_mode: Optional[ExecutionMode] = None
         ) -> NumericArtifact:
             """
             Creates the following files in the zipped folder structure:
@@ -710,6 +735,11 @@ def metric(
             """
             assert isinstance(name, str)
             assert isinstance(description, str)
+
+            if execution_mode == None:
+                execution_mode = _get_global_execution_mode()
+
+            assert isinstance(execution_mode, ExecutionMode)
 
             if len(input_artifacts) == 0:
                 raise InvalidUserArgumentException(
@@ -762,7 +792,7 @@ def metric(
         def wrapped(
             *input_artifacts: BaseArtifact,
         ) -> NumericArtifact:
-            return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.EAGER)
+            return _wrapped_util(*input_artifacts)
 
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
         def local_func(*inputs: Any) -> Number:
@@ -775,9 +805,6 @@ def metric(
             return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.LAZY)
 
         setattr(wrapped, "lazy", lazy_mode)
-
-        if globals.__GLOBAL_CONFIG__.lazy:
-            return lazy_mode
 
         return wrapped
 
@@ -825,8 +852,7 @@ def check(
             Can be either a path to the requirements.txt file or a list of pip requirements specifiers.
             (eg. ["transformers==4.21.0", "numpy==1.22.4"]. If not supplied, we'll first
             look for a `requirements.txt` file in the same directory as the decorated function
-            and install those. Otherwise, we'll attempt to infer the requirements with
-            `pip freeze`.
+            and install those. Otherwise, the method raises RequirementsMissingError exception.
         output:
             An optional custom name for the output metric artifact. Otherwise, the default naming scheme
             will be used.
@@ -883,7 +909,7 @@ def check(
             description = func.__doc__ or ""
 
         def _wrapped_util(
-            *input_artifacts: BaseArtifact, execution_mode: ExecutionMode
+            *input_artifacts: BaseArtifact, execution_mode: Optional[ExecutionMode] = None
         ) -> BoolArtifact:
             """
             Creates the following files in the zipped folder structure:
@@ -895,6 +921,11 @@ def check(
             """
             assert isinstance(name, str)
             assert isinstance(description, str)
+
+            if execution_mode == None:
+                execution_mode = _get_global_execution_mode()
+
+            assert isinstance(execution_mode, ExecutionMode)
 
             if len(input_artifacts) == 0:
                 raise InvalidUserArgumentException(
@@ -945,7 +976,7 @@ def check(
         def wrapped(
             *input_artifacts: BaseArtifact,
         ) -> BoolArtifact:
-            return _wrapped_util(*input_artifacts, execution_mode=ExecutionMode.EAGER)
+            return _wrapped_util(*input_artifacts)
 
         # Enable the .local(*args) attribute, which calls the original function with the raw inputs.
         def local_func(*inputs: Any) -> Union[bool, np.bool_]:
@@ -959,8 +990,6 @@ def check(
 
         setattr(wrapped, "lazy", lazy_mode)
 
-        if globals.__GLOBAL_CONFIG__.lazy:
-            return lazy_mode
         return wrapped
 
     if callable(name):
@@ -1017,3 +1046,10 @@ def to_operator(
         ),
     )
     return func_op(func)
+
+
+def _get_global_execution_mode() -> ExecutionMode:
+    if globals.__GLOBAL_CONFIG__.lazy:
+        return ExecutionMode.LAZY
+    else:
+        return ExecutionMode.EAGER
