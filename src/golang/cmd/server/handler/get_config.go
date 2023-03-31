@@ -2,14 +2,13 @@ package handler
 
 import (
 	"context"
-	"github.com/aqueducthq/aqueduct/lib/database"
-	aq_errors "github.com/aqueducthq/aqueduct/lib/errors"
-	"github.com/aqueducthq/aqueduct/lib/repos"
 	"net/http"
-
 	"github.com/aqueducthq/aqueduct/config"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
+	"github.com/aqueducthq/aqueduct/lib/database"
+	aq_errors "github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 )
 
@@ -47,6 +46,7 @@ func (h *GetConfigHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	}, http.StatusOK, nil
 }
 
+// TODO(ENG-2725): We should use the database as the source of truth, not the config file.
 func (h *GetConfigHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	storageConfig := config.Storage()
 	storageConfigPtr := &storageConfig
@@ -54,7 +54,6 @@ func (h *GetConfigHandler) Perform(ctx context.Context, interfaceArgs interface{
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve storage config.")
 	}
-
 	// Fetch the integration name as well, since that isn't recorded in the config.
 	currStorageMigrationObj, err := h.StorageMigrationRepo.Current(ctx, h.Database)
 	if err != nil && !aq_errors.Is(err, database.ErrNoRows()) {
