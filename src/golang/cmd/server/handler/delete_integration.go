@@ -8,6 +8,7 @@ import (
 	"github.com/aqueducthq/aqueduct/config"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	aq_errors "github.com/aqueducthq/aqueduct/lib/errors"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -44,6 +45,7 @@ type DeleteIntegrationHandler struct {
 	ExecutionEnvironmentRepo repos.ExecutionEnvironment
 	IntegrationRepo          repos.Integration
 	OperatorRepo             repos.Operator
+	StorageMigrationRepo     repos.StorageMigration
 	WorkflowRepo             repos.Workflow
 }
 
@@ -87,6 +89,15 @@ func (h *DeleteIntegrationHandler) Prepare(r *http.Request) (interface{}, int, e
 
 	if !ok {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this integration.")
+	}
+
+	// Check that we can't delete an integration that is being used as artifact storage.
+	currentStorageMigrationEntry, err := h.StorageMigrationRepo.Current(r.Context(), h.Database)
+	if err != nil && !aq_errors.Is(err, database.ErrNoRows()) {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving current storage migration entry.")
+	}
+	if currentStorageMigrationEntry != nil && currentStorageMigrationEntry.DestIntegrationID == integrationObject.ID {
+		return nil, http.StatusBadRequest, errors.New("Cannot delete an integration that is being used as artifact storage.")
 	}
 
 	return &deleteIntegrationArgs{

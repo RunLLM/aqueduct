@@ -3,7 +3,6 @@ package storage_migration
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/config"
@@ -100,12 +99,6 @@ func PerformStorageMigration(
 		err = updateStorageMigrationExecState(ctx, storageMigrationObj.ID, &execState, storageMigrationRepo, DB)
 		if err != nil {
 			log.Errorf("Unexpected error when updating the storage migration entry to RUNNING: %v", err)
-			return
-		}
-
-		// TODO: REMOVE
-		if strings.HasPrefix(destIntegrationName, "failing") {
-			err = errors.Newf("I REALLY DONT LIKE YOUR NAME %s SIR", destIntegrationName)
 			return
 		}
 
