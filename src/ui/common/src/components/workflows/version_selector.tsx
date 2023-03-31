@@ -39,11 +39,12 @@ export const VersionSelector: React.FC = () => {
     return null;
   }
 
+  let historyHasLoaded = true;
   if (
     workflowHistory.status.loading === LoadingStatusEnum.Loading ||
     workflowHistory.status.loading === LoadingStatusEnum.Initial
   ) {
-    return null;
+    historyHasLoaded = false;
   }
 
   const getMenuItems = () => {
@@ -154,7 +155,7 @@ export const VersionSelector: React.FC = () => {
           horizontal: 'left',
         }}
       >
-        {getMenuItems()}
+        {historyHasLoaded && getMenuItems()}
       </Popover>
     </Box>
   );
