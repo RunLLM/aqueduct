@@ -110,7 +110,7 @@ const WithOperatorHeader: React.FC<Props> = ({
 
         <Box width="96px" />
 
-        <Box display="flex" width="100%">
+        <Box display="flex" width="100%" paddingTop={sideSheetMode ? '16px' : '24px'}>
           {inputs.length > 0 && (
             <Box width="100%" mr="32px">
               <ArtifactSummaryList
