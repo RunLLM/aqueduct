@@ -81,7 +81,7 @@ func PerformStorageMigration(
 					// TODO: this can be a system error too. But no one cares right now.
 					shared.UserFatalFailure,
 					&shared.Error{
-						Tip:     fmt.Sprintf("Failure occurred when migrating to the new storage integration %s.", destIntegrationName),
+						Tip:     fmt.Sprintf("Failure occurred when migrating to the new storage integration `%s`.", destIntegrationName),
 						Context: err.Error(),
 					},
 				)
