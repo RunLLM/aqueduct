@@ -15,6 +15,7 @@ import IntegrationObjectList from '../../../../components/integrations/integrati
 import OperatorsOnIntegration from '../../../../components/integrations/operatorsOnIntegration';
 import DefaultLayout from '../../../../components/layouts/default';
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
+import { handleGetServerConfig } from '../../../../handlers/getServerConfig';
 import {
   handleListIntegrationObjects,
   handleLoadIntegrationOperators,
@@ -33,7 +34,6 @@ import {
 import { isFailed, isLoading, isSucceeded } from '../../../../utils/shared';
 import IntegrationOptions from '../../../integrations/options';
 import { LayoutProps } from '../../types';
-import {handleGetServerConfig} from "../../../../handlers/getServerConfig";
 
 type IntegrationDetailsPageProps = {
   user: UserProfile;
@@ -81,7 +81,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   );
 
   const serverConfig = useSelector(
-      (state: RootState) => state.serverConfigReducer
+    (state: RootState) => state.serverConfigReducer
   );
 
   const selectedIntegration = integrations[integrationId];
@@ -177,7 +177,10 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             onDeleteIntegration={() => {
               setShowDeleteTableDialog(true);
             }}
-            allowDeletion={ serverConfig.config?.storageConfig.integration_name !== selectedIntegration.name }
+            allowDeletion={
+              serverConfig.config?.storageConfig.integration_name !==
+              selectedIntegration.name
+            }
           />
         </Box>
 

@@ -9,11 +9,10 @@ import Box from '@mui/material/Box';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
-import React, {useEffect, useState} from 'react';
+import React, { useState } from 'react';
 
 import { Integration, isDemo } from '../../utils/integrations';
 import { Button } from '../primitives/Button.styles';
-import {handleGetServerConfig} from "../../handlers/getServerConfig";
 
 type Props = {
   integration: Integration;
@@ -30,7 +29,7 @@ const IntegrationOptions: React.FC<Props> = ({
   onTestConnection,
   onEdit,
   onDeleteIntegration,
-allowDeletion,
+  allowDeletion,
 }) => {
   // Menu control based on
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
