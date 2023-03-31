@@ -25,8 +25,8 @@ type OperatorNode struct {
 	Spec                   operator.Spec  `db:"spec" json:"spec"`
 	ExecutionEnvironmentID utils.NullUUID `db:"execution_environment_id" json:"execution_environment_id"`
 
-	Inputs  shared.NullableList[uuid.UUID] `db:"inputs" json:"inputs"`
-	Outputs shared.NullableList[uuid.UUID] `db:"outputs" json:"outputs"`
+	Inputs  shared.NullableIndexedList[uuid.UUID] `db:"inputs" json:"inputs"`
+	Outputs shared.NullableIndexedList[uuid.UUID] `db:"outputs" json:"outputs"`
 }
 
 // OperatorNodeCols returns a comma-separated string of all Operator columns.

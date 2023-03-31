@@ -84,6 +84,16 @@ func (*operatorReader) GetByDAG(ctx context.Context, dagID uuid.UUID, DB databas
 	return getOperators(ctx, DB, query, args...)
 }
 
+func (*operatorReader) GetNodeByDAG(ctx context.Context, dagID uuid.UUID, DB database.Database) ([]views.OperatorNode, error) {
+	query := fmt.Sprintf(
+		"SELECT %s FROM %s WHERE dag_id = $1",
+		views.OperatorNodeCols(),
+		views.OperatorNodeView,
+	)
+	args := []interface{}{dagID}
+	return getOperatorNodes(ctx, DB, query, args...)
+}
+
 func (*operatorReader) GetDistinctLoadOPsByWorkflow(
 	ctx context.Context,
 	workflowID uuid.UUID,
@@ -537,6 +547,12 @@ func getOperators(ctx context.Context, DB database.Database, query string, args 
 	var operators []models.Operator
 	err := DB.Query(ctx, &operators, query, args...)
 	return operators, err
+}
+
+func getOperatorNodes(ctx context.Context, DB database.Database, query string, args ...interface{}) ([]views.OperatorNode, error) {
+	var operatorNodes []views.OperatorNode
+	err := DB.Query(ctx, &operatorNodes, query, args...)
+	return operatorNodes, err
 }
 
 func getOperator(ctx context.Context, DB database.Database, query string, args ...interface{}) (*models.Operator, error) {

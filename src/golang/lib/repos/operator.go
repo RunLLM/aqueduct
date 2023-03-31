@@ -30,6 +30,11 @@ type operatorReader interface {
 	// GetByDAG returns the Operators in the specified DAG.
 	GetByDAG(ctx context.Context, dagID uuid.UUID, DB database.Database) ([]models.Operator, error)
 
+	// GetNodeByDAG returns the OperatorNodes in the specified DAG.
+	// OperatorNodes includes inputs / outputs IDs, which are not available in
+	// Operators.
+	GetNodeByDAG(ctx context.Context, dagID uuid.UUID, DB database.Database) ([]views.OperatorNode, error)
+
 	// GetDistinctLoadOPsByWorkflow returns the distinct Load Operators in a workflow.
 	// Load Operators are distinct if they have a unique combination of
 	// the integration they are saving an Artifact to, the name of the object (i.e. table)

@@ -61,6 +61,21 @@ func (ts *TestSuite) TestOperator_GetByDAG() {
 	requireDeepEqualOperators(ts.T(), expectedOperators, actualOperators)
 }
 
+func (ts *TestSuite) TestOperator_GetNodeByDAG() {
+	dag, operators, _ := ts.seedComplexWorkflow()
+	operatorNodes, err := ts.operator.GetNodeByDAG(ts.ctx, dag.ID, ts.DB)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), len(operators), len(operatorNodes))
+	for _, opNode := range operatorNodes {
+		expectedOp, ok := operators[opNode.Name]
+		require.True(ts.T(), ok)
+		require.Subset(ts.T(), expectedOp.Inputs, opNode.Inputs)
+		require.Subset(ts.T(), opNode.Inputs, expectedOp.Inputs)
+		require.Subset(ts.T(), expectedOp.Outputs, opNode.Outputs)
+		require.Subset(ts.T(), opNode.Outputs, expectedOp.Outputs)
+	}
+}
+
 func (ts *TestSuite) TestOperator_GetDistinctLoadOPsByWorkflow() {
 	users := ts.seedUser(1)
 	user := users[0]
