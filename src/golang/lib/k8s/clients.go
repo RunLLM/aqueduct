@@ -75,7 +75,10 @@ func CreateNamespaces(k8sClient *kubernetes.Clientset) error {
 
 		_, err = k8sClient.CoreV1().Namespaces().Create(context.TODO(), userNamespace, metav1.CreateOptions{})
 		if err != nil {
-			return errors.Wrap(err, "Unable to create namespace.")
+			// Double-check that we didn't race against another process to create this namespace.
+			if _, namespaceExistsErr := namespaces.Get(context.TODO(), AqueductNamespace, metav1.GetOptions{}); namespaceExistsErr != nil {
+				return errors.Wrap(err, "Unable to create namespace.")
+			}
 		}
 		log.Infof("User namespace (name: %s) created successfully.\n", AqueductNamespace)
 	}
