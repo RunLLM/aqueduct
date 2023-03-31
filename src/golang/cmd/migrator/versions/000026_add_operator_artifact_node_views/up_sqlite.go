@@ -3,7 +3,10 @@ package _000026_add_operator_artifact_node_views
 const upSqliteScript = `
 CREATE VIEW IF NOT EXISTS operator_node
 AS 
-	WITH op_with_outputs AS ( -- Aggregate outputs
+	WITH edge_ordered AS (
+		SELECT * FROM workflow_dag_edge ORDER BY idx ASC
+	),
+	op_with_outputs AS ( -- Aggregate outputs
 		SELECT
 			operator.id AS id,
 			workflow_dag.id AS dag_id,
@@ -11,9 +14,11 @@ AS
 			operator.description AS description,
 			operator.spec AS spec,
 			operator.execution_environment_id AS execution_environment_id,
-            CAST(
-				json_group_array(workflow_dag_edge.to_id)
-				AS BLOB
+			json_group_array(
+				json_object(
+					'value', workflow_dag_edge.to_id,
+					'idx', workflow_dag_edge.idx
+				)
 			) AS outputs
 		FROM
 			operator, workflow_dag, workflow_dag_edge
@@ -31,9 +36,11 @@ AS
 			operator.description AS description,
 			operator.spec AS spec,
 			operator.execution_environment_id AS execution_environment_id,
-			CAST(
-				json_group_array(workflow_dag_edge.from_id)
-				AS BLOB
+			json_group_array(
+				json_object(
+					'value', workflow_dag_edge.from_id,
+					'idx', workflow_dag_edge.idx
+				)
 			) AS inputs
 		FROM
 			operator, workflow_dag, workflow_dag_edge
@@ -83,9 +90,11 @@ AS
 			artifact.name AS name,
 			artifact.description AS description,
 			artifact.type as type,
-			CAST(
-				json_group_array(workflow_dag_edge.to_id)
-				AS BLOB
+			json_group_array(
+				json_object(
+					'value', workflow_dag_edge.to_id,
+					'idx', workflow_dag_edge.idx
+				)
 			) AS outputs
 		FROM
 			artifact, workflow_dag, workflow_dag_edge
@@ -102,9 +111,11 @@ AS
 			artifact.name AS name,
 			artifact.description AS description,
 			artifact.type as type,
-			CAST(
-				json_group_array(workflow_dag_edge.from_id)
-				AS BLOB
+			json_group_array(
+				json_object(
+					'value', workflow_dag_edge.from_id,
+					'idx', workflow_dag_edge.idx
+				)
 			) AS inputs
 		FROM
 			artifact, workflow_dag, workflow_dag_edge
