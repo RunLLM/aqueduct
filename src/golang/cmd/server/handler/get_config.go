@@ -2,6 +2,9 @@ package handler
 
 import (
 	"context"
+	"github.com/aqueducthq/aqueduct/lib/database"
+	aq_errors "github.com/aqueducthq/aqueduct/lib/errors"
+	"github.com/aqueducthq/aqueduct/lib/repos"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/config"
@@ -23,6 +26,10 @@ type getConfigResponse struct {
 
 type GetConfigHandler struct {
 	GetHandler
+
+	IntegrationRepo      repos.Integration
+	StorageMigrationRepo repos.StorageMigration
+	Database             database.Database
 }
 
 func (*GetConfigHandler) Name() string {
@@ -47,6 +54,20 @@ func (h *GetConfigHandler) Perform(ctx context.Context, interfaceArgs interface{
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve storage config.")
 	}
+
+	// Fetch the integration name as well, since that isn't recorded in the config.
+	currStorageMigrationObj, err := h.StorageMigrationRepo.Current(ctx, h.Database)
+	if err != nil && !aq_errors.Is(err, database.ErrNoRows()) {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error when fetchin current storage integration.")
+	}
+	if err == nil {
+		integrationObj, err := h.IntegrationRepo.Get(ctx, currStorageMigrationObj.DestIntegrationID, h.Database)
+		if err != nil {
+			return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error when fetching current storage integration.")
+		}
+		storageConfigPublic.IntegrationName = integrationObj.Name
+	}
+	// Continue without populating the integration name if there was no previous storage migration.
 
 	return getConfigResponse{
 		AqPath:              config.AqueductPath(),
