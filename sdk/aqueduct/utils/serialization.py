@@ -148,7 +148,7 @@ __deserialization_function_mapping: Dict[str, Callable[[bytes], Any]] = {
 }
 
 # Not intended for use outside of `deserialize()`.
-__local_data_deserialization_function_mapping: Dict[str, Callable[[str], Any]] = {
+__local_data_deserialization_function_mapping: Dict[str, Callable[[bytes], Any]] = {
     LocalDataSerializationType.CSV_TABLE: _read_local_csv_table_content,
     LocalDataSerializationType.JSON_TABLE: _read_local_json_table_content,
     LocalDataSerializationType.PARQUET_TABLE: _read_local_parquet_table_content,
