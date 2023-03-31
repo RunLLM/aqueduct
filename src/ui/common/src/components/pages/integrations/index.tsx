@@ -78,24 +78,25 @@ const IntegrationsPage: React.FC<Props> = ({
     forceLoad = true;
   }
 
-  // Check if there were any failed storage migrations recently that we should surface.
-  const now = new Date();
-  const fiveMinutesAgo = new Date(now.getTime() - 5 * 60 * 1000); // units of getTime() are milliseconds.
-  const fiveMinutesAgoTimestamp = Math.floor(fiveMinutesAgo.getTime() / 1000);
-
+  // If the last storage migration failed, display the error message.
   const { data, error, isLoading } = useStorageMigrationListQuery(
       {
         apiKey: user.apiKey,
-        status: 'failed', // must be equivalent to ExecutionStatus.FAILED.
-        completedSince: fiveMinutesAgoTimestamp.toString(), // must be a unix timestamp.
         limit: '1', // only fetch the latest result.
       }
   )
-  const recentFailedMigration = data as StorageMigrationResponse[]
-  console.log("----------------------------------")
-  console.log(recentFailedMigration);
-  console.log(error);
-  console.log(isLoading);
+  const lastMigration = data as StorageMigrationResponse[]
+  let lastFailedFormattedTimestamp: string | undefined = undefined;
+  if (lastMigration && lastMigration[0].execution_state.status === "failed") {
+    const date = new Date(lastMigration[0].execution_state.timestamps.registered_at);
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1; // Note: getMonth() returns 0-based index
+    const day = date.getDate();
+    const hour = date.getHours() % 12; // Convert to 12-hour format
+    const minute = date.getMinutes();
+    const amPm = date.getHours() >= 12 ? "pm" : "am"; // Determine AM/PM based on hour
+    lastFailedFormattedTimestamp = `${year}-${month < 10 ? "0" : ""}${month}-${day < 10 ? "0" : ""}${day} ${hour}:${minute < 10 ? "0" : ""}${minute}${amPm}`;
+  }
 
   return (
     <Layout
@@ -148,11 +149,12 @@ const IntegrationsPage: React.FC<Props> = ({
         </Box>
 
         <MetadataStorageInfo serverConfig={serverConfig.config} />
-        {!isLoading && recentFailedMigration && (
+        {!isLoading && lastFailedFormattedTimestamp && (
             <Box>
-              <pre>
-                Recently Failed Storage Migration at {recentFailedMigration[0].execution_state.timestamps.finished_at}
-              </pre>
+              <Typography variant="body2" fontWeight="fontWeightRegular" marginTop={2} marginBottom={1}>
+                The last artifact storage migration, which started at {lastFailedFormattedTimestamp}, has failed!
+                As a result, the artifact storage has not changed from `{serverConfig.config?.storageConfig.integration_name}`.
+              </Typography>
               <Box
                   sx={{
                     backgroundColor: theme.palette.red[100],
@@ -164,7 +166,7 @@ const IntegrationsPage: React.FC<Props> = ({
                   }}
               >
               <pre style={{ margin: '0px' }}>
-                {`${recentFailedMigration[0].execution_state.error.tip}\n\n${recentFailedMigration[0].execution_state.error.context}`}
+                {`${lastMigration[0].execution_state.error.tip}\n\n${lastMigration[0].execution_state.error.context}`}
               </pre>
               </Box>
             </Box>

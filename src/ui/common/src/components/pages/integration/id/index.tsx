@@ -140,7 +140,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     }
 
     fetchServerConfig();
-  }, [user]);
+  }, [user.apiKey]);
 
   if (!integrations || !selectedIntegration) {
     return null;

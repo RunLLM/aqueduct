@@ -62,6 +62,13 @@ export const GCSMetadataStorageInfo: React.FC<MetadataPreviewProps> = ({
             Google Cloud Storage
           </Box>
         </Typography>
+
+        <Typography variant="body2" fontWeight="fontWeightMedium">
+          Name:{' '}
+          <Box component="span" fontWeight="fontWeightRegular">
+            {serverConfig?.storageConfig?.integration_name || 'loading ...'}
+          </Box>
+        </Typography>
         <Typography variant="body2" fontWeight="fontWeightMedium">
           Bucket:{' '}
           <Box component="span" fontWeight="fontWeightRegular">
@@ -90,6 +97,13 @@ export const S3MetadataStorageInfo: React.FC<MetadataPreviewProps> = ({
           Storage Type:{' '}
           <Box component="span" fontWeight="fontWeightRegular">
             Amazon S3
+          </Box>
+        </Typography>
+
+        <Typography variant="body2" fontWeight="fontWeightMedium">
+          Name:{' '}
+          <Box component="span" fontWeight="fontWeightRegular">
+            {serverConfig?.storageConfig?.integration_name || 'loading ...'}
           </Box>
         </Typography>
         <Typography variant="body2" fontWeight="fontWeightMedium">
@@ -139,7 +153,7 @@ export const MetadataStorageInfo: React.FC<MetadataStorageInfoProps> = ({
   return (
     <Box>
       <Typography variant="h5" marginY={2}>
-        Storage Integration
+        Artifact Storage
       </Typography>
       {storageInfo}
     </Box>
