@@ -7,10 +7,9 @@ import (
 	"github.com/aqueducthq/aqueduct/config"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	aq_errors "github.com/aqueducthq/aqueduct/lib/errors"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
-	"github.com/dropbox/godropbox/errors"
 )
 
 type getConfigArgs struct {
@@ -57,7 +56,7 @@ func (h *GetConfigHandler) Perform(ctx context.Context, interfaceArgs interface{
 	}
 	// Fetch the integration name as well, since that isn't recorded in the config.
 	currStorageMigrationObj, err := h.StorageMigrationRepo.Current(ctx, h.Database)
-	if err != nil && !aq_errors.Is(err, database.ErrNoRows()) {
+	if err != nil && !errors.Is(err, database.ErrNoRows()) {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error when fetchin current storage integration.")
 	}
 	if err == nil {

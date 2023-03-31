@@ -47,10 +47,13 @@ type ListStorageMigrationsHandler struct {
 type listStorageMigrationsArgs struct {
 	*aq_context.AqContext
 
-	// See the route description above for what each of these filters mean.
+	// See the route description above for what each of these filters below means.
+	// A nil value means that the filter is not set.
 	status         *string
-	limit          int
 	completedSince *time.Time
+
+	// A negative value for limit (eg. -1) means that the limit is not set.
+	limit int
 }
 
 func (*ListStorageMigrationsHandler) Headers() []string {

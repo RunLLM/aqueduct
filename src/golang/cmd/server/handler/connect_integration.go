@@ -214,7 +214,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 			return emptyResp, http.StatusBadRequest, errors.Wrap(err, "Integration config is malformed.")
 		}
 
-		err = storage_migration.PerformStorageMigration(
+		err = storage_migration.Perform(
 			ctx,
 			args.OrgID,
 			integrationObj,

@@ -94,7 +94,7 @@ func (h *ConfigureStorageHandler) Perform(ctx context.Context, interfaceArgs int
 		},
 	}
 
-	err := storage_migration.PerformStorageMigration(
+	err := storage_migration.Perform(
 		ctx,
 		args.OrgID,
 		nil, /* destIntegrationObj */

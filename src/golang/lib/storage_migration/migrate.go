@@ -19,11 +19,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// PerformStorageMigration starts and manages the storage migration process through its entire lifecycle.
+// Perform starts and manages the storage migration process through its entire lifecycle.
 // The migration logic is performed asynchronously, and it's process is tracked as a new entry in the
 // `storage_migration` table. This method does not block on the migration process.
 // This method also pauses the server, until the migration completes or errors, wherein the server will restart.
-func PerformStorageMigration(
+func Perform(
 	ctx context.Context,
 	orgID string,
 	destIntegrationObj *models.Integration,
