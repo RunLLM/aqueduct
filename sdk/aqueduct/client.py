@@ -204,7 +204,7 @@ class Client:
             use_local:
                 Whether this parameter uses local data source or not.
             as_type:
-                The expected type of the local data. Only supported types are ArtifactType.TABLE and ArtifactType.IMAGE.
+                The expected type of the local data.
             format:
                 If local data type is ArtifactType.TABLE, the user has to specify the table format.
                 We currently support "json", "csv", and "parquet".
