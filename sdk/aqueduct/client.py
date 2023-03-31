@@ -214,7 +214,7 @@ class Client:
         if use_local:
             if not isinstance(default, str):
                 raise InvalidUserArgumentException(
-                    "the default value must be a path to local data."
+                    "The default value must be a path to local data."
                 )
             validate_local_data(default, as_type, format)
             default = extract_val_from_local_data(default, as_type, format)
