@@ -24,8 +24,8 @@ export const MongoDBDialog: React.FC<Props> = ({
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
-        label={'Uri*'}
-        description={'The connection uri to your mongoDB server.'}
+        label={'URI*'}
+        description={'The connection URI to your MongoDB server.'}
         spellCheck={false}
         required={true}
         placeholder={Placeholders.auth_uri}
