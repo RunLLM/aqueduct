@@ -9,8 +9,8 @@ import {
   RelationalDBLoadParams,
   S3LoadParams,
 } from '../../../utils/operators';
-import RelationalDBLoadParamDisplay from './RelationalDBLoadParamDisplay';
-import S3LoadParamDisplay from './S3LoadParamDisplay';
+import RelationalDBLoadParamDisplay from '../../workflows/operator/RelationalDBLoadParamDisplay';
+import S3LoadParamDisplay from '../../workflows/operator/S3LoadParamDisplay';
 
 type SaveDetailsProps = {
   parameters: LoadParameters;

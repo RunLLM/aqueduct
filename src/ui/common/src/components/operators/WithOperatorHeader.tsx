@@ -103,41 +103,45 @@ const WithOperatorHeader: React.FC<Props> = ({
         {checkLevelDisplay}
       </Box>
 
-      <Box width="100%" paddingTop={sideSheetMode ? '16px' : '24px'}>
-        <SaveDetails parameters={operator?.spec?.load?.parameters} />
-      </Box>
-
       <Box display="flex" width="100%">
-        {inputs.length > 0 && (
-          <Box width="100%" mr="32px">
-            <ArtifactSummaryList
-              title="Inputs"
-              workflowId={workflowId}
-              dagId={dagId}
-              dagResultId={dagResultId}
-              artifactResults={inputs}
-              collapsePrimitives={operator.spec?.type !== OperatorType.Check}
-              appearance={
-                operator.spec?.type === OperatorType.Metric ? 'value' : 'link'
-              }
-            />
-          </Box>
-        )}
+        <Box width="100%" paddingTop={sideSheetMode ? '16px' : '24px'}>
+          <SaveDetails parameters={operator?.spec?.load?.parameters} />
+        </Box>
 
-        {outputs.length > 0 && (
-          <Box width="100%">
-            <ArtifactSummaryList
-              title="Outputs"
-              workflowId={workflowId}
-              dagId={dagId}
-              dagResultId={dagResultId}
-              artifactResults={outputs}
-              appearance={
-                operator.spec?.type === OperatorType.Metric ? 'value' : 'link'
-              }
-            />
-          </Box>
-        )}
+        <Box width="96px" />
+
+        <Box display="flex" width="100%">
+          {inputs.length > 0 && (
+            <Box width="100%" mr="32px">
+              <ArtifactSummaryList
+                title="Inputs"
+                workflowId={workflowId}
+                dagId={dagId}
+                dagResultId={dagResultId}
+                artifactResults={inputs}
+                collapsePrimitives={operator.spec?.type !== OperatorType.Check}
+                appearance={
+                  operator.spec?.type === OperatorType.Metric ? 'value' : 'link'
+                }
+              />
+            </Box>
+          )}
+
+          {outputs.length > 0 && (
+            <Box width="100%">
+              <ArtifactSummaryList
+                title="Outputs"
+                workflowId={workflowId}
+                dagId={dagId}
+                dagResultId={dagResultId}
+                artifactResults={outputs}
+                appearance={
+                  operator.spec?.type === OperatorType.Metric ? 'value' : 'link'
+                }
+              />
+            </Box>
+          )}
+        </Box>
       </Box>
 
       <Divider sx={{ my: '32px' }} />
