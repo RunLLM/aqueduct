@@ -72,12 +72,8 @@ func PerformStorageMigration(
 		var err error
 		defer func() {
 			if err != nil {
-				// Regardless of whether the migration succeeded, we should track the finished timestamp.
-				finishedAt := time.Now()
-				execState.Timestamps.FinishedAt = &finishedAt
-
 				execState.UpdateWithFailure(
-					// TODO: this can be a system error too. But no one cares right now.
+					// This can be a system error too. But no one cares right now.
 					shared.UserFatalFailure,
 					&shared.Error{
 						Tip:     fmt.Sprintf("Failure occurred when migrating to the new storage integration `%s`.", destIntegrationName),
@@ -179,6 +175,15 @@ func updateStorageMigrationExecState(
 	storageMigrationRepo repos.StorageMigration,
 	db database.Database,
 ) error {
+	// If we're updating the old storage migration entry, that must be done in the same transaction
+	// as the update of the new storage migration entry, so that there is at most one current=True
+	// entry in the storage_migration table.
+	txn, err := db.BeginTx(context.Background())
+	if err != nil {
+		return errors.Wrap(err, "Unable to start transaction for updating storage state.")
+	}
+	defer database.TxnRollbackIgnoreErr(ctx, txn)
+
 	updates := map[string]interface{}{
 		models.StorageMigrationExecutionState: execState,
 	}
@@ -188,54 +193,38 @@ func updateStorageMigrationExecState(
 		updates[models.StorageMigrationCurrent] = true
 
 		// If there was a previous storage migration, update that entry to be `current=False`.
-		oldStorageMigrationObj, err := storageMigrationRepo.Current(ctx, db)
+		oldStorageMigrationObj, err := storageMigrationRepo.Current(ctx, txn)
+		if err != nil && !aq_errors.Is(err, database.ErrNoRows()) {
+			return errors.Wrap(err, "Unexpected error when fetching current storage state.")
+		}
 		if err == nil {
-			// Updating the old storage migration entry must be done in the same transaction
-			// as the update of the new storage migration entry, so that there is at most one
-			// current=True entry in the storage_migration table.
-			txn, err := db.BeginTx(context.Background())
-			if err != nil {
-				return errors.Wrap(err, "Unable to start transaction for updating storage state.")
-			}
-			defer database.TxnRollbackIgnoreErr(ctx, txn)
-
-			db = txn
 			_, err = storageMigrationRepo.Update(
 				ctx,
 				oldStorageMigrationObj.ID,
 				map[string]interface{}{
 					models.StorageMigrationCurrent: false,
 				},
-				db,
+				txn,
 			)
 			if err != nil {
 				return errors.Wrap(err, "Unexpected error when updating old storage migration entry to be non-current")
 			}
-		} else if !aq_errors.Is(err, database.ErrNoRows()) {
-			return errors.Wrap(err, "Unexpected error when fetching current storage state.")
 		}
 		// Continue without doing anything if there was no previous storage migration.
 	}
 
 	// Perform the actual intended execution state update.
-	_, err := storageMigrationRepo.Update(
+	_, err = storageMigrationRepo.Update(
 		ctx,
 		storageMigrationID,
 		updates,
-		db,
+		txn,
 	)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error when updating storage migration execution state.")
 	}
 
-	// Only need to do this if we're committing a transaction.
-	if txn, ok := db.(database.Transaction); ok {
-		err = txn.Commit(ctx)
-		if err != nil {
-			return errors.Wrap(err, "Unexpected error when committing storage migration execution state update.")
-		}
-	}
-	return nil
+	return txn.Commit(ctx)
 }
 
 // StorageCleanupConfig contains the fields necessary to cleanup the old storage layer.

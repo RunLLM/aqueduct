@@ -46,6 +46,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			ExecutionEnvironmentRepo: s.ExecutionEnvironmentRepo,
 			IntegrationRepo:          s.IntegrationRepo,
 			OperatorRepo:             s.OperatorRepo,
+			StorageMigrationRepo:     s.StorageMigrationRepo,
 			WorkflowRepo:             s.WorkflowRepo,
 		},
 		routes.DeleteWorkflowRoute: &handler.DeleteWorkflowHandler{

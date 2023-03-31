@@ -16,7 +16,7 @@ import (
 )
 
 /*
-This file should map directory to src/ui/common/src/handlers/ListStorageMigrations.tsx
+This file should map directly to src/ui/common/src/handlers/ListStorageMigrations.tsx
 
 Route: /v2/storage-migrations
 Method: GET

@@ -2,6 +2,7 @@ package shared
 
 import (
 	"database/sql/driver"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
 )
@@ -33,10 +34,14 @@ func (e *ExecutionState) HasSystemError() bool {
 	return e.Status == FailedExecutionStatus && *e.FailureType == SystemFailure
 }
 
+// UpdateWithFailure also updates the `FinishedAt` timestamp.
 func (e *ExecutionState) UpdateWithFailure(failureType FailureType, execErr *Error) {
 	e.Status = FailedExecutionStatus
 	e.FailureType = &failureType
 	e.Error = execErr
+
+	finishedAt := time.Now()
+	e.Timestamps.FinishedAt = &finishedAt
 }
 
 func (e *ExecutionState) Value() (driver.Value, error) {
