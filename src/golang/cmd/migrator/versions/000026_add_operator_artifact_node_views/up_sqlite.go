@@ -14,12 +14,12 @@ AS
 			operator.description AS description,
 			operator.spec AS spec,
 			operator.execution_environment_id AS execution_environment_id,
-			json_group_array(
+			CAST( json_group_array(
 				json_object(
 					'value', workflow_dag_edge.to_id,
 					'idx', workflow_dag_edge.idx
 				)
-			) AS outputs
+			) AS BLOB) AS outputs
 		FROM
 			operator, workflow_dag, workflow_dag_edge
 		WHERE
@@ -36,12 +36,12 @@ AS
 			operator.description AS description,
 			operator.spec AS spec,
 			operator.execution_environment_id AS execution_environment_id,
-			json_group_array(
+			CAST( json_group_array(
 				json_object(
 					'value', workflow_dag_edge.from_id,
 					'idx', workflow_dag_edge.idx
 				)
-			) AS inputs
+			) AS BLOB) AS inputs
 		FROM
 			operator, workflow_dag, workflow_dag_edge
 		WHERE
@@ -90,12 +90,12 @@ AS
 			artifact.name AS name,
 			artifact.description AS description,
 			artifact.type as type,
-			json_group_array(
+			CAST( json_group_array(
 				json_object(
 					'value', workflow_dag_edge.to_id,
 					'idx', workflow_dag_edge.idx
 				)
-			) AS outputs
+			) AS BLOB) AS outputs
 		FROM
 			artifact, workflow_dag, workflow_dag_edge
 		WHERE
@@ -111,12 +111,12 @@ AS
 			artifact.name AS name,
 			artifact.description AS description,
 			artifact.type as type,
-			json_group_array(
+			CAST( json_group_array(
 				json_object(
 					'value', workflow_dag_edge.from_id,
 					'idx', workflow_dag_edge.idx
 				)
-			) AS inputs
+			) AS BLOB) AS inputs
 		FROM
 			artifact, workflow_dag, workflow_dag_edge
 		WHERE
