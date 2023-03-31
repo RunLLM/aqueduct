@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { StatusIndicator } from '../../../../components/workflows/workflowStatus';
 import { theme } from '../../../../styles/theme/theme';
 import { ExecutionStatus, showMorePadding } from '../../../../utils/shared';
-import { parseMetricResult } from '../../../workflows/nodes/MetricOperatorNode';
+import { parseMetricResult } from '../../../workflows/nodes/Node';
 
 interface ShowMoreProps {
   totalItems: number;

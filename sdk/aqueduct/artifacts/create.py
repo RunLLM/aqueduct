@@ -3,7 +3,6 @@ from __future__ import annotations
 import uuid
 from typing import Any, Optional
 
-from aqueduct.artifacts import bool_artifact, generic_artifact, numeric_artifact, table_artifact
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import ArtifactType
 from aqueduct.error import InvalidUserArgumentException
@@ -22,6 +21,13 @@ def to_artifact_class(
     artifact_type: ArtifactType = ArtifactType.UNTYPED,
     content: Optional[Any] = None,
 ) -> BaseArtifact:
+    """
+    This function uses the `ArtifactType` parameter to determine the appropriate `BaseArtifact` class to instantiate.
+    This function imports `TableArtifact`, `NumericArtifact`, `BoolArtifact`, and `GenericArtifact` from the `aqueduct.artifacts`
+    module, so ensure that module is importable before calling this function.
+    """
+    from aqueduct.artifacts import bool_artifact, generic_artifact, numeric_artifact, table_artifact
+
     if artifact_type == ArtifactType.TABLE:
         return table_artifact.TableArtifact(
             dag,

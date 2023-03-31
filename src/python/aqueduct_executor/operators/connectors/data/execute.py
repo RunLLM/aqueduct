@@ -128,12 +128,11 @@ def run_extract(
 ) -> None:
     extract_params = spec.parameters
 
-    # Search for user-defined placeholder if this is a relational query, and replace them with
+    # Search for user-defined placeholders if this is a relational query, and replace them with
     # the appropriate values.
     if isinstance(extract_params, extract.RelationalParams) or isinstance(
         extract_params, extract.MongoDBParams
     ):
-        assert len(spec.input_param_names) == len(spec.input_content_paths)
         input_vals, _, _ = utils.read_artifacts(
             storage,
             spec.input_content_paths,
@@ -142,9 +141,7 @@ def run_extract(
         assert all(
             isinstance(param_val, str) for param_val in input_vals
         ), "Parameter value must be a string."
-
-        parameters = dict(zip(spec.input_param_names, input_vals))
-        extract_params.compile(parameters)
+        extract_params.compile(input_vals)
 
     @exec_state.user_fn_redirected(failure_tip=TIP_EXTRACT)
     def _extract() -> Any:

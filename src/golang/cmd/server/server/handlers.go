@@ -2,11 +2,20 @@ package server
 
 import (
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
+	v2 "github.com/aqueducthq/aqueduct/cmd/server/handler/v2"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 )
 
 func (s *AqServer) Handlers() map[string]handler.Handler {
 	return map[string]handler.Handler{
+		// V2 Handlers
+		routes.WorkflowRoute: &v2.WorkflowGetHandler{
+			Database:     s.Database,
+			WorkflowRepo: s.WorkflowRepo,
+		},
+
+		// V1 Handlers
+		// (ENG-2715) Remove deprecated ones
 		routes.ArchiveNotificationRoute: &handler.ArchiveNotificationHandler{
 			Database: s.Database,
 
@@ -112,7 +121,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			OperatorRepo: s.OperatorRepo,
 			WorkflowRepo: s.WorkflowRepo,
 		},
-		routes.GetWorkflowRoute: &handler.GetWorkflowHandler{
+		routes.GetWorkflowRouteV1: &handler.GetWorkflowHandler{
 			Database: s.Database,
 
 			ArtifactRepo:       s.ArtifactRepo,

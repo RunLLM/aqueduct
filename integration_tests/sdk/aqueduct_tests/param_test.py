@@ -113,6 +113,25 @@ def test_implicitly_created_parameter(client, flow_name, engine):
     assert flow_run.artifact("output1").get() == 101
     assert flow_run.artifact("output2").get() == 200
 
+    @op
+    def func(a, b="world"):
+        return a + " " + b
+
+    with pytest.raises(
+        InvalidUserArgumentException,
+        match="No input was provided for argument `a` of function `func`, and no default value was specified.",
+    ):
+        result = func()
+
+    result = func("hello")
+    assert result.get() == "hello world"
+
+    flow = publish_flow_test(client, artifacts=[result], name=flow_name(), engine=engine)
+    flow_run = flow.latest()
+    assert flow_run.artifact("func:a").get() == "hello"
+    # Test that we implicitly created a parameter called "func:b" with the default value "world".
+    assert flow_run.artifact("func:b").get() == "world"
+
 
 @op
 def append_row_to_df(df, row):
@@ -224,8 +243,8 @@ def test_trigger_flow_with_different_param(client, flow_name, data_integration, 
 
 @pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
 def test_trigger_flow_with_different_sql_param(client, flow_name, data_integration, engine):
-    _ = client.create_param("table_name", default="hotel_reviews")
-    table_artifact = data_integration.sql(query="select * from {{ table_name}}")
+    table_name_param = client.create_param("table_name", default="hotel_reviews")
+    table_artifact = data_integration.sql(query="select * from $1", parameters=[table_name_param])
 
     flow = publish_flow_test(
         client,
