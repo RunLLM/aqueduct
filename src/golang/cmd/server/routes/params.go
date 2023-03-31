@@ -8,4 +8,7 @@ const (
 	ArtifactIdUrlParam          = "artifactId"
 	NotificationIdUrlParam      = "notificationId"
 	IntegrationIdUrlParam       = "integrationId"
+
+	// v2 params
+	WorkflowIDParam = "workflowID"
 )

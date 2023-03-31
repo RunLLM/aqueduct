@@ -68,7 +68,7 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
         Date.parse(y['timestamp'] as string)
     );
 
-  const timestamps = dataToPlot.map((x) => x['timestamp']);
+  const timestamps = dataToPlot.map((x) => new Date(x['timestamp'] as string));
   const values = dataToPlot.map((x) => x['value']);
 
   return (
@@ -100,7 +100,7 @@ const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
               height: '100%',
               plot_bgcolor: theme.palette.gray[100],
               margin: { b: 0, t: 0, l: 0, r: 0, pad: 8 },
-              xaxis: { automargin: true },
+              xaxis: { automargin: true, type: 'date' },
               yaxis: { automargin: true, ticksuffix: ' ' },
             }}
           />

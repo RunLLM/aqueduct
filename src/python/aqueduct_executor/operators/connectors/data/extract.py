@@ -1,41 +1,35 @@
 import json
 import re
 import uuid
-from datetime import date
 from typing import Any, Dict, List, Optional, Union
 
-from aqueduct.integrations.sql_integration import BUILT_IN_EXPANSIONS, PREV_TABLE_TAG, TAG_PATTERN
+from aqueduct.integrations.parameters import BUILT_IN_EXPANSIONS, TAG_PATTERN
 from aqueduct_executor.operators.connectors.data import common, models
 from aqueduct_executor.operators.utils.enums import ArtifactType
 from pydantic import parse_obj_as
 
+# The TAG for 'previous table' when the user specifies a chained query.
+PREV_TABLE_TAG = "$"
 
-def replace_today() -> str:
-    return "'" + date.today().strftime("%Y-%m-%d") + "'"
 
-
-def _expand_placeholders(query: str, parameters: Dict[str, str]) -> str:
-    """Expands any tags found in the raw query, eg. {{ today }}.
-
-    Relational queries can be arbitrarily parameterized the same way operators are. The only
-    requirement is that these parameters must be defined as strings.
-
-    User-defined parameters are prioritized over built-in ones. Eg. if the user defines a parameter
-    named "today" that they set with value "1234", the "{{today}}" will be expanded as "1234", even
-    though there already is a built-in expansion.
-    """
+def _replace_builtin_tags(query: str) -> str:
+    """Expands any builtin tags found in the raw query, eg. {{ today }}."""
     matches = re.findall(TAG_PATTERN, query)
     for match in matches:
         tag_name = match.strip(" {}")
-
-        if tag_name in parameters:
-            query = query.replace(match, parameters[tag_name])
-        elif tag_name in BUILT_IN_EXPANSIONS:
+        if tag_name in BUILT_IN_EXPANSIONS:
             expansion_func = BUILT_IN_EXPANSIONS[tag_name]
             query = query.replace(match, expansion_func())
-        else:
-            # If there's a tag in the query for which no expansion value is available, we error here.
-            raise Exception("Unable to expand tag `%s` for query `%s`." % (tag_name, query))
+    return query
+
+
+def _replace_param_placeholders(query: str, parameter_vals: List[str]) -> str:
+    """Replaces any user-defined placeholders in the query with the corresponding parameter value.
+
+    Assumes that we've already validated that every parameter value has a corresponding placeholder in the query.
+    """
+    for i in range(len(parameter_vals)):
+        query = query.replace("$" + str(i + 1), parameter_vals[i])
     return query
 
 
@@ -108,7 +102,7 @@ class RelationalParams(models.BaseParams):
         # Returns `WITH` clause with the normalized final query.
         return f"{with_clause}\n{normalized_query}"
 
-    def compile(self, parameters: Dict[str, str]) -> None:
+    def compile(self, parameter_vals: List[str]) -> None:
         """
         `compile` compiles this object to a single query that can be
         executed.
@@ -121,12 +115,16 @@ class RelationalParams(models.BaseParams):
         if self.query:
             queries = [self.query]
 
+        # Expand the placeholders first, before collapsing the query chain, since $ is broader than $1, $2, etc.
+        for i, q in enumerate(queries):
+            q = _replace_param_placeholders(q, parameter_vals)
+            queries[i] = _replace_builtin_tags(q)
+        print(f"Expanded queries are `{queries}`.")
+
         print(f"Compiling queries {queries} .")
         query = self._compile_chain(queries)
         print(f"Compiled query is {query} .")
 
-        query = _expand_placeholders(query, parameters)
-        print(f"Expanded query is `{query}`.")
         self.query = query
         self.query_is_usable = True
 
@@ -157,8 +155,8 @@ class MongoDBParams(models.BaseParams):
     query_serialized: str
     query: Optional[MongoDBFindParams] = None
 
-    def compile(self, parameters: Dict[str, str]) -> None:
-        expanded = _expand_placeholders(self.query_serialized, parameters)
+    def compile(self, parameters: List[str]) -> None:
+        expanded = _replace_param_placeholders(self.query_serialized, parameters)
         self.query = parse_obj_as(MongoDBFindParams, json.loads(expanded))
 
     def usable(self) -> bool:

@@ -21,7 +21,7 @@ import {
   WorkflowDag,
   WorkflowUpdateTrigger,
 } from '../../utils/workflows';
-import EngineItem from '../pages/workflows/components/EngineItem';
+import ResourceItem from '../pages/workflows/components/ResourceItem';
 import VersionSelector from './version_selector';
 import { StatusIndicator } from './workflowStatus';
 
@@ -175,7 +175,7 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
               <Box display="flex" flexDirection="row">
                 {engines.map((engine) => (
                   <Box ml={1} key={engine}>
-                    <EngineItem engine={engine} />
+                    <ResourceItem resource={engine} />
                   </Box>
                 ))}
               </Box>

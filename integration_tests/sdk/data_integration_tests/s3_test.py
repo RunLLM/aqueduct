@@ -5,6 +5,7 @@ import pytest
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import ArtifactType
 from aqueduct.error import AqueductError, InvalidUserArgumentException
+from aqueduct.flow import Flow
 from aqueduct.integrations.s3_integration import S3Integration
 from PIL import Image
 
@@ -33,7 +34,7 @@ def _save_artifact_and_check(
     format: Optional[str],
     object_identifier: Optional[str] = None,
     skip_data_check: bool = False,
-):
+) -> Flow:
     """Saves the artifact by publishing a flow, and then checks that the data now exists in S3."""
     assert isinstance(artifact, BaseArtifact)
 
@@ -51,6 +52,8 @@ def _save_artifact_and_check(
         expected_data=artifact.get(),
         skip_data_check=skip_data_check,
     )
+
+    return flow
 
 
 def test_s3_table_fetch_and_save(flow_manager, data_integration):
@@ -292,6 +295,53 @@ def test_s3_fetch_directory_with_merge(flow_manager, data_integration):
     assert expected_merged_data.equals(dir_contents_merged.get())
 
 
+def test_s3_fetch_directory_with_delete(flow_manager, data_integration):
+    """Create a random directory name and save a table artifact into it. Delete the workflow,
+    and include that object in the deletion. After that check if the directory is empty."""
+    dir_name = generate_object_name()
+
+    # Order hotel_reviews to be listed before customers by ordering the paths alphabetically.
+    hotel_reviews_table_name = generate_table_name()
+
+    # Write a tabular artifact into the directory.
+    hotel_reviews = data_integration.file(
+        "hotel_reviews", artifact_type=ArtifactType.TABLE, format="parquet"
+    )
+    flow = _save_artifact_and_check(
+        flow_manager,
+        data_integration,
+        artifact=hotel_reviews,
+        format="parquet",
+        object_identifier="%s/%s" % (dir_name, hotel_reviews_table_name),
+    )
+
+    # Check that the artifact can be fetched by directory search.
+    dir_contents = data_integration.file(
+        dir_name + "/",
+        artifact_type=ArtifactType.TABLE,
+        format="parquet",
+    )
+    assert dir_contents.type() == ArtifactType.TUPLE
+    assert dir_contents.get()[0].equals(hotel_reviews.get())
+
+    # Delete the workflow and include artifact into deletion.
+    tables = flow.list_saved_objects()
+    flow_manager._client.delete_flow(
+        flow_id=str(flow.id()),
+        saved_objects_to_delete=tables,
+        force=True,
+    )
+    # Check if the directory is an empty directory.
+    with pytest.raises(
+        AqueductError, match="Given path to S3 directory '%s/' does not exist." % dir_name
+    ):
+        dir_contents = data_integration.file(
+            dir_name + "/",
+            artifact_type=ArtifactType.TABLE,
+            format="parquet",
+        )
+
+
 def test_s3_non_tabular_fetch(client, flow_manager, data_integration):
     string_data = "This is a string."
     non_tabular_artifact = client.create_param("Non-Tabular Data", default=string_data)
@@ -421,6 +471,10 @@ def test_s3_basic_fetch_failure(client, data_integration):
     # Fetch a path that does not exist will fail.
     with pytest.raises(AqueductError, match="The specified key does not exist."):
         data_integration.file("asdlkf", artifact_type=ArtifactType.TABLE, format="parquet")
+
+    # Fetch a path to directory that does not exist will fail.
+    with pytest.raises(AqueductError, match="Given path to S3 directory 'asdlkf/' does not exist."):
+        data_integration.file("asdlkf/", artifact_type="bytes")
 
     # Fetch an artifact with the wrong artifact type.
     with pytest.raises(

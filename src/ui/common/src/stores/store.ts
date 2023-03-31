@@ -1,5 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
+import { setupListeners } from '@reduxjs/toolkit/dist/query';
 
+import { aqueductApi } from '../handlers/AqueductApi';
 import artifactResultContentsReducer from '../reducers/artifactResultContents';
 import artifactResultsReducer from '../reducers/artifactResults';
 import dataPreviewReducer from '../reducers/dataPreview';
@@ -16,6 +18,7 @@ import workflowHistoryReducer from '../reducers/workflowHistory';
 
 export const store = configureStore({
   reducer: {
+    [aqueductApi.reducerPath]: aqueductApi.reducer,
     artifactResultContentsReducer,
     nodeSelectionReducer,
     notificationsReducer,
@@ -30,7 +33,12 @@ export const store = configureStore({
     artifactResultsReducer,
     workflowHistoryReducer,
   },
+
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(aqueductApi.middleware),
 });
+
+setupListeners(store.dispatch);
 
 // Infer the `RootState` and `AppDispatch` types from the store itself
 export type RootState = ReturnType<typeof store.getState>;
