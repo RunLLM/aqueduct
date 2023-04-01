@@ -27,6 +27,9 @@ type StorageConfigPublic struct {
 	S3ConfigPublic  *S3ConfigPublic  `json:"s3Config,omitempty"`
 	FileConfig      *FileConfig      `json:"fileConfig,omitempty"`
 	GCSConfigPublic *GCSConfigPublic `json:"gcsConfig,omitempty"`
+
+	// Empty means that the local filesystem is being used as storage.
+	IntegrationName string `json:"integration_name,omitempty"`
 }
 
 type S3Config struct {

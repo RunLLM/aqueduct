@@ -14,7 +14,7 @@ const (
 	secretConfigTypeKey = "config-type"
 )
 
-// WriteConfigToSecret takes a Config and stores it in a k8s secret.
+// WriteConfigToSecret takes a Config and stores it.
 // The name of the secret is integrationId.
 func WriteConfigToSecret(
 	ctx context.Context,
@@ -48,7 +48,7 @@ func WriteConfigToSecret(
 }
 
 // ReadConfigFromSecret reads a Config from the vault keyed by integrationId.
-// It also refreshes the Config if necessary, and writes the updated Config to the k8s secret.
+// It also refreshes the Config if necessary, and writes the updated Config back.
 func ReadConfigFromSecret(
 	ctx context.Context,
 	integrationId uuid.UUID,

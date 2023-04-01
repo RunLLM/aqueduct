@@ -6,6 +6,11 @@ import {
 
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import {
+  storageMigrationListQuery,
+  storageMigrationListRequest,
+  storageMigrationListResponse,
+} from './ListStorageMigrations';
+import {
   workflowGetQuery,
   WorkflowGetRequest,
   WorkflowGetResponse,
@@ -23,7 +28,15 @@ export const aqueductApi = createApi({
       query: (req) => workflowGetQuery(req),
       transformErrorResponse: transformErrorResponse,
     }),
+    storageMigrationList: builder.query<
+      storageMigrationListResponse,
+      storageMigrationListRequest
+    >({
+      query: (req) => storageMigrationListQuery(req),
+      transformErrorResponse: transformErrorResponse,
+    }),
   }),
 });
 
-export const { useWorkflowGetQuery } = aqueductApi;
+export const { useWorkflowGetQuery, useStorageMigrationListQuery } =
+  aqueductApi;

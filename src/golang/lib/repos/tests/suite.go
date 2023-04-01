@@ -31,6 +31,7 @@ type TestSuite struct {
 	operator             repos.Operator
 	operatorResult       repos.OperatorResult
 	schemaVersion        repos.SchemaVersion
+	storageMigration     repos.StorageMigration
 	user                 repos.User
 	watcher              repos.Watcher
 	workflow             repos.Workflow
@@ -62,6 +63,7 @@ func (ts *TestSuite) SetupSuite() {
 	ts.operator = sqlite.NewOperatorRepo()
 	ts.operatorResult = sqlite.NewOperatorResultRepo()
 	ts.schemaVersion = sqlite.NewSchemaVersionRepo()
+	ts.storageMigration = sqlite.NewStorageMigrationRepo()
 	ts.user = sqlite.NewUserRepo()
 	ts.watcher = sqlite.NewWatcherRepo()
 	ts.workflow = sqlite.NewWorklowRepo()
@@ -111,6 +113,7 @@ func (ts *TestSuite) TearDownTest() {
 	DELETE FROM operator;
 	DELETE FROM operator_result;
 	DELETE FROM schema_version;
+	DELETE FROM storage_migration;
 	DELETE FROM workflow;
 	DELETE FROM workflow_dag;
 	DELETE FROM workflow_dag_edge;
