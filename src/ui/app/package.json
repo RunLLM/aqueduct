@@ -1,7 +1,7 @@
 {
   "name": "@aqueducthq/ui",
   "author": "Aqueduct, Inc. <hello@aqueducthq.com>",
-  "version": "0.2.8",
+  "version": "0.2.8.alpha",
   "scripts": {
     "start": "parcel --no-cache index.html",
     "build": "parcel build --public-url /dist --dist-dir dist/default index.html",
@@ -15,7 +15,7 @@
     "@fortawesome/fontawesome-svg-core": "^6.2.1",
     "@mui/base": "^5.0.0-alpha.115",
     "@mui/material": "^5.11.6",
-    "@reduxjs/toolkit": "^1.9.1",
+    "@reduxjs/toolkit": "^1.9.3",
     "dotenv": "^16.0.3",
     "react": "^18.2.0",
     "react-app-polyfill": "^3.0.0",
