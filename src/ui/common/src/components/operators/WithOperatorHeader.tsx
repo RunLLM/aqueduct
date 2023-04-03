@@ -5,6 +5,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Box, Divider, Typography } from '@mui/material';
 import React from 'react';
+import { useSelector } from 'react-redux';
 
 import { DagResultResponse } from '../../handlers/responses/dag';
 import { OperatorResultResponse } from '../../handlers/responses/operator';
@@ -13,6 +14,7 @@ import { WorkflowDagWithLoadingStatus } from '../../reducers/workflowDags';
 import { theme } from '../../styles/theme/theme';
 import { OperatorType } from '../../utils/operators';
 import { CheckLevel } from '../../utils/operators';
+import { RootState } from '../../stores/store';
 import DetailsPageHeader from '../pages/components/DetailsPageHeader';
 import SaveDetails from '../pages/components/SaveDetails';
 import ResourceItem from '../pages/workflows/components/ResourceItem';
@@ -59,6 +61,13 @@ const WithOperatorHeader: React.FC<Props> = ({
   const inputs = mapArtifacts(operator.inputs);
   const outputs = mapArtifacts(operator.outputs);
 
+  const integrationsState = useSelector(
+    (state: RootState) => state.integrationsReducer
+  );
+
+  console.log("integrationsState", integrationsState)
+    
+
   let checkLevelDisplay = null;
   if (operator?.spec?.check?.level) {
     const checkLevel = operator.spec.check.level;
@@ -86,6 +95,9 @@ const WithOperatorHeader: React.FC<Props> = ({
     );
   }
 
+  const service = operator?.spec?.load?.service || operator?.spec?.extract?.service;
+  const integrationId = operator?.spec?.load?.integration_id || operator?.spec?.extract?.integration_id;
+
   return (
     <Box width="100%">
       {!sideSheetMode && (
@@ -104,7 +116,12 @@ const WithOperatorHeader: React.FC<Props> = ({
         {checkLevelDisplay}
       </Box>
 
-      <ResourceItem resource={operator?.spec?.load?.service || operator?.spec?.extract?.service} />
+      <ResourceItem 
+        resource={service} 
+        resourceCustomName={
+          integrationsState?.integrations[integrationId]?.name
+        }
+      />
       
       <Box display="flex" width="100%">
         <Box width="100%" paddingTop={sideSheetMode ? '16px' : '24px'}>
