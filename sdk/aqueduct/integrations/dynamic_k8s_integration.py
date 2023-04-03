@@ -1,6 +1,6 @@
 from typing import Dict, Union
 
-from aqueduct.backend.response_models import DynamicEngineStatusResponse
+from aqueduct.models.response_models import DynamicEngineStatusResponse
 from aqueduct.constants.enums import K8sClusterActionType, K8sClusterStatusType
 from aqueduct.error import InvalidIntegrationException, InvalidUserArgumentException
 from aqueduct.integrations.connect_config import DynamicK8sConfig

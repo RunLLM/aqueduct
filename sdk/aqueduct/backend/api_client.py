@@ -28,7 +28,7 @@ from .response_helpers import (
     _handle_preview_resp,
     _parse_artifact_result_response,
 )
-from .response_models import (
+from aqueduct.models.response_models import (
     DeleteWorkflowResponse,
     DynamicEngineStatusResponse,
     GetVersionResponse,

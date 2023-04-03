@@ -12,7 +12,13 @@ from aqueduct.artifacts import (
 from aqueduct.constants.enums import ArtifactType, ExecutionStatus, OperatorType
 from aqueduct.error import InternalAqueductError
 from aqueduct.models.dag import DAG
-from aqueduct.utils.utils import format_header_for_print, generate_ui_url, human_readable_timestamp, TIME_FORMAT
+from aqueduct.models.utils import TIME_FORMAT, human_readable_timestamp
+from aqueduct.utils.utils import (
+    format_header_for_print,
+    generate_ui_url,
+    indent_multiline_string,
+    print_logs,
+)
 
 from aqueduct import globals
 
@@ -46,8 +52,8 @@ class FlowRun:
             },
             metadata=dag_result_resp.metadata(),
         )
-        self._created_at = dag_result_resp.dag_created_at
-        self._dag_exec_state = dag_result_resp.result.exec_state
+
+        self._dag_result_resp = dag_result_resp
 
     def id(self) -> uuid.UUID:
         """Returns the id for this flow run."""
@@ -55,7 +61,7 @@ class FlowRun:
 
     def status(self) -> ExecutionStatus:
         """Returns the status of the flow run."""
-        return self._dag_exec_state.status
+        return self._dag_result_resp.result.exec_state.status
 
     def describe(self) -> None:
         """Prints out a human-readable description of the flow run."""
@@ -70,27 +76,50 @@ class FlowRun:
                 f"""
             {format_header_for_print(f"'{self._dag.metadata.name}' Run")}
             ID: {self._id}
-            Created At (UTC): {self._created_at.strftime(TIME_FORMAT)}
-            Status: {str(self._dag_exec_state.status)}
+            Created At (UTC): {self._dag_result_resp.dag_created_at.strftime(TIME_FORMAT)}
+            Status: {str(self.status())}
             UI: {url}
             """
             )
         )
 
         param_operators = self._dag.list_operators(filter_to=[OperatorType.PARAM])
-        print(format_header_for_print("Parameters "))
-        for param_op in param_operators:
-            (
-                param_content,
-                execution_status,
-            ) = globals.__GLOBAL_API_CLIENT__.get_artifact_result_data(
-                self._id, str(param_op.outputs[0])
-            )
+        if len(param_operators) > 0:
+            print(format_header_for_print("Parameters"))
+            for param_op in param_operators:
+                (
+                    param_content,
+                    execution_status,
+                ) = globals.__GLOBAL_API_CLIENT__.get_artifact_result_data(
+                    self._id, str(param_op.outputs[0])
+                )
 
-            if execution_status != ExecutionStatus.SUCCEEDED:
-                param_content = "Parameter not successfully initialized."
+                if execution_status != ExecutionStatus.SUCCEEDED:
+                    param_content = "Parameter not successfully initialized."
 
-            print("* " + param_op.name + ": " + str(param_content))
+                print("* " + param_op.name + ": " + str(param_content))
+
+        if self.status() == ExecutionStatus.FAILED:
+            print(format_header_for_print("Failures"))
+
+            # Print out any workflow-level errors.
+            dag_exec_state = self._dag_result_resp.result.exec_state
+            if dag_exec_state.error is not None:
+                print("Workflow-level error: ")
+                print(
+                    indent_multiline_string(
+                        "%s\n%s" % (dag_exec_state.error.tip, dag_exec_state.error.context)
+                    )
+                )
+
+            workflow_logs = dag_exec_state.user_logs
+            if workflow_logs is not None and not workflow_logs.is_empty():
+                print("Workflow logs: ")
+                print_logs(workflow_logs)
+
+            # Lastly, print out any operator-level errors.
+            for op in self._dag.list_operators():
+                pass
 
     def artifact(self, name: str) -> Optional[base_artifact.BaseArtifact]:
         """Gets the Artifact from the flow run based on the name of the artifact.

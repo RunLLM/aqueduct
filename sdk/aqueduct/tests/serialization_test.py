@@ -2,7 +2,7 @@ import json
 import uuid
 
 import cloudpickle as pickle
-from aqueduct.backend.response_models import ArtifactResult, ExecutionState, Logs, PreviewResponse
+from aqueduct.models.response_models import ArtifactResult, ExecutionState, Logs, PreviewResponse
 from aqueduct.constants.enums import (
     ArtifactType,
     ExecutionStatus,

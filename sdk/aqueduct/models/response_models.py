@@ -12,7 +12,7 @@ from aqueduct.constants.enums import (
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import Metadata, RetentionPolicy, Schedule
 from aqueduct.models.operators import LoadSpec, Operator, OperatorSpec
-from aqueduct.utils.utils import human_readable_timestamp
+from aqueduct.models.utils import human_readable_timestamp
 from pydantic import BaseModel
 
 

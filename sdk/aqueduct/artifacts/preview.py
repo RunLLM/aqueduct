@@ -5,9 +5,9 @@ from typing import Any, Dict, List, Optional
 
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.create import to_artifact_class
-from aqueduct.backend.response_models import ArtifactResult
+from aqueduct.models.response_models import ArtifactResult
 from aqueduct.constants.enums import ArtifactType, K8sClusterStatusType
-from aqueduct.error import InvalidArtifactTypeException, InvalidIntegrationException
+from aqueduct.error import InvalidArtifactTypeException
 from aqueduct.models.config import EngineConfig
 from aqueduct.models.dag import DAG
 from aqueduct.utils.dag_deltas import SubgraphDAGDelta, UpdateParametersDelta, apply_deltas_to_dag
