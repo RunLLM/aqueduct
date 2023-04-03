@@ -141,6 +141,10 @@ export type RelationalDBLoadParams = {
   table: string;
   update_mode: UpdateMode;
 };
+export const isRelationalDBLoadParams = (
+  input: LoadParameters
+): input is RelationalDBLoadParams =>
+  input.table !== undefined && input.update_mode !== undefined;
 
 export type GoogleSheetsLoadParams = {
   filepath: string;
@@ -156,6 +160,23 @@ export enum S3TableFormat {
 export type S3LoadParams = {
   filepath: string;
   format: S3TableFormat;
+};
+export const isS3LoadParams = (input: LoadParameters): input is S3LoadParams =>
+  input.filepath !== undefined && input.format !== undefined;
+
+export enum LoadParametersType {
+  RelationalDBLoadParamsType = 'RelationalDBLoadParamsType',
+  S3LoadParamsType = 'S3LoadParamsType',
+}
+
+export const getLoadParametersType = (
+  input: LoadParameters
+): LoadParametersType => {
+  if (isRelationalDBLoadParams(input)) {
+    return LoadParametersType.RelationalDBLoadParamsType;
+  } else if (isS3LoadParams(input)) {
+    return LoadParametersType.S3LoadParamsType;
+  }
 };
 
 export type Load = {
