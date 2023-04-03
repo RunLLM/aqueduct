@@ -78,4 +78,12 @@ type operatorResultWriter interface {
 
 	// Update applies changes to the OperatorResult with ID. It returns the updated OperatorResult.
 	Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.OperatorResult, error)
+
+	// UpdateBatchStatusByStatus updates operator result's status based on the current status.
+	UpdateBatchStatusByStatus(
+		ctx context.Context,
+		from shared.ExecutionStatus,
+		to shared.ExecutionStatus,
+		DB database.Database,
+	) ([]models.OperatorResult, error)
 }

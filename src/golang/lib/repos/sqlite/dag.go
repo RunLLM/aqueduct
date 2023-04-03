@@ -241,21 +241,32 @@ func (*dagReader) GetLatestIDsByOrgAndEngine(
 	engine shared.EngineType,
 	DB database.Database,
 ) ([]uuid.UUID, error) {
-	query := `
+	orgIDQuerySnippet := ""
+	if orgID != "" {
+		orgIDQuerySnippet = `
+			AND app_user.organization_id = $2
+			AND app_user.id = workflow.user_id
+		`
+	}
+	query := fmt.Sprintf(`
 		SELECT workflow_dag.id 
 		FROM workflow_dag 
 		WHERE created_at IN 
 		(
 			SELECT MAX(workflow_dag.created_at) 
 			FROM app_user, workflow, workflow_dag 
-			WHERE 
-				app_user.id = workflow.user_id 
-				AND workflow.id = workflow_dag.workflow_id 
-				AND app_user.organization_id = $1 
-				AND json_extract(workflow_dag.engine_config, '$.type') = $2
+			WHERE
+				workflow.id = workflow_dag.workflow_id
+				AND json_extract(workflow_dag.engine_config, '$.type') = $1
+				%s
 		 	GROUP BY workflow.id
-		);`
-	args := []interface{}{orgID, engine}
+		);`,
+		orgIDQuerySnippet,
+	)
+	args := []interface{}{engine}
+	if orgID != "" {
+		args = append(args, orgID)
+	}
 
 	var objectIDs []views.ObjectID
 	err := DB.Query(ctx, &objectIDs, query, args...)

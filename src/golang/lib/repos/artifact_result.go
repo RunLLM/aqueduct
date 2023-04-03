@@ -81,5 +81,18 @@ type artifactResultWriter interface {
 	DeleteBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) error
 
 	// Update applies changes to the ArtifactResult with ID. It returns the updated ArtifactResult.
-	Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.ArtifactResult, error)
+	Update(
+		ctx context.Context,
+		ID uuid.UUID,
+		changes map[string]interface{},
+		DB database.Database,
+	) (*models.ArtifactResult, error)
+
+	// UpdateBatchStatusByStatus updates artifact result's status based on the current status.
+	UpdateBatchStatusByStatus(
+		ctx context.Context,
+		from shared.ExecutionStatus,
+		to shared.ExecutionStatus,
+		DB database.Database,
+	) ([]models.ArtifactResult, error)
 }
