@@ -11,12 +11,14 @@ import (
 
 const (
 	ArtifactNodeView    = "artifact_node"
+	ArtifactNodeDagID   = "dag_id"
 	ArtifactNodeInputs  = "inputs"
 	ArtifactNodeOutputs = "outputs"
 )
 
 type ArtifactNode struct {
 	ID          uuid.UUID           `db:"id" json:"id"`
+	DagID       uuid.UUID           `db:"dag_id" json:"dag_id"`
 	Name        string              `db:"name" json:"name"`
 	Description string              `db:"description" json:"description"`
 	Type        shared.ArtifactType `db:"type" json:"type"`
@@ -45,6 +47,7 @@ func allArtifactNodeCols() []string {
 	artfNodeCols := models.AllArtifactCols()
 	artfNodeCols = append(
 		artfNodeCols,
+		ArtifactNodeDagID,
 		ArtifactNodeInputs,
 		ArtifactNodeOutputs,
 	)

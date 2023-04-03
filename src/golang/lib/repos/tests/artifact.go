@@ -50,7 +50,7 @@ func (ts *TestSuite) TestArtifact_GetByDAG() {
 }
 
 func (ts *TestSuite) TestArtifact_GetMetricsByUpstreamArtifactBatch() {
-	_, _, artifacts := ts.seedComplexWorkflow()
+	_, _, artifacts, _, _ := ts.seedComplexWorkflow()
 
 	expectedResults := map[uuid.UUID][]models.Artifact{
 		artifacts["function_1_artf"].ID: {artifacts["metric_1_artf"]},

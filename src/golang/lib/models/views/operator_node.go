@@ -13,6 +13,7 @@ import (
 
 const (
 	OperatorNodeView    = "operator_node"
+	OperatorNodeDagID   = "dag_id"
 	OperatorNodeInputs  = "inputs"
 	OperatorNodeOutputs = "outputs"
 )
@@ -49,6 +50,7 @@ func allOperatorNodeCols() []string {
 	opNodeCols := models.AllOperatorCols()
 	opNodeCols = append(
 		opNodeCols,
+		OperatorNodeDagID,
 		OperatorNodeInputs,
 		OperatorNodeOutputs,
 	)
