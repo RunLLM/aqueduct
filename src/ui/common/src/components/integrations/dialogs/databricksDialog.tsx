@@ -27,9 +27,9 @@ export const DatabricksDialog: React.FC<Props> = ({
   return (
     <Box sx={{ mt: 2 }}>
       <Typography variant="body2">
-        For more details on connecting to Databricks, please see{' '}
+        For more details on connecting to Databricks, please refer{' '}
         <Link href="https://docs.aqueducthq.com/integrations/compute-systems/databricks">
-          our documentation
+          the Aqueduct documentation
         </Link>
         .
       </Typography>
@@ -63,7 +63,9 @@ export const DatabricksDialog: React.FC<Props> = ({
 
       <Typography variant="body2">
         For more details on creating an S3 profile for Databricks, please see{' '}
-        <Link href="https://docs.databricks.com/aws/iam/instance-profile-tutorial.html"></Link>
+        <Link href="https://docs.databricks.com/aws/iam/instance-profile-tutorial.html">
+          the Databricks documentation
+        </Link>
         .
       </Typography>
 
