@@ -18,7 +18,7 @@ import (
 // This file should map directly to
 // src/ui/common/src/handlers/WorkflowGet.tsx
 //
-// Route: /v2/workflow/{workflowId}
+// Route: /v2/workflow/{workflowID}
 // Method: GET
 // Params:
 //	`workflowId`: ID for `workflow` object

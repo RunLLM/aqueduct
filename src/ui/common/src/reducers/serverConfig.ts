@@ -9,6 +9,7 @@ export type ServerConfig = {
   apiKey: string;
   storageConfig: {
     type: string;
+    integration_name: string;
     fileConfig?: {
       directory: string;
     };

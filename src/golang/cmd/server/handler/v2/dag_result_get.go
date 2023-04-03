@@ -18,10 +18,11 @@ import (
 // This file should map directly to
 // src/ui/common/src/handlers/DagResultGet.tsx
 //
-// Route: /v2/workflow/{workflowId}
+// Route: /v2/workflow/{workflowId}/result/{dagResultID}
 // Method: GET
 // Params:
 //	`workflowId`: ID for `workflow` object
+//  `dagResultID`: ID for `workflow_dag_result` object
 // Request:
 //	Headers:
 //		`api-key`: user's API Key

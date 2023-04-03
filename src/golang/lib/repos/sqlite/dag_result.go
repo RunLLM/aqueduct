@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
@@ -170,6 +171,44 @@ func (*dagResultWriter) Update(ctx context.Context, ID uuid.UUID, changes map[st
 	)
 
 	return &dagResult, err
+}
+
+func (*dagResultWriter) UpdateBatchStatusByStatus(
+	ctx context.Context,
+	from shared.ExecutionStatus,
+	to shared.ExecutionStatus,
+	DB database.Database,
+) ([]models.DAGResult, error) {
+	setExecStateFragment, args, err := generateUpdateExecStateSnippet(
+		models.DAGResultExecState,
+		to,
+		time.Now(),
+		0, /* offset */
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	query := fmt.Sprintf(`
+		UPDATE %s SET
+			%s,
+			status = $%d
+		WHERE
+			json_extract(%s, '$.status') = $%d
+		RETURNING %s;`,
+		models.DAGResultTable,
+		setExecStateFragment,
+		len(args)+1,
+		models.DAGResultExecState,
+		len(args)+2,
+		models.DAGResultCols(),
+	)
+
+	args = append(args, to)
+	args = append(args, from)
+	var results []models.DAGResult
+	err = DB.Query(ctx, &results, query, args...)
+	return results, err
 }
 
 func getDAGResults(ctx context.Context, DB database.Database, query string, args ...interface{}) ([]models.DAGResult, error) {

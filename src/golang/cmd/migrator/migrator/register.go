@@ -27,6 +27,7 @@ import (
 	_000022 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000022_backfill_python_type"
 	_000023 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000023_add_notification_settings_column"
 	_000024 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000024_migrate_exec_env_to_conda_engine"
+	_000025 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000025_add_storage_migration_table"
 	_000026 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000026_add_operator_artifact_node_views"
 	"github.com/aqueducthq/aqueduct/lib/database"
 )
@@ -181,6 +182,12 @@ func init() {
 	}
 
 	registeredMigrations[25] = &migration{
+		upPostgres: _000025.UpPostgres, upSqlite: _000025.UpSqlite,
+		downPostgres: _000025.DownPostgres,
+		name:         "add storage migration table",
+	}
+
+	registeredMigrations[26] = &migration{
 		upPostgres: _000026.UpPostgres, upSqlite: _000026.UpSqlite,
 		downPostgres: _000026.DownPostgres,
 		name:         "add views for operator and artifact nodes",

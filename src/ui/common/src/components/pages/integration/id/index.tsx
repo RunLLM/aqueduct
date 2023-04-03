@@ -15,6 +15,7 @@ import IntegrationObjectList from '../../../../components/integrations/integrati
 import OperatorsOnIntegration from '../../../../components/integrations/operatorsOnIntegration';
 import DefaultLayout from '../../../../components/layouts/default';
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
+import { handleGetServerConfig } from '../../../../handlers/getServerConfig';
 import {
   handleListIntegrationObjects,
   handleLoadIntegrationOperators,
@@ -79,6 +80,10 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     isLoading(state.integrationReducer.objectNames.status)
   );
 
+  const serverConfig = useSelector(
+    (state: RootState) => state.serverConfigReducer
+  );
+
   const selectedIntegration = integrations[integrationId];
 
   // Using the ListIntegrationsRoute.
@@ -126,6 +131,18 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     }
   }, [selectedIntegration]);
 
+  // Load the server config to check if the selected integration is currently being used as storage.
+  // If that is the case, we hide the option to delete the integration from the user.
+  useEffect(() => {
+    async function fetchServerConfig() {
+      if (user) {
+        await dispatch(handleGetServerConfig({ apiKey: user.apiKey }));
+      }
+    }
+
+    fetchServerConfig();
+  }, [user.apiKey]);
+
   if (!integrations || !selectedIntegration) {
     return null;
   }
@@ -161,8 +178,21 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             onDeleteIntegration={() => {
               setShowDeleteTableDialog(true);
             }}
+            allowDeletion={
+              serverConfig.config?.storageConfig.integration_name !==
+              selectedIntegration.name
+            }
           />
         </Box>
+
+        {serverConfig.config?.storageConfig.integration_name ===
+          selectedIntegration.name && (
+          <Alert severity="info" sx={{ marginTop: 2 }}>
+            This integration cannot be deleted because it is currently being
+            used as artifact storage. To delete this integration, please migrate
+            your artifact storage elsewhere first.
+          </Alert>
+        )}
 
         {showDeleteTableDialog && (
           <DeleteIntegrationDialog

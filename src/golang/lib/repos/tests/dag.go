@@ -70,6 +70,49 @@ func (ts *TestSuite) TestDAG_GetLatestByWorkflow() {
 	requireDeepEqual(ts.T(), expectedDAG, *actualDAG)
 }
 
+func (ts *TestSuite) TestDAG_GetLatestIDsByOrgAndEngine() {
+	user := ts.seedUser(1)[0]
+	workflow := ts.seedWorkflowWithUser(1, []uuid.UUID{user.ID})[0]
+
+	dags := ts.seedDAGWithWorkflow(3, []uuid.UUID{workflow.ID, workflow.ID, workflow.ID})
+
+	latestDAG := dags[0]
+	for i := 1; i < 3; i++ {
+		if dags[i].CreatedAt.After(latestDAG.CreatedAt) {
+			latestDAG = dags[i]
+		}
+	}
+
+	actualDagIDs, err := ts.dag.GetLatestIDsByOrgAndEngine(
+		ts.ctx,
+		user.OrgID,
+		shared.AqueductEngineType,
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), 1, len(actualDagIDs))
+	require.Equal(ts.T(), latestDAG.ID, actualDagIDs[0])
+
+	actualDagIDs, err = ts.dag.GetLatestIDsByOrgAndEngine(
+		ts.ctx,
+		"",
+		shared.AqueductEngineType,
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), 1, len(actualDagIDs))
+	require.Equal(ts.T(), latestDAG.ID, actualDagIDs[0])
+
+	actualDagIDs, err = ts.dag.GetLatestIDsByOrgAndEngine(
+		ts.ctx,
+		"",
+		shared.AirflowEngineType,
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), 0, len(actualDagIDs))
+}
+
 func (ts *TestSuite) TestDAG_Create() {
 	workflows := ts.seedWorkflow(1)
 	workflow := workflows[0]

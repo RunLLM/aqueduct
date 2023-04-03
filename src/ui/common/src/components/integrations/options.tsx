@@ -20,6 +20,7 @@ type Props = {
   onTestConnection?: () => void;
   onEdit?: () => void;
   onDeleteIntegration?: () => void;
+  allowDeletion: boolean;
 };
 
 const IntegrationOptions: React.FC<Props> = ({
@@ -28,12 +29,14 @@ const IntegrationOptions: React.FC<Props> = ({
   onTestConnection,
   onEdit,
   onDeleteIntegration,
+  allowDeletion,
 }) => {
   // Menu control based on
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const onMenuClose = () => {
     setAnchorEl(null);
   };
+
   return (
     <Box display="flex" flexDirection="row" sx={{ height: 'fit-content' }}>
       {isDemo(integration) && (
@@ -98,7 +101,7 @@ const IntegrationOptions: React.FC<Props> = ({
             </Typography>
           </MenuItem>
         )}
-        {!isDemo(integration) && (
+        {!isDemo(integration) && allowDeletion && (
           <MenuItem
             onClick={() => {
               setAnchorEl(null);
