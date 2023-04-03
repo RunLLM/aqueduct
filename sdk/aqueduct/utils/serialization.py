@@ -74,7 +74,6 @@ def _read_string_content(content: bytes) -> str:
 def _read_bytes_content(content: bytes) -> bytes:
     return content
 
-
 def _read_local_csv_table_content(path: str) -> pd.DataFrame:
     return pd.read_csv(path)
 

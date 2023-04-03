@@ -207,10 +207,6 @@ def _package_files_and_requirements(
 
         elif os.path.exists(REQUIREMENTS_FILE):
             # There exists a workflow-level requirements file (need to reside in the same directory as the function).
-            logger().debug(
-                "%s: requirements.txt file detected in current directory %s, will not self-generate by inferring package dependencies."
-                % (func.__name__, os.getcwd())
-            )
             shutil.copy(REQUIREMENTS_FILE, packaged_requirements_path)
 
         else:

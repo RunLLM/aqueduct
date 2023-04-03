@@ -1,10 +1,10 @@
-from typing import Callable, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import ExecutionStatus
 
 from aqueduct import Client, Flow
-from sdk.shared.flow_helpers import publish_flow_test
+from sdk.shared.flow_helpers import publish_flow_test, trigger_flow_test
 
 
 class FlowManager:
@@ -50,3 +50,18 @@ class FlowManager:
                 expected_statuses=expected_statuses,
                 engine=self._engine,
             )
+
+    def trigger_flow_test(
+        self,
+        flow: Flow,
+        expected_status: Union[ExecutionStatus, List[ExecutionStatus]] = ExecutionStatus.SUCCEEDED,
+        parameters: Optional[Dict[str, Any]] = None,
+    ):
+        """Convenience function, mostly here for completeness. It's the same as `trigger_flow_test()`, except missing the client argument."""
+
+        trigger_flow_test(
+            self._client,
+            flow,
+            expected_status=expected_status,
+            parameters=parameters,
+        )

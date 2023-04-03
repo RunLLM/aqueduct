@@ -11,11 +11,10 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
-	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
+	"github.com/aqueducthq/aqueduct/lib/storage_migration"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 )
 
 // Route: /config/storage/{integrationID}
@@ -31,11 +30,12 @@ type ConfigureStorageHandler struct {
 
 	Database database.Database
 
-	ArtifactRepo       repos.Artifact
-	ArtifactResultRepo repos.ArtifactResult
-	DAGRepo            repos.DAG
-	IntegrationRepo    repos.Integration
-	OperatorRepo       repos.Operator
+	ArtifactRepo         repos.Artifact
+	ArtifactResultRepo   repos.ArtifactResult
+	DAGRepo              repos.DAG
+	IntegrationRepo      repos.Integration
+	OperatorRepo         repos.Operator
+	StorageMigrationRepo repos.StorageMigration
 
 	PauseServerFn   func()
 	RestartServerFn func()
@@ -94,51 +94,23 @@ func (h *ConfigureStorageHandler) Perform(ctx context.Context, interfaceArgs int
 		},
 	}
 
-	log.Info("Starting storage migration process...")
-
-	log.Info("Waiting to pause the server")
-	// Wait until the server is paused
-	h.PauseServerFn()
-	// Makes sure that the server is restarted
-	defer h.RestartServerFn()
-	log.Info("Server has been paused")
-
-	// Wait until there are no more workflow runs in progress
-	lock := utils.NewExecutionLock()
-	log.Info("Waiting for execution lock")
-	if err := lock.Lock(); err != nil {
-		log.Errorf("Unexpected error when acquiring workflow execution lock: %v. Aborting storage migration!", err)
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to migrate to the new storage layer")
-	}
-	defer func() {
-		if err := lock.Unlock(); err != nil {
-			log.Errorf("Unexpected error when unlocking workflow execution lock: %v", err)
-		}
-	}()
-	log.Info("Execution lock has been acquired")
-
-	// Migrate all storage content to the new storage config
-	if err := utils.MigrateStorageAndVault(
+	err := storage_migration.Perform(
 		ctx,
-		&currentStorageConfig,
-		&newStorageConfig,
 		args.OrgID,
-		h.DAGRepo,
+		nil, /* destIntegrationObj */
+		&newStorageConfig,
+		h.PauseServerFn,
+		h.RestartServerFn,
 		h.ArtifactRepo,
 		h.ArtifactResultRepo,
-		h.OperatorRepo,
+		h.DAGRepo,
 		h.IntegrationRepo,
+		h.OperatorRepo,
+		h.StorageMigrationRepo,
 		h.Database,
-	); err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to migrate to the new storage layer")
+	)
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to migrate storage layer.")
 	}
-
-	// Change global storage config
-	if err := config.UpdateStorage(&newStorageConfig); err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to migrate to the new storage layer")
-	}
-
-	log.Info("Successfully migrated the storage layer!")
-
 	return nil, http.StatusOK, nil
 }

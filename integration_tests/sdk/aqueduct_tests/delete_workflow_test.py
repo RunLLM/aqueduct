@@ -9,7 +9,7 @@ from aqueduct import op
 from ..shared.data_objects import DataObject
 from ..shared.flow_helpers import publish_flow_test
 from ..shared.naming import generate_table_name
-from ..shared.relational import SHORT_SENTIMENT_SQL_QUERY, all_relational_DBs
+from ..shared.relational import all_relational_DBs
 from .extract import extract
 from .save import save
 
@@ -79,7 +79,7 @@ def test_force_delete_workflow_saved_objects(
 ):
     """Check the flow with object(s) saved with update_mode=APPEND can only be deleted if in force mode."""
     table_name = generate_table_name()
-    table_artifact = data_integration.sql(query=SHORT_SENTIMENT_SQL_QUERY)
+    table_artifact = data_integration.sql("select * from hotel_reviews limit 5")
     save(data_integration, table_artifact, name=table_name, update_mode=LoadUpdateMode.REPLACE)
 
     flow = publish_flow_test(
@@ -133,7 +133,7 @@ def test_delete_workflow_saved_objects_twice(
     """
     table_name = generate_table_name()
 
-    table_artifact = data_integration.sql(query=SHORT_SENTIMENT_SQL_QUERY)
+    table_artifact = data_integration.sql("select * from hotel_reviews limit 5")
     save(data_integration, table_artifact, name=table_name, update_mode=LoadUpdateMode.REPLACE)
 
     # Workflow 1's name not specified, so given a random workflow name.

@@ -656,8 +656,16 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 sx={{ width: '100%', py: 1, fontSize: '32px' }}
                 variant="text"
                 onClick={() => {
-                  // When the button is clicked, load all of the metadata again.
+                  // When the button is clicked, load all of the metadata of each of the nodes again.
                   getDagResultDetails(true);
+
+                  // Also refresh the history of workflow runs to update the status.
+                  dispatch(
+                    handleGetWorkflowHistory({
+                      apiKey: user.apiKey,
+                      workflowId: workflowId,
+                    })
+                  );
                 }}
               >
                 <FontAwesomeIcon icon={faArrowRotateRight} />
