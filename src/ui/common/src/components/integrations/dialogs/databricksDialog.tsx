@@ -1,4 +1,6 @@
+import { Link } from '@mui/material';
 import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import React from 'react';
 
 import { DatabricksConfig } from '../../../utils/integrations';
@@ -24,6 +26,13 @@ export const DatabricksDialog: React.FC<Props> = ({
 }) => {
   return (
     <Box sx={{ mt: 2 }}>
+      <Typography variant="body2">
+        For more details on connecting to Databricks, please see{' '}
+        <Link href="https://docs.aqueducthq.com/integrations/compute-systems/databricks">
+          our documentation
+        </Link>
+        .
+      </Typography>
       <IntegrationTextInputField
         label={'Workspace URL*'}
         description={'URL of Databricks Workspace.'}
@@ -51,6 +60,13 @@ export const DatabricksDialog: React.FC<Props> = ({
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
+
+      <Typography variant="body2">
+        For more details on creating an S3 profile for Databricks, please see{' '}
+        <Link href="https://docs.databricks.com/aws/iam/instance-profile-tutorial.html">
+        </Link>
+        .
+      </Typography>
 
       <IntegrationTextInputField
         label={'S3 Instance Profile ARN*'}
