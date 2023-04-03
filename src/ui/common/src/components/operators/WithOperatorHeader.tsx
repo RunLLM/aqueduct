@@ -15,6 +15,7 @@ import { OperatorType } from '../../utils/operators';
 import { CheckLevel } from '../../utils/operators';
 import DetailsPageHeader from '../pages/components/DetailsPageHeader';
 import SaveDetails from '../pages/components/SaveDetails';
+import ResourceItem from '../pages/workflows/components/ResourceItem';
 import ArtifactSummaryList from '../workflows/artifact/summaryList';
 
 type Props = {
@@ -103,12 +104,14 @@ const WithOperatorHeader: React.FC<Props> = ({
         {checkLevelDisplay}
       </Box>
 
+      <ResourceItem resource={operator?.spec?.load?.service || operator?.spec?.extract?.service} />
+      
       <Box display="flex" width="100%">
         <Box width="100%" paddingTop={sideSheetMode ? '16px' : '24px'}>
           <SaveDetails parameters={operator?.spec?.load?.parameters} />
         </Box>
 
-        <Box width="96px" />
+        {operator?.spec?.load && <Box width="96px" />}
 
         <Box
           display="flex"
