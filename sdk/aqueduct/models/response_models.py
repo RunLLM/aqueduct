@@ -207,21 +207,29 @@ class GetWorkflowResponse(BaseModel):
 
 
 class WorkflowDagResultResultResponse(BaseModel):
+    """A workflow dag result's execution state, derived from api_client.get_workflow_dag_result()."""
+
     id: uuid.UUID
     exec_state: ExecutionState
 
 
 class OperatorRawResultResponse(BaseModel):
+    """An operator result's execution state, derived from api_client.get_workflow_dag_result()."""
+
     id: uuid.UUID
     exec_state: ExecutionState
 
 
 class ArtifactRawResultResponse(BaseModel):
+    """An artifact result's execution state, derived from api_client.get_workflow_dag_result()."""
+
     id: uuid.UUID
     exec_state: ExecutionState
 
 
 class OperatorResultResponse(BaseModel):
+    """An operator result, derived from the returned response from api_client.get_workflow_dag_result()."""
+
     # Copied from the Operator class, because the golang response nests that class
     # in a way that is hard to represent in pydantic.
     id: uuid.UUID
@@ -231,8 +239,8 @@ class OperatorResultResponse(BaseModel):
     inputs: List[uuid.UUID] = []
     outputs: List[uuid.UUID] = []
 
-    # The operator result.
-    result: OperatorRawResultResponse
+    # The operator execution result.
+    result: Optional[OperatorRawResultResponse]
 
     def to_operator(self) -> Operator:
         """Convert to an operator class."""
@@ -240,7 +248,8 @@ class OperatorResultResponse(BaseModel):
 
 
 class ArtifactResultResponse(BaseModel):
-    """
+    """An artifact result, derived from the returned response from api_client.get_workflow_dag_result().
+
     Excluded attributes:
     - from: the upstream operator ID. Also, "from" is a reserved keyword in pydantic.
     - to: the downstream operator IDs.
@@ -258,7 +267,11 @@ class ArtifactResultResponse(BaseModel):
 
 
 class GetWorkflowDagResultResponse(BaseModel):
-    """This is the response object returned by api_client.get_workflow_dag_result()."""
+    """This is the response object returned by api_client.get_workflow_dag_result().
+
+    Excluded attributes:
+        Only the necessary metadata fields are included.
+    """
 
     # This is a subset of what metadata is available on the backend.
     # Allows for this object to be cast into a Metadata object.

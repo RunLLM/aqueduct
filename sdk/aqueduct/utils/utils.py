@@ -89,7 +89,7 @@ def indent_multiline_string(content: str) -> str:
     return "\t" + "\t".join(content.splitlines(True))
 
 
-def print_logs(logs: Logs):
+def print_logs(logs: Logs) -> None:
     """Prints out the logs with the following format:
 
     stdout:

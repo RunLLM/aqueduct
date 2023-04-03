@@ -108,18 +108,37 @@ class FlowRun:
                 print("Workflow-level error: ")
                 print(
                     indent_multiline_string(
-                        "%s\n%s" % (dag_exec_state.error.tip, dag_exec_state.error.context)
+                        "%s\n\n%s" % (dag_exec_state.error.tip, dag_exec_state.error.context)
                     )
                 )
 
-            workflow_logs = dag_exec_state.user_logs
-            if workflow_logs is not None and not workflow_logs.is_empty():
-                print("Workflow logs: ")
-                print_logs(workflow_logs)
+                workflow_logs = dag_exec_state.user_logs
+                if workflow_logs is not None and not workflow_logs.is_empty():
+                    print("Workflow logs: ")
+                    print_logs(workflow_logs)
 
             # Lastly, print out any operator-level errors.
-            for op in self._dag.list_operators():
-                pass
+            for op_result in self._dag_result_resp.operators.values():
+                if op_result.result is None:
+                    continue
+
+                if op_result.result.exec_state.status == ExecutionStatus.FAILED:
+                    if op_result.result.exec_state.error is not None:
+                        print(f"Operator '{op_result.name}' failed: ")
+                        print(
+                            indent_multiline_string(
+                                "%s\n%s"
+                                % (
+                                    op_result.result.exec_state.error.tip,
+                                    op_result.result.exec_state.error.context,
+                                )
+                            )
+                        )
+
+                    logs = op_result.result.exec_state.user_logs
+                    if logs is not None and not logs.is_empty():
+                        print("Operator logs: ")
+                        print_logs(logs)
 
     def artifact(self, name: str) -> Optional[base_artifact.BaseArtifact]:
         """Gets the Artifact from the flow run based on the name of the artifact.

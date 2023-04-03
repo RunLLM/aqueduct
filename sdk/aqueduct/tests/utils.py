@@ -4,7 +4,6 @@ from typing import List, Optional
 
 import pandas as pd
 from aqueduct.artifacts.table_artifact import TableArtifact
-from aqueduct.models.response_models import ArtifactResult, PreviewResponse
 from aqueduct.constants.enums import (
     ArtifactType,
     CheckSeverity,
@@ -29,6 +28,7 @@ from aqueduct.models.operators import (
     RelationalDBExtractParams,
     RelationalDBLoadParams,
 )
+from aqueduct.models.response_models import ArtifactResult, PreviewResponse
 from aqueduct.utils.utils import generate_uuid
 
 from aqueduct import globals
