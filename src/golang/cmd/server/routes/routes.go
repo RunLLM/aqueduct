@@ -3,8 +3,11 @@ package routes
 // Please sort the routes by their VALUEs
 const (
 	// V2 routes
-	WorkflowRoute             = "/api/v2/workflow/{workflowID}"
 	ListStorageMigrationRoute = "/api/v2/storage-migrations"
+
+	WorkflowRoute  = "/api/v2/workflow/{workflowID}"
+	DAGRoute       = "/api/v2/workflow/{workflowID}/dag/{dagID}"
+	DAGResultRoute = "/api/v2/workflow/{workflowID}/result/{dagResultID}"
 
 	// V1 routes
 	GetArtifactVersionsRoute = "/api/artifact/versions"

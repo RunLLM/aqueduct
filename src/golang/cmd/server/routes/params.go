@@ -10,5 +10,7 @@ const (
 	IntegrationIdUrlParam       = "integrationId"
 
 	// v2 params
-	WorkflowIDParam = "workflowID"
+	WorkflowIDParam  = "workflowID"
+	DagIDParam       = "dagID"
+	DAGResultIDParam = "dagResultID"
 )

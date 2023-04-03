@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 import { handleGetWorkflowHistory } from '../handlers/getWorkflowHistory';
-import { WorkflowHistoryResponse } from '../handlers/responses/workflowHistory';
+import { WorkflowHistoryResponse } from '../handlers/responses/workflowHistoryDeprecated';
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 
 // TODO(ENG-2680): Do we ever need to capture multiple workflows' histories at once?

@@ -7,8 +7,8 @@ import { Box, Divider, Typography } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { DagResultResponse } from '../../handlers/responses/dag';
-import { OperatorResultResponse } from '../../handlers/responses/operator';
+import { DagResultResponse } from '../../handlers/responses/dagDeprecated';
+import { OperatorResultResponse } from '../../handlers/responses/operatorDeprecated';
 import { WorkflowDagResultWithLoadingStatus } from '../../reducers/workflowDagResults';
 import { WorkflowDagWithLoadingStatus } from '../../reducers/workflowDags';
 import { RootState } from '../../stores/store';

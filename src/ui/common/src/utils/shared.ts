@@ -1,4 +1,4 @@
-import { ArtifactResultMetadataResponse } from 'src/handlers/responses/artifact';
+import { ArtifactResultMetadataResponse } from 'src/handlers/responses/artifactDeprecated';
 
 import { TableRow } from './data';
 

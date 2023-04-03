@@ -4,8 +4,8 @@ import { OperatorType } from '../../utils/operators';
 import { ExecState } from '../../utils/shared';
 import { StorageConfig } from '../../utils/storage';
 import { RetentionPolicy, WorkflowSchedule } from '../../utils/workflows';
-import { ArtifactResponse, ArtifactResultResponse } from './artifact';
-import { OperatorResponse, OperatorResultResponse } from './operator';
+import { ArtifactResponse, ArtifactResultResponse } from './artifactDeprecated';
+import { OperatorResponse, OperatorResultResponse } from './operatorDeprecated';
 
 export type DagMetadataResponse = {
   dag_id: string;

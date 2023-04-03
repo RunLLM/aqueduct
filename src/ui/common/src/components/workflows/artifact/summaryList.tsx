@@ -5,7 +5,7 @@ import Typography from '@mui/material/Typography';
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
-import { ArtifactResultResponse } from '../../../handlers/responses/artifact';
+import { ArtifactResultResponse } from '../../../handlers/responses/artifactDeprecated';
 import { theme } from '../../../styles/theme/theme';
 import { getPathPrefix } from '../../../utils/getPathPrefix';
 import { OperatorType } from '../../../utils/operators';

@@ -1,7 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 
 import { apiAddress } from '../components/hooks/useAqueductConsts';
-import { WorkflowHistoryResponse } from './responses/workflowHistory';
+import { WorkflowHistoryResponse } from './responses/workflowHistoryDeprecated';
 
 export const handleGetWorkflowHistory = createAsyncThunk<
   WorkflowHistoryResponse,
