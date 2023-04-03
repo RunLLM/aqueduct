@@ -74,7 +74,7 @@ func ConnectBuiltinIntegration(
 	serviceType := shared.Sqlite
 	builtinConfig := demo.GetSqliteIntegrationConfig()
 
-	if _, err := handler.ConnectIntegration(
+	if _, _, err := handler.ConnectIntegration(
 		ctx,
 		&handler.ConnectIntegrationArgs{
 			AqContext: &aq_context.AqContext{

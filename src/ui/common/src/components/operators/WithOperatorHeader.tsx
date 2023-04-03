@@ -5,15 +5,19 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Box, Divider, Typography } from '@mui/material';
 import React from 'react';
+import { useSelector } from 'react-redux';
 
 import { DagResultResponse } from '../../handlers/responses/dag';
 import { OperatorResultResponse } from '../../handlers/responses/operator';
 import { WorkflowDagResultWithLoadingStatus } from '../../reducers/workflowDagResults';
 import { WorkflowDagWithLoadingStatus } from '../../reducers/workflowDags';
+import { RootState } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import { OperatorType } from '../../utils/operators';
 import { CheckLevel } from '../../utils/operators';
 import DetailsPageHeader from '../pages/components/DetailsPageHeader';
+import SaveDetails from '../pages/components/SaveDetails';
+import ResourceItem from '../pages/workflows/components/ResourceItem';
 import ArtifactSummaryList from '../workflows/artifact/summaryList';
 
 type Props = {
@@ -37,6 +41,10 @@ const WithOperatorHeader: React.FC<Props> = ({
   sideSheetMode,
   children,
 }) => {
+  const integrationsState = useSelector(
+    (state: RootState) => state.integrationsReducer
+  );
+
   if (!operator) {
     return null;
   }
@@ -56,6 +64,8 @@ const WithOperatorHeader: React.FC<Props> = ({
       .filter((artf) => !!artf);
   const inputs = mapArtifacts(operator.inputs);
   const outputs = mapArtifacts(operator.outputs);
+
+  console.log('integrationsState', integrationsState);
 
   let checkLevelDisplay = null;
   if (operator?.spec?.check?.level) {
@@ -84,6 +94,12 @@ const WithOperatorHeader: React.FC<Props> = ({
     );
   }
 
+  const service =
+    operator?.spec?.load?.service || operator?.spec?.extract?.service;
+  const integrationId =
+    operator?.spec?.load?.integration_id ||
+    operator?.spec?.extract?.integration_id;
+
   return (
     <Box width="100%">
       {!sideSheetMode && (
@@ -97,41 +113,61 @@ const WithOperatorHeader: React.FC<Props> = ({
           )}
         </Box>
       )}
+
       <Box width="100%" paddingTop={sideSheetMode ? '16px' : '24px'}>
         {checkLevelDisplay}
       </Box>
 
-      <Box display="flex" width="100%">
-        {inputs.length > 0 && (
-          <Box width="100%" mr="32px">
-            <ArtifactSummaryList
-              title="Inputs"
-              workflowId={workflowId}
-              dagId={dagId}
-              dagResultId={dagResultId}
-              artifactResults={inputs}
-              collapsePrimitives={operator.spec?.type !== OperatorType.Check}
-              appearance={
-                operator.spec?.type === OperatorType.Metric ? 'value' : 'link'
-              }
-            />
-          </Box>
-        )}
+      <ResourceItem
+        resource={service}
+        resourceCustomName={
+          integrationsState?.integrations[integrationId]?.name
+        }
+      />
 
-        {outputs.length > 0 && (
-          <Box width="100%">
-            <ArtifactSummaryList
-              title="Outputs"
-              workflowId={workflowId}
-              dagId={dagId}
-              dagResultId={dagResultId}
-              artifactResults={outputs}
-              appearance={
-                operator.spec?.type === OperatorType.Metric ? 'value' : 'link'
-              }
-            />
-          </Box>
-        )}
+      <Box display="flex" width="100%">
+        <Box width="100%" paddingTop={sideSheetMode ? '16px' : '24px'}>
+          <SaveDetails parameters={operator?.spec?.load?.parameters} />
+        </Box>
+
+        {operator?.spec?.load && <Box width="96px" />}
+
+        <Box
+          display="flex"
+          width="100%"
+          paddingTop={sideSheetMode ? '16px' : '24px'}
+        >
+          {inputs.length > 0 && (
+            <Box width="100%" mr="32px">
+              <ArtifactSummaryList
+                title="Inputs"
+                workflowId={workflowId}
+                dagId={dagId}
+                dagResultId={dagResultId}
+                artifactResults={inputs}
+                collapsePrimitives={operator.spec?.type !== OperatorType.Check}
+                appearance={
+                  operator.spec?.type === OperatorType.Metric ? 'value' : 'link'
+                }
+              />
+            </Box>
+          )}
+
+          {outputs.length > 0 && (
+            <Box width="100%">
+              <ArtifactSummaryList
+                title="Outputs"
+                workflowId={workflowId}
+                dagId={dagId}
+                dagResultId={dagResultId}
+                artifactResults={outputs}
+                appearance={
+                  operator.spec?.type === OperatorType.Metric ? 'value' : 'link'
+                }
+              />
+            </Box>
+          )}
+        </Box>
       </Box>
 
       <Divider sx={{ my: '32px' }} />

@@ -48,6 +48,7 @@ def create_param_artifact(
     default: Any,
     description: str,
     explicitly_named: bool,
+    is_local_data: bool = False,
 ) -> BaseArtifact:
     """Creates a parameter operator and return an artifact that can be fed into other operators.
 
@@ -62,6 +63,8 @@ def create_param_artifact(
             A description for the parameter.
         explicitly_named:
             Whether this parameter was explicitly created with `client.create_param()`.
+        is_local_data:
+            Whether this parameter comes from a local data source.
     """
     if default is None:
         raise InvalidUserArgumentException("Parameter default value cannot be None.")
@@ -89,6 +92,7 @@ def create_param_artifact(
                         name=sanitize_artifact_name(param_name),
                         type=artifact_type,
                         explicitly_named=explicitly_named,
+                        from_local_data=is_local_data,
                     ),
                 ],
             ),

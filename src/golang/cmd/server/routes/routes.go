@@ -2,13 +2,17 @@ package routes
 
 // Please sort the routes by their VALUEs
 const (
+	// V2 routes
+	WorkflowRoute             = "/api/v2/workflow/{workflowID}"
+	ListStorageMigrationRoute = "/api/v2/storage-migrations"
+
+	// V1 routes
 	GetArtifactVersionsRoute = "/api/artifact/versions"
 	GetArtifactResultRoute   = "/api/artifact/{workflowDagResultId}/{artifactId}/result"
 
 	GetConfigRoute        = "/api/config"
 	ConfigureStorageRoute = "/api/config/storage/{integrationId}"
 
-	GetFunctionRoute    = "/api/function/{functionId}"
 	ExportFunctionRoute = "/api/function/{operatorId}/export"
 
 	ListIntegrationsRoute            = "/api/integrations"
@@ -39,7 +43,7 @@ const (
 	ListWorkflowsRoute           = "/api/workflows"
 	RegisterWorkflowRoute        = "/api/workflow/register"
 	RegisterAirflowWorkflowRoute = "/api/workflow/register/airflow"
-	GetWorkflowRoute             = "/api/workflow/{workflowId}"
+	GetWorkflowRouteV1           = "/api/workflow/{workflowId}"
 	ListArtifactResultsRoute     = "/api/workflow/{workflowId}/artifact/{artifactId}/results"
 	GetWorkflowDAGRoute          = "/api/workflow/{workflowId}/dag/{workflowDagID}"
 	ListWorkflowObjectsRoute     = "/api/workflow/{workflowId}/objects"
@@ -47,8 +51,6 @@ const (
 	EditWorkflowRoute            = "/api/workflow/{workflowId}/edit"
 	RefreshWorkflowRoute         = "/api/workflow/{workflowId}/refresh"
 	GetWorkflowDagResultRoute    = "/api/workflow/{workflowId}/result/{workflowDagResultId}"
-	UnwatchWorkflowRoute         = "/api/workflow/{workflowId}/unwatch"
-	WatchWorkflowRoute           = "/api/workflow/{workflowId}/watch"
 	GetWorkflowHistoryRoute      = "/api/workflow/{workflowId}/history"
 
 	GetServerVersionRoute     = "/api/version"

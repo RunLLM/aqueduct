@@ -1,3 +1,5 @@
+from typing import Optional
+
 import pytest
 from aqueduct.constants.enums import ServiceType
 from aqueduct.models.dag import DAG, Metadata
@@ -5,6 +7,7 @@ from aqueduct.models.dag import DAG, Metadata
 from aqueduct import Client, global_config, globals
 from sdk.setup_integration import (
     get_aqueduct_config,
+    get_artifact_store_name,
     has_storage_config,
     list_compute_integrations,
     list_data_integrations,
@@ -127,6 +130,12 @@ def engine(request, pytestconfig):
     # Test cases process the aqueduct engine as None. We do the conversion here
     # because fixture parameters are printed as part of test execution.
     return request.param if request.param != "aqueduct_engine" else None
+
+
+@pytest.fixture(scope="function")
+def artifact_store():
+    """Is None if local filesystem is being used as the artifact store."""
+    return get_artifact_store_name()
 
 
 @pytest.fixture(autouse=True, scope="session")
