@@ -307,7 +307,7 @@ func (*artifactResultWriter) UpdateBatchStatusByStatus(
 	to shared.ExecutionStatus,
 	DB database.Database,
 ) ([]models.ArtifactResult, error) {
-	setExecStateFragment, args, err := DB.PrepareUpdateExecStateStmt(
+	setExecStateFragment, args, err := generateUpdateExecStateSnippet(
 		models.ArtifactResultExecState,
 		to,
 		time.Now(),

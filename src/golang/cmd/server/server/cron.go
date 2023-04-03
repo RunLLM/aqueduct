@@ -5,9 +5,12 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/engine"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	"github.com/gorhill/cronexpr"
@@ -55,7 +58,8 @@ func (s *AqServer) triggerMissedCronJobs(
 }
 
 // backfillKilledJobs backfills all pending and running op/artf/DAG _results
-// and mark them as canceled.
+// and mark them as canceled. For non-aqueduct jobs like Airflow, we sync these
+// jobs from the remote servers.
 func (s *AqServer) backfillKilledJobs(ctx context.Context) error {
 	txn, err := s.Database.BeginTx(ctx)
 	if err != nil {
@@ -112,6 +116,31 @@ func (s *AqServer) backfillKilledJobs(ctx context.Context) error {
 		ctx,
 		shared.PendingExecutionStatus,
 		shared.CanceledExecutionStatus,
+		txn,
+	); err != nil {
+		return err
+	}
+
+	storageConfig := config.Storage()
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return err
+	}
+
+	// Backfill self-orchestrated workflows after the above steps and overwrite
+	// within the txn.
+	if err := engine.SyncSelfOrchestratedWorkflows(
+		ctx,
+		"", /* orgID */
+		s.ArtifactRepo,
+		s.ArtifactResultRepo,
+		s.DAGRepo,
+		s.DAGEdgeRepo,
+		s.DAGResultRepo,
+		s.OperatorRepo,
+		s.OperatorResultRepo,
+		s.WorkflowRepo,
+		vaultObject,
 		txn,
 	); err != nil {
 		return err

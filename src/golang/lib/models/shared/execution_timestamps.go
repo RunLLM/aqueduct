@@ -13,6 +13,10 @@ type ExecutionTimestamps struct {
 	FinishedAt   *time.Time `json:"finished_at"`
 }
 
+// ExecutionTimestampsJsonFieldByStatus returns the json_field
+// of the timestamp for a given status. This is useful when
+// we are directly inserting the timestamp to DB's JSON blob
+// based on the status, using a `json_set()` query.
 func ExecutionTimestampsJsonFieldByStatus(
 	status ExecutionStatus,
 ) (string, error) {

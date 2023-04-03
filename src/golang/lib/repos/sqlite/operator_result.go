@@ -250,7 +250,7 @@ func (*operatorResultWriter) UpdateBatchStatusByStatus(
 	to shared.ExecutionStatus,
 	DB database.Database,
 ) ([]models.OperatorResult, error) {
-	setExecStateFragment, args, err := DB.PrepareUpdateExecStateStmt(
+	setExecStateFragment, args, err := generateUpdateExecStateSnippet(
 		models.OperatorResultExecState,
 		to,
 		time.Now(),

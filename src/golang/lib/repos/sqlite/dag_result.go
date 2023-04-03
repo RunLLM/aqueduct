@@ -179,7 +179,7 @@ func (*dagResultWriter) UpdateBatchStatusByStatus(
 	to shared.ExecutionStatus,
 	DB database.Database,
 ) ([]models.DAGResult, error) {
-	setExecStateFragment, args, err := DB.PrepareUpdateExecStateStmt(
+	setExecStateFragment, args, err := generateUpdateExecStateSnippet(
 		models.DAGResultExecState,
 		to,
 		time.Now(),
