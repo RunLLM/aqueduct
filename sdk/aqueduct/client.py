@@ -53,7 +53,8 @@ from aqueduct.utils.dag_deltas import (
     apply_deltas_to_dag,
     validate_overwriting_parameters,
 )
-from aqueduct.utils.serialization import deserialize
+from aqueduct.utils.local_data import validate_local_data
+from aqueduct.utils.serialization import deserialize, extract_val_from_local_data
 from aqueduct.utils.type_inference import _base64_string_to_bytes, infer_artifact_type
 from aqueduct.utils.utils import (
     construct_param_spec,
@@ -178,7 +179,15 @@ class Client:
         """
         return Github(repo_url=repo, branch=branch)
 
-    def create_param(self, name: str, default: Any, description: str = "") -> BaseArtifact:
+    def create_param(
+        self,
+        name: str,
+        default: Any,
+        description: str = "",
+        use_local: bool = False,
+        as_type: Optional[ArtifactType] = None,
+        format: Optional[str] = None,
+    ) -> BaseArtifact:
         """Creates a parameter artifact that can be fed into other operators.
 
         Parameter values are configurable at runtime.
@@ -188,19 +197,34 @@ class Client:
                 The name to assign this parameter.
             default:
                 The default value to give this parameter, if no value is provided.
-                Every parameter must have a default.
+                Every parameter must have a default. If we decide to use local data,
+                a path to the local data file must be specified.
             description:
                 A description of what this parameter represents.
-
+            use_local:
+                Whether this parameter uses local data source or not.
+            as_type:
+                The expected type of the local data. Only supported types are ArtifactType.TABLE and ArtifactType.IMAGE.
+            format:
+                If local data type is ArtifactType.TABLE, the user has to specify the table format.
+                We currently support "json", "csv", and "parquet".
         Returns:
             A parameter artifact.
         """
+        if use_local:
+            if not isinstance(default, str):
+                raise InvalidUserArgumentException(
+                    "The default value must be a path to local data."
+                )
+            validate_local_data(default, as_type, format)
+            default = extract_val_from_local_data(default, as_type, format)
         return create_param_artifact(
             self._dag,
             name,
             default,
             description,
             explicitly_named=True,
+            is_local_data=use_local,
         )
 
     def connect_integration(
@@ -427,6 +451,7 @@ class Client:
         k_latest_runs: Optional[int] = None,
         source_flow: Optional[Union[Flow, str, uuid.UUID]] = None,
         run_now: Optional[bool] = None,
+        use_local: Optional[bool] = False,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
 
@@ -474,6 +499,8 @@ class Client:
             run_now:
                 Used to specify if the flow should run immediately at publish time. The default
                 behavior is 'True'.
+            use_local:
+                Must be set if any artifact in the flow is derived from local data.
 
         Raises:
             InvalidUserArgumentException:
@@ -582,6 +609,12 @@ class Client:
             ],
             make_copy=True,
         )
+        if not use_local and any(
+            artifact_metadata.from_local_data for artifact_metadata in list(dag.artifacts.values())
+        ):
+            raise InvalidUserActionException(
+                "Cannot create a flow with local data. Consider setting `use_local` to True to publish a workflow with local data parameters."
+            )
         dag.metadata = Metadata(
             name=name,
             description=description,

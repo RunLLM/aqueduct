@@ -24,6 +24,43 @@ const (
 	testIntegrationService = shared.AqueductDemo
 )
 
+// seedStorageMigraton creates a 5 storage migration records, alternating between
+// real destination IDs and nil ones. Also updates each entry to have a complete set of timestamps.
+func (ts *TestSuite) seedStorageMigration() []models.StorageMigration {
+	count := 5
+	storageMigrations := make([]models.StorageMigration, count)
+	for i := 0; i < count; i++ {
+		var destIntegrationID *uuid.UUID
+		var err error
+		if i%2 == 0 {
+			rawID, err := uuid.NewUUID()
+			destIntegrationID = &rawID
+			require.Nil(ts.T(), err)
+		}
+		entry, err := ts.storageMigration.Create(ts.ctx, destIntegrationID, ts.DB)
+		require.Nil(ts.T(), err)
+
+		now := time.Now()
+		entry.ExecState.Timestamps.RunningAt = &now
+		entry.ExecState.Timestamps.FinishedAt = &now
+
+		// Mark the last entry as current.
+		is_current := i == count-1
+		entry, err = ts.storageMigration.Update(ts.ctx, entry.ID, map[string]interface{}{
+			"execution_state": &entry.ExecState,
+			"current":         is_current,
+		},
+			ts.DB,
+		)
+		require.Nil(ts.T(), err)
+
+		// Insert into the `storageMigrations` list in reverse order, which
+		// simulates the result of calling List().
+		storageMigrations[count-1-i] = *entry
+	}
+	return storageMigrations
+}
+
 // seedIntegration creates count integration records for the given user.
 func (ts *TestSuite) seedIntegrationWithUser(count int, userID uuid.UUID) []models.Integration {
 	integrations := make([]models.Integration, 0, count)

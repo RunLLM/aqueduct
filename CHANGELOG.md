@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.2.8
+Released on March 29, 2023.
+
+### Key Features
+
+### Enhancements
+* Extends Aqueduct's parameter support to allow parameters to be `None` *if*
+    there is a default value for the parameter in the function definition.
+* Tweaks the design of the workflow details page to reduce the number of shades
+    of blue.
+* Updates SQL query parametrization scheme to use `$1`, `$2`, etc. as parameter
+    placeholders rather than the previous `{ param }` syntax. This allows a
+    paramter to be reused multiple times within the same query and is similar
+    to how traditional RDBMS interfaces work.
+* Adds context about the execution configuration of an operator to the workflow
+    details page. Now, each operator will show the logo of the engine on which
+    its running.
+
+### Bugfixes
+* Fixes bug where the metric history graph's X-axis would not reflect
+    timescales; all data points would be evenly spaced out rather than
+    reflecting the amount of time between each point.
+* Fixes bug where cross-environment Python requirements gathering would lead to
+    erroneous installation. Currently, Aqueduct only supports explicit
+    requirements specification.
+* Fixes bug where certain workflow failures would leave unfinished operators in
+    an infinitely-pending state; now, nodes are correctly marked as canceled.
+* Fixes bug where retrieving a non-existent filepath from S3 would return
+    succesfully but with empty data; now, a detailed error message is shown
+    instead.
+* Fixes bug where attempting to capture a system metric would thrown an error.
+
 ## 0.2.7
 Released on March 22, 2023.
 
