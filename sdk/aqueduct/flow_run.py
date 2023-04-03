@@ -12,7 +12,7 @@ from aqueduct.artifacts import (
 from aqueduct.constants.enums import ArtifactType, ExecutionStatus, OperatorType
 from aqueduct.error import InternalAqueductError
 from aqueduct.models.dag import DAG
-from aqueduct.utils.utils import format_header_for_print, generate_ui_url, human_readable_timestamp
+from aqueduct.utils.utils import format_header_for_print, generate_ui_url, human_readable_timestamp, TIME_FORMAT
 
 from aqueduct import globals
 
@@ -32,8 +32,8 @@ class FlowRun:
         self._in_notebook_or_console_context = in_notebook_or_console_context
 
         dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
+            self._flow_id,
             self._id,
-            run_id,
         )
 
         # Note that the operators for fetched flow runs are missing their serialized functions.
@@ -46,6 +46,8 @@ class FlowRun:
             },
             metadata=dag_result_resp.metadata(),
         )
+        self._created_at = dag_result_resp.dag_created_at
+        self._dag_exec_state = dag_result_resp.result.exec_state
 
     def id(self) -> uuid.UUID:
         """Returns the id for this flow run."""
@@ -53,11 +55,10 @@ class FlowRun:
 
     def status(self) -> ExecutionStatus:
         """Returns the status of the flow run."""
-        return self._status
+        return self._dag_exec_state.status
 
     def describe(self) -> None:
         """Prints out a human-readable description of the flow run."""
-
         url = generate_ui_url(
             globals.__GLOBAL_API_CLIENT__.construct_base_url(),
             self._flow_id,
@@ -69,14 +70,12 @@ class FlowRun:
                 f"""
             {format_header_for_print(f"'{self._dag.metadata.name}' Run")}
             ID: {self._id}
-            Created At (UTC): {human_readable_timestamp(self._created_at)}
-            Status: {str(self._status)}
+            Created At (UTC): {self._created_at.strftime(TIME_FORMAT)}
+            Status: {str(self._dag_exec_state.status)}
             UI: {url}
             """
             )
         )
-
-        # TODO: print out what
 
         param_operators = self._dag.list_operators(filter_to=[OperatorType.PARAM])
         print(format_header_for_print("Parameters "))

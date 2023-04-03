@@ -20,6 +20,7 @@ from croniter import croniter
 from .serialization import artifact_type_to_serialization_type, serialize_val
 from .type_inference import _bytes_to_base64_string
 
+TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 def format_header_for_print(header: str) -> str:
     """Used to print the header of a section in "describe()" with a consistent length.
@@ -85,8 +86,7 @@ def generate_flow_schedule(
 
 
 def human_readable_timestamp(ts: int) -> str:
-    format = "%Y-%m-%d %H:%M:%S"
-    return datetime.utcfromtimestamp(ts).strftime(format)
+    return datetime.utcfromtimestamp(ts).strftime(TIME_FORMAT)
 
 
 def indent_multiline_string(content: str) -> str:
