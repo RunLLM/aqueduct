@@ -53,6 +53,7 @@ jobs:
         run: pytest aqueduct_tests/ -rP -vv -n 4
 
       - name: Teardown K8s Cluster
+        id: k8s_cleanup # so that we only upload the state on this specific failure.
         if: always()
         uses: nick-fields/retry@v2
         with:
@@ -66,7 +67,7 @@ jobs:
 
       # This directory is quite large, so we only upload it on failure.
       - uses: actions/upload-artifact@v3
-        if: ${{ failure() }}
+        if: ${{ failure() && steps.k8s_cleanup.outcome == 'failure' }}
         with:
           name: Terraform State
           path: |

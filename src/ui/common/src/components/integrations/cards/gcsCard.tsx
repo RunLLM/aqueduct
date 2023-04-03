@@ -3,7 +3,6 @@ import Typography from '@mui/material/Typography';
 import React from 'react';
 
 import { GCSConfig, Integration } from '../../../utils/integrations';
-import StorageConfigurationDisplay from '../StorageConfiguration';
 
 type Props = {
   integration: Integration;
@@ -18,7 +17,6 @@ export const GCSCard: React.FC<Props> = ({ integration }) => {
         <strong>Bucket: </strong>
         {config.bucket}
       </Typography>
-      <StorageConfigurationDisplay integrationName="gcs" />
     </Box>
   );
 };

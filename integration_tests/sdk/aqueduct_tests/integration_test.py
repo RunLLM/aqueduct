@@ -76,6 +76,18 @@ def test_compute_integration_without_cloud_storage(client):
         )
 
 
+def test_cannot_delete_artifact_store_integration(client, artifact_store):
+    # Skip test for local artifact storage.
+    if artifact_store is None:
+        return
+
+    with pytest.raises(
+        InvalidRequestError,
+        match="Cannot delete an integration that is being used as artifact storage.",
+    ):
+        client.delete_integration(artifact_store)
+
+
 # TODO (ENG-2593): Investigate ways to support relative kubeconfig and aws credential path
 # def test_k8s_integration_wrong_kubeconfig(client):
 #    with pytest.raises(InvalidRequestError):

@@ -1,16 +1,12 @@
-import {
-  faCircleDown,
-  faQuestionCircle,
-} from '@fortawesome/free-solid-svg-icons';
+import { faCircleDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Box from '@mui/material/Box';
-import IconButton from '@mui/material/IconButton';
-import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { BlobReader, TextWriter, ZipReader } from '@zip.js/zip.js';
 import React, { useEffect, useState } from 'react';
 
 import MultiFileViewer from '../../../components/MultiFileViewer';
+import { InfoTooltip } from '../../../components/pages/components/InfoTooltip';
 import { OperatorResultResponse } from '../../../handlers/responses/operatorDeprecated';
 import { theme } from '../../../styles/theme/theme';
 import UserProfile from '../../../utils/auth';
@@ -177,15 +173,7 @@ const SpecDetails: React.FC<Props> = ({ user, operator }) => {
               Query Details
             </Typography>
             {tooltips && (
-              <Tooltip arrow placement="right" title={tooltips}>
-                <IconButton>
-                  <FontAwesomeIcon
-                    color={`${theme.palette.gray[700]}`}
-                    fontSize="16px"
-                    icon={faQuestionCircle}
-                  />
-                </IconButton>
-              </Tooltip>
+              <InfoTooltip tooltipText={tooltips} placement="right" />
             )}
           </Box>
           {content}

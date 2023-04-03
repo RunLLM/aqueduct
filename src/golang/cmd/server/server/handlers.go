@@ -23,6 +23,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			WorkflowRepo:  s.WorkflowRepo,
 			DAGResultRepo: s.DAGResultRepo,
 		},
+		routes.ListStorageMigrationRoute: &v2.ListStorageMigrationsHandler{
+			Database:             s.Database,
+			StorageMigrationRepo: s.StorageMigrationRepo,
+		},
 
 		// V1 Handlers
 		// (ENG-2715) Remove deprecated ones
@@ -35,11 +39,12 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database:   s.Database,
 			JobManager: s.JobManager,
 
-			ArtifactRepo:       s.ArtifactRepo,
-			ArtifactResultRepo: s.ArtifactResultRepo,
-			DAGRepo:            s.DAGRepo,
-			IntegrationRepo:    s.IntegrationRepo,
-			OperatorRepo:       s.OperatorRepo,
+			ArtifactRepo:         s.ArtifactRepo,
+			ArtifactResultRepo:   s.ArtifactResultRepo,
+			DAGRepo:              s.DAGRepo,
+			IntegrationRepo:      s.IntegrationRepo,
+			StorageMigrationRepo: s.StorageMigrationRepo,
+			OperatorRepo:         s.OperatorRepo,
 
 			PauseServer:   s.Pause,
 			RestartServer: s.Restart,
@@ -51,6 +56,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			ExecutionEnvironmentRepo: s.ExecutionEnvironmentRepo,
 			IntegrationRepo:          s.IntegrationRepo,
 			OperatorRepo:             s.OperatorRepo,
+			StorageMigrationRepo:     s.StorageMigrationRepo,
 			WorkflowRepo:             s.WorkflowRepo,
 		},
 		routes.DeleteWorkflowRoute: &handler.DeleteWorkflowHandler{
@@ -103,15 +109,20 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			OperatorRepo:       s.OperatorRepo,
 			OperatorResultRepo: s.OperatorResultRepo,
 		},
-		routes.GetConfigRoute: &handler.GetConfigHandler{},
+		routes.GetConfigRoute: &handler.GetConfigHandler{
+			IntegrationRepo:      s.IntegrationRepo,
+			StorageMigrationRepo: s.StorageMigrationRepo,
+			Database:             s.Database,
+		},
 		routes.ConfigureStorageRoute: &handler.ConfigureStorageHandler{
 			Database: s.Database,
 
-			ArtifactRepo:       s.ArtifactRepo,
-			ArtifactResultRepo: s.ArtifactResultRepo,
-			DAGRepo:            s.DAGRepo,
-			IntegrationRepo:    s.IntegrationRepo,
-			OperatorRepo:       s.OperatorRepo,
+			ArtifactRepo:         s.ArtifactRepo,
+			ArtifactResultRepo:   s.ArtifactResultRepo,
+			DAGRepo:              s.DAGRepo,
+			IntegrationRepo:      s.IntegrationRepo,
+			OperatorRepo:         s.OperatorRepo,
+			StorageMigrationRepo: s.StorageMigrationRepo,
 
 			PauseServerFn:   s.Pause,
 			RestartServerFn: s.Restart,

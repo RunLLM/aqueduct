@@ -12,6 +12,11 @@ const (
 	IntegrationConfigHeader  = "integration-config"
 	IntegrationIDsHeader     = "integration-ids"
 
+	// Storage Migration Headers
+	StorageMigrationFilterStatusHeader   = "status"
+	StorageMigrationLimitHeader          = "limit"
+	StorageMigrationCompletedSinceHeader = "completed-since"
+
 	// Export Function headers
 	ExportFnUserFriendlyHeader = "user-friendly"
 
