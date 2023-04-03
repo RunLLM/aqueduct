@@ -1,5 +1,6 @@
-import { FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
 import * as rtkQueryRaw from '@reduxjs/toolkit/dist/query/react/index.js';
+import { FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
+
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import {
   storageMigrationListQuery,
@@ -12,9 +13,8 @@ import {
   WorkflowGetResponse,
 } from './WorkflowGet';
 
-const {
-  createApi, fetchBaseQuery,
-} = ((rtkQueryRaw as any).default ?? rtkQueryRaw) as typeof rtkQueryRaw;
+const { createApi, fetchBaseQuery } = ((rtkQueryRaw as any).default ??
+  rtkQueryRaw) as typeof rtkQueryRaw;
 
 const transformErrorResponse = (resp: FetchBaseQueryError) =>
   (resp.data as { error: string })?.error;
