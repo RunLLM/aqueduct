@@ -63,8 +63,7 @@ export const DatabricksDialog: React.FC<Props> = ({
 
       <Typography variant="body2">
         For more details on creating an S3 profile for Databricks, please see{' '}
-        <Link href="https://docs.databricks.com/aws/iam/instance-profile-tutorial.html">
-        </Link>
+        <Link href="https://docs.databricks.com/aws/iam/instance-profile-tutorial.html"></Link>
         .
       </Typography>
 
