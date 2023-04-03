@@ -25,17 +25,27 @@ class FlowRun:
         flow_id: str,
         run_id: str,
         in_notebook_or_console_context: bool,
-        dag: DAG,
-        created_at: int,
-        status: ExecutionStatus,
     ):
         assert run_id is not None
         self._flow_id = flow_id
         self._id = run_id
         self._in_notebook_or_console_context = in_notebook_or_console_context
-        self._dag = dag
-        self._created_at = created_at
-        self._status = status
+
+        dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
+            self._id,
+            run_id,
+        )
+
+        # Note that the operators for fetched flow runs are missing their serialized functions.
+        self._dag = DAG(
+            operators={
+                str(id): elem.to_operator() for id, elem in dag_result_resp.operators.items()
+            },
+            artifacts={
+                str(id): elem.to_artifact() for id, elem in dag_result_resp.artifacts.items()
+            },
+            metadata=dag_result_resp.metadata(),
+        )
 
     def id(self) -> uuid.UUID:
         """Returns the id for this flow run."""

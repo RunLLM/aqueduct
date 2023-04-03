@@ -8,12 +8,9 @@ from aqueduct.backend.response_models import (
     GetWorkflowResponse,
     SavedObjectUpdate,
     WorkflowDagResponse,
-    WorkflowDagResultResponse,
 )
-from aqueduct.constants.enums import ExecutionStatus
-from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
+from aqueduct.error import InvalidUserArgumentException
 from aqueduct.flow_run import FlowRun
-from aqueduct.models.dag import DAG
 from aqueduct.utils.utils import format_header_for_print, generate_ui_url, parse_user_supplied_id
 
 from aqueduct import globals
@@ -68,35 +65,6 @@ class Flow:
             for dag_result in list(reversed(resp.workflow_dag_results))[:limit]
         ]
 
-    def _construct_flow_run(self, result_id: str) -> FlowRun:
-        """Constructs a flow run."""
-        dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
-            self._id,
-            result_id,
-        )
-
-        dag = DAG(
-            operators={
-                str(id): elem.to_operator() for id, elem in dag_result_resp.operators.items()
-            },
-            artifacts={
-                str(id): elem.to_artifact() for id, elem in dag_result_resp.artifacts.items()
-            },
-            metadata=dag_result_resp.metadata(),
-        )
-
-        # The dags for fetched flow runs are missing their serialized functions.
-
-        # TODO: REFACTOR THIS.
-        return FlowRun(
-            flow_id=self._id,
-            run_id=result_id,
-            in_notebook_or_console_context=self._in_notebook_or_console_context,
-            dag=dag,
-            created_at=0,
-            status=ExecutionStatus.FAILED,
-        )
-
     def _get_latest_dag_resp(self) -> WorkflowDagResponse:
         resp = self._get_workflow_resp()
         if not resp.workflow_dag_results:
@@ -112,7 +80,11 @@ class Flow:
             return None
 
         latest_result = resp.workflow_dag_results[-1]
-        return self._construct_flow_run(str(latest_result.id))
+        return FlowRun(
+            flow_id=self._id,
+            run_id=str(latest_result.id),
+            in_notebook_or_console_context=self._in_notebook_or_console_context,
+        )
 
     def fetch(self, run_id: Union[str, uuid.UUID]) -> FlowRun:
         run_id = parse_user_supplied_id(run_id)
@@ -129,7 +101,11 @@ class Flow:
                 "Cannot find any run with id %s on this flow." % run_id
             )
 
-        return self._construct_flow_run(str(run_id))
+        return FlowRun(
+            flow_id=self._id,
+            run_id=str(run_id),
+            in_notebook_or_console_context=self._in_notebook_or_console_context,
+        )
 
     def list_saved_objects(self) -> DefaultDict[str, List[SavedObjectUpdate]]:
         """Get everything saved by the flow.

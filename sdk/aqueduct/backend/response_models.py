@@ -260,7 +260,7 @@ class ArtifactResultResponse(BaseModel):
 class GetWorkflowDagResultResponse(BaseModel):
     """This is the response object returned by api_client.get_workflow_dag_result()."""
 
-    # This is a small subset of what metadata is available on the backend.
+    # This is a subset of what metadata is available on the backend.
     # Allows for this object to be cast into a Metadata object.
     name: Optional[str]
     description: Optional[str]
