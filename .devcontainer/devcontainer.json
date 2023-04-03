@@ -6,12 +6,12 @@
     "forwardPorts": [
         8080
     ],
-    "postAttachCommand": "aqueduct start --disable-usage-stats",
+    "postAttachCommand": "aqueduct start",
     "customizations": {
         "codespaces": {
             "openFiles": [
-                "README.md",
-                ".devcontainer/README.md"
+                ".devcontainer/README.md",
+                "README.md"
             ]
         }
     }
