@@ -267,14 +267,9 @@ def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) 
 
 def setup_storage_layer(client: Client) -> None:
     """If a storage data integration is specified, perform a migration if we aren't already connected to it."""
-    test_config = _parse_config_file()
-    if "storage" not in test_config:
+    name = get_artifact_store_name()
+    if name is None:
         return
-
-    assert (
-        len(test_config["storage"]) == 1
-    ), "Only one data integration can be set as storage layer."
-    name = list(test_config["storage"].keys())[0]
 
     connected_integrations = client.list_integrations()
     if name not in connected_integrations.keys():
@@ -360,3 +355,15 @@ def get_aqueduct_config() -> Tuple[str, str]:
         apikey = get_apikey()
 
     return apikey, test_config["address"]
+
+
+def get_artifact_store_name() -> Optional[str]:
+    """Returns None if the artifact store is the local filesystem."""
+    test_config = _parse_config_file()
+    if "storage" not in test_config:
+        return None
+
+    assert (
+        len(test_config["storage"]) == 1
+    ), "Only one data integration can be set as storage layer."
+    return list(test_config["storage"].keys())[0]

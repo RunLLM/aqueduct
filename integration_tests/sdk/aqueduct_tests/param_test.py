@@ -1,10 +1,11 @@
+import os
 from typing import Dict, List
 
 import pandas as pd
 import pytest
 from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
-from aqueduct.constants.enums import ExecutionStatus
+from aqueduct.constants.enums import ArtifactType, ExecutionStatus
 from aqueduct.error import (
     AqueductError,
     ArtifactNeverComputedException,
@@ -436,4 +437,108 @@ def test_parameter_type_changes(client, flow_name, engine):
         flow,
         expected_status=ExecutionStatus.FAILED,
         parameters={"number": "This is a string"},
+    )
+
+
+def test_local_table_data_parameter(client, flow_name, engine):
+    row_to_add = ["new hotel", "09-28-1996", "US", "It was new."]
+
+    file_type = ["csv", "json", "parquet"]
+    output_artifact_list = []
+    input_data_list = []
+    for extension in file_type:
+        data_param = client.create_param(
+            name="data_" + extension,
+            default="data/hotel_reviews." + extension,
+            use_local=True,
+            as_type=ArtifactType.TABLE,
+            format=extension,
+        )
+
+        if extension == "csv":
+            input_df = pd.read_csv("data/hotel_reviews." + extension)
+        elif extension == "json":
+            input_df = pd.read_json("data/hotel_reviews." + extension, orient="table")
+        else:
+            input_df = pd.read_parquet("data/hotel_reviews." + extension)
+        assert input_df.equals(data_param.get())
+
+        @op(name=extension, outputs=["output_" + extension])
+        def append_row_to_df(df, row):
+            """`row` is a list of values to append to the input dataframe."""
+            df.loc[len(df.index)] = row
+            return df
+
+        output = append_row_to_df(data_param, row_to_add)
+        input_df.loc[len(input_df.index)] = row_to_add
+        output_df = output.get()
+        assert output_df.equals(input_df)
+
+        output_artifact_list.append(output)
+        input_data_list.append(input_df)
+
+    with pytest.raises(
+        InvalidUserActionException,
+        match="Cannot create a flow with local data. Consider setting `use_local` to True to publish a workflow with local data parameters.",
+    ):
+        flow = client.publish_flow(
+            name=flow_name(),
+            artifacts=output_artifact_list,
+            engine=engine,
+        )
+    flow = publish_flow_test(
+        client, artifacts=output_artifact_list, name=flow_name(), engine=engine, use_local=True
+    )
+    flow_run = flow.latest()
+    assert flow_run.artifact("output_csv").get().equals(input_data_list[0])
+    assert flow_run.artifact("output_json").get().equals(input_data_list[1])
+    assert flow_run.artifact("output_parquet").get().equals(input_data_list[2])
+
+
+def test_invalid_local_data(client):
+    # check Local Data with file path that does not exist will fail
+    with pytest.raises(
+        InvalidUserArgumentException,
+        match="Given path file 'data/hotel_reviews' to local data does not exist.",
+    ):
+        client.create_param(
+            name="data", default="data/hotel_reviews", use_local=True, as_type=ArtifactType.IMAGE
+        )
+
+    # Check that format is supplied when Artifact type is table
+    with pytest.raises(
+        InvalidUserArgumentException,
+        match="Specify format in order to use local data as TableArtifact.",
+    ):
+        client.create_param(
+            name="data",
+            default="data/hotel_reviews.json",
+            use_local=True,
+            as_type=ArtifactType.TABLE,
+        )
+
+
+def test_local_image_data_parameter(client, flow_name, engine):
+    @op
+    def must_be_image(input):
+        if not isinstance(input, Image.Image):
+            raise Exception("Expected image.")
+        return input
+
+    image_param = client.create_param(
+        name="data", default="data/aqueduct.jpg", use_local=True, as_type=ArtifactType.IMAGE
+    )
+
+    image_output = must_be_image(image_param)
+    assert isinstance(image_output, GenericArtifact)
+    assert isinstance(image_output.get(), Image.Image)
+
+    publish_flow_test(
+        client,
+        name=flow_name(),
+        artifacts=[
+            image_output,
+        ],
+        engine=engine,
+        use_local=True,
     )
