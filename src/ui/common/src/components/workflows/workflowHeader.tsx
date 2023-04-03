@@ -37,7 +37,7 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
   const currentNode = useSelector(
     (state: RootState) => state.nodeSelectionReducer.selected
   );
-  
+
   // NOTE: The 1000 here is just a placeholder. By the time the page snaps into place,
   // it will be overridden.
   const [containerWidth, setContainerWidth] = useState(1000);
