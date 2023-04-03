@@ -57,5 +57,4 @@ export const {
   useDagResultGetQuery,
   useStorageMigrationListQuery,
   useWorkflowGetQuery,
-} =
-  aqueductApi;
+} = aqueductApi;

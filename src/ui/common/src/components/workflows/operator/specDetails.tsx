@@ -8,7 +8,6 @@ import React, { useEffect, useState } from 'react';
 import MultiFileViewer from '../../../components/MultiFileViewer';
 import { InfoTooltip } from '../../../components/pages/components/InfoTooltip';
 import { OperatorResultResponse } from '../../../handlers/responses/operatorDeprecated';
-import { theme } from '../../../styles/theme/theme';
 import UserProfile from '../../../utils/auth';
 import {
   exportFunction,
