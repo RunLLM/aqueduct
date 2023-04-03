@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 from typing import Dict, List, Optional
 
 from aqueduct.constants.enums import (
@@ -9,8 +10,8 @@ from aqueduct.constants.enums import (
     SerializationType,
 )
 from aqueduct.models.artifact import ArtifactMetadata
-from aqueduct.models.dag import Metadata
-from aqueduct.models.operators import LoadSpec, Operator
+from aqueduct.models.dag import Metadata, RetentionPolicy, Schedule
+from aqueduct.models.operators import LoadSpec, Operator, OperatorSpec
 from aqueduct.utils.utils import human_readable_timestamp
 from pydantic import BaseModel
 
@@ -149,7 +150,10 @@ class WorkflowDagResponse(BaseModel):
 
 
 class WorkflowDagResultResponse(BaseModel):
-    """Represents the result of a single workflwo run.
+    """Represents the result of a single workflow run.
+
+    NOTE: Very confusingly, this is not the response from `get_workflow_dag_result.go`, but instead is
+    derived from the `get_workflow.go` response.
 
     Attributes:
         id:
@@ -161,12 +165,15 @@ class WorkflowDagResultResponse(BaseModel):
             The execution status of this workflow run.
         workflow_dag_id:
             This id can be used to find the corresponding workflow dag version.
+
     """
+
+    # TODO: only keep workflow_dag_id and id.
 
     id: uuid.UUID
     created_at: int
-
-    # TODO(ENG-2665): remove the status field.
+    #
+    # # TODO(ENG-2665): remove the status field.
     status: ExecutionStatus
     exec_state: ExecutionState
     workflow_dag_id: uuid.UUID
@@ -197,6 +204,76 @@ class GetWorkflowResponse(BaseModel):
 
     workflow_dags: Dict[uuid.UUID, WorkflowDagResponse]
     workflow_dag_results: List[WorkflowDagResultResponse]
+
+
+class WorkflowDagResultResultResponse(BaseModel):
+    id: uuid.UUID
+    exec_state: ExecutionState
+
+
+class OperatorRawResultResponse(BaseModel):
+    id: uuid.UUID
+    exec_state: ExecutionState
+
+
+class ArtifactRawResultResponse(BaseModel):
+    id: uuid.UUID
+    exec_state: ExecutionState
+
+
+class OperatorResultResponse(BaseModel):
+    # Copied from the Operator class, because the golang response nests that class
+    # in a way that is hard to represent in pydantic.
+    id: uuid.UUID
+    name: str
+    description: str
+    spec: OperatorSpec
+    inputs: List[uuid.UUID] = []
+    outputs: List[uuid.UUID] = []
+
+    # The operator result.
+    result: OperatorRawResultResponse
+
+    def to_operator(self) -> Operator:
+        """Convert to an operator class."""
+        return Operator(**self.dict())
+
+
+class ArtifactResultResponse(BaseModel):
+    """
+    Excluded attributes:
+    - from: the upstream operator ID. Also, "from" is a reserved keyword in pydantic.
+    - to: the downstream operator IDs.
+    """
+
+    # Copied from the ArtifactMetadata class, because the golang response nests that class
+    # in a way that is hard to represent in pydantic.
+    id: uuid.UUID
+    name: str
+    type: ArtifactType
+
+    def to_artifact(self) -> ArtifactMetadata:
+        """Convert to an artifact class."""
+        return ArtifactMetadata(**self.dict())
+
+
+class GetWorkflowDagResultResponse(BaseModel):
+    """This is the response object returned by api_client.get_workflow_dag_result()."""
+
+    # This is a small subset of what metadata is available on the backend.
+    # Allows for this object to be cast into a Metadata object.
+    name: Optional[str]
+    description: Optional[str]
+    schedule: Optional[Schedule]
+    retention_policy: Optional[RetentionPolicy]
+    dag_created_at: datetime
+
+    result: WorkflowDagResultResultResponse
+    operators: Dict[uuid.UUID, OperatorResultResponse]
+    artifacts: Dict[uuid.UUID, ArtifactResultResponse]
+
+    def metadata(self) -> Metadata:
+        return Metadata(**self.dict())
 
 
 class SavedObjectDelete(BaseModel):

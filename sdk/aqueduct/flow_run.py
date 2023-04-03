@@ -66,6 +66,8 @@ class FlowRun:
             )
         )
 
+        # TODO: print out what
+
         param_operators = self._dag.list_operators(filter_to=[OperatorType.PARAM])
         print(format_header_for_print("Parameters "))
         for param_op in param_operators:

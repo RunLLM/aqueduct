@@ -32,6 +32,7 @@ from .response_models import (
     DeleteWorkflowResponse,
     DynamicEngineStatusResponse,
     GetVersionResponse,
+    GetWorkflowDagResultResponse,
     GetWorkflowResponse,
     ListWorkflowResponseEntry,
     ListWorkflowSavedObjectsResponse,
@@ -63,6 +64,7 @@ class APIClient:
     LIST_INTEGRATIONS_ROUTE = "/api/integrations"
     LIST_INTEGRATION_OBJECTS_ROUTE_TEMPLATE = "/api/integration/%s/objects"
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
+    GET_WORKFLOW_DAG_RESULT_TEMPLATE = "/api/workflow/%s/result/%s"
     LIST_WORKFLOW_SAVED_OBJECTS_ROUTE = "/api/workflow/%s/objects"
     GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact/%s/%s/result"
 
@@ -525,8 +527,14 @@ class APIClient:
         url = self.construct_full_url(self.GET_WORKFLOW_ROUTE_TEMPLATE % flow_id)
         resp = requests.get(url, headers=headers)
         self.raise_errors(resp)
-        workflow_response = GetWorkflowResponse(**resp.json())
-        return workflow_response
+        return GetWorkflowResponse(**resp.json())
+
+    def get_workflow_dag_result(self, flow_id: str, result_id: str) -> GetWorkflowDagResultResponse:
+        headers = self._generate_auth_headers()
+        url = self.construct_full_url(self.GET_WORKFLOW_DAG_RESULT_TEMPLATE % (flow_id, result_id))
+        resp = requests.get(url, headers=headers)
+        self.raise_errors(resp)
+        return GetWorkflowDagResultResponse(**resp.json())
 
     def list_saved_objects(self, flow_id: str) -> ListWorkflowSavedObjectsResponse:
         headers = self._generate_auth_headers()
