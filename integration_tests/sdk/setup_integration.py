@@ -182,8 +182,7 @@ def _setup_s3_data(client: Client, s3: S3Integration):
     existing_names = set()
     for object_name in demo_db_tables():
         try:
-            s3.file(object_name, artifact_type=ArtifactType.TABLE,
-                    format="parquet")
+            s3.file(object_name, artifact_type=ArtifactType.TABLE, format="parquet")
             existing_names.add(object_name)
         except:
             # Failing to fetch simply means we will need to populate this data.
@@ -219,8 +218,7 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
         # Only connect to integrations that don't already exist.
         if integration_name not in connected_integrations.keys():
             print("Fetching integration credentials ...")
-            integration_config = _fetch_integration_credentials(
-                "data", integration_name)
+            integration_config = _fetch_integration_credentials("data", integration_name)
 
             # Stand up the external integration first.
             if integration_config["type"] == ServiceType.SQLITE:
@@ -252,8 +250,7 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
             # We only support reading from Athena, so no setup is necessary.
             pass
         else:
-            raise Exception("Test suite does not yet support %s." %
-                            integration.type())
+            raise Exception("Test suite does not yet support %s." % integration.type())
 
 
 def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) -> None:
@@ -279,8 +276,7 @@ def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) 
     for integration_name in compute_integrations:
         # Only connect to integrations that don't already exist.
         if integration_name not in connected_integrations.keys():
-            integration_config = _fetch_integration_credentials(
-                "compute", integration_name)
+            integration_config = _fetch_integration_credentials("compute", integration_name)
 
             client.connect_integration(
                 integration_name,
