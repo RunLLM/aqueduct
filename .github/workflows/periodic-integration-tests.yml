@@ -125,9 +125,10 @@ jobs:
         image: mysql:5.7
         env:
           MYSQL_DATABASE: aqueducttest
-          MYSQL_USER: user
+          MYSQL_USER: root
           MYSQL_PASSWORD: password
           MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_HOST: 127.0.0.1
         ports:
           # Maps tcp port 3306 on service container to the host
           - 3306:3306
