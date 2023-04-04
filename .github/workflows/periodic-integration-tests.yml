@@ -122,24 +122,24 @@ jobs:
           - 5432:5432
 
       mysql:
-        image: mysql:5.7
+        image: mysql:8.0
         env:
+          MYSQL_USER: aqueduct
+          MYSQL_PASSWORD: Password123!
           MYSQL_DATABASE: aqueducttest
-          #MYSQL_USER: aqueduct
-          #MYSQL_PASSWORD: password
-          #MYSQL_ROOT_PASSWORD: password
+          MYSQL_ROOT_PASSWORD: root
           MYSQL_HOST: 127.0.0.1
-          MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          #MYSQL_ALLOW_EMPTY_PASSWORD: yes
         ports:
           # Maps tcp port 3306 on service container to the host
-          - 3306:3306
+          - 3306/tcp
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
       - uses: actions/checkout@v2
 
       - uses: ./.github/actions/setup-server
-        timeout-minutes: 5
+        timeout-minutes: 50
 
       - uses: ./.github/actions/fetch-test-config
         with:
