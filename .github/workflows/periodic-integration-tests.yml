@@ -127,7 +127,7 @@ jobs:
           MYSQL_DATABASE: aqueducttest
           MYSQL_USER: aqueduct
           MYSQL_PASSWORD: password
-          #MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_ROOT_PASSWORD: password
           MYSQL_HOST: 127.0.0.1
         ports:
           # Maps tcp port 3306 on service container to the host
