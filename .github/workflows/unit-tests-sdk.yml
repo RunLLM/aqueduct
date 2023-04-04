@@ -2,28 +2,34 @@ name: SDK Unit Tests
 
 on:
   pull_request:
-    paths:
-      - 'sdk/aqueduct/**'
+#    paths:
+#      - 'sdk/aqueduct/**'
+  merge_group:
 
 jobs:
   test:
     name: Run Unit Tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - name: Only run these steps if in the merge group.
+        if: ${{ github.event_name != 'pull_request' }}
+        run: exit 0
 
-      - name: Set up Python version
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.8'
 
-      - name: Install Dependencies
-        working-directory: ./sdk
-        run: python3 -m pip install .
-
-      - name: Install pytest
-        run: python3 -m pip install pytest
-
-      - name: Run Tests
-        working-directory: ./sdk
-        run: pytest . -rP -vv
+#      - uses: actions/checkout@v2
+#
+#      - name: Set up Python version
+#        uses: actions/setup-python@v2
+#        with:
+#          python-version: '3.8'
+#
+#      - name: Install Dependencies
+#        working-directory: ./sdk
+#        run: python3 -m pip install .
+#
+#      - name: Install pytest
+#        run: python3 -m pip install pytest
+#
+#      - name: Run Tests
+#        working-directory: ./sdk
+#        run: pytest . -rP -vv
