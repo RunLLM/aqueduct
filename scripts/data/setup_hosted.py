@@ -1,6 +1,6 @@
 import argparse
 
-from .redshift_test import resume_redshift
+from redshift_test import resume_redshift
 
 def main():
     parser = argparse.ArgumentParser()
