@@ -123,7 +123,7 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
   function rehypeWrapText() {
     return function wrapTextTransform(tree) {
       visitParents(tree, 'text', (node, ancestors) => {
-        if (ancestors.at(-1).tagName !== 'custom-typography') {
+        if (ancestors[ancestors.length - 1]?.tagName !== 'custom-typography') {
           node.type = 'element';
           node.tagName = 'custom-typography';
           node.children = [{ type: 'text', value: node.value }];
