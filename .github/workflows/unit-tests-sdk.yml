@@ -2,8 +2,8 @@ name: SDK Unit Tests
 
 on:
   pull_request:
-    paths:
-      - 'sdk/aqueduct/**'
+#    paths:
+#      - 'sdk/aqueduct/**'
   merge_group:
 
 jobs:
