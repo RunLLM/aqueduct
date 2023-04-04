@@ -112,7 +112,7 @@ jobs:
         with:
           aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
-          s3_test_config_path: periodic-data-integration-test-config-saurav.yml
+          s3_test_config_path: periodic-data-integration-test-config.yml
       
       - name: Install any data connector packages
         run: |
@@ -136,7 +136,7 @@ jobs:
         working-directory: scripts/data
         run: python3 teardown_hosted.py --aws-key-id ${{ secrets.SAURAV_AWS_ACCESS_KEY_ID }} --aws-secret-key ${{ secrets.SAURAV_AWS_SECRET_ACCESS_KEY }}
 
-      Sets it as an environmental variable.
+      # Sets it as an environmental variable.
       - name: Get the Slack ID for the current oncall
         if: always()
         run: |
