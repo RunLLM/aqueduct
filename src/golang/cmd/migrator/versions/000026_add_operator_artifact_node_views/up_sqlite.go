@@ -137,6 +137,5 @@ AS
 		artf_with_inputs LEFT JOIN artf_with_outputs
 	ON
 		artf_with_outputs.id = artf_with_inputs.id
-		AND artf_with_outputs.dag_id = artf_with_inputs.dag_id
-	WHERE artf_with_outputs.outputs IS NULL;
+		AND artf_with_outputs.dag_id = artf_with_inputs.dag_id;
 `
