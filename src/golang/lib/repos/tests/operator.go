@@ -61,9 +61,9 @@ func (ts *TestSuite) TestOperator_GetByDAG() {
 	requireDeepEqualOperators(ts.T(), expectedOperators, actualOperators)
 }
 
-func (ts *TestSuite) TestOperator_GetNodeByDAG() {
+func (ts *TestSuite) TestOperator_GetNodesByDAG() {
 	dag, _, _, expectedOpNodes, _ := ts.seedComplexWorkflow()
-	actualOpNodes, err := ts.operator.GetNodeByDAG(ts.ctx, dag.ID, ts.DB)
+	actualOpNodes, err := ts.operator.GetNodesByDAG(ts.ctx, dag.ID, ts.DB)
 	require.Nil(ts.T(), err)
 	require.Equal(ts.T(), len(expectedOpNodes), len(actualOpNodes))
 	for _, actualOp := range actualOpNodes {

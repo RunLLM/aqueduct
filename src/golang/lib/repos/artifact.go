@@ -6,6 +6,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
 
@@ -27,6 +28,11 @@ type artifactReader interface {
 
 	// GetByDAG returns the Artifacts created by the workflow DAG with ID dagID.
 	GetByDAG(ctx context.Context, dagID uuid.UUID, DB database.Database) ([]models.Artifact, error)
+
+	// GetNodesByDAG returns the OperatorNodes in the specified DAG.
+	// ArtifactNodes includes inputs / outputs IDs, which are not available in
+	// Artifacts.
+	GetNodesByDAG(ctx context.Context, dagID uuid.UUID, DB database.Database) ([]views.ArtifactNode, error)
 
 	// GetIDsByDAGAndDownstreamOPBatch returns a list of Artifact IDs belonging to a DAG
 	// in dagIDs if it is connected via a DAGEdge to an operator in operatorIDs.

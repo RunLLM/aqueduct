@@ -84,11 +84,16 @@ func (*operatorReader) GetByDAG(ctx context.Context, dagID uuid.UUID, DB databas
 	return getOperators(ctx, DB, query, args...)
 }
 
-func (*operatorReader) GetNodeByDAG(ctx context.Context, dagID uuid.UUID, DB database.Database) ([]views.OperatorNode, error) {
+func (*operatorReader) GetNodesByDAG(
+	ctx context.Context,
+	dagID uuid.UUID,
+	DB database.Database,
+) ([]views.OperatorNode, error) {
 	query := fmt.Sprintf(
-		"SELECT %s FROM %s WHERE dag_id = $1",
+		"SELECT %s FROM %s WHERE %s = $1",
 		views.OperatorNodeCols(),
 		views.OperatorNodeView,
+		views.OperatorNodeDagID,
 	)
 	args := []interface{}{dagID}
 	return getOperatorNodes(ctx, DB, query, args...)

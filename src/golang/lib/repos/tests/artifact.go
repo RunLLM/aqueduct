@@ -49,6 +49,18 @@ func (ts *TestSuite) TestArtifact_GetByDAG() {
 	requireDeepEqual(ts.T(), []models.Artifact{expectedArtifact}, actualArtifact)
 }
 
+func (ts *TestSuite) TestArtifact_GetNodesByDAG() {
+	dag, _, _, _, expectedArtfNodes := ts.seedComplexWorkflow()
+	actualArtfNodes, err := ts.artifact.GetNodesByDAG(ts.ctx, dag.ID, ts.DB)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), len(expectedArtfNodes), len(actualArtfNodes))
+	for _, actualArtf := range actualArtfNodes {
+		expectedOp, ok := expectedArtfNodes[actualArtf.Name]
+		require.True(ts.T(), ok)
+		requireDeepEqual(ts.T(), expectedOp, actualArtf)
+	}
+}
+
 func (ts *TestSuite) TestArtifact_GetMetricsByUpstreamArtifactBatch() {
 	_, _, artifacts, _, _ := ts.seedComplexWorkflow()
 

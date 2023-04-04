@@ -171,6 +171,21 @@ func (*artifactReader) GetMetricsByUpstreamArtifactBatch(
 	return results, nil
 }
 
+func (*artifactReader) GetNodesByDAG(
+	ctx context.Context,
+	dagID uuid.UUID,
+	DB database.Database,
+) ([]views.ArtifactNode, error) {
+	query := fmt.Sprintf(
+		"SELECT %s FROM %s WHERE %s = $1",
+		views.ArtifactNodeCols(),
+		views.ArtifactNodeView,
+		views.ArtifactNodeDagID,
+	)
+	args := []interface{}{dagID}
+	return getArtifactNodes(ctx, DB, query, args...)
+}
+
 func (*artifactWriter) Create(
 	ctx context.Context,
 	name string,
@@ -227,6 +242,12 @@ func getArtifacts(ctx context.Context, DB database.Database, query string, args 
 	var artifacts []models.Artifact
 	err := DB.Query(ctx, &artifacts, query, args...)
 	return artifacts, err
+}
+
+func getArtifactNodes(ctx context.Context, DB database.Database, query string, args ...interface{}) ([]views.ArtifactNode, error) {
+	var artifactNodes []views.ArtifactNode
+	err := DB.Query(ctx, &artifactNodes, query, args...)
+	return artifactNodes, err
 }
 
 func getArtifact(ctx context.Context, DB database.Database, query string, args ...interface{}) (*models.Artifact, error) {
