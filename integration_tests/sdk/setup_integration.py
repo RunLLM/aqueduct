@@ -161,9 +161,7 @@ def _setup_external_sqlite_db(path: str):
 
 
 def _setup_postgres_db():
-    print("Installing Aqueduct Postgres Connector")
     _execute_command(["aqueduct", "install", "postgres"])
-    print("Finished installing Postgres Connector")
 
 
 def _setup_relational_data(client: Client, db: RelationalDBIntegration) -> None:
@@ -212,7 +210,6 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
     for integration_name in data_integrations:
         # Only connect to integrations that don't already exist.
         if integration_name not in connected_integrations.keys():
-            print("Fetching integration credentials ...")
             integration_config = _fetch_integration_credentials("data", integration_name)
 
             # Stand up the external integration first.
@@ -220,7 +217,6 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
                 _setup_external_sqlite_db(integration_config["database"])
 
             if integration_config["type"] == ServiceType.POSTGRES:
-                print("Postgres case hit!!")
                 _setup_postgres_db()
 
             client.connect_integration(
