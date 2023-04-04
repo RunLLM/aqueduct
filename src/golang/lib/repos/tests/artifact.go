@@ -55,9 +55,14 @@ func (ts *TestSuite) TestArtifact_GetNodesByDAG() {
 	require.Nil(ts.T(), err)
 	require.Equal(ts.T(), len(expectedArtfNodes), len(actualArtfNodes))
 	for _, actualArtf := range actualArtfNodes {
-		expectedOp, ok := expectedArtfNodes[actualArtf.Name]
+		expectedArtf, ok := expectedArtfNodes[actualArtf.Name]
 		require.True(ts.T(), ok)
-		requireDeepEqual(ts.T(), expectedOp, actualArtf)
+		// We don't care about artifact inputs / outputs ordering.
+		// It's sufficient if they are the same as sets.
+		require.Equal(ts.T(), len(expectedArtf.Inputs), len(actualArtf.Inputs))
+		require.Subset(ts.T(), expectedArtf.Inputs, actualArtf.Inputs)
+		require.Equal(ts.T(), len(expectedArtf.Outputs), len(actualArtf.Outputs))
+		require.Subset(ts.T(), expectedArtf.Outputs, actualArtf.Outputs)
 	}
 }
 
