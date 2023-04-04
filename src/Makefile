@@ -38,6 +38,18 @@ server-release:
 
 release: server-release executor-release migrator-release
 
+# Prerequisites:
+# install RTK codegen in ~/: `npm i @rtk-query/codegen-openapi`
+# install pydantic codegen: `pip install pip3 install datamodel-code-generator`
+# install swagger codegen (for go): `brew install swagger-codegen`
+api:
+	rm -r api/go/*
+	rm -r api/python/*
+	rm -r api/rtk/*
+	cd api && swagger-codegen generate -i pet_example.json -l go-server -o go/
+	cd api && datamodel-codegen --input pet_example.json --input-file-type jsonschema --output python/response.py
+	cd api && npx @rtk-query/codegen-openapi rtk/config.json
+
 test:
 	cd golang && go test -v $$(go list ./...)
 
