@@ -147,7 +147,9 @@ jobs:
           s3_test_config_path: periodic-data-integration-test-config-agiron123.yml
 
       - name: MySQL Setup
-        run: mysql -u root -h 127.0.0.1 -P 3306 -p root -e 'CREATE DATABASE IF NOT EXISTS aqueducttest;'
+        run: |
+          sudo /etc/init.d/mysql start
+          mysql -u root -h 127.0.0.1 -P 3306 -p root -e 'CREATE DATABASE IF NOT EXISTS aqueducttest;'
 
       - name: Run the SDK Data Integration Tests
         working-directory: integration_tests/sdk
