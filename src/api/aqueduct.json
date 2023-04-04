@@ -1,0 +1,51 @@
+{
+    "components": {
+        "schemas": {
+          "GeneralError": { "$id": "./schema/general_error.json" },
+          "Workflow": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "Tag": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "parameters": {
+          "limitParam": { "$id": "./parameter/limit.json" }
+        },
+        "responses": {
+          "NotFound": {
+            "description": "Entity not found."
+          },
+          "IllegalInput": {
+            "description": "Illegal input for operation."
+          },
+          "GeneralError": {
+            "description": "General Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneralError"
+                }
+              }
+            }
+          }
+        }
+    }
+}

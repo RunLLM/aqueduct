@@ -1,0 +1,10 @@
+{
+    "name": "limit",
+    "in": "query",
+    "description": "max records to return",
+    "required": false,
+    "schema" : {
+      "type": "integer",
+      "format": "int32"
+    }
+}
