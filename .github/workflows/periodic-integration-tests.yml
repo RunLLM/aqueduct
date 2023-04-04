@@ -45,7 +45,6 @@ jobs:
 
       - name: Install any data connector packages
         run: |
-          aqueduct install redshift
           aqueduct install s3
           aqueduct install snowflake
 
