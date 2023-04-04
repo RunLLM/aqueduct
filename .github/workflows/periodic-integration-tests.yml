@@ -55,48 +55,26 @@ jobs:
   #     working-directory: integration_tests/sdk
   #     run: pytest aqueduct_tests/ -rP -vv -n 4
 
-<<<<<<< HEAD
-      - name: Teardown K8s Cluster
-        id: k8s_cleanup # so that we only upload the state on this specific failure.
-        if: always()
-        uses: nick-fields/retry@v2
-        with:
-          max_attempts: 2
-          retry_on: error
-          timeout_minutes: 20
-          retry_wait_seconds: 300
-          command: |
-            cd integration_tests/sdk/compute/k8s
-            terraform destroy --auto-approve
+  #    - name: Teardown K8s Cluster
+  #      id: k8s_cleanup # so that we only upload the state on this specific failure.
+  #      if: always()
+  #      uses: nick-fields/retry@v2
+  #      with:
+  #        max_attempts: 2
+  #        retry_on: error
+  #        timeout_minutes: 20
+  #        retry_wait_seconds: 300
+  #        command: |
+  #          cd integration_tests/sdk/compute/k8s
+  #          terraform destroy --auto-approve
 
-      # This directory is quite large, so we only upload it on failure.
-      - uses: actions/upload-artifact@v3
-        if: ${{ failure() && steps.k8s_cleanup.outcome == 'failure' }}
-        with:
-          name: Terraform State
-          path: |
-            integration_tests/sdk/compute/k8s/*
-=======
-  #   - name: Teardown K8s Cluster
-  #     if: always()
-  #     uses: nick-fields/retry@v2
-  #     with:
-  #       max_attempts: 2
-  #       retry_on: error
-  #       timeout_minutes: 20
-  #       retry_wait_seconds: 300
-  #       command: |
-  #         cd integration_tests/sdk/compute/k8s
-  #         terraform destroy --auto-approve
-
-  #   # This directory is quite large, so we only upload it on failure.
+  # This directory is quite large, so we only upload it on failure.
   #   - uses: actions/upload-artifact@v3
-  #     if: ${{ failure() }}
+  #     if: ${{ failure() && steps.k8s_cleanup.outcome == 'failure' }}
   #     with:
   #       name: Terraform State
   #       path: |
   #         integration_tests/sdk/compute/k8s/*
->>>>>>> 3cb2946fb (comment out k8s tests)
 
   #   - uses: ./.github/actions/upload-artifacts
   #     if: always()
@@ -151,7 +129,8 @@ jobs:
           MYSQL_PASSWORD: password
           MYSQL_ROOT_PASSWORD: rootpassword
         ports:
-          - 33306:3306
+          # Maps tcp port 3306 on service container to the host
+          - 3306:3306
         options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
