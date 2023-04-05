@@ -6,6 +6,7 @@ from aqueduct.models.dag import DAG, Metadata
 
 from aqueduct import Client, global_config, globals
 from sdk.setup_integration import (
+    lazy_configuration,
     get_aqueduct_config,
     get_artifact_store_name,
     has_storage_config,
@@ -128,8 +129,10 @@ def engine(request, pytestconfig):
             )
     # Test cases process the aqueduct engine as None. We do the conversion here
     # because fixture parameters are printed as part of test execution.
+    global_config({"lazy": lazy_configuration(request.param)})
+    
     if request.param != "aqueduct_engine":
-        global_config({"engine": request.param, "lazy": True})
+        global_config({"engine": request.param})
         return request.param
     else:
         return None

@@ -3,29 +3,28 @@ from aqueduct import op
 
 @op()
 def dummy_sentiment_model(df):
-    df["positivity"] = 123
+    columns = df.columns
     return df
 
 
 def dummy_sentiment_model_function(df):
-    df["positivity"] = 123
+    columns = df.columns
     return df
 
 
 @op
 def dummy_sentiment_model_multiple_input(df1, df2):
-    df1["positivity"] = 123
-    df1["positivity_2"] = 456
+    columns = df1.columns
     return df1
 
 
 @op()
 def dummy_model(df):
-    df["newcol"] = "value"
+    columns = df.columns
     return df
 
 
 @op()
 def dummy_model_2(df):
-    df["newcol_2"] = "value"
+    columns = df.columns
     return df
