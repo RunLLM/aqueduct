@@ -70,3 +70,6 @@ def deploy(client, integration_name):
             pass_level_error_artf,
         ],
     )
+
+def hello():
+    return "hello"

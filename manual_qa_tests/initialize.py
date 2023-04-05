@@ -1,7 +1,8 @@
 import argparse
-
 import deploy_example
+
 from aqueduct.constants.enums import NotificationLevel
+from multiprocessing import Process
 from notification import connect_slack
 from wait_for_flows import wait_for_all_flows_to_complete
 from workflows import (
@@ -15,6 +16,8 @@ from workflows import (
     succeed_parameters,
     warning_bad_check,
 )
+
+from workflows.check_status_test import hello
 
 import aqueduct as aq
 
@@ -47,6 +50,12 @@ ADDITIONAL_EXAMPLE_NOTEBOOKS_PATHS = [
 TEMP_NOTEBOOK_PATH = "temp.py"
 RUN_NOTEBOOK_SCRIPT = "examples/run_notebook.py"
 
+
+def deploy_flow(name, deploy_fn, api_key, address, data_integration) -> None:
+    print(f"Deploying {name}...")
+    client = aq.Client(api_key, address)
+    deploy_fn(client, data_integration)
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--addr", default="localhost:8080")
@@ -63,7 +72,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     api_key = args.api_key if args.api_key else aq.get_apikey()
-    client = aq.Client(api_key, args.addr)
 
     if args.slack_token and args.slack_channel:
         connect_slack(
@@ -89,9 +97,14 @@ if __name__ == "__main__":
             )
 
     if not args.example_notebooks_only and not args.demo_container_notebooks_only:
+        processes = []
         for pkg in WORKFLOW_PKGS:
-            print(f"Deploying {pkg.NAME}...")
-            pkg.deploy(client, args.data_integration)
+            p = Process(target=deploy_flow, args=(pkg.NAME, pkg.deploy, api_key, args.addr, args.data_integration))
+            processes.append(p)
+            p.start()
+
+        for p in processes:
+            p.join()
 
     if args.wait_to_complete:
         wait_for_all_flows_to_complete(client)
