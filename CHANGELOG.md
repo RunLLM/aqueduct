@@ -3,6 +3,10 @@
 ## 0.2.9
 Released on April 5, 2023.
 
+### Key Features
+* [Beta] Aqueduct now has support for loading dataframe and image data from
+  the local filesystem as parameters. See `client.create_param()` for details.
+
 ### Enhancements
 * Improves the artifact storage management process. The integrations page now
     shows which system is being used for artifact storage, and if a migration
