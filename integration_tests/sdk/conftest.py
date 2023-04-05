@@ -126,10 +126,13 @@ def engine(request, pytestconfig):
             pytest.skip(
                 "Skipped. Tests are only running against compute %s." % cmdline_compute_flag
             )
-
     # Test cases process the aqueduct engine as None. We do the conversion here
     # because fixture parameters are printed as part of test execution.
-    return request.param if request.param != "aqueduct_engine" else None
+    if request.param != "aqueduct_engine":
+        global_config({"engine": request.param, "lazy": True})
+        return request.param
+    else:
+        return None
 
 
 @pytest.fixture(scope="function")
