@@ -323,7 +323,7 @@ def _fetch_integration_credentials(section: str, name: str) -> Dict[str, Any]:
         name in test_credentials[section]
     ), "%s Integration `%s` must have its credentials in test-credentials.yml." % (section, name)
     return test_credentials[section][name]
-    
+
 
 def lazy_configuration(name: str) -> bool:
     """
@@ -332,7 +332,7 @@ def lazy_configuration(name: str) -> bool:
     Returns False otherwise.
     """
     test_credentials = _parse_credentials_file()
-    
+
     assert "compute" in test_credentials, "compute section expected in test-credentials.yml"
     assert name in test_credentials["compute"].keys(), "%s not in test-credentials.yml." % name
 
