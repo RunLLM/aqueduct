@@ -99,6 +99,9 @@ const WithOperatorHeader: React.FC<Props> = ({
   const integrationId =
     operator?.spec?.load?.integration_id ||
     operator?.spec?.extract?.integration_id;
+  const integrationName = integrationId
+    ? integrationsState?.integrations[integrationId]?.name
+    : undefined;
 
   return (
     <Box width="100%">
@@ -118,17 +121,21 @@ const WithOperatorHeader: React.FC<Props> = ({
         {checkLevelDisplay}
       </Box>
 
-      <ResourceItem
-        resource={service}
-        resourceCustomName={
-          integrationsState?.integrations[integrationId]?.name
-        }
-      />
+      {integrationName && (
+        <ResourceItem
+          resource={service}
+          resourceCustomName={
+            integrationsState?.integrations[integrationId]?.name
+          }
+        />
+      )}
 
       <Box display="flex" width="100%">
-        <Box width="100%" paddingTop={sideSheetMode ? '16px' : '24px'}>
-          <SaveDetails parameters={operator?.spec?.load?.parameters} />
-        </Box>
+        {operator?.spec?.load?.parameters && (
+          <Box width="100%" paddingTop={sideSheetMode ? '16px' : '24px'}>
+            <SaveDetails parameters={operator?.spec?.load?.parameters} />
+          </Box>
+        )}
 
         {operator?.spec?.load && <Box width="96px" />}
 
