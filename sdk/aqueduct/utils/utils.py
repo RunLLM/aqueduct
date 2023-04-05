@@ -1,5 +1,4 @@
 import uuid
-from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from aqueduct.constants.enums import ArtifactType, RuntimeType, ServiceType, TriggerType
@@ -17,6 +16,7 @@ from aqueduct.models.integration import IntegrationInfo
 from aqueduct.models.operators import ParamSpec
 from croniter import croniter
 
+from ..models.response_models import Logs
 from .serialization import artifact_type_to_serialization_type, serialize_val
 from .type_inference import _bytes_to_base64_string
 
@@ -84,14 +84,32 @@ def generate_flow_schedule(
     return Schedule(trigger=TriggerType.PERIODIC, cron_schedule=schedule_str)
 
 
-def human_readable_timestamp(ts: int) -> str:
-    format = "%Y-%m-%d %H:%M:%S"
-    return datetime.utcfromtimestamp(ts).strftime(format)
-
-
 def indent_multiline_string(content: str) -> str:
     """Indents every line of a multiline string block."""
     return "\t" + "\t".join(content.splitlines(True))
+
+
+def print_logs(logs: Logs) -> None:
+    """Prints out the logs with the following format:
+
+    stdout:
+        {logs}
+        {logs}
+    ----------------------------------
+    stderr:
+        {logs}
+        {logs}
+    """
+    if len(logs.stdout) > 0:
+        print("stdout:")
+        print(indent_multiline_string(logs.stdout).rstrip("\n"))
+
+    if len(logs.stdout) > 0 and len(logs.stderr) > 0:
+        print("----------------------------------")
+
+    if len(logs.stderr) > 0:
+        print("stderr:")
+        print(indent_multiline_string(logs.stderr).rstrip("\n"))
 
 
 def parse_user_supplied_id(id: Union[str, uuid.UUID]) -> str:
