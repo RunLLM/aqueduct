@@ -1,5 +1,6 @@
 import textwrap
 import uuid
+from datetime import datetime
 from typing import Optional
 
 from aqueduct.artifacts import (
@@ -63,6 +64,14 @@ class FlowRun:
         """Returns the status of the flow run."""
         return self._dag_result_resp.result.exec_state.status
 
+    def _created_at(self) -> datetime:
+        """Returns the datetime at which the flow run was created."""
+        return self._dag_result_resp.dag_created_at
+
+    def created_at(self) -> float:
+        """Returns the unix timestamp at which the flow run was created."""
+        return self._created_at().timestamp()
+
     def describe(self) -> None:
         """Prints out a human-readable description of the flow run."""
         url = generate_ui_url(
@@ -76,7 +85,7 @@ class FlowRun:
                 f"""
             {format_header_for_print(f"'{self._dag.metadata.name}' Run")}
             ID: {self._id}
-            Created At (UTC): {self._dag_result_resp.dag_created_at.strftime(TIME_FORMAT)}
+            Created At (UTC): {self._created_at().strftime(TIME_FORMAT)}
             Status: {str(self.status())}
             UI: {url}
             """
