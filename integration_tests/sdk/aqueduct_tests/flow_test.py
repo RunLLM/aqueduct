@@ -28,9 +28,15 @@ def test_basic_flow(client, flow_name, data_integration, engine, data_validator)
     output_artifact = dummy_sentiment_model(table_artifact)
     save(data_integration, output_artifact)
 
+    @op
+    def foo(input):
+        5/0
+        return 123
+    output = foo.lazy(output_artifact)
+
     flow = publish_flow_test(
         client,
-        output_artifact,
+        output,
         name=flow_name(),
         engine=engine,
     )
