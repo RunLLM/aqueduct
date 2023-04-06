@@ -179,4 +179,7 @@ def parse_spec(spec_json: bytes) -> Spec:
     # The following line is working, but mypy complains:
     # Argument 1 to "parse_obj_as" has incompatible type "object"; expected "Type[<nothing>]"
     # We ignore the error for now.
+
+    print("HELLO: ", data)
+
     return parse_obj_as(Spec, data)  # type: ignore

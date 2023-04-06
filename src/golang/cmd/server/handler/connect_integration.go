@@ -162,6 +162,9 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		return emptyResp, statusCode, err
 	}
 
+	log.Errorf("S3 Storage Config: %v", args.StorageConfig.S3Config)
+	log.Errorf("File Storage Config: %v", args.StorageConfig.FileConfig)
+
 	// Validate integration config
 	statusCode, err = ValidateConfig(
 		ctx,
@@ -213,6 +216,8 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		if err != nil {
 			return emptyResp, http.StatusBadRequest, errors.Wrap(err, "Integration config is malformed.")
 		}
+
+		log.Errorf("HELLO: new storage config %v", newStorageConfig.S3Config)
 
 		err = storage_migration.Perform(
 			ctx,

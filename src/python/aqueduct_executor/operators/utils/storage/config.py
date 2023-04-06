@@ -18,6 +18,8 @@ class FileStorageConfig(BaseModel):
 class S3StorageConfig(BaseModel):
     region: str
     bucket: str
+    root_dir: str = ""
+
     credentials_path: str
     credentials_profile: str
     aws_access_key_id: str = ""

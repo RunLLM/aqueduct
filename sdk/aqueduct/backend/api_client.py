@@ -268,6 +268,8 @@ class APIClient:
             # The enum value needs to be used
             integration_service = integration_service.value
 
+        print("HELLO: Integration Config: ", config)
+
         headers = self._generate_auth_headers()
         headers.update(
             {

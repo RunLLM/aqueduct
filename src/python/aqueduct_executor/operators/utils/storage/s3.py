@@ -32,24 +32,29 @@ class S3Storage(Storage):
             os.environ["AWS_SHARED_CREDENTIALS_FILE"] = config.credentials_path
             os.environ["AWS_PROFILE"] = config.credentials_profile
             self._client = boto3.client("s3", config=BotoConfig(region_name=config.region))
+
+        print("HELLO: print config ", config)
         self._config = config
 
-        bucket, key_prefix = parse_s3_path(self._config.bucket)
+        bucket, key_prefix = parse_s3_bucket_and_key_prefix(self._config.bucket, self._config.root_dir)
+
+        print("HELLO: key_prefix", key_prefix)
+
         self._bucket = bucket
         self._key_prefix = key_prefix
 
     def put(self, key: str, value: bytes) -> None:
-        key = self._prefix_key(key)
+        key = self._resolve_full_key(key)
         print(f"writing to s3: {key}")
         self._client.put_object(Bucket=self._bucket, Key=key, Body=value)
 
     def get(self, key: str) -> bytes:
-        key = self._prefix_key(key)
+        key = self._resolve_full_key(key)
         print(f"reading from s3: {key}")
         return self._client.get_object(Bucket=self._bucket, Key=key)["Body"].read()  # type: ignore
 
     def exists(self, key: str) -> bool:
-        key = self._prefix_key(key)
+        key = self._resolve_full_key(key)
         print(f"checking if exists in s3: {key}")
         try:
             self._client.head_object(Bucket=self._bucket, Key=key)
@@ -63,14 +68,20 @@ class S3Storage(Storage):
                 return False
         return True
 
-    def _prefix_key(self, key: str) -> str:
+    def _resolve_full_key(self, key: str) -> str:
         if not self._key_prefix:
             return key
         return self._key_prefix + "/" + key
 
 
-def parse_s3_path(s3_path: str) -> Tuple[str, str]:
-    path_parts = s3_path.replace("s3://", "").split("/")
+def parse_s3_bucket_and_key_prefix(s3_bucket_path: str, root_dir_path: str) -> Tuple[str, str]:
+    path_parts = s3_bucket_path.replace("s3://", "").split("/")
     bucket = path_parts.pop(0)
+
+    print("HELLO: path parts ", path_parts)
+
+    if root_dir_path != "":
+        path_parts += root_dir_path.split("/")
+
     key = "/".join(path_parts)
     return bucket, key
