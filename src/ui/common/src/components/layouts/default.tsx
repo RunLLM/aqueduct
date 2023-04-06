@@ -42,7 +42,7 @@ export const DefaultLayout: React.FC<Props> = ({
   const muiTheme = createTheme(theme);
   const dispatch: AppDispatch = useDispatch();
 
-  const [showBanner, setShowBanner] = useState(true);
+  const [showBanner, setShowBanner] = useState<boolean>(true);
 
   useEffect(() => {
     if (user) {
@@ -62,49 +62,62 @@ export const DefaultLayout: React.FC<Props> = ({
           overflow: 'auto',
         }}
       >
-        {
-          showBanner && (
-            <Box sx={{ backgroundColor: '#A7E2EA', width: '100%', height: '64px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <Box>
-                <Typography variant="h6">
-                  ✨ v0.2.9 has launched!{' '}
-                  <Link href={'https://github.com/aqueducthq/aqueduct/releases'} target='_blank'>
-                    Release Notes
-                  </Link>
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  width: '16px',
-                  fontSize: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifySelf: 'space-between',
-                  position: 'absolute',
-                  right: '16px',
-                }}
-              >
-                <FontAwesomeIcon
-                  icon={faXmark}
-                  onClick={() => {
-                    setShowBanner(false);
-                  }}
-                />
-              </Box>
+        {showBanner && (
+          <Box
+            sx={{
+              backgroundColor: '#A7E2EA',
+              width: '100%',
+              height: '64px',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+            }}
+          >
+            <Box>
+              <Typography variant="h6">
+                ✨ v0.2.9 has launched!{' '}
+                <Link
+                  href={'https://github.com/aqueducthq/aqueduct/releases'}
+                  target="_blank"
+                >
+                  Release Notes
+                </Link>
+              </Typography>
             </Box>
-          )
-        }
+            <Box
+              sx={{
+                width: '16px',
+                fontSize: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                justifySelf: 'space-between',
+                position: 'absolute',
+                right: '16px',
+              }}
+            >
+              <FontAwesomeIcon
+                icon={faXmark}
+                onClick={() => {
+                  setShowBanner(false);
+                }}
+              />
+            </Box>
+          </Box>
+        )}
 
         <Box sx={{ width: '100%', height: '100%', display: 'flex', flex: 1 }}>
           <MenuSidebar
             user={user}
             onSidebarItemClicked={onSidebarItemClicked}
           />
+
           <NavBar
             user={user}
             breadcrumbs={breadcrumbs}
+            showBanner={showBanner}
             onBreadCrumbClicked={onBreadCrumbClicked}
           />
+
           {/* Pad top for breadcrumbs (64px). */}
           {/* The margin here is fixed to be a constant (50px) more than the sidebar, which is a fixed width (200px). */}
           <Box

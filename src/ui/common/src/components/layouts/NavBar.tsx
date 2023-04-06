@@ -46,7 +46,7 @@ export class BreadcrumbLink {
     'Page Not Found'
   );
 
-  constructor(public readonly address: string, public readonly name: string) { }
+  constructor(public readonly address: string, public readonly name: string) {}
 
   toString(): string {
     return this.name;
@@ -62,7 +62,13 @@ const NavBar: React.FC<{
   user: UserProfile;
   breadcrumbs: BreadcrumbLink[];
   onBreadCrumbClicked?: (name: string) => void;
-}> = ({ user, breadcrumbs, onBreadCrumbClicked = null }) => {
+  showBanner: boolean;
+}> = ({
+  user,
+  breadcrumbs,
+  onBreadCrumbClicked = null,
+  showBanner = false,
+}) => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -98,7 +104,7 @@ const NavBar: React.FC<{
         backgroundColor: 'white',
         color: 'black',
         // Need to give room for the announcement banner
-        marginTop: '64px'
+        marginTop: showBanner ? '64px' : null,
       }}
     >
       <Toolbar>
