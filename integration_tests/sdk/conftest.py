@@ -129,10 +129,9 @@ def engine(request, pytestconfig):
             )
     # Test cases process the aqueduct engine as None. We do the conversion here
     # because fixture parameters are printed as part of test execution.
-    global_config({"lazy": lazy_configuration(request.param)})
-
     if request.param != "aqueduct_engine":
-        global_config({"engine": request.param})
+        lazy_config = lazy_configuration(request.param)
+        global_config({"engine": request.param, "lazy": lazy_config})
         return request.param
     else:
         return None
