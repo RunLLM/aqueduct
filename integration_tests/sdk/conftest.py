@@ -9,7 +9,7 @@ from sdk.setup_integration import (
     get_aqueduct_config,
     get_artifact_store_name,
     has_storage_config,
-    lazy_configuration,
+    is_preview_enabled,
     list_compute_integrations,
     list_data_integrations,
     setup_compute_integrations,
@@ -127,14 +127,22 @@ def engine(request, pytestconfig):
             pytest.skip(
                 "Skipped. Tests are only running against compute %s." % cmdline_compute_flag
             )
+
     # Test cases process the aqueduct engine as None. We do the conversion here
     # because fixture parameters are printed as part of test execution.
-    if request.param != "aqueduct_engine":
-        lazy_config = lazy_configuration(request.param)
-        global_config({"engine": request.param, "lazy": lazy_config})
-        return request.param
-    else:
-        return None
+    return request.param if request.param != "aqueduct_engine" else None
+
+
+@pytest.fixture(scope="function", autouse=True)
+def set_global_configs(engine):
+    if engine != "aqueduct_engine":
+        # We set lazy to False if previews are enabled, True otherwise.
+        lazy_config = not is_preview_enabled(engine)
+        global_config({"engine": engine, "lazy": lazy_config})
+
+    yield
+
+    global_config({"engine": None, "lazy": False})
 
 
 @pytest.fixture(scope="function")

@@ -325,7 +325,7 @@ def _fetch_integration_credentials(section: str, name: str) -> Dict[str, Any]:
     return test_credentials[section][name]
 
 
-def lazy_configuration(name: str) -> bool:
+def is_preview_enabled(name: str) -> bool:
     """
     Checks config to see if given compute integration should have lazy exeuction.
     Returns True if if given compute integration has `enable_previews` set.
@@ -336,11 +336,7 @@ def lazy_configuration(name: str) -> bool:
     assert "compute" in test_credentials, "compute section expected in test-credentials.yml"
     assert name in test_credentials["compute"].keys(), "%s not in test-credentials.yml." % name
 
-    if "enable_previews" in test_credentials["compute"][name].keys():
-        # `enable_previews` set, so we set `lazy` to False
-        return False
-    # `enable_previews` not set, so we set `lazy` to True
-    return True
+    return "enable_previews" in test_credentials["compute"][name].keys()
 
 
 def list_data_integrations() -> List[str]:
