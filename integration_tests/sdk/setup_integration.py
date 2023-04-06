@@ -332,6 +332,18 @@ def _fetch_integration_credentials(section: str, name: str) -> Dict[str, Any]:
     return test_credentials[section][name]
 
 
+def is_preview_enabled(name: str) -> bool:
+    """
+    Returns whether or not the provided compute integration has `enable_previews` set.
+    """
+    test_credentials = _parse_credentials_file()
+
+    assert "compute" in test_credentials, "compute section expected in test-credentials.yml"
+    assert name in test_credentials["compute"].keys(), "%s not in test-credentials.yml." % name
+
+    return "enable_previews" in test_credentials["compute"][name].keys()
+
+
 def list_data_integrations() -> List[str]:
     """Get the list of data integrations from the config file."""
     test_config = _parse_config_file()
