@@ -2,7 +2,7 @@ name: Periodic Integration Tests
 
 on:
   schedule:
-     - cron: '0 12 * * 1-5' # Run at 4AM PST on every weekday
+    - cron: "0 12 * * 1-5" # Run at 4AM PST on every weekday
   workflow_dispatch:
 
 jobs:
@@ -90,10 +90,10 @@ jobs:
         uses: ravsamhq/notify-slack-action@v1
         with:
           status: ${{ job.status }}
-          notification_title: ''
-          message_format: '{emoji} *{workflow}* has {status_message}'
-          footer: '{run_url}'
-          notify_when: 'failure,warnings'
+          notification_title: ""
+          message_format: "{emoji} *{workflow}* has {status_message}"
+          footer: "{run_url}"
+          notify_when: "failure,warnings"
           mention_users: ${{ env.ONCALL_SLACK_MEMBER_ID }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
@@ -102,6 +102,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     name: SDK Integration Tests against Data Connectors
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: aqueduct
+          POSTGRES_DB: aqueducttest
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
     steps:
       - uses: actions/checkout@v2
 
@@ -148,10 +163,10 @@ jobs:
         uses: ravsamhq/notify-slack-action@v1
         with:
           status: ${{ job.status }}
-          notification_title: ''
-          message_format: '{emoji} *{workflow}* has {status_message}'
-          footer: '{run_url}'
-          notify_when: 'failure,warnings'
+          notification_title: ""
+          message_format: "{emoji} *{workflow}* has {status_message}"
+          footer: "{run_url}"
+          notify_when: "failure,warnings"
           mention_users: ${{ env.ONCALL_SLACK_MEMBER_ID }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
