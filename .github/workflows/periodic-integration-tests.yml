@@ -127,13 +127,16 @@ jobs:
           MYSQL_USER: aqueduct
           MYSQL_PASSWORD: Password123!
           MYSQL_DATABASE: aqueducttest
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_HOST: 127.0.0.1
-          #MYSQL_ALLOW_EMPTY_PASSWORD: yes
+          MYSQL_ROOT_PASSWORD: Password123!
         ports:
           # Maps tcp port 3306 on service container to the host
           - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+        options: >-
+          --name=mysql
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
 
     steps:
       - uses: actions/checkout@v2
@@ -147,10 +150,10 @@ jobs:
           aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
           s3_test_config_path: periodic-data-integration-test-config-agiron123.yml
 
-#      - name: MySQL Setup
-#        run: |
-#          sudo /etc/init.d/mysql start
-#          mysql -u root -h 127.0.0.1 -P 3306 -e 'CREATE DATABASE IF NOT EXISTS aqueducttest;'
+      #      - name: MySQL Setup
+      #        run: |
+      #          sudo /etc/init.d/mysql start
+      #          mysql -u root -h 127.0.0.1 -P 3306 -e 'CREATE DATABASE IF NOT EXISTS aqueducttest;'
 
       - name: Run the SDK Data Integration Tests
         working-directory: integration_tests/sdk
