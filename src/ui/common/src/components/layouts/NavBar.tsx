@@ -46,7 +46,7 @@ export class BreadcrumbLink {
     'Page Not Found'
   );
 
-  constructor(public readonly address: string, public readonly name: string) {}
+  constructor(public readonly address: string, public readonly name: string) { }
 
   toString(): string {
     return this.name;
@@ -97,6 +97,8 @@ const NavBar: React.FC<{
         borderBottom: `2px solid ${contextTheme.palette.gray[300]}`,
         backgroundColor: 'white',
         color: 'black',
+        // Need to give room for the announcement banner
+        marginTop: '64px'
       }}
     >
       <Toolbar>
