@@ -142,7 +142,7 @@ def set_global_configs(engine):
 
     yield
 
-    global_config({"engine": None, "lazy": False})
+    global_config({"engine": "aqueduct", "lazy": False})
 
 
 @pytest.fixture(scope="function")
