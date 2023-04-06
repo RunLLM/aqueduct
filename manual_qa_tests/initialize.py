@@ -17,8 +17,6 @@ from workflows import (
     warning_bad_check,
 )
 
-from workflows.check_status_test import hello
-
 import aqueduct as aq
 
 # when adding new deployments, keep the order of `fail`, `warning`, and `succeed`
@@ -51,10 +49,22 @@ TEMP_NOTEBOOK_PATH = "temp.py"
 RUN_NOTEBOOK_SCRIPT = "examples/run_notebook.py"
 
 
+def deploy_example_notebook(deploy_fn, dir_path, notebook_name, api_key, address) -> None:
+    print(f"Deploying example notebooks {notebook_name}...")
+    deploy_fn(
+        dir_path,
+        notebook_name,
+        TEMP_NOTEBOOK_PATH,
+        address,
+        api_key,
+    )
+
+
 def deploy_flow(name, deploy_fn, api_key, address, data_integration) -> None:
     print(f"Deploying {name}...")
     client = aq.Client(api_key, address)
     deploy_fn(client, data_integration)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -69,9 +79,11 @@ if __name__ == "__main__":
     parser.add_argument("--slack-channel", default="")
     parser.add_argument("--notification-level", default="success")
     parser.add_argument("--wait-to-complete", action="store_true")
+    parser.add_argument("--single-threaded", action="store_true")
     args = parser.parse_args()
 
     api_key = args.api_key if args.api_key else aq.get_apikey()
+    client = aq.Client(api_key, args.addr)
 
     if args.slack_token and args.slack_channel:
         connect_slack(
@@ -81,28 +93,32 @@ if __name__ == "__main__":
             NotificationLevel(args.notification_level),
         )
 
+    # This is only populated in the default multi-process case.
+    processes = []
+
     if args.example_notebooks or args.example_notebooks_only or args.demo_container_notebooks_only:
         notebooks = DEMO_NOTEBOOKS_PATHS
         if not args.demo_container_notebooks_only:
             notebooks += ADDITIONAL_EXAMPLE_NOTEBOOKS_PATHS
 
         for example_path in notebooks:
-            print(f"Deploying example notebooks {example_path[1]}...")
-            deploy_example.deploy(
-                example_path[0],
-                example_path[1],
-                TEMP_NOTEBOOK_PATH,
-                args.addr,
-                api_key,
-            )
+            if args.single_threaded:
+                deploy_example_notebook(deploy_example.deploy, example_path[0], example_path[1], api_key, args.addr)
+            else:
+                p = Process(target=deploy_example_notebook, args=(deploy_example.deploy, example_path[0], example_path[1], api_key, args.addr))
+                processes.append(p)
+                p.start()
 
     if not args.example_notebooks_only and not args.demo_container_notebooks_only:
-        processes = []
         for pkg in WORKFLOW_PKGS:
-            p = Process(target=deploy_flow, args=(pkg.NAME, pkg.deploy, api_key, args.addr, args.data_integration))
-            processes.append(p)
-            p.start()
+            if args.single_threaded:
+                deploy_flow(pkg.NAME, pkg.deploy, api_key, args.addr, args.data_integration)
+            else:
+                p = Process(target=deploy_flow, args=(pkg.NAME, pkg.deploy, api_key, args.addr, args.data_integration))
+                processes.append(p)
+                p.start()
 
+    if len(processes) > 0:
         for p in processes:
             p.join()
 
