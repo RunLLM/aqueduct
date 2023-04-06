@@ -1,6 +1,7 @@
 print("Cell 0")
-import pandas as pd
 import numpy as np
+import pandas as pd
+
 import aqueduct as aq
 
 # Read some customer data from the Aqueduct repo.

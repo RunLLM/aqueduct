@@ -1,8 +1,8 @@
 import argparse
-import deploy_example
-
-from aqueduct.constants.enums import NotificationLevel
 from multiprocessing import Process
+
+import deploy_example
+from aqueduct.constants.enums import NotificationLevel
 from notification import connect_slack
 from wait_for_flows import wait_for_all_flows_to_complete
 from workflows import (
@@ -103,9 +103,20 @@ if __name__ == "__main__":
 
         for example_path in notebooks:
             if args.single_threaded:
-                deploy_example_notebook(deploy_example.deploy, example_path[0], example_path[1], api_key, args.addr)
+                deploy_example_notebook(
+                    deploy_example.deploy, example_path[0], example_path[1], api_key, args.addr
+                )
             else:
-                p = Process(target=deploy_example_notebook, args=(deploy_example.deploy, example_path[0], example_path[1], api_key, args.addr))
+                p = Process(
+                    target=deploy_example_notebook,
+                    args=(
+                        deploy_example.deploy,
+                        example_path[0],
+                        example_path[1],
+                        api_key,
+                        args.addr,
+                    ),
+                )
                 processes.append(p)
                 p.start()
 
@@ -114,7 +125,10 @@ if __name__ == "__main__":
             if args.single_threaded:
                 deploy_flow(pkg.NAME, pkg.deploy, api_key, args.addr, args.data_integration)
             else:
-                p = Process(target=deploy_flow, args=(pkg.NAME, pkg.deploy, api_key, args.addr, args.data_integration))
+                p = Process(
+                    target=deploy_flow,
+                    args=(pkg.NAME, pkg.deploy, api_key, args.addr, args.data_integration),
+                )
                 processes.append(p)
                 p.start()
 
