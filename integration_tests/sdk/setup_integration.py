@@ -327,9 +327,7 @@ def _fetch_integration_credentials(section: str, name: str) -> Dict[str, Any]:
 
 def is_preview_enabled(name: str) -> bool:
     """
-    Checks config to see if given compute integration should have lazy exeuction.
-    Returns True if if given compute integration has `enable_previews` set.
-    Returns False otherwise.
+    Returns whether or not the provided compute integration has `enable_previews` set.
     """
     test_credentials = _parse_credentials_file()
 
