@@ -135,7 +135,7 @@ def engine(request, pytestconfig):
 
 @pytest.fixture(scope="function", autouse=True)
 def set_global_configs(engine):
-    if engine != "aqueduct_engine":
+    if engine != None:
         # We set lazy to False if previews are enabled, True otherwise.
         lazy_config = not is_preview_enabled(engine)
         global_config({"engine": engine, "lazy": lazy_config})
