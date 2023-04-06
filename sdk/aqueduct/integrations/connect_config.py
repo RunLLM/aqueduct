@@ -85,6 +85,7 @@ class S3Config(BaseConnectionConfig):
 
     bucket: str
     region: str
+    root_dir: str = ""
 
     use_as_storage: str = "false"
 

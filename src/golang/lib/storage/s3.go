@@ -26,8 +26,8 @@ func newS3Storage(s3Config *shared.S3Config) *s3Storage {
 	}
 }
 
-// parseBucketAndKey takes the bucket in the form of s3://bucket/path
-// and a key and parses the bucket name and the key.
+// parseBucketAndKey takes a key and resolves to into the form s3://bucket/[root dirpath/]path,
+// returning the bucket name and the full, usable key.
 func (s *s3Storage) parseBucketAndKey(key string) (string, string, error) {
 	u, err := url.Parse(s.s3Config.Bucket)
 	if err != nil {
@@ -36,8 +36,11 @@ func (s *s3Storage) parseBucketAndKey(key string) (string, string, error) {
 
 	bucket := u.Host
 
-	u.Path = strings.TrimLeft(u.Path, "/")
-	key = path.Join(u.Path, key)
+	dirPath := strings.TrimLeft(u.Path, "/")
+	if s.s3Config.RootPath != "" {
+		dirPath = path.Join(dirPath, s.s3Config.RootPath)
+	}
+	key = path.Join(dirPath, key)
 
 	return bucket, key, nil
 }

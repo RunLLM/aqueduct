@@ -33,8 +33,12 @@ type StorageConfigPublic struct {
 }
 
 type S3Config struct {
-	Region             string `yaml:"region" json:"region"`
-	Bucket             string `yaml:"bucket" json:"bucket"`
+	Region string `yaml:"region" json:"region"`
+	Bucket string `yaml:"bucket" json:"bucket"`
+
+	// If set, use this directory as the root, otherwise we use the root of the bucket.
+	RootPath string `yaml:"root_dir" json:"root_dir"`
+
 	CredentialsPath    string `yaml:"credentialsPath" json:"credentials_path"`
 	CredentialsProfile string `yaml:"credentialsProfile"  json:"credentials_profile"`
 	AWSAccessKeyID     string `yaml:"awsAccessKeyId"  json:"aws_access_key_id"`
