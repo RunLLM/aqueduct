@@ -28,7 +28,7 @@ class DayOfWeek(Enum):
 class DayOfMonth:
     def __init__(self, day: int):
         if day < 0 or day >= 32:
-            raise Exception("Invalid day value %s." % day)
+            raise Exception("Invalid hour value %s." % day)
         self.val = day
 
 
@@ -70,7 +70,7 @@ def weekly(day: DayOfWeek, hour: Hour = Hour(0), minute: Minute = Minute(0)) -> 
 
 
 def monthly(day: DayOfMonth, hour: Hour = Hour(0), minute: Minute = Minute(0)) -> str:
-    if not isinstance(day, DayOfMonth):
+    if not isinstance(day, DayOfWeek):
         raise Exception(
             "Invalid types provided in parameters: aqueduct.schedule.DayOfMonth required for first argument."
         )
