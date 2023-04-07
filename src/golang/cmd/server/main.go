@@ -121,9 +121,9 @@ func main() {
 		log.Fatalf("Failed to deployed dynamic teardown cronjob: %v", err)
 	}
 
-	err = s.RunMissedCronJobs()
+	err = s.SyncCronJobs()
 	if err != nil {
-		log.Errorf("Failed to run missed workflows: %v", err)
+		log.Errorf("Failed to sync scheduled workflows: %v", err)
 	}
 
 	// Start the HTTP server and listen for requests indefinitely.

@@ -1,7 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 
 import { apiAddress } from '../components/hooks/useAqueductConsts';
-import { ListArtifactResultsResponse } from './responses/artifact';
+import { ListArtifactResultsResponse } from './responses/artifactDeprecated';
 
 export const handleListArtifactResults = createAsyncThunk<
   ListArtifactResultsResponse,

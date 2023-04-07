@@ -9,7 +9,7 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/repos"
-	"github.com/aqueducthq/aqueduct/lib/workflow"
+	"github.com/aqueducthq/aqueduct/lib/response"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -18,7 +18,7 @@ import (
 // This file should map directly to
 // src/ui/common/src/handlers/WorkflowGet.tsx
 //
-// Route: /v2/workflow/{workflowId}
+// Route: /v2/workflow/{workflowID}
 // Method: GET
 // Params:
 //	`workflowId`: ID for `workflow` object
@@ -86,5 +86,5 @@ func (h *WorkflowGetHandler) Perform(ctx context.Context, interfaceArgs interfac
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading workflow.")
 	}
 
-	return workflow.NewResponseFromDBObject(dbWorkflow), http.StatusOK, nil
+	return response.NewWorkflowFromDBObject(dbWorkflow), http.StatusOK, nil
 }

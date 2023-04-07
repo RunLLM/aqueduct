@@ -233,3 +233,45 @@ func (ts *TestSuite) TestArtifactResult_Update() {
 
 	requireDeepEqual(ts.T(), expectedArtifactResult, actualArtifactResult)
 }
+
+func (ts *TestSuite) TestArtifactResult_UpdateBatchStatusByStatus() {
+	artifactResults, _, _, _ := ts.seedArtifactResult(2)
+	succeededArtifactResult := artifactResults[0]
+	pendingArtifactResult := artifactResults[1]
+
+	succeededState := shared.NullExecutionState{
+		ExecutionState: shared.ExecutionState{
+			UserLogs: &shared.Logs{
+				Stdout: randString(10),
+				StdErr: randString(10),
+			},
+			Status: shared.SucceededExecutionStatus,
+		},
+		IsNull: false,
+	}
+
+	changes := map[string]interface{}{
+		models.ArtifactResultExecState: &succeededState,
+	}
+
+	_, err := ts.artifactResult.Update(ts.ctx, succeededArtifactResult.ID, changes, ts.DB)
+	require.Nil(ts.T(), err)
+
+	updatedByStatusArtf, err := ts.artifactResult.UpdateBatchStatusByStatus(
+		ts.ctx,
+		shared.PendingExecutionStatus,
+		shared.CanceledExecutionStatus,
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), 1, len(updatedByStatusArtf))
+
+	actualArtf := updatedByStatusArtf[0]
+	require.Equal(ts.T(), pendingArtifactResult.ID, actualArtf.ID)
+	require.Equal(ts.T(), shared.CanceledExecutionStatus, actualArtf.Status)
+	require.False(ts.T(), actualArtf.ExecState.IsNull)
+
+	execState := actualArtf.ExecState.ExecutionState
+	require.Equal(ts.T(), shared.CanceledExecutionStatus, execState.Status)
+	require.NotNil(ts.T(), execState.Timestamps.FinishedAt)
+}
