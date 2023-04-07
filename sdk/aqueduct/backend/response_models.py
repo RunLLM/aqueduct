@@ -68,9 +68,12 @@ class RegisterWorkflowResponse(BaseModel):
     Attributes:
         id:
             The uuid if of the newly registered workflow.
+        python_version:
+            The Python version in the engine in string format "major_version.minor_version.patch_level".
     """
 
     id: uuid.UUID
+    python_version: str
 
 
 class RegisterAirflowWorkflowResponse(BaseModel):

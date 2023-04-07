@@ -4,6 +4,8 @@ import (
 	"context"
 	"net/http"
 	"strconv"
+	"os/exec"
+	"strings"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
@@ -68,6 +70,8 @@ type registerWorkflowArgs struct {
 type registerWorkflowResponse struct {
 	// The newly registered workflow's id.
 	Id uuid.UUID `json:"id"`
+	// The Python version in the engine.
+	PythonVersion string `json:"python_version"`
 }
 
 func (*RegisterWorkflowHandler) Name() string {
@@ -355,5 +359,21 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		}
 	}()
 
-	return registerWorkflowResponse{Id: workflowId}, http.StatusOK, nil
+	var version strings.Builder
+	if args.dagSummary.Dag.EngineConfig.Type == shared.AqueductEngineType {
+		cmd := exec.Command(
+			"python3",
+			"--version",
+		)
+		cmd.Stdout = &version
+		err := cmd.Run()
+		if err != nil {
+			log.Errorf("Could not get Python version on server: %v", err)
+		}
+	}
+
+	return registerWorkflowResponse{
+		Id: workflowId,
+		PythonVersion: version.String(),
+	}, http.StatusOK, nil
 }
