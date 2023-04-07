@@ -8,7 +8,7 @@ from typing import NamedTuple, List
 
 class SnippetExec(NamedTuple):
     # The result from executing the code snippets sequentially.
-    # Returned from `run_in_order` and stores useful information for debugging that is displayed if a file fails to run to the end successfully.
+    # Returned from `run` and stores useful information for debugging that is displayed if a file fails to run to the end successfully.
     
     # All the Python code block in the Markdown file joined in order of appearance.
     snippet: str
@@ -46,7 +46,12 @@ flow = client.publish_flow(name='workflow_b',
 client.trigger(id=workflow_id)""",
     ],
 }
-def get_code(page):
+def get_code(page: str) -> List[str]:
+    '''
+    Use an regular expression to find all Python code blocks in the page.
+    Return
+    - List of each code block found in the page in order of appearance
+    '''
     contents = Path(page).read_text()
 
     # The regular expression is used to extract code blocks written in the Python language that are enclosed in a triple backtick (```) fence.
@@ -60,7 +65,15 @@ def get_code(page):
     
     return re.findall("`{3}python\n([\s\S]*?)\n`{3}", contents)
 
-def run_in_order(snippet, filename):
+def run(snippet: str, filename: str) -> SnippetExec:
+    '''
+    Save the code snippets into a file and run through it.
+    Return
+    - `SnippetExec` which tells us:
+        - Whether we are able to successfully run through the entire snippet
+        - Any errors
+        - Any output
+    '''
     success = True
     error = ""
     output = ""
@@ -142,7 +155,7 @@ if __name__ == "__main__":
                     if file_name in blacklist_snippets.keys():
                         snippets = [snippet for snippet in snippets if snippet not in blacklist_snippets[file_name]]
                     if len(snippets) > 0:
-                        snippets_by_page[file] = run_in_order("\n".join(snippets), file.replace(r"/", "_")[:-2] + "py")
+                        snippets_by_page[file] = run("\n".join(snippets), file.replace(r"/", "_")[:-2] + "py")
                         if not snippets_by_page[file].success:
                             # Snippet failed to run. Display relevant information for debugging. 
                             successfully_ran_all = False
