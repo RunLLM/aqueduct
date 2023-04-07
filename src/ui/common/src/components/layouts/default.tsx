@@ -14,6 +14,7 @@ import UserProfile from '../../utils/auth';
 import { breadcrumbsSize } from '../notifications/NotificationsPopover';
 import MenuSidebar, { MenuSidebarWidth } from './menuSidebar';
 import NavBar, { BreadcrumbLink } from './NavBar';
+import AnnouncementBanner from '../AnnouncementBanner/AnnouncementBanner';
 
 export const DefaultLayoutMargin = '24px';
 export const SidesheetMargin = '16px';
@@ -42,7 +43,7 @@ export const DefaultLayout: React.FC<Props> = ({
   const muiTheme = createTheme(theme);
   const dispatch: AppDispatch = useDispatch();
 
-  const [showBanner, setShowBanner] = useState<boolean>(true);
+  const [showBanner, setShowBanner] = useState<boolean>(false);
 
   useEffect(() => {
     if (user) {
@@ -59,51 +60,13 @@ export const DefaultLayout: React.FC<Props> = ({
         sx={{
           width: '100%',
           height: '100%',
+          position: 'fixed',
           overflow: 'auto',
         }}
       >
-        {showBanner && (
-          <Box
-            sx={{
-              backgroundColor: '#A7E2EA',
-              width: '100%',
-              height: '64px',
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <Box>
-              <Typography variant="h6">
-                ✨ v0.2.9 has launched!{' '}
-                <Link
-                  href={'https://github.com/aqueducthq/aqueduct/releases'}
-                  target="_blank"
-                >
-                  Release Notes
-                </Link>
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                width: '16px',
-                fontSize: '16px',
-                display: 'flex',
-                alignItems: 'center',
-                justifySelf: 'space-between',
-                position: 'absolute',
-                right: '16px',
-              }}
-            >
-              <FontAwesomeIcon
-                icon={faXmark}
-                onClick={() => {
-                  setShowBanner(false);
-                }}
-              />
-            </Box>
-          </Box>
-        )}
+
+        <AnnouncementBanner user={user} onShow={() => setShowBanner(true)} onClose={() => setShowBanner(false)} />
+
 
         <Box sx={{ width: '100%', height: '100%', display: 'flex', flex: 1 }}>
           <MenuSidebar
@@ -124,7 +87,7 @@ export const DefaultLayout: React.FC<Props> = ({
             sx={{
               boxSizing: 'border-box',
               width: `calc(100% - ${MenuSidebarWidth} - ${DefaultLayoutMargin})`,
-              marginTop: breadcrumbsSize,
+              marginTop: showBanner ? '128px' : breadcrumbsSize,
               marginLeft: MenuSidebarWidth,
               marginRight: 0,
               paddingTop: DefaultLayoutMargin,

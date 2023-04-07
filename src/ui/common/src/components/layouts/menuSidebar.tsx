@@ -27,6 +27,8 @@ import {
   menuSidebarLogoLink,
   notificationAlert,
 } from './menuSidebar.styles';
+import { useVersionNumberGetQuery } from '../../handlers/AqueductApi';
+import { VersionNumberGetResponse } from '../../handlers/VersionNumberGet';
 
 // Left padding = 8px
 // Right padding = 8px
@@ -139,6 +141,14 @@ const MenuSidebar: React.FC<{
 
     fetchVersionNumber();
   }, [user.apiKey]);
+
+  const { data, error, isLoading } = useVersionNumberGetQuery({
+    apiKey: user.apiKey
+  });
+
+  console.log('data: ', data);
+  console.log('error: ', error);
+  console.log('isLoading: ', isLoading);
 
   const pathPrefix = getPathPrefix();
   return (
