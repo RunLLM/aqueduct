@@ -3,8 +3,9 @@ package handler
 import (
 	"context"
 	"net/http"
-	"strconv"
 	"os/exec"
+	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
@@ -373,7 +374,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 	}
 
 	return registerWorkflowResponse{
-		Id: workflowId,
+		Id:            workflowId,
 		PythonVersion: version.String(),
 	}, http.StatusOK, nil
 }
