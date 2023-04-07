@@ -25,6 +25,7 @@ class S3Connector(connector.DataConnector):
         session = construct_boto_session(config)
         self.s3 = session.resource("s3")
         self.bucket = config.bucket
+        self.root_dir = config.root_dir
 
     def authenticate(self) -> None:
         try:
@@ -36,6 +37,12 @@ class S3Connector(connector.DataConnector):
                 "Bucket does not exist or you do not have permission to access the bucket: %s."
                 % str(e)
             )
+
+        # Check that any user-supplied root directory exists.
+        if self.root_dir != "":
+            # If nothing is returned by this filter call, then the directory does not exist.
+            if len(list(self.s3.Bucket(self.bucket).objects.filter(Prefix=self.root_dir))) == 0:
+                raise Exception("Supplied root directory `%s` does not exist in bucket %s." % self.root_dir, self.bucket)
 
     def discover(self) -> List[str]:
         raise Exception("Discover is not supported for S3.")
