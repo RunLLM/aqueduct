@@ -93,8 +93,8 @@ import {
   useDagGetQuery,
   useDagResultGetQuery,
   useStorageMigrationListQuery,
+  useVersionNumberGetQuery,
   useWorkflowGetQuery,
-  useVersionNumberGetQuery
 } from './handlers/AqueductApi';
 import { handleGetArtifactResultContent } from './handlers/getArtifactResultContent';
 import { handleGetServerConfig } from './handlers/getServerConfig';
@@ -370,9 +370,9 @@ export {
   UserProfile,
   useStorageMigrationListQuery,
   useUser,
+  useVersionNumberGetQuery,
   useWorkflow,
   useWorkflowGetQuery,
-  useVersionNumberGetQuery,
   VersionSelector,
   WidthTransition,
   workflow,

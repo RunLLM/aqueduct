@@ -14,11 +14,15 @@ import {
   storageMigrationListResponse,
 } from './ListStorageMigrations';
 import {
+  versionNumberGetQuery,
+  VersionNumberGetRequest,
+  VersionNumberGetResponse,
+} from './VersionNumberGet';
+import {
   workflowGetQuery,
   WorkflowGetRequest,
   WorkflowGetResponse,
 } from './WorkflowGet';
-import { versionNumberGetQuery, VersionNumberGetRequest, VersionNumberGetResponse } from './VersionNumberGet';
 
 const { createApi, fetchBaseQuery } = ((rtkQueryRaw as any).default ??
   rtkQueryRaw) as typeof rtkQueryRaw;
@@ -50,7 +54,10 @@ export const aqueductApi = createApi({
       query: (req) => workflowGetQuery(req),
       transformErrorResponse: transformErrorResponse,
     }),
-    versionNumberGet: builder.query<VersionNumberGetResponse, VersionNumberGetRequest>({
+    versionNumberGet: builder.query<
+      VersionNumberGetResponse,
+      VersionNumberGetRequest
+    >({
       query: (req) => versionNumberGetQuery(req),
       transformErrorResponse: transformErrorResponse,
     }),
@@ -62,5 +69,5 @@ export const {
   useDagResultGetQuery,
   useStorageMigrationListQuery,
   useWorkflowGetQuery,
-  useVersionNumberGetQuery
+  useVersionNumberGetQuery,
 } = aqueductApi;

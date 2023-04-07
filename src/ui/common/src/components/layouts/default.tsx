@@ -1,9 +1,5 @@
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { createTheme, ThemeProvider } from '@mui/material';
 import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
-import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
@@ -11,10 +7,10 @@ import { handleFetchNotifications } from '../../reducers/notifications';
 import { AppDispatch } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
+import AnnouncementBanner from '../AnnouncementBanner/AnnouncementBanner';
 import { breadcrumbsSize } from '../notifications/NotificationsPopover';
 import MenuSidebar, { MenuSidebarWidth } from './menuSidebar';
 import NavBar, { BreadcrumbLink } from './NavBar';
-import AnnouncementBanner from '../AnnouncementBanner/AnnouncementBanner';
 
 export const DefaultLayoutMargin = '24px';
 export const SidesheetMargin = '16px';
@@ -64,9 +60,11 @@ export const DefaultLayout: React.FC<Props> = ({
           overflow: 'auto',
         }}
       >
-
-        <AnnouncementBanner user={user} onShow={() => setShowBanner(true)} onClose={() => setShowBanner(false)} />
-
+        <AnnouncementBanner
+          user={user}
+          onShow={() => setShowBanner(true)}
+          onClose={() => setShowBanner(false)}
+        />
 
         <Box sx={{ width: '100%', height: '100%', display: 'flex', flex: 1 }}>
           <MenuSidebar

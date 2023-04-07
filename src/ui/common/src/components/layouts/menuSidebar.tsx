@@ -15,6 +15,7 @@ import { useDispatch } from 'react-redux';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import UserProfile from 'src/utils/auth';
 
+import { useVersionNumberGetQuery } from '../../handlers/AqueductApi';
 import { AppDispatch } from '../../stores/store';
 import { getPathPrefix } from '../../utils/getPathPrefix';
 import { apiAddress } from '../hooks/useAqueductConsts';
@@ -27,8 +28,6 @@ import {
   menuSidebarLogoLink,
   notificationAlert,
 } from './menuSidebar.styles';
-import { useVersionNumberGetQuery } from '../../handlers/AqueductApi';
-import { VersionNumberGetResponse } from '../../handlers/VersionNumberGet';
 
 // Left padding = 8px
 // Right padding = 8px
@@ -143,12 +142,8 @@ const MenuSidebar: React.FC<{
   }, [user.apiKey]);
 
   const { data, error, isLoading } = useVersionNumberGetQuery({
-    apiKey: user.apiKey
+    apiKey: user.apiKey,
   });
-
-  console.log('data: ', data);
-  console.log('error: ', error);
-  console.log('isLoading: ', isLoading);
 
   const pathPrefix = getPathPrefix();
   return (
