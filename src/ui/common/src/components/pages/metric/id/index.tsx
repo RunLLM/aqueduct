@@ -1,9 +1,11 @@
 import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import React from 'react';
 
 import WithOperatorHeader from '../../../../components/operators/WithOperatorHeader';
 import UserProfile from '../../../../utils/auth';
 import DefaultLayout from '../../../layouts/default';
+import LogViewer from '../../../LogViewer';
 import RequireOperator from '../../../operators/RequireOperator';
 import MetricsHistory from '../../../workflows/artifact/metric/history';
 import RequireDagOrResult from '../../../workflows/RequireDagOrResult';
@@ -11,8 +13,6 @@ import { useArtifactHistory } from '../../artifact/id/hook';
 import useOpeartor from '../../operator/id/hook';
 import { LayoutProps } from '../../types';
 import useWorkflow from '../../workflow/id/hook';
-import Typography from '@mui/material/Typography';
-import LogViewer from '../../../LogViewer';
 
 type MetricDetailsPageProps = {
   user: UserProfile;
