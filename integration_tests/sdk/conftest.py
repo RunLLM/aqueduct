@@ -208,6 +208,19 @@ def enable_only_for_engine_type(request, client, engine):
 
 
 @pytest.fixture(autouse=True)
+def skip_for_spark_engines(request, client, engine):
+    """When a test is marked with this, we skip if we are using a spark based engine
+    (Databricks or Spark)
+    """
+    if request.node.get_closest_marker("skip_for_spark_engines"):
+        if _type_from_engine_name(client, engine) in [ServiceType.DATABRICKS, ServiceType.SPARK]:
+            pytest.skip(
+                "Skipped for engine integration `%s`, since it is a spark-based engine."
+                % engine
+            )
+
+
+@pytest.fixture(autouse=True)
 def enable_only_for_local_storage(request, client, engine):
     """When a test is marked with this, we run it only when the local file system is used as storage."""
     if not request.node.get_closest_marker("enable_only_for_local_storage"):

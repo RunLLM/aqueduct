@@ -40,6 +40,7 @@ def test_basic_flow(client, flow_name, data_integration, engine, data_validator)
     )
 
 
+@pytest.mark.skip_for_spark_engines()
 def test_sentiment_flow(client, flow_name, data_integration, engine, data_validator):
     """Actually run the full sentiment model (with nltk dependency)."""
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
