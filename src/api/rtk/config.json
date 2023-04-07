@@ -1,8 +1,0 @@
-{
-  "schemaFile": "../pet_example.json",
-  "apiFile": "./placeholder.ts",
-  "apiImport": "emptySplitApi",
-  "outputFile": "./petApi.ts",
-  "exportName": "petApi",
-  "hooks": true
-}

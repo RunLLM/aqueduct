@@ -1,0 +1,10 @@
+{
+    "name": "workflowID",
+    "description": "the ID of workflow object",
+    "required": true,
+    "in": "path",
+    "schema": {
+        "type": "string",
+        "format": "uuid"
+    }
+}

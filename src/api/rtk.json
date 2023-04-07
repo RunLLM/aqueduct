@@ -1,0 +1,8 @@
+{
+  "schemaFile": "./aqueduct.json",
+  "apiFile": "./rtk_placeholder.ts",
+  "apiImport": "emptySplitApi",
+  "outputFile": "./codegen/rtk/aqueduct.ts",
+  "exportName": "aqueduct",
+  "hooks": true
+}

@@ -1,0 +1,212 @@
+openapi: 3.0.0
+info:
+  title: Aqueduct
+  description: Aqueduct's API endpoint
+  contact:
+    name: API Support
+    url: https://www.example.com/support
+    email: support@example.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+  version: 0.2.9
+servers:
+- url: http://localhost:8080/api/v2
+  description: The Aqueduct API server
+paths:
+  /workflow/{workflowID}:
+    get:
+      summary: get metadata of a workflow
+      description: ""
+      operationId: WorkflowGet
+      parameters:
+      - name: workflowID
+        in: path
+        description: the ID of workflow object
+        required: true
+        schema:
+          type: string
+          format: uuid
+      - name: api-key
+        in: header
+        description: the user's API Key
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          description: The metadata of the given workflow.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workflow'
+        "400":
+          description: Illegal input for operation.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+        "500":
+          description: General Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneralError'
+components:
+  schemas:
+    GeneralError:
+      type: object
+      properties:
+        error:
+          type: string
+    NotificationSettings:
+      type: array
+      items:
+        $ref: '#/components/schemas/NotificationSettings_inner'
+      x-schema-name: notification_settings
+    RetentionPolicy:
+      required:
+      - k_latest_runs
+      type: object
+      properties:
+        k_latest_runs:
+          type: integer
+      example:
+        k_latest_runs: 0
+    Schedule:
+      required:
+      - trigger
+      type: object
+      properties:
+        trigger:
+          type: string
+          enum:
+          - manual
+          - periodic
+          - airflow
+          - cascade
+        cron_schedule:
+          type: string
+        disable_manual_trigger:
+          type: boolean
+        paused:
+          type: boolean
+        source_id:
+          type: string
+          format: uuid
+      example:
+        paused: true
+        cron_schedule: cron_schedule
+        trigger: manual
+        source_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        disable_manual_trigger: true
+    Workflow:
+      required:
+      - id
+      - name
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        schedule:
+          $ref: '#/components/schemas/Schedule'
+        created_at:
+          type: string
+          format: date-time
+        retention_policy:
+          $ref: '#/components/schemas/retention_policy'
+        notification_settings:
+          $ref: '#/components/schemas/notification_settings'
+      example:
+        schedule:
+          paused: true
+          cron_schedule: cron_schedule
+          trigger: manual
+          source_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          disable_manual_trigger: true
+        retention_policy:
+          k_latest_runs: 0
+        notification_settings:
+        - integration_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          notification_level: success
+        - integration_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          notification_level: success
+        name: name
+        description: description
+        created_at: 2000-01-23T04:56:07.000+00:00
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+    general_error:
+      type: object
+      properties:
+        error:
+          type: string
+    notification_settings:
+      type: array
+      items:
+        $ref: '#/components/schemas/NotificationSettings_inner'
+      x-schema-name: notification_settings
+    retention_policy:
+      required:
+      - k_latest_runs
+      type: object
+      properties:
+        k_latest_runs:
+          type: integer
+      example:
+        k_latest_runs: 0
+    NotificationSettings_inner:
+      required:
+      - integration_id
+      - notification_level
+      type: object
+      properties:
+        integration_id:
+          type: string
+          format: uuid
+        notification_level:
+          type: string
+          enum:
+          - success
+          - warning
+          - error
+          - info
+          - neutral
+      example:
+        integration_id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        notification_level: success
+  responses:
+    NotFound:
+      description: Entity not found.
+    IllegalInput:
+      description: Illegal input for operation.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GeneralError'
+    InternalServerError:
+      description: General Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/GeneralError'
+  parameters:
+    workflow_id:
+      name: workflowID
+      in: path
+      description: the ID of workflow object
+      required: true
+      schema:
+        type: string
+        format: uuid
+    api-key:
+      name: api-key
+      in: header
+      description: the user's API Key
+      required: true
+      schema:
+        type: string

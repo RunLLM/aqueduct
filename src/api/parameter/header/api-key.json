@@ -1,0 +1,9 @@
+{
+    "name": "api-key",
+    "in": "header",
+    "description": "the user's API Key",
+    "required": true,
+    "schema": {
+        "type": "string"
+    }
+}

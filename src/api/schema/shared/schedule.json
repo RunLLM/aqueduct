@@ -1,0 +1,30 @@
+{
+    "type": "object",
+    "properties": {
+        "trigger": {
+            "type": "string",
+            "enum": [
+                "manual",
+                "periodic",
+                "airflow",
+                "cascade"
+            ]
+        },
+        "cron_schedule": {
+            "type": "string"
+        },
+        "disable_manual_trigger": {
+            "type": "boolean"
+        },
+        "paused": {
+            "type": "boolean"
+        },
+        "source_id": {
+            "type": "string",
+            "format": "uuid"
+        }
+    },
+    "required": [
+        "trigger"
+    ]
+}

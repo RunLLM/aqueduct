@@ -42,13 +42,17 @@ release: server-release executor-release migrator-release
 # install RTK codegen in ~/: `npm i @rtk-query/codegen-openapi`
 # install pydantic codegen: `pip install pip3 install datamodel-code-generator`
 # install swagger codegen (for go): `brew install swagger-codegen`
-api:
-	rm -r api/go/*
-	rm -r api/python/*
-	rm -r api/rtk/*
-	cd api && swagger-codegen generate -i pet_example.json -l go-server -o go/
-	cd api && datamodel-codegen --input pet_example.json --input-file-type jsonschema --output python/response.py
-	cd api && npx @rtk-query/codegen-openapi rtk/config.json
+rest-api:
+	rm -rf api/codegen/go
+	rm -rf api/codegen/python
+	rm -rf api/codegen/rtk
+	mkdir api/codegen/go
+	mkdir api/codegen/python
+	mkdir api/codegen/rtk
+	cd api && swagger-codegen generate -i aqueduct.json -l go-server -o codegen/go/
+	cd api && swagger-codegen generate -i aqueduct.json -l python -o codegen/python/
+# pydantic: cd api && datamodel-codegen --input aqueduct.json --input-file-type jsonschema --output codegen/python/response.py
+	cd ui/common && npx @rtk-query/codegen-openapi ../../api/rtk.json
 
 test:
 	cd golang && go test -v $$(go list ./...)
@@ -68,4 +72,4 @@ clean:
 .PHONY: 
 	server executor migrator \
 	server-release executor-release migrator-release release \
-	test test-database lint-go clean \
+	test test-database lint-go rest-api clean \

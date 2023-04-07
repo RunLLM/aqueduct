@@ -1,0 +1,11 @@
+{
+    "type": "object",
+    "properties": {
+        "k_latest_runs": {
+            "type": "integer"
+        }
+    },
+    "required": [
+        "k_latest_runs"
+    ]
+}

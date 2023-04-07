@@ -1,0 +1,26 @@
+{
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "integration_id": {
+                "type": "string",
+                "format": "uuid"
+            },
+            "notification_level": {
+                "type": "string",
+                "enum": [
+                    "success",
+                    "warning",
+                    "error",
+                    "info",
+                    "neutral"
+                ]
+            }
+        },
+        "required": [
+            "integration_id",
+            "notification_level"
+        ]
+    }
+}

@@ -12,17 +12,21 @@
       "type": "string"
     },
     "schedule": {
-      "$ref": "./schedule.json"
+      "$ref": "./shared/schedule.json"
     },
     "created_at": {
       "type": "string",
       "format": "date-time"
     },
     "retention_policy": {
-      "$ref": "./retention_policy.json"
+      "$ref": "./shared/retention_policy.json"
     },
     "notification_settings": {
-      "$ref": "./notification_settings"
+      "$ref": "./shared/notification_settings.json"
     }
-  }
+  },
+  "required": [
+    "id",
+    "name"
+  ]
 }

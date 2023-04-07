@@ -107,6 +107,7 @@
     "@typescript-eslint/eslint-plugin": "^5.49.0",
     "@typescript-eslint/parser": "^5.49.0",
     "@vitejs/plugin-react": "^3.0.1",
+    "@rtk-query/codegen-openapi": "1.0.0",
     "autoprefixer": "^10.4.13",
     "babel-loader": "^9.1.2",
     "cssnano": "^5.1.14",

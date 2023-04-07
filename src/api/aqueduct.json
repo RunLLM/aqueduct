@@ -1,51 +1,102 @@
 {
-    "components": {
-        "schemas": {
-          "GeneralError": { "$id": "./schema/general_error.json" },
-          "Workflow": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "string"
-              },
-              "name": {
-                "type": "string"
-              }
-            }
+  "openapi": "3.0.0",
+  "servers": [
+    {
+      "url": "http://localhost:8080/api/v2",
+      "description": "The Aqueduct API server"
+    }
+  ],
+  "info": {
+    "title": "Aqueduct",
+    "description": "Aqueduct's API endpoint",
+    "contact": {
+      "name": "API Support",
+      "url": "https://www.example.com/support",
+      "email": "support@example.com"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "https://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version": "0.2.9"
+  },
+  "paths": {
+    "/workflow/{workflowID}": {
+      "get": {
+        "summary": "get metadata of a workflow",
+        "description": "",
+        "operationId": "WorkflowGet",
+        "parameters": [
+          {
+            "$ref": "./parameter/path/workflow_id.json"
           },
-          "Tag": {
-            "type": "object",
-            "properties": {
-              "id": {
-                "type": "integer",
-                "format": "int64"
-              },
-              "name": {
-                "type": "string"
-              }
-            }
+          {
+            "$ref": "./parameter/header/api-key.json"
           }
-        },
-        "parameters": {
-          "limitParam": { "$id": "./parameter/limit.json" }
-        },
+        ],
         "responses": {
-          "NotFound": {
-            "description": "Entity not found."
-          },
-          "IllegalInput": {
-            "description": "Illegal input for operation."
-          },
-          "GeneralError": {
-            "description": "General Error",
+          "200": {
+            "description": "The metadata of the given workflow.",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GeneralError"
+                  "$ref": "#/components/schemas/Workflow"
                 }
               }
             }
+          },
+          "400": {
+            "$ref": "#/components/responses/IllegalInput"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
           }
         }
+      }
     }
+  },
+  "components": {
+    "schemas": {
+      "GeneralError": {
+        "$ref": "./schema/shared/general_error.json"
+      },
+      "NotificationSettings": {
+        "$ref": "./schema/shared/notification_settings.json"
+      },
+      "RetentionPolicy": {
+        "$ref": "./schema/shared/retention_policy.json"
+      },
+      "Schedule": {
+        "$ref": "./schema/shared/schedule.json"
+      },
+      "Workflow": {
+        "$ref": "./schema/workflow.json"
+      }
+    },
+    "responses": {
+      "NotFound": {
+        "description": "Entity not found."
+      },
+      "IllegalInput": {
+        "description": "Illegal input for operation.",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GeneralError"
+            }
+          }
+        }
+      },
+      "InternalServerError": {
+        "description": "General Error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/GeneralError"
+            }
+          }
+        }
+      }
+    }
+  }
 }
