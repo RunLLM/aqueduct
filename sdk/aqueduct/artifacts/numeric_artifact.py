@@ -182,8 +182,8 @@ class NumericArtifact(BaseArtifact):
                 "Could not find a parameter for bounding the metric please specify one of either: %s"
                 % (",".join(input_mapping.keys()))
             )
-
-        assert bound_name and bound_value
+        # Specify is not None because otherwise will incorrectly capture Falsey values e.g. 0, "" is a Falsey value
+        assert bound_name is not None and bound_value is not None
 
         accepted_types = [float, int]
         if type(bound_value) not in accepted_types:
