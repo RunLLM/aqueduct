@@ -5,6 +5,7 @@ import React from 'react';
 import { ArtifactResultsWithLoadingStatus } from '../../../../reducers/artifactResults';
 import { theme } from '../../../../styles/theme/theme';
 import { Data, DataSchema } from '../../../../utils/data';
+import { CheckLevel } from '../../../../utils/operators';
 import ExecutionStatus, {
   getArtifactExecStateAsTableRow,
   stringToExecutionStatus,
@@ -76,12 +77,30 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
         if (entry.status === ExecutionStatus.Succeeded) {
           backgroundColor = theme.palette.green[100];
           hoverColor = theme.palette.green[200];
-        } else if (entry.status === ExecutionStatus.Failed) {
+        } else if (
+          entry.status === ExecutionStatus.Failed &&
+          checkLevel === CheckLevel.Error
+        ) {
           backgroundColor = theme.palette.red[25];
           hoverColor = theme.palette.red[100];
+        } else if (
+          entry.status === ExecutionStatus.Failed &&
+          checkLevel === CheckLevel.Warning
+        ) {
+          backgroundColor = theme.palette.yellow[100];
+          hoverColor = theme.palette.yellow[200];
         } else {
+          // unknown or canceled status
           backgroundColor = theme.palette.gray[100];
           hoverColor = theme.palette.gray[200];
+        }
+
+        let checkStatus = entry.status as string;
+        if (
+          checkLevel === CheckLevel.Warning &&
+          entry.status === ExecutionStatus.Failed
+        ) {
+          checkStatus = ExecutionStatus.Warning as string;
         }
 
         return (
@@ -102,7 +121,7 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
           >
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <StatusIndicator
-                status={stringToExecutionStatus(entry.status as string)}
+                status={stringToExecutionStatus(checkStatus)}
                 size={'16px'}
                 monochrome={false}
               />

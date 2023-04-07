@@ -2,8 +2,8 @@ import { useEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
-import { DagResultResponse } from '../../../../handlers/responses/dag';
-import { OperatorResultResponse } from '../../../../handlers/responses/operator';
+import { DagResultResponse } from '../../../../handlers/responses/dagDeprecated';
+import { OperatorResultResponse } from '../../../../handlers/responses/operatorDeprecated';
 import { WorkflowDagResultWithLoadingStatus } from '../../../../reducers/workflowDagResults';
 import { WorkflowDagWithLoadingStatus } from '../../../../reducers/workflowDags';
 

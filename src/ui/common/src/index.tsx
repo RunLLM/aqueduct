@@ -90,6 +90,8 @@ import WorkflowHeader from './components/workflows/workflowHeader';
 import WorkflowSettings from './components/workflows/WorkflowSettings';
 import {
   aqueductApi,
+  useDagGetQuery,
+  useDagResultGetQuery,
   useStorageMigrationListQuery,
   useWorkflowGetQuery,
 } from './handlers/AqueductApi';
@@ -361,6 +363,8 @@ export {
   useAqueductConsts,
   useArtifact,
   useArtifactHistory,
+  useDagGetQuery,
+  useDagResultGetQuery,
   useOpeartor,
   UserProfile,
   useStorageMigrationListQuery,

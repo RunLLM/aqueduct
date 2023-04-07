@@ -9,13 +9,23 @@ import (
 func (s *AqServer) Handlers() map[string]handler.Handler {
 	return map[string]handler.Handler{
 		// V2 Handlers
-		routes.ListStorageMigrationRoute: &v2.ListStorageMigrationsHandler{
-			Database:             s.Database,
-			StorageMigrationRepo: s.StorageMigrationRepo,
-		},
 		routes.WorkflowRoute: &v2.WorkflowGetHandler{
 			Database:     s.Database,
 			WorkflowRepo: s.WorkflowRepo,
+		},
+		routes.DAGRoute: &v2.DAGGetHandler{
+			Database:     s.Database,
+			WorkflowRepo: s.WorkflowRepo,
+			DAGRepo:      s.DAGRepo,
+		},
+		routes.DAGResultRoute: &v2.DAGResultGetHandler{
+			Database:      s.Database,
+			WorkflowRepo:  s.WorkflowRepo,
+			DAGResultRepo: s.DAGResultRepo,
+		},
+		routes.ListStorageMigrationRoute: &v2.ListStorageMigrationsHandler{
+			Database:             s.Database,
+			StorageMigrationRepo: s.StorageMigrationRepo,
 		},
 
 		// V1 Handlers

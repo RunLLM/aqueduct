@@ -3,14 +3,8 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 import pytest
-from aqueduct.constants.enums import ExecutionStatus, ServiceType
-from aqueduct.error import (
-    InvalidRequestError,
-    InvalidUserActionException,
-    InvalidUserArgumentException,
-)
-from aqueduct.integrations.airflow_integration import AirflowIntegration
-from aqueduct.models.integration import IntegrationInfo
+from aqueduct.constants.enums import ExecutionStatus
+from aqueduct.error import InvalidRequestError, InvalidUserArgumentException
 
 import aqueduct
 from aqueduct import check, metric, op

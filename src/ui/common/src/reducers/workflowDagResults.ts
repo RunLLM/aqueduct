@@ -3,7 +3,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 import { handleGetWorkflowDagResult } from '../handlers/getWorkflowDagResult';
-import { DagResultResponse } from '../handlers/responses/dag';
+import { DagResultResponse } from '../handlers/responses/dagDeprecated';
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 
 export type WorkflowDagResultWithLoadingStatus = {

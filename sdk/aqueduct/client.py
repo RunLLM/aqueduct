@@ -12,7 +12,6 @@ from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.create import create_param_artifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
-from aqueduct.backend.response_models import SavedObjectUpdate
 from aqueduct.constants.enums import (
     ArtifactType,
     ExecutionStatus,
@@ -48,6 +47,7 @@ from aqueduct.logger import logger
 from aqueduct.models.dag import Metadata, RetentionPolicy
 from aqueduct.models.integration import Integration, IntegrationInfo
 from aqueduct.models.operators import ParamSpec
+from aqueduct.models.response_models import SavedObjectUpdate
 from aqueduct.utils.dag_deltas import (
     SubgraphDAGDelta,
     apply_deltas_to_dag,

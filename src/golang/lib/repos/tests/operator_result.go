@@ -222,3 +222,45 @@ func (ts *TestSuite) TestOperatorResult_Update() {
 
 	requireDeepEqual(ts.T(), &expectedOperatorResult, actualOperatorResult)
 }
+
+func (ts *TestSuite) TestOperatorResult_UpdateBatchStatusByStatus() {
+	operatorResults := ts.seedOperatorResultForDAGAndOperator(2, uuid.New(), uuid.New())
+	succeededOperatorResult := operatorResults[0]
+	pendingOperatorResult := operatorResults[1]
+
+	succeededState := shared.NullExecutionState{
+		ExecutionState: shared.ExecutionState{
+			UserLogs: &shared.Logs{
+				Stdout: randString(10),
+				StdErr: randString(10),
+			},
+			Status: shared.SucceededExecutionStatus,
+		},
+		IsNull: false,
+	}
+
+	changes := map[string]interface{}{
+		models.OperatorResultExecState: &succeededState,
+	}
+
+	_, err := ts.operatorResult.Update(ts.ctx, succeededOperatorResult.ID, changes, ts.DB)
+	require.Nil(ts.T(), err)
+
+	updatedByStatusOp, err := ts.operatorResult.UpdateBatchStatusByStatus(
+		ts.ctx,
+		shared.PendingExecutionStatus,
+		shared.CanceledExecutionStatus,
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), 1, len(updatedByStatusOp))
+
+	actualOp := updatedByStatusOp[0]
+	require.Equal(ts.T(), pendingOperatorResult.ID, actualOp.ID)
+	require.Equal(ts.T(), shared.CanceledExecutionStatus, actualOp.Status)
+	require.False(ts.T(), actualOp.ExecState.IsNull)
+
+	execState := actualOp.ExecState.ExecutionState
+	require.Equal(ts.T(), shared.CanceledExecutionStatus, execState.Status)
+	require.NotNil(ts.T(), execState.Timestamps.FinishedAt)
+}

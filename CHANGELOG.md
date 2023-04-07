@@ -1,9 +1,32 @@
 # Changelog
 
-## 0.2.8
-Released on March 29, 2023.
+## 0.2.9
+Released on April 5, 2023.
 
 ### Key Features
+* [Beta] Aqueduct now has support for loading dataframe and image data from
+  the local filesystem as parameters. See `client.create_param()` for details.
+
+### Enhancements
+* Improves the artifact storage management process. The integrations page now
+    shows which system is being used for artifact storage, and if a migration
+    between artifact stores fails, the error will be surfaced on the
+    integration details page until the user triggers a new artifact migration.
+* Adds metadata to read and write operators' sidesheets. Both sidesheets now
+    show which system is being used for the IO operation, and the save operator
+    now shows to what location and (if relevant) in what format the data is
+    being saved.
+
+### Bugfixes
+* Fixes typos in MongoDB connection dialog.
+* Fixes bug where workflow status at the top of the workflow details page would 
+    not update in sync with other parts of the page.
+* Fixes a bug where stopping the Aqueduct server immediately after starting it
+    could potentially trigger and then kill a workflow run that would then
+    stay in a pending state permanently.
+
+## 0.2.8
+Released on March 29, 2023.
 
 ### Enhancements
 * Extends Aqueduct's parameter support to allow parameters to be `None` *if*

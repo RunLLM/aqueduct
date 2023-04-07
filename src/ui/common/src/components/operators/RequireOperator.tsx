@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { OperatorResultResponse } from '../../handlers/responses/operator';
+import { OperatorResultResponse } from '../../handlers/responses/operatorDeprecated';
 
 type Props = {
   operator?: OperatorResultResponse;

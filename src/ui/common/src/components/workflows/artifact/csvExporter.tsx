@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { ArtifactResultResponse } from '../../../handlers/responses/artifact';
+import { ArtifactResultResponse } from '../../../handlers/responses/artifactDeprecated';
 import { ContentWithLoadingStatus } from '../../../reducers/artifactResultContents';
 import { ArtifactType } from '../../../utils/artifacts';
 import { exportCsv } from '../../../utils/preview';

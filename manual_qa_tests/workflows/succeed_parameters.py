@@ -23,11 +23,11 @@ def empty_str_check(df, empty_str):
 
 def deploy(client, integration_name):
     integration = client.integration(integration_name)
-    client.create_param("table", default="hotel_reviews")
+    table_param = client.create_param("table", default="hotel_reviews")
     bound = client.create_param("bound", default=10)
     empty_str = client.create_param("empty_str", default="")
 
-    reviews = integration.sql("SELECT * FROM {{ table }}")
+    reviews = integration.sql("SELECT * FROM $1", parameters=[table_param])
     check(reviews, bound)
     empty_str_check(reviews, empty_str)
     flow = client.publish_flow(
