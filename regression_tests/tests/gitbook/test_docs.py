@@ -7,17 +7,22 @@ from pathlib import Path
 from typing import NamedTuple, List
 
 class SnippetExec(NamedTuple):
-    snippet: List[str]
+    # The result from executing the code snippets sequentially.
+    # Returned from `run_in_order` and stores useful information for debugging that is displayed if a file fails to run to the end successfully.
+    
+    # All the Python code block in the Markdown file joined in order of appearance.
+    snippet: str
+    # Whether or not every snippet is successfully executed.
     success: bool
-    output: str
+    # The index of the last successfully ran block.
     last_successful_block: int
+    # The error message.
     error: str
 
 # Not in-scope for testing now
 blacklist_sections = [
-    "integrations",
-    "api-reference",
-    "installation-and-configuration",
+    "integrations",  # Requires setting up the integrations which currently cannot be done through the SDK alone
+    "installation-and-configuration/installing-aqueduct",  # Specific examples that relate to screenshots of the external setups (e.g. using the IP address displayed on the screenshot)
     "example-workflows",  # Already tested elsewhere
 ]
 
@@ -43,44 +48,40 @@ client.trigger(id=workflow_id)""",
 }
 def get_code(page):
     contents = Path(page).read_text()
+
+    # The regular expression is used to extract code blocks written in the Python language that are enclosed in a triple backtick (```) fence.
+
+    # - `{3} matches exactly three occurrences of the previous character or group, which in this case is the backtick (`).
+    # - python\n matches the string "python" followed by a newline character.
+    # - ([\s\S]*?) is a capture group that matches any sequence of characters, including whitespace characters and line breaks. The *? quantifier means "match zero or more of the preceding token, but as few as possible".
+    # - \n`{3} matches exactly a newline followed by three three backticks (`).
+    
+    # The regular expression matches a string that starts with three backticks followed by the string "python" and a newline character, then captures any sequence of characters (including whitespace and line breaks) until it encounters another newline and three backticks.
+    
     return re.findall("`{3}python\n([\s\S]*?)\n`{3}", contents)
 
-def run_in_order(snippet_list, filename):
+def run_in_order(snippet, filename):
     success = True
     error = ""
     output = ""
-    i = len(snippet_list)
 
     try:
-        # Create a temporary file
+        # Create a temporary file with every code block from the Markdown file.
         with open(filename, "w") as f:
-            f.write("\n".join(snippet_list))
+            f.write(snippet)
 
-        # Execute the code in the file and capture the output
+        # Execute the code in the file and capture the output.
         result = subprocess.run(["python3", filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, text=True)
 
+        # Store the output from execution.
         output = result.stdout
     except subprocess.CalledProcessError as e:
-        if i <= 1:
-            success = False
-            output = e.stdout
-            error = e.stderr
-        else:
-            # Determine which block is the issue.
-            for i in range(1, i):
-                try:
-                    with open(filename, "w") as f:
-                        f.write("\n".join(snippet_list[:i]))
-                    result = subprocess.run(["python3", filename], stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, text=True)
-                except subprocess.CalledProcessError as e:
-                    success = False
-                    output = e.stdout
-                    error = e.stderr
-                    i -= 1
-                    break
+        success = False
+        output = e.stdout
+        error = e.stderr
     # Delete the temporary file
     os.remove(filename)
-    return SnippetExec(snippet_list, success, output, i, error)
+    return SnippetExec(snippet, success, output, error)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -141,17 +142,18 @@ if __name__ == "__main__":
                     if file_name in blacklist_snippets.keys():
                         snippets = [snippet for snippet in snippets if snippet not in blacklist_snippets[file_name]]
                     if len(snippets) > 0:
-                        snippets_by_page[file] = run_in_order(snippets, file.replace(r"/", "_")[:-2] + "py")
+                        snippets_by_page[file] = run_in_order("\n".join(snippets), file.replace(r"/", "_")[:-2] + "py")
                         if not snippets_by_page[file].success:
+                            # Snippet failed to run. Display relevant information for debugging. 
                             successfully_ran_all = False
                             print(">> FAILED   ", file_name)
+                            # Display the code
                             print("-"*25 + "[CODE]" + "-"*25)
-                            for i, snippet in enumerate(snippets_by_page[file].snippet):
-                                if i == snippets_by_page[file].last_successful_block:
-                                    print("-"*25 + "[FAILED BLOCK]" + "-"*25)
-                                print(snippet)
-                                if i == snippets_by_page[file].last_successful_block:
-                                    break
+                            print(snippets_by_page[file].snippet)
+                            # Display the output
+                            print("-"*25 + "[OUTPUT]" + "-"*25)
+                            print(snippets_by_page[file].output)
+                            # Display the error
                             print("-"*25 + "[ERROR]" + "-"*25)
                             print(snippets_by_page[file].error)
                         else:
