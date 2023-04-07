@@ -68,7 +68,9 @@ Once you've made changes in your local clone of the repository and are ready to
 test it, the easiest way to test is to replace your local Aqueduct 
 installation, which you can do by running `python3 scripts/install_local.py`.
 This will compile your local changes both on the backend server and UI and
-install them in `~/.aqueduct`.
+install them in `~/.aqueduct`. If you aren't making UI changes, then running
+`python3 scripts/install_local.py -s -g -e` will save some time by only updating
+the non-UI parts of the system.
 
 Once this is done, you can run `aqueduct start` to access the app running with
 the changes you've made.
