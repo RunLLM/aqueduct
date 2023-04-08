@@ -268,9 +268,6 @@ func MigrateStorageAndVault(
 		return nil, err
 	}
 
-	// log.Errorf("HELLO: old vault config %v", *oldConf.FileConfig)
-	// log.Errorf("HELLO: new vault config %v", *newConf.S3Config)
-
 	newVault, err := vault.NewVault(newConf, config.EncryptionKey())
 	if err != nil {
 		return nil, err

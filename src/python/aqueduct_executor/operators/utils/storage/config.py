@@ -18,6 +18,8 @@ class FileStorageConfig(BaseModel):
 class S3StorageConfig(BaseModel):
     region: str
     bucket: str
+
+    # Expected to be in the format "path/to/dir/" (without a leading slash, but with a trailing one).
     root_dir: str = ""
 
     credentials_path: str

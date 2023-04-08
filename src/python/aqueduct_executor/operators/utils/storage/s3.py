@@ -33,16 +33,11 @@ class S3Storage(Storage):
             os.environ["AWS_PROFILE"] = config.credentials_profile
             self._client = boto3.client("s3", config=BotoConfig(region_name=config.region))
 
-        print("HELLO: print config ", config)
         self._config = config
 
-        # The key prefix is guaranteed to not end with a slash.
         bucket, key_prefix = parse_s3_bucket_and_key_prefix(
             self._config.bucket, self._config.root_dir
         )
-
-        print("HELLO: key_prefix", key_prefix)
-
         self._bucket = bucket
         self._key_prefix = key_prefix
 
@@ -72,30 +67,21 @@ class S3Storage(Storage):
         return True
 
     def _resolve_full_key(self, key: str) -> str:
+        """The `key_prefix` is expected to be in the format `path/to/dir/`."""
         if not self._key_prefix:
             return key
-
-        # This is safe since the key prefix does not end in a slash, and key is not expected to start with a slash.
-        return "/".join([self._key_prefix, key])
+        assert self._key_prefix[0] != "/" and self._key_prefix[-1] == "/"
+        return self._key_prefix + key
 
 
 def parse_s3_bucket_and_key_prefix(s3_bucket_path: str, root_dir_path: str) -> Tuple[str, str]:
-    """The returned key prefix is guaranteed to NOT end in a slash. This behavior mirrors `path.Join()` in Golang,
-    which is what is used in the Golang implementation."""
+    """The returned key prefix is guaranteed to be in the format `path/to/dir/`."""
     path_parts = s3_bucket_path.replace("s3://", "").split("/")
     bucket = path_parts.pop(0)
 
-    print("HELLO: path parts ", path_parts)
-
-    # Remove any trailing slash from the root_dir_path.
-    if root_dir_path != "":
-        if root_dir_path[-1] == "/":
-            root_dir_path = root_dir_path[:-1]
-        path_parts += root_dir_path.split("/")
-
-    print("HELLO: path parts ", path_parts)
-
     key_prefix = "/".join(path_parts)
+    if root_dir_path != "":
+        assert root_dir_path[0] != "/" and root_dir_path[-1] == "/"
+        key_prefix += "/" + root_dir_path
 
-    print("HELLO: key prefix ", key_prefix)
     return bucket, key_prefix

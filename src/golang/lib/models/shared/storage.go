@@ -36,7 +36,8 @@ type S3Config struct {
 	Region string `yaml:"region" json:"region"`
 	Bucket string `yaml:"bucket" json:"bucket"`
 
-	// If set, use this directory as the root, otherwise we use the root of the bucket.
+	// Use this directory in the bucket as the root. If not set, we default to the root of the bucket.
+	// Expected to be santizied into the format "path/to/dir/" (without a leading slash, but with a trailing one).
 	RootDir string `yaml:"root_dir" json:"root_dir"`
 
 	CredentialsPath    string `yaml:"credentialsPath" json:"credentials_path"`
@@ -49,7 +50,8 @@ type S3ConfigPublic struct {
 	Region string `yaml:"region" json:"region"`
 	Bucket string `yaml:"bucket" json:"bucket"`
 
-	// If set, use this directory as the root, otherwise we use the root of the bucket.
+	// Use this directory in the bucket as the root. If not set, we default to the root of the bucket.
+	// Expected to be santizied into the format "path/to/dir/" (without a leading slash, but with a trailing one).
 	RootPath string `yaml:"root_dir" json:"root_dir"`
 }
 

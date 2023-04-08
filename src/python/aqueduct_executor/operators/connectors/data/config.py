@@ -55,6 +55,8 @@ class S3Config(models.BaseConfig):
 
     bucket: str = ""
     region: str = ""
+
+    # Expected to be in the format "path/to/dir/" (without a leading slash, but with a trailing one).
     root_dir: str = ""
 
     use_as_storage: str = ""

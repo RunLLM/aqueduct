@@ -110,6 +110,8 @@ export type S3Config = {
   type: AWSCredentialType;
   bucket: string;
   region: string;
+
+  // If set, expected to be in the format `path/to/dir/`
   root_dir: string;
   access_key_id: string;
   secret_access_key: string;

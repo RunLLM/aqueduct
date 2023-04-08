@@ -16,6 +16,8 @@ import { StorageConfig } from './storage';
 export type S3Config = {
   region: string;
   bucket: string;
+
+  // If set, expected to be in the format `path/to/dir/`
   root_dir: string;
 };
 

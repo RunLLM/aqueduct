@@ -126,8 +126,8 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Error getting server's home directory path")
 	}
 
-	// If the configuration is setting the root directory for an S3 integration, strip any leading slash, but
-	// ensure that there is a trailing slash.
+	// Sanitize the root directory path for S3. We remove any leading slash, but force there to always
+	// be a trailing slash. eg: `path/to/root/`.
 	if service == shared.S3 {
 		if root_dir, ok := configMap["root_dir"]; ok && root_dir != "" {
 			if root_dir[len(root_dir)-1] != '/' {
@@ -172,9 +172,6 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	if err != nil {
 		return emptyResp, statusCode, err
 	}
-
-	log.Errorf("S3 Storage Config: %v", args.StorageConfig.S3Config)
-	log.Errorf("File Storage Config: %v", args.StorageConfig.FileConfig)
 
 	// Validate integration config
 	statusCode, err = ValidateConfig(
@@ -227,8 +224,6 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		if err != nil {
 			return emptyResp, http.StatusBadRequest, errors.Wrap(err, "Integration config is malformed.")
 		}
-
-		log.Errorf("HELLO: new storage config %v", newStorageConfig.S3Config)
 
 		err = storage_migration.Perform(
 			ctx,

@@ -85,6 +85,9 @@ class S3Config(BaseConnectionConfig):
 
     bucket: str
     region: str
+
+    # When connecting a new integration, we allow both leading or trailing slashes here.
+    # The path will be sanitized before being stored in the database.
     root_dir: str = ""
 
     use_as_storage: str = "false"

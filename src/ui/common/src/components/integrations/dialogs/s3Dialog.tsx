@@ -18,7 +18,7 @@ const Placeholders: S3Config = {
   type: AWSCredentialType.AccessKey,
   bucket: 'aqueduct',
   region: 'us-east-1',
-  root_dir: 'path/to/root',
+  root_dir: 'path/to/root/',
   access_key_id: '',
   secret_access_key: '',
   config_file_path: '',

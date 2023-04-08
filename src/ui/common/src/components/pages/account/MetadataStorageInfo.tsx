@@ -83,8 +83,6 @@ export const GCSMetadataStorageInfo: React.FC<MetadataPreviewProps> = ({
 export const S3MetadataStorageInfo: React.FC<MetadataPreviewProps> = ({
   serverConfig,
 }) => {
-  console.log('HELLO: ', serverConfig?.storageConfig?.s3Config);
-
   return (
     <Box sx={{ display: 'flex', height: '85px' }}>
       <Box>
