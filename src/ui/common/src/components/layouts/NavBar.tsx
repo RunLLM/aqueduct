@@ -104,7 +104,7 @@ const NavBar: React.FC<{
         backgroundColor: 'white',
         color: 'black',
         // Need to give room for the announcement banner
-        marginTop: showBanner ? '64px' : null,
+        marginTop: showBanner ? '32px' : null,
       }}
     >
       <Toolbar>

@@ -15,7 +15,6 @@ import { useDispatch } from 'react-redux';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import UserProfile from 'src/utils/auth';
 
-import { useVersionNumberGetQuery } from '../../handlers/AqueductApi';
 import { AppDispatch } from '../../stores/store';
 import { getPathPrefix } from '../../utils/getPathPrefix';
 import { apiAddress } from '../hooks/useAqueductConsts';
@@ -140,10 +139,6 @@ const MenuSidebar: React.FC<{
 
     fetchVersionNumber();
   }, [user.apiKey]);
-
-  const { data, error, isLoading } = useVersionNumberGetQuery({
-    apiKey: user.apiKey,
-  });
 
   const pathPrefix = getPathPrefix();
   return (

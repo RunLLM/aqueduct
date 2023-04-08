@@ -2,7 +2,9 @@ import { faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Box, Link, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 
+import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
 import { apiAddress } from '../hooks/useAqueductConsts';
 
@@ -17,6 +19,9 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
   onClose,
   user,
 }) => {
+  const location = useLocation();
+  const allowedBannerPages = ['/workflows', '/integrations', '/data', '/'];
+
   // By default do not show banner until we know that we have an announcement to show.
   const [shouldShowAnnouncementBanner, setShouldShowAnnouncementBanner] =
     useState<boolean>(false);
@@ -95,16 +100,24 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
     fetchVersionNumber();
   }, [user.apiKey]);
 
-  if (!shouldShowAnnouncementBanner) {
+  // Make sure user is on appropriate pages and that the banner should be shown.
+  if (
+    !shouldShowAnnouncementBanner ||
+    allowedBannerPages.indexOf(location.pathname) < 0
+  ) {
+    if (onClose) {
+      onClose();
+    }
+
     return null;
   }
 
   return (
     <Box
       sx={{
-        backgroundColor: '#A7E2EA',
+        backgroundColor: theme.palette.gray[100],
         width: '100%',
-        height: '64px',
+        height: '32px',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
@@ -114,7 +127,7 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
       }}
     >
       <Box>
-        <Typography variant="h6">
+        <Typography variant="body1">
           ✨ {versionNumber} has launched!{' '}
           <Link
             href={'https://github.com/aqueducthq/aqueduct/releases'}

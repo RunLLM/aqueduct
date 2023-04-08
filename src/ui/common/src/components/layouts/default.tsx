@@ -44,9 +44,6 @@ export const DefaultLayout: React.FC<Props> = ({
   useEffect(() => {
     if (user) {
       dispatch(handleFetchNotifications({ user }));
-      // TODO: Get the version number here.
-      // Store version number after it's fetched.
-      // lastVersionNumberSeen, showBanner are two vars that we should use to track whether or not to show the verison number
     }
   }, [dispatch, user]);
 
@@ -85,7 +82,9 @@ export const DefaultLayout: React.FC<Props> = ({
             sx={{
               boxSizing: 'border-box',
               width: `calc(100% - ${MenuSidebarWidth} - ${DefaultLayoutMargin})`,
-              marginTop: showBanner ? '128px' : breadcrumbsSize,
+              marginTop: showBanner
+                ? `calc(${breadcrumbsSize} + 32px )`
+                : breadcrumbsSize,
               marginLeft: MenuSidebarWidth,
               marginRight: 0,
               paddingTop: DefaultLayoutMargin,

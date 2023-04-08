@@ -14,11 +14,6 @@ import {
   storageMigrationListResponse,
 } from './ListStorageMigrations';
 import {
-  versionNumberGetQuery,
-  VersionNumberGetRequest,
-  VersionNumberGetResponse,
-} from './VersionNumberGet';
-import {
   workflowGetQuery,
   WorkflowGetRequest,
   WorkflowGetResponse,
@@ -54,13 +49,6 @@ export const aqueductApi = createApi({
       query: (req) => workflowGetQuery(req),
       transformErrorResponse: transformErrorResponse,
     }),
-    versionNumberGet: builder.query<
-      VersionNumberGetResponse,
-      VersionNumberGetRequest
-    >({
-      query: (req) => versionNumberGetQuery(req),
-      transformErrorResponse: transformErrorResponse,
-    }),
   }),
 });
 
@@ -69,5 +57,4 @@ export const {
   useDagResultGetQuery,
   useStorageMigrationListQuery,
   useWorkflowGetQuery,
-  useVersionNumberGetQuery,
 } = aqueductApi;
