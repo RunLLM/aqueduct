@@ -14,8 +14,8 @@ class SnippetExec(NamedTuple):
     snippet: str
     # Whether or not every snippet is successfully executed.
     success: bool
-    # The index of the last successfully ran block.
-    last_successful_block: int
+    # The output from running the snippet
+    output: str
     # The error message.
     error: str
 
@@ -23,29 +23,18 @@ class SnippetExec(NamedTuple):
 blacklist_sections = [
     "integrations",  # Requires setting up the integrations which currently cannot be done through the SDK alone
     "installation-and-configuration/installing-aqueduct",  # Specific examples that relate to screenshots of the external setups (e.g. using the IP address displayed on the screenshot)
+    "api-reference",  # Header snippets.
     "example-workflows",  # Already tested elsewhere
 ]
 
 blacklist_files = [
     "operators/configuring-resource-constraints.md",  # Header snippets. The GPU Access one require the operator to be executed on Kubernetes
-    "workflows/deleting-a-workflow.md",  # Referencing workflow UUIDs.
+    # "workflows/deleting-a-workflow.md",  # Referencing workflow UUIDs.
     "operators/specifying-a-requirements.txt.md", # Requires specific requirements.txt
 ]
 
-blacklist_snippets = {
-    "workflows/managing-workflow-schedules.md": [
-# Skipping because references workflows by UUID.
-"""workflow_a = client.flow('8fb25dc4-62ed-44a3-872d-c3ff988c8dd3')
+blacklist_snippets = {}
 
-# source_flow can be a Flow object, workflow name, or workflow ID
-flow = client.publish_flow(name='workflow_b', 
-                           artifacts=[data],
-                           source_flow=source_flow)""",
-# Skipping because references workflows by UUID.
-"""workflow_id = "0c007eff-6ae0-4a1a-a114-5f16164ffcdf" # Set your workflow ID here.
-client.trigger(id=workflow_id)""",
-    ],
-}
 def get_code(page: str) -> List[str]:
     '''
     Use an regular expression to find all Python code blocks in the page.
@@ -126,15 +115,17 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    # If we do not want to test every code snippet in the documentation, we can `run_subset` instead.
     if args.run_subset:
+        # The subset of sections we run is specified in `sections_subset`. The for loop expects a list of tuples so we add a dummy 0.
         args.sections = [(section, 0) for section in args.sections_subset]
     else:
+        # Otherwise, we look at all files in all sections in the `docs_folder`.
         args.sections = os.walk(args.docs_folder)
-
-    snippets_by_page = {}
 
     successfully_ran_all = True
     for item in args.sections:
+        # Check to see if the section is excluded via `blacklist_sections`.
         skip = False
         for blacklist_section in blacklist_sections:
             current_section = item[0].split("gitbook/")[-1]
@@ -142,33 +133,44 @@ if __name__ == "__main__":
                 skip = True
                 print(">> SKIPPING ", current_section)
                 break
+
+        # skip = False which means we want to run the files in the section.
         if not skip:
             for file in glob(os.path.join(item[0], '*.md')):
                 file_name = file.split("gitbook/")[-1]
+
+                # Check to see if the section is excluded via `blacklist_files`.
                 skip = False
                 for blacklist_file in blacklist_files:
                     if file_name == blacklist_file:
                         skip = True
                         print(">> SKIPPING ", file_name)
+
+                # skip = False which means we want to run the file.
                 if not skip:
                     snippets = get_code(file)
+                    
+                    # Remove any snippet that shows up in `blacklist_snippets`.
                     if file_name in blacklist_snippets.keys():
                         snippets = [snippet for snippet in snippets if snippet not in blacklist_snippets[file_name]]
+                    
+                    # If we still have code to run, run it.
                     if len(snippets) > 0:
-                        snippets_by_page[file] = run("\n".join(snippets), file.replace(r"/", "_")[:-2] + "py")
-                        if not snippets_by_page[file].success:
+                        snippet_result = run("\n".join(snippets), file.replace(r"/", "_")[:-2] + "py")
+
+                        if not snippet_result.success:
                             # Snippet failed to run. Display relevant information for debugging. 
                             successfully_ran_all = False
                             print(">> FAILED   ", file_name)
                             # Display the code
                             print("-"*25 + "[CODE]" + "-"*25)
-                            print(snippets_by_page[file].snippet)
+                            print(snippet_result.snippet)
                             # Display the output
                             print("-"*25 + "[OUTPUT]" + "-"*25)
-                            print(snippets_by_page[file].output)
+                            print(snippet_result.output)
                             # Display the error
                             print("-"*25 + "[ERROR]" + "-"*25)
-                            print(snippets_by_page[file].error)
+                            print(snippet_result.error)
                         else:
                             print(">> OK       ", file_name)
                     else:
