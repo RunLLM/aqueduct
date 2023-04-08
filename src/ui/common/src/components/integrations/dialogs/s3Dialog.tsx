@@ -18,6 +18,7 @@ const Placeholders: S3Config = {
   type: AWSCredentialType.AccessKey,
   bucket: 'aqueduct',
   region: 'us-east-1',
+  root_dir: 'path/to/root',
   access_key_id: '',
   secret_access_key: '',
   config_file_path: '',
@@ -188,6 +189,19 @@ export const S3Dialog: React.FC<Props> = ({
         placeholder={Placeholders.region}
         onChange={(event) => onUpdateField('region', event.target.value)}
         value={value?.region ?? null}
+        disabled={editMode}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
+      />
+
+      <IntegrationTextInputField
+        spellCheck={false}
+        required={false}
+        label="Directory"
+        description="An optional path to a directory in the S3 bucket to be used as the root. Defaults to the bucket's root."
+        placeholder={Placeholders.root_dir}
+        onChange={(event) => onUpdateField('root_dir', event.target.value)}
+        value={value?.root_dir ?? null}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}

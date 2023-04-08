@@ -36,7 +36,10 @@ class S3Storage(Storage):
         print("HELLO: print config ", config)
         self._config = config
 
-        bucket, key_prefix = parse_s3_bucket_and_key_prefix(self._config.bucket, self._config.root_dir)
+        # The key prefix is guaranteed to not end with a slash.
+        bucket, key_prefix = parse_s3_bucket_and_key_prefix(
+            self._config.bucket, self._config.root_dir
+        )
 
         print("HELLO: key_prefix", key_prefix)
 
@@ -71,17 +74,28 @@ class S3Storage(Storage):
     def _resolve_full_key(self, key: str) -> str:
         if not self._key_prefix:
             return key
-        return self._key_prefix + "/" + key
+
+        # This is safe since the key prefix does not end in a slash, and key is not expected to start with a slash.
+        return "/".join([self._key_prefix, key])
 
 
 def parse_s3_bucket_and_key_prefix(s3_bucket_path: str, root_dir_path: str) -> Tuple[str, str]:
+    """The returned key prefix is guaranteed to NOT end in a slash. This behavior mirrors `path.Join()` in Golang,
+    which is what is used in the Golang implementation."""
     path_parts = s3_bucket_path.replace("s3://", "").split("/")
     bucket = path_parts.pop(0)
 
     print("HELLO: path parts ", path_parts)
 
+    # Remove any trailing slash from the root_dir_path.
     if root_dir_path != "":
+        if root_dir_path[-1] == "/":
+            root_dir_path = root_dir_path[:-1]
         path_parts += root_dir_path.split("/")
 
-    key = "/".join(path_parts)
-    return bucket, key
+    print("HELLO: path parts ", path_parts)
+
+    key_prefix = "/".join(path_parts)
+
+    print("HELLO: key prefix ", key_prefix)
+    return bucket, key_prefix

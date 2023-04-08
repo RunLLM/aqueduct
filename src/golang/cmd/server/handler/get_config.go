@@ -4,12 +4,16 @@ import (
 	"context"
 	"net/http"
 
+
+	log "github.com/sirupsen/logrus"
+
 	"github.com/aqueducthq/aqueduct/config"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
+	log "github.com/sirupsen/logrus"
 )
 
 type getConfigArgs struct {
@@ -36,6 +40,7 @@ func (*GetConfigHandler) Name() string {
 }
 
 func (h *GetConfigHandler) Prepare(r *http.Request) (interface{}, int, error) {
+	log.Error("HELLO: GetCONFIG called!")
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err

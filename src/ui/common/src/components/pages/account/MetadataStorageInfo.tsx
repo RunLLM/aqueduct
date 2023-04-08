@@ -83,6 +83,8 @@ export const GCSMetadataStorageInfo: React.FC<MetadataPreviewProps> = ({
 export const S3MetadataStorageInfo: React.FC<MetadataPreviewProps> = ({
   serverConfig,
 }) => {
+  console.log('HELLO: ', serverConfig?.storageConfig?.s3Config);
+
   return (
     <Box sx={{ display: 'flex', height: '85px' }}>
       <Box>
@@ -112,6 +114,15 @@ export const S3MetadataStorageInfo: React.FC<MetadataPreviewProps> = ({
             {serverConfig?.storageConfig?.s3Config?.bucket || 'loading ...'}
           </Box>
         </Typography>
+        {serverConfig?.storageConfig?.s3Config?.root_dir?.length > 0 && (
+          <Typography variant="body2" fontWeight="fontWeightRegular">
+            Root Directory:{' '}
+            <Box component="span" fontWeight="fontWeightRegular">
+              {serverConfig?.storageConfig?.s3Config?.root_dir || 'loading ...'}
+            </Box>
+          </Typography>
+        )}
+
         <Typography variant="body2" fontWeight="fontWeightRegular">
           Region:{' '}
           <Box component="span" fontWeight="fontWeightRegular">

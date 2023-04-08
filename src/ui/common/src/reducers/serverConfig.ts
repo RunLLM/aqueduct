@@ -19,6 +19,8 @@ export type ServerConfig = {
     s3Config?: {
       region: string;
       bucket: string;
+      root_dir: string;
+      hello: 'sdlkjf';
     };
   };
 };

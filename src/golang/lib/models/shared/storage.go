@@ -37,7 +37,7 @@ type S3Config struct {
 	Bucket string `yaml:"bucket" json:"bucket"`
 
 	// If set, use this directory as the root, otherwise we use the root of the bucket.
-	RootPath string `yaml:"root_dir" json:"root_dir"`
+	RootDir string `yaml:"root_dir" json:"root_dir"`
 
 	CredentialsPath    string `yaml:"credentialsPath" json:"credentials_path"`
 	CredentialsProfile string `yaml:"credentialsProfile"  json:"credentials_profile"`
@@ -48,6 +48,9 @@ type S3Config struct {
 type S3ConfigPublic struct {
 	Region string `yaml:"region" json:"region"`
 	Bucket string `yaml:"bucket" json:"bucket"`
+
+	// If set, use this directory as the root, otherwise we use the root of the bucket.
+	RootPath string `yaml:"root_dir" json:"root_dir"`
 }
 
 type FileConfig struct {
@@ -81,8 +84,9 @@ func (s *StorageConfig) ToPublic() (*StorageConfigPublic, error) {
 		storageConfigPublic.FileConfig = s.FileConfig
 	case S3StorageType:
 		storageConfigPublic.S3ConfigPublic = &S3ConfigPublic{
-			Region: s.S3Config.Region,
-			Bucket: s.S3Config.Bucket,
+			Region:   s.S3Config.Region,
+			Bucket:   s.S3Config.Bucket,
+			RootPath: s.S3Config.RootDir,
 		}
 	case GCSStorageType:
 		storageConfigPublic.GCSConfigPublic = &GCSConfigPublic{

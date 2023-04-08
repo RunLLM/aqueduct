@@ -53,6 +53,7 @@ def test_invalid_connect_integration(client):
     with pytest.raises(ValidationError):
         client.connect_integration("New Integration", "SQLite", {})
 
+
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
 @pytest.mark.enable_only_for_data_integration_type(ServiceType.SQLITE)
 def test_sqlite_with_k8s(data_integration, engine):

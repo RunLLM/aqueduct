@@ -23,9 +23,9 @@ func convertS3IntegrationtoStorageConfig(c *shared.S3IntegrationConfig) (*shared
 	storageConfig := &shared.StorageConfig{
 		Type: shared.S3StorageType,
 		S3Config: &shared.S3Config{
-			Bucket:   fmt.Sprintf("s3://%s", c.Bucket),
-			Region:   c.Region,
-			RootPath: c.RootDir,
+			Bucket:  fmt.Sprintf("s3://%s", c.Bucket),
+			Region:  c.Region,
+			RootDir: c.RootDir,
 		},
 	}
 	switch c.Type {

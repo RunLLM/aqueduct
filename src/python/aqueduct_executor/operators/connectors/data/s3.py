@@ -42,7 +42,10 @@ class S3Connector(connector.DataConnector):
         if self.root_dir != "":
             # If nothing is returned by this filter call, then the directory does not exist.
             if len(list(self.s3.Bucket(self.bucket).objects.filter(Prefix=self.root_dir))) == 0:
-                raise Exception("Supplied root directory `%s` does not exist in bucket %s." % self.root_dir, self.bucket)
+                raise Exception(
+                    "Supplied root directory `%s` does not exist in bucket %s."
+                    % (self.root_dir, self.bucket)
+                )
 
     def discover(self) -> List[str]:
         raise Exception("Discover is not supported for S3.")

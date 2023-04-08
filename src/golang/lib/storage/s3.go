@@ -8,12 +8,20 @@ import (
 	"path"
 	"strings"
 
+	"github.com/dropbox/godropbox/errors"
+	log "github.com/sirupsen/logrus"
+
+	"github.com/dropbox/godropbox/errors"
+	log "github.com/sirupsen/logrus"
+
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/dropbox/godropbox/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 type s3Storage struct {
@@ -29,6 +37,9 @@ func newS3Storage(s3Config *shared.S3Config) *s3Storage {
 // parseBucketAndKey takes a key and resolves to into the form s3://bucket/[root dirpath/]path,
 // returning the bucket name and the full, usable key.
 func (s *s3Storage) parseBucketAndKey(key string) (string, string, error) {
+	log.Errorf("Parse bucket and key: %s", key)
+	log.Errorf("S3Config bucket %s", s.s3Config.Bucket)
+
 	u, err := url.Parse(s.s3Config.Bucket)
 	if err != nil {
 		return "", "", err
@@ -36,9 +47,11 @@ func (s *s3Storage) parseBucketAndKey(key string) (string, string, error) {
 
 	bucket := u.Host
 
+	log.Errorf("U.Path %v", u.Path)
+
 	dirPath := strings.TrimLeft(u.Path, "/")
-	if s.s3Config.RootPath != "" {
-		dirPath = path.Join(dirPath, s.s3Config.RootPath)
+	if s.s3Config.RootDir != "" {
+		dirPath = path.Join(dirPath, s.s3Config.RootDir)
 	}
 	key = path.Join(dirPath, key)
 
@@ -66,7 +79,7 @@ func (s *s3Storage) Get(ctx context.Context, key string) ([]byte, error) {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
 			case s3.ErrCodeNoSuchKey:
-				return nil, ErrObjectDoesNotExist()
+				return nil, errors.Wrapf(ErrObjectDoesNotExist(), "Unable to fetch key `%s` from bucket `%s`.", key, bucket)
 			default:
 				return nil, err
 			}
@@ -86,6 +99,7 @@ func (s *s3Storage) Get(ctx context.Context, key string) ([]byte, error) {
 func (s *s3Storage) Put(ctx context.Context, key string, value []byte) error {
 	sess, err := CreateS3Session(s.s3Config)
 	if err != nil {
+		log.Errorf("HELLO")
 		return err
 	}
 
@@ -94,12 +108,15 @@ func (s *s3Storage) Put(ctx context.Context, key string, value []byte) error {
 		return err
 	}
 
+	log.Errorf("HELLO: s3storage.put() bucket %s: %s", bucket, key)
+
 	svc := s3.New(sess)
 	_, err = svc.PutObject(&s3.PutObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 		Body:   bytes.NewReader(value),
 	})
+	log.Errorf("HELLO: put object failure: %v", err)
 	return err
 }
 

@@ -16,6 +16,7 @@ import { StorageConfig } from './storage';
 export type S3Config = {
   region: string;
   bucket: string;
+  root_dir: string;
 };
 
 export enum WorkflowUpdateTrigger {
