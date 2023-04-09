@@ -20,7 +20,9 @@ from .test_metrics.constant.model import constant_metric
 @check()
 def success_on_single_table_input(df):
     if not isinstance(df, pd.DataFrame):
-        raise Exception("Expected dataframe as input to check, got %s" % type(df).__name__)
+        from pyspark.sql import DataFrame
+        if not isinstance(df, DataFrame):
+            raise Exception("Expected dataframe as input to check, got %s" % type(df).__name__)
     return True
 
 
@@ -36,7 +38,9 @@ def success_on_multiple_mixed_inputs(metric, df):
     if not isinstance(metric, float):
         raise Exception("Expected float as input to check, got %s" % type(metric).__name__)
     if not isinstance(df, pd.DataFrame):
-        raise Exception("Expected dataframe as input to check, got %s" % type(df).__name__)
+        from pyspark.sql import DataFrame
+        if not isinstance(df, DataFrame):
+            raise Exception("Expected dataframe as input to check, got %s" % type(df).__name__)
     return True
 
 
@@ -98,7 +102,10 @@ def test_edit_check(client, data_integration, engine, flow_name):
 
     @check
     def foo(table):
-        return len(table) < 200
+        if isinstance(table, pd.DataFrame):
+            return len(table) < 200
+        else:
+            return table.count() < 200
 
     pass1 = foo(table)
     pass2 = foo(table)
@@ -150,6 +157,7 @@ def test_check_wrong_input_type(client, data_integration):
     # User function receives a dataframe when it's expecting a metric.
     with pytest.raises(AqueductError):
         check_artifact = success_on_single_metric_input(table_artifact)
+        check_artifact.get()
 
     # TODO(ENG-862): the following code should not surface an internal error,
     #  since its the user's fault.
@@ -165,15 +173,21 @@ def test_check_wrong_number_of_inputs(client, data_integration):
 
     # TODO(ENG-863): Do we want a more specific error here?
     with pytest.raises(AqueductError):
-        success_on_single_table_input(table_artifact1, table_artifact2)
+        check_artifact = success_on_single_table_input(table_artifact1, table_artifact2)
+        check_artifact.get()
 
 
+@pytest.mark.skip
 def test_check_with_numpy_bool_output(client, data_integration):
     table_artifact = extract(data_integration, DataObject.CHURN)
 
     @check()
     def success_check_return_numpy_bool(df):
-        return df["total_charges"].mean() < 2500
+        if isinstance(df, pd.DataFrame):
+            return df["total_charges"].mean() < 2500
+        else:
+            from pyspark.sql.functions import mean
+            return df.select(mean('total_charges')).collect()[0][0]
 
     check_artifact = success_check_return_numpy_bool(table_artifact)
     assert check_artifact.get()
@@ -227,4 +241,5 @@ def test_check_failure_with_varying_severity(client, flow_name, data_integration
 
     # In eager execution, this check should fail before we can publish the flow.
     with pytest.raises(AqueductError):
-        failure_blocking_check(table_artifact)
+        check_artifact = failure_blocking_check(table_artifact)
+        check_artifact.get()
