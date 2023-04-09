@@ -1,5 +1,6 @@
-import boto3
 import sys
+
+import boto3
 
 CLUSTER_NAME = "integration-test-shared"
 
@@ -12,15 +13,11 @@ def resume_redshift(aws_access_key_id, aws_secret_access_key):
 
     status = _get_cluster_status(client, CLUSTER_NAME)
     if status == STATUS_AVAILABLE:
-        print(
-            f"The {CLUSTER_NAME} cluster is already available, it does not need to be resumed"
-        )
+        print(f"The {CLUSTER_NAME} cluster is already available, it does not need to be resumed")
     elif status == STATUS_PAUSED:
         client.resume_cluster(ClusterIdentifier=CLUSTER_NAME)
     else:
-        sys.exit(
-            f"Cannot resume {CLUSTER_NAME} cluster because it is in the {status} state"
-        )
+        sys.exit(f"Cannot resume {CLUSTER_NAME} cluster because it is in the {status} state")
 
 
 def pause_redshift(aws_access_key_id, aws_secret_access_key):
@@ -28,15 +25,11 @@ def pause_redshift(aws_access_key_id, aws_secret_access_key):
 
     status = _get_cluster_status(client, CLUSTER_NAME)
     if status == STATUS_PAUSED:
-        print(
-            f"The {CLUSTER_NAME} cluster is already paused, it does not need to be paused"
-        )
+        print(f"The {CLUSTER_NAME} cluster is already paused, it does not need to be paused")
     elif status == STATUS_AVAILABLE:
         client.pause_cluster(ClusterIdentifier=CLUSTER_NAME)
     else:
-        sys.exit(
-            f"Cannot pause {CLUSTER_NAME} cluster because it is in the {status} state"
-        )
+        sys.exit(f"Cannot pause {CLUSTER_NAME} cluster because it is in the {status} state")
 
 
 def _create_client(aws_access_key_id, aws_secret_access_key):

@@ -27,7 +27,7 @@ func NewSparkJobManager(conf *SparkJobManagerConfig) (*SparkJobManager, error) {
 
 	session, err := livyClient.CreateSession(&spark.CreateSessionRequest{
 		Kind:                     "pyspark",
-		HeartbeatTimeoutInSecond: 600,
+		HeartbeatTimeoutInSecond: 10,
 		Archives:                 []string{fmt.Sprintf("%s#environment", conf.EnvironmentPathURI)},
 		Conf: map[string]string{
 			"spark.yarn.appMasterEnv.PYSPARK_PYTHON": "./environment/bin/python",

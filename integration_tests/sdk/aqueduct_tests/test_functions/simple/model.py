@@ -1,5 +1,6 @@
-from aqueduct import op
 import pandas as pd
+
+from aqueduct import op
 
 
 @op()
@@ -8,6 +9,7 @@ def dummy_sentiment_model(df):
         df["positivity"] = 123
     else:
         from pyspark.sql.functions import lit
+
         df = df.withColumn("POSITIVITY", lit(123.0))
 
     return df
@@ -18,6 +20,7 @@ def dummy_sentiment_model_function(df):
         df["positivity"] = 123
     else:
         from pyspark.sql.functions import lit
+
         df = df.withColumn("POSITIVITY", lit(123.0))
 
     return df
@@ -30,6 +33,7 @@ def dummy_sentiment_model_multiple_input(df1, df2):
         df1["positivity_2"] = 456
     else:
         from pyspark.sql.functions import lit
+
         df1 = df1.withColumn("POSITIVITY", lit(123.0))
         df1 = df1.withColumn("POSITIVITY_2", lit(456.0))
 
@@ -42,6 +46,7 @@ def dummy_model(df):
         df["newcol"] = "value"
     else:
         from pyspark.sql.functions import lit
+
         df = df.withColumn("NEWCOL", lit("value"))
 
     return df
@@ -53,6 +58,7 @@ def dummy_model_2(df):
         df["newcol_2"] = "value"
     else:
         from pyspark.sql.functions import lit
+
         df = df.withColumn("NEWCOL_2", lit("value"))
 
     return df

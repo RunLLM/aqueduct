@@ -21,6 +21,7 @@ from .test_metrics.constant.model import constant_metric
 def success_on_single_table_input(df):
     if not isinstance(df, pd.DataFrame):
         from pyspark.sql import DataFrame
+
         if not isinstance(df, DataFrame):
             raise Exception("Expected dataframe as input to check, got %s" % type(df).__name__)
     return True
@@ -39,6 +40,7 @@ def success_on_multiple_mixed_inputs(metric, df):
         raise Exception("Expected float as input to check, got %s" % type(metric).__name__)
     if not isinstance(df, pd.DataFrame):
         from pyspark.sql import DataFrame
+
         if not isinstance(df, DataFrame):
             raise Exception("Expected dataframe as input to check, got %s" % type(df).__name__)
     return True
@@ -187,7 +189,8 @@ def test_check_with_numpy_bool_output(client, data_integration):
             return df["total_charges"].mean() < 2500
         else:
             from pyspark.sql.functions import mean
-            return df.select(mean('total_charges')).collect()[0][0]
+
+            return df.select(mean("total_charges")).collect()[0][0]
 
     check_artifact = success_check_return_numpy_bool(table_artifact)
     assert check_artifact.get()

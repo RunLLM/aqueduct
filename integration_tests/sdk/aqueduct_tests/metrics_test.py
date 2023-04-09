@@ -56,6 +56,7 @@ def test_register_metric(client, flow_name, data_integration, engine):
 def metric_with_multiple_inputs(df1, m, df2):
     if not isinstance(df1, pd.DataFrame) or not isinstance(df2, pd.DataFrame):
         from pyspark.sql import DataFrame
+
         if not isinstance(df1, DataFrame) or not isinstance(df2, DataFrame):
             raise Exception(
                 "Expected dataframes as first and third args, got %s and %s"
@@ -92,6 +93,7 @@ def test_edit_metric(client, data_integration, engine, flow_name):
             return len(table)
         else:
             from pyspark.sql import DataFrame
+
             if isinstance(table, DataFrame):
                 return table.count()
 

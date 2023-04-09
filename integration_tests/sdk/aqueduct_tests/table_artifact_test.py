@@ -2,6 +2,7 @@ import math
 import time
 
 import pandas as pd
+import pytest
 
 from aqueduct import global_config, op
 
@@ -84,6 +85,7 @@ def test_system_max_memory_metric_generic(client, data_integration):
     assert max_mem > 10
 
 
+@pytest.mark.skip_for_spark_engines()
 def test_number_of_missing_values(client, data_integration):
     table = extract(data_integration, DataObject.SENTIMENT)
     missing_metric = table.number_of_missing_values(column_id="hotel_name")
@@ -97,6 +99,7 @@ def test_number_of_missing_values(client, data_integration):
     assert missing_metric.get() == 4
 
 
+@pytest.mark.skip_for_spark_engines()
 def test_number_of_rows(client, data_integration):
     table = extract(data_integration, DataObject.SENTIMENT)
     missing_metric = table.number_of_rows()
@@ -107,6 +110,7 @@ def test_number_of_rows(client, data_integration):
     assert missing_metric.get() == 101
 
 
+@pytest.mark.skip_for_spark_engines()
 def test_max(client, data_integration):
     table = extract(data_integration, DataObject.WINE)
     missing_metric = table.max(column_id="fixed_acidity")
@@ -116,6 +120,7 @@ def test_max(client, data_integration):
     assert math.isclose(missing_metric.get(), 440, rel_tol=1e-3)
 
 
+@pytest.mark.skip_for_spark_engines()
 def test_min(client, data_integration):
     table = extract(data_integration, DataObject.WINE)
     missing_metric = table.min(column_id="fixed_acidity")
@@ -125,6 +130,7 @@ def test_min(client, data_integration):
     assert math.isclose(missing_metric.get(), 6, rel_tol=1e-3)
 
 
+@pytest.mark.skip_for_spark_engines()
 def test_mean(client, data_integration):
     table = extract(data_integration, DataObject.WINE)
     missing_metric = table.mean(column_id="fixed_acidity")
@@ -134,6 +140,7 @@ def test_mean(client, data_integration):
     assert math.isclose(missing_metric.get(), 115.7445, rel_tol=1e-3)
 
 
+@pytest.mark.skip_for_spark_engines()
 def test_std(client, data_integration):
     table = extract(data_integration, DataObject.WINE)
     missing_metric = table.std(column_id="fixed_acidity")
