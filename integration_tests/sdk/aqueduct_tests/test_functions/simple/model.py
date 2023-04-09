@@ -8,7 +8,7 @@ def dummy_sentiment_model(df):
         df["positivity"] = 123
     else:
         from pyspark.sql.functions import lit
-        df = df.withColumn("positivity", lit(123))
+        df = df.withColumn("POSITIVITY", lit(123.0))
 
     return df
 
@@ -18,20 +18,20 @@ def dummy_sentiment_model_function(df):
         df["positivity"] = 123
     else:
         from pyspark.sql.functions import lit
-        df = df.withColumn("positivity", lit(123))
+        df = df.withColumn("POSITIVITY", lit(123.0))
 
     return df
 
 
 @op
 def dummy_sentiment_model_multiple_input(df1, df2):
-    if isinstance(df, pd.DataFrame):
+    if isinstance(df1, pd.DataFrame):
         df1["positivity"] = 123
         df1["positivity_2"] = 456
     else:
         from pyspark.sql.functions import lit
-        df1 = df1.withColumn("positivity", lit(123))
-        df1 = df1.withColumn("positivity_2", lit(456))
+        df1 = df1.withColumn("POSITIVITY", lit(123.0))
+        df1 = df1.withColumn("POSITIVITY_2", lit(456.0))
 
     return df1
 
@@ -42,7 +42,7 @@ def dummy_model(df):
         df["newcol"] = "value"
     else:
         from pyspark.sql.functions import lit
-        df = df.withColumn("newcol", lit("value"))
+        df = df.withColumn("NEWCOL", lit("value"))
 
     return df
 
@@ -53,6 +53,6 @@ def dummy_model_2(df):
         df["newcol_2"] = "value"
     else:
         from pyspark.sql.functions import lit
-        df = df.withColumn("newcol_2", lit("value"))
+        df = df.withColumn("NEWCOL_2", lit("value"))
 
     return df
