@@ -663,10 +663,10 @@ class Client:
         else:
             if run_now is None:
                 run_now = True
-            register_metadata = globals.__GLOBAL_API_CLIENT__.register_workflow(dag, run_now)
-            flow_id = register_metadata.id
+            registered_metadata = globals.__GLOBAL_API_CLIENT__.register_workflow(dag, run_now)
+            flow_id = registered_metadata.id
             server_python_version = (
-                register_metadata.python_version.strip()
+                registered_metadata.python_version.strip()
             )  # Remove newline at the end
             client_python_version = f"Python {platform.python_version()}"
             if (

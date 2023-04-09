@@ -359,6 +359,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		}
 	}()
 
+	// This is best-effort
 	var version strings.Builder
 	if args.dagSummary.Dag.EngineConfig.Type == shared.AqueductEngineType {
 		cmd := exec.Command(
