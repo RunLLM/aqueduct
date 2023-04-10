@@ -1,4 +1,4 @@
-import { faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowRight, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Box, Link, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react';
@@ -127,8 +127,9 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
       }}
     >
       <Box>
-        <Typography variant="body1">
-          ✨ {versionNumber} has launched!{' '}
+        <Typography variant="body1" component={'span'}>
+          ✨ Aqueduct v{versionNumber} is out! See release notes{' '}
+          <FontAwesomeIcon icon={faArrowRight} />{' '}
           <Link
             href={'https://github.com/aqueducthq/aqueduct/releases'}
             target="_blank"
