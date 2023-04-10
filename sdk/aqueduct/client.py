@@ -1,8 +1,8 @@
 import logging
 import os
+import platform
 import uuid
 import warnings
-import platform
 from collections import defaultdict
 from typing import Any, DefaultDict, Dict, List, Optional, Union
 
