@@ -128,13 +128,12 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
     >
       <Box>
         <Typography variant="body1" component={'span'}>
-          ✨ Aqueduct v{versionNumber} is out! See release notes{' '}
-          <FontAwesomeIcon icon={faArrowRight} />{' '}
+          ✨ Aqueduct v{versionNumber} is out!{' '}
           <Link
             href={'https://github.com/aqueducthq/aqueduct/releases'}
             target="_blank"
           >
-            Release Notes
+            See release notes <FontAwesomeIcon icon={faArrowRight} />
           </Link>
         </Typography>
       </Box>
