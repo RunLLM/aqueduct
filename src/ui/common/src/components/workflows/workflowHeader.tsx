@@ -6,7 +6,7 @@ import {
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Collapse, Tooltip, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import Markdown from 'react-markdown';
 import { useSelector } from 'react-redux';
 import { visitParents } from 'unist-util-visit-parents';
@@ -16,12 +16,13 @@ import style from '../../styles/markdown.module.css';
 import { theme } from '../../styles/theme/theme';
 import { getNextUpdateTime } from '../../utils/cron';
 import { EngineType } from '../../utils/engine';
+import ExecutionStatus, { LoadingStatusEnum } from '../../utils/shared';
 import {
   getWorkflowEngineTypes,
   WorkflowDag,
   WorkflowUpdateTrigger,
 } from '../../utils/workflows';
-import EngineItem from '../pages/workflows/components/EngineItem';
+import ResourceItem from '../pages/workflows/components/ResourceItem';
 import VersionSelector from './version_selector';
 import { StatusIndicator } from './workflowStatus';
 
@@ -60,6 +61,32 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
 
   const [showDescription, setShowDescription] = useState(false);
   const workflow = useSelector((state: RootState) => state.workflowReducer);
+  const workflowHistory = useSelector(
+    (state: RootState) => state.workflowHistoryReducer
+  );
+  const [selectedResultIdx, setSelectedResultIdx] = useState(0);
+
+  // Whenever the workflow reducer's selected result changes, we update our local state to
+  // have the correct index of the workflow history list. This is used to ensure that we show
+  // the correct execution status in the header.
+  useEffect(() => {
+    if (workflowHistory.status.loading !== LoadingStatusEnum.Succeeded) {
+      return;
+    }
+
+    for (let i = 0; i < workflowHistory.history.versions.length; i++) {
+      const result = workflowHistory.history.versions[i];
+      if (result.versionId === workflow.selectedResult.id) {
+        setSelectedResultIdx(i);
+      }
+    }
+  }, [workflow.selectedResult]);
+
+  let selectedWorkflowStatus = ExecutionStatus.Unknown;
+  if (workflowHistory.status.loading === LoadingStatusEnum.Succeeded) {
+    selectedWorkflowStatus =
+      workflowHistory.history.versions[selectedResultIdx].exec_state.status;
+  }
 
   const name = workflowDag.metadata?.name ?? '';
   const description = workflowDag.metadata?.description;
@@ -119,7 +146,7 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
       >
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           {!!workflow.dagResults && workflow.dagResults.length > 0 && (
-            <StatusIndicator status={workflow.dagResults[0].status} />
+            <StatusIndicator status={selectedWorkflowStatus} />
           )}
 
           <Typography
@@ -175,7 +202,7 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
               <Box display="flex" flexDirection="row">
                 {engines.map((engine) => (
                   <Box ml={1} key={engine}>
-                    <EngineItem engine={engine} />
+                    <ResourceItem resource={engine} />
                   </Box>
                 ))}
               </Box>

@@ -65,5 +65,5 @@ def deploy(client, integration):
     client.publish_flow(
         name=NAME,
         description=DESCRIPTION,
-        artifacts=[res1, check1, res2, res3, res4, res5, res6, res7]
+        artifacts=[res1, check1, res2, res3, res4, res5, res6, res7],
     )

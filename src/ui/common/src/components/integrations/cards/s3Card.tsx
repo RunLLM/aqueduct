@@ -4,7 +4,6 @@ import React from 'react';
 
 import { Integration } from '../../../utils/integrations';
 import { S3Config } from '../../../utils/workflows';
-import StorageConfigurationDisplay from '../StorageConfiguration';
 
 type Props = {
   integration: Integration;
@@ -23,7 +22,6 @@ export const S3Card: React.FC<Props> = ({ integration }) => {
         <strong>Region: </strong>
         {config.region}
       </Typography>
-      <StorageConfigurationDisplay integrationName="s3" />
     </Box>
   );
 };

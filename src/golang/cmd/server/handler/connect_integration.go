@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -26,6 +25,8 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/notification"
 	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/storage"
+	"github.com/aqueducthq/aqueduct/lib/storage_migration"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
@@ -63,11 +64,12 @@ type ConnectIntegrationHandler struct {
 	Database   database.Database
 	JobManager job.JobManager
 
-	ArtifactRepo       repos.Artifact
-	ArtifactResultRepo repos.ArtifactResult
-	DAGRepo            repos.DAG
-	IntegrationRepo    repos.Integration
-	OperatorRepo       repos.Operator
+	ArtifactRepo         repos.Artifact
+	ArtifactResultRepo   repos.ArtifactResult
+	DAGRepo              repos.DAG
+	IntegrationRepo      repos.Integration
+	StorageMigrationRepo repos.StorageMigration
+	OperatorRepo         repos.Operator
 
 	PauseServer   func()
 	RestartServer func()
@@ -179,7 +181,10 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	if statusCode, err := ConnectIntegration(ctx, args, h.IntegrationRepo, txn); err != nil {
+	// Assumption: we are always ADDING a new integration, so `integrationObj` must be a freshly created
+	// integration entry on success.
+	integrationObj, statusCode, err := ConnectIntegration(ctx, args, h.IntegrationRepo, txn)
+	if err != nil {
 		return emptyResp, statusCode, err
 	}
 
@@ -199,61 +204,49 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	}
 
 	if args.SetAsStorage {
-		// This integration should be used as the new storage layer.
-		// In order to do so, we need to migrate all content from the old store
-		// to the new store. This requires pausing the server and then restarting it.
-		// All of this logic is performed asynchronously so that the user knows that
-		// the connect integration request has succeeded and that the migration is now
-		// under way.
-		go func() {
-			log.Info("Starting storage migration process...")
-			// Wait until the server is paused
-			h.PauseServer()
-			// Makes sure that the server is restarted
-			defer h.RestartServer()
+		confData, err := args.Config.Marshal()
+		if err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
 
-			// Wait until there are no more workflow runs in progress
-			lock := utils.NewExecutionLock()
-			if err := lock.Lock(); err != nil {
-				log.Errorf("Unexpected error when acquiring workflow execution lock: %v. Aborting storage migration!", err)
-				return
-			}
-			defer func() {
-				if err := lock.Unlock(); err != nil {
-					log.Errorf("Unexpected error when unlocking workflow execution lock: %v", err)
-				}
-			}()
+		newStorageConfig, err := storage.ConvertIntegrationConfigToStorageConfig(args.Service, confData)
+		if err != nil {
+			return emptyResp, http.StatusBadRequest, errors.Wrap(err, "Integration config is malformed.")
+		}
 
-			if err := setIntegrationAsStorage(
-				context.Background(),
-				args.Service,
-				args.Config,
-				args.OrgID,
-				h.DAGRepo,
-				h.ArtifactRepo,
-				h.ArtifactResultRepo,
-				h.OperatorRepo,
-				h.IntegrationRepo,
-				h.Database,
-			); err != nil {
-				log.Errorf("Unexpected error when setting the new storage layer: %v", err)
-			}
-
-			log.Info("Successfully migrated the storage layer!")
-		}()
+		err = storage_migration.Perform(
+			ctx,
+			args.OrgID,
+			integrationObj,
+			newStorageConfig,
+			h.PauseServer,
+			h.RestartServer,
+			h.ArtifactRepo,
+			h.ArtifactResultRepo,
+			h.DAGRepo,
+			h.IntegrationRepo,
+			h.OperatorRepo,
+			h.StorageMigrationRepo,
+			h.Database,
+		)
+		if err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to migrate storage layer.")
+		}
 	}
 
 	return emptyResp, http.StatusOK, nil
 }
 
-// ConnectIntegration connects a new integration specified by `args`. It returns a status code for the request
-// and an error, if any.
+// ConnectIntegration connects a new integration specified by `args`.
+// It returns the integration object, the status code for the request and an error, if any.
+// If an error is returns, the integration object is guaranteed to be nil. Conversely, the integration
+// object is always well-formed on success.
 func ConnectIntegration(
 	ctx context.Context,
 	args *ConnectIntegrationArgs,
 	integrationRepo repos.Integration,
 	DB database.Database,
-) (int, error) {
+) (*models.Integration, int, error) {
 	// Extract non-confidential config
 	publicConfig := args.Config.PublicConfig()
 
@@ -283,13 +276,13 @@ func ConnectIntegration(
 		)
 	}
 	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
 	storageConfig := config.Storage()
 	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
 	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
 	}
 
 	// Store config (including confidential information) in vault
@@ -299,7 +292,7 @@ func ConnectIntegration(
 		args.Config,
 		vaultObject,
 	); err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
 	// TODO(ENG-2523): move base conda env creation outside of ConnectIntegration.
@@ -338,7 +331,7 @@ func ConnectIntegration(
 		}()
 	}
 
-	return http.StatusOK, nil
+	return integrationObject, http.StatusOK, nil
 }
 
 // ValidateConfig authenticates the config provided.
@@ -491,157 +484,6 @@ func checkIntegrationSetStorage(svc shared.Service, conf auth.Config) (bool, err
 		return bool(c.UseAsStorage), nil
 	default:
 		return false, errors.Newf("%v cannot be used as the metadata storage layer", svc)
-	}
-}
-
-// setIntegrationAsStorage use the integration config `conf` and updates the global
-// storage config with it. This involves migrating the storage (and vault) content to the new
-// storage layer.
-func setIntegrationAsStorage(
-	ctx context.Context,
-	svc shared.Service,
-	conf auth.Config,
-	orgID string,
-	dagRepo repos.DAG,
-	artifactRepo repos.Artifact,
-	artifactResultRepo repos.ArtifactResult,
-	operatorRepo repos.Operator,
-	integrationRepo repos.Integration,
-	db database.Database,
-) error {
-	data, err := conf.Marshal()
-	if err != nil {
-		return err
-	}
-
-	var storageConfig *shared.StorageConfig
-
-	switch svc {
-	case shared.S3:
-		var c shared.S3IntegrationConfig
-		if err := json.Unmarshal(data, &c); err != nil {
-			return err
-		}
-
-		storageConfig, err = convertS3IntegrationtoStorageConfig(&c)
-		if err != nil {
-			return err
-		}
-	case shared.GCS:
-		var c shared.GCSIntegrationConfig
-		if err := json.Unmarshal(data, &c); err != nil {
-			return err
-		}
-
-		storageConfig = convertGCSIntegrationtoStorageConfig(&c)
-	default:
-		return errors.Newf("%v cannot be used as the metadata storage layer", svc)
-	}
-
-	currentStorageConfig := config.Storage()
-
-	// Migrate all storage content to the new storage config
-	if err := utils.MigrateStorageAndVault(
-		ctx,
-		&currentStorageConfig,
-		storageConfig,
-		orgID,
-		dagRepo,
-		artifactRepo,
-		artifactResultRepo,
-		operatorRepo,
-		integrationRepo,
-		db,
-	); err != nil {
-		return err
-	}
-
-	// Change global storage config
-	return config.UpdateStorage(storageConfig)
-}
-
-func convertS3IntegrationtoStorageConfig(c *shared.S3IntegrationConfig) (*shared.StorageConfig, error) {
-	// Users provide AWS credentials for an S3 integration via one of the following:
-	//  1. AWS Access Key and Secret Key
-	//  2. Credentials file content
-	//  3. Credentials filepath and profile name
-	// The S3 Storage implementation expects the AWS credentials to be specified via a
-	// filepath and profile name, so we must convert the above to the correct format.
-	storageConfig := &shared.StorageConfig{
-		Type: shared.S3StorageType,
-		S3Config: &shared.S3Config{
-			Bucket: fmt.Sprintf("s3://%s", c.Bucket),
-			Region: c.Region,
-		},
-	}
-	switch c.Type {
-	case shared.AccessKeyS3ConfigType:
-		// AWS access and secret keys need to be written to a credentials file
-		path := filepath.Join(config.AqueductPath(), "storage", uuid.NewString())
-		f, err := os.Create(path)
-		if err != nil {
-			return nil, err
-		}
-		defer f.Close()
-
-		credentialsContent := fmt.Sprintf(
-			"[default]\naws_access_key_id=%s\naws_secret_access_key=%s\n",
-			c.AccessKeyId,
-			c.SecretAccessKey,
-		)
-		if _, err := f.WriteString(credentialsContent); err != nil {
-			return nil, err
-		}
-
-		storageConfig.S3Config.CredentialsPath = path
-		storageConfig.S3Config.CredentialsProfile = "default"
-	case shared.ConfigFileContentS3ConfigType:
-		// The credentials content needs to be written to a credentials file
-		path := filepath.Join(config.AqueductPath(), "storage", uuid.NewString())
-		f, err := os.Create(path)
-		if err != nil {
-			return nil, err
-		}
-		defer f.Close()
-
-		// Determine profile name by looking for [profile_name]
-		i := strings.Index(c.ConfigFileContent, "[")
-		if i < 0 {
-			return nil, errors.New("Unable to determine AWS credentials profile name.")
-		}
-
-		j := strings.Index(c.ConfigFileContent, "]")
-		if j < 0 {
-			return nil, errors.New("Unable to determine AWS credentials profile name.")
-		}
-
-		profileName := c.ConfigFileContent[i+1 : j]
-
-		if _, err := f.WriteString(c.ConfigFileContent); err != nil {
-			return nil, err
-		}
-
-		storageConfig.S3Config.CredentialsPath = path
-		storageConfig.S3Config.CredentialsProfile = profileName
-	case shared.ConfigFilePathS3ConfigType:
-		// The credentials are already in the form of a filepath and profile, so no changes
-		// need to be made
-		storageConfig.S3Config.CredentialsPath = c.ConfigFilePath
-		storageConfig.S3Config.CredentialsProfile = c.ConfigFileProfile
-	default:
-		return nil, errors.Newf("Unknown S3ConfigType: %v", c.Type)
-	}
-
-	return storageConfig, nil
-}
-
-func convertGCSIntegrationtoStorageConfig(c *shared.GCSIntegrationConfig) *shared.StorageConfig {
-	return &shared.StorageConfig{
-		Type: shared.GCSStorageType,
-		GCSConfig: &shared.GCSConfig{
-			Bucket:                    c.Bucket,
-			ServiceAccountCredentials: c.ServiceAccountCredentials,
-		},
 	}
 }
 

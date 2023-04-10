@@ -18,9 +18,9 @@ import {
 } from '../../tables/PaginatedSearchTable';
 import { LayoutProps } from '../types';
 import CheckItem from './components/CheckItem';
-import EngineItem from './components/EngineItem';
 import ExecutionStatusLink from './components/ExecutionStatusLink';
 import MetricItem from './components/MetricItem';
+import ResourceItem from './components/ResourceItem';
 
 type Props = {
   user: UserProfile;
@@ -179,8 +179,14 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       case 'engines': {
         value = (
           <Box>
-            {value.map((v) => (
-              <EngineItem key={v} engine={v} />
+            {value.map((v, idx) => (
+              <Box
+                mb={value.length > 1 && idx < value.length - 1 ? 1 : 0}
+                key={idx}
+              >
+                {/* We need a box with margins so the chips have space between them. */}
+                <ResourceItem resource={v} />
+              </Box>
             ))}
           </Box>
         );

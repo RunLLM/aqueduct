@@ -2,6 +2,7 @@ package shared
 
 import (
 	"database/sql/driver"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
 )
@@ -10,10 +11,11 @@ type ExecutionState struct {
 	UserLogs *Logs           `json:"user_logs"`
 	Status   ExecutionStatus `json:"status"`
 
-	// These fields are only set if status == Failed.
-	FailureType *FailureType         `json:"failure_type"`
-	Error       *Error               `json:"error"`
-	Timestamps  *ExecutionTimestamps `json:"timestamps"`
+	// These two failure fields are only set if status == Failed.
+	FailureType *FailureType `json:"failure_type"`
+	Error       *Error       `json:"error"`
+
+	Timestamps *ExecutionTimestamps `json:"timestamps"`
 }
 
 func (e ExecutionState) Terminated() bool {
@@ -30,6 +32,16 @@ func (e *ExecutionState) HasWarning() bool {
 
 func (e *ExecutionState) HasSystemError() bool {
 	return e.Status == FailedExecutionStatus && *e.FailureType == SystemFailure
+}
+
+// UpdateWithFailure also updates the `FinishedAt` timestamp.
+func (e *ExecutionState) UpdateWithFailure(failureType FailureType, execErr *Error) {
+	e.Status = FailedExecutionStatus
+	e.FailureType = &failureType
+	e.Error = execErr
+
+	finishedAt := time.Now()
+	e.Timestamps.FinishedAt = &finishedAt
 }
 
 func (e *ExecutionState) Value() (driver.Value, error) {
