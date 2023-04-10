@@ -70,18 +70,29 @@ class S3Storage(Storage):
         """The `key_prefix` is expected to be in the format `path/to/dir/`."""
         if not self._key_prefix:
             return key
+
         assert self._key_prefix[0] != "/" and self._key_prefix[-1] == "/"
         return self._key_prefix + key
 
 
+def _sanitize_path(path):
+    """Sanitize the given path to be in the format `path/to/dir/` (no leading slash but one trailing slash)."""
+    if path == "":
+        return path
+    if path[0] == "/":
+        path = path[1:]
+    if path[-1] != "/":
+        path += "/"
+    return path
+
+
 def parse_s3_bucket_and_key_prefix(s3_bucket_path: str, root_dir_path: str) -> Tuple[str, str]:
-    """The returned key prefix is guaranteed to be in the format `path/to/dir/`."""
+    """The root_dir_path is assumed to be in the format `path/to/dir/`."""
     path_parts = s3_bucket_path.replace("s3://", "").split("/")
     bucket = path_parts.pop(0)
 
-    key_prefix = "/".join(path_parts)
     if root_dir_path != "":
-        assert root_dir_path[0] != "/" and root_dir_path[-1] == "/"
-        key_prefix += "/" + root_dir_path
+        path_parts += [_sanitize_path(root_dir_path)]
 
-    return bucket, key_prefix
+    key_prefix = "/".join(path_parts)
+    return bucket, _sanitize_path(key_prefix)
