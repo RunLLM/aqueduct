@@ -87,7 +87,6 @@ def _sanitize_path(path: str) -> str:
 
 
 def parse_s3_bucket_and_key_prefix(s3_bucket_path: str, root_dir_path: str) -> Tuple[str, str]:
-    """The root_dir_path is assumed to be in the format `path/to/dir/`."""
     path_parts = s3_bucket_path.replace("s3://", "").split("/")
     bucket = path_parts.pop(0)
 

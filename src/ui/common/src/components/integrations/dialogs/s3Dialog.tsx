@@ -198,7 +198,7 @@ export const S3Dialog: React.FC<Props> = ({
         spellCheck={false}
         required={false}
         label="Directory"
-        description="An optional path to a directory in the S3 bucket to be used as the root. Defaults to the bucket's root."
+        description="Only applicable when also setting this integration to be the artifact store. An optional path to an existing directory in the bucket, to be used as the root of the artifact store. Defaults to the bucket's root."
         placeholder={Placeholders.root_dir}
         onChange={(event) => onUpdateField('root_dir', event.target.value)}
         value={value?.root_dir ?? null}
