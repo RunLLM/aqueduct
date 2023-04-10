@@ -92,8 +92,7 @@ def _read_local_image_content(path: str) -> Image.Image:
 
 
 def _read_local_json_content(path: str) -> Any:
-    with open(path, mode="rb", encoding=DEFAULT_ENCODING) as file:
-        return json.load(file.read())
+    json.load(path)
 
 
 def _read_local_pickle_content(path: str) -> Any:

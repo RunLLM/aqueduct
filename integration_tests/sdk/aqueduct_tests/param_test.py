@@ -507,7 +507,6 @@ def test_all_local_data_types(client, flow_name, engine):
         Unable to check that the input is picklable, since `pickle.loads()`
         complains about `import of module 'param_test' failed`.
         """
-        print(input)
         if input != ArtifactType:
             raise Exception("Expected Class.")
         return input
@@ -588,6 +587,26 @@ def test_all_local_data_types(client, flow_name, engine):
     assert isinstance(image_output, GenericArtifact)
     assert isinstance(image_output.get(), Image.Image)
 
+    from tensorflow import keras
+
+    model = keras.models.load_model(
+        "data/tf_model",
+    )
+
+    @op
+    def must_be_tf_keras(input):
+        if not input.get_config() == model.get_config():
+            raise Exception("Tensorflow keras model config does not match.")
+        return input
+
+    tf_keras_param = client.create_param(
+        "tf_keras", default="data/tf_model", use_local=True, as_type=ArtifactType.TF_KERAS
+    )
+    tf_keras_output = must_be_tf_keras(tf_keras_param)
+    assert isinstance(tf_keras_output, GenericArtifact)
+    assert isinstance(tf_keras_output.get(), keras.Model)
+    assert tf_keras_output.get().get_config() == model.get_config()
+
     publish_flow_test(
         client,
         name=flow_name(),
@@ -598,6 +617,7 @@ def test_all_local_data_types(client, flow_name, engine):
             tuple_output,
             list_output,
             image_output,
+            tf_keras_output,
         ],
         engine=engine,
         use_local=True,
