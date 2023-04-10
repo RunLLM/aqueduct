@@ -15,3 +15,4 @@ Pillow<=9.4.0
 multipart<=0.2.4
 requests_toolbelt<=0.10.1
 pymongo<=4.3.3
+tensorflow<=2.12.0

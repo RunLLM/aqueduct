@@ -74,6 +74,7 @@ def _read_string_content(content: bytes) -> str:
 def _read_bytes_content(content: bytes) -> bytes:
     return content
 
+
 def _read_local_csv_table_content(path: str) -> pd.DataFrame:
     return pd.read_csv(path)
 
@@ -91,7 +92,8 @@ def _read_local_image_content(path: str) -> Image.Image:
 
 
 def _read_local_json_content(path: str) -> Any:
-    json.load(path)
+    with open(path, mode="rb", encoding=DEFAULT_ENCODING) as file:
+        return json.load(file)
 
 
 def _read_local_pickle_content(path: str) -> Any:
