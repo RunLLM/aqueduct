@@ -75,7 +75,7 @@ class S3Storage(Storage):
         return self._key_prefix + key
 
 
-def _sanitize_path(path):
+def _sanitize_path(path: str) -> str:
     """Sanitize the given path to be in the format `path/to/dir/` (no leading slash but one trailing slash)."""
     if path == "":
         return path
