@@ -52,7 +52,7 @@ type S3ConfigPublic struct {
 
 	// Use this directory in the bucket as the root. If not set, we default to the root of the bucket.
 	// Expected to be santizied into the format "path/to/dir/" (without a leading slash, but with a trailing one).
-	RootPath string `yaml:"root_dir" json:"root_dir"`
+	RootDir string `yaml:"root_dir" json:"root_dir"`
 }
 
 type FileConfig struct {
@@ -86,9 +86,9 @@ func (s *StorageConfig) ToPublic() (*StorageConfigPublic, error) {
 		storageConfigPublic.FileConfig = s.FileConfig
 	case S3StorageType:
 		storageConfigPublic.S3ConfigPublic = &S3ConfigPublic{
-			Region:   s.S3Config.Region,
-			Bucket:   s.S3Config.Bucket,
-			RootPath: s.S3Config.RootDir,
+			Region:  s.S3Config.Region,
+			Bucket:  s.S3Config.Bucket,
+			RootDir: s.S3Config.RootDir,
 		}
 	case GCSStorageType:
 		storageConfigPublic.GCSConfigPublic = &GCSConfigPublic{
