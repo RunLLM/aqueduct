@@ -91,16 +91,20 @@ def test_invalid_file_dependencies(client, data_integration):
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
 
     with pytest.raises(AqueductError):
-        model_with_invalid_dependencies(table_artifact)
+        output_artifact = model_with_invalid_dependencies(table_artifact)
+        output_artifact.get()
 
     with pytest.raises(AqueductError):
-        model_with_missing_file_dependencies(table_artifact)
+        output_artifact = model_with_missing_file_dependencies(table_artifact)
+        output_artifact.get()
 
     with pytest.raises(InvalidFunctionException):
-        model_with_improper_dependency_path(table_artifact)
+        output_artifact = model_with_improper_dependency_path(table_artifact)
+        output_artifact.get()
 
     with pytest.raises(InvalidDependencyFilePath):
-        model_with_out_of_package_file_dependency(table_artifact)
+        output_artifact = model_with_out_of_package_file_dependency(table_artifact)
+        output_artifact.get()
 
 
 def test_table_with_non_string_column_name(client):
@@ -109,4 +113,5 @@ def test_table_with_non_string_column_name(client):
         return pd.DataFrame([0, 1, 2, 3], columns=[123])
 
     with pytest.raises(AqueductError):
-        bad_return()
+        output_artifact = bad_return()
+        output_artifact.get()

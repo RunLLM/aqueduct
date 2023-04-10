@@ -213,7 +213,7 @@ def skip_for_spark_engines(request, client, engine):
     (Databricks or Spark)
     """
     if request.node.get_closest_marker("skip_for_spark_engines"):
-        if _type_from_engine_name(client, engine) in [ServiceType.DATABRICKS, ServiceType.SPARK]:
+        if (not engine) and _type_from_engine_name(client, engine) in [ServiceType.DATABRICKS, ServiceType.SPARK]:
             pytest.skip(
                 "Skipped for engine integration `%s`, since it is a spark-based engine." % engine
             )
