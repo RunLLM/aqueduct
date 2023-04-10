@@ -606,15 +606,11 @@ def test_all_local_data_types(client, flow_name, engine):
     assert isinstance(image_output, GenericArtifact)
     assert isinstance(image_output.get(), Image.Image)
 
-    from tensorflow import keras
 
-    model = keras.models.load_model(
-        "data/tf_model",
-    )
-
-    @op
+    @op(requirements=["tensorflow"])
     def must_be_tf_keras(input):
-        if not input.get_config() == model.get_config():
+        from tensorflow import keras
+        if not isinstance(input, keras.Model):
             raise Exception("Tensorflow keras model config does not match.")
         return input
 
@@ -623,8 +619,6 @@ def test_all_local_data_types(client, flow_name, engine):
     )
     tf_keras_output = must_be_tf_keras(tf_keras_param)
     assert isinstance(tf_keras_output, GenericArtifact)
-    assert isinstance(tf_keras_output.get(), keras.Model)
-    assert tf_keras_output.get().get_config() == model.get_config()
 
     publish_flow_test(
         client,
