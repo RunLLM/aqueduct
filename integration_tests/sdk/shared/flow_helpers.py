@@ -160,7 +160,12 @@ def wait_for_flow_runs(
         expect_status_strs = [status.value for status in expected_statuses]
         if statuses != expect_status_strs:
             for i, status in enumerate(statuses):
-                if status != expect_status_strs[i] and status == ExecutionStatus.FAILED:
+                if i >= len(expect_status_strs):
+                    print("Unexpected additional workflow run:")
+                    unexpected_flow_run = flow.fetch(flow_runs[i]["run_id"])
+                    unexpected_flow_run.describe()
+                elif status != expect_status_strs[i] and status == ExecutionStatus.FAILED:
+                    print("Failed workflow run:")
                     failed_flow_run = flow.fetch(flow_runs[i]["run_id"])
                     failed_flow_run.describe()
 
