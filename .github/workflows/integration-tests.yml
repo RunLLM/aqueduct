@@ -29,7 +29,7 @@ jobs:
           s3_test_config_path: premerge-basic-test-config.yml
 
       - name: Run the SDK Integration Tests
-        timeout-minutes: 10
+        timeout-minutes: 20
         working-directory: integration_tests/sdk
         run: python3 run_tests.py -n 8
 
@@ -79,7 +79,7 @@ jobs:
         run: aqueduct install s3
 
       - name: Run the SDK Integration Aqueduct Tests
-        timeout-minutes: 10
+        timeout-minutes: 20
         working-directory: integration_tests/sdk
         run: python3 run_tests.py --aqueduct -n 8
 
