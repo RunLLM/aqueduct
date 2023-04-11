@@ -67,6 +67,7 @@ export const KubernetesDialog: React.FC<Props> = ({
       )}
 
       <IntegrationTextInputField
+        name="kubeconfig_path"
         spellCheck={false}
         required={!(value?.use_same_cluster === 'true')}
         label="Kubernetes Config Path*"
@@ -80,12 +81,13 @@ export const KubernetesDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="cluster_name"
         spellCheck={false}
         required={!(value?.use_same_cluster === 'true')}
         label="Cluster Name*"
         description="The name of the cluster that will be used."
         placeholder={Placeholders.cluster_name}
-        onChange={(event) => onUpdateField('cluster_name', event.target.value)}
+        onChange={(event) => { onUpdateField('cluster_name', event.target.value) }}
         value={value?.cluster_name ?? null}
         disabled={value?.use_same_cluster === 'true'}
       />

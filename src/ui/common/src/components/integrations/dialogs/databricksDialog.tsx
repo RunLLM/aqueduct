@@ -34,6 +34,7 @@ export const DatabricksDialog: React.FC<Props> = ({
         .
       </Typography>
       <IntegrationTextInputField
+        name="workspace_url"
         label={'Workspace URL*'}
         description={'URL of Databricks Workspace.'}
         spellCheck={false}
@@ -47,6 +48,7 @@ export const DatabricksDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="access_token"
         label={'Access Token*'}
         description={
           'The access token to connect to your Databricks Workspace.'
@@ -70,6 +72,7 @@ export const DatabricksDialog: React.FC<Props> = ({
       </Typography>
 
       <IntegrationTextInputField
+        name="s3_instance_profile_arn"
         label={'S3 Instance Profile ARN*'}
         description={
           'The ARN of the instance profile that allows Databricks clusters to access S3.'

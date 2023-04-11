@@ -17,6 +17,7 @@ export const LambdaDialog: React.FC<Props> = ({ onUpdateField, value }) => {
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="role_arn"
         spellCheck={false}
         required={true}
         label="Lambda Role ARN"

@@ -50,6 +50,7 @@ export const AirflowDialog: React.FC<Props> = ({
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="host"
         spellCheck={false}
         required={true}
         label="Host *"
@@ -63,6 +64,7 @@ export const AirflowDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="username"
         spellCheck={false}
         required={true}
         label="Username *"
@@ -73,6 +75,7 @@ export const AirflowDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="password"
         spellCheck={false}
         required={true}
         label="Password *"
@@ -84,6 +87,7 @@ export const AirflowDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="s3_credentials_path"
         spellCheck={false}
         required={true}
         label="S3 Credentials Path *"
@@ -96,6 +100,7 @@ export const AirflowDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="s3CredsProfile"
         spellCheck={false}
         required={false}
         label="S3 Credentials Profile"

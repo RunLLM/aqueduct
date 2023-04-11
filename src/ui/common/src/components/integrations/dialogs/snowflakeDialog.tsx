@@ -41,6 +41,7 @@ export const SnowflakeDialog: React.FC<Props> = ({
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="account_identifier"
         spellCheck={false}
         required={true}
         label="Account Identifier *"
@@ -56,6 +57,7 @@ export const SnowflakeDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="warehouse"
         spellCheck={false}
         required={true}
         label="Warehouse *"
@@ -69,6 +71,7 @@ export const SnowflakeDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="database"
         spellCheck={false}
         required={true}
         label="Database *"
@@ -82,6 +85,7 @@ export const SnowflakeDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="schema"
         spellCheck={false}
         required={false}
         label="Schema"
@@ -95,6 +99,7 @@ export const SnowflakeDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="username"
         spellCheck={false}
         required={true}
         label="Username *"
@@ -105,6 +110,7 @@ export const SnowflakeDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="password"
         spellCheck={false}
         required={true}
         label="Password *"
@@ -116,6 +122,7 @@ export const SnowflakeDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="role"
         spellCheck={false}
         required={false}
         label="Role"

@@ -51,6 +51,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
 
   const configProfileInput = (
     <IntegrationTextInputField
+      name="config_file_profile"
       spellCheck={false}
       required={true}
       label="AWS Profile*"
@@ -69,6 +70,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         Manually enter your AWS credentials.
       </Typography>
       <IntegrationTextInputField
+        name="access_key_id"
         spellCheck={false}
         required={true}
         label="AWS Access Key ID*"
@@ -79,6 +81,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       />
 
       <IntegrationTextInputField
+        name="secret_access_key"
         spellCheck={false}
         required={true}
         label="AWS Secret Access Key*"
@@ -91,6 +94,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       />
 
       <IntegrationTextInputField
+        name="region"
         spellCheck={false}
         required={true}
         label="AWS Region*"
@@ -113,6 +117,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         automatically apply to this integration.
       </Typography>
       <IntegrationTextInputField
+        name="config_file_path"
         spellCheck={false}
         required={true}
         label="AWS Credentials File Path*"
@@ -133,7 +138,9 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       <Typography variant="body2" color="gray.700">
         Optionally configure on-demand Kubernetes cluster parameters.
       </Typography>
+      {/* TODO: add custom handling for this field, might not be able to just handle with react-hook-form's register */}
       <IntegrationTextInputField
+        name="keepalive"
         spellCheck={false}
         required={false}
         label="Keepalive period"
@@ -146,6 +153,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         value={k8sConfigs['keepalive'] ?? null}
       />
       <IntegrationTextInputField
+        name="cpu_node_type"
         spellCheck={false}
         required={false}
         label="CPU node type"
@@ -159,6 +167,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       />
 
       <IntegrationTextInputField
+        name="gpu_node_type"
         spellCheck={false}
         required={false}
         label="GPU node type"
@@ -171,6 +180,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         value={k8sConfigs['gpu_node_type'] ?? null}
       />
       <IntegrationTextInputField
+        name="min_cpu_node"
         spellCheck={false}
         required={false}
         label="Min CPU node"
@@ -183,6 +193,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         value={k8sConfigs['min_cpu_node'] ?? null}
       />
       <IntegrationTextInputField
+        name="max_cpu_node"
         spellCheck={false}
         required={false}
         label="Max CPU node"
@@ -195,6 +206,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         value={k8sConfigs['max_cpu_node'] ?? null}
       />
       <IntegrationTextInputField
+        name="min_gpu_node"
         spellCheck={false}
         required={false}
         label="Min GPU node"
@@ -207,6 +219,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         value={k8sConfigs['min_gpu_node'] ?? null}
       />
       <IntegrationTextInputField
+        name="max_gpu_node"
         spellCheck={false}
         required={false}
         label="Max GPU node"

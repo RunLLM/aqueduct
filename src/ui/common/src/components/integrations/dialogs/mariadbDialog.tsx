@@ -27,6 +27,7 @@ export const MariaDbDialog: React.FC<Props> = ({
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="host"
         label={'Host*'}
         description={'The hostname or IP address of the MariaDB server.'}
         spellCheck={false}
@@ -40,6 +41,7 @@ export const MariaDbDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="port"
         label={'Port*'}
         description={'The port number of the MariaDB server.'}
         spellCheck={false}
@@ -53,6 +55,7 @@ export const MariaDbDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="database"
         label={'Database*'}
         description={'The name of the specific database to connect to.'}
         spellCheck={false}
@@ -66,6 +69,7 @@ export const MariaDbDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="username"
         spellCheck={false}
         required={true}
         label="Username*"
@@ -76,6 +80,7 @@ export const MariaDbDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="password"
         spellCheck={false}
         required={true}
         label="Password*"

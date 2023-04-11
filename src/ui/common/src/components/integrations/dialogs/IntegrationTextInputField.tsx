@@ -1,8 +1,10 @@
 import { Box, Typography } from '@mui/material';
 import TextField from '@mui/material/TextField';
 import React, { ChangeEvent } from 'react';
+import { useForm } from 'react-hook-form';
 
 type IntegrationTextFieldProps = {
+  name: string; // used for registering input via react-hook-form
   label: string;
   description: string;
   warning?: string;
@@ -19,6 +21,7 @@ type IntegrationTextFieldProps = {
 };
 
 export const IntegrationTextInputField: React.FC<IntegrationTextFieldProps> = ({
+  name,
   label,
   description,
   warning,
@@ -31,6 +34,8 @@ export const IntegrationTextInputField: React.FC<IntegrationTextFieldProps> = ({
   disabled,
   disableReason,
 }) => {
+  const { register } = useForm();
+
   return (
     <Box sx={{ mt: 2 }}>
       <Box sx={{ my: 1 }}>
@@ -54,6 +59,7 @@ export const IntegrationTextInputField: React.FC<IntegrationTextFieldProps> = ({
           size={'small'}
           disabled={disabled}
           helperText={disabled ? disableReason : undefined}
+          {...register(name, { required: required })}
         />
       </Box>
     </Box>

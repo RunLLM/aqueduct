@@ -40,9 +40,9 @@ export const GCSDialog: React.FC<Props> = ({
   const fileData =
     fileName && !!value?.service_account_credentials
       ? {
-          name: fileName,
-          data: value.service_account_credentials,
-        }
+        name: fileName,
+        data: value.service_account_credentials,
+      }
       : null;
 
   const fileUploadDescription = (
@@ -62,6 +62,7 @@ export const GCSDialog: React.FC<Props> = ({
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="bucket"
         spellCheck={false}
         required={true}
         label="Bucket*"
@@ -90,6 +91,7 @@ export const GCSDialog: React.FC<Props> = ({
         }}
       />
 
+      {/* TODO: Register checkbox and other form elements that we need here in react-hook-form */}
       <FormControlLabel
         label="Use this integration for Aqueduct metadata storage."
         control={

@@ -41,6 +41,7 @@ export const SlackDialog: React.FC<Props> = ({ onUpdateField, value }) => {
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="token"
         spellCheck={false}
         required={false}
         label="Bot Token *"
@@ -56,6 +57,7 @@ export const SlackDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       />
 
       <IntegrationTextInputField
+        name="channels"
         spellCheck={false}
         required={true}
         label="Channels *"
@@ -73,6 +75,7 @@ export const SlackDialog: React.FC<Props> = ({ onUpdateField, value }) => {
 
       <Divider sx={{ mt: 2 }} />
 
+      {/* TODO: get checkbox hooked up with react-hook-form */}
       <Box sx={{ mt: 2 }}>
         <CheckboxEntry
           checked={value?.enabled === 'true'}

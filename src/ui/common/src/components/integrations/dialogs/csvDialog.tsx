@@ -90,6 +90,7 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
     <Box sx={{ mt: 2 }}>
       <Typography>Upload a CSV file to the demo database.</Typography>
       <IntegrationTextInputField
+        name="name"
         label={'Table Name*'}
         description={'The name of the table to create.'}
         spellCheck={false}

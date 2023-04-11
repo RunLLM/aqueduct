@@ -27,6 +27,7 @@ export const PostgresDialog: React.FC<Props> = ({
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="host"
         spellCheck={false}
         required={true}
         label="Host *"
@@ -40,6 +41,7 @@ export const PostgresDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="port"
         spellCheck={false}
         required={true}
         label="Port *"
@@ -53,6 +55,7 @@ export const PostgresDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="database"
         spellCheck={false}
         required={true}
         label="Database *"
@@ -66,6 +69,7 @@ export const PostgresDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="username"
         spellCheck={false}
         required={true}
         label="Username *"
@@ -76,6 +80,7 @@ export const PostgresDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="password"
         spellCheck={false}
         required={false}
         label="Password"

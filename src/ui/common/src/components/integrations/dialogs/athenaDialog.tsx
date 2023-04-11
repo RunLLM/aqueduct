@@ -46,9 +46,9 @@ export const AthenaDialog: React.FC<Props> = ({
   const fileData =
     fileName && !!value?.config_file_content
       ? {
-          name: fileName,
-          data: value.config_file_content,
-        }
+        name: fileName,
+        data: value.config_file_content,
+      }
       : null;
 
   useEffect(() => {
@@ -59,6 +59,7 @@ export const AthenaDialog: React.FC<Props> = ({
 
   const configProfileInput = (
     <IntegrationTextInputField
+      name="config_file_profile"
       spellCheck={false}
       required={true}
       label="AWS Profile*"
@@ -77,6 +78,7 @@ export const AthenaDialog: React.FC<Props> = ({
         Manually enter your AWS credentials.
       </Typography>
       <IntegrationTextInputField
+        name="access_key_id"
         spellCheck={false}
         required={true}
         label="AWS Access Key ID*"
@@ -87,6 +89,7 @@ export const AthenaDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="secret_access_key"
         spellCheck={false}
         required={true}
         label="AWS Secret Access Key*"
@@ -99,6 +102,7 @@ export const AthenaDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="region"
         spellCheck={false}
         required={true}
         label="Region*"
@@ -121,6 +125,7 @@ export const AthenaDialog: React.FC<Props> = ({
         automatically apply to this integration.
       </Typography>
       <IntegrationTextInputField
+        name="config_file_path"
         spellCheck={false}
         required={true}
         label="AWS Credentials File Path*"
@@ -148,6 +153,7 @@ export const AthenaDialog: React.FC<Props> = ({
       {/* TODO: add these message once integration edit is ready:
         Once connected, you would need to re-upload the file to update the credentials.
       */}
+      {/* TODO: Figure out how to use this with react-hook form */}
       <IntegrationFileUploadField
         label={'AWS Credentials File*'}
         description={'Upload your credentials file here.'}
@@ -171,6 +177,7 @@ export const AthenaDialog: React.FC<Props> = ({
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="database"
         spellCheck={false}
         required={true}
         label="Database*"
@@ -184,6 +191,7 @@ export const AthenaDialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="output_location"
         spellCheck={false}
         required={true}
         label="S3 Output Location*"

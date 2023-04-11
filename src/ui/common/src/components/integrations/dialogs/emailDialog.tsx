@@ -47,6 +47,7 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="host"
         spellCheck={false}
         required={true}
         label="Host *"
@@ -57,6 +58,7 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       />
 
       <IntegrationTextInputField
+        name="port"
         spellCheck={false}
         required={true}
         label="Port *"
@@ -67,6 +69,7 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       />
 
       <IntegrationTextInputField
+        name="user"
         spellCheck={false}
         required={true}
         label="Sender Address *"
@@ -77,6 +80,7 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       />
 
       <IntegrationTextInputField
+        name="password"
         spellCheck={false}
         required={false}
         label="Sender Password *"
@@ -92,6 +96,7 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       />
 
       <IntegrationTextInputField
+        name="receivers"
         spellCheck={false}
         required={true}
         label="Receiver Address *"

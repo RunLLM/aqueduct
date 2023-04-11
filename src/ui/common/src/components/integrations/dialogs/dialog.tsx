@@ -378,6 +378,8 @@ const IntegrationDialog: React.FC<Props> = ({
       return null;
   }
 
+
+  // TODO: Change to react-hook-form's handleSubmit function.
   const onConfirmDialog = () => {
     //check that name is unique before connecting.
     if (!editMode) {
@@ -391,25 +393,26 @@ const IntegrationDialog: React.FC<Props> = ({
 
     return editMode
       ? dispatch(
-          handleEditIntegration({
-            apiKey: user.apiKey,
-            integrationId: integrationToEdit.id,
-            name: name,
-            config: config,
-          })
-        )
+        handleEditIntegration({
+          apiKey: user.apiKey,
+          integrationId: integrationToEdit.id,
+          name: name,
+          config: config,
+        })
+      )
       : dispatch(
-          handleConnectToNewIntegration({
-            apiKey: user.apiKey,
-            service: service,
-            name: name,
-            config: config,
-          })
-        );
+        handleConnectToNewIntegration({
+          apiKey: user.apiKey,
+          service: service,
+          name: name,
+          config: config,
+        })
+      );
   };
 
   const nameInput = (
     <IntegrationTextInputField
+      name="name"
       spellCheck={false}
       required={true}
       label="Name*"
@@ -430,9 +433,8 @@ const IntegrationDialog: React.FC<Props> = ({
       <DialogContent>
         {editMode && numWorkflows > 0 && (
           <Alert sx={{ mb: 2 }} severity="info">
-            {`Changing this integration will automatically update ${numWorkflows} ${
-              numWorkflows === 1 ? 'workflow' : 'workflows'
-            }.`}
+            {`Changing this integration will automatically update ${numWorkflows} ${numWorkflows === 1 ? 'workflow' : 'workflows'
+              }.`}
           </Alert>
         )}
         {(service === 'Email' || service === 'Slack') && (

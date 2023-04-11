@@ -3,6 +3,8 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 
+import { useForm, Controller } from 'react-hook-form';
+
 import {
   AWSCredentialType,
   FileData,
@@ -40,6 +42,8 @@ export const S3Dialog: React.FC<Props> = ({
   setMigrateStorage,
 }) => {
   const [fileName, setFileName] = useState<string>(null);
+  // TODO: Use yup or some TS library to handle form validation.
+  const { register } = useForm();
 
   const setFile = (fileData: FileData | null) => {
     setFileName(fileData?.name ?? null);
@@ -49,9 +53,9 @@ export const S3Dialog: React.FC<Props> = ({
   const fileData =
     fileName && !!value?.config_file_content
       ? {
-          name: fileName,
-          data: value.config_file_content,
-        }
+        name: fileName,
+        data: value.config_file_content,
+      }
       : null;
 
   useEffect(() => {
@@ -66,6 +70,7 @@ export const S3Dialog: React.FC<Props> = ({
 
   const configProfileInput = (
     <IntegrationTextInputField
+      name="config_file_profile"
       spellCheck={false}
       required={true}
       label="AWS Profile*"
@@ -84,6 +89,7 @@ export const S3Dialog: React.FC<Props> = ({
         Manually enter your AWS credentials.
       </Typography>
       <IntegrationTextInputField
+        name="access_key_id"
         spellCheck={false}
         required={true}
         label="AWS Access Key ID*"
@@ -94,6 +100,7 @@ export const S3Dialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="secret_access_key"
         spellCheck={false}
         required={true}
         label="AWS Secret Access Key*"
@@ -118,6 +125,7 @@ export const S3Dialog: React.FC<Props> = ({
         automatically apply to this integration.
       </Typography>
       <IntegrationTextInputField
+        name="config_file_path"
         spellCheck={false}
         required={true}
         label="AWS Credentials File Path*"
@@ -168,6 +176,7 @@ export const S3Dialog: React.FC<Props> = ({
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="bucket"
         spellCheck={false}
         required={true}
         label="Bucket*"
@@ -181,6 +190,7 @@ export const S3Dialog: React.FC<Props> = ({
       />
 
       <IntegrationTextInputField
+        name="region"
         spellCheck={false}
         required={true}
         label="Region*"
@@ -217,6 +227,7 @@ export const S3Dialog: React.FC<Props> = ({
         label="Use this integration for Aqueduct metadata storage."
         control={
           <Checkbox
+            {...register('use_as_storage')}
             checked={value?.use_as_storage === 'true'}
             onChange={(event) => {
               onUpdateField(

@@ -23,6 +23,7 @@ export const SQLiteDialog: React.FC<Props> = ({
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="path"
         spellCheck={false}
         required={true}
         label="Path *"

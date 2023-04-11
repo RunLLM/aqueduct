@@ -31,9 +31,9 @@ export const BigQueryDialog: React.FC<Props> = ({
   const fileData =
     fileName && !!value?.service_account_credentials
       ? {
-          name: fileName,
-          data: value.service_account_credentials,
-        }
+        name: fileName,
+        data: value.service_account_credentials,
+      }
       : null;
 
   const fileUploadDescription = (
@@ -53,6 +53,7 @@ export const BigQueryDialog: React.FC<Props> = ({
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="project_id"
         spellCheck={false}
         required={true}
         label="Project ID*"
