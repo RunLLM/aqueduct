@@ -48,7 +48,9 @@ func (*operatorReader) Get(ctx context.Context, ID uuid.UUID, DB database.Databa
 
 func (*operatorReader) GetNode(ctx context.Context, ID uuid.UUID, DB database.Database) (*views.OperatorNode, error) {
 	query := fmt.Sprintf(
-		"SELECT %s FROM %s WHERE %s = $1",
+		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s = $1",
+		views.OperatorNodeView,
+		views.OperatorNodeViewSubQuery,
 		views.OperatorNodeCols(),
 		views.OperatorNodeView,
 		models.OperatorID,
@@ -101,7 +103,9 @@ func (*operatorReader) GetNodesByDAG(
 	DB database.Database,
 ) ([]views.OperatorNode, error) {
 	query := fmt.Sprintf(
-		"SELECT %s FROM %s WHERE %s = $1",
+		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s = $1",
+		views.OperatorNodeView,
+		views.OperatorNodeViewSubQuery,
 		views.OperatorNodeCols(),
 		views.OperatorNodeView,
 		views.OperatorNodeDagID,

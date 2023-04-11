@@ -47,7 +47,9 @@ func (*artifactReader) Get(ctx context.Context, ID uuid.UUID, DB database.Databa
 
 func (*artifactReader) GetNode(ctx context.Context, ID uuid.UUID, DB database.Database) (*views.ArtifactNode, error) {
 	query := fmt.Sprintf(
-		"SELECT %s FROM %s WHERE %s = $1",
+		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s = $1",
+		views.ArtifactNodeView,
+		views.ArtifactNodeViewSubQuery,
 		views.ArtifactNodeCols(),
 		views.ArtifactNodeView,
 		models.ArtifactID,
@@ -188,7 +190,9 @@ func (*artifactReader) GetNodesByDAG(
 	DB database.Database,
 ) ([]views.ArtifactNode, error) {
 	query := fmt.Sprintf(
-		"SELECT %s FROM %s WHERE %s = $1",
+		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s = $1",
+		views.ArtifactNodeView,
+		views.ArtifactNodeViewSubQuery,
 		views.ArtifactNodeCols(),
 		views.ArtifactNodeView,
 		views.ArtifactNodeDagID,
