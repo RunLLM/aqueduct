@@ -55,10 +55,13 @@ def test_register_metric(client, flow_name, data_integration, engine):
 @metric()
 def metric_with_multiple_inputs(df1, m, df2):
     if not isinstance(df1, pd.DataFrame) or not isinstance(df2, pd.DataFrame):
-        raise Exception(
-            "Expected dataframes as first and third args, got %s and %s"
-            % (type(df1).__name__, type(df2).__name__)
-        )
+        from pyspark.sql import DataFrame
+
+        if not isinstance(df1, DataFrame) or not isinstance(df2, DataFrame):
+            raise Exception(
+                "Expected dataframes as first and third args, got %s and %s"
+                % (type(df1).__name__, type(df2).__name__)
+            )
     if not isinstance(m, float):
         raise Exception("Expected float as input to check, got %s" % type(m).__name__)
     return m + 10
@@ -86,7 +89,13 @@ def test_edit_metric(client, data_integration, engine, flow_name):
 
     @metric
     def foo(table):
-        return len(table)
+        if isinstance(table, pd.DataFrame):
+            return len(table)
+        else:
+            from pyspark.sql import DataFrame
+
+            if isinstance(table, DataFrame):
+                return table.count()
 
     output1 = foo(table)
     output2 = foo(table)
