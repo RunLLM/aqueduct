@@ -287,6 +287,7 @@ def update_server_version():
         # We add a couple new tables to the demo db for the v0.1.0 release.
         # If we want to add tables in other releases in the future, we should refactor each of them
         # into a helper function.
+        print("Adding new tables to the demo db...")
         data_script_path = os.path.join(server_directory, "db", "0.1.0", "create_tables.py")
         data_script_dir = os.path.dirname(data_script_path)
         if not os.path.isdir(data_script_dir):
