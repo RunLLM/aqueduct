@@ -21,6 +21,7 @@ type S3IntegrationConfig struct {
 	Type              S3ConfigType `json:"type"`
 	Bucket            string       `json:"bucket"`
 	Region            string       `json:"region"`
+	RootDir           string       `json:"root_dir"`
 	AccessKeyId       string       `json:"access_key_id"`
 	SecretAccessKey   string       `json:"secret_access_key"`
 	ConfigFilePath    string       `json:"config_file_path"`

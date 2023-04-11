@@ -1,4 +1,5 @@
 import os
+import pickle
 from typing import Dict, List
 
 import pandas as pd
@@ -518,7 +519,80 @@ def test_invalid_local_data(client):
         )
 
 
-def test_local_image_data_parameter(client, flow_name, engine):
+def test_all_local_data_types(client, flow_name, engine):
+    @op
+    def must_be_picklable(input):
+        """
+        Unable to check that the input is picklable, since `pickle.loads()`
+        complains about `import of module 'param_test' failed`.
+        """
+        if input != ArtifactType:
+            raise Exception("Expected Class.")
+        return input
+
+    with open("data/test.pickle", "wb") as file:
+        pickle.dump(ArtifactType, file)
+    picklable_param = client.create_param(
+        "pickleable", default="data/test.pickle", use_local=True, as_type=ArtifactType.PICKLABLE
+    )
+    pickle_output = must_be_picklable(picklable_param)
+
+    assert isinstance(pickle_output, GenericArtifact)
+    assert pickle_output.get() == ArtifactType
+
+    @op
+    def must_be_bytes(input):
+        if not isinstance(input, bytes):
+            raise Exception("Expected bytes")
+        return input
+
+    bytes_param = client.create_param(
+        "bytes", default="data/test_bytes.txt", use_local=True, as_type=ArtifactType.BYTES
+    )
+    bytes_output = must_be_bytes(bytes_param)
+
+    assert isinstance(bytes_output, GenericArtifact)
+    assert bytes_output.get() == b"hello world"
+
+    @op
+    def must_be_string(input):
+        if not isinstance(input, str):
+            raise Exception("Expected string.")
+        return input
+
+    string_param = client.create_param(
+        "string", default="data/test_bytes.txt", use_local=True, as_type=ArtifactType.STRING
+    )
+    string_output = must_be_string(string_param)
+    assert isinstance(string_output, GenericArtifact)
+    assert string_output.get() == "hello world"
+
+    @op
+    def must_be_tuple(input):
+        if not isinstance(input, tuple):
+            raise Exception("Expected tuple.")
+        return input
+
+    tuple_param = client.create_param(
+        "tuple", default="data/test_tuple", use_local=True, as_type=ArtifactType.TUPLE
+    )
+    tuple_output = must_be_tuple(tuple_param)
+    assert isinstance(tuple_output, GenericArtifact)
+    assert tuple_output.get() == ("hello", "world")
+
+    @op
+    def must_be_list(input):
+        if not isinstance(input, list):
+            raise Exception("Expected list.")
+        return input
+
+    list_param = client.create_param(
+        "list", default="data/test_list", use_local=True, as_type=ArtifactType.LIST
+    )
+    list_output = must_be_list(list_param)
+    assert isinstance(list_output, GenericArtifact)
+    assert list_output.get() == ["hello", "world"]
+
     @op
     def must_be_image(input):
         if not isinstance(input, Image.Image):
@@ -526,18 +600,40 @@ def test_local_image_data_parameter(client, flow_name, engine):
         return input
 
     image_param = client.create_param(
-        name="data", default="data/aqueduct.jpg", use_local=True, as_type=ArtifactType.IMAGE
+        "image", default="data/aqueduct.jpg", use_local=True, as_type=ArtifactType.IMAGE
     )
-
     image_output = must_be_image(image_param)
     assert isinstance(image_output, GenericArtifact)
     assert isinstance(image_output.get(), Image.Image)
+
+    from tensorflow import keras
+
+    model = keras.models.load_model("data/tf_model")
+
+    @op
+    def must_be_tf_keras(input):
+        if not isinstance(input, keras.Model):
+            raise Exception("Tensorflow keras model config does not match.")
+        return input
+
+    tf_keras_param = client.create_param(
+        "tf_keras", default="data/tf_model", use_local=True, as_type=ArtifactType.TF_KERAS
+    )
+    tf_keras_output = must_be_tf_keras(tf_keras_param)
+    assert isinstance(tf_keras_output.get(), keras.Model)
+    assert tf_keras_output.get().get_config() == model.get_config()
 
     publish_flow_test(
         client,
         name=flow_name(),
         artifacts=[
+            pickle_output,
+            bytes_output,
+            string_output,
+            tuple_output,
+            list_output,
             image_output,
+            tf_keras_output,
         ],
         engine=engine,
         use_local=True,

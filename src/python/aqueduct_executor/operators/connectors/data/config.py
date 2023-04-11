@@ -54,8 +54,11 @@ class S3Config(models.BaseConfig):
     config_file_profile: str = ""
 
     bucket: str = ""
-
     region: str = ""
+
+    # This is unused for data integrations. It is only used for storage.
+    root_dir: str = ""
+
     use_as_storage: str = ""
 
 

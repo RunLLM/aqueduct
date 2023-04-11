@@ -36,12 +36,7 @@ def validate_local_data(
             "Specify artifact type in `as_type` field in `create_param` to use local data. "
         )
 
-    if (artifact_type is not ArtifactType.TABLE) and (artifact_type is not ArtifactType.IMAGE):
-        raise InvalidUserArgumentException(
-            "We currently only support using Image and Table Artifacts from local data."
-        )
-
-    if not os.path.isfile(file_path):
+    if not os.path.exists(file_path):
         raise InvalidUserArgumentException(
             "Given path file '%s' to local data does not exist." % file_path
         )

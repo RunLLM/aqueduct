@@ -65,8 +65,6 @@ const WithOperatorHeader: React.FC<Props> = ({
   const inputs = mapArtifacts(operator.inputs);
   const outputs = mapArtifacts(operator.outputs);
 
-  console.log('integrationsState', integrationsState);
-
   let checkLevelDisplay = null;
   if (operator?.spec?.check?.level) {
     const checkLevel = operator.spec.check.level;
