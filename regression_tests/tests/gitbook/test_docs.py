@@ -1,20 +1,23 @@
 import os
 import re
+import time
 import argparse
 import subprocess
 from glob import glob
 from pathlib import Path
 from typing import NamedTuple, List
 
+start = time.time()
+
 class SnippetExec(NamedTuple):
     # The result from executing the code snippets sequentially.
+    # We produce one per file.
     # Returned from `run` and stores useful information for debugging that is displayed if a file fails to run to the end successfully.
     
     # All the Python code block in the Markdown file joined in order of appearance.
     snippet: str
-    # Whether or not every snippet is successfully executed.
     success: bool
-    # The output from running the snippet
+    # The output logged to stdout when running the snippet
     output: str
     # The error message.
     error: str
@@ -43,15 +46,16 @@ def get_code(page: str) -> List[str]:
     '''
     contents = Path(page).read_text()
 
-    # The regular expression is used to extract code blocks written in the Python language that are enclosed in a triple backtick (```) fence.
+    '''
+    The regular expression is used to extract code blocks written in the Python language that are enclosed in a triple backtick (```) fence.
 
-    # - `{3} matches exactly three occurrences of the previous character or group, which in this case is the backtick (`).
-    # - python\n matches the string "python" followed by a newline character.
-    # - ([\s\S]*?) is a capture group that matches any sequence of characters, including whitespace characters and line breaks. The *? quantifier means "match zero or more of the preceding token, but as few as possible".
-    # - \n`{3} matches exactly a newline followed by three three backticks (`).
+    - `{3} matches exactly three occurrences of the previous character or group, which in this case is the backtick (`).
+    - python\n matches the string "python" followed by a newline character.
+    - ([\s\S]*?) is a capture group that matches any sequence of characters, including whitespace characters and line breaks. The *? quantifier means "match zero or more of the preceding token, but as few as possible".
+    - \n`{3} matches exactly a newline followed by three three backticks (`).
     
-    # The regular expression matches a string that starts with three backticks followed by the string "python" and a newline character, then captures any sequence of characters (including whitespace and line breaks) until it encounters another newline and three backticks.
-    
+    The regular expression matches a string that starts with three backticks followed by the string "python" and a newline character, then captures any sequence of characters (including whitespace and line breaks) until it encounters another newline and three backticks.
+    '''
     return re.findall("`{3}python\n([\s\S]*?)\n`{3}", contents)
 
 def run(snippet: str, filename: str) -> SnippetExec:
@@ -85,6 +89,28 @@ def run(snippet: str, filename: str) -> SnippetExec:
     os.remove(filename)
     return SnippetExec(snippet, success, output, error)
 
+def should_skip_section(item):
+    # Check to see if the section is excluded via `blacklist_sections`.
+    for blacklist_section in blacklist_sections:
+        current_section = item[0].split("gitbook/")[-1]
+        if current_section == blacklist_section or current_section.startswith(blacklist_section+"/"):
+            print(">> SKIPPING ", current_section)
+            return True
+        
+def should_skip_file(item):
+    # Check to see if the section is excluded via `blacklist_files`.
+    for blacklist_file in blacklist_files:
+        if item == blacklist_file:
+            print(">> SKIPPING ", item)
+            return True
+        
+def remove_skipped_snippets(snippets):
+    # Remove any snippet that shows up in `blacklist_snippets`.
+    if file_name in blacklist_snippets.keys():
+        return [snippet for snippet in snippets if snippet not in blacklist_snippets[file_name]]
+    else:
+        return snippets
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
@@ -110,7 +136,7 @@ if __name__ == "__main__":
         default=[],
         nargs='+',
         action="store",
-        help="Subset of gitbook sections to run.",
+        help="Subset of gitbook sections to run. Expects a list of paths.",
     )
 
     args = parser.parse_args()
@@ -125,57 +151,42 @@ if __name__ == "__main__":
 
     successfully_ran_all = True
     for item in args.sections:
-        # Check to see if the section is excluded via `blacklist_sections`.
-        skip = False
-        for blacklist_section in blacklist_sections:
-            current_section = item[0].split("gitbook/")[-1]
-            if current_section == blacklist_section or current_section.startswith(blacklist_section+"/"):
-                skip = True
-                print(">> SKIPPING ", current_section)
-                break
+        if should_skip_section(item):
+            continue
 
-        # skip = False which means we want to run the files in the section.
-        if not skip:
-            for file in glob(os.path.join(item[0], '*.md')):
-                file_name = file.split("gitbook/")[-1]
+        for file in glob(os.path.join(item[0], '*.md')):
+            file_name = file.split("gitbook/")[-1]
 
-                # Check to see if the section is excluded via `blacklist_files`.
-                skip = False
-                for blacklist_file in blacklist_files:
-                    if file_name == blacklist_file:
-                        skip = True
-                        print(">> SKIPPING ", file_name)
+            if should_skip_file(file_name):
+                continue
 
-                # skip = False which means we want to run the file.
-                if not skip:
-                    snippets = get_code(file)
-                    
-                    # Remove any snippet that shows up in `blacklist_snippets`.
-                    if file_name in blacklist_snippets.keys():
-                        snippets = [snippet for snippet in snippets if snippet not in blacklist_snippets[file_name]]
-                    
-                    # If we still have code to run, run it.
-                    if len(snippets) > 0:
-                        snippet_result = run("\n".join(snippets), file.replace(r"/", "_")[:-2] + "py")
+            snippets = remove_skipped_snippets(get_code(file))
+            
+            # If we still have code to run, run it.
+            if len(snippets) > 0:
+                temp_file_name =  file.replace(r"/", "_")[:-2] + "py"
+                snippet_result = run("\n".join(snippets), temp_file_name)
 
-                        if not snippet_result.success:
-                            # Snippet failed to run. Display relevant information for debugging. 
-                            successfully_ran_all = False
-                            print(">> FAILED   ", file_name)
-                            # Display the code
-                            print("-"*25 + "[CODE]" + "-"*25)
-                            print(snippet_result.snippet)
-                            # Display the output
-                            print("-"*25 + "[OUTPUT]" + "-"*25)
-                            print(snippet_result.output)
-                            # Display the error
-                            print("-"*25 + "[ERROR]" + "-"*25)
-                            print(snippet_result.error)
-                        else:
-                            print(">> OK       ", file_name)
-                    else:
-                        print(">> SKIPPING  (no Python snippets found)", file_name)
+                if not snippet_result.success:
+                    # Snippet failed to run. Display relevant information for debugging. 
+                    successfully_ran_all = False
+                    print(">> FAILED   ", file_name)
+                    # Display the code
+                    print("-"*25 + "[CODE]" + "-"*25)
+                    print(snippet_result.snippet)
+                    # Display the output
+                    print("-"*25 + "[OUTPUT]" + "-"*25)
+                    print(snippet_result.output)
+                    # Display the error
+                    print("-"*25 + "[ERROR]" + "-"*25)
+                    print(snippet_result.error)
+                else:
+                    print(">> OK       ", file_name)
+            else:
+                print(">> SKIPPING  (no Python snippets found)", file_name)
 
-
+    print("Took", time.time() - start, "s.")
     if successfully_ran_all:
         print("Congrats! You've successfully ran all code snippets in the documentation.")
+        exit(0)
+    exit(1)
