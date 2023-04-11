@@ -9,7 +9,8 @@ from sdk.setup_integration import (
     get_aqueduct_config,
     get_artifact_store_name,
     has_storage_config,
-    is_preview_enabled,
+    is_global_engine_set,
+    is_lazy_set,
     list_compute_integrations,
     list_data_integrations,
     setup_compute_integrations,
@@ -139,17 +140,18 @@ def engine(request, pytestconfig):
 
 @pytest.fixture(scope="function", autouse=True)
 def set_global_config(engine):
-    # If we are using the aqueduct engine (where the engine fixture is None), we
-    # assume that previews are enabled and thus don't have to change the existing
-    # global_config.
+    # If we are using the aqueduct engine (where the engine fixture is None), we don't
+    # have to change the existing global_config.
     if engine != None:
-        # If we are using an external compute engine, we check if the `enable_previews` tag
-        # has been set in test-credentials.yml. If it is, we set lazy execution to False
-        # to force the external engine to run previews. If not set (in the case we want to save
-        # on costs) we set lazy to True and thus do not run previews unless we force execution
-        # via <artifact>.get().
-        lazy_config = not is_preview_enabled(engine)
-        global_config({"engine": engine, "lazy": lazy_config})
+        # Enables lazy execution by default if `set_global_lazy` flag is added in conf.
+        lazy_config = is_lazy_set(engine)
+
+        # Enables the compute engine as global default if `set_global_engine` flag is added in conf.
+        engine_config = "aqueduct"
+        if is_global_engine_set(engine):
+            engine_config = engine
+
+        global_config({"engine": engine_config, "lazy": lazy_config})
 
     yield
     # Reset the global_config after the end of the function.
