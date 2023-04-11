@@ -1,3 +1,4 @@
+import pytest
 from pandas import DataFrame
 from pandas._testing import assert_frame_equal
 
@@ -15,6 +16,8 @@ def test_local_operator(client, data_integration):
 
     output_local = dummy_sentiment_model.local(table_artifact)
     assert output_cloud.count()[0] == output_local.count()[0]
+    output_cloud.columns = output_cloud.columns.str.lower()
+    output_local.columns = output_local.columns.str.lower()
     assert_frame_equal(output_cloud, output_local)
 
 
@@ -39,6 +42,8 @@ def test_local_dataframe_input(client, data_integration):
     output_cloud = dummy_sentiment_model(table_artifact).get()
     output_local = dummy_sentiment_model.local(table_artifact.get())
     assert type(output_local) is DataFrame
+    output_cloud.columns = output_cloud.columns.str.lower()
+    output_local.columns = output_local.columns.str.lower()
     assert_frame_equal(output_cloud, output_local)
 
 
@@ -49,4 +54,6 @@ def test_local_on_multiple_inputs(client, data_integration):
     output_cloud = dummy_sentiment_model_multiple_input(table_artifact, table_artifact2).get()
     output_local = dummy_sentiment_model_multiple_input.local(table_artifact, table_artifact2)
     assert type(output_local) is DataFrame
+    output_cloud.columns = output_cloud.columns.str.lower()
+    output_local.columns = output_local.columns.str.lower()
     assert_frame_equal(output_cloud, output_local)

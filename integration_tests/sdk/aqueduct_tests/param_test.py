@@ -42,6 +42,9 @@ def convert_dict_to_df(kv: Dict[str, List[float]]):
     return pd.DataFrame(data=kv)
 
 
+@pytest.mark.skip_for_spark_engines(
+    reason="Expect a Spark Dataframe as return type, not Pandas Dataframe."
+)
 def test_basic_param_creation(client):
     # Parameter of integer type
     param = client.create_param(name="number", default=8)
@@ -140,6 +143,7 @@ def append_row_to_df(df, row):
     return df
 
 
+@pytest.mark.skip_for_spark_engines(reason="append_row_to_df doesn't work for Spark Dataframes")
 def test_parameter_in_basic_flow(client, data_integration):
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
     row_to_add = ["new hotel", "09-28-1996", "US", "It was new."]
@@ -153,6 +157,7 @@ def test_parameter_in_basic_flow(client, data_integration):
     assert output_df.equals(input_df)
 
 
+@pytest.mark.skip_for_spark_engines(reason="append_row_to_df doesn't work for Spark Dataframes")
 def test_edit_param_for_flow(client, flow_name, data_integration, engine):
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
     row_to_add = ["new hotel", "09-28-1996", "US", "It was new."]
@@ -440,6 +445,7 @@ def test_parameter_type_changes(client, flow_name, engine):
     )
 
 
+@pytest.mark.skip_for_spark_engines(reason="append_row_to_df doesn't work for Spark Dataframes")
 def test_local_table_data_parameter(client, flow_name, engine):
     row_to_add = ["new hotel", "09-28-1996", "US", "It was new."]
 

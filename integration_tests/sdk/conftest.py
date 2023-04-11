@@ -59,6 +59,10 @@ def pytest_configure(config):
         "markers",
         "enable_only_for_local_storage: the test is expected to run in an environment with local storage.",
     )
+    config.addinivalue_line(
+        "markers",
+        "skip_for_spark_engines: the test only runs for non-Spark compute engines.",
+    )
 
 
 def pytest_cmdline_main(config):
@@ -208,7 +212,7 @@ def enable_only_for_engine_type(request, client, engine):
 
 
 @pytest.fixture(autouse=True)
-def skip_for_spark_engines(request, client, engine):
+def skip_for_spark_engines(request, client, engine, reason=None):
     """When a test is marked with this, we skip if we are using a spark based engine
     (Databricks or Spark)
     """

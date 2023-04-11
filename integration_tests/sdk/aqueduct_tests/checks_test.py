@@ -179,7 +179,6 @@ def test_check_wrong_number_of_inputs(client, data_integration):
         check_artifact.get()
 
 
-@pytest.mark.skip
 def test_check_with_numpy_bool_output(client, data_integration):
     table_artifact = extract(data_integration, DataObject.CHURN)
 

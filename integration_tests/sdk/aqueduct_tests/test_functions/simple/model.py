@@ -3,6 +3,10 @@ import pandas as pd
 from aqueduct import op
 
 
+# In order to use these functions with spark compute engines, we add a clause
+# with equivalent pyspark code. the `lit` function creates a full column of the
+# given value. `lit(123)` automatically is casted to a double, so we case back
+# to an integer type.
 @op()
 def dummy_sentiment_model(df):
     if isinstance(df, pd.DataFrame):
@@ -10,7 +14,7 @@ def dummy_sentiment_model(df):
     else:
         from pyspark.sql.functions import lit
 
-        df = df.withColumn("POSITIVITY", lit(123.0))
+        df = df.withColumn("POSITIVITY", lit(123).cast("integer"))
 
     return df
 
@@ -21,7 +25,7 @@ def dummy_sentiment_model_function(df):
     else:
         from pyspark.sql.functions import lit
 
-        df = df.withColumn("POSITIVITY", lit(123.0))
+        df = df.withColumn("POSITIVITY", lit(123).cast("integer"))
 
     return df
 
@@ -34,8 +38,8 @@ def dummy_sentiment_model_multiple_input(df1, df2):
     else:
         from pyspark.sql.functions import lit
 
-        df1 = df1.withColumn("POSITIVITY", lit(123.0))
-        df1 = df1.withColumn("POSITIVITY_2", lit(456.0))
+        df1 = df1.withColumn("POSITIVITY", lit(123).cast("integer"))
+        df2 = df2.withColumn("POSITIVITY", lit(456).cast("integer"))
 
     return df1
 

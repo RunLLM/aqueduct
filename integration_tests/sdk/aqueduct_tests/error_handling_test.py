@@ -26,10 +26,8 @@ TIP_OP_EXECUTION = "Error executing operator. Please refer to the stack trace fo
 def test_handle_bad_op_error(client, data_integration):
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
 
-    try:
+    with pytest.raises(AqueductError, match=TIP_OP_EXECUTION):
         bad_op(table_artifact)
-    except AqueductError as e:
-        assert TIP_OP_EXECUTION in e.message
 
 
 def test_handle_bad_op_with_multiple_outputs(client, data_integration):

@@ -40,7 +40,7 @@ def test_basic_flow(client, flow_name, data_integration, engine, data_validator)
     )
 
 
-@pytest.mark.skip_for_spark_engines()
+@pytest.mark.skip_for_spark_engines(reason="Uses sentiment model with pandas-specific code.")
 def test_sentiment_flow(client, flow_name, data_integration, engine, data_validator):
     """Actually run the full sentiment model (with nltk dependency)."""
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
@@ -385,7 +385,7 @@ def test_multiple_flows_with_same_schedule(client, flow_name, data_integration, 
     )
 
 
-@pytest.mark.skip_for_spark_engines()
+@pytest.mark.skip_for_spark_engines(reason="requires implicit pandas requirement.")
 def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integration, engine):
     # Write a new table into the data integration.
     initial_table = pd.DataFrame([1, 2, 3, 4, 5, 6], columns=["numbers"])
@@ -440,7 +440,6 @@ def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integra
     assert artifact.get().equals(initial_table)
 
 
-@pytest.mark.skip_for_spark_engines()
 def test_flow_with_args(client):
     str_val = "this is a string"
     num_val = 1234
@@ -464,7 +463,8 @@ def test_flow_with_args(client):
 
     # Implicit parameter creation is disallowed for variable-length parameters.
     with pytest.raises(InvalidUserArgumentException):
-        foo_with_args(*[str_val, num_val])
+        output_artifact = foo_with_args(*[str_val, num_val])
+        output_artifact.get()
 
 
 def test_flow_list_saved_objects_none(client, flow_name, engine):

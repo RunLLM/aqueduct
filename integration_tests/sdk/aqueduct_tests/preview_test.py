@@ -31,7 +31,7 @@ def test_basic_get(client, data_integration, engine):
 
     output_artifact = dummy_sentiment_model(table_artifact)
     output_df = output_artifact.get()
-    assert list(output_df) == [
+    assert [col.lower() for col in list(output_df)] == [
         "hotel_name",
         "review_date",
         "reviewer_nationality",
@@ -48,7 +48,7 @@ def test_multiple_input_get(client, data_integration):
     fn_artifact = dummy_sentiment_model_multiple_input(table_artifact1, table_artifact2)
     fn_df = fn_artifact.get()
 
-    assert list(fn_df) == [
+    assert [col.lower() for col in list(fn_df)] == [
         "hotel_name",
         "review_date",
         "reviewer_nationality",
@@ -60,7 +60,7 @@ def test_multiple_input_get(client, data_integration):
 
     output_artifact = dummy_model(fn_artifact)
     output_df = output_artifact.get()
-    assert list(output_df) == [
+    assert [col.lower() for col in list(output_df)] == [
         "hotel_name",
         "review_date",
         "reviewer_nationality",
@@ -77,7 +77,7 @@ def test_basic_file_dependencies(client, data_integration):
 
     output_artifact = model_with_file_dependency(table_artifact)
     output_df = output_artifact.get()
-    assert list(output_df) == [
+    assert [col.lower() for col in list(output_df)] == [
         "hotel_name",
         "review_date",
         "reviewer_nationality",
