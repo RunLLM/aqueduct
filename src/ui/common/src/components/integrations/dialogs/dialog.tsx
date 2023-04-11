@@ -58,6 +58,7 @@ import {
   DatabricksDialog,
   isDatabricksConfigComplete,
 } from './databricksDialog';
+import { useForm, FormProvider, useFormContext } from "react-hook-form";
 import {
   EmailDefaultsOnCreate,
   EmailDialog,
@@ -112,6 +113,7 @@ const IntegrationDialog: React.FC<Props> = ({
   showMigrationDialog = undefined,
   integrationToEdit = undefined,
 }) => {
+  const methods = useForm();
   const editMode = !!integrationToEdit;
   const dispatch: AppDispatch = useDispatch();
   const [config, setConfig] = useState<IntegrationConfig>(
@@ -378,6 +380,10 @@ const IntegrationDialog: React.FC<Props> = ({
       return null;
   }
 
+  // TODO: Move this around after done testing out react-hook-form context inputs.
+  const onSubmit = (data) => {
+    console.log('onSubmit data: ', data);
+  };
 
   // TODO: Change to react-hook-form's handleSubmit function.
   const onConfirmDialog = () => {
@@ -412,13 +418,15 @@ const IntegrationDialog: React.FC<Props> = ({
 
   const nameInput = (
     <IntegrationTextInputField
-      name="name"
+      name="nameasdf"
       spellCheck={false}
       required={true}
       label="Name*"
       description="Provide a unique name to refer to this integration."
       placeholder={'my_' + formatService(service) + '_integration'}
       onChange={(event) => {
+        debugger;
+        console.log('onChange value: ', event.target.value);
         setName(event.target.value);
         setShouldShowNameError(false);
       }}
@@ -427,60 +435,67 @@ const IntegrationDialog: React.FC<Props> = ({
     />
   );
 
+
   return (
     <Dialog open={true} onClose={onCloseDialog} fullWidth maxWidth="lg">
-      <DialogTitle>{dialogHeader}</DialogTitle>
-      <DialogContent>
-        {editMode && numWorkflows > 0 && (
-          <Alert sx={{ mb: 2 }} severity="info">
-            {`Changing this integration will automatically update ${numWorkflows} ${numWorkflows === 1 ? 'workflow' : 'workflows'
-              }.`}
-          </Alert>
-        )}
-        {(service === 'Email' || service === 'Slack') && (
-          <Typography variant="body1" color="gray.700">
-            To learn more about how to set up {service}, see our{' '}
-            <Link href={SupportedIntegrations[service].docs} target="_blank">
-              documentation
-            </Link>
-            .
-          </Typography>
-        )}
-        {nameInput}
-        {serviceDialog}
+      <FormProvider {...methods}>
+        <DialogTitle>{dialogHeader}</DialogTitle>
+        <DialogContent>
+          {editMode && numWorkflows > 0 && (
+            <Alert sx={{ mb: 2 }} severity="info">
+              {`Changing this integration will automatically update ${numWorkflows} ${numWorkflows === 1 ? 'workflow' : 'workflows'
+                }.`}
+            </Alert>
+          )}
+          {(service === 'Email' || service === 'Slack') && (
+            <Typography variant="body1" color="gray.700">
+              To learn more about how to set up {service}, see our{' '}
+              <Link href={SupportedIntegrations[service].docs} target="_blank">
+                documentation
+              </Link>
+              .
+            </Typography>
+          )}
+          {nameInput}
+          {serviceDialog}
 
-        {shouldShowNameError && (
-          <Alert sx={{ mt: 2 }} severity="error">
-            <AlertTitle>Naming Error</AlertTitle>A connected integration already
-            exists with this name. Please provide a unique name for your
-            integration.
-          </Alert>
-        )}
+          {shouldShowNameError && (
+            <Alert sx={{ mt: 2 }} severity="error">
+              <AlertTitle>Naming Error</AlertTitle>A connected integration already
+              exists with this name. Please provide a unique name for your
+              integration.
+            </Alert>
+          )}
 
-        {isFailed(connectStatus) && (
-          <Alert sx={{ mt: 2 }} severity="error">
-            <AlertTitle>
-              {editMode
-                ? `Failed to update ${integrationToEdit.name}`
-                : `Unable to connect to ${service}`}
-            </AlertTitle>
-            <pre>{connectStatus.err}</pre>
-          </Alert>
-        )}
-      </DialogContent>
-      <DialogActions>
-        <Button autoFocus onClick={onCloseDialog}>
-          Cancel
-        </Button>
-        <LoadingButton
-          autoFocus
-          onClick={onConfirmDialog}
-          loading={isLoading(connectStatus)}
-          disabled={disableConnect}
-        >
-          Confirm
-        </LoadingButton>
-      </DialogActions>
+          {isFailed(connectStatus) && (
+            <Alert sx={{ mt: 2 }} severity="error">
+              <AlertTitle>
+                {editMode
+                  ? `Failed to update ${integrationToEdit.name}`
+                  : `Unable to connect to ${service}`}
+              </AlertTitle>
+              <pre>{connectStatus.err}</pre>
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button autoFocus onClick={onCloseDialog}>
+            Cancel
+          </Button>
+          <LoadingButton
+            autoFocus
+            onClick={() => {
+              methods.handleSubmit(onSubmit);
+              // TODO: uncomment when done debugging :)
+              // onConfirmDialog();
+            }}
+            loading={isLoading(connectStatus)}
+            disabled={disableConnect}
+          >
+            Confirm
+          </LoadingButton>
+        </DialogActions>
+      </FormProvider>
     </Dialog>
   );
 };
