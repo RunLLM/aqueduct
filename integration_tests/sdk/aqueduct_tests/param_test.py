@@ -547,7 +547,7 @@ def test_all_local_data_types(client, flow_name, engine):
         return input
 
     bytes_param = client.create_param(
-        "bytes", default="data/helloworld.txt", use_local=True, as_type=ArtifactType.BYTES
+        "bytes", default="data/test_bytes.txt", use_local=True, as_type=ArtifactType.BYTES
     )
     bytes_output = must_be_bytes(bytes_param)
 
@@ -561,7 +561,7 @@ def test_all_local_data_types(client, flow_name, engine):
         return input
 
     string_param = client.create_param(
-        "string", default="data/helloworld.txt", use_local=True, as_type=ArtifactType.STRING
+        "string", default="data/test_bytes.txt", use_local=True, as_type=ArtifactType.STRING
     )
     string_output = must_be_string(string_param)
     assert isinstance(string_output, GenericArtifact)
@@ -574,7 +574,7 @@ def test_all_local_data_types(client, flow_name, engine):
         return input
 
     tuple_param = client.create_param(
-        "tuple", default="data/helloworld_tuple", use_local=True, as_type=ArtifactType.TUPLE
+        "tuple", default="data/test_tuple", use_local=True, as_type=ArtifactType.TUPLE
     )
     tuple_output = must_be_tuple(tuple_param)
     assert isinstance(tuple_output, GenericArtifact)
@@ -587,7 +587,7 @@ def test_all_local_data_types(client, flow_name, engine):
         return input
 
     list_param = client.create_param(
-        "list", default="data/helloworld_list", use_local=True, as_type=ArtifactType.LIST
+        "list", default="data/test_list", use_local=True, as_type=ArtifactType.LIST
     )
     list_output = must_be_list(list_param)
     assert isinstance(list_output, GenericArtifact)
