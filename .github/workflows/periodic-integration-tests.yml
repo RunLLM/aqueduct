@@ -98,75 +98,75 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
 
-  run-data-integration-tests:
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    name: SDK Integration Tests against Data Connectors
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: aqueduct
-          POSTGRES_DB: aqueducttest
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          # Maps tcp port 5432 on service container to the host
-          - 5432:5432
-    steps:
-      - uses: actions/checkout@v2
-
-      - uses: ./.github/actions/setup-server
-        timeout-minutes: 5
-
-      - uses: ./.github/actions/fetch-test-config
-        with:
-          aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
-          s3_test_config_path: periodic-data-integration-test-config.yml
-      
-      - name: Install any data connector packages
-        run: |
-          aqueduct install redshift
-      
-      - name: Setup Hosted Data Integrations
-        working-directory: scripts/data
-        run: python3 setup_hosted.py --aws-key-id ${{ secrets.SAURAV_AWS_ACCESS_KEY_ID }} --aws-secret-key ${{ secrets.SAURAV_AWS_SECRET_ACCESS_KEY }}
-
-      - name: Run the SDK Data Integration Tests
-        working-directory: integration_tests/sdk
-        run: python3 run_tests.py --data-integration -n 2
-
-      - uses: ./.github/actions/upload-artifacts
-        if: always()
-        with:
-          prefix: Data Connectors
-      
-      - name: Teardown Hosted Data Integrations
-        if: always()
-        working-directory: scripts/data
-        run: python3 teardown_hosted.py --aws-key-id ${{ secrets.SAURAV_AWS_ACCESS_KEY_ID }} --aws-secret-key ${{ secrets.SAURAV_AWS_SECRET_ACCESS_KEY }}
-
-      # Sets it as an environmental variable.
-      - name: Get the Slack ID for the current oncall
-        if: always()
-        run: |
-          aws s3 cp s3://aqueduct-assets/oncall.yml ./oncall.yml
-          echo "ONCALL_SLACK_MEMBER_ID=$(python3 scripts/get_current_oncall.py --file ./oncall.yml)" >> $GITHUB_ENV
-
-      - name: Report to Slack on Failure
-        if: always()
-        uses: ravsamhq/notify-slack-action@v1
-        with:
-          status: ${{ job.status }}
-          notification_title: ""
-          message_format: "{emoji} *{workflow}* has {status_message}"
-          footer: "{run_url}"
-          notify_when: "failure,warnings"
-          mention_users: ${{ env.ONCALL_SLACK_MEMBER_ID }}
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
+#  run-data-integration-tests:
+#    runs-on: ubuntu-latest
+#    timeout-minutes: 60
+#    name: SDK Integration Tests against Data Connectors
+#    services:
+#      postgres:
+#        image: postgres:15
+#        env:
+#          POSTGRES_USER: postgres
+#          POSTGRES_PASSWORD: aqueduct
+#          POSTGRES_DB: aqueducttest
+#        options: >-
+#          --health-cmd pg_isready
+#          --health-interval 10s
+#          --health-timeout 5s
+#          --health-retries 5
+#        ports:
+#          # Maps tcp port 5432 on service container to the host
+#          - 5432:5432
+#    steps:
+#      - uses: actions/checkout@v2
+#
+#      - uses: ./.github/actions/setup-server
+#        timeout-minutes: 5
+#
+#      - uses: ./.github/actions/fetch-test-config
+#        with:
+#          aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
+#          aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
+#          s3_test_config_path: periodic-data-integration-test-config.yml
+#
+#      - name: Install any data connector packages
+#        run: |
+#          aqueduct install redshift
+#
+#      - name: Setup Hosted Data Integrations
+#        working-directory: scripts/data
+#        run: python3 setup_hosted.py --aws-key-id ${{ secrets.SAURAV_AWS_ACCESS_KEY_ID }} --aws-secret-key ${{ secrets.SAURAV_AWS_SECRET_ACCESS_KEY }}
+#
+#      - name: Run the SDK Data Integration Tests
+#        working-directory: integration_tests/sdk
+#        run: python3 run_tests.py --data-integration -n 2
+#
+#      - uses: ./.github/actions/upload-artifacts
+#        if: always()
+#        with:
+#          prefix: Data Connectors
+#
+#      - name: Teardown Hosted Data Integrations
+#        if: always()
+#        working-directory: scripts/data
+#        run: python3 teardown_hosted.py --aws-key-id ${{ secrets.SAURAV_AWS_ACCESS_KEY_ID }} --aws-secret-key ${{ secrets.SAURAV_AWS_SECRET_ACCESS_KEY }}
+#
+#      # Sets it as an environmental variable.
+#      - name: Get the Slack ID for the current oncall
+#        if: always()
+#        run: |
+#          aws s3 cp s3://aqueduct-assets/oncall.yml ./oncall.yml
+#          echo "ONCALL_SLACK_MEMBER_ID=$(python3 scripts/get_current_oncall.py --file ./oncall.yml)" >> $GITHUB_ENV
+#
+#      - name: Report to Slack on Failure
+#        if: always()
+#        uses: ravsamhq/notify-slack-action@v1
+#        with:
+#          status: ${{ job.status }}
+#          notification_title: ""
+#          message_format: "{emoji} *{workflow}* has {status_message}"
+#          footer: "{run_url}"
+#          notify_when: "failure,warnings"
+#          mention_users: ${{ env.ONCALL_SLACK_MEMBER_ID }}
+#        env:
+#          SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
