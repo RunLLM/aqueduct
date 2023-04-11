@@ -46,6 +46,7 @@ func CreateJob(
 	databricksClient *databricks_sdk.WorkspaceClient,
 	name string,
 	s3InstanceProfileArn string,
+	instancePoolID *string,
 	tasks []jobs.JobTaskSettings,
 ) (int64, error) {
 	sparkVersions, err := databricksClient.Clusters.SparkVersions(ctx)
@@ -61,22 +62,31 @@ func CreateJob(
 		return -1, errors.Wrap(err, "Error selecting a spark version.")
 	}
 
+	jobCluster := &clusters.CreateCluster{
+		SparkVersion: latestLTS,
+		Autoscale: &clusters.AutoScale{
+			MinWorkers: DefaultMinNumWorkers,
+			MaxWorkers: DefaultMaxNumWorkers,
+		},
+		// NodeTypeId: DefaultNodeTypeID,
+		AwsAttributes: &clusters.AwsAttributes{
+			InstanceProfileArn: s3InstanceProfileArn,
+		},
+		InstancePoolId: "0410-195714-julep1-pool-sf9ui7f5",
+	}
+
+	if instancePoolID != nil {
+		jobCluster.InstancePoolId = *instancePoolID
+	} else {
+		jobCluster.NodeTypeId = DefaultNodeTypeID
+	}
+
 	createRequest := &jobs.CreateJob{
 		Name: name,
 		JobClusters: []jobs.JobCluster{
 			{
 				JobClusterKey: workflowNameToJobClusterKey(name),
-				NewCluster: &clusters.CreateCluster{
-					SparkVersion: latestLTS,
-					Autoscale: &clusters.AutoScale{
-						MinWorkers: DefaultMinNumWorkers,
-						MaxWorkers: DefaultMaxNumWorkers,
-					},
-					NodeTypeId: DefaultNodeTypeID,
-					AwsAttributes: &clusters.AwsAttributes{
-						InstanceProfileArn: s3InstanceProfileArn,
-					},
-				},
+				NewCluster:    jobCluster,
 			},
 		},
 		Tasks: tasks,
