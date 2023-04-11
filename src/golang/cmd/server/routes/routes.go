@@ -8,6 +8,8 @@ const (
 	WorkflowRoute  = "/api/v2/workflow/{workflowID}"
 	DAGRoute       = "/api/v2/workflow/{workflowID}/dag/{dagID}"
 	DAGResultRoute = "/api/v2/workflow/{workflowID}/result/{dagResultID}"
+	NodesRoute     = "/api/v2/workflow/{workflowID}/dag/{dagID}/nodes"
+	NodeRoute      = "/api/v2/workflow/{workflowID}/dag/{dagID}/{nodeType}/{nodeID}"
 
 	// V1 routes
 	GetArtifactVersionsRoute = "/api/artifact/versions"
