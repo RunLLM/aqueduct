@@ -382,7 +382,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
   },
   ['MySQL']: {
     logo: ServiceLogos['MySQL'],
-    activated: true,
+    activated: false,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
   },
