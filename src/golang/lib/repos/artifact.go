@@ -23,6 +23,9 @@ type artifactReader interface {
 	// Get returns the Artifact with ID.
 	Get(ctx context.Context, ID uuid.UUID, DB database.Database) (*models.Artifact, error)
 
+	// GetNode returns theArtifactNode view given the artifact ID.
+	GetNode(ctx context.Context, ID uuid.UUID, DB database.Database) (*views.ArtifactNode, error)
+
 	// GetBatch returns the Artifacts with IDs.
 	GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.Artifact, error)
 

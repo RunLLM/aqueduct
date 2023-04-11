@@ -28,6 +28,20 @@ func (ts *TestSuite) TestArtifact_Get() {
 	requireDeepEqual(ts.T(), expectedArtifact, *actualArtifact)
 }
 
+func (ts *TestSuite) TestArtifact_GetNode() {
+	_, _, _, _, expectedArtfNodes := ts.seedComplexWorkflow()
+	for _, expectedArtf := range expectedArtfNodes {
+		actualArtf, err := ts.artifact.GetNode(ts.ctx, expectedArtf.ID, ts.DB)
+		require.Nil(ts.T(), err)
+		// We don't care about artifact inputs / outputs ordering.
+		// It's sufficient if they are the same as sets.
+		require.Equal(ts.T(), len(expectedArtf.Inputs), len(actualArtf.Inputs))
+		require.Subset(ts.T(), expectedArtf.Inputs, actualArtf.Inputs)
+		require.Equal(ts.T(), len(expectedArtf.Outputs), len(actualArtf.Outputs))
+		require.Subset(ts.T(), expectedArtf.Outputs, actualArtf.Outputs)
+	}
+}
+
 func (ts *TestSuite) TestArtifact_GetBatch() {
 	expectedArtifacts := ts.seedArtifact(3)
 

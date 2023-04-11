@@ -46,6 +46,17 @@ func (*operatorReader) Get(ctx context.Context, ID uuid.UUID, DB database.Databa
 	return getOperator(ctx, DB, query, args...)
 }
 
+func (*operatorReader) GetNode(ctx context.Context, ID uuid.UUID, DB database.Database) (*views.OperatorNode, error) {
+	query := fmt.Sprintf(
+		"SELECT %s FROM %s WHERE %s = $1",
+		views.OperatorNodeCols(),
+		views.OperatorNodeView,
+		models.OperatorID,
+	)
+	args := []interface{}{ID}
+	return getOperatorNode(ctx, DB, query, args...)
+}
+
 func (*operatorReader) GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.Operator, error) {
 	if len(IDs) == 0 {
 		return nil, errors.New("Provided empty IDs list.")
@@ -552,6 +563,23 @@ func getOperators(ctx context.Context, DB database.Database, query string, args 
 	var operators []models.Operator
 	err := DB.Query(ctx, &operators, query, args...)
 	return operators, err
+}
+
+func getOperatorNode(ctx context.Context, DB database.Database, query string, args ...interface{}) (*views.OperatorNode, error) {
+	nodes, err := getOperatorNodes(ctx, DB, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(nodes) == 0 {
+		return nil, database.ErrNoRows()
+	}
+
+	if len(nodes) != 1 {
+		return nil, errors.Newf("Expected 1 Operator but got %v", len(nodes))
+	}
+
+	return &nodes[0], nil
 }
 
 func getOperatorNodes(ctx context.Context, DB database.Database, query string, args ...interface{}) ([]views.OperatorNode, error) {

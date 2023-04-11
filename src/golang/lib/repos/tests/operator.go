@@ -35,6 +35,15 @@ func (ts *TestSuite) TestOperator_Get() {
 	requireDeepEqual(ts.T(), expectedOperator, *actualOperator)
 }
 
+func (ts *TestSuite) TestOperator_GetNode() {
+	_, _, _, expectedOpNodes, _ := ts.seedComplexWorkflow()
+	for _, expectedOp := range expectedOpNodes {
+		actualOp, err := ts.operator.GetNode(ts.ctx, expectedOp.ID, ts.DB)
+		require.Nil(ts.T(), err)
+		requireDeepEqual(ts.T(), expectedOp, *actualOp)
+	}
+}
+
 func (ts *TestSuite) TestOperator_GetBatch() {
 	expectedOperators := ts.seedOperator(3)
 
