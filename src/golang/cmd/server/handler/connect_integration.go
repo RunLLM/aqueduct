@@ -126,10 +126,21 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Error getting server's home directory path")
 	}
 
-	config := auth.NewStaticConfig(configMap)
+	// Sanitize the root directory path for S3. We remove any leading slash, but force there to always
+	// be a trailing slash. eg: `path/to/root/`.
+	if service == shared.S3 {
+		if root_dir, ok := configMap["root_dir"]; ok && root_dir != "" {
+			if root_dir[len(root_dir)-1] != '/' {
+				root_dir += "/"
+			}
+			configMap["root_dir"] = strings.TrimLeft(root_dir, "/")
+		}
+	}
+
+	staticConfig := auth.NewStaticConfig(configMap)
 
 	// Check if this integration should be used as the new storage layer
-	setStorage, err := checkIntegrationSetStorage(service, config)
+	setStorage, err := checkIntegrationSetStorage(service, staticConfig)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to connect integration.")
 	}
@@ -138,7 +149,7 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 		AqContext:    aqContext,
 		Service:      service,
 		Name:         name,
-		Config:       config,
+		Config:       staticConfig,
 		UserOnly:     userOnly,
 		SetAsStorage: setStorage,
 	}, http.StatusOK, nil
