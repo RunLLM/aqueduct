@@ -1,11 +1,46 @@
 # Changelog
 
+## 0.2.10
+Released on April 11, 2023.
+
+### Enhancements
+* Enables subdirectory support when configuring the AWS S3 integration. When
+    a subdirectory is specified, everything outside of that directory will be
+    ignored by Aqueduct.
+* Extends support for creating artifact from the local file system to [all
+    types](https://docs.aqueducthq.com/artifacts) supported by Aqueduct.
+* If executing code on the Aqueduct server without Conda, the server will now
+    proactively ensure that the Python version from your environment matches
+    the server's Python environment. If there's a mismatch, an error will be
+    thrown.
+* Adds a dismissable banner to the Aqueduct UI notifying users of new releases.
+
+### Bugfixes
+* Fixes bug where errors occurring during the execution of a metric were not
+    being properly surfaced.
+* Fixes bug where checks with a severity level of warning were being shown as
+    errors in check history.
+* Fixes bug where creating a schedule with helper functions on the SDK would
+    fail for monthly schedules.
+
 ## 0.2.9
 Released on April 5, 2023.
 
 ### Key Features
-* [Beta] Aqueduct now has support for loading dataframe and image data from
-  the local filesystem as parameters. See `client.create_param()` for details.
+* [Beta] Aqueduct now has support for loading DataFrames and images from
+  the local filesystem as parameters:
+  ```python
+import aqueduct as aq
+client = aq.Client()
+
+data = client.create_param(
+  "df", 
+  "/path/to/my/df.csv",
+  use_local=True, 
+  as_type=aq.TableArtifact,
+  format='csv',
+)
+  ```
 
 ### Enhancements
 * Improves the artifact storage management process. The integrations page now
