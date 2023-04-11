@@ -27,14 +27,16 @@ def test_handle_bad_op_error(client, data_integration):
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
 
     with pytest.raises(AqueductError, match=TIP_OP_EXECUTION):
-        bad_op(table_artifact)
+        output_artifact = bad_op(table_artifact)
+        output_artifact.get()
 
 
 def test_handle_bad_op_with_multiple_outputs(client, data_integration):
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
 
     with pytest.raises(AqueductError, match=TIP_OP_EXECUTION):
-        bad_op_multiple_outputs(table_artifact)
+        output_artifact = bad_op_multiple_outputs(table_artifact)
+        output_artifact.get()
 
 
 def test_file_dependencies_invalid(client):

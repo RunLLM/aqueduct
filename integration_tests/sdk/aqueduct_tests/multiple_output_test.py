@@ -49,4 +49,5 @@ def test_multiple_outputs_user_failure(client):
         return "hello", 1234
 
     with pytest.raises(AqueductError):
-        generate_two_outputs()
+        output_artifact = generate_two_outputs()
+        output_artifact.get()

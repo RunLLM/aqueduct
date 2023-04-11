@@ -26,7 +26,12 @@ def test_basic_get(client, data_integration, engine):
 
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
     sql_df = table_artifact.get()
-    assert list(sql_df) == ["hotel_name", "review_date", "reviewer_nationality", "review"]
+    assert [col.lower() for col in list(sql_df)] == [
+        "hotel_name",
+        "review_date",
+        "reviewer_nationality",
+        "review",
+    ]
     assert sql_df.shape[0] == 100
 
     output_artifact = dummy_sentiment_model(table_artifact)

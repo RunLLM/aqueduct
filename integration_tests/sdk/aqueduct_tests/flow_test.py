@@ -385,7 +385,7 @@ def test_multiple_flows_with_same_schedule(client, flow_name, data_integration, 
     )
 
 
-@pytest.mark.skip_for_spark_engines(reason="requires implicit pandas requirement.")
+@pytest.mark.skip_for_spark_engines(reason="Requires implicit Pandas requirement.")
 def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integration, engine):
     # Write a new table into the data integration.
     initial_table = pd.DataFrame([1, 2, 3, 4, 5, 6], columns=["numbers"])
@@ -440,6 +440,7 @@ def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integra
     assert artifact.get().equals(initial_table)
 
 
+@pytest.mark.skip_for_spark_engines(reason="Cannot use implicit imports with Spark engines.")
 def test_flow_with_args(client):
     str_val = "this is a string"
     num_val = 1234

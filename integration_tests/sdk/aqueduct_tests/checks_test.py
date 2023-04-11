@@ -189,7 +189,7 @@ def test_check_with_numpy_bool_output(client, data_integration):
         else:
             from pyspark.sql.functions import mean
 
-            return df.select(mean("total_charges")).collect()[0][0]
+            return df.select(mean("total_charges")).collect()[0][0] < 2500
 
     check_artifact = success_check_return_numpy_bool(table_artifact)
     assert check_artifact.get()

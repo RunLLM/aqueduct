@@ -34,12 +34,12 @@ def dummy_sentiment_model_function(df):
 def dummy_sentiment_model_multiple_input(df1, df2):
     if isinstance(df1, pd.DataFrame):
         df1["positivity"] = 123
-        df1["positivity_2"] = 456
+        df2["positivity_2"] = 456
     else:
         from pyspark.sql.functions import lit
 
         df1 = df1.withColumn("POSITIVITY", lit(123).cast("integer"))
-        df2 = df2.withColumn("POSITIVITY", lit(456).cast("integer"))
+        df2 = df2.withColumn("POSITIVITY_2", lit(456).cast("integer"))
 
     return df1
 
