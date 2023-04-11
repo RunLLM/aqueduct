@@ -68,13 +68,10 @@ func CreateJob(
 			MinWorkers: DefaultMinNumWorkers,
 			MaxWorkers: DefaultMaxNumWorkers,
 		},
-		// NodeTypeId: DefaultNodeTypeID,
 		AwsAttributes: &clusters.AwsAttributes{
 			InstanceProfileArn: s3InstanceProfileArn,
 		},
-		InstancePoolId: "0410-195714-julep1-pool-sf9ui7f5",
 	}
-
 	if instancePoolID != nil {
 		jobCluster.InstancePoolId = *instancePoolID
 	} else {

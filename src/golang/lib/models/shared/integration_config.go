@@ -110,7 +110,7 @@ type DatabricksIntegrationConfig struct {
 	// https://docs.databricks.com/aws/iam/instance-profile-tutorial.html
 	S3InstanceProfileARN string `json:"s3_instance_profile_arn" yaml:"s3InstanceProfileArn"`
 	// [Optional] ID of instance pool that Aqueduct-created JobClusters should use.
-	InstancePoolID *string `json:"instance_pool_id" yaml:"instancePoolID"`
+	InstancePoolID *string `json:"instance_pool_id,omitempty" yaml:"instancePoolID"`
 }
 
 type EmailConfig struct {
