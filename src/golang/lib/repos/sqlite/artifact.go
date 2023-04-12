@@ -15,7 +15,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const ArtifactNodeViewSubQuery = `
+const artifactNodeViewSubQuery = `
 	WITH artf_with_outputs AS ( -- Aggregate outputs
 		SELECT
 			artifact.id AS id,
@@ -100,7 +100,7 @@ func (*artifactReader) GetNode(ctx context.Context, ID uuid.UUID, DB database.Da
 	query := fmt.Sprintf(
 		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s = $1",
 		views.ArtifactNodeView,
-		views.ArtifactNodeViewSubQuery,
+		artifactNodeViewSubQuery,
 		views.ArtifactNodeCols(),
 		views.ArtifactNodeView,
 		models.ArtifactID,
@@ -243,7 +243,7 @@ func (*artifactReader) GetNodesByDAG(
 	query := fmt.Sprintf(
 		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s = $1",
 		views.ArtifactNodeView,
-		views.ArtifactNodeViewSubQuery,
+		artifactNodeViewSubQuery,
 		views.ArtifactNodeCols(),
 		views.ArtifactNodeView,
 		views.ArtifactNodeDagID,

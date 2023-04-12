@@ -16,7 +16,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const OperatorNodeViewSubQuery = `
+const operatorNodeViewSubQuery = `
 	WITH op_with_outputs AS ( -- Aggregate outputs
 		SELECT
 			operator.id AS id,
@@ -127,7 +127,7 @@ func (*operatorReader) GetNode(ctx context.Context, ID uuid.UUID, DB database.Da
 	query := fmt.Sprintf(
 		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s = $1",
 		views.OperatorNodeView,
-		views.OperatorNodeViewSubQuery,
+		operatorNodeViewSubQuery,
 		views.OperatorNodeCols(),
 		views.OperatorNodeView,
 		models.OperatorID,
@@ -182,7 +182,7 @@ func (*operatorReader) GetNodesByDAG(
 	query := fmt.Sprintf(
 		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s = $1",
 		views.OperatorNodeView,
-		views.OperatorNodeViewSubQuery,
+		operatorNodeViewSubQuery,
 		views.OperatorNodeCols(),
 		views.OperatorNodeView,
 		views.OperatorNodeDagID,
