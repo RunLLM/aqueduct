@@ -27,6 +27,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database:             s.Database,
 			StorageMigrationRepo: s.StorageMigrationRepo,
 		},
+		routes.ListWorkflowsRoute: &v2.ListWorkflowsHandler{
+			Database:     s.Database,
+			WorkflowRepo: s.WorkflowRepo,
+		},
 
 		// V1 Handlers
 		// (ENG-2715) Remove deprecated ones
@@ -216,7 +220,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			IntegrationRepo: s.IntegrationRepo,
 			OperatorRepo:    s.OperatorRepo,
 		},
-		routes.ListWorkflowsRoute: &handler.ListWorkflowsHandler{
+		routes.ListWorkflowsRouteV1: &handler.ListWorkflowsHandler{
 			Database: s.Database,
 
 			ArtifactRepo:       s.ArtifactRepo,
