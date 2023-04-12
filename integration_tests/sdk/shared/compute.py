@@ -1,5 +1,6 @@
 from aqueduct.constants.enums import ServiceType
 
+
 def type_from_engine_name(client, engine: str) -> ServiceType:
     """
     Returns the integration type of an engine from the name.

@@ -306,7 +306,7 @@ def convert_dict_to_integration_connect_config(
         return EmailConfig(**config_dict)
     elif service == ServiceType.CONDA:
         return CondaConfig(**config_dict)
-    elif service ==  ServiceType.AIRFLOW:
+    elif service == ServiceType.AIRFLOW:
         return AirflowConfig(**config_dict)
     elif service == ServiceType.SPARK:
         return SparkConfig(**config_dict)

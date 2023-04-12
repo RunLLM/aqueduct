@@ -1,12 +1,18 @@
+import os
+import shutil
 import time
 import uuid
 from typing import Any, Dict, List, Optional, Union
 
 from aqueduct.artifacts.base_artifact import BaseArtifact
-from aqueduct.constants.enums import ExecutionStatus
+from aqueduct.constants.enums import ExecutionStatus, ServiceType
 
 import aqueduct
 from aqueduct import Flow
+
+from .compute import type_from_engine_name
+
+AIRFLOW_DAGS_FOLDER = "~/airflow/dags"
 
 
 def publish_flow_test(
@@ -81,6 +87,23 @@ def publish_flow_test(
         use_local=use_local,
     )
     print("Workflow registration succeeded. Workflow ID %s. Name: %s" % (flow.id(), name))
+
+    engine_type = type_from_engine_name(client, engine)
+    if engine_type == ServiceType.AIRFLOW:
+        # Copy over the Airflow DAG file to the Airflow DAGs folder
+        dag_path = f"{name}_airflow.py"
+        assert os.path.exists(
+            dag_path
+        ), f"The expected Airflow DAG file was not found at {dag_path}"
+
+        folder_path = os.path.expanduser(AIRFLOW_DAGS_FOLDER)
+        shutil.move(dag_path, folder_path)
+
+        print("Sleeping for 20s to wait for Airflow scheduler to pick up new DAG file")
+        time.sleep(20)
+
+        # Manually trigger a run to match behavior of non-Airflow engines
+        client.trigger(flow_id=flow.id())
 
     if should_block:
         wait_for_flow_runs(
@@ -210,6 +233,12 @@ def delete_all_flows(client: aqueduct.Client) -> None:
             print("Error deleting workflow %s with exception: %s" % (flow_name, e))
         else:
             print("Successfully deleted workflow %s" % flow_name)
+        
+        # Try deleting Airflow DAG file if it exists
+        # TODO - Only do this for Airflow workflows
+        dag_path = f"{flow_name}_airflow.py"
+        if os.path.exists(dag_path):
+            os.remove(dag_path)
 
 
 def polling(

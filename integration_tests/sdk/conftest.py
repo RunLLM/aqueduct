@@ -1,3 +1,5 @@
+import os
+
 import pytest
 from aqueduct.constants.enums import ServiceType
 from aqueduct.models.dag import DAG, Metadata
