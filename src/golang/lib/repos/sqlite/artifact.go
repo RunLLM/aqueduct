@@ -15,6 +15,57 @@ import (
 	"github.com/google/uuid"
 )
 
+const ArtifactNodeViewSubQuery = `
+	WITH artf_with_outputs AS ( -- Aggregate outputs
+		SELECT
+			artifact.id AS id,
+			workflow_dag.id AS dag_id,
+			artifact.name AS name,
+			artifact.description AS description,
+			artifact.type as type,
+			CAST( json_group_array( -- Group to_ids and idx into one array
+				json_object(
+					'value', workflow_dag_edge.to_id,
+					'idx', workflow_dag_edge.idx
+				)
+			) AS BLOB) AS outputs
+		FROM
+			artifact, workflow_dag, workflow_dag_edge
+		WHERE
+			workflow_dag.id = workflow_dag_edge.workflow_dag_id
+			AND artifact.id = workflow_dag_edge.from_id
+		GROUP BY
+			workflow_dag.id, artifact.id
+	),
+	artf_with_input AS ( -- No need to group as input is unique
+		SELECT
+			artifact.id AS id,
+			workflow_dag.id AS dag_id,
+			artifact.name AS name,
+			artifact.description AS description,
+			artifact.type as type,
+			workflow_dag_edge.from_id AS input
+		FROM
+			artifact, workflow_dag, workflow_dag_edge
+		WHERE
+			workflow_dag.id = workflow_dag_edge.workflow_dag_id
+			AND artifact.id = workflow_dag_edge.to_id
+	)
+	SELECT -- just do input LEFT JOIN outputs as all artifacts have inputs
+		artf_with_input.id AS id,
+		artf_with_input.dag_id AS dag_id,
+		artf_with_input.name AS name,
+		artf_with_input.description AS description,
+		artf_with_input.type AS type,
+		artf_with_outputs.outputs AS outputs,
+		artf_with_input.input AS input
+	FROM
+		artf_with_input LEFT JOIN artf_with_outputs
+	ON
+		artf_with_outputs.id = artf_with_input.id
+		AND artf_with_outputs.dag_id = artf_with_input.dag_id
+`
+
 type artifactRepo struct {
 	artifactReader
 	artifactWriter
