@@ -273,6 +273,7 @@ def setup_connector(
             # Use pythonic mysql library to fix crossplatform compatibility issues.
             # MySQLdb is a C-based library
             import pymysql
+
             # Implementation can be found here: https://github.com/PyMySQL/PyMySQL/blob/main/pymysql/__init__.py
             pymysql.install_as_MySQLdb()
             import MySQLdb
