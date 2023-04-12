@@ -78,7 +78,11 @@ func CreateLambdaFunction(ctx context.Context, functionsToShip []LambdaFunctionT
 	defer close(pushImageChannel)
 	AddFunctionTypeToChannel(functionsToShip[:], pullImageChannel)
 
-	for i := 0; i < MaxConcurrentDownload; i++ {
+	numPullWorkers := MaxConcurrentDownload
+	if numPullWorkers > len(functionsToShip) {
+		numPullWorkers = len(functionsToShip)
+	}
+	for i := 0; i < numPullWorkers; i++ {
 		errGroup.Go(func() error {
 			for {
 				select {
@@ -105,7 +109,11 @@ func CreateLambdaFunction(ctx context.Context, functionsToShip []LambdaFunctionT
 	AddFunctionTypeToChannel(functionsToShip[:], incompleteWorkChannel)
 
 	// Receive the downloaded docker images from push channels and create lambda functions on a concurrency of "MaxConcurrentUpload".
-	for i := 0; i < MaxConcurrentUpload; i++ {
+	numPushWorkers := MaxConcurrentUpload
+	if numPushWorkers > len(functionsToShip) {
+		numPushWorkers = len(functionsToShip)
+	}
+	for i := 0; i < numPushWorkers; i++ {
 		errGroup.Go(func() error {
 			for {
 				select {
@@ -245,6 +253,8 @@ func PushImageToPrivateECR(functionType LambdaFunctionType, roleArn string) erro
 	repositoryUri := fmt.Sprintf("%s:%s", *result.Repository.RepositoryUri, lib.ServerVersionNumber)
 
 	cmd := exec.Command("docker", "tag", versionedLambdaImageUri, repositoryUri)
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
 	err = cmd.Run()
 	if err != nil {
 		log.Info(stdout.String())
@@ -253,6 +263,8 @@ func PushImageToPrivateECR(functionType LambdaFunctionType, roleArn string) erro
 	}
 
 	cmd = exec.Command("docker", "push", repositoryUri)
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
 	err = cmd.Run()
 	if err != nil {
 		log.Info(stdout.String())

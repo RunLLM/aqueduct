@@ -4,6 +4,7 @@ from typing import Optional
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, SalesforceExtractType
+from aqueduct.integrations.validation import validate_is_connected
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
 from aqueduct.models.integration import Integration, IntegrationInfo
@@ -30,6 +31,7 @@ class SalesforceIntegration(Integration):
         self._dag = dag
         self._metadata = metadata
 
+    @validate_is_connected()
     def search(
         self,
         search_query: str,
@@ -69,6 +71,7 @@ class SalesforceIntegration(Integration):
             artifact_id=output_artifact_id,
         )
 
+    @validate_is_connected()
     def query(
         self,
         query: str,
@@ -102,6 +105,7 @@ class SalesforceIntegration(Integration):
             artifact_id=output_artifact_id,
         )
 
+    @validate_is_connected()
     def save(self, artifact: BaseArtifact, object: str) -> None:
         """Registers a save operator of the given artifact, to be executed when it's computed in a published flow.
 

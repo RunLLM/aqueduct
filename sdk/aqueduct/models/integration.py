@@ -4,6 +4,7 @@ from abc import ABC
 from typing import Any, Dict, Optional
 
 from aqueduct.constants.enums import ExecutionStatus, ServiceType
+from aqueduct.error import IntegrationConnectionInProgress, IntegrationFailedToConnect
 from aqueduct.models.execution_state import ExecutionState
 from aqueduct.models.utils import human_readable_timestamp
 from pydantic import BaseModel
@@ -75,6 +76,34 @@ class Integration(ABC):
 
     def type(self) -> ServiceType:
         return self._metadata.service
+
+    def _validate_is_connected(self) -> None:
+        """Method used to determine if this integration was successfully connected to or not.
+        If not successfully connected (or pending), we will raise an Exception.
+        """
+        # TODO(ENG-2813): Remove the assumption that a missing `exec_state` means success.
+        if (
+            self._metadata.exec_state is None
+            or self._metadata.exec_state.status == ExecutionStatus.SUCCEEDED
+        ):
+            return
+
+        if self._metadata.exec_state.status == ExecutionStatus.FAILED:
+            assert self._metadata.exec_state.error is not None
+            raise IntegrationFailedToConnect(
+                "The attempt to connect to %s has failed with error: %s\n%s\n\n "
+                "Please see the /integrations page on the UI for more details."
+                % (
+                    self.name(),
+                    self._metadata.exec_state.error.tip,
+                    self._metadata.exec_state.error.context,
+                )
+            )
+        else:
+            raise IntegrationConnectionInProgress(
+                "We are still in the process of connecting to integration %s."
+                "Please see the /integrations page oen the UI for more details." % self.name()
+            )
 
     def __hash__(self) -> int:
         """An integration is uniquely identified by its name.
