@@ -33,10 +33,9 @@ func (ts *TestSuite) TestArtifact_GetNode() {
 	for _, expectedArtf := range expectedArtfNodes {
 		actualArtf, err := ts.artifact.GetNode(ts.ctx, expectedArtf.ID, ts.DB)
 		require.Nil(ts.T(), err)
-		// We don't care about artifact inputs / outputs ordering.
+		require.Equal(ts.T(), expectedArtf.Input, actualArtf.Input)
+		// We don't care about artifact outputs ordering.
 		// It's sufficient if they are the same as sets.
-		require.Equal(ts.T(), len(expectedArtf.Inputs), len(actualArtf.Inputs))
-		require.Subset(ts.T(), expectedArtf.Inputs, actualArtf.Inputs)
 		require.Equal(ts.T(), len(expectedArtf.Outputs), len(actualArtf.Outputs))
 		require.Subset(ts.T(), expectedArtf.Outputs, actualArtf.Outputs)
 	}
@@ -71,10 +70,9 @@ func (ts *TestSuite) TestArtifact_GetNodesByDAG() {
 	for _, actualArtf := range actualArtfNodes {
 		expectedArtf, ok := expectedArtfNodes[actualArtf.Name]
 		require.True(ts.T(), ok)
-		// We don't care about artifact inputs / outputs ordering.
+		require.Equal(ts.T(), expectedArtf.Input, actualArtf.Input)
+		// We don't care about artifact outputs ordering.
 		// It's sufficient if they are the same as sets.
-		require.Equal(ts.T(), len(expectedArtf.Inputs), len(actualArtf.Inputs))
-		require.Subset(ts.T(), expectedArtf.Inputs, actualArtf.Inputs)
 		require.Equal(ts.T(), len(expectedArtf.Outputs), len(actualArtf.Outputs))
 		require.Subset(ts.T(), expectedArtf.Outputs, actualArtf.Outputs)
 	}
