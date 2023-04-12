@@ -6,7 +6,7 @@ import pandas as pd
 import pytest
 from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
-from aqueduct.constants.enums import ArtifactType, ExecutionStatus
+from aqueduct.constants.enums import ArtifactType, ExecutionStatus,ServiceType
 from aqueduct.error import (
     AqueductError,
     ArtifactNeverComputedException,
@@ -524,7 +524,8 @@ def test_invalid_local_data(client):
             as_type=ArtifactType.TABLE,
         )
 
-
+# TODO: Remove this pytest fixture on next release.
+@pytest.mark.enable_only_for_engine_type(ServiceType.AQUEDUCT_ENGINE)
 def test_all_local_data_types(client, flow_name, engine):
     @op
     def must_be_picklable(input):
