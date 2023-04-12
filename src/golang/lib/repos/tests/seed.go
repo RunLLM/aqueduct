@@ -863,7 +863,7 @@ func (ts *TestSuite) seedComplexWorkflow() (
 					Name:        artf.Name,
 					Description: artf.Description,
 					Type:        artf.Type,
-					Inputs:      []uuid.UUID{op.ID},
+					Input:       op.ID,
 					Outputs:     []uuid.UUID{},
 				}
 
