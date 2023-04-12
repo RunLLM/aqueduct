@@ -14,6 +14,17 @@ import {
   storageMigrationListResponse,
 } from './ListStorageMigrations';
 import {
+  nodeArtifactGetQuery,
+  NodeArtifactGetRequest,
+  NodeArtifactGetResponse,
+} from './NodeArtifactGet';
+import {
+  nodeOperatorGetQuery,
+  NodeOperatorGetRequest,
+  NodeOperatorGetResponse,
+} from './NodeOperatorGet';
+import { nodesGetQuery, NodesGetRequest, NodesGetResponse } from './NodesGet';
+import {
   workflowGetQuery,
   WorkflowGetRequest,
   WorkflowGetResponse,
@@ -38,6 +49,24 @@ export const aqueductApi = createApi({
       query: (req) => dagResultGetQuery(req),
       transformErrorResponse: transformErrorResponse,
     }),
+    nodeOperatorGet: builder.query<
+      NodeOperatorGetResponse,
+      NodeOperatorGetRequest
+    >({
+      query: (req) => nodeOperatorGetQuery(req),
+      transformErrorResponse: transformErrorResponse,
+    }),
+    nodeArtifactGet: builder.query<
+      NodeArtifactGetResponse,
+      NodeArtifactGetRequest
+    >({
+      query: (req) => nodeArtifactGetQuery(req),
+      transformErrorResponse: transformErrorResponse,
+    }),
+    nodesGet: builder.query<NodesGetResponse, NodesGetRequest>({
+      query: (req) => nodesGetQuery(req),
+      transformErrorResponse: transformErrorResponse,
+    }),
     storageMigrationList: builder.query<
       storageMigrationListResponse,
       storageMigrationListRequest
@@ -56,5 +85,8 @@ export const {
   useDagGetQuery,
   useDagResultGetQuery,
   useStorageMigrationListQuery,
+  useNodeArtifactGetQuery,
+  useNodeOperatorGetQuery,
+  useNodesGetQuery,
   useWorkflowGetQuery,
 } = aqueductApi;
