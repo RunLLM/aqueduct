@@ -98,7 +98,7 @@ export const DatabricksDialog: React.FC<Props> = ({
       <IntegrationTextInputField
         label={'Instance Pool ID'}
         description={
-          'The ID of the Datbricks Instance Pool that Aqueduct will run compute on.'
+          'The ID of the Databricks Instance Pool that Aqueduct will run compute on.'
         }
         spellCheck={false}
         required={false}
