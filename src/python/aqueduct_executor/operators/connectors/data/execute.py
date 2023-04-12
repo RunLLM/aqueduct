@@ -1,6 +1,6 @@
+import platform
 import sys
 from typing import Any
-import platform
 
 from aqueduct_executor.operators.connectors.data import common, config, connector, extract
 from aqueduct_executor.operators.connectors.data.spec import (
@@ -65,13 +65,10 @@ def run(spec: Spec) -> None:
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
     except ExecFailureException as e:
         # We must reconcile the user logs here, since those logs are not captured on the exception.
-        from_exception_exec_state = ExecutionState.from_exception(
-            e, user_logs=exec_state.user_logs)
+        from_exception_exec_state = ExecutionState.from_exception(e, user_logs=exec_state.user_logs)
 
-        print(
-            f"Failed with error. Full Logs:\n{from_exception_exec_state.json()}")
-        utils.write_exec_state(storage, spec.metadata_path,
-                               from_exception_exec_state)
+        print(f"Failed with error. Full Logs:\n{from_exception_exec_state.json()}")
+        utils.write_exec_state(storage, spec.metadata_path, from_exception_exec_state)
         sys.exit(1)
     except MissingConnectorDependencyException as e:
         exec_state.mark_as_failure(
@@ -81,8 +78,7 @@ def run(spec: Spec) -> None:
         sys.exit(1)
     except Exception as e:
         exec_state.mark_as_failure(
-            FailureType.SYSTEM, tip=TIP_UNKNOWN_ERROR, context=exception_traceback(
-                e)
+            FailureType.SYSTEM, tip=TIP_UNKNOWN_ERROR, context=exception_traceback(e)
         )
         print(f"Failed with system error. Full Logs:\n{exec_state.json()}")
 
@@ -97,8 +93,7 @@ def _execute(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
     # Because constructing certain connectors (eg. Postgres) can also involve authentication,
     # we do both in `run_authenticate()`, and give a more helpful error message on failure.
     elif spec.type == JobType.AUTHENTICATE:
-        run_authenticate(spec, exec_state, is_demo=(
-            spec.name == AQUEDUCT_DEMO_NAME))
+        run_authenticate(spec, exec_state, is_demo=(spec.name == AQUEDUCT_DEMO_NAME))
 
     else:
         op = setup_connector(spec.connector_name, spec.connector_config)
@@ -180,12 +175,9 @@ def run_delete_saved_objects(spec: Spec, storage: Storage, exec_state: Execution
     results = {}
     assert isinstance(spec.connector_name, dict)
     for integration in spec.connector_name:
-        op = setup_connector(
-            spec.connector_name[integration], spec.connector_config[integration])
-        results[integration] = op.delete(
-            spec.integration_to_object[integration])
-    utils.write_delete_saved_objects_results(
-        storage, spec.output_content_path, results)
+        op = setup_connector(spec.connector_name[integration], spec.connector_config[integration])
+        results[integration] = op.delete(spec.integration_to_object[integration])
+    utils.write_delete_saved_objects_results(storage, spec.output_content_path, results)
 
 
 def run_load(
@@ -280,6 +272,7 @@ def setup_connector(
         try:
             if platform.system() == "Darwin":
                 import pymysql
+
                 pymysql.install_as_MySQLdb()
             import MySQLdb
         except:
