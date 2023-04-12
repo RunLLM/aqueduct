@@ -118,6 +118,10 @@ func (h *NodesResultsGetHandler) Perform(ctx context.Context, interfaceArgs inte
 	}
 
 	dbArtifacts, err := h.ArtifactRepo.GetByDAG(ctx, dbDAG.ID, h.Database)
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when reading artifacts.")
+	}
+
 	dbArtifactsByID := functional_map.FromValues(
 		dbArtifacts,
 		func(artf models.Artifact) uuid.UUID { return artf.ID },
