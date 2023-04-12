@@ -2,7 +2,8 @@ import { Link, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React from 'react';
 
-export const CondaDialog: React.FC = ({}) => {
+export const CondaDialog: React.FC = ({ }) => {
+  console.log('rendering conda dialog ...');
   return (
     <Box sx={{ mt: 2 }}>
       <Typography variant="body2">

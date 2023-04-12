@@ -21,6 +21,7 @@ export const MongoDBDialog: React.FC<Props> = ({
   value,
   editMode,
 }) => {
+  console.log('rendering MongoDBDialog');
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField

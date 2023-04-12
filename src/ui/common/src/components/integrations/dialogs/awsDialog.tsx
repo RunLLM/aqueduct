@@ -221,6 +221,8 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
     </Box>
   );
 
+  console.log('rendering AWS dialog ...');
+
   return (
     <Box sx={{ mt: 2 }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>

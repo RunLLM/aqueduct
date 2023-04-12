@@ -24,6 +24,7 @@ export const DatabricksDialog: React.FC<Props> = ({
   value,
   editMode,
 }) => {
+  console.log('rendering databricks dialog ...');
   return (
     <Box sx={{ mt: 2 }}>
       <Typography variant="body2">

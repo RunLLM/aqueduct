@@ -24,6 +24,9 @@ export const MysqlDialog: React.FC<Props> = ({
   value,
   editMode,
 }) => {
+
+  console.log('rendering MySQLDialog ...');
+
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField

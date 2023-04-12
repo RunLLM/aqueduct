@@ -24,6 +24,9 @@ export const MariaDbDialog: React.FC<Props> = ({
   value,
   editMode,
 }) => {
+
+  console.log('rendering MariaDBDialog ...');
+
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField

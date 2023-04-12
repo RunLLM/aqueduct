@@ -38,6 +38,8 @@ export const SlackDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       : ''
   );
 
+  console.log('rendering SlackDialog ...');
+
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField

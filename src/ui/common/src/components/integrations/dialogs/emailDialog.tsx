@@ -44,6 +44,8 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       : ''
   );
 
+  console.log('rendering emailDialog ...');
+
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField

@@ -47,6 +47,8 @@ export const AirflowDialog: React.FC<Props> = ({
     }
   }, [host, onUpdateField, s3CredsProfile]);
 
+  console.log('rendering airflow dialog ...');
+
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField

@@ -50,9 +50,9 @@ export const S3Dialog: React.FC<Props> = ({
   const fileData =
     fileName && !!value?.config_file_content
       ? {
-          name: fileName,
-          data: value.config_file_content,
-        }
+        name: fileName,
+        data: value.config_file_content,
+      }
       : null;
 
   useEffect(() => {
@@ -165,6 +165,8 @@ export const S3Dialog: React.FC<Props> = ({
       {configProfileInput}
     </Box>
   );
+
+  console.log('rendering s3Dialog ...');
 
   return (
     <Box sx={{ mt: 2 }}>

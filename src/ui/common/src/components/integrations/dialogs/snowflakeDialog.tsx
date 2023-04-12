@@ -38,6 +38,8 @@ export const SnowflakeDialog: React.FC<Props> = ({
     }
   }, [schema]);
 
+  console.log('rendering Snowflake dialog ...');
+
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField

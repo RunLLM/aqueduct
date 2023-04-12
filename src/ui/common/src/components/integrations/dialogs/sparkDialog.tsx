@@ -20,6 +20,8 @@ export const SparkDialog: React.FC<Props> = ({
   value,
   editMode,
 }) => {
+  console.log('rendering spark dialog ...');
+
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField

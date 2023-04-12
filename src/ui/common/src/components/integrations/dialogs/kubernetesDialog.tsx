@@ -47,6 +47,8 @@ export const KubernetesDialog: React.FC<Props> = ({
     fetchEnvironment().catch(console.error);
   }, [apiKey]);
 
+  console.log('rendering kubernetes dialog ...');
+
   return (
     <Box sx={{ mt: 2 }}>
       {inK8sCluster && (

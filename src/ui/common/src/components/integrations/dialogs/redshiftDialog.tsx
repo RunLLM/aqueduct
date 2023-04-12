@@ -24,6 +24,8 @@ export const RedshiftDialog: React.FC<Props> = ({
   value,
   editMode,
 }) => {
+  console.log('rendering redshift dialog ...');
+
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
