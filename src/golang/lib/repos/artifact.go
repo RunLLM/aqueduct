@@ -23,7 +23,7 @@ type artifactReader interface {
 	// Get returns the Artifact with ID.
 	Get(ctx context.Context, ID uuid.UUID, DB database.Database) (*models.Artifact, error)
 
-	// GetNode returns theArtifactNode view given the artifact ID.
+	// GetNode returns the ArtifactNode view given the artifact ID.
 	GetNode(ctx context.Context, ID uuid.UUID, DB database.Database) (*views.ArtifactNode, error)
 
 	// GetBatch returns the Artifacts with IDs.
@@ -32,7 +32,7 @@ type artifactReader interface {
 	// GetByDAG returns the Artifacts created by the workflow DAG with ID dagID.
 	GetByDAG(ctx context.Context, dagID uuid.UUID, DB database.Database) ([]models.Artifact, error)
 
-	// GetNodesByDAG returns the OperatorNodes in the specified DAG.
+	// GetNodesByDAG returns the ArtifactNodes in the specified DAG.
 	// ArtifactNodes includes inputs / outputs IDs, which are not available in
 	// Artifacts.
 	GetNodesByDAG(ctx context.Context, dagID uuid.UUID, DB database.Database) ([]views.ArtifactNode, error)

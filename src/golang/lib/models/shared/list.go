@@ -4,16 +4,18 @@ import (
 	"database/sql/driver"
 	"sort"
 
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
-	"github.com/dropbox/godropbox/errors"
 )
 
-var ErrReadOnlyFieldType = errors.New("The cannot serialized read-only field type.")
+func ErrReadOnlyFieldType() error {
+	return errors.New("We cannot serialize read-only field type.")
+}
 
 type NullableList[T any] []T
 
 func (l *NullableList[T]) Value() (driver.Value, error) {
-	return nil, ErrReadOnlyFieldType
+	return nil, ErrReadOnlyFieldType()
 }
 
 func (l *NullableList[T]) Scan(value interface{}) error {
@@ -33,7 +35,7 @@ type indexedListItem[T any] struct {
 }
 
 func (l *NullableIndexedList[T]) Value() (driver.Value, error) {
-	return nil, ErrReadOnlyFieldType
+	return nil, ErrReadOnlyFieldType()
 }
 
 func (l *NullableIndexedList[T]) Scan(value interface{}) error {
