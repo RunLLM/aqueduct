@@ -9,7 +9,7 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/errors"
-	"github.com/aqueducthq/aqueduct/lib/funcitonal_primitives/functional_map"
+	"github.com/aqueducthq/aqueduct/lib/functional_primitives/functional_map"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/response"

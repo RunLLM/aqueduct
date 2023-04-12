@@ -1,7 +1,7 @@
 package response
 
 import (
-	"github.com/aqueducthq/aqueduct/lib/funcitonal_primitives/functional_slice"
+	"github.com/aqueducthq/aqueduct/lib/functional_primitives/functional_slice"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"

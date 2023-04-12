@@ -40,7 +40,6 @@ const (
 //		`response.Content`
 
 type NodeArtifactResultContentGetHandler struct {
-	nodeGetHandler
 	handler.GetHandler
 
 	Database database.Database
