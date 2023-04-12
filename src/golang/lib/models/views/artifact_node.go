@@ -12,7 +12,7 @@ import (
 const (
 	ArtifactNodeView    = "artifact_node"
 	ArtifactNodeDagID   = "dag_id"
-	ArtifactNodeInputs  = "inputs"
+	ArtifactNodeInput   = "input"
 	ArtifactNodeOutputs = "outputs"
 )
 
@@ -48,7 +48,7 @@ func allArtifactNodeCols() []string {
 	artfNodeCols = append(
 		artfNodeCols,
 		ArtifactNodeDagID,
-		ArtifactNodeInputs,
+		ArtifactNodeInput,
 		ArtifactNodeOutputs,
 	)
 
