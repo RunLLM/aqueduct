@@ -76,6 +76,7 @@ func ConnectBuiltinIntegration(
 
 	if _, _, err := handler.ConnectIntegration(
 		ctx,
+		nil, // Not registering an AWS integration.
 		&handler.ConnectIntegrationArgs{
 			AqContext: &aq_context.AqContext{
 				User:      *user,

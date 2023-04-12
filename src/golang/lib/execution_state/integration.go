@@ -78,6 +78,34 @@ func SerializedSuccess(runningAt *time.Time) string {
 	return SerializeExecStateAndLogFailure(execState)
 }
 
+func UpdateOnSuccess(
+	ctx context.Context,
+	integrationType string,
+	integrationConfig *shared.IntegrationConfig,
+	runningAt *time.Time,
+	integrationID uuid.UUID,
+	integrationRepo repos.Integration,
+	DB database.Database,
+) error {
+	integrationConfigMap := (map[string]string)(*integrationConfig)
+	integrationConfigMap[ExecStateKey] = SerializedSuccess(runningAt)
+	updatedIntegrationConfig := (*shared.IntegrationConfig)(&integrationConfigMap)
+
+	_, err := integrationRepo.Update(
+		ctx,
+		integrationID,
+		map[string]interface{}{
+			models.IntegrationConfig: updatedIntegrationConfig,
+		},
+		DB,
+	)
+	if err != nil {
+		log.Errorf("Failed to update %s integration: %v", integrationType, err)
+		return err
+	}
+	return nil
+}
+
 func UpdateOnFailure(
 	ctx context.Context,
 	outputs string,
@@ -107,23 +135,17 @@ func UpdateOnFailure(
 }
 
 // ExtractConnectionState retrieves the current connection state from
-// the given integration object.
-// For integrations other than lambda and conda, we assume they are always successfully connected
-// since they are created in-sync in `connectIntegration` handler.
+// the given integration object. If the execution state is not present,
+// we can assume that this is a legacy entry from before we always wrote
+// an execution state. In this case, we always return success.
 func ExtractConnectionState(
 	integrationObject *models.Integration,
 ) (*shared.ExecutionState, error) {
-	if integrationObject.Service != shared.Conda &&
-		integrationObject.Service != shared.Lambda {
-		return &shared.ExecutionState{
-			Status: shared.SucceededExecutionStatus,
-		}, nil
-	}
-
 	stateSerialized, ok := integrationObject.Config[ExecStateKey]
 	if !ok {
+		// TODO(ENG-2813): Remove this success logic. An execution state key should always exist.
 		return &shared.ExecutionState{
-			Status: shared.PendingExecutionStatus,
+			Status: shared.SucceededExecutionStatus,
 		}, nil
 	}
 
