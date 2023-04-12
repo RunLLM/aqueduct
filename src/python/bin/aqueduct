@@ -61,8 +61,7 @@ Usage data collection is enabled by default, and can be disabled via `aqueduct s
 """
 
 conda_cmd_prefix = "conda"
-env_file_path = os.path.join(
-    os.environ["HOME"], ".aqueduct", "server", "config", "env")
+env_file_path = os.path.join(os.environ["HOME"], ".aqueduct", "server", "config", "env")
 
 
 def update_config_yaml(file):
@@ -133,8 +132,7 @@ def is_tool(name):
 # It runs `conda env list` under the hood, and we ignore any error
 # when running the command.
 def get_conda_environments():
-    cmd_result = subprocess.run(
-        [conda_cmd_prefix, 'env', 'list'], stdout=subprocess.PIPE)
+    cmd_result = subprocess.run([conda_cmd_prefix, 'env', 'list'], stdout=subprocess.PIPE)
     if cmd_result.returncode == 0:
         results = set()
         for line in cmd_result.stdout.decode().split("\n"):
@@ -159,7 +157,7 @@ def update_base_conda_environments():
                 env_name,
                 "pip3",
                 "install",
-                "-q",  # hide most pip outputs, which is noisy
+                "-q", # hide most pip outputs, which is noisy
                 f"aqueduct-ml=={package_version}",
             ])
 
@@ -187,28 +185,19 @@ def _download_file(s3_url, f, prefix=None):
 def download_server_binaries(architecture):
     print("Downloading server binaries...")
     with open(os.path.join(server_directory, "bin/server"), "wb") as f:
-        _download_file(os.path.join(s3_server_prefix,
-                       f"bin/{architecture}/server"), f, "Server")
+        _download_file(os.path.join(s3_server_prefix, f"bin/{architecture}/server"), f, "Server")
     with open(os.path.join(server_directory, "bin/executor"), "wb") as f:
-        _download_file(
-            os.path.join(s3_server_prefix,
-                         f"bin/{architecture}/executor"), f, "Executor"
-        )
+        _download_file(os.path.join(s3_server_prefix, f"bin/{architecture}/executor"), f, "Executor")
     with open(os.path.join(server_directory, "bin/migrator"), "wb") as f:
-        _download_file(
-            os.path.join(s3_server_prefix,
-                         f"bin/{architecture}/migrator"), f, "Migrator"
-        )
+        _download_file(os.path.join(s3_server_prefix, f"bin/{architecture}/migrator"), f, "Migrator")
 
     print("Downloading integration set up scripts...")
     with open(os.path.join(server_directory, "bin/start-function-executor.sh"), "wb") as f:
-        _download_file(os.path.join(s3_server_prefix,
-                       f"bin/start-function-executor.sh"), f)
+        _download_file(os.path.join(s3_server_prefix, f"bin/start-function-executor.sh"), f)
     with open(os.path.join(server_directory, "bin/dag.template"), "wb") as f:
         _download_file(os.path.join(s3_server_prefix, f"bin/dag.template"), f)
     with open(os.path.join(server_directory, "bin/install_sqlserver_ubuntu.sh"), "wb") as f:
-        _download_file(os.path.join(s3_server_prefix,
-                       f"bin/install_sqlserver_ubuntu.sh"), f)
+        _download_file(os.path.join(s3_server_prefix, f"bin/install_sqlserver_ubuntu.sh"), f)
     print("Downloaded server binaries...")
 
 
@@ -230,8 +219,7 @@ def setup_server_binaries():
         download_server_binaries("darwin_arm64")
     else:
         raise Exception(
-            "Unsupported operating system and architecture combination: %s, %s" % (
-                system, arch)
+            "Unsupported operating system and architecture combination: %s, %s" % (system, arch)
         )
 
 
@@ -239,8 +227,7 @@ def download_terraform_template():
     terraform_folder = os.path.join(server_directory, "template", "aws", "eks")
     terraform_zip_path = os.path.join(terraform_folder, "eks_terraform.zip")
     with open(terraform_zip_path, "wb") as f:
-        _download_file(os.path.join(s3_server_prefix, "template",
-                       "aws", "eks", "eks_terraform.zip"), f)
+        _download_file(os.path.join(s3_server_prefix, "template", "aws", "eks", "eks_terraform.zip"), f)
     with zipfile.ZipFile(terraform_zip_path, "r") as zip:
         zip.extractall(terraform_folder)
     os.remove(terraform_zip_path)
@@ -297,13 +284,11 @@ def update_server_version():
         # If we want to add tables in other releases in the future, we should refactor each of them
         # into a helper function.
         print("Adding new tables to the demo db...")
-        data_script_path = os.path.join(
-            server_directory, "db", "0.1.0", "create_tables.py")
+        data_script_path = os.path.join(server_directory, "db", "0.1.0", "create_tables.py")
         data_script_dir = os.path.dirname(data_script_path)
         if not os.path.isdir(data_script_dir):
             os.mkdir(data_script_dir)
-        s3_path = (
-            "https://aqueduct-ai.s3.us-east-2.amazonaws.com/assets/demo/0.1.0/create_tables.py")
+        s3_path = ("https://aqueduct-ai.s3.us-east-2.amazonaws.com/assets/demo/0.1.0/create_tables.py")
         with open(data_script_path, "wb") as f:
             f.write(requests.get(s3_path).content)
         os.chmod(data_script_path, 0o755)
@@ -335,15 +320,12 @@ def update():
                 os.mkdir(directory)
 
             with open(os.path.join(server_directory, "config/config.yml"), "wb") as f:
-                f.write(requests.get(os.path.join(
-                    s3_server_prefix, "config/config.yml")).content)
+                f.write(requests.get(os.path.join(s3_server_prefix, "config/config.yml")).content)
 
-            update_config_yaml(os.path.join(
-                server_directory, "config", "config.yml"))
+            update_config_yaml(os.path.join(server_directory, "config", "config.yml"))
 
             with open(os.path.join(server_directory, "db/demo.db"), "wb") as f:
-                f.write(requests.get(os.path.join(
-                    s3_server_prefix, "db/demo.db")).content)
+                f.write(requests.get(os.path.join(s3_server_prefix, "db/demo.db")).content)
 
             print("Finished initializing Aqueduct base directory.")
         except Exception as e:
@@ -353,8 +335,7 @@ def update():
 
     # Ensure that the preview outputs directory always exists, and always starts off empty.
     # Contents from previous server sessions will be cleared.
-    preview_outputs_directory = os.path.join(
-        server_directory, "storage", "preview")
+    preview_outputs_directory = os.path.join(server_directory, "storage", "preview")
     if os.path.isdir(preview_outputs_directory):
         shutil.rmtree(preview_outputs_directory)
     os.mkdir(preview_outputs_directory)
@@ -401,19 +382,17 @@ def get_address(expose):
             ec2_ip = requests.get(
                 "http://169.254.169.254/latest/meta-data/public-ipv4", timeout=0.25
             )
-            if ec2_ip.status_code != 404:  # User is in EC2 instance.
+            if ec2_ip.status_code != 404: # User is in EC2 instance.
                 expose_ip = ec2_ip.content.decode("utf-8")
             else:
                 # Assume is Google Cloud
                 metadata_flavor = {'Metadata-Flavor': 'Google'}
-                gcp_ip = requests.get(
-                    'http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip', headers=metadata_flavor, timeout=0.25)
+                gcp_ip = requests.get('http://169.254.169.254/computeMetadata/v1/instance/network-interfaces/0/access-configs/0/external-ip', headers=metadata_flavor, timeout=0.25)
                 if gcp_ip.status_code != 404:
                     expose_ip = gcp_ip.text
                 else:
                     # Assume is Azure
-                    azure_ip = requests.get(
-                        'http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0/publicIpAddress?api-version=2017-08-01&format=text', headers={'Metadata': 'true'}, timeout=0.25)
+                    azure_ip = requests.get('http://169.254.169.254/metadata/instance/network/interface/0/ipv4/ipAddress/0/publicIpAddress?api-version=2017-08-01&format=text', headers={'Metadata': 'true'}, timeout=0.25)
                     if azure_ip.status_code != 404:
                         expose_ip = azure_ip.text
                     else:
@@ -487,33 +466,27 @@ def start(addr, expose, port, verbose, env, disable_usage_stats):
 
 
 def install_mongodb():
-    execute_command([sys.executable, "-m", "pip", "install",
-                    "pymongo%s" % PYMONGO_VERSION_BOUND])
+    execute_command([sys.executable, "-m", "pip", "install", "pymongo%s" % PYMONGO_VERSION_BOUND])
 
 
 def install_postgres():
-    execute_command([sys.executable, "-m", "pip", "install",
-                    "psycopg2-binary%s" % PSYCOPG2_VERSION_BOUND])
+    execute_command([sys.executable, "-m", "pip", "install", "psycopg2-binary%s" % PSYCOPG2_VERSION_BOUND])
 
 
 def install_bigquery():
-    execute_command([sys.executable, "-m", "pip", "install",
-                    "google-cloud-bigquery%s" % BIGQUERY_VERSION_BOUND])
+    execute_command([sys.executable, "-m", "pip", "install", "google-cloud-bigquery%s" % BIGQUERY_VERSION_BOUND])
 
 
 def install_snowflake():
-    execute_command([sys.executable, "-m", "pip", "install",
-                    "snowflake-sqlalchemy%s" % SNOWFLAKE_VERSION_BOUND])
+    execute_command([sys.executable, "-m", "pip", "install", "snowflake-sqlalchemy%s" % SNOWFLAKE_VERSION_BOUND])
 
 
 def install_s3():
-    execute_command([sys.executable, "-m", "pip", "install",
-                    "pyarrow%s" % PYARROW_VERSION_BOUND])
+    execute_command([sys.executable, "-m", "pip", "install", "pyarrow%s" % PYARROW_VERSION_BOUND])
 
 
 def install_athena():
-    execute_command([sys.executable, "-m", "pip", "install",
-                    "awswrangler%s" % AWS_WRANGLER_VERSION_BOUND])
+    execute_command([sys.executable, "-m", "pip", "install", "awswrangler%s" % AWS_WRANGLER_VERSION_BOUND])
 
 
 def install_mysql():
@@ -532,8 +505,7 @@ def install_mysql():
                 ]
             )
         elif distro.id() == "centos" or distro.id() == "rhel":
-            execute_command(["sudo", "yum", "install", "-y",
-                            "python3-devel", "mysql-devel"])
+            execute_command(["sudo", "yum", "install", "-y", "python3-devel", "mysql-devel"])
         else:
             print("Unsupported distribution:", distro.id())
     elif system == "Darwin":
@@ -544,14 +516,12 @@ def install_mysql():
         if architecture.startswith(b"/opt/homebrew"):
             cmd = ["arch", "-arm64", *cmd]
         execute_command(cmd)
-        pip_cmd = ["pip", "install", "PyMySQL"]
-        execute_command(pip_cmd)
     else:
         print("Unsupported operating system:", system)
 
+    execute_command(["pip", "install", "PyMySQL"])
     execute_command([sys.executable, "-m", "pip", "install",
                     "mysqlclient%s" % MYSQL_CLIENT_VERSION_BOUND])
-
 
 def install_sqlserver():
     system = platform.system()

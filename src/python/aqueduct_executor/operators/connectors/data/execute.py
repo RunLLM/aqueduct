@@ -268,31 +268,21 @@ def setup_connector(
         from aqueduct_executor.operators.connectors.data.sql_server import (  # type: ignore
             SqlServerConnector as OpConnector,
         )
-    elif connector_name == common.Name.MYSQL:
+    elif connector_name == common.Name.MYSQL or connector_name == common.Name.MARIA_DB:
         try:
-            if platform.system() == "Darwin":
-                import pymysql
-
-                pymysql.install_as_MySQLdb()
+            # Use pythonic mysql library to fix crossplatform compatibility issues.
+            # MySQLdb is a C-based library
+            import pymysql
+            # Implementation can be found here: https://github.com/PyMySQL/PyMySQL/blob/main/pymysql/__init__.py
+            pymysql.install_as_MySQLdb()
             import MySQLdb
         except:
             raise MissingConnectorDependencyException(
-                "Unable to initialize the MySQL connector. Have you run `aqueduct install mysql`?"
+                "Unable to initialize the MySQL\/MariaDB connector. Have you run `aqueduct install mysql`?"
             )
 
         from aqueduct_executor.operators.connectors.data.mysql import (  # type: ignore
             MySqlConnector as OpConnector,
-        )
-    elif connector_name == common.Name.MARIA_DB:
-        try:
-            import MySQLdb
-        except:
-            raise MissingConnectorDependencyException(
-                "Unable to initialize the MariaDB connector. Have you run `aqueduct install mariadb`?"
-            )
-
-        from aqueduct_executor.operators.connectors.data.maria_db import (  # type: ignore
-            MariaDbConnector as OpConnector,
         )
     elif connector_name == common.Name.AZURE_SQL:
         try:
