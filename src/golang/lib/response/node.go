@@ -17,11 +17,10 @@ type Artifact struct {
 	Type        shared.ArtifactType `json:"type"`
 	// Once we clean up DBArtifact we should include inputs / outputs fields here.
 
-	// upstream operator ID. It should be unique in practice, but we do not
-	// enforce the assumption here.
-	Inputs []uuid.UUID `json:"inputs"`
+	// upstream operator ID.
+	Input uuid.UUID `json:"input"`
 
-	// downstream operator IDs, could be multiple or empty.
+	// Downstream operator IDs, could be multiple or empty.
 	Outputs []uuid.UUID `json:"outputs"`
 }
 
@@ -32,7 +31,7 @@ func NewArtifactFromDBObject(dbArtifactNode *views.ArtifactNode) *Artifact {
 		Name:        dbArtifactNode.Name,
 		Description: dbArtifactNode.Description,
 		Type:        dbArtifactNode.Type,
-		Inputs:      dbArtifactNode.Inputs,
+		Input:       dbArtifactNode.Input,
 		Outputs:     dbArtifactNode.Outputs,
 	}
 }
