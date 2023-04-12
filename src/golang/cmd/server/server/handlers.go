@@ -38,10 +38,38 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			WorkflowRepo: s.WorkflowRepo,
 			ArtifactRepo: s.ArtifactRepo,
 		},
+		routes.NodeArtifactResultContentRoute: &v2.NodeArtifactResultContentGetHandler{
+			Database:           s.Database,
+			WorkflowRepo:       s.WorkflowRepo,
+			DAGRepo:            s.DAGRepo,
+			ArtifactRepo:       s.ArtifactRepo,
+			ArtifactResultRepo: s.ArtifactResultRepo,
+		},
+		routes.NodeArtifactResultsRoute: &v2.NodeArtifactResultsGetHandler{
+			Database:           s.Database,
+			WorkflowRepo:       s.WorkflowRepo,
+			DAGRepo:            s.DAGRepo,
+			ArtifactRepo:       s.ArtifactRepo,
+			ArtifactResultRepo: s.ArtifactResultRepo,
+		},
+		routes.NodeOperatorContentRoute: &v2.NodeOperatorContentGetHandler{
+			Database:     s.Database,
+			WorkflowRepo: s.WorkflowRepo,
+			DAGRepo:      s.DAGRepo,
+			OperatorRepo: s.OperatorRepo,
+		},
 		routes.NodeOperatorRoute: &v2.NodeOperatorGetHandler{
 			Database:     s.Database,
 			WorkflowRepo: s.WorkflowRepo,
 			OperatorRepo: s.OperatorRepo,
+		},
+		routes.NodesResultsRoute: &v2.NodesResultsGetHandler{
+			Database:           s.Database,
+			WorkflowRepo:       s.WorkflowRepo,
+			DAGRepo:            s.DAGRepo,
+			ArtifactRepo:       s.ArtifactRepo,
+			OperatorResultRepo: s.OperatorResultRepo,
+			ArtifactResultRepo: s.ArtifactResultRepo,
 		},
 
 		// V1 Handlers
