@@ -27,6 +27,22 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database:             s.Database,
 			StorageMigrationRepo: s.StorageMigrationRepo,
 		},
+		routes.NodesRoute: &v2.NodesGetHandler{
+			Database:     s.Database,
+			WorkflowRepo: s.WorkflowRepo,
+			OperatorRepo: s.OperatorRepo,
+			ArtifactRepo: s.ArtifactRepo,
+		},
+		routes.NodeArtifactRoute: &v2.NodeArtifactGetHandler{
+			Database:     s.Database,
+			WorkflowRepo: s.WorkflowRepo,
+			ArtifactRepo: s.ArtifactRepo,
+		},
+		routes.NodeOperatorRoute: &v2.NodeOperatorGetHandler{
+			Database:     s.Database,
+			WorkflowRepo: s.WorkflowRepo,
+			OperatorRepo: s.OperatorRepo,
+		},
 
 		// V1 Handlers
 		// (ENG-2715) Remove deprecated ones

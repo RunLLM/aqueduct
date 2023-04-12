@@ -14,5 +14,4 @@ const (
 	DagIDParam       = "dagID"
 	DAGResultIDParam = "dagResultID"
 	NodeIDParam      = "nodeID"
-	NodeTypeParam    = "nodeType"
 )

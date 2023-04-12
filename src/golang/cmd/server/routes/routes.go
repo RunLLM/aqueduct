@@ -5,11 +5,12 @@ const (
 	// V2 routes
 	ListStorageMigrationRoute = "/api/v2/storage-migrations"
 
-	WorkflowRoute  = "/api/v2/workflow/{workflowID}"
-	DAGRoute       = "/api/v2/workflow/{workflowID}/dag/{dagID}"
-	DAGResultRoute = "/api/v2/workflow/{workflowID}/result/{dagResultID}"
-	NodesRoute     = "/api/v2/workflow/{workflowID}/dag/{dagID}/nodes"
-	NodeRoute      = "/api/v2/workflow/{workflowID}/dag/{dagID}/{nodeType}/{nodeID}"
+	WorkflowRoute     = "/api/v2/workflow/{workflowID}"
+	DAGRoute          = "/api/v2/workflow/{workflowID}/dag/{dagID}"
+	DAGResultRoute    = "/api/v2/workflow/{workflowID}/result/{dagResultID}"
+	NodesRoute        = "/api/v2/workflow/{workflowID}/dag/{dagID}/nodes"
+	NodeArtifactRoute = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/artifact/{nodeID}"
+	NodeOperatorRoute = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/operator/{nodeID}"
 
 	// V1 routes
 	GetArtifactVersionsRoute = "/api/artifact/versions"

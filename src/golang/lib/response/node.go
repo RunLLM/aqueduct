@@ -25,7 +25,7 @@ type Artifact struct {
 	Outputs []uuid.UUID `json:"outputs"`
 }
 
-func NewArtifactFromDBObjet(dbArtifactNode *views.ArtifactNode) *Artifact {
+func NewArtifactFromDBObject(dbArtifactNode *views.ArtifactNode) *Artifact {
 	return &Artifact{
 		ID:          dbArtifactNode.ID,
 		DagID:       dbArtifactNode.DagID,
@@ -99,7 +99,7 @@ func NewNodesFromDBObjects(
 	}
 
 	for _, artfNode := range artifactNodes {
-		artifacts = append(artifacts, *NewArtifactFromDBObjet(&artfNode))
+		artifacts = append(artifacts, *NewArtifactFromDBObject(&artfNode))
 	}
 	return &Nodes{
 		Operators: operators,
