@@ -57,7 +57,7 @@ def test_extract_with_default_name_collision(client, flow_name, engine, data_int
 
     fn_artifact = dummy_sentiment_model_multiple_input(table_artifact_1, table_artifact_2)
     fn_df = fn_artifact.get()
-    assert list(fn_df) == [
+    assert [col.lower() for col in list(fn_df)] == [
         "hotel_name",
         "review_date",
         "reviewer_nationality",
@@ -89,7 +89,7 @@ def test_extract_with_op_name_collision(client, data_integration, engine, flow_n
     table_1 = table_artifact_1.get()
     table_2 = table_artifact_2.get()
     assert table_1.equals(table_2)
-    assert list(table_1) == [
+    assert [col.lower() for col in list(table_1)] == [
         "hotel_name",
         "review_date",
         "reviewer_nationality",

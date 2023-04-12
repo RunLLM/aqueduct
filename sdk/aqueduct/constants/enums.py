@@ -241,6 +241,11 @@ class LocalDataSerializationType(str, Enum, metaclass=MetaEnum):
     JSON_TABLE = "json_table"
     PARQUET_TABLE = "parquet_table"
     IMAGE = "image"
+    JSON = "json"
+    PICKLE = "pickle"
+    STRING = "string"
+    BYTES = "bytes"
+    TF_KERAS = "tensorflow-keras-model"
 
 
 class K8sClusterActionType(str, Enum, metaclass=MetaEnum):

@@ -8,6 +8,8 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 )
 
+// NOTE: Callers that use ErrObjectDoesNotExist need to wrap this error with more detail about what
+// path and storage integration is being accessed.
 func ErrObjectDoesNotExist() error {
 	return errors.New("Object does not exist in storage.")
 }

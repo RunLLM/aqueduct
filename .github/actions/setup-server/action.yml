@@ -62,7 +62,7 @@ runs:
 
     - name: Install packages needed for testing
       shell: bash
-      run: python3 -m pip install nltk pytest-xdist
+      run: python3 -m pip install nltk pytest-xdist tensorflow
 
     - name: Wait for server again
       shell: bash

@@ -254,24 +254,22 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
               {headerIcon}
             </Box>
 
-            <Box flex={1}>
-              <Typography
-                sx={{
-                  maxWidth: '80%',
-                  flex: 1,
-                  whiteSpace: 'nowrap',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  fontSize: '32px',
-                }}
-              >
-                {data.label}
-              </Typography>
-            </Box>
+            <Typography
+              sx={{
+                maxWidth: '70%',
+                flex: 1,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                fontSize: '32px',
+              }}
+            >
+              {data.label}
+            </Typography>
 
             {headerEndIcon && (
               <>
-                <Box justifySelf="end" mr={2}>
+                <Box justifySelf="end" ml={1} mr={2}>
                   <Tooltip
                     title={
                       data.spec?.type === OperatorType.Check

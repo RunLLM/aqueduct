@@ -1,9 +1,11 @@
 import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import React from 'react';
 
 import WithOperatorHeader from '../../../../components/operators/WithOperatorHeader';
 import UserProfile from '../../../../utils/auth';
 import DefaultLayout from '../../../layouts/default';
+import LogViewer from '../../../LogViewer';
 import RequireOperator from '../../../operators/RequireOperator';
 import MetricsHistory from '../../../workflows/artifact/metric/history';
 import RequireDagOrResult from '../../../workflows/RequireDagOrResult';
@@ -63,6 +65,9 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
     workflowDagResultWithLoadingStatus
   );
 
+  const logs = operator?.result?.exec_state?.user_logs ?? {};
+  const operatorError = operator?.result?.exec_state?.error;
+
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
       <RequireDagOrResult
@@ -80,14 +85,22 @@ const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
             sideSheetMode={sideSheetMode}
           >
             {workflowDagResultWithLoadingStatus && (
-              <Box
-                width={sideSheetMode ? 'auto' : '49.2%'}
-                marginTop={sideSheetMode ? '16px' : '40px'}
-              >
-                <MetricsHistory
-                  historyWithLoadingStatus={artifactHistoryWithLoadingStatus}
-                />
-              </Box>
+              <>
+                <Box>
+                  <Typography variant="h6" fontWeight="normal">
+                    Logs
+                  </Typography>
+                  {logs !== {} && <LogViewer logs={logs} err={operatorError} />}
+                </Box>
+                <Box
+                  width={sideSheetMode ? 'auto' : '49.2%'}
+                  marginTop={sideSheetMode ? '16px' : '40px'}
+                >
+                  <MetricsHistory
+                    historyWithLoadingStatus={artifactHistoryWithLoadingStatus}
+                  />
+                </Box>
+              </>
             )}
           </WithOperatorHeader>
         </RequireOperator>

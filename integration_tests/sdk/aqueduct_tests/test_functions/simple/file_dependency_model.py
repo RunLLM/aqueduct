@@ -1,5 +1,7 @@
 import os
 
+import pandas as pd
+
 from aqueduct import op
 
 
@@ -8,7 +10,13 @@ def model_with_file_dependency(df):
     if not os.path.exists("data"):
         raise Exception("Data does not exist!")
 
-    df["newcol"] = 999
+    if isinstance(df, pd.DataFrame):
+        df["newcol"] = 999
+    else:
+        from pyspark.sql.functions import lit
+
+        df = df.withColumn("NEWCOL", lit(999).cast("integer"))
+
     return df
 
 

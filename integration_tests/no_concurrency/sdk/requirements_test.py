@@ -83,7 +83,7 @@ def test_requirements_installation_from_path(client):
     assert valid_path_table.get().shape[0] == 100
 
 
-@op(requirements=["transformers==4.21.0"])
+@op(requirements=["transformers==4.27.4"])
 def sentiment_prediction_with_string_requirements(reviews):
     import transformers
 

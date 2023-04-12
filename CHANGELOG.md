@@ -1,9 +1,67 @@
 # Changelog
 
-## 0.2.8
-Released on March 29, 2023.
+## 0.2.10
+Released on April 11, 2023.
+
+### Enhancements
+* Enables subdirectory support when configuring the AWS S3 integration. When
+    a subdirectory is specified, everything outside of that directory will be
+    ignored by Aqueduct.
+* Extends support for creating artifact from the local file system to [all
+    types](https://docs.aqueducthq.com/artifacts) supported by Aqueduct.
+* If executing code on the Aqueduct server without Conda, the server will now
+    proactively ensure that the Python version from your environment matches
+    the server's Python environment. If there's a mismatch, an error will be
+    thrown.
+* Adds a dismissable banner to the Aqueduct UI notifying users of new releases.
+
+### Bugfixes
+* Fixes bug where errors occurring during the execution of a metric were not
+    being properly surfaced.
+* Fixes bug where checks with a severity level of warning were being shown as
+    errors in check history.
+* Fixes bug where creating a schedule with helper functions on the SDK would
+    fail for monthly schedules.
+
+## 0.2.9
+Released on April 5, 2023.
 
 ### Key Features
+* [Beta] Aqueduct now has support for loading DataFrames and images from
+  the local filesystem as parameters:
+  ```python
+import aqueduct as aq
+client = aq.Client()
+
+data = client.create_param(
+  "df", 
+  "/path/to/my/df.csv",
+  use_local=True, 
+  as_type=aq.TableArtifact,
+  format='csv',
+)
+  ```
+
+### Enhancements
+* Improves the artifact storage management process. The integrations page now
+    shows which system is being used for artifact storage, and if a migration
+    between artifact stores fails, the error will be surfaced on the
+    integration details page until the user triggers a new artifact migration.
+* Adds metadata to read and write operators' sidesheets. Both sidesheets now
+    show which system is being used for the IO operation, and the save operator
+    now shows to what location and (if relevant) in what format the data is
+    being saved.
+
+### Bugfixes
+* Fixes typos in MongoDB connection dialog.
+* Fixes bug where workflow status at the top of the workflow details page would 
+    not update in sync with other parts of the page.
+* Fixes a bug where stopping the Aqueduct server immediately after starting it
+    could potentially trigger and then kill a workflow run that would then
+    stay in a pending state permanently.
+
+## 0.2.8
+Released on March 29, 2023.
 
 ### Enhancements
 * Extends Aqueduct's parameter support to allow parameters to be `None` *if*

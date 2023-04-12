@@ -1,5 +1,6 @@
 import logging
 import os
+import platform
 import uuid
 import warnings
 from collections import defaultdict
@@ -11,11 +12,9 @@ from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.create import create_param_artifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
-from aqueduct.backend.response_models import SavedObjectUpdate
 from aqueduct.constants.enums import (
     ArtifactType,
     ExecutionStatus,
-    OperatorType,
     RelationalDBServices,
     RuntimeType,
     ServiceType,
@@ -48,6 +47,7 @@ from aqueduct.logger import logger
 from aqueduct.models.dag import Metadata, RetentionPolicy
 from aqueduct.models.integration import Integration, IntegrationInfo
 from aqueduct.models.operators import ParamSpec
+from aqueduct.models.response_models import SavedObjectUpdate
 from aqueduct.utils.dag_deltas import (
     SubgraphDAGDelta,
     apply_deltas_to_dag,
@@ -628,6 +628,7 @@ class Client:
             ),
             publish_flow_engine_config=generate_engine_config(self._connected_integrations, engine),
         )
+
         dag.validate_and_resolve_artifact_names()
 
         if dag.engine_config.type == RuntimeType.AIRFLOW:
@@ -662,7 +663,20 @@ class Client:
         else:
             if run_now is None:
                 run_now = True
-            flow_id = globals.__GLOBAL_API_CLIENT__.register_workflow(dag, run_now).id
+            registered_metadata = globals.__GLOBAL_API_CLIENT__.register_workflow(dag, run_now)
+            flow_id = registered_metadata.id
+            server_python_version = (
+                registered_metadata.python_version.strip()
+            )  # Remove newline at the end
+            client_python_version = f"Python {platform.python_version()}"
+            if (
+                dag.engine_config.type == RuntimeType.AQUEDUCT
+                and client_python_version != server_python_version
+            ):
+                warnings.warn(
+                    "There is a mismatch between the Python version on the engine (%s) and the client (%s)."
+                    % (server_python_version, client_python_version)
+                )
 
         url = generate_ui_url(
             globals.__GLOBAL_API_CLIENT__.construct_base_url(),

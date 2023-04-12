@@ -9,6 +9,8 @@ from sdk.setup_integration import (
     get_aqueduct_config,
     get_artifact_store_name,
     has_storage_config,
+    is_global_engine_set,
+    is_lazy_set,
     list_compute_integrations,
     list_data_integrations,
     setup_compute_integrations,
@@ -57,6 +59,10 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers",
         "enable_only_for_local_storage: the test is expected to run in an environment with local storage.",
+    )
+    config.addinivalue_line(
+        "markers",
+        "skip_for_spark_engines: the test only runs for non-Spark compute engines.",
     )
 
 
@@ -132,6 +138,26 @@ def engine(request, pytestconfig):
     return request.param if request.param != "aqueduct_engine" else None
 
 
+@pytest.fixture(scope="function", autouse=True)
+def set_global_config(engine):
+    # If we are using the aqueduct engine (where the engine fixture is None), we don't
+    # have to change the existing global_config.
+    if engine != None:
+        # Enables lazy execution by default if `set_global_lazy` flag is added in conf.
+        lazy_config = is_lazy_set(engine)
+
+        # Enables the compute engine as global default if `set_global_engine` flag is added in conf.
+        engine_config = "aqueduct"
+        if is_global_engine_set(engine):
+            engine_config = engine
+
+        global_config({"engine": engine_config, "lazy": lazy_config})
+
+    yield
+    # Reset the global_config after the end of the function.
+    global_config({"engine": "aqueduct", "lazy": False})
+
+
 @pytest.fixture(scope="function")
 def artifact_store():
     """Is None if local filesystem is being used as the artifact store."""
@@ -184,6 +210,21 @@ def enable_only_for_engine_type(request, client, engine):
             pytest.skip(
                 "Skipped for engine integration `%s`, since it is not of type `%s`."
                 % (engine, ",".join(enabled_engine_types))
+            )
+
+
+@pytest.fixture(autouse=True)
+def skip_for_spark_engines(request, client, engine, reason=None):
+    """When a test is marked with this, we skip if we are using a spark based engine
+    (Databricks or Spark)
+    """
+    if request.node.get_closest_marker("skip_for_spark_engines"):
+        if engine and _type_from_engine_name(client, engine) in [
+            ServiceType.DATABRICKS,
+            ServiceType.SPARK,
+        ]:
+            pytest.skip(
+                "Skipped for engine integration `%s`, since it is a spark-based engine." % engine
             )
 
 

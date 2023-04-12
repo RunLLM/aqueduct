@@ -160,6 +160,10 @@ def _setup_external_sqlite_db(path: str):
     _execute_command(["sqlite3", db_abspath, "VACUUM;"])
 
 
+def _setup_postgres_db():
+    _execute_command(["aqueduct", "install", "postgres"])
+
+
 def _setup_relational_data(client: Client, db: RelationalDBIntegration) -> None:
     # Find all the tables that already exist.
     existing_table_names = set(db.list_tables()["tablename"])
@@ -211,6 +215,9 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
             # Stand up the external integration first.
             if integration_config["type"] == ServiceType.SQLITE:
                 _setup_external_sqlite_db(integration_config["database"])
+
+            if integration_config["type"] == ServiceType.POSTGRES:
+                _setup_postgres_db()
 
             client.connect_integration(
                 integration_name,
@@ -323,6 +330,30 @@ def _fetch_integration_credentials(section: str, name: str) -> Dict[str, Any]:
         name in test_credentials[section]
     ), "%s Integration `%s` must have its credentials in test-credentials.yml." % (section, name)
     return test_credentials[section][name]
+
+
+def is_global_engine_set(name: str) -> bool:
+    """
+    Returns whether or not the provided compute integration has `set_global_engine` set.
+    """
+    test_credentials = _parse_credentials_file()
+
+    assert "compute" in test_credentials, "compute section expected in test-credentials.yml"
+    assert name in test_credentials["compute"].keys(), "%s not in test-credentials.yml." % name
+
+    return "set_global_engine" in test_credentials["compute"][name].keys()
+
+
+def is_lazy_set(name: str) -> bool:
+    """
+    Returns whether or not the provided compute integration has `set_global_lazy` set.
+    """
+    test_credentials = _parse_credentials_file()
+
+    assert "compute" in test_credentials, "compute section expected in test-credentials.yml"
+    assert name in test_credentials["compute"].keys(), "%s not in test-credentials.yml." % name
+
+    return "set_global_lazy" in test_credentials["compute"][name].keys()
 
 
 def list_data_integrations() -> List[str]:

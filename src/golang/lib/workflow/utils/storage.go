@@ -31,7 +31,7 @@ func ReadFromStorage(ctx context.Context, storageConfig *shared.StorageConfig, p
 	// Read data from storage and deserialize payload to `container`
 	serializedPayload, err := storage.NewStorage(storageConfig).Get(ctx, path)
 	if err != nil {
-		return errors.Wrap(err, "Unable to get object from storage")
+		return errors.Wrapf(err, "Unable to get object from %s storage at path %s.", storageConfig.Type, path)
 	}
 
 	err = json.Unmarshal(serializedPayload, container)

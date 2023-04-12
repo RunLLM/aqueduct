@@ -5,6 +5,8 @@ from pydantic import BaseModel
 
 
 class ArtifactMetadata(BaseModel):
+    """NOTE: `description` exists on the backend but not here."""
+
     id: uuid.UUID
     name: str
     type: ArtifactType

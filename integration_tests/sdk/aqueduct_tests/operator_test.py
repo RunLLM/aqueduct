@@ -1,3 +1,4 @@
+import pandas as pd
 import pytest
 from aqueduct.decorator import to_operator
 from aqueduct.error import ArtifactNotFoundException
@@ -12,13 +13,25 @@ from .extract import extract
 def test_to_operator_local_function(client, data_integration):
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
 
-    @op
+    @op()
     def dummy_sentiment_model(df):
-        df["positivity"] = 123
+        if isinstance(df, pd.DataFrame):
+            df["POSITIVITY"] = 123
+        else:
+            from pyspark.sql.functions import lit
+
+            df = df.withColumn("POSITIVITY", lit(123.0))
+
         return df
 
     def dummy_sentiment_model_func(df):
-        df["positivity"] = 123
+        if isinstance(df, pd.DataFrame):
+            df["POSITIVITY"] = 123
+        else:
+            from pyspark.sql.functions import lit
+
+            df = df.withColumn("POSITIVITY", lit(123.0))
+
         return df
 
     output_artifact_from_decorator = dummy_sentiment_model(table_artifact)
@@ -26,7 +39,7 @@ def test_to_operator_local_function(client, data_integration):
     output_artifact_from_to_operator = to_operator(dummy_sentiment_model_func)(table_artifact)
     df_func = output_artifact_from_to_operator.get()
 
-    assert df_normal["positivity"].equals(df_func["positivity"])
+    assert df_normal["POSITIVITY"].equals(df_func["POSITIVITY"])
 
 
 def test_operator_reuse_chain(data_integration):
