@@ -9,7 +9,7 @@ export type ArtifactResponse = {
   name: string;
   description: string;
   type: ArtifactType;
-  inputs: string[];
+  input: string;
   outputs: string[];
 };
 
