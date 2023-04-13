@@ -37,7 +37,7 @@ const (
 //		`api-key`: user's API Key
 // Response:
 //	Body:
-//		`response.Content`
+//		`response.NodeContent`
 
 type NodeArtifactResultContentGetHandler struct {
 	handler.GetHandler
