@@ -11,7 +11,7 @@ RUN apt-get update && \
   boto3 \ 
   pandas \
   pydantic \
-  tensorflow==2.12.0
+  tensorflow>=2.12.0
 
 ENV PYTHONUNBUFFERED 1
 
