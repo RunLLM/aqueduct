@@ -40,9 +40,9 @@ export const GCSDialog: React.FC<Props> = ({
   const fileData =
     fileName && !!value?.service_account_credentials
       ? {
-        name: fileName,
-        data: value.service_account_credentials,
-      }
+          name: fileName,
+          data: value.service_account_credentials,
+        }
       : null;
 
   const fileUploadDescription = (
@@ -58,8 +58,6 @@ export const GCSDialog: React.FC<Props> = ({
       <> to create a service account and get the service account key file.</>
     </>
   );
-
-  console.log('rendering GCSDialog ...');
 
   return (
     <Box sx={{ mt: 2 }}>

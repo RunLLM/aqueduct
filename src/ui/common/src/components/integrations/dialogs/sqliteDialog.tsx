@@ -20,7 +20,6 @@ export const SQLiteDialog: React.FC<Props> = ({
   value,
   editMode,
 }) => {
-  console.log('rendering sqliteDialog ...');
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField

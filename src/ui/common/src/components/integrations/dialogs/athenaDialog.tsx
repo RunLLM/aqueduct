@@ -46,9 +46,9 @@ export const AthenaDialog: React.FC<Props> = ({
   const fileData =
     fileName && !!value?.config_file_content
       ? {
-        name: fileName,
-        data: value.config_file_content,
-      }
+          name: fileName,
+          data: value.config_file_content,
+        }
       : null;
 
   useEffect(() => {
@@ -167,8 +167,6 @@ export const AthenaDialog: React.FC<Props> = ({
       {configProfileInput}
     </Box>
   );
-
-  console.log('rendering AthenaDialog ...');
 
   return (
     <Box sx={{ mt: 2 }}>

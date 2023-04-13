@@ -1,5 +1,5 @@
 import Box from '@mui/material/Box';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import { AirflowConfig } from '../../../utils/integrations';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
@@ -25,9 +25,6 @@ export const AirflowDialog: React.FC<Props> = ({
   editMode,
 }) => {
   const [host, setHost] = useState<string>(value?.host ?? '');
-
-  console.log('rendering airflow dialog ...');
-
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
@@ -37,7 +34,7 @@ export const AirflowDialog: React.FC<Props> = ({
         description="The hostname of the Airflow server."
         placeholder={Placeholders.host}
         onChange={(event) => {
-          setHost(event.target.value)
+          setHost(event.target.value);
           if (event.target.value.startsWith('http://')) {
             // Backend requires the protocol to be stripped
             onUpdateField('host', event.target.value.substring(7));
@@ -81,7 +78,9 @@ export const AirflowDialog: React.FC<Props> = ({
         label="S3 Credentials Path *"
         description="The path on the Airflow server to the AWS credentials that have access to the same S3 bucket configured for Aqueduct storage."
         placeholder={Placeholders.s3_credentials_path}
-        onChange={(event) => { onUpdateField('s3_credentials_path', event.target.value)}}
+        onChange={(event) => {
+          onUpdateField('s3_credentials_path', event.target.value);
+        }}
         value={value?.s3_credentials_path ?? ''}
       />
 

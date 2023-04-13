@@ -59,14 +59,8 @@ export const DefaultLayout: React.FC<Props> = ({
       >
         <AnnouncementBanner
           user={user}
-          onShow={() => setShowBanner(() => {
-            console.log('inside setShowBanner');
-            return true;
-          })}
-          onClose={() => setShowBanner(() => {
-            console.log('inside hide banner');
-            return false;
-          })}
+          onShow={() => setShowBanner(true)}
+          onClose={() => setShowBanner(false)}
         />
 
         <Box sx={{ width: '100%', height: '100%', display: 'flex', flex: 1 }}>

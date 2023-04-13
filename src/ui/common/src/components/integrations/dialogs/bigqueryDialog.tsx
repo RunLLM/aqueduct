@@ -31,9 +31,9 @@ export const BigQueryDialog: React.FC<Props> = ({
   const fileData =
     fileName && !!value?.service_account_credentials
       ? {
-        name: fileName,
-        data: value.service_account_credentials,
-      }
+          name: fileName,
+          data: value.service_account_credentials,
+        }
       : null;
 
   const fileUploadDescription = (
@@ -49,8 +49,6 @@ export const BigQueryDialog: React.FC<Props> = ({
       <> to get your service account key file.</>
     </>
   );
-
-  console.log('rendering BigQuery dialog ...');
 
   return (
     <Box sx={{ mt: 2 }}>

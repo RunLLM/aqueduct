@@ -24,7 +24,6 @@ export const PostgresDialog: React.FC<Props> = ({
   value,
   editMode,
 }) => {
-  console.log('rendering postgresDialog ...');
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField

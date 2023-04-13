@@ -14,7 +14,6 @@ type Props = {
 };
 
 export const LambdaDialog: React.FC<Props> = ({ onUpdateField, value }) => {
-  console.log('rendering lambdaDialog ...');
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
