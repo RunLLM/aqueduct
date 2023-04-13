@@ -54,9 +54,6 @@ class RelationalDBIntegration(Integration):
             pd.DataFrame of available tables.
         """
 
-        print('hello from list tables finally')
-
-        #This is the actual list_tables implementation, not the save one.
         if self.type() in [ServiceType.BIGQUERY, ServiceType.SNOWFLAKE]:
             # Use the list integration objects endpoint instead of
             # providing a hardcoded SQL query to execute

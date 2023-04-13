@@ -31,7 +31,6 @@ def save(
         update_mode = LoadUpdateMode.REPLACE
 
     if isinstance(integration, RelationalDBIntegration):
-        print('Saving artifact to table ' + str(name))
         integration.save(artifact, name, update_mode)
 
     elif isinstance(integration, S3Integration):

@@ -57,7 +57,6 @@ def _parse_credentials_file() -> Dict[str, Any]:
 
 def _fetch_demo_data(demo: RelationalDBIntegration, table_name: str) -> pd.DataFrame:
     df = demo.table(table_name)
-    print('retrieved demo table data')
 
     # Certain tables in our demo db read out some unexpected tokens that
     # we need to remove before saving into other databases. The unsanitized version
@@ -102,10 +101,8 @@ def _add_missing_artifacts(
     """
     # Force name comparisons to be case-insensitive.
     existing_names = [elem.lower() for elem in existing_names]
-    print('existing_names: ' + str(existing_names))
 
     needed_names = set(demo_db_tables())
-    print('needed_names: ' + str(needed_names))
     already_set_up_names = needed_names.intersection(existing_names)
     missing_names = needed_names.difference(already_set_up_names)
     if len(missing_names) == 0:
@@ -114,7 +111,6 @@ def _add_missing_artifacts(
     demo = client.integration("aqueduct_demo")
     artifacts: List[BaseArtifact] = []
     for table_name in missing_names:
-        print('Missing table name: ' + str(table_name))
         data = _fetch_demo_data(demo, table_name)
         data_param = client.create_param(generate_object_name(), default=data)
 
@@ -169,7 +165,6 @@ def _setup_postgres_db():
 
 
 def _setup_mysql_db():
-    print("Setting up MySQL database ...")
     _execute_command(["aqueduct", "install", "mysql"])
 
 
