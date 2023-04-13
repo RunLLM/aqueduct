@@ -39,7 +39,7 @@ export const AthenaDialog: React.FC<Props> = ({
   const [fileName, setFileName] = useState<string>(null);
 
   const setFile = (fileData: FileData | null) => {
-    setFileName(fileData?.name ?? null);
+    setFileName(fileData?.name ?? '');
     onUpdateField('config_file_content', fileData?.data);
   };
 
@@ -67,7 +67,7 @@ export const AthenaDialog: React.FC<Props> = ({
       onChange={(event) =>
         onUpdateField('config_file_profile', event.target.value)
       }
-      value={value?.config_file_profile ?? null}
+      value={value?.config_file_profile ?? ''}
     />
   );
 
@@ -83,7 +83,7 @@ export const AthenaDialog: React.FC<Props> = ({
         description="The access key ID of your AWS account."
         placeholder={Placeholders.access_key_id}
         onChange={(event) => onUpdateField('access_key_id', event.target.value)}
-        value={value?.access_key_id ?? null}
+        value={value?.access_key_id ?? ''}
       />
 
       <IntegrationTextInputField
@@ -95,7 +95,7 @@ export const AthenaDialog: React.FC<Props> = ({
         onChange={(event) =>
           onUpdateField('secret_access_key', event.target.value)
         }
-        value={value?.secret_access_key ?? null}
+        value={value?.secret_access_key ?? ''}
       />
 
       <IntegrationTextInputField
@@ -105,7 +105,7 @@ export const AthenaDialog: React.FC<Props> = ({
         description="The region the Athena database belongs to."
         placeholder={Placeholders.region}
         onChange={(event) => onUpdateField('region', event.target.value)}
-        value={value?.region ?? null}
+        value={value?.region ?? ''}
       />
     </Box>
   );
@@ -129,7 +129,7 @@ export const AthenaDialog: React.FC<Props> = ({
         onChange={(event) =>
           onUpdateField('config_file_path', event.target.value)
         }
-        value={value?.config_file_path ?? null}
+        value={value?.config_file_path ?? ''}
       />
 
       {configProfileInput}
@@ -177,7 +177,7 @@ export const AthenaDialog: React.FC<Props> = ({
         description="The name of the Athena database."
         placeholder={Placeholders.database}
         onChange={(event) => onUpdateField('database', event.target.value)}
-        value={value?.database ?? null}
+        value={value?.database ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -194,7 +194,7 @@ export const AthenaDialog: React.FC<Props> = ({
         onChange={(event) =>
           onUpdateField('output_location', event.target.value)
         }
-        value={value?.output_location ?? null}
+        value={value?.output_location ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -202,7 +202,7 @@ export const AthenaDialog: React.FC<Props> = ({
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tabs
-          value={value?.type}
+          value={value?.type ?? 'access_key'}
           onChange={(_, value) => onUpdateField('type', value)}
         >
           <Tab value={AWSCredentialType.AccessKey} label="Enter Access Keys" />
