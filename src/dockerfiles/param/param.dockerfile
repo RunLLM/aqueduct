@@ -10,7 +10,7 @@ RUN apt-get update && \
   aqueduct-ml \
   boto3 \ 
   pandas \
-  pydantic 
+  pydantic
 
 ENV PYTHONUNBUFFERED 1
 
