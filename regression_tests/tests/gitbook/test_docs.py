@@ -1,11 +1,11 @@
+import argparse
 import os
 import re
-import time
-import argparse
 import subprocess
+import time
 from glob import glob
 from pathlib import Path
-from typing import NamedTuple, List
+from typing import List, NamedTuple
 
 start = time.time()
 
