@@ -29,7 +29,7 @@ import (
 //		`api-key`: user's API Key
 // Response:
 //	Body:
-//		`response.Content`
+//		`response.NodeContent`
 
 type NodeOperatorContentGetHandler struct {
 	nodeGetHandler
@@ -52,7 +52,7 @@ func (h *NodeOperatorContentGetHandler) Prepare(r *http.Request) (interface{}, i
 
 func (h *NodeOperatorContentGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*nodeGetArgs)
-	emptyResp := &response.Content{}
+	emptyResp := &response.NodeContent{}
 
 	ok, err := h.WorkflowRepo.ValidateOrg(
 		ctx,
@@ -95,11 +95,11 @@ func (h *NodeOperatorContentGetHandler) Perform(ctx context.Context, interfaceAr
 		)
 	}
 
-	return &response.Content{Name: dbOperator.Name, Data: content}, http.StatusOK, nil
+	return &response.NodeContent{Name: dbOperator.Name, Data: content}, http.StatusOK, nil
 }
 
 func (*NodeOperatorContentGetHandler) SendResponse(w http.ResponseWriter, interfaceResp interface{}) {
-	resp := interfaceResp.(*response.Content)
+	resp := interfaceResp.(*response.NodeContent)
 	server_resp.SendSmallFileResponse(
 		w,
 		fmt.Sprintf("%s.zip", resp.Name),

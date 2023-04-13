@@ -1,4 +1,4 @@
-package functional_map
+package maps
 
 // This library provides functional programming helpers
 // whose OUTPUTs are maps

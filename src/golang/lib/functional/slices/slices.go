@@ -1,4 +1,4 @@
-package functional_slice
+package slices
 
 // This library provides functional programming helpers
 // whose OUTPUTs are slices

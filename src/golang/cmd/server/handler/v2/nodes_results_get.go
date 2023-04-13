@@ -9,7 +9,7 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/errors"
-	"github.com/aqueducthq/aqueduct/lib/functional_primitives/functional_map"
+	"github.com/aqueducthq/aqueduct/lib/functional/maps"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/response"
@@ -122,7 +122,7 @@ func (h *NodesResultsGetHandler) Perform(ctx context.Context, interfaceArgs inte
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when reading artifacts.")
 	}
 
-	dbArtifactsByID := functional_map.FromValues(
+	dbArtifactsByID := maps.FromValues(
 		dbArtifacts,
 		func(artf models.Artifact) uuid.UUID { return artf.ID },
 	)

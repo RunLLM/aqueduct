@@ -1,7 +1,7 @@
 package response
 
 import (
-	"github.com/aqueducthq/aqueduct/lib/functional_primitives/functional_slice"
+	"github.com/aqueducthq/aqueduct/lib/functional/slices"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
@@ -19,7 +19,7 @@ type Artifact struct {
 	Type        shared.ArtifactType `json:"type"`
 	// Once we clean up DBArtifact we should include inputs / outputs fields here.
 
-	// upstream operator ID.
+	// Upstream operator ID.
 	Input uuid.UUID `json:"input"`
 
 	// Downstream operator IDs, could be multiple or empty.
@@ -127,13 +127,13 @@ func NewNodesFromDBObjects(
 	artifactNodes []views.ArtifactNode,
 ) *Nodes {
 	return &Nodes{
-		Operators: functional_slice.Map(
+		Operators: slices.Map(
 			operatorNodes,
 			func(node views.OperatorNode) Operator {
 				return *NewOperatorFromDBObject(&node)
 			},
 		),
-		Artifacts: functional_slice.Map(
+		Artifacts: slices.Map(
 			artifactNodes,
 			func(node views.ArtifactNode) Artifact {
 				return *NewArtifactFromDBObject(&node)
@@ -153,13 +153,13 @@ func NewNodeResultsFromDBObjects(
 	contents map[string]string,
 ) *NodeResults {
 	return &NodeResults{
-		Operators: functional_slice.Map(
+		Operators: slices.Map(
 			dbOperatorResults,
 			func(result models.OperatorResult) OperatorResult {
 				return *NewOperatorResultFromDBObject(&result)
 			},
 		),
-		Artifacts: functional_slice.Map(
+		Artifacts: slices.Map(
 			dbArtifactResults,
 			func(result models.ArtifactResult) ArtifactResult {
 				content, ok := contents[result.ContentPath]
@@ -174,7 +174,15 @@ func NewNodeResultsFromDBObjects(
 	}
 }
 
-type Content struct {
+// Node content represents the content of the requested node.
+// It's currently used in two cases:
+// * operator: NodeContent is the .zip file of the operator. `Name`
+// is the file name and `Data` is the file bytes.
+// * artifact result: NodeContent is the bytes data stored in content_path
+// in storage. The exact format depends on the artifact result's `SerializationType`
+// and is up to the caller to process. The `Name` field is just the artifact name and
+// is not particularly useful.
+type NodeContent struct {
 	Name string `json:"name"`
 	Data []byte `json:"data"`
 }
