@@ -57,6 +57,7 @@ def _parse_credentials_file() -> Dict[str, Any]:
 
 def _fetch_demo_data(demo: RelationalDBIntegration, table_name: str) -> pd.DataFrame:
     df = demo.table(table_name)
+    print('retrieved demo table data')
 
     # Certain tables in our demo db read out some unexpected tokens that
     # we need to remove before saving into other databases. The unsanitized version
@@ -101,8 +102,10 @@ def _add_missing_artifacts(
     """
     # Force name comparisons to be case-insensitive.
     existing_names = [elem.lower() for elem in existing_names]
+    print('existing_names: ' + str(existing_names))
 
     needed_names = set(demo_db_tables())
+    print('needed_names: ' + str(needed_names))
     already_set_up_names = needed_names.intersection(existing_names)
     missing_names = needed_names.difference(already_set_up_names)
     if len(missing_names) == 0:
@@ -111,6 +114,7 @@ def _add_missing_artifacts(
     demo = client.integration("aqueduct_demo")
     artifacts: List[BaseArtifact] = []
     for table_name in missing_names:
+        print('Missing table name: ' + str(table_name))
         data = _fetch_demo_data(demo, table_name)
         data_param = client.create_param(generate_object_name(), default=data)
 
@@ -173,7 +177,11 @@ def _setup_relational_data(client: Client, db: RelationalDBIntegration) -> None:
     # Find all the tables that already exist.
     print('inside _setup_relational_data')
     print('databaseTables: ' + db.list_tables())
-    existing_table_names = set(db.list_tables()["tablename"])
+    # For MYSQL, this field is called TABLE_NAME
+    # Inside list_tables there is a query to get the talbes, need to do the query of table_name AS tablename to work here
+    # Looks like the field here is called TABLE_NAME
+    existing_table_names = set(db.list_tables()["TABLE_NAME"])
+    #existing_table_names = set(db.list_tables()["tablename"])
     _add_missing_artifacts(client, db, existing_table_names)
 
 
