@@ -12,7 +12,7 @@ import (
 )
 
 // This file should map directly to
-// src/ui/common/src/handlers/NodeOperatorGet.tsx
+// src/ui/common/src/handlers/v2/NodeOperatorGet.tsx
 //
 // Route: /api/v2/workflow/{workflowID}/dag/{dagID}/node/operator/{nodeID}
 // Method: GET

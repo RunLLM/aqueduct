@@ -15,7 +15,7 @@ import (
 )
 
 // This file should map directly to
-// src/ui/common/src/handlers/DagResultGet.tsx
+// src/ui/common/src/handlers/v2/DagResultGet.tsx
 //
 // Route: /v2/workflow/{workflowId}/result/{dagResultID}
 // Method: GET

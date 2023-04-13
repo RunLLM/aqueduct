@@ -1,0 +1,20 @@
+// This file should map exactly to
+// src/golang/cmd/server/handler/v2/node_artifact_get.go
+
+import { APIKeyParameter } from '../parameters/ApiKey';
+import { DagIdParameter } from '../parameters/DagId';
+import { NodeIdParameter } from '../parameters/NodeId';
+import { WorkflowIdParameter } from '../parameters/WorkflowId';
+import { ArtifactResponse } from '../responses/Node';
+
+export type NodeArtifactGetRequest = APIKeyParameter &
+  DagIdParameter &
+  NodeIdParameter &
+  WorkflowIdParameter;
+
+export type NodeArtifactGetResponse = ArtifactResponse;
+
+export const nodeArtifactGetQuery = (req: NodeArtifactGetRequest) => ({
+  url: `workflow/${req.workflowId}/dag/${req.dagId}/node/artifact/${req.nodeId}`,
+  headers: { 'api-key': req.apiKey },
+});
