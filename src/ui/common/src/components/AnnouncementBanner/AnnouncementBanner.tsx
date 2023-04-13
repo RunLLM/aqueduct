@@ -153,8 +153,8 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
           icon={faXmark}
           onClick={() => {
             if (onClose) {
-              localStorage.setItem('versionBanner.dismissed', 'true');
               onClose();
+              localStorage.setItem('versionBanner.dismissed', 'true');
             }
           }}
         />
