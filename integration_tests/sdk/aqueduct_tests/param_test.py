@@ -525,7 +525,7 @@ def test_invalid_local_data(client):
         )
 
 
-# TODO: Remove this pytest fixture on next release.
+# TODO(ENG-2798): Enable this test on next release.
 @pytest.mark.enable_only_for_engine_type(ServiceType.AQUEDUCT_ENGINE)
 def test_all_local_data_types(client, flow_name, engine):
     @op
