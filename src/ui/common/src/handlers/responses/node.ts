@@ -1,6 +1,7 @@
 // This file should map exactly to
 // `src/golang/lib/response/node.go`
-import { ArtifactType } from '../../utils/artifacts';
+import { ExecState } from '../../utils/shared';
+import { ArtifactType, SerializationType } from '../../utils/artifacts';
 import { OperatorSpec } from '../../utils/operators';
 
 export type ArtifactResponse = {
@@ -13,6 +14,14 @@ export type ArtifactResponse = {
   outputs: string[];
 };
 
+export type ArtifactResultResponse = {
+  id: string;
+  serialization_type: SerializationType;
+  content_path: string;
+  content_serialized: string;
+  exec_state?: ExecState
+}
+
 export type OperatorResponse = {
   id: string;
   dag_id: string;
@@ -23,7 +32,22 @@ export type OperatorResponse = {
   outputs: string[];
 };
 
+export type OperatorResultResponse = {
+  id: string;
+  exec_state?: ExecState
+}
+
 export type NodesResponse = {
   operators: OperatorResponse[];
   artifacts: ArtifactResponse[];
 };
+
+export type NodeResultsResponse = {
+  operators: OperatorResultResponse[];
+  artifacts: ArtifactResultResponse[];
+};
+
+export type NodeContentResponse = {
+  name: string;
+  data: string;
+}
