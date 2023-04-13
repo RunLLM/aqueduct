@@ -175,13 +175,7 @@ def _setup_mysql_db():
 
 def _setup_relational_data(client: Client, db: RelationalDBIntegration) -> None:
     # Find all the tables that already exist.
-    print('inside _setup_relational_data')
-    print('databaseTables: ' + db.list_tables())
-    # For MYSQL, this field is called TABLE_NAME
-    # Inside list_tables there is a query to get the talbes, need to do the query of table_name AS tablename to work here
-    # Looks like the field here is called TABLE_NAME
-    existing_table_names = set(db.list_tables()["TABLE_NAME"])
-    #existing_table_names = set(db.list_tables()["tablename"])
+    existing_table_names = set(db.list_tables()["tablename"])
     _add_missing_artifacts(client, db, existing_table_names)
 
 

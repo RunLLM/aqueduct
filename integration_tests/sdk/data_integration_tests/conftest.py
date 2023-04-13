@@ -15,6 +15,7 @@ allowed_data_integrations_by_file = {
         ServiceType.SQLITE,
         ServiceType.SNOWFLAKE,
         ServiceType.MARIADB,
+        ServiceType.MYSQL
     ],
     "s3_test": [ServiceType.S3],
     "mongo_db_test": [ServiceType.MONGO_DB],
