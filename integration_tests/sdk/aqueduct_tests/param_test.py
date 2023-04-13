@@ -525,8 +525,6 @@ def test_invalid_local_data(client):
         )
 
 
-# TODO(ENG-2798): Enable this test on next release.
-@pytest.mark.enable_only_for_engine_type(ServiceType.AQUEDUCT_ENGINE)
 def test_all_local_data_types(client, flow_name, engine):
     @op
     def must_be_picklable(input):
@@ -614,6 +612,25 @@ def test_all_local_data_types(client, flow_name, engine):
     assert isinstance(image_output, GenericArtifact)
     assert isinstance(image_output.get(), Image.Image)
 
+    publish_flow_test(
+        client,
+        name=flow_name(),
+        artifacts=[
+            pickle_output,
+            bytes_output,
+            string_output,
+            tuple_output,
+            list_output,
+            image_output,
+        ],
+        engine=engine,
+        use_local=True,
+    )
+
+
+# TODO(ENG-2798): Unable to publish flow using TF_KERAS parameter.
+@pytest.mark.skip()
+def test_local_tf_keras_data(client, flow_name, engine):
     from tensorflow import keras
 
     model = keras.models.load_model("data/tf_model")
@@ -634,15 +651,7 @@ def test_all_local_data_types(client, flow_name, engine):
     publish_flow_test(
         client,
         name=flow_name(),
-        artifacts=[
-            pickle_output,
-            bytes_output,
-            string_output,
-            tuple_output,
-            list_output,
-            image_output,
-            tf_keras_output,
-        ],
+        artifacts=[tf_keras_output],
         engine=engine,
         use_local=True,
     )

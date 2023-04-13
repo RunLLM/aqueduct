@@ -10,8 +10,7 @@ RUN apt-get update && \
   aqueduct-ml \
   boto3 \ 
   pandas \
-  pydantic \
-  tensorflow>=2.12.0
+  pydantic 
 
 ENV PYTHONUNBUFFERED 1
 
