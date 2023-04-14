@@ -214,9 +214,7 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
     for integration_name in data_integrations:
         # Only connect to integrations that don't already exist.
         if integration_name not in connected_integrations.keys():
-            integration_config = _fetch_integration_credentials(
-                "data", integration_name
-            )
+            integration_config = _fetch_integration_credentials("data", integration_name)
 
             # Stand up the external integration first.
             if integration_config["type"] == ServiceType.SQLITE:
@@ -272,9 +270,7 @@ def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) 
     for integration_name in compute_integrations:
         # Only connect to integrations that don't already exist.
         if integration_name not in connected_integrations.keys():
-            integration_config = _fetch_integration_credentials(
-                "compute", integration_name
-            )
+            integration_config = _fetch_integration_credentials("compute", integration_name)
 
             client.connect_integration(
                 integration_name,
@@ -325,10 +321,7 @@ def setup_storage_layer(client: Client) -> None:
             try:
                 _ = client.integration(name)
             except AqueductError as e:
-                if (
-                    "The server is currently unavailable due to system maintenance."
-                    in str(e)
-                ):
+                if "The server is currently unavailable due to system maintenance." in str(e):
                     time.sleep(1)
                     continue
                 raise
@@ -353,9 +346,7 @@ def _fetch_integration_credentials(section: str, name: str) -> Dict[str, Any]:
     `section` can be "data" or "compute".
     """
     test_credentials = _parse_credentials_file()
-    assert section in test_credentials, (
-        "%s section expected in test-credentials.yml" % section
-    )
+    assert section in test_credentials, "%s section expected in test-credentials.yml" % section
 
     assert (
         name in test_credentials[section]
@@ -372,12 +363,8 @@ def is_global_engine_set(name: str) -> bool:
     """
     test_credentials = _parse_credentials_file()
 
-    assert (
-        "compute" in test_credentials
-    ), "compute section expected in test-credentials.yml"
-    assert name in test_credentials["compute"].keys(), (
-        "%s not in test-credentials.yml." % name
-    )
+    assert "compute" in test_credentials, "compute section expected in test-credentials.yml"
+    assert name in test_credentials["compute"].keys(), "%s not in test-credentials.yml." % name
 
     return "set_global_engine" in test_credentials["compute"][name].keys()
 
@@ -388,12 +375,8 @@ def is_lazy_set(name: str) -> bool:
     """
     test_credentials = _parse_credentials_file()
 
-    assert (
-        "compute" in test_credentials
-    ), "compute section expected in test-credentials.yml"
-    assert name in test_credentials["compute"].keys(), (
-        "%s not in test-credentials.yml." % name
-    )
+    assert "compute" in test_credentials, "compute section expected in test-credentials.yml"
+    assert name in test_credentials["compute"].keys(), "%s not in test-credentials.yml." % name
 
     return "set_global_lazy" in test_credentials["compute"][name].keys()
 

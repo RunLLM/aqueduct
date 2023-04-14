@@ -99,12 +99,6 @@ class GCSConfig(BaseConnectionConfig):
     use_as_storage: str = "false"
 
 
-class GCSConfig(BaseConnectionConfig):
-    bucket: str
-    service_account_credentials: str
-    use_as_storage: str = "false"
-
-
 class AthenaConfig(BaseConnectionConfig):
     # default type to ACCESS_KEY mainly for backward compatibility
     type: AWSCredentialType = AWSCredentialType.ACCESS_KEY
@@ -131,12 +125,8 @@ class SnowflakeConfig(BaseConnectionConfig):
     account_identifier: str
     database: str
     warehouse: str
-    db_schema: Optional[str] = Field(
-        "public", alias="schema"
-    )  # schema is a Pydantic keyword
-    role: Optional[
-        str
-    ] = None  # we must exclude this field if None when dumping to json.
+    db_schema: Optional[str] = Field("public", alias="schema")  # schema is a Pydantic keyword
+    role: Optional[str] = None  # we must exclude this field if None when dumping to json.
 
     class Config:
         # Ensures that Pydantic parses JSON keys named "schema" or "db_schema" to
@@ -274,6 +264,7 @@ IntegrationConfig = Union[
     _SlackConfigWithStringField,
     SparkConfig,
     K8sConfig,
+    CondaConfig,
 ]
 
 
@@ -364,9 +355,7 @@ def _prepare_aws_config(config: AWSConfig) -> _AWSConfigWithSerializedConfig:
         region=config.region,
         config_file_path=config.config_file_path,
         config_file_profile=config.config_file_profile,
-        k8s_serialized=(
-            None if config.k8s is None else config.k8s.json(exclude_none=True)
-        ),
+        k8s_serialized=(None if config.k8s is None else config.k8s.json(exclude_none=True)),
     )
 
 
@@ -374,10 +363,7 @@ def _prepare_big_query_config(config: BigQueryConfig) -> BigQueryConfig:
     """Prepares the BigQueryConfig object by reading the service account
     credentials into a string field if the filepath is specified.
     """
-    if (
-        not config.service_account_credentials
-        and not config.service_account_credentials_path
-    ):
+    if not config.service_account_credentials and not config.service_account_credentials_path:
         raise InvalidUserArgumentException(
             "At least one of `service_account_credentials` or `service_account_credentials_path` must be set for a BigQueryConfig."
         )

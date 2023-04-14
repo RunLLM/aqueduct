@@ -174,8 +174,7 @@ def _package_files_and_requirements(
 
             if not os.path.abspath(file_path).startswith(os.getcwd()):
                 raise InvalidDependencyFilePath(
-                    "File %s cannot be outside of the directory containing the function"
-                    % file_path
+                    "File %s cannot be outside of the directory containing the function" % file_path
                 )
 
             dstfolder = os.path.dirname(os.path.join(dir_path, file_path))
@@ -197,15 +196,12 @@ def _package_files_and_requirements(
             if isinstance(requirements, str):
                 if os.path.exists(requirements):
                     logger().info(
-                        "Installing requirements found at {path}".format(
-                            path=requirements
-                        )
+                        "Installing requirements found at {path}".format(path=requirements)
                     )
                     shutil.copy(requirements, packaged_requirements_path)
                 else:
                     raise FileNotFoundError(
-                        "Requirements file provided at %s does not exist."
-                        % requirements
+                        "Requirements file provided at %s does not exist." % requirements
                     )
             else:
                 # User has given us a list of pip requirement strings.
@@ -241,9 +237,7 @@ def _filter_out_blacklisted_requirements(packaged_requirements_path: str) -> Non
 
     with open(packaged_requirements_path, "w") as f:
         for line in req_lines:
-            if any(
-                blacklisted_req in line for blacklisted_req in BLACKLISTED_REQUIREMENTS
-            ):
+            if any(blacklisted_req in line for blacklisted_req in BLACKLISTED_REQUIREMENTS):
                 continue
             f.write(line)
 

@@ -4,12 +4,7 @@ import uuid
 from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import requests
-from aqueduct.constants.enums import (
-    ExecutionStatus,
-    K8sClusterActionType,
-    RuntimeType,
-    ServiceType,
-)
+from aqueduct.constants.enums import ExecutionStatus, K8sClusterActionType, RuntimeType, ServiceType
 from aqueduct.error import (
     AqueductError,
     ClientValidationError,
@@ -93,9 +88,7 @@ class APIClient:
         def _extract_err_msg() -> str:
             resp_json = response.json()
             if "error" not in resp_json:
-                raise Exception(
-                    "No 'error' field on response: %s" % json.dumps(resp_json)
-                )
+                raise Exception("No 'error' field on response: %s" % json.dumps(resp_json))
             return str(resp_json["error"])
 
         if response.status_code == 400:
@@ -167,9 +160,7 @@ class APIClient:
         protocol_prefix = self.HTTPS_PREFIX if use_https else self.HTTP_PREFIX
         return "%s%s" % (protocol_prefix, self.aqueduct_address)
 
-    def construct_full_url(
-        self, route_suffix: str, use_https: Optional[bool] = None
-    ) -> str:
+    def construct_full_url(self, route_suffix: str, use_https: Optional[bool] = None) -> str:
         self._check_config()
         if use_https is None:
             use_https = self.use_https
@@ -262,9 +253,7 @@ class APIClient:
         """Returns a list of the tables in the specified integration.
         If the integration is not a relational database, it will throw an error.
         """
-        url = self.construct_full_url(
-            self.LIST_INTEGRATION_OBJECTS_ROUTE_TEMPLATE % integration_id
-        )
+        url = self.construct_full_url(self.LIST_INTEGRATION_OBJECTS_ROUTE_TEMPLATE % integration_id)
         headers = self._generate_auth_headers()
         resp = requests.get(url, headers=headers)
         self.raise_errors(resp)
@@ -321,9 +310,7 @@ class APIClient:
         for op in dag.operators.values():
             if op.spec.engine_config and op.spec.engine_config.type == RuntimeType.K8S:
                 assert op.spec.engine_config.k8s_config is not None
-                engine_integration_ids.add(
-                    str(op.spec.engine_config.k8s_config.integration_id)
-                )
+                engine_integration_ids.add(str(op.spec.engine_config.k8s_config.integration_id))
 
         return self.get_dynamic_engine_status(list(engine_integration_ids))
 
@@ -351,9 +338,7 @@ class APIClient:
         self.raise_errors(resp)
 
         return {
-            dynamic_engine_status["name"]: DynamicEngineStatusResponse(
-                **dynamic_engine_status
-            )
+            dynamic_engine_status["name"]: DynamicEngineStatusResponse(**dynamic_engine_status)
             for dynamic_engine_status in resp.json()
         }
 
@@ -387,9 +372,7 @@ class APIClient:
         headers = self._generate_auth_headers()
         headers["action"] = action.value
 
-        url = self.construct_full_url(
-            self.EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE % integration_id
-        )
+        url = self.construct_full_url(self.EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE % integration_id)
 
         body = {
             "config_delta": config_delta.json(exclude_none=True),
@@ -403,9 +386,7 @@ class APIClient:
         self,
         integration_id: uuid.UUID,
     ) -> None:
-        url = self.construct_full_url(
-            self.DELETE_INTEGRATION_ROUTE_TEMPLATE % integration_id
-        )
+        url = self.construct_full_url(self.DELETE_INTEGRATION_ROUTE_TEMPLATE % integration_id)
         headers = self._generate_auth_headers()
         resp = requests.post(url, headers=headers)
         self.raise_errors(resp)
@@ -430,8 +411,7 @@ class APIClient:
         }
 
         if len(body["dag"]) > MAX_REQUEST_BODY_SIZE and any(
-            artifact_metadata.from_local_data
-            for artifact_metadata in list(dag.artifacts.values())
+            artifact_metadata.from_local_data for artifact_metadata in list(dag.artifacts.values())
         ):
             raise InvalidUserActionException(
                 "Local Data after serialization is too large. Aqueduct uses json serialization. The maximum size of workflow with local data is %s in bytes, the current size is %s in bytes."
@@ -469,9 +449,7 @@ class APIClient:
         dag: DAG,
     ) -> RegisterAirflowWorkflowResponse:
         headers, body, files = self._construct_register_workflow_request(dag, False)
-        url = self.construct_full_url(
-            self.REGISTER_AIRFLOW_WORKFLOW_ROUTE, self.use_https
-        )
+        url = self.construct_full_url(self.REGISTER_AIRFLOW_WORKFLOW_ROUTE, self.use_https)
         resp = requests.post(url, headers=headers, data=body, files=files)
         self.raise_errors(resp)
 
@@ -490,8 +468,7 @@ class APIClient:
         }
 
         if len(body["dag"]) > MAX_REQUEST_BODY_SIZE and any(
-            artifact_metadata.from_local_data
-            for artifact_metadata in list(dag.artifacts.values())
+            artifact_metadata.from_local_data for artifact_metadata in list(dag.artifacts.values())
         ):
             raise InvalidUserActionException(
                 "Local Data after serialization is too large. Aqueduct uses json serialization. The maximum size of workflow with local data is %s in bytes, the current size is %s in bytes."
@@ -519,10 +496,7 @@ class APIClient:
 
         body = {
             "parameters": json.dumps(
-                {
-                    param_name: param_spec.dict()
-                    for param_name, param_spec in param_specs.items()
-                }
+                {param_name: param_spec.dict() for param_name, param_spec in param_specs.items()}
             )
         }
 
@@ -532,18 +506,14 @@ class APIClient:
     def delete_workflow(
         self,
         flow_id: str,
-        saved_objects_to_delete: DefaultDict[
-            Union[str, Integration], List[SavedObjectUpdate]
-        ],
+        saved_objects_to_delete: DefaultDict[Union[str, Integration], List[SavedObjectUpdate]],
         force: bool,
     ) -> DeleteWorkflowResponse:
         headers = self._generate_auth_headers()
         url = self.construct_full_url(self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id)
         body = {
             "external_delete": {
-                str(integration): [
-                    obj.spec.json() for obj in saved_objects_to_delete[integration]
-                ]
+                str(integration): [obj.spec.json() for obj in saved_objects_to_delete[integration]]
                 for integration in saved_objects_to_delete
             },
             "force": force,
@@ -559,13 +529,9 @@ class APIClient:
         self.raise_errors(resp)
         return GetWorkflowResponse(**resp.json())
 
-    def get_workflow_dag_result(
-        self, flow_id: str, result_id: str
-    ) -> GetWorkflowDagResultResponse:
+    def get_workflow_dag_result(self, flow_id: str, result_id: str) -> GetWorkflowDagResultResponse:
         headers = self._generate_auth_headers()
-        url = self.construct_full_url(
-            self.GET_WORKFLOW_DAG_RESULT_TEMPLATE % (flow_id, result_id)
-        )
+        url = self.construct_full_url(self.GET_WORKFLOW_DAG_RESULT_TEMPLATE % (flow_id, result_id))
         resp = requests.get(url, headers=headers)
         self.raise_errors(resp)
         return GetWorkflowDagResultResponse(**resp.json())
@@ -605,13 +571,9 @@ class APIClient:
 
         return_value = None
         if "data" in parsed_response:
-            return_value = deserialize(
-                serialization_type, artifact_type, parsed_response["data"]
-            )
+            return_value = deserialize(serialization_type, artifact_type, parsed_response["data"])
 
         if execution_status != ExecutionStatus.SUCCEEDED:
-            logger().warning(
-                "Artifact result unavailable due to unsuccessful execution."
-            )
+            logger().warning("Artifact result unavailable due to unsuccessful execution.")
 
         return (return_value, execution_status)

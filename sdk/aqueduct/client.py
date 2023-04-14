@@ -86,9 +86,7 @@ def global_config(config_dict: Dict[str, Any]) -> None:
     if globals.GLOBAL_LAZY_KEY in config_dict:
         lazy_val = config_dict[globals.GLOBAL_LAZY_KEY]
         if not isinstance(lazy_val, bool):
-            raise InvalidUserArgumentException(
-                "Must supply a boolean for the lazy key."
-            )
+            raise InvalidUserArgumentException("Must supply a boolean for the lazy key.")
         globals.__GLOBAL_CONFIG__.lazy = lazy_val
 
     if globals.GLOBAL_ENGINE_KEY in config_dict:
@@ -259,9 +257,7 @@ class Client:
                 % name
             )
 
-        if not isinstance(config, dict) and not isinstance(
-            config, BaseConnectionConfig
-        ):
+        if not isinstance(config, dict) and not isinstance(config, BaseConnectionConfig):
             raise InvalidUserArgumentException(
                 "`config` argument must be either a dict or ConnectConfig."
             )
@@ -273,9 +269,7 @@ class Client:
         config = prepare_integration_config(service, config)
 
         globals.__GLOBAL_API_CLIENT__.connect_integration(name, service, config)
-        logger().info(
-            "Successfully connected to new %s integration `%s`." % (service, name)
-        )
+        logger().info("Successfully connected to new %s integration `%s`." % (service, name))
 
     def delete_integration(
         self,
@@ -433,10 +427,7 @@ class Client:
             InvalidUserArgumentException:
                 If the provided flow id or name does not correspond to a flow the client knows about.
         """
-        flows = [
-            (flow.id, flow.name)
-            for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()
-        ]
+        flows = [(flow.id, flow.name) for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()]
         flow_id = find_flow_with_user_supplied_id_and_name(
             flows,
             flow_id,
@@ -602,8 +593,7 @@ class Client:
         else:
             if not isinstance(k_latest_runs, int):
                 raise InvalidUserArgumentException(
-                    "`k_latest_runs` parameter must be an int, got %s"
-                    % type(k_latest_runs)
+                    "`k_latest_runs` parameter must be an int, got %s" % type(k_latest_runs)
                 )
             retention_policy = RetentionPolicy(k_latest_runs=k_latest_runs)
 
@@ -620,8 +610,7 @@ class Client:
             make_copy=True,
         )
         if not use_local and any(
-            artifact_metadata.from_local_data
-            for artifact_metadata in list(dag.artifacts.values())
+            artifact_metadata.from_local_data for artifact_metadata in list(dag.artifacts.values())
         ):
             raise InvalidUserActionException(
                 "Cannot create a flow with local data. Consider setting `use_local` to True to publish a workflow with local data parameters."
@@ -637,9 +626,7 @@ class Client:
                 self._connected_integrations,
                 globals.__GLOBAL_CONFIG__.engine,
             ),
-            publish_flow_engine_config=generate_engine_config(
-                self._connected_integrations, engine
-            ),
+            publish_flow_engine_config=generate_engine_config(self._connected_integrations, engine),
         )
 
         dag.validate_and_resolve_artifact_names()
@@ -676,9 +663,7 @@ class Client:
         else:
             if run_now is None:
                 run_now = True
-            registered_metadata = globals.__GLOBAL_API_CLIENT__.register_workflow(
-                dag, run_now
-            )
+            registered_metadata = globals.__GLOBAL_API_CLIENT__.register_workflow(dag, run_now)
             flow_id = registered_metadata.id
             server_python_version = (
                 registered_metadata.python_version.strip()
@@ -749,10 +734,7 @@ class Client:
                 artifact_type = infer_artifact_type(new_val)
                 param_specs[name] = construct_param_spec(new_val, artifact_type)
 
-        flows = [
-            (flow.id, flow.name)
-            for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()
-        ]
+        flows = [(flow.id, flow.name) for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()]
         flow_id = find_flow_with_user_supplied_id_and_name(
             flows,
             flow_id,
@@ -793,10 +775,7 @@ class Client:
         if saved_objects_to_delete is None:
             saved_objects_to_delete = defaultdict()
 
-        flows = [
-            (flow.id, flow.name)
-            for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()
-        ]
+        flows = [(flow.id, flow.name) for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()]
         flow_id = find_flow_with_user_supplied_id_and_name(
             flows,
             flow_id,
@@ -815,9 +794,7 @@ class Client:
                 if obj.exec_state.status == ExecutionStatus.FAILED:
                     trace = ""
                     if obj.exec_state.error:
-                        context = obj.exec_state.error.context.strip().replace(
-                            "\n", "\n>\t"
-                        )
+                        context = obj.exec_state.error.context.strip().replace("\n", "\n>\t")
                         trace = f">\t{context}\n{obj.exec_state.error.tip}"
                     failure_string = f"[{integration}] {obj.name}\n{trace}"
                     failures.append(failure_string)
@@ -829,9 +806,7 @@ class Client:
 
     def describe(self) -> None:
         """Prints out info about this client in a human-readable format."""
-        print(
-            "============================= Aqueduct Client ============================="
-        )
+        print("============================= Aqueduct Client =============================")
         print("Connected endpoint: %s" % globals.__GLOBAL_API_CLIENT__.aqueduct_address)
         print("Log Level: %s" % logging.getLevelName(logging.root.level))
         self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
