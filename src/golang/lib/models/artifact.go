@@ -28,10 +28,10 @@ type Artifact struct {
 
 // ArtifactCols returns a comma-separated string of all Artifact columns.
 func ArtifactCols() string {
-	return strings.Join(allArtifactCols(), ",")
+	return strings.Join(AllArtifactCols(), ",")
 }
 
-func allArtifactCols() []string {
+func AllArtifactCols() []string {
 	return []string{
 		ArtifactID,
 		ArtifactName,
@@ -43,7 +43,7 @@ func allArtifactCols() []string {
 // ArtifactColsWithPrefix returns a comma-separated string of all
 // Artifact columns prefixed by the table name.
 func ArtifactColsWithPrefix() string {
-	cols := allArtifactCols()
+	cols := AllArtifactCols()
 	for i, col := range cols {
 		cols[i] = fmt.Sprintf("%s.%s", ArtifactTable, col)
 	}

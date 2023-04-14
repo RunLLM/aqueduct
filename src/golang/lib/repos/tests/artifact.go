@@ -28,6 +28,19 @@ func (ts *TestSuite) TestArtifact_Get() {
 	requireDeepEqual(ts.T(), expectedArtifact, *actualArtifact)
 }
 
+func (ts *TestSuite) TestArtifact_GetNode() {
+	_, _, _, _, expectedArtfNodes := ts.seedComplexWorkflow()
+	for _, expectedArtf := range expectedArtfNodes {
+		actualArtf, err := ts.artifact.GetNode(ts.ctx, expectedArtf.ID, ts.DB)
+		require.Nil(ts.T(), err)
+		require.Equal(ts.T(), expectedArtf.Input, actualArtf.Input)
+		// We don't care about artifact outputs ordering.
+		// It's sufficient if they are the same as sets.
+		require.Equal(ts.T(), len(expectedArtf.Outputs), len(actualArtf.Outputs))
+		require.Subset(ts.T(), expectedArtf.Outputs, actualArtf.Outputs)
+	}
+}
+
 func (ts *TestSuite) TestArtifact_GetBatch() {
 	expectedArtifacts := ts.seedArtifact(3)
 
@@ -49,8 +62,24 @@ func (ts *TestSuite) TestArtifact_GetByDAG() {
 	requireDeepEqual(ts.T(), []models.Artifact{expectedArtifact}, actualArtifact)
 }
 
+func (ts *TestSuite) TestArtifact_GetNodesByDAG() {
+	dag, _, _, _, expectedArtfNodes := ts.seedComplexWorkflow()
+	actualArtfNodes, err := ts.artifact.GetNodesByDAG(ts.ctx, dag.ID, ts.DB)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), len(expectedArtfNodes), len(actualArtfNodes))
+	for _, actualArtf := range actualArtfNodes {
+		expectedArtf, ok := expectedArtfNodes[actualArtf.Name]
+		require.True(ts.T(), ok)
+		require.Equal(ts.T(), expectedArtf.Input, actualArtf.Input)
+		// We don't care about artifact outputs ordering.
+		// It's sufficient if they are the same as sets.
+		require.Equal(ts.T(), len(expectedArtf.Outputs), len(actualArtf.Outputs))
+		require.Subset(ts.T(), expectedArtf.Outputs, actualArtf.Outputs)
+	}
+}
+
 func (ts *TestSuite) TestArtifact_GetMetricsByUpstreamArtifactBatch() {
-	_, _, artifacts := ts.seedComplexWorkflow()
+	_, _, artifacts, _, _ := ts.seedComplexWorkflow()
 
 	expectedResults := map[uuid.UUID][]models.Artifact{
 		artifacts["function_1_artf"].ID: {artifacts["metric_1_artf"]},
