@@ -15,12 +15,13 @@ import (
 )
 
 // This file should map directly to
-// src/ui/common/src/handlers/v2/WorkflowGet.tsx
+// src/ui/common/src/handlers/v2/NodesGet.tsx
 //
-// Route: /v2/workflow/{workflowID}
+// Route: /v2/workflow/{workflowID}/dag/{dagID}
 // Method: GET
 // Params:
-//	`workflowId`: ID for `workflow` object
+//	`workflowID`: ID for `workflow` object
+//  `dagID`: ID for `workflow_dag` object
 // Request:
 //	Headers:
 //		`api-key`: user's API Key
@@ -28,24 +29,27 @@ import (
 //	Body:
 //		serialized `workflow.Response`
 
-type workflowGetArgs struct {
+type nodesGetArgs struct {
 	*aq_context.AqContext
 	workflowID uuid.UUID
+	dagID      uuid.UUID
 }
 
-type WorkflowGetHandler struct {
+type NodesGetHandler struct {
 	handler.GetHandler
 
 	Database database.Database
 
 	WorkflowRepo repos.Workflow
+	OperatorRepo repos.Operator
+	ArtifactRepo repos.Artifact
 }
 
-func (*WorkflowGetHandler) Name() string {
-	return "WorkflowGet"
+func (*NodesGetHandler) Name() string {
+	return "NodesGet"
 }
 
-func (h *WorkflowGetHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *NodesGetHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
@@ -56,14 +60,20 @@ func (h *WorkflowGetHandler) Prepare(r *http.Request) (interface{}, int, error) 
 		return nil, http.StatusBadRequest, err
 	}
 
-	return &workflowGetArgs{
+	dagID, err := (parser.DagIDParser{}).Parse(r)
+	if err != nil {
+		return nil, http.StatusBadRequest, err
+	}
+
+	return &nodesGetArgs{
 		AqContext:  aqContext,
 		workflowID: workflowID,
+		dagID:      dagID,
 	}, http.StatusOK, nil
 }
 
-func (h *WorkflowGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*workflowGetArgs)
+func (h *NodesGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*nodesGetArgs)
 
 	ok, err := h.WorkflowRepo.ValidateOrg(
 		ctx,
@@ -79,10 +89,18 @@ func (h *WorkflowGetHandler) Perform(ctx context.Context, interfaceArgs interfac
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
 	}
 
-	dbWorkflow, err := h.WorkflowRepo.Get(ctx, args.workflowID, h.Database)
+	dbOperatorNodes, err := h.OperatorRepo.GetNodesByDAG(ctx, args.dagID, h.Database)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading workflow.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading operator nodes.")
 	}
 
-	return response.NewWorkflowFromDBObject(dbWorkflow), http.StatusOK, nil
+	dbArtifactNodes, err := h.ArtifactRepo.GetNodesByDAG(ctx, args.dagID, h.Database)
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading artifact nodes.")
+	}
+
+	return response.NewNodesFromDBObjects(
+		dbOperatorNodes,
+		dbArtifactNodes,
+	), http.StatusOK, nil
 }
