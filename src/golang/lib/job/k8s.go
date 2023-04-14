@@ -43,9 +43,8 @@ func setupNamespaceAndSecrets(k8sClient *kubernetes.Clientset, conf *K8sJobManag
 	if err != nil {
 		// Double-check that we didn't race against another process to create this secret.
 		if _, secretExistsErr := k8s.GetSecret(context.Background(), k8s.AwsCredentialsSecretName, k8sClient); secretExistsErr != nil {
-			return errors.Wrap(err, "Unable to create secret.")
+			return errors.Wrap(err, "Error while creating K8s Secrets")
 		}
-		return errors.Wrap(err, "Error while creating K8s Secrets")
 	}
 
 	return nil
