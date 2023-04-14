@@ -41,7 +41,7 @@ export const DatabricksDialog: React.FC<Props> = ({
         required={true}
         placeholder={Placeholders.workspace_url}
         onChange={(event) => onUpdateField('workspace_url', event.target.value)}
-        value={value?.workspace_url ?? null}
+        value={value?.workspace_url ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -56,7 +56,7 @@ export const DatabricksDialog: React.FC<Props> = ({
         required={true}
         placeholder={Placeholders.access_token}
         onChange={(event) => onUpdateField('access_token', event.target.value)}
-        value={value?.access_token ?? null}
+        value={value?.access_token ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -81,7 +81,7 @@ export const DatabricksDialog: React.FC<Props> = ({
         onChange={(event) =>
           onUpdateField('s3_instance_profile_arn', event.target.value)
         }
-        value={value?.s3_instance_profile_arn ?? null}
+        value={value?.s3_instance_profile_arn ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -106,7 +106,7 @@ export const DatabricksDialog: React.FC<Props> = ({
         onChange={(event) =>
           onUpdateField('instance_pool_id', event.target.value)
         }
-        value={value?.instance_pool_id ?? null}
+        value={value?.instance_pool_id ?? ''}
       />
     </Box>
   );

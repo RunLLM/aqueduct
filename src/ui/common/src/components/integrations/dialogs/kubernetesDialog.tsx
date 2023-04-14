@@ -75,7 +75,7 @@ export const KubernetesDialog: React.FC<Props> = ({
         onChange={(event) =>
           onUpdateField('kubeconfig_path', event.target.value)
         }
-        value={value?.kubeconfig_path ?? null}
+        value={value?.kubeconfig_path ?? ''}
         disabled={value?.use_same_cluster === 'true'}
       />
 
@@ -86,7 +86,7 @@ export const KubernetesDialog: React.FC<Props> = ({
         description="The name of the cluster that will be used."
         placeholder={Placeholders.cluster_name}
         onChange={(event) => onUpdateField('cluster_name', event.target.value)}
-        value={value?.cluster_name ?? null}
+        value={value?.cluster_name ?? ''}
         disabled={value?.use_same_cluster === 'true'}
       />
     </Box>

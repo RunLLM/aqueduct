@@ -68,7 +68,7 @@ export const GCSDialog: React.FC<Props> = ({
         description="The name of the GCS bucket."
         placeholder={Placeholders.bucket}
         onChange={(event) => onUpdateField('bucket', event.target.value)}
-        value={value?.bucket ?? null}
+        value={value?.bucket ?? ''}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disabled={editMode}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
