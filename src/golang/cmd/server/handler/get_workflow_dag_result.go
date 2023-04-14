@@ -34,7 +34,7 @@ type getWorkflowDagResultArgs struct {
 	dagResultID uuid.UUID
 }
 
-type GetWorkflowDagResultHandler struct {
+type GetWorkflowDagResultHandlerDeprecated struct {
 	GetHandler
 
 	Database database.Database
@@ -49,11 +49,11 @@ type GetWorkflowDagResultHandler struct {
 	WorkflowRepo       repos.Workflow
 }
 
-func (*GetWorkflowDagResultHandler) Name() string {
+func (*GetWorkflowDagResultHandlerDeprecated) Name() string {
 	return "GetWorkflowDagResult"
 }
 
-func (h *GetWorkflowDagResultHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *GetWorkflowDagResultHandlerDeprecated) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
@@ -91,7 +91,7 @@ func (h *GetWorkflowDagResultHandler) Prepare(r *http.Request) (interface{}, int
 	}, http.StatusOK, nil
 }
 
-func (h *GetWorkflowDagResultHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+func (h *GetWorkflowDagResultHandlerDeprecated) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*getWorkflowDagResultArgs)
 
 	emptyResp := dag.ResultResponse{}

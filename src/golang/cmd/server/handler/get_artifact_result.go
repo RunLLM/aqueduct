@@ -70,7 +70,7 @@ type getArtifactResultResponse struct {
 	Data []byte `json:"data"`
 }
 
-type GetArtifactResultHandler struct {
+type GetArtifactResultHandlerDeprecated struct {
 	GetHandler
 
 	Database database.Database
@@ -81,11 +81,11 @@ type GetArtifactResultHandler struct {
 	DAGResultRepo      repos.DAGResult
 }
 
-func (*GetArtifactResultHandler) Name() string {
+func (*GetArtifactResultHandlerDeprecated) Name() string {
 	return "GetArtifactResult"
 }
 
-func (*GetArtifactResultHandler) Headers() []string {
+func (*GetArtifactResultHandlerDeprecated) Headers() []string {
 	return []string{routes.MetadataOnlyHeader}
 }
 
@@ -93,7 +93,7 @@ func (*GetArtifactResultHandler) Headers() []string {
 // 1: "metadata" contains a json serialized blob of artifact result metadata.
 // 2: "data" contains the artifact result data blob generated the serialization method
 // specified in the metadata field.
-func (*GetArtifactResultHandler) SendResponse(w http.ResponseWriter, response interface{}) {
+func (*GetArtifactResultHandlerDeprecated) SendResponse(w http.ResponseWriter, response interface{}) {
 	resp := response.(*getArtifactResultResponse)
 	multipartWriter := multipart.NewWriter(w)
 	defer multipartWriter.Close()
@@ -134,7 +134,7 @@ func (*GetArtifactResultHandler) SendResponse(w http.ResponseWriter, response in
 	}
 }
 
-func (h *GetArtifactResultHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *GetArtifactResultHandlerDeprecated) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
@@ -183,7 +183,7 @@ func (h *GetArtifactResultHandler) Prepare(r *http.Request) (interface{}, int, e
 	}, http.StatusOK, nil
 }
 
-func (h *GetArtifactResultHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+func (h *GetArtifactResultHandlerDeprecated) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*getArtifactResultArgs)
 
 	emptyResp := getArtifactResultResponse{}
