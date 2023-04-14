@@ -40,7 +40,7 @@ runs:
 
     - name: Start the server
       shell: bash
-      run: (aqueduct start --verbose > $SERVER_LOGS_FILE 2>&1 &)
+      run: (aqueduct start --env test --verbose > $SERVER_LOGS_FILE 2>&1 &)
 
     - name: Wait for server
       shell: bash
@@ -58,7 +58,7 @@ runs:
 
     - name: Start the server again
       shell: bash
-      run: (aqueduct start --disable-usage-stats --verbose > $SERVER_LOGS_FILE 2>&1 &)
+      run: (aqueduct start --env test --disable-usage-stats --verbose > $SERVER_LOGS_FILE 2>&1 &)
 
     - name: Install packages needed for testing
       shell: bash

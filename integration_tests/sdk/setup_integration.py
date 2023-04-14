@@ -270,16 +270,21 @@ def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) 
     for integration_name in compute_integrations:
         # Only connect to integrations that don't already exist.
         if integration_name not in connected_integrations.keys():
-            integration_config = _fetch_integration_credentials("compute", integration_name)
-
-            client.connect_integration(
-                integration_name,
-                integration_config["type"],
-                _sanitize_integration_config_for_connect(integration_config),
-            )
-
-            if integration_config["type"] == ServiceType.CONDA:
+            if integration_name == "conda":
+                client.connect_integration(
+                    integration_name,
+                    ServiceType.CONDA,
+                    {},  # integration_config
+                )
                 wait_for_conda_integration(client, integration_name)
+            else:
+                integration_config = _fetch_integration_credentials("compute", integration_name)
+
+                client.connect_integration(
+                    integration_name,
+                    integration_config["type"],
+                    _sanitize_integration_config_for_connect(integration_config),
+                )
 
 
 def wait_for_conda_integration(client: Client, name: str):

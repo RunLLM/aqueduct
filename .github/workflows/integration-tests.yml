@@ -57,6 +57,60 @@ jobs:
         with:
           prefix: Basic
 
+  run-tests-conda:
+    runs-on: ubuntu-latest-4-cores
+    timeout-minutes: 30
+    name: All Integration Tests with Conda
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: ./.github/actions/setup-server
+        timeout-minutes: 5
+
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install conda build
+        run: conda install conda-build
+
+      # TODO(ENG-2537): Use our separate GH actions credentials.
+      - uses: ./.github/actions/fetch-test-config
+        with:
+          aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
+          s3_test_config_path: premerge-conda-test-config-wei.yml
+
+      - name: Run the SDK Integration Tests
+        timeout-minutes: 20
+        working-directory: integration_tests/sdk
+        run: python3 run_tests.py -n 8
+
+      - name: Set the API key as an env variable.
+        run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
+
+      - name: Run the No-Concurrency Integration Tests
+        timeout-minutes: 10
+        working-directory: integration_tests/no_concurrency
+        env:
+          SERVER_ADDRESS: localhost:8080
+          INTEGRATION: aqueduct_demo
+        run: pytest . -rP
+
+      - name: Run the Backend Integration Tests
+        timeout-minutes: 10
+        working-directory: integration_tests/backend
+        env:
+          SERVER_ADDRESS: localhost:8080
+          INTEGRATION: aqueduct_demo
+        run: pytest . -rP -n 1
+
+      - uses: ./.github/actions/upload-artifacts
+        if: always()
+        with:
+          prefix: Basic
+
   run-tests-s3-storage:
     runs-on: ubuntu-latest-4-cores
     timeout-minutes: 30
@@ -73,7 +127,6 @@ jobs:
           aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
           s3_test_config_path: premerge-s3-storage-test-config.yml
-
 
       - name: Install any data connector packages
         run: aqueduct install s3
