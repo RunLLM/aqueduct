@@ -59,7 +59,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       onChange={(event) =>
         onUpdateField('config_file_profile', event.target.value)
       }
-      value={value?.config_file_profile ?? null}
+      value={value?.config_file_profile ?? ''}
     />
   );
 
@@ -75,7 +75,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         description="The access key ID of your AWS account."
         placeholder={Placeholders.access_key_id}
         onChange={(event) => onUpdateField('access_key_id', event.target.value)}
-        value={value?.access_key_id ?? null}
+        value={value?.access_key_id ?? ''}
       />
 
       <IntegrationTextInputField
@@ -87,7 +87,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         onChange={(event) =>
           onUpdateField('secret_access_key', event.target.value)
         }
-        value={value?.secret_access_key ?? null}
+        value={value?.secret_access_key ?? ''}
       />
 
       <IntegrationTextInputField
@@ -97,7 +97,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         description="The region of your AWS account."
         placeholder={Placeholders.region}
         onChange={(event) => onUpdateField('region', event.target.value)}
-        value={value?.region ?? null}
+        value={value?.region ?? ''}
       />
     </Box>
   );
@@ -121,7 +121,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         onChange={(event) =>
           onUpdateField('config_file_path', event.target.value)
         }
-        value={value?.config_file_path ?? null}
+        value={value?.config_file_path ?? ''}
       />
 
       {configProfileInput}
@@ -143,7 +143,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
           k8sConfigs['keepalive'] = event.target.value;
           onUpdateField('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
-        value={k8sConfigs['keepalive'] ?? null}
+        value={k8sConfigs['keepalive'] ?? ''}
       />
       <IntegrationTextInputField
         spellCheck={false}
@@ -155,7 +155,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
           k8sConfigs['cpu_node_type'] = event.target.value;
           onUpdateField('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
-        value={k8sConfigs['cpu_node_type'] ?? null}
+        value={k8sConfigs['cpu_node_type'] ?? ''}
       />
 
       <IntegrationTextInputField
@@ -168,7 +168,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
           k8sConfigs['gpu_node_type'] = event.target.value;
           onUpdateField('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
-        value={k8sConfigs['gpu_node_type'] ?? null}
+        value={k8sConfigs['gpu_node_type'] ?? ''}
       />
       <IntegrationTextInputField
         spellCheck={false}
@@ -180,7 +180,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
           k8sConfigs['min_cpu_node'] = event.target.value;
           onUpdateField('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
-        value={k8sConfigs['min_cpu_node'] ?? null}
+        value={k8sConfigs['min_cpu_node'] ?? ''}
       />
       <IntegrationTextInputField
         spellCheck={false}
@@ -192,7 +192,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
           k8sConfigs['max_cpu_node'] = event.target.value;
           onUpdateField('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
-        value={k8sConfigs['max_cpu_node'] ?? null}
+        value={k8sConfigs['max_cpu_node'] ?? ''}
       />
       <IntegrationTextInputField
         spellCheck={false}
@@ -204,7 +204,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
           k8sConfigs['min_gpu_node'] = event.target.value;
           onUpdateField('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
-        value={k8sConfigs['min_gpu_node'] ?? null}
+        value={k8sConfigs['min_gpu_node'] ?? ''}
       />
       <IntegrationTextInputField
         spellCheck={false}
@@ -216,7 +216,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
           k8sConfigs['max_gpu_node'] = event.target.value;
           onUpdateField('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
-        value={k8sConfigs['max_gpu_node'] ?? null}
+        value={k8sConfigs['max_gpu_node'] ?? ''}
       />
     </Box>
   );
@@ -225,7 +225,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
     <Box sx={{ mt: 2 }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tabs
-          value={value?.type}
+          value={value?.type ?? 'access_key'}
           onChange={(_, value) => onUpdateField('type', value)}
         >
           <Tab value={AWSCredentialType.AccessKey} label="Enter Access Keys" />

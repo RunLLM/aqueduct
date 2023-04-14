@@ -62,7 +62,13 @@ const NavBar: React.FC<{
   user: UserProfile;
   breadcrumbs: BreadcrumbLink[];
   onBreadCrumbClicked?: (name: string) => void;
-}> = ({ user, breadcrumbs, onBreadCrumbClicked = null }) => {
+  showBanner: boolean;
+}> = ({
+  user,
+  breadcrumbs,
+  onBreadCrumbClicked = null,
+  showBanner = false,
+}) => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -97,6 +103,8 @@ const NavBar: React.FC<{
         borderBottom: `2px solid ${contextTheme.palette.gray[300]}`,
         backgroundColor: 'white',
         color: 'black',
+        // Need to give room for the announcement banner
+        marginTop: showBanner ? '32px' : null,
       }}
     >
       <Toolbar>

@@ -32,6 +32,7 @@ def test_flow_with_multiple_compute_using_op_spec(client, flow_name, data_integr
     assert flow_run.artifact("noop_on_third_party artifact").get().equals(table_artifact.get())
 
 
+@pytest.mark.skip_for_spark_engines(reason="Cannot switch between Spark and Aqueduct engines.")
 @pytest.mark.enable_only_for_external_compute()
 def test_global_config_engine_switching(client, engine):
     """Test that we can freely switch between Aqueduct to External compute and back again."""

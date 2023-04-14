@@ -201,7 +201,7 @@ while True:
 
         # A flow has been successfully published if it makes at least one successful workflow run since start_time,
         flow_runs = [flow.fetch(flow_run_dict["run_id"]) for flow_run_dict in flow.list_runs()]
-        flow_runs = [flow_run for flow_run in flow_runs if float(flow_run._created_at) > start_time]
+        flow_runs = [flow_run for flow_run in flow_runs if flow_run.created_at() > start_time]
         if len(flow_runs) == 0:
             continue
 

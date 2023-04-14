@@ -2,7 +2,6 @@ import json
 import uuid
 
 import cloudpickle as pickle
-from aqueduct.backend.response_models import ArtifactResult, ExecutionState, Logs, PreviewResponse
 from aqueduct.constants.enums import (
     ArtifactType,
     ExecutionStatus,
@@ -33,6 +32,7 @@ from aqueduct.models.operators import (
     SalesforceExtractParams,
     SalesforceLoadParams,
 )
+from aqueduct.models.response_models import ArtifactResult, ExecutionState, Logs, PreviewResponse
 from aqueduct.tests.utils import _construct_dag, _construct_operator
 from aqueduct.utils.serialization import (
     PickleableCollectionSerializationFormat,

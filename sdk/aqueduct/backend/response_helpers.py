@@ -7,10 +7,9 @@ from aqueduct.constants.enums import ExecutionStatus
 from aqueduct.error import AqueductError, InternalAqueductError
 from aqueduct.models.dag import DAG
 from aqueduct.models.operators import Operator
-from aqueduct.utils.utils import indent_multiline_string, is_string_valid_uuid
+from aqueduct.models.response_models import ArtifactResult, ExecutionState, Logs, PreviewResponse
+from aqueduct.utils.utils import is_string_valid_uuid, print_logs
 from requests_toolbelt.multipart import decoder
-
-from .response_models import ArtifactResult, ExecutionState, Logs, PreviewResponse
 
 
 def _parse_artifact_result_response(response: requests.Response) -> Dict[str, Any]:
@@ -37,7 +36,6 @@ def _parse_artifact_result_response(response: requests.Response) -> Dict[str, An
 
 def _construct_preview_response(response: requests.Response) -> PreviewResponse:
     artifact_results = {}
-    artifact_result_constructor = {}
     preview_response = {}
     is_metadata_received = False
     multipart_data = decoder.MultipartDecoder.from_response(response)
@@ -98,6 +96,7 @@ def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:
     def _print_op_user_logs(op_name: str, logs: Logs) -> None:
         """Prints out the logs for a single operator. The format is:
 
+        Operator {op_name} Logs:
         stdout:
             {logs}
             {logs}
@@ -113,16 +112,7 @@ def _handle_preview_resp(preview_resp: PreviewResponse, dag: DAG) -> None:
             return
 
         print(f"Operator {op_name} Logs:")
-        if len(logs.stdout) > 0:
-            print("stdout:")
-            print(indent_multiline_string(logs.stdout).rstrip("\n"))
-
-        if len(logs.stdout) > 0 and len(logs.stderr) > 0:
-            print("----------------------------------")
-
-        if len(logs.stderr) > 0:
-            print("stderr:")
-            print(indent_multiline_string(logs.stderr).rstrip("\n"))
+        print_logs(logs)
         print("")
 
     q: List[Operator] = dag.list_root_operators()

@@ -40,12 +40,12 @@ func MigrateVault(
 
 		val, err := oldVault.Get(ctx, key)
 		if err != nil {
-			log.Errorf("Unable to get integration credentials %v from old vault: %v", integrationDB.ID, err)
+			log.Errorf("Unable to get integration credentials %v from old vault at path %s: %v", integrationDB.ID, key, err)
 			return nil, err
 		}
 
 		if err := newVault.Put(ctx, key, val); err != nil {
-			log.Errorf("Unable to write integration credentials %v to new vault: %v", integrationDB.ID, err)
+			log.Errorf("Unable to write integration credentials %v to new vault at path %s: %v", integrationDB.ID, key, err)
 			return nil, err
 		}
 

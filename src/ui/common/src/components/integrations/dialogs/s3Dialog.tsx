@@ -18,6 +18,7 @@ const Placeholders: S3Config = {
   type: AWSCredentialType.AccessKey,
   bucket: 'aqueduct',
   region: 'us-east-1',
+  root_dir: 'path/to/root/',
   access_key_id: '',
   secret_access_key: '',
   config_file_path: '',
@@ -74,7 +75,7 @@ export const S3Dialog: React.FC<Props> = ({
       onChange={(event) =>
         onUpdateField('config_file_profile', event.target.value)
       }
-      value={value?.config_file_profile ?? null}
+      value={value?.config_file_profile ?? ''}
     />
   );
 
@@ -90,7 +91,7 @@ export const S3Dialog: React.FC<Props> = ({
         description="The access key ID of your AWS account."
         placeholder={Placeholders.access_key_id}
         onChange={(event) => onUpdateField('access_key_id', event.target.value)}
-        value={value?.access_key_id ?? null}
+        value={value?.access_key_id ?? ''}
       />
 
       <IntegrationTextInputField
@@ -102,7 +103,7 @@ export const S3Dialog: React.FC<Props> = ({
         onChange={(event) =>
           onUpdateField('secret_access_key', event.target.value)
         }
-        value={value?.secret_access_key ?? null}
+        value={value?.secret_access_key ?? ''}
       />
     </Box>
   );
@@ -126,7 +127,7 @@ export const S3Dialog: React.FC<Props> = ({
         onChange={(event) =>
           onUpdateField('config_file_path', event.target.value)
         }
-        value={value?.config_file_path ?? null}
+        value={value?.config_file_path ?? ''}
       />
 
       {configProfileInput}
@@ -174,7 +175,7 @@ export const S3Dialog: React.FC<Props> = ({
         description="The name of the S3 bucket."
         placeholder={Placeholders.bucket}
         onChange={(event) => onUpdateField('bucket', event.target.value)}
-        value={value?.bucket ?? null}
+        value={value?.bucket ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -187,7 +188,20 @@ export const S3Dialog: React.FC<Props> = ({
         description="The region the S3 bucket belongs to."
         placeholder={Placeholders.region}
         onChange={(event) => onUpdateField('region', event.target.value)}
-        value={value?.region ?? null}
+        value={value?.region ?? ''}
+        disabled={editMode}
+        warning={editMode ? undefined : readOnlyFieldWarning}
+        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
+      />
+
+      <IntegrationTextInputField
+        spellCheck={false}
+        required={false}
+        label="Directory"
+        description="Only applicable when also setting this integration to be the artifact store. This is an optional path to an existing directory in the bucket, to be used as the root of the artifact store. Defaults to the root of the bucket."
+        placeholder={Placeholders.root_dir}
+        onChange={(event) => onUpdateField('root_dir', event.target.value)}
+        value={value?.root_dir ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -195,7 +209,7 @@ export const S3Dialog: React.FC<Props> = ({
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tabs
-          value={value?.type}
+          value={value?.type ?? 'access_key'}
           onChange={(_, value) => onUpdateField('type', value)}
         >
           <Tab value={AWSCredentialType.AccessKey} label="Enter Access Keys" />

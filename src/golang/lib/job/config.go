@@ -64,6 +64,8 @@ type DatabricksJobManagerConfig struct {
 	// storage in S3. Information on how to create this can be found here:
 	// https://docs.databricks.com/aws/iam/instance-profile-tutorial.html
 	S3InstanceProfileARN string `yaml:"s3InstanceProfileArn" json:"s3_instance_profile_arn"`
+	// [Optional] ID of instance pool that Aqueduct-created JobClusters should use.
+	InstancePoolID *string `yaml:"instancePoolID" json:"instance_pool_id"`
 	// AWS Access Key ID is passed from the StorageConfig.
 	AwsAccessKeyID string `yaml:"awsAccessKeyId" json:"aws_access_key_id"`
 	// AWS Secret Access Key is passed from the StorageConfig.
@@ -251,6 +253,7 @@ func GenerateJobManagerConfig(
 			WorkspaceURL:         databricksConfig.WorkspaceURL,
 			AccessToken:          databricksConfig.AccessToken,
 			S3InstanceProfileARN: databricksConfig.S3InstanceProfileARN,
+			InstancePoolID:       databricksConfig.InstancePoolID,
 			AwsAccessKeyID:       awsAccessKeyId,
 			AwsSecretAccessKey:   awsSecretAccessKey,
 		}, nil
