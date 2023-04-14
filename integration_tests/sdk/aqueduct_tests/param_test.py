@@ -628,7 +628,7 @@ def test_all_local_data_types(client, flow_name, engine):
     )
 
 
-# TODO(ENG-2798): Unable to publish flow using TF_KERAS parameter.
+# TODO(ENG-2798): Currented we can't publish a flow with tensorflow model as parameter.
 @pytest.mark.skip()
 def test_local_tf_keras_data(client, flow_name, engine):
     from tensorflow import keras
