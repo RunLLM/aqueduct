@@ -33,7 +33,6 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
         method: 'GET',
       });
       const pyPiResponse = await pypiRes.json();
-      console.log('pyPiVersion:  ', pyPiResponse.info.version);
       const pyPiVersionString = pyPiResponse.info.version;
 
       const res = await fetch(`${apiAddress}/api/version`, {
