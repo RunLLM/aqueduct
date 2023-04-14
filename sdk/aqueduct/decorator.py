@@ -444,7 +444,10 @@ def _update_operator_spec_with_resources(
             )
 
         spec.resources = ResourceConfig(
-            num_cpus=num_cpus, memory_mb=memory, gpu_resource_name=gpu_resource_name
+            num_cpus=num_cpus,
+            memory_mb=memory,
+            gpu_resource_name=gpu_resource_name,
+            cuda_version=cuda_version,
         )
 
 

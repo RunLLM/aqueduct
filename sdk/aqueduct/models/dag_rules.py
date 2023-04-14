@@ -17,12 +17,14 @@ def check_customized_resources_are_supported(
         CustomizableResourceType.NUM_CPUS: False,
         CustomizableResourceType.MEMORY: False,
         CustomizableResourceType.GPU_RESOURCE_NAME: False,
+        CustomizableResourceType.CUDA_VERSION: False,
     }
     if engine_config.type == RuntimeType.K8S:
         allowed_customizable_resources = {
             CustomizableResourceType.NUM_CPUS: True,
             CustomizableResourceType.MEMORY: True,
             CustomizableResourceType.GPU_RESOURCE_NAME: True,
+            CustomizableResourceType.CUDA_VERSION: True,
         }
     elif engine_config.type == RuntimeType.LAMBDA:
         allowed_customizable_resources[CustomizableResourceType.MEMORY] = True
