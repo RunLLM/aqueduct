@@ -1,10 +1,12 @@
 // This file should map exactly to
 // src/golang/cmd/server/handler/v2/node_operator_get.go
 
-import { APIKeyParameter } from '../parameters/ApiKey';
-import { DagIdParameter } from '../parameters/DagId';
-import { NodeIdParameter } from '../parameters/NodeId';
-import { WorkflowIdParameter } from '../parameters/WorkflowId';
+import { APIKeyParameter } from '../parameters/Header';
+import {
+  DagIdParameter,
+  NodeIdParameter,
+  WorkflowIdParameter,
+} from '../parameters/Path';
 import { OperatorResponse } from '../responses/Node';
 
 export type NodeOperatorGetRequest = APIKeyParameter &

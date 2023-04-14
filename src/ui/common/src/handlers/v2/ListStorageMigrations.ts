@@ -1,7 +1,7 @@
 // This file should map exactly to
 // src/golang/cmd/server/handler/v2/list_storage_migrations.go
 
-import { APIKeyParameter } from '../parameters/ApiKey';
+import { APIKeyParameter } from '../parameters/Header';
 import { StorageMigrationResponse } from '../responses/storageMigration';
 
 export type storageMigrationListRequest = APIKeyParameter & {

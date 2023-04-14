@@ -1,11 +1,13 @@
 // This file should map exactly to
 // src/golang/cmd/server/handler/v2/node_artifact_result_content_get.go
 
-import { APIKeyParameter } from '../parameters/ApiKey';
-import { DagIdParameter } from '../parameters/DagId';
-import { NodeIdParameter } from '../parameters/NodeId';
-import { NodeResultIdParameter } from '../parameters/NodeResultId';
-import { WorkflowIdParameter } from '../parameters/WorkflowId';
+import { APIKeyParameter } from '../parameters/Header';
+import {
+  DagIdParameter,
+  NodeIdParameter,
+  NodeResultIdParameter,
+  WorkflowIdParameter,
+} from '../parameters/Path';
 
 export type NodeArtifactResultContentGetRequest = APIKeyParameter &
   DagIdParameter &

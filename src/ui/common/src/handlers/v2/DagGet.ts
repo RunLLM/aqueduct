@@ -1,9 +1,8 @@
 // This file should map exactly to
 // src/golang/cmd/server/handler/v2/dag_get.go
 
-import { APIKeyParameter } from '../parameters/ApiKey';
-import { DagIdParameter } from '../parameters/DagId';
-import { WorkflowIdParameter } from '../parameters/WorkflowId';
+import { APIKeyParameter } from '../parameters/Header';
+import { DagIdParameter, WorkflowIdParameter } from '../parameters/Path';
 import { DagResponse } from '../responses/Workflow';
 
 export type DagGetRequest = APIKeyParameter &
