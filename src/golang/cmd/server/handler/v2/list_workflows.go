@@ -7,8 +7,9 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/response"
 	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/response"
 	"github.com/dropbox/godropbox/errors"
 )
 
@@ -49,7 +50,7 @@ func (h *ListWorkflowsHandler) Prepare(r *http.Request) (interface{}, int, error
 	}
 
 	return &workflowGetArgs{
-		AqContext:  aqContext,
+		AqContext: aqContext,
 	}, http.StatusOK, nil
 }
 
