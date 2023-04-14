@@ -20,7 +20,6 @@ from .test_functions.simple.model import (
     dummy_sentiment_model,
     dummy_sentiment_model_multiple_input,
 )
-from .test_functions.simple.op_with_args import foo_with_args
 from .test_metrics.constant.model import constant_metric
 
 
@@ -445,6 +444,12 @@ def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integra
 def test_flow_with_args(client):
     str_val = "this is a string"
     num_val = 1234
+
+    @op
+    def foo_with_args(*args):
+        args_list = list(args)
+        assert args_list == [str_val, num_val]
+        return args_list
 
     @op
     def generate_str():
