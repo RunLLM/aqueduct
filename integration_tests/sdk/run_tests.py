@@ -2,6 +2,7 @@ import argparse
 import os
 import subprocess
 import sys
+from typing import List, Optional
 
 
 def _execute_command(args, cwd=None) -> None:
@@ -12,20 +13,19 @@ def _execute_command(args, cwd=None) -> None:
 
 
 def _run_tests(
-    dir_name: str, test_case: str, concurrency: int, rerun_failed: bool, skip_data_setup: bool
+    dir_name: str,
+    file_name: Optional[str],
+    concurrency: int,
+    unknown_args: List[str],
 ) -> None:
     """Either test_case or rerun_failed can be set, but not both."""
-    if rerun_failed:
-        cmd = ["pytest", dir_name, "-rP", "-vv", "--lf", "-n", str(concurrency)]
-    else:
-        cmd = ["pytest", dir_name, "-rP", "-vv", "-n", str(concurrency)]
+    target_name = dir_name
+    if file_name is not None:
+        # `dir_name` already ends in a slash.
+        assert dir_name[-1] == "/"
+        target_name = dir_name + file_name
 
-    if len(test_case) > 0:
-        cmd += ["-k", test_case]
-
-    if skip_data_setup:
-        cmd.append("--skip-data-setup")
-
+    cmd = ["pytest", target_name, "-rP", "-vv"] + unknown_args + ["-n", str(concurrency)]
     _execute_command(cmd)
 
 
@@ -49,27 +49,12 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "-k",
-        dest="test_case",
-        default="",
+        "--file",
+        dest="file",
+        default=None,
         action="store",
-        help="Only runs tests that match this argument",
-    )
-
-    parser.add_argument(
-        "--lf",
-        dest="rerun_failed",
-        default=False,
-        action="store_true",
-        help="Run only the tests in the suite that failed during the last run.",
-    )
-
-    parser.add_argument(
-        "--skip-data-setup",
-        dest="skip_data_setup",
-        default=False,
-        action="store_true",
-        help="If set, skips any data integration setup to speed up testing.",
+        help="The file to run the tests on. For example, `python3 run_tests.py --aqueduct --file flow_test.py` is "
+        "equivalent to running `pytest aqueduct/flow_test.py`.",
     )
 
     parser.add_argument(
@@ -80,14 +65,10 @@ if __name__ == "__main__":
         help="The concurrency to run the test suite with.",
     )
 
-    args = parser.parse_args()
+    args, unknown_args = parser.parse_known_args()
     if not (args.aqueduct_tests or args.data_integration_tests):
         args.aqueduct_tests = True
         args.data_integration_tests = True
-
-    assert not (
-        args.rerun_failed and len(args.test_case) > 0
-    ), "Either -k or -lf can be set, but not both."
 
     cwd = os.getcwd()
     if not cwd.endswith("integration_tests/sdk"):
@@ -99,18 +80,16 @@ if __name__ == "__main__":
         print("Running Aqueduct Tests...")
         _run_tests(
             "aqueduct_tests/",
-            args.test_case,
+            args.file,
             args.concurrency,
-            args.rerun_failed,
-            args.skip_data_setup,
+            unknown_args,
         )
 
     if args.data_integration_tests:
         print("Running Data Integration Tests...")
         _run_tests(
             "data_integration_tests/",
-            args.test_case,
+            args.file,
             args.concurrency,
-            args.rerun_failed,
-            args.skip_data_setup,
+            unknown_args,
         )

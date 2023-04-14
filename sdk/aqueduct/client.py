@@ -1,5 +1,6 @@
 import logging
 import os
+import platform
 import uuid
 import warnings
 from collections import defaultdict
@@ -9,13 +10,11 @@ import __main__ as main
 import yaml
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
-from aqueduct.artifacts.create import check_explicit_param_name, create_param_artifact
+from aqueduct.artifacts.create import create_param_artifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
-from aqueduct.backend.response_models import SavedObjectUpdate
 from aqueduct.constants.enums import (
     ArtifactType,
     ExecutionStatus,
-    OperatorType,
     RelationalDBServices,
     RuntimeType,
     ServiceType,
@@ -28,6 +27,7 @@ from aqueduct.error import (
 from aqueduct.flow import Flow
 from aqueduct.github import Github
 from aqueduct.integrations.airflow_integration import AirflowIntegration
+from aqueduct.integrations.aws_integration import AWSIntegration
 from aqueduct.integrations.connect_config import (
     BaseConnectionConfig,
     IntegrationConfig,
@@ -41,20 +41,20 @@ from aqueduct.integrations.lambda_integration import LambdaIntegration
 from aqueduct.integrations.mongodb_integration import MongoDBIntegration
 from aqueduct.integrations.s3_integration import S3Integration
 from aqueduct.integrations.salesforce_integration import SalesforceIntegration
+from aqueduct.integrations.spark_integration import SparkIntegration
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
 from aqueduct.logger import logger
-from aqueduct.models.config import FlowConfig
 from aqueduct.models.dag import Metadata, RetentionPolicy
 from aqueduct.models.integration import Integration, IntegrationInfo
 from aqueduct.models.operators import ParamSpec
+from aqueduct.models.response_models import SavedObjectUpdate
 from aqueduct.utils.dag_deltas import (
-    RemoveOperatorDelta,
     SubgraphDAGDelta,
     apply_deltas_to_dag,
     validate_overwriting_parameters,
 )
-from aqueduct.utils.function_packaging import infer_requirements_from_env
-from aqueduct.utils.serialization import deserialize
+from aqueduct.utils.local_data import validate_local_data
+from aqueduct.utils.serialization import deserialize, extract_val_from_local_data
 from aqueduct.utils.type_inference import _base64_string_to_bytes, infer_artifact_type
 from aqueduct.utils.utils import (
     construct_param_spec,
@@ -86,7 +86,9 @@ def global_config(config_dict: Dict[str, Any]) -> None:
     if globals.GLOBAL_LAZY_KEY in config_dict:
         lazy_val = config_dict[globals.GLOBAL_LAZY_KEY]
         if not isinstance(lazy_val, bool):
-            raise InvalidUserArgumentException("Must supply a boolean for the lazy key.")
+            raise InvalidUserArgumentException(
+                "Must supply a boolean for the lazy key."
+            )
         globals.__GLOBAL_CONFIG__.lazy = lazy_val
 
     if globals.GLOBAL_ENGINE_KEY in config_dict:
@@ -115,15 +117,6 @@ def get_apikey() -> str:
                 "This API works only when you are running the server and the SDK on the same machine."
             )
             exit(1)
-
-
-def infer_requirements() -> List[str]:
-    """Obtains the list of pip requirements specifiers from the current python environment using `pip freeze`.
-
-    Returns:
-        A list, for example, ["transformers==4.21.0", "numpy==1.22.4"].
-    """
-    return infer_requirements_from_env()
 
 
 class Client:
@@ -170,18 +163,6 @@ class Client:
             not "PYTEST_CURRENT_TEST" in os.environ
         )
 
-        # Check if "@ file" in pip freeze requirements and warn user.
-        if not "localhost" in aqueduct_address:
-            skipped_packages = []
-            for requirement in infer_requirements():
-                if "@ file" in requirement:
-                    skipped_packages.append(requirement.split(" ")[0])
-            if len(skipped_packages) > 0:
-                warnings.warn(
-                    "Your local Python environment contains packages installed from the local file system. The following packages won't be installed when running your workflow: "
-                    + ", ".join(skipped_packages)
-                )
-
     def github(self, repo: str, branch: str = "") -> Github:
         """Retrieves a Github object connecting to specified repos and branch.
 
@@ -200,7 +181,15 @@ class Client:
         """
         return Github(repo_url=repo, branch=branch)
 
-    def create_param(self, name: str, default: Any, description: str = "") -> BaseArtifact:
+    def create_param(
+        self,
+        name: str,
+        default: Any,
+        description: str = "",
+        use_local: bool = False,
+        as_type: Optional[ArtifactType] = None,
+        format: Optional[str] = None,
+    ) -> BaseArtifact:
         """Creates a parameter artifact that can be fed into other operators.
 
         Parameter values are configurable at runtime.
@@ -210,65 +199,41 @@ class Client:
                 The name to assign this parameter.
             default:
                 The default value to give this parameter, if no value is provided.
-                Every parameter must have a default.
+                Every parameter must have a default. If we decide to use local data,
+                a path to the local data file must be specified.
             description:
                 A description of what this parameter represents.
-
+            use_local:
+                Whether this parameter uses local data source or not.
+            as_type:
+                The expected type of the local data. Only supported types are ArtifactType.TABLE and ArtifactType.IMAGE.
+            format:
+                If local data type is ArtifactType.TABLE, the user has to specify the table format.
+                We currently support "json", "csv", and "parquet".
         Returns:
             A parameter artifact.
         """
-        check_explicit_param_name(self._dag, name)
-        return create_param_artifact(self._dag, name, default, description)
-
-    def list_params(self) -> Dict[str, Any]:
-        """Lists all the currently tracked parameters.
-
-        Returns:
-            A dict where the keys are the existing parameter names and the values
-            are the default values.
-        """
-        param_ops = globals.__GLOBAL_DAG__.list_operators(filter_to=[OperatorType.PARAM])
-
-        param_dict = {}
-        for op in param_ops:
-            assert op.spec.param is not None
-            param_dict[op.name] = deserialize(
-                op.spec.param.serialization_type,
-                ArtifactType.UNTYPED,  # This argument is irrelevant, as long as it's not TUPLE.
-                _base64_string_to_bytes(op.spec.param.val),
-            )
-
-        return param_dict
-
-    def delete_param(self, name: str, force: bool = False) -> None:
-        """Deletes the given parameter from client's context.
-
-        Args:
-            name:
-                The name of the parameter to delete.
-            force:
-                If set, we will delete the parameter and any operators that it is dependency of.
-                Otherwise, we will error if it is a dependency of any operator.
-        """
-        param_op = self._dag.get_operator(with_name=name)
-        if param_op is None:
-            raise InvalidUserArgumentException(
-                "Unable to delete parameter %s. Not such parameter exists." % name
-            )
-
-        if not force:
-            assert len(param_op.outputs) == 1, "Parameter operators only have one output."
-            downstream_ops = self._dag.list_operators(on_artifact_id=param_op.outputs[0])
-            if len(downstream_ops) > 0:
-                raise InvalidUserActionException(
-                    "Cannot delete parameter %s because operator %s uses it. If you would like to "
-                    "delete the parameter and it's dependents anyways, set `force=True`."
+        if use_local:
+            if not isinstance(default, str):
+                raise InvalidUserArgumentException(
+                    "The default value must be a path to local data."
                 )
-
-        apply_deltas_to_dag(self._dag, [RemoveOperatorDelta(param_op.id)])
+            validate_local_data(default, as_type, format)
+            default = extract_val_from_local_data(default, as_type, format)
+        return create_param_artifact(
+            self._dag,
+            name,
+            default,
+            description,
+            explicitly_named=True,
+            is_local_data=use_local,
+        )
 
     def connect_integration(
-        self, name: str, service: ServiceType, config: Union[Dict[str, str], BaseConnectionConfig]
+        self,
+        name: str,
+        service: Union[str, ServiceType],
+        config: Union[Dict[str, str], IntegrationConfig],
     ) -> None:
         """Connects the Aqueduct server to an integration.
 
@@ -294,7 +259,9 @@ class Client:
                 % name
             )
 
-        if not isinstance(config, dict) and not isinstance(config, BaseConnectionConfig):
+        if not isinstance(config, dict) and not isinstance(
+            config, BaseConnectionConfig
+        ):
             raise InvalidUserArgumentException(
                 "`config` argument must be either a dict or ConnectConfig."
             )
@@ -306,7 +273,9 @@ class Client:
         config = prepare_integration_config(service, config)
 
         globals.__GLOBAL_API_CLIENT__.connect_integration(name, service, config)
-        logger().info("Successfully connected to new %s integration `%s`." % (service, name))
+        logger().info(
+            "Successfully connected to new %s integration `%s`." % (service, name)
+        )
 
     def delete_integration(
         self,
@@ -348,6 +317,8 @@ class Client:
         LambdaIntegration,
         MongoDBIntegration,
         DatabricksIntegration,
+        SparkIntegration,
+        AWSIntegration,
     ]:
         """Retrieves a connected integration object.
 
@@ -411,6 +382,19 @@ class Client:
             return DatabricksIntegration(
                 metadata=integration_info,
             )
+        elif integration_info.service == ServiceType.SPARK:
+            return SparkIntegration(
+                metadata=integration_info,
+            )
+        elif integration_info.service == ServiceType.AWS:
+            dynamic_k8s_integration_name = "%s:aqueduct_ondemand_k8s" % name
+            dynamic_k8s_integration_info = self._connected_integrations[
+                dynamic_k8s_integration_name
+            ]
+            return AWSIntegration(
+                metadata=integration_info,
+                k8s_integration_metadata=dynamic_k8s_integration_info,
+            )
         else:
             raise InvalidIntegrationException(
                 "This method does not support loading integration of type %s"
@@ -449,7 +433,10 @@ class Client:
             InvalidUserArgumentException:
                 If the provided flow id or name does not correspond to a flow the client knows about.
         """
-        flows = [(flow.id, flow.name) for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()]
+        flows = [
+            (flow.id, flow.name)
+            for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()
+        ]
         flow_id = find_flow_with_user_supplied_id_and_name(
             flows,
             flow_id,
@@ -471,8 +458,9 @@ class Client:
         metrics: Optional[List[NumericArtifact]] = None,
         checks: Optional[List[BoolArtifact]] = None,
         k_latest_runs: Optional[int] = None,
-        config: Optional[FlowConfig] = None,
         source_flow: Optional[Union[Flow, str, uuid.UUID]] = None,
+        run_now: Optional[bool] = None,
+        use_local: Optional[bool] = False,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
 
@@ -506,24 +494,22 @@ class Client:
                 to be computed. Additional artifacts may also be computed if they are upstream
                 dependencies.
             metrics:
-                All the metrics that you would like to compute. If not supplied, we will implicitly
-                include all metrics computed on artifacts in the flow.
+                All the metrics that you would like to compute. If not supplied, we include by default
+                all metrics computed on artifacts in the flow.
             checks:
-                All the checks that you would like to compute. If not supplied, we will implicitly
-                include all checks computed on artifacts in the flow.
+                All the checks that you would like to compute. If not supplied, we will by default
+                all checks computed on artifacts in the flow.
             k_latest_runs:
                 Number of most-recent runs of this flow that Aqueduct should keep. Runs outside of
                 this bound are garbage collected. Defaults to persisting all runs.
-            config:
-                This field will be deprecated. Please use `engine` and `k_latest_runs` instead.
-
-                An optional set of config fields for this flow.
-                - engine: Specify where this flow should run with one of your connected integrations.
-                - k_latest_runs: Number of most-recent runs of this flow that Aqueduct should store.
-                    Runs outside of this bound are deleted. Defaults to persisting all runs.
             source_flow:
                 Used to identify the source flow for this flow. This can be identified
                 via an object (Flow), name (str), or id (str or uuid).
+            run_now:
+                Used to specify if the flow should run immediately at publish time. The default
+                behavior is 'True'.
+            use_local:
+                Must be set if any artifact in the flow is derived from local data.
 
         Raises:
             InvalidUserArgumentException:
@@ -544,16 +530,6 @@ class Client:
         if engine is not None and not isinstance(engine, str):
             raise InvalidUserArgumentException(
                 "`engine` parameter must be a string, got %s." % type(engine)
-            )
-
-        if config and config.engine:
-            raise InvalidUserArgumentException(
-                "The `config` parameter is deprecated. Please use `engine` instead."
-            )
-
-        if config is not None:
-            logger().warning(
-                "`config` is deprecated, please use the `engine` or `k_latest_runs` fields directly."
             )
 
         if artifacts is None or artifacts == []:
@@ -621,20 +597,13 @@ class Client:
 
         flow_schedule = generate_flow_schedule(schedule, source_flow_id)
 
-        k_latest_runs_from_flow_config = config.k_latest_runs if config else None
-        if k_latest_runs and k_latest_runs_from_flow_config:
-            raise InvalidUserArgumentException(
-                "Cannot set `k_latest_runs` in two places, pick one. Note that use of `FlowConfig` will be deprecated soon."
-            )
-        if k_latest_runs is None and k_latest_runs_from_flow_config:
-            k_latest_runs = k_latest_runs_from_flow_config
-
         if k_latest_runs is None:
             retention_policy = RetentionPolicy(k_latest_runs=-1)
         else:
             if not isinstance(k_latest_runs, int):
                 raise InvalidUserArgumentException(
-                    "`k_latest_runs` parameter must be an int, got %s" % type(k_latest_runs)
+                    "`k_latest_runs` parameter must be an int, got %s"
+                    % type(k_latest_runs)
                 )
             retention_policy = RetentionPolicy(k_latest_runs=k_latest_runs)
 
@@ -650,6 +619,13 @@ class Client:
             ],
             make_copy=True,
         )
+        if not use_local and any(
+            artifact_metadata.from_local_data
+            for artifact_metadata in list(dag.artifacts.values())
+        ):
+            raise InvalidUserActionException(
+                "Cannot create a flow with local data. Consider setting `use_local` to True to publish a workflow with local data parameters."
+            )
         dag.metadata = Metadata(
             name=name,
             description=description,
@@ -661,10 +637,18 @@ class Client:
                 self._connected_integrations,
                 globals.__GLOBAL_CONFIG__.engine,
             ),
-            publish_flow_engine_config=generate_engine_config(self._connected_integrations, engine),
+            publish_flow_engine_config=generate_engine_config(
+                self._connected_integrations, engine
+            ),
         )
 
+        dag.validate_and_resolve_artifact_names()
+
         if dag.engine_config.type == RuntimeType.AIRFLOW:
+            if run_now is not None:
+                raise InvalidUserArgumentException(
+                    "run_now parameter is not supported for Airflow engine."
+                )
             # This is an Airflow workflow
             resp = globals.__GLOBAL_API_CLIENT__.register_airflow_workflow(dag)
             flow_id, airflow_file = resp.id, resp.file
@@ -690,7 +674,24 @@ class Client:
                     )
                 )
         else:
-            flow_id = globals.__GLOBAL_API_CLIENT__.register_workflow(dag).id
+            if run_now is None:
+                run_now = True
+            registered_metadata = globals.__GLOBAL_API_CLIENT__.register_workflow(
+                dag, run_now
+            )
+            flow_id = registered_metadata.id
+            server_python_version = (
+                registered_metadata.python_version.strip()
+            )  # Remove newline at the end
+            client_python_version = f"Python {platform.python_version()}"
+            if (
+                dag.engine_config.type == RuntimeType.AQUEDUCT
+                and client_python_version != server_python_version
+            ):
+                warnings.warn(
+                    "There is a mismatch between the Python version on the engine (%s) and the client (%s)."
+                    % (server_python_version, client_python_version)
+                )
 
         url = generate_ui_url(
             globals.__GLOBAL_API_CLIENT__.construct_base_url(),
@@ -734,21 +735,24 @@ class Client:
         param_specs: Dict[str, ParamSpec] = {}
         if parameters is not None:
             flow = self.flow(flow_id)
-            runs = flow.list_runs(limit=1)
+            latest_run = flow.latest()
 
             # NOTE: this is a defense check against triggering runs that haven't run yet.
             # We may want to revisit this in the future if more nuanced constraints are necessary.
-            if len(runs) == 0:
+            if not latest_run:
                 raise InvalidUserActionException(
                     "Cannot trigger a workflow that hasn't already run at least once."
                 )
-            validate_overwriting_parameters(flow.latest()._dag, parameters)
+            validate_overwriting_parameters(latest_run._dag, parameters)
 
             for name, new_val in parameters.items():
                 artifact_type = infer_artifact_type(new_val)
                 param_specs[name] = construct_param_spec(new_val, artifact_type)
 
-        flows = [(flow.id, flow.name) for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()]
+        flows = [
+            (flow.id, flow.name)
+            for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()
+        ]
         flow_id = find_flow_with_user_supplied_id_and_name(
             flows,
             flow_id,
@@ -789,7 +793,10 @@ class Client:
         if saved_objects_to_delete is None:
             saved_objects_to_delete = defaultdict()
 
-        flows = [(flow.id, flow.name) for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()]
+        flows = [
+            (flow.id, flow.name)
+            for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()
+        ]
         flow_id = find_flow_with_user_supplied_id_and_name(
             flows,
             flow_id,
@@ -808,7 +815,9 @@ class Client:
                 if obj.exec_state.status == ExecutionStatus.FAILED:
                     trace = ""
                     if obj.exec_state.error:
-                        context = obj.exec_state.error.context.strip().replace("\n", "\n>\t")
+                        context = obj.exec_state.error.context.strip().replace(
+                            "\n", "\n>\t"
+                        )
                         trace = f">\t{context}\n{obj.exec_state.error.tip}"
                     failure_string = f"[{integration}] {obj.name}\n{trace}"
                     failures.append(failure_string)
@@ -820,7 +829,9 @@ class Client:
 
     def describe(self) -> None:
         """Prints out info about this client in a human-readable format."""
-        print("============================= Aqueduct Client =============================")
+        print(
+            "============================= Aqueduct Client ============================="
+        )
         print("Connected endpoint: %s" % globals.__GLOBAL_API_CLIENT__.aqueduct_address)
         print("Log Level: %s" % logging.getLevelName(logging.root.level))
         self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()

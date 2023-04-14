@@ -54,6 +54,9 @@ type baseOperator struct {
 	// Otherwise, it will switch to the appropriate Conda environment before running the operator.
 	// This only applies to operators running with the Aqueduct engine.
 	execEnv *exec_env.ExecutionEnvironment
+
+	// Used for dynamic integration.
+	dynamicProperties *dynamicProperties
 }
 
 func (bo *baseOperator) Type() operator.Type {
@@ -66,6 +69,32 @@ func (bo *baseOperator) Name() string {
 
 func (bo *baseOperator) ID() uuid.UUID {
 	return bo.dbOperator.ID
+}
+
+func (bo *baseOperator) Dynamic() bool {
+	return bo.dynamicProperties != nil
+}
+
+func (bo *baseOperator) GetDynamicProperties() *dynamicProperties {
+	return bo.dynamicProperties
+}
+
+type dynamicProperties struct {
+	engineIntegrationId uuid.UUID
+	// prepared indicates whether the dynamic engine this operator relies on is ready.
+	prepared bool
+}
+
+func (dp *dynamicProperties) GetEngineIntegrationId() uuid.UUID {
+	return dp.engineIntegrationId
+}
+
+func (dp *dynamicProperties) Prepared() bool {
+	return dp.prepared
+}
+
+func (dp *dynamicProperties) SetPrepared() {
+	dp.prepared = true
 }
 
 // A catch-all for execution states that are the system's fault.
@@ -136,7 +165,25 @@ func (bo *baseOperator) launch(ctx context.Context, spec job.Spec) error {
 		}
 	}
 
-	return bo.jobManager.Launch(ctx, spec.JobName(), spec)
+	err := bo.jobManager.Launch(ctx, spec.JobName(), spec)
+	if err != nil {
+		if err.Code() == job.User {
+			bo.UpdateExecState(
+				jobManagerUserFailureExecState(err, "Job manager's Launch API failed due to user error"),
+			)
+		} else if err.Code() == job.System {
+			bo.UpdateExecState(
+				unknownSystemFailureExecState(err, "Job manager's Launch API failed due to system error"),
+			)
+		} else {
+			log.Errorf("Unexpected job error code %d", err.Code())
+			bo.UpdateExecState(
+				unknownSystemFailureExecState(err, "Job manager's Launch API failed due to system error"),
+			)
+		}
+	}
+
+	return err
 }
 
 // FetchExecState assumes that the operator has been computed already.
@@ -352,6 +399,10 @@ func (bo *baseOperator) Cancel() {
 	})
 }
 
+func (bfo *baseOperator) FetchExecutionEnvironment(ctx context.Context) *exec_env.ExecutionEnvironment {
+	return bfo.execEnv
+}
+
 // Any operator that runs a python function serialized from storage should use this instead of baseOperator.
 type baseFunctionOperator struct {
 	baseOperator
@@ -412,7 +463,6 @@ func (bfo *baseFunctionOperator) jobSpec(
 		ExpectedOutputArtifactTypes: expectedOutputTypes,
 		OperatorType:                bfo.Type(),
 		CheckSeverity:               checkSeverity,
-		ExecEnv:                     bfo.execEnv,
 		Resources:                   bfo.dbOperator.Spec.Resources(),
 	}
 }

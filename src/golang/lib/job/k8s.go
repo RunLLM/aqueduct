@@ -8,6 +8,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/function"
 	"github.com/dropbox/godropbox/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -16,24 +17,23 @@ import (
 )
 
 const (
-	defaultFunctionExtractPath = "/app/function/"
-	jobSpecEnvVarKey           = "JOB_SPEC"
+	jobSpecEnvVarKey = "JOB_SPEC"
 )
 
 type k8sJobManager struct {
+	// When we initialize k8sJobManager, k8sClient is always set to nil. This is because
+	// in case of dynamic k8s integration, when we initialize the job manager, the k8s
+	// cluster may not exist yet, so k8s client creation will fail. We defer the initialization
+	// to Launch and Poll, at which point regardless of dynamic or static k8s integration, we expect
+	// the k8s client creation to succeed.
 	k8sClient *kubernetes.Clientset
 	conf      *K8sJobManagerConfig
 }
 
-func NewK8sJobManager(conf *K8sJobManagerConfig) (*k8sJobManager, error) {
-	k8sClient, err := k8s.CreateK8sClient(conf.KubeconfigPath, conf.UseSameCluster)
+func setupNamespaceAndSecrets(k8sClient *kubernetes.Clientset, conf *K8sJobManagerConfig) error {
+	err := k8s.CreateNamespaces(k8sClient)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error while creating K8sClient")
-	}
-
-	err = k8s.CreateNamespaces(k8sClient)
-	if err != nil {
-		return nil, errors.Wrap(err, "Error while creating K8s Namespaces")
+		return errors.Wrap(err, "Error while creating K8s Namespaces")
 	}
 
 	secretsMap := map[string]string{}
@@ -41,11 +41,31 @@ func NewK8sJobManager(conf *K8sJobManagerConfig) (*k8sJobManager, error) {
 	secretsMap[k8s.AwsAccessKeyName] = conf.AwsSecretAccessKey
 	err = k8s.CreateSecret(context.TODO(), k8s.AwsCredentialsSecretName, secretsMap, k8sClient)
 	if err != nil {
-		return nil, errors.Wrap(err, "Error while creating K8s Secrets")
+		return errors.Wrap(err, "Error while creating K8s Secrets")
 	}
 
+	return nil
+}
+
+func (j *k8sJobManager) initialize() error {
+	k8sClient, err := k8s.CreateK8sClient(j.conf.KubeconfigPath, j.conf.UseSameCluster)
+	if err != nil {
+		return errors.Wrap(err, "Error while creating K8sClient")
+	}
+
+	err = setupNamespaceAndSecrets(k8sClient, j.conf)
+	if err != nil {
+		return err
+	}
+
+	j.k8sClient = k8sClient
+
+	return nil
+}
+
+func NewK8sJobManager(conf *K8sJobManagerConfig) (*k8sJobManager, error) {
 	return &k8sJobManager{
-		k8sClient: k8sClient,
+		k8sClient: nil,
 		conf:      conf,
 	}, nil
 }
@@ -55,7 +75,14 @@ func (j *k8sJobManager) Config() Config {
 }
 
 func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobError {
+	if j.k8sClient == nil {
+		if err := j.initialize(); err != nil {
+			return systemError(err)
+		}
+	}
+
 	launchGpu := false
+	var cudaVersion operator.CudaVersionNumber
 	resourceRequest := map[string]string{
 		k8s.PodResourceCPUKey:    k8s.DefaultCPURequest,
 		k8s.PodResourceMemoryKey: k8s.DefaultMemoryRequest,
@@ -75,6 +102,12 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobE
 			if functionSpec.Resources.GPUResourceName != nil {
 				resourceRequest[k8s.GPUResourceName] = *functionSpec.Resources.GPUResourceName
 				launchGpu = true
+			}
+
+			if functionSpec.Resources.CudaVersion != nil {
+				cudaVersion = *functionSpec.Resources.CudaVersion
+			} else {
+				cudaVersion = k8s.DefaultCudaVersion
 			}
 
 			if functionSpec.Resources.NumCPU != nil {
@@ -113,9 +146,9 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobE
 		}
 	}
 
-	containerRepo, err := mapJobTypeToDockerImage(spec, launchGpu)
+	containerRepo, err := mapJobTypeToDockerImage(spec, launchGpu, cudaVersion)
 	if err != nil {
-		return systemError(err)
+		return userError(err)
 	}
 	containerImage := fmt.Sprintf("%s:%s", containerRepo, lib.ServerVersionNumber)
 
@@ -152,6 +185,12 @@ func containerStatusFromPod(pod *corev1.Pod, name string) (*corev1.ContainerStat
 }
 
 func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.ExecutionStatus, JobError) {
+	if j.k8sClient == nil {
+		if err := j.initialize(); err != nil {
+			return shared.UnknownExecutionStatus, systemError(err)
+		}
+	}
+
 	job, err := k8s.GetJob(ctx, name, j.k8sClient)
 	if err != nil {
 		return shared.UnknownExecutionStatus, jobMissingError(err)
@@ -215,7 +254,7 @@ func (j *k8sJobManager) DeleteCronJob(ctx context.Context, name string) JobError
 }
 
 // Maps a job Spec to Docker image.
-func mapJobTypeToDockerImage(spec Spec, launchGpu bool) (string, error) {
+func mapJobTypeToDockerImage(spec Spec, launchGpu bool, cudaVersion operator.CudaVersionNumber) (string, error) {
 	switch spec.Type() {
 	case FunctionJobType:
 		functionSpec, ok := spec.(*FunctionSpec)
@@ -227,18 +266,7 @@ func mapJobTypeToDockerImage(spec Spec, launchGpu bool) (string, error) {
 			return "", errors.New("Unable to determine Python Version.")
 		}
 		if launchGpu {
-			switch pythonVersion {
-			case function.PythonVersion37:
-				return GpuFunction37DockerImage, nil
-			case function.PythonVersion38:
-				return GpuFunction38DockerImage, nil
-			case function.PythonVersion39:
-				return GpuFunction39DockerImage, nil
-			case function.PythonVersion310:
-				return GpuFunction310DockerImage, nil
-			default:
-				return "", errors.New("Unable to determine Python Version.")
-			}
+			return mapGpuFunctionToDockerImage(pythonVersion, cudaVersion)
 		} else {
 			switch pythonVersion {
 			case function.PythonVersion37:
@@ -291,5 +319,38 @@ func mapIntegrationServiceToDockerImage(service shared.Service) (string, error) 
 		return S3ConnectorDockerImage, nil
 	default:
 		return "", errors.Newf("Unknown integration service provided %v", service)
+	}
+}
+
+func mapGpuFunctionToDockerImage(pythonVersion function.PythonVersion, cudaVersion operator.CudaVersionNumber) (string, error) {
+	switch cudaVersion {
+	case operator.Cuda11_8_0:
+		switch pythonVersion {
+		case function.PythonVersion37:
+			return GpuCuda1180Python37, nil
+		case function.PythonVersion38:
+			return GpuCuda1180Python38, nil
+		case function.PythonVersion39:
+			return GpuCuda1180Python39, nil
+		case function.PythonVersion310:
+			return GpuCuda1180Python310, nil
+		default:
+			return "", errors.New("Unable to determine Python Version.")
+		}
+	case operator.Cuda11_4_1:
+		switch pythonVersion {
+		case function.PythonVersion37:
+			return GpuCuda1141Python37, nil
+		case function.PythonVersion38:
+			return GpuCuda1141Python38, nil
+		case function.PythonVersion39:
+			return GpuCuda1141Python39, nil
+		case function.PythonVersion310:
+			return GpuCuda1141Python310, nil
+		default:
+			return "", errors.New("Unable to determine Python Version.")
+		}
+	default:
+		return "", errors.New("Unsupported CUDA version provided. We currently only support CUDA versions 11.4.1 and 11.8.0")
 	}
 }

@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
@@ -212,6 +213,7 @@ func (*artifactResultWriter) Create(
 		models.ArtifactResultArtifactID,
 		models.ArtifactResultContentPath,
 		models.ArtifactResultStatus,
+		models.ArtifactResultExecState,
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.ArtifactResultTable, cols, models.ArtifactResultCols())
 
@@ -220,12 +222,21 @@ func (*artifactResultWriter) Create(
 		return nil, err
 	}
 
+	now := time.Now()
+	execState := shared.ExecutionState{
+		Status: shared.PendingExecutionStatus,
+		Timestamps: &shared.ExecutionTimestamps{
+			PendingAt: &now,
+		},
+	}
+
 	args := []interface{}{
 		ID,
 		dagResultID,
 		artifactID,
 		contentPath,
 		shared.PendingExecutionStatus,
+		&execState,
 	}
 	return getArtifactResult(ctx, DB, query, args...)
 }
@@ -290,6 +301,44 @@ func (*artifactResultWriter) Update(ctx context.Context, ID uuid.UUID, changes m
 	return &artifactResult, err
 }
 
+func (*artifactResultWriter) UpdateBatchStatusByStatus(
+	ctx context.Context,
+	from shared.ExecutionStatus,
+	to shared.ExecutionStatus,
+	DB database.Database,
+) ([]models.ArtifactResult, error) {
+	setExecStateFragment, args, err := generateUpdateExecStateSnippet(
+		models.ArtifactResultExecState,
+		to,
+		time.Now(),
+		0, /* offset */
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	query := fmt.Sprintf(`
+		UPDATE %s SET
+			%s,
+			status = $%d
+		WHERE
+			json_extract(%s, '$.status') = $%d
+		RETURNING %s;`,
+		models.ArtifactResultTable,
+		setExecStateFragment,
+		len(args)+1,
+		models.ArtifactResultExecState,
+		len(args)+2,
+		models.ArtifactResultCols(),
+	)
+
+	args = append(args, to)
+	args = append(args, from)
+	var results []models.ArtifactResult
+	err = DB.Query(ctx, &results, query, args...)
+	return results, err
+}
+
 func deleteArtifactResults(ctx context.Context, DB database.Database, IDs []uuid.UUID) error {
 	if len(IDs) == 0 {
 		return nil
@@ -317,7 +366,7 @@ func getArtifactResult(ctx context.Context, DB database.Database, query string, 
 	}
 
 	if len(artifactResults) == 0 {
-		return nil, database.ErrNoRows
+		return nil, database.ErrNoRows()
 	}
 
 	if len(artifactResults) != 1 {

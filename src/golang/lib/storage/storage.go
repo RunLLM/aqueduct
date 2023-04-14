@@ -4,11 +4,15 @@ import (
 	"context"
 	"log"
 
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
-	"github.com/dropbox/godropbox/errors"
 )
 
-var ErrObjectDoesNotExist = errors.New("Object does not exist in storage.")
+// NOTE: Callers that use ErrObjectDoesNotExist need to wrap this error with more detail about what
+// path and storage integration is being accessed.
+func ErrObjectDoesNotExist() error {
+	return errors.New("Object does not exist in storage.")
+}
 
 type Storage interface {
 	// Throws `ErrObjectDoesNotExist` if the path does not exist.

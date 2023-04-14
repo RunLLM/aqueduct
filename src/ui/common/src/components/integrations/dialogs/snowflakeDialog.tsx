@@ -12,6 +12,7 @@ const Placeholders: SnowflakeConfig = {
   schema: 'public',
   username: 'aqueduct',
   password: '********',
+  role: '',
 };
 
 type Props = {
@@ -113,6 +114,27 @@ export const SnowflakeDialog: React.FC<Props> = ({
         onChange={(event) => onUpdateField('password', event.target.value)}
         value={value?.password ?? null}
       />
+
+      <IntegrationTextInputField
+        spellCheck={false}
+        required={false}
+        label="Role"
+        description="The role to use when accessing the database above."
+        placeholder={Placeholders.role}
+        onChange={(event) => onUpdateField('role', event.target.value)}
+        value={value?.role ?? null}
+      />
     </Box>
   );
 };
+
+export function isSnowflakeConfigComplete(config: SnowflakeConfig): boolean {
+  const required = [
+    'account_identifier',
+    'username',
+    'password',
+    'warehouse',
+    'database',
+  ];
+  return required.every((key) => key in config && config[key].length > 0);
+}

@@ -12,6 +12,7 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/connector"
@@ -22,6 +23,7 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -240,23 +242,23 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 		return resp, http.StatusInternalServerError, errors.Wrap(err, "Unable to delete workflow.")
 	}
 
-	//// Check unused conda environments and garbage collect them.
-	//go func() {
-	//	db, err := database.NewDatabase(h.Database.Config())
-	//	if err != nil {
-	//		log.Errorf("Error creating DB in go routine: %v", err)
-	//		return
-	//	}
-	//
-	//	err = exec_env.CleanupUnusedEnvironments(
-	//		context.Background(),
-	//		h.ExecutionEnvironmentRepo,
-	//		db,
-	//	)
-	//	if err != nil {
-	//		log.Errorf("%v", err)
-	//	}
-	//}()
+	// Check unused conda environments and garbage collect them.
+	go func() {
+		db, err := database.NewDatabase(h.Database.Config())
+		if err != nil {
+			log.Errorf("Error creating DB in go routine: %v", err)
+			return
+		}
+
+		err = exec_env.CleanupUnusedEnvironments(
+			context.Background(),
+			h.OperatorRepo,
+			db,
+		)
+		if err != nil {
+			log.Errorf("%v", err)
+		}
+	}()
 
 	return resp, http.StatusOK, nil
 }
@@ -281,7 +283,7 @@ func DeleteSavedObject(
 
 	defer func() {
 		// Delete storage files created for delete saved objects job metadata
-		go workflow_utils.CleanupStorageFiles(ctx, storageConfig, []string{jobMetadataPath, contentPath})
+		go workflow_utils.CleanupStorageFiles(context.Background(), storageConfig, []string{jobMetadataPath, contentPath})
 	}()
 
 	integrationConfigs := make(map[string]auth.Config, len(integrationNameToID))

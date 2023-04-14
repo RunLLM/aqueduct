@@ -9,6 +9,7 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
@@ -38,7 +39,7 @@ type listArtifactResultsArgs struct {
 	ArtifactId uuid.UUID
 }
 
-type ListArtifactResultsHandler struct {
+type ListArtifactResultsHandlerDeprecated struct {
 	GetHandler
 
 	Database database.Database
@@ -48,11 +49,11 @@ type ListArtifactResultsHandler struct {
 	DAGRepo            repos.DAG
 }
 
-func (*ListArtifactResultsHandler) Name() string {
+func (*ListArtifactResultsHandlerDeprecated) Name() string {
 	return "ListArtifactResults"
 }
 
-func (*ListArtifactResultsHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (*ListArtifactResultsHandlerDeprecated) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
@@ -77,7 +78,7 @@ func (*ListArtifactResultsHandler) Prepare(r *http.Request) (interface{}, int, e
 	}, http.StatusOK, nil
 }
 
-func (h *ListArtifactResultsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+func (h *ListArtifactResultsHandlerDeprecated) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*listArtifactResultsArgs)
 	artfID := args.ArtifactId
 	wfID := args.WorkflowId
@@ -133,14 +134,20 @@ func (h *ListArtifactResultsHandler) Perform(ctx context.Context, interfaceArgs 
 
 			for _, artfResult := range artfResults {
 				var contentPtr *string = nil
-				if artf.Type.IsCompact() && !artfResult.ExecState.IsNull && artfResult.ExecState.ExecutionState.Terminated() {
-					contentBytes, err := storageObj.Get(ctx, artfResult.ContentPath)
-					if err != nil {
-						return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, fmt.Sprintf("Error retrieving artifact content for result %s", artfResult.ID))
-					}
+				if artf.Type.IsCompact() &&
+					!artfResult.ExecState.IsNull &&
+					(artfResult.ExecState.ExecutionState.Status == shared.FailedExecutionStatus ||
+						artfResult.ExecState.ExecutionState.Status == shared.SucceededExecutionStatus) {
+					exists := storageObj.Exists(ctx, artfResult.ContentPath)
+					if exists {
+						contentBytes, err := storageObj.Get(ctx, artfResult.ContentPath)
+						if err != nil {
+							return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, fmt.Sprintf("Error retrieving artifact content for result %s", artfResult.ID))
+						}
 
-					contentStr := string(contentBytes)
-					contentPtr = &contentStr
+						contentStr := string(contentBytes)
+						contentPtr = &contentStr
+					}
 				}
 
 				responses = append(responses, *artifact.NewRawResultResponseFromDbObject(

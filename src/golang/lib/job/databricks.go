@@ -9,6 +9,7 @@ import (
 	databricks_sdk "github.com/databricks/databricks-sdk-go"
 	"github.com/databricks/databricks-sdk-go/service/jobs"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -50,7 +51,7 @@ func (j *DatabricksJobManager) Launch(
 		return systemError(err)
 	}
 
-	jobID, err := databricks_lib.CreateJob(ctx, j.databricksClient, name, j.conf.S3InstanceProfileARN, []jobs.JobTaskSettings{*task})
+	jobID, err := databricks_lib.CreateJob(ctx, j.databricksClient, name, j.conf.S3InstanceProfileARN, j.conf.InstancePoolID, []jobs.JobTaskSettings{*task})
 	if err != nil {
 		return systemError(errors.Wrap(err, "Error creating job in Databricks."))
 	}
@@ -155,7 +156,7 @@ func (j *DatabricksJobManager) LaunchMultipleTaskJob(
 	taskList []jobs.JobTaskSettings,
 ) (int64, JobError) {
 	// Create and register the job with Databricks.
-	jobID, err := databricks_lib.CreateJob(ctx, j.databricksClient, name, j.conf.S3InstanceProfileARN, taskList)
+	jobID, err := databricks_lib.CreateJob(ctx, j.databricksClient, name, j.conf.S3InstanceProfileARN, j.conf.InstancePoolID, taskList)
 	if err != nil {
 		return -1, systemError(errors.Wrap(err, "Error creating job in Databricks."))
 	}
@@ -190,7 +191,7 @@ func (j *DatabricksJobManager) mapJobTypeToFile(spec Spec) (string, string, erro
 			return "", "", ErrInvalidJobSpec
 		}
 
-		functionSpec.FunctionExtractPath = defaultFunctionExtractPath
+		functionSpec.FunctionExtractPath = fmt.Sprintf("%s%s/", defaultFunctionExtractPath, uuid.New().String())
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
 			return "", "", errors.Wrap(err, "Unable to encode spec.")

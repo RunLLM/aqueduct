@@ -5,7 +5,7 @@ import Typography from '@mui/material/Typography';
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
-import { ArtifactResultResponse } from '../../../handlers/responses/artifact';
+import { ArtifactResultResponse } from '../../../handlers/responses/artifactDeprecated';
 import { theme } from '../../../styles/theme/theme';
 import { getPathPrefix } from '../../../utils/getPathPrefix';
 import { OperatorType } from '../../../utils/operators';
@@ -14,6 +14,7 @@ import { artifactTypeToIconMapping } from '../nodes/nodeTypes';
 type Props = {
   title: string;
   workflowId: string;
+  dagId: string;
   dagResultId: string;
   artifactResults: ArtifactResultResponse[];
   collapsePrimitives?: boolean;
@@ -25,6 +26,7 @@ type Props = {
 const SummaryList: React.FC<Props> = ({
   title,
   workflowId,
+  dagId,
   dagResultId,
   artifactResults,
   appearance = 'link',
@@ -36,6 +38,9 @@ const SummaryList: React.FC<Props> = ({
 
     let linkType = 'artifact';
     let linkTarget = artifactResult.id;
+    const dagLinkSegment = dagResultId
+      ? `result/${dagResultId}`
+      : `dag/${dagId}`;
     if (
       artifactResult.operatorType === OperatorType.Metric ||
       artifactResult.operatorType === OperatorType.Check
@@ -54,11 +59,11 @@ const SummaryList: React.FC<Props> = ({
       content = artifactResult.result.content_serialized;
     } else if (artifactResult.result?.content_serialized) {
       // Show the name and the value and link it.
-      link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/${linkType}/${linkTarget}`;
+      link = `${getPathPrefix()}/workflow/${workflowId}/${dagLinkSegment}/${linkType}/${linkTarget}`;
       content = `${artifactResult.name} (${artifactResult.result.content_serialized})`;
     } else {
       // Show only the name and link it.
-      link = `${getPathPrefix()}/workflow/${workflowId}/result/${dagResultId}/${linkType}/${linkTarget}`;
+      link = `${getPathPrefix()}/workflow/${workflowId}/${dagLinkSegment}/${linkType}/${linkTarget}`;
       content = artifactResult.name;
     }
 

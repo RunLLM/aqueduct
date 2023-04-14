@@ -1,7 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
 
 import { apiAddress } from '../components/hooks/useAqueductConsts';
-import { DagResultResponse } from './responses/dag';
+import { DagResultResponse } from './responses/dagDeprecated';
 
 export const handleGetWorkflowDagResult = createAsyncThunk<
   DagResultResponse,

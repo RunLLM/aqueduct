@@ -24,11 +24,11 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          python3 -m pip install mypy pydantic pymongo
+          python3 -m pip install mypy==1.0.0 pydantic pymongo
 
       - name: Install Type Stub Libraries
-        run : |
-          python3 -m pip install types-croniter types-requests types-PyYAML types-setuptools
+        run: |
+          python3 -m pip install types-croniter types-requests types-PyYAML types-setuptools types-PyMySQL
 
       - name: mypy sdk
         working-directory: sdk
@@ -55,9 +55,9 @@ jobs:
           python3 -m pip install mypy pydantic pymongo
 
       - name: Install Type Stub Libraries
-        run : |
-          python3 -m pip install types-croniter types-requests types-PyYAML types-setuptools
-      
+        run: |
+          python3 -m pip install types-croniter types-requests types-PyYAML types-setuptools types-PyMySQL
+
       - name: mypy executor
         working-directory: src/python
         run: |

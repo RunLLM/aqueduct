@@ -1,6 +1,8 @@
 package tests
 
 import (
+	"time"
+
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/google/uuid"
@@ -85,13 +87,20 @@ func (ts *TestSuite) TestArtifactResult_GetByDAGResults() {
 }
 
 func (ts *TestSuite) TestArtifactResult_Create() {
+	tmpTime := time.Now()
 	expectedArtifactResult := &models.ArtifactResult{
 		DAGResultID: uuid.New(),
 		ArtifactID:  uuid.New(),
 		ContentPath: randString(10),
 		Status:      shared.PendingExecutionStatus,
 		ExecState: shared.NullExecutionState{
-			IsNull: true,
+			ExecutionState: shared.ExecutionState{
+				Status: shared.PendingExecutionStatus,
+				Timestamps: &shared.ExecutionTimestamps{
+					PendingAt: &tmpTime,
+				},
+			},
+			IsNull: false,
 		},
 		Metadata: shared.NullArtifactResultMetadata{
 			IsNull: true,
@@ -104,6 +113,7 @@ func (ts *TestSuite) TestArtifactResult_Create() {
 	require.NotEqual(ts.T(), uuid.Nil, actualArtifactResult.ID)
 
 	expectedArtifactResult.ID = actualArtifactResult.ID
+	expectedArtifactResult.ExecState.ExecutionState.Timestamps.PendingAt = actualArtifactResult.ExecState.ExecutionState.Timestamps.PendingAt
 
 	requireDeepEqual(ts.T(), expectedArtifactResult, actualArtifactResult)
 }
@@ -222,4 +232,46 @@ func (ts *TestSuite) TestArtifactResult_Update() {
 	expectedArtifactResult.Metadata = metadata
 
 	requireDeepEqual(ts.T(), expectedArtifactResult, actualArtifactResult)
+}
+
+func (ts *TestSuite) TestArtifactResult_UpdateBatchStatusByStatus() {
+	artifactResults, _, _, _ := ts.seedArtifactResult(2)
+	succeededArtifactResult := artifactResults[0]
+	pendingArtifactResult := artifactResults[1]
+
+	succeededState := shared.NullExecutionState{
+		ExecutionState: shared.ExecutionState{
+			UserLogs: &shared.Logs{
+				Stdout: randString(10),
+				StdErr: randString(10),
+			},
+			Status: shared.SucceededExecutionStatus,
+		},
+		IsNull: false,
+	}
+
+	changes := map[string]interface{}{
+		models.ArtifactResultExecState: &succeededState,
+	}
+
+	_, err := ts.artifactResult.Update(ts.ctx, succeededArtifactResult.ID, changes, ts.DB)
+	require.Nil(ts.T(), err)
+
+	updatedByStatusArtf, err := ts.artifactResult.UpdateBatchStatusByStatus(
+		ts.ctx,
+		shared.PendingExecutionStatus,
+		shared.CanceledExecutionStatus,
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), 1, len(updatedByStatusArtf))
+
+	actualArtf := updatedByStatusArtf[0]
+	require.Equal(ts.T(), pendingArtifactResult.ID, actualArtf.ID)
+	require.Equal(ts.T(), shared.CanceledExecutionStatus, actualArtf.Status)
+	require.False(ts.T(), actualArtf.ExecState.IsNull)
+
+	execState := actualArtf.ExecState.ExecutionState
+	require.Equal(ts.T(), shared.CanceledExecutionStatus, execState.Status)
+	require.NotNil(ts.T(), execState.Timestamps.FinishedAt)
 }

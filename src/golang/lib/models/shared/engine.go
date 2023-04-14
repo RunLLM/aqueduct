@@ -10,23 +10,31 @@ import (
 type EngineType string
 
 const (
-	AqueductEngineType   EngineType = "aqueduct"
-	AirflowEngineType    EngineType = "airflow"
-	K8sEngineType        EngineType = "k8s"
-	LambdaEngineType     EngineType = "lambda"
-	DatabricksEngineType EngineType = "databricks"
+	AqueductEngineType      EngineType = "aqueduct"
+	AqueductCondaEngineType EngineType = "aqueduct_conda"
+	AirflowEngineType       EngineType = "airflow"
+	K8sEngineType           EngineType = "k8s"
+	LambdaEngineType        EngineType = "lambda"
+	DatabricksEngineType    EngineType = "databricks"
+	SparkEngineType         EngineType = "spark"
 )
 
 type EngineConfig struct {
-	Type             EngineType        `yaml:"type" json:"type"`
-	AqueductConfig   *AqueductConfig   `yaml:"aqueductConfig" json:"aqueduct_config,omitempty"`
-	AirflowConfig    *AirflowConfig    `yaml:"airflowConfig" json:"airflow_config,omitempty"`
-	K8sConfig        *K8sConfig        `yaml:"k8sConfig" json:"k8s_config,omitempty"`
-	LambdaConfig     *LambdaConfig     `yaml:"lambdaConfig" json:"lambda_config,omitempty"`
-	DatabricksConfig *DatabricksConfig `yaml:"databricksConfig" json:"databricks_config,omitempty"`
+	Type                EngineType           `yaml:"type" json:"type"`
+	AqueductConfig      *AqueductConfig      `yaml:"aqueductConfig" json:"aqueduct_config,omitempty"`
+	AqueductCondaConfig *AqueductCondaConfig `yaml:"aqueductCondaConfig" json:"aqueduct_conda_config,omitempty"`
+	AirflowConfig       *AirflowConfig       `yaml:"airflowConfig" json:"airflow_config,omitempty"`
+	K8sConfig           *K8sConfig           `yaml:"k8sConfig" json:"k8s_config,omitempty"`
+	LambdaConfig        *LambdaConfig        `yaml:"lambdaConfig" json:"lambda_config,omitempty"`
+	DatabricksConfig    *DatabricksConfig    `yaml:"databricksConfig" json:"databricks_config,omitempty"`
+	SparkConfig         *SparkConfig         `yaml:"sparkConfig" json:"spark_config,omitempty"`
 }
 
 type AqueductConfig struct{}
+
+type AqueductCondaConfig struct {
+	Env string `yaml:"env" json:"env"`
+}
 
 type AirflowConfig struct {
 	IntegrationID uuid.UUID `json:"integration_id"  yaml:"integration_id"`
@@ -49,6 +57,13 @@ type LambdaConfig struct {
 
 type DatabricksConfig struct {
 	IntegrationID uuid.UUID `json:"integration_id"  yaml:"integration_id"`
+}
+
+type SparkConfig struct {
+	IntegrationId uuid.UUID `json:"integration_id"  yaml:"integration_id"`
+	// URI to the packaged environment. This is passed when creating and uploading the
+	// environment during execution.
+	EnvironmentPathURI string `yaml:"environmentPathUri" json:"environment_path_uri"`
 }
 
 func (e *EngineConfig) Scan(value interface{}) error {

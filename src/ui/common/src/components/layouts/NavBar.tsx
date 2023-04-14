@@ -1,13 +1,19 @@
 import { faBell, faSliders } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { AppBar, Breadcrumbs, Link, Toolbar, Typography } from '@mui/material';
+import {
+  AppBar,
+  Breadcrumbs,
+  Link,
+  Toolbar,
+  Typography,
+  useTheme,
+} from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 
 import { RootState } from '../../stores/store';
-import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
 import { getPathPrefix } from '../../utils/getPathPrefix';
 import {
@@ -56,10 +62,18 @@ const NavBar: React.FC<{
   user: UserProfile;
   breadcrumbs: BreadcrumbLink[];
   onBreadCrumbClicked?: (name: string) => void;
-}> = ({ user, breadcrumbs, onBreadCrumbClicked = null }) => {
+  showBanner: boolean;
+}> = ({
+  user,
+  breadcrumbs,
+  onBreadCrumbClicked = null,
+  showBanner = false,
+}) => {
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
+
+  const contextTheme = useTheme();
 
   const numUnreadNotifications = useSelector(
     (state: RootState) =>
@@ -86,9 +100,11 @@ const NavBar: React.FC<{
         width: `calc(100% - ${MenuSidebarWidthNumber}px)`,
         height: '64px',
         boxShadow: 'none',
-        borderBottom: `2px solid ${theme.palette.gray[300]}`,
+        borderBottom: `2px solid ${contextTheme.palette.gray[300]}`,
         backgroundColor: 'white',
         color: 'black',
+        // Need to give room for the announcement banner
+        marginTop: showBanner ? '32px' : null,
       }}
     >
       <Toolbar>

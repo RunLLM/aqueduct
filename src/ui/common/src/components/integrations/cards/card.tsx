@@ -11,6 +11,7 @@ import ExecutionChip from '../../execution/chip';
 import IntegrationLogo from '../logo';
 import { AirflowCard } from './airflowCard';
 import { AqueductDemoCard } from './aqueductDemoCard';
+import { AWSCard } from './awsCard';
 import { BigQueryCard } from './bigqueryCard';
 import { DatabricksCard } from './databricksCard';
 import { EmailCard } from './emailCard';
@@ -26,6 +27,7 @@ import { RedshiftCard } from './redshiftCard';
 import { S3Card } from './s3Card';
 import { SlackCard } from './slackCard';
 import { SnowflakeCard } from './snowflakeCard';
+import { SparkCard } from './sparkCard';
 
 type DataProps = {
   dataPreviewInfo: DataPreviewInfo;
@@ -145,6 +147,12 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
       break;
     case 'Slack':
       serviceCard = <SlackCard integration={integration} />;
+      break;
+    case 'Spark':
+      serviceCard = <SparkCard integration={integration} />;
+      break;
+    case 'AWS':
+      serviceCard = <AWSCard integration={integration} />;
       break;
     default:
       serviceCard = null;

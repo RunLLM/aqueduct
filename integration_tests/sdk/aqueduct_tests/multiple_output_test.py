@@ -22,6 +22,8 @@ def test_multiple_outputs(client, flow_name, engine):
     str_artifact, int_artifact = generate_two_outputs()
     assert str_artifact.get() == "hello"
     assert int_artifact.get() == 1234
+    assert str_artifact.name() == "generate_two_outputs artifact"
+    assert int_artifact.name() == "generate_two_outputs artifact"
 
     str_output = append_to_str(str_artifact)
     int_output = double_number(int_artifact)
@@ -47,4 +49,5 @@ def test_multiple_outputs_user_failure(client):
         return "hello", 1234
 
     with pytest.raises(AqueductError):
-        generate_two_outputs()
+        output_artifact = generate_two_outputs()
+        output_artifact.get()

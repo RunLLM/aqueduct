@@ -10,6 +10,7 @@ type Props = {
 
 export const GCSCard: React.FC<Props> = ({ integration }) => {
   const config = integration.config as GCSConfig;
+
   return (
     <Box>
       <Typography variant="body2">

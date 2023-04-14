@@ -5,10 +5,8 @@ from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, LoadUpdateMode
-from aqueduct.error import InvalidUserArgumentException
-from aqueduct.integrations.naming import _resolve_op_and_artifact_name_for_extract
+from aqueduct.integrations.parameters import _validate_parameters
 from aqueduct.integrations.save import _save_artifact
-from aqueduct.integrations.sql_integration import find_parameter_artifacts, find_parameter_names
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
 from aqueduct.models.integration import Integration, IntegrationInfo
@@ -19,7 +17,8 @@ from aqueduct.models.operators import (
     OperatorSpec,
     RelationalDBLoadParams,
 )
-from aqueduct.utils.dag_deltas import AddOrReplaceOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.naming import default_artifact_name_from_op_name, sanitize_artifact_name
 from aqueduct.utils.utils import generate_uuid
 
 from aqueduct import globals
@@ -40,6 +39,7 @@ class MongoDBCollectionIntegration(Integration):
         name: Optional[str] = None,
         output: Optional[str] = None,
         description: str = "",
+        parameters: Optional[List[BaseArtifact]] = None,
         lazy: bool = False,
         **kwargs: Dict[str, Any],
     ) -> BaseArtifact:
@@ -57,15 +57,34 @@ class MongoDBCollectionIntegration(Integration):
                 Description of the query.
             output:
                 Name to assign the output artifact. If not set, the default naming scheme will be used.
+            parameters:
+                An optional list of string parameters to use in the query.  We use the Postgres syntax of $1, $2 for placeholders.
+                The number denotes which parameter in the list to use (one-indexed). These parameters feed into the
+                sql query operator and will fill in the placeholders in the query with the actual values.
+
+                Example:
+                    country1 = client.create_param("UK", default=" United Kingdom ")
+                    country2 = client.create_param("Thailand", default=" Thailand ")
+                    mongo_db_integration.collection("hotel_reviews").find(
+                        {
+                            "reviewer_nationality": {
+                                "$in": [$1, $2],
+                           }
+                        },
+                        parameters=[country1, country2],
+                    )
+
+                    The query will then be executed with:
+                        "reviewer_nationality": {
+                            "$in": [" United Kingdom ", " Thailand "],
+                       }
+
+
             lazy:
                 Whether to run this operator lazily. See https://docs.aqueducthq.com/operators/lazy-vs.-eager-execution .
         """
-        op_name, artifact_name = _resolve_op_and_artifact_name_for_extract(
-            dag=self._dag,
-            op_name=name,
-            default_op_name="%s query" % self.name(),
-            artifact_name=output,
-        )
+        op_name = name or "%s query" % self.name()
+        artifact_name = output or default_artifact_name_from_op_name(op_name)
 
         if globals.__GLOBAL_CONFIG__.lazy:
             lazy = True
@@ -89,21 +108,19 @@ class MongoDBCollectionIntegration(Integration):
         mongo_extract_params = MongoExtractParams(
             collection=self._collection_name, query_serialized=serialized_args
         )
-        param_names = find_parameter_names(serialized_args)
-        param_artifacts = find_parameter_artifacts(self._dag, param_names)
-        for artf in param_artifacts:
-            if artf.type != ArtifactType.STRING:
-                raise InvalidUserArgumentException(
-                    "The parameter `%s` must be defined as a string. Instead, got type %s"
-                    % (artf.name, artf.type)
-                )
-        param_artf_ids = [artf.id for artf in param_artifacts]
+
+        # Perform validations on any parameters.
+        param_artf_ids = []
+        if parameters is not None:
+            _validate_parameters(queries=[serialized_args], parameters=parameters)
+            param_artf_ids = [artf.id() for artf in parameters]
+
         op_id = generate_uuid()
         output_artf_id = generate_uuid()
         apply_deltas_to_dag(
             self._dag,
             deltas=[
-                AddOrReplaceOperatorDelta(
+                AddOperatorDelta(
                     op=Operator(
                         id=op_id,
                         name=op_name,
@@ -121,8 +138,9 @@ class MongoDBCollectionIntegration(Integration):
                     output_artifacts=[
                         ArtifactMetadata(
                             id=output_artf_id,
-                            name=artifact_name,
+                            name=sanitize_artifact_name(artifact_name),
                             type=ArtifactType.TABLE,
+                            explicitly_named=output is not None,
                         ),
                     ],
                 ),

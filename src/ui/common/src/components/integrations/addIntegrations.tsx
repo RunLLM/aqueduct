@@ -38,7 +38,7 @@ const AddIntegrations: React.FC<Props> = ({
             setShowMigrationDialog(false);
           }}
           severity="info"
-          sx={{ width: '100%' }}
+          sx={{ margin: 1 }}
         >
           {`Storage migration is in progress. The server will be temporarily unavailable. Please refresh the page to check if the server is ready.`}
         </Alert>
@@ -131,7 +131,14 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
           size="large"
         />
       </Box>
-      <Typography variant={'body1'} align={'center'} sx={{ marginTop: '16px' }}>
+      <Typography
+        variant={'body1'}
+        align={'center'}
+        sx={{
+          marginTop: '16px',
+          color: integration.activated ? 'inherit' : 'grey',
+        }}
+      >
         {service}
       </Typography>
     </Box>

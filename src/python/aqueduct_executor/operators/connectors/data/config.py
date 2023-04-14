@@ -54,8 +54,11 @@ class S3Config(models.BaseConfig):
     config_file_profile: str = ""
 
     bucket: str = ""
-
     region: str = ""
+
+    # This is unused for data integrations. It is only used for storage.
+    root_dir: str = ""
+
     use_as_storage: str = ""
 
 
@@ -90,6 +93,7 @@ class SnowflakeConfig(models.BaseConfig):
     database: str
     warehouse: str
     db_schema: Optional[str] = Field("public", alias="schema")  # schema is a Pydantic keyword
+    role: Optional[str] = None
 
     class Config:
         # Ensures that Pydantic parses JSON keys named "schema" or "db_schema" to

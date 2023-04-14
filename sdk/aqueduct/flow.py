@@ -2,17 +2,15 @@ import json
 import textwrap
 import uuid
 from collections import defaultdict
-from typing import DefaultDict, Dict, List, Union
+from typing import DefaultDict, Dict, List, Optional, Union
 
-from aqueduct.backend.response_models import (
+from aqueduct.error import InvalidUserArgumentException
+from aqueduct.flow_run import FlowRun
+from aqueduct.models.response_models import (
     GetWorkflowResponse,
     SavedObjectUpdate,
     WorkflowDagResponse,
-    WorkflowDagResultResponse,
 )
-from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.flow_run import FlowRun
-from aqueduct.models.dag import DAG
 from aqueduct.utils.utils import format_header_for_print, generate_ui_url, parse_user_supplied_id
 
 from aqueduct import globals
@@ -39,15 +37,11 @@ class Flow:
 
     def _get_workflow_resp(self) -> GetWorkflowResponse:
         resp = globals.__GLOBAL_API_CLIENT__.get_workflow(self._id)
-        if len(resp.workflow_dag_results) == 0:
-            raise InvalidUserActionException("This flow has not been run yet.")
         return resp
 
     def name(self) -> str:
         """Returns the latest name of the flow."""
-        resp = self._get_workflow_resp()
-        latest_result = resp.workflow_dag_results[-1]
-        latest_workflow_dag = resp.workflow_dags[latest_result.workflow_dag_id]
+        latest_workflow_dag = self._get_latest_dag_resp()
         assert latest_workflow_dag.metadata.name is not None
         return latest_workflow_dag.metadata.name
 
@@ -71,51 +65,47 @@ class Flow:
             for dag_result in list(reversed(resp.workflow_dag_results))[:limit]
         ]
 
-    def _construct_flow_run(
-        self, dag_result: WorkflowDagResultResponse, dag_resp: WorkflowDagResponse
-    ) -> FlowRun:
-        """Constructs a flow run from a GetWorkflowResponse."""
-        dag = DAG(
-            operators=dag_resp.operators,
-            artifacts=dag_resp.artifacts,
-            operator_by_name={op.name: op for op in dag_resp.operators.values()},
-            metadata=dag_resp.metadata,
-        )
+    def _get_latest_dag_resp(self) -> WorkflowDagResponse:
+        resp = self._get_workflow_resp()
+        if not resp.workflow_dag_results:
+            assert bool(resp.workflow_dags)
+            return list(resp.workflow_dags.values())[0]
 
-        # The dags for fetched flow runs are missing their serialized functions.
+        latest_result = resp.workflow_dag_results[-1]
+        return resp.workflow_dags[latest_result.workflow_dag_id]
+
+    def latest(self) -> Optional[FlowRun]:
+        resp = self._get_workflow_resp()
+        if not resp.workflow_dag_results:
+            return None
+
+        latest_result = resp.workflow_dag_results[-1]
         return FlowRun(
             flow_id=self._id,
-            run_id=str(dag_result.id),
+            run_id=str(latest_result.id),
             in_notebook_or_console_context=self._in_notebook_or_console_context,
-            dag=dag,
-            created_at=dag_result.created_at,
-            status=dag_result.status,
         )
-
-    def latest(self) -> FlowRun:
-        resp = self._get_workflow_resp()
-        latest_result = resp.workflow_dag_results[-1]
-        latest_workflow_dag = resp.workflow_dags[latest_result.workflow_dag_id]
-        return self._construct_flow_run(latest_result, latest_workflow_dag)
 
     def fetch(self, run_id: Union[str, uuid.UUID]) -> FlowRun:
         run_id = parse_user_supplied_id(run_id)
 
         resp = self._get_workflow_resp()
-
-        result = None
+        found = False
         for candidate_result in resp.workflow_dag_results:
             if str(candidate_result.id) == run_id:
-                assert result is None, "Cannot have two runs with the same id."
-                result = candidate_result
+                assert not found, "Cannot have two runs with the same id."
+                found = True
 
-        if result is None:
+        if not found:
             raise InvalidUserArgumentException(
                 "Cannot find any run with id %s on this flow." % run_id
             )
 
-        workflow_dag = resp.workflow_dags[result.workflow_dag_id]
-        return self._construct_flow_run(result, workflow_dag)
+        return FlowRun(
+            flow_id=self._id,
+            run_id=str(run_id),
+            in_notebook_or_console_context=self._in_notebook_or_console_context,
+        )
 
     def list_saved_objects(self) -> DefaultDict[str, List[SavedObjectUpdate]]:
         """Get everything saved by the flow.
@@ -136,9 +126,7 @@ class Flow:
 
     def describe(self) -> None:
         """Prints out a human-readable description of the flow."""
-        resp = self._get_workflow_resp()
-        latest_result = resp.workflow_dag_results[-1]
-        latest_workflow_dag = resp.workflow_dags[latest_result.workflow_dag_id]
+        latest_workflow_dag = self._get_latest_dag_resp()
 
         latest_metadata = latest_workflow_dag.metadata
         assert latest_metadata.schedule is not None, "A flow must have a schedule."
@@ -155,8 +143,11 @@ class Flow:
             UI: {url}
             Schedule: {latest_metadata.schedule.json(exclude_none=True)}
             RetentionPolicy: {latest_metadata.retention_policy.json(exclude_none=True)}
-            Runs:
             """
             )
         )
-        print(json.dumps(self.list_runs(), sort_keys=False, indent=4))
+
+        runs = self.list_runs()
+        if runs:
+            print("Runs:")
+            print(json.dumps(runs, sort_keys=False, indent=4))

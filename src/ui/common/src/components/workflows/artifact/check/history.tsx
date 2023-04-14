@@ -5,7 +5,9 @@ import React from 'react';
 import { ArtifactResultsWithLoadingStatus } from '../../../../reducers/artifactResults';
 import { theme } from '../../../../styles/theme/theme';
 import { Data, DataSchema } from '../../../../utils/data';
+import { CheckLevel } from '../../../../utils/operators';
 import ExecutionStatus, {
+  getArtifactExecStateAsTableRow,
   stringToExecutionStatus,
 } from '../../../../utils/shared';
 import { isFailed, isInitial, isLoading } from '../../../../utils/shared';
@@ -51,21 +53,9 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
     schema: checkHistorySchema,
     data: (historyWithLoadingStatus.results?.results ?? []).map(
       (artifactStatusResult) => {
-        let timestamp = new Date(
-          artifactStatusResult.exec_state?.timestamps?.finished_at
-        ).toLocaleString();
-
-        // Checks that are canceled / fail to execute have no exec_state or finished_at time.
-        if (timestamp === 'Invalid Date') {
-          timestamp = 'Unknown';
-        }
-
-        return {
-          status: artifactStatusResult.exec_state?.status ?? 'Unknown',
-          level: checkLevel ? checkLevel : 'undefined',
-          value: artifactStatusResult.content_serialized,
-          timestamp,
-        };
+        const resultRow = getArtifactExecStateAsTableRow(artifactStatusResult);
+        resultRow.level = checkLevel ? checkLevel : 'undefined';
+        return resultRow;
       }
     ),
   };
@@ -87,12 +77,30 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
         if (entry.status === ExecutionStatus.Succeeded) {
           backgroundColor = theme.palette.green[100];
           hoverColor = theme.palette.green[200];
-        } else if (entry.status === ExecutionStatus.Failed) {
+        } else if (
+          entry.status === ExecutionStatus.Failed &&
+          checkLevel === CheckLevel.Error
+        ) {
           backgroundColor = theme.palette.red[25];
           hoverColor = theme.palette.red[100];
+        } else if (
+          entry.status === ExecutionStatus.Failed &&
+          checkLevel === CheckLevel.Warning
+        ) {
+          backgroundColor = theme.palette.yellow[100];
+          hoverColor = theme.palette.yellow[200];
         } else {
+          // unknown or canceled status
           backgroundColor = theme.palette.gray[100];
           hoverColor = theme.palette.gray[200];
+        }
+
+        let checkStatus = entry.status as string;
+        if (
+          checkLevel === CheckLevel.Warning &&
+          entry.status === ExecutionStatus.Failed
+        ) {
+          checkStatus = ExecutionStatus.Warning as string;
         }
 
         return (
@@ -113,7 +121,7 @@ const CheckHistory: React.FC<CheckHistoryProps> = ({
           >
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <StatusIndicator
-                status={stringToExecutionStatus(entry.status as string)}
+                status={stringToExecutionStatus(checkStatus)}
                 size={'16px'}
                 monochrome={false}
               />

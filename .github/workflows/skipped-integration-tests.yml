@@ -7,11 +7,28 @@ on:
   workflow_dispatch:
 
 jobs:
-  run-tests:
+  run-tests-basic:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 5
 
     name: All Integration Tests with Basic Config
     steps:
       - run: |
           exit 0
+
+  run-tests-s3-storage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    name: SDK Integration Tests with S3 Storage Layer
+    steps:
+      - run: |
+          exit 0
+
+  run-tests-data-integrations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    name: SDK Data Integration Tests
+    steps:
+      - run: |
+          exit 0          
+            

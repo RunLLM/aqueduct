@@ -1,5 +1,5 @@
 .DEFAULT_GOAL = all
-VERSION = 0.2.3
+VERSION = 0.2.10
 
 # By default, turn off the Makefile practice of printing each command before
 # you run it.
@@ -131,18 +131,41 @@ publish-lambda:
 	docker push aqueducthq/lambda-snowflake-connector:$(VERSION)
 
 # Building GPU Images
-
 build-function-gpu:
-	docker build . -t aqueducthq/function37gpu:$(VERSION) -f gpu/function37gpu.dockerfile
-	docker build . -t aqueducthq/function38gpu:$(VERSION) -f gpu/function38gpu.dockerfile
-	docker build . -t aqueducthq/function39gpu:$(VERSION) -f gpu/function39gpu.dockerfile
-	docker build . -t aqueducthq/function310gpu:$(VERSION) -f gpu/function310gpu.dockerfile
+	docker build . -t aqueducthq/gpu_cuda1141_py37:$(VERSION) -f gpu/cuda_11_4_1/cuda_1141_py37.dockerfile
+	docker build . -t aqueducthq/gpu_cuda1141_py38:$(VERSION) -f gpu/cuda_11_4_1/cuda_1141_py38.dockerfile
+	docker build . -t aqueducthq/gpu_cuda1141_py39:$(VERSION) -f gpu/cuda_11_4_1/cuda_1141_py39.dockerfile
+	docker build . -t aqueducthq/gpu_cuda1141_py310:$(VERSION) -f gpu/cuda_11_4_1/cuda_1141_py310.dockerfile
+
+	docker build . -t aqueducthq/gpu_cuda1180_py37:$(VERSION) -f gpu/cuda_11_8_0/cuda_1180_py37.dockerfile
+	docker build . -t aqueducthq/gpu_cuda1180_py38:$(VERSION) -f gpu/cuda_11_8_0/cuda_1180_py38.dockerfile
+	docker build . -t aqueducthq/gpu_cuda1180_py39:$(VERSION) -f gpu/cuda_11_8_0/cuda_1180_py39.dockerfile
+	docker build . -t aqueducthq/gpu_cuda1180_py310:$(VERSION) -f gpu/cuda_11_8_0/cuda_1180_py310.dockerfile
 
 publish-gpu:
-	docker push aqueducthq/function37gpu:$(VERSION)
-	docker push aqueducthq/function38gpu:$(VERSION)
-	docker push aqueducthq/function39gpu:$(VERSION)
-	docker push aqueducthq/function310gpu:$(VERSION)
+	docker push aqueducthq/gpu_cuda1141_py37:$(VERSION)
+	docker push aqueducthq/gpu_cuda1141_py38:$(VERSION)
+	docker push aqueducthq/gpu_cuda1141_py39:$(VERSION)
+	docker push aqueducthq/gpu_cuda1141_py310:$(VERSION)
+
+	docker push aqueducthq/gpu_cuda1180_py37:$(VERSION)
+	docker push aqueducthq/gpu_cuda1180_py38:$(VERSION)
+	docker push aqueducthq/gpu_cuda1180_py39:$(VERSION)
+	docker push aqueducthq/gpu_cuda1180_py310:$(VERSION)
+
+
+# Building Spark Conda env images
+build-spark-conda:
+	docker build . -t aqueducthq/spark-py37-env:$(VERSION) -f spark/spark-py37-env.dockerfile
+	docker build . -t aqueducthq/spark-py38-env:$(VERSION) -f spark/spark-py38-env.dockerfile
+	docker build . -t aqueducthq/spark-py39-env:$(VERSION) -f spark/spark-py39-env.dockerfile
+	docker build . -t aqueducthq/spark-py310-env:$(VERSION) -f spark/spark-py310-env.dockerfile
+
+publish-spark-conda:
+	docker push aqueducthq/spark-py37-env:$(VERSION)
+	docker push aqueducthq/spark-py38-env:$(VERSION)
+	docker push aqueducthq/spark-py39-env:$(VERSION)
+	docker push aqueducthq/spark-py310-env:$(VERSION)
 
 .PHONY:
 

@@ -108,7 +108,7 @@ func (h *DiscoverHandler) Perform(
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to retrieve integration.")
 	}
 
-	if _, ok := shared.GetRelationalDatabaseIntegrations()[integrationObject.Service]; !ok {
+	if !shared.IsRelationalDatabaseIntegration(integrationObject.Service) {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "List tables request is only allowed for relational databases.")
 	}
 
@@ -117,7 +117,7 @@ func (h *DiscoverHandler) Perform(
 
 	defer func() {
 		// Delete storage files created for list tables job metadata
-		go workflow_utils.CleanupStorageFiles(ctx, args.StorageConfig, []string{jobMetadataPath, jobResultPath})
+		go workflow_utils.CleanupStorageFiles(context.Background(), args.StorageConfig, []string{jobMetadataPath, jobResultPath})
 	}()
 
 	storageConfig := config.Storage()

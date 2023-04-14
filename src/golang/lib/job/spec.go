@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
-	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/check"
@@ -25,6 +24,7 @@ type JobType string
 
 const (
 	WorkflowRetentionName = "workflowretentionjob"
+	DynamicTeardownName   = "dynamicteardownjob"
 )
 
 type SerializationType string
@@ -47,6 +47,7 @@ const (
 	DiscoverJobType           JobType = "discover"
 	WorkflowRetentionType     JobType = "workflow_retention"
 	CompileAirflowJobType     JobType = "compile_airflow"
+	DynamicTeardownType       JobType = "dynamic_teardown"
 )
 
 // `ExecutorConfiguration` represents the configuration variables that are
@@ -74,6 +75,19 @@ type BaseSpec struct {
 
 func (bs *BaseSpec) JobName() string {
 	return bs.Name
+}
+
+type DynamicTeardownSpec struct {
+	BaseSpec
+	ExecutorConfig *ExecutorConfiguration
+}
+
+func (dits *DynamicTeardownSpec) HasStorageConfig() bool {
+	return false
+}
+
+func (dits *DynamicTeardownSpec) GetStorageConfig() (*shared.StorageConfig, error) {
+	return nil, errors.New("DynamicTeardown job specs don't have a storage config.")
 }
 
 type WorkflowRetentionSpec struct {
@@ -140,12 +154,6 @@ type FunctionSpec struct {
 	OperatorType                operator.Type            `json:"operator_type" yaml:"operator_type"`
 	Resources                   *operator.ResourceConfig `json:"resources" yaml:"resources"`
 
-	// We use this field as an indication of whether we should switch to certain environment before
-	// running a function.
-	// This field is not used by the Python side, so we use - to omit it during JSON serialization.
-	// Otherwise, Pydantic will complain about this extra field. It's good for performance reason as well.
-	ExecEnv *exec_env.ExecutionEnvironment `json:"-" yaml:"-"`
-
 	// Specific to the check operator. This is left unset by any other function type.
 	CheckSeverity *check.Level `json:"check_severity" yaml:"check_severity"`
 }
@@ -172,8 +180,6 @@ type ExtractSpec struct {
 	ConnectorConfig auth.Config             `json:"connector_config"  yaml:"connector_config"`
 	Parameters      connector.ExtractParams `json:"parameters"  yaml:"parameters"`
 
-	// These input fields are only used to record user-defined parameters for relational queries.
-	InputParamNames    []string `json:"input_param_names" yaml:"input_param_names"`
 	InputContentPaths  []string `json:"input_content_paths" yaml:"input_content_paths"`
 	InputMetadataPaths []string `json:"input_metadata_paths" yaml:"input_metadata_paths"`
 	OutputContentPath  string   `json:"output_content_path"  yaml:"output_content_path"`
@@ -228,6 +234,10 @@ type CompileAirflowSpec struct {
 	TaskEdges         map[string][]string `json:"task_edges"  yaml:"task_edges"`
 }
 
+func (*DynamicTeardownSpec) Type() JobType {
+	return DynamicTeardownType
+}
+
 func (*WorkflowRetentionSpec) Type() JobType {
 	return WorkflowRetentionType
 }
@@ -274,6 +284,37 @@ func (*DiscoverSpec) Type() JobType {
 
 func (*CompileAirflowSpec) Type() JobType {
 	return CompileAirflowJobType
+}
+
+// NewDynamicTeardownJobSpec constructs a Spec for a DynamicTeardownJob.
+func NewDynamicTeardownJobSpec(
+	database *database.DatabaseConfig,
+	jobManager Config,
+) Spec {
+	return &DynamicTeardownSpec{
+		BaseSpec: BaseSpec{
+			Type: DynamicTeardownType,
+			Name: DynamicTeardownName,
+		},
+
+		ExecutorConfig: &ExecutorConfiguration{
+			Database:   database,
+			JobManager: jobManager,
+		},
+	}
+}
+
+func IsDataType(jobType JobType) bool {
+	if jobType == AuthenticateJobType ||
+		jobType == LoadJobType ||
+		jobType == ExtractJobType ||
+		jobType == LoadTableJobType ||
+		jobType == DeleteSavedObjectsJobType ||
+		jobType == DiscoverJobType {
+		return true
+	} else {
+		return false
+	}
 }
 
 // NewWorkflowRetentionSpec constructs a Spec for a WorkflowRetentionJob.
@@ -382,7 +423,6 @@ func NewExtractSpec(
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
 		},
-		InputParamNames:    inputParamNames,
 		InputContentPaths:  inputContentPaths,
 		InputMetadataPaths: inputMetadataPaths,
 		ConnectorName:      connectorName,

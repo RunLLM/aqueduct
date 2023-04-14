@@ -5,8 +5,8 @@ import (
 
 	databricks_lib "github.com/aqueducthq/aqueduct/lib/databricks"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
-	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/spark"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
 )
@@ -17,42 +17,16 @@ func AuthenticateK8sConfig(ctx context.Context, authConf auth.Config) error {
 	if err != nil {
 		return errors.Wrap(err, "Unable to parse configuration.")
 	}
-	_, err = k8s.CreateK8sClient(conf.KubeconfigPath, bool(conf.UseSameCluster))
-	if err != nil {
-		return errors.Wrap(err, "Unable to create kubernetes client.")
-	}
-	return nil
-}
 
-func AuthenticateLambdaConfig(ctx context.Context, authConf auth.Config) error {
-	lambdaConf, err := lib_utils.ParseLambdaConfig(authConf)
-	if err != nil {
-		return errors.Wrap(err, "Unable to parse configuration.")
-	}
-	functionsToShip := [10]lambda_utils.LambdaFunctionType{
-		lambda_utils.FunctionExecutor37Type,
-		lambda_utils.FunctionExecutor38Type,
-		lambda_utils.FunctionExecutor39Type,
-		lambda_utils.ParamExecutorType,
-		lambda_utils.SystemMetricType,
-		lambda_utils.AthenaConnectorType,
-		lambda_utils.BigQueryConnectorType,
-		lambda_utils.PostgresConnectorType,
-		lambda_utils.S3ConnectorType,
-		lambda_utils.SnowflakeConnectorType,
+	if conf.Dynamic {
+		if conf.CloudIntegrationId == "" {
+			return errors.New("Dynamic K8s integration must have a cloud integration ID attached.")
+		} else {
+			return nil
+		}
 	}
 
-	err = lambda_utils.AuthenticateDockerToECR()
-	if err != nil {
-		return errors.Wrap(err, "Unable to authenticate Lambda Function.")
-	}
-
-	err = lambda_utils.CreateLambdaFunction(ctx, functionsToShip[:], lambdaConf.RoleArn)
-	if err != nil {
-		return errors.Wrap(err, "Unable to create Lambda Function.")
-	}
-
-	return nil
+	return k8s.ValidateCluster(ctx, conf.ClusterName, conf.KubeconfigPath, bool(conf.UseSameCluster))
 }
 
 func AuthenticateDatabricksConfig(ctx context.Context, authConf auth.Config) error {
@@ -79,6 +53,42 @@ func AuthenticateDatabricksConfig(ctx context.Context, authConf auth.Config) err
 	err = databricks_lib.AddEntrypointFilesToStorage(ctx)
 	if err != nil {
 		return errors.Wrap(err, "Unable to upload entrypoint files to storage.")
+	}
+
+	return nil
+}
+
+func AuthenticateSparkConfig(ctx context.Context, authConf auth.Config) error {
+	sparkConfig, err := lib_utils.ParseSparkConfig(authConf)
+	if err != nil {
+		return errors.Wrap(err, "Unable to parse configuration.")
+	}
+
+	livyClient := spark.NewLivyClient(sparkConfig.LivyServerURL)
+	_, err = livyClient.GetSessions()
+	if err != nil {
+		return errors.Wrap(err, "Unable to list active Sessions on Livy Server.")
+	}
+
+	return nil
+}
+
+func AuthenticateAWSConfig(authConf auth.Config) error {
+	conf, err := lib_utils.ParseAWSConfig(authConf)
+	if err != nil {
+		return errors.Wrap(err, "Unable to parse configuration.")
+	}
+
+	if conf.AccessKeyId != "" && conf.SecretAccessKey != "" && conf.Region != "" {
+		if conf.ConfigFilePath != "" || conf.ConfigFileProfile != "" {
+			return errors.New("When authenticating via access keys, credential file path and profile must be empty.")
+		}
+	} else if conf.ConfigFilePath != "" && conf.ConfigFileProfile != "" {
+		if conf.AccessKeyId != "" || conf.SecretAccessKey != "" || conf.Region != "" {
+			return errors.New("When authenticating via credential file, access key fields must be empty.")
+		}
+	} else {
+		return errors.New("Either 1) AWS access key ID, secret access key, region, or 2) credential file path, profile must be provided.")
 	}
 
 	return nil

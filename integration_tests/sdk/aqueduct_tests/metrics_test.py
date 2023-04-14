@@ -1,6 +1,6 @@
 import pandas as pd
 import pytest
-from aqueduct.error import AqueductError
+from aqueduct.error import AqueductError, ArtifactNotFoundException
 
 from aqueduct import metric
 
@@ -55,10 +55,13 @@ def test_register_metric(client, flow_name, data_integration, engine):
 @metric()
 def metric_with_multiple_inputs(df1, m, df2):
     if not isinstance(df1, pd.DataFrame) or not isinstance(df2, pd.DataFrame):
-        raise Exception(
-            "Expected dataframes as first and third args, got %s and %s"
-            % (type(df1).__name__, type(df2).__name__)
-        )
+        from pyspark.sql import DataFrame
+
+        if not isinstance(df1, DataFrame) or not isinstance(df2, DataFrame):
+            raise Exception(
+                "Expected dataframes as first and third args, got %s and %s"
+                % (type(df1).__name__, type(df2).__name__)
+            )
     if not isinstance(m, float):
         raise Exception("Expected float as input to check, got %s" % type(m).__name__)
     return m + 10
@@ -78,3 +81,45 @@ def test_metric_mixed_inputs(client, flow_name, data_integration, engine):
         name=flow_name(),
         engine=engine,
     )
+
+
+def test_edit_metric(client, data_integration, engine, flow_name):
+    """Test that running the same metric (by name) twice on the same artifact will result in last-run-wins behavior."""
+    table = extract(data_integration, DataObject.SENTIMENT)
+
+    @metric
+    def foo(table):
+        if isinstance(table, pd.DataFrame):
+            return len(table)
+        else:
+            from pyspark.sql import DataFrame
+
+            if isinstance(table, DataFrame):
+                return table.count()
+
+    output1 = foo(table)
+    output2 = foo(table)
+    with pytest.raises(
+        ArtifactNotFoundException, match="Artifact has been overwritten and no longer exists"
+    ):
+        output1.get()
+    assert output2.get() == 100
+
+    flow = publish_flow_test(client, artifacts=table, engine=engine, name=flow_name())
+    flow_run = flow.latest()
+    assert flow_run.artifact("foo artifact").get() == 100
+
+    # We do not overwrite metrics with the same name that run on other artifacts.
+    # Instead, we deduplicate with suffix (1).
+    table2 = extract(data_integration, DataObject.WINE)
+    output3 = foo(table2)
+    assert output2.get() == 100  # the previous metric with the same name still exists.
+    assert output3.get() == 6497
+
+    # For deterministic ordering, have the previous metric claim "foo artifact".
+    output2.set_name("foo artifact")
+
+    flow = publish_flow_test(client, artifacts=[output2, output3], engine=engine, name=flow_name())
+    flow_run = flow.latest()
+    assert flow_run.artifact("foo artifact").get() == 100
+    assert flow_run.artifact("foo artifact (1)").get() == 6497

@@ -7,17 +7,17 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/workflow/dag"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
-// Route: /workflow/{workflowDagId}/result/{workflowDagResultId}
+// Route: /workflow/{workflowId}/result/{workflowDagResultId}
 // Method: GET
 // Params:
 //	`workflowId`: ID for `workflow` object
@@ -34,7 +34,7 @@ type getWorkflowDagResultArgs struct {
 	dagResultID uuid.UUID
 }
 
-type GetWorkflowDagResultHandler struct {
+type GetWorkflowDagResultHandlerDeprecated struct {
 	GetHandler
 
 	Database database.Database
@@ -49,11 +49,11 @@ type GetWorkflowDagResultHandler struct {
 	WorkflowRepo       repos.Workflow
 }
 
-func (*GetWorkflowDagResultHandler) Name() string {
+func (*GetWorkflowDagResultHandlerDeprecated) Name() string {
 	return "GetWorkflowDagResult"
 }
 
-func (h *GetWorkflowDagResultHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *GetWorkflowDagResultHandlerDeprecated) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
@@ -91,7 +91,7 @@ func (h *GetWorkflowDagResultHandler) Prepare(r *http.Request) (interface{}, int
 	}, http.StatusOK, nil
 }
 
-func (h *GetWorkflowDagResultHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+func (h *GetWorkflowDagResultHandlerDeprecated) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*getWorkflowDagResultArgs)
 
 	emptyResp := dag.ResultResponse{}
@@ -175,7 +175,7 @@ func getArtifactContents(
 				path := artfResult.ContentPath
 				// Read data from storage and deserialize payload to `container`.
 				contentBytes, err := storageObj.Get(ctx, path)
-				if err == storage.ErrObjectDoesNotExist {
+				if errors.Is(err, storage.ErrObjectDoesNotExist()) {
 					// If the data does not exist, skip the fetch.
 					continue
 				}

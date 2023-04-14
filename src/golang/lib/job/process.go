@@ -63,9 +63,10 @@ type ProcessJobManager struct {
 	cmds          map[string]*Command
 	cronScheduler *gocron.Scheduler
 	// A mapping from cron job name to cron job object pointer.
-	cronMapping map[string]*cronMetadata
-	cmdMutex    *sync.RWMutex
-	cronMutex   *sync.RWMutex
+	cronMapping  map[string]*cronMetadata
+	condaEnvName string
+	cmdMutex     *sync.RWMutex
+	cronMutex    *sync.RWMutex
 }
 
 func (j *ProcessJobManager) getCmd(key string) (*Command, bool) {
@@ -129,6 +130,7 @@ func NewProcessJobManager(conf *ProcessConfig) (*ProcessJobManager, error) {
 		cronMapping:   map[string]*cronMetadata{},
 		cmdMutex:      &sync.RWMutex{},
 		cronMutex:     &sync.RWMutex{},
+		condaEnvName:  conf.CondaEnvName,
 	}, nil
 }
 
@@ -176,6 +178,27 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			"--logs-path",
 			logFilePath,
 		)
+	} else if spec.Type() == DynamicTeardownType {
+		dynamicTeardownSpec, ok := spec.(*DynamicTeardownSpec)
+		if !ok {
+			return nil, errors.New("Unable to cast job spec to dynamicTeardownSpec.")
+		}
+
+		specStr, err := EncodeSpec(dynamicTeardownSpec, GobSerializationType)
+		if err != nil {
+			return nil, err
+		}
+
+		logFilePath := path.Join(defaultLogsDir, jobName)
+		log.Infof("Logs for job %s are stored in %s", jobName, logFilePath)
+
+		cmd = exec.Command(
+			fmt.Sprintf("%s/%s", j.conf.BinaryDir, executorBinary),
+			"--spec",
+			specStr,
+			"--logs-path",
+			logFilePath,
+		)
 	} else if spec.Type() == FunctionJobType {
 		functionSpec, ok := spec.(*FunctionSpec)
 		if !ok {
@@ -188,13 +211,12 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			return nil, err
 		}
 
-		if functionSpec.ExecEnv != nil {
-			log.Info("!!!!!!using conda to run operator!!!!!!")
+		if j.condaEnvName != "" {
 			cmd = exec.Command(
 				"conda",
 				"run",
 				"-n",
-				functionSpec.ExecEnv.Name(),
+				j.condaEnvName,
 				"bash",
 				filepath.Join(j.conf.BinaryDir, functionExecutorBashScript),
 				specStr,
@@ -297,7 +319,7 @@ func (j *ProcessJobManager) Launch(
 ) JobError {
 	log.Infof("Running %s job %s.", spec.Type(), name)
 	if _, ok := j.getCmd(name); ok {
-		return systemError(errors.Newf("Reached timeout waiting for the job %s to finish.", name))
+		return systemError(errors.Newf("A job with the same name %s already exists.", name))
 	}
 
 	cmd, err := j.mapJobTypeToCmd(name, spec)

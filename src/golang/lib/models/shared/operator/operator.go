@@ -27,6 +27,8 @@ import (
 
 type Type string
 
+type CudaVersionNumber string
+
 const (
 	FunctionType     Type = "function"
 	MetricType       Type = "metric"
@@ -35,12 +37,16 @@ const (
 	LoadType         Type = "load"
 	ParamType        Type = "param"
 	SystemMetricType Type = "system_metric"
+
+	Cuda11_4_1 CudaVersionNumber = "11.4.1"
+	Cuda11_8_0 CudaVersionNumber = "11.8.0"
 )
 
 type ResourceConfig struct {
-	NumCPU          *int    `json:"num_cpus,omitempty"`
-	MemoryMB        *int    `json:"memory_mb,omitempty"`
-	GPUResourceName *string `json:"gpu_resource_name,omitempty"`
+	NumCPU          *int               `json:"num_cpus,omitempty"`
+	MemoryMB        *int               `json:"memory_mb,omitempty"`
+	GPUResourceName *string            `json:"gpu_resource_name,omitempty"`
+	CudaVersion     *CudaVersionNumber `json:"cuda_version,omitempty"`
 }
 
 type specUnion struct {
@@ -53,7 +59,8 @@ type specUnion struct {
 	Param        *param.Param                `json:"param,omitempty"`
 	SystemMetric *system_metric.SystemMetric `json:"system_metric,omitempty"`
 
-	// This can currently only be set for function operators.
+	// This can currently only be set for operators that has function,
+	// including function, metric, and check.
 	Resources    *ResourceConfig      `json:"resources,omitempty"`
 	EngineConfig *shared.EngineConfig `json:"engine_config,omitempty"`
 }
@@ -258,4 +265,9 @@ func (s *Spec) Value() (driver.Value, error) {
 
 func (s *Spec) Scan(value interface{}) error {
 	return utils.ScanJSONB(value, s)
+}
+
+func (s *Spec) SetEngineConfig(engineConfig *shared.EngineConfig) *Spec {
+	s.spec.EngineConfig = engineConfig
+	return s
 }

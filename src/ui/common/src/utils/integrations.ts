@@ -37,6 +37,7 @@ export type SnowflakeConfig = {
   schema: string;
   username: string;
   password?: string;
+  role: string;
 };
 
 export type RedshiftConfig = {
@@ -101,10 +102,17 @@ export enum AWSCredentialType {
   ConfigFileContent = 'config_file_content',
 }
 
+export enum DynamicEngineType {
+  K8s = 'k8s',
+}
+
 export type S3Config = {
   type: AWSCredentialType;
   bucket: string;
   region: string;
+
+  // If set, expected to be in the format `path/to/dir/`
+  root_dir: string;
   access_key_id: string;
   secret_access_key: string;
   config_file_path: string;
@@ -153,12 +161,14 @@ export type KubernetesConfig = {
 
 export type LambdaConfig = {
   role_arn: string;
+  exec_state: string;
 };
 
 export type DatabricksConfig = {
   workspace_url: string;
   access_token: string;
   s3_instance_profile_arn: string;
+  instance_pool_id: string;
 };
 
 export type NotificationIntegrationConfig = {
@@ -178,6 +188,30 @@ export type SlackConfig = {
   token: string;
   channels_serialized: string;
 } & NotificationIntegrationConfig;
+
+export type SparkConfig = {
+  livy_server_url: string;
+};
+
+export type AWSConfig = {
+  type: AWSCredentialType;
+  region: string;
+  access_key_id: string;
+  secret_access_key: string;
+  config_file_path: string;
+  config_file_profile: string;
+  k8s_serialized: string;
+};
+
+export type DynamicK8sConfig = {
+  keepalive: string;
+  cpu_node_type: string;
+  gpu_node_type: string;
+  min_cpu_node: string;
+  max_cpu_node: string;
+  min_gpu_node: string;
+  max_gpu_node: string;
+};
 
 export type IntegrationConfig =
   | PostgresConfig
@@ -199,9 +233,12 @@ export type IntegrationConfig =
   | CondaConfig
   | DatabricksConfig
   | EmailConfig
-  | SlackConfig;
+  | SlackConfig
+  | SparkConfig
+  | AWSConfig;
 
 export type Service =
+  | 'Aqueduct'
   | 'Postgres'
   | 'Snowflake'
   | 'Redshift'
@@ -222,7 +259,9 @@ export type Service =
   | 'Conda'
   | 'Databricks'
   | 'Email'
-  | 'Slack';
+  | 'Slack'
+  | 'Spark'
+  | 'AWS';
 
 export type Info = {
   logo: string;
@@ -285,6 +324,7 @@ const addingIntegrationLink = `${AqueductDocsLink}/integrations/adding-an-integr
 export const IntegrationCategories = {
   DATA: 'data',
   COMPUTE: 'compute',
+  CLOUD: 'cloud',
   NOTIFICATION: 'notification',
 };
 
@@ -309,6 +349,8 @@ export const ServiceLogos: ServiceLogo = {
   ['Databricks']: `${integrationLogosBucket}/databricks_logo.png`,
   ['Email']: `${integrationLogosBucket}/email.png`,
   ['Slack']: `${integrationLogosBucket}/slack.png`,
+  ['Spark']: `${integrationLogosBucket}/spark-logo-trademark.png`,
+  ['AWS']: `${integrationLogosBucket}/aws-logo-trademark.png`,
 
   // TODO(ENG-2301): Once task is addressed, remove this duplicate entry.
   ['K8s']: `${integrationLogosBucket}/kubernetes.png`,
@@ -428,6 +470,18 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.NOTIFICATION,
     docs: `${AqueductDocsLink}/notifications/connecting-to-slack`,
+  },
+  ['Spark']: {
+    logo: ServiceLogos['Spark'],
+    activated: true,
+    category: IntegrationCategories.COMPUTE,
+    docs: addingIntegrationLink,
+  },
+  ['AWS']: {
+    logo: ServiceLogos['AWS'],
+    activated: true,
+    category: IntegrationCategories.CLOUD,
+    docs: addingIntegrationLink,
   },
 };
 

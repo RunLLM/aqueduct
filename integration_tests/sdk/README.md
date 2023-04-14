@@ -20,35 +20,43 @@ This file contains:
 will automatically run against each of the data integrations specified in this file, unless a `--data` argument
 is supplied, whereby the tests will filter down to just that data integration.
 
-Both these test suites share a collection of command line flags:
+Both these test suites share a collection of custom command line flags:
 * `--data`: The integration name of the data integration to run all tests against. 
 * `--engine`: The integration of the engine to compute all tests on.
 * `--keep-flows`: If set, we will not delete any flows created by the test run. This is useful for debugging.
 * `--deprecated`: Runs against any deprecated API that still exists in the SDK. Such code paths should be eventually deleted after some time, but this ensures backwards compatibility.
 * `--skip-data-setup`: Skips the checking and setup of external data integrations. Instead, assumes that all data integrations have been set up correctly with the appropriate data.
+* `--skip-engine-setup`: Skips the checking and setup of external compute integrations.
 
 For additional markers/fixtures/flags, please inspect `conftest.py` in this directory. For test-specific configurations,
 see `aqueduct_tests/conftest.py` and  `data_integration_tests/conftest.py`.
 
-## Commands
+## Running the Tests
+You can run this test suite using vanilla pytest, or you can use the `run_tests.py` script in this directory.
+
+### About run_tests.py
+`run_tests.py` is just a convenience wrapper around the pytest command. Any pytest flags can be used
+with this script too. The main difference is that run_tests.py adds some default pytest configuration,
+like setting the default concurrenty to 8.
+
+### Commands
+Note that to run tests with concurrency > 1, `pytest-xdist` must be installed.
 
 To run all SDK Integration Tests, from the `integration_tests/sdk` directory, run:
-`python3 run_tests.py [-lf] [-n CONCURRENCY]`
+`python3 run_tests.py`
 
 To run just one of the test suites:
-- `python3 run_tests.py --aqueduct [-lf] [-n CONCURRENCY]`
-- `python3 run_tests.py --data-integration [-lf] [-n CONCURRENCY]`
+- `python3 run_tests.py --aqueduct`
+- `python3 run_tests.py --data-integration`
 
-To run tests with concurrency > 1, `pytest-xdist` must be installed.
+To run just one of the test files:
+- `python3 run_tests.py --aqueduct --file flow_test.py`
 
-## Useful Pytest Command Flags 
+To run just one test case:
+- `python3 run_tests.py --aqueduct -k test_basic_flow`
 
-The above script simply runs the following pytest commands:
-- `pytest aqueduct_tests/ -rP -vv [-lf] [-n CONCURRENCY]`
-- `pytest data_integration_tests/ -rP -vv [-lf] [-n CONCURRENCY]`
+### Useful Command Flags 
+In addition to the custom test suite flags listed above, you can also apply generic pytest flags to the test run too.
 
-Running all the tests in a single file:
-- `pytest <path to test file> -rP -vv`
-
-Running a specific test:
-- `pytest <specific test directory> -rP -vv -k '<specific test name>'`
+For example, to only run tests that have failed in the last run, use the `--lf` flag.
+- `python3 run_tests.py --lf`

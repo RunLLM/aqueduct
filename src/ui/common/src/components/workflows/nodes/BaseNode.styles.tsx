@@ -8,11 +8,12 @@ const BaseNode = styled(Box)({
   justifyContent: 'center',
   borderRadius: '8px',
   borderStyle: 'solid',
-  borderWidth: '2px',
-  padding: '10px',
-  maxWidth: '250px',
-  minHeight: '140px',
-  maxHeight: '250px',
+  borderWidth: '3px',
+  width: '400px',
+  height: '120px',
+  maxWidth: '400px',
+  maxHeight: '120px',
+  textOverflow: 'ellipsis',
 });
 
 export { BaseNode };

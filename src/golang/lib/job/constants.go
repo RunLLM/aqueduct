@@ -6,10 +6,15 @@ const (
 	Function39DockerImage  = "aqueducthq/function39"
 	Function310DockerImage = "aqueducthq/function310"
 
-	GpuFunction37DockerImage  = "aqueducthq/function37gpu"
-	GpuFunction38DockerImage  = "aqueducthq/function38gpu"
-	GpuFunction39DockerImage  = "aqueducthq/function39gpu"
-	GpuFunction310DockerImage = "aqueducthq/function310gpu"
+	GpuCuda1180Python37  = "aqueducthq/gpu_cuda1180_py37"
+	GpuCuda1180Python38  = "aqueducthq/gpu_cuda1180_py38"
+	GpuCuda1180Python39  = "aqueducthq/gpu_cuda1180_py39"
+	GpuCuda1180Python310 = "aqueducthq/gpu_cuda1180_py310"
+
+	GpuCuda1141Python37  = "aqueducthq/gpu_cuda1141_py37"
+	GpuCuda1141Python38  = "aqueducthq/gpu_cuda1141_py38"
+	GpuCuda1141Python39  = "aqueducthq/gpu_cuda1141_py39"
+	GpuCuda1141Python310 = "aqueducthq/gpu_cuda1141_py310"
 
 	ParameterDockerImage          = "aqueducthq/param"
 	SystemMetricDockerImage       = "aqueducthq/system-metric"
@@ -19,4 +24,6 @@ const (
 	SqlServerConnectorDockerImage = "aqueducthq/sqlserver-connector"
 	BigQueryConnectorDockerImage  = "aqueducthq/bigquery-connector"
 	S3ConnectorDockerImage        = "aqueducthq/s3-connector"
+
+	defaultFunctionExtractPath = "/app/function/"
 )

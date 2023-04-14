@@ -7,9 +7,9 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
@@ -37,7 +37,7 @@ type getOperatorResultArgs struct {
 	operatorID  uuid.UUID
 }
 
-type GetOperatorResultHandler struct {
+type GetOperatorResultHandlerDeprecated struct {
 	GetHandler
 
 	Database database.Database
@@ -54,11 +54,11 @@ type GetOperatorResultResponse struct {
 	Status      shared.ExecutionStatus `json:"status"`
 }
 
-func (*GetOperatorResultHandler) Name() string {
+func (*GetOperatorResultHandlerDeprecated) Name() string {
 	return "GetOperatorResult"
 }
 
-func (h *GetOperatorResultHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *GetOperatorResultHandlerDeprecated) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
@@ -96,7 +96,7 @@ func (h *GetOperatorResultHandler) Prepare(r *http.Request) (interface{}, int, e
 	}, http.StatusOK, nil
 }
 
-func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+func (h *GetOperatorResultHandlerDeprecated) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*getOperatorResultArgs)
 
 	emptyResp := GetOperatorResultResponse{}
@@ -119,7 +119,7 @@ func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs in
 		h.Database,
 	)
 	if err != nil {
-		if err != database.ErrNoRows {
+		if !errors.Is(err, database.ErrNoRows()) {
 			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving operator result.")
 		}
 		// OperatorResult was never created, so we use the WorkflowDagResult's status as this OperatorResult's status

@@ -78,6 +78,8 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     DATABRICKS = "Databricks"
     EMAIL = "Email"
     SLACK = "Slack"
+    SPARK = "Spark"
+    AWS = "AWS"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
@@ -98,6 +100,7 @@ class RelationalDBServices(str, Enum, metaclass=MetaEnum):
 class ExecutionStatus(str, Enum, metaclass=MetaEnum):
     UNKNOWN = "unknown"
     SUCCEEDED = "succeeded"
+    RUNNING = "running"
     FAILED = "failed"
     PENDING = "pending"
     REGISTERED = "registered"
@@ -190,15 +193,72 @@ class ExecutionMode(str, Enum, metaclass=MetaEnum):
     LAZY = "lazy"
 
 
-class RuntimeType(Enum, metaclass=MetaEnum):
+class RuntimeType(str, Enum, metaclass=MetaEnum):
     AQUEDUCT = "aqueduct"
+    AQUEDUCT_CONDA = "aqueduct_conda"
     AIRFLOW = "airflow"
     K8S = "k8s"
     LAMBDA = "lambda"
     DATABRICKS = "databricks"
+    SPARK = "spark"
 
 
 class NotificationLevel(Enum, metaclass=MetaEnum):
     SUCCESS = "success"
     WARNING = "warning"
     ERROR = "error"
+
+
+class SparkRuntimeType(str, Enum, metaclass=MetaEnum):
+    DATABRICKS = "databricks"
+    SPARK = "spark"
+
+
+# The lifecycle of a cluster goes from Creating -> Active -> Terminating -> Terminated.
+# If an Active cluster receives an config update request, it goes from Active -> Updating -> Active.
+class K8sClusterStatusType(str, Enum, metaclass=MetaEnum):
+    # The cluster is being created (transitioning from Terminated to Active status).
+    CREATING = "Creating"
+    # The cluster has been active, and it received a config update request and it's
+    # updating to the new config. After the update completes, it will be in the Active status again.
+    UPDATING = "Updating"
+    # The cluster is currently active and ready to serve requests.
+    ACTIVE = "Active"
+    # The cluster is being deleted.
+    TERMINATING = "Terminating"
+    # The cluster is terminated.
+    TERMINATED = "Terminated"
+
+
+class LocalDataTableFormat(str, Enum, metaclass=MetaEnum):
+    CSV = "CSV"
+    JSON = "JSON"
+    PARQUET = "Parquet"
+
+
+class LocalDataSerializationType(str, Enum, metaclass=MetaEnum):
+    CSV_TABLE = "csv_table"
+    JSON_TABLE = "json_table"
+    PARQUET_TABLE = "parquet_table"
+    IMAGE = "image"
+    JSON = "json"
+    PICKLE = "pickle"
+    STRING = "string"
+    BYTES = "bytes"
+    TF_KERAS = "tensorflow-keras-model"
+
+
+class K8sClusterActionType(str, Enum, metaclass=MetaEnum):
+    CREATE = "create"
+    UPDATE = "update"
+    DELETE = "delete"
+    FORCE_DELETE = "force-delete"
+
+
+# These are keys for resources that users can customize for operators.
+# They are used as dict keys, eg @op(resources={'num_cpus': 1, ...})
+class CustomizableResourceType(str, Enum, metaclass=MetaEnum):
+    NUM_CPUS = "num_cpus"
+    MEMORY = "memory"
+    GPU_RESOURCE_NAME = "gpu_resource_name"
+    CUDA_VERSION = "cuda_version"

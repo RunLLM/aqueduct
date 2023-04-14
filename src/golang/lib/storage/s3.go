@@ -14,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/dropbox/godropbox/errors"
 )
 
 type s3Storage struct {
@@ -26,20 +27,21 @@ func newS3Storage(s3Config *shared.S3Config) *s3Storage {
 	}
 }
 
-// parseBucketAndKey takes the bucket in the form of s3://bucket/path
-// and a key and parses the bucket name and the key.
+// parseBucketAndKey returns the bucket name and resolves the supplied key to the
+// full path in the bucket.
 func (s *s3Storage) parseBucketAndKey(key string) (string, string, error) {
 	u, err := url.Parse(s.s3Config.Bucket)
 	if err != nil {
 		return "", "", err
 	}
-
 	bucket := u.Host
 
-	u.Path = strings.TrimLeft(u.Path, "/")
-	key = path.Join(u.Path, key)
-
-	return bucket, key, nil
+	dirPath := strings.TrimLeft(u.Path, "/")
+	if s.s3Config.RootDir != "" {
+		dirPath = path.Join(dirPath, s.s3Config.RootDir)
+	}
+	full_key := path.Join(dirPath, key)
+	return bucket, full_key, nil
 }
 
 func (s *s3Storage) Get(ctx context.Context, key string) ([]byte, error) {
@@ -63,7 +65,7 @@ func (s *s3Storage) Get(ctx context.Context, key string) ([]byte, error) {
 		if aerr, ok := err.(awserr.Error); ok {
 			switch aerr.Code() {
 			case s3.ErrCodeNoSuchKey:
-				return nil, ErrObjectDoesNotExist
+				return nil, errors.Wrapf(ErrObjectDoesNotExist(), "Unable to fetch key `%s` from bucket `%s`.", key, bucket)
 			default:
 				return nil, err
 			}

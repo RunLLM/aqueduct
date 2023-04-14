@@ -2,13 +2,15 @@ import math
 import time
 
 import pandas as pd
+import pytest
 
-from aqueduct import op
+from aqueduct import global_config, op
 
 from ..shared.data_objects import DataObject
 from .extract import extract
 
 
+@pytest.mark.skip_for_spark_engines(reason="GE checks don't work with Spark")
 def test_great_expectations_check(client, data_integration):
     table = extract(data_integration, DataObject.WINE)
     ge_check = table.validate_with_expectation(
@@ -64,6 +66,27 @@ def test_system_max_memory_metric(client, data_integration):
     assert max_mem > 10
 
 
+def test_system_runtime_metric_generic(client, data_integration):
+    global_config({"lazy": True})
+    table = extract(data_integration, DataObject.SENTIMENT, lazy=True)
+    timed_table = timed_function(table)
+
+    runtime_metric = timed_table.system_metric("runtime")
+    runtime = runtime_metric.get()
+    assert runtime > SLEEP_TIME
+
+
+def test_system_max_memory_metric_generic(client, data_integration):
+    global_config({"lazy": True})
+    table = extract(data_integration, DataObject.SENTIMENT, lazy=True)
+    timed_table = mem_intensive_function(table)
+
+    max_mem_metric = timed_table.system_metric("max_memory")
+    max_mem = max_mem_metric.get()
+    assert max_mem > 10
+
+
+@pytest.mark.skip_for_spark_engines(reason="Built in table metrics don't work with Spark")
 def test_number_of_missing_values(client, data_integration):
     table = extract(data_integration, DataObject.SENTIMENT)
     missing_metric = table.number_of_missing_values(column_id="hotel_name")
@@ -77,6 +100,7 @@ def test_number_of_missing_values(client, data_integration):
     assert missing_metric.get() == 4
 
 
+@pytest.mark.skip_for_spark_engines(reason="Built in table metrics don't work with Spark")
 def test_number_of_rows(client, data_integration):
     table = extract(data_integration, DataObject.SENTIMENT)
     missing_metric = table.number_of_rows()
@@ -87,6 +111,7 @@ def test_number_of_rows(client, data_integration):
     assert missing_metric.get() == 101
 
 
+@pytest.mark.skip_for_spark_engines(reason="Built in table metrics don't work with Spark")
 def test_max(client, data_integration):
     table = extract(data_integration, DataObject.WINE)
     missing_metric = table.max(column_id="fixed_acidity")
@@ -96,6 +121,7 @@ def test_max(client, data_integration):
     assert math.isclose(missing_metric.get(), 440, rel_tol=1e-3)
 
 
+@pytest.mark.skip_for_spark_engines(reason="Built in table metrics don't work with Spark")
 def test_min(client, data_integration):
     table = extract(data_integration, DataObject.WINE)
     missing_metric = table.min(column_id="fixed_acidity")
@@ -105,6 +131,7 @@ def test_min(client, data_integration):
     assert math.isclose(missing_metric.get(), 6, rel_tol=1e-3)
 
 
+@pytest.mark.skip_for_spark_engines(reason="Built in table metrics don't work with Spark")
 def test_mean(client, data_integration):
     table = extract(data_integration, DataObject.WINE)
     missing_metric = table.mean(column_id="fixed_acidity")
@@ -114,6 +141,7 @@ def test_mean(client, data_integration):
     assert math.isclose(missing_metric.get(), 115.7445, rel_tol=1e-3)
 
 
+@pytest.mark.skip_for_spark_engines(reason="Built in table metrics don't work with Spark")
 def test_std(client, data_integration):
     table = extract(data_integration, DataObject.WINE)
     missing_metric = table.std(column_id="fixed_acidity")
@@ -123,6 +151,7 @@ def test_std(client, data_integration):
     assert math.isclose(missing_metric.get(), 56.5218, rel_tol=1e-3)
 
 
+@pytest.mark.skip_for_spark_engines(reason="Built in table metrics don't work with Spark")
 def test_head_standard(client, data_integration):
     table = extract(data_integration, DataObject.SENTIMENT)
     assert table.get().shape[0] == 100

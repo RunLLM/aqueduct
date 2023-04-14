@@ -1,9 +1,224 @@
 # Changelog
 
-# 0.2.3
-Release on February 22, 2023.
+## 0.2.10
+Released on April 11, 2023.
+
+### Enhancements
+* Enables subdirectory support when configuring the AWS S3 integration. When
+    a subdirectory is specified, everything outside of that directory will be
+    ignored by Aqueduct.
+* Extends support for creating artifact from the local file system to [all
+    types](https://docs.aqueducthq.com/artifacts) supported by Aqueduct.
+* If executing code on the Aqueduct server without Conda, the server will now
+    proactively ensure that the Python version from your environment matches
+    the server's Python environment. If there's a mismatch, an error will be
+    thrown.
+* Adds a dismissable banner to the Aqueduct UI notifying users of new releases.
+
+### Bugfixes
+* Fixes bug where errors occurring during the execution of a metric were not
+    being properly surfaced.
+* Fixes bug where checks with a severity level of warning were being shown as
+    errors in check history.
+* Fixes bug where creating a schedule with helper functions on the SDK would
+    fail for monthly schedules.
+
+## 0.2.9
+Released on April 5, 2023.
 
 ### Key Features
+* [Beta] Aqueduct now has support for loading DataFrames and images from
+  the local filesystem as parameters:
+  ```python
+import aqueduct as aq
+client = aq.Client()
+
+data = client.create_param(
+  "df", 
+  "/path/to/my/df.csv",
+  use_local=True, 
+  as_type=aq.TableArtifact,
+  format='csv',
+)
+  ```
+
+### Enhancements
+* Improves the artifact storage management process. The integrations page now
+    shows which system is being used for artifact storage, and if a migration
+    between artifact stores fails, the error will be surfaced on the
+    integration details page until the user triggers a new artifact migration.
+* Adds metadata to read and write operators' sidesheets. Both sidesheets now
+    show which system is being used for the IO operation, and the save operator
+    now shows to what location and (if relevant) in what format the data is
+    being saved.
+
+### Bugfixes
+* Fixes typos in MongoDB connection dialog.
+* Fixes bug where workflow status at the top of the workflow details page would 
+    not update in sync with other parts of the page.
+* Fixes a bug where stopping the Aqueduct server immediately after starting it
+    could potentially trigger and then kill a workflow run that would then
+    stay in a pending state permanently.
+
+## 0.2.8
+Released on March 29, 2023.
+
+### Enhancements
+* Extends Aqueduct's parameter support to allow parameters to be `None` *if*
+    there is a default value for the parameter in the function definition.
+* Tweaks the design of the workflow details page to reduce the number of shades
+    of blue.
+* Updates SQL query parametrization scheme to use `$1`, `$2`, etc. as parameter
+    placeholders rather than the previous `{ param }` syntax. This allows a
+    paramter to be reused multiple times within the same query and is similar
+    to how traditional RDBMS interfaces work.
+* Adds context about the execution configuration of an operator to the workflow
+    details page. Now, each operator will show the logo of the engine on which
+    its running.
+
+### Bugfixes
+* Fixes bug where the metric history graph's X-axis would not reflect
+    timescales; all data points would be evenly spaced out rather than
+    reflecting the amount of time between each point.
+* Fixes bug where cross-environment Python requirements gathering would lead to
+    erroneous installation. Currently, Aqueduct only supports explicit
+    requirements specification.
+* Fixes bug where certain workflow failures would leave unfinished operators in
+    an infinitely-pending state; now, nodes are correctly marked as canceled.
+* Fixes bug where retrieving a non-existent filepath from S3 would return
+    succesfully but with empty data; now, a detailed error message is shown
+    instead.
+* Fixes bug where attempting to capture a system metric would thrown an error.
+
+## 0.2.7
+Released on March 22, 2023.
+
+### Key Features
+* [Beta] Aqueduct now has support for on-demand Kubernetes cluster creation and
+    management on AWS. From the Aqueduct UI, you can connect Aqueduct to your
+    AWS account via the cloud integration feature. Once connected, you can use
+    this cloud integration to ask Aqueduct to automatically create a Kubernetes
+    cluster for you. See the documentation
+    [here](https://docs.aqueducthq.com/integrations/on-demand-aws-eks-clusters)
+    for how to create an operator that uses on-demand Kubernetes.
+
+### Enhancements
+* Improves error handling to return more detailed error messages from errors
+    occurring during execution.
+* Improves error handling by surfacing errors that occur outside of the
+    execution of an individual function as workflow-level errors; these errors
+    could occur for example if a compute system was misconfigured.
+* Improves handling of artifact name conflicts in the Python SDK. Explicitly
+    named artifacts (using either the `outputs` argument to the `@op` decorator
+    or the `.set_name()` function) will immediately flag and prevent conflicts
+    in artifact names. Automatically named artifacts will error if multiple
+    artifacts with the same name are included in a single `publish_flow` call.
+* Displays all compute engines associated with a workflow on the workflows list
+    page.
+* Improves efficiency when previewing large objects on the UI by retrieving a
+    sample of the data instead of the full data object and noting that the
+    displayed data is a sample.
+
+### Bugfixes
+* Fixes bug where an S3 or GCS bucket being used as the Aqueduct artifact store
+    could possibly be deleted from the UI.
+* Fixes bug that caused navigation buttons to be misaligned with other buttons
+    on the action bar on the workflow details page.
+* Fixes bug where navigating to the next most recent run on the workflow
+    details page would not work correctly.
+* Fixes bug pending or errored metric would show as "Unknown" on the UI instead
+    of with the correct status.
+* Fixes bug where warning-level checks were being shown as failures on the
+    workflows list page.
+* Fixes bug where certain DAG layouts would continue to show a layout with
+    overlapping and crossing edges.
+
+### Note
+* The parameterization of SQL queries may have unexpected behavior if you accidentally define a 
+    parameter with the same name twice. The parameter value will be chosen at random in such a case.
+    This bug will be fixed in the next release.
+
+## 0.2.6
+
+Released on March 14, 2023.
+
+### Key Features
+* Enables registering a workflow without immediately triggering a run of that
+    workflow. When calling `publish_flow` the `run_now` parameter can be set to
+    `False`, which will tell the Aqueduct server to wait until the next
+    scheduled (or triggered) run. In the interim, only the DAG's structure will
+    be shown without any execution metadata.
+
+### Enhancements
+* Adds error checking to ensure that a remote compute engine is paired with a
+    remote artifact store.
+* Adds error checking to ensure that a valid `kubeconfig` is provided when
+    connecting Aqueduct to Kubernetes.
+* Enables using `~` to refer to the home directory when specifying a path to
+    AWS credentials or a `kubeconfig`.
+* Adds icons to integration details views to indicate when an object store (AWS
+    S3, GCS) are being used for metadata storage.
+* Allows specifying the specific library version of CUDA when requesting GPU
+    resources; v11.4.1 is the current default because that is what EKS clusters
+    use by default.
+
+### Bugfixes
+* Fixes bug where certain errors occurring during task launch weren't clearly 
+    surfaced in the Aqueduct stack.
+* Fixes bug where, within a Python process, executing an operator in lazy mode
+    precluded users from later executing it in eager mode (or vice versa).
+* Fixes bug where notification count wasn't being shown.
+* Fixes bug where the notice for an ongoing metadata migration would run off
+    the end of the screen.
+* Removes duplicate "History" header on metric details page.
+
+## 0.2.5
+Released on March 7, 2023.
+
+### Key Features
+* Users can now run Aqueduct workflows on Spark clusters on AWS EMR. With Apache Livy as an interface, Aqueduct can submit your code to your Spark cluster reliably and seamlessly. See our documentation [here](https://docs.aqueducthq.com/integrations/adding-an-integration/connecting-to-spark-emr.md).
+* Redesigns node layout on DAG view to improve information presentation and
+    better distinguish between different node types.
+
+### Enhancements
+* Enables specification of Snowflake role when connecting the Snowflake
+    integration.
+* Updates workflow details page header to be more compact and reduce
+    information overload.
+* Adds support for specifying compute engine and resource requirements when
+    creating metrics & checks.
+
+### Bugfixes
+* Fixes issue where size of large rows on Snowflake was artificially limited.
+* Resolves requirement mismatches that would occur on the latest versions of
+    Ubuntu 22.
+* Fixes layout issue where dates on metric history graph could have been cut
+    off.
+* Fixes bug where the integration details page for compute integrations would
+    not list all workflows using that integration.
+* Fixes bug where metrics plot failed to render when upstream operator was 
+    cancelled.
+
+## 0.2.4
+Released on February 28, 2023.
+
+### Enhancements
+* Opens links to docs and feedback in new tabs rather than in the existing tab
+    on the Aqueduct UI.
+* When authoring a pipeline, allows reusing the same Python function multiple
+    times in the same DAG.
+* Improves the layout of the card displaying metadata storage information on
+    the settings page.
+
+### Bugfixes
+* Fixes bug where changing the Aqueduct metadata storage layer when there was a
+    previously-failed workflow would cause the data migration process to pause.
+* Fixes bug where certain DAGs would render in a confusing fashion on the
+    workflow details page. The algorithm for DAG layouts is now signifcantly
+    more reliable.
+
+## 0.2.3
+Released on February 22, 2023.
 
 ### Enhancements
 * Updates workflow and data table views to show overview of all executed checks

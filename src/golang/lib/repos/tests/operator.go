@@ -2,6 +2,7 @@ package tests
 
 import (
 	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/function"
@@ -34,6 +35,15 @@ func (ts *TestSuite) TestOperator_Get() {
 	requireDeepEqual(ts.T(), expectedOperator, *actualOperator)
 }
 
+func (ts *TestSuite) TestOperator_GetNode() {
+	_, _, _, expectedOpNodes, _ := ts.seedComplexWorkflow()
+	for _, expectedOp := range expectedOpNodes {
+		actualOp, err := ts.operator.GetNode(ts.ctx, expectedOp.ID, ts.DB)
+		require.Nil(ts.T(), err)
+		requireDeepEqual(ts.T(), expectedOp, *actualOp)
+	}
+}
+
 func (ts *TestSuite) TestOperator_GetBatch() {
 	expectedOperators := ts.seedOperator(3)
 
@@ -58,6 +68,18 @@ func (ts *TestSuite) TestOperator_GetByDAG() {
 	actualOperators, err := ts.operator.GetByDAG(ts.ctx, dag.ID, ts.DB)
 	require.Nil(ts.T(), err)
 	requireDeepEqualOperators(ts.T(), expectedOperators, actualOperators)
+}
+
+func (ts *TestSuite) TestOperator_GetNodesByDAG() {
+	dag, _, _, expectedOpNodes, _ := ts.seedComplexWorkflow()
+	actualOpNodes, err := ts.operator.GetNodesByDAG(ts.ctx, dag.ID, ts.DB)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), len(expectedOpNodes), len(actualOpNodes))
+	for _, actualOp := range actualOpNodes {
+		expectedOp, ok := expectedOpNodes[actualOp.Name]
+		require.True(ts.T(), ok)
+		requireDeepEqual(ts.T(), expectedOp, actualOp)
+	}
 }
 
 func (ts *TestSuite) TestOperator_GetDistinctLoadOPsByWorkflow() {
@@ -135,6 +157,67 @@ func (ts *TestSuite) TestOperator_GetLoadOPsByIntegration() {
 	requireDeepEqualOperators(ts.T(), []models.Operator{operators[0]}, actualOperators)
 }
 
+func (ts *TestSuite) TestOperator_GetByEngineIntegrationID() {
+	users := ts.seedUser(1)
+	user := users[0]
+	dags := ts.seedDAGWithUser(1, user)
+	dag := dags[0]
+
+	operators := ts.seedOperatorWithDAG(2, dag.ID, user.ID, operator.FunctionType)
+	k8sOperator := operators[0]
+	lambdaOperator := operators[1]
+
+	lambdaIntegrationID := uuid.New()
+	k8sIntegrationID := uuid.New()
+	_, err := ts.dag.Update(
+		ts.ctx,
+		dag.ID,
+		map[string]interface{}{
+			models.DagEngineConfig: &shared.EngineConfig{
+				Type: shared.LambdaEngineType,
+				LambdaConfig: &shared.LambdaConfig{
+					IntegrationID: lambdaIntegrationID,
+				},
+			},
+		},
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+
+	k8sOpSpec := k8sOperator.Spec.SetEngineConfig(
+		&shared.EngineConfig{
+			Type: shared.K8sEngineType,
+			K8sConfig: &shared.K8sConfig{
+				IntegrationID: k8sIntegrationID,
+			},
+		},
+	)
+
+	_, err = ts.operator.Update(
+		ts.ctx,
+		k8sOperator.ID,
+		map[string]interface{}{
+			models.OperatorSpec: k8sOpSpec,
+		},
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+
+	operators, err = ts.operator.GetByEngineIntegrationID(
+		ts.ctx, lambdaIntegrationID, ts.DB,
+	)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), 1, len(operators))
+	require.Equal(ts.T(), lambdaOperator.ID, operators[0].ID)
+
+	operators, err = ts.operator.GetByEngineIntegrationID(
+		ts.ctx, k8sIntegrationID, ts.DB,
+	)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), 1, len(operators))
+	require.Equal(ts.T(), k8sOperator.ID, operators[0].ID)
+}
+
 func (ts *TestSuite) TestOperator_ValidateOrg() {
 	users := ts.seedUser(1)
 	user := users[0]
@@ -151,6 +234,122 @@ func (ts *TestSuite) TestOperator_ValidateOrg() {
 	invalid, invalidErr := ts.operator.ValidateOrg(ts.ctx, operator.ID, randString(10), ts.DB)
 	require.Nil(ts.T(), invalidErr)
 	require.False(ts.T(), invalid)
+}
+
+func (ts *TestSuite) TestOperator_GetUnusedCondaEnvNames() {
+	artifactID := uuid.New()
+	users := ts.seedUser(1)
+	userIDs := sampleUserIDs(1, users)
+	workflows := ts.seedWorkflowWithUser(1, userIDs)
+	workflowIDs := sampleWorkflowIDs(1, workflows)
+	dags := ts.seedDAGWithWorkflow(2, []uuid.UUID{workflowIDs[0], workflowIDs[0]})
+	historicalOp := ts.seedOperatorAndDAGOperatorToArtifact(artifactID, dags[0].ID, operator.FunctionType)
+	historicalOp.Spec.SetEngineConfig(&shared.EngineConfig{
+		Type: shared.AqueductCondaEngineType,
+		AqueductCondaConfig: &shared.AqueductCondaConfig{
+			Env: "historical",
+		},
+	})
+	_, err := ts.operator.Update(
+		ts.ctx,
+		historicalOp.ID,
+		map[string]interface{}{
+			"spec": &historicalOp.Spec,
+		},
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+
+	latestOp := ts.seedOperatorAndDAGOperatorToArtifact(artifactID, dags[1].ID, operator.FunctionType)
+	latestOp.Spec.SetEngineConfig(&shared.EngineConfig{
+		Type: shared.AqueductCondaEngineType,
+		AqueductCondaConfig: &shared.AqueductCondaConfig{
+			Env: "latest",
+		},
+	})
+	_, err = ts.operator.Update(
+		ts.ctx,
+		latestOp.ID,
+		map[string]interface{}{
+			"spec": &latestOp.Spec,
+		},
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+
+	names, err := ts.operator.GetUnusedCondaEnvNames(ts.ctx, ts.DB)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), len(names), 1)
+	require.Equal(ts.T(), names[0], "historical")
+}
+
+func (ts *TestSuite) TestOperator_GetEngineTypesMapByDagIDs() {
+	users := ts.seedUser(1)
+	userIDs := sampleUserIDs(1, users)
+	workflows := ts.seedWorkflowWithUser(1, userIDs)
+	workflowIDs := sampleWorkflowIDs(1, workflows)
+	dags := ts.seedDAGWithWorkflow(2, []uuid.UUID{workflowIDs[0], workflowIDs[0]})
+
+	operators := ts.seedOperatorWithDAG(1, dags[0].ID, users[0].ID, operator.FunctionType)
+	k8sOp := operators[0]
+	k8sOp.Spec.SetEngineConfig(&shared.EngineConfig{
+		Type: shared.K8sEngineType,
+	})
+	_, err := ts.operator.Update(
+		ts.ctx,
+		k8sOp.ID,
+		map[string]interface{}{
+			"spec": &k8sOp.Spec,
+		},
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+
+	operators = ts.seedOperatorWithDAG(1, dags[0].ID, users[0].ID, operator.FunctionType)
+	databricksOp := operators[0]
+	databricksOp.Spec.SetEngineConfig(&shared.EngineConfig{
+		Type: shared.DatabricksEngineType,
+	})
+	_, err = ts.operator.Update(
+		ts.ctx,
+		databricksOp.ID,
+		map[string]interface{}{
+			"spec": &databricksOp.Spec,
+		},
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+
+	operators = ts.seedOperatorWithDAG(2, dags[1].ID, users[0].ID, operator.FunctionType)
+	sparkOp := operators[0]
+	sparkOp.Spec.SetEngineConfig(&shared.EngineConfig{
+		Type: shared.SparkEngineType,
+	})
+	_, err = ts.operator.Update(
+		ts.ctx,
+		sparkOp.ID,
+		map[string]interface{}{
+			"spec": &sparkOp.Spec,
+		},
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+
+	dagIDToEngineTypes, err := ts.operator.GetEngineTypesMapByDagIDs(
+		ts.ctx,
+		[]uuid.UUID{dags[0].ID, dags[1].ID},
+		ts.DB,
+	)
+	require.Nil(ts.T(), err)
+	actualDag0Types := dagIDToEngineTypes[dags[0].ID]
+	require.Equal(ts.T(), len(actualDag0Types), 2)
+	require.Contains(ts.T(), actualDag0Types, shared.K8sEngineType)
+	require.Contains(ts.T(), actualDag0Types, shared.DatabricksEngineType)
+
+	actualDag1Types := dagIDToEngineTypes[dags[1].ID]
+	require.Equal(ts.T(), len(actualDag1Types), 2)
+	require.Contains(ts.T(), actualDag1Types, shared.SparkEngineType)
+	require.Contains(ts.T(), actualDag1Types, shared.EngineType(""))
 }
 
 func (ts *TestSuite) TestOperator_Create() {

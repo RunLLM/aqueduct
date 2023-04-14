@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.generic_artifact import GenericArtifact
+from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.constants.enums import ArtifactType
 from aqueduct.error import InvalidUserArgumentException
 
@@ -74,6 +75,7 @@ def test_eager_operator_after_lazy(client):
     assert bar_result.get() == 2.0
 
 
+@pytest.mark.skip_for_spark_engines(reason="Built-in metrics don't work with Spark engines.")
 def test_table_artifact_lazy_syntax_sugar(client, data_integration):
     table_artifact = extract(data_integration, DataObject.SENTIMENT, lazy=True)
     num_rows_artifact = table_artifact.number_of_rows(lazy=True)
@@ -83,6 +85,7 @@ def test_table_artifact_lazy_syntax_sugar(client, data_integration):
     assert num_rows_artifact._get_content() is not None
 
 
+@pytest.mark.skip_for_spark_engines(reason="Built-in metrics don't work with Spark engines.")
 def test_numeric_artifact_lazy_syntax_sugar(client):
     @op
     def generate_number():
@@ -111,6 +114,7 @@ def test_lazy_artifact_type(client):
     assert isinstance(output_artifact, GenericArtifact)
 
 
+@pytest.mark.skip_for_spark_engines(reason="Built-in metrics don't work with Spark engines.")
 def test_lazy_global_config(client, data_integration):
     with pytest.raises(InvalidUserArgumentException):
         global_config({"lazy": 1234})
@@ -223,7 +227,12 @@ def test_lazy_artifact_with_save(client, flow_name, data_integration, engine, da
 
     @op()
     def copy_field(df):
-        df["new"] = df["review"]
+        if isinstance(df, pd.DataFrame):
+            df["new"] = df["review"]
+        else:
+            from pyspark.sql.functions import col
+
+            df = df.withColumn("new", col("review"))
         return df
 
     review_copied = copy_field.lazy(reviews)
@@ -238,3 +247,22 @@ def test_lazy_artifact_with_save(client, flow_name, data_integration, engine, da
     data_validator.check_saved_artifact_data(
         flow, review_copied.id(), expected_data=copy_field.local(reviews)
     )
+
+
+@pytest.mark.skip_for_spark_engines(reason="We by default run Spark engines in lazy mode.")
+def test_eager_then_lazy(client):
+    """For an operator, checks that we can switch its execution mode from eager to lazy."""
+
+    @op
+    def number():
+        return 1
+
+    result = number()
+    assert isinstance(result, NumericArtifact)
+    assert result.get() == 1
+
+    global_config({"lazy": True})
+
+    result = number()
+    assert isinstance(result, GenericArtifact)
+    assert result.get() == 1

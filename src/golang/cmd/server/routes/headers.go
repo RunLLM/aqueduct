@@ -10,6 +10,12 @@ const (
 	IntegrationNameHeader    = "integration-name"
 	IntegrationServiceHeader = "integration-service"
 	IntegrationConfigHeader  = "integration-config"
+	IntegrationIDsHeader     = "integration-ids"
+
+	// Storage Migration Headers
+	StorageMigrationFilterStatusHeader   = "status"
+	StorageMigrationLimitHeader          = "limit"
+	StorageMigrationCompletedSinceHeader = "completed-since"
 
 	// Export Function headers
 	ExportFnUserFriendlyHeader = "user-friendly"
@@ -17,4 +23,7 @@ const (
 	TableNameHeader = "table-name"
 
 	MetadataOnlyHeader = "metadata-only"
+
+	RunNowHeader              = "run-now"
+	DynamicEngineActionHeader = "action"
 )

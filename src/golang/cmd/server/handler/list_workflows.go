@@ -5,9 +5,10 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/config"
-	"github.com/aqueducthq/aqueduct/lib/airflow"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/engine"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/logging"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	db_operator "github.com/aqueducthq/aqueduct/lib/models/shared/operator"
@@ -17,7 +18,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 )
 
@@ -32,15 +32,16 @@ import (
 //		serialized `listWorkflowsResponse`, a list of workflow information in the user's org
 
 type workflowResponse struct {
-	Id          uuid.UUID                 `json:"id"`
-	Name        string                    `json:"name"`
-	Description string                    `json:"description"`
-	CreatedAt   int64                     `json:"created_at"`
-	LastRunAt   int64                     `json:"last_run_at"`
-	Status      shared.ExecutionStatus    `json:"status"`
-	Engine      string                    `json:"engine"`
-	Checks      []operator.ResultResponse `json:"checks"`
-	Metrics     []artifact.ResultResponse `json:"metrics"`
+	Id              uuid.UUID                 `json:"id"`
+	Name            string                    `json:"name"`
+	Description     string                    `json:"description"`
+	CreatedAt       int64                     `json:"created_at"`
+	LastRunAt       int64                     `json:"last_run_at"`
+	Status          shared.ExecutionStatus    `json:"status"`
+	Engine          shared.EngineType         `json:"engine"`
+	OperatorEngines []shared.EngineType       `json:"operator_engines"`
+	Checks          []operator.ResultResponse `json:"checks"`
+	Metrics         []artifact.ResultResponse `json:"metrics"`
 }
 
 type ListWorkflowsHandler struct {
@@ -74,9 +75,30 @@ func (*ListWorkflowsHandler) Prepare(r *http.Request) (interface{}, int, error) 
 func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*aq_context.AqContext)
 
+	storageConfig := config.Storage()
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return nil,
+			http.StatusInternalServerError,
+			errors.Wrap(err, "Unable to initialize vault to sync self-orchestrated workflows.")
+	}
+
 	// Asynchronously sync self-orchestrated workflow runs
 	go func() {
-		if err := syncSelfOrchestratedWorkflows(context.Background(), h, args.OrgID); err != nil {
+		if err := engine.SyncSelfOrchestratedWorkflows(
+			context.Background(),
+			args.OrgID,
+			h.ArtifactRepo,
+			h.ArtifactResultRepo,
+			h.DAGRepo,
+			h.DAGEdgeRepo,
+			h.DAGResultRepo,
+			h.OperatorRepo,
+			h.OperatorResultRepo,
+			h.WorkflowRepo,
+			vaultObject,
+			h.Database,
+		); err != nil {
 			logging.LogAsyncEvent(ctx, logging.ServerComponent, "Sync Workflows", err)
 		}
 	}()
@@ -86,9 +108,16 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to list workflows.")
 	}
 
+	dagIDs := make([]uuid.UUID, 0, len(latestStatuses))
 	dagResultIDs := make([]uuid.UUID, 0, len(latestStatuses))
 	for _, status := range latestStatuses {
+		dagIDs = append(dagIDs, status.DagID)
 		dagResultIDs = append(dagResultIDs, status.ResultID)
+	}
+
+	engineTypesByDagID, err := h.OperatorRepo.GetEngineTypesMapByDagIDs(ctx, dagIDs, h.Database)
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to get engine types.")
 	}
 
 	checkResults, err := h.OperatorResultRepo.GetWithOperatorByDAGResultBatch(
@@ -135,11 +164,12 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 	if len(workflowIDs) > 0 {
 		for _, latestStatus := range latestStatuses {
 			response := workflowResponse{
-				Id:          latestStatus.ID,
-				Name:        latestStatus.Name,
-				Description: latestStatus.Description,
-				CreatedAt:   latestStatus.CreatedAt.Unix(),
-				Engine:      latestStatus.Engine,
+				Id:              latestStatus.ID,
+				Name:            latestStatus.Name,
+				Description:     latestStatus.Description,
+				CreatedAt:       latestStatus.CreatedAt.Unix(),
+				Engine:          latestStatus.Engine,
+				OperatorEngines: engineTypesByDagID[latestStatus.DagID],
 			}
 
 			for _, checkResult := range checkResultsByDAGResultID[latestStatus.ResultID] {
@@ -158,7 +188,7 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 					if err == nil {
 						content := string(contentBytes)
 						contentPtr = &content
-					} else if err != storage.ErrObjectDoesNotExist {
+					} else if !errors.Is(err, storage.ErrObjectDoesNotExist()) {
 						return nil, http.StatusInternalServerError, errors.Wrap(
 							err, "Unable to get metric content from storage",
 						)
@@ -188,44 +218,4 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 	}
 
 	return workflowResponses, http.StatusOK, nil
-}
-
-// syncSelfOrchestratedWorkflows syncs any workflow DAG results for any workflows running on a
-// self-orchestrated engine for the user's organization.
-func syncSelfOrchestratedWorkflows(ctx context.Context, h *ListWorkflowsHandler, orgID string) error {
-	// Sync workflows running on self-orchestrated engines
-	airflowDagIDs, err := h.DAGRepo.GetLatestIDsByOrgAndEngine(
-		ctx,
-		orgID,
-		shared.AirflowEngineType,
-		h.Database,
-	)
-	if err != nil {
-		return err
-	}
-
-	storageConfig := config.Storage()
-	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
-	if err != nil {
-		return errors.Wrap(err, "Unable to initialize vault.")
-	}
-
-	if err := airflow.SyncDAGs(
-		ctx,
-		airflowDagIDs,
-		h.WorkflowRepo,
-		h.DAGRepo,
-		h.OperatorRepo,
-		h.ArtifactRepo,
-		h.DAGEdgeRepo,
-		h.DAGResultRepo,
-		h.OperatorResultRepo,
-		h.ArtifactResultRepo,
-		vaultObject,
-		h.Database,
-	); err != nil {
-		return err
-	}
-
-	return nil
 }

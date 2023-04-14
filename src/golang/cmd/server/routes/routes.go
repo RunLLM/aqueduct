@@ -1,13 +1,28 @@
 package routes
 
-// Please sort the route by their VALUEs
+// Please sort the routes by their VALUEs
 const (
+	// V2 routes
+	ListStorageMigrationRoute = "/api/v2/storage-migrations"
+
+	WorkflowRoute                  = "/api/v2/workflow/{workflowID}"
+	DAGRoute                       = "/api/v2/workflow/{workflowID}/dag/{dagID}"
+	DAGResultRoute                 = "/api/v2/workflow/{workflowID}/result/{dagResultID}"
+	NodesRoute                     = "/api/v2/workflow/{workflowID}/dag/{dagID}/nodes"
+	NodeArtifactRoute              = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/artifact/{nodeID}"
+	NodeArtifactResultContentRoute = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/artifact/{nodeID}/result/{nodeResultID}/content"
+	NodeArtifactResultsRoute       = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/artifact/{nodeID}/results"
+	NodeOperatorRoute              = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/operator/{nodeID}"
+	NodeOperatorContentRoute       = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/operator/{nodeID}/content"
+	NodesResultsRoute              = "/api/v2/workflow/{workflowID}/result/{dagResultID}/nodes/results"
+
+	// V1 routes
 	GetArtifactVersionsRoute = "/api/artifact/versions"
 	GetArtifactResultRoute   = "/api/artifact/{workflowDagResultId}/{artifactId}/result"
 
-	GetConfigRoute = "/api/config"
+	GetConfigRoute        = "/api/config"
+	ConfigureStorageRoute = "/api/config/storage/{integrationId}"
 
-	GetFunctionRoute    = "/api/function/{functionId}"
 	ExportFunctionRoute = "/api/function/{operatorId}/export"
 
 	ListIntegrationsRoute            = "/api/integrations"
@@ -20,6 +35,8 @@ const (
 	PreviewTableRoute                = "/api/integration/{integrationId}/preview"
 	ListOperatorsForIntegrationRoute = "/api/integration/{integrationId}/operators"
 	TestIntegrationRoute             = "/api/integration/{integrationId}/test"
+	GetDynamicEngineStatusRoute      = "/api/integration/dynamic-engine/status"
+	EditDynamicEngineRoute           = "/api/integration/dynamic-engine/{integrationId}/edit"
 
 	ResetApiKeyRoute = "/api/keys/reset" // nolint:gosec
 
@@ -36,15 +53,15 @@ const (
 	ListWorkflowsRoute           = "/api/workflows"
 	RegisterWorkflowRoute        = "/api/workflow/register"
 	RegisterAirflowWorkflowRoute = "/api/workflow/register/airflow"
-	GetWorkflowRoute             = "/api/workflow/{workflowId}"
+	GetWorkflowRouteV1           = "/api/workflow/{workflowId}"
 	ListArtifactResultsRoute     = "/api/workflow/{workflowId}/artifact/{artifactId}/results"
+	GetWorkflowDAGRoute          = "/api/workflow/{workflowId}/dag/{workflowDagID}"
 	ListWorkflowObjectsRoute     = "/api/workflow/{workflowId}/objects"
 	DeleteWorkflowRoute          = "/api/workflow/{workflowId}/delete"
 	EditWorkflowRoute            = "/api/workflow/{workflowId}/edit"
 	RefreshWorkflowRoute         = "/api/workflow/{workflowId}/refresh"
 	GetWorkflowDagResultRoute    = "/api/workflow/{workflowId}/result/{workflowDagResultId}"
-	UnwatchWorkflowRoute         = "/api/workflow/{workflowId}/unwatch"
-	WatchWorkflowRoute           = "/api/workflow/{workflowId}/watch"
+	GetWorkflowHistoryRoute      = "/api/workflow/{workflowId}/history"
 
 	GetServerVersionRoute     = "/api/version"
 	GetServerEnvironmentRoute = "/api/environment"

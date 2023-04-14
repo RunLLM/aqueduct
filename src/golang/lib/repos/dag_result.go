@@ -53,5 +53,18 @@ type dagResultWriter interface {
 	DeleteBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) error
 
 	// Update applies changes to the the DAGResult with ID. It returns the updated DAGResult.
-	Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.DAGResult, error)
+	Update(
+		ctx context.Context,
+		ID uuid.UUID,
+		changes map[string]interface{},
+		DB database.Database,
+	) (*models.DAGResult, error)
+
+	// UpdateBatchStatusByStatus updates DAG result's status based on the current status.
+	UpdateBatchStatusByStatus(
+		ctx context.Context,
+		from shared.ExecutionStatus,
+		to shared.ExecutionStatus,
+		DB database.Database,
+	) ([]models.DAGResult, error)
 }

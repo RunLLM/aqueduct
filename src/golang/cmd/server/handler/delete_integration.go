@@ -8,6 +8,7 @@ import (
 	"github.com/aqueducthq/aqueduct/config"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	aq_errors "github.com/aqueducthq/aqueduct/lib/errors"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -29,7 +30,8 @@ import (
 // The `DeleteIntegrationHandler` does a best effort at deleting an integration.
 type deleteIntegrationArgs struct {
 	*aq_context.AqContext
-	integrationID uuid.UUID
+	integrationObject            *models.Integration
+	skipActiveWorkflowValidation bool
 }
 
 type deleteIntegrationResponse struct{}
@@ -43,6 +45,7 @@ type DeleteIntegrationHandler struct {
 	ExecutionEnvironmentRepo repos.ExecutionEnvironment
 	IntegrationRepo          repos.Integration
 	OperatorRepo             repos.Operator
+	StorageMigrationRepo     repos.StorageMigration
 	WorkflowRepo             repos.Workflow
 }
 
@@ -62,6 +65,17 @@ func (h *DeleteIntegrationHandler) Prepare(r *http.Request) (interface{}, int, e
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
 	}
 
+	integrationObject, err := h.IntegrationRepo.Get(r.Context(), integrationID, h.Database)
+	if err != nil {
+		return nil, http.StatusNotFound, errors.Wrap(err, "Failed to retrieve integration object.")
+	}
+
+	if integrationObject.Service == shared.Kubernetes {
+		if _, ok := integrationObject.Config[shared.K8sCloudIntegrationIdKey]; ok {
+			return nil, http.StatusUnprocessableEntity, errors.Wrap(err, "Cannot delete the Aqueduct-generated k8s integration. Please delete the corresponding cloud integration instead.")
+		}
+	}
+
 	ok, err := h.IntegrationRepo.ValidateOwnership(
 		r.Context(),
 		integrationID,
@@ -77,9 +91,19 @@ func (h *DeleteIntegrationHandler) Prepare(r *http.Request) (interface{}, int, e
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this integration.")
 	}
 
+	// Check that we can't delete an integration that is being used as artifact storage.
+	currentStorageMigrationEntry, err := h.StorageMigrationRepo.Current(r.Context(), h.Database)
+	if err != nil && !aq_errors.Is(err, database.ErrNoRows()) {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving current storage migration entry.")
+	}
+	if currentStorageMigrationEntry != nil && currentStorageMigrationEntry.DestIntegrationID == integrationObject.ID {
+		return nil, http.StatusBadRequest, errors.New("Cannot delete an integration that is being used as artifact storage.")
+	}
+
 	return &deleteIntegrationArgs{
-		AqContext:     aqContext,
-		integrationID: integrationID,
+		AqContext:                    aqContext,
+		integrationObject:            integrationObject,
+		skipActiveWorkflowValidation: false,
 	}, http.StatusOK, nil
 }
 
@@ -87,21 +111,26 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 	args := interfaceArgs.(*deleteIntegrationArgs)
 	emptyResp := deleteIntegrationResponse{}
 
-	code, err := validateNoActiveWorkflowOnIntegration(
-		ctx,
-		args.integrationID,
-		h.OperatorRepo,
-		h.DAGRepo,
-		h.IntegrationRepo,
-		h.Database,
-	)
-	if err != nil {
-		return emptyResp, code, err
+	if !args.skipActiveWorkflowValidation {
+		if statusCode, err := validateNoActiveWorkflowOnIntegration(
+			ctx,
+			args.AqContext,
+			args.integrationObject,
+			h.OperatorRepo,
+			h.DAGRepo,
+			h.IntegrationRepo,
+			h.Database,
+		); err != nil {
+			return emptyResp, statusCode, err
+		}
 	}
 
-	integrationObject, err := h.IntegrationRepo.Get(ctx, args.integrationID, h.Database)
-	if err != nil {
-		return emptyResp, http.StatusBadRequest, errors.Wrap(err, "failed to retrieve the given integration.")
+	if args.integrationObject.Service == shared.AWS {
+		// Note that this will make a call to DeleteIntegrationHandler.Perform() to delete the
+		// Aqueduct-generated dynamic k8s integration.
+		if statusCode, err := deleteCloudIntegrationHelper(ctx, args, h); err != nil {
+			return emptyResp, statusCode, err
+		}
 	}
 
 	txn, err := h.Database.BeginTx(ctx)
@@ -110,7 +139,7 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	err = h.IntegrationRepo.Delete(ctx, args.integrationID, txn)
+	err = h.IntegrationRepo.Delete(ctx, args.integrationObject.ID, txn)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting integration.")
 	}
@@ -123,8 +152,8 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 
 	if err := cleanUpIntegration(
 		ctx,
-		integrationObject,
-		h.ExecutionEnvironmentRepo,
+		args.integrationObject,
+		h.OperatorRepo,
 		h.WorkflowRepo,
 		vaultObject,
 		txn,
@@ -145,7 +174,8 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 // using that integration.
 func validateNoActiveWorkflowOnIntegration(
 	ctx context.Context,
-	id uuid.UUID,
+	aqContext *aq_context.AqContext,
+	integrationObject *models.Integration,
 	operatorRepo repos.Operator,
 	dagRepo repos.DAG,
 	integrationRepo repos.Integration,
@@ -157,7 +187,7 @@ func validateNoActiveWorkflowOnIntegration(
 		DAGRepo:         dagRepo,
 		IntegrationRepo: integrationRepo,
 		OperatorRepo:    operatorRepo,
-	}).Perform(ctx, id)
+	}).Perform(ctx, &listOperatorsForIntegrationArgs{AqContext: aqContext, integrationObject: integrationObject})
 	if err != nil {
 		return code, errors.Wrap(err, "Error getting operators on this integration.")
 	}
@@ -184,7 +214,7 @@ func validateNoActiveWorkflowOnIntegration(
 func cleanUpIntegration(
 	ctx context.Context,
 	integrationObject *models.Integration,
-	execEnvRepo repos.ExecutionEnvironment,
+	operatorRepo repos.Operator,
 	workflowRepo repos.Workflow,
 	vaultObject vault.Vault,
 	DB database.Database,
@@ -192,7 +222,7 @@ func cleanUpIntegration(
 	if integrationObject.Service == shared.Conda {
 		// Best effort to clean up
 		err := exec_env.CleanupUnusedEnvironments(
-			ctx, execEnvRepo, DB,
+			ctx, operatorRepo, DB,
 		)
 		if err != nil {
 			return err

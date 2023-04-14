@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -17,18 +16,22 @@ import (
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/notification"
 	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/storage"
+	"github.com/aqueducthq/aqueduct/lib/storage_migration"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
+	"github.com/hashicorp/go-version"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -36,6 +39,13 @@ const (
 	pollAuthenticateInterval = 500 * time.Millisecond
 	pollAuthenticateTimeout  = 2 * time.Minute
 )
+
+var pathConfigKeys = map[string]bool{
+	"config_file_path":    true, // AWS, S3, Athena credentials path
+	"kubeconfig_path":     true, // K8s credentials path
+	"s3_credentials_path": true, // Airflow S3 credentials path
+	"database":            true, // SQLite database path
+}
 
 // Route: /integration/connect
 // Method: POST
@@ -54,11 +64,12 @@ type ConnectIntegrationHandler struct {
 	Database   database.Database
 	JobManager job.JobManager
 
-	ArtifactRepo       repos.Artifact
-	ArtifactResultRepo repos.ArtifactResult
-	DAGRepo            repos.DAG
-	IntegrationRepo    repos.Integration
-	OperatorRepo       repos.Operator
+	ArtifactRepo         repos.Artifact
+	ArtifactResultRepo   repos.ArtifactResult
+	DAGRepo              repos.DAG
+	IntegrationRepo      repos.Integration
+	StorageMigrationRepo repos.StorageMigration
+	OperatorRepo         repos.Operator
 
 	PauseServer   func()
 	RestartServer func()
@@ -111,10 +122,25 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 		return nil, http.StatusBadRequest, errors.Newf("%s integration type is currently not supported", service)
 	}
 
-	config := auth.NewStaticConfig(configMap)
+	if err = convertToAbsolutePath(configMap); err != nil {
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Error getting server's home directory path")
+	}
+
+	// Sanitize the root directory path for S3. We remove any leading slash, but force there to always
+	// be a trailing slash. eg: `path/to/root/`.
+	if service == shared.S3 {
+		if root_dir, ok := configMap["root_dir"]; ok && root_dir != "" {
+			if root_dir[len(root_dir)-1] != '/' {
+				root_dir += "/"
+			}
+			configMap["root_dir"] = strings.TrimLeft(root_dir, "/")
+		}
+	}
+
+	staticConfig := auth.NewStaticConfig(configMap)
 
 	// Check if this integration should be used as the new storage layer
-	setStorage, err := checkIntegrationSetStorage(service, config)
+	setStorage, err := checkIntegrationSetStorage(service, staticConfig)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to connect integration.")
 	}
@@ -123,7 +149,7 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 		AqContext:    aqContext,
 		Service:      service,
 		Name:         name,
-		Config:       config,
+		Config:       staticConfig,
 		UserOnly:     userOnly,
 		SetAsStorage: setStorage,
 	}, http.StatusOK, nil
@@ -166,8 +192,22 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	if statusCode, err := ConnectIntegration(ctx, args, h.IntegrationRepo, txn); err != nil {
+	// Assumption: we are always ADDING a new integration, so `integrationObj` must be a freshly created
+	// integration entry on success.
+	integrationObj, statusCode, err := ConnectIntegration(ctx, args, h.IntegrationRepo, txn)
+	if err != nil {
 		return emptyResp, statusCode, err
+	}
+
+	if args.Service == shared.AWS {
+		if statusCode, err := setupCloudIntegration(
+			ctx,
+			args,
+			h,
+			txn,
+		); err != nil {
+			return emptyResp, statusCode, err
+		}
 	}
 
 	if err := txn.Commit(ctx); err != nil {
@@ -175,58 +215,49 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	}
 
 	if args.SetAsStorage {
-		// This integration should be used as the new storage layer.
-		// In order to do so, we need to migrate all content from the old store
-		// to the new store. This requires pausing the server and then restarting it.
-		// All of this logic is performed asynchronously so that the user knows that
-		// the connect integration request has succeeded and that the migration is now
-		// under way.
-		go func() {
-			// Wait until the server is paused
-			h.PauseServer()
-			// Makes sure that the server is restarted
-			defer h.RestartServer()
+		confData, err := args.Config.Marshal()
+		if err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
 
-			// Wait until there are no more workflow runs in progress
-			lock := utils.NewExecutionLock()
-			if err := lock.Lock(); err != nil {
-				log.Errorf("Unexpected error when acquiring workflow execution lock: %v. Aborting storage migration!", err)
-				return
-			}
-			defer func() {
-				if err := lock.Unlock(); err != nil {
-					log.Errorf("Unexpected error when unlocking workflow execution lock: %v", err)
-				}
-			}()
+		newStorageConfig, err := storage.ConvertIntegrationConfigToStorageConfig(args.Service, confData)
+		if err != nil {
+			return emptyResp, http.StatusBadRequest, errors.Wrap(err, "Integration config is malformed.")
+		}
 
-			if err := setIntegrationAsStorage(
-				context.Background(),
-				args.Service,
-				args.Config,
-				args.OrgID,
-				h.DAGRepo,
-				h.ArtifactRepo,
-				h.ArtifactResultRepo,
-				h.OperatorRepo,
-				h.IntegrationRepo,
-				h.Database,
-			); err != nil {
-				log.Errorf("Unexpected error when setting the new storage layer: %v", err)
-			}
-		}()
+		err = storage_migration.Perform(
+			ctx,
+			args.OrgID,
+			integrationObj,
+			newStorageConfig,
+			h.PauseServer,
+			h.RestartServer,
+			h.ArtifactRepo,
+			h.ArtifactResultRepo,
+			h.DAGRepo,
+			h.IntegrationRepo,
+			h.OperatorRepo,
+			h.StorageMigrationRepo,
+			h.Database,
+		)
+		if err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to migrate storage layer.")
+		}
 	}
 
 	return emptyResp, http.StatusOK, nil
 }
 
-// ConnectIntegration connects a new integration specified by `args`. It returns a status code for the request
-// and an error, if any.
+// ConnectIntegration connects a new integration specified by `args`.
+// It returns the integration object, the status code for the request and an error, if any.
+// If an error is returns, the integration object is guaranteed to be nil. Conversely, the integration
+// object is always well-formed on success.
 func ConnectIntegration(
 	ctx context.Context,
 	args *ConnectIntegrationArgs,
 	integrationRepo repos.Integration,
 	DB database.Database,
-) (int, error) {
+) (*models.Integration, int, error) {
 	// Extract non-confidential config
 	publicConfig := args.Config.PublicConfig()
 
@@ -256,13 +287,13 @@ func ConnectIntegration(
 		)
 	}
 	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
 	storageConfig := config.Storage()
 	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
 	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
 	}
 
 	// Store config (including confidential information) in vault
@@ -272,9 +303,10 @@ func ConnectIntegration(
 		args.Config,
 		vaultObject,
 	); err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
+	// TODO(ENG-2523): move base conda env creation outside of ConnectIntegration.
 	if args.Service == shared.Conda {
 		go func() {
 			DB, err = database.NewDatabase(DB.Config())
@@ -292,7 +324,25 @@ func ConnectIntegration(
 		}()
 	}
 
-	return http.StatusOK, nil
+	if args.Service == shared.Lambda {
+		go func() {
+			DB, err = database.NewDatabase(DB.Config())
+			if err != nil {
+				log.Errorf("Error creating DB in go routine: %v", err)
+				return
+			}
+
+			lambda_utils.ConnectToLambda(
+				context.Background(),
+				args.Config,
+				integrationObject.ID,
+				integrationRepo,
+				DB,
+			)
+		}()
+	}
+
+	return integrationObject, http.StatusOK, nil
 }
 
 // ValidateConfig authenticates the config provided.
@@ -318,9 +368,10 @@ func ValidateConfig(
 	}
 
 	if service == shared.Lambda {
-		// Lambda authentication is performed by creating Lambda jobs
-		// instead of the Python client, so we don't launch a job for it.
-		return validateLambdaConfig(ctx, config)
+		// Lambda authentication is performed in ConnectToLambda()
+		// by creating Lambda jobs instead of the Python client,
+		// so we don't launch a job for it.
+		return http.StatusOK, nil
 	}
 
 	if service == shared.Databricks {
@@ -329,12 +380,20 @@ func ValidateConfig(
 		return validateDatabricksConfig(ctx, config)
 	}
 
+	if service == shared.Spark {
+		return validateSparkConfig(ctx, config)
+	}
+
 	if service == shared.Email {
 		return validateEmailConfig(config)
 	}
 
 	if service == shared.Slack {
 		return validateSlackConfig(config)
+	}
+
+	if service == shared.AWS {
+		return validateAWSConfig(config)
 	}
 
 	jobName := fmt.Sprintf("authenticate-operator-%s", uuid.New().String())
@@ -347,7 +406,7 @@ func ValidateConfig(
 
 	defer func() {
 		// Delete storage files created for authenticate job metadata
-		go utils.CleanupStorageFiles(ctx, storageConfig, []string{jobMetadataPath})
+		go utils.CleanupStorageFiles(context.Background(), storageConfig, []string{jobMetadataPath})
 	}()
 
 	jobSpec := job.NewAuthenticateSpec(
@@ -439,157 +498,6 @@ func checkIntegrationSetStorage(svc shared.Service, conf auth.Config) (bool, err
 	}
 }
 
-// setIntegrationAsStorage use the integration config `conf` and updates the global
-// storage config with it. This involves migrating the storage (and vault) content to the new
-// storage layer.
-func setIntegrationAsStorage(
-	ctx context.Context,
-	svc shared.Service,
-	conf auth.Config,
-	orgID string,
-	dagRepo repos.DAG,
-	artifactRepo repos.Artifact,
-	artifactResultRepo repos.ArtifactResult,
-	operatorRepo repos.Operator,
-	integrationRepo repos.Integration,
-	db database.Database,
-) error {
-	data, err := conf.Marshal()
-	if err != nil {
-		return err
-	}
-
-	var storageConfig *shared.StorageConfig
-
-	switch svc {
-	case shared.S3:
-		var c shared.S3IntegrationConfig
-		if err := json.Unmarshal(data, &c); err != nil {
-			return err
-		}
-
-		storageConfig, err = convertS3IntegrationtoStorageConfig(&c)
-		if err != nil {
-			return err
-		}
-	case shared.GCS:
-		var c shared.GCSIntegrationConfig
-		if err := json.Unmarshal(data, &c); err != nil {
-			return err
-		}
-
-		storageConfig = convertGCSIntegrationtoStorageConfig(&c)
-	default:
-		return errors.Newf("%v cannot be used as the metadata storage layer", svc)
-	}
-
-	currentStorageConfig := config.Storage()
-
-	// Migrate all storage content to the new storage config
-	if err := utils.MigrateStorageAndVault(
-		ctx,
-		&currentStorageConfig,
-		storageConfig,
-		orgID,
-		dagRepo,
-		artifactRepo,
-		artifactResultRepo,
-		operatorRepo,
-		integrationRepo,
-		db,
-	); err != nil {
-		return err
-	}
-
-	// Change global storage config
-	return config.UpdateStorage(storageConfig)
-}
-
-func convertS3IntegrationtoStorageConfig(c *shared.S3IntegrationConfig) (*shared.StorageConfig, error) {
-	// Users provide AWS credentials for an S3 integration via one of the following:
-	//  1. AWS Access Key and Secret Key
-	//  2. Credentials file content
-	//  3. Credentials filepath and profile name
-	// The S3 Storage implementation expects the AWS credentials to be specified via a
-	// filepath and profile name, so we must convert the above to the correct format.
-	storageConfig := &shared.StorageConfig{
-		Type: shared.S3StorageType,
-		S3Config: &shared.S3Config{
-			Bucket: fmt.Sprintf("s3://%s", c.Bucket),
-			Region: c.Region,
-		},
-	}
-	switch c.Type {
-	case shared.AccessKeyS3ConfigType:
-		// AWS access and secret keys need to be written to a credentials file
-		path := filepath.Join(config.AqueductPath(), "storage", uuid.NewString())
-		f, err := os.Create(path)
-		if err != nil {
-			return nil, err
-		}
-		defer f.Close()
-
-		credentialsContent := fmt.Sprintf(
-			"[default]\naws_access_key_id=%s\naws_secret_access_key=%s\n",
-			c.AccessKeyId,
-			c.SecretAccessKey,
-		)
-		if _, err := f.WriteString(credentialsContent); err != nil {
-			return nil, err
-		}
-
-		storageConfig.S3Config.CredentialsPath = path
-		storageConfig.S3Config.CredentialsProfile = "default"
-	case shared.ConfigFileContentS3ConfigType:
-		// The credentials content needs to be written to a credentials file
-		path := filepath.Join(config.AqueductPath(), "storage", uuid.NewString())
-		f, err := os.Create(path)
-		if err != nil {
-			return nil, err
-		}
-		defer f.Close()
-
-		// Determine profile name by looking for [profile_name]
-		i := strings.Index(c.ConfigFileContent, "[")
-		if i < 0 {
-			return nil, errors.New("Unable to determine AWS credentials profile name.")
-		}
-
-		j := strings.Index(c.ConfigFileContent, "]")
-		if j < 0 {
-			return nil, errors.New("Unable to determine AWS credentials profile name.")
-		}
-
-		profileName := c.ConfigFileContent[i+1 : j]
-
-		if _, err := f.WriteString(c.ConfigFileContent); err != nil {
-			return nil, err
-		}
-
-		storageConfig.S3Config.CredentialsPath = path
-		storageConfig.S3Config.CredentialsProfile = profileName
-	case shared.ConfigFilePathS3ConfigType:
-		// The credentials are already in the form of a filepath and profile, so no changes
-		// need to be made
-		storageConfig.S3Config.CredentialsPath = c.ConfigFilePath
-		storageConfig.S3Config.CredentialsProfile = c.ConfigFileProfile
-	default:
-		return nil, errors.Newf("Unknown S3ConfigType: %v", c.Type)
-	}
-
-	return storageConfig, nil
-}
-
-func convertGCSIntegrationtoStorageConfig(c *shared.GCSIntegrationConfig) *shared.StorageConfig {
-	return &shared.StorageConfig{
-		Type: shared.GCSStorageType,
-		GCSConfig: &shared.GCSConfig{
-			Bucket:                    c.Bucket,
-			ServiceAccountCredentials: c.ServiceAccountCredentials,
-		},
-	}
-}
-
 func validateKubernetesConfig(
 	ctx context.Context,
 	config auth.Config,
@@ -601,22 +509,23 @@ func validateKubernetesConfig(
 	return http.StatusOK, nil
 }
 
-func validateLambdaConfig(
+func validateDatabricksConfig(
 	ctx context.Context,
 	config auth.Config,
 ) (int, error) {
-	if err := engine.AuthenticateLambdaConfig(ctx, config); err != nil {
+	if err := engine.AuthenticateDatabricksConfig(ctx, config); err != nil {
 		return http.StatusBadRequest, err
 	}
 
 	return http.StatusOK, nil
 }
 
-func validateDatabricksConfig(
+func validateSparkConfig(
 	ctx context.Context,
 	config auth.Config,
 ) (int, error) {
-	if err := engine.AuthenticateDatabricksConfig(ctx, config); err != nil {
+	// Validate that we are able to connect to the Spark cluster via Livy.
+	if err := engine.AuthenticateSparkConfig(ctx, config); err != nil {
 		return http.StatusBadRequest, err
 	}
 
@@ -649,6 +558,16 @@ func validateSlackConfig(config auth.Config) (int, error) {
 	return http.StatusOK, nil
 }
 
+func validateAWSConfig(
+	config auth.Config,
+) (int, error) {
+	if err := engine.AuthenticateAWSConfig(config); err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	return http.StatusOK, nil
+}
+
 // ValidatePrerequisites validates if the integration for the given service can be connected at all.
 // 1) Checks if an integration already exists for unique integrations including conda, email, and slack.
 // 2) Checks if the name has already been taken.
@@ -666,7 +585,7 @@ func ValidatePrerequisites(
 	if err == nil {
 		return http.StatusBadRequest, errors.Newf("Cannot connect to an integration %s, since it already exists.", name)
 	}
-	if err != database.ErrNoRows {
+	if !errors.Is(err, database.ErrNoRows()) {
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to query for existing integrations.")
 	}
 
@@ -688,11 +607,18 @@ func ValidatePrerequisites(
 		if err = exec_env.ValidateCondaDevelop(); err != nil {
 			return http.StatusBadRequest, errors.Wrap(
 				err,
-				"You don't seem to have `conda develop` available. We use this to help set up conda environments. Please install the dependency before connecting Aqueduct to Conda. Typically, this can be done by running `conda install conda-build`.",
+				"Failed to run `conda develop`. We use this to help set up conda environments. Please install the dependency before connecting Aqueduct to Conda. Typically, this can be done by running `conda install conda-build`.",
 			)
 		}
 
 		return http.StatusOK, nil
+	}
+
+	if svc != shared.Conda && shared.IsComputeIntegration(svc) {
+		// For all non-conda compute integrations, we require the metadata store to be cloud storage.
+		if config.Storage().Type == shared.FileStorageType {
+			return http.StatusBadRequest, errors.Newf("You need to setup cloud storage as metadata store before registering compute integration of type %s.", svc)
+		}
 	}
 
 	// These integrations should be unique.
@@ -713,15 +639,58 @@ func ValidatePrerequisites(
 		return http.StatusOK, nil
 	}
 
+	// For AWS integration, we require the user to have AWS CLI and Terraform installed.
+	// We also require env (GNU coreutils) executable to set the env variables when using the AWS CLI.
+	if svc == shared.AWS {
+		if _, _, err := lib_utils.RunCmd("terraform", []string{"--version"}, "", false); err != nil {
+			return http.StatusNotFound, errors.Wrap(err, "terraform executable not found. Please go to https://developer.hashicorp.com/terraform/downloads to install terraform")
+		}
+
+		awsVersionString, _, err := lib_utils.RunCmd("aws", []string{"--version"}, "", false)
+		if err != nil {
+			return http.StatusNotFound, errors.Wrap(err, "AWS CLI executable not found. Please go to https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html to install AWS CLI")
+		}
+
+		awsVersion, err := version.NewVersion(strings.Split(strings.Split(awsVersionString, " ")[0], "/")[1])
+		if err != nil {
+			return http.StatusUnprocessableEntity, errors.Wrap(err, "Error parsing AWS CLI version")
+		}
+
+		requiredVersion, _ := version.NewVersion("2.11.5")
+		if awsVersion.LessThan(requiredVersion) {
+			return http.StatusUnprocessableEntity, errors.Wrapf(err, "AWS CLI version 2.11.5 and above is required, but you got %s. Please update!", awsVersion.String())
+		}
+
+		if _, _, err := lib_utils.RunCmd("env", []string{"--version"}, "", false); err != nil {
+			return http.StatusNotFound, errors.Wrap(err, "env (GNU coreutils) executable not found.")
+		}
+	}
+
 	return http.StatusOK, nil
 }
 
 func validateConda() (int, error) {
 	errMsg := "Unable to validate conda installation. Do you have conda installed?"
-	_, _, err := lib_utils.RunCmd(exec_env.CondaCmdPrefix, "--version")
+	_, _, err := lib_utils.RunCmd(exec_env.CondaCmdPrefix, []string{"--version"}, "", false)
 	if err != nil {
 		return http.StatusBadRequest, errors.Wrap(err, errMsg)
 	}
 
 	return http.StatusOK, nil
+}
+
+func convertToAbsolutePath(configMap map[string]string) error {
+	for key, path := range configMap {
+		if _, ok := pathConfigKeys[key]; ok {
+			if strings.HasPrefix(path, "~") {
+				homeDir, err := os.UserHomeDir()
+				if err != nil {
+					return err
+				}
+				configMap[key] = strings.Replace(path, "~", homeDir, 1)
+			}
+		}
+	}
+
+	return nil
 }

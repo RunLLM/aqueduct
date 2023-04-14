@@ -26,12 +26,17 @@ def test_basic_get(client, data_integration, engine):
 
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
     sql_df = table_artifact.get()
-    assert list(sql_df) == ["hotel_name", "review_date", "reviewer_nationality", "review"]
+    assert [col.lower() for col in list(sql_df)] == [
+        "hotel_name",
+        "review_date",
+        "reviewer_nationality",
+        "review",
+    ]
     assert sql_df.shape[0] == 100
 
     output_artifact = dummy_sentiment_model(table_artifact)
     output_df = output_artifact.get()
-    assert list(output_df) == [
+    assert [col.lower() for col in list(output_df)] == [
         "hotel_name",
         "review_date",
         "reviewer_nationality",
@@ -48,7 +53,7 @@ def test_multiple_input_get(client, data_integration):
     fn_artifact = dummy_sentiment_model_multiple_input(table_artifact1, table_artifact2)
     fn_df = fn_artifact.get()
 
-    assert list(fn_df) == [
+    assert [col.lower() for col in list(fn_df)] == [
         "hotel_name",
         "review_date",
         "reviewer_nationality",
@@ -60,7 +65,7 @@ def test_multiple_input_get(client, data_integration):
 
     output_artifact = dummy_model(fn_artifact)
     output_df = output_artifact.get()
-    assert list(output_df) == [
+    assert [col.lower() for col in list(output_df)] == [
         "hotel_name",
         "review_date",
         "reviewer_nationality",
@@ -77,7 +82,7 @@ def test_basic_file_dependencies(client, data_integration):
 
     output_artifact = model_with_file_dependency(table_artifact)
     output_df = output_artifact.get()
-    assert list(output_df) == [
+    assert [col.lower() for col in list(output_df)] == [
         "hotel_name",
         "review_date",
         "reviewer_nationality",
@@ -91,16 +96,20 @@ def test_invalid_file_dependencies(client, data_integration):
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
 
     with pytest.raises(AqueductError):
-        model_with_invalid_dependencies(table_artifact)
+        output_artifact = model_with_invalid_dependencies(table_artifact)
+        output_artifact.get()
 
     with pytest.raises(AqueductError):
-        model_with_missing_file_dependencies(table_artifact)
+        output_artifact = model_with_missing_file_dependencies(table_artifact)
+        output_artifact.get()
 
     with pytest.raises(InvalidFunctionException):
-        model_with_improper_dependency_path(table_artifact)
+        output_artifact = model_with_improper_dependency_path(table_artifact)
+        output_artifact.get()
 
     with pytest.raises(InvalidDependencyFilePath):
-        model_with_out_of_package_file_dependency(table_artifact)
+        output_artifact = model_with_out_of_package_file_dependency(table_artifact)
+        output_artifact.get()
 
 
 def test_table_with_non_string_column_name(client):
@@ -109,4 +118,5 @@ def test_table_with_non_string_column_name(client):
         return pd.DataFrame([0, 1, 2, 3], columns=[123])
 
     with pytest.raises(AqueductError):
-        bad_return()
+        output_artifact = bad_return()
+        output_artifact.get()

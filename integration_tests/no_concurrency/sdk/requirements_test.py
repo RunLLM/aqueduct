@@ -6,7 +6,7 @@ from aqueduct.error import AqueductError, InvalidUserArgumentException
 from transformers_model.model import sentiment_prediction_using_transformers
 from utils import SENTIMENT_SQL_QUERY, get_integration_name
 
-from aqueduct import infer_requirements, op
+from aqueduct import op
 
 INVALID_REQUIREMENTS_PATH = "~/random.txt"
 VALID_REQUIREMENTS_PATH = "transformers_model/requirements.txt"
@@ -46,42 +46,12 @@ def _install_transformers_package():
     _run_shell_command(f"{sys.executable} -m pip install transformers")
 
 
-def _check_infer_requirements(transformers_exists: bool):
-    """Runs our supplied `infer_requirements` method and checks for the presence of `transformers`."""
-    inferred_reqs = infer_requirements()
-    if transformers_exists:
-        assert any(req_str.startswith("transformers") for req_str in inferred_reqs)
-    else:
-        assert all(not req_str.startswith("transformers") for req_str in inferred_reqs)
-
-
-@op()
+@op
 def sentiment_prediction_without_reqs_path(reviews: pd.DataFrame) -> pd.DataFrame:
     import transformers
 
     model = transformers.pipeline("sentiment-analysis")
     return reviews.join(pd.DataFrame(model(list(reviews["review"]))))
-
-
-def test_infer_requirements(client):
-    if _transformers_package_exists():
-        _uninstall_transformers_package()
-
-    # If no requirements are supplied, our inference will not pick up the transformers package.
-    db = client.integration(name=get_integration_name())
-    table = db.sql(query=SENTIMENT_SQL_QUERY)
-    with pytest.raises(AqueductError):
-        sentiment_prediction_without_reqs_path(table)
-
-    _check_infer_requirements(transformers_exists=False)
-    _install_transformers_package()
-
-    # After installing the transformers package in the environment, check that we now
-    # are inferring the `transformers` package. There's not a great way of checking this exactly,
-    # since the SDK and backend are expected to share the same python environment currently.
-    # TODO(ENG-1471): Once installation isolation is provided, we can rewrite this to test case
-    #  to simply check that preview works.
-    _check_infer_requirements(transformers_exists=True)
 
 
 @op(requirements=INVALID_REQUIREMENTS_PATH)
@@ -113,7 +83,7 @@ def test_requirements_installation_from_path(client):
     assert valid_path_table.get().shape[0] == 100
 
 
-@op(requirements=["transformers==4.21.0"])
+@op(requirements=["transformers==4.27.4"])
 def sentiment_prediction_with_string_requirements(reviews):
     import transformers
 

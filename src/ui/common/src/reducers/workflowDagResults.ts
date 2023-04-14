@@ -3,15 +3,16 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 import { handleGetWorkflowDagResult } from '../handlers/getWorkflowDagResult';
-import { DagResultResponse } from '../handlers/responses/dag';
+import { DagResultResponse } from '../handlers/responses/dagDeprecated';
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 
+export type WorkflowDagResultWithLoadingStatus = {
+  status: LoadingStatus;
+  result?: DagResultResponse;
+};
 export interface WorkflowDagResultsState {
   results: {
-    [id: string]: {
-      status: LoadingStatus;
-      result?: DagResultResponse;
-    };
+    [id: string]: WorkflowDagResultWithLoadingStatus;
   };
 }
 

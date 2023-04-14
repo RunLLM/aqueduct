@@ -1,13 +1,21 @@
+from typing import Optional
+
 import pytest
 from aqueduct.constants.enums import ServiceType
 from aqueduct.models.dag import DAG, Metadata
 
-from aqueduct import Client, globals
+from aqueduct import Client, global_config, globals
 from sdk.setup_integration import (
     get_aqueduct_config,
+    get_artifact_store_name,
+    has_storage_config,
+    is_global_engine_set,
+    is_lazy_set,
     list_compute_integrations,
     list_data_integrations,
+    setup_compute_integrations,
     setup_data_integrations,
+    setup_storage_layer,
 )
 from sdk.shared import globals as test_globals
 from sdk.shared.utils import generate_new_flow_name
@@ -22,9 +30,10 @@ def pytest_addoption(parser):
     # Sets a global flag that can be toggled if we want to check that a deprecated code path still works.
     parser.addoption(f"--deprecated", action="store_true", default=False)
 
-    # Skips the setup of any data integrations for faster testing. Best used as an optimization after first
+    # Skips the setup of data/compute integrations for faster testing. Best used as an optimization after first
     # test run of a debugging session.
     parser.addoption(f"--skip-data-setup", action="store_true", default=False)
+    parser.addoption(f"--skip-engine-setup", action="store_true", default=False)
 
     # Allows any tests that rely on a K8s cluster with a GPU setup to run.
     parser.addoption(f"--gpu", action="store_true", default=False)
@@ -45,12 +54,28 @@ def pytest_configure(config):
     )
     config.addinivalue_line(
         "markers",
-        "must_have_gpu: the K8s integration is expected to have access to a GPU",
+        "must_have_gpu: the K8s integration is expected to have access to a GPU.",
+    )
+    config.addinivalue_line(
+        "markers",
+        "enable_only_for_local_storage: the test is expected to run in an environment with local storage.",
+    )
+    config.addinivalue_line(
+        "markers",
+        "skip_for_spark_engines: the test only runs for non-Spark compute engines.",
     )
 
 
 def pytest_cmdline_main(config):
     """Gets all the integrations ready for the tests to run. Should only run once, before we even collect any tests."""
+    client = Client(*get_aqueduct_config())
+    setup_storage_layer(client)
+
+    _parse_flags_and_setup_data_integrations(config, client)
+    _parse_flags_and_setup_compute_integrations(config, client)
+
+
+def _parse_flags_and_setup_data_integrations(config, client: Client):
     should_skip = config.getoption(f"--skip-data-setup")
     if should_skip:
         return
@@ -58,9 +83,21 @@ def pytest_cmdline_main(config):
     # TODO: create client here.
     data_integration = config.getoption(f"--data")
     if data_integration is not None:
-        setup_data_integrations(filter_to=data_integration)
+        setup_data_integrations(client, filter_to=data_integration)
     else:
-        setup_data_integrations()
+        setup_data_integrations(client)
+
+
+def _parse_flags_and_setup_compute_integrations(config, client: Client):
+    should_skip = config.getoption(f"--skip-engine-setup")
+    if should_skip:
+        return
+
+    engine = config.getoption(f"--engine")
+    if engine is not None:
+        setup_compute_integrations(client, filter_to=engine)
+    else:
+        setup_compute_integrations(client)
 
 
 @pytest.fixture(scope="function")
@@ -100,6 +137,32 @@ def engine(request, pytestconfig):
     # Test cases process the aqueduct engine as None. We do the conversion here
     # because fixture parameters are printed as part of test execution.
     return request.param if request.param != "aqueduct_engine" else None
+
+
+@pytest.fixture(scope="function", autouse=True)
+def set_global_config(engine):
+    # If we are using the aqueduct engine (where the engine fixture is None), we don't
+    # have to change the existing global_config.
+    if engine != None:
+        # Enables lazy execution by default if `set_global_lazy` flag is added in conf.
+        lazy_config = is_lazy_set(engine)
+
+        # Enables the compute engine as global default if `set_global_engine` flag is added in conf.
+        engine_config = "aqueduct"
+        if is_global_engine_set(engine):
+            engine_config = engine
+
+        global_config({"engine": engine_config, "lazy": lazy_config})
+
+    yield
+    # Reset the global_config after the end of the function.
+    global_config({"engine": "aqueduct", "lazy": False})
+
+
+@pytest.fixture(scope="function")
+def artifact_store():
+    """Is None if local filesystem is being used as the artifact store."""
+    return get_artifact_store_name()
 
 
 @pytest.fixture(autouse=True, scope="session")
@@ -152,6 +215,31 @@ def enable_only_for_engine_type(request, client, engine):
 
 
 @pytest.fixture(autouse=True)
+def skip_for_spark_engines(request, client, engine, reason=None):
+    """When a test is marked with this, we skip if we are using a spark based engine
+    (Databricks or Spark)
+    """
+    if request.node.get_closest_marker("skip_for_spark_engines"):
+        if engine and _type_from_engine_name(client, engine) in [
+            ServiceType.DATABRICKS,
+            ServiceType.SPARK,
+        ]:
+            pytest.skip(
+                "Skipped for engine integration `%s`, since it is a spark-based engine." % engine
+            )
+
+
+@pytest.fixture(autouse=True)
+def enable_only_for_local_storage(request, client, engine):
+    """When a test is marked with this, we run it only when the local file system is used as storage."""
+    if not request.node.get_closest_marker("enable_only_for_local_storage"):
+        return
+
+    if has_storage_config():
+        pytest.skip("Skipped since the test environment uses non-local storage.")
+
+
+@pytest.fixture(autouse=True)
 def enable_only_for_external_compute(request, client, engine):
     """When a test is marked with this, it will run for all engine types EXCEPT Aqueduct!"""
     if request.node.get_closest_marker("enable_only_for_external_compute"):
@@ -166,7 +254,7 @@ def must_have_gpu(pytestconfig, request, client, engine):
 
     The user is responsible for supplying a K8s integration with an available GPU.
     """
-    if not request.node.get_closest_marker("gpu"):
+    if not request.node.get_closest_marker("must_have_gpu"):
         return
 
     if pytestconfig.getoption("gpu"):
@@ -217,3 +305,11 @@ def flow_name(client, request, pytestconfig):
 @pytest.fixture(scope="function")
 def validator(client, data_integration):
     return Validator(client, data_integration)
+
+
+@pytest.fixture(scope="function", autouse=True)
+def post_process_reset_execution_mode_to_eager():
+    # Pre-processing code
+    yield
+    # Post-processing code
+    global_config({"lazy": False})

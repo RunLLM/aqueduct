@@ -1,11 +1,8 @@
 package job
 
 import (
-	"bufio"
 	"context"
 	"encoding/gob"
-	"fmt"
-	"os"
 	"path"
 
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
@@ -22,8 +19,7 @@ const (
 	K8sType        ManagerType = "k8s"
 	LambdaType     ManagerType = "lambda"
 	DatabricksType ManagerType = "databricks"
-
-	DefaultAwsRegion = "us-east-2"
+	SparkType      ManagerType = "spark"
 )
 
 type Config interface {
@@ -35,6 +31,7 @@ type ProcessConfig struct {
 	LogsDir               string `yaml:"logsDir" json:"logs_dir"`
 	PythonExecutorPackage string `yaml:"pythonExecutorPackage" json:"python_executor_package"`
 	OperatorStorageDir    string `yaml:"operatorStorageDir" json:"operator_storage_dir"`
+	CondaEnvName          string `yaml:"condaEnvName" json:"conda_env_name"`
 }
 
 type K8sJobManagerConfig struct {
@@ -46,6 +43,8 @@ type K8sJobManagerConfig struct {
 
 	// System config, will have defaults
 	AwsRegion string `yaml:"awsRegion" json:"aws_region"`
+
+	Dynamic bool `yaml:"dynamic" json:"dynamic"`
 }
 
 type LambdaJobManagerConfig struct {
@@ -65,10 +64,25 @@ type DatabricksJobManagerConfig struct {
 	// storage in S3. Information on how to create this can be found here:
 	// https://docs.databricks.com/aws/iam/instance-profile-tutorial.html
 	S3InstanceProfileARN string `yaml:"s3InstanceProfileArn" json:"s3_instance_profile_arn"`
+	// [Optional] ID of instance pool that Aqueduct-created JobClusters should use.
+	InstancePoolID *string `yaml:"instancePoolID" json:"instance_pool_id"`
 	// AWS Access Key ID is passed from the StorageConfig.
 	AwsAccessKeyID string `yaml:"awsAccessKeyId" json:"aws_access_key_id"`
 	// AWS Secret Access Key is passed from the StorageConfig.
 	AwsSecretAccessKey string `yaml:"awsSecretAccessKey" json:"aws_secret_access_key"`
+}
+
+type SparkJobManagerConfig struct {
+	// LivyServerURL is the URL of the Livy server that sits in front of the Spark cluster.
+	// This URL is assumed to be accessible by the machine running the Aqueduct server.
+	LivyServerURL string `yaml:"baseUrl" json:"livy_server_url"`
+	// AWS Access Key ID is passed from the StorageConfig.
+	AwsAccessKeyID string `yaml:"awsAccessKeyId" json:"aws_access_key_id"`
+	// AWS Secret Access Key is passed from the StorageConfig.
+	AwsSecretAccessKey string `yaml:"awsSecretAccessKey" json:"aws_secret_access_key"`
+	// URI to the packaged environment. This is passed when creating and uploading the
+	// environment during execution.
+	EnvironmentPathURI string `yaml:"environmentPathUri" json:"environment_path_uri"`
 }
 
 func (*ProcessConfig) Type() ManagerType {
@@ -87,11 +101,16 @@ func (*DatabricksJobManagerConfig) Type() ManagerType {
 	return DatabricksType
 }
 
+func (*SparkJobManagerConfig) Type() ManagerType {
+	return SparkType
+}
+
 func RegisterGobTypes() {
 	gob.Register(&ProcessConfig{})
 	gob.Register(&K8sJobManagerConfig{})
 	gob.Register(&WorkflowSpec{})
 	gob.Register(&WorkflowRetentionSpec{})
+	gob.Register(&DynamicTeardownSpec{})
 }
 
 func init() {
@@ -136,6 +155,12 @@ func GenerateJobManagerConfig(
 			BinaryDir:          path.Join(aqPath, BinaryDir),
 			OperatorStorageDir: path.Join(aqPath, OperatorStorageDir),
 		}, nil
+	case shared.AqueductCondaEngineType:
+		return &ProcessConfig{
+			BinaryDir:          path.Join(aqPath, BinaryDir),
+			OperatorStorageDir: path.Join(aqPath, OperatorStorageDir),
+			CondaEnvName:       engineConfig.AqueductCondaConfig.Env,
+		}, nil
 	case shared.K8sEngineType:
 		if storageConfig.Type != shared.S3StorageType && storageConfig.Type != shared.GCSStorageType {
 			return nil, errors.New("Must use S3 or GCS storage config for K8s engine.")
@@ -143,7 +168,7 @@ func GenerateJobManagerConfig(
 
 		var awsAccessKeyId, awsSecretAccessKey string
 		if storageConfig.Type == shared.S3StorageType {
-			keyId, secretKey, err := extractAwsCredentials(storageConfig.S3Config)
+			keyId, secretKey, err := lib_utils.ExtractAwsCredentials(storageConfig.S3Config)
 			if err != nil {
 				return nil, errors.Wrap(err, "Unable to extract AWS credentials from file.")
 			}
@@ -155,19 +180,20 @@ func GenerateJobManagerConfig(
 		k8sIntegrationId := engineConfig.K8sConfig.IntegrationID
 		config, err := auth.ReadConfigFromSecret(ctx, k8sIntegrationId, vault)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to read config from vault.")
+			return nil, errors.Wrap(err, "Unable to read k8s config from vault.")
 		}
 		k8sConfig, err := lib_utils.ParseK8sConfig(config)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to get integration.")
+			return nil, errors.Wrap(err, "Unable to parse k8s config.")
 		}
+
 		return &K8sJobManagerConfig{
 			KubeconfigPath:     k8sConfig.KubeconfigPath,
 			ClusterName:        k8sConfig.ClusterName,
 			UseSameCluster:     bool(k8sConfig.UseSameCluster),
 			AwsAccessKeyId:     awsAccessKeyId,
 			AwsSecretAccessKey: awsSecretAccessKey,
-			AwsRegion:          DefaultAwsRegion,
+			Dynamic:            bool(k8sConfig.Dynamic),
 		}, nil
 	case shared.LambdaEngineType:
 		if storageConfig.Type != shared.S3StorageType {
@@ -185,7 +211,7 @@ func GenerateJobManagerConfig(
 
 		var awsAccessKeyId, awsSecretAccessKey string
 		if storageConfig.Type == shared.S3StorageType {
-			keyId, secretKey, err := extractAwsCredentials(storageConfig.S3Config)
+			keyId, secretKey, err := lib_utils.ExtractAwsCredentials(storageConfig.S3Config)
 			if err != nil {
 				return nil, errors.Wrap(err, "Unable to extract AWS credentials from file.")
 			}
@@ -215,7 +241,7 @@ func GenerateJobManagerConfig(
 
 		var awsAccessKeyId, awsSecretAccessKey string
 		if storageConfig.Type == shared.S3StorageType {
-			keyId, secretKey, err := extractAwsCredentials(storageConfig.S3Config)
+			keyId, secretKey, err := lib_utils.ExtractAwsCredentials(storageConfig.S3Config)
 			if err != nil {
 				return nil, errors.Wrap(err, "Unable to extract AWS credentials from file.")
 			}
@@ -227,43 +253,41 @@ func GenerateJobManagerConfig(
 			WorkspaceURL:         databricksConfig.WorkspaceURL,
 			AccessToken:          databricksConfig.AccessToken,
 			S3InstanceProfileARN: databricksConfig.S3InstanceProfileARN,
+			InstancePoolID:       databricksConfig.InstancePoolID,
 			AwsAccessKeyID:       awsAccessKeyId,
 			AwsSecretAccessKey:   awsSecretAccessKey,
 		}, nil
+	case shared.SparkEngineType:
+		if storageConfig.Type != shared.S3StorageType {
+			return nil, errors.New("Must use S3 storage config for Databricks engine.")
+		}
+		sparkIntegrationID := engineConfig.SparkConfig.IntegrationId
+		config, err := auth.ReadConfigFromSecret(ctx, sparkIntegrationID, vault)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to read config from vault.")
+		}
+		sparkConfig, err := lib_utils.ParseSparkConfig(config)
+		if err != nil {
+			return nil, errors.Wrap(err, "Unable to get integration.")
+		}
 
+		var awsAccessKeyId, awsSecretAccessKey string
+		if storageConfig.Type == shared.S3StorageType {
+			keyId, secretKey, err := lib_utils.ExtractAwsCredentials(storageConfig.S3Config)
+			if err != nil {
+				return nil, errors.Wrap(err, "Unable to extract AWS credentials from file.")
+			}
+
+			awsAccessKeyId = keyId
+			awsSecretAccessKey = secretKey
+		}
+		return &SparkJobManagerConfig{
+			LivyServerURL:      sparkConfig.LivyServerURL,
+			AwsAccessKeyID:     awsAccessKeyId,
+			AwsSecretAccessKey: awsSecretAccessKey,
+			EnvironmentPathURI: engineConfig.SparkConfig.EnvironmentPathURI,
+		}, nil
 	default:
 		return nil, errors.New("Unsupported engine type.")
 	}
-}
-
-func extractAwsCredentials(config *shared.S3Config) (string, string, error) {
-	var awsAccessKeyId string
-	var awsSecretAccessKey string
-	profileString := fmt.Sprintf("[%s]", config.CredentialsProfile)
-
-	file, err := os.Open(config.CredentialsPath)
-	if err != nil {
-		return "", "", errors.Wrap(err, "Unable to open AWS credentials file.")
-	}
-	defer file.Close()
-	fileScanner := bufio.NewScanner(file)
-	fileScanner.Split(bufio.ScanLines)
-
-	for fileScanner.Scan() {
-		if profileString == fileScanner.Text() {
-			if fileScanner.Scan() {
-				fmt.Sscanf(fileScanner.Text(), "aws_access_key_id=%v", &awsAccessKeyId)
-			} else {
-				return "", "", errors.New("Unable to extract AWS credentials.")
-			}
-			if fileScanner.Scan() {
-				fmt.Sscanf(fileScanner.Text(), "aws_secret_access_key=%v", &awsSecretAccessKey)
-			} else {
-				return "", "", errors.New("Unable to extract AWS credentials.")
-			}
-
-			return awsAccessKeyId, awsSecretAccessKey, nil
-		}
-	}
-	return "", "", errors.New("Unable to extract AWS credentials.")
 }

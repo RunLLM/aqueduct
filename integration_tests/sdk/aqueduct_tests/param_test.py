@@ -1,10 +1,12 @@
+import os
+import pickle
 from typing import Dict, List
 
 import pandas as pd
 import pytest
 from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
-from aqueduct.constants.enums import ExecutionStatus
+from aqueduct.constants.enums import ArtifactType, ExecutionStatus
 from aqueduct.error import (
     AqueductError,
     ArtifactNeverComputedException,
@@ -41,6 +43,9 @@ def convert_dict_to_df(kv: Dict[str, List[float]]):
     return pd.DataFrame(data=kv)
 
 
+@pytest.mark.skip_for_spark_engines(
+    reason="Expect a Spark Dataframe as return type, not Pandas Dataframe."
+)
 def test_basic_param_creation(client):
     # Parameter of integer type
     param = client.create_param(name="number", default=8)
@@ -112,130 +117,24 @@ def test_implicitly_created_parameter(client, flow_name, engine):
     assert flow_run.artifact("output1").get() == 101
     assert flow_run.artifact("output2").get() == 200
 
-
-def test_implicitly_created_param_overwrites(client, flow_name, engine):
     @op
-    def foo(param):
-        return param
+    def func(a, b="world"):
+        return a + " " + b
 
-    # Test that two implicit parameters colliding will result in an override if they
-    # are used by the same function.
-    foo_output = foo(123)
-    assert foo_output.get() == 123
+    with pytest.raises(
+        InvalidUserArgumentException,
+        match="No input was provided for argument `a` of function `func`, and no default value was specified.",
+    ):
+        result = func()
 
-    foo_output = foo("hello")
-    assert foo_output.get() == "hello"
-    assert foo_output.get({"foo:param": "custom val"}) == "custom val"
+    result = func("hello")
+    assert result.get() == "hello world"
 
-    # Test that two implicit parameters colliding with NOT result in an override if
-    # they are used by different functions. In this case, is it because the names are
-    # resolved to different values.
-    @op
-    def different_fn(param):
-        return param
-
-    different_fn_output = different_fn("different value")
-    assert different_fn_output.get() == "different value"
-    assert different_fn_output.get({"different_fn:param": "another val"}) == "another val"
-
-    # Publish and validate the final value of each parameter.
-    flow = publish_flow_test(
-        client,
-        artifacts=[foo_output, different_fn_output],
-        name=flow_name(),
-        engine=engine,
-    )
+    flow = publish_flow_test(client, artifacts=[result], name=flow_name(), engine=engine)
     flow_run = flow.latest()
-
-    assert flow_run.artifact("foo:param").get() == "hello"
-    assert flow_run.artifact("different_fn:param").get() == "different value"
-
-
-def test_multiple_implicitly_created_param(client):
-    @op
-    def foo(param1, param2):
-        return param1 + param2
-
-    assert foo(100, 50).get() == 150
-    assert foo(500, 500).get() == 1000
-
-
-def test_implicitly_created_param_failures(client):
-    # Test that an implicit parameter colliding with a globally created parameter will error.
-    @op
-    def bar(param):
-        return param
-
-    _ = client.create_param("bar:param", default=200)
-    with pytest.raises(
-        InvalidUserActionException,
-        match="there is an existing operator or artifact with the same name",
-    ):
-        _ = bar(300)
-
-    # Same case as above, but actually attach the global parameter to the operator first.
-    @op
-    def baz(param):
-        return param
-
-    baz_param = client.create_param("baz:param", default=500)
-    _ = baz(baz_param)
-
-    with pytest.raises(
-        InvalidUserActionException,
-        match="there is an existing operator or artifact with the same name",
-    ):
-        baz(500)
-
-    # Test that an implicit parameter can cannot collide with an existing operator.
-    @op(name="qup:param")
-    def colliding_fn():
-        return 222
-
-    _ = colliding_fn()
-
-    @op
-    def qup(param):
-        return param
-
-    with pytest.raises(
-        InvalidUserActionException,
-        match="there is an existing operator or artifact with the same name",
-    ):
-        _ = qup(500)
-
-    # Test that an explicit parameter colliding with an implicit one will raise an exception.
-    @op
-    def another_fn(another_param):
-        return another_param
-
-    _ = another_fn("another string")
-    with pytest.raises(
-        InvalidUserActionException,
-        match="there is an implicitly created parameter with the same name",
-    ):
-        client.create_param("another_fn:another_param", default="this should fail")
-
-
-def test_change_param_artifact_name(client, flow_name, engine):
-    """Test that changing a parameter artifact name is possible."""
-    param = client.create_param("param", default=123)
-    param.set_name("new param name")
-    new_param = param  # Move the parameter to a different variable
-
-    # The operator name collides with the old param name, but we already moved it out.
-    @op
-    def param():
-        return "value"
-
-    fn_output = param()
-
-    flow = publish_flow_test(
-        client, artifacts=[new_param, fn_output], name=flow_name(), engine=engine
-    )
-    flow_run = flow.latest()
-    assert flow_run.artifact("new param name").get() == 123
-    assert flow_run.artifact("param artifact").get() == "value"
+    assert flow_run.artifact("func:a").get() == "hello"
+    # Test that we implicitly created a parameter called "func:b" with the default value "world".
+    assert flow_run.artifact("func:b").get() == "world"
 
 
 @op
@@ -245,6 +144,7 @@ def append_row_to_df(df, row):
     return df
 
 
+@pytest.mark.skip_for_spark_engines(reason="append_row_to_df doesn't work for Spark Dataframes")
 def test_parameter_in_basic_flow(client, data_integration):
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
     row_to_add = ["new hotel", "09-28-1996", "US", "It was new."]
@@ -258,6 +158,7 @@ def test_parameter_in_basic_flow(client, data_integration):
     assert output_df.equals(input_df)
 
 
+@pytest.mark.skip_for_spark_engines(reason="append_row_to_df doesn't work for Spark Dataframes")
 def test_edit_param_for_flow(client, flow_name, data_integration, engine):
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
     row_to_add = ["new hotel", "09-28-1996", "US", "It was new."]
@@ -348,8 +249,8 @@ def test_trigger_flow_with_different_param(client, flow_name, data_integration, 
 
 @pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
 def test_trigger_flow_with_different_sql_param(client, flow_name, data_integration, engine):
-    _ = client.create_param("table_name", default="hotel_reviews")
-    table_artifact = data_integration.sql(query="select * from {{ table_name}}")
+    table_name_param = client.create_param("table_name", default="hotel_reviews")
+    table_artifact = data_integration.sql(query="select * from $1", parameters=[table_name_param])
 
     flow = publish_flow_test(
         client,
@@ -545,44 +446,212 @@ def test_parameter_type_changes(client, flow_name, engine):
     )
 
 
-def test_param_management(client):
-    # Create some implicit parameters that are consumed by downstream operators.
-    @op
-    def foo(param1, param2):
-        return 123
+@pytest.mark.skip_for_spark_engines(reason="append_row_to_df doesn't work for Spark Dataframes")
+def test_local_table_data_parameter(client, flow_name, engine):
+    row_to_add = ["new hotel", "09-28-1996", "US", "It was new."]
 
-    foo_output = foo(1000, "string val")
+    file_type = ["csv", "json", "parquet"]
+    output_artifact_list = []
+    input_data_list = []
+    for extension in file_type:
+        data_param = client.create_param(
+            name="data_" + extension,
+            default="data/hotel_reviews." + extension,
+            use_local=True,
+            as_type=ArtifactType.TABLE,
+            format=extension,
+        )
 
+        if extension == "csv":
+            input_df = pd.read_csv("data/hotel_reviews." + extension)
+        elif extension == "json":
+            input_df = pd.read_json("data/hotel_reviews." + extension, orient="table")
+        else:
+            input_df = pd.read_parquet("data/hotel_reviews." + extension)
+        assert input_df.equals(data_param.get())
+
+        @op(name=extension, outputs=["output_" + extension])
+        def append_row_to_df(df, row):
+            """`row` is a list of values to append to the input dataframe."""
+            df.loc[len(df.index)] = row
+            return df
+
+        output = append_row_to_df(data_param, row_to_add)
+        input_df.loc[len(input_df.index)] = row_to_add
+        output_df = output.get()
+        assert output_df.equals(input_df)
+
+        output_artifact_list.append(output)
+        input_data_list.append(input_df)
+
+    with pytest.raises(
+        InvalidUserActionException,
+        match="Cannot create a flow with local data. Consider setting `use_local` to True to publish a workflow with local data parameters.",
+    ):
+        flow = client.publish_flow(
+            name=flow_name(),
+            artifacts=output_artifact_list,
+            engine=engine,
+        )
+    flow = publish_flow_test(
+        client, artifacts=output_artifact_list, name=flow_name(), engine=engine, use_local=True
+    )
+    flow_run = flow.latest()
+    assert flow_run.artifact("output_csv").get().equals(input_data_list[0])
+    assert flow_run.artifact("output_json").get().equals(input_data_list[1])
+    assert flow_run.artifact("output_parquet").get().equals(input_data_list[2])
+
+
+def test_invalid_local_data(client):
+    # check Local Data with file path that does not exist will fail
+    with pytest.raises(
+        InvalidUserArgumentException,
+        match="Given path file 'data/hotel_reviews' to local data does not exist.",
+    ):
+        client.create_param(
+            name="data", default="data/hotel_reviews", use_local=True, as_type=ArtifactType.IMAGE
+        )
+
+    # Check that format is supplied when Artifact type is table
+    with pytest.raises(
+        InvalidUserArgumentException,
+        match="Specify format in order to use local data as TableArtifact.",
+    ):
+        client.create_param(
+            name="data",
+            default="data/hotel_reviews.json",
+            use_local=True,
+            as_type=ArtifactType.TABLE,
+        )
+
+
+def test_all_local_data_types(client, flow_name, engine):
     @op
-    def bar(input):
+    def must_be_picklable(input):
+        """
+        Unable to check that the input is picklable, since `pickle.loads()`
+        complains about `import of module 'param_test' failed`.
+        """
+        if input != ArtifactType:
+            raise Exception("Expected Class.")
         return input
 
-    bar_output = bar(foo_output)
+    with open("data/test.pickle", "wb") as file:
+        pickle.dump(ArtifactType, file)
+    picklable_param = client.create_param(
+        "pickleable", default="data/test.pickle", use_local=True, as_type=ArtifactType.PICKLABLE
+    )
+    pickle_output = must_be_picklable(picklable_param)
 
-    # Create a global parameter with no attachments.
-    client.create_param("param3", default="content")
+    assert isinstance(pickle_output, GenericArtifact)
+    assert pickle_output.get() == ArtifactType
 
-    assert client.list_params() == {
-        "foo:param1": 1000,
-        "foo:param2": "string val",
-        "param3": "content",
-    }
+    @op
+    def must_be_bytes(input):
+        if not isinstance(input, bytes):
+            raise Exception("Expected bytes")
+        return input
 
-    # Delete the unattached parameter.
-    client.delete_param("param3")
-    assert client.list_params() == {
-        "foo:param1": 1000,
-        "foo:param2": "string val",
-    }
+    bytes_param = client.create_param(
+        "bytes", default="data/test_bytes.txt", use_local=True, as_type=ArtifactType.BYTES
+    )
+    bytes_output = must_be_bytes(bytes_param)
 
-    # Delete one of the attached parameters.
-    with pytest.raises(InvalidUserActionException, match="Cannot delete parameter"):
-        client.delete_param("foo:param1")
+    assert isinstance(bytes_output, GenericArtifact)
+    assert bytes_output.get() == b"hello world"
 
-    client.delete_param("foo:param1", force=True)
-    client.delete_param("foo:param2", force=True)
-    assert client.list_params() == {}
+    @op
+    def must_be_string(input):
+        if not isinstance(input, str):
+            raise Exception("Expected string.")
+        return input
 
-    # Check that bar_output is now invalid
-    with pytest.raises(Exception):
-        bar_output.get()
+    string_param = client.create_param(
+        "string", default="data/test_bytes.txt", use_local=True, as_type=ArtifactType.STRING
+    )
+    string_output = must_be_string(string_param)
+    assert isinstance(string_output, GenericArtifact)
+    assert string_output.get() == "hello world"
+
+    @op
+    def must_be_tuple(input):
+        if not isinstance(input, tuple):
+            raise Exception("Expected tuple.")
+        return input
+
+    tuple_param = client.create_param(
+        "tuple", default="data/test_tuple", use_local=True, as_type=ArtifactType.TUPLE
+    )
+    tuple_output = must_be_tuple(tuple_param)
+    assert isinstance(tuple_output, GenericArtifact)
+    assert tuple_output.get() == ("hello", "world")
+
+    @op
+    def must_be_list(input):
+        if not isinstance(input, list):
+            raise Exception("Expected list.")
+        return input
+
+    list_param = client.create_param(
+        "list", default="data/test_list", use_local=True, as_type=ArtifactType.LIST
+    )
+    list_output = must_be_list(list_param)
+    assert isinstance(list_output, GenericArtifact)
+    assert list_output.get() == ["hello", "world"]
+
+    @op
+    def must_be_image(input):
+        if not isinstance(input, Image.Image):
+            raise Exception("Expected image.")
+        return input
+
+    image_param = client.create_param(
+        "image", default="data/aqueduct.jpg", use_local=True, as_type=ArtifactType.IMAGE
+    )
+    image_output = must_be_image(image_param)
+    assert isinstance(image_output, GenericArtifact)
+    assert isinstance(image_output.get(), Image.Image)
+
+    publish_flow_test(
+        client,
+        name=flow_name(),
+        artifacts=[
+            pickle_output,
+            bytes_output,
+            string_output,
+            tuple_output,
+            list_output,
+            image_output,
+        ],
+        engine=engine,
+        use_local=True,
+    )
+
+
+# TODO(ENG-2798): Currented we can't publish a flow with tensorflow model as parameter.
+@pytest.mark.skip()
+def test_local_tf_keras_data(client, flow_name, engine):
+    from tensorflow import keras
+
+    model = keras.models.load_model("data/tf_model")
+
+    @op
+    def must_be_tf_keras(input):
+        if not isinstance(input, keras.Model):
+            raise Exception("Tensorflow keras model config does not match.")
+        return input
+
+    tf_keras_param = client.create_param(
+        "tf_keras", default="data/tf_model", use_local=True, as_type=ArtifactType.TF_KERAS
+    )
+    tf_keras_output = must_be_tf_keras(tf_keras_param)
+    assert isinstance(tf_keras_output.get(), keras.Model)
+    assert tf_keras_output.get().get_config() == model.get_config()
+
+    publish_flow_test(
+        client,
+        name=flow_name(),
+        artifacts=[tf_keras_output],
+        engine=engine,
+        use_local=True,
+    )

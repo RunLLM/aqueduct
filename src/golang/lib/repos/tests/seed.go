@@ -13,6 +13,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/function"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/metric"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
@@ -22,6 +23,43 @@ const (
 	testOrgID              = "aqueduct-test"
 	testIntegrationService = shared.AqueductDemo
 )
+
+// seedStorageMigraton creates a 5 storage migration records, alternating between
+// real destination IDs and nil ones. Also updates each entry to have a complete set of timestamps.
+func (ts *TestSuite) seedStorageMigration() []models.StorageMigration {
+	count := 5
+	storageMigrations := make([]models.StorageMigration, count)
+	for i := 0; i < count; i++ {
+		var destIntegrationID *uuid.UUID
+		var err error
+		if i%2 == 0 {
+			rawID, err := uuid.NewUUID()
+			destIntegrationID = &rawID
+			require.Nil(ts.T(), err)
+		}
+		entry, err := ts.storageMigration.Create(ts.ctx, destIntegrationID, ts.DB)
+		require.Nil(ts.T(), err)
+
+		now := time.Now()
+		entry.ExecState.Timestamps.RunningAt = &now
+		entry.ExecState.Timestamps.FinishedAt = &now
+
+		// Mark the last entry as current.
+		is_current := i == count-1
+		entry, err = ts.storageMigration.Update(ts.ctx, entry.ID, map[string]interface{}{
+			"execution_state": &entry.ExecState,
+			"current":         is_current,
+		},
+			ts.DB,
+		)
+		require.Nil(ts.T(), err)
+
+		// Insert into the `storageMigrations` list in reverse order, which
+		// simulates the result of calling List().
+		storageMigrations[count-1-i] = *entry
+	}
+	return storageMigrations
+}
 
 // seedIntegration creates count integration records for the given user.
 func (ts *TestSuite) seedIntegrationWithUser(count int, userID uuid.UUID) []models.Integration {
@@ -682,7 +720,13 @@ func (ts *TestSuite) seedUsedExecutionEnvironment(count int) ([]models.Execution
 //
 //	|                      |=> function_3 --> function_3_artf // function_3 takes artf of function_1 and function_2 as inputs
 //	|-> function_2 --> function_2_artf --> metric_2 --> metric_2_artf
-func (ts *TestSuite) seedComplexWorkflow() (models.DAG, map[string]models.Operator, map[string]models.Artifact) {
+func (ts *TestSuite) seedComplexWorkflow() (
+	models.DAG,
+	map[string]models.Operator,
+	map[string]models.Artifact,
+	map[string]views.OperatorNode,
+	map[string]views.ArtifactNode,
+) {
 	// this gives all op -> op edges by names. We assume each operator is named by `<type>_<index>` format
 	// to deduce the type used to create the operator.
 	type simpleDependency struct {
@@ -748,6 +792,9 @@ func (ts *TestSuite) seedComplexWorkflow() (models.DAG, map[string]models.Operat
 
 	operators := make(map[string]models.Operator, len(dependencies))
 	artifacts := make(map[string]models.Artifact, len(dependencies))
+	operatorNodes := make(map[string]views.OperatorNode, len(dependencies))
+	artifactNodes := make(map[string]views.ArtifactNode, len(dependencies))
+
 	createdOperatorNames := make(map[string]bool, len(dependencies))
 
 	for _, dep := range dependencies {
@@ -799,22 +846,55 @@ func (ts *TestSuite) seedComplexWorkflow() (models.DAG, map[string]models.Operat
 				)
 				require.Nil(ts.T(), err)
 
+				operatorNodes[opName] = views.OperatorNode{
+					ID:                     op.ID,
+					DagID:                  dag.ID,
+					Name:                   op.Name,
+					Description:            op.Description,
+					Spec:                   op.Spec,
+					ExecutionEnvironmentID: op.ExecutionEnvironmentID,
+					Inputs:                 []uuid.UUID{},
+					Outputs:                []uuid.UUID{artf.ID},
+				}
+
+				artifactNodes[artfName] = views.ArtifactNode{
+					ID:          artf.ID,
+					DagID:       dag.ID,
+					Name:        artf.Name,
+					Description: artf.Description,
+					Type:        artf.Type,
+					Input:       op.ID,
+					Outputs:     []uuid.UUID{},
+				}
+
 				createdOperatorNames[opName] = true
 			}
 		}
+
+		fromArtfName := fmt.Sprintf("%s_artf", dep.From)
 
 		// create artf -> op edge based on dependency
 		_, err := ts.dagEdge.Create(
 			ts.ctx,
 			dag.ID,
 			shared.ArtifactToOperatorDAGEdge,
-			artifacts[fmt.Sprintf("%s_artf", dep.From)].ID,
+			artifacts[fromArtfName].ID,
 			operators[dep.To].ID,
 			int16(dep.Idx),
 			ts.DB,
 		)
 		require.Nil(ts.T(), err)
+
+		// assign op inputs
+		opNode := operatorNodes[dep.To]
+		artfNode := artifactNodes[fromArtfName]
+		opNode.Inputs = append(opNode.Inputs, artfNode.ID)
+		operatorNodes[dep.To] = opNode
+
+		// assign artf outputs
+		artfNode.Outputs = append(artfNode.Outputs, opNode.ID)
+		artifactNodes[fromArtfName] = artfNode
 	}
 
-	return dag, operators, artifacts
+	return dag, operators, artifacts, operatorNodes, artifactNodes
 }

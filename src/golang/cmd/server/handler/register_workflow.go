@@ -3,13 +3,20 @@ package handler
 import (
 	"context"
 	"net/http"
+	"os/exec"
+	"strconv"
+	"strings"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
+	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
+	"github.com/aqueducthq/aqueduct/lib/errors"
+	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	mdl_utils "github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/workflow"
@@ -17,8 +24,8 @@ import (
 	operator_utils "github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
-	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 // Route: /workflow/register
@@ -57,11 +64,14 @@ type registerWorkflowArgs struct {
 
 	// Whether this is a registering a new workflow or updating an existing one.
 	isUpdate bool
+	runNow   bool
 }
 
 type registerWorkflowResponse struct {
 	// The newly registered workflow's id.
 	Id uuid.UUID `json:"id"`
+	// The Python version in the engine.
+	PythonVersion string `json:"python_version"`
 }
 
 func (*RegisterWorkflowHandler) Name() string {
@@ -72,6 +82,19 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
+	}
+
+	runNowStr := r.Header.Get(routes.RunNowHeader)
+	runNow := false
+	if runNowStr != "" {
+		runNow, err = strconv.ParseBool(runNowStr)
+		if err != nil {
+			return nil, http.StatusBadRequest, errors.Newf(
+				"Invalid header %s: %s. It must be either 'True' or 'False'.",
+				routes.RunNowHeader,
+				runNowStr,
+			)
+		}
 	}
 
 	dagSummary, statusCode, err := request.ParseDagSummaryFromRequest(
@@ -109,7 +132,7 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 		h.Database,
 	)
 	if err != nil {
-		if err != database.ErrNoRows {
+		if !errors.Is(err, database.ErrNoRows()) {
 			return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when checking for existing workflows.")
 		}
 		// A colliding workflow does not exist, so this is not an update
@@ -135,6 +158,7 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 		AqContext:  aqContext,
 		dagSummary: dagSummary,
 		isUpdate:   isUpdate,
+		runNow:     runNow,
 	}, http.StatusOK, nil
 }
 
@@ -153,16 +177,49 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
 	}
 
-	execEnvByOpId, status, err := setupExecEnv(
+	txn, err := h.Database.BeginTx(ctx)
+	if err != nil {
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
+	}
+	defer database.TxnRollbackIgnoreErr(ctx, txn)
+
+	execEnvByOpId, status, err := registerDependencies(
+		ctx,
+		args.dagSummary,
+		h.ExecutionEnvironmentRepo,
+		txn,
+	)
+	if err != nil {
+		return emptyResp, status, err
+	}
+
+	status, err = setupCondaEnv(
 		ctx,
 		args.ID,
 		args.dagSummary,
 		h.IntegrationRepo,
-		h.ExecutionEnvironmentRepo,
-		h.Database,
+		execEnvByOpId,
+		txn,
 	)
 	if err != nil {
 		return emptyResp, status, err
+	}
+
+	if args.dagSummary.Dag.EngineConfig.Type == shared.SparkEngineType {
+		if args.dagSummary.Dag.EngineConfig.SparkConfig == nil {
+			return emptyResp, http.StatusBadRequest, errors.New("Spark config is not provided.")
+		}
+
+		status, err := createSparkWorkflowEnv(
+			ctx,
+			args.dagSummary,
+			h.ExecutionEnvironmentRepo,
+			execEnvByOpId,
+			txn,
+		)
+		if err != nil {
+			return emptyResp, status, err
+		}
 	}
 
 	for opId, op := range args.dagSummary.Dag.Operators {
@@ -173,12 +230,6 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 			dbWorkflowDag.Operators[opId] = op
 		}
 	}
-
-	txn, err := h.Database.BeginTx(ctx)
-	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to create workflow.")
-	}
-	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
 	// Schedule validation needs to happen inside the `txn` to prevent
 	// concurrent requests from forming a cycle among cascading workflows
@@ -258,15 +309,17 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		CleanupTimeout:       engine.DefaultCleanupTimeout,
 	}
 
-	_, err = h.Engine.TriggerWorkflow(
-		ctx,
-		workflowId,
-		shared_utils.AppendPrefix(dbWorkflowDag.Metadata.ID.String()),
-		timeConfig,
-		nil, /* parameters */
-	)
-	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow.")
+	if args.runNow {
+		_, err = h.Engine.TriggerWorkflow(
+			ctx,
+			workflowId,
+			shared_utils.AppendPrefix(dbWorkflowDag.Metadata.ID.String()),
+			timeConfig,
+			nil, /* parameters */
+		)
+		if err != nil {
+			return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to trigger workflow.")
+		}
 	}
 
 	if !args.isUpdate {
@@ -289,22 +342,39 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 	}
 
 	// Check unused conda environments and garbage collect them.
-	//go func() {
-	//	db, err := database.NewDatabase(h.Database.Config())
-	//	if err != nil {
-	//		log.Errorf("Error creating DB in go routine: %v", err)
-	//		return
-	//	}
-	//
-	//	err = exec_env.CleanupUnusedEnvironments(
-	//		context.Background(),
-	//		h.ExecutionEnvironmentRepo,
-	//		db,
-	//	)
-	//	if err != nil {
-	//		log.Errorf("%v", err)
-	//	}
-	//}()
+	go func() {
+		db, err := database.NewDatabase(h.Database.Config())
+		if err != nil {
+			log.Errorf("Error creating DB in go routine: %v", err)
+			return
+		}
 
-	return registerWorkflowResponse{Id: workflowId}, http.StatusOK, nil
+		err = exec_env.CleanupUnusedEnvironments(
+			context.Background(),
+			h.OperatorRepo,
+			db,
+		)
+		if err != nil {
+			log.Errorf("%v", err)
+		}
+	}()
+
+	// This is best-effort
+	var version strings.Builder
+	if args.dagSummary.Dag.EngineConfig.Type == shared.AqueductEngineType {
+		cmd := exec.Command(
+			"python3",
+			"--version",
+		)
+		cmd.Stdout = &version
+		err := cmd.Run()
+		if err != nil {
+			log.Errorf("Could not get Python version on server: %v", err)
+		}
+	}
+
+	return registerWorkflowResponse{
+		Id:            workflowId,
+		PythonVersion: version.String(),
+	}, http.StatusOK, nil
 }

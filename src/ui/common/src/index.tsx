@@ -5,6 +5,7 @@ import { useAqueductConsts } from './components/hooks/useAqueductConsts';
 import useUser from './components/hooks/useUser';
 import AddIntegrations from './components/integrations/addIntegrations';
 import { AqueductDemoCard } from './components/integrations/cards/aqueductDemoCard';
+import { AWSCard } from './components/integrations/cards/awsCard';
 import { BigQueryCard } from './components/integrations/cards/bigqueryCard';
 import { DataCard } from './components/integrations/cards/card';
 import { IntegrationCard } from './components/integrations/cards/card';
@@ -19,8 +20,10 @@ import { RedshiftCard } from './components/integrations/cards/redshiftCard';
 import { S3Card } from './components/integrations/cards/s3Card';
 import { SlackCard } from './components/integrations/cards/slackCard';
 import { SnowflakeCard } from './components/integrations/cards/snowflakeCard';
+import { SparkCard } from './components/integrations/cards/sparkCard';
 import { ConnectedIntegrations } from './components/integrations/connectedIntegrations';
 import AddTableDialog from './components/integrations/dialogs/addTableDialog';
+import { AWSDialog } from './components/integrations/dialogs/awsDialog';
 import { BigQueryDialog } from './components/integrations/dialogs/bigqueryDialog';
 import { CondaDialog } from './components/integrations/dialogs/condaDialog';
 import { CSVDialog } from './components/integrations/dialogs/csvDialog';
@@ -38,6 +41,7 @@ import { RedshiftDialog } from './components/integrations/dialogs/redshiftDialog
 import { S3Dialog } from './components/integrations/dialogs/s3Dialog';
 import { SlackDialog } from './components/integrations/dialogs/slackDialog';
 import { SnowflakeDialog } from './components/integrations/dialogs/snowflakeDialog';
+import { SparkDialog } from './components/integrations/dialogs/sparkDialog';
 import { Card } from './components/layouts/card';
 import DefaultLayout from './components/layouts/default';
 import MenuSidebar, {
@@ -49,8 +53,12 @@ import AccountNotificationSettingsSelector from './components/notifications/Acco
 import NotificationLevelSelector from './components/notifications/NotificationLevelSelector';
 import { NotificationListItem } from './components/notifications/NotificationListItem';
 import NotificationsPopover from './components/notifications/NotificationsPopover';
-import AccountPage from './components/pages/AccountPage';
+import RequireOperator from './components/operators/RequireOperator';
+import AccountPage from './components/pages/account/AccountPage';
 import ArtifactDetailsPage from './components/pages/artifact/id';
+import useArtifact, {
+  useArtifactHistory,
+} from './components/pages/artifact/id/hook';
 import CheckDetailsPage from './components/pages/check/id';
 import DataPage from './components/pages/data';
 import ErrorPage from './components/pages/ErrorPage';
@@ -60,41 +68,30 @@ import IntegrationsPage from './components/pages/integrations';
 import LoginPage from './components/pages/LoginPage';
 import MetricDetailsPage from './components/pages/metric/id';
 import OperatorDetailsPage from './components/pages/operator/id';
+import useOpeartor from './components/pages/operator/id/hook';
 import WorkflowPage from './components/pages/workflow/id';
+import useWorkflow from './components/pages/workflow/id/hook';
 import WorkflowsPage from './components/pages/workflows';
 import { Button } from './components/primitives/Button.styles';
-import { IconButton } from './components/primitives/IconButton.styles';
 import { LoadingButton } from './components/primitives/LoadingButton.styles';
+import { Tab, Tabs } from './components/primitives/Tabs.styles';
 import { OperatorExecStateTableType } from './components/tables/OperatorExecStateTable';
 import PaginatedTable from './components/tables/PaginatedTable';
-import { Tab, Tabs } from './components/Tabs/Tabs.styles';
-import LogBlock, { LogLevel } from './components/text/LogBlock';
-import getUniqueListBy from './components/utils/list_utils';
 import AqueductBezier from './components/workflows/edges/AqueductBezier';
 import AqueductQuadratic from './components/workflows/edges/AqueductQuadratic';
 import AqueductStraight from './components/workflows/edges/AqueductStraight';
 import { BaseNode } from './components/workflows/nodes/BaseNode.styles';
-import BoolArtifactNode from './components/workflows/nodes/BoolArtifactNode';
-import CheckOperatorNode from './components/workflows/nodes/CheckOperatorNode';
-import DatabaseNode from './components/workflows/nodes/DatabaseNode';
-import FunctionOperatorNode from './components/workflows/nodes/FunctionOperatorNode';
-import MetricOperatorNode from './components/workflows/nodes/MetricOperatorNode';
 import Node from './components/workflows/nodes/Node';
 import nodeTypes from './components/workflows/nodes/nodeTypes';
-import NumericArtifactNode from './components/workflows/nodes/NumericArtifactNode';
-import ParameterOperatorNode from './components/workflows/nodes/ParameterOperatorNode';
-import TableArtifactNode from './components/workflows/nodes/TableArtifactNode';
 import ReactFlowCanvas from './components/workflows/ReactFlowCanvas';
-import WorkflowStatusBar, {
-  StatusBarHeaderHeightInPx,
-  StatusBarWidthInPx,
-} from './components/workflows/StatusBar';
+import RequireDagOrResult from './components/workflows/RequireDagOrResult';
 import VersionSelector from './components/workflows/version_selector';
-import WorkflowCard from './components/workflows/workflowCard';
 import WorkflowHeader from './components/workflows/workflowHeader';
 import WorkflowSettings from './components/workflows/WorkflowSettings';
-import { StatusChip } from './components/workflows/workflowStatus';
+import { aqueductApi } from './handlers/AqueductApi';
 import { handleGetArtifactResultContent } from './handlers/getArtifactResultContent';
+import { handleGetServerConfig } from './handlers/getServerConfig';
+import { handleGetWorkflowDag } from './handlers/getWorkflowDag';
 import { handleGetWorkflowDagResult } from './handlers/getWorkflowDagResult';
 import { handleListArtifactResults } from './handlers/listArtifactResults';
 import artifactResultContents from './reducers/artifactResultContents';
@@ -134,14 +131,7 @@ import notifications, {
   handleFetchNotifications,
   notificationsSlice,
 } from './reducers/notifications';
-import openSideSheet, {
-  openSideSheetSlice,
-  setAllSideSheetState,
-  setBottomSideSheetOpenState,
-  setLeftSideSheetOpenState,
-  setRightSideSheetOpenState,
-  setWorkflowStatusBarOpenState,
-} from './reducers/openSideSheet';
+import serverConfig from './reducers/serverConfig';
 import workflow, {
   handleGetArtifactResults,
   handleGetOperatorResults,
@@ -151,6 +141,8 @@ import workflow, {
   workflowSlice,
 } from './reducers/workflow';
 import workflowDagResults from './reducers/workflowDagResults';
+import workflowDags from './reducers/workflowDags';
+import workflowHistory from './reducers/workflowHistory';
 import { store } from './stores/store';
 import { theme } from './styles/theme/theme';
 import { ArtifactType } from './utils/artifacts';
@@ -201,13 +193,13 @@ import {
   normalizeWorkflowDag,
   WorkflowUpdateTrigger,
 } from './utils/workflows';
-
 export {
   AccountNotificationSettingsSelector,
   AccountPage,
   AddIntegrations,
   addTable,
   AddTableDialog,
+  aqueductApi,
   AqueductBezier,
   AqueductDemoCard,
   AqueductQuadratic,
@@ -218,22 +210,21 @@ export {
   artifactResults,
   ArtifactType,
   ArtifactTypeToNodeTypeMap,
+  AWSCard,
+  AWSDialog,
   BaseNode,
   BigQueryCard,
   BigQueryDialog,
-  BoolArtifactNode,
   Button,
   Card,
   CheckDetailsPage,
   CheckLevel,
-  CheckOperatorNode,
   CheckStatus,
   CodeBlock,
   CondaDialog,
   ConnectedIntegrations,
   createCronString,
   CSVDialog,
-  DatabaseNode,
   DatabricksCard,
   DatabricksDialog,
   DataCard,
@@ -257,13 +248,11 @@ export {
   fetchUser,
   formatService,
   FunctionGranularity,
-  FunctionOperatorNode,
   FunctionType,
   getDataArtifactPreview,
   getDataSideSheetContent,
   getNextUpdateTime,
   GettingStartedTutorial,
-  getUniqueListBy,
   handleArchiveAllNotifications,
   handleArchiveNotification,
   handleConnectToNewIntegration,
@@ -274,7 +263,9 @@ export {
   handleGetArtifactResultContent,
   handleGetArtifactResults,
   handleGetOperatorResults,
+  handleGetServerConfig,
   handleGetWorkflow,
+  handleGetWorkflowDag,
   handleGetWorkflowDagResult,
   handleListArtifactResults,
   handleListIntegrationObjects,
@@ -284,7 +275,6 @@ export {
   handleLoadIntegrations,
   handleTestConnectIntegration,
   HomePage,
-  IconButton,
   integration,
   IntegrationCard,
   IntegrationDetailsPage,
@@ -300,16 +290,13 @@ export {
   LoadingButton,
   LoadingStatusEnum,
   LoadSpecsCard,
-  LogBlock,
   LoginPage,
-  LogLevel,
   LogViewer,
   MariaDbCard,
   MariaDbDialog,
   MenuSidebar,
   MenuSidebarWidth,
   MetricDetailsPage,
-  MetricOperatorNode,
   MongoDBCard,
   MongoDBDialog,
   MultiFileViewer,
@@ -330,16 +317,12 @@ export {
   NotificationsPopover,
   notificationsSlice,
   NotificationStatus,
-  NumericArtifactNode,
   objectKeyFn,
-  openSideSheet,
-  openSideSheetSlice,
   OperatorDetailsPage,
   OperatorExecStateTableType,
   OperatorType,
   OperatorTypeToNodeTypeMap,
   PaginatedTable,
-  ParameterOperatorNode,
   PeriodUnit,
   PostgresCard,
   PostgresDialog,
@@ -347,6 +330,8 @@ export {
   ReactflowNodeType,
   RedshiftCard,
   RedshiftDialog,
+  RequireDagOrResult,
+  RequireOperator,
   resetConnectNewStatus,
   resetSelectedNode,
   resetTestConnectStatus,
@@ -354,47 +339,39 @@ export {
   S3Dialog,
   selectNode,
   selectResultIdx,
+  serverConfig,
   ServiceLogos,
   ServiceType,
-  // TODO: Refactor to remove sidesheet state
-  setAllSideSheetState,
-  // TODO: Refactor to remove sidesheet state
-  setBottomSideSheetOpenState,
-  // TODO: Refactor to remove sidesheet state
-  setLeftSideSheetOpenState,
-  // TODO: Refactor to remove sidesheet state
-  setRightSideSheetOpenState,
-  // TODO: Refactor to remove sidesheet state
-  setWorkflowStatusBarOpenState,
-  // TODO: Refactor to remove sidesheet state
   sideSheetSwitcher,
   SlackCard,
   SlackDialog,
   SnowflakeCard,
   SnowflakeDialog,
-  StatusChip as Status,
-  StatusBarHeaderHeightInPx,
-  StatusBarWidthInPx,
+  SparkCard,
+  SparkDialog,
   store,
   SupportedIntegrations,
   Tab,
-  TableArtifactNode,
   Tabs,
   theme,
   useAqueductConsts,
+  useArtifact,
+  useArtifactHistory,
+  useOpeartor,
   UserProfile,
   useUser,
+  useWorkflow,
   VersionSelector,
   WidthTransition,
   workflow,
-  WorkflowCard,
   workflowDagResults,
+  workflowDags,
   WorkflowHeader,
+  workflowHistory,
   WorkflowPage,
   WorkflowSettings,
   workflowSlice,
   WorkflowsPage,
-  WorkflowStatusBar,
   workflowSummaries,
   WorkflowUpdateTrigger,
 };

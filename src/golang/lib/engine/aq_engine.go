@@ -11,6 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/airflow"
 	"github.com/aqueducthq/aqueduct/lib/cronjob"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/dynamic"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
@@ -23,7 +24,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/github"
 	"github.com/aqueducthq/aqueduct/lib/workflow/preview_cache"
-	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	workflow_utils "github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -151,7 +151,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 	workflowID uuid.UUID,
 	timeConfig *AqueductTimeConfig,
 	parameters map[string]param.Param,
-) (shared.ExecutionStatus, error) {
+) (_ shared.ExecutionStatus, err error) {
 	dbDAG, err := workflow_utils.ReadLatestDAGFromDatabase(
 		ctx,
 		workflowID,
@@ -184,11 +184,21 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Error initializing workflowDagResult.")
 	}
 
-	// Any errors after this point should be persisted to the WorkflowDagResult created above
+	// Any errors after this point should be persisted to the WorkflowDagResult created above.
 	defer func() {
 		if err != nil {
 			// Mark the workflow dag result as failed
 			execState.Status = shared.FailedExecutionStatus
+
+			// Only set the workflow-level error if the error occurred outside the context
+			// of any single operator's execution. (eg. workflow timed out)
+			if !isOpFailureError(err) {
+				execState.Error = &shared.Error{
+					Context: err.Error(),
+					Tip:     "A workflow-level error occurred!",
+				}
+			}
+
 			now := time.Now()
 			execState.Timestamps.FinishedAt = &now
 		}
@@ -198,6 +208,8 @@ func (eng *aqEngine) ExecuteWorkflow(
 			dagResult.ID,
 			execState,
 			eng.DAGResultRepo,
+			eng.ArtifactResultRepo,
+			eng.OperatorResultRepo,
 			eng.WorkflowRepo,
 			eng.NotificationRepo,
 			eng.Database,
@@ -252,7 +264,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		opIds = append(opIds, op.ID)
 	}
 
-	execEnvsByOpId, err := exec_env.GetActiveExecutionEnvironmentsByOperatorIDs(
+	execEnvsByOpId, err := exec_env.GetExecutionEnvironmentsByOperatorIDs(
 		ctx,
 		opIds,
 		eng.ExecutionEnvironmentRepo,
@@ -269,7 +281,8 @@ func (eng *aqEngine) ExecuteWorkflow(
 	}
 
 	var jobManager job.JobManager
-	if dbDAG.EngineConfig.Type == shared.DatabricksEngineType {
+	if dbDAG.EngineConfig.Type == shared.SparkEngineType || dbDAG.EngineConfig.Type == shared.DatabricksEngineType {
+		// Create the SparkJobManager.
 		jobManager, err = job.GenerateNewJobManager(
 			ctx,
 			dbDAG.EngineConfig,
@@ -364,7 +377,8 @@ func (eng *aqEngine) PreviewWorkflow(
 	}
 
 	var jobManager job.JobManager
-	if dbDAG.EngineConfig.Type == shared.DatabricksEngineType {
+	var previewCacheManager preview_cache.CacheManager
+	if dbDAG.EngineConfig.Type == shared.SparkEngineType || dbDAG.EngineConfig.Type == shared.DatabricksEngineType {
 		jobManager, err = job.GenerateNewJobManager(
 			ctx,
 			dbDAG.EngineConfig,
@@ -375,6 +389,8 @@ func (eng *aqEngine) PreviewWorkflow(
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		previewCacheManager = eng.PreviewCacheManager
 	}
 
 	dag, err := dag_utils.NewWorkflowDag(
@@ -385,7 +401,7 @@ func (eng *aqEngine) PreviewWorkflow(
 		eng.ArtifactRepo,
 		eng.ArtifactResultRepo,
 		vaultObject,
-		eng.PreviewCacheManager,
+		previewCacheManager,
 		execEnvByOperatorId,
 		operator.Preview,
 		eng.AqPath,
@@ -652,7 +668,7 @@ func (eng *aqEngine) DeleteWorkflow(
 	// Delete storage files (artifact content and function files)
 	storagePaths := make([]string, 0, len(operatorIDs)+len(artifactResultIDs))
 	for _, op := range operatorsToDelete {
-		if op.Spec.IsFunction() || op.Spec.IsMetric() || op.Spec.IsCheck() {
+		if op.Spec.HasFunction() {
 			storagePaths = append(storagePaths, op.Spec.Function().StoragePath)
 		}
 	}
@@ -736,7 +752,7 @@ func (eng *aqEngine) TriggerWorkflow(
 	timeConfig *AqueductTimeConfig,
 	parameters map[string]param.Param,
 ) (shared.ExecutionStatus, error) {
-	dag, err := utils.ReadLatestDAGFromDatabase(
+	dag, err := workflow_utils.ReadLatestDAGFromDatabase(
 		ctx,
 		workflowID,
 		eng.WorkflowRepo,
@@ -936,10 +952,26 @@ func (eng *aqEngine) execute(
 
 	for len(inProgressOps) > 0 {
 		if time.Since(start) > timeConfig.ExecTimeout {
-			return errors.New("Reached timeout waiting for workflow to complete.")
+			return errors.Newf("Reached timeout %s waiting for workflow to complete.", timeConfig.ExecTimeout)
 		}
 
 		for _, op := range inProgressOps {
+			if op.Dynamic() && !op.GetDynamicProperties().Prepared() {
+				err = dynamic.PrepareCluster(
+					ctx,
+					&shared.DynamicK8sConfig{}, // empty configDelta map
+					op.GetDynamicProperties().GetEngineIntegrationId(),
+					eng.IntegrationRepo,
+					vaultObject,
+					eng.Database,
+				)
+				if err != nil {
+					return err
+				}
+
+				op.GetDynamicProperties().SetPrepared()
+			}
+
 			execState, err := op.Poll(ctx)
 			if err != nil {
 				return err
@@ -1017,6 +1049,18 @@ func (eng *aqEngine) execute(
 			}
 			completedOps[op.ID()] = op
 			delete(inProgressOps, op.ID())
+
+			if op.Dynamic() {
+				err = dynamic.UpdateClusterLastUsedTimestamp(
+					ctx,
+					op.GetDynamicProperties().GetEngineIntegrationId(),
+					eng.IntegrationRepo,
+					eng.Database,
+				)
+				if err != nil {
+					return err
+				}
+			}
 
 			outputArtifacts, err := dag.OperatorOutputs(op)
 			if err != nil {
@@ -1156,11 +1200,4 @@ func (eng *aqEngine) updateWorkflowSchedule(
 		}
 	}
 	return nil
-}
-
-func (eng *aqEngine) InitEnv(
-	ctx context.Context,
-	env *exec_env.ExecutionEnvironment,
-) error {
-	return env.CreateEnv()
 }

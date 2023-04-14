@@ -1,3 +1,4 @@
+import platform
 import sys
 from typing import Any
 
@@ -128,12 +129,11 @@ def run_extract(
 ) -> None:
     extract_params = spec.parameters
 
-    # Search for user-defined placeholder if this is a relational query, and replace them with
+    # Search for user-defined placeholders if this is a relational query, and replace them with
     # the appropriate values.
     if isinstance(extract_params, extract.RelationalParams) or isinstance(
         extract_params, extract.MongoDBParams
     ):
-        assert len(spec.input_param_names) == len(spec.input_content_paths)
         input_vals, _, _ = utils.read_artifacts(
             storage,
             spec.input_content_paths,
@@ -142,9 +142,7 @@ def run_extract(
         assert all(
             isinstance(param_val, str) for param_val in input_vals
         ), "Parameter value must be a string."
-
-        parameters = dict(zip(spec.input_param_names, input_vals))
-        extract_params.compile(parameters)
+        extract_params.compile(input_vals)
 
     @exec_state.user_fn_redirected(failure_tip=TIP_EXTRACT)
     def _extract() -> Any:
@@ -270,27 +268,22 @@ def setup_connector(
         from aqueduct_executor.operators.connectors.data.sql_server import (  # type: ignore
             SqlServerConnector as OpConnector,
         )
-    elif connector_name == common.Name.MYSQL:
+    elif connector_name == common.Name.MYSQL or connector_name == common.Name.MARIA_DB:
         try:
+            # Use pythonic mysql library to fix crossplatform compatibility issues.
+            # MySQLdb is a C-based library
+            import pymysql
+
+            # Implementation can be found here: https://github.com/PyMySQL/PyMySQL/blob/main/pymysql/__init__.py
+            pymysql.install_as_MySQLdb()
             import MySQLdb
         except:
             raise MissingConnectorDependencyException(
-                "Unable to initialize the MySQL connector. Have you run `aqueduct install mysql`?"
+                "Unable to initialize the MySQL\/MariaDB connector. Have you run `aqueduct install mysql`?"
             )
 
         from aqueduct_executor.operators.connectors.data.mysql import (  # type: ignore
             MySqlConnector as OpConnector,
-        )
-    elif connector_name == common.Name.MARIA_DB:
-        try:
-            import MySQLdb
-        except:
-            raise MissingConnectorDependencyException(
-                "Unable to initialize the MariaDB connector. Have you run `aqueduct install mariadb`?"
-            )
-
-        from aqueduct_executor.operators.connectors.data.maria_db import (  # type: ignore
-            MariaDbConnector as OpConnector,
         )
     elif connector_name == common.Name.AZURE_SQL:
         try:

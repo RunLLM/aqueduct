@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
@@ -34,10 +35,21 @@ type Operator struct {
 
 // OperatorCols returns a comma-separated string of all Operator columns.
 func OperatorCols() string {
-	return strings.Join(allOperatorCols(), ",")
+	return strings.Join(AllOperatorCols(), ",")
 }
 
-func allOperatorCols() []string {
+// OperatorColsWithPrefix returns a comma-separated string of all
+// operator columns prefixed by the view name.
+func OperatorColsWithPrefix() string {
+	cols := AllOperatorCols()
+	for i, col := range cols {
+		cols[i] = fmt.Sprintf("%s.%s", OperatorTable, col)
+	}
+
+	return strings.Join(cols, ",")
+}
+
+func AllOperatorCols() []string {
 	return []string{
 		OperatorID,
 		OperatorName,

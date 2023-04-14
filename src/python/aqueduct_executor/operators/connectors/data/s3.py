@@ -25,6 +25,7 @@ class S3Connector(connector.DataConnector):
         session = construct_boto_session(config)
         self.s3 = session.resource("s3")
         self.bucket = config.bucket
+        self.root_dir = config.root_dir
 
     def authenticate(self) -> None:
         try:
@@ -36,6 +37,15 @@ class S3Connector(connector.DataConnector):
                 "Bucket does not exist or you do not have permission to access the bucket: %s."
                 % str(e)
             )
+
+        # Check that any user-supplied root directory exists.
+        if self.root_dir != "":
+            # If nothing is returned by this filter call, then the directory does not exist.
+            if len(list(self.s3.Bucket(self.bucket).objects.filter(Prefix=self.root_dir))) == 0:
+                raise Exception(
+                    "Supplied root directory `%s` does not exist in bucket %s."
+                    % (self.root_dir, self.bucket)
+                )
 
     def discover(self) -> List[str]:
         raise Exception("Discover is not supported for S3.")
@@ -127,9 +137,12 @@ class S3Connector(connector.DataConnector):
             if len(path) == 0:
                 raise Exception("S3 file path cannot be an empty string.")
             if path[-1] == "/":
-                # This means the path is a directory, and we will do a prefix search.
                 files = []
-                for obj in self.s3.Bucket(self.bucket).objects.filter(Prefix=path):
+                s3_file_collection = self.s3.Bucket(self.bucket).objects.filter(Prefix=path)
+                # If nothing is returned, that means the file directory does not exist.
+                if (len(list(s3_file_collection))) == 0:
+                    raise Exception("Given path to S3 directory '%s' does not exist." % (path))
+                for obj in s3_file_collection:
                     # The filter api also returns the directories, so we filter them out.
                     if (obj.key)[-1] != "/":
                         files.append(self.fetch_object(obj.key, params))

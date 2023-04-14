@@ -4,13 +4,18 @@ import uuid
 from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import requests
-from aqueduct.constants.enums import ExecutionStatus, ServiceType
+from aqueduct.constants.enums import (
+    ExecutionStatus,
+    K8sClusterActionType,
+    RuntimeType,
+    ServiceType,
+)
 from aqueduct.error import (
     AqueductError,
     ClientValidationError,
     InternalServerError,
     InvalidRequestError,
-    InvalidUserArgumentException,
+    InvalidUserActionException,
     NoConnectedIntegrationsException,
     ResourceNotFoundError,
     UnprocessableEntityError,
@@ -18,19 +23,12 @@ from aqueduct.error import (
 from aqueduct.logger import logger
 from aqueduct.models.dag import DAG
 from aqueduct.models.integration import Integration, IntegrationInfo
-from aqueduct.models.operators import LoadSpec, ParamSpec, RelationalDBLoadParams, S3LoadParams
-from aqueduct.utils.serialization import deserialize
-from pkg_resources import parse_version, require
-
-from ..integrations.connect_config import IntegrationConfig
-from .response_helpers import (
-    _construct_preview_response,
-    _handle_preview_resp,
-    _parse_artifact_result_response,
-)
-from .response_models import (
+from aqueduct.models.operators import ParamSpec
+from aqueduct.models.response_models import (
     DeleteWorkflowResponse,
+    DynamicEngineStatusResponse,
     GetVersionResponse,
+    GetWorkflowDagResultResponse,
     GetWorkflowResponse,
     ListWorkflowResponseEntry,
     ListWorkflowSavedObjectsResponse,
@@ -39,6 +37,19 @@ from .response_models import (
     RegisterWorkflowResponse,
     SavedObjectUpdate,
 )
+from aqueduct.utils.serialization import deserialize
+from pkg_resources import get_distribution, parse_version
+
+from ..integrations.connect_config import DynamicK8sConfig, IntegrationConfig
+from .response_helpers import (
+    _construct_preview_response,
+    _handle_preview_resp,
+    _parse_artifact_result_response,
+)
+
+# The maximum http request size is capped at 32 MB. DAG containing
+# local data parameter(s) should not go beyond this value.
+MAX_REQUEST_BODY_SIZE = 32 << 20
 
 
 class APIClient:
@@ -58,6 +69,7 @@ class APIClient:
     LIST_INTEGRATIONS_ROUTE = "/api/integrations"
     LIST_INTEGRATION_OBJECTS_ROUTE_TEMPLATE = "/api/integration/%s/objects"
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
+    GET_WORKFLOW_DAG_RESULT_TEMPLATE = "/api/workflow/%s/result/%s"
     LIST_WORKFLOW_SAVED_OBJECTS_ROUTE = "/api/workflow/%s/objects"
     GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact/%s/%s/result"
 
@@ -69,6 +81,9 @@ class APIClient:
     NODE_POSITION_ROUTE = "/api/positioning"
     EXPORT_FUNCTION_ROUTE = "/api/function/%s/export"
 
+    GET_DYNAMIC_ENGINE_STATUS_ROUTE = "/api/integration/dynamic-engine/status"
+    EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE = "/api/integration/dynamic-engine/%s/edit"
+
     # Auth header
     API_KEY_HEADER = "api-key"
 
@@ -78,7 +93,9 @@ class APIClient:
         def _extract_err_msg() -> str:
             resp_json = response.json()
             if "error" not in resp_json:
-                raise Exception("No 'error' field on response: %s" % json.dumps(resp_json))
+                raise Exception(
+                    "No 'error' field on response: %s" % json.dumps(resp_json)
+                )
             return str(resp_json["error"])
 
         if response.status_code == 400:
@@ -150,7 +167,9 @@ class APIClient:
         protocol_prefix = self.HTTPS_PREFIX if use_https else self.HTTP_PREFIX
         return "%s%s" % (protocol_prefix, self.aqueduct_address)
 
-    def construct_full_url(self, route_suffix: str, use_https: Optional[bool] = None) -> str:
+    def construct_full_url(
+        self, route_suffix: str, use_https: Optional[bool] = None
+    ) -> str:
         self._check_config()
         if use_https is None:
             use_https = self.use_https
@@ -158,7 +177,7 @@ class APIClient:
 
     def _validate_server_version(self, server_version: str) -> None:
         """Checks that the SDK and the server versions match."""
-        sdk_version = require("aqueduct-sdk")[0].version
+        sdk_version = get_distribution("aqueduct-sdk").version
         if parse_version(server_version) > parse_version(sdk_version):
             raise ClientValidationError(
                 "The SDK is outdated, it is using version %s, while the server is of version %s. "
@@ -243,7 +262,9 @@ class APIClient:
         """Returns a list of the tables in the specified integration.
         If the integration is not a relational database, it will throw an error.
         """
-        url = self.construct_full_url(self.LIST_INTEGRATION_OBJECTS_ROUTE_TEMPLATE % integration_id)
+        url = self.construct_full_url(
+            self.LIST_INTEGRATION_OBJECTS_ROUTE_TEMPLATE % integration_id
+        )
         headers = self._generate_auth_headers()
         resp = requests.get(url, headers=headers)
         self.raise_errors(resp)
@@ -251,10 +272,10 @@ class APIClient:
         return [x for x in resp.json()["object_names"]]
 
     def connect_integration(
-        self, name: str, service: ServiceType, config: IntegrationConfig
+        self, name: str, service: Union[str, ServiceType], config: IntegrationConfig
     ) -> None:
         integration_service = service
-        if not isinstance(integration_service, str):
+        if isinstance(integration_service, ServiceType):
             # The enum value needs to be used
             integration_service = integration_service.value
 
@@ -263,7 +284,9 @@ class APIClient:
             {
                 "integration-name": name,
                 "integration-service": integration_service,
-                "integration-config": config.json(),
+                # `by_alias` is necessary to get this to use `schema` as a key for SnowflakeConfig.
+                # `exclude_none` is necessary to exclude `role` when None as SnowflakeConfig.
+                "integration-config": config.json(exclude_none=True, by_alias=True),
             }
         )
         url = self.construct_full_url(
@@ -272,11 +295,117 @@ class APIClient:
         resp = requests.post(url, url, headers=headers)
         self.raise_errors(resp)
 
+    def get_dynamic_engine_status_by_dag(
+        self,
+        dag: DAG,
+    ) -> Dict[str, DynamicEngineStatusResponse]:
+        """Makes a request against the /api/integration/dynamic-engine/status endpoint.
+           If an integration id does not correspond to a dynamic integration, the response won't
+           have an entry for that integration.
+
+        Args:
+            dag:
+                The DAG object. We will extract the engine integration IDs and send them
+                to the backend to retrieve their status. Currently, we are only interested in
+                the status of dynamic engines.
+
+        Returns:
+            A DynamicEngineStatusResponse object, parsed from the backend endpoint's response.
+        """
+        engine_integration_ids = set()
+
+        dag_engine_config = dag.engine_config
+        if dag_engine_config.type == RuntimeType.K8S:
+            assert dag_engine_config.k8s_config is not None
+            engine_integration_ids.add(str(dag_engine_config.k8s_config.integration_id))
+        for op in dag.operators.values():
+            if op.spec.engine_config and op.spec.engine_config.type == RuntimeType.K8S:
+                assert op.spec.engine_config.k8s_config is not None
+                engine_integration_ids.add(
+                    str(op.spec.engine_config.k8s_config.integration_id)
+                )
+
+        return self.get_dynamic_engine_status(list(engine_integration_ids))
+
+    def get_dynamic_engine_status(
+        self,
+        engine_integration_ids: List[str],
+    ) -> Dict[str, DynamicEngineStatusResponse]:
+        """Makes a request against the /api/integration/dynamic-engine/status endpoint.
+           If an integration id does not correspond to a dynamic integration, the response won't
+           have an entry for that integration.
+
+        Args:
+            engine_integration_ids:
+                A list of engine integration IDs. Currently, we are only interested in
+                the status of dynamic engines.
+
+        Returns:
+            A DynamicEngineStatusResponse object, parsed from the backend endpoint's response.
+        """
+        headers = self._generate_auth_headers()
+        headers["integration-ids"] = json.dumps(engine_integration_ids)
+
+        url = self.construct_full_url(self.GET_DYNAMIC_ENGINE_STATUS_ROUTE)
+        resp = requests.get(url, headers=headers)
+        self.raise_errors(resp)
+
+        return {
+            dynamic_engine_status["name"]: DynamicEngineStatusResponse(
+                **dynamic_engine_status
+            )
+            for dynamic_engine_status in resp.json()
+        }
+
+    def edit_dynamic_engine(
+        self,
+        action: K8sClusterActionType,
+        integration_id: str,
+        config_delta: Optional[DynamicK8sConfig] = None,
+    ) -> None:
+        """Makes a request against the /api/integration/dynamic-engine/{integrationId}/edit endpoint.
+
+        Args:
+            integration_id:
+                The engine integration ID.
+        """
+        if action not in [
+            K8sClusterActionType.CREATE,
+            K8sClusterActionType.UPDATE,
+            K8sClusterActionType.DELETE,
+            K8sClusterActionType.FORCE_DELETE,
+        ]:
+            raise InvalidRequestError(
+                "Invalid action %s for interacting with dynamic engine." % action
+            )
+
+        if config_delta == None:
+            config_delta = DynamicK8sConfig()
+
+        assert isinstance(config_delta, DynamicK8sConfig)
+
+        headers = self._generate_auth_headers()
+        headers["action"] = action.value
+
+        url = self.construct_full_url(
+            self.EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE % integration_id
+        )
+
+        body = {
+            "config_delta": config_delta.json(exclude_none=True),
+        }
+
+        resp = requests.post(url, headers=headers, data=body)
+
+        self.raise_errors(resp)
+
     def delete_integration(
         self,
         integration_id: uuid.UUID,
     ) -> None:
-        url = self.construct_full_url(self.DELETE_INTEGRATION_ROUTE_TEMPLATE % integration_id)
+        url = self.construct_full_url(
+            self.DELETE_INTEGRATION_ROUTE_TEMPLATE % integration_id
+        )
         headers = self._generate_auth_headers()
         resp = requests.post(url, headers=headers)
         self.raise_errors(resp)
@@ -285,7 +414,7 @@ class APIClient:
         self,
         dag: DAG,
     ) -> PreviewResponse:
-        """Makes a request against the /preview endpoint.
+        """Makes a request against the /api/preview endpoint.
 
         Args:
             dag:
@@ -299,6 +428,15 @@ class APIClient:
         body = {
             "dag": dag.json(exclude_none=True),
         }
+
+        if len(body["dag"]) > MAX_REQUEST_BODY_SIZE and any(
+            artifact_metadata.from_local_data
+            for artifact_metadata in list(dag.artifacts.values())
+        ):
+            raise InvalidUserActionException(
+                "Local Data after serialization is too large. Aqueduct uses json serialization. The maximum size of workflow with local data is %s in bytes, the current size is %s in bytes."
+                % (MAX_REQUEST_BODY_SIZE, len(body["dag"]))
+            )
 
         files: Dict[str, IO[Any]] = {}
         for op in dag.list_operators():
@@ -317,8 +455,9 @@ class APIClient:
     def register_workflow(
         self,
         dag: DAG,
+        run_now: bool,
     ) -> RegisterWorkflowResponse:
-        headers, body, files = self._construct_register_workflow_request(dag)
+        headers, body, files = self._construct_register_workflow_request(dag, run_now)
         url = self.construct_full_url(self.REGISTER_WORKFLOW_ROUTE)
         resp = requests.post(url, headers=headers, data=body, files=files)
         self.raise_errors(resp)
@@ -329,8 +468,10 @@ class APIClient:
         self,
         dag: DAG,
     ) -> RegisterAirflowWorkflowResponse:
-        headers, body, files = self._construct_register_workflow_request(dag)
-        url = self.construct_full_url(self.REGISTER_AIRFLOW_WORKFLOW_ROUTE, self.use_https)
+        headers, body, files = self._construct_register_workflow_request(dag, False)
+        url = self.construct_full_url(
+            self.REGISTER_AIRFLOW_WORKFLOW_ROUTE, self.use_https
+        )
         resp = requests.post(url, headers=headers, data=body, files=files)
         self.raise_errors(resp)
 
@@ -339,11 +480,23 @@ class APIClient:
     def _construct_register_workflow_request(
         self,
         dag: DAG,
+        run_now: bool,
     ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, IO[Any]]]:
         headers = self._generate_auth_headers()
+        # This header value will be string "True" or "False"
+        headers.update({"run-now": str(run_now)})
         body = {
             "dag": dag.json(exclude_none=True),
         }
+
+        if len(body["dag"]) > MAX_REQUEST_BODY_SIZE and any(
+            artifact_metadata.from_local_data
+            for artifact_metadata in list(dag.artifacts.values())
+        ):
+            raise InvalidUserActionException(
+                "Local Data after serialization is too large. Aqueduct uses json serialization. The maximum size of workflow with local data is %s in bytes, the current size is %s in bytes."
+                % (MAX_REQUEST_BODY_SIZE, len(body["dag"]))
+            )
 
         files: Dict[str, IO[Any]] = {}
         for op in dag.list_operators():
@@ -366,7 +519,10 @@ class APIClient:
 
         body = {
             "parameters": json.dumps(
-                {param_name: param_spec.dict() for param_name, param_spec in param_specs.items()}
+                {
+                    param_name: param_spec.dict()
+                    for param_name, param_spec in param_specs.items()
+                }
             )
         }
 
@@ -376,14 +532,18 @@ class APIClient:
     def delete_workflow(
         self,
         flow_id: str,
-        saved_objects_to_delete: DefaultDict[Union[str, Integration], List[SavedObjectUpdate]],
+        saved_objects_to_delete: DefaultDict[
+            Union[str, Integration], List[SavedObjectUpdate]
+        ],
         force: bool,
     ) -> DeleteWorkflowResponse:
         headers = self._generate_auth_headers()
         url = self.construct_full_url(self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id)
         body = {
             "external_delete": {
-                str(integration): [obj.spec.json() for obj in saved_objects_to_delete[integration]]
+                str(integration): [
+                    obj.spec.json() for obj in saved_objects_to_delete[integration]
+                ]
                 for integration in saved_objects_to_delete
             },
             "force": force,
@@ -397,8 +557,18 @@ class APIClient:
         url = self.construct_full_url(self.GET_WORKFLOW_ROUTE_TEMPLATE % flow_id)
         resp = requests.get(url, headers=headers)
         self.raise_errors(resp)
-        workflow_response = GetWorkflowResponse(**resp.json())
-        return workflow_response
+        return GetWorkflowResponse(**resp.json())
+
+    def get_workflow_dag_result(
+        self, flow_id: str, result_id: str
+    ) -> GetWorkflowDagResultResponse:
+        headers = self._generate_auth_headers()
+        url = self.construct_full_url(
+            self.GET_WORKFLOW_DAG_RESULT_TEMPLATE % (flow_id, result_id)
+        )
+        resp = requests.get(url, headers=headers)
+        self.raise_errors(resp)
+        return GetWorkflowDagResultResponse(**resp.json())
 
     def list_saved_objects(self, flow_id: str) -> ListWorkflowSavedObjectsResponse:
         headers = self._generate_auth_headers()
@@ -430,13 +600,18 @@ class APIClient:
         parsed_response = _parse_artifact_result_response(resp)
         execution_status = parsed_response["metadata"]["exec_state"]["status"]
 
-        if execution_status != ExecutionStatus.SUCCEEDED:
-            print("Artifact result unavailable due to unsuccessful execution.")
-            return None, execution_status
-
         serialization_type = parsed_response["metadata"]["serialization_type"]
         artifact_type = parsed_response["metadata"]["artifact_type"]
-        return (
-            deserialize(serialization_type, artifact_type, parsed_response["data"]),
-            execution_status,
-        )
+
+        return_value = None
+        if "data" in parsed_response:
+            return_value = deserialize(
+                serialization_type, artifact_type, parsed_response["data"]
+            )
+
+        if execution_status != ExecutionStatus.SUCCEEDED:
+            logger().warning(
+                "Artifact result unavailable due to unsuccessful execution."
+            )
+
+        return (return_value, execution_status)

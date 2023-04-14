@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -14,20 +15,18 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func reportUsage(startTime time.Time, environment string, statusCode int, urlPath string) {
+func reportUsage(
+	startTime time.Time,
+	environment string,
+	statusCode int,
+	urlPath string,
+	machineID string,
+) {
 	pathToken := strings.Split(urlPath, delimiter)
 	for i, token := range pathToken {
 		if _, err := uuid.Parse(token); err == nil {
 			pathToken[i] = obfuscated
 		}
-	}
-
-	// This call generates a unique hash of the host device in a privacy-preserving fashion.
-	// Details can be found here: https://github.com/denisbrodbeck/machineid
-	machineID, err := machineid.ProtectedID(hashKey)
-	if err != nil {
-		log.Errorf("Failed to generate obfuscated device ID: %v", err)
-		return
 	}
 
 	startTimeUnix := startTime.UnixNano()
@@ -94,6 +93,23 @@ func reportUsage(startTime time.Time, environment string, statusCode int, urlPat
 }
 
 func WithUsageStats(environment string) func(http.Handler) http.Handler {
+	var machineID string
+	// Determine codespace ID based on
+	// https://docs.github.com/en/codespaces/developing-in-codespaces/default-environment-variables-for-your-codespace
+	if os.Getenv(codespacesEnv) == codespacesEnvActiveValue {
+		environment = "code_space"
+		machineID = os.Getenv(codespaceUserEnv)
+	} else {
+		// This call generates a unique hash of the host device in a privacy-preserving fashion.
+		// Details can be found here: https://github.com/denisbrodbeck/machineid
+		var err error
+		machineID, err = machineid.ProtectedID(hashKey)
+		if err != nil {
+			log.Errorf("Failed to generate obfuscated device ID: %v", err)
+			return func(h http.Handler) http.Handler { return h }
+		}
+	}
+
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// The reason we need this wrapper is so that we can get the status of the response via
@@ -102,7 +118,7 @@ func WithUsageStats(environment string) func(http.Handler) http.Handler {
 
 			startTime := time.Now()
 			defer func() {
-				go reportUsage(startTime, environment, ww.Status(), r.URL.Path)
+				go reportUsage(startTime, environment, ww.Status(), r.URL.Path, machineID)
 			}()
 
 			h.ServeHTTP(ww, r)

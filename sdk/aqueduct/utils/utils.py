@@ -1,5 +1,4 @@
 import uuid
-from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Union
 
 from aqueduct.constants.enums import ArtifactType, RuntimeType, ServiceType, TriggerType
@@ -10,12 +9,14 @@ from aqueduct.models.config import (
     EngineConfig,
     K8sEngineConfig,
     LambdaEngineConfig,
+    SparkEngineConfig,
 )
 from aqueduct.models.dag import Schedule
 from aqueduct.models.integration import IntegrationInfo
 from aqueduct.models.operators import ParamSpec
 from croniter import croniter
 
+from ..models.response_models import Logs
 from .serialization import artifact_type_to_serialization_type, serialize_val
 from .type_inference import _bytes_to_base64_string
 
@@ -83,14 +84,32 @@ def generate_flow_schedule(
     return Schedule(trigger=TriggerType.PERIODIC, cron_schedule=schedule_str)
 
 
-def human_readable_timestamp(ts: int) -> str:
-    format = "%Y-%m-%d %H:%M:%S"
-    return datetime.utcfromtimestamp(ts).strftime(format)
-
-
 def indent_multiline_string(content: str) -> str:
     """Indents every line of a multiline string block."""
     return "\t" + "\t".join(content.splitlines(True))
+
+
+def print_logs(logs: Logs) -> None:
+    """Prints out the logs with the following format:
+
+    stdout:
+        {logs}
+        {logs}
+    ----------------------------------
+    stderr:
+        {logs}
+        {logs}
+    """
+    if len(logs.stdout) > 0:
+        print("stdout:")
+        print(indent_multiline_string(logs.stdout).rstrip("\n"))
+
+    if len(logs.stdout) > 0 and len(logs.stderr) > 0:
+        print("----------------------------------")
+
+    if len(logs.stderr) > 0:
+        print("stderr:")
+        print(indent_multiline_string(logs.stderr).rstrip("\n"))
 
 
 def parse_user_supplied_id(id: Union[str, uuid.UUID]) -> str:
@@ -104,7 +123,8 @@ def parse_user_supplied_id(id: Union[str, uuid.UUID]) -> str:
 
 
 def construct_param_spec(
-    val: Any, artifact_type: ArtifactType, is_implicit: bool = False
+    val: Any,
+    artifact_type: ArtifactType,
 ) -> ParamSpec:
     # Not derived from bson.
     # For now, bson_table applies only to tables read from mongo.
@@ -121,7 +141,6 @@ def construct_param_spec(
     return ParamSpec(
         val=_bytes_to_base64_string(serialize_val(val, serialization_type, derived_from_bson)),
         serialization_type=serialization_type,
-        implicitly_created=is_implicit,
     )
 
 
@@ -170,6 +189,14 @@ def generate_engine_config(
             type=RuntimeType.DATABRICKS,
             name=integration_name,
             databricks_config=DatabricksEngineConfig(
+                integration_id=integration.id,
+            ),
+        )
+    elif integration.service == ServiceType.SPARK:
+        return EngineConfig(
+            type=RuntimeType.SPARK,
+            name=integration_name,
+            spark_config=SparkEngineConfig(
                 integration_id=integration.id,
             ),
         )
