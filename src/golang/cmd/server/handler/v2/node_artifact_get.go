@@ -12,7 +12,7 @@ import (
 )
 
 // This file should map directly to
-// src/ui/common/src/handlers/NodeArtifactGet.tsx
+// src/ui/common/src/handlers/v2/NodeArtifactGet.tsx
 //
 // Route: /api/v2/workflow/{workflowID}/dag/{dagID}/node/artifact/{nodeID}
 // Method: GET

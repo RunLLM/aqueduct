@@ -37,7 +37,7 @@ type getOperatorResultArgs struct {
 	operatorID  uuid.UUID
 }
 
-type GetOperatorResultHandler struct {
+type GetOperatorResultHandlerDeprecated struct {
 	GetHandler
 
 	Database database.Database
@@ -54,11 +54,11 @@ type GetOperatorResultResponse struct {
 	Status      shared.ExecutionStatus `json:"status"`
 }
 
-func (*GetOperatorResultHandler) Name() string {
+func (*GetOperatorResultHandlerDeprecated) Name() string {
 	return "GetOperatorResult"
 }
 
-func (h *GetOperatorResultHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *GetOperatorResultHandlerDeprecated) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
@@ -96,7 +96,7 @@ func (h *GetOperatorResultHandler) Prepare(r *http.Request) (interface{}, int, e
 	}, http.StatusOK, nil
 }
 
-func (h *GetOperatorResultHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+func (h *GetOperatorResultHandlerDeprecated) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*getOperatorResultArgs)
 
 	emptyResp := GetOperatorResultResponse{}
