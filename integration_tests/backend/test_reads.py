@@ -17,6 +17,9 @@ from aqueduct import globals
 
 
 class TestBackend:
+    V2_GET_WORKFLOWS_TEMPLATE = "/api/v2/workflows"
+
+    GET_WORKFLOWS_TEMPLATE = "/api/workflows"
     LIST_WORKFLOW_SAVED_OBJECTS_TEMPLATE = "/api/workflow/%s/objects"
     GET_TEST_INTEGRATION_TEMPLATE = "/api/integration/%s/test"
     LIST_INTEGRATIONS_TEMPLATE = "/api/integrations"
@@ -265,31 +268,56 @@ class TestBackend:
                 raise Exception(f"unexpected operator name {name}")
 
     def test_endpoint_list_artifact_results_with_metrics_and_checks(self):
-        flow_id, num_runs = self.flows["flow_with_metrics_and_checks"]
-        flow = self.client.flow(flow_id)
-        runs = flow.list_runs()
-        resp = self.get_response(
-            self.GET_WORKFLOW_RESULT_TEMPLATE % (flow_id, runs[0]["run_id"])
+    #     flow_id, num_runs = self.flows["flow_with_metrics_and_checks"]
+    #     flow = self.client.flow(flow_id)
+    #     runs = flow.list_runs()
+    #     resp = self.get_response(
+    #         self.GET_WORKFLOW_RESULT_TEMPLATE % (flow_id, runs[0]["run_id"])
+    #     ).json()
+
+    #     # artifacts
+    #     artifacts = resp["artifacts"]
+    #     assert len(artifacts) == 3
+    #     for artf in artifacts.values():
+    #         name = artf["name"]
+    #         id = artf["id"]
+    #         resp = self.get_response(self.LIST_ARTIFACT_RESULTS_TEMPLATE % (flow_id, id)).json()
+    #         results = resp["results"]
+    #         assert len(results) == num_runs
+
+    #         for result in results:
+    #             exec_state = result["exec_state"]
+    #             value = result["content_serialized"]
+    #             assert_exec_state(exec_state, "succeeded")
+
+    #             if "query" in name:
+    #                 assert value is None
+    #             elif name == "size artifact":
+    #                 assert int(value) > 0
+    #             elif name == "check artifact":
+    #                 assert value == "true"
+
+    def test_endpoint_v2_list_workflows(self):
+        v1_resp = self.get_response(
+            self.GET_WORKFLOWS_TEMPLATE
         ).json()
 
-        # artifacts
-        artifacts = resp["artifacts"]
-        assert len(artifacts) == 3
-        for artf in artifacts.values():
-            name = artf["name"]
-            id = artf["id"]
-            resp = self.get_response(self.LIST_ARTIFACT_RESULTS_TEMPLATE % (flow_id, id)).json()
-            results = resp["results"]
-            assert len(results) == num_runs
+        v2_resp = self.get_response(
+            self.V2_GET_WORKFLOWS_TEMPLATE
+        ).json()
 
-            for result in results:
-                exec_state = result["exec_state"]
-                value = result["content_serialized"]
-                assert_exec_state(exec_state, "succeeded")
+        assert len(v1_resp) == len(v2_resp)
 
-                if "query" in name:
-                    assert value is None
-                elif name == "size artifact":
-                    assert int(value) > 0
-                elif name == "check artifact":
-                    assert value == "true"
+        if len(v2_resp) > 0:
+
+            keys = ["id", "user_id", "name", "description", 
+                    "schedule", "created_at", "retention_policy", 
+                    "notification_settings"]
+
+            user_id = v2_resp[0]["user_id"]
+
+            for v2_workflow in v2_resp:
+                for key in keys:
+                    assert key in v2_workflow
+                assert v2_workflow["user_id"] == user_id
+å

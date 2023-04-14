@@ -3,15 +3,12 @@ package v2
 import (
 	"context"
 	"net/http"
-	"strconv"
-	"time"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
-	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/response"
 	"github.com/aqueducthq/aqueduct/lib/repos"
-	"github.com/aqueducthq/aqueduct/lib/storage_migration"
 	"github.com/dropbox/godropbox/errors"
 )
 
@@ -57,8 +54,6 @@ func (h *ListWorkflowsHandler) Prepare(r *http.Request) (interface{}, int, error
 }
 
 func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*workflowGetArgs)
-
 	dbWorkflows, err := h.WorkflowRepo.List(
 		ctx,
 		h.Database,
@@ -67,10 +62,10 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during the retrieval of workflows.")
 	}
 
-	var workflows [len(dbWorkflows)]response.Workflow
+	workflows := make([]*response.Workflow, len(dbWorkflows))
 
-	for idx, dbWorkflow := range someSlice {
-		workflows[idx] = response.NewWorkflowFromDBObject(dbWorkflow)
+	for idx, dbWorkflow := range dbWorkflows {
+		workflows[idx] = response.NewWorkflowFromDBObject(&dbWorkflow)
 	}
 
 	return workflows, http.StatusOK, nil

@@ -14,6 +14,11 @@ import {
   storageMigrationListResponse,
 } from './ListStorageMigrations';
 import {
+  workflowListQuery,
+  workflowListRequest,
+  workflowListResponse,
+} from './ListWorkflows';
+import {
   workflowGetQuery,
   WorkflowGetRequest,
   WorkflowGetResponse,
@@ -45,6 +50,13 @@ export const aqueductApi = createApi({
       query: (req) => storageMigrationListQuery(req),
       transformErrorResponse: transformErrorResponse,
     }),
+    workflowList: builder.query<
+      workflowListResponse,
+      workflowListRequest
+    >({
+      query: (req) => workflowListQuery(req),
+      transformErrorResponse: transformErrorResponse,
+    }),
     workflowGet: builder.query<WorkflowGetResponse, WorkflowGetRequest>({
       query: (req) => workflowGetQuery(req),
       transformErrorResponse: transformErrorResponse,
@@ -56,5 +68,6 @@ export const {
   useDagGetQuery,
   useDagResultGetQuery,
   useStorageMigrationListQuery,
+  useWorkflowListQuery,
   useWorkflowGetQuery,
 } = aqueductApi;
