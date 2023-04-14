@@ -298,21 +298,23 @@ class TestBackend:
                     assert value == "true"
 
     def test_endpoint_v2_list_workflows(self):
-        v1_resp = self.get_response(
-            self.GET_WORKFLOWS_TEMPLATE
-        ).json()
+        v1_resp = self.get_response(self.GET_WORKFLOWS_TEMPLATE).json()
 
-        v2_resp = self.get_response(
-            self.V2_GET_WORKFLOWS_TEMPLATE
-        ).json()
+        v2_resp = self.get_response(self.V2_GET_WORKFLOWS_TEMPLATE).json()
 
         assert len(v1_resp) == len(v2_resp)
 
         if len(v2_resp) > 0:
-
-            keys = ["id", "user_id", "name", "description", 
-                    "schedule", "created_at", "retention_policy", 
-                    "notification_settings"]
+            keys = [
+                "id",
+                "user_id",
+                "name",
+                "description",
+                "schedule",
+                "created_at",
+                "retention_policy",
+                "notification_settings",
+            ]
 
             user_id = v2_resp[0]["user_id"]
 
@@ -320,4 +322,6 @@ class TestBackend:
                 for key in keys:
                     assert key in v2_workflow
                 assert v2_workflow["user_id"] == user_id
+
+
 å
