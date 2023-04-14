@@ -45,6 +45,8 @@ from aqueduct.utils.utils import generate_engine_config, generate_uuid
 
 from aqueduct import globals
 
+from aqueduct.integrations.dynamic_k8s_integration import DynamicK8sIntegration
+
 OutputArtifactFunction = Callable[..., BaseArtifact]
 
 # For functions that can handle multiple outputs (eg. `op()`)
@@ -302,10 +304,10 @@ def _convert_input_arguments_to_parameters(
             param_name = op_name + ":" + fn_param_names[idx]
 
             # Implicit parameters are only ever created (or error). They never replace anything.
-            logger().warning(
-                """Operator `%s`'s argument `%s` is not an artifact type. We have implicitly created a parameter named `%s` and your input will be used as its default value. This parameter will be used when running the function."""
-                % (op_name, fn_param_names[idx], param_name)
-            )
+            #logger().warning(
+            #    """Operator `%s`'s argument `%s` is not an artifact type. We have implicitly created a parameter named `%s` and your input will be used as its default value. This parameter will be used when running the function."""
+            #    % (op_name, fn_param_names[idx], param_name)
+            #)
             artifacts[idx] = create_param_artifact(
                 dag=dag,
                 param_name=param_name,
@@ -329,10 +331,10 @@ def _convert_input_arguments_to_parameters(
             param_name = op_name + ":" + fn_param_names[idx]
 
             # Implicit parameters are only ever created (or error). They never replace anything.
-            logger().warning(
-                """Operator `%s`'s argument `%s` is not an artifact type. We have implicitly created a parameter named `%s` and your input will be used as its default value. This parameter will be used when running the function."""
-                % (op_name, fn_param_names[idx], param_name)
-            )
+            #logger().warning(
+            #    """Operator `%s`'s argument `%s` is not an artifact type. We have implicitly created a parameter named `%s` and your input will be used as its default value. This parameter will be used when running the function."""
+            #    % (op_name, fn_param_names[idx], param_name)
+            #)
             artifacts.append(
                 create_param_artifact(
                     dag=dag,
@@ -444,7 +446,7 @@ def _update_operator_spec_with_resources(
             )
 
         spec.resources = ResourceConfig(
-            num_cpus=num_cpus, memory_mb=memory, gpu_resource_name=gpu_resource_name
+            num_cpus=num_cpus, memory_mb=memory, gpu_resource_name=gpu_resource_name, cuda_version=cuda_version
         )
 
 
@@ -532,6 +534,9 @@ def op(
         >>> recommendations.get()
     """
     # Establish parity between `num_outputs` and `outputs`, or raise exception if there is a mismatch.
+    if isinstance(engine, DynamicK8sIntegration):
+        engine = engine.name()
+    
     if num_outputs is None and outputs is None:
         num_outputs = 1
     elif num_outputs is not None and outputs is not None:
