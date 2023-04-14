@@ -103,6 +103,23 @@ jobs:
     timeout-minutes: 60
     name: SDK Integration Tests against Data Connectors
     services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_USER: aqueduct
+          MYSQL_PASSWORD: Password123!
+          MYSQL_DATABASE: aqueducttest
+          MYSQL_ROOT_PASSWORD: Password123!
+        ports:
+          # Maps tcp port 3306 on service container to the host
+          - 3306:3306
+        options: >-
+          --name=mysql
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
       postgres:
         image: postgres:15
         env:
