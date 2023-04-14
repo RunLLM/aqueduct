@@ -26,10 +26,6 @@ Response:
 		List of `response.Workflow` objects
 */
 
-type listWorkflowsArgs struct {
-	*aq_context.AqContext
-}
-
 type ListWorkflowsHandler struct {
 	handler.GetHandler
 
