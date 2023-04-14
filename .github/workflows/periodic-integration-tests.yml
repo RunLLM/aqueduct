@@ -7,7 +7,7 @@ on:
 
 jobs:
   run-k8s-tests:
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-latest-4-cores
     timeout-minutes: 90
     name: SDK Integration Tests against K8s Compute
     steps:
@@ -103,6 +103,23 @@ jobs:
     timeout-minutes: 60
     name: SDK Integration Tests against Data Connectors
     services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_USER: aqueduct
+          MYSQL_PASSWORD: Password123!
+          MYSQL_DATABASE: aqueducttest
+          MYSQL_ROOT_PASSWORD: Password123!
+        ports:
+          # Maps tcp port 3306 on service container to the host
+          - 3306:3306
+        options: >-
+          --name=mysql
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
       postgres:
         image: postgres:15
         env:
@@ -128,11 +145,11 @@ jobs:
           aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
           s3_test_config_path: periodic-data-integration-test-config.yml
-      
+
       - name: Install any data connector packages
         run: |
           aqueduct install redshift
-      
+
       - name: Setup Hosted Data Integrations
         working-directory: scripts/data
         run: python3 setup_hosted.py --aws-key-id ${{ secrets.SAURAV_AWS_ACCESS_KEY_ID }} --aws-secret-key ${{ secrets.SAURAV_AWS_SECRET_ACCESS_KEY }}
@@ -145,7 +162,7 @@ jobs:
         if: always()
         with:
           prefix: Data Connectors
-      
+
       - name: Teardown Hosted Data Integrations
         if: always()
         working-directory: scripts/data

@@ -35,13 +35,13 @@ type Operator struct {
 
 // OperatorCols returns a comma-separated string of all Operator columns.
 func OperatorCols() string {
-	return strings.Join(allOperatorCols(), ",")
+	return strings.Join(AllOperatorCols(), ",")
 }
 
 // OperatorColsWithPrefix returns a comma-separated string of all
-// operator columns prefixed by the table name.
+// operator columns prefixed by the view name.
 func OperatorColsWithPrefix() string {
-	cols := allOperatorCols()
+	cols := AllOperatorCols()
 	for i, col := range cols {
 		cols[i] = fmt.Sprintf("%s.%s", OperatorTable, col)
 	}
@@ -49,7 +49,7 @@ func OperatorColsWithPrefix() string {
 	return strings.Join(cols, ",")
 }
 
-func allOperatorCols() []string {
+func AllOperatorCols() []string {
 	return []string{
 		OperatorID,
 		OperatorName,

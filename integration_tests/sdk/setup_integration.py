@@ -164,6 +164,10 @@ def _setup_postgres_db():
     _execute_command(["aqueduct", "install", "postgres"])
 
 
+def _setup_mysql_db():
+    _execute_command(["aqueduct", "install", "mysql"])
+
+
 def _setup_relational_data(client: Client, db: RelationalDBIntegration) -> None:
     # Find all the tables that already exist.
     existing_table_names = set(db.list_tables()["tablename"])
@@ -218,6 +222,9 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
 
             if integration_config["type"] == ServiceType.POSTGRES:
                 _setup_postgres_db()
+
+            if integration_config["type"] == ServiceType.MYSQL:
+                _setup_mysql_db()
 
             client.connect_integration(
                 integration_name,

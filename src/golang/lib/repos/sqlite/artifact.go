@@ -15,6 +15,57 @@ import (
 	"github.com/google/uuid"
 )
 
+const artifactNodeViewSubQuery = `
+	WITH artf_with_outputs AS ( -- Aggregate outputs
+		SELECT
+			artifact.id AS id,
+			workflow_dag.id AS dag_id,
+			artifact.name AS name,
+			artifact.description AS description,
+			artifact.type as type,
+			CAST( json_group_array( -- Group to_ids and idx into one array
+				json_object(
+					'value', workflow_dag_edge.to_id,
+					'idx', workflow_dag_edge.idx
+				)
+			) AS BLOB) AS outputs
+		FROM
+			artifact, workflow_dag, workflow_dag_edge
+		WHERE
+			workflow_dag.id = workflow_dag_edge.workflow_dag_id
+			AND artifact.id = workflow_dag_edge.from_id
+		GROUP BY
+			workflow_dag.id, artifact.id
+	),
+	artf_with_input AS ( -- No need to group as input is unique
+		SELECT
+			artifact.id AS id,
+			workflow_dag.id AS dag_id,
+			artifact.name AS name,
+			artifact.description AS description,
+			artifact.type as type,
+			workflow_dag_edge.from_id AS input
+		FROM
+			artifact, workflow_dag, workflow_dag_edge
+		WHERE
+			workflow_dag.id = workflow_dag_edge.workflow_dag_id
+			AND artifact.id = workflow_dag_edge.to_id
+	)
+	SELECT -- just do input LEFT JOIN outputs as all artifacts have inputs
+		artf_with_input.id AS id,
+		artf_with_input.dag_id AS dag_id,
+		artf_with_input.name AS name,
+		artf_with_input.description AS description,
+		artf_with_input.type AS type,
+		artf_with_outputs.outputs AS outputs,
+		artf_with_input.input AS input
+	FROM
+		artf_with_input LEFT JOIN artf_with_outputs
+	ON
+		artf_with_outputs.id = artf_with_input.id
+		AND artf_with_outputs.dag_id = artf_with_input.dag_id
+`
+
 type artifactRepo struct {
 	artifactReader
 	artifactWriter
@@ -43,6 +94,19 @@ func (*artifactReader) Get(ctx context.Context, ID uuid.UUID, DB database.Databa
 	args := []interface{}{ID}
 
 	return getArtifact(ctx, DB, query, args...)
+}
+
+func (*artifactReader) GetNode(ctx context.Context, ID uuid.UUID, DB database.Database) (*views.ArtifactNode, error) {
+	query := fmt.Sprintf(
+		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s = $1",
+		views.ArtifactNodeView,
+		artifactNodeViewSubQuery,
+		views.ArtifactNodeCols(),
+		views.ArtifactNodeView,
+		models.ArtifactID,
+	)
+	args := []interface{}{ID}
+	return getArtifactNode(ctx, DB, query, args...)
 }
 
 func (*artifactReader) GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.Artifact, error) {
@@ -171,6 +235,23 @@ func (*artifactReader) GetMetricsByUpstreamArtifactBatch(
 	return results, nil
 }
 
+func (*artifactReader) GetNodesByDAG(
+	ctx context.Context,
+	dagID uuid.UUID,
+	DB database.Database,
+) ([]views.ArtifactNode, error) {
+	query := fmt.Sprintf(
+		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s = $1",
+		views.ArtifactNodeView,
+		artifactNodeViewSubQuery,
+		views.ArtifactNodeCols(),
+		views.ArtifactNodeView,
+		views.ArtifactNodeDagID,
+	)
+	args := []interface{}{dagID}
+	return getArtifactNodes(ctx, DB, query, args...)
+}
+
 func (*artifactWriter) Create(
 	ctx context.Context,
 	name string,
@@ -227,6 +308,29 @@ func getArtifacts(ctx context.Context, DB database.Database, query string, args 
 	var artifacts []models.Artifact
 	err := DB.Query(ctx, &artifacts, query, args...)
 	return artifacts, err
+}
+
+func getArtifactNode(ctx context.Context, DB database.Database, query string, args ...interface{}) (*views.ArtifactNode, error) {
+	nodes, err := getArtifactNodes(ctx, DB, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(nodes) == 0 {
+		return nil, database.ErrNoRows()
+	}
+
+	if len(nodes) != 1 {
+		return nil, errors.Newf("Expected 1 Artifact but got %v", len(nodes))
+	}
+
+	return &nodes[0], nil
+}
+
+func getArtifactNodes(ctx context.Context, DB database.Database, query string, args ...interface{}) ([]views.ArtifactNode, error) {
+	var artifactNodes []views.ArtifactNode
+	err := DB.Query(ctx, &artifactNodes, query, args...)
+	return artifactNodes, err
 }
 
 func getArtifact(ctx context.Context, DB database.Database, query string, args ...interface{}) (*models.Artifact, error) {

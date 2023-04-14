@@ -114,7 +114,7 @@ def _read_local_bytes_content(path: str) -> bytes:
 def _read_local_tf_keras_model(path: str) -> Any:
     from tensorflow import keras
 
-    return keras.saving.load_model(path)
+    return keras.models.load_model(path)
 
 
 # Returns a tf.keras.Model type. We don't assume that every user has it installed,

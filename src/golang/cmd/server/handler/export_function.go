@@ -48,7 +48,7 @@ type exportFunctionResponse struct {
 //		`api-key`: user's API Key
 //
 // Response: a zip file for the function content.
-type ExportFunctionHandler struct {
+type ExportFunctionHandlerDeprecated struct {
 	GetHandler
 
 	Database database.Database
@@ -57,17 +57,17 @@ type ExportFunctionHandler struct {
 	OperatorRepo repos.Operator
 }
 
-func (*ExportFunctionHandler) Name() string {
+func (*ExportFunctionHandlerDeprecated) Name() string {
 	return "ExportFunction"
 }
 
-func (*ExportFunctionHandler) Headers() []string {
+func (*ExportFunctionHandlerDeprecated) Headers() []string {
 	return []string{
 		routes.ExportFnUserFriendlyHeader,
 	}
 }
 
-func (h *ExportFunctionHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *ExportFunctionHandlerDeprecated) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, errors.Wrap(err, "Error when parsing common args.")
@@ -101,7 +101,7 @@ func (h *ExportFunctionHandler) Prepare(r *http.Request) (interface{}, int, erro
 	}, http.StatusOK, nil
 }
 
-func (h *ExportFunctionHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+func (h *ExportFunctionHandlerDeprecated) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*exportFunctionArgs)
 
 	emptyResp := exportFunctionResponse{}
@@ -161,7 +161,7 @@ func (h *ExportFunctionHandler) Perform(ctx context.Context, interfaceArgs inter
 	}, http.StatusOK, nil
 }
 
-func (*ExportFunctionHandler) SendResponse(w http.ResponseWriter, interfaceResp interface{}) {
+func (*ExportFunctionHandlerDeprecated) SendResponse(w http.ResponseWriter, interfaceResp interface{}) {
 	resp := interfaceResp.(*exportFunctionResponse)
 	response.SendSmallFileResponse(w, resp.fileName, resp.program)
 }

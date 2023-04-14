@@ -6,9 +6,16 @@ const (
 	ListStorageMigrationRoute = "/api/v2/storage-migrations"
 	ListWorkflowsRoute        = "/api/v2/workflows"
 
-	WorkflowRoute  = "/api/v2/workflow/{workflowID}"
-	DAGRoute       = "/api/v2/workflow/{workflowID}/dag/{dagID}"
-	DAGResultRoute = "/api/v2/workflow/{workflowID}/result/{dagResultID}"
+	WorkflowRoute                  = "/api/v2/workflow/{workflowID}"
+	DAGRoute                       = "/api/v2/workflow/{workflowID}/dag/{dagID}"
+	DAGResultRoute                 = "/api/v2/workflow/{workflowID}/result/{dagResultID}"
+	NodesRoute                     = "/api/v2/workflow/{workflowID}/dag/{dagID}/nodes"
+	NodeArtifactRoute              = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/artifact/{nodeID}"
+	NodeArtifactResultContentRoute = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/artifact/{nodeID}/result/{nodeResultID}/content"
+	NodeArtifactResultsRoute       = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/artifact/{nodeID}/results"
+	NodeOperatorRoute              = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/operator/{nodeID}"
+	NodeOperatorContentRoute       = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/operator/{nodeID}/content"
+	NodesResultsRoute              = "/api/v2/workflow/{workflowID}/result/{dagResultID}/nodes/results"
 
 	// V1 routes
 	GetArtifactVersionsRoute = "/api/artifact/versions"

@@ -16,6 +16,83 @@ import (
 	"github.com/google/uuid"
 )
 
+const operatorNodeViewSubQuery = `
+	WITH op_with_outputs AS ( -- Aggregate outputs
+		SELECT
+			operator.id AS id,
+			workflow_dag.id AS dag_id,
+			operator.name AS name,
+			operator.description AS description,
+			operator.spec AS spec,
+			operator.execution_environment_id AS execution_environment_id,
+			CAST( json_group_array( -- Group to_ids and idx into one array
+				json_object(
+					'value', workflow_dag_edge.to_id,
+					'idx', workflow_dag_edge.idx
+				)
+			) AS BLOB) AS outputs
+		FROM
+			operator, workflow_dag, workflow_dag_edge
+		WHERE
+			workflow_dag.id = workflow_dag_edge.workflow_dag_id
+			AND operator.id = workflow_dag_edge.from_id
+		GROUP BY
+			workflow_dag.id, operator.id
+	),
+	op_with_inputs AS ( -- Aggregate inputs
+		SELECT
+			operator.id AS id,
+			workflow_dag.id AS dag_id,
+			operator.name AS name,
+			operator.description AS description,
+			operator.spec AS spec,
+			operator.execution_environment_id AS execution_environment_id,
+			CAST( json_group_array( -- Group from_ids and idx into one array
+				json_object(
+					'value', workflow_dag_edge.from_id,
+					'idx', workflow_dag_edge.idx
+				)
+			) AS BLOB) AS inputs
+		FROM
+			operator, workflow_dag, workflow_dag_edge
+		WHERE
+			workflow_dag.id = workflow_dag_edge.workflow_dag_id
+			AND operator.id = workflow_dag_edge.to_id
+		GROUP BY
+			workflow_dag.id, operator.id
+	)
+	SELECT -- A full outer join to include operators without inputs / outputs.
+		op_with_outputs.id AS id,
+		op_with_outputs.dag_id AS dag_id,
+		op_with_outputs.name AS name,
+		op_with_outputs.description AS description,
+		op_with_outputs.spec AS spec,
+		op_with_outputs.execution_environment_id AS execution_environment_id,
+		op_with_outputs.outputs AS outputs,
+		op_with_inputs.inputs AS inputs
+	FROM
+		op_with_outputs LEFT JOIN op_with_inputs
+	ON
+		op_with_outputs.id = op_with_inputs.id
+		AND op_with_outputs.dag_id = op_with_inputs.dag_id
+	UNION ALL
+	SELECT
+		op_with_inputs.id AS id,
+		op_with_inputs.dag_id AS dag_id,
+		op_with_inputs.name AS name,
+		op_with_inputs.description AS description,
+		op_with_inputs.spec AS spec,
+		op_with_inputs.execution_environment_id AS execution_environment_id,
+		op_with_outputs.outputs AS outputs,
+		op_with_inputs.inputs AS inputs
+	FROM
+		op_with_inputs LEFT JOIN op_with_outputs
+	ON
+		op_with_outputs.id = op_with_inputs.id
+		AND op_with_outputs.dag_id = op_with_inputs.dag_id
+	WHERE op_with_outputs.outputs IS NULL
+`
+
 type operatorRepo struct {
 	operatorReader
 	operatorWriter
@@ -44,6 +121,19 @@ func (*operatorReader) Get(ctx context.Context, ID uuid.UUID, DB database.Databa
 	args := []interface{}{ID}
 
 	return getOperator(ctx, DB, query, args...)
+}
+
+func (*operatorReader) GetNode(ctx context.Context, ID uuid.UUID, DB database.Database) (*views.OperatorNode, error) {
+	query := fmt.Sprintf(
+		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s = $1",
+		views.OperatorNodeView,
+		operatorNodeViewSubQuery,
+		views.OperatorNodeCols(),
+		views.OperatorNodeView,
+		models.OperatorID,
+	)
+	args := []interface{}{ID}
+	return getOperatorNode(ctx, DB, query, args...)
 }
 
 func (*operatorReader) GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.Operator, error) {
@@ -82,6 +172,23 @@ func (*operatorReader) GetByDAG(ctx context.Context, dagID uuid.UUID, DB databas
 	args := []interface{}{dagID}
 
 	return getOperators(ctx, DB, query, args...)
+}
+
+func (*operatorReader) GetNodesByDAG(
+	ctx context.Context,
+	dagID uuid.UUID,
+	DB database.Database,
+) ([]views.OperatorNode, error) {
+	query := fmt.Sprintf(
+		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s = $1",
+		views.OperatorNodeView,
+		operatorNodeViewSubQuery,
+		views.OperatorNodeCols(),
+		views.OperatorNodeView,
+		views.OperatorNodeDagID,
+	)
+	args := []interface{}{dagID}
+	return getOperatorNodes(ctx, DB, query, args...)
 }
 
 func (*operatorReader) GetDistinctLoadOPsByWorkflow(
@@ -537,6 +644,29 @@ func getOperators(ctx context.Context, DB database.Database, query string, args 
 	var operators []models.Operator
 	err := DB.Query(ctx, &operators, query, args...)
 	return operators, err
+}
+
+func getOperatorNode(ctx context.Context, DB database.Database, query string, args ...interface{}) (*views.OperatorNode, error) {
+	nodes, err := getOperatorNodes(ctx, DB, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(nodes) == 0 {
+		return nil, database.ErrNoRows()
+	}
+
+	if len(nodes) != 1 {
+		return nil, errors.Newf("Expected 1 Operator but got %v", len(nodes))
+	}
+
+	return &nodes[0], nil
+}
+
+func getOperatorNodes(ctx context.Context, DB database.Database, query string, args ...interface{}) ([]views.OperatorNode, error) {
+	var operatorNodes []views.OperatorNode
+	err := DB.Query(ctx, &operatorNodes, query, args...)
+	return operatorNodes, err
 }
 
 func getOperator(ctx context.Context, DB database.Database, query string, args ...interface{}) (*models.Operator, error) {

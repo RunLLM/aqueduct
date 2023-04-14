@@ -39,7 +39,7 @@ type listArtifactResultsArgs struct {
 	ArtifactId uuid.UUID
 }
 
-type ListArtifactResultsHandler struct {
+type ListArtifactResultsHandlerDeprecated struct {
 	GetHandler
 
 	Database database.Database
@@ -49,11 +49,11 @@ type ListArtifactResultsHandler struct {
 	DAGRepo            repos.DAG
 }
 
-func (*ListArtifactResultsHandler) Name() string {
+func (*ListArtifactResultsHandlerDeprecated) Name() string {
 	return "ListArtifactResults"
 }
 
-func (*ListArtifactResultsHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (*ListArtifactResultsHandlerDeprecated) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
@@ -78,7 +78,7 @@ func (*ListArtifactResultsHandler) Prepare(r *http.Request) (interface{}, int, e
 	}, http.StatusOK, nil
 }
 
-func (h *ListArtifactResultsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+func (h *ListArtifactResultsHandlerDeprecated) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*listArtifactResultsArgs)
 	artfID := args.ArtifactId
 	wfID := args.WorkflowId
