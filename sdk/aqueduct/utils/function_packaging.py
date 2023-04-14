@@ -190,9 +190,6 @@ def _package_files_and_requirements(
                 isinstance(req, str) for req in requirements
             )
 
-            if len(requirements) > 0:
-                raise Exception("Requirements: %s" % requirements)
-
             if isinstance(requirements, str):
                 if os.path.exists(requirements):
                     logger().info(

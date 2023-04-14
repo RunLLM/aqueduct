@@ -242,7 +242,7 @@ class Client:
             service:
                 The type of integration to connect to.
             config:
-                Either a dictionary or an ConnectConfig object that contains the
+                Either a dictionary or an IntegrationConnectConfig object that contains the
                 configuration credentials needed to connect.
         """
         if service not in ServiceType:
@@ -259,7 +259,7 @@ class Client:
 
         if not isinstance(config, dict) and not isinstance(config, BaseConnectionConfig):
             raise InvalidUserArgumentException(
-                "`config` argument must be either a dict or ConnectConfig."
+                "`config` argument must be either a dict or IntegrationConnectConfig."
             )
 
         if isinstance(config, dict):
