@@ -4,13 +4,11 @@
 import { APIKeyRequest } from './requests/ApiKey';
 import { WorkflowResponse } from './responses/workflow';
 
-export type workflowListRequest = APIKeyRequest
+export type workflowListRequest = APIKeyRequest;
 
 export type workflowListResponse = WorkflowResponse[];
 
-export const workflowListQuery = (
-  req: workflowListRequest
-) => ({
+export const workflowListQuery = (req: workflowListRequest) => ({
   url: 'workflows',
   headers: {
     'api-key': req.apiKey,
