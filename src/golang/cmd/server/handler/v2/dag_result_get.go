@@ -5,18 +5,17 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
-	"github.com/aqueducthq/aqueduct/cmd/server/routes"
+	"github.com/aqueducthq/aqueduct/cmd/server/request/parser"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/response"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
 // This file should map directly to
-// src/ui/common/src/handlers/DagResultGet.tsx
+// src/ui/common/src/handlers/v2/DagResultGet.tsx
 //
 // Route: /v2/workflow/{workflowId}/result/{dagResultID}
 // Method: GET
@@ -55,16 +54,14 @@ func (h *DAGResultGetHandler) Prepare(r *http.Request) (interface{}, int, error)
 		return nil, statusCode, err
 	}
 
-	workflowIDStr := chi.URLParam(r, routes.WorkflowIDParam)
-	workflowID, err := uuid.Parse(workflowIDStr)
+	workflowID, err := (parser.WorkflowIDParser{}).Parse(r)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
+		return nil, http.StatusBadRequest, err
 	}
 
-	dagResultIDStr := chi.URLParam(r, routes.DAGResultIDParam)
-	dagResultID, err := uuid.Parse(dagResultIDStr)
+	dagResultID, err := (parser.DAGResultIDParser{}).Parse(r)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed DAG ID.")
+		return nil, http.StatusBadRequest, err
 	}
 
 	return &dagResultGetArgs{

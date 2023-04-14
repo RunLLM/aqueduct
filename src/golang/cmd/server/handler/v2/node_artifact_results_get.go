@@ -1,89 +1,64 @@
-package handler
+package v2
 
 import (
 	"context"
 	"fmt"
 	"net/http"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	aq_context "github.com/aqueducthq/aqueduct/lib/context"
+	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/response"
 	"github.com/aqueducthq/aqueduct/lib/storage"
-	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 )
 
-// Route: /workflow/{workflowId}/artifact/{artifactId}/results
+// This file should map directly to
+// src/ui/common/src/handlers/v2/NodeArtifactResultsGet.tsx
+//
+// Route: /api/v2/workflow/{workflowID}/dag/{dagID}/node/artifact/{nodeID}/results
 // Method: GET
-// Params: None
+// Params:
+//	`workflowID`: ID for `workflow` object
+//  `dagID`: ID for `workflow_dag` object
+//	`nodeID`: ID for operator object
 // Request:
 //	Headers:
 //		`api-key`: user's API Key
 // Response:
 //	Body:
-//		serialized `listArtifactResultsResponse`
+//		`[]response.ArtifactResult`
 
-type listArtifactResultsResponse struct {
-	// Results are not ordered.
-	Results []artifact.RawResultResponse `json:"results"`
-}
-
-type listArtifactResultsArgs struct {
-	*aq_context.AqContext
-	WorkflowId uuid.UUID
-	ArtifactId uuid.UUID
-}
-
-type ListArtifactResultsHandlerDeprecated struct {
-	GetHandler
+type NodeArtifactResultsGetHandler struct {
+	nodeGetHandler
+	handler.GetHandler
 
 	Database database.Database
 
+	WorkflowRepo       repos.Workflow
+	DAGRepo            repos.DAG
 	ArtifactRepo       repos.Artifact
 	ArtifactResultRepo repos.ArtifactResult
-	DAGRepo            repos.DAG
 }
 
-func (*ListArtifactResultsHandlerDeprecated) Name() string {
-	return "ListArtifactResults"
+func (*NodeArtifactResultsGetHandler) Name() string {
+	return "NodeArtifactResultsGet"
 }
 
-func (*ListArtifactResultsHandlerDeprecated) Prepare(r *http.Request) (interface{}, int, error) {
-	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
-	if err != nil {
-		return nil, statusCode, err
-	}
-
-	artfIdStr := chi.URLParam(r, routes.ArtifactIdUrlParam)
-	artfId, err := uuid.Parse(artfIdStr)
-	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed artifact ID.")
-	}
-
-	wfIdStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
-	wfId, err := uuid.Parse(wfIdStr)
-	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow Id.")
-	}
-
-	return &listArtifactResultsArgs{
-		AqContext:  aqContext,
-		ArtifactId: artfId,
-		WorkflowId: wfId,
-	}, http.StatusOK, nil
+func (h *NodeArtifactResultsGetHandler) Prepare(r *http.Request) (interface{}, int, error) {
+	return h.nodeGetHandler.Prepare(r)
 }
 
-func (h *ListArtifactResultsHandlerDeprecated) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*listArtifactResultsArgs)
-	artfID := args.ArtifactId
-	wfID := args.WorkflowId
+func (h *NodeArtifactResultsGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*nodeGetArgs)
 
-	emptyResponse := listArtifactResultsResponse{}
+	artfID := args.nodeID
+	wfID := args.workflowID
+
+	emptyResponse := []response.ArtifactResult{}
 
 	artf, err := h.ArtifactRepo.Get(ctx, artfID, h.Database)
 	if err != nil {
@@ -124,7 +99,7 @@ func (h *ListArtifactResultsHandlerDeprecated) Perform(ctx context.Context, inte
 		}
 	}
 
-	responses := make([]artifact.RawResultResponse, 0, len(results))
+	responses := make([]response.ArtifactResult, 0, len(results))
 	for dbDagId, artfResults := range artfResultByDagId {
 		if dag, ok := dbDagByDagId[dbDagId]; ok {
 			storageObj := storage.NewStorage(&dag.StorageConfig)
@@ -150,7 +125,7 @@ func (h *ListArtifactResultsHandlerDeprecated) Perform(ctx context.Context, inte
 					}
 				}
 
-				responses = append(responses, *artifact.NewRawResultResponseFromDbObject(
+				responses = append(responses, *response.NewArtifactResultFromDBObject(
 					&artfResult, contentPtr,
 				))
 			}
@@ -159,5 +134,5 @@ func (h *ListArtifactResultsHandlerDeprecated) Perform(ctx context.Context, inte
 		}
 	}
 
-	return &listArtifactResultsResponse{Results: responses}, http.StatusOK, nil
+	return responses, http.StatusOK, nil
 }

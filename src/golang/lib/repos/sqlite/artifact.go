@@ -15,7 +15,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const ArtifactNodeViewSubQuery = `
+const artifactNodeViewSubQuery = `
 	WITH artf_with_outputs AS ( -- Aggregate outputs
 		SELECT
 			artifact.id AS id,
@@ -94,6 +94,19 @@ func (*artifactReader) Get(ctx context.Context, ID uuid.UUID, DB database.Databa
 	args := []interface{}{ID}
 
 	return getArtifact(ctx, DB, query, args...)
+}
+
+func (*artifactReader) GetNode(ctx context.Context, ID uuid.UUID, DB database.Database) (*views.ArtifactNode, error) {
+	query := fmt.Sprintf(
+		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s = $1",
+		views.ArtifactNodeView,
+		artifactNodeViewSubQuery,
+		views.ArtifactNodeCols(),
+		views.ArtifactNodeView,
+		models.ArtifactID,
+	)
+	args := []interface{}{ID}
+	return getArtifactNode(ctx, DB, query, args...)
 }
 
 func (*artifactReader) GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.Artifact, error) {
@@ -222,6 +235,23 @@ func (*artifactReader) GetMetricsByUpstreamArtifactBatch(
 	return results, nil
 }
 
+func (*artifactReader) GetNodesByDAG(
+	ctx context.Context,
+	dagID uuid.UUID,
+	DB database.Database,
+) ([]views.ArtifactNode, error) {
+	query := fmt.Sprintf(
+		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s = $1",
+		views.ArtifactNodeView,
+		artifactNodeViewSubQuery,
+		views.ArtifactNodeCols(),
+		views.ArtifactNodeView,
+		views.ArtifactNodeDagID,
+	)
+	args := []interface{}{dagID}
+	return getArtifactNodes(ctx, DB, query, args...)
+}
+
 func (*artifactWriter) Create(
 	ctx context.Context,
 	name string,
@@ -278,6 +308,29 @@ func getArtifacts(ctx context.Context, DB database.Database, query string, args 
 	var artifacts []models.Artifact
 	err := DB.Query(ctx, &artifacts, query, args...)
 	return artifacts, err
+}
+
+func getArtifactNode(ctx context.Context, DB database.Database, query string, args ...interface{}) (*views.ArtifactNode, error) {
+	nodes, err := getArtifactNodes(ctx, DB, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(nodes) == 0 {
+		return nil, database.ErrNoRows()
+	}
+
+	if len(nodes) != 1 {
+		return nil, errors.Newf("Expected 1 Artifact but got %v", len(nodes))
+	}
+
+	return &nodes[0], nil
+}
+
+func getArtifactNodes(ctx context.Context, DB database.Database, query string, args ...interface{}) ([]views.ArtifactNode, error) {
+	var artifactNodes []views.ArtifactNode
+	err := DB.Query(ctx, &artifactNodes, query, args...)
+	return artifactNodes, err
 }
 
 func getArtifact(ctx context.Context, DB database.Database, query string, args ...interface{}) (*models.Artifact, error) {

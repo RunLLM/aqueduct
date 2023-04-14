@@ -35,6 +35,15 @@ func (ts *TestSuite) TestOperator_Get() {
 	requireDeepEqual(ts.T(), expectedOperator, *actualOperator)
 }
 
+func (ts *TestSuite) TestOperator_GetNode() {
+	_, _, _, expectedOpNodes, _ := ts.seedComplexWorkflow()
+	for _, expectedOp := range expectedOpNodes {
+		actualOp, err := ts.operator.GetNode(ts.ctx, expectedOp.ID, ts.DB)
+		require.Nil(ts.T(), err)
+		requireDeepEqual(ts.T(), expectedOp, *actualOp)
+	}
+}
+
 func (ts *TestSuite) TestOperator_GetBatch() {
 	expectedOperators := ts.seedOperator(3)
 
@@ -59,6 +68,18 @@ func (ts *TestSuite) TestOperator_GetByDAG() {
 	actualOperators, err := ts.operator.GetByDAG(ts.ctx, dag.ID, ts.DB)
 	require.Nil(ts.T(), err)
 	requireDeepEqualOperators(ts.T(), expectedOperators, actualOperators)
+}
+
+func (ts *TestSuite) TestOperator_GetNodesByDAG() {
+	dag, _, _, expectedOpNodes, _ := ts.seedComplexWorkflow()
+	actualOpNodes, err := ts.operator.GetNodesByDAG(ts.ctx, dag.ID, ts.DB)
+	require.Nil(ts.T(), err)
+	require.Equal(ts.T(), len(expectedOpNodes), len(actualOpNodes))
+	for _, actualOp := range actualOpNodes {
+		expectedOp, ok := expectedOpNodes[actualOp.Name]
+		require.True(ts.T(), ok)
+		requireDeepEqual(ts.T(), expectedOp, actualOp)
+	}
 }
 
 func (ts *TestSuite) TestOperator_GetDistinctLoadOPsByWorkflow() {
