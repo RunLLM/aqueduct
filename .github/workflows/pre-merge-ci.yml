@@ -7,7 +7,7 @@ on:
 jobs:
   trigger-integration-tests:
     if: contains(github.event.pull_request.labels.*.name, 'run_integration_test')
-    uses: aqueducthq/aqueduct/.github/workflows/integration-tests.yml@${{ github.ref }}
+    uses: aqueducthq/aqueduct/.github/workflows/integration-tests.yml@eng-2142-add-ability-to-run-the-e2e-integration
     secrets:
       KENNY_AWS_ACCESS_KEY_ID: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
       KENNY_AWS_SECRET_ACCESS_KEY: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
