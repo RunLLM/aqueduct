@@ -29,70 +29,62 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
 
   useEffect(() => {
     async function fetchVersionNumber() {
+      const pypiRes = await fetch('https://pypi.org/pypi/aqueduct-ml/json', {
+        method: 'GET',
+      });
+      const pyPiResponse = await pypiRes.json();
+      console.log('pyPiVersion:  ', pyPiResponse.info.version);
+      const pyPiVersionString = pyPiResponse.info.version;
+
       const res = await fetch(`${apiAddress}/api/version`, {
         method: 'GET',
         headers: { 'api-key': user.apiKey },
       });
-      const versionNumberResponse = await res.json();
+      const aqueductVersionNumberResponse = await res.json();
 
       const versionBannerDismissed = localStorage.getItem(
-        'versionBanner.dismissed'
+        'versionBanner.dismissedVersion'
       );
+
       let showBanner = false;
-      if (versionNumberResponse?.version) {
-        const storageResult = localStorage.getItem(
-          'versionBanner.lastVersionSeen'
-        );
-        const versionNumbersStorage = storageResult?.split('.');
+      if (aqueductVersionNumberResponse?.version) {
+        const pyPiVersionNumbers = pyPiVersionString?.split('.');
 
         // compare strings to see if the two are equal.
         // if equal, check if banner has been dismissed and return
-        if (
-          versionNumberResponse.version === storageResult &&
-          versionBannerDismissed !== 'true'
-        ) {
-          showBanner = true;
-        } else if (versionNumbersStorage) {
+        const sameVersion =
+          aqueductVersionNumberResponse.version === pyPiVersionString;
+        const isDismissed = versionBannerDismissed === pyPiVersionString;
+
+        // First check if we should hide the banner.
+        if (isDismissed || sameVersion) {
+          showBanner = false;
+        } else if (pyPiVersionNumbers) {
           const versionNumbersResponse =
-            versionNumberResponse.version.split('.');
+            aqueductVersionNumberResponse.version.split('.');
           const majorResponse = parseInt(versionNumbersResponse[0]);
           const minorResponse = parseInt(versionNumbersResponse[1]);
           const patchResponse = parseInt(versionNumbersResponse[2]);
 
           // compare the two version numbers that we have
-          const majorStorage = parseInt(versionNumbersStorage[0]);
-          const minorStorage = parseInt(versionNumbersStorage[1]);
-          const patchStorage = parseInt(versionNumbersStorage[2]);
+          const pyPiMajor = parseInt(pyPiVersionNumbers[0]);
+          const pyPiMinor = parseInt(pyPiVersionNumbers[1]);
+          const pyPiPatch = parseInt(pyPiVersionNumbers[2]);
 
+          // Finally check if there is in fact a new version and show banner if so.
           if (
-            majorResponse > majorStorage ||
-            minorResponse > minorStorage ||
-            patchResponse > patchStorage
+            pyPiMajor > majorResponse ||
+            pyPiMinor > minorResponse ||
+            pyPiPatch > patchResponse
           ) {
             showBanner = true;
-            // Update local storage
-            localStorage.setItem(
-              'versionBanner.lastVersionSeen',
-              versionNumberResponse.version
-            );
-            // clear dismissed state if user dismissed last banner.
-            localStorage.removeItem('versionBanner.dismissed');
           }
-          // remember to check if banner has been dismissed.
-        } else {
-          // newly seen latest version, show banner
-          showBanner = true;
-          // Update local storage if needed.
-          localStorage.setItem(
-            'versionBanner.lastVersionSeen',
-            versionNumberResponse.version
-          );
         }
       }
 
-      setVersionNumber(versionNumberResponse.version);
+      setVersionNumber(pyPiVersionString);
       setShouldShowAnnouncementBanner(showBanner);
-      if (showBanner && onShow) {
+      if (showBanner === true && onShow) {
         onShow();
       }
     }
@@ -154,7 +146,10 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
           onClick={() => {
             if (onClose) {
               onClose();
-              localStorage.setItem('versionBanner.dismissed', 'true');
+              localStorage.setItem(
+                'versionBanner.dismissedVersion',
+                versionNumber ?? ''
+              );
             }
           }}
         />
