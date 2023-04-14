@@ -1,7 +1,7 @@
 .DEFAULT_GOAL = all
 
 # By default, turn off the Makefile practice of printing each command before
-# you run it.
+# you run  it.
 ifndef VERBOSE
 .SILENT:
 endif
