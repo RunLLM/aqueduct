@@ -296,7 +296,16 @@ def wait_for_conda_integration(client: Client, name: str):
         return 123
 
     while True:
-        _ = test_conda_fn()
+        try:
+            _ = test_conda_fn()
+            return
+        except Exception as e:
+            # bypass expected error message for waiting.
+            if "We are still creating base conda environments" not in str(e):
+                raise e
+        
+            # otherwise, wait and try again
+            time.sleep(5)
 
 
 def setup_storage_layer(client: Client) -> None:
