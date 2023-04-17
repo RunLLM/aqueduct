@@ -30,7 +30,7 @@ export const MongoDBDialog: React.FC<Props> = ({
         required={true}
         placeholder={Placeholders.auth_uri}
         onChange={(event) => onUpdateField('auth_uri', event.target.value)}
-        value={value?.auth_uri ?? null}
+        value={value?.auth_uri ?? ''}
       />
 
       <IntegrationTextInputField
@@ -40,7 +40,7 @@ export const MongoDBDialog: React.FC<Props> = ({
         required={true}
         placeholder={Placeholders.database}
         onChange={(event) => onUpdateField('database', event.target.value)}
-        value={value?.database ?? null}
+        value={value?.database ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}

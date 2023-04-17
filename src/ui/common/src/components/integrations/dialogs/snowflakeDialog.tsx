@@ -49,7 +49,7 @@ export const SnowflakeDialog: React.FC<Props> = ({
         onChange={(event) =>
           onUpdateField('account_identifier', event.target.value)
         }
-        value={value?.account_identifier ?? null}
+        value={value?.account_identifier ?? ''}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disabled={editMode}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -62,7 +62,7 @@ export const SnowflakeDialog: React.FC<Props> = ({
         description="The name of the Snowflake warehouse to connect to."
         placeholder={Placeholders.warehouse}
         onChange={(event) => onUpdateField('warehouse', event.target.value)}
-        value={value?.warehouse ?? null}
+        value={value?.warehouse ?? ''}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disabled={editMode}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -75,7 +75,7 @@ export const SnowflakeDialog: React.FC<Props> = ({
         description="The name of the database to connect to."
         placeholder={Placeholders.database}
         onChange={(event) => onUpdateField('database', event.target.value)}
-        value={value?.database ?? null}
+        value={value?.database ?? ''}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disabled={editMode}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -88,7 +88,7 @@ export const SnowflakeDialog: React.FC<Props> = ({
         description="The name of the schema to connect to. The public schema will be used if none is provided."
         placeholder={Placeholders.schema}
         onChange={(event) => setSchema(event.target.value)}
-        value={schema !== Placeholders.schema ? schema : null}
+        value={schema !== Placeholders.schema ? schema : ''}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disabled={editMode}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -101,7 +101,7 @@ export const SnowflakeDialog: React.FC<Props> = ({
         description="The username of a user with permission to access the database above."
         placeholder={Placeholders.username}
         onChange={(event) => onUpdateField('username', event.target.value)}
-        value={value?.username ?? null}
+        value={value?.username ?? ''}
       />
 
       <IntegrationTextInputField
@@ -112,7 +112,7 @@ export const SnowflakeDialog: React.FC<Props> = ({
         placeholder={Placeholders.password}
         type="password"
         onChange={(event) => onUpdateField('password', event.target.value)}
-        value={value?.password ?? null}
+        value={value?.password ?? ''}
       />
 
       <IntegrationTextInputField
@@ -122,7 +122,7 @@ export const SnowflakeDialog: React.FC<Props> = ({
         description="The role to use when accessing the database above."
         placeholder={Placeholders.role}
         onChange={(event) => onUpdateField('role', event.target.value)}
-        value={value?.role ?? null}
+        value={value?.role ?? ''}
       />
     </Box>
   );
