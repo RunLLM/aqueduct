@@ -1,0 +1,3 @@
+# cloudpickle sometimes include pytest in dependency and breaks testings
+pytest
+pytest-xdist

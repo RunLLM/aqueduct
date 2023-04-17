@@ -392,7 +392,9 @@ def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integra
 
     @op
     def generate_initial_table():
-        return initial_table
+        # We copy the definition to bypass a known potential package version issue.
+        # TODO (ENG-2814): Resolve the pkg issue and replace this with `initial_table` variable
+        return pd.DataFrame([1, 2, 3, 4, 5, 6], columns=["numbers"])
 
     table = generate_initial_table()
     saved_table_identifier = generate_table_name()
