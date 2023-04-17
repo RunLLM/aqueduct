@@ -39,9 +39,12 @@ func setupNamespaceAndSecrets(k8sClient *kubernetes.Clientset, conf *K8sJobManag
 	secretsMap := map[string]string{}
 	secretsMap[k8s.AwsAccessKeyIdName] = conf.AwsAccessKeyId
 	secretsMap[k8s.AwsAccessKeyName] = conf.AwsSecretAccessKey
-	err = k8s.CreateSecret(context.TODO(), k8s.AwsCredentialsSecretName, secretsMap, k8sClient)
+	err = k8s.CreateSecret(context.Background(), k8s.AwsCredentialsSecretName, secretsMap, k8sClient)
 	if err != nil {
-		return errors.Wrap(err, "Error while creating K8s Secrets")
+		// Double-check that we didn't race against another process to create this secret.
+		if _, secretExistsErr := k8s.GetSecret(context.Background(), k8s.AwsCredentialsSecretName, k8sClient); secretExistsErr != nil {
+			return errors.Wrap(err, "Error while creating K8s Secrets")
+		}
 	}
 
 	return nil
