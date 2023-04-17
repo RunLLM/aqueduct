@@ -1,8 +1,8 @@
 import pandas as pd
 import pytest
-from aqueduct.error import AqueductError, ArtifactNotFoundException
 
 from aqueduct import metric
+from aqueduct.error import AqueductError, ArtifactNotFoundException
 
 from ..shared.data_objects import DataObject
 from ..shared.flow_helpers import publish_flow_test

@@ -1,6 +1,5 @@
-from aqueduct.decorator import op
-
 import aqueduct as aq
+from aqueduct.decorator import op
 
 NAME = "succeed_march_madness_dag_layout_test"
 DESCRIPTION = """

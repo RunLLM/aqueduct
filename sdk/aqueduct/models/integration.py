@@ -3,8 +3,9 @@ import uuid
 from abc import ABC
 from typing import Any
 
-from aqueduct.constants.enums import ServiceType
 from pydantic import BaseModel
+
+from aqueduct.constants.enums import ServiceType
 
 
 class IntegrationInfo(BaseModel):

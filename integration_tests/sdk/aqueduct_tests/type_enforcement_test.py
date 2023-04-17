@@ -1,10 +1,10 @@
 from typing import Union
 
 import pytest
-from aqueduct.constants.enums import ExecutionStatus
-from aqueduct.error import AqueductError
 
 from aqueduct import op
+from aqueduct.constants.enums import ExecutionStatus
+from aqueduct.error import AqueductError
 
 from ..shared.flow_helpers import publish_flow_test, trigger_flow_test
 

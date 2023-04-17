@@ -2,10 +2,10 @@ from typing import Optional
 
 import pandas as pd
 import pytest
-from aqueduct.error import AqueductError
-from aqueduct.integrations.mongodb_integration import MongoDBIntegration
 
 from aqueduct import LoadUpdateMode, op
+from aqueduct.error import AqueductError
+from aqueduct.integrations.mongodb_integration import MongoDBIntegration
 from sdk.data_integration_tests.flow_manager import FlowManager
 from sdk.data_integration_tests.mongo_db_data_validator import MongoDBDataValidator
 from sdk.data_integration_tests.save import save

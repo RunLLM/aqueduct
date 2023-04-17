@@ -3,6 +3,7 @@ import os
 import zipfile
 
 import pytest
+
 from aqueduct.error import (
     InvalidDependencyFilePath,
     RequirementsMissingError,

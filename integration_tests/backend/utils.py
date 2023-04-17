@@ -1,9 +1,8 @@
 import time
 from typing import Optional
 
-from aqueduct.constants.enums import ExecutionStatus
-
 import aqueduct
+from aqueduct.constants.enums import ExecutionStatus
 
 
 def wait_for_flow_runs(

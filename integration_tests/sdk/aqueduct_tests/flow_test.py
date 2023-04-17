@@ -3,11 +3,11 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 import pytest
-from aqueduct.constants.enums import ExecutionStatus
-from aqueduct.error import InvalidRequestError, InvalidUserArgumentException
 
 import aqueduct
 from aqueduct import check, metric, op
+from aqueduct.constants.enums import ExecutionStatus
+from aqueduct.error import InvalidRequestError, InvalidUserArgumentException
 
 from ..shared.data_objects import DataObject
 from ..shared.flow_helpers import publish_flow_test, trigger_flow_test, wait_for_flow_runs

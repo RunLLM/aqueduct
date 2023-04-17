@@ -8,6 +8,8 @@ from typing import Any, DefaultDict, Dict, List, Optional, Union
 
 import __main__ as main
 import yaml
+
+from aqueduct import globals
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
 from aqueduct.artifacts.create import create_param_artifact
@@ -63,8 +65,6 @@ from aqueduct.utils.utils import (
     generate_flow_schedule,
     generate_ui_url,
 )
-
-from aqueduct import globals
 
 
 def global_config(config_dict: Dict[str, Any]) -> None:

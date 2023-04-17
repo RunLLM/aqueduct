@@ -1,10 +1,10 @@
 import os
 
 import pytest
-from aqueduct.models.dag import DAG, Metadata
 
 import aqueduct
 from aqueduct import globals
+from aqueduct.models.dag import DAG, Metadata
 
 API_KEY_ENV_NAME = "API_KEY"
 SERVER_ADDR_ENV_NAME = "SERVER_ADDRESS"

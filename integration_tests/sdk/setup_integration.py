@@ -5,6 +5,8 @@ from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 import pandas as pd
 import yaml
+
+from aqueduct import Client, get_apikey
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ServiceType
@@ -14,8 +16,6 @@ from aqueduct.integrations.mongodb_integration import MongoDBIntegration
 from aqueduct.integrations.s3_integration import S3Integration
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
 from aqueduct.models.integration import Integration
-
-from aqueduct import Client, get_apikey
 from sdk.aqueduct_tests.save import save
 from sdk.shared.demo_db import demo_db_tables
 from sdk.shared.flow_helpers import delete_flow, publish_flow_test

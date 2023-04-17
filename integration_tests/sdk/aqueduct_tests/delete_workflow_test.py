@@ -1,10 +1,10 @@
 import pandas as pd
 import pytest
-from aqueduct.constants.enums import LoadUpdateMode
-from aqueduct.error import InvalidRequestError, InvalidUserArgumentException
 
 import aqueduct
 from aqueduct import op
+from aqueduct.constants.enums import LoadUpdateMode
+from aqueduct.error import InvalidRequestError, InvalidUserArgumentException
 
 from ..shared.data_objects import DataObject
 from ..shared.flow_helpers import publish_flow_test

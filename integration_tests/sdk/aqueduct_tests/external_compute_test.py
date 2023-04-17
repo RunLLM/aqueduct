@@ -1,9 +1,9 @@
 import platform
 
 import pytest
-from aqueduct.error import AqueductError
 
 from aqueduct import check, global_config, op
+from aqueduct.error import AqueductError
 
 from ..shared.data_objects import DataObject
 from ..shared.flow_helpers import publish_flow_test
