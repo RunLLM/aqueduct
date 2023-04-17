@@ -201,6 +201,7 @@ class ResourceConfig(BaseModel):
     num_cpus: Optional[int]
     memory_mb: Optional[int]
     gpu_resource_name: Optional[str]
+    cuda_version: Optional[str]
 
 
 class OperatorSpec(BaseModel):
