@@ -9,6 +9,6 @@ export type WorkflowsGetRequest = APIKeyParameter;
 export type WorkflowsGetResponse = WorkflowResponse[];
 
 export const workflowsGetQuery = (req: WorkflowsGetRequest) => ({
-  url: `workflows/`,
+  url: `workflows`,
   headers: { 'api-key': req.apiKey },
 });
