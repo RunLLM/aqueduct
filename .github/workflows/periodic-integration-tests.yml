@@ -50,7 +50,7 @@ jobs:
 
       - name: Run the SDK Integration Tests
         working-directory: integration_tests/sdk
-        run: pytest aqueduct_tests/ -rP -vv -n 4
+        run: pytest aqueduct_tests/ -rP -vv -n 1
 
       - name: Teardown K8s Cluster
         id: k8s_cleanup # so that we only upload the state on this specific failure.
