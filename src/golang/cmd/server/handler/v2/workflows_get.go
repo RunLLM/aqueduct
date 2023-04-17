@@ -7,6 +7,8 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/functional/slices"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/response"
 	"github.com/dropbox/godropbox/errors"
@@ -62,10 +64,8 @@ func (h *WorkflowsGetHandler) Perform(ctx context.Context, interfaceArgs interfa
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during the retrieval of workflows.")
 	}
 
-	workflows := make([]*response.Workflow, len(dbWorkflows))
-
-	workflows, err := slices.Map(dbWorkflows, func(idx, dbWorkflow model.Workflow) (response.Workflow, error) {
-		return response.NewWorkflowFromDBObject(&dbWorkflow)
+	workflows := slices.Map(dbWorkflows, func(dbWorkflow models.Workflow) response.Workflow {
+		return *response.NewWorkflowFromDBObject(&dbWorkflow)
 	})
 
 	return workflows, http.StatusOK, nil

@@ -4,7 +4,7 @@ package routes
 const (
 	// V2 routes
 	ListStorageMigrationRoute = "/api/v2/storage-migrations"
-	WorkflowsRoute        = "/api/v2/workflows/"
+	WorkflowsRoute            = "/api/v2/workflows/"
 
 	WorkflowRoute                  = "/api/v2/workflow/{workflowID}"
 	DAGRoute                       = "/api/v2/workflow/{workflowID}/dag/{dagID}"
@@ -51,7 +51,7 @@ const (
 
 	GetUserProfileRoute = "/api/user"
 
-	ListWorkflowsRoute         = "/api/workflows"
+	ListWorkflowsRoute           = "/api/workflows"
 	RegisterWorkflowRoute        = "/api/workflow/register"
 	RegisterAirflowWorkflowRoute = "/api/workflow/register/airflow"
 	GetWorkflowRouteV1           = "/api/workflow/{workflowId}"

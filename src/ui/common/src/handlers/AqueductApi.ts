@@ -53,11 +53,7 @@ import {
   WorkflowGetRequest,
   WorkflowGetResponse,
 } from './v2/WorkflowGet';
-import {
-  workflowsGetQuery,
-  WorkflowsGetRequest,
-  WorkflowsGetResponse,
-} from './v2/WorkflowsGet';
+import { workflowsGetQuery, WorkflowsGetRequest } from './v2/WorkflowsGet';
 
 const { createApi, fetchBaseQuery } = ((rtkQueryRaw as any).default ??
   rtkQueryRaw) as typeof rtkQueryRaw;

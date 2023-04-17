@@ -3,12 +3,6 @@ import json
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
-from aqueduct.utils.format import DEFAULT_ENCODING
-from aqueduct.utils.serialization import (
-    artifact_type_to_serialization_type,
-    deserialize,
-    serialize_val,
-)
 from aqueduct_executor.operators.utils.enums import (
     ArtifactType,
     ExecutionStatus,
@@ -35,6 +29,13 @@ from aqueduct_executor.operators.utils.utils import (
     serialize_val_wrapper,
 )
 from pyspark.sql import SparkSession
+
+from aqueduct.utils.format import DEFAULT_ENCODING
+from aqueduct.utils.serialization import (
+    artifact_type_to_serialization_type,
+    deserialize,
+    serialize_val,
+)
 
 
 def read_artifacts_spark(

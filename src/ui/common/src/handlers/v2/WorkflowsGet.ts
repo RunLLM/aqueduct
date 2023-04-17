@@ -8,7 +8,7 @@ export type WorkflowsGetRequest = APIKeyParameter;
 
 export type WorkflowsGetResponse = WorkflowResponse[];
 
-export const workflowGetQuery = (req: WorkflowsGetRequest) => ({
+export const workflowsGetQuery = (req: WorkflowsGetRequest) => ({
   url: `workflows/`,
   headers: { 'api-key': req.apiKey },
 });

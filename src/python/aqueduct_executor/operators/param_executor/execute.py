@@ -1,7 +1,5 @@
 import sys
 
-from aqueduct.utils.serialization import deserialize
-from aqueduct.utils.type_inference import infer_artifact_type
 from aqueduct_executor.operators.param_executor.spec import ParamSpec
 from aqueduct_executor.operators.utils import utils
 from aqueduct_executor.operators.utils.enums import ExecutionStatus, FailureType
@@ -14,6 +12,9 @@ from aqueduct_executor.operators.utils.execution import (
     exception_traceback,
 )
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
+
+from aqueduct.utils.serialization import deserialize
+from aqueduct.utils.type_inference import infer_artifact_type
 
 
 def run(spec: ParamSpec) -> None:
