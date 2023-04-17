@@ -7,6 +7,7 @@ const (
 
 	WorkflowRoute                  = "/api/v2/workflow/{workflowID}"
 	DAGRoute                       = "/api/v2/workflow/{workflowID}/dag/{dagID}"
+	DAGResultsRoute                = "/api/v2/workflow/{workflowID}/results"
 	DAGResultRoute                 = "/api/v2/workflow/{workflowID}/result/{dagResultID}"
 	NodesRoute                     = "/api/v2/workflow/{workflowID}/dag/{dagID}/nodes"
 	NodeArtifactRoute              = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/artifact/{nodeID}"
