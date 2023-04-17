@@ -92,7 +92,7 @@ export const RedshiftDialog: React.FC<Props> = ({
 export function isRedshiftConfigComplete(config: RedshiftConfig): boolean {
   return (
     !!config.host &&
-    !!config.port  &&
+    !!config.port &&
     !!config.database &&
     !!config.username &&
     !!config.password

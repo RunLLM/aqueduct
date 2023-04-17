@@ -96,10 +96,9 @@ export const PostgresDialog: React.FC<Props> = ({
 export function isPostgresConfigComplete(config: PostgresConfig): boolean {
   return (
     !!config.host &&
-    !!config.port  &&
+    !!config.port &&
     !!config.database &&
     !!config.username &&
     !!config.password
   );
 }
-

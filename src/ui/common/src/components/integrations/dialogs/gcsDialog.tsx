@@ -128,5 +128,5 @@ export function readCredentialsFile(
 }
 
 export function isGCSConfigComplete(config: GCSConfig): boolean {
-  return (!!config.bucket && !!config.service_account_credentials);
+  return !!config.bucket && !!config.service_account_credentials;
 }

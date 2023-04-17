@@ -49,9 +49,6 @@ export const SlackDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         type="password"
         onChange={(event) => {
           onUpdateField('token', event.target.value);
-          // if (!!event.target.value) {
-          //   onUpdateField('token', event.target.value);
-          // }
         }}
         value={value?.token ?? null}
       />
