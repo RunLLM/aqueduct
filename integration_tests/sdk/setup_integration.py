@@ -259,10 +259,6 @@ def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) 
     else:
         compute_integrations = list_compute_integrations()
 
-    # No need to do any setup for the demo db.
-    if "aqueduct_engine" in compute_integrations:
-        compute_integrations.remove("aqueduct_engine")
-
     if len(compute_integrations) == 0:
         return
 
@@ -270,13 +266,16 @@ def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) 
     for integration_name in compute_integrations:
         # Only connect to integrations that don't already exist.
         if integration_name not in connected_integrations.keys():
-            if integration_name == "conda":
-                client.connect_integration(
-                    integration_name,
-                    ServiceType.CONDA,
-                    {},  # integration_config
-                )
-                wait_for_conda_integration(client, integration_name)
+            if "aqueduct_engine" in compute_integrations:
+                # Connect to conda if specified, otherwise, do nothing for aq engine.
+                aq_config = _parse_config_file()["compute"][integration_name]
+                if "conda" in aq_config:
+                    client.connect_integration(
+                        integration_name,
+                        ServiceType.CONDA,
+                        {},  # integration_config
+                    )
+                    wait_for_conda_integration(client, integration_name)
             else:
                 integration_config = _fetch_integration_credentials("compute", integration_name)
 
@@ -300,11 +299,11 @@ def wait_for_conda_integration(client: Client, name: str):
             _ = test_conda_fn()
             return
         except Exception as e:
-            # bypass expected error message for waiting.
+            # Throw if error message is not expected.
             if "We are still creating base conda environments" not in str(e):
                 raise e
         
-            # otherwise, wait and try again
+            # Wait and try again if error message is expected.
             time.sleep(5)
 
 
