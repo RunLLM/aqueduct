@@ -248,7 +248,7 @@ export const S3Dialog: React.FC<Props> = ({
 };
 
 export function isS3ConfigComplete(config: S3Config): boolean {
-  if (!config.bucket) {
+  if (!config.bucket || !config.region) {
     return false;
   }
 

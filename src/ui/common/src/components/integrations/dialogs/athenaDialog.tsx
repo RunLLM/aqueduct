@@ -223,6 +223,20 @@ export const AthenaDialog: React.FC<Props> = ({
   );
 };
 
+// TODO: Figure out How we should validate the input forms for Athena
+// According to UI, required fields are:
+// - database
+// - output_location
+
+// When using access key, also need:
+// - access_key_id
+// - secret_access_key
+// - region
+
+// When using credentials file, also need:
+// - file path and file content
+// - config_file_profile
+
 export function isAthenaConfigComplete(config: AthenaConfig): boolean {
   if (!config.output_location || !config.database) {
     return false;

@@ -88,3 +88,13 @@ export const RedshiftDialog: React.FC<Props> = ({
     </Box>
   );
 };
+
+export function isRedshiftConfigComplete(config: RedshiftConfig): boolean {
+  return (
+    !!config.host &&
+    !!config.port  &&
+    !!config.database &&
+    !!config.username &&
+    !!config.password
+  );
+}

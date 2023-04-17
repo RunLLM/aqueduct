@@ -126,3 +126,7 @@ export function readCredentialsFile(
   };
   reader.readAsText(file);
 }
+
+export function isGCSConfigComplete(config: GCSConfig): boolean {
+  return (!!config.bucket && !!config.service_account_credentials);
+}

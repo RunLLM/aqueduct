@@ -49,7 +49,7 @@ import {
   SupportedIntegrations,
 } from '../../../utils/integrations';
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
-import { AirflowDialog } from './airflowDialog';
+import { AirflowDialog, isAirflowConfigComplete } from './airflowDialog';
 import { AthenaDialog, isAthenaConfigComplete } from './athenaDialog';
 import { AWSDialog, isAWSConfigComplete } from './awsDialog';
 import { BigQueryDialog } from './bigqueryDialog';
@@ -63,15 +63,15 @@ import {
   EmailDialog,
   isEmailConfigComplete,
 } from './emailDialog';
-import { GCSDialog } from './gcsDialog';
+import { GCSDialog, isGCSConfigComplete } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { isK8sConfigComplete, KubernetesDialog } from './kubernetesDialog';
 import { LambdaDialog } from './lambdaDialog';
-import { MariaDbDialog } from './mariadbDialog';
-import { MongoDBDialog } from './mongoDbDialog';
-import { MysqlDialog } from './mysqlDialog';
-import { PostgresDialog } from './postgresDialog';
-import { RedshiftDialog } from './redshiftDialog';
+import { isMariaDBConfigComplete, MariaDbDialog } from './mariadbDialog';
+import { isMongoDBConfigComplete, MongoDBDialog } from './mongoDbDialog';
+import { isMySqlConfigComplete, MysqlDialog } from './mysqlDialog';
+import { isPostgresConfigComplete, PostgresDialog } from './postgresDialog';
+import { isRedshiftConfigComplete, RedshiftDialog } from './redshiftDialog';
 import { isS3ConfigComplete, S3Dialog } from './s3Dialog';
 import {
   isSlackConfigComplete,
@@ -80,7 +80,7 @@ import {
 } from './slackDialog';
 import { isSnowflakeConfigComplete, SnowflakeDialog } from './snowflakeDialog';
 import { isSparkConfigComplete, SparkDialog } from './sparkDialog';
-import { SQLiteDialog } from './sqliteDialog';
+import { isSQLiteConfigComplete, SQLiteDialog } from './sqliteDialog';
 
 type Props = {
   user: UserProfile;
@@ -489,18 +489,36 @@ export function isConfigComplete(
   service: Service
 ): boolean {
   switch (service) {
+    case 'Airflow':
+      return isAirflowConfigComplete(config as AirflowConfig);
     case 'Athena':
       return isAthenaConfigComplete(config as AthenaConfig);
     case 'AWS':
       return isAWSConfigComplete(config as AWSConfig);
     case 'Conda':
+      // Conda only has a name field that the user supplies, so this half of form is always valid.
       return true;
     case 'Databricks':
       return isDatabricksConfigComplete(config as DatabricksConfig);
     case 'Email':
       return isEmailConfigComplete(config as EmailConfig);
+    case 'GCS':
+      return isGCSConfigComplete(config as GCSConfig);
     case 'Kubernetes':
       return isK8sConfigComplete(config as KubernetesConfig);
+    case 'Lambda':
+      // Lambda only has a name field that the user supplies, so this half of form is always valid.
+      return true;
+    case 'MariaDB':
+      return isMariaDBConfigComplete(config as MariaDbConfig);
+    case 'MongoDB':
+      return isMongoDBConfigComplete(config as MongoDBConfig);
+    case 'MySQL':
+      return isMySqlConfigComplete(config as MySqlConfig);
+    case 'Postgres':
+      return isPostgresConfigComplete(config as PostgresConfig);
+    case 'Redshift':
+      return isRedshiftConfigComplete(config as RedshiftConfig);
     case 'S3':
       return isS3ConfigComplete(config as S3Config);
     case 'Slack':
@@ -509,12 +527,11 @@ export function isConfigComplete(
       return isSparkConfigComplete(config as SparkConfig);
     case 'Snowflake':
       return isSnowflakeConfigComplete(config as SnowflakeConfig);
+    case 'SQLite':
+      return isSQLiteConfigComplete(config as SQLiteConfig);
     default:
-      // Make sure config is not empty and all fields are not empty as well.
-      return (
-        Object.values(config).length > 0 &&
-        Object.values(config).every((x) => !!x)
-      );
+      // Require all integrations to have their own validation function.
+      return false;
   }
 }
 

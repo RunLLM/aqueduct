@@ -88,3 +88,13 @@ export const MysqlDialog: React.FC<Props> = ({
     </Box>
   );
 };
+
+export function isMySqlConfigComplete(config: MySqlConfig): boolean {
+  return (
+    !!config.host &&
+    !!config.port  &&
+    !!config.database &&
+    !!config.username &&
+    !!config.password
+  );
+}

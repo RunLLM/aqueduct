@@ -37,3 +37,7 @@ export const SQLiteDialog: React.FC<Props> = ({
     </Box>
   );
 };
+
+export function isSQLiteConfigComplete(config: SQLiteConfig): boolean {
+  return !!config.database;
+}

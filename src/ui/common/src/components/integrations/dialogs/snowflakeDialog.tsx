@@ -129,12 +129,11 @@ export const SnowflakeDialog: React.FC<Props> = ({
 };
 
 export function isSnowflakeConfigComplete(config: SnowflakeConfig): boolean {
-  const required = [
-    'account_identifier',
-    'username',
-    'password',
-    'warehouse',
-    'database',
-  ];
-  return required.every((key) => key in config && config[key].length > 0);
+  return (
+    !!config.account_identifier &&
+    !!config.username &&
+    !!config.password &&
+    !!config.warehouse &&
+    !!config.database
+  );
 }
