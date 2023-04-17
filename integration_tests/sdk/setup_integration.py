@@ -269,9 +269,9 @@ def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) 
             if "aqueduct_engine" in compute_integrations:
                 # Connect to conda if specified, otherwise, do nothing for aq engine.
                 aq_config = _parse_config_file()["compute"][integration_name]
-                if "conda" in aq_config:
+                if aq_config and "conda" in aq_config:
                     client.connect_integration(
-                        integration_name,
+                        "conda_test",  # for the sake of clarity, use a different name for the integration.
                         ServiceType.CONDA,
                         {},  # integration_config
                     )
@@ -302,7 +302,7 @@ def wait_for_conda_integration(client: Client, name: str):
             # Throw if error message is not expected.
             if "We are still creating base conda environments" not in str(e):
                 raise e
-        
+
             # Wait and try again if error message is expected.
             time.sleep(5)
 
