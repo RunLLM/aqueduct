@@ -48,3 +48,7 @@ export const MongoDBDialog: React.FC<Props> = ({
     </Box>
   );
 };
+
+export function isMongoDBConfigComplete(config: MongoDBConfig): boolean {
+  return !!config.auth_uri && !!config.database;
+}

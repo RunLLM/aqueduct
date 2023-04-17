@@ -88,3 +88,14 @@ export const MariaDbDialog: React.FC<Props> = ({
     </Box>
   );
 };
+
+export const isMariaDBConfigComplete = (config: MariaDbConfig): boolean => {
+  return (
+    !!config.database &&
+    !!config.host &&
+    !!config.password &&
+    !!config.port &&
+    !!config.username &&
+    !!config.port
+  );
+};

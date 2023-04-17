@@ -223,23 +223,40 @@ export const AthenaDialog: React.FC<Props> = ({
   );
 };
 
+// Required fields are (baseFields):
+// - database
+// - output_location
+
+// When using access key, also need:
+// - access_key_id
+// - secret_access_key
+// - region
+
+// When using credentials file, also need:
+// - file path and file content
+// - config_file_profile
 export function isAthenaConfigComplete(config: AthenaConfig): boolean {
-  if (!config.output_location || !config.database) {
-    return false;
-  }
+  const baseFields = !!config.database && !!config.output_location;
 
   if (config.type === AWSCredentialType.AccessKey) {
     return (
-      !!config.access_key_id && !!config.secret_access_key && !!config.region
+      baseFields &&
+      !!config.access_key_id &&
+      !!config.secret_access_key &&
+      !!config.region
     );
   }
 
   if (config.type === AWSCredentialType.ConfigFilePath) {
-    return !!config.config_file_profile && !!config.config_file_path;
+    return (
+      baseFields && !!config.config_file_profile && !!config.config_file_path
+    );
   }
 
   if (config.type === AWSCredentialType.ConfigFileContent) {
-    return !!config.config_file_profile && !!config.config_file_content;
+    return (
+      baseFields && !!config.config_file_profile && !!config.config_file_content
+    );
   }
 
   return false;

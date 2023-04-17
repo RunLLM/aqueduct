@@ -92,3 +92,13 @@ export const PostgresDialog: React.FC<Props> = ({
     </Box>
   );
 };
+
+export function isPostgresConfigComplete(config: PostgresConfig): boolean {
+  return (
+    !!config.host &&
+    !!config.port &&
+    !!config.database &&
+    !!config.username &&
+    !!config.password
+  );
+}
