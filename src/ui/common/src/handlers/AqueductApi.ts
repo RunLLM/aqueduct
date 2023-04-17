@@ -2,11 +2,6 @@ import * as rtkQueryRaw from '@reduxjs/toolkit/dist/query/react/index.js';
 import { FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
 
 import { apiAddress } from '../components/hooks/useAqueductConsts';
-import {
-  workflowListQuery,
-  workflowListRequest,
-  workflowListResponse,
-} from './ListWorkflows';
 import { dagGetQuery, DagGetRequest, DagGetResponse } from './v2/DagGet';
 import {
   dagResultGetQuery,
@@ -58,6 +53,11 @@ import {
   WorkflowGetRequest,
   WorkflowGetResponse,
 } from './v2/WorkflowGet';
+import {
+  workflowsGetQuery,
+  WorkflowsGetRequest,
+  WorkflowsGetResponse,
+} from './v2/WorkflowsGet';
 
 const { createApi, fetchBaseQuery } = ((rtkQueryRaw as any).default ??
   rtkQueryRaw) as typeof rtkQueryRaw;
@@ -131,8 +131,8 @@ export const aqueductApi = createApi({
       query: (req) => storageMigrationListQuery(req),
       transformErrorResponse,
     }),
-    workflowList: builder.query<workflowListResponse, workflowListRequest>({
-      query: (req) => workflowListQuery(req),
+    workflowsGet: builder.query<WorkflowsGettResponse, WorkflowsGetRequest>({
+      query: (req) => workflowsGetQuery(req),
       transformErrorResponse: transformErrorResponse,
     }),
     workflowGet: builder.query<WorkflowGetResponse, WorkflowGetRequest>({
@@ -146,7 +146,6 @@ export const {
   useDagGetQuery,
   useDagResultGetQuery,
   useStorageMigrationListQuery,
-  useWorkflowListQuery,
   useNodeArtifactGetQuery,
   useNodeArtifactResultContentGetQuery,
   useNodeArtifactResultsGetQuery,
@@ -155,4 +154,5 @@ export const {
   useNodesGetQuery,
   useNodesResultsGetQuery,
   useWorkflowGetQuery,
+  useWorkflowsGetQuery,
 } = aqueductApi;

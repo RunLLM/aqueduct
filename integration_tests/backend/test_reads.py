@@ -17,9 +17,8 @@ from aqueduct import globals
 
 
 class TestBackend:
-    V2_GET_WORKFLOWS_TEMPLATE = "/api/v2/workflows"
+    GET_WORKFLOWS_TEMPLATE = "/api/v2/workflows"
 
-    GET_WORKFLOWS_TEMPLATE = "/api/workflows"
     LIST_WORKFLOW_SAVED_OBJECTS_TEMPLATE = "/api/workflow/%s/objects"
     GET_TEST_INTEGRATION_TEMPLATE = "/api/integration/%s/test"
     LIST_INTEGRATIONS_TEMPLATE = "/api/integrations"
@@ -297,14 +296,10 @@ class TestBackend:
                 elif name == "check artifact":
                     assert value == "true"
 
-    def test_endpoint_v2_list_workflows(self):
-        v1_resp = self.get_response(self.GET_WORKFLOWS_TEMPLATE).json()
+    def test_endpoint_workflows_get(self):
+        resp = self.get_response(self.GET_WORKFLOWS_TEMPLATE).json()
 
-        v2_resp = self.get_response(self.V2_GET_WORKFLOWS_TEMPLATE).json()
-
-        assert len(v1_resp) == len(v2_resp)
-
-        if len(v2_resp) > 0:
+        if len(resp) > 0:
             keys = [
                 "id",
                 "user_id",
@@ -316,12 +311,11 @@ class TestBackend:
                 "notification_settings",
             ]
 
-            user_id = v2_resp[0]["user_id"]
+            user_id = resp[0]["user_id"]
 
-            for v2_workflow in v2_resp:
+            for v2_workflow in resp:
                 for key in keys:
                     assert key in v2_workflow
                 assert v2_workflow["user_id"] == user_id
 
 
-å

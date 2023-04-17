@@ -27,7 +27,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database:             s.Database,
 			StorageMigrationRepo: s.StorageMigrationRepo,
 		},
-		routes.ListWorkflowsRoute: &v2.ListWorkflowsHandler{
+		routes.WorkflowsRoute: &v2.WorkflowsGetHandler{
 			Database:     s.Database,
 			WorkflowRepo: s.WorkflowRepo,
 		},

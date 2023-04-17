@@ -13,7 +13,7 @@ import (
 )
 
 /*
-This file should map directly to src/ui/common/src/handlers/ListWorkflows.tsx
+This file should map directly to src/ui/common/src/handlers/WorkflowsGet.tsx
 
 Route: /v2/workflows
 Method: GET
@@ -26,7 +26,7 @@ Response:
 		List of `response.Workflow` objects
 */
 
-type ListWorkflowsHandler struct {
+type WorkflowsGetHandler struct {
 	handler.GetHandler
 
 	Database database.Database
@@ -34,22 +34,26 @@ type ListWorkflowsHandler struct {
 	WorkflowRepo repos.Workflow
 }
 
-func (*ListWorkflowsHandler) Name() string {
-	return "ListWorkflows"
+type workflowsGetArgs struct {
+	*aq_context.AqContext
 }
 
-func (h *ListWorkflowsHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (*WorkflowsGetHandler) Name() string {
+	return "WorkflowsGet"
+}
+
+func (h *WorkflowsGetHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}
 
-	return &workflowGetArgs{
+	return &workflowsGetArgs{
 		AqContext: aqContext,
 	}, http.StatusOK, nil
 }
 
-func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+func (h *WorkflowsGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	dbWorkflows, err := h.WorkflowRepo.List(
 		ctx,
 		h.Database,
@@ -60,9 +64,9 @@ func (h *ListWorkflowsHandler) Perform(ctx context.Context, interfaceArgs interf
 
 	workflows := make([]*response.Workflow, len(dbWorkflows))
 
-	for idx, dbWorkflow := range dbWorkflows {
-		workflows[idx] = response.NewWorkflowFromDBObject(&dbWorkflow)
-	}
+	workflows, err := slices.Map(dbWorkflows, func(idx, dbWorkflow model.Workflow) (response.Workflow, error) {
+		return response.NewWorkflowFromDBObject(&dbWorkflow)
+	})
 
 	return workflows, http.StatusOK, nil
 }
