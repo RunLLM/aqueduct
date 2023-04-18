@@ -149,7 +149,7 @@ jobs:
           --health-retries 5
         ports:
           # Maps tcp port 3306 on service container to 3808 on the host
-          - 3306:3808
+          - 3808:3306
     steps:
       - uses: actions/checkout@v2
 
