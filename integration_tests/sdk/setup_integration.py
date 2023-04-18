@@ -214,6 +214,7 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
     for integration_name in data_integrations:
         # Only connect to integrations that don't already exist.
         if integration_name not in connected_integrations.keys():
+            print(f"Connecting to {integration_name}")
             integration_config = _fetch_integration_credentials("data", integration_name)
 
             # Stand up the external integration first.
@@ -266,6 +267,7 @@ def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) 
     for integration_name in compute_integrations:
         # Only connect to integrations that don't already exist.
         if integration_name not in connected_integrations.keys():
+            print(f"Connecting to {integration_name}")
             if "aqueduct_engine" in compute_integrations:
                 # Connect to conda if specified, otherwise, do nothing for aq engine.
                 aq_config = _parse_config_file()["compute"][integration_name]
