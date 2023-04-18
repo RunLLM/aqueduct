@@ -2,14 +2,14 @@ from typing import List
 
 import pandas as pd
 import pytest
+
+from aqueduct import LoadUpdateMode, metric, op
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.constants.enums import ExecutionStatus
 from aqueduct.error import AqueductError, InvalidUserActionException, InvalidUserArgumentException
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
 from aqueduct.models.operators import RelationalDBExtractParams
-
-from aqueduct import LoadUpdateMode, metric, op
 
 from ..shared.demo_db import demo_db_tables
 from ..shared.naming import generate_table_name

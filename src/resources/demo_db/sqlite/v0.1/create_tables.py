@@ -29,6 +29,7 @@ def create_diabetes_table(engine):
         if_exists="replace",
     )
 
+
 def create_housing_table(engine):
     df = pd.read_csv(
         "https://raw.githubusercontent.com/aqueducthq/aqueduct/main/src/resources/demo_db/sqlite/v0.1/house_prices.csv",
@@ -41,6 +42,7 @@ def create_housing_table(engine):
         index=True,
         if_exists="replace",
     )
+
 
 if __name__ == "__main__":
     url = "sqlite:///{database}".format(

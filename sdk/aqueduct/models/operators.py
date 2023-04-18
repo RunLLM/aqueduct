@@ -1,6 +1,8 @@
 import uuid
 from typing import List, Optional, Union
 
+from pydantic import BaseModel, Extra
+
 from aqueduct.constants.enums import (
     ArtifactType,
     CheckSeverity,
@@ -18,7 +20,6 @@ from aqueduct.constants.enums import (
 from aqueduct.error import AqueductError, UnsupportedFeatureException
 from aqueduct.models.config import EngineConfig
 from aqueduct.models.integration import IntegrationInfo
-from pydantic import BaseModel, Extra
 
 
 class GithubMetadata(BaseModel):

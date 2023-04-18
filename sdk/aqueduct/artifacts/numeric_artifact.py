@@ -5,6 +5,8 @@ import uuid
 from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
+
+from aqueduct import globals
 from aqueduct.artifacts import bool_artifact
 from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts._create import create_metric_or_check_artifact
@@ -33,8 +35,6 @@ from aqueduct.utils.describe import get_readable_description_for_metric
 from aqueduct.utils.function_packaging import serialize_function
 from aqueduct.utils.naming import default_artifact_name_from_op_name
 from aqueduct.utils.utils import format_header_for_print, generate_uuid
-
-from aqueduct import globals
 
 
 class NumericArtifact(BaseArtifact):

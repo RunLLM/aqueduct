@@ -26,8 +26,8 @@ def handler(event, context):
     spec = parse_spec(spec_json)
 
     extract_function.run(spec)
-    open(spec.function_extract_path + "op/local_deps.txt", 'w')
-    open(spec.function_extract_path + "op/missing.txt", 'w')
+    open(spec.function_extract_path + "op/local_deps.txt", "w")
+    open(spec.function_extract_path + "op/missing.txt", "w")
     pip_freeze(spec.function_extract_path + "op/local_deps.txt")
     install_requirements.run(
         spec.function_extract_path + "op/local_deps.txt",

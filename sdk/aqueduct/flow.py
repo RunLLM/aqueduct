@@ -4,6 +4,7 @@ import uuid
 from collections import defaultdict
 from typing import DefaultDict, Dict, List, Optional, Union
 
+from aqueduct import globals
 from aqueduct.error import InvalidUserArgumentException
 from aqueduct.flow_run import FlowRun
 from aqueduct.models.response_models import (
@@ -12,8 +13,6 @@ from aqueduct.models.response_models import (
     WorkflowDagResponse,
 )
 from aqueduct.utils.utils import format_header_for_print, generate_ui_url, parse_user_supplied_id
-
-from aqueduct import globals
 
 
 class Flow:

@@ -58,6 +58,7 @@ import {
   WorkflowGetRequest,
   WorkflowGetResponse,
 } from './v2/WorkflowGet';
+import { workflowsGetQuery, WorkflowsGetRequest } from './v2/WorkflowsGet';
 
 const { createApi, fetchBaseQuery } = ((rtkQueryRaw as any).default ??
   rtkQueryRaw) as typeof rtkQueryRaw;
@@ -135,6 +136,10 @@ export const aqueductApi = createApi({
       query: (req) => storageMigrationListQuery(req),
       transformErrorResponse,
     }),
+    workflowsGet: builder.query<WorkflowsGettResponse, WorkflowsGetRequest>({
+      query: (req) => workflowsGetQuery(req),
+      transformErrorResponse: transformErrorResponse,
+    }),
     workflowGet: builder.query<WorkflowGetResponse, WorkflowGetRequest>({
       query: (req) => workflowGetQuery(req),
       transformErrorResponse,
@@ -155,4 +160,5 @@ export const {
   useNodesGetQuery,
   useNodesResultsGetQuery,
   useWorkflowGetQuery,
+  useWorkflowsGetQuery,
 } = aqueductApi;

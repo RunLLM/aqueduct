@@ -1,10 +1,10 @@
 from os import cpu_count
 
 import pytest
-from aqueduct.constants.enums import ExecutionStatus, ServiceType
-from aqueduct.error import AqueductError, InvalidUserArgumentException
 
 from aqueduct import global_config, op
+from aqueduct.constants.enums import ExecutionStatus, ServiceType
+from aqueduct.error import AqueductError, InvalidUserArgumentException
 
 from ..shared.data_objects import DataObject
 from ..shared.flow_helpers import publish_flow_test

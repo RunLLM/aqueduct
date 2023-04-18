@@ -1,8 +1,8 @@
 import pytest
-from aqueduct.error import AqueductError, InvalidUserArgumentException
 
 import aqueduct
 from aqueduct import op
+from aqueduct.error import AqueductError, InvalidUserArgumentException
 
 from ..shared.data_objects import DataObject
 from .extract import extract

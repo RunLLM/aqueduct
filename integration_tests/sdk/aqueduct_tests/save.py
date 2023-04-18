@@ -1,12 +1,11 @@
 from typing import Optional
 
+from aqueduct import LoadUpdateMode
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import S3TableFormat
 from aqueduct.integrations.mongodb_integration import MongoDBIntegration
 from aqueduct.integrations.s3_integration import S3Integration
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
-
-from aqueduct import LoadUpdateMode
 
 from ..shared.globals import artifact_id_to_saved_identifier
 from ..shared.naming import generate_table_name

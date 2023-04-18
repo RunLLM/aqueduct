@@ -1,5 +1,7 @@
 import pandas as pd
 import pytest
+
+from aqueduct import check
 from aqueduct.constants.enums import CheckSeverity
 from aqueduct.error import (
     AqueductError,
@@ -7,8 +9,6 @@ from aqueduct.error import (
     ArtifactNotFoundException,
     InvalidUserActionException,
 )
-
-from aqueduct import check
 
 from ..shared.data_objects import DataObject
 from ..shared.flow_helpers import publish_flow_test
