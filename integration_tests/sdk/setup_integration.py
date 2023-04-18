@@ -292,7 +292,7 @@ def wait_for_conda_integration(client: Client, name: str):
     # Try to preview a test function integration it completes successfully.
     from aqueduct import op
 
-    @op(requirements=[])
+    @op(requirements=["pytest"])
     def test_conda_fn():
         return 123
 
