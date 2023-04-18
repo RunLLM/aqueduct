@@ -9,6 +9,11 @@ import {
   DagResultGetResponse,
 } from './v2/DagResultGet';
 import {
+  dagResultsGetQuery,
+  DagResultsGetRequest,
+  DagResultsGetResponse,
+} from './v2/DagResultsGet';
+import {
   storageMigrationListQuery,
   storageMigrationListRequest,
   storageMigrationListResponse,
@@ -71,6 +76,10 @@ export const aqueductApi = createApi({
     }),
     dagResultGet: builder.query<DagResultGetResponse, DagResultGetRequest>({
       query: (req) => dagResultGetQuery(req),
+      transformErrorResponse,
+    }),
+    dagResultsGet: builder.query<DagResultsGetResponse, DagResultsGetRequest>({
+      query: (req) => dagResultsGetQuery(req),
       transformErrorResponse,
     }),
     nodeArtifactGet: builder.query<
@@ -136,6 +145,7 @@ export const aqueductApi = createApi({
 export const {
   useDagGetQuery,
   useDagResultGetQuery,
+  useDagResultsGetQuery,
   useStorageMigrationListQuery,
   useNodeArtifactGetQuery,
   useNodeArtifactResultContentGetQuery,
