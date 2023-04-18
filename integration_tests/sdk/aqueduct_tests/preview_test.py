@@ -1,8 +1,8 @@
 import pandas as pd
 import pytest
+from aqueduct.error import AqueductError, InvalidDependencyFilePath, InvalidFunctionException
 
 from aqueduct import global_config, op
-from aqueduct.error import AqueductError, InvalidDependencyFilePath, InvalidFunctionException
 
 from ..shared.data_objects import DataObject
 from .extract import extract

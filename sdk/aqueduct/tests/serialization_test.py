@@ -2,8 +2,6 @@ import json
 import uuid
 
 import cloudpickle as pickle
-from PIL import Image
-
 from aqueduct.constants.enums import (
     ArtifactType,
     ExecutionStatus,
@@ -46,6 +44,7 @@ from aqueduct.utils.serialization import (
     serialize_val,
 )
 from aqueduct.utils.utils import generate_uuid
+from PIL import Image
 
 
 def test_artifact_serialization():

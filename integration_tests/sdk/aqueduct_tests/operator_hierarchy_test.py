@@ -1,7 +1,7 @@
 import pytest
+from aqueduct.error import InvalidUserActionException
 
 from aqueduct import check, metric, op
-from aqueduct.error import InvalidUserActionException
 
 from ..shared.data_objects import DataObject
 from .extract import extract

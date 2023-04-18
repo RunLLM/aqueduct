@@ -2,11 +2,11 @@ import sys
 
 import pandas as pd
 import pytest
+from aqueduct.error import AqueductError, InvalidUserArgumentException
 from transformers_model.model import sentiment_prediction_using_transformers
 from utils import SENTIMENT_SQL_QUERY, get_integration_name
 
 from aqueduct import op
-from aqueduct.error import AqueductError, InvalidUserArgumentException
 
 INVALID_REQUIREMENTS_PATH = "~/random.txt"
 VALID_REQUIREMENTS_PATH = "transformers_model/requirements.txt"

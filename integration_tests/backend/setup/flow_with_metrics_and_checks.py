@@ -3,8 +3,9 @@
 # with a check to enforce the row-count is larger than 0.
 # This workflow is published twice.
 ###
-import aqueduct
 from aqueduct.constants.enums import CheckSeverity
+
+import aqueduct
 
 
 def setup_flow_with_metrics_and_checks(
