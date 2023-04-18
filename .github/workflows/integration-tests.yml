@@ -78,6 +78,9 @@ jobs:
       - name: Update conda
         run: conda update --all
 
+      - name: Show disk space
+        run: echo df -h /dev/sda1
+
       # TODO(ENG-2537): Use our separate GH actions credentials.
       - uses: ./.github/actions/fetch-test-config
         with:
