@@ -62,18 +62,19 @@ export const GCSDialog: React.FC<Props> = ({
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="bucket"
         spellCheck={false}
         required={true}
         label="Bucket*"
         description="The name of the GCS bucket."
         placeholder={Placeholders.bucket}
         onChange={(event) => onUpdateField('bucket', event.target.value)}
-        value={value?.bucket ?? ''}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disabled={editMode}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
+      {/* TODO: get this to work with react-hook-form */}
       <IntegrationFileUploadField
         label={'Service Account Credentials*'}
         description={fileUploadDescription}
@@ -90,6 +91,7 @@ export const GCSDialog: React.FC<Props> = ({
         }}
       />
 
+      {/* TODO: get this to work with react-hook-form */}
       <FormControlLabel
         label="Use this integration for Aqueduct metadata storage."
         control={

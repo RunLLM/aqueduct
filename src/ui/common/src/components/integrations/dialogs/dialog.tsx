@@ -1,3 +1,5 @@
+import { DevTool } from '@hookform/devtools';
+import { yupResolver } from '@hookform/resolvers/yup';
 import { LoadingButton } from '@mui/lab';
 import {
   Alert,
@@ -16,8 +18,6 @@ import React, { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
 import * as Yup from 'yup';
-import { yupResolver } from '@hookform/resolvers/yup';
-import { DevTool } from "@hookform/devtools";
 
 import {
   handleConnectToNewIntegration,
@@ -34,6 +34,7 @@ import {
   BigQueryConfig,
   DatabricksConfig,
   EmailConfig,
+  formatService,
   GCSConfig,
   Integration,
   IntegrationConfig,
@@ -84,6 +85,7 @@ import {
 import { isSnowflakeConfigComplete, SnowflakeDialog } from './snowflakeDialog';
 import { isSparkConfigComplete, SparkDialog } from './sparkDialog';
 import { isSQLiteConfigComplete, SQLiteDialog } from './sqliteDialog';
+import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 type Props = {
   user: UserProfile;
@@ -451,103 +453,101 @@ const IntegrationDialog: React.FC<Props> = ({
   };
 
   // let's see if we can pick up the name field here.
-  // const nameInput = (
-  //   <IntegrationTextInputField
-  //     spellCheck={false}
-  //     required={true}
-  //     label="Name*"
-  //     description="Provide a unique name to refer to this integration."
-  //     placeholder={'my_' + formatService(service) + '_integration'}
-  //     onChange={(event) => {
-  //       setName(event.target.value);
-  //       setShouldShowNameError(false);
-  //     }}
-  //     {...register('name')}
-  //     value={name}
-  //     disabled={service === 'Aqueduct Demo'}
-  //   />
-  // );
-
   const nameInput = (
-    <TextField
-      required
-      id="name"
+    <IntegrationTextInputField
       name="name"
-      label="Name"
-      margin="dense"
-      {...methods.register('name', { required: true })}
-      //error={errors.name ? true : false}
+      spellCheck={false}
+      required={true}
+      label="Name*"
+      description="Provide a unique name to refer to this integration."
+      placeholder={'my_' + formatService(service) + '_integration'}
+      onChange={(event) => {
+        setName(event.target.value);
+        setShouldShowNameError(false);
+      }}
+      disabled={service === 'Aqueduct Demo'}
+      // don't need to register here since this is already done in the IntegrationTextInputField component
+      //{...methods.register('name')}
     />
   );
 
   return (
     <Dialog open={true} onClose={onCloseDialog} fullWidth maxWidth="lg">
       <FormProvider {...methods}>
-        <DialogTitle>{dialogHeader}</DialogTitle>
-        <DialogContent>
-          {editMode && numWorkflows > 0 && (
-            <Alert sx={{ mb: 2 }} severity="info">
-              {`Changing this integration will automatically update ${numWorkflows} ${
-                numWorkflows === 1 ? 'workflow' : 'workflows'
-              }.`}
-            </Alert>
-          )}
-          {(service === 'Email' || service === 'Slack') && (
-            <Typography variant="body1" color="gray.700">
-              To learn more about how to set up {service}, see our{' '}
-              <Link href={SupportedIntegrations[service].docs} target="_blank">
-                documentation
-              </Link>
-              .
-            </Typography>
-          )}
-          {nameInput}
-          {serviceDialog}
+        <form>
+          <DialogTitle>{dialogHeader}</DialogTitle>
+          <DialogContent>
+            {editMode && numWorkflows > 0 && (
+              <Alert sx={{ mb: 2 }} severity="info">
+                {`Changing this integration will automatically update ${numWorkflows} ${
+                  numWorkflows === 1 ? 'workflow' : 'workflows'
+                }.`}
+              </Alert>
+            )}
+            {(service === 'Email' || service === 'Slack') && (
+              <Typography variant="body1" color="gray.700">
+                To learn more about how to set up {service}, see our{' '}
+                <Link
+                  href={SupportedIntegrations[service].docs}
+                  target="_blank"
+                >
+                  documentation
+                </Link>
+                .
+              </Typography>
+            )}
+            {nameInput}
+            {serviceDialog}
 
-          {shouldShowNameError && (
-            <Alert sx={{ mt: 2 }} severity="error">
-              <AlertTitle>Naming Error</AlertTitle>A connected integration
-              already exists with this name. Please provide a unique name for
-              your integration.
-            </Alert>
-          )}
+            {shouldShowNameError && (
+              <Alert sx={{ mt: 2 }} severity="error">
+                <AlertTitle>Naming Error</AlertTitle>A connected integration
+                already exists with this name. Please provide a unique name for
+                your integration.
+              </Alert>
+            )}
 
-          {isFailed(connectStatus) && (
-            <Alert sx={{ mt: 2 }} severity="error">
-              <AlertTitle>
-                {editMode
-                  ? `Failed to update ${integrationToEdit.name}`
-                  : `Unable to connect to ${service}`}
-              </AlertTitle>
-              <pre>{connectStatus.err}</pre>
-            </Alert>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button autoFocus onClick={onCloseDialog}>
-            Cancel
-          </Button>
-          <LoadingButton
-            autoFocus
-            onClick={async () => {
-              console.log('loading button clicked. Calling handleSubmit()');
-              console.log('formState: ', methods.formState);
+            {isFailed(connectStatus) && (
+              <Alert sx={{ mt: 2 }} severity="error">
+                <AlertTitle>
+                  {editMode
+                    ? `Failed to update ${integrationToEdit.name}`
+                    : `Unable to connect to ${service}`}
+                </AlertTitle>
+                <pre>{connectStatus.err}</pre>
+              </Alert>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button autoFocus onClick={onCloseDialog}>
+              Cancel
+            </Button>
+            <LoadingButton
+              autoFocus
+              onClick={async () => {
+                console.log('loading button clicked. Calling handleSubmit()');
+                console.log('formState: ', methods.formState);
 
-              const triggerResult = await methods.trigger();
-              console.log('triggerResult: ', triggerResult);
-              
-              const triggerParams = await methods.trigger(['name', 'host', 'port']);
-              console.log('triggerParams: ', triggerParams);
-              // NOTE: handleSubmit() is a function that returns a function, please call it as so
-              methods.handleSubmit(onSubmit)()
-            }}
-            loading={isLoading(connectStatus)}
-            //disabled={disableConnect}
-            disabled={false}
-          >
-            Confirm
-          </LoadingButton>
-        </DialogActions>
+                const triggerResult = await methods.trigger();
+                console.log('triggerResult: ', triggerResult);
+
+                const triggerParams = await methods.trigger([
+                  'name',
+                  'host',
+                  'port',
+                ]);
+                console.log('triggerParams: ', triggerParams);
+                // NOTE: handleSubmit() is a function that returns a function, please call it as so
+                methods.handleSubmit(onSubmit)();
+              }}
+              loading={isLoading(connectStatus)}
+              //disabled={disableConnect}
+              disabled={false}
+            >
+              Confirm
+            </LoadingButton>
+          </DialogActions>
+        </form>
       </FormProvider>
       <DevTool control={methods.control} /> {/* set up the dev tool */}
     </Dialog>

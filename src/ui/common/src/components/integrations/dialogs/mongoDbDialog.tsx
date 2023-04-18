@@ -24,23 +24,23 @@ export const MongoDBDialog: React.FC<Props> = ({
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="auth_uri"
         label={'URI*'}
         description={'The connection URI to your MongoDB server.'}
         spellCheck={false}
         required={true}
         placeholder={Placeholders.auth_uri}
         onChange={(event) => onUpdateField('auth_uri', event.target.value)}
-        value={value?.auth_uri ?? ''}
       />
 
       <IntegrationTextInputField
+        name="database"
         label={'Database*'}
         description={'The name of the specific database to connect to.'}
         spellCheck={false}
         required={true}
         placeholder={Placeholders.database}
         onChange={(event) => onUpdateField('database', event.target.value)}
-        value={value?.database ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}

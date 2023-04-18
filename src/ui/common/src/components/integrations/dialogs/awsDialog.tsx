@@ -51,6 +51,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
 
   const configProfileInput = (
     <IntegrationTextInputField
+      name="config_file_profile"
       spellCheck={false}
       required={true}
       label="AWS Profile*"
@@ -59,7 +60,6 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       onChange={(event) =>
         onUpdateField('config_file_profile', event.target.value)
       }
-      value={value?.config_file_profile ?? ''}
     />
   );
 
@@ -69,16 +69,17 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         Manually enter your AWS credentials.
       </Typography>
       <IntegrationTextInputField
+        name="access_key_id"
         spellCheck={false}
         required={true}
         label="AWS Access Key ID*"
         description="The access key ID of your AWS account."
         placeholder={Placeholders.access_key_id}
         onChange={(event) => onUpdateField('access_key_id', event.target.value)}
-        value={value?.access_key_id ?? ''}
       />
 
       <IntegrationTextInputField
+        name="secret_access_key"
         spellCheck={false}
         required={true}
         label="AWS Secret Access Key*"
@@ -87,17 +88,16 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         onChange={(event) =>
           onUpdateField('secret_access_key', event.target.value)
         }
-        value={value?.secret_access_key ?? ''}
       />
 
       <IntegrationTextInputField
+        name="region"
         spellCheck={false}
         required={true}
         label="AWS Region*"
         description="The region of your AWS account."
         placeholder={Placeholders.region}
         onChange={(event) => onUpdateField('region', event.target.value)}
-        value={value?.region ?? ''}
       />
     </Box>
   );
@@ -113,6 +113,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         automatically apply to this integration.
       </Typography>
       <IntegrationTextInputField
+        name="config_file_path"
         spellCheck={false}
         required={true}
         label="AWS Credentials File Path*"
@@ -121,7 +122,6 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         onChange={(event) =>
           onUpdateField('config_file_path', event.target.value)
         }
-        value={value?.config_file_path ?? ''}
       />
 
       {configProfileInput}
@@ -133,7 +133,10 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       <Typography variant="body2" color="gray.700">
         Optionally configure on-demand Kubernetes cluster parameters.
       </Typography>
+
+      {/* TODO: Figure out how to get this to work with react-hook-form */}
       <IntegrationTextInputField
+        name="keepalive"
         spellCheck={false}
         required={false}
         label="Keepalive period"
@@ -143,9 +146,12 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
           k8sConfigs['keepalive'] = event.target.value;
           onUpdateField('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
-        value={k8sConfigs['keepalive'] ?? ''}
+        //value={k8sConfigs['keepalive'] ?? ''}
       />
+
+      {/* TODO: Figure out how to get this to work with react-hook-form */}
       <IntegrationTextInputField
+        name="cpu_node_type"
         spellCheck={false}
         required={false}
         label="CPU node type"
@@ -155,10 +161,12 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
           k8sConfigs['cpu_node_type'] = event.target.value;
           onUpdateField('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
-        value={k8sConfigs['cpu_node_type'] ?? ''}
+        //value={k8sConfigs['cpu_node_type'] ?? ''}
       />
 
+      {/* TODO: Figure out how to get this to work with react-hook-form */}
       <IntegrationTextInputField
+        name="gpu_node_type"
         spellCheck={false}
         required={false}
         label="GPU node type"
@@ -168,9 +176,12 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
           k8sConfigs['gpu_node_type'] = event.target.value;
           onUpdateField('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
-        value={k8sConfigs['gpu_node_type'] ?? ''}
+        //value={k8sConfigs['gpu_node_type'] ?? ''}
       />
+      
+      {/* TODO: Figure out how to get this to work with react-hook-form */}
       <IntegrationTextInputField
+        name="min_cpu_node"
         spellCheck={false}
         required={false}
         label="Min CPU node"
@@ -180,9 +191,12 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
           k8sConfigs['min_cpu_node'] = event.target.value;
           onUpdateField('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
-        value={k8sConfigs['min_cpu_node'] ?? ''}
+        //value={k8sConfigs['min_cpu_node'] ?? ''}
       />
+
+      {/* TODO: Figure out how to get this to work with react-hook-form */}
       <IntegrationTextInputField
+        name="max_cpu_node"
         spellCheck={false}
         required={false}
         label="Max CPU node"
@@ -192,9 +206,12 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
           k8sConfigs['max_cpu_node'] = event.target.value;
           onUpdateField('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
-        value={k8sConfigs['max_cpu_node'] ?? ''}
+        //value={k8sConfigs['max_cpu_node'] ?? ''}
       />
+
+      {/* TODO: Figure out how to get this to work with react-hook-form */}
       <IntegrationTextInputField
+        name="min_gpu_node"
         spellCheck={false}
         required={false}
         label="Min GPU node"
@@ -204,9 +221,12 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
           k8sConfigs['min_gpu_node'] = event.target.value;
           onUpdateField('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
-        value={k8sConfigs['min_gpu_node'] ?? ''}
+        //value={k8sConfigs['min_gpu_node'] ?? ''}
       />
+
+      {/* TODO: Figure out how to get this to work with react-hook-form */}
       <IntegrationTextInputField
+        name="max_gpu_node"
         spellCheck={false}
         required={false}
         label="Max GPU node"
@@ -216,7 +236,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
           k8sConfigs['max_gpu_node'] = event.target.value;
           onUpdateField('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
-        value={k8sConfigs['max_gpu_node'] ?? ''}
+        //value={k8sConfigs['max_gpu_node'] ?? ''}
       />
     </Box>
   );

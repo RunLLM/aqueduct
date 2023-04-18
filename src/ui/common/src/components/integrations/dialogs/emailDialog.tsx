@@ -47,36 +47,37 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="host"
         spellCheck={false}
         required={true}
         label="Host *"
         description="The hostname address of the email SMTP server."
         placeholder={Placeholders.host}
         onChange={(event) => onUpdateField('host', event.target.value)}
-        value={value?.host ?? null}
       />
 
       <IntegrationTextInputField
+        name="port"
         spellCheck={false}
         required={true}
         label="Port *"
         description="The port number of the email SMTP server."
         placeholder={Placeholders.port}
         onChange={(event) => onUpdateField('port', event.target.value)}
-        value={value?.port ?? null}
       />
 
       <IntegrationTextInputField
+        name="user"
         spellCheck={false}
         required={true}
         label="Sender Address *"
         description="The email address of the sender."
         placeholder={Placeholders.user}
         onChange={(event) => onUpdateField('user', event.target.value)}
-        value={value?.user ?? null}
       />
 
       <IntegrationTextInputField
+        name="password"
         spellCheck={false}
         required={false}
         label="Sender Password *"
@@ -84,14 +85,12 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         placeholder={Placeholders.password}
         type="password"
         onChange={(event) => {
-          if (!!event.target.value) {
-            onUpdateField('password', event.target.value);
-          }
+          onUpdateField('password', event.target.value);
         }}
-        value={value?.password ?? null}
       />
 
       <IntegrationTextInputField
+        name="reciever"
         spellCheck={false}
         required={true}
         label="Receiver Address *"
@@ -104,11 +103,11 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
             .map((r) => r.trim());
           onUpdateField('targets_serialized', JSON.stringify(receiversList));
         }}
-        value={receivers ?? null}
       />
 
       <Divider sx={{ mt: 2 }} />
 
+      {/* TODO: Get this to work with react-hook-form */}
       <Box sx={{ mt: 2 }}>
         <CheckboxEntry
           checked={value?.enabled === 'true'}
@@ -125,6 +124,7 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         </Typography>
       </Box>
 
+      {/* TODO: Get this to work with react-hook-form */}
       {value?.enabled === 'true' && (
         <Box sx={{ mt: 2 }}>
           <Box sx={{ my: 1 }}>

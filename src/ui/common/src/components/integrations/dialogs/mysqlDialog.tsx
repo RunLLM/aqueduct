@@ -84,6 +84,7 @@ export const MysqlDialog: React.FC<Props> = ({
         type="password"
         onChange={(event) => onUpdateField('password', event.target.value)}
         value={value?.password ?? ''}
+        autoComplete="mysql-password"
       />
     </Box>
   );

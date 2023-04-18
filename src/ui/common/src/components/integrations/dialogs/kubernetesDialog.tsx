@@ -49,6 +49,7 @@ export const KubernetesDialog: React.FC<Props> = ({
 
   return (
     <Box sx={{ mt: 2 }}>
+      {/* TODO: get this to work with react-hook-form */}
       {inK8sCluster && (
         <FormControlLabel
           label="Use the same Kubernetes cluster that the server is running on."
@@ -67,6 +68,7 @@ export const KubernetesDialog: React.FC<Props> = ({
       )}
 
       <IntegrationTextInputField
+        name="kubeconfig_path"
         spellCheck={false}
         required={!(value?.use_same_cluster === 'true')}
         label="Kubernetes Config Path*"
@@ -75,18 +77,17 @@ export const KubernetesDialog: React.FC<Props> = ({
         onChange={(event) =>
           onUpdateField('kubeconfig_path', event.target.value)
         }
-        value={value?.kubeconfig_path ?? ''}
         disabled={value?.use_same_cluster === 'true'}
       />
 
       <IntegrationTextInputField
+        name="cluster_name"
         spellCheck={false}
         required={!(value?.use_same_cluster === 'true')}
         label="Cluster Name*"
         description="The name of the cluster that will be used."
         placeholder={Placeholders.cluster_name}
         onChange={(event) => onUpdateField('cluster_name', event.target.value)}
-        value={value?.cluster_name ?? ''}
         disabled={value?.use_same_cluster === 'true'}
       />
     </Box>

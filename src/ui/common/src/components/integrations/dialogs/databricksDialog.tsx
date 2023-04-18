@@ -36,19 +36,20 @@ export const DatabricksDialog: React.FC<Props> = ({
         .
       </Typography>
       <IntegrationTextInputField
+        name="workspace_url"
         label={'Workspace URL*'}
         description={'URL of Databricks Workspace.'}
         spellCheck={false}
         required={true}
         placeholder={Placeholders.workspace_url}
         onChange={(event) => onUpdateField('workspace_url', event.target.value)}
-        value={value?.workspace_url ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationTextInputField
+        name="access_token"
         label={'Access Token*'}
         description={
           'The access token to connect to your Databricks Workspace.'
@@ -57,7 +58,6 @@ export const DatabricksDialog: React.FC<Props> = ({
         required={true}
         placeholder={Placeholders.access_token}
         onChange={(event) => onUpdateField('access_token', event.target.value)}
-        value={value?.access_token ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -72,6 +72,7 @@ export const DatabricksDialog: React.FC<Props> = ({
       </Typography>
 
       <IntegrationTextInputField
+        name="s3_instance_profile_arn"
         label={'S3 Instance Profile ARN*'}
         description={
           'The ARN of the instance profile that allows Databricks clusters to access S3.'
@@ -82,7 +83,6 @@ export const DatabricksDialog: React.FC<Props> = ({
         onChange={(event) =>
           onUpdateField('s3_instance_profile_arn', event.target.value)
         }
-        value={value?.s3_instance_profile_arn ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -97,6 +97,7 @@ export const DatabricksDialog: React.FC<Props> = ({
       </Typography>
 
       <IntegrationTextInputField
+        name="instance_pool_id"
         label={'Instance Pool ID'}
         description={
           'The ID of the Databricks Instance Pool that Aqueduct will run compute on.'
@@ -107,7 +108,6 @@ export const DatabricksDialog: React.FC<Props> = ({
         onChange={(event) =>
           onUpdateField('instance_pool_id', event.target.value)
         }
-        value={value?.instance_pool_id ?? ''}
       />
     </Box>
   );

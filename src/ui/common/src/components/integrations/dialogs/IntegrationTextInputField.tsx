@@ -1,6 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import TextField from '@mui/material/TextField';
 import React, { ChangeEvent } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 type IntegrationTextFieldProps = {
   label: string;
@@ -12,10 +13,12 @@ type IntegrationTextFieldProps = {
   onChange: (
     event: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
   ) => void;
-  value: string;
+  //value: string;
   type?: string;
   disabled?: boolean;
   disableReason?: string;
+  autoComplete?: string;
+  name: string;
 };
 
 export const IntegrationTextInputField: React.FC<IntegrationTextFieldProps> = ({
@@ -26,11 +29,22 @@ export const IntegrationTextInputField: React.FC<IntegrationTextFieldProps> = ({
   required,
   placeholder,
   onChange,
-  value,
+  //value,
   type,
   disabled,
   disableReason,
+  autoComplete,
+  name
 }) => {
+
+  const { register, errors, formState } = useFormContext();
+  
+  console.log('formContext errors: ', errors);
+
+  // TDOO: Show input error in the warning field.
+  //error={errors.name ? true : false}
+  // TODO: figure out how to get this by key/value access.
+
   return (
     <Box sx={{ mt: 2 }}>
       <Box sx={{ my: 1 }}>
@@ -44,16 +58,18 @@ export const IntegrationTextInputField: React.FC<IntegrationTextFieldProps> = ({
       </Box>
       <Box>
         <TextField
+          name={name}
           spellCheck={spellCheck}
           required={required}
           placeholder={placeholder}
           onChange={onChange}
-          value={value}
           type={type ? type : null}
           fullWidth={true}
           size={'small'}
           disabled={disabled}
           helperText={disabled ? disableReason : undefined}
+          autoComplete={autoComplete}
+          {...register(name, { required })}
         />
       </Box>
     </Box>

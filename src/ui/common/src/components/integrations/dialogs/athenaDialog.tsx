@@ -59,6 +59,7 @@ export const AthenaDialog: React.FC<Props> = ({
 
   const configProfileInput = (
     <IntegrationTextInputField
+      name="config_file_profile"
       spellCheck={false}
       required={true}
       label="AWS Profile*"
@@ -67,7 +68,7 @@ export const AthenaDialog: React.FC<Props> = ({
       onChange={(event) =>
         onUpdateField('config_file_profile', event.target.value)
       }
-      value={value?.config_file_profile ?? ''}
+      //value={value?.config_file_profile ?? ''}
     />
   );
 
@@ -77,16 +78,17 @@ export const AthenaDialog: React.FC<Props> = ({
         Manually enter your AWS credentials.
       </Typography>
       <IntegrationTextInputField
+        name="access_key_id"
         spellCheck={false}
         required={true}
         label="AWS Access Key ID*"
         description="The access key ID of your AWS account."
         placeholder={Placeholders.access_key_id}
         onChange={(event) => onUpdateField('access_key_id', event.target.value)}
-        value={value?.access_key_id ?? ''}
       />
 
       <IntegrationTextInputField
+        name="secret_access_key"
         spellCheck={false}
         required={true}
         label="AWS Secret Access Key*"
@@ -95,17 +97,16 @@ export const AthenaDialog: React.FC<Props> = ({
         onChange={(event) =>
           onUpdateField('secret_access_key', event.target.value)
         }
-        value={value?.secret_access_key ?? ''}
       />
 
       <IntegrationTextInputField
+        name="region"
         spellCheck={false}
         required={true}
         label="Region*"
         description="The region the Athena database belongs to."
         placeholder={Placeholders.region}
         onChange={(event) => onUpdateField('region', event.target.value)}
-        value={value?.region ?? ''}
       />
     </Box>
   );
@@ -121,6 +122,7 @@ export const AthenaDialog: React.FC<Props> = ({
         automatically apply to this integration.
       </Typography>
       <IntegrationTextInputField
+        name="config_file_path"
         spellCheck={false}
         required={true}
         label="AWS Credentials File Path*"
@@ -129,7 +131,6 @@ export const AthenaDialog: React.FC<Props> = ({
         onChange={(event) =>
           onUpdateField('config_file_path', event.target.value)
         }
-        value={value?.config_file_path ?? ''}
       />
 
       {configProfileInput}
@@ -171,19 +172,20 @@ export const AthenaDialog: React.FC<Props> = ({
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="database"
         spellCheck={false}
         required={true}
         label="Database*"
         description="The name of the Athena database."
         placeholder={Placeholders.database}
         onChange={(event) => onUpdateField('database', event.target.value)}
-        value={value?.database ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationTextInputField
+        name="output_location"
         spellCheck={false}
         required={true}
         label="S3 Output Location*"
@@ -194,7 +196,6 @@ export const AthenaDialog: React.FC<Props> = ({
         onChange={(event) =>
           onUpdateField('output_location', event.target.value)
         }
-        value={value?.output_location ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -222,6 +223,9 @@ export const AthenaDialog: React.FC<Props> = ({
     </Box>
   );
 };
+
+
+// TODO: Add custom Control component to render tabs and use that to update form context.
 
 // Required fields are (baseFields):
 // - database

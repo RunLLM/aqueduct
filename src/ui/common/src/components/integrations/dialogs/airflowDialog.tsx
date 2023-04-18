@@ -28,12 +28,15 @@ export const AirflowDialog: React.FC<Props> = ({
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="host"
         spellCheck={false}
         required={true}
         label="Host *"
         description="The hostname of the Airflow server."
         placeholder={Placeholders.host}
         onChange={(event) => {
+          // TODO: Send this new updated value to react-hook-form's context.
+          // NOTE: Cannot have url prefix in here.
           setHost(event.target.value);
           if (event.target.value.startsWith('http://')) {
             // Backend requires the protocol to be stripped
@@ -45,23 +48,26 @@ export const AirflowDialog: React.FC<Props> = ({
             onUpdateField('host', event.target.value);
           }
         }}
-        value={host}
+        //value={host}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationTextInputField
+        name="username"
         spellCheck={false}
         required={true}
         label="Username *"
         description="The username of a user with access to the above server."
         placeholder={Placeholders.username}
         onChange={(event) => onUpdateField('username', event.target.value)}
-        value={value?.username ?? ''}
+        //value={value?.username ?? ''}
       />
 
       <IntegrationTextInputField
+        name="password"
+        autoComplete="airflow-password"
         spellCheck={false}
         required={true}
         label="Password *"
@@ -69,10 +75,11 @@ export const AirflowDialog: React.FC<Props> = ({
         placeholder={Placeholders.password}
         type="password"
         onChange={(event) => onUpdateField('password', event.target.value)}
-        value={value?.password ?? ''}
+        //value={value?.password ?? ''}
       />
 
       <IntegrationTextInputField
+        name="s3_credentials_path"
         spellCheck={false}
         required={true}
         label="S3 Credentials Path *"
@@ -81,10 +88,11 @@ export const AirflowDialog: React.FC<Props> = ({
         onChange={(event) => {
           onUpdateField('s3_credentials_path', event.target.value);
         }}
-        value={value?.s3_credentials_path ?? ''}
+        //value={value?.s3_credentials_path ?? ''}
       />
 
       <IntegrationTextInputField
+        name="s3_credentials_profile"
         spellCheck={false}
         required={false}
         label="S3 Credentials Profile"
@@ -93,7 +101,7 @@ export const AirflowDialog: React.FC<Props> = ({
         onChange={(event) => {
           onUpdateField('s3_credentials_profile', event.target.value);
         }}
-        value={value?.s3_credentials_profile ?? ''}
+        //value={value?.s3_credentials_profile ?? ''}
       />
     </Box>
   );
