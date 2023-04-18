@@ -58,7 +58,7 @@ jobs:
   #         prefix: Basic
 
   run-tests-conda:
-    runs-on: ubuntu-latest-4-cores
+    runs-on: ubuntu-latest-8-cores
     timeout-minutes: 40
     name: All Integration Tests with Conda
     steps:
