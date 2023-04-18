@@ -1,14 +1,15 @@
 import Box from '@mui/material/Box';
+import TextField from '@mui/material/Textfield';
+import Typography from '@mui/material/Typography';
 import React from 'react';
-import { useFormContext } from 'react-hook-form';
-import * as Yup from 'yup';
 
-import {
-  IntegrationDialogProps,
-  MariaDbConfig,
-} from '../../../utils/integrations';
+import { MariaDbConfig } from '../../../utils/integrations';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { useForm, Controller } from 'react-hook-form';
+import * as Yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { Button } from '../../primitives/Button.styles';
 
 const Placeholders: MariaDbConfig = {
   host: '127.0.0.1',
@@ -18,82 +19,146 @@ const Placeholders: MariaDbConfig = {
   password: '********',
 };
 
-export const MariaDbDialog: React.FC<IntegrationDialogProps> = ({
-  editMode = false,
+type Props = {
+  onUpdateField: (field: keyof MariaDbConfig, value: string) => void;
+  value?: MariaDbConfig;
+  editMode: boolean;
+};
+
+export const MariaDbDialog: React.FC<Props> = ({
+  onUpdateField,
+  value,
+  editMode,
 }) => {
-  const { setValue } = useFormContext();
+  const validationSchema = Yup.object().shape({
+    host: Yup.string().required('Please enter a host url.'),
+    port: Yup.string().required('Please enter a port number.'),
+    //database: Yup.string().required('Please enter a database name.'),
+    //username: Yup.string().required('Please enter a username.'),
+    //password: Yup.string().required('Please enter a password.'),
+  });
+
+  const onSubmit = data => {
+    console.log(JSON.stringify(data, null, 2));
+  };
+
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors }
+  } = useForm({
+    resolver: yupResolver(validationSchema)
+  });
 
   return (
     <Box sx={{ mt: 2 }}>
-      <IntegrationTextInputField
-        name="host"
+      {/* <IntegrationTextInputField
         label={'Host*'}
         description={'The hostname or IP address of the MariaDB server.'}
         spellCheck={false}
         required={true}
         placeholder={Placeholders.host}
-        onChange={(event) => setValue('host', event.target.value)}
+        onChange={(event) => onUpdateField('host', event.target.value)}
+        value={value?.host ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
-      />
+      /> */}
 
-      <IntegrationTextInputField
-        name="port"
+      <TextField
+        required
+        id="host"
+        name="host"
+        label="Host"
+        fullWidth
+        margin="dense"
+        {...register('host')}
+        error={errors.host ? true : false}
+      />
+      <Typography variant="inherit" color="textSecondary">
+        {errors.host?.message}
+      </Typography>
+
+      {/* <IntegrationTextInputField
         label={'Port*'}
         description={'The port number of the MariaDB server.'}
         spellCheck={false}
         required={true}
         placeholder={Placeholders.port}
-        onChange={(event) => setValue('port', event.target.value)}
+        onChange={(event) => onUpdateField('port', event.target.value)}
+        value={value?.port ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
-      />
+      /> */}
 
-      <IntegrationTextInputField
-        name="database"
+      <TextField
+        required
+        id="port"
+        name="port"
+        label="Port"
+        fullWidth
+        margin="dense"
+        {...register('port')}
+        error={errors.port ? true : false}
+      />
+      <Typography variant="inherit" color="textSecondary">
+        {errors.port?.message}
+      </Typography>
+
+      {/* <IntegrationTextInputField
         label={'Database*'}
         description={'The name of the specific database to connect to.'}
         spellCheck={false}
         required={true}
         placeholder={Placeholders.database}
-        onChange={(event) => setValue('database', event.target.value)}
+        onChange={(event) => onUpdateField('database', event.target.value)}
+        value={value?.database ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
-      />
+      /> */}
 
-      <IntegrationTextInputField
-        name="username"
+      {/* <IntegrationTextInputField
         spellCheck={false}
         required={true}
         label="Username*"
         description="The username of a user with access to the above database."
         placeholder={Placeholders.username}
-        onChange={(event) => setValue('username', event.target.value)}
-      />
+        onChange={(event) => onUpdateField('username', event.target.value)}
+        value={value?.username ?? ''}
+      /> */}
 
-      <IntegrationTextInputField
-        name="password"
+      {/* <IntegrationTextInputField
         spellCheck={false}
         required={true}
         label="Password*"
         description="The password corresponding to the above username."
         placeholder={Placeholders.password}
         type="password"
-        onChange={(event) => setValue('password', event.target.value)}
-      />
+        onChange={(event) => onUpdateField('password', event.target.value)}
+        value={value?.password ?? ''}
+      /> */}
+
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={handleSubmit(onSubmit)}
+      >
+        Register
+      </Button>
     </Box>
   );
 };
 
-export function getMariaDBValidationSchema() {
-  return Yup.object().shape({
-    host: Yup.string().required('Please enter a host'),
-    port: Yup.number().required('Please enter a port'),
-    database: Yup.string().required('Please enter a database'),
-    username: Yup.string().required('Please enter a username'),
-    password: Yup.string().required('Please enter a password'),
-  });
-}
+export const isMariaDBConfigComplete = (config: MariaDbConfig): boolean => {
+  return (
+    !!config.database &&
+    !!config.host &&
+    !!config.password &&
+    !!config.port &&
+    !!config.username &&
+    !!config.port
+  );
+};

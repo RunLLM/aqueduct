@@ -13,6 +13,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useForm, Controller } from 'react-hook-form';
 
 import {
   handleConnectToNewIntegration,
@@ -86,6 +87,7 @@ import {
 import { isSnowflakeConfigComplete, SnowflakeDialog } from './snowflakeDialog';
 import { isSparkConfigComplete, SparkDialog } from './sparkDialog';
 import { isSQLiteConfigComplete, SQLiteDialog } from './sqliteDialog';
+import TextField from '@mui/material/TextField';
 
 type Props = {
   user: UserProfile;
@@ -163,6 +165,17 @@ const IntegrationDialog: React.FC<Props> = ({
     });
 
   const [migrateStorage, setMigrateStorage] = useState(false);
+
+  // TODO: Figure out how we're going to set up validation schema
+  const { register, control, handleSubmit, formState } = useForm();
+
+  const onSubmit = (data: any) => {
+
+    console.log('inside onSubmit')
+    console.log(JSON.stringify(data, null, 2));
+  }
+
+  console.log('formState: ', formState);
 
   useEffect(() => {
     if (isSucceeded(connectStatus)) {
@@ -427,19 +440,34 @@ const IntegrationDialog: React.FC<Props> = ({
         );
   };
 
+  // let's see if we can pick up the name field here.
+  // const nameInput = (
+  //   <IntegrationTextInputField
+  //     spellCheck={false}
+  //     required={true}
+  //     label="Name*"
+  //     description="Provide a unique name to refer to this integration."
+  //     placeholder={'my_' + formatService(service) + '_integration'}
+  //     onChange={(event) => {
+  //       setName(event.target.value);
+  //       setShouldShowNameError(false);
+  //     }}
+  //     {...register('name')}
+  //     value={name}
+  //     disabled={service === 'Aqueduct Demo'}
+  //   />
+  // );
+
+
   const nameInput = (
-    <IntegrationTextInputField
-      spellCheck={false}
-      required={true}
-      label="Name*"
-      description="Provide a unique name to refer to this integration."
-      placeholder={'my_' + formatService(service) + '_integration'}
-      onChange={(event) => {
-        setName(event.target.value);
-        setShouldShowNameError(false);
-      }}
-      value={name}
-      disabled={service === 'Aqueduct Demo'}
+    <TextField
+      required
+      id="name"
+      name="name"
+      label="Name"
+      margin="dense"
+      {...register('name', { required: true })}
+      //error={errors.name ? true : false}
     />
   );
 
@@ -491,9 +519,16 @@ const IntegrationDialog: React.FC<Props> = ({
         </Button>
         <LoadingButton
           autoFocus
-          onClick={onConfirmDialog}
+          onClick={( )=> {
+            console.log('loading button clicked. Calling handleSubmit()');
+            console.log('formState: ', formState)
+            handleSubmit((data)=> {
+              console.log('handleSubmit data: ', data);
+            })
+          }}
           loading={isLoading(connectStatus)}
-          disabled={disableConnect}
+          //disabled={disableConnect}
+          disabled={false}
         >
           Confirm
         </LoadingButton>
