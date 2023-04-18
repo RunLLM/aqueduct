@@ -163,6 +163,7 @@ def _setup_external_sqlite_db(path: str):
 def _setup_postgres_db():
     _execute_command(["aqueduct", "install", "postgres"])
 
+
 def _setup_maria_db():
     _execute_command(["aqueduct", "install", "mariadb"])
 
