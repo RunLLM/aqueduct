@@ -142,7 +142,7 @@ def _execute_function(
 def _validate_result_count_and_infer_type(
     spec: FunctionSpec,
     results: List[Any],
-    infer_type_func: function,
+    infer_type_func: Any,
 ) -> List[ArtifactType]:
     """
     Validates that the expected number of results were returned by the Function
@@ -169,7 +169,7 @@ def _validate_result_count_and_infer_type(
 
 
 def _write_artifacts(
-    write_func: function,
+    write_func: Any,
     results: Any,
     result_types: List[ArtifactType],
     derived_from_bson: bool,
@@ -188,7 +188,7 @@ def _write_artifacts(
             output_metadata_paths[i],
             result,
             system_metadata=system_metadata,
-            kwargs=kwargs,
+            **kwargs,
         )
 
 
@@ -251,7 +251,7 @@ def run(spec: FunctionSpec) -> None:
     )
 
 
-def run_helper(spec: FunctionSpec, read_func: function, write_func: function, infer_type_func: function, **kwargs) -> None:
+def run_helper(spec: FunctionSpec, read_func: Any, write_func: Any, infer_type_func: Any, **kwargs) -> None:
     """
     Executes a function operator.
     """
@@ -265,9 +265,9 @@ def run_helper(spec: FunctionSpec, read_func: function, write_func: function, in
             job_name=spec.name, job_type=spec.type.value, step="Reading Inputs"
         )(read_func)(
             storage=storage, 
-            input_content_paths=spec.input_content_paths, 
+            input_paths=spec.input_content_paths, 
             input_metadata_paths=spec.input_metadata_paths, 
-            kwargs=kwargs
+            **kwargs
         )
 
         # We need to check for BSON_TABLE serialization type at both the top level
@@ -345,7 +345,7 @@ def run_helper(spec: FunctionSpec, read_func: function, write_func: function, in
                     output_metadata_path=spec.output_metadata_paths[0],
                     content=check_passed,
                     system_metadata=system_metadata,
-                    kwargs=kwargs,
+                    **kwargs,
                 )
 
                 check_severity = spec.check_severity
@@ -388,7 +388,7 @@ def run_helper(spec: FunctionSpec, read_func: function, write_func: function, in
             output_metadata_paths=spec.output_metadata_paths,
             system_metadata=system_metadata,
             storage=storage,
-            kwargs=kwargs,
+            **kwargs,
         )
 
         # If we made it here, then the operator has succeeded.
