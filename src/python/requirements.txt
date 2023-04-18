@@ -1,7 +1,7 @@
 boto3<=1.26.34
 cloudpickle<=2.2.0
 google-cloud-storage<=2.7.0
-numpy<=1.24.0
+numpy<=1.24.2
 pandas<=1.5.2
 pydantic<=1.10.2
 SQLAlchemy<2.0.0
