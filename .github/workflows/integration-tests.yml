@@ -75,6 +75,9 @@ jobs:
       - name: Install conda build
         run: conda install conda-build
 
+      - name: Update conda
+        run: conda update --all
+
       # TODO(ENG-2537): Use our separate GH actions credentials.
       - uses: ./.github/actions/fetch-test-config
         with:
