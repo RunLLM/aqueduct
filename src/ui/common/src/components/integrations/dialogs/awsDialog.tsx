@@ -1,21 +1,18 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React, { useState } from 'react';
-import { useFormContext } from 'react-hook-form';
-import * as Yup from 'yup';
+import React, { useEffect, useState } from 'react';
 
 import {
   AWSConfig,
   AWSCredentialType,
   DynamicEngineType,
   DynamicK8sConfig,
-  IntegrationDialogProps,
 } from '../../../utils/integrations';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: AWSConfig = {
-  type: 'access_key',
+  type: AWSCredentialType.AccessKey,
   region: 'us-east-2',
   access_key_id: '',
   secret_access_key: '',
@@ -34,19 +31,21 @@ const K8sPlaceholders: DynamicK8sConfig = {
   max_gpu_node: '1',
 };
 
-export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
-  const { register, getValues, setValue } = useFormContext();
+type Props = {
+  onUpdateField: (field: keyof AWSConfig, value: string) => void;
+  value?: AWSConfig;
+};
 
-  // Need state variable to change tabs, as the formContext doesn't change as readily.
-  const [currentTab, setCurrentTab] = useState(AWSCredentialType.AccessKey);
-  const [engineTypeTab, setEngineTypeTab] = useState(DynamicEngineType.K8s);
+export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
+  const [engineType, setEngineType] = useState(DynamicEngineType.K8s);
 
-  register('engineType', { value: DynamicEngineType.K8s });
-  register('type', { value: AWSCredentialType.AccessKey });
-  register('k8s_serialized', { value: '{}' });
+  useEffect(() => {
+    if (!value?.type) {
+      onUpdateField('type', AWSCredentialType.AccessKey);
+    }
+  }, [onUpdateField, value?.type]);
 
-  const k8s_serialized = getValues('k8s_serialized');
-  const k8sConfigs = JSON.parse(k8s_serialized ?? '{}') as {
+  const k8sConfigs = JSON.parse(value?.k8s_serialized ?? '{}') as {
     [key: string]: string;
   };
 
@@ -58,7 +57,9 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
       label="AWS Profile*"
       description="The name of the profile specified in brackets in your credential file."
       placeholder={Placeholders.config_file_profile}
-      onChange={(event) => setValue('config_file_profile', event.target.value)}
+      onChange={(event) =>
+        onUpdateField('config_file_profile', event.target.value)
+      }
     />
   );
 
@@ -74,7 +75,7 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
         label="AWS Access Key ID*"
         description="The access key ID of your AWS account."
         placeholder={Placeholders.access_key_id}
-        onChange={(event) => setValue('access_key_id', event.target.value)}
+        onChange={(event) => onUpdateField('access_key_id', event.target.value)}
       />
 
       <IntegrationTextInputField
@@ -84,7 +85,9 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
         label="AWS Secret Access Key*"
         description="The secret access key of your AWS account."
         placeholder={Placeholders.secret_access_key}
-        onChange={(event) => setValue('secret_access_key', event.target.value)}
+        onChange={(event) =>
+          onUpdateField('secret_access_key', event.target.value)
+        }
       />
 
       <IntegrationTextInputField
@@ -94,7 +97,7 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
         label="AWS Region*"
         description="The region of your AWS account."
         placeholder={Placeholders.region}
-        onChange={(event) => setValue('region', event.target.value)}
+        onChange={(event) => onUpdateField('region', event.target.value)}
       />
     </Box>
   );
@@ -116,7 +119,9 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
         label="AWS Credentials File Path*"
         description={'The path to the credentials file'}
         placeholder={Placeholders.config_file_path}
-        onChange={(event) => setValue('config_file_path', event.target.value)}
+        onChange={(event) =>
+          onUpdateField('config_file_path', event.target.value)
+        }
       />
 
       {configProfileInput}
@@ -128,6 +133,8 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
       <Typography variant="body2" color="gray.700">
         Optionally configure on-demand Kubernetes cluster parameters.
       </Typography>
+
+      {/* TODO: Figure out how to get this to work with react-hook-form */}
       <IntegrationTextInputField
         name="keepalive"
         spellCheck={false}
@@ -136,11 +143,13 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
         description="How long (in seconds) does the cluster need to remain idle before it is deleted."
         placeholder={K8sPlaceholders.keepalive}
         onChange={(event) => {
-          setValue('keepalive', event.target.value);
           k8sConfigs['keepalive'] = event.target.value;
-          setValue('k8s_serialized', JSON.stringify(k8sConfigs));
+          onUpdateField('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
+        //value={k8sConfigs['keepalive'] ?? ''}
       />
+
+      {/* TODO: Figure out how to get this to work with react-hook-form */}
       <IntegrationTextInputField
         name="cpu_node_type"
         spellCheck={false}
@@ -149,12 +158,13 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
         description="The EC2 instance type of the CPU node group."
         placeholder={K8sPlaceholders.cpu_node_type}
         onChange={(event) => {
-          setValue('cpu_node_type', event.target.value);
           k8sConfigs['cpu_node_type'] = event.target.value;
-          setValue('k8s_serialized', JSON.stringify(k8sConfigs));
+          onUpdateField('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
+        //value={k8sConfigs['cpu_node_type'] ?? ''}
       />
 
+      {/* TODO: Figure out how to get this to work with react-hook-form */}
       <IntegrationTextInputField
         name="gpu_node_type"
         spellCheck={false}
@@ -163,12 +173,13 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
         description="The EC2 instance type of the GPU node group."
         placeholder={K8sPlaceholders.gpu_node_type}
         onChange={(event) => {
-          setValue('gpu_node_type', event.target.value);
           k8sConfigs['gpu_node_type'] = event.target.value;
-          setValue('k8s_serialized', JSON.stringify(k8sConfigs));
+          onUpdateField('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
+        //value={k8sConfigs['gpu_node_type'] ?? ''}
       />
-
+      
+      {/* TODO: Figure out how to get this to work with react-hook-form */}
       <IntegrationTextInputField
         name="min_cpu_node"
         spellCheck={false}
@@ -177,12 +188,13 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
         description="Minimum number of nodes in the CPU node group."
         placeholder={K8sPlaceholders.min_cpu_node}
         onChange={(event) => {
-          setValue('min_cpu_node', event.target.value);
           k8sConfigs['min_cpu_node'] = event.target.value;
-          setValue('k8s_serialized', JSON.stringify(k8sConfigs));
+          onUpdateField('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
+        //value={k8sConfigs['min_cpu_node'] ?? ''}
       />
 
+      {/* TODO: Figure out how to get this to work with react-hook-form */}
       <IntegrationTextInputField
         name="max_cpu_node"
         spellCheck={false}
@@ -191,12 +203,13 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
         description="Maximum number of nodes in the CPU node group."
         placeholder={K8sPlaceholders.max_cpu_node}
         onChange={(event) => {
-          setValue('max_cpu_node', event.target.value);
           k8sConfigs['max_cpu_node'] = event.target.value;
-          setValue('k8s_serialized', JSON.stringify(k8sConfigs));
+          onUpdateField('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
+        //value={k8sConfigs['max_cpu_node'] ?? ''}
       />
 
+      {/* TODO: Figure out how to get this to work with react-hook-form */}
       <IntegrationTextInputField
         name="min_gpu_node"
         spellCheck={false}
@@ -205,12 +218,13 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
         description="Minimum number of nodes in the GPU node group."
         placeholder={K8sPlaceholders.min_gpu_node}
         onChange={(event) => {
-          setValue('min_gpu_node', event.target.value);
           k8sConfigs['min_gpu_node'] = event.target.value;
-          setValue('k8s_serialized', JSON.stringify(k8sConfigs));
+          onUpdateField('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
+        //value={k8sConfigs['min_gpu_node'] ?? ''}
       />
 
+      {/* TODO: Figure out how to get this to work with react-hook-form */}
       <IntegrationTextInputField
         name="max_gpu_node"
         spellCheck={false}
@@ -219,10 +233,10 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
         description="Maximum number of nodes in the GPU node group."
         placeholder={K8sPlaceholders.max_gpu_node}
         onChange={(event) => {
-          setValue('max_gpu_node', event.target.value);
           k8sConfigs['max_gpu_node'] = event.target.value;
-          setValue('k8s_serialized', JSON.stringify(k8sConfigs));
+          onUpdateField('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
+        //value={k8sConfigs['max_gpu_node'] ?? ''}
       />
     </Box>
   );
@@ -231,11 +245,8 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
     <Box sx={{ mt: 2 }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tabs
-          value={currentTab}
-          onChange={(_, value) => {
-            setValue('type', value);
-            setCurrentTab(value);
-          }}
+          value={value?.type ?? 'access_key'}
+          onChange={(_, value) => onUpdateField('type', value)}
         >
           <Tab value={AWSCredentialType.AccessKey} label="Enter Access Keys" />
           <Tab
@@ -244,49 +255,31 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
           />
         </Tabs>
       </Box>
-      {currentTab === AWSCredentialType.AccessKey && accessKeyTab}
-      {currentTab === AWSCredentialType.ConfigFilePath && configPathTab}
+      {value?.type === AWSCredentialType.AccessKey && accessKeyTab}
+      {value?.type === AWSCredentialType.ConfigFilePath && configPathTab}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-        <Tabs
-          value={engineTypeTab}
-          onChange={(_, value) => {
-            setEngineTypeTab(value);
-            setValue('engine_type', value);
-          }}
-        >
+        <Tabs value={engineType} onChange={(_, value) => setEngineType(value)}>
           <Tab
             value={DynamicEngineType.K8s}
             label="On-demand Kubernetes Cluster Config"
           />
         </Tabs>
       </Box>
-      {engineTypeTab === DynamicEngineType.K8s && k8sConfigTab}
+      {engineType === DynamicEngineType.K8s && k8sConfigTab}
     </Box>
   );
 };
 
-export function getAWSValidationSchema() {
-  return Yup.object().shape({
-    type: Yup.string().required('Please select a credential type'),
-    access_key_id: Yup.string().when('type', {
-      is: 'access_key',
-      then: Yup.string().required('Please enter an access key id'),
-    }),
-    secret_access_key: Yup.string().when('type', {
-      is: 'access_key',
-      then: Yup.string().required('Please enter a secret access key'),
-    }),
-    region: Yup.string().when('type', {
-      is: 'access_key',
-      then: Yup.string().required('Please enter a region'),
-    }),
-    config_file_profile: Yup.string().when('type', {
-      is: 'config_file_path',
-      then: Yup.string().required('Please enter a config file profile'),
-    }),
-    config_file_path: Yup.string().when('type', {
-      is: 'config_file_path',
-      then: Yup.string().required('Please enter a profile path'),
-    }),
-  });
+export function isAWSConfigComplete(config: AWSConfig): boolean {
+  if (config.type === AWSCredentialType.AccessKey) {
+    return (
+      !!config.access_key_id && !!config.secret_access_key && !!config.region
+    );
+  }
+
+  if (config.type === AWSCredentialType.ConfigFilePath) {
+    return !!config.config_file_profile && !!config.config_file_path;
+  }
+
+  return false;
 }

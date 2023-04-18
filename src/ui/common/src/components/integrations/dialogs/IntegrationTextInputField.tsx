@@ -10,9 +10,10 @@ type IntegrationTextFieldProps = {
   spellCheck: boolean;
   required: boolean;
   placeholder?: string;
-  onChange?: (
+  onChange: (
     event: ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
   ) => void;
+  //value: string;
   type?: string;
   disabled?: boolean;
   disableReason?: string;
@@ -28,13 +29,21 @@ export const IntegrationTextInputField: React.FC<IntegrationTextFieldProps> = ({
   required,
   placeholder,
   onChange,
+  //value,
   type,
   disabled,
   disableReason,
   autoComplete,
-  name,
+  name
 }) => {
-  const { register } = useFormContext();
+
+  const { register, errors, formState } = useFormContext();
+  
+  console.log('formContext errors: ', errors);
+
+  // TDOO: Show input error in the warning field.
+  //error={errors.name ? true : false}
+  // TODO: figure out how to get this by key/value access.
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -53,6 +62,7 @@ export const IntegrationTextInputField: React.FC<IntegrationTextFieldProps> = ({
           spellCheck={spellCheck}
           required={required}
           placeholder={placeholder}
+          onChange={onChange}
           type={type ? type : null}
           fullWidth={true}
           size={'small'}
@@ -60,7 +70,6 @@ export const IntegrationTextInputField: React.FC<IntegrationTextFieldProps> = ({
           helperText={disabled ? disableReason : undefined}
           autoComplete={autoComplete}
           {...register(name, { required })}
-          onChange={onChange}
         />
       </Box>
     </Box>

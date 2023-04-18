@@ -2,10 +2,8 @@ import { Divider } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
-import { useFormContext } from 'react-hook-form';
-import * as Yup from 'yup';
 
-import { IntegrationDialogProps } from '../../../utils/integrations';
+import { EmailConfig } from '../../../utils/integrations';
 import { NotificationLogLevel } from '../../../utils/notifications';
 import CheckboxEntry from '../../notifications/CheckboxEntry';
 import NotificationLevelSelector from '../../notifications/NotificationLevelSelector';
@@ -34,25 +32,17 @@ export const EmailDefaultsOnCreate = {
   enabled: 'false',
 };
 
-export const EmailDialog: React.FC<IntegrationDialogProps> = ({
-  editMode = false,
-}) => {
-  const [selectedLevel, setSelectedLevel] = useState(
-    EmailDefaultsOnCreate.level
-  );
-  const [notificationsEnabled, setNotificationsEnabled] = useState(
-    EmailDefaultsOnCreate.enabled
-  );
+type Props = {
+  onUpdateField: (field: keyof EmailConfig, value: string) => void;
+  value?: EmailConfig;
+};
 
-  // Retrieve the form context.
-  const { register, setValue } = useFormContext();
-
-  // Register forms with custom logic.
-  register('enabled', { value: EmailDefaultsOnCreate.enabled });
-  register('level', { value: EmailDefaultsOnCreate.level });
-  register('targets_serialized', {
-    value: EmailDefaultsOnCreate.targets_serialized,
-  });
+export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
+  const [receivers, setReceivers] = useState(
+    value?.targets_serialized
+      ? (JSON.parse(value?.targets_serialized) as string[]).join(',')
+      : ''
+  );
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -63,7 +53,7 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
         label="Host *"
         description="The hostname address of the email SMTP server."
         placeholder={Placeholders.host}
-        onChange={(event) => setValue('host', event.target.value)}
+        onChange={(event) => onUpdateField('host', event.target.value)}
       />
 
       <IntegrationTextInputField
@@ -73,7 +63,7 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
         label="Port *"
         description="The port number of the email SMTP server."
         placeholder={Placeholders.port}
-        onChange={(event) => setValue('port', event.target.value)}
+        onChange={(event) => onUpdateField('port', event.target.value)}
       />
 
       <IntegrationTextInputField
@@ -83,7 +73,7 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
         label="Sender Address *"
         description="The email address of the sender."
         placeholder={Placeholders.user}
-        onChange={(event) => setValue('user', event.target.value)}
+        onChange={(event) => onUpdateField('user', event.target.value)}
       />
 
       <IntegrationTextInputField
@@ -95,36 +85,36 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
         placeholder={Placeholders.password}
         type="password"
         onChange={(event) => {
-          setValue('password', event.target.value);
+          onUpdateField('password', event.target.value);
         }}
       />
 
       <IntegrationTextInputField
-        name="receivers"
+        name="reciever"
         spellCheck={false}
         required={true}
         label="Receiver Address *"
         description="The email address(es) of the receiver(s). Use comma to separate different addresses."
         placeholder={Placeholders.reciever}
         onChange={(event) => {
+          setReceivers(event.target.value);
           const receiversList = event.target.value
             .split(',')
             .map((r) => r.trim());
-          setValue('targets_serialized', JSON.stringify(receiversList));
+          onUpdateField('targets_serialized', JSON.stringify(receiversList));
         }}
       />
 
       <Divider sx={{ mt: 2 }} />
 
+      {/* TODO: Get this to work with react-hook-form */}
       <Box sx={{ mt: 2 }}>
         <CheckboxEntry
-          checked={notificationsEnabled === 'true'}
+          checked={value?.enabled === 'true'}
           disabled={false}
-          onChange={(checked) => {
-            const areNotificationsEnabled = checked ? 'true' : 'false';
-            setNotificationsEnabled(areNotificationsEnabled);
-            setValue('enabled', areNotificationsEnabled);
-          }}
+          onChange={(checked) =>
+            onUpdateField('enabled', checked ? 'true' : 'false')
+          }
         >
           Enable this notification for all workflows.
         </CheckboxEntry>
@@ -134,7 +124,8 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
         </Typography>
       </Box>
 
-      {notificationsEnabled === 'true' && (
+      {/* TODO: Get this to work with react-hook-form */}
+      {value?.enabled === 'true' && (
         <Box sx={{ mt: 2 }}>
           <Box sx={{ my: 1 }}>
             <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
@@ -147,12 +138,9 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
             </Typography>
           </Box>
           <NotificationLevelSelector
-            level={selectedLevel as NotificationLogLevel}
-            onSelectLevel={(level) => {
-              setSelectedLevel(level);
-              setValue('level', level);
-            }}
-            enabled={notificationsEnabled === 'true'}
+            level={value?.level as NotificationLogLevel}
+            onSelectLevel={(level) => onUpdateField('level', level)}
+            enabled={value?.enabled === 'true'}
           />
         </Box>
       )}
@@ -160,15 +148,20 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
   );
 };
 
-export function getEmailValidationSchema() {
-  return Yup.object().shape({
-    host: Yup.string().required('Please enter a host'),
-    port: Yup.number().required('Please enter a port'),
-    user: Yup.string().required('Please enter a sender address'),
-    password: Yup.string().required('Please enter a sender password'),
-    targets_serialized: Yup.string().required(
-      'Please enter at least one receiver'
-    ),
-    enabled: Yup.string(),
-  });
+export function isEmailConfigComplete(config: EmailConfig): boolean {
+  if (config.enabled !== 'true' && config.enabled !== 'false') {
+    return false;
+  }
+
+  if (config.enabled == 'true' && !config.level) {
+    return false;
+  }
+
+  return (
+    !!config.host &&
+    !!config.port &&
+    !!config.password &&
+    !!config.targets_serialized &&
+    !!config.user
+  );
 }

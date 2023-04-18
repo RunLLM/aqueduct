@@ -3,14 +3,8 @@ import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
-import { useController, useFormContext } from 'react-hook-form';
-import * as Yup from 'yup';
 
-import {
-  FileData,
-  GCSConfig,
-  IntegrationDialogProps,
-} from '../../../utils/integrations';
+import { FileData, GCSConfig } from '../../../utils/integrations';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
@@ -20,34 +14,36 @@ const Placeholders: GCSConfig = {
   use_as_storage: '',
 };
 
-interface GCSDialogProps extends IntegrationDialogProps {
+type Props = {
+  onUpdateField: (field: keyof GCSConfig, value: string) => void;
+  value?: GCSConfig;
+  editMode: boolean;
   setMigrateStorage: React.Dispatch<React.SetStateAction<boolean>>;
-}
+};
 
-export const GCSDialog: React.FC<GCSDialogProps> = ({
+export const GCSDialog: React.FC<Props> = ({
+  onUpdateField,
+  value,
   editMode,
   setMigrateStorage,
 }) => {
-  const [fileData, setFileData] = useState<FileData | null>(null);
-
-  const { control, setValue } = useFormContext();
-  const { field } = useController({
-    control,
-    name: 'use_as_storage',
-    defaultValue: 'true',
-    rules: { required: true },
-  });
-
+  const [fileName, setFileName] = useState<string>(null);
   const setFile = (fileData: FileData | null) => {
-    // Update the react-hook-form value.
-    setValue('service_account_credentials', fileData?.data);
-    // Set state to trigger re-render of file upload field.
-    setFileData(fileData);
+    setFileName(fileData?.name ?? null);
+    onUpdateField('service_account_credentials', fileData?.data);
   };
 
   useEffect(() => {
     setMigrateStorage(true);
   }, [setMigrateStorage]);
+
+  const fileData =
+    fileName && !!value?.service_account_credentials
+      ? {
+          name: fileName,
+          data: value.service_account_credentials,
+        }
+      : null;
 
   const fileUploadDescription = (
     <>
@@ -72,14 +68,14 @@ export const GCSDialog: React.FC<GCSDialogProps> = ({
         label="Bucket*"
         description="The name of the GCS bucket."
         placeholder={Placeholders.bucket}
-        onChange={(event) => setValue('bucket', event.target.value)}
+        onChange={(event) => onUpdateField('bucket', event.target.value)}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disabled={editMode}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
+      {/* TODO: get this to work with react-hook-form */}
       <IntegrationFileUploadField
-        name="service_account_credentials"
         label={'Service Account Credentials*'}
         description={fileUploadDescription}
         required={true}
@@ -95,16 +91,18 @@ export const GCSDialog: React.FC<GCSDialogProps> = ({
         }}
       />
 
+      {/* TODO: get this to work with react-hook-form */}
       <FormControlLabel
         label="Use this integration for Aqueduct metadata storage."
         control={
           <Checkbox
-            ref={field.ref}
-            checked={field.value === 'true'}
-            onChange={(event) => {
-              const updatedValue = event.target.checked ? 'true' : 'false';
-              field.onChange(updatedValue);
-            }}
+            checked={value?.use_as_storage === 'true'}
+            onChange={(event) =>
+              onUpdateField(
+                'use_as_storage',
+                event.target.checked ? 'true' : 'false'
+              )
+            }
             disabled={true}
           />
         }
@@ -119,7 +117,6 @@ export const GCSDialog: React.FC<GCSDialogProps> = ({
   );
 };
 
-// TODO: Move this function to a shared utils file since it is used in multiple places.
 export function readCredentialsFile(
   file: File,
   setFile: (credentials: FileData) => void
@@ -132,11 +129,6 @@ export function readCredentialsFile(
   reader.readAsText(file);
 }
 
-export function getGCSValidationSchema() {
-  return Yup.object().shape({
-    bucket: Yup.string().required('Please enter a bucket name'),
-    service_account_credentials: Yup.string().required(
-      'Please upload a service account key file.'
-    ),
-  });
+export function isGCSConfigComplete(config: GCSConfig): boolean {
+  return !!config.bucket && !!config.service_account_credentials;
 }

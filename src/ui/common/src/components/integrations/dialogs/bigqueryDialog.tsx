@@ -53,19 +53,21 @@ export const BigQueryDialog: React.FC<Props> = ({
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="project_id"
         spellCheck={false}
         required={true}
         label="Project ID*"
         description="The BigQuery project ID."
         placeholder={Placeholders.project_id}
         onChange={(event) => onUpdateField('project_id', event.target.value)}
-        value={value?.project_id ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
+      {/* TODO: figure out how to get this to work with react-hook-form */}
       <IntegrationFileUploadField
+        //name="service_account_credentials"
         label={'Service Account Credentials*'}
         description={fileUploadDescription}
         required={true}

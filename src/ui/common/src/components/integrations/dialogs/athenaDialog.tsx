@@ -1,25 +1,17 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React, { useState } from 'react';
-import { useFormContext } from 'react-hook-form';
-import * as Yup from 'yup';
+import React, { useEffect, useState } from 'react';
 
 import {
   AthenaConfig,
+  AWSCredentialType,
   FileData,
-  IntegrationDialogProps,
 } from '../../../utils/integrations';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';
 import { readCredentialsFile } from './bigqueryDialog';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
-
-enum AWSCredentialType {
-  AccessKey = 'access_key',
-  ConfigFilePath = 'config_file_path',
-  ConfigFileContent = 'config_file_content',
-}
 
 const Placeholders: AthenaConfig = {
   type: AWSCredentialType.AccessKey,
@@ -33,22 +25,37 @@ const Placeholders: AthenaConfig = {
   output_location: 's3://bucket/path/to/folder/',
 };
 
-export const AthenaDialog: React.FC<IntegrationDialogProps> = ({
-  editMode = false,
-}) => {
-  const [fileData, setFileData] = useState<FileData | null>(null);
-  // Need state variable to change tabs, as the formContext doesn't change as readily.
-  const [currentTab, setCurrentTab] = useState(AWSCredentialType.AccessKey);
-  const { setValue, register } = useFormContext();
+type Props = {
+  onUpdateField: (field: keyof AthenaConfig, value: string) => void;
+  value?: AthenaConfig;
+  editMode: boolean;
+};
 
-  register('type', { value: currentTab, required: true });
+export const AthenaDialog: React.FC<Props> = ({
+  onUpdateField,
+  value,
+  editMode,
+}) => {
+  const [fileName, setFileName] = useState<string>(null);
 
   const setFile = (fileData: FileData | null) => {
-    // Update the react-hook-form value
-    setValue('config_file_content', fileData?.data);
-    // Set state to trigger re-render of file upload field.
-    setFileData(fileData);
+    setFileName(fileData?.name ?? '');
+    onUpdateField('config_file_content', fileData?.data);
   };
+
+  const fileData =
+    fileName && !!value?.config_file_content
+      ? {
+          name: fileName,
+          data: value.config_file_content,
+        }
+      : null;
+
+  useEffect(() => {
+    if (!value?.type) {
+      onUpdateField('type', AWSCredentialType.AccessKey);
+    }
+  }, [onUpdateField, value?.type]);
 
   const configProfileInput = (
     <IntegrationTextInputField
@@ -58,7 +65,10 @@ export const AthenaDialog: React.FC<IntegrationDialogProps> = ({
       label="AWS Profile*"
       description="The name of the profile specified in brackets in your credential file."
       placeholder={Placeholders.config_file_profile}
-      onChange={(event) => setValue('config_file_profile', event.target.value)}
+      onChange={(event) =>
+        onUpdateField('config_file_profile', event.target.value)
+      }
+      //value={value?.config_file_profile ?? ''}
     />
   );
 
@@ -74,7 +84,7 @@ export const AthenaDialog: React.FC<IntegrationDialogProps> = ({
         label="AWS Access Key ID*"
         description="The access key ID of your AWS account."
         placeholder={Placeholders.access_key_id}
-        onChange={(event) => setValue('access_key_id', event.target.value)}
+        onChange={(event) => onUpdateField('access_key_id', event.target.value)}
       />
 
       <IntegrationTextInputField
@@ -84,7 +94,9 @@ export const AthenaDialog: React.FC<IntegrationDialogProps> = ({
         label="AWS Secret Access Key*"
         description="The secret access key of your AWS account."
         placeholder={Placeholders.secret_access_key}
-        onChange={(event) => setValue('secret_access_key', event.target.value)}
+        onChange={(event) =>
+          onUpdateField('secret_access_key', event.target.value)
+        }
       />
 
       <IntegrationTextInputField
@@ -94,7 +106,7 @@ export const AthenaDialog: React.FC<IntegrationDialogProps> = ({
         label="Region*"
         description="The region the Athena database belongs to."
         placeholder={Placeholders.region}
-        onChange={(event) => setValue('region', event.target.value)}
+        onChange={(event) => onUpdateField('region', event.target.value)}
       />
     </Box>
   );
@@ -116,7 +128,9 @@ export const AthenaDialog: React.FC<IntegrationDialogProps> = ({
         label="AWS Credentials File Path*"
         description={'The path to the credentials file'}
         placeholder={Placeholders.config_file_path}
-        onChange={(event) => setValue('config_file_path', event.target.value)}
+        onChange={(event) =>
+          onUpdateField('config_file_path', event.target.value)
+        }
       />
 
       {configProfileInput}
@@ -136,7 +150,6 @@ export const AthenaDialog: React.FC<IntegrationDialogProps> = ({
         Once connected, you would need to re-upload the file to update the credentials.
       */}
       <IntegrationFileUploadField
-        name="config_file_content"
         label={'AWS Credentials File*'}
         description={'Upload your credentials file here.'}
         required={true}
@@ -165,7 +178,7 @@ export const AthenaDialog: React.FC<IntegrationDialogProps> = ({
         label="Database*"
         description="The name of the Athena database."
         placeholder={Placeholders.database}
-        onChange={(event) => setValue('database', event.target.value)}
+        onChange={(event) => onUpdateField('database', event.target.value)}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -180,20 +193,18 @@ export const AthenaDialog: React.FC<IntegrationDialogProps> = ({
         in advance, Aqueduct attempts to create it. Data written to this location is garbage collected
         after each query."
         placeholder={Placeholders.output_location}
-        onChange={(event) => setValue('output_location', event.target.value)}
+        onChange={(event) =>
+          onUpdateField('output_location', event.target.value)
+        }
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
-      {/* TODO: Share tabs code with the aws and s3 dialog components. */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tabs
-          value={currentTab}
-          onChange={(_, value) => {
-            setValue('type', value);
-            setCurrentTab(value);
-          }}
+          value={value?.type ?? 'access_key'}
+          onChange={(_, value) => onUpdateField('type', value)}
         >
           <Tab value={AWSCredentialType.AccessKey} label="Enter Access Keys" />
           <Tab
@@ -206,12 +217,15 @@ export const AthenaDialog: React.FC<IntegrationDialogProps> = ({
           />
         </Tabs>
       </Box>
-      {currentTab === AWSCredentialType.AccessKey && accessKeyTab}
-      {currentTab === AWSCredentialType.ConfigFilePath && configPathTab}
-      {currentTab === AWSCredentialType.ConfigFileContent && configUploadTab}
+      {value?.type === AWSCredentialType.AccessKey && accessKeyTab}
+      {value?.type === AWSCredentialType.ConfigFilePath && configPathTab}
+      {value?.type === AWSCredentialType.ConfigFileContent && configUploadTab}
     </Box>
   );
 };
+
+
+// TODO: Add custom Control component to render tabs and use that to update form context.
 
 // Required fields are (baseFields):
 // - database
@@ -225,36 +239,29 @@ export const AthenaDialog: React.FC<IntegrationDialogProps> = ({
 // When using credentials file, also need:
 // - file path and file content
 // - config_file_profile
-export function getAthenaValidationSchema() {
-  return Yup.object().shape({
-    type: Yup.string().required('Please select a credential type'),
-    database: Yup.string().required('Please enter a database name'),
-    output_location: Yup.string().required('Please enter an output location'),
-    access_key_id: Yup.string().when('type', {
-      is: 'access_key',
-      then: Yup.string().required('Please enter an access key id'),
-    }),
-    secret_access_key: Yup.string().when('type', {
-      is: 'access_key',
-      then: Yup.string().required('Please enter a secret access key'),
-    }),
-    region: Yup.string().when('type', {
-      is: 'access_key',
-      then: Yup.string().required('Please enter a region'),
-    }),
-    // config file path stuff goes here
-    config_file_profile: Yup.string().when('type', {
-      is: 'config_file_path' || 'config_file_content',
-      then: Yup.string().required('Please enter a config file profile'),
-    }),
-    config_file_path: Yup.string().when('type', {
-      is: 'config_file_path',
-      then: Yup.string().required('Please enter a config'),
-    }),
-    // config file content goes here.
-    config_file_content: Yup.string().when('type', {
-      is: 'config_file_content',
-      then: Yup.string().required('Please upload a config file.'),
-    }),
-  });
+export function isAthenaConfigComplete(config: AthenaConfig): boolean {
+  const baseFields = !!config.database && !!config.output_location;
+
+  if (config.type === AWSCredentialType.AccessKey) {
+    return (
+      baseFields &&
+      !!config.access_key_id &&
+      !!config.secret_access_key &&
+      !!config.region
+    );
+  }
+
+  if (config.type === AWSCredentialType.ConfigFilePath) {
+    return (
+      baseFields && !!config.config_file_profile && !!config.config_file_path
+    );
+  }
+
+  if (config.type === AWSCredentialType.ConfigFileContent) {
+    return (
+      baseFields && !!config.config_file_profile && !!config.config_file_content
+    );
+  }
+
+  return false;
 }
