@@ -1,9 +1,15 @@
 import Box from '@mui/material/Box';
+import TextField from '@mui/material/Textfield';
+import Typography from '@mui/material/Typography';
 import React from 'react';
 
 import { MariaDbConfig } from '../../../utils/integrations';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { useForm, Controller } from 'react-hook-form';
+import * as Yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { Button } from '../../primitives/Button.styles';
 
 const Placeholders: MariaDbConfig = {
   host: '127.0.0.1',
@@ -24,9 +30,30 @@ export const MariaDbDialog: React.FC<Props> = ({
   value,
   editMode,
 }) => {
+  const validationSchema = Yup.object().shape({
+    host: Yup.string().required('Please enter a host url.'),
+    port: Yup.string().required('Please enter a port number.'),
+    //database: Yup.string().required('Please enter a database name.'),
+    //username: Yup.string().required('Please enter a username.'),
+    //password: Yup.string().required('Please enter a password.'),
+  });
+
+  const onSubmit = data => {
+    console.log(JSON.stringify(data, null, 2));
+  };
+
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors }
+  } = useForm({
+    resolver: yupResolver(validationSchema)
+  });
+
   return (
     <Box sx={{ mt: 2 }}>
-      <IntegrationTextInputField
+      {/* <IntegrationTextInputField
         label={'Host*'}
         description={'The hostname or IP address of the MariaDB server.'}
         spellCheck={false}
@@ -37,9 +64,23 @@ export const MariaDbDialog: React.FC<Props> = ({
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
-      />
+      /> */}
 
-      <IntegrationTextInputField
+      <TextField
+        required
+        id="host"
+        name="host"
+        label="Host"
+        fullWidth
+        margin="dense"
+        {...register('host')}
+        error={errors.host ? true : false}
+      />
+      <Typography variant="inherit" color="textSecondary">
+        {errors.host?.message}
+      </Typography>
+
+      {/* <IntegrationTextInputField
         label={'Port*'}
         description={'The port number of the MariaDB server.'}
         spellCheck={false}
@@ -50,9 +91,23 @@ export const MariaDbDialog: React.FC<Props> = ({
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
-      />
+      /> */}
 
-      <IntegrationTextInputField
+      <TextField
+        required
+        id="port"
+        name="port"
+        label="Port"
+        fullWidth
+        margin="dense"
+        {...register('port')}
+        error={errors.port ? true : false}
+      />
+      <Typography variant="inherit" color="textSecondary">
+        {errors.port?.message}
+      </Typography>
+
+      {/* <IntegrationTextInputField
         label={'Database*'}
         description={'The name of the specific database to connect to.'}
         spellCheck={false}
@@ -63,9 +118,9 @@ export const MariaDbDialog: React.FC<Props> = ({
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
-      />
+      /> */}
 
-      <IntegrationTextInputField
+      {/* <IntegrationTextInputField
         spellCheck={false}
         required={true}
         label="Username*"
@@ -73,9 +128,9 @@ export const MariaDbDialog: React.FC<Props> = ({
         placeholder={Placeholders.username}
         onChange={(event) => onUpdateField('username', event.target.value)}
         value={value?.username ?? ''}
-      />
+      /> */}
 
-      <IntegrationTextInputField
+      {/* <IntegrationTextInputField
         spellCheck={false}
         required={true}
         label="Password*"
@@ -84,7 +139,15 @@ export const MariaDbDialog: React.FC<Props> = ({
         type="password"
         onChange={(event) => onUpdateField('password', event.target.value)}
         value={value?.password ?? ''}
-      />
+      /> */}
+
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={handleSubmit(onSubmit)}
+      >
+        Register
+      </Button>
     </Box>
   );
 };

@@ -13,6 +13,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useForm, Controller } from 'react-hook-form';
 
 import {
   handleConnectToNewIntegration,
@@ -23,11 +24,11 @@ import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import {
   AirflowConfig,
+  aqueductDemoName,
   AthenaConfig,
   AWSConfig,
   BigQueryConfig,
   DatabricksConfig,
-  ECRConfig,
   EmailConfig,
   formatService,
   GCSConfig,
@@ -52,16 +53,12 @@ import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
 import { AirflowDialog, isAirflowConfigComplete } from './airflowDialog';
 import { AthenaDialog, isAthenaConfigComplete } from './athenaDialog';
 import { AWSDialog, isAWSConfigComplete } from './awsDialog';
-import {
-  BigQueryDialog,
-  isBigQueryDialogConfigComplete,
-} from './bigqueryDialog';
+import { BigQueryDialog } from './bigqueryDialog';
 import { CondaDialog } from './condaDialog';
 import {
   DatabricksDialog,
   isDatabricksConfigComplete,
 } from './databricksDialog';
-import { ECRDialog, isECRConfigComplete } from './ecrDialog';
 import {
   EmailDefaultsOnCreate,
   EmailDialog,
@@ -85,6 +82,7 @@ import {
 import { isSnowflakeConfigComplete, SnowflakeDialog } from './snowflakeDialog';
 import { isSparkConfigComplete, SparkDialog } from './sparkDialog';
 import { isSQLiteConfigComplete, SQLiteDialog } from './sqliteDialog';
+import TextField from '@mui/material/TextField';
 
 type Props = {
   user: UserProfile;
@@ -152,13 +150,27 @@ const IntegrationDialog: React.FC<Props> = ({
 
   const connectStatus = editMode ? editStatus : connectNewStatus;
   const disableConnect =
-    !editMode && (!isConfigComplete(config, service) || name === '');
+    !editMode &&
+    (!isConfigComplete(config, service) ||
+      name === '' ||
+      name === aqueductDemoName);
   const setConfigField = (field: string, value: string) =>
     setConfig((config) => {
       return { ...config, [field]: value };
     });
 
   const [migrateStorage, setMigrateStorage] = useState(false);
+
+  // TODO: Figure out how we're going to set up validation schema
+  const { register, control, handleSubmit, formState } = useForm();
+
+  const onSubmit = (data: any) => {
+
+    console.log('inside onSubmit')
+    console.log(JSON.stringify(data, null, 2));
+  }
+
+  console.log('formState: ', formState);
 
   useEffect(() => {
     if (isSucceeded(connectStatus)) {
@@ -181,13 +193,6 @@ const IntegrationDialog: React.FC<Props> = ({
     user.apiKey,
   ]);
 
-  let connectionMessage = '';
-  if (service === 'AWS') {
-    connectionMessage = 'Configuring Aqueduct-managed Kubernetes on AWS';
-  } else {
-    connectionMessage = `Connecting to ${service}`;
-  }
-
   const dialogHeader = (
     <Box
       sx={{
@@ -200,7 +205,7 @@ const IntegrationDialog: React.FC<Props> = ({
       <Typography variant="h5">
         {!!integrationToEdit
           ? `Edit ${integrationToEdit.name}`
-          : `${connectionMessage}`}
+          : `Connecting to ${service}`}
       </Typography>
       <img height="45px" src={SupportedIntegrations[service].logo} />
     </Box>
@@ -226,6 +231,9 @@ const IntegrationDialog: React.FC<Props> = ({
           editMode={editMode}
         />
       );
+      break;
+    case 'Aqueduct Demo':
+      serviceDialog = null;
       break;
     case 'MySQL':
       serviceDialog = (
@@ -381,11 +389,6 @@ const IntegrationDialog: React.FC<Props> = ({
         <AWSDialog onUpdateField={setConfigField} value={config as AWSConfig} />
       );
       break;
-    case 'ECR':
-      serviceDialog = (
-        <ECRDialog onUpdateField={setConfigField} value={config as AWSConfig} />
-      );
-      break;
     default:
       return null;
   }
@@ -420,18 +423,34 @@ const IntegrationDialog: React.FC<Props> = ({
         );
   };
 
+  // let's see if we can pick up the name field here.
+  // const nameInput = (
+  //   <IntegrationTextInputField
+  //     spellCheck={false}
+  //     required={true}
+  //     label="Name*"
+  //     description="Provide a unique name to refer to this integration."
+  //     placeholder={'my_' + formatService(service) + '_integration'}
+  //     onChange={(event) => {
+  //       setName(event.target.value);
+  //       setShouldShowNameError(false);
+  //     }}
+  //     {...register('name')}
+  //     value={name}
+  //     disabled={service === 'Aqueduct Demo'}
+  //   />
+  // );
+
+
   const nameInput = (
-    <IntegrationTextInputField
-      spellCheck={false}
-      required={true}
-      label="Name*"
-      description="Provide a unique name to refer to this resource."
-      placeholder={'my_' + formatService(service) + '_resource'}
-      onChange={(event) => {
-        setName(event.target.value);
-        setShouldShowNameError(false);
-      }}
-      value={name}
+    <TextField
+      required
+      id="name"
+      name="name"
+      label="Name"
+      margin="dense"
+      {...register('name', { required: true })}
+      //error={errors.name ? true : false}
     />
   );
 
@@ -441,7 +460,7 @@ const IntegrationDialog: React.FC<Props> = ({
       <DialogContent>
         {editMode && numWorkflows > 0 && (
           <Alert sx={{ mb: 2 }} severity="info">
-            {`Changing this resource will automatically update ${numWorkflows} ${
+            {`Changing this integration will automatically update ${numWorkflows} ${
               numWorkflows === 1 ? 'workflow' : 'workflows'
             }.`}
           </Alert>
@@ -460,9 +479,9 @@ const IntegrationDialog: React.FC<Props> = ({
 
         {shouldShowNameError && (
           <Alert sx={{ mt: 2 }} severity="error">
-            <AlertTitle>Naming Error</AlertTitle>A connected resource already
+            <AlertTitle>Naming Error</AlertTitle>A connected integration already
             exists with this name. Please provide a unique name for your
-            resource.
+            integration.
           </Alert>
         )}
 
@@ -483,9 +502,16 @@ const IntegrationDialog: React.FC<Props> = ({
         </Button>
         <LoadingButton
           autoFocus
-          onClick={onConfirmDialog}
+          onClick={( )=> {
+            console.log('loading button clicked. Calling handleSubmit()');
+            console.log('formState: ', formState)
+            handleSubmit((data)=> {
+              console.log('handleSubmit data: ', data);
+            })
+          }}
           loading={isLoading(connectStatus)}
-          disabled={disableConnect}
+          //disabled={disableConnect}
+          disabled={false}
         >
           Confirm
         </LoadingButton>
@@ -494,7 +520,7 @@ const IntegrationDialog: React.FC<Props> = ({
   );
 };
 
-// Helper function to check if the Resource config is completely filled.
+// Helper function to check if the Integration config is completely filled.
 export function isConfigComplete(
   config: IntegrationConfig,
   service: Service
@@ -506,8 +532,6 @@ export function isConfigComplete(
       return isAthenaConfigComplete(config as AthenaConfig);
     case 'AWS':
       return isAWSConfigComplete(config as AWSConfig);
-    case 'BigQuery':
-      return isBigQueryDialogConfigComplete(config as BigQueryConfig);
     case 'Conda':
       // Conda only has a name field that the user supplies, so this half of form is always valid.
       return true;
@@ -542,8 +566,6 @@ export function isConfigComplete(
       return isSnowflakeConfigComplete(config as SnowflakeConfig);
     case 'SQLite':
       return isSQLiteConfigComplete(config as SQLiteConfig);
-    case 'ECR':
-      return isECRConfigComplete(config as ECRConfig);
     default:
       // Require all integrations to have their own validation function.
       return false;
