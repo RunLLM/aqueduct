@@ -11,9 +11,13 @@ import {
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
+import TextField from '@mui/material/TextField';
 import React, { useEffect, useState } from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
-import { useForm, Controller } from 'react-hook-form';
+import * as Yup from 'yup';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { DevTool } from "@hookform/devtools";
 
 import {
   handleConnectToNewIntegration,
@@ -31,7 +35,6 @@ import {
   DatabricksConfig,
   ECRConfig,
   EmailConfig,
-  formatService,
   GCSConfig,
   Integration,
   IntegrationConfig,
@@ -70,7 +73,6 @@ import {
   isEmailConfigComplete,
 } from './emailDialog';
 import { GCSDialog, isGCSConfigComplete } from './gcsDialog';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { isK8sConfigComplete, KubernetesDialog } from './kubernetesDialog';
 import { LambdaDialog } from './lambdaDialog';
 import { isMariaDBConfigComplete, MariaDbDialog } from './mariadbDialog';
@@ -87,7 +89,6 @@ import {
 import { isSnowflakeConfigComplete, SnowflakeDialog } from './snowflakeDialog';
 import { isSparkConfigComplete, SparkDialog } from './sparkDialog';
 import { isSQLiteConfigComplete, SQLiteDialog } from './sqliteDialog';
-import TextField from '@mui/material/TextField';
 
 type Props = {
   user: UserProfile;
@@ -167,15 +168,41 @@ const IntegrationDialog: React.FC<Props> = ({
   const [migrateStorage, setMigrateStorage] = useState(false);
 
   // TODO: Figure out how we're going to set up validation schema
-  const { register, control, handleSubmit, formState } = useForm();
+  //const { register, control, handleSubmit, formState } = useForm();
+
+  const validationSchema = Yup.object().shape({
+    name: Yup.string().required('Please enter a name.'),
+    host: Yup.string().required('Please enter a host url.'),
+    port: Yup.string().required('Please enter a port number.'),
+    //database: Yup.string().required('Please enter a database name.'),
+    //username: Yup.string().required('Please enter a username.'),
+    //password: Yup.string().required('Please enter a password.'),
+  });
+
+  // const {
+  //   register,
+  //   control,
+  //   handleSubmit,
+  //   formState
+  // } = useForm({
+  //   // TODO: Figure out how to get the validationSchema from the appropriate dialog.
+  //   resolver: yupResolver(validationSchema),
+  // });
+
+  const methods = useForm({
+    // TODO: Figure out how to get the validationSchema from the appropriate dialog.
+    resolver: yupResolver(validationSchema),
+  });
 
   const onSubmit = (data: any) => {
-
-    console.log('inside onSubmit')
+    console.log('inside onSubmit');
     console.log(JSON.stringify(data, null, 2));
-  }
+  };
 
-  console.log('formState: ', formState);
+  console.log('formState from Dialog.tsx: ', methods.formState);
+  console.log('Dialog.tsx touchedFields: ', methods.formState.touchedFields);
+  console.log('Dialog.tsx errors: ', methods.formState.touchedFields);
+  console.log('Dialog.tsx getValues: ', methods.getValues());
 
   useEffect(() => {
     if (isSucceeded(connectStatus)) {
@@ -458,7 +485,6 @@ const IntegrationDialog: React.FC<Props> = ({
   //   />
   // );
 
-
   const nameInput = (
     <TextField
       required
@@ -466,73 +492,81 @@ const IntegrationDialog: React.FC<Props> = ({
       name="name"
       label="Name"
       margin="dense"
-      {...register('name', { required: true })}
+      {...methods.register('name', { required: true })}
       //error={errors.name ? true : false}
     />
   );
 
   return (
     <Dialog open={true} onClose={onCloseDialog} fullWidth maxWidth="lg">
-      <DialogTitle>{dialogHeader}</DialogTitle>
-      <DialogContent>
-        {editMode && numWorkflows > 0 && (
-          <Alert sx={{ mb: 2 }} severity="info">
-            {`Changing this integration will automatically update ${numWorkflows} ${
-              numWorkflows === 1 ? 'workflow' : 'workflows'
-            }.`}
-          </Alert>
-        )}
-        {(service === 'Email' || service === 'Slack') && (
-          <Typography variant="body1" color="gray.700">
-            To learn more about how to set up {service}, see our{' '}
-            <Link href={SupportedIntegrations[service].docs} target="_blank">
-              documentation
-            </Link>
-            .
-          </Typography>
-        )}
-        {nameInput}
-        {serviceDialog}
+      <FormProvider {...methods}>
+        <DialogTitle>{dialogHeader}</DialogTitle>
+        <DialogContent>
+          {editMode && numWorkflows > 0 && (
+            <Alert sx={{ mb: 2 }} severity="info">
+              {`Changing this integration will automatically update ${numWorkflows} ${
+                numWorkflows === 1 ? 'workflow' : 'workflows'
+              }.`}
+            </Alert>
+          )}
+          {(service === 'Email' || service === 'Slack') && (
+            <Typography variant="body1" color="gray.700">
+              To learn more about how to set up {service}, see our{' '}
+              <Link href={SupportedIntegrations[service].docs} target="_blank">
+                documentation
+              </Link>
+              .
+            </Typography>
+          )}
+          {nameInput}
+          {serviceDialog}
 
-        {shouldShowNameError && (
-          <Alert sx={{ mt: 2 }} severity="error">
-            <AlertTitle>Naming Error</AlertTitle>A connected integration already
-            exists with this name. Please provide a unique name for your
-            integration.
-          </Alert>
-        )}
+          {shouldShowNameError && (
+            <Alert sx={{ mt: 2 }} severity="error">
+              <AlertTitle>Naming Error</AlertTitle>A connected integration
+              already exists with this name. Please provide a unique name for
+              your integration.
+            </Alert>
+          )}
 
-        {isFailed(connectStatus) && (
-          <Alert sx={{ mt: 2 }} severity="error">
-            <AlertTitle>
-              {editMode
-                ? `Failed to update ${integrationToEdit.name}`
-                : `Unable to connect to ${service}`}
-            </AlertTitle>
-            <pre>{connectStatus.err}</pre>
-          </Alert>
-        )}
-      </DialogContent>
-      <DialogActions>
-        <Button autoFocus onClick={onCloseDialog}>
-          Cancel
-        </Button>
-        <LoadingButton
-          autoFocus
-          onClick={( )=> {
-            console.log('loading button clicked. Calling handleSubmit()');
-            console.log('formState: ', formState)
-            handleSubmit((data)=> {
-              console.log('handleSubmit data: ', data);
-            })
-          }}
-          loading={isLoading(connectStatus)}
-          //disabled={disableConnect}
-          disabled={false}
-        >
-          Confirm
-        </LoadingButton>
-      </DialogActions>
+          {isFailed(connectStatus) && (
+            <Alert sx={{ mt: 2 }} severity="error">
+              <AlertTitle>
+                {editMode
+                  ? `Failed to update ${integrationToEdit.name}`
+                  : `Unable to connect to ${service}`}
+              </AlertTitle>
+              <pre>{connectStatus.err}</pre>
+            </Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button autoFocus onClick={onCloseDialog}>
+            Cancel
+          </Button>
+          <LoadingButton
+            autoFocus
+            onClick={async () => {
+              console.log('loading button clicked. Calling handleSubmit()');
+              console.log('formState: ', methods.formState);
+
+              const triggerResult = await methods.trigger();
+              console.log('triggerResult: ', triggerResult);
+              
+              const triggerParams = await methods.trigger(['name', 'host', 'port']);
+              console.log('triggerParams: ', triggerParams);
+              // NOTE: handleSubmit() is a function that returns a function, please call it as so
+              methods.handleSubmit(onSubmit)()
+            }}
+            loading={isLoading(connectStatus)}
+            //disabled={disableConnect}
+            disabled={false}
+          >
+            Confirm
+          </LoadingButton>
+        </DialogActions>
+      </FormProvider>
+      <DevTool control={methods.control} /> {/* set up the dev tool */}
     </Dialog>
   );
 };

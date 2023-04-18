@@ -1,14 +1,12 @@
+// import { yupResolver } from '@hookform/resolvers/yup';
 import Box from '@mui/material/Box';
 import TextField from '@mui/material/Textfield';
 import Typography from '@mui/material/Typography';
 import React from 'react';
+import { useFormContext } from 'react-hook-form';
+// import * as Yup from 'yup';
 
 import { MariaDbConfig } from '../../../utils/integrations';
-import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
-import { useForm, Controller } from 'react-hook-form';
-import * as Yup from 'yup';
-import { yupResolver } from '@hookform/resolvers/yup';
 import { Button } from '../../primitives/Button.styles';
 
 const Placeholders: MariaDbConfig = {
@@ -30,26 +28,32 @@ export const MariaDbDialog: React.FC<Props> = ({
   value,
   editMode,
 }) => {
-  const validationSchema = Yup.object().shape({
-    host: Yup.string().required('Please enter a host url.'),
-    port: Yup.string().required('Please enter a port number.'),
+  //const validationSchema = Yup.object().shape({
+    //host: Yup.string().required('Please enter a host url.'),
+    //port: Yup.string().required('Please enter a port number.'),
     //database: Yup.string().required('Please enter a database name.'),
     //username: Yup.string().required('Please enter a username.'),
     //password: Yup.string().required('Please enter a password.'),
-  });
+  //});
 
-  const onSubmit = data => {
+  const onSubmit = (data) => {
     console.log(JSON.stringify(data, null, 2));
   };
 
-  const {
-    register,
-    control,
-    handleSubmit,
-    formState: { errors }
-  } = useForm({
-    resolver: yupResolver(validationSchema)
-  });
+  // const {
+  //   register,
+  //   control,
+  //   handleSubmit,
+  //   formState: { errors },
+  // } = useForm({
+  //   resolver: yupResolver(validationSchema),
+  // });
+
+  const { register, errors, formState } = useFormContext();
+
+  console.log('formState from context: ', formState);
+  console.log('errors from context: ', formState.errors)
+  console.log('touchedFields: ', formState.touchedFields)
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -73,11 +77,11 @@ export const MariaDbDialog: React.FC<Props> = ({
         label="Host"
         fullWidth
         margin="dense"
+        error={errors?.host ? true : false}
         {...register('host')}
-        error={errors.host ? true : false}
       />
       <Typography variant="inherit" color="textSecondary">
-        {errors.host?.message}
+        {errors?.host?.message}
       </Typography>
 
       {/* <IntegrationTextInputField
@@ -100,11 +104,11 @@ export const MariaDbDialog: React.FC<Props> = ({
         label="Port"
         fullWidth
         margin="dense"
+        error={errors?.port ? true : false}
         {...register('port')}
-        error={errors.port ? true : false}
       />
       <Typography variant="inherit" color="textSecondary">
-        {errors.port?.message}
+        {errors?.port?.message}
       </Typography>
 
       {/* <IntegrationTextInputField
@@ -144,7 +148,7 @@ export const MariaDbDialog: React.FC<Props> = ({
       <Button
         variant="contained"
         color="primary"
-        onClick={handleSubmit(onSubmit)}
+        onClick={() => console.log('register clicked')}
       >
         Register
       </Button>
