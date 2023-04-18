@@ -58,7 +58,7 @@ jobs:
   #         prefix: Basic
 
   run-tests-conda:
-    runs-on: ubuntu-latest-8-cores
+    runs-on: ubuntu-latest-4-cores
     timeout-minutes: 40
     name: All Integration Tests with Conda
     steps:
@@ -78,15 +78,18 @@ jobs:
       - name: Update conda
         run: conda update --all
 
-      - name: Show disk space
-        run: echo df -h /dev/sda1
-
       # TODO(ENG-2537): Use our separate GH actions credentials.
       - uses: ./.github/actions/fetch-test-config
         with:
           aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
           aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
           s3_test_config_path: premerge-conda-test-config-wei.yml
+
+      - name: try conda create
+        run: /usr/bin/conda create -n aqueduct_0e74456e-df94-4c85-84c5-6a16394d2f95 python==3.9 -y
+
+      - name: try conda create py version
+        run: /usr/bin/conda create -n aqueduct_0e74456e-df94-4c85-84c5-6a16394d2f95 python==${{ matrix.python-version }} -y
 
       - name: Run the SDK Integration Tests
         timeout-minutes: 30
