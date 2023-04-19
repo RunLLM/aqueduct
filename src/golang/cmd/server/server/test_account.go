@@ -73,7 +73,7 @@ func CheckBuiltinIntegrations(ctx context.Context, s *AqServer, orgID string) (b
 	return demoConnected, engineConnected, nil
 }
 
-// ConnectBuiltinDemoDBIntegration adds the builtin compute and data integrations for the specified
+// ConnectBuiltinDemoDBIntegration adds the builtin demo data integrations for the specified
 // user's organization. It returns an error, if any.
 func ConnectBuiltinDemoDBIntegration(
 	ctx context.Context,
