@@ -3,11 +3,9 @@ import uuid
 from abc import ABC
 from typing import Any, Dict, Optional
 
-from aqueduct.constants.enums import ExecutionStatus
+from aqueduct.constants.enums import ExecutionStatus, ServiceType
 from aqueduct.models.execution_state import ExecutionState
 from aqueduct.models.utils import human_readable_timestamp
-
-from aqueduct.constants.enums import ServiceType
 from pydantic import BaseModel
 
 
