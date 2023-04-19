@@ -2,7 +2,7 @@ package server
 
 import (
 	"context"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
+
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -11,6 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/demo"
 	"github.com/google/uuid"
 )
