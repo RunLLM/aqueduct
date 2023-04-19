@@ -4,6 +4,7 @@ import json
 import uuid
 from typing import Any, Dict, Optional
 
+from aqueduct import globals
 from aqueduct.artifacts import numeric_artifact
 from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts import system_metric
@@ -12,8 +13,6 @@ from aqueduct.constants.enums import ArtifactType, ExecutionStatus
 from aqueduct.error import ArtifactNeverComputedException
 from aqueduct.models.dag import DAG
 from aqueduct.utils.utils import format_header_for_print
-
-from aqueduct import globals
 
 
 class GenericArtifact(BaseArtifact, system_metric.SystemMetricMixin):

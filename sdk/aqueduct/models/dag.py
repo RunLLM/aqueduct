@@ -2,6 +2,8 @@ import copy
 import uuid
 from typing import Any, Callable, Dict, List, Optional, Set
 
+from pydantic import BaseModel
+
 from aqueduct.constants.enums import (
     ArtifactType,
     OperatorType,
@@ -14,7 +16,6 @@ from aqueduct.error import (
     InternalAqueductError,
     InvalidUserActionException,
 )
-from pydantic import BaseModel
 
 from ..logger import logger
 from ..utils.naming import bump_artifact_suffix

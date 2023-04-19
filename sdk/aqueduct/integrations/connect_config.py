@@ -2,9 +2,10 @@ import json
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union, cast
 
+from pydantic import BaseModel, Extra, Field
+
 from aqueduct.constants.enums import MetaEnum, NotificationLevel, ServiceType
 from aqueduct.error import InternalAqueductError, InvalidUserArgumentException
-from pydantic import BaseModel, Extra, Field
 
 """Copied mostly over from `aqueduct_executor/operators/connectors/data/config.py` for now, please keep them in sync."""
 

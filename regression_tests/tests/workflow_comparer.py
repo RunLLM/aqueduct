@@ -51,7 +51,7 @@ if args.flow_id is None:
     flows = client.list_flows()
     if not flows:
         raise Exception("Could not find any flows on the server")
-    flow_id = client.list_flows()[0]['flow_id']
+    flow_id = client.list_flows()[0]["flow_id"]
 else:
     flow_id = str(args.flow_id)
 
@@ -61,11 +61,11 @@ if not os.path.isdir(args.path):
     os.mkdir(args.path)
 
 if args.checkpoint == "create":
-    with open(checkpoint_path, 'w+') as sys.stdout:
+    with open(checkpoint_path, "w+") as sys.stdout:
         flow.describe()
 
 if args.checkpoint == "diff":
-    with open(checkpoint_path, 'r') as file:
+    with open(checkpoint_path, "r") as file:
         previous_flow_info = file.read()
 
     stdout_log = StringIO()
@@ -73,9 +73,11 @@ if args.checkpoint == "diff":
         flow.describe()
     stdout_log.seek(0)
     flow_info = stdout_log.read()
-    
+
     if previous_flow_info == flow_info:
         print("Checkpoint passed. Flow diff for %s from checkpoint is same" % flow_id)
     else:
-        raise Exception("Flow diff for %s from checkpoint is not the same. \nCheckpoint info:\n%s\nCurrent info:\n%s" % (flow_id, previous_flow_info, flow_info))
-    
+        raise Exception(
+            "Flow diff for %s from checkpoint is not the same. \nCheckpoint info:\n%s\nCurrent info:\n%s"
+            % (flow_id, previous_flow_info, flow_info)
+        )

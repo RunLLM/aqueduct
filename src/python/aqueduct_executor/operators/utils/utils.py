@@ -4,12 +4,6 @@ import time
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
-from aqueduct.utils.format import DEFAULT_ENCODING
-from aqueduct.utils.serialization import (
-    artifact_type_to_serialization_type,
-    deserialize,
-    serialize_val,
-)
 from aqueduct_executor.operators.utils.enums import (
     ArtifactType,
     ExecutionStatus,
@@ -28,6 +22,13 @@ from aqueduct_executor.operators.utils.execution import (
 )
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 from aqueduct_executor.operators.utils.storage.storage import Storage
+
+from aqueduct.utils.format import DEFAULT_ENCODING
+from aqueduct.utils.serialization import (
+    artifact_type_to_serialization_type,
+    deserialize,
+    serialize_val,
+)
 
 _RUNTIME_SEC_METRIC_NAME = "runtime"
 _MAX_MEMORY_MB_METRIC_NAME = "max_memory"

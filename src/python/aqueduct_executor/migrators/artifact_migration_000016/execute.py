@@ -2,11 +2,12 @@ import json
 from typing import Any
 
 import cloudpickle as pickle
-from aqueduct.utils.type_inference import infer_artifact_type
 from aqueduct_executor.migrators.artifact_migration_000016.spec import MigrationSpec
 from aqueduct_executor.operators.utils.enums import ArtifactType, SerializationType
 from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
+
+from aqueduct.utils.type_inference import infer_artifact_type
 
 # The variable definition and type mapping logic below are partially
 # duplicated from aqueduct_executor.operators.utils.utils

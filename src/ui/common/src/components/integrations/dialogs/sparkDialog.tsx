@@ -31,7 +31,7 @@ export const SparkDialog: React.FC<Props> = ({
         onChange={(event) =>
           onUpdateField('livy_server_url', event.target.value)
         }
-        value={value?.livy_server_url ?? null}
+        value={value?.livy_server_url ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}

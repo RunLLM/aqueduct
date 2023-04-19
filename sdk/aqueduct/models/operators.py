@@ -1,6 +1,8 @@
 import uuid
 from typing import List, Optional, Union
 
+from pydantic import BaseModel, Extra
+
 from aqueduct.constants.enums import (
     ArtifactType,
     CheckSeverity,
@@ -18,7 +20,6 @@ from aqueduct.constants.enums import (
 from aqueduct.error import AqueductError, UnsupportedFeatureException
 from aqueduct.models.config import EngineConfig
 from aqueduct.models.integration import IntegrationInfo
-from pydantic import BaseModel, Extra
 
 
 class GithubMetadata(BaseModel):
@@ -201,6 +202,7 @@ class ResourceConfig(BaseModel):
     num_cpus: Optional[int]
     memory_mb: Optional[int]
     gpu_resource_name: Optional[str]
+    cuda_version: Optional[str]
 
 
 class OperatorSpec(BaseModel):

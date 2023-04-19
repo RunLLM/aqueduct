@@ -2,13 +2,12 @@ import time
 import uuid
 from typing import Any, Dict, List, Optional, Union
 
+import aqueduct
+from aqueduct import Flow
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionStatus
 from aqueduct.integrations.s3_integration import S3Integration
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
-
-import aqueduct
-from aqueduct import Flow
 
 from .data_objects import DataObject
 

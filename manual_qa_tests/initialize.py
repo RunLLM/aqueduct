@@ -2,7 +2,6 @@ import argparse
 from multiprocessing import Process
 
 import deploy_example
-from aqueduct.constants.enums import NotificationLevel
 from notification import connect_slack
 from wait_for_flows import wait_for_all_flows_to_complete
 from workflows import (
@@ -18,6 +17,7 @@ from workflows import (
 )
 
 import aqueduct as aq
+from aqueduct.constants.enums import NotificationLevel
 
 # when adding new deployments, keep the order of `fail`, `warning`, and `succeed`
 # such that the UI would approximately show these workflows in reverse order.

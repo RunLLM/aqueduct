@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 from typing import Optional
 
+from aqueduct import globals
 from aqueduct.artifacts import (
     base_artifact,
     bool_artifact,
@@ -20,8 +21,6 @@ from aqueduct.utils.utils import (
     indent_multiline_string,
     print_logs,
 )
-
-from aqueduct import globals
 
 
 class FlowRun:

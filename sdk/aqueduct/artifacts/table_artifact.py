@@ -5,6 +5,9 @@ import uuid
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
+from ruamel import yaml
+
+from aqueduct import globals
 from aqueduct.artifacts import bool_artifact, numeric_artifact
 from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts import system_metric
@@ -28,9 +31,6 @@ from aqueduct.utils.describe import (
 )
 from aqueduct.utils.function_packaging import serialize_function
 from aqueduct.utils.utils import format_header_for_print
-from ruamel import yaml
-
-from aqueduct import globals
 
 
 class TableArtifact(BaseArtifact, system_metric.SystemMetricMixin):

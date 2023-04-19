@@ -33,7 +33,7 @@ export const MariaDbDialog: React.FC<Props> = ({
         required={true}
         placeholder={Placeholders.host}
         onChange={(event) => onUpdateField('host', event.target.value)}
-        value={value?.host ?? null}
+        value={value?.host ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -46,7 +46,7 @@ export const MariaDbDialog: React.FC<Props> = ({
         required={true}
         placeholder={Placeholders.port}
         onChange={(event) => onUpdateField('port', event.target.value)}
-        value={value?.port ?? null}
+        value={value?.port ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -59,7 +59,7 @@ export const MariaDbDialog: React.FC<Props> = ({
         required={true}
         placeholder={Placeholders.database}
         onChange={(event) => onUpdateField('database', event.target.value)}
-        value={value?.database ?? null}
+        value={value?.database ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -72,7 +72,7 @@ export const MariaDbDialog: React.FC<Props> = ({
         description="The username of a user with access to the above database."
         placeholder={Placeholders.username}
         onChange={(event) => onUpdateField('username', event.target.value)}
-        value={value?.username ?? null}
+        value={value?.username ?? ''}
       />
 
       <IntegrationTextInputField
@@ -83,8 +83,19 @@ export const MariaDbDialog: React.FC<Props> = ({
         placeholder={Placeholders.password}
         type="password"
         onChange={(event) => onUpdateField('password', event.target.value)}
-        value={value?.password ?? null}
+        value={value?.password ?? ''}
       />
     </Box>
+  );
+};
+
+export const isMariaDBConfigComplete = (config: MariaDbConfig): boolean => {
+  return (
+    !!config.database &&
+    !!config.host &&
+    !!config.password &&
+    !!config.port &&
+    !!config.username &&
+    !!config.port
   );
 };

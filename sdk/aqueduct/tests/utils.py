@@ -3,6 +3,8 @@ import uuid
 from typing import List, Optional
 
 import pandas as pd
+
+from aqueduct import globals
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import (
     ArtifactType,
@@ -30,8 +32,6 @@ from aqueduct.models.operators import (
 )
 from aqueduct.models.response_models import ArtifactResult, PreviewResponse
 from aqueduct.utils.utils import generate_uuid
-
-from aqueduct import globals
 
 
 def generate_uuids(num: int) -> List[uuid.UUID]:

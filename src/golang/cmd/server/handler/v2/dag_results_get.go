@@ -8,6 +8,8 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/request/parser"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/functional/slices"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/response"
 	"github.com/dropbox/godropbox/errors"
@@ -15,9 +17,9 @@ import (
 )
 
 // This file should map directly to
-// src/ui/common/src/handlers/v2/DagResultGet.tsx
+// src/ui/common/src/handlers/v2/DagResultsGet.tsx
 //
-// Route: /v2/workflow/{workflowId}/result/{dagResultID}
+// Route: /v2/workflow/{workflowId}/results
 // Method: GET
 // Params:
 //	`workflowId`: ID for `workflow` object
@@ -27,15 +29,14 @@ import (
 //		`api-key`: user's API Key
 // Response:
 //	Body:
-//		serialized `response.DAG`
+//		serialized `[]response.DAGResult`
 
-type dagResultGetArgs struct {
+type dagResultsGetArgs struct {
 	*aq_context.AqContext
-	workflowID  uuid.UUID
-	dagResultID uuid.UUID
+	workflowID uuid.UUID
 }
 
-type DAGResultGetHandler struct {
+type DAGResultsGetHandler struct {
 	handler.GetHandler
 
 	Database database.Database
@@ -44,11 +45,11 @@ type DAGResultGetHandler struct {
 	DAGResultRepo repos.DAGResult
 }
 
-func (*DAGResultGetHandler) Name() string {
-	return "DAGResultGet"
+func (*DAGResultsGetHandler) Name() string {
+	return "DAGResultsGet"
 }
 
-func (h *DAGResultGetHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *DAGResultsGetHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
@@ -59,20 +60,14 @@ func (h *DAGResultGetHandler) Prepare(r *http.Request) (interface{}, int, error)
 		return nil, http.StatusBadRequest, err
 	}
 
-	dagResultID, err := (parser.DAGResultIDParser{}).Parse(r)
-	if err != nil {
-		return nil, http.StatusBadRequest, err
-	}
-
-	return &dagResultGetArgs{
-		AqContext:   aqContext,
-		workflowID:  workflowID,
-		dagResultID: dagResultID,
+	return &dagResultsGetArgs{
+		AqContext:  aqContext,
+		workflowID: workflowID,
 	}, http.StatusOK, nil
 }
 
-func (h *DAGResultGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*dagResultGetArgs)
+func (h *DAGResultsGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*dagResultsGetArgs)
 
 	ok, err := h.WorkflowRepo.ValidateOrg(
 		ctx,
@@ -88,10 +83,12 @@ func (h *DAGResultGetHandler) Perform(ctx context.Context, interfaceArgs interfa
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
 	}
 
-	dbDAGResult, err := h.DAGResultRepo.Get(ctx, args.dagResultID, h.Database)
+	dbDAGResults, err := h.DAGResultRepo.GetByWorkflow(ctx, args.workflowID, h.Database)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading workflow.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading dag results.")
 	}
 
-	return response.NewDAGResultFromDBObject(dbDAGResult), http.StatusOK, nil
+	return slices.Map(dbDAGResults, func(dbResult models.DAGResult) response.DAGResult {
+		return *response.NewDAGResultFromDBObject(&dbResult)
+	}), http.StatusOK, nil
 }

@@ -29,7 +29,7 @@ export const SQLiteDialog: React.FC<Props> = ({
         description="The path to the SQLite file on your Aqueduct server machine."
         placeholder={Placeholders.database}
         onChange={(event) => onUpdateField('database', event.target.value)}
-        value={value?.database ?? null}
+        value={value?.database ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -37,3 +37,7 @@ export const SQLiteDialog: React.FC<Props> = ({
     </Box>
   );
 };
+
+export function isSQLiteConfigComplete(config: SQLiteConfig): boolean {
+  return !!config.database;
+}

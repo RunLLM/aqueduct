@@ -34,3 +34,8 @@ runs:
       working-directory: integration_tests/sdk
       shell: bash
       run: aws s3 cp s3://aqueduct-assets/test-credentials.yml ./test-credentials.yml
+    
+    - name: Fetch BigQuery Test Credentials
+      working-directory: integration_tests/sdk
+      shell: bash
+      run: aws s3 cp s3://aqueduct-assets/test-bigquery-credentials.json ./test-bigquery-credentials.json
