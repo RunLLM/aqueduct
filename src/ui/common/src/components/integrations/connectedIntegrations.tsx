@@ -1,24 +1,31 @@
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
 import Link from '@mui/material/Link';
-import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, {useEffect} from 'react';
+import {useDispatch, useSelector} from 'react-redux';
 
-import { IntegrationCard } from '../../components/integrations/cards/card';
-import { handleLoadIntegrations } from '../../reducers/integrations';
-import { AppDispatch, RootState } from '../../stores/store';
-import { UserProfile } from '../../utils/auth';
-import { getPathPrefix } from '../../utils/getPathPrefix';
-import { Card } from '../layouts/card';
+import {IntegrationCard} from '../../components/integrations/cards/card';
+import {handleLoadIntegrations} from '../../reducers/integrations';
+import {AppDispatch, RootState} from '../../stores/store';
+import {UserProfile} from '../../utils/auth';
+import {getPathPrefix} from '../../utils/getPathPrefix';
+import {Card} from '../layouts/card';
+import {ConnectedIntegrationType} from "./connectedIntegrationType";
+import {ServiceGroupingMap} from "../../utils/integrations";
+import {Typography} from "@mui/material";
 
 type ConnectedIntegrationsProps = {
   user: UserProfile;
   forceLoad: boolean;
+
+  // This filters the displayed integrations to only those of the given type.
+  connectedIntegrationType: ConnectedIntegrationType;
 };
 
 export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
   user,
   forceLoad,
+  connectedIntegrationType,
 }) => {
   const dispatch: AppDispatch = useDispatch();
 
@@ -29,13 +36,25 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
   }, [dispatch, forceLoad, user.apiKey]);
 
   const integrations = useSelector((state: RootState) =>
-    Object.values(state.integrationsReducer.integrations)
+    Object.values(state.integrationsReducer.integrations).filter(
+      (integration) => ServiceGroupingMap[connectedIntegrationType].includes(integration.service)
+    )
   );
   if (!integrations) {
     return null;
   }
 
+  // Do not show the "Other" section if there are no "Other" integrations.
+  if (integrations.length === 0 && connectedIntegrationType === ConnectedIntegrationType.Other) {
+    return null;
+  }
+
   return (
+  <Box>
+    <Typography variant="h6">
+      {connectedIntegrationType}
+    </Typography>
+
     <Box
       sx={{
         display: 'flex',
@@ -63,5 +82,6 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
           );
         })}
     </Box>
+  </Box>
   );
 };

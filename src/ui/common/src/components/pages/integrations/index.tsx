@@ -1,27 +1,25 @@
-import { Alert, Snackbar, Typography } from '@mui/material';
+import {Alert, Snackbar, Typography} from '@mui/material';
 import Box from '@mui/material/Box';
 import Divider from '@mui/material/Divider';
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+import React, {useEffect, useState} from 'react';
+import {useDispatch, useSelector} from 'react-redux';
+import {useLocation} from 'react-router-dom';
 
-import { BreadcrumbLink } from '../../../components/layouts/NavBar';
-import { useStorageMigrationListQuery } from '../../../handlers/AqueductApi';
-import { handleGetServerConfig } from '../../../handlers/getServerConfig';
-import { StorageMigrationResponse } from '../../../handlers/responses/storageMigration';
-import { RootState } from '../../../stores/store';
-import { theme } from '../../../styles/theme/theme';
+import {BreadcrumbLink} from '../../../components/layouts/NavBar';
+import {useStorageMigrationListQuery} from '../../../handlers/AqueductApi';
+import {handleGetServerConfig} from '../../../handlers/getServerConfig';
+import {StorageMigrationResponse} from '../../../handlers/responses/storageMigration';
+import {RootState} from '../../../stores/store';
+import {theme} from '../../../styles/theme/theme';
 import UserProfile from '../../../utils/auth';
-import {
-  IntegrationCategories,
-  SupportedIntegrations,
-} from '../../../utils/integrations';
-import { LoadingStatus, LoadingStatusEnum } from '../../../utils/shared';
+import {IntegrationCategories, SupportedIntegrations,} from '../../../utils/integrations';
+import {LoadingStatus, LoadingStatusEnum} from '../../../utils/shared';
 import AddIntegrations from '../../integrations/addIntegrations';
-import { ConnectedIntegrations } from '../../integrations/connectedIntegrations';
+import {ConnectedIntegrations} from '../../integrations/connectedIntegrations';
 import DefaultLayout from '../../layouts/default';
 import MetadataStorageInfo from '../account/MetadataStorageInfo';
-import { LayoutProps } from '../types';
+import {LayoutProps} from '../types';
+import {ConnectedIntegrationType} from "../../integrations/connectedIntegrationType";
 
 type Props = {
   user: UserProfile;
@@ -102,69 +100,55 @@ const IntegrationsPage: React.FC<Props> = ({
         <Typography variant="h5" marginBottom={2}>
           Available Resources
         </Typography>
-          <Typography variant="h6" marginY={2}>
-            Compute
-          </Typography>
-          <ConnectedIntegrations user={user} forceLoad={forceLoad} />
+          <ConnectedIntegrations user={user} forceLoad={forceLoad} connectedIntegrationType={ConnectedIntegrationType.Compute} />
+          <ConnectedIntegrations user={user} forceLoad={forceLoad} connectedIntegrationType={ConnectedIntegrationType.Data} />
 
-          <Typography variant="h6" marginY={2}>
-            Data
-          </Typography>
-
-          <Typography variant="h6" marginY={2}>
-            Artifact Storage
-          </Typography>
-
-          <MetadataStorageInfo serverConfig={serverConfig.config} />
-          {!isLoading && lastFailedFormattedTimestamp && (
-              <Box>
-                <Typography
-                    variant="body2"
-                    fontWeight="fontWeightRegular"
-                    marginTop={2}
-                    marginBottom={1}
-                >
-                  The last artifact storage migration, which started at{' '}
-                  {lastFailedFormattedTimestamp}, has failed! As a result, the
-                  artifact storage has not changed from `
-                  {serverConfig.config?.storageConfig.integration_name}`.
-                </Typography>
-                <Box
-                    sx={{
-                      backgroundColor: theme.palette.red[100],
-                      color: theme.palette.red[600],
-                      p: 2,
-                      paddingBottom: '16px',
-                      paddingTop: '16px',
-                      height: 'fit-content',
-                    }}
-                >
+          <Box>
+            <Typography variant="h6" marginY={2}>
+              Artifact Storage
+            </Typography>
+            <MetadataStorageInfo serverConfig={serverConfig.config} />
+            {!isLoading && lastFailedFormattedTimestamp && (
+                <Box>
+                  <Typography
+                      variant="body2"
+                      fontWeight="fontWeightRegular"
+                      marginTop={2}
+                      marginBottom={1}
+                  >
+                    The last artifact storage migration, which started at{' '}
+                    {lastFailedFormattedTimestamp}, has failed! As a result, the
+                    artifact storage has not changed from `
+                    {serverConfig.config?.storageConfig.integration_name}`.
+                  </Typography>
+                  <Box
+                      sx={{
+                        backgroundColor: theme.palette.red[100],
+                        color: theme.palette.red[600],
+                        p: 2,
+                        paddingBottom: '16px',
+                        paddingTop: '16px',
+                        height: 'fit-content',
+                      }}
+                  >
               <pre style={{ margin: '0px' }}>
                 {`${lastMigration[0].execution_state.error.tip}\n\n${lastMigration[0].execution_state.error.context}`}
               </pre>
+                  </Box>
                 </Box>
-              </Box>
-          )}
-
-          <Typography variant="h6" marginY={2}>
-            Other
-          </Typography>
-
-          <Box marginY={3}>
-            <Divider />
+            )}
           </Box>
-          <Box marginY={3}>
+
+          <ConnectedIntegrations user={user} forceLoad={forceLoad} connectedIntegrationType={ConnectedIntegrationType.Other} />
+
+          <Box marginY={2}>
             <Divider />
           </Box>
 
-          <Typography variant="h6" marginY={2}>
-            Cloud
+          <Typography variant="h5" marginY={2}>
+            Add New Resources
           </Typography>
-          <AddIntegrations
-            user={user}
-            category={IntegrationCategories.CLOUD}
-            supportedIntegrations={SupportedIntegrations}
-          />
+
           <Typography variant="h6" marginY={2}>
             Compute
           </Typography>
@@ -181,7 +165,18 @@ const IntegrationsPage: React.FC<Props> = ({
             category={IntegrationCategories.DATA}
             supportedIntegrations={SupportedIntegrations}
           />
+          <Typography variant="h6" marginY={2}>
+            Cloud
+          </Typography>
+          <AddIntegrations
+              user={user}
+              category={IntegrationCategories.CLOUD}
+              supportedIntegrations={SupportedIntegrations}
+          />
 
+          <Typography variant="h6" marginY={2}>
+            Notifications
+          </Typography>
           <Typography variant="h6" marginY={2}>
             <AddIntegrations
                 user={user}
@@ -189,10 +184,6 @@ const IntegrationsPage: React.FC<Props> = ({
                 supportedIntegrations={SupportedIntegrations}
             />
           </Typography>
-        </Box>
-
-        <Box marginY={3}>
-          <Divider />
         </Box>
       </Box>
 

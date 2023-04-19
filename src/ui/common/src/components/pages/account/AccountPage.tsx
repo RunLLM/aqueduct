@@ -207,7 +207,12 @@ client = aqueduct.Client(
 
       {notificationSection}
 
-      <MetadataStorageInfo serverConfig={serverConfig.config} />
+      <Box>
+        <Typography variant="h5" marginY={2}>
+          Artifact Storage
+        </Typography>
+        <MetadataStorageInfo serverConfig={serverConfig.config} />
+      </Box>
 
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}

@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -42,7 +43,7 @@ func CreateTestAccount(
 	return testUser, nil
 }
 
-func CheckBuiltinIntegration(ctx context.Context, s *AqServer, orgID string) (bool, error) {
+func CheckBuiltinIntegrations(ctx context.Context, s *AqServer, orgID string) (bool, error) {
 	// Check if builtin integration is already connected
 	integrations, err := s.IntegrationRepo.GetByOrg(
 		context.Background(),
@@ -53,9 +54,18 @@ func CheckBuiltinIntegration(ctx context.Context, s *AqServer, orgID string) (bo
 		return false, errors.Newf("Unable to get connected integrations: %v", err)
 	}
 
+	demoConnected := false
+	engineConnected := false
 	for _, integrationObject := range integrations {
 		if integrationObject.Name == shared.DemoDbIntegrationName {
-			// Builtin integration already connected
+			demoConnected = true
+		}
+		if integrationObject.Name == shared.AqueductEngineIntegrationName {
+			engineConnected = true
+		}
+
+		if demoConnected && engineConnected {
+			// Builtin integrations already connected
 			return true, nil
 		}
 	}
@@ -63,17 +73,35 @@ func CheckBuiltinIntegration(ctx context.Context, s *AqServer, orgID string) (bo
 	return false, nil
 }
 
-// ConnectBuiltinIntegration adds a builtin integration for the specified
+// ConnectBuiltinIntegrations adds the builtin compute and data integrations for the specified
 // user's organization. It returns an error, if any.
-func ConnectBuiltinIntegration(
+func ConnectBuiltinIntegrations(
 	ctx context.Context,
 	user *models.User,
 	integrationRepo repos.Integration,
 	db database.Database,
 ) error {
-	serviceType := shared.Sqlite
-	builtinConfig := demo.GetSqliteIntegrationConfig()
+	// TODO: backfill the compute integration, as well as the name of the Demo DB.
+	if _, _, err := handler.ConnectIntegration(
+		ctx,
+		nil, // Not registering an AWS integration.
+		&handler.ConnectIntegrationArgs{
+			AqContext: &aq_context.AqContext{
+				User:      *user,
+				RequestID: uuid.New().String(),
+			},
+			Name:     shared.AqueductEngineIntegrationName,
+			Service:  shared.Aqueduct,
+			Config:   auth.NewStaticConfig(map[string]string{}),
+			UserOnly: false,
+		},
+		integrationRepo,
+		db,
+	); err != nil {
+		return err
+	}
 
+	builtinConfig := demo.GetSqliteIntegrationConfig()
 	if _, _, err := handler.ConnectIntegration(
 		ctx,
 		nil, // Not registering an AWS integration.
@@ -83,7 +111,7 @@ func ConnectBuiltinIntegration(
 				RequestID: uuid.New().String(),
 			},
 			Name:     shared.DemoDbIntegrationName,
-			Service:  serviceType,
+			Service:  shared.Sqlite,
 			Config:   builtinConfig,
 			UserOnly: false,
 		},

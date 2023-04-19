@@ -1,6 +1,8 @@
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
 import { AqueductDocsLink } from './docs';
+import {ConnectedIntegrations} from "../components/integrations/connectedIntegrations";
+import {ConnectedIntegrationType} from "../components/integrations/connectedIntegrationType";
 
 export const aqueductDemoName = 'aqueduct_demo';
 
@@ -263,6 +265,17 @@ export type Service =
   | 'Spark'
   | 'AWS';
 
+
+export type ServiceGroupings = {
+  [key: string]: Service[];
+}
+
+export const ServiceGroupingMap: ServiceGroupings = {
+  [ConnectedIntegrationType.Compute]: ['Aqueduct', 'Kubernetes', 'Conda', 'Lambda', 'Databricks', 'Spark'],
+  [ConnectedIntegrationType.Data]: ['Postgres', 'Snowflake', 'Redshift', 'BigQuery', 'MySQL', 'MariaDB', 'S3', 'Athena', 'GCS', 'SQLite', 'Google Sheets', 'MongoDB'],
+  [ConnectedIntegrationType.Other]: ['Email', 'Slack'],
+}
+
 export type Info = {
   logo: string;
   activated: boolean;
@@ -338,7 +351,6 @@ export const ServiceLogos: ServiceLogo = {
   ['MariaDB']: `${integrationLogosBucket}/mariadb.png`,
   ['S3']: `${integrationLogosBucket}/s3.png`,
   ['GCS']: `${integrationLogosBucket}/google-cloud-storage.png`,
-  ['Aqueduct Demo']: `/assets/aqueduct.png`,
   ['SQLite']: `${integrationLogosBucket}/sqlite-square-icon-256x256.png`,
   ['Athena']: `${integrationLogosBucket}/athena.png`,
   ['Airflow']: `${integrationLogosBucket}/airflow.png`,
@@ -405,10 +417,10 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.DATA,
     docs: `${addingIntegrationLink}/connecting-to-google-cloud-storage`,
   },
-  ['Aqueduct Demo']: {
+  ['Aqueduct']: {
     logo: ServiceLogos['Aqueduct'],
     activated: true,
-    category: IntegrationCategories.DATA,
+    category: IntegrationCategories.COMPUTEj,
     docs: addingIntegrationLink,
   },
   ['SQLite']: {
