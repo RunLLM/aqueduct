@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 
-
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -85,7 +84,6 @@ func ConnectBuiltinDemoDBIntegration(
 	builtinConfig := demo.GetSqliteIntegrationConfig()
 	if _, _, err := handler.ConnectIntegration(
 		ctx,
-		nil, // Not registering an AWS integration.
 		&handler.ConnectIntegrationArgs{
 			AqContext: &aq_context.AqContext{
 				User:      *user,

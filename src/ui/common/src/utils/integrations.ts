@@ -1,13 +1,15 @@
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
 import { AqueductDocsLink } from './docs';
-import {ConnectedIntegrations} from "../components/integrations/connectedIntegrations";
-import {ConnectedIntegrationType} from "../components/integrations/connectedIntegrationType";
 
 export const aqueductDemoName = 'aqueduct_demo';
+export const aqueductComputeName = 'Aqueduct Server';
 
-export function isDemo(integration: Integration): boolean {
-  return integration.name === aqueductDemoName;
+export function isBuiltinIntegration(integration: Integration): boolean {
+  return (
+    integration.name === aqueductDemoName ||
+    integration.name == aqueductComputeName
+  );
 }
 
 export type Integration = {
@@ -264,17 +266,6 @@ export type Service =
   | 'Slack'
   | 'Spark'
   | 'AWS';
-
-
-export type ServiceGroupings = {
-  [key: string]: Service[];
-}
-
-export const ServiceGroupingMap: ServiceGroupings = {
-  [ConnectedIntegrationType.Compute]: ['Aqueduct', 'Kubernetes', 'Conda', 'Lambda', 'Databricks', 'Spark'],
-  [ConnectedIntegrationType.Data]: ['Postgres', 'Snowflake', 'Redshift', 'BigQuery', 'MySQL', 'MariaDB', 'S3', 'Athena', 'GCS', 'SQLite', 'Google Sheets', 'MongoDB'],
-  [ConnectedIntegrationType.Other]: ['Email', 'Slack'],
-}
 
 export type Info = {
   logo: string;

@@ -14,11 +14,7 @@ export const FileMetadataStorageInfo: React.FC<MetadataPreviewProps> = ({
   return (
     <Box sx={{ display: 'flex', height: '85px' }}>
       <Box>
-        <IntegrationLogo
-          service={'Aqueduct'}
-          size={'large'}
-          activated={true}
-        />
+        <IntegrationLogo service={'Aqueduct'} size={'large'} activated={true} />
       </Box>
       <Box sx={{ alignSelf: 'center', marginLeft: 2 }}>
         <Typography
