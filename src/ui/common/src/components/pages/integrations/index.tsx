@@ -99,9 +99,64 @@ const IntegrationsPage: React.FC<Props> = ({
     >
       <Box>
         <Box>
-          <Typography variant="h5" marginBottom={2}>
-            Add an Integration
+        <Typography variant="h5" marginBottom={2}>
+          Available Resources
+        </Typography>
+          <Typography variant="h6" marginY={2}>
+            Compute
           </Typography>
+          <ConnectedIntegrations user={user} forceLoad={forceLoad} />
+
+          <Typography variant="h6" marginY={2}>
+            Data
+          </Typography>
+
+          <Typography variant="h6" marginY={2}>
+            Artifact Storage
+          </Typography>
+
+          <MetadataStorageInfo serverConfig={serverConfig.config} />
+          {!isLoading && lastFailedFormattedTimestamp && (
+              <Box>
+                <Typography
+                    variant="body2"
+                    fontWeight="fontWeightRegular"
+                    marginTop={2}
+                    marginBottom={1}
+                >
+                  The last artifact storage migration, which started at{' '}
+                  {lastFailedFormattedTimestamp}, has failed! As a result, the
+                  artifact storage has not changed from `
+                  {serverConfig.config?.storageConfig.integration_name}`.
+                </Typography>
+                <Box
+                    sx={{
+                      backgroundColor: theme.palette.red[100],
+                      color: theme.palette.red[600],
+                      p: 2,
+                      paddingBottom: '16px',
+                      paddingTop: '16px',
+                      height: 'fit-content',
+                    }}
+                >
+              <pre style={{ margin: '0px' }}>
+                {`${lastMigration[0].execution_state.error.tip}\n\n${lastMigration[0].execution_state.error.context}`}
+              </pre>
+                </Box>
+              </Box>
+          )}
+
+          <Typography variant="h6" marginY={2}>
+            Other
+          </Typography>
+
+          <Box marginY={3}>
+            <Divider />
+          </Box>
+          <Box marginY={3}>
+            <Divider />
+          </Box>
+
           <Typography variant="h6" marginY={2}>
             Cloud
           </Typography>
@@ -126,63 +181,18 @@ const IntegrationsPage: React.FC<Props> = ({
             category={IntegrationCategories.DATA}
             supportedIntegrations={SupportedIntegrations}
           />
-          <Typography variant="h6" marginY={2}>
-            Notifications
-          </Typography>
+
           <Typography variant="h6" marginY={2}>
             <AddIntegrations
-              user={user}
-              category={IntegrationCategories.NOTIFICATION}
-              supportedIntegrations={SupportedIntegrations}
+                user={user}
+                category={IntegrationCategories.NOTIFICATION}
+                supportedIntegrations={SupportedIntegrations}
             />
           </Typography>
         </Box>
 
         <Box marginY={3}>
           <Divider />
-        </Box>
-
-        <MetadataStorageInfo serverConfig={serverConfig.config} />
-        {!isLoading && lastFailedFormattedTimestamp && (
-          <Box>
-            <Typography
-              variant="body2"
-              fontWeight="fontWeightRegular"
-              marginTop={2}
-              marginBottom={1}
-            >
-              The last artifact storage migration, which started at{' '}
-              {lastFailedFormattedTimestamp}, has failed! As a result, the
-              artifact storage has not changed from `
-              {serverConfig.config?.storageConfig.integration_name}`.
-            </Typography>
-            <Box
-              sx={{
-                backgroundColor: theme.palette.red[100],
-                color: theme.palette.red[600],
-                p: 2,
-                paddingBottom: '16px',
-                paddingTop: '16px',
-                height: 'fit-content',
-              }}
-            >
-              <pre style={{ margin: '0px' }}>
-                {`${lastMigration[0].execution_state.error.tip}\n\n${lastMigration[0].execution_state.error.context}`}
-              </pre>
-            </Box>
-          </Box>
-        )}
-
-        <Box marginY={3}>
-          <Divider />
-        </Box>
-
-        <Box>
-          <Typography variant="h5" marginY={2}>
-            Connected Integrations
-          </Typography>
-
-          <ConnectedIntegrations user={user} forceLoad={forceLoad} />
         </Box>
       </Box>
 
