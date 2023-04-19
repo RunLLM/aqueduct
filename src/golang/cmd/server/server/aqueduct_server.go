@@ -134,14 +134,20 @@ func NewAqServer(environment string, externalIP string, port int, disableUsageSt
 		log.Fatal(err)
 	}
 
-	builtinConnected, err := CheckBuiltinIntegrations(ctx, s, accountOrganizationId)
+	demoDBConnected, aqEngineConnected, err := CheckBuiltinIntegrations(ctx, s, accountOrganizationId)
 	if err != nil {
 		db.Close()
 		log.Fatal(err)
 	}
-
-	if !builtinConnected {
-		err = ConnectBuiltinIntegrations(ctx, testUser, s.IntegrationRepo, s.Database)
+	if !demoDBConnected {
+		err = ConnectBuiltinDemoDBIntegration(ctx, testUser, s.IntegrationRepo, s.Database)
+		if err != nil {
+			db.Close()
+			log.Fatal(err)
+		}
+	}
+	if !aqEngineConnected {
+		err = ConnectBuiltinComputeIntegration(ctx, testUser, s.IntegrationRepo, s.Database)
 		if err != nil {
 			db.Close()
 			log.Fatal(err)

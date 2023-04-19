@@ -40,8 +40,8 @@ const (
 	Aqueduct     Service = "Aqueduct"
 	AqueductDemo Service = "Aqueduct Demo"
 
-	AqueductEngineIntegrationName = "Local Server Compute"
-	DemoDbIntegrationName         = "aqueduct_demo"
+	AqueductComputeIntegrationName = "Aqueduct Server"
+	DemoDbIntegrationName          = "aqueduct_demo"
 )
 
 var relationalDatabaseIntegrations map[Service]bool = map[Service]bool{
