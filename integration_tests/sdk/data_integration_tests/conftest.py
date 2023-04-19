@@ -5,6 +5,7 @@ import pytest
 # Maps the test files in this directory to the allowed data integrations for that file.
 # If a disallowed data integration is used, all tests in the file will be skipped.
 from aqueduct.constants.enums import ServiceType
+
 from sdk.data_integration_tests.flow_manager import FlowManager
 
 allowed_data_integrations_by_file = {

@@ -2,8 +2,6 @@ import uuid
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel
-
 from aqueduct.constants.enums import (
     ArtifactType,
     ExecutionStatus,
@@ -15,6 +13,7 @@ from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import Metadata, RetentionPolicy, Schedule
 from aqueduct.models.operators import LoadSpec, Operator, OperatorSpec
 from aqueduct.models.utils import human_readable_timestamp
+from pydantic import BaseModel
 
 
 class Logs(BaseModel):

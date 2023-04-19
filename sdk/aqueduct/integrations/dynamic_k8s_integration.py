@@ -1,11 +1,12 @@
 from typing import Dict, Union
 
-from aqueduct import globals
 from aqueduct.constants.enums import K8sClusterActionType, K8sClusterStatusType
 from aqueduct.error import InvalidIntegrationException, InvalidUserArgumentException
 from aqueduct.integrations.connect_config import DynamicK8sConfig
 from aqueduct.models.integration import Integration, IntegrationInfo
 from aqueduct.models.response_models import DynamicEngineStatusResponse
+
+from aqueduct import globals
 
 
 def parse_dynamic_k8s_config(

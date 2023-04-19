@@ -3,7 +3,6 @@ from __future__ import annotations
 import uuid
 from typing import Any, Dict, List, Optional
 
-from aqueduct import globals
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.create import to_artifact_class
 from aqueduct.constants.enums import ArtifactType, K8sClusterStatusType
@@ -15,6 +14,8 @@ from aqueduct.utils.dag_deltas import SubgraphDAGDelta, UpdateParametersDelta, a
 from aqueduct.utils.serialization import deserialize
 from aqueduct.utils.type_inference import infer_artifact_type
 from aqueduct.utils.utils import generate_engine_config
+
+from aqueduct import globals
 
 
 def preview_artifact(

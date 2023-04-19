@@ -9,7 +9,6 @@ from typing import List, Optional, Union
 
 import cloudpickle as pickle
 import pkg_resources
-
 from aqueduct.error import (
     InternalAqueductError,
     InvalidDependencyFilePath,

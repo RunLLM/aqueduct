@@ -1,7 +1,7 @@
 import pytest
+from aqueduct.error import AqueductError
 
 from aqueduct import op
-from aqueduct.error import AqueductError
 
 from ..shared.flow_helpers import publish_flow_test
 

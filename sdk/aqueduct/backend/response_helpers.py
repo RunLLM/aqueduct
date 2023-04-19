@@ -3,14 +3,13 @@ from typing import Any, Dict, List
 
 import multipart
 import requests
-from requests_toolbelt.multipart import decoder
-
 from aqueduct.constants.enums import ExecutionStatus
 from aqueduct.error import AqueductError, InternalAqueductError
 from aqueduct.models.dag import DAG
 from aqueduct.models.operators import Operator
 from aqueduct.models.response_models import ArtifactResult, ExecutionState, Logs, PreviewResponse
 from aqueduct.utils.utils import is_string_valid_uuid, print_logs
+from requests_toolbelt.multipart import decoder
 
 
 def _parse_artifact_result_response(response: requests.Response) -> Dict[str, Any]:
