@@ -420,7 +420,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['Aqueduct']: {
     logo: ServiceLogos['Aqueduct'],
     activated: true,
-    category: IntegrationCategories.COMPUTEj,
+    category: IntegrationCategories.COMPUTE,
     docs: addingIntegrationLink,
   },
   ['SQLite']: {
