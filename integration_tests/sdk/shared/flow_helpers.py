@@ -2,10 +2,11 @@ import time
 import uuid
 from typing import Any, Dict, List, Optional, Union
 
-import aqueduct
-from aqueduct import Flow
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import ExecutionStatus
+
+import aqueduct
+from aqueduct import Flow
 
 
 def publish_flow_test(

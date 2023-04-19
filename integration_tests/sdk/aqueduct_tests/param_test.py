@@ -4,10 +4,6 @@ from typing import Dict, List
 
 import pandas as pd
 import pytest
-from pandas._testing import assert_frame_equal
-from PIL import Image
-
-from aqueduct import metric, op
 from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionStatus
@@ -17,6 +13,10 @@ from aqueduct.error import (
     InvalidUserActionException,
     InvalidUserArgumentException,
 )
+from pandas._testing import assert_frame_equal
+from PIL import Image
+
+from aqueduct import metric, op
 
 from ..shared.data_objects import DataObject
 from ..shared.flow_helpers import publish_flow_test, trigger_flow_test

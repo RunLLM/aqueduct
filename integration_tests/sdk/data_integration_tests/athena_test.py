@@ -1,9 +1,9 @@
 import pandas as pd
 import pytest
-
-from aqueduct import LoadUpdateMode, metric, op
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
+
+from aqueduct import LoadUpdateMode, metric, op
 
 from ..shared.naming import generate_table_name
 from .save import save

@@ -1,10 +1,10 @@
 from typing import Optional
 
 import pytest
-
-from aqueduct import Client, global_config, globals
 from aqueduct.constants.enums import ServiceType
 from aqueduct.models.dag import DAG, Metadata
+
+from aqueduct import Client, global_config, globals
 from sdk.setup_integration import (
     get_aqueduct_config,
     get_artifact_store_name,

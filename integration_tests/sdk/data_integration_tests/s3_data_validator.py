@@ -2,11 +2,11 @@ import uuid
 from typing import Any, Optional
 
 import pandas as pd
+from aqueduct.constants.enums import ArtifactType
+from aqueduct.integrations.s3_integration import S3Integration
 from PIL import Image
 
 from aqueduct import Client, Flow
-from aqueduct.constants.enums import ArtifactType
-from aqueduct.integrations.s3_integration import S3Integration
 from sdk.shared.validation import fetch_and_validate_saved_object_identifier
 
 

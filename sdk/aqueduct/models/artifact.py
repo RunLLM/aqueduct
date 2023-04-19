@@ -1,8 +1,7 @@
 import uuid
 
-from pydantic import BaseModel
-
 from aqueduct.constants.enums import ArtifactType
+from pydantic import BaseModel
 
 
 class ArtifactMetadata(BaseModel):

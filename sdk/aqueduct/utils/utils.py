@@ -1,8 +1,6 @@
 import uuid
 from typing import Any, Dict, List, Optional, Tuple, Union
 
-from croniter import croniter
-
 from aqueduct.constants.enums import ArtifactType, RuntimeType, ServiceType, TriggerType
 from aqueduct.error import *
 from aqueduct.models.config import (
@@ -16,6 +14,7 @@ from aqueduct.models.config import (
 from aqueduct.models.dag import Schedule
 from aqueduct.models.integration import IntegrationInfo
 from aqueduct.models.operators import ParamSpec
+from croniter import croniter
 
 from ..models.response_models import Logs
 from .serialization import artifact_type_to_serialization_type, serialize_val

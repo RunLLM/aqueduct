@@ -1,6 +1,5 @@
 from typing import List, Optional, Tuple
 
-from aqueduct import globals
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import (
     ArtifactType,
@@ -18,6 +17,8 @@ from aqueduct.models.operators import (
     RelationalDBExtractParams,
 )
 from aqueduct.utils.function_packaging import DEFAULT_OP_METHOD_NAME, MODEL_FILE_NAME
+
+from aqueduct import globals
 
 
 def _get_operator_name(prefix: str, repo_url: str, branch: str, path: str) -> str:

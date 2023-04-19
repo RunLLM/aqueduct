@@ -9,6 +9,8 @@ from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
+from aqueduct.utils.serialization import check_and_fetch_pickled_collection_format
+from aqueduct.utils.type_inference import infer_artifact_type
 from aqueduct_executor.operators.function_executor import extract_function, get_extract_path
 from aqueduct_executor.operators.function_executor.spec import FunctionSpec
 from aqueduct_executor.operators.function_executor.utils import OP_DIR
@@ -36,9 +38,6 @@ from aqueduct_executor.operators.utils.storage.parse import parse_storage
 from aqueduct_executor.operators.utils.storage.storage import Storage
 from aqueduct_executor.operators.utils.timer import Timer
 from aqueduct_executor.operators.utils.utils import time_it
-
-from aqueduct.utils.serialization import check_and_fetch_pickled_collection_format
-from aqueduct.utils.type_inference import infer_artifact_type
 
 
 def get_py_import_path(spec: FunctionSpec) -> str:

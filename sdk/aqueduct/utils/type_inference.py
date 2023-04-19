@@ -4,10 +4,9 @@ from typing import Any
 
 import cloudpickle as pickle
 import numpy as np
+from aqueduct.constants.enums import ArtifactType
 from pandas import DataFrame
 from PIL import Image
-
-from aqueduct.constants.enums import ArtifactType
 
 from .format import DEFAULT_ENCODING
 

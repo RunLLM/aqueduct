@@ -5,8 +5,6 @@ from typing import Any, Dict, List, Optional, Set, Tuple, cast
 
 import pandas as pd
 import yaml
-
-from aqueduct import Client, get_apikey
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ServiceType
@@ -16,6 +14,8 @@ from aqueduct.integrations.mongodb_integration import MongoDBIntegration
 from aqueduct.integrations.s3_integration import S3Integration
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
 from aqueduct.models.integration import Integration
+
+from aqueduct import Client, get_apikey
 from sdk.aqueduct_tests.save import save
 from sdk.shared.demo_db import demo_db_tables
 from sdk.shared.flow_helpers import delete_flow, publish_flow_test
@@ -220,11 +220,12 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
             # Stand up the external integration first.
             if integration_config["type"] == ServiceType.SQLITE:
                 _setup_external_sqlite_db(integration_config["database"])
-
-            if integration_config["type"] == ServiceType.POSTGRES:
+            elif integration_config["type"] == ServiceType.POSTGRES:
                 _setup_postgres_db()
-
-            if integration_config["type"] == ServiceType.MYSQL:
+            elif (
+                integration_config["type"] == ServiceType.MYSQL
+                or integration_config["type"] == ServiceType.MARIADB
+            ):
                 _setup_mysql_db()
 
             client.connect_integration(

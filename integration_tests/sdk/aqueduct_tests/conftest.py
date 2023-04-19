@@ -1,5 +1,4 @@
 import pytest
-
 from aqueduct.constants.enums import ServiceType
 
 from .data_validator import DataValidator
