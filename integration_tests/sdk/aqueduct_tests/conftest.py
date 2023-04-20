@@ -1,6 +1,10 @@
 import pytest
 from aqueduct.constants.enums import ServiceType
 
+import aqueduct as aq
+
+from ..setup_integration import get_aqueduct_config
+from ..shared.flow_helpers import delete_all_flows
 from .data_validator import DataValidator
 
 
@@ -31,3 +35,9 @@ def enable_only_for_data_integration_type(request, client, data_integration):
                 "Skipped for data integration `%s`, since it is not of type `%s`."
                 % (data_integration.name(), ",".join(enabled_data_integration_types))
             )
+
+
+def pytest_sessionfinish(session, exitstatus):
+    if not hasattr(session.config, "workerinput"):
+        client = aq.Client(*get_aqueduct_config())
+        delete_all_flows(client)

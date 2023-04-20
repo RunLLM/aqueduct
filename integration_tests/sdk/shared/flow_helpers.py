@@ -197,6 +197,21 @@ def delete_flow(client: aqueduct.Client, workflow_id: uuid.UUID) -> None:
         print("Successfully deleted workflow %s" % (workflow_id))
 
 
+def delete_all_flows(client: aqueduct.Client) -> None:
+    flows = client.list_flows()
+    for flow in flows:
+        flow_name = flow["name"]
+        try:
+            client.delete_flow(
+                flow_name=flow_name,
+                saved_objects_to_delete=client.flow(flow_name=flow_name).list_saved_objects(),
+            )
+        except Exception as e:
+            print("Error deleting workflow %s with exception: %s" % (flow_name, e))
+        else:
+            print("Successfully deleted workflow %s" % flow_name)
+
+
 def polling(
     stop_condition_fn,
     timeout=60,
