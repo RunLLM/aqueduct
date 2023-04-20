@@ -40,7 +40,7 @@ runs:
 
     - name: Start the server
       shell: bash
-      run: (aqueduct start --env test --verbose > $SERVER_LOGS_FILE 2>&1 &)
+      run: (aqueduct start --verbose > $SERVER_LOGS_FILE 2>&1 &)
 
     - name: Wait for server
       shell: bash
