@@ -67,6 +67,7 @@ export const S3Dialog: React.FC<Props> = ({
 
   const configProfileInput = (
     <IntegrationTextInputField
+      name="config_file_profile"
       spellCheck={false}
       required={true}
       label="AWS Profile*"
@@ -75,7 +76,6 @@ export const S3Dialog: React.FC<Props> = ({
       onChange={(event) =>
         onUpdateField('config_file_profile', event.target.value)
       }
-      value={value?.config_file_profile ?? ''}
     />
   );
 
@@ -85,16 +85,17 @@ export const S3Dialog: React.FC<Props> = ({
         Manually enter your AWS credentials.
       </Typography>
       <IntegrationTextInputField
+        name="access_key_id"
         spellCheck={false}
         required={true}
         label="AWS Access Key ID*"
         description="The access key ID of your AWS account."
         placeholder={Placeholders.access_key_id}
         onChange={(event) => onUpdateField('access_key_id', event.target.value)}
-        value={value?.access_key_id ?? ''}
       />
 
       <IntegrationTextInputField
+        name="secret_access_key"
         spellCheck={false}
         required={true}
         label="AWS Secret Access Key*"
@@ -103,7 +104,6 @@ export const S3Dialog: React.FC<Props> = ({
         onChange={(event) =>
           onUpdateField('secret_access_key', event.target.value)
         }
-        value={value?.secret_access_key ?? ''}
       />
     </Box>
   );
@@ -119,6 +119,7 @@ export const S3Dialog: React.FC<Props> = ({
         automatically apply to this integration.
       </Typography>
       <IntegrationTextInputField
+        name="config_file_path"
         spellCheck={false}
         required={true}
         label="AWS Credentials File Path*"
@@ -127,13 +128,13 @@ export const S3Dialog: React.FC<Props> = ({
         onChange={(event) =>
           onUpdateField('config_file_path', event.target.value)
         }
-        value={value?.config_file_path ?? ''}
       />
 
       {configProfileInput}
     </Box>
   );
 
+  // TODO: Get this form field working with react-hook-form
   const configUploadTab = (
     <Box>
       <Typography variant="body2" color="gray.700">
@@ -147,6 +148,7 @@ export const S3Dialog: React.FC<Props> = ({
         Once connected, you would need to re-upload the file to update the credentials.
       */}
       <IntegrationFileUploadField
+        name="config_file_content"
         label={'AWS Credentials File*'}
         description={'Upload your credentials file here.'}
         required={true}
@@ -169,39 +171,39 @@ export const S3Dialog: React.FC<Props> = ({
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="bucket"
         spellCheck={false}
         required={true}
         label="Bucket*"
         description="The name of the S3 bucket."
         placeholder={Placeholders.bucket}
         onChange={(event) => onUpdateField('bucket', event.target.value)}
-        value={value?.bucket ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationTextInputField
+        name="region"
         spellCheck={false}
         required={true}
         label="Region*"
         description="The region the S3 bucket belongs to."
         placeholder={Placeholders.region}
         onChange={(event) => onUpdateField('region', event.target.value)}
-        value={value?.region ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationTextInputField
+        name="root_dir"
         spellCheck={false}
         required={false}
         label="Directory"
         description="Only applicable when also setting this integration to be the artifact store. This is an optional path to an existing directory in the bucket, to be used as the root of the artifact store. Defaults to the root of the bucket."
         placeholder={Placeholders.root_dir}
         onChange={(event) => onUpdateField('root_dir', event.target.value)}
-        value={value?.root_dir ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -227,6 +229,7 @@ export const S3Dialog: React.FC<Props> = ({
       {value?.type === AWSCredentialType.ConfigFilePath && configPathTab}
       {value?.type === AWSCredentialType.ConfigFileContent && configUploadTab}
 
+      {/* TODO: Get this to use react-hook-form */}
       <FormControlLabel
         label="Use this integration for Aqueduct metadata storage."
         control={

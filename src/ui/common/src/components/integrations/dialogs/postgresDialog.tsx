@@ -34,7 +34,6 @@ export const PostgresDialog: React.FC<Props> = ({
         description="The hostname or IP address of the Postgres server."
         placeholder={Placeholders.host}
         onChange={(event) => onUpdateField('host', event.target.value)}
-        value={value?.host ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -48,7 +47,6 @@ export const PostgresDialog: React.FC<Props> = ({
         description="The port number of the Postgres server."
         placeholder={Placeholders.port}
         onChange={(event) => onUpdateField('port', event.target.value)}
-        value={value?.port ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -62,7 +60,6 @@ export const PostgresDialog: React.FC<Props> = ({
         description="The name of the specific database to connect to."
         placeholder={Placeholders.database}
         onChange={(event) => onUpdateField('database', event.target.value)}
-        value={value?.database ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -76,7 +73,6 @@ export const PostgresDialog: React.FC<Props> = ({
         description="The username of a user with access to the above database."
         placeholder={Placeholders.username}
         onChange={(event) => onUpdateField('username', event.target.value)}
-        value={value?.username ?? ''}
       />
 
       <IntegrationTextInputField
@@ -92,7 +88,6 @@ export const PostgresDialog: React.FC<Props> = ({
             onUpdateField('password', event.target.value);
           }
         }}
-        value={value?.password ?? ''}
         autoComplete="postgres-password"
       />
     </Box>

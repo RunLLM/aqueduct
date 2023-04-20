@@ -5,14 +5,17 @@ import React, {
   useEffect,
   useRef,
 } from 'react';
+import { useController, useFormContext } from 'react-hook-form';
 
 import { theme } from '../../../styles/theme/theme';
 import { FileData } from '../../../utils/integrations';
 import { CodeBlock } from '../../CodeBlock';
+import { readCredentialsFile } from './bigqueryDialog';
 
 export type FileEventTarget = EventTarget & { files: FileList };
 
 type IntegrationFileUploadFieldProps = {
+  name: string;
   label: string;
   description: string | JSX.Element;
   required: boolean;
@@ -26,6 +29,7 @@ type IntegrationFileUploadFieldProps = {
 export const IntegrationFileUploadField: React.FC<
   IntegrationFileUploadFieldProps
 > = ({
+  name,
   label,
   description,
   required,
@@ -35,6 +39,9 @@ export const IntegrationFileUploadField: React.FC<
   displayFile,
   onReset,
 }) => {
+  const { control } = useFormContext();
+  const { field } = useController({ control, name, rules: { required } });
+
   let header, contents;
   const drop = useRef(undefined);
   const [dragging, setDragging] = React.useState(false);
@@ -167,13 +174,17 @@ export const IntegrationFileUploadField: React.FC<
         <Button component="label" variant="outlined" sx={{ marginTop: 2 }}>
           Choose File
           <Input
+            ref={field.ref}
             type="file"
             onChange={(e) => {
               const fileEvent: FileEventTarget = e.target as FileEventTarget;
               onFiles(fileEvent.files);
+              const file = fileEvent.files[0];
+              readCredentialsFile(file, field.onChange);
             }}
             required={required}
             sx={{ display: 'none' }}
+            onBlur={field.onBlur}
           />
         </Button>
       </Box>

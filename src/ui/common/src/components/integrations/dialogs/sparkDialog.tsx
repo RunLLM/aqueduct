@@ -23,6 +23,7 @@ export const SparkDialog: React.FC<Props> = ({
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="livy_server_url"
         label={'Livy Server URL*'}
         description={'URL of Livy Server.'}
         spellCheck={false}
@@ -31,7 +32,6 @@ export const SparkDialog: React.FC<Props> = ({
         onChange={(event) =>
           onUpdateField('livy_server_url', event.target.value)
         }
-        value={value?.livy_server_url ?? ''}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}

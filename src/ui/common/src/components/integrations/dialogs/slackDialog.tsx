@@ -41,6 +41,7 @@ export const SlackDialog: React.FC<Props> = ({ onUpdateField, value }) => {
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="token"
         spellCheck={false}
         required={false}
         label="Bot Token *"
@@ -50,10 +51,10 @@ export const SlackDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         onChange={(event) => {
           onUpdateField('token', event.target.value);
         }}
-        value={value?.token ?? null}
       />
 
       <IntegrationTextInputField
+        name="channels"
         spellCheck={false}
         required={true}
         label="Channels *"
@@ -66,7 +67,6 @@ export const SlackDialog: React.FC<Props> = ({ onUpdateField, value }) => {
             .map((r) => r.trim());
           onUpdateField('channels_serialized', JSON.stringify(channelsList));
         }}
-        value={channels ?? null}
       />
 
       <Divider sx={{ mt: 2 }} />
