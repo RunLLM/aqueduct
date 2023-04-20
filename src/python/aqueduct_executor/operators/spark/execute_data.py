@@ -24,6 +24,7 @@ def run(spec: Spec, spark_session_obj: SparkSession) -> None:
 
     Arguments:
     - spec: The spec provided for this operator.
+    - spark_session_obj: The SparkSession
     """
     return run_helper(
         spec=spec,
@@ -38,6 +39,11 @@ def run(spec: Spec, spark_session_obj: SparkSession) -> None:
 def setup_connector_spark(
     connector_name: common.Name, connector_config: config.Config
 ) -> connector.DataConnector:
+    """
+    Sets up the Spark Connectors. We currently support the following resources with Spark:
+    - S3
+    - Snowflake
+    """
     # prevent isort from moving around type: ignore comments which will cause mypy issues.
     # isort: off
     if connector_name == common.Name.SNOWFLAKE:

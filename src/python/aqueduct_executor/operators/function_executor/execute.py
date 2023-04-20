@@ -245,7 +245,7 @@ def run(spec: FunctionSpec) -> None:
     """
     run_helper(
         spec=spec,
-        read_artifact_func=utils.read_artifacts,
+        read_artifacts_func=utils.read_artifacts,
         write_artifact_func=utils.write_artifact,
         infer_type_func=infer_artifact_type,
     )
@@ -253,13 +253,23 @@ def run(spec: FunctionSpec) -> None:
 
 def run_helper(
     spec: FunctionSpec,
-    read_artifact_func: Any,
+    read_artifacts_func: Any,
     write_artifact_func: Any,
     infer_type_func: Any,
     **kwargs: Any,
 ) -> None:
     """
-    Executes a function operator.
+    Executes a function operator. If run in a Spark environment, it uses
+    the Spark specific utils functions to read/write to storage layer and to infer the type of artifact.
+
+    Arguments:
+    - spec: The spec provided for this operator.
+    - read_artifacts_func: function used to read artifacts from storage layer
+    - write_artifact_func: function used to write artifacts to storage layer
+    - infer_type_func: function used to infer type of artifacts returned by operators.
+
+    The only kwarg we expect is spark_session_obj
+
     """
     exec_state = ExecutionState(user_logs=Logs())
     storage = parse_storage(spec.storage_config)
@@ -269,7 +279,7 @@ def run_helper(
         # Read the input data from intermediate storage.
         inputs, _, serialization_types = time_it(
             job_name=spec.name, job_type=spec.type.value, step="Reading Inputs"
-        )(read_artifact_func)(
+        )(read_artifacts_func)(
             storage=storage,
             input_paths=spec.input_content_paths,
             input_metadata_paths=spec.input_metadata_paths,

@@ -66,16 +66,16 @@ def run_helper(
     **kwargs: Any,
 ) -> None:
     """
-    Runs one of the following connector operations:
-    - authenticate
-    - extract
-    - load
-    - load-table
-    - delete-saved-objects
-    - discover
+    This function executes the spec provided. If run in a Spark environment, it uses
+    the Spark specific utils functions to read/write to storage layer and to setup connectors.
 
     Arguments:
     - spec: The spec provided for this operator.
+    - read_artifacts_func: function used to read artifacts from storage layer
+    - write_artifact_func: function used to write artifacts to storage layer
+    - setup_connector_func: function to use to setup the connectors
+    - is_spark Whether or not we are running in a Spark env.
+    The only kwarg we expect is spark_session_obj
     """
     storage = parse_storage(spec.storage_config)
     exec_state = ExecutionState(user_logs=Logs())

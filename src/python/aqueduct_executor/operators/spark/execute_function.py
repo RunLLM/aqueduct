@@ -21,7 +21,7 @@ def run(spec: FunctionSpec, spark_session_obj: SparkSession) -> None:
     """
     return run_helper(
         spec=spec,
-        read_artifact_func=read_artifacts_spark,
+        read_artifacts_func=read_artifacts_spark,
         write_artifact_func=write_artifact_spark,
         infer_type_func=infer_artifact_type_spark,
         spark_session_obj=spark_session_obj,
