@@ -4,9 +4,6 @@ import (
 	"context"
 	"net/http"
 
-
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
-
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
