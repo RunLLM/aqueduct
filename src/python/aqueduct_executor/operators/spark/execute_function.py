@@ -24,6 +24,6 @@ def run(spec: FunctionSpec, spark_session_obj: SparkSession) -> None:
         spec=spec, 
         read_func=read_artifacts_spark, 
         write_func=write_artifact_spark, 
-        infer_func=infer_artifact_type_spark, 
+        infer_type_func=infer_artifact_type_spark, 
         spark_session_obj=spark_session_obj,
     )
