@@ -56,8 +56,6 @@ type RegisterWorkflowHandler struct {
 	OperatorRepo             repos.Operator
 	WatcherRepo              repos.Watcher
 	WorkflowRepo             repos.Workflow
-
-	ServerEnvironment aq_context.ServerEnvironment
 }
 
 type registerWorkflowArgs struct {
@@ -344,26 +342,22 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 	}
 
 	// Check unused conda environments and garbage collect them.
-	// This is disabled during testing as it causes repeated env creation / deletion
-	// which throttles the testing batch.
-	if h.ServerEnvironment != aq_context.TestServerEnvironment {
-		go func() {
-			db, err := database.NewDatabase(h.Database.Config())
-			if err != nil {
-				log.Errorf("Error creating DB in go routine: %v", err)
-				return
-			}
+	go func() {
+		db, err := database.NewDatabase(h.Database.Config())
+		if err != nil {
+			log.Errorf("Error creating DB in go routine: %v", err)
+			return
+		}
 
-			err = exec_env.CleanupUnusedEnvironments(
-				context.Background(),
-				h.OperatorRepo,
-				db,
-			)
-			if err != nil {
-				log.Errorf("%v", err)
-			}
-		}()
-	}
+		err = exec_env.CleanupUnusedEnvironments(
+			context.Background(),
+			h.OperatorRepo,
+			db,
+		)
+		if err != nil {
+			log.Errorf("%v", err)
+		}
+	}()
 
 	// This is best-effort
 	var version strings.Builder

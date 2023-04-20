@@ -83,8 +83,6 @@ type DeleteWorkflowHandler struct {
 	IntegrationRepo          repos.Integration
 	OperatorRepo             repos.Operator
 	WorkflowRepo             repos.Workflow
-
-	ServerEnvironment aq_context.ServerEnvironment
 }
 
 func (*DeleteWorkflowHandler) Name() string {
@@ -245,26 +243,22 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	}
 
 	// Check unused conda environments and garbage collect them.
-	// This is disabled during testing as it causes repeated env creation / deletion
-	// which throttles the testing batch.
-	if h.ServerEnvironment != aq_context.TestServerEnvironment {
-		go func() {
-			db, err := database.NewDatabase(h.Database.Config())
-			if err != nil {
-				log.Errorf("Error creating DB in go routine: %v", err)
-				return
-			}
+	go func() {
+		db, err := database.NewDatabase(h.Database.Config())
+		if err != nil {
+			log.Errorf("Error creating DB in go routine: %v", err)
+			return
+		}
 
-			err = exec_env.CleanupUnusedEnvironments(
-				context.Background(),
-				h.OperatorRepo,
-				db,
-			)
-			if err != nil {
-				log.Errorf("%v", err)
-			}
-		}()
-	}
+		err = exec_env.CleanupUnusedEnvironments(
+			context.Background(),
+			h.OperatorRepo,
+			db,
+		)
+		if err != nil {
+			log.Errorf("%v", err)
+		}
+	}()
 
 	return resp, http.StatusOK, nil
 }

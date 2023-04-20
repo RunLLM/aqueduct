@@ -121,8 +121,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			ExecutionEnvironmentRepo: s.ExecutionEnvironmentRepo,
 			OperatorRepo:             s.OperatorRepo,
 			WorkflowRepo:             s.WorkflowRepo,
-
-			ServerEnvironment: s.Environment,
 		},
 		routes.EditIntegrationRoute: &handler.EditIntegrationHandler{
 			Database:   s.Database,
@@ -336,8 +334,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			OperatorRepo:             s.OperatorRepo,
 			WatcherRepo:              s.WatcherRepo,
 			WorkflowRepo:             s.WorkflowRepo,
-
-			ServerEnvironment: s.Environment,
 		},
 		routes.RegisterAirflowWorkflowRoute: &handler.RegisterAirflowWorkflowHandler{
 			RegisterWorkflowHandler: handler.RegisterWorkflowHandler{
