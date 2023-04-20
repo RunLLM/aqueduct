@@ -169,7 +169,7 @@ def _validate_result_count_and_infer_type(
 
 
 def _write_artifacts(
-    write_func: Any,
+    write_artifact_func: Any,
     results: Any,
     result_types: List[ArtifactType],
     derived_from_bson: bool,
@@ -177,10 +177,10 @@ def _write_artifacts(
     output_metadata_paths: List[str],
     system_metadata: Any,
     storage: Storage,
-    **kwargs,
+    **kwargs: Any,
 ) -> None:
     for i, result in enumerate(results):
-        write_func(
+        write_artifact_func(
             storage,
             result_types[i],
             derived_from_bson,
@@ -245,13 +245,19 @@ def run(spec: FunctionSpec) -> None:
     """
     run_helper(
         spec=spec,
-        read_func=utils.read_artifacts,
-        write_func=utils.write_artifact, 
+        read_artifact_func=utils.read_artifacts,
+        write_artifact_func=utils.write_artifact,
         infer_type_func=infer_artifact_type,
     )
 
 
-def run_helper(spec: FunctionSpec, read_func: Any, write_func: Any, infer_type_func: Any, **kwargs) -> None:
+def run_helper(
+    spec: FunctionSpec,
+    read_artifact_func: Any,
+    write_artifact_func: Any,
+    infer_type_func: Any,
+    **kwargs: Any,
+) -> None:
     """
     Executes a function operator.
     """
@@ -263,11 +269,11 @@ def run_helper(spec: FunctionSpec, read_func: Any, write_func: Any, infer_type_f
         # Read the input data from intermediate storage.
         inputs, _, serialization_types = time_it(
             job_name=spec.name, job_type=spec.type.value, step="Reading Inputs"
-        )(read_func)(
-            storage=storage, 
-            input_paths=spec.input_content_paths, 
-            input_metadata_paths=spec.input_metadata_paths, 
-            **kwargs
+        )(read_artifact_func)(
+            storage=storage,
+            input_paths=spec.input_content_paths,
+            input_metadata_paths=spec.input_metadata_paths,
+            **kwargs,
         )
 
         # We need to check for BSON_TABLE serialization type at both the top level
@@ -296,7 +302,9 @@ def run_helper(spec: FunctionSpec, read_func: Any, write_func: Any, infer_type_f
 
         print("Function invoked successfully!")
 
-        result_types = _validate_result_count_and_infer_type(spec=spec, results=results, infer_type_func=infer_type_func)
+        result_types = _validate_result_count_and_infer_type(
+            spec=spec, results=results, infer_type_func=infer_type_func
+        )
 
         # Perform type checking on the function output.
         if spec.operator_type == OperatorType.METRIC:
@@ -337,7 +345,7 @@ def run_helper(spec: FunctionSpec, read_func: Any, write_func: Any, infer_type_f
             # not before recording the output artifact value (which will be False).
             if not check_passed:
                 print(f"Check Operator did not pass.")
-                write_func(
+                write_artifact_func(
                     storage=storage,
                     artifact_type=ArtifactType.BOOL,
                     derived_from_bson=derived_from_bson,  # derived_from_bson doesn't apply to bool artifact
@@ -380,7 +388,7 @@ def run_helper(spec: FunctionSpec, read_func: Any, write_func: Any, infer_type_f
         time_it(job_name=spec.name, job_type=spec.type.value, step="Writing Outputs")(
             _write_artifacts
         )(
-            write_func=write_func,
+            write_artifact_func=write_artifact_func,
             results=results,
             result_types=result_types,
             derived_from_bson=derived_from_bson,
@@ -413,7 +421,6 @@ def run_helper(spec: FunctionSpec, read_func: Any, write_func: Any, infer_type_f
     finally:
         # Perform any cleanup
         cleanup(spec)
-
 
 
 def run_with_setup(spec: FunctionSpec) -> None:

@@ -48,11 +48,49 @@ def run(spec: Spec) -> None:
     Arguments:
     - spec: The spec provided for this operator.
     """
+    return run_helper(
+        spec=spec,
+        read_artifacts_func=utils.read_artifacts,
+        write_artifact_func=utils.write_artifact,
+        setup_connector_func=setup_connector,
+        is_spark=False,
+    )
+
+
+def run_helper(
+    spec: Spec,
+    read_artifacts_func: Any,
+    write_artifact_func: Any,
+    setup_connector_func: Any,
+    is_spark: bool,
+    **kwargs: Any,
+) -> None:
+    """
+    Runs one of the following connector operations:
+    - authenticate
+    - extract
+    - load
+    - load-table
+    - delete-saved-objects
+    - discover
+
+    Arguments:
+    - spec: The spec provided for this operator.
+    """
     storage = parse_storage(spec.storage_config)
     exec_state = ExecutionState(user_logs=Logs())
 
     try:
-        _execute(spec, storage, exec_state)
+        _execute(
+            spec,
+            storage,
+            exec_state,
+            read_artifacts_func,
+            write_artifact_func,
+            setup_connector_func,
+            is_spark,
+            **kwargs,
+        )
         # Write operator execution metadata
         # Each decorator may set exec_state.status to FAILED, but if none of them did, then we are
         # certain that the operator succeeded.
@@ -86,23 +124,46 @@ def run(spec: Spec) -> None:
         sys.exit(1)
 
 
-def _execute(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
+def _execute(
+    spec: Spec,
+    storage: Storage,
+    exec_state: ExecutionState,
+    read_artifacts_func: Any,
+    write_artifact_func: Any,
+    setup_connector_func: Any,
+    is_spark: bool,
+    **kwargs: Any,
+) -> None:
     if spec.type == JobType.DELETESAVEDOBJECTS:
         run_delete_saved_objects(spec, storage, exec_state)
 
     # Because constructing certain connectors (eg. Postgres) can also involve authentication,
     # we do both in `run_authenticate()`, and give a more helpful error message on failure.
     elif spec.type == JobType.AUTHENTICATE:
-        run_authenticate(spec, exec_state, is_demo=(spec.name == AQUEDUCT_DEMO_NAME))
+        run_authenticate(
+            spec,
+            exec_state,
+            is_demo=(spec.name == AQUEDUCT_DEMO_NAME),
+            setup_connector_func=setup_connector_func,
+        )
 
     else:
-        op = setup_connector(spec.connector_name, spec.connector_config)
+        op = setup_connector_func(spec.connector_name, spec.connector_config)
         if spec.type == JobType.EXTRACT:
-            run_extract(spec, op, storage, exec_state)
+            run_extract(
+                spec,
+                op,
+                storage,
+                exec_state,
+                read_artifacts_func,
+                write_artifact_func,
+                is_spark,
+                **kwargs,
+            )
         elif spec.type == JobType.LOADTABLE:
-            run_load_table(spec, op, storage)
+            run_load_table(spec, op, storage, is_spark)
         elif spec.type == JobType.LOAD:
-            run_load(spec, op, storage, exec_state)
+            run_load(spec, op, storage, exec_state, read_artifacts_func, is_spark, **kwargs)
         elif spec.type == JobType.DISCOVER:
             run_discover(spec, op, storage)
         else:
@@ -113,19 +174,27 @@ def run_authenticate(
     spec: AuthenticateSpec,
     exec_state: ExecutionState,
     is_demo: bool,
+    setup_connector_func: Any,
 ) -> None:
     @exec_state.user_fn_redirected(
         failure_tip=TIP_DEMO_CONNECTION if is_demo else TIP_INTEGRATION_CONNECTION
     )
     def _authenticate() -> None:
-        op = setup_connector(spec.connector_name, spec.connector_config)
+        op = setup_connector_func(spec.connector_name, spec.connector_config)
         op.authenticate()
 
     _authenticate()
 
 
 def run_extract(
-    spec: ExtractSpec, op: connector.DataConnector, storage: Storage, exec_state: ExecutionState
+    spec: ExtractSpec,
+    op: connector.DataConnector,
+    storage: Storage,
+    exec_state: ExecutionState,
+    read_artifacts_func: Any,
+    write_artifact_func: Any,
+    is_spark: bool,
+    **kwargs: Any,
 ) -> None:
     extract_params = spec.parameters
 
@@ -134,10 +203,11 @@ def run_extract(
     if isinstance(extract_params, extract.RelationalParams) or isinstance(
         extract_params, extract.MongoDBParams
     ):
-        input_vals, _, _ = utils.read_artifacts(
-            storage,
-            spec.input_content_paths,
-            spec.input_metadata_paths,
+        input_vals, _, _ = read_artifacts_func(
+            storage=storage,
+            input_paths=spec.input_content_paths,
+            input_metadata_paths=spec.input_metadata_paths,
+            **kwargs,
         )
         assert all(
             isinstance(param_val, str) for param_val in input_vals
@@ -146,7 +216,10 @@ def run_extract(
 
     @exec_state.user_fn_redirected(failure_tip=TIP_EXTRACT)
     def _extract() -> Any:
-        return op.extract(spec.parameters)
+        if is_spark:
+            return op.extract_spark(spec.parameters, **kwargs)  # type: ignore
+        else:
+            return op.extract(spec.parameters)
 
     output = _extract()
 
@@ -160,7 +233,7 @@ def run_extract(
             output_artifact_type = ArtifactType.TUPLE
 
     if exec_state.status != ExecutionStatus.FAILED:
-        utils.write_artifact(
+        write_artifact_func(
             storage,
             output_artifact_type,
             derived_from_bson,
@@ -168,6 +241,7 @@ def run_extract(
             spec.output_metadata_path,
             output,
             system_metadata={},
+            **kwargs,
         )
 
 
@@ -181,26 +255,44 @@ def run_delete_saved_objects(spec: Spec, storage: Storage, exec_state: Execution
 
 
 def run_load(
-    spec: LoadSpec, op: connector.DataConnector, storage: Storage, exec_state: ExecutionState
+    spec: LoadSpec,
+    op: connector.DataConnector,
+    storage: Storage,
+    exec_state: ExecutionState,
+    read_artifacts_func: Any,
+    is_spark: bool,
+    **kwargs: Any,
 ) -> None:
-    inputs, input_types, _ = utils.read_artifacts(
-        storage,
-        [spec.input_content_path],
-        [spec.input_metadata_path],
+    inputs, input_types, _ = read_artifacts_func(
+        storage=storage,
+        input_paths=[spec.input_content_path],
+        input_metadata_paths=[spec.input_metadata_path],
+        **kwargs,
     )
     if len(inputs) != 1:
         raise Exception("Expected 1 input artifact, but got %d" % len(inputs))
 
     @exec_state.user_fn_redirected(failure_tip=TIP_LOAD)
     def _load() -> None:
-        op.load(spec.parameters, inputs[0], input_types[0])
+        if is_spark:
+            op.load_spark(spec.parameters, inputs[0], input_types[0])  # type: ignore
+        else:
+            op.load(spec.parameters, inputs[0], input_types[0])
 
     _load()
 
 
-def run_load_table(spec: LoadTableSpec, op: connector.DataConnector, storage: Storage) -> None:
+def run_load_table(
+    spec: LoadTableSpec,
+    op: connector.DataConnector,
+    storage: Storage,
+    is_spark: bool,
+) -> None:
     df = utils._read_csv(storage.get(spec.csv))
-    op.load(spec.load_parameters.parameters, df, ArtifactType.TABLE)
+    if is_spark:
+        op.load_spark(spec.load_parameters.parameters, df, ArtifactType.TABLE)  # type: ignore
+    else:
+        op.load(spec.load_parameters.parameters, df, ArtifactType.TABLE)
 
 
 def run_discover(spec: DiscoverSpec, op: connector.DataConnector, storage: Storage) -> None:
