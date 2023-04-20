@@ -78,13 +78,12 @@ def _generate_setup_flow_name(integration: Integration):
 def _publish_missing_artifacts(
     client: Client, artifacts: List[BaseArtifact], flow_name: str
 ) -> None:
-    flow = publish_flow_test(
+    publish_flow_test(
         client,
         artifacts=artifacts,
         name=flow_name,
         engine=None,
     )
-    delete_flow(client, flow.id())
 
 
 def _add_missing_artifacts(

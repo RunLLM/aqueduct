@@ -64,6 +64,7 @@ func RunCmd(command string, args []string, dir string, stream bool) (string, str
 		cmd.Dir = dir
 	}
 
+	log.Infof("Running command %s", cmd.String())
 	if stream {
 		// create pipes for the command's standard output and standard error
 		stdout, err := cmd.StdoutPipe()
