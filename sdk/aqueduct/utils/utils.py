@@ -16,7 +16,7 @@ from aqueduct.models.integration import IntegrationInfo
 from aqueduct.models.operators import ParamSpec
 from croniter import croniter
 
-from ..models.response_models import Logs
+from ..models.execution_state import Logs
 from .serialization import artifact_type_to_serialization_type, serialize_val
 from .type_inference import _bytes_to_base64_string
 
