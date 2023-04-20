@@ -251,7 +251,6 @@ export type Service =
   | 'MariaDB'
   | 'S3'
   | 'Athena'
-  | 'CSV'
   | 'GCS'
   | 'Aqueduct Demo'
   | 'Airflow'
