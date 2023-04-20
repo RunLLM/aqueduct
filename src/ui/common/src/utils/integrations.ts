@@ -18,7 +18,6 @@ export type Integration = {
   name: string;
   config: IntegrationConfig;
   createdAt: number;
-  validated: boolean;
 };
 
 export type CondaConfig = {
