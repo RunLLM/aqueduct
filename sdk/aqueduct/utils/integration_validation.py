@@ -25,6 +25,7 @@ def validate_integration_is_connected(name: str, exec_state: Optional[ExecutionS
             )
         )
     else:
+        # The assumption is that we are in the running state here.
         raise IntegrationConnectionInProgress(
             "Cannot use integration %s because it is still in the process of connecting."
             "Please see the /integrations page on the UI for more details." % name
