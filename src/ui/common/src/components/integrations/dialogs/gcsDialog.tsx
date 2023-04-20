@@ -8,6 +8,7 @@ import { FileData, GCSConfig } from '../../../utils/integrations';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { useFormContext, useController } from 'react-hook-form';
 
 const Placeholders: GCSConfig = {
   bucket: 'aqueduct',
@@ -27,6 +28,11 @@ export const GCSDialog: React.FC<Props> = ({
   editMode,
   setMigrateStorage,
 }) => {
+
+  // Setup for the checkbox component.
+  const { control } = useFormContext();
+  const { field } = useController({ control, name: 'use_as_storage', defaultValue: 'true', rules: { required: false } });
+
   const [fileName, setFileName] = useState<string>(null);
   const setFile = (fileData: FileData | null) => {
     setFileName(fileData?.name ?? null);
@@ -74,8 +80,8 @@ export const GCSDialog: React.FC<Props> = ({
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
-      {/* TODO: get this to work with react-hook-form */}
       <IntegrationFileUploadField
+        name="service_account_credentials"
         label={'Service Account Credentials*'}
         description={fileUploadDescription}
         required={true}
@@ -96,13 +102,19 @@ export const GCSDialog: React.FC<Props> = ({
         label="Use this integration for Aqueduct metadata storage."
         control={
           <Checkbox
-            checked={value?.use_as_storage === 'true'}
-            onChange={(event) =>
+            ref={field.ref}
+            //checked={value?.use_as_storage === 'true'}
+            checked={field.value === 'true'}
+            onChange={(event) => {
+              const updatedValue = event.target.checked ? 'true' : 'false'
               onUpdateField(
                 'use_as_storage',
-                event.target.checked ? 'true' : 'false'
-              )
-            }
+                //event.target.checked ? 'true' : 'false'
+                updatedValue
+              );
+
+              field.onChange(updatedValue);
+            }}
             disabled={true}
           />
         }

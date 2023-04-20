@@ -99,8 +99,8 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
         onChange={(event) => setName(event.target.value)}
       />
 
-      {/* TODO: Figure out how to use with react-hook-form. */}
       <IntegrationFileUploadField
+        name="csv"
         label={'CSV File*'}
         description={'The CSV file to populate the table in the demo database.'}
         required={true}

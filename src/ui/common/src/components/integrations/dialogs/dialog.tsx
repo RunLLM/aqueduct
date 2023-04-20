@@ -122,6 +122,7 @@ const IntegrationDialog: React.FC<Props> = ({
   showMigrationDialog = undefined,
   integrationToEdit = undefined,
 }) => {
+  console.log('integrationToEdit: ', integrationToEdit);
   const editMode = !!integrationToEdit;
   const dispatch: AppDispatch = useDispatch();
   const [config, setConfig] = useState<IntegrationConfig>(
@@ -171,6 +172,10 @@ const IntegrationDialog: React.FC<Props> = ({
 
   // TODO: Figure out how we're going to set up validation schema
   //const { register, control, handleSubmit, formState } = useForm();
+  
+  // How do i use Yup.inferType to get the type of the validationSchema?
+  // Yup.inferType<typeof validationSchema>;
+  //type Inferred = Yup.InferType<typeof validationSchema>;
 
   const validationSchema = Yup.object().shape({
     name: Yup.string().required('Please enter a name.'),
@@ -180,6 +185,8 @@ const IntegrationDialog: React.FC<Props> = ({
     //username: Yup.string().required('Please enter a username.'),
     //password: Yup.string().required('Please enter a password.'),
   });
+
+  
 
   // const {
   //   register,

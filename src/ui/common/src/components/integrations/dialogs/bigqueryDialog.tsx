@@ -65,9 +65,8 @@ export const BigQueryDialog: React.FC<Props> = ({
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
-      {/* TODO: figure out how to get this to work with react-hook-form */}
       <IntegrationFileUploadField
-        //name="service_account_credentials"
+        name="service_account_credentials"
         label={'Service Account Credentials*'}
         description={fileUploadDescription}
         required={true}

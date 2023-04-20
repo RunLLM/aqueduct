@@ -10,6 +10,7 @@ import { useController, useFormContext } from 'react-hook-form';
 import { theme } from '../../../styles/theme/theme';
 import { FileData } from '../../../utils/integrations';
 import { CodeBlock } from '../../CodeBlock';
+import { readCredentialsFile } from './bigqueryDialog';
 
 export type FileEventTarget = EventTarget & { files: FileList };
 
@@ -188,6 +189,8 @@ export const IntegrationFileUploadField: React.FC<
             onChange={(e) => {
               const fileEvent: FileEventTarget = e.target as FileEventTarget;
               onFiles(fileEvent.files);
+              const file = fileEvent.files[0];
+              readCredentialsFile(file, field.onChange);
             }}
             required={required}
             sx={{ display: 'none' }}

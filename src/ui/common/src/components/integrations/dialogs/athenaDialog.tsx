@@ -12,6 +12,7 @@ import { readCredentialsFile } from './bigqueryDialog';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { useController } from 'react-hook-form';
 
 const Placeholders: AthenaConfig = {
   type: AWSCredentialType.AccessKey,
@@ -150,6 +151,8 @@ export const AthenaDialog: React.FC<Props> = ({
         Once connected, you would need to re-upload the file to update the credentials.
       */}
       <IntegrationFileUploadField
+        //field={fileInput}
+        name="config_file_content"
         label={'AWS Credentials File*'}
         description={'Upload your credentials file here.'}
         required={true}
@@ -158,10 +161,14 @@ export const AthenaDialog: React.FC<Props> = ({
         onFiles={(files) => {
           const file = files[0];
           readCredentialsFile(file, setFile);
+          // Reading file input into the react-hook-form field.
+          //readCredentialsFile(file, fileInput.onChange)
         }}
         displayFile={null}
         onReset={() => {
           setFile(null);
+          // Set input to null.
+          //fileInput.onChange(null);
         }}
       />
 
