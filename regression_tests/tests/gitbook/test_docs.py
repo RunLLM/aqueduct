@@ -39,7 +39,7 @@ blacklist_files = [
 ]
 
 blacklist_snippets_by_keyword = {
-    "parameters.md": "use_local"
+    "parameters.md": "use_local" # Requires specific local file
 }
 
 
