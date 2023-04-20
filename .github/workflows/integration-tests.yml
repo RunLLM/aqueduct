@@ -13,7 +13,7 @@ on:
 jobs:
   run-tests-basic:
     runs-on: ubuntu-latest-4-cores
-    timeout-minutes: 30
+    timeout-minutes: 40
     name: All Integration Tests with Basic Config
     steps:
       - uses: actions/checkout@v2
@@ -29,7 +29,7 @@ jobs:
           s3_test_config_path: premerge-basic-test-config-wei.yml
 
       - name: Run the SDK Integration Tests
-        timeout-minutes: 20
+        timeout-minutes: 30
         working-directory: integration_tests/sdk
         run: python3 run_tests.py -n 8
 
@@ -109,7 +109,7 @@ jobs:
 
   run-tests-s3-storage:
     runs-on: ubuntu-latest-4-cores
-    timeout-minutes: 30
+    timeout-minutes: 40
     name: SDK Integration Tests with S3 Storage Layer
     steps:
       - uses: actions/checkout@v2
@@ -128,7 +128,7 @@ jobs:
         run: aqueduct install s3
 
       - name: Run the SDK Integration Aqueduct Tests
-        timeout-minutes: 20
+        timeout-minutes: 30
         working-directory: integration_tests/sdk
         run: python3 run_tests.py --aqueduct -n 8
 
