@@ -4,7 +4,6 @@ from abc import ABC
 from typing import Any, Dict, Optional
 
 from aqueduct.constants.enums import ExecutionStatus, ServiceType
-from aqueduct.error import IntegrationConnectionInProgress, IntegrationFailedToConnect
 from aqueduct.models.execution_state import ExecutionState
 from aqueduct.models.utils import human_readable_timestamp
 from pydantic import BaseModel

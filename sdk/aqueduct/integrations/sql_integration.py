@@ -85,7 +85,7 @@ class RelationalDBIntegration(Integration):
     @validate_is_connected()
     def table(self, name: str) -> pd.DataFrame:
         """
-        Retrieves a table from a RealtionalDB integration.
+        Retrieves a table from a RelationalDB integration.
 
         Args:
             name:

@@ -6,13 +6,13 @@ AnyFunc = Callable[..., Any]
 
 
 def validate_is_connected() -> Callable[[AnyFunc], AnyFunc]:
-    """This decorator, when used on an Integration class method, ensures that the integration is
-    connected before allowing the method to be called."""
+    """This decorator, which must be used on an Integration class method,
+    ensures that the integration is connected before allowing the method to be called."""
 
     def decorator(method: AnyFunc) -> Callable[[AnyFunc], AnyFunc]:
         def wrapper(self: Any, *args: Any, **kwargs: Any) -> Any:
             validate_integration_is_connected(self.name(), self._metadata.exec_state)
-            return method(*args, **kwargs)
+            return method(self, *args, **kwargs)
 
         return wrapper
 
