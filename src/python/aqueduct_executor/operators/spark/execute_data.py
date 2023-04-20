@@ -31,6 +31,7 @@ def run(spec: Spec, spark_session_obj: SparkSession) -> None:
         write_artifact_func=write_artifact_spark,
         setup_connector_func=setup_connector_spark,
         is_spark=True,
+        spark_session_obj=spark_session_obj,
     )
 
 
