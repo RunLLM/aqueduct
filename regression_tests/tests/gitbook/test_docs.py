@@ -38,7 +38,9 @@ blacklist_files = [
     "operators/specifying-a-requirements.txt.md",  # Requires specific requirements.txt
 ]
 
-blacklist_snippets = {}
+blacklist_snippets_by_keyword = {
+    "parameters.md": "use_local"
+}
 
 
 def get_code(page: str) -> List[str]:
@@ -121,8 +123,8 @@ def should_skip_file(item):
 
 def remove_skipped_snippets(snippets):
     # Remove any snippet that shows up in `blacklist_snippets`.
-    if file_name in blacklist_snippets.keys():
-        return [snippet for snippet in snippets if snippet not in blacklist_snippets[file_name]]
+    if file_name in blacklist_snippets_by_keyword.keys():
+        return [snippet for snippet in snippets if blacklist_snippets_by_keyword[file_name] not in snippet]
     else:
         return snippets
 
