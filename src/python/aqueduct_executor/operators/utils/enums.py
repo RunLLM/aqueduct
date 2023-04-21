@@ -75,6 +75,7 @@ class ArtifactType(str, Enum, metaclass=MetaEnum):
 class SerializationType(str, Enum, metaclass=MetaEnum):
     TABLE = "table"
     BSON_TABLE = "bson_table"
+    PARAM_TABLE = "param_table"
     JSON = "json"
     PICKLE = "pickle"
     IMAGE = "image"

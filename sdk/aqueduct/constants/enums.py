@@ -179,6 +179,7 @@ class S3SerializationType(str, Enum, metaclass=MetaEnum):
 
 class SerializationType(str, Enum, metaclass=MetaEnum):
     TABLE = "table"
+    PARAM_TABLE = "param_table"
     BSON_TABLE = "bson_table"
     JSON = "json"
     PICKLE = "pickle"

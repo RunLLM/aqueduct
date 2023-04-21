@@ -110,7 +110,10 @@ def _read_metadata_key(
 
 
 def serialize_val_wrapper(
-    val: Any, serialization_type: SerializationType, derived_from_bson: bool
+    val: Any,
+    serialization_type: SerializationType,
+    derived_from_bson: bool,
+    derived_from_param: bool,
 ) -> bytes:
     """Wrapper around `serialize_val()` to perform additional checks that are specific to the executor."""
     if serialization_type == SerializationType.TABLE:
@@ -123,7 +126,7 @@ def serialize_val_wrapper(
                 % (", ".join(violating_col_names)),
             )
 
-    serialized_val = serialize_val(val, serialization_type, derived_from_bson)
+    serialized_val = serialize_val(val, serialization_type, derived_from_bson, derived_from_param)
     assert isinstance(serialized_val, bytes)  # Necessary for mypy
     return serialized_val
 
@@ -151,11 +154,13 @@ def write_artifact(
         output_metadata[_METADATA_SCHEMA_KEY] = [{col: str(content[col].dtype)} for col in content]
 
     serialization_type = artifact_type_to_serialization_type(
-        artifact_type, derived_from_bson, content
+        artifact_type, derived_from_bson, False, content
     ).value
 
     if output_path is not None:
-        serialized_val = serialize_val_wrapper(content, serialization_type, derived_from_bson)
+        serialized_val = serialize_val_wrapper(
+            content, serialization_type, derived_from_bson, derived_from_param=False
+        )
         storage.put(output_path, serialized_val)
 
     output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = serialization_type

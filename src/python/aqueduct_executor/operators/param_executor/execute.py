@@ -4,7 +4,7 @@ from aqueduct.utils.serialization import deserialize
 from aqueduct.utils.type_inference import infer_artifact_type
 from aqueduct_executor.operators.param_executor.spec import ParamSpec
 from aqueduct_executor.operators.utils import utils
-from aqueduct_executor.operators.utils.enums import ExecutionStatus, FailureType
+from aqueduct_executor.operators.utils.enums import ExecutionStatus, FailureType, SerializationType
 from aqueduct_executor.operators.utils.execution import (
     TIP_UNKNOWN_ERROR,
     Error,
@@ -41,15 +41,29 @@ def run(spec: ParamSpec) -> None:
 
         # This does not write to the output artifact's content path as a performance optimization.
         # That has already been written by the Golang Orchestrator.
-        utils.write_artifact(
-            storage,
-            inferred_type,
-            False,  # derived_from_bson
-            None,  # output_content_path
-            spec.output_metadata_path,
-            val,
-            system_metadata={},
-        )
+        if spec.serialization_type != SerializationType.PARAM_TABLE:
+            utils.write_artifact(
+                storage,
+                inferred_type,
+                False,  # derived_from_bson
+                None,  # output_content_path
+                spec.output_metadata_path,
+                val,
+                system_metadata={},
+            )
+        else:
+            # Rewrite Parameter Table Artifact back to json format since downstream
+            # server and UI can't parse parquet table now.
+            # TODO (ENG-1729) Resolve when parquet replaces json for serializing Dataframe.
+            utils.write_artifact(
+                storage,
+                inferred_type,
+                False,  # derived_from_bson
+                spec.output_content_path,  # output_content_path
+                spec.output_metadata_path,
+                val,
+                system_metadata={},
+            )
 
         if inferred_type != spec.expected_type:
             raise ExecFailureException(

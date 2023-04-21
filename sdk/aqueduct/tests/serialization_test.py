@@ -491,7 +491,10 @@ def test_serialization_of_pickled_collection_types():
 
     assert (
         artifact_type_to_serialization_type(
-            ArtifactType.PICKLABLE, derived_from_bson=False, content=list_input
+            ArtifactType.PICKLABLE,
+            derived_from_bson=False,
+            derived_from_param=False,
+            content=list_input,
         )
         == SerializationType.PICKLE
     )

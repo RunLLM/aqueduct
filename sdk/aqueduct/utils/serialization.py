@@ -51,6 +51,10 @@ def _read_table_content(content: bytes) -> pd.DataFrame:
     return pd.read_json(io.BytesIO(content), orient="table")
 
 
+def _read_param_table_content(content: bytes) -> pd.DataFrame:
+    return pd.read_parquet(io.BytesIO(content))
+
+
 def _read_bson_table_content(content: bytes) -> pd.DataFrame:
     return pd.DataFrame.from_records(bson_json_util.loads(content.decode(DEFAULT_ENCODING)))
 
@@ -145,6 +149,7 @@ __deserialization_function_mapping: Dict[str, Callable[[bytes], Any]] = {
     SerializationType.BYTES: _read_bytes_content,
     SerializationType.TF_KERAS: _read_tf_keras_model,
     SerializationType.BSON_TABLE: _read_bson_table_content,
+    SerializationType.PARAM_TABLE: _read_param_table_content,
 }
 
 # Not intended for use outside of `deserialize()`.
@@ -251,6 +256,10 @@ def _write_table_output(output: pd.DataFrame) -> bytes:
     return output_str.encode(DEFAULT_ENCODING)
 
 
+def _write_param_table_output(output: pd.DataFrame) -> bytes:
+    return output.to_parquet()
+
+
 def _write_bson_table_output(output: pd.DataFrame) -> bytes:
     # This serialization format should also be consistent with go code in
     # src/golang/lib/workflow/artifact/artifact.go SampleContent() method.
@@ -301,6 +310,7 @@ __serialization_function_mapping: Dict[str, Callable[..., bytes]] = {
     SerializationType.BYTES: _write_bytes_output,
     SerializationType.TF_KERAS: _write_tf_keras_model,
     SerializationType.BSON_TABLE: _write_bson_table_output,
+    SerializationType.PARAM_TABLE: _write_param_table_output,
 }
 
 
@@ -308,6 +318,7 @@ def serialize_val(
     val: Any,
     serialization_type: Union[SerializationType, S3SerializationType],
     derived_from_bson: bool,
+    derived_from_param: bool,
 ) -> bytes:
     """Serializes a parameter or computed value into bytes."""
     if serialization_type == SerializationType.PICKLE and (
@@ -320,6 +331,7 @@ def serialize_val(
                 artifact_type_to_serialization_type(
                     elem_artifact_type,
                     derived_from_bson,
+                    derived_from_param,
                     elem,
                 ),
             )
@@ -347,12 +359,17 @@ def artifact_type_to_serialization_type(
     # and thus requires bson encoding.
     # For now, it only applies to DataFrames extracted / transformed from Mongo.
     derived_from_bson: bool,
+    derived_from_param: bool,
     content: Any,
 ) -> SerializationType:
+    print(derived_from_param)
     if artifact_type == ArtifactType.TABLE:
-        serialization_type = (
-            SerializationType.BSON_TABLE if derived_from_bson else SerializationType.TABLE
-        )
+        if derived_from_bson:
+            serialization_type = SerializationType.BSON_TABLE
+        elif derived_from_param:
+            serialization_type = SerializationType.PARAM_TABLE
+        else:
+            serialization_type = SerializationType.TABLE
     elif artifact_type == ArtifactType.IMAGE:
         serialization_type = SerializationType.IMAGE
     elif artifact_type == ArtifactType.JSON or artifact_type == ArtifactType.STRING:
