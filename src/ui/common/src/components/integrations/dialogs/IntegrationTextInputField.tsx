@@ -34,11 +34,10 @@ export const IntegrationTextInputField: React.FC<IntegrationTextFieldProps> = ({
   disabled,
   disableReason,
   autoComplete,
-  name
+  name,
 }) => {
-
   const { register, errors, formState } = useFormContext();
-  
+
   console.log('formContext errors: ', errors);
 
   // TDOO: Show input error in the warning field.

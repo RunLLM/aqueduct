@@ -2,6 +2,7 @@ import { Divider } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { EmailConfig } from '../../../utils/integrations';
 import { NotificationLogLevel } from '../../../utils/notifications';
@@ -43,6 +44,16 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       ? (JSON.parse(value?.targets_serialized) as string[]).join(',')
       : ''
   );
+
+  // Retrieve the form context.
+  const { register, setValue } = useFormContext();
+
+  // Register forms with custom logic.
+  register('enabled', { value: EmailDefaultsOnCreate.enabled });
+  register('level', { value: EmailDefaultsOnCreate.level });
+  register('targets_serialized', {
+    value: EmailDefaultsOnCreate.targets_serialized,
+  });
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -102,19 +113,20 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
             .split(',')
             .map((r) => r.trim());
           onUpdateField('targets_serialized', JSON.stringify(receiversList));
+          setValue('targets_serialized', JSON.stringify(receiversList));
         }}
       />
 
       <Divider sx={{ mt: 2 }} />
 
-      {/* TODO: Get this to work with react-hook-form */}
       <Box sx={{ mt: 2 }}>
         <CheckboxEntry
           checked={value?.enabled === 'true'}
           disabled={false}
-          onChange={(checked) =>
-            onUpdateField('enabled', checked ? 'true' : 'false')
-          }
+          onChange={(checked) => {
+            onUpdateField('enabled', checked ? 'true' : 'false');
+            setValue('enabled', checked ? 'true' : 'false');
+          }}
         >
           Enable this notification for all workflows.
         </CheckboxEntry>
@@ -124,7 +136,6 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         </Typography>
       </Box>
 
-      {/* TODO: Get this to work with react-hook-form */}
       {value?.enabled === 'true' && (
         <Box sx={{ mt: 2 }}>
           <Box sx={{ my: 1 }}>
@@ -139,7 +150,10 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
           </Box>
           <NotificationLevelSelector
             level={value?.level as NotificationLogLevel}
-            onSelectLevel={(level) => onUpdateField('level', level)}
+            onSelectLevel={(level) => {
+              onUpdateField('level', level);
+              setValue('level', level);
+            }}
             enabled={value?.enabled === 'true'}
           />
         </Box>

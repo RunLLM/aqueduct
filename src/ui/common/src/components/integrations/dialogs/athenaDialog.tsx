@@ -12,7 +12,6 @@ import { readCredentialsFile } from './bigqueryDialog';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
-import { useController } from 'react-hook-form';
 
 const Placeholders: AthenaConfig = {
   type: AWSCredentialType.AccessKey,
@@ -230,7 +229,6 @@ export const AthenaDialog: React.FC<Props> = ({
     </Box>
   );
 };
-
 
 // TODO: Add custom Control component to render tabs and use that to update form context.
 

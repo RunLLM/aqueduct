@@ -178,7 +178,7 @@ export const AWSDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         }}
         //value={k8sConfigs['gpu_node_type'] ?? ''}
       />
-      
+
       {/* TODO: Figure out how to get this to work with react-hook-form */}
       <IntegrationTextInputField
         name="min_cpu_node"
