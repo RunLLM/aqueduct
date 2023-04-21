@@ -80,7 +80,6 @@ def _parse_flags_and_setup_data_integrations(config, client: Client):
     if should_skip:
         return
 
-    # TODO: create client here.
     data_integration = config.getoption(f"--data")
     if data_integration is not None:
         setup_data_integrations(client, filter_to=data_integration)

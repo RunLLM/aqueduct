@@ -31,4 +31,7 @@ data:
 # `aqueduct_engine`, which is our native orchestration engine.
 compute:
   aqueduct_engine:
-    conda: test_conda
+    # aqueduct_engine can have an optional `conda` field to run using conda.
+    # It requires `conda`` and `conda-build` pre-installed in testing environment.
+    # It does not require an entry in `test-credentials.yml`
+    conda:
