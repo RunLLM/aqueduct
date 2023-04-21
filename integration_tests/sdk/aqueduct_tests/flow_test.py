@@ -285,7 +285,9 @@ def test_refresh_flow(client, flow_name, data_integration, engine):
         output_artifact,
         name=flow_name(),
         engine=engine,
-        schedule=aqueduct.hourly(),
+        # Schedule the test far enough in the future so that the test will
+        # finish before the next scheduled run.
+        schedule=aqueduct.hourly(minute=(datetime.now().minute + 30) % 60),
     )
 
     # Trigger the workflow again verify that it runs one more time.
