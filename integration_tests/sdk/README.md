@@ -60,3 +60,6 @@ In addition to the custom test suite flags listed above, you can also apply gene
 
 For example, to only run tests that have failed in the last run, use the `--lf` flag.
 - `python3 run_tests.py --lf`
+
+### Requirements.txt
+We noticed that cloudpickle occassionally pack environment's pytest package as dependency. As a workaround, we include `pytest` in all test operator's requirements to avoid any package mismatch

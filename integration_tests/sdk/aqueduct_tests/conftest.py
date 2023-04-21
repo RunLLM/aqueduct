@@ -38,6 +38,6 @@ def enable_only_for_data_integration_type(request, client, data_integration):
 
 
 def pytest_sessionfinish(session, exitstatus):
-    if not hasattr(session.config, "workerinput"):
+    if not hasattr(session.config, "workerinput") and not session.config.getoption("keep_flows"):
         client = aq.Client(*get_aqueduct_config())
         delete_all_flows(client)
