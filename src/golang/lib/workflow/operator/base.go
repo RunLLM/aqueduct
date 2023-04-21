@@ -443,6 +443,12 @@ func (bfo *baseFunctionOperator) jobSpec(
 
 	inputContentPaths, inputMetadataPaths := unzipExecPathsToRawPaths(bfo.inputExecPaths)
 	outputContentPaths, outputMetadataPaths := unzipExecPathsToRawPaths(bfo.outputExecPaths)
+
+	llmSpec := bfo.dbOperator.Spec.LLMSpec()
+	if llmSpec == nil {
+		log.Error("LLM spec is nil in generating job spec!")
+	}
+
 	return &job.FunctionSpec{
 		BasePythonSpec: job.NewBasePythonSpec(
 			job.FunctionJobType,
@@ -464,5 +470,6 @@ func (bfo *baseFunctionOperator) jobSpec(
 		OperatorType:                bfo.Type(),
 		CheckSeverity:               checkSeverity,
 		Resources:                   bfo.dbOperator.Spec.Resources(),
+		LLMSpec:                     bfo.dbOperator.Spec.LLMSpec(),
 	}
 }

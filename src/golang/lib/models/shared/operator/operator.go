@@ -49,6 +49,11 @@ type ResourceConfig struct {
 	CudaVersion     *CudaVersionNumber `json:"cuda_version,omitempty"`
 }
 
+type LLMSpec struct {
+	Name   *shared.LLMName    `json:"name"`
+	Config *map[string]string `json:"config"`
+}
+
 type specUnion struct {
 	Type         Type                        `json:"type"`
 	Function     *function.Function          `json:"function,omitempty"`
@@ -61,8 +66,10 @@ type specUnion struct {
 
 	// This can currently only be set for operators that has function,
 	// including function, metric, and check.
-	Resources    *ResourceConfig      `json:"resources,omitempty"`
+	Resources *ResourceConfig `json:"resources,omitempty"`
+
 	EngineConfig *shared.EngineConfig `json:"engine_config,omitempty"`
+	LLMSpec      *LLMSpec             `json:"llm_spec,omitempty"`
 }
 
 type Spec struct {
@@ -118,6 +125,10 @@ func (s Spec) HasFunction() bool {
 
 func (s Spec) Resources() *ResourceConfig {
 	return s.spec.Resources
+}
+
+func (s Spec) LLMSpec() *LLMSpec {
+	return s.spec.LLMSpec
 }
 
 func (s Spec) EngineConfig() *shared.EngineConfig {

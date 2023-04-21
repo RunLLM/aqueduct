@@ -1,5 +1,5 @@
 import uuid
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, Extra
 
@@ -205,6 +205,13 @@ class ResourceConfig(BaseModel):
     cuda_version: Optional[str]
 
 
+class LLMSpec(BaseModel):
+    name: str
+    requires_gpu: bool
+    min_required_memory: int # in MB
+    config: Dict[str, str]
+
+
 class OperatorSpec(BaseModel):
     extract: Optional[ExtractSpec]
     load: Optional[LoadSpec]
@@ -214,6 +221,7 @@ class OperatorSpec(BaseModel):
     param: Optional[ParamSpec]
     system_metric: Optional[SystemMetricSpec]
     resources: Optional[ResourceConfig]
+    llm_spec: Optional[LLMSpec]
 
     # If set, overwrites any default engine on the DAG.
     engine_config: Optional[EngineConfig]

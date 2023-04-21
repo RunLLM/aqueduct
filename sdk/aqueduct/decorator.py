@@ -21,6 +21,7 @@ from aqueduct.constants.enums import (
     FunctionGranularity,
     FunctionType,
     OperatorType,
+    RuntimeType,
 )
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
 from aqueduct.logger import logger
@@ -33,6 +34,7 @@ from aqueduct.models.operators import (
     OperatorSpec,
     ResourceConfig,
     get_operator_type,
+    LLMSpec,
 )
 from aqueduct.type_annotations import CheckFunction, MetricFunction, Number, UserFunction
 from aqueduct.utils.dag_deltas import (
@@ -362,7 +364,7 @@ def _convert_memory_string_to_mbs(memory_str: str) -> int:
     if memory_str[-2:].upper() == "MB":
         multiplier = 1
     elif memory_str[-2:].upper() == "GB":
-        multiplier = 1000
+        multiplier = 1024
     else:
         raise InvalidUserArgumentException(
             "Memory value `%s` is invalid. It must have a suffix that is one of mb/MB/gb/GB."
@@ -451,6 +453,43 @@ def _update_operator_spec_with_resources(
         )
 
 
+def _update_operator_spec_with_llm(
+    spec: OperatorSpec,
+    llm: Optional[LLMSpec] = None,
+) -> None:
+    if llm is not None:
+        assert isinstance(llm, LLMSpec)
+        # Check to see if the engine meets the constraints of the LLM.
+        if spec.engine_config is None or spec.engine_config.type is not RuntimeType.K8S:
+            engine_type = RuntimeType.AQUEDUCT if spec.engine_config is None else spec.engine_config.type
+            raise InvalidUserArgumentException(
+                "LLM %s is currently only supported to run on Kubernetes engine. "
+                "Got engine type: %s" % (llm.name, engine_type.value)
+            )
+        # Check to see if the resources meet the constraints of the LLM.
+        requested_gpu = False
+        requested_memory = 4096 # 4GB
+
+        if spec.resources is not None:
+            if spec.resources.gpu_resource_name is not None:
+                requested_gpu = True
+            if spec.resources.memory_mb is not None:
+                requested_memory = spec.resources.memory_mb
+
+        if llm.requires_gpu and not requested_gpu:
+            raise InvalidUserArgumentException(
+                "LLM %s requires GPU resource but it is not requested" % llm.name
+            )
+
+        if llm.min_required_memory > requested_memory:
+            raise InvalidUserArgumentException(
+                "LLM %s requires at least %dMB of memory but only %dMB is requested"
+                % (llm.name, llm.min_required_memory, requested_memory)
+            )
+
+        spec.llm_spec = llm
+
+
 def op(
     name: Optional[Union[str, UserFunction]] = None,
     description: Optional[str] = None,
@@ -460,6 +499,7 @@ def op(
     num_outputs: Optional[int] = None,
     outputs: Optional[List[str]] = None,
     resources: Optional[Dict[str, Any]] = None,
+    llm: Optional[LLMSpec] = None,
 ) -> Union[DecoratedFunction, OutputArtifactsFunction]:
     """Decorator that converts regular python functions into an operator.
 
@@ -602,6 +642,7 @@ def op(
 
             _update_operator_spec_with_engine(op_spec, engine)
             _update_operator_spec_with_resources(op_spec, resources)
+            _update_operator_spec_with_llm(op_spec, llm)
 
             assert isinstance(num_outputs, int)
             return wrap_spec(
@@ -646,6 +687,7 @@ def metric(
     output: Optional[str] = None,
     engine: Optional[str] = None,
     resources: Optional[Dict[str, Any]] = None,
+    llm: Optional[LLMSpec] = None,
 ) -> Union[DecoratedMetricFunction, OutputArtifactFunction]:
     """Decorator that converts regular python functions into a metric.
 
@@ -770,6 +812,7 @@ def metric(
             op_spec = OperatorSpec(metric=metric_spec)
             _update_operator_spec_with_engine(op_spec, engine)
             _update_operator_spec_with_resources(op_spec, resources)
+            _update_operator_spec_with_llm(op_spec, llm)
 
             output_names = [output] if output is not None else None
             numeric_artifact = wrap_spec(
@@ -827,6 +870,7 @@ def check(
     output: Optional[str] = None,
     engine: Optional[str] = None,
     resources: Optional[Dict[str, Any]] = None,
+    llm: Optional[LLMSpec] = None,
 ) -> Union[DecoratedCheckFunction, OutputArtifactFunction]:
     """Decorator that converts a regular python function into a check.
 
@@ -953,6 +997,7 @@ def check(
             op_spec = OperatorSpec(check=check_spec)
             _update_operator_spec_with_engine(op_spec, engine)
             _update_operator_spec_with_resources(op_spec, resources)
+            _update_operator_spec_with_llm(op_spec, llm)
 
             output_names = [output] if output is not None else None
             bool_artifact = wrap_spec(

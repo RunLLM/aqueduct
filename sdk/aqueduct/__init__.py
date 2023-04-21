@@ -7,6 +7,7 @@ from aqueduct.decorator import check, metric, op, to_operator
 from aqueduct.flow import Flow
 from aqueduct.schedule import DayOfMonth, DayOfWeek, Hour, Minute, daily, hourly, monthly, weekly
 
+import aqueduct.llm
 
 # Retrieves all valid import paths for all variables in a given module, using the import path prefix
 # When you add a constant module, call this function to generate a

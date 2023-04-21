@@ -11,6 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/function"
 	"github.com/dropbox/godropbox/errors"
+	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -101,6 +102,18 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobE
 
 		functionSpec.FunctionExtractPath = defaultFunctionExtractPath
 
+		if functionSpec.LLMSpec != nil {
+			log.Errorf("LLM name: %v", *functionSpec.LLMSpec.Name)
+			log.Errorf("LLM config: %v", *functionSpec.LLMSpec.Config)
+		}
+
+		// If the function spec has a LLM config, we need to add it to the environment variables
+		if functionSpec.LLMSpec != nil && len(*functionSpec.LLMSpec.Config) > 0 {
+			for k, v := range *functionSpec.LLMSpec.Config {
+				environmentVariables[k] = v
+			}
+		}
+
 		if functionSpec.Resources != nil {
 			if functionSpec.Resources.GPUResourceName != nil {
 				resourceRequest[k8s.GPUResourceName] = *functionSpec.Resources.GPUResourceName
@@ -125,17 +138,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobE
 		}
 	}
 
-	// Encode job spec to prevent data loss
-	serializationType := JsonSerializationType
-	encodedSpec, err := EncodeSpec(spec, serializationType)
-	if err != nil {
-		return systemError(err)
-	}
-
-	environmentVariables[jobSpecEnvVarKey] = encodedSpec
-
 	secretEnvVars := []string{}
-
 	if spec.HasStorageConfig() {
 		// This job spec has a storage config that k8s needs access to
 		storageConfig, err := spec.GetStorageConfig()
@@ -154,6 +157,27 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobE
 		return userError(err)
 	}
 	containerImage := fmt.Sprintf("%s:%s", containerRepo, lib.ServerVersionNumber)
+
+	log.Errorf("container image is %s", containerImage)
+
+	// Hack
+	if spec.Type() == FunctionJobType {
+		functionSpec, ok := spec.(*FunctionSpec)
+		if !ok {
+			return systemError(errors.Newf("Function Spec is expected, but got %v", spec))
+		}
+
+		functionSpec.LLMSpec = nil
+	}
+
+	// Encode job spec to prevent data loss
+	serializationType := JsonSerializationType
+	encodedSpec, err := EncodeSpec(spec, serializationType)
+	if err != nil {
+		return systemError(err)
+	}
+
+	environmentVariables[jobSpecEnvVarKey] = encodedSpec
 
 	err = k8s.LaunchJob(
 		name,
@@ -262,13 +286,17 @@ func mapJobTypeToDockerImage(spec Spec, launchGpu bool, cudaVersion operator.Cud
 	case FunctionJobType:
 		functionSpec, ok := spec.(*FunctionSpec)
 		if !ok {
-			return "", errors.New("Unable to determine Python Version.")
+			return "", errors.New("Unable to cast spec to FunctionSpec.")
 		}
+
 		pythonVersion, err := function.GetPythonVersion(context.TODO(), functionSpec.FunctionPath, &functionSpec.StorageConfig)
 		if err != nil {
 			return "", errors.New("Unable to determine Python Version.")
 		}
-		if launchGpu {
+
+		if functionSpec.LLMSpec != nil {
+			return mapLLMToDockerImage(*functionSpec.LLMSpec.Name, pythonVersion)
+		} else if launchGpu {
 			return mapGpuFunctionToDockerImage(pythonVersion, cudaVersion)
 		} else {
 			switch pythonVersion {
@@ -355,5 +383,64 @@ func mapGpuFunctionToDockerImage(pythonVersion function.PythonVersion, cudaVersi
 		}
 	default:
 		return "", errors.New("Unsupported CUDA version provided. We currently only support CUDA versions 11.4.1 and 11.8.0")
+	}
+}
+
+func mapLLMToDockerImage(llmName shared.LLMName, pythonVersion function.PythonVersion) (string, error) {
+	switch llmName {
+	case shared.Vicuna7b:
+		switch pythonVersion {
+		case function.PythonVersion37:
+			return "", errors.Newf("LLM %s does not support Python version %s.", llmName, pythonVersion)
+		case function.PythonVersion38:
+			return Vicuna7bPython38, nil
+		case function.PythonVersion39:
+			return Vicuna7bPython39, nil
+		case function.PythonVersion310:
+			return Vicuna7bPython310, nil
+		default:
+			return "", errors.New("Unable to determine Python Version.")
+		}
+	case shared.DollyV23b:
+		switch pythonVersion {
+		case function.PythonVersion37:
+			return "", errors.Newf("LLM %s does not support Python version %s.", llmName, pythonVersion)
+		case function.PythonVersion38:
+			return DollyV23bPython38, nil
+		case function.PythonVersion39:
+			return DollyV23bPython39, nil
+		case function.PythonVersion310:
+			return DollyV23bPython310, nil
+		default:
+			return "", errors.New("Unable to determine Python Version.")
+		}
+	case shared.DollyV27b:
+		switch pythonVersion {
+		case function.PythonVersion37:
+			return "", errors.Newf("LLM %s does not support Python version %s.", llmName, pythonVersion)
+		case function.PythonVersion38:
+			return DollyV27bPython38, nil
+		case function.PythonVersion39:
+			return DollyV27bPython39, nil
+		case function.PythonVersion310:
+			return DollyV27bPython310, nil
+		default:
+			return "", errors.New("Unable to determine Python Version.")
+		}
+	case shared.Llama7b:
+		switch pythonVersion {
+		case function.PythonVersion37:
+			return "", errors.Newf("LLM %s does not support Python version %s.", llmName, pythonVersion)
+		case function.PythonVersion38:
+			return Llama7bPython38, nil
+		case function.PythonVersion39:
+			return Llama7bPython39, nil
+		case function.PythonVersion310:
+			return Llama7bPython310, nil
+		default:
+			return "", errors.New("Unable to determine Python Version.")
+		}
+	default:
+		return "", errors.Newf("Unsupported LLM name provided: %v", llmName)
 	}
 }
