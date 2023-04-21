@@ -57,7 +57,7 @@ def hourly(minute: Union[int, Minute] = 0) -> str:
         minute = Minute(minute)
 
     assert isinstance(minute, Minute)
-    return "%s * * * *" % (minute)
+    return "%s * * * *" % (minute.val)
 
 
 def daily(hour: Union[int, Hour] = 0, minute: Union[Minute, int] = 0) -> str:
