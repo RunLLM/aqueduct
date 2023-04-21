@@ -13,7 +13,6 @@ import {
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
-import TextField from '@mui/material/TextField';
 import React, { useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
@@ -69,6 +68,7 @@ import {
   isEmailConfigComplete,
 } from './emailDialog';
 import { GCSDialog, isGCSConfigComplete } from './gcsDialog';
+import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { isK8sConfigComplete, KubernetesDialog } from './kubernetesDialog';
 import { LambdaDialog } from './lambdaDialog';
 import { isMariaDBConfigComplete, MariaDbDialog } from './mariadbDialog';
@@ -85,7 +85,6 @@ import {
 import { isSnowflakeConfigComplete, SnowflakeDialog } from './snowflakeDialog';
 import { isSparkConfigComplete, SparkDialog } from './sparkDialog';
 import { isSQLiteConfigComplete, SQLiteDialog } from './sqliteDialog';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 type Props = {
   user: UserProfile;
@@ -167,7 +166,7 @@ const IntegrationDialog: React.FC<Props> = ({
 
   // TODO: Figure out how we're going to set up validation schema
   //const { register, control, handleSubmit, formState } = useForm();
-  
+
   // How do i use Yup.inferType to get the type of the validationSchema?
   // Yup.inferType<typeof validationSchema>;
   //type Inferred = Yup.InferType<typeof validationSchema>;
@@ -180,8 +179,6 @@ const IntegrationDialog: React.FC<Props> = ({
     //username: Yup.string().required('Please enter a username.'),
     //password: Yup.string().required('Please enter a password.'),
   });
-
-  
 
   // const {
   //   register,

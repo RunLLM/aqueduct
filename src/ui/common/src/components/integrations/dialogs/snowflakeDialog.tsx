@@ -89,7 +89,6 @@ export const SnowflakeDialog: React.FC<Props> = ({
         description="The name of the schema to connect to. The public schema will be used if none is provided."
         placeholder={Placeholders.schema}
         onChange={(event) => setSchema(event.target.value)}
-        //value={schema !== Placeholders.schema ? schema : ''}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disabled={editMode}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}

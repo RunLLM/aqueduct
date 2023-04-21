@@ -1,15 +1,11 @@
 // import { yupResolver } from '@hookform/resolvers/yup';
 import Box from '@mui/material/Box';
-import TextField from '@mui/material/Textfield';
-import Typography from '@mui/material/Typography';
 import React from 'react';
-import { useFormContext } from 'react-hook-form';
 
 // import * as Yup from 'yup';
 import { MariaDbConfig } from '../../../utils/integrations';
-import { Button } from '../../primitives/Button.styles';
+import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
-import { readOnlyFieldWarning, readOnlyFieldDisableReason } from './constants';
 
 const Placeholders: MariaDbConfig = {
   host: '127.0.0.1',
@@ -25,10 +21,7 @@ type Props = {
   editMode: boolean;
 };
 
-export const MariaDbDialog: React.FC<Props> = ({
-  onUpdateField,
-  editMode,
-}) => {
+export const MariaDbDialog: React.FC<Props> = ({ onUpdateField, editMode }) => {
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
@@ -90,7 +83,6 @@ export const MariaDbDialog: React.FC<Props> = ({
         type="password"
         onChange={(event) => onUpdateField('password', event.target.value)}
       />
-
     </Box>
   );
 };

@@ -2,6 +2,7 @@ import { Divider } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import { SlackConfig } from '../../../utils/integrations';
 import { NotificationLogLevel } from '../../../utils/notifications';
@@ -26,10 +27,10 @@ export const SlackDefaultsOnCreate = {
   enabled: 'false',
 };
 
-type Props = {
+interface Props {
   onUpdateField: (field: keyof SlackConfig, value: string) => void;
   value?: SlackConfig;
-};
+}
 
 export const SlackDialog: React.FC<Props> = ({ onUpdateField, value }) => {
   const [channels, setChannels] = useState(
@@ -37,6 +38,14 @@ export const SlackDialog: React.FC<Props> = ({ onUpdateField, value }) => {
       ? (JSON.parse(value?.channels_serialized) as string[]).join(',')
       : ''
   );
+
+  const { register, setValue } = useFormContext();
+  // register the notification level field
+  register('level', { value: SlackDefaultsOnCreate.level });
+  register('enabled', { value: SlackDefaultsOnCreate.enabled });
+  register('channels_serialized', {
+    value: SlackDefaultsOnCreate.channels_serialized,
+  });
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -65,7 +74,10 @@ export const SlackDialog: React.FC<Props> = ({ onUpdateField, value }) => {
           const channelsList = event.target.value
             .split(',')
             .map((r) => r.trim());
-          onUpdateField('channels_serialized', JSON.stringify(channelsList));
+
+          const serializedChannels = JSON.stringify(channelsList);
+          onUpdateField('channels_serialized', serializedChannels);
+          setValue('channels_serialized', serializedChannels);
         }}
       />
 
@@ -75,9 +87,10 @@ export const SlackDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         <CheckboxEntry
           checked={value?.enabled === 'true'}
           disabled={false}
-          onChange={(checked) =>
-            onUpdateField('enabled', checked ? 'true' : 'false')
-          }
+          onChange={(checked) => {
+            onUpdateField('enabled', checked ? 'true' : 'false');
+            setValue('enabled', checked ? 'true' : 'false');
+          }}
         >
           Enable this notification for all workflows.
         </CheckboxEntry>
@@ -101,7 +114,11 @@ export const SlackDialog: React.FC<Props> = ({ onUpdateField, value }) => {
           </Box>
           <NotificationLevelSelector
             level={value?.level as NotificationLogLevel}
-            onSelectLevel={(level) => onUpdateField('level', level)}
+            onSelectLevel={(level) => {
+              // TODO: Take out the onUpdateField oncce we migrate to react-hook-form
+              onUpdateField('level', level);
+              setValue('level', level);
+            }}
             enabled={value?.enabled === 'true'}
           />
         </Box>

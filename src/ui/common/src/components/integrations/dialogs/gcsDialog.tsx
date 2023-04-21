@@ -3,12 +3,12 @@ import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
+import { useController, useFormContext } from 'react-hook-form';
 
 import { FileData, GCSConfig } from '../../../utils/integrations';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
-import { useFormContext, useController } from 'react-hook-form';
 
 const Placeholders: GCSConfig = {
   bucket: 'aqueduct',
@@ -28,10 +28,14 @@ export const GCSDialog: React.FC<Props> = ({
   editMode,
   setMigrateStorage,
 }) => {
-
   // Setup for the checkbox component.
   const { control } = useFormContext();
-  const { field } = useController({ control, name: 'use_as_storage', defaultValue: 'true', rules: { required: false } });
+  const { field } = useController({
+    control,
+    name: 'use_as_storage',
+    defaultValue: 'true',
+    rules: { required: false },
+  });
 
   const [fileName, setFileName] = useState<string>(null);
   const setFile = (fileData: FileData | null) => {
@@ -106,7 +110,7 @@ export const GCSDialog: React.FC<Props> = ({
             //checked={value?.use_as_storage === 'true'}
             checked={field.value === 'true'}
             onChange={(event) => {
-              const updatedValue = event.target.checked ? 'true' : 'false'
+              const updatedValue = event.target.checked ? 'true' : 'false';
               onUpdateField(
                 'use_as_storage',
                 //event.target.checked ? 'true' : 'false'
