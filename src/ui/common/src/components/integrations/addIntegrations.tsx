@@ -45,7 +45,7 @@ const AddIntegrations: React.FC<Props> = ({
       )}
       <Box sx={{ width: '100%', display: 'flex', flexWrap: 'wrap' }}>
         {Object.entries(supportedIntegrations)
-          .filter(([svc]) => svc !== 'Aqueduct Demo')
+          .filter(([svc]) => svc !== 'Aqueduct')
           .sort(([name1], [name2]) => name1.localeCompare(name2))
           .map(([svc, integration]) => {
             return (

@@ -19,7 +19,6 @@ const (
 	GoogleSheets Service = "Google Sheets"
 	Salesforce   Service = "Salesforce"
 	S3           Service = "S3"
-	AqueductDemo Service = "Aqueduct Demo"
 	Github       Service = "Github"
 	Sqlite       Service = "SQLite"
 	Airflow      Service = "Airflow"
@@ -40,7 +39,12 @@ const (
 	// Container registry integrations
 	ECR Service = "ECR"
 
-	DemoDbIntegrationName = "aqueduct_demo"
+	// Built-in integrations
+	Aqueduct     Service = "Aqueduct"
+	AqueductDemo Service = "Aqueduct Demo"
+
+	AqueductComputeIntegrationName = "Aqueduct Server"
+	DemoDbIntegrationName          = "aqueduct_demo"
 )
 
 var relationalDatabaseIntegrations map[Service]bool = map[Service]bool{

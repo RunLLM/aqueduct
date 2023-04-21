@@ -302,7 +302,7 @@ func ConnectIntegration(
 	}
 
 	// The initial integration entry has been written. Any errors from this point on will need to update
-	// the that entry to reflect the failure. Note that this defer is only relevant for q
+	// the that entry to reflect the failure.
 	defer func() {
 		if err != nil {
 			execution_state.UpdateOnFailure(
