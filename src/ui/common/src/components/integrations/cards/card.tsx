@@ -27,12 +27,13 @@ import { S3Card } from './s3Card';
 import { SlackCard } from './slackCard';
 import { SnowflakeCard } from './snowflakeCard';
 import { SparkCard } from './sparkCard';
-import {TruncatedText} from "./truncatedText";
+import { TruncatedText } from './text';
 
 type DataProps = {
   dataPreviewInfo: DataPreviewInfo;
 };
 
+// TODO: what does this do?
 export const DataCard: React.FC<DataProps> = ({ dataPreviewInfo }) => {
   const dataPreviewInfoVersions = Object.entries(dataPreviewInfo.versions);
   if (dataPreviewInfoVersions.length > 0) {
@@ -160,21 +161,24 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ display: 'flex', flexDirection: 'row' }}>
-        <Box sx={{ flex: 1, maxWidth: `calc(100% - 24px)`}}>
-          <TruncatedText sx={{ fontFamily: 'Monospace' }} variant="h6">
+      <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+        <Box sx={{ flex: 1, maxWidth: `calc(100% - 24px)` }}>
+          <TruncatedText sx={{ fontWeight: 400 }} variant="h6">
             {integration.name}
           </TruncatedText>
         </Box>
         <IntegrationLogo service={integration.service} size="small" activated />
       </Box>
 
-      {serviceCard}
-
-      <TruncatedText variant="body2">
-        <strong>Connected On: </strong>
+      <TruncatedText
+        variant="caption"
+        marginBottom={1}
+        sx={{ fontWeight: 300 }}
+      >
         {new Date(integration.createdAt * 1000).toLocaleString()}
       </TruncatedText>
+
+      {serviceCard}
     </Box>
   );
 };

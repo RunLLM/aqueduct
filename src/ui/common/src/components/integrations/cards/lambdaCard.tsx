@@ -1,9 +1,10 @@
 import Box from '@mui/material/Box';
 import React from 'react';
-import { TruncatedText } from './truncatedText';
+
 import { Integration, LambdaConfig } from '../../../utils/integrations';
 import { ExecState, ExecutionStatus } from '../../../utils/shared';
 import LambdaConnectionStatus from '../lambda/lambdaConnectionStatus';
+import { TruncatedText } from './text';
 
 type Props = {
   integration: Integration;

@@ -1,7 +1,8 @@
 import Box from '@mui/material/Box';
 import React from 'react';
-import { TruncatedText } from './truncatedText';
+
 import { Integration, SparkConfig } from '../../../utils/integrations';
+import { TruncatedText } from './text';
 
 type SparkCardProps = {
   integration: Integration;

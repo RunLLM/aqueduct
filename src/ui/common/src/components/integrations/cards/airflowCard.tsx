@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import React from 'react';
 
 import { AirflowConfig, Integration } from '../../../utils/integrations';
-import { TruncatedText } from './truncatedText';
+import { TruncatedText } from './text';
 
 type Props = {
   integration: Integration;

@@ -1,7 +1,8 @@
 import Box from '@mui/material/Box';
 import React from 'react';
-import { TruncatedText } from './truncatedText';
+
 import { AWSConfig, Integration } from '../../../utils/integrations';
+import { TruncatedText } from './text';
 
 type AWSCardProps = {
   integration: Integration;

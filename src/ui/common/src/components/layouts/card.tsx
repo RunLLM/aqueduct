@@ -12,7 +12,7 @@ export const Card = styled(Box)(() => {
       backgroundColor: theme.palette.blue[50],
     },
     width: '325px',
-    height: '128px',
+    height: '156px',
     padding: CardPadding,
   };
 });

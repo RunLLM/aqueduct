@@ -1,7 +1,8 @@
 import Box from '@mui/material/Box';
 import React from 'react';
-import { TruncatedText } from './truncatedText';
+
 import { DatabricksConfig, Integration } from '../../../utils/integrations';
+import { TruncatedText } from './text';
 
 type DatabricksCardProps = {
   integration: Integration;

@@ -3,8 +3,7 @@ import React from 'react';
 
 import { Integration } from '../../../utils/integrations';
 import { S3Config } from '../../../utils/workflows';
-import {TruncatedText} from "./truncatedText";
-
+import { TruncatedText } from './text';
 
 type Props = {
   integration: Integration;
