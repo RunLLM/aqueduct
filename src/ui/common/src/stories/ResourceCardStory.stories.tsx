@@ -4,7 +4,6 @@ import React from 'react';
 import { IntegrationCard } from '../components/integrations/cards/card';
 import { Card } from '../components/layouts/card';
 import {
-  AWSConfig,
   AWSCredentialType,
   BigQueryConfig,
   DatabricksConfig,
@@ -120,6 +119,7 @@ export const ResourceCardStory: React.FC = () => {
         type: AWSCredentialType.ConfigFilePath,
         bucket: 'integration-test-bucket',
         region: 'us-east-2',
+        root_dir: 'path/to/dir',
         config_file_path: '~/.aws/credentials',
         config_file_profile: 'default',
       } as S3Config,
@@ -190,18 +190,18 @@ export const ResourceCardStory: React.FC = () => {
       },
       createdAt: Date.now() / 1000,
     },
-    {
-      id: '15',
-      service: 'AWS',
-      name: 'My AWS',
-      config: {
-        type: AWSCredentialType.ConfigFilePath,
-        region: 'us-east-2',
-        config_file_path: '~/.aws/credentials',
-        config_file_profile: 'default',
-      } as AWSConfig,
-      createdAt: Date.now() / 1000,
-    },
+    // {
+    //   id: '15',
+    //   service: 'AWS',
+    //   name: 'My AWS',
+    //   config: {
+    //     type: AWSCredentialType.ConfigFilePath,
+    //     region: 'us-east-2',
+    //     config_file_path: '~/.aws/credentials',
+    //     config_file_profile: 'default',
+    //   } as AWSConfig,
+    //   createdAt: Date.now() / 1000,
+    // },
     {
       id: '16',
       service: 'Slack',
@@ -210,7 +210,7 @@ export const ResourceCardStory: React.FC = () => {
         token: 'xoxb-123456789012-1234567890123-123456789012345678901234',
         channels_serialized: '["#general"]',
         level: 'warning',
-        enabled: 'true',
+        enabled: 'false',
       } as SlackConfig,
       createdAt: Date.now() / 1000,
     },

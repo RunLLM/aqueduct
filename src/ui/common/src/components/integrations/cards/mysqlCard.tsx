@@ -2,32 +2,36 @@ import Box from '@mui/material/Box';
 import React from 'react';
 
 import { Integration, MySqlConfig } from '../../../utils/integrations';
-import { TruncatedText } from './text';
+import { CardTextEntry } from './text';
 
 type Props = {
   integration: Integration;
 };
 
+// This should be set to the minimum width required to display the longest category name on the card.
+const categoryWidth = '70px';
+
 export const MySqlCard: React.FC<Props> = ({ integration }) => {
   const config = integration.config as MySqlConfig;
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-      <TruncatedText variant="body2">
-        <strong>Host: </strong>
-        {config.host}
-      </TruncatedText>
-      <TruncatedText variant="body2">
-        <strong>Port: </strong>
-        {config.port}
-      </TruncatedText>
-      <TruncatedText variant="body2">
-        <strong>User: </strong>
-        {config.username}
-      </TruncatedText>
-      <TruncatedText variant="body2">
-        <strong>Database: </strong>
-        {config.database}
-      </TruncatedText>
+      <CardTextEntry
+        category="Host: "
+        value={config.host}
+        categoryWidth={categoryWidth}
+      />
+
+      <CardTextEntry
+        category="User: "
+        value={config.username}
+        categoryWidth={categoryWidth}
+      />
+
+      <CardTextEntry
+        category="Database: "
+        value={config.database}
+        categoryWidth={categoryWidth}
+      />
     </Box>
   );
 };

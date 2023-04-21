@@ -2,11 +2,14 @@ import Box from '@mui/material/Box';
 import React from 'react';
 
 import { DatabricksConfig, Integration } from '../../../utils/integrations';
-import { TruncatedText } from './text';
+import { CardTextEntry } from './text';
 
 type DatabricksCardProps = {
   integration: Integration;
 };
+
+// This should be set to the minimum width required to display the longest category name on the card.
+const categoryWidth = '80px';
 
 export const DatabricksCard: React.FC<DatabricksCardProps> = ({
   integration,
@@ -14,14 +17,11 @@ export const DatabricksCard: React.FC<DatabricksCardProps> = ({
   const config = integration.config as DatabricksConfig;
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-      <TruncatedText variant="body2">
-        <strong>Workspace URL: </strong>
-        {config.workspace_url}
-      </TruncatedText>
-      <TruncatedText variant="body2">
-        <strong>Access Token: </strong>
-        {config.access_token}
-      </TruncatedText>
+      <CardTextEntry
+        category="Workspace: "
+        value={config.workspace_url}
+        categoryWidth={categoryWidth}
+      />
     </Box>
   );
 };

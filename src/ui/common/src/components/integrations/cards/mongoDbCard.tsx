@@ -2,24 +2,24 @@ import Box from '@mui/material/Box';
 import React from 'react';
 
 import { Integration, MongoDBConfig } from '../../../utils/integrations';
-import { TruncatedText } from './text';
+import { CardTextEntry } from './text';
 
 type Props = {
   integration: Integration;
 };
 
+// This should be set to the minimum width required to display the longest category name on the card.
+const categoryWidth = '70px';
+
 export const MongoDBCard: React.FC<Props> = ({ integration }) => {
   const config = integration.config as MongoDBConfig;
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-      <TruncatedText variant="body2">
-        <strong>URI: </strong>
-        ********
-      </TruncatedText>
-      <TruncatedText variant="body2">
-        <strong>Database: </strong>
-        {config.database}
-      </TruncatedText>
+      <CardTextEntry
+        category="Database: "
+        value={config.database}
+        categoryWidth={categoryWidth}
+      />
     </Box>
   );
 };

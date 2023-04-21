@@ -8,6 +8,7 @@ type Props = {
   integration: Integration;
 };
 
+// This should be set to the minimum width required to display the longest category name on the card.
 const categoryWidth = '120px';
 
 export const EmailCard: React.FC<Props> = ({ integration }) => {
@@ -17,18 +18,20 @@ export const EmailCard: React.FC<Props> = ({ integration }) => {
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       <CardTextEntry
         category="Sender Address: "
-        value={`${config.user}`}
+        value={config.user}
         categoryWidth={categoryWidth}
       />
 
       <CardTextEntry
-          category="Sender Socket: "
-          value={`${config.host}:${config.port}`}
-          categoryWidth={categoryWidth}
+        category="Sender Socket: "
+        value={`${config.host}:${config.port}`}
+        categoryWidth={categoryWidth}
       />
 
       <CardTextEntry
-        category={targets.length > 1 ? 'Receiver Addresses: ' : 'Receiver Address: '}
+        category={
+          targets.length > 1 ? 'Receiver Addresses: ' : 'Receiver Address: '
+        }
         value={targets.join(', ')}
         categoryWidth={categoryWidth}
       />

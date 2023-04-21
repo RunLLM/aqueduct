@@ -3,31 +3,39 @@ import React from 'react';
 
 import { Integration } from '../../../utils/integrations';
 import { S3Config } from '../../../utils/workflows';
-import { TruncatedText } from './text';
+import { CardTextEntry } from './text';
 
 type Props = {
   integration: Integration;
 };
+
+// This should be set to the minimum width required to display the longest category name on the card.
+const categoryWidth = '100px';
 
 export const S3Card: React.FC<Props> = ({ integration }) => {
   const config = integration.config as S3Config;
 
   return (
     <Box>
-      <TruncatedText variant="body2">
-        <strong>Bucket: </strong>
-        {config.bucket}
-      </TruncatedText>
+      <CardTextEntry
+        category="Bucket: "
+        value={config.bucket}
+        categoryWidth={categoryWidth}
+      />
+
       {config.root_dir?.length > 0 && (
-        <TruncatedText variant="body2">
-          <strong>Root Directory: </strong>
-          {config.root_dir}
-        </TruncatedText>
+        <CardTextEntry
+          category="Root Directory: "
+          value={config.root_dir}
+          categoryWidth={categoryWidth}
+        />
       )}
-      <TruncatedText variant="body2">
-        <strong>Region: </strong>
-        {config.region}
-      </TruncatedText>
+
+      <CardTextEntry
+        category="Region: "
+        value={config.region}
+        categoryWidth={categoryWidth}
+      />
     </Box>
   );
 };
