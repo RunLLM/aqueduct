@@ -5,7 +5,8 @@ import { LambdaConfig } from '../../../utils/integrations';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: LambdaConfig = {
-  role_arn: '<my lambda role ARN>',
+  role_arn: 'arn:aws:iam::123:role/lambda-function-role-arn',
+  exec_state: '',
 };
 
 type Props = {
