@@ -238,7 +238,9 @@ export type IntegrationConfig =
   | EmailConfig
   | SlackConfig
   | SparkConfig
-  | AWSConfig;
+  | AWSConfig
+  | MongoDBConfig
+;
 
 export type Service =
   | 'Aqueduct'
