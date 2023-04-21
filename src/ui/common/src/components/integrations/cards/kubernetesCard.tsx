@@ -1,7 +1,6 @@
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import React from 'react';
-
+import { TruncatedText } from './truncatedText';
 import { Integration, KubernetesConfig } from '../../../utils/integrations';
 
 type Props = {
@@ -12,14 +11,14 @@ export const KubernetesCard: React.FC<Props> = ({ integration }) => {
   const config = integration.config as KubernetesConfig;
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-      <Typography variant="body2">
+      <TruncatedText variant="body2">
         <strong>Kubernetes Config Path: </strong>
         {config.kubeconfig_path}
-      </Typography>
-      <Typography variant="body2">
+      </TruncatedText>
+      <TruncatedText variant="body2">
         <strong>Cluster Name: </strong>
         {config.cluster_name}
-      </Typography>
+      </TruncatedText>
     </Box>
   );
 };

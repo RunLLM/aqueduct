@@ -11,7 +11,8 @@ export const Card = styled(Box)(() => {
     '&:hover': {
       backgroundColor: theme.palette.blue[50],
     },
-    minWidth: '450px',
+    width: '325px',
+    height: '128px',
     padding: CardPadding,
   };
 });

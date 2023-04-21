@@ -1,8 +1,8 @@
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import React from 'react';
 
 import { GCSConfig, Integration } from '../../../utils/integrations';
+import {TruncatedText} from "./truncatedText";
 
 type Props = {
   integration: Integration;
@@ -13,10 +13,10 @@ export const GCSCard: React.FC<Props> = ({ integration }) => {
 
   return (
     <Box>
-      <Typography variant="body2">
+      <TruncatedText variant="body2">
         <strong>Bucket: </strong>
         {config.bucket}
-      </Typography>
+      </TruncatedText>
     </Box>
   );
 };

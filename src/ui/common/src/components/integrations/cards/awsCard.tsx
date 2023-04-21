@@ -1,7 +1,6 @@
-import { Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React from 'react';
-
+import { TruncatedText } from './truncatedText';
 import { AWSConfig, Integration } from '../../../utils/integrations';
 
 type AWSCardProps = {
@@ -13,22 +12,22 @@ export const AWSCard: React.FC<AWSCardProps> = ({ integration }) => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       {config.region && (
-        <Typography variant="body2">
+        <TruncatedText variant="body2">
           <strong>Region: </strong>
           {config.region}
-        </Typography>
+        </TruncatedText>
       )}
       {config.config_file_path && (
-        <Typography variant="body2">
+        <TruncatedText variant="body2">
           <strong>Credential File Path: </strong>
           {config.config_file_path}
-        </Typography>
+        </TruncatedText>
       )}
       {config.config_file_profile && (
-        <Typography variant="body2">
+        <TruncatedText variant="body2">
           <strong>Profile: </strong>
           {config.config_file_profile}
-        </Typography>
+        </TruncatedText>
       )}
     </Box>
   );

@@ -1,6 +1,5 @@
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
-import Typography from '@mui/material/Typography';
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
@@ -28,6 +27,7 @@ import { S3Card } from './s3Card';
 import { SlackCard } from './slackCard';
 import { SnowflakeCard } from './snowflakeCard';
 import { SparkCard } from './sparkCard';
+import {TruncatedText} from "./truncatedText";
 
 type DataProps = {
   dataPreviewInfo: DataPreviewInfo;
@@ -59,7 +59,7 @@ export const DataCard: React.FC<DataProps> = ({ dataPreviewInfo }) => {
         <Box sx={{ display: 'flex', flexDirection: 'column' }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             <Box sx={{ flex: 1 }}>
-              <Typography
+              <TruncatedText
                 variant="h6"
                 component="div"
                 sx={{
@@ -68,20 +68,20 @@ export const DataCard: React.FC<DataProps> = ({ dataPreviewInfo }) => {
                 }}
               >
                 {dataPreviewInfo.artifact_name}
-              </Typography>
+              </TruncatedText>
             </Box>
             <Box marginLeft={1}>
               <ExecutionChip status={latestVersion.status} />
             </Box>
           </Box>
           <Box sx={{ fontSize: 1, my: 1 }}>
-            <Typography variant="body2">
+            <TruncatedText variant="body2">
               <strong>Workflow:</strong> {dataPreviewInfo.workflow_name}
-            </Typography>
-            <Typography variant="body2">
+            </TruncatedText>
+            <TruncatedText variant="body2">
               <strong>Last Updated:</strong>{' '}
               {new Date(latestVersion.timestamp * 1000).toLocaleString()}
-            </Typography>
+            </TruncatedText>
           </Box>
           <LoadSpecsCard loadSpecs={dataPreviewInfo.load_specs} />
         </Box>
@@ -161,20 +161,20 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', flexDirection: 'row' }}>
-        <Box sx={{ flex: 1 }}>
-          <Typography sx={{ fontFamily: 'Monospace' }} variant="h6">
+        <Box sx={{ flex: 1, maxWidth: `calc(100% - 24px)`}}>
+          <TruncatedText sx={{ fontFamily: 'Monospace' }} variant="h6">
             {integration.name}
-          </Typography>
+          </TruncatedText>
         </Box>
         <IntegrationLogo service={integration.service} size="small" activated />
       </Box>
 
       {serviceCard}
 
-      <Typography variant="body2">
+      <TruncatedText variant="body2">
         <strong>Connected On: </strong>
         {new Date(integration.createdAt * 1000).toLocaleString()}
-      </Typography>
+      </TruncatedText>
     </Box>
   );
 };
