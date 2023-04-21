@@ -147,7 +147,6 @@ func (*integrationWriter) Create(
 	service shared.Service,
 	name string,
 	config *shared.IntegrationConfig,
-	validated bool,
 	DB database.Database,
 ) (*models.Integration, error) {
 	cols := []string{
@@ -157,7 +156,6 @@ func (*integrationWriter) Create(
 		models.IntegrationName,
 		models.IntegrationConfig,
 		models.IntegrationCreatedAt,
-		models.IntegrationValidated,
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.IntegrationTable, cols, models.IntegrationCols())
 
@@ -173,7 +171,6 @@ func (*integrationWriter) Create(
 		name,
 		config,
 		time.Now(),
-		validated,
 	}
 	return getIntegration(ctx, DB, query, args...)
 }
@@ -185,7 +182,6 @@ func (*integrationWriter) CreateForUser(
 	service shared.Service,
 	name string,
 	config *shared.IntegrationConfig,
-	validated bool,
 	DB database.Database,
 ) (*models.Integration, error) {
 	cols := []string{
@@ -196,7 +192,6 @@ func (*integrationWriter) CreateForUser(
 		models.IntegrationName,
 		models.IntegrationConfig,
 		models.IntegrationCreatedAt,
-		models.IntegrationValidated,
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.IntegrationTable, cols, models.IntegrationCols())
 
@@ -213,7 +208,6 @@ func (*integrationWriter) CreateForUser(
 		name,
 		config,
 		time.Now(),
-		validated,
 	}
 	return getIntegration(ctx, DB, query, args...)
 }

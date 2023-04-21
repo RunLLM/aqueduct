@@ -6,8 +6,9 @@ import requests
 from aqueduct.constants.enums import ExecutionStatus
 from aqueduct.error import AqueductError, InternalAqueductError
 from aqueduct.models.dag import DAG
+from aqueduct.models.execution_state import ExecutionState, Logs
 from aqueduct.models.operators import Operator
-from aqueduct.models.response_models import ArtifactResult, ExecutionState, Logs, PreviewResponse
+from aqueduct.models.response_models import ArtifactResult, PreviewResponse
 from aqueduct.utils.utils import is_string_valid_uuid, print_logs
 from requests_toolbelt.multipart import decoder
 

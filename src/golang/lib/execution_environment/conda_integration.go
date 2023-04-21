@@ -3,16 +3,14 @@ package execution_environment
 import (
 	"context"
 	"strings"
-	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/execution_state"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -30,86 +28,20 @@ func ValidateCondaDevelop() error {
 	return err
 }
 
-func InitializeConda(
-	ctx context.Context,
-	integrationID uuid.UUID,
-	integrationRepo repos.Integration,
-	DB database.Database,
-) {
-	now := time.Now()
-	_, err := integrationRepo.Update(
-		ctx,
-		integrationID,
-		map[string]interface{}{
-			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
-				ExecStateKey: execution_state.SerializedRunning(&now),
-			}),
-		},
-		DB,
-	)
-	if err != nil {
-		log.Errorf("Failed to update conda integration: %v", err)
-		return
-	}
-
+// Returns the Conda path and std outputs, in addition to any errors.
+func InitializeConda() (string, string, error) {
 	out, _, err := lib_utils.RunCmd(CondaCmdPrefix, []string{"info", "--base"}, "", false)
 	if err != nil {
-		integrationConfig := (*shared.IntegrationConfig)(&map[string]string{
-			CondaPathKey: "",
-		})
-
-		execution_state.UpdateOnFailure(
-			ctx,
-			out,
-			err.Error(),
-			"Conda",
-			integrationConfig,
-			&now,
-			integrationID,
-			integrationRepo,
-			DB,
-		)
-
-		return
+		return "", out, errors.Wrap(err, "Failed to run Conda command.")
 	}
 
 	condaPath := strings.TrimSpace(out)
 
 	err = createBaseEnvs()
 	if err != nil {
-		integrationConfig := (*shared.IntegrationConfig)(&map[string]string{
-			CondaPathKey: condaPath,
-		})
-		execution_state.UpdateOnFailure(
-			ctx,
-			out,
-			err.Error(),
-			"Conda",
-			integrationConfig,
-			&now,
-			integrationID,
-			integrationRepo,
-			DB,
-		)
-
-		return
+		return condaPath, out, errors.Wrap(err, "Failed to create base Conda envs.")
 	}
-
-	_, err = integrationRepo.Update(
-		ctx,
-		integrationID,
-		map[string]interface{}{
-			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
-				CondaPathKey: condaPath,
-				ExecStateKey: execution_state.SerializedSuccess(&now),
-			}),
-		},
-		DB,
-	)
-
-	if err != nil {
-		log.Errorf("Failed to update conda integration: ")
-	}
+	return condaPath, out, nil
 }
 
 func GetCondaIntegration(

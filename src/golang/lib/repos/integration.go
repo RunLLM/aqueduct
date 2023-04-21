@@ -49,7 +49,6 @@ type integrationWriter interface {
 		service shared.Service,
 		name string,
 		config *shared.IntegrationConfig,
-		validated bool,
 		DB database.Database,
 	) (*models.Integration, error)
 
@@ -61,7 +60,6 @@ type integrationWriter interface {
 		service shared.Service,
 		name string,
 		config *shared.IntegrationConfig,
-		validated bool,
 		DB database.Database,
 	) (*models.Integration, error)
 
