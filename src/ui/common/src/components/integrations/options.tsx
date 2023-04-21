@@ -11,7 +11,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 
-import { Integration, isDemo } from '../../utils/integrations';
+import { Integration, isBuiltinIntegration } from '../../utils/integrations';
 import { Button } from '../primitives/Button.styles';
 
 type Props = {
@@ -39,7 +39,7 @@ const IntegrationOptions: React.FC<Props> = ({
 
   return (
     <Box display="flex" flexDirection="row" sx={{ height: 'fit-content' }}>
-      {isDemo(integration) && (
+      {isBuiltinIntegration(integration) && (
         <Button
           variant="outlined"
           onClick={onUploadCsv}
@@ -88,7 +88,7 @@ const IntegrationOptions: React.FC<Props> = ({
           </Typography>
         </MenuItem>
 
-        {!isDemo(integration) && (
+        {!isBuiltinIntegration(integration) && (
           <MenuItem
             onClick={() => {
               setAnchorEl(null);
@@ -101,7 +101,7 @@ const IntegrationOptions: React.FC<Props> = ({
             </Typography>
           </MenuItem>
         )}
-        {!isDemo(integration) && allowDeletion && (
+        {!isBuiltinIntegration(integration) && allowDeletion && (
           <MenuItem
             onClick={() => {
               setAnchorEl(null);
