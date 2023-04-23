@@ -47,11 +47,7 @@ type ResourceConfig struct {
 	MemoryMB        *int               `json:"memory_mb,omitempty"`
 	GPUResourceName *string            `json:"gpu_resource_name,omitempty"`
 	CudaVersion     *CudaVersionNumber `json:"cuda_version,omitempty"`
-}
-
-type LLMSpec struct {
-	Name   *shared.LLMName    `json:"name"`
-	Config *map[string]string `json:"config"`
+	UseLlm          *bool              `json:"use_llm,omitempty"`
 }
 
 type specUnion struct {
@@ -69,7 +65,6 @@ type specUnion struct {
 	Resources *ResourceConfig `json:"resources,omitempty"`
 
 	EngineConfig *shared.EngineConfig `json:"engine_config,omitempty"`
-	LLMSpec      *LLMSpec             `json:"llm_spec,omitempty"`
 }
 
 type Spec struct {
@@ -125,10 +120,6 @@ func (s Spec) HasFunction() bool {
 
 func (s Spec) Resources() *ResourceConfig {
 	return s.spec.Resources
-}
-
-func (s Spec) LLMSpec() *LLMSpec {
-	return s.spec.LLMSpec
 }
 
 func (s Spec) EngineConfig() *shared.EngineConfig {

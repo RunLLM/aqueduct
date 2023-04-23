@@ -38,9 +38,8 @@ class FunctionSpec(BaseModel):
     # This is specific to the check operator. This is left unset by any other function type.
     check_severity: Optional[CheckSeverity]
 
-    # These are always unset - they are only here because we forbid extra fields.
+    # This is always unset - it is only here because we forbid extra fields.
     resources: Optional[Any]
-    llm_spec: Optional[Any]
 
     class Config:
         extra = Extra.forbid

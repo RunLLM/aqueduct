@@ -262,3 +262,4 @@ class CustomizableResourceType(str, Enum, metaclass=MetaEnum):
     MEMORY = "memory"
     GPU_RESOURCE_NAME = "gpu_resource_name"
     CUDA_VERSION = "cuda_version"
+    USE_LLM = "use_llm"

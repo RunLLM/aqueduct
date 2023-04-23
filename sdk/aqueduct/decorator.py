@@ -6,6 +6,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, Union, cast
 
 import numpy as np
 
+import aqueduct
 from aqueduct import globals
 from aqueduct.artifacts._create import create_metric_or_check_artifact
 from aqueduct.artifacts.base_artifact import BaseArtifact
@@ -34,7 +35,6 @@ from aqueduct.models.operators import (
     OperatorSpec,
     ResourceConfig,
     get_operator_type,
-    LLMSpec,
 )
 from aqueduct.type_annotations import CheckFunction, MetricFunction, Number, UserFunction
 from aqueduct.utils.dag_deltas import (
@@ -400,7 +400,15 @@ def _update_operator_spec_with_engine(
 def _update_operator_spec_with_resources(
     spec: OperatorSpec,
     resources: Optional[Dict[str, Any]] = None,
+    use: Optional[str] = None,
 ) -> None:
+    if use is not None:
+        if use != aqueduct.llm:
+            raise InvalidUserArgumentException(
+                "Currently, the only supported value for `use` is `aqq.llm` (or 'llm')."
+            )
+        resources[CustomizableResourceType.USE_LLM] = True
+
     if resources is not None:
         if not isinstance(resources, Dict) or any(not isinstance(k, str) for k in resources):
             raise InvalidUserArgumentException("`resources` must be a dictionary with string keys.")
@@ -409,6 +417,7 @@ def _update_operator_spec_with_resources(
         memory = resources.get(CustomizableResourceType.MEMORY)
         gpu_resource_name = resources.get(CustomizableResourceType.GPU_RESOURCE_NAME)
         cuda_version = resources.get(CustomizableResourceType.CUDA_VERSION)
+        use_llm = resources.get(CustomizableResourceType.USE_LLM)
 
         if num_cpus is not None and (not isinstance(num_cpus, int) or num_cpus < 0):
             raise InvalidUserArgumentException(
@@ -450,44 +459,47 @@ def _update_operator_spec_with_resources(
             memory_mb=memory,
             gpu_resource_name=gpu_resource_name,
             cuda_version=cuda_version,
+            use_llm=use_llm,
         )
 
 
-def _update_operator_spec_with_llm(
-    spec: OperatorSpec,
-    llm: Optional[LLMSpec] = None,
-) -> None:
-    if llm is not None:
-        assert isinstance(llm, LLMSpec)
-        # Check to see if the engine meets the constraints of the LLM.
-        if spec.engine_config is None or spec.engine_config.type is not RuntimeType.K8S:
-            engine_type = RuntimeType.AQUEDUCT if spec.engine_config is None else spec.engine_config.type
-            raise InvalidUserArgumentException(
-                "LLM %s is currently only supported to run on Kubernetes engine. "
-                "Got engine type: %s" % (llm.name, engine_type.value)
-            )
-        # Check to see if the resources meet the constraints of the LLM.
-        requested_gpu = False
-        requested_memory = 4096 # 4GB
+def _check_llm_requirements(spec: OperatorSpec) -> None:
+    min_required_memory = 8192 # 8GB
+    max_required_memory = 32768 # 32GB
 
-        if spec.resources is not None:
-            if spec.resources.gpu_resource_name is not None:
-                requested_gpu = True
-            if spec.resources.memory_mb is not None:
-                requested_memory = spec.resources.memory_mb
+    if spec.engine_config is None or spec.engine_config.type is not RuntimeType.K8S:
+        engine_type = RuntimeType.AQUEDUCT if spec.engine_config is None else spec.engine_config.type
+        raise InvalidUserArgumentException(
+            "`use=aqueduct.llm` is only compatible with Kubernetes engine. "
+            "Got engine type: %s. "
+            "If you want to use `aqueduct-llm` with a non-Kubernetes engine, use "
+            "`requirements=['aqueduct-llm']` instead." % engine_type.value
+        )
+    # Check to see if the resources meet the constraints of the LLM.
+    requested_gpu = False
+    requested_memory = 4096 # 4GB
 
-        if llm.requires_gpu and not requested_gpu:
-            raise InvalidUserArgumentException(
-                "LLM %s requires GPU resource but it is not requested" % llm.name
-            )
+    if spec.resources.gpu_resource_name is not None:
+        requested_gpu = True
+    if spec.resources.memory_mb is not None:
+        requested_memory = spec.resources.memory_mb
 
-        if llm.min_required_memory > requested_memory:
-            raise InvalidUserArgumentException(
-                "LLM %s requires at least %dMB of memory but only %dMB is requested"
-                % (llm.name, llm.min_required_memory, requested_memory)
-            )
+    if not requested_gpu:
+        raise InvalidUserArgumentException(
+            "LLM requires GPU resource but it is not requested."
+        )
 
-        spec.llm_spec = llm
+    if min_required_memory > requested_memory:
+        raise InvalidUserArgumentException(
+            "LLMs require at least %dMB of memory but only %dMB is requested."
+            % (min_required_memory, requested_memory)
+        )
+    
+    if max_required_memory > requested_memory:
+        logger().warning(
+            "LLMs can require as much as %dMB of memory but only %dMB is requested. This may lead to out-of-memory errors."
+            % (max_required_memory, requested_memory)
+        )
 
 
 def op(
@@ -499,7 +511,7 @@ def op(
     num_outputs: Optional[int] = None,
     outputs: Optional[List[str]] = None,
     resources: Optional[Dict[str, Any]] = None,
-    llm: Optional[LLMSpec] = None,
+    use: Optional[str] = None,
 ) -> Union[DecoratedFunction, OutputArtifactsFunction]:
     """Decorator that converts regular python functions into an operator.
 
@@ -558,6 +570,9 @@ def op(
             "cuda_version" (str):
                 Version of CUDA to use with GPU (only applicable for Kubernetes engine). The currently supported
                 values are "11.4.1" and "11.8.0".
+        use:
+            Specify which foundation models to use for this operator. Currently, the only supported
+            value is `aq.llm` (or "llm"), which allows this operator to import the aqueduct_llm package.
 
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
@@ -641,8 +656,10 @@ def op(
             )
 
             _update_operator_spec_with_engine(op_spec, engine)
-            _update_operator_spec_with_resources(op_spec, resources)
-            _update_operator_spec_with_llm(op_spec, llm)
+            _update_operator_spec_with_resources(op_spec, resources, use)
+
+            if op_spec.resources is not None and op_spec.resources.use_llm:
+                _check_llm_requirements(op_spec)
 
             assert isinstance(num_outputs, int)
             return wrap_spec(
@@ -687,7 +704,7 @@ def metric(
     output: Optional[str] = None,
     engine: Optional[str] = None,
     resources: Optional[Dict[str, Any]] = None,
-    llm: Optional[LLMSpec] = None,
+    use: Optional[str] = None,
 ) -> Union[DecoratedMetricFunction, OutputArtifactFunction]:
     """Decorator that converts regular python functions into a metric.
 
@@ -739,6 +756,9 @@ def metric(
                 For example, the following values are valid: 100, "100MB", "1GB", "100mb", "1gb".
             "gpu_resource_name" (str):
                 Name of the gpu resource to use (only applicable for Kubernetes engine).
+        use:
+            Specify which foundation models to use for this operator. Currently, the only supported
+            value is `aq.llm` (or "llm"), which allows this operator to import the aqueduct_llm package.
 
     Examples:
         The metric name is inferred from the function name. The description is pulled from the function
@@ -811,8 +831,10 @@ def metric(
             metric_spec = MetricSpec(function=function_spec)
             op_spec = OperatorSpec(metric=metric_spec)
             _update_operator_spec_with_engine(op_spec, engine)
-            _update_operator_spec_with_resources(op_spec, resources)
-            _update_operator_spec_with_llm(op_spec, llm)
+            _update_operator_spec_with_resources(op_spec, resources, use)
+
+            if op_spec.resources is not None and op_spec.resources.use_llm:
+                _check_llm_requirements(op_spec)
 
             output_names = [output] if output is not None else None
             numeric_artifact = wrap_spec(
@@ -870,7 +892,7 @@ def check(
     output: Optional[str] = None,
     engine: Optional[str] = None,
     resources: Optional[Dict[str, Any]] = None,
-    llm: Optional[LLMSpec] = None,
+    use: Optional[str] = None,
 ) -> Union[DecoratedCheckFunction, OutputArtifactFunction]:
     """Decorator that converts a regular python function into a check.
 
@@ -925,6 +947,9 @@ def check(
                 For example, the following values are valid: 100, "100MB", "1GB", "100mb", "1gb".
             "gpu_resource_name" (str):
                 Name of the gpu resource to use (only applicable for Kubernetes engine).
+        use:
+            Specify which foundation models to use for this operator. Currently, the only supported
+            value is `aq.llm` (or "llm"), which allows this operator to import the aqueduct_llm package.
 
     Examples:
         The check name is inferred from the function name. The description is pulled from the function
@@ -996,8 +1021,10 @@ def check(
             check_spec = CheckSpec(level=severity, function=function_spec)
             op_spec = OperatorSpec(check=check_spec)
             _update_operator_spec_with_engine(op_spec, engine)
-            _update_operator_spec_with_resources(op_spec, resources)
-            _update_operator_spec_with_llm(op_spec, llm)
+            _update_operator_spec_with_resources(op_spec, resources, use)
+
+            if op_spec.resources is not None and op_spec.resources.use_llm:
+                _check_llm_requirements(op_spec)
 
             output_names = [output] if output is not None else None
             bool_artifact = wrap_spec(
