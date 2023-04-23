@@ -116,3 +116,15 @@ func generateUpdateExecStateSnippet(
 			status, string(timestampValue),
 		}, nil
 }
+
+// Creates the initial execution state for when we initially kick off some process (eg. storage migration).
+func createPendingExecState() *shared.ExecutionState {
+	now := time.Now()
+	return &shared.ExecutionState{
+		Status: shared.PendingExecutionStatus,
+		Timestamps: &shared.ExecutionTimestamps{
+			RegisteredAt: &now,
+			PendingAt:    &now,
+		},
+	}
+}

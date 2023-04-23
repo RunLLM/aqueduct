@@ -219,11 +219,12 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
             # Stand up the external integration first.
             if integration_config["type"] == ServiceType.SQLITE:
                 _setup_external_sqlite_db(integration_config["database"])
-
-            if integration_config["type"] == ServiceType.POSTGRES:
+            elif integration_config["type"] == ServiceType.POSTGRES:
                 _setup_postgres_db()
-
-            if integration_config["type"] == ServiceType.MYSQL:
+            elif (
+                integration_config["type"] == ServiceType.MYSQL
+                or integration_config["type"] == ServiceType.MARIADB
+            ):
                 _setup_mysql_db()
 
             client.connect_integration(

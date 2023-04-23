@@ -6,7 +6,7 @@ import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: SparkConfig = {
-  livy_server_url: '',
+  livy_server_url: 'http://cluster-url.com:8998',
 };
 
 type Props = {

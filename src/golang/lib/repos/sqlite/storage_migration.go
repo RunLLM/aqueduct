@@ -2,11 +2,9 @@ package sqlite
 
 import (
 	"context"
-	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
@@ -56,17 +54,10 @@ func (*storageMigrationWriter) Create(
 		return nil, err
 	}
 
-	now := time.Now()
 	args := []interface{}{
 		id,
 		destIntegrationID,
-		&shared.ExecutionState{
-			Status: shared.PendingExecutionStatus,
-			Timestamps: &shared.ExecutionTimestamps{
-				RegisteredAt: &now,
-				PendingAt:    &now,
-			},
-		},
+		createPendingExecState(),
 		false, // current
 	}
 

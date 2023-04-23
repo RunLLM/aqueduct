@@ -1,7 +1,7 @@
 boto3<=1.26.34
 cloudpickle<=2.2.0
 google-cloud-storage<=2.7.0
-numpy<=1.24.0
+numpy<=1.24.2
 pandas<=1.5.2
 pydantic<=1.10.2
 SQLAlchemy<2.0.0
@@ -11,4 +11,4 @@ typing_extensions>=4.3.0,<=4.4.0
 Pillow<=9.4.0
 packaging<=23.0
 pymongo<=4.3.3
-aqueduct-sdk==0.2.10
+aqueduct-sdk==0.2.11

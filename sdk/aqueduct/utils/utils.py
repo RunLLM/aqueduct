@@ -14,9 +14,10 @@ from aqueduct.models.config import (
 from aqueduct.models.dag import Schedule
 from aqueduct.models.integration import IntegrationInfo
 from aqueduct.models.operators import ParamSpec
+from aqueduct.utils.integration_validation import validate_integration_is_connected
 from croniter import croniter
 
-from ..models.response_models import Logs
+from ..models.execution_state import Logs
 from .serialization import artifact_type_to_serialization_type, serialize_val
 from .type_inference import _bytes_to_base64_string
 
@@ -160,6 +161,8 @@ def generate_engine_config(
         )
 
     integration = integrations[integration_name]
+    validate_integration_is_connected(integration_name, integration.exec_state)
+
     if integration.service == ServiceType.AIRFLOW:
         return EngineConfig(
             type=RuntimeType.AIRFLOW,

@@ -10,20 +10,12 @@ import (
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib"
-	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/execution_state"
-	"github.com/aqueducthq/aqueduct/lib/lib_utils"
-	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
-	"github.com/aqueducthq/aqueduct/lib/repos"
-	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/aws/aws-sdk-go/service/lambda"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
@@ -38,70 +30,12 @@ const (
 	MaxConcurrentDownload = 3
 	MaxConcurrentUpload   = 5
 	RoleArnKey            = "role_arn"
-	ExecStateKey          = "exec_state"
 )
 
 func ConnectToLambda(
 	ctx context.Context,
-	authConf auth.Config,
-	integrationID uuid.UUID,
-	integrationRepo repos.Integration,
-	DB database.Database,
-) {
-	now := time.Now()
-	_, err := integrationRepo.Update(
-		ctx,
-		integrationID,
-		map[string]interface{}{
-			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
-				RoleArnKey:   "",
-				ExecStateKey: execution_state.SerializedRunning(&now),
-			}),
-		},
-		DB,
-	)
-	if err != nil {
-		log.Errorf("Failed to update lambda integration: %v", err)
-		return
-	}
-
-	lambdaConf, err := lib_utils.ParseLambdaConfig(authConf)
-	if err != nil {
-		now = time.Now()
-		integrationConfig := (*shared.IntegrationConfig)(&map[string]string{
-			RoleArnKey: lambdaConf.RoleArn,
-		})
-
-		execution_state.UpdateOnFailure(
-			ctx,
-			"",
-			errors.Wrap(err, "Unable to parse configuration.").Error(),
-			"Lambda",
-			integrationConfig,
-			&now,
-			integrationID,
-			integrationRepo,
-			DB,
-		)
-		return
-	}
-
-	_, err = integrationRepo.Update(
-		ctx,
-		integrationID,
-		map[string]interface{}{
-			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
-				RoleArnKey:   lambdaConf.RoleArn,
-				ExecStateKey: execution_state.SerializedRunning(&now),
-			}),
-		},
-		DB,
-	)
-	if err != nil {
-		log.Errorf("Failed to update lambda integration: %v", err)
-		return
-	}
-
+	lambdaRoleArn string,
+) error {
 	functionsToShip := [10]LambdaFunctionType{
 		FunctionExecutor37Type,
 		FunctionExecutor38Type,
@@ -115,65 +49,16 @@ func ConnectToLambda(
 		SnowflakeConnectorType,
 	}
 
-	err = AuthenticateDockerToECR()
+	err := AuthenticateDockerToECR()
 	if err != nil {
-		now = time.Now()
-		integrationConfig := (*shared.IntegrationConfig)(&map[string]string{
-			RoleArnKey: lambdaConf.RoleArn,
-		})
-
-		execution_state.UpdateOnFailure(
-			ctx,
-			"",
-			errors.Wrap(err, "Unable to authenticate Lambda Function.").Error(),
-			"Lambda",
-			integrationConfig,
-			&now,
-			integrationID,
-			integrationRepo,
-			DB,
-		)
-
-		return
+		return errors.Wrap(err, "Unable to authenticate Lambda Function.")
 	}
 
-	err = CreateLambdaFunction(ctx, functionsToShip[:], lambdaConf.RoleArn)
+	err = CreateLambdaFunction(ctx, functionsToShip[:], lambdaRoleArn)
 	if err != nil {
-		now = time.Now()
-		integrationConfig := (*shared.IntegrationConfig)(&map[string]string{
-			RoleArnKey: lambdaConf.RoleArn,
-		})
-
-		execution_state.UpdateOnFailure(
-			ctx,
-			"",
-			errors.Wrap(err, "Unable to create Lambda Function.").Error(),
-			"Lambda",
-			integrationConfig,
-			&now,
-			integrationID,
-			integrationRepo,
-			DB,
-		)
-
-		return
+		return errors.Wrap(err, "Unable to create Lambda Function.")
 	}
-
-	_, err = integrationRepo.Update(
-		ctx,
-		integrationID,
-		map[string]interface{}{
-			models.IntegrationConfig: (*shared.IntegrationConfig)(&map[string]string{
-				RoleArnKey:   lambdaConf.RoleArn,
-				ExecStateKey: execution_state.SerializedSuccess(&now),
-			}),
-		},
-		DB,
-	)
-
-	if err != nil {
-		log.Errorf("Failed to update lambda integration: ")
-	}
+	return nil
 }
 
 func CreateLambdaFunction(ctx context.Context, functionsToShip []LambdaFunctionType, roleArn string) error {
@@ -193,7 +78,11 @@ func CreateLambdaFunction(ctx context.Context, functionsToShip []LambdaFunctionT
 	defer close(pushImageChannel)
 	AddFunctionTypeToChannel(functionsToShip[:], pullImageChannel)
 
-	for i := 0; i < MaxConcurrentDownload; i++ {
+	numPullWorkers := MaxConcurrentDownload
+	if numPullWorkers > len(functionsToShip) {
+		numPullWorkers = len(functionsToShip)
+	}
+	for i := 0; i < numPullWorkers; i++ {
 		errGroup.Go(func() error {
 			for {
 				select {
@@ -220,7 +109,11 @@ func CreateLambdaFunction(ctx context.Context, functionsToShip []LambdaFunctionT
 	AddFunctionTypeToChannel(functionsToShip[:], incompleteWorkChannel)
 
 	// Receive the downloaded docker images from push channels and create lambda functions on a concurrency of "MaxConcurrentUpload".
-	for i := 0; i < MaxConcurrentUpload; i++ {
+	numPushWorkers := MaxConcurrentUpload
+	if numPushWorkers > len(functionsToShip) {
+		numPushWorkers = len(functionsToShip)
+	}
+	for i := 0; i < numPushWorkers; i++ {
 		errGroup.Go(func() error {
 			for {
 				select {
@@ -360,6 +253,8 @@ func PushImageToPrivateECR(functionType LambdaFunctionType, roleArn string) erro
 	repositoryUri := fmt.Sprintf("%s:%s", *result.Repository.RepositoryUri, lib.ServerVersionNumber)
 
 	cmd := exec.Command("docker", "tag", versionedLambdaImageUri, repositoryUri)
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
 	err = cmd.Run()
 	if err != nil {
 		log.Info(stdout.String())
@@ -368,6 +263,8 @@ func PushImageToPrivateECR(functionType LambdaFunctionType, roleArn string) erro
 	}
 
 	cmd = exec.Command("docker", "push", repositoryUri)
+	cmd.Stdout = stdout
+	cmd.Stderr = stderr
 	err = cmd.Run()
 	if err != nil {
 		log.Info(stdout.String())
