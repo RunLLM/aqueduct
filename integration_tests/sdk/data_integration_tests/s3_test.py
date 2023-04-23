@@ -2,14 +2,14 @@ from typing import Optional
 
 import pandas as pd
 import pytest
-from PIL import Image
-
-from aqueduct import op
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import ArtifactType
 from aqueduct.error import AqueductError, InvalidUserArgumentException
 from aqueduct.flow import Flow
 from aqueduct.integrations.s3_integration import S3Integration
+from PIL import Image
+
+from aqueduct import op
 from sdk.data_integration_tests.flow_manager import FlowManager
 from sdk.data_integration_tests.s3_data_validator import S3DataValidator
 from sdk.data_integration_tests.save import save

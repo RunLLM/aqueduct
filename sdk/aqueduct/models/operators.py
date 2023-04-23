@@ -1,7 +1,5 @@
 import uuid
-from typing import Dict, List, Optional, Union
-
-from pydantic import BaseModel, Extra
+from typing import List, Optional, Union
 
 from aqueduct.constants.enums import (
     ArtifactType,
@@ -20,6 +18,7 @@ from aqueduct.constants.enums import (
 from aqueduct.error import AqueductError, UnsupportedFeatureException
 from aqueduct.models.config import EngineConfig
 from aqueduct.models.integration import IntegrationInfo
+from pydantic import BaseModel, Extra
 
 
 class GithubMetadata(BaseModel):

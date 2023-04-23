@@ -1,8 +1,9 @@
 from typing import Any, Callable, Dict, List, Optional, Union
 
-from aqueduct import Client, Flow
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import ExecutionStatus
+
+from aqueduct import Client, Flow
 from sdk.shared.flow_helpers import publish_flow_test, trigger_flow_test
 
 

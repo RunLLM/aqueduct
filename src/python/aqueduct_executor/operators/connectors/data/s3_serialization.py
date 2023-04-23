@@ -4,13 +4,12 @@ from typing import Any, Callable, Dict, List, Optional
 
 import cloudpickle as pickle
 import pandas as pd
-from aqueduct_executor.operators.connectors.data.common import S3TableFormat
-from aqueduct_executor.operators.utils.enums import ArtifactType
-from PIL import Image
-
 from aqueduct.constants.enums import S3SerializationType
 from aqueduct.utils.serialization import PickleableCollectionSerializationFormat
 from aqueduct.utils.type_inference import infer_artifact_type
+from aqueduct_executor.operators.connectors.data.common import S3TableFormat
+from aqueduct_executor.operators.utils.enums import ArtifactType
+from PIL import Image
 
 _DEFAULT_JSON_ENCODING = "utf8"
 _DEFAULT_IMAGE_FORMAT = "jpeg"

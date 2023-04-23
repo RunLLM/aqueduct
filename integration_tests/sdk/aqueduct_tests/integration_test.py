@@ -1,7 +1,4 @@
 import pytest
-from pydantic import ValidationError
-
-from aqueduct import global_config
 from aqueduct.constants.enums import ServiceType
 from aqueduct.error import (
     AqueductError,
@@ -11,6 +8,9 @@ from aqueduct.error import (
     InvalidUserArgumentException,
 )
 from aqueduct.integrations.connect_config import K8sConfig
+from pydantic import ValidationError
+
+from aqueduct import global_config
 
 from ..shared.data_objects import DataObject
 from .extract import extract

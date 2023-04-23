@@ -1,7 +1,8 @@
 import uuid
 
-from aqueduct import Client, Flow
 from aqueduct.models.integration import Integration
+
+from aqueduct import Client, Flow
 from sdk.shared.globals import artifact_id_to_saved_identifier
 
 """These helpers are shared across both integration test suites."""

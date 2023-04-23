@@ -5,9 +5,6 @@ from functools import wraps
 from typing import Any, Callable, Dict, List, Mapping, Optional, Union, cast
 
 import numpy as np
-
-import aqueduct
-from aqueduct import globals
 from aqueduct.artifacts._create import create_metric_or_check_artifact
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
@@ -46,6 +43,9 @@ from aqueduct.utils.dag_deltas import (
 from aqueduct.utils.function_packaging import serialize_function
 from aqueduct.utils.naming import default_artifact_name_from_op_name, sanitize_artifact_name
 from aqueduct.utils.utils import generate_engine_config, generate_uuid
+
+import aqueduct
+from aqueduct import globals
 
 OutputArtifactFunction = Callable[..., BaseArtifact]
 
@@ -407,6 +407,10 @@ def _update_operator_spec_with_resources(
             raise InvalidUserArgumentException(
                 "Currently, the only supported value for `use` is `aqq.llm` (or 'llm')."
             )
+
+        if resources is None:
+            resources = {}
+
         resources[CustomizableResourceType.USE_LLM] = True
 
     if resources is not None:
@@ -464,11 +468,15 @@ def _update_operator_spec_with_resources(
 
 
 def _check_llm_requirements(spec: OperatorSpec) -> None:
-    min_required_memory = 8192 # 8GB
-    max_required_memory = 32768 # 32GB
+    assert spec.resources is not None
+
+    min_required_memory = 8192  # 8GB
+    max_required_memory = 32768  # 32GB
 
     if spec.engine_config is None or spec.engine_config.type is not RuntimeType.K8S:
-        engine_type = RuntimeType.AQUEDUCT if spec.engine_config is None else spec.engine_config.type
+        engine_type = (
+            RuntimeType.AQUEDUCT if spec.engine_config is None else spec.engine_config.type
+        )
         raise InvalidUserArgumentException(
             "`use=aqueduct.llm` is only compatible with Kubernetes engine. "
             "Got engine type: %s. "
@@ -476,8 +484,8 @@ def _check_llm_requirements(spec: OperatorSpec) -> None:
             "`requirements=['aqueduct-llm']` instead." % engine_type.value
         )
     # Check to see if the resources meet the constraints of the LLM.
-    requested_gpu = False
-    requested_memory = 4096 # 4GB
+    requested_gpu = False  # this is what we default to if gpu_resource_name is not specified.
+    requested_memory = 4096  # 4GB, this is what we defaults to if memory is not specified.
 
     if spec.resources.gpu_resource_name is not None:
         requested_gpu = True
@@ -485,16 +493,14 @@ def _check_llm_requirements(spec: OperatorSpec) -> None:
         requested_memory = spec.resources.memory_mb
 
     if not requested_gpu:
-        raise InvalidUserArgumentException(
-            "LLM requires GPU resource but it is not requested."
-        )
+        raise InvalidUserArgumentException("LLM requires GPU resource but it is not requested.")
 
     if min_required_memory > requested_memory:
         raise InvalidUserArgumentException(
             "LLMs require at least %dMB of memory but only %dMB is requested."
             % (min_required_memory, requested_memory)
         )
-    
+
     if max_required_memory > requested_memory:
         logger().warning(
             "LLMs can require as much as %dMB of memory but only %dMB is requested. This may lead to out-of-memory errors."

@@ -1,7 +1,6 @@
 import json
 from typing import List, Optional, Union
 
-from aqueduct import globals
 from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, S3TableFormat
@@ -17,6 +16,8 @@ from aqueduct.models.operators import (
 )
 from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import generate_uuid
+
+from aqueduct import globals
 
 from ..artifacts.create import to_artifact_class
 from ..error import InvalidUserArgumentException

@@ -1,7 +1,6 @@
 import json
 from typing import Any, Dict, List, Optional
 
-from aqueduct import globals
 from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
@@ -21,6 +20,8 @@ from aqueduct.models.operators import (
 from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.naming import default_artifact_name_from_op_name, sanitize_artifact_name
 from aqueduct.utils.utils import generate_uuid
+
+from aqueduct import globals
 
 
 class MongoDBCollectionIntegration(Integration):

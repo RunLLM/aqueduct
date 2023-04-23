@@ -6,10 +6,6 @@ from typing import Any, Callable, Dict, List, Optional, Union, cast
 
 import cloudpickle as pickle
 import pandas as pd
-from bson import json_util as bson_json_util
-from PIL import Image
-from pydantic import BaseModel
-
 from aqueduct.constants.enums import (
     ArtifactType,
     LocalDataSerializationType,
@@ -19,6 +15,9 @@ from aqueduct.constants.enums import (
 )
 from aqueduct.utils.local_data import _convert_to_local_data_table_format
 from aqueduct.utils.type_inference import infer_artifact_type
+from bson import json_util as bson_json_util
+from PIL import Image
+from pydantic import BaseModel
 
 from .format import DEFAULT_ENCODING
 from .function_packaging import _make_temp_dir
