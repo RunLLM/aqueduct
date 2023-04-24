@@ -97,7 +97,7 @@ func (h *GetWorkflowHistoryHandler) Perform(ctx context.Context, interfaceArgs i
 		return nil, http.StatusBadRequest, errors.Wrap(err, fmt.Sprintf("Workflow %v does not exist.", args.workflowId))
 	}
 
-	results, err := h.DAGResultRepo.GetByWorkflow(ctx, args.workflowId, h.Database)
+	results, err := h.DAGResultRepo.GetByWorkflow(ctx, args.workflowId, "", -1, h.Database)
 	if err != nil && err != database.ErrNoRows() { // Don't return an error if there are just no rows.
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while retrieving workflow runs.")
 	}

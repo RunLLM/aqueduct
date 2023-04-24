@@ -510,7 +510,7 @@ func (eng *aqEngine) DeleteWorkflow(
 		dagIDs = append(dagIDs, dag.ID)
 	}
 
-	dagResultsToDelete, err := eng.DAGResultRepo.GetByWorkflow(ctx, workflowObj.ID, txn)
+	dagResultsToDelete, err := eng.DAGResultRepo.GetByWorkflow(ctx, workflowObj.ID, "", -1, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving workflow dag results.")
 	}

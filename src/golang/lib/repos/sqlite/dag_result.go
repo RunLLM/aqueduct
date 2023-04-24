@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"time"
+	"strconv"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
@@ -52,13 +53,23 @@ func (*dagResultReader) GetBatch(ctx context.Context, IDs []uuid.UUID, DB databa
 	return getDAGResults(ctx, DB, query, args...)
 }
 
-func (*dagResultReader) GetByWorkflow(ctx context.Context, workflowID uuid.UUID, DB database.Database) ([]models.DAGResult, error) {
+func (*dagResultReader) GetByWorkflow(ctx context.Context, workflowID uuid.UUID, orderBy string, limit int, DB database.Database) ([]models.DAGResult, error) {
+	var orderByQuery string
+	if len(orderBy) > 0 {
+		orderByQuery = " ORDER BY " + orderBy + " DESC"
+	}
+
+	var limitQuery string
+	if limit >= 0 {
+		limitQuery = " LIMIT " + strconv.Itoa(limit)
+	}
+		
 	query := fmt.Sprintf(
 		`SELECT %s 
 		FROM workflow_dag_result, workflow_dag 
 		WHERE 
 			workflow_dag_result.workflow_dag_id = workflow_dag.id 
-			AND workflow_dag.workflow_id = $1;`,
+			AND workflow_dag.workflow_id = $1` + orderByQuery + limitQuery + `;`,
 		models.DAGResultColsWithPrefix(),
 	)
 	args := []interface{}{workflowID}

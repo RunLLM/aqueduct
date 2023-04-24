@@ -184,7 +184,7 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 		dags[dbDAG.ID] = constructedDAG
 	}
 
-	dagResults, err := h.DAGResultRepo.GetByWorkflow(ctx, args.workflowID, h.Database)
+	dagResults, err := h.DAGResultRepo.GetByWorkflow(ctx, args.workflowID, "", -1, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
 	}

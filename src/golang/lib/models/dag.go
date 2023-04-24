@@ -38,13 +38,13 @@ type DAG struct {
 
 // DAGCols returns a comma-separated string of all DAG columns.
 func DAGCols() string {
-	return strings.Join(allDAGCols(), ",")
+	return strings.Join(AllDAGCols(), ",")
 }
 
 // DAGColsWithPrefix returns a comma-separated string of all
 // DAG columns prefixed by the table name.
 func DAGColsWithPrefix() string {
-	cols := allDAGCols()
+	cols := AllDAGCols()
 	for i, col := range cols {
 		cols[i] = fmt.Sprintf("%s.%s", DagTable, col)
 	}
@@ -52,7 +52,7 @@ func DAGColsWithPrefix() string {
 	return strings.Join(cols, ",")
 }
 
-func allDAGCols() []string {
+func AllDAGCols() []string {
 	return []string{
 		DagID,
 		DagWorkflowID,

@@ -121,7 +121,7 @@ func syncWorkflowDag(
 		return err
 	}
 
-	dagResults, err := dagResultRepo.GetByWorkflow(ctx, dag.WorkflowID, DB)
+	dagResults, err := dagResultRepo.GetByWorkflow(ctx, dag.WorkflowID, "", -1, DB)
 	if err != nil {
 		return err
 	}
