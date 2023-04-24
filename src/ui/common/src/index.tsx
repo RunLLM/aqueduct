@@ -85,9 +85,9 @@ import Node from './components/workflows/nodes/Node';
 import nodeTypes from './components/workflows/nodes/nodeTypes';
 import ReactFlowCanvas from './components/workflows/ReactFlowCanvas';
 import RequireDagOrResult from './components/workflows/RequireDagOrResult';
-import VersionSelector from './components/workflows/version_selector';
-import WorkflowHeader from './components/workflows/workflowHeader';
+import WorkflowHeader from './components/workflows/WorkflowHeader';
 import WorkflowSettings from './components/workflows/WorkflowSettings';
+import VersionSelector from './components/workflows/WorkflowVersionSelector';
 import { aqueductApi } from './handlers/AqueductApi';
 import { handleGetArtifactResultContent } from './handlers/getArtifactResultContent';
 import { handleGetServerConfig } from './handlers/getServerConfig';
@@ -131,6 +131,7 @@ import notifications, {
   handleFetchNotifications,
   notificationsSlice,
 } from './reducers/notifications';
+import workflowPage from './reducers/pages/Workflow';
 import serverConfig from './reducers/serverConfig';
 import workflow, {
   handleGetArtifactResults,
@@ -369,6 +370,7 @@ export {
   WorkflowHeader,
   workflowHistory,
   WorkflowPage,
+  workflowPage,
   WorkflowSettings,
   workflowSlice,
   WorkflowsPage,

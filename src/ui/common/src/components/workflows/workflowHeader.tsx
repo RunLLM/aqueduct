@@ -1,40 +1,45 @@
-import {
-  faCalendar,
-  faEllipsis,
-  faMicrochip,
-} from '@fortawesome/free-solid-svg-icons';
+import { faEllipsis, faMicrochip } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Collapse, Tooltip, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
-import React, { useEffect, useLayoutEffect, useState } from 'react';
-import Markdown from 'react-markdown';
+import React, { useLayoutEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
-import { visitParents } from 'unist-util-visit-parents';
 
-import { RootState } from '../../stores/store';
-import style from '../../styles/markdown.module.css';
-import { theme } from '../../styles/theme/theme';
-import { getNextUpdateTime } from '../../utils/cron';
-import { EngineType } from '../../utils/engine';
-import ExecutionStatus, { LoadingStatusEnum } from '../../utils/shared';
 import {
-  getWorkflowEngineTypes,
-  WorkflowDag,
-  WorkflowUpdateTrigger,
-} from '../../utils/workflows';
+  useDagGetQuery,
+  useDagResultsGetQuery,
+  useNodesGetQuery,
+  useWorkflowGetQuery,
+} from '../../handlers/AqueductApi';
+import { RootState } from '../../stores/store';
+import { theme } from '../../styles/theme/theme';
+import { EngineType } from '../../utils/engine';
+import ExecutionStatus from '../../utils/shared';
+import { reduceEngineTypes } from '../../utils/workflows';
 import ResourceItem from '../pages/workflows/components/ResourceItem';
-import VersionSelector from './version_selector';
+import WorkflowDescription from './WorkflowDescription';
+import WorkflowNextUpdateTime from './WorkflowNextUpdateTime';
 import { StatusIndicator } from './workflowStatus';
+import VersionSelector from './WorkflowVersionSelector';
 
 export const WorkflowPageContentId = 'workflow-page-main';
 
 type Props = {
-  workflowDag: WorkflowDag;
+  apiKey: string;
+  workflowId: string;
+  dagId: string;
+  dagResultId?: string;
 };
 
 const ContainerWidthBreakpoint = 700;
 
-const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
+const WorkflowHeader: React.FC<Props> = ({
+  apiKey,
+  workflowId,
+  dagId,
+  dagResultId,
+}) => {
+  // TODO: Refactor
   const currentNode = useSelector(
     (state: RootState) => state.nodeSelectionReducer.selected
   );
@@ -60,53 +65,24 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
   useLayoutEffect(getContainerSize, [currentNode]);
 
   const [showDescription, setShowDescription] = useState(false);
-  const workflow = useSelector((state: RootState) => state.workflowReducer);
-  const workflowHistory = useSelector(
-    (state: RootState) => state.workflowHistoryReducer
-  );
-  const [selectedResultIdx, setSelectedResultIdx] = useState(0);
+  const { data: workflow } = useWorkflowGetQuery({ apiKey, workflowId });
+  const { data: dag } = useDagGetQuery({ apiKey, workflowId, dagId });
+  const { data: dagResults } = useDagResultsGetQuery({ apiKey, workflowId });
+  const { data: nodes } = useNodesGetQuery({ apiKey, workflowId, dagId });
+  const dagResult = dagResults.filter((x) => x.dag_id === dagResultId)[0];
 
-  // Whenever the workflow reducer's selected result changes, we update our local state to
-  // have the correct index of the workflow history list. This is used to ensure that we show
-  // the correct execution status in the header.
-  useEffect(() => {
-    if (workflowHistory.status.loading !== LoadingStatusEnum.Succeeded) {
-      return;
-    }
-
-    for (let i = 0; i < workflowHistory.history.versions.length; i++) {
-      const result = workflowHistory.history.versions[i];
-      if (result.versionId === workflow.selectedResult.id) {
-        setSelectedResultIdx(i);
-      }
-    }
-  }, [workflow.selectedResult]);
-
-  let selectedWorkflowStatus = ExecutionStatus.Unknown;
-  if (workflowHistory.status.loading === LoadingStatusEnum.Succeeded) {
-    selectedWorkflowStatus =
-      workflowHistory.history.versions[selectedResultIdx]?.exec_state.status;
+  if (!dag || !workflow || !nodes) {
+    // We simply do not render if main data is not available.
+    // We expect caller to handle loading and error status.
+    return null;
   }
 
-  const name = workflowDag.metadata?.name ?? '';
-  const description = workflowDag.metadata?.description;
-
-  let nextUpdate;
-  if (
-    workflowDag.metadata?.schedule?.trigger ===
-      WorkflowUpdateTrigger.Periodic &&
-    !workflowDag.metadata?.schedule?.paused
-  ) {
-    const nextUpdateTime = getNextUpdateTime(
-      workflowDag.metadata?.schedule?.cron_schedule
-    );
-
-    nextUpdate = nextUpdateTime.toDate().toLocaleString();
-  }
+  const status = dagResult?.exec_state?.status ?? ExecutionStatus.Unknown;
+  const name = workflow.name;
 
   const showAirflowUpdateWarning =
-    workflowDag.engine_config.type === EngineType.Airflow &&
-    !workflowDag.engine_config.airflow_config?.matches_airflow;
+    dag.engine_config.type === EngineType.Airflow &&
+    !dag.engine_config.airflow_config?.matches_airflow;
   const airflowUpdateWarning = (
     <Box maxWidth="800px">
       <Alert severity="warning">
@@ -117,22 +93,10 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
     </Box>
   );
 
-  /**
-   * Wrap text in a `custom-typography` tag
-   */
-  function rehypeWrapText() {
-    return function wrapTextTransform(tree) {
-      visitParents(tree, 'text', (node, ancestors) => {
-        if (ancestors[ancestors.length - 1]?.tagName !== 'custom-typography') {
-          node.type = 'element';
-          node.tagName = 'custom-typography';
-          node.children = [{ type: 'text', value: node.value }];
-        }
-      });
-    };
-  }
-
-  const engines = getWorkflowEngineTypes(workflowDag);
+  const engines = reduceEngineTypes(
+    dag.engine_config.type,
+    nodes.operators.map((op) => op.spec?.engine_config?.type).filter((t) => !!t)
+  );
 
   return (
     <Box>
@@ -145,9 +109,7 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          {!!workflow.dagResults && workflow.dagResults.length > 0 && (
-            <StatusIndicator status={selectedWorkflowStatus} />
-          )}
+          {!!dagResult && <StatusIndicator status={status} />}
 
           <Typography
             variant="h5"
@@ -157,11 +119,9 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
             {name}
           </Typography>
 
-          {workflow.dagResults && workflow.dagResults.length > 0 && (
-            <Box ml={2}>
-              <VersionSelector />
-            </Box>
-          )}
+          <Box ml={2}>
+            <VersionSelector apiKey={apiKey} workflowId={workflowId} />
+          </Box>
         </Box>
 
         <Box
@@ -208,20 +168,7 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
               </Box>
             </Box>
           </Tooltip>
-          {/* Display the next workflow run. */}
-          {nextUpdate && (
-            <Tooltip title="Next Workflow Run" arrow>
-              <Box display="flex" alignItems="center" ml={2}>
-                <Box mr={1}>
-                  <FontAwesomeIcon
-                    icon={faCalendar}
-                    color={theme.palette.gray[800]}
-                  />
-                </Box>
-                <Typography>{nextUpdate}</Typography>
-              </Box>
-            </Tooltip>
-          )}
+          <WorkflowNextUpdateTime workflow={workflow} />
         </Box>
 
         <Box
@@ -234,17 +181,7 @@ const WorkflowHeader: React.FC<Props> = ({ workflowDag }) => {
             borderRadius: '4px',
           }}
         >
-          <Markdown
-            className={style.reactMarkdown}
-            rehypePlugins={[rehypeWrapText]}
-            components={{
-              'custom-typography': ({ children }) => (
-                <Typography variant="body1">{children}</Typography>
-              ),
-            }}
-          >
-            {description === '' ? '*No description.*' : description}
-          </Markdown>
+          <WorkflowDescription workflow={workflow} />
         </Box>
       </Collapse>
 

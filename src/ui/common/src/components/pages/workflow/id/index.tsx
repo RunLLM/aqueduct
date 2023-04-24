@@ -12,7 +12,6 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { parse } from 'query-string';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ReactFlowProvider } from 'react-flow-renderer';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ReactFlowProvider } from 'reactflow';
@@ -50,7 +49,7 @@ import { Tab, Tabs } from '../../../primitives/Tabs.styles';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowHeader, {
   WorkflowPageContentId,
-} from '../../../workflows/workflowHeader';
+} from '../../../workflows/WorkflowHeader';
 import WorkflowSettings from '../../../workflows/WorkflowSettings';
 import { LayoutProps } from '../../types';
 import RunWorkflowDialog from '../../workflows/components/RunWorkflowDialog';
@@ -596,8 +595,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                         // to an *earlier* run.
                         dispatch(selectResultIdx(selectedResultIdx + 1));
                         navigate(
-                          `?workflowDagResultId=${
-                            workflow.dagResults[selectedResultIdx + 1].id
+                          `?workflowDagResultId=${workflow.dagResults[selectedResultIdx + 1].id
                           }`
                         );
                       }}
@@ -620,8 +618,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                         // to a *newer* run.
                         dispatch(selectResultIdx(selectedResultIdx - 1));
                         navigate(
-                          `?workflowDagResultId=${
-                            workflow.dagResults[selectedResultIdx - 1].id
+                          `?workflowDagResultId=${workflow.dagResults[selectedResultIdx - 1].id
                           }`
                         );
                       }}

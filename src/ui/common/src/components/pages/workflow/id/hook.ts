@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import { handleGetWorkflowDag } from '../../../../handlers/getWorkflowDag';
@@ -10,6 +10,14 @@ import { WorkflowDagWithLoadingStatus } from '../../../../reducers/workflowDags'
 import { AppDispatch, RootState } from '../../../../stores/store';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { isInitial } from '../../../../utils/shared';
+import { useDagResultsGetQuery } from '../../../../handlers/AqueductApi';
+import { selectDagResult } from '../../../../reducers/pages/Workflow';
+
+export type useWorkflowIdsOutputs = {
+  workflowId: string;
+  dagId: string;
+  dagResultId?: string;
+}
 
 export type useWorkflowOutputs = {
   breadcrumbs: BreadcrumbLink[];
@@ -20,11 +28,24 @@ export type useWorkflowOutputs = {
   workflowDagResultWithLoadingStatus: WorkflowDagResultWithLoadingStatus;
 };
 
+export default function useWorkflowIds(apiKey: string): useWorkflowIdsOutputs {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { workflowId: wfIdParam, workflowDagId: dagIdParam, workflowDagResultId: dagResultIdParam } = useParams();
+  const { data: dagResults } = useDagResultsGetQuery({ apiKey, workflowId: wfIdParam });
+  // Select the first availale dag result if ID is not provided.
+  const dagResult = dagResultIdParam ? (dagResults ?? []).filter(r => r.id === dagResultIdParam) : dagResults[0]
+  const workflowPageState = useSelector((state: RootState) => state.workflowPageReducer)
+  useEffect(() => {
+    dispatch(selectDagResult({ workflowId, dagResultId: workflowDagResultId }))
+  }, [wfIdParam, dagIdParam, dagResultIdParam])
+}
+
 export default function useWorkflow(
   apiKey: string,
-  workflowIdProp: string,
-  workflowDagIdProp: string,
-  workflowDagResultIdProp: string,
+  workflowIdProp: string | undefined,
+  workflowDagIdProp: string | undefined,
+  workflowDagResultIdProp: string | undefined,
   title = 'Workflow'
 ): useWorkflowOutputs {
   const dispatch: AppDispatch = useDispatch();
