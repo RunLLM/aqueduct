@@ -243,7 +243,7 @@ def run(spec: FunctionSpec) -> None:
     """
     Executes a function operator.
     """
-    run_helper(
+    execute_function_spec(
         spec=spec,
         read_artifacts_func=utils.read_artifacts,
         write_artifact_func=utils.write_artifact,
@@ -251,7 +251,7 @@ def run(spec: FunctionSpec) -> None:
     )
 
 
-def run_helper(
+def execute_function_spec(
     spec: FunctionSpec,
     read_artifacts_func: Any,
     write_artifact_func: Any,
@@ -259,17 +259,15 @@ def run_helper(
     **kwargs: Any,
 ) -> None:
     """
-    Executes a function operator. If run in a Spark environment, it uses
-    the Spark specific utils functions to read/write to storage layer and to infer the type of artifact.
+    Executes a function operator. If run in a Spark environment, it uses the Spark specific utils
+    functions to read/write to storage layer and to infer the type of artifact.
+    The only kwarg we expect is spark_session_obj.
 
-    Arguments:
-    - spec: The spec provided for this operator.
-    - read_artifacts_func: function used to read artifacts from storage layer
-    - write_artifact_func: function used to write artifacts to storage layer
-    - infer_type_func: function used to infer type of artifacts returned by operators.
-
-    The only kwarg we expect is spark_session_obj
-
+    Args:
+        spec: The spec provided for this operator.
+        read_artifacts_func: function used to read artifacts from storage layer
+        write_artifact_func: function used to write artifacts to storage layer
+        infer_type_func: function used to infer type of artifacts returned by operators.
     """
     exec_state = ExecutionState(user_logs=Logs())
     storage = parse_storage(spec.storage_config)
