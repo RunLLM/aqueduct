@@ -52,7 +52,10 @@ def _read_table_content(content: bytes) -> pd.DataFrame:
 
 
 def _read_param_table_content(content: bytes) -> pd.DataFrame:
-    return pd.read_parquet(io.BytesIO(content))
+    try:
+        return pd.read_parquet(io.BytesIO(content))
+    except:
+        return _read_table_content(content)
 
 
 def _read_bson_table_content(content: bytes) -> pd.DataFrame:
