@@ -320,49 +320,56 @@ class TestBackend:
                 for key in keys:
                     assert key in v2_workflow
                 assert v2_workflow["user_id"] == user_id
-    
+
     def test_endpoint_dag_results_get(self):
         flow_id, n_runs = self.flows["flow_with_metrics_and_checks"]
         resp = self.get_response(self.GET_DAG_RESULTS_TEMPLATE % flow_id).json()
-        
+
         assert len(resp) == n_runs
 
-        fields = ['id', 'dag_id', 'exec_state']
+        fields = ["id", "dag_id", "exec_state"]
+
         def check_structure(resp):
             for result in resp:
                 for field in fields:
                     assert field in result
-                assert result['exec_state']['status'] == 'succeeded'
-                assert result['exec_state']['failure_type'] == None
-                assert result['exec_state']['error'] == None
+                assert result["exec_state"]["status"] == "succeeded"
+                assert result["exec_state"]["failure_type"] == None
+                assert result["exec_state"]["error"] == None
 
         check_structure(resp)
 
         # Using the order parameter
         flow_id, n_runs = self.flows["flow_with_failure"]
-        resp = self.get_response(self.GET_DAG_RESULTS_TEMPLATE % flow_id,
+        resp = self.get_response(
+            self.GET_DAG_RESULTS_TEMPLATE % flow_id,
             additional_headers={
-            "order_by": "status",
-        }).json()
-        statuses = [result['exec_state']['status'] for result in resp]
+                "order_by": "status",
+            },
+        ).json()
+        statuses = [result["exec_state"]["status"] for result in resp]
         sorted_statuses = sorted(statuses, reverse=True)  # Descending order
         assert statuses == sorted_statuses
 
         # Using the limit parameter
-        resp = self.get_response(self.GET_DAG_RESULTS_TEMPLATE % flow_id,
+        resp = self.get_response(
+            self.GET_DAG_RESULTS_TEMPLATE % flow_id,
             additional_headers={
-            "limit": "1",
-        }).json()
+                "limit": "1",
+            },
+        ).json()
         assert len(resp) == 1
 
         # Using both the order and limit parameters
-        resp = self.get_response(self.GET_DAG_RESULTS_TEMPLATE % flow_id,
+        resp = self.get_response(
+            self.GET_DAG_RESULTS_TEMPLATE % flow_id,
             additional_headers={
-            "order_by": "status",
-            "limit": "1",
-        }).json()
+                "order_by": "status",
+                "limit": "1",
+            },
+        ).json()
 
-        workflow_status = [result['exec_state']['status'] for result in resp]
+        workflow_status = [result["exec_state"]["status"] for result in resp]
         assert len(workflow_status) == 1
         workflow_status = workflow_status[0]
         assert workflow_status == sorted_statuses[0]
