@@ -503,6 +503,7 @@ def test_serialization_of_pickled_collection_types():
         list_input,
         SerializationType.PICKLE,
         False,
+        False,
     )
 
     picklable_collection = PickleableCollectionSerializationFormat(

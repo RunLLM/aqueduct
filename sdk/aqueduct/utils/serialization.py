@@ -265,7 +265,7 @@ def _write_table_output(output: pd.DataFrame) -> bytes:
 
 
 def _write_param_table_output(output: pd.DataFrame) -> bytes:
-    return output.to_parquet()
+    return bytes(output.to_parquet())
 
 
 def _write_bson_table_output(output: pd.DataFrame) -> bytes:
