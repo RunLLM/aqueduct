@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
+from aqueduct.utils.serialization import deserialize
 from aqueduct_executor.operators.connectors.data import connector, extract, load
 from aqueduct_executor.operators.connectors.data.config import S3Config
 from aqueduct_executor.operators.connectors.data.s3_serialization import (
@@ -17,8 +18,6 @@ from aqueduct_executor.operators.utils.enums import ArtifactType
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 from aqueduct_executor.operators.utils.utils import delete_object
 from botocore.client import ClientError
-
-from aqueduct.utils.serialization import deserialize
 
 
 class S3Connector(connector.DataConnector):

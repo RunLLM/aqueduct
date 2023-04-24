@@ -2,9 +2,9 @@ import uuid
 from typing import Any
 
 import pandas as pd
+from aqueduct.models.integration import Integration
 
 from aqueduct import Client, Flow
-from aqueduct.models.integration import Integration
 
 from ..shared.globals import artifact_id_to_saved_identifier
 from ..shared.validation import fetch_and_validate_saved_object_identifier

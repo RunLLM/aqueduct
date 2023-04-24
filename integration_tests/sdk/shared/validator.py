@@ -2,12 +2,12 @@ import uuid
 from typing import Any, List, Tuple
 
 import pandas as pd
-
-from aqueduct import Client, Flow
 from aqueduct.constants.enums import LoadUpdateMode
 from aqueduct.integrations.sql_integration import RelationalDBIntegration
 from aqueduct.models.integration import Integration
 from aqueduct.models.operators import RelationalDBLoadParams
+
+from aqueduct import Client, Flow
 
 from .globals import artifact_id_to_saved_identifier
 from .utils import extract

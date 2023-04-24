@@ -1,8 +1,6 @@
 from typing import List, Optional, Union
 
 import pandas as pd
-
-from aqueduct import globals
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.preview import preview_artifact
 from aqueduct.artifacts.table_artifact import TableArtifact
@@ -10,6 +8,7 @@ from aqueduct.constants.enums import ArtifactType, ExecutionMode, LoadUpdateMode
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
 from aqueduct.integrations.parameters import _validate_builtin_expansions, _validate_parameters
 from aqueduct.integrations.save import _save_artifact
+from aqueduct.integrations.validation import validate_is_connected
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
 from aqueduct.models.integration import Integration, IntegrationInfo
@@ -23,6 +22,8 @@ from aqueduct.models.operators import (
 from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.naming import default_artifact_name_from_op_name, sanitize_artifact_name
 from aqueduct.utils.utils import generate_uuid
+
+from aqueduct import globals
 
 LIST_TABLES_QUERY_PG = "SELECT tablename, tableowner FROM pg_catalog.pg_tables WHERE schemaname != 'pg_catalog' AND schemaname != 'information_schema';"
 LIST_TABLES_QUERY_SNOWFLAKE = "SELECT table_name AS \"tablename\", table_owner AS \"tableowner\" FROM information_schema.tables WHERE table_schema != 'INFORMATION_SCHEMA' AND table_type = 'BASE TABLE';"
@@ -46,6 +47,7 @@ class RelationalDBIntegration(Integration):
         self._dag = dag
         self._metadata = metadata
 
+    @validate_is_connected()
     def list_tables(self) -> pd.DataFrame:
         """
         Lists the tables available in the RelationalDB integration.
@@ -80,9 +82,10 @@ class RelationalDBIntegration(Integration):
         sql_artifact = self.sql(query=list_tables_query)
         return sql_artifact.get()
 
+    @validate_is_connected()
     def table(self, name: str) -> pd.DataFrame:
         """
-        Retrieves a table from a RealtionalDB integration.
+        Retrieves a table from a RelationalDB integration.
 
         Args:
             name:
@@ -94,6 +97,7 @@ class RelationalDBIntegration(Integration):
         sql_artifact = self.sql(query=GET_TABLE_QUERY % name)
         return sql_artifact.get()
 
+    @validate_is_connected()
     def sql(
         self,
         query: Union[str, List[str], RelationalDBExtractParams],
@@ -233,6 +237,7 @@ class RelationalDBIntegration(Integration):
             # We are in lazy mode.
             return TableArtifact(self._dag, sql_output_artifact_id)
 
+    @validate_is_connected()
     def save(self, artifact: BaseArtifact, table_name: str, update_mode: LoadUpdateMode) -> None:
         """Registers a save operator of the given artifact, to be executed when it's computed in a published flow.
 
@@ -269,6 +274,11 @@ class RelationalDBIntegration(Integration):
         print("==================== SQL Integration =============================")
         print("Integration Information:")
         self._metadata.describe()
-        print("Integration Table List Preview:")
-        print(self.list_tables()["name"].head().to_string())
-        print("(only first 5 tables are shown)")
+
+        # Only list the tables if the integration is connected.
+        try:
+            print("Integration Table List Preview:")
+            print(self.list_tables()["name"].head().to_string())
+            print("(only first 5 tables are shown)")
+        except:
+            pass

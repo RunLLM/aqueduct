@@ -1,7 +1,7 @@
 import pytest
+from aqueduct.error import ArtifactNotFoundException, InvalidUserActionException
 
 from aqueduct import check, metric, op
-from aqueduct.error import ArtifactNotFoundException, InvalidUserActionException
 
 from ..shared.data_objects import DataObject
 from ..shared.flow_helpers import publish_flow_test

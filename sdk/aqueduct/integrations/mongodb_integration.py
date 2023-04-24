@@ -1,13 +1,13 @@
 import json
 from typing import Any, Dict, List, Optional
 
-from aqueduct import globals
 from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, LoadUpdateMode
 from aqueduct.integrations.parameters import _validate_parameters
 from aqueduct.integrations.save import _save_artifact
+from aqueduct.integrations.validation import validate_is_connected
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
 from aqueduct.models.integration import Integration, IntegrationInfo
@@ -22,6 +22,8 @@ from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.naming import default_artifact_name_from_op_name, sanitize_artifact_name
 from aqueduct.utils.utils import generate_uuid
 
+from aqueduct import globals
+
 
 class MongoDBCollectionIntegration(Integration):
     _collection_name: str
@@ -32,6 +34,7 @@ class MongoDBCollectionIntegration(Integration):
         self._dag = dag
         self._collection_name = collection_name
 
+    @validate_is_connected()
     def find(
         self,
         *args: List[Any],
@@ -155,6 +158,7 @@ class MongoDBCollectionIntegration(Integration):
             # We are in lazy mode.
             return TableArtifact(self._dag, output_artf_id)
 
+    @validate_is_connected()
     def save(self, artifact: BaseArtifact, update_mode: LoadUpdateMode) -> None:
         """Registers a save operator of the given artifact, to be executed when it's computed in a published flow.
 
@@ -187,6 +191,7 @@ class MongoDBIntegration(Integration):
         self._dag = dag
         self._metadata = metadata
 
+    @validate_is_connected()
     def collection(self, name: str) -> MongoDBCollectionIntegration:
         """Returns a specific collection object to call `.find()` method.
 
@@ -202,6 +207,7 @@ class MongoDBIntegration(Integration):
         print("==================== MongoDB Integration  =============================")
         self._metadata.describe()
 
+    @validate_is_connected()
     def save(self, artifact: BaseArtifact, collection: str, update_mode: LoadUpdateMode) -> None:
         """Registers a save operator of the given artifact, to be executed when it's computed in a published flow.
 

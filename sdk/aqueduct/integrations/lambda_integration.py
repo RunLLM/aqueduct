@@ -11,5 +11,5 @@ class LambdaIntegration(Integration):
 
     def describe(self) -> None:
         """Prints out a human-readable description of the K8s integration."""
-        print("==================== K8s Integration  =============================")
+        print("==================== Lambda Integration  =============================")
         self._metadata.describe()

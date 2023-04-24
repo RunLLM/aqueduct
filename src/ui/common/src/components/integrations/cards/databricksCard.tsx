@@ -22,6 +22,10 @@ export const DatabricksCard: React.FC<DatabricksCardProps> = ({
         <strong>Access Token: </strong>
         {config.access_token}
       </Typography>
+      <Typography variant="body2">
+        <strong>Instance Pool ID: </strong>
+        {config.instance_pool_id}
+      </Typography>
     </Box>
   );
 };

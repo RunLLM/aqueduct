@@ -3,7 +3,6 @@ from __future__ import annotations
 import uuid
 from typing import Any, Dict, List, Optional
 
-from aqueduct import globals
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.create import to_artifact_class
 from aqueduct.constants.enums import ArtifactType, K8sClusterStatusType
@@ -15,6 +14,8 @@ from aqueduct.utils.dag_deltas import SubgraphDAGDelta, UpdateParametersDelta, a
 from aqueduct.utils.serialization import deserialize
 from aqueduct.utils.type_inference import infer_artifact_type
 from aqueduct.utils.utils import generate_engine_config
+
+from aqueduct import globals
 
 
 def preview_artifact(
@@ -36,6 +37,13 @@ def preview_artifacts(
     Returns a list of artifacts, each corresponding to one of the provided `target_artifact_ids`, in
     the same order.
     """
+    global_engine_config: Optional[EngineConfig] = None
+    if globals.__GLOBAL_CONFIG__.engine is not None:
+        global_engine_config = generate_engine_config(
+            globals.__GLOBAL_API_CLIENT__.list_integrations(),
+            globals.__GLOBAL_CONFIG__.engine,
+        )
+
     subgraph = apply_deltas_to_dag(
         dag,
         deltas=[
@@ -49,13 +57,6 @@ def preview_artifacts(
         ],
         make_copy=True,
     )
-
-    global_engine_config: Optional[EngineConfig] = None
-    if globals.__GLOBAL_CONFIG__.engine is not None:
-        global_engine_config = generate_engine_config(
-            globals.__GLOBAL_API_CLIENT__.list_integrations(),
-            globals.__GLOBAL_CONFIG__.engine,
-        )
     subgraph.set_engine_config(global_engine_config=global_engine_config)
 
     engine_statuses = globals.__GLOBAL_API_CLIENT__.get_dynamic_engine_status_by_dag(dag=subgraph)

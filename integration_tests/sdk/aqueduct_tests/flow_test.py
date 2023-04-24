@@ -3,11 +3,11 @@ from datetime import datetime, timedelta
 
 import pandas as pd
 import pytest
+from aqueduct.constants.enums import ExecutionStatus
+from aqueduct.error import InvalidRequestError, InvalidUserArgumentException
 
 import aqueduct
 from aqueduct import check, metric, op
-from aqueduct.constants.enums import ExecutionStatus
-from aqueduct.error import InvalidRequestError, InvalidUserArgumentException
 
 from ..shared.data_objects import DataObject
 from ..shared.flow_helpers import publish_flow_test, trigger_flow_test, wait_for_flow_runs
@@ -285,7 +285,9 @@ def test_refresh_flow(client, flow_name, data_integration, engine):
         output_artifact,
         name=flow_name(),
         engine=engine,
-        schedule=aqueduct.hourly(),
+        # Schedule the test far enough in the future so that the test will
+        # finish before the next scheduled run.
+        schedule=aqueduct.hourly(minute=(datetime.now().minute + 30) % 60),
     )
 
     # Trigger the workflow again verify that it runs one more time.

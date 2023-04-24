@@ -135,3 +135,13 @@ class ClientValidationError(Error):
 # Exception raised when requirements.txt file is missing
 class RequirementsMissingError(Error):
     pass
+
+
+# Exception raised when the user attempts to use an integration that has failed to connected.
+class IntegrationFailedToConnect(Error):
+    pass
+
+
+# Exception raised when the user attempts to use an integration that is still connecting.
+class IntegrationConnectionInProgress(Error):
+    pass

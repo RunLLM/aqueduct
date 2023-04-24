@@ -2,39 +2,18 @@ import uuid
 from datetime import datetime
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel
-
 from aqueduct.constants.enums import (
     ArtifactType,
     ExecutionStatus,
-    FailureType,
     K8sClusterStatusType,
     SerializationType,
 )
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import Metadata, RetentionPolicy, Schedule
+from aqueduct.models.execution_state import ExecutionState
 from aqueduct.models.operators import LoadSpec, Operator, OperatorSpec
 from aqueduct.models.utils import human_readable_timestamp
-
-
-class Logs(BaseModel):
-    stdout: str = ""
-    stderr: str = ""
-
-    def is_empty(self) -> bool:
-        return self.stdout == "" and self.stderr == ""
-
-
-class Error(BaseModel):
-    context: str = ""
-    tip: str = ""
-
-
-class ExecutionState(BaseModel):
-    user_logs: Optional[Logs] = None
-    error: Optional[Error] = None
-    status: ExecutionStatus = ExecutionStatus.UNKNOWN
-    failure_type: Optional[FailureType] = None
+from pydantic import BaseModel
 
 
 class ArtifactResult(BaseModel):

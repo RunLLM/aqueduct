@@ -1,9 +1,9 @@
 import pandas as pd
 import pytest
-
-from aqueduct import op
 from aqueduct.decorator import to_operator
 from aqueduct.error import ArtifactNotFoundException
+
+from aqueduct import op
 from sdk.aqueduct_tests.test_function import dummy_sentiment_model_function
 
 from ..shared.data_objects import DataObject

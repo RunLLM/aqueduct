@@ -1,11 +1,13 @@
 from typing import Dict, Union
 
-from aqueduct import globals
 from aqueduct.constants.enums import K8sClusterActionType, K8sClusterStatusType
 from aqueduct.error import InvalidIntegrationException, InvalidUserArgumentException
 from aqueduct.integrations.connect_config import DynamicK8sConfig
+from aqueduct.integrations.validation import validate_is_connected
 from aqueduct.models.integration import Integration, IntegrationInfo
 from aqueduct.models.response_models import DynamicEngineStatusResponse
+
+from aqueduct import globals
 
 
 def parse_dynamic_k8s_config(
@@ -40,6 +42,7 @@ class DynamicK8sIntegration(Integration):
     def __init__(self, metadata: IntegrationInfo):
         self._metadata = metadata
 
+    @validate_is_connected()
     def status(self) -> str:
         """Get the current status of the dynamic Kubernetes cluster."""
         engine_statuses = globals.__GLOBAL_API_CLIENT__.get_dynamic_engine_status(
@@ -50,6 +53,7 @@ class DynamicK8sIntegration(Integration):
 
         return engine_statuses[self._metadata.name].status.value
 
+    @validate_is_connected()
     def create(
         self, config_delta: Union[Dict[str, Union[int, str]], DynamicK8sConfig] = {}
     ) -> None:
@@ -92,6 +96,7 @@ class DynamicK8sIntegration(Integration):
             config_delta=config_delta,
         )
 
+    @validate_is_connected()
     def update(self, config_delta: Union[Dict[str, Union[int, str]], DynamicK8sConfig]) -> None:
         """Update the dynamic Kubernetes cluster. This can only be done when the cluster is in
             Active status.
@@ -134,6 +139,7 @@ class DynamicK8sIntegration(Integration):
             config_delta=config_delta,
         )
 
+    @validate_is_connected()
     def delete(self, force: bool = False) -> None:
         """Deletes the dynamic Kubernetes cluster if it is running, ignoring the keepalive period.
 

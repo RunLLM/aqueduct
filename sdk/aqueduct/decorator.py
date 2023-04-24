@@ -5,8 +5,6 @@ from functools import wraps
 from typing import Any, Callable, Dict, List, Mapping, Optional, Union, cast
 
 import numpy as np
-
-from aqueduct import globals
 from aqueduct.artifacts._create import create_metric_or_check_artifact
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.bool_artifact import BoolArtifact
@@ -44,6 +42,8 @@ from aqueduct.utils.dag_deltas import (
 from aqueduct.utils.function_packaging import serialize_function
 from aqueduct.utils.naming import default_artifact_name_from_op_name, sanitize_artifact_name
 from aqueduct.utils.utils import generate_engine_config, generate_uuid
+
+from aqueduct import globals
 
 OutputArtifactFunction = Callable[..., BaseArtifact]
 

@@ -18,6 +18,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/errors"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
+	"github.com/aqueducthq/aqueduct/lib/execution_state"
 	"github.com/aqueducthq/aqueduct/lib/job"
 	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
@@ -58,6 +59,9 @@ var pathConfigKeys = map[string]bool{
 //		`integration-config`: the json-serialized integration config
 //
 // Response: none
+//
+// If this route finishes successfully, then an integration entry is guaranteed to have been created
+// in the database.
 type ConnectIntegrationHandler struct {
 	PostHandler
 
@@ -186,32 +190,11 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		return emptyResp, statusCode, err
 	}
 
-	txn, err := h.Database.BeginTx(ctx)
-	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
-	}
-	defer database.TxnRollbackIgnoreErr(ctx, txn)
-
-	// Assumption: we are always ADDING a new integration, so `integrationObj` must be a freshly created
-	// integration entry on success.
-	integrationObj, statusCode, err := ConnectIntegration(ctx, args, h.IntegrationRepo, txn)
+	// Assumption: we are always ADDING a new integration, so `integrationObj` must be a freshly created integration entry.
+	// Note that the config of this returned `integrationObj` may be outdated.
+	integrationObj, statusCode, err := ConnectIntegration(ctx, h, args, h.IntegrationRepo, h.Database)
 	if err != nil {
 		return emptyResp, statusCode, err
-	}
-
-	if args.Service == shared.AWS {
-		if statusCode, err := setupCloudIntegration(
-			ctx,
-			args,
-			h,
-			txn,
-		); err != nil {
-			return emptyResp, statusCode, err
-		}
-	}
-
-	if err := txn.Commit(ctx); err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
 	if args.SetAsStorage {
@@ -254,15 +237,27 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 // object is always well-formed on success.
 func ConnectIntegration(
 	ctx context.Context,
+	h *ConnectIntegrationHandler, // This only needs to be non-nil if the integration can be AWS.
 	args *ConnectIntegrationArgs,
 	integrationRepo repos.Integration,
 	DB database.Database,
-) (*models.Integration, int, error) {
+) (_ *models.Integration, _ int, err error) {
 	// Extract non-confidential config
 	publicConfig := args.Config.PublicConfig()
 
+	// Always create the integration entry with a running state to start.
+	runningAt := time.Now()
+	publicConfig[exec_env.ExecStateKey] = execution_state.SerializedRunning(&runningAt)
+
+	// Must open a transaction to write the initial integration state, because the AWS integration
+	// may need to perform multiple writes.
+	txn, err := DB.BeginTx(ctx)
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+	}
+	defer database.TxnRollbackIgnoreErr(ctx, txn)
+
 	var integrationObject *models.Integration
-	var err error
 	if args.UserOnly {
 		// This is a user-specific integration
 		integrationObject, err = integrationRepo.CreateForUser(
@@ -272,8 +267,7 @@ func ConnectIntegration(
 			args.Service,
 			args.Name,
 			(*shared.IntegrationConfig)(&publicConfig),
-			true,
-			DB,
+			txn,
 		)
 	} else {
 		integrationObject, err = integrationRepo.Create(
@@ -282,13 +276,47 @@ func ConnectIntegration(
 			args.Service,
 			args.Name,
 			(*shared.IntegrationConfig)(&publicConfig),
-			true,
-			DB,
+			txn,
 		)
 	}
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
+
+	if args.Service == shared.AWS {
+		if h == nil {
+			return nil, http.StatusInternalServerError, errors.New("Internal error: No route handler present when registering an AWS integration.")
+		}
+		if statusCode, err := setupCloudIntegration(
+			ctx,
+			args,
+			h,
+			txn,
+		); err != nil {
+			return nil, statusCode, err
+		}
+	}
+	if err := txn.Commit(ctx); err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+	}
+
+	// The initial integration entry has been written. Any errors from this point on will need to update
+	// the that entry to reflect the failure. Note that this defer is only relevant for q
+	defer func() {
+		if err != nil {
+			execution_state.UpdateOnFailure(
+				ctx,
+				"", // outputs
+				err.Error(),
+				string(args.Service),
+				(*shared.IntegrationConfig)(&publicConfig),
+				&runningAt,
+				integrationObject.ID,
+				integrationRepo,
+				DB,
+			)
+		}
+	}()
 
 	storageConfig := config.Storage()
 	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
@@ -306,43 +334,141 @@ func ConnectIntegration(
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
 	}
 
+	// For those integrations that require asynchronous setup, we spin those up here. When those goroutines are
+	// complete, they write their results back to the config column of their integration entry.
+	// Note that kicking off any asynchronous setup is the last thing this method does. This ensures that there
+	// will never be any status update races between the goroutines and the main thread.
 	// TODO(ENG-2523): move base conda env creation outside of ConnectIntegration.
 	if args.Service == shared.Conda {
 		go func() {
-			DB, err = database.NewDatabase(DB.Config())
+			// We must copy the Database inside the goroutine, because the underlying DB connection
+			// will error if passed between the main thread and goroutine.
+			condaDB, err := database.NewDatabase(DB.Config())
 			if err != nil {
-				log.Errorf("Error creating DB in go routine: %v", err)
+				log.Errorf("Error creating DB for Conda: %v", err)
 				return
 			}
 
-			exec_env.InitializeConda(
-				context.Background(),
-				integrationObject.ID,
-				integrationRepo,
-				DB,
-			)
+			condaErr := setupCondaAsync(integrationRepo, integrationObject.ID, publicConfig, runningAt, condaDB)
+			if condaErr != nil {
+				log.Errorf("Conda setup failed: %v", condaErr)
+			}
 		}()
-	}
-
-	if args.Service == shared.Lambda {
+	} else if args.Service == shared.Lambda {
 		go func() {
-			DB, err = database.NewDatabase(DB.Config())
+			// We must copy the Database inside the goroutine, because the underlying DB connection
+			// will error if passed between the main thread and goroutine.
+			lambdaDB, err := database.NewDatabase(DB.Config())
 			if err != nil {
-				log.Errorf("Error creating DB in go routine: %v", err)
+				log.Errorf("Error creating DB for Lambda: %v", err)
 				return
 			}
 
-			lambda_utils.ConnectToLambda(
+			lambdaErr := setupLambdaAsync(integrationRepo, integrationObject.ID, publicConfig, runningAt, lambdaDB)
+			if lambdaErr != nil {
+				log.Errorf("Lambda setup failed: %v", lambdaErr)
+			}
+		}()
+	} else {
+		// No asynchronous setup is needed for these services, so we can simply mark the connection entries as successful.
+		err = execution_state.UpdateOnSuccess(
+			ctx,
+			string(args.Service),
+			(*shared.IntegrationConfig)(&publicConfig),
+			&runningAt,
+			integrationObject.ID,
+			integrationRepo,
+			DB,
+		)
+		if err != nil {
+			return nil, http.StatusInternalServerError, err
+		}
+	}
+	return integrationObject, http.StatusOK, nil
+}
+
+// Asynchronously setup the lambda integration.
+func setupLambdaAsync(
+	integrationRepo repos.Integration,
+	integrationID uuid.UUID,
+	publicConfig map[string]string,
+	runningAt time.Time,
+	DB database.Database,
+) (err error) {
+	defer func() {
+		if err != nil {
+			execution_state.UpdateOnFailure(
 				context.Background(),
-				args.Config,
-				integrationObject.ID,
+				"", // outputs
+				err.Error(),
+				string(shared.Lambda),
+				(*shared.IntegrationConfig)(&publicConfig),
+				&runningAt,
+				integrationID,
 				integrationRepo,
 				DB,
 			)
-		}()
-	}
+		} else {
+			_ = execution_state.UpdateOnSuccess(
+				context.Background(),
+				string(shared.Lambda),
+				(*shared.IntegrationConfig)(&publicConfig),
+				&runningAt,
+				integrationID,
+				integrationRepo,
+				DB,
+			)
+		}
+	}()
 
-	return integrationObject, http.StatusOK, nil
+	return lambda_utils.ConnectToLambda(
+		context.Background(),
+		publicConfig[lambda_utils.RoleArnKey],
+	)
+}
+
+// Asynchronously setup the conda integration.
+func setupCondaAsync(
+	integrationRepo repos.Integration,
+	integrationID uuid.UUID,
+	publicConfig map[string]string,
+	runningAt time.Time,
+	DB database.Database,
+) (err error) {
+	var condaPath string
+	var output string
+	defer func() {
+		// Update both the conda path and execution state of the integration's config.
+		publicConfig[exec_env.CondaPathKey] = condaPath
+
+		if err != nil {
+			execution_state.UpdateOnFailure(
+				context.Background(),
+				output,
+				err.Error(),
+				string(shared.Conda),
+				(*shared.IntegrationConfig)(&publicConfig),
+				&runningAt,
+				integrationID,
+				integrationRepo,
+				DB,
+			)
+		} else {
+			// Update the conda execution state to be successful.
+			_ = execution_state.UpdateOnSuccess(
+				context.Background(),
+				string(shared.Conda),
+				(*shared.IntegrationConfig)(&publicConfig),
+				&runningAt,
+				integrationID,
+				integrationRepo,
+				DB,
+			)
+		}
+	}()
+
+	condaPath, output, err = exec_env.InitializeConda()
+	return err
 }
 
 // ValidateConfig authenticates the config provided.

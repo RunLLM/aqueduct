@@ -7,8 +7,8 @@ on:
 
 jobs:
   run-k8s-tests:
-    runs-on: ubuntu-latest-4-cores
-    timeout-minutes: 90
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
     name: SDK Integration Tests against K8s Compute
     steps:
       - uses: actions/checkout@v2
@@ -50,7 +50,7 @@ jobs:
 
       - name: Run the SDK Integration Tests
         working-directory: integration_tests/sdk
-        run: pytest aqueduct_tests/ -rP -vv -n 4
+        run: pytest aqueduct_tests/ -rP -vv -n 1
 
       - name: Teardown K8s Cluster
         id: k8s_cleanup # so that we only upload the state on this specific failure.
@@ -134,6 +134,22 @@ jobs:
         ports:
           # Maps tcp port 5432 on service container to the host
           - 5432:5432
+
+      mariadb:
+        image: mariadb:10.7
+        env:
+          MARIADB_USER: aqueduct
+          MARIADB_PASSWORD: aqueduct
+          MARIADB_ROOT_PASSWORD: aqueduct
+          MARIADB_DATABASE: aqueducttest
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps tcp port 3306 on service container to 3808 on the host
+          - 3808:3306
     steps:
       - uses: actions/checkout@v2
 

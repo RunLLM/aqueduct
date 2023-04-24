@@ -2,8 +2,6 @@ import json
 import uuid
 
 import cloudpickle as pickle
-from PIL import Image
-
 from aqueduct.constants.enums import (
     ArtifactType,
     ExecutionStatus,
@@ -19,6 +17,7 @@ from aqueduct.constants.enums import (
 )
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG, Metadata
+from aqueduct.models.execution_state import ExecutionState, Logs
 from aqueduct.models.operators import (
     ExtractSpec,
     FunctionSpec,
@@ -34,7 +33,7 @@ from aqueduct.models.operators import (
     SalesforceExtractParams,
     SalesforceLoadParams,
 )
-from aqueduct.models.response_models import ArtifactResult, ExecutionState, Logs, PreviewResponse
+from aqueduct.models.response_models import ArtifactResult, PreviewResponse
 from aqueduct.tests.utils import _construct_dag, _construct_operator
 from aqueduct.utils.serialization import (
     PickleableCollectionSerializationFormat,
@@ -46,6 +45,7 @@ from aqueduct.utils.serialization import (
     serialize_val,
 )
 from aqueduct.utils.utils import generate_uuid
+from PIL import Image
 
 
 def test_artifact_serialization():

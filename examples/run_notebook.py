@@ -7,8 +7,9 @@ import time
 from pathlib import Path
 from typing import List
 
-from aqueduct import Client, get_apikey
 from aqueduct.error import InvalidUserArgumentException
+
+from aqueduct import Client, get_apikey
 
 """
 See README.md for details about this script.

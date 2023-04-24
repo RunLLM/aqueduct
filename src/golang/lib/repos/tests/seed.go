@@ -69,7 +69,6 @@ func (ts *TestSuite) seedIntegrationWithUser(count int, userID uuid.UUID) []mode
 		name := randString(10)
 		config := make(shared.IntegrationConfig)
 		config[randString(10)] = randString(10)
-		validated := true
 		integration, err := ts.integration.CreateForUser(
 			ts.ctx,
 			testOrgID,
@@ -77,7 +76,6 @@ func (ts *TestSuite) seedIntegrationWithUser(count int, userID uuid.UUID) []mode
 			testIntegrationService,
 			name,
 			&config,
-			validated,
 			ts.DB,
 		)
 		require.Nil(ts.T(), err)

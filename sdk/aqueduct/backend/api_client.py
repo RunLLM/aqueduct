@@ -4,8 +4,6 @@ import uuid
 from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import requests
-from pkg_resources import get_distribution, parse_version
-
 from aqueduct.constants.enums import ExecutionStatus, K8sClusterActionType, RuntimeType, ServiceType
 from aqueduct.error import (
     AqueductError,
@@ -35,6 +33,7 @@ from aqueduct.models.response_models import (
     SavedObjectUpdate,
 )
 from aqueduct.utils.serialization import deserialize
+from pkg_resources import get_distribution, parse_version
 
 from ..integrations.connect_config import DynamicK8sConfig, IntegrationConfig
 from .response_helpers import (

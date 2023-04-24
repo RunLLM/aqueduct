@@ -1,6 +1,7 @@
-import aqueduct as aq
 from aqueduct.constants.enums import NotificationLevel
 from aqueduct.integrations.connect_config import ServiceType, SlackConfig
+
+import aqueduct as aq
 
 
 def connect_slack(

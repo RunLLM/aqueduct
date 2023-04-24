@@ -107,20 +107,18 @@ func (ts *TestSuite) TestIntegration_Create() {
 	name := randString(10)
 	config := make(shared.IntegrationConfig)
 	config[randString(10)] = randString(10)
-	valid := true
 
 	expectedIntegration := &models.Integration{
 		OrgID: testOrgID,
 		UserID: utils.NullUUID{
 			IsNull: true,
 		},
-		Service:   testIntegrationService,
-		Name:      name,
-		Config:    config,
-		Validated: valid,
+		Service: testIntegrationService,
+		Name:    name,
+		Config:  config,
 	}
 
-	actualIntegration, err := ts.integration.Create(ts.ctx, expectedIntegration.OrgID, expectedIntegration.Service, expectedIntegration.Name, &expectedIntegration.Config, expectedIntegration.Validated, ts.DB)
+	actualIntegration, err := ts.integration.Create(ts.ctx, expectedIntegration.OrgID, expectedIntegration.Service, expectedIntegration.Name, &expectedIntegration.Config, ts.DB)
 	require.Nil(ts.T(), err)
 
 	require.NotEqual(ts.T(), uuid.Nil, actualIntegration.ID)
@@ -138,15 +136,13 @@ func (ts *TestSuite) TestIntegration_CreateForUser() {
 	name := randString(10)
 	config := make(shared.IntegrationConfig)
 	config[randString(10)] = randString(10)
-	valid := true
 
 	expectedIntegration := &models.Integration{
-		UserID:    userID,
-		OrgID:     testOrgID,
-		Service:   testIntegrationService,
-		Name:      name,
-		Config:    config,
-		Validated: valid,
+		UserID:  userID,
+		OrgID:   testOrgID,
+		Service: testIntegrationService,
+		Name:    name,
+		Config:  config,
 	}
 
 	actualIntegration, err := ts.integration.CreateForUser(
@@ -156,7 +152,6 @@ func (ts *TestSuite) TestIntegration_CreateForUser() {
 		expectedIntegration.Service,
 		expectedIntegration.Name,
 		&expectedIntegration.Config,
-		expectedIntegration.Validated,
 		ts.DB,
 	)
 	require.Nil(ts.T(), err)

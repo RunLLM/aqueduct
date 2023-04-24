@@ -1,7 +1,6 @@
 import uuid
 from typing import Any, Dict, Union
 
-from aqueduct import globals
 from aqueduct.artifacts import bool_artifact, numeric_artifact
 from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts._create import create_metric_or_check_artifact
@@ -12,6 +11,8 @@ from aqueduct.models.dag import DAG
 from aqueduct.models.operators import Operator, OperatorSpec, SystemMetricSpec
 from aqueduct.utils.naming import default_artifact_name_from_op_name
 from aqueduct.utils.utils import generate_uuid
+
+from aqueduct import globals
 
 
 class SystemMetricMixin:
