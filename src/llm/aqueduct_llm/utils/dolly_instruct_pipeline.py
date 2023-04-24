@@ -1,3 +1,4 @@
+# Copied from https://huggingface.co/databricks/dolly-v2-7b/blob/main/instruct_pipeline.py
 import logging
 import re
 from typing import List
