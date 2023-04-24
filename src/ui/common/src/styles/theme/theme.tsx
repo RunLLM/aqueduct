@@ -14,6 +14,7 @@ export const theme: Theme = {
       400: '#d8dae5',
       300: '#E6E8F0',
       200: '#edeff5',
+      150: '#EDEDED',
       100: '#F4F5F9',
       90: '#F4F6FA',
       75: '#F9FAFC',

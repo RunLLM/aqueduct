@@ -190,18 +190,6 @@ export const ResourceCardStory: React.FC = () => {
       },
       createdAt: Date.now() / 1000,
     },
-    // {
-    //   id: '15',
-    //   service: 'AWS',
-    //   name: 'My AWS',
-    //   config: {
-    //     type: AWSCredentialType.ConfigFilePath,
-    //     region: 'us-east-2',
-    //     config_file_path: '~/.aws/credentials',
-    //     config_file_profile: 'default',
-    //   } as AWSConfig,
-    //   createdAt: Date.now() / 1000,
-    // },
     {
       id: '16',
       service: 'Slack',

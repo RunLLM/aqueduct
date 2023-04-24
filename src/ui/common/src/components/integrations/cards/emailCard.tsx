@@ -17,18 +17,6 @@ export const EmailCard: React.FC<Props> = ({ integration }) => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       <CardTextEntry
-        category="Sender Address: "
-        value={config.user}
-        categoryWidth={categoryWidth}
-      />
-
-      <CardTextEntry
-        category="Sender Socket: "
-        value={`${config.host}:${config.port}`}
-        categoryWidth={categoryWidth}
-      />
-
-      <CardTextEntry
         category={
           targets.length > 1 ? 'Receiver Addresses: ' : 'Receiver Address: '
         }
