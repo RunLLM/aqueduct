@@ -217,6 +217,20 @@ export const ResourceCardStory: React.FC = () => {
       } as EmailConfig,
       createdAt: Date.now() / 1000,
     },
+    {
+      id: '18',
+      service: 'SQLite',
+      name: 'Aqueduct Demo',
+      config: {},
+      createdAt: Date.now() / 1000,
+    },
+    {
+      id: '19',
+      service: 'Aqueduct',
+      name: 'Aqueduct Server',
+      config: {},
+      createdAt: Date.now() / 1000,
+    },
   ];
 
   // Is missing the <Link> component that encapsulates the <Card> component.
