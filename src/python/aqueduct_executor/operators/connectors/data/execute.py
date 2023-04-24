@@ -48,7 +48,7 @@ def run(spec: Spec) -> None:
     Arguments:
     - spec: The spec provided for this operator.
     """
-    return execute_function_spec(
+    return execute_data_spec(
         spec=spec,
         read_artifacts_func=utils.read_artifacts,
         write_artifact_func=utils.write_artifact,
@@ -57,7 +57,7 @@ def run(spec: Spec) -> None:
     )
 
 
-def execute_function_spec(
+def execute_data_spec(
     spec: Spec,
     read_artifacts_func: Any,
     write_artifact_func: Any,

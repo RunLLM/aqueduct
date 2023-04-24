@@ -2,7 +2,7 @@ import sys
 from typing import Any
 
 from aqueduct_executor.operators.connectors.data import common, config, connector
-from aqueduct_executor.operators.connectors.data.execute import execute_function_spec
+from aqueduct_executor.operators.connectors.data.execute import execute_data_spec
 from aqueduct_executor.operators.connectors.data.spec import Spec
 from aqueduct_executor.operators.spark.utils import read_artifacts_spark, write_artifact_spark
 from aqueduct_executor.operators.utils.exceptions import (
@@ -26,7 +26,7 @@ def run(spec: Spec, spark_session_obj: SparkSession) -> None:
     - spec: The spec provided for this operator.
     - spark_session_obj: The SparkSession
     """
-    return execute_function_spec(
+    return execute_data_spec(
         spec=spec,
         read_artifacts_func=read_artifacts_spark,
         write_artifact_func=write_artifact_spark,
