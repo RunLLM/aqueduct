@@ -3,8 +3,9 @@ package sqlite
 import (
 	"context"
 	"fmt"
-	"time"
 	"strconv"
+	"strconv"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/database/stmt_preparers"
@@ -63,13 +64,13 @@ func (*dagResultReader) GetByWorkflow(ctx context.Context, workflowID uuid.UUID,
 	if limit >= 0 {
 		limitQuery = " LIMIT " + strconv.Itoa(limit)
 	}
-		
+
 	query := fmt.Sprintf(
 		`SELECT %s 
 		FROM workflow_dag_result, workflow_dag 
 		WHERE 
 			workflow_dag_result.workflow_dag_id = workflow_dag.id 
-			AND workflow_dag.workflow_id = $1` + orderByQuery + limitQuery + `;`,
+			AND workflow_dag.workflow_id = $1`+orderByQuery+limitQuery+`;`,
 		models.DAGResultColsWithPrefix(),
 	)
 	args := []interface{}{workflowID}

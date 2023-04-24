@@ -6,8 +6,9 @@ import (
 	"strconv"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
-	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/cmd/server/request/parser"
+	"github.com/aqueducthq/aqueduct/cmd/server/request/parser"
+	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/functional/slices"
@@ -39,9 +40,9 @@ import (
 type dagResultsGetArgs struct {
 	*aq_context.AqContext
 	workflowID uuid.UUID
-	
+
 	// A nil value means that the order is not set.
-	orderBy         string
+	orderBy string
 	// A negative value for limit (eg. -1) means that the limit is not set.
 	limit int
 }
@@ -83,7 +84,7 @@ func (h *DAGResultsGetHandler) Prepare(r *http.Request) (interface{}, int, error
 		// Check is a field in workflow_dag_result
 		isColumn := false
 		for _, column := range models.AllDAGResultCols() {
-			if models.DAGResultTable + "." + column == orderByVal {
+			if models.DAGResultTable+"."+column == orderByVal {
 				isColumn = true
 				break
 			}
@@ -91,7 +92,7 @@ func (h *DAGResultsGetHandler) Prepare(r *http.Request) (interface{}, int, error
 		if !isColumn {
 			// Check is a field in workflow_dag
 			for _, column := range models.AllDAGCols() {
-				if models.DagTable + "." + column == orderByVal {
+				if models.DagTable+"."+column == orderByVal {
 					isColumn = true
 					break
 				}
@@ -106,8 +107,8 @@ func (h *DAGResultsGetHandler) Prepare(r *http.Request) (interface{}, int, error
 	return &dagResultsGetArgs{
 		AqContext:  aqContext,
 		workflowID: workflowID,
-		orderBy: orderBy,
-		limit: limit,
+		orderBy:    orderBy,
+		limit:      limit,
 	}, http.StatusOK, nil
 }
 
