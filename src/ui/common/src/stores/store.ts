@@ -10,6 +10,7 @@ import integrationsReducer from '../reducers/integrations';
 import listWorkflowReducer from '../reducers/listWorkflowSummaries';
 import nodeSelectionReducer from '../reducers/nodeSelection';
 import notificationsReducer from '../reducers/notifications';
+import workflowPageReducer from '../reducers/pages/Workflow';
 import serverConfigReducer from '../reducers/serverConfig';
 import workflowReducer from '../reducers/workflow';
 import workflowDagResultsReducer from '../reducers/workflowDagResults';
@@ -32,6 +33,7 @@ export const store = configureStore({
     workflowDagResultsReducer,
     artifactResultsReducer,
     workflowHistoryReducer,
+    workflowPageReducer,
   },
 
   middleware: (getDefaultMiddleware) =>

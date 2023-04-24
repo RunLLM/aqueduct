@@ -12,48 +12,31 @@ import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
-import { selectResultIdx } from '../../reducers/workflow';
-import { RootState } from '../../stores/store';
+import { useDagResultsGetQuery } from '../../handlers/AqueductApi';
 import { theme } from '../../styles/theme/theme';
-import { dateString } from '../../utils/metadata';
-import ExecutionStatus, { LoadingStatusEnum } from '../../utils/shared';
+import ExecutionStatus from '../../utils/shared';
+import { useWorkflowIds } from '../pages/workflow/id/hook';
 
-export const VersionSelector: React.FC = () => {
+type Props = {
+  apiKey: string;
+};
+
+export const VersionSelector: React.FC<Props> = ({ apiKey }) => {
   const navigate = useNavigate();
+  const { workflowId, dagResultId } = useWorkflowIds(apiKey);
 
-  const workflow = useSelector((state: RootState) => state.workflowReducer);
-  const results = workflow.dagResults;
-  const selectedResult = workflow.selectedResult;
-
-  const workflowHistory = useSelector(
-    (state: RootState) => state.workflowHistoryReducer
-  );
-  const dispatch = useDispatch();
-
+  const { data: dagResults } = useDagResultsGetQuery({ apiKey, workflowId });
   const [menuAnchor, setMenuAnchor] = useState<HTMLButtonElement | null>(null);
-  const [selectedResultIdx, setSelectedResultIdx] = useState<number>(0);
-  if (!selectedResult) {
-    return null;
-  }
-
-  let historyHasLoaded = true;
-  if (
-    workflowHistory.status.loading === LoadingStatusEnum.Loading ||
-    workflowHistory.status.loading === LoadingStatusEnum.Initial
-  ) {
-    historyHasLoaded = false;
-  }
 
   const getMenuItems = () => {
-    return workflowHistory.history.versions.map((r, idx) => {
-      const selected = selectedResult && selectedResult.id === r.versionId;
-
-      if (selected && idx !== selectedResultIdx) {
-        setSelectedResultIdx(idx);
-      }
+    if (!dagResults || dagResults.length === 0) {
+      return [];
+    }
+    return dagResults.map((r, idx) => {
+      // either an ID match, or no selection and default to the first result
+      const selected = r.id === dagResultId || (!dagResultId && idx === 0);
 
       let menuItemIcon;
 
@@ -100,8 +83,7 @@ export const VersionSelector: React.FC = () => {
           value={idx}
           key={r.id}
           onClick={() => {
-            dispatch(selectResultIdx(idx));
-            navigate(`?workflowDagResultId=${encodeURI(r.versionId)}`);
+            navigate(`result/${encodeURI(r.id)}`);
           }}
           sx={{
             backgroundColor: selected ? selectedBackground : defaultBackground,
@@ -113,7 +95,9 @@ export const VersionSelector: React.FC = () => {
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             {menuItemIcon}
-            <Typography ml={1}>{`${dateString(r.created_at)}`}</Typography>
+            <Typography
+              ml={1}
+            >{`${r.exec_state.timestamps?.pending_at}`}</Typography>
           </Box>
         </MenuItem>
       );
@@ -141,7 +125,7 @@ export const VersionSelector: React.FC = () => {
         disableFocusRipple
       >
         <FontAwesomeIcon icon={faClock} color={theme.palette.gray[800]} />
-        <Box mx={1}>{dateString(results[selectedResultIdx].created_at)}</Box>
+        <Box mx={1}>{r.exec_state.timestamps?.pending_at}</Box>
 
         <FontAwesomeIcon icon={faChevronDown} />
       </Button>
@@ -155,7 +139,7 @@ export const VersionSelector: React.FC = () => {
           horizontal: 'left',
         }}
       >
-        {historyHasLoaded && getMenuItems()}
+        {getMenuItems()}
       </Popover>
     </Box>
   );
