@@ -4,9 +4,11 @@ package routes
 const (
 	// V2 routes
 	ListStorageMigrationRoute = "/api/v2/storage-migrations"
+	WorkflowsRoute            = "/api/v2/workflows"
 
 	WorkflowRoute                  = "/api/v2/workflow/{workflowID}"
 	DAGRoute                       = "/api/v2/workflow/{workflowID}/dag/{dagID}"
+	DAGResultsRoute                = "/api/v2/workflow/{workflowID}/results"
 	DAGResultRoute                 = "/api/v2/workflow/{workflowID}/result/{dagResultID}"
 	NodesRoute                     = "/api/v2/workflow/{workflowID}/dag/{dagID}/nodes"
 	NodeArtifactRoute              = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/artifact/{nodeID}"

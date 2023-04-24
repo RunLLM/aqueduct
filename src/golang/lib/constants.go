@@ -1,3 +1,3 @@
 package lib
 
-const ServerVersionNumber = "0.2.10"
+const ServerVersionNumber = "0.2.11"

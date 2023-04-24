@@ -4,6 +4,7 @@ from typing import List, Optional, Union
 from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, S3TableFormat
+from aqueduct.integrations.validation import validate_is_connected
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
 from aqueduct.models.integration import Integration, IntegrationInfo
@@ -51,6 +52,7 @@ class S3Integration(Integration):
         self._dag = dag
         self._metadata = metadata
 
+    @validate_is_connected()
     def file(
         self,
         filepaths: Union[List[str], str],
@@ -171,6 +173,7 @@ class S3Integration(Integration):
             # We are in lazy mode.
             return to_artifact_class(self._dag, output_artifact_id, artifact_type)
 
+    @validate_is_connected()
     def save(self, artifact: BaseArtifact, filepath: str, format: Optional[str] = None) -> None:
         """Registers a save operator of the given artifact, to be executed when it's computed in a published flow.
 

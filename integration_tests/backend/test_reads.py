@@ -17,6 +17,8 @@ from aqueduct import globals
 
 
 class TestBackend:
+    GET_WORKFLOWS_TEMPLATE = "/api/v2/workflows"
+
     LIST_WORKFLOW_SAVED_OBJECTS_TEMPLATE = "/api/workflow/%s/objects"
     GET_TEST_INTEGRATION_TEMPLATE = "/api/integration/%s/test"
     LIST_INTEGRATIONS_TEMPLATE = "/api/integrations"
@@ -293,3 +295,26 @@ class TestBackend:
                     assert int(value) > 0
                 elif name == "check artifact":
                     assert value == "true"
+
+    def test_endpoint_workflows_get(self):
+        resp = self.get_response(self.GET_WORKFLOWS_TEMPLATE)
+        resp = resp.json()
+
+        if len(resp) > 0:
+            keys = [
+                "id",
+                "user_id",
+                "name",
+                "description",
+                "schedule",
+                "created_at",
+                "retention_policy",
+                "notification_settings",
+            ]
+
+            user_id = resp[0]["user_id"]
+
+            for v2_workflow in resp:
+                for key in keys:
+                    assert key in v2_workflow
+                assert v2_workflow["user_id"] == user_id

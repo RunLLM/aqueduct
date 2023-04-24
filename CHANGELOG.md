@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.2.11
+Released on April 18, 2023.
+
+### Enhancements
+* Extends the Aqueduct-Databricks integration to optionally support 
+    long-standing instance pools. If specified, Aqueduct will automatically use
+    nodes in the instance pool, and otherwise, Aqueduct will create a cluster
+    with new instances.
+* Improves form validation during integration connection to ensure that valid
+    and invalid form fields are correctly detected and visualized.
+
+### Bugfixes
+* Fixes bug where MySQL dependency installation could fail on an M-series Mac.
+* Fixes bug where integration connections dialogs did could re-render
+    repeatedly, causing slight performance degradation.
+* Fixes bug where loading a Tensorflow object from a file could fail due to
+    library version mismatches.
+* Fixes bug where multiple processes could attempt to simultaneously create the
+    same Kubernetes secret, causing mismatches in the name.
+* Fixes bug where the release notification banner introduced in the last
+    release was not picking up new Aqueduct versions from PyPI.
+* Fixes bug where CUDA versions specified via the SDK may not have been
+    faithfully installed at execution time.
+
 ## 0.2.10
 Released on April 11, 2023.
 

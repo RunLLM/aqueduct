@@ -3,6 +3,7 @@ from typing import Optional
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, GoogleSheetsSaveMode
+from aqueduct.integrations.validation import validate_is_connected
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
 from aqueduct.models.integration import Integration, IntegrationInfo
@@ -29,6 +30,7 @@ class GoogleSheetsIntegration(Integration):
         self._dag = dag
         self._metadata = metadata
 
+    @validate_is_connected()
     def spreadsheet(
         self,
         spreadsheet_id: str,
@@ -96,6 +98,7 @@ class GoogleSheetsIntegration(Integration):
             artifact_id=output_artifact_id,
         )
 
+    @validate_is_connected()
     def save(
         self,
         artifact: BaseArtifact,

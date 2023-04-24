@@ -136,11 +136,14 @@ def extract_credential(credential_prefix: str) -> str:
     end_idx = code.find("\n", start_idx)
     return code[start_idx + len(credential_prefix) : end_idx].strip('"')
 
+
 server_address = "localhost:8080"
 if args.server_address is not None:
     old_server_address = extract_credential(SERVER_ADDRESS_CODE_SNIPPET)
     new_server_address = args.server_address.strip('"')
-    print("Replacing the inline server address %s with %s" % (old_server_address, new_server_address))
+    print(
+        "Replacing the inline server address %s with %s" % (old_server_address, new_server_address)
+    )
     code = code.replace(old_server_address, new_server_address)
     server_address = new_server_address
 

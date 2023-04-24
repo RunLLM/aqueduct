@@ -20,7 +20,6 @@ const (
 	IntegrationName      = "name"
 	IntegrationConfig    = "config"
 	IntegrationCreatedAt = "created_at"
-	IntegrationValidated = "validated"
 )
 
 // A Integration maps to the integration table.
@@ -32,7 +31,6 @@ type Integration struct {
 	Name      string                   `db:"name"`
 	Config    shared.IntegrationConfig `db:"config"`
 	CreatedAt time.Time                `db:"created_at"`
-	Validated bool                     `db:"validated"`
 }
 
 // IntegrationCols returns a comma-separated string of all Integration columns.
@@ -49,6 +47,5 @@ func allIntegrationCols() []string {
 		IntegrationName,
 		IntegrationConfig,
 		IntegrationCreatedAt,
-		IntegrationValidated,
 	}
 }
