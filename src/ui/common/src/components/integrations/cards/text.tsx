@@ -5,7 +5,6 @@ import React from 'react';
 // Use in place of Typography when you need the text to be truncated with an ellipsis.
 export const TruncatedText = styled(Typography)(() => {
   return {
-    fontFamily: 'Roboto',
     whiteSpace: 'nowrap',
     textOverflow: 'ellipsis',
     overflow: 'hidden',
