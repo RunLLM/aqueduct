@@ -2,6 +2,7 @@ import { Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
 import Snackbar from '@mui/material/Snackbar';
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -151,7 +152,7 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
     </Box>
   );
 
-  if (svc !== 'Kubernetes') {
+  if (service !== 'Kubernetes') {
     return (
       <Box key={service}>
         <Box>
@@ -192,25 +193,22 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
   } else {
     const [showKubernetesDialog, setShowKubernetesDialog] = useState(false);
     const [showOndemandDialog, setShowOndemandDialog] = useState(false);
-    //const [showOriginalDialog, setShowOriginalDialog] = useState(true);
+    const [showSelectProviderDialog, setShowSelectProviderDialog] = useState(false);
   
     const handleOption1Click = () => {
       setShowKubernetesDialog(true);
-      setShowOndemandDialog(false);
       setShowDialog(false);
     };
   
     const handleOption2Click = () => {
-      setShowKubernetesDialog(false);
-      setShowOndemandDialog(true);
+      setShowSelectProviderDialog(true);
       setShowDialog(false);
     };
-  
-    // const handleCancelClick = () => {
-    //   setShowKubernetesDialog(false);
-    //   setShowOndemandDialog(false);
-    //   setShowDialog(true);
-    // };
+
+    const handleAwsClick = () => {
+      setShowOndemandDialog(true);
+      setShowSelectProviderDialog(false);
+    };
 
     return (
       <Box key={service}>
@@ -218,14 +216,32 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
           {iconWrapper}
           <>
             <Dialog open={showDialog} onClose={() => setShowDialog(false)}>
-              <DialogTitle>Kubernetes Integration</DialogTitle>
+              <DialogTitle>
+                <IntegrationLogo
+                  service={service}
+                  activated={integration.activated}
+                  size="small"
+                />
+                Connect to Kubernetes
+              </DialogTitle>
               <DialogContent>
-                <Button onClick={handleOption1Click}>I have an existing Kubernetes cluster</Button>
-                <Button onClick={handleOption2Click}>I'd like to create an on-demand Kubernetes integration</Button>
+                <Button onClick={handleOption1Click}>
+                  <IntegrationLogo
+                    service={service}
+                    activated={integration.activated}
+                    size="small"
+                  />
+                  I have an existing Kubernetes cluster
+                </Button>
+                <Button onClick={handleOption2Click}>
+                  <IntegrationLogo
+                      service={'Aqueduct Demo'}
+                      activated={integration.activated}
+                      size="small"
+                  />
+                  I'd like Aqueduct to create & manage a cluster for me
+                </Button>
               </DialogContent>
-              {/* <DialogActions>
-                <Button onClick={handleCancelClick}>Cancel</Button>
-              </DialogActions> */}
             </Dialog>
 
             {showKubernetesDialog && (
@@ -233,6 +249,7 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
                 user={user}
                 service={service}
                 onSuccess={() => {
+                  setShowKubernetesDialog(false)
                   setShowSuccessToast(service);
                 }}
                 onCloseDialog={() => {
@@ -243,11 +260,21 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
               />
             )}
 
+            <Dialog open={showSelectProviderDialog} onClose={() => setShowSelectProviderDialog(false)}>
+              <DialogTitle>Aqueduct-managed Kubernetes</DialogTitle>
+              <DialogContent>
+                <Button onClick={handleAwsClick}>AWS</Button>
+                <Button disabled={true}>GCP</Button>
+                <Button disabled={true}>Azure</Button>
+              </DialogContent>
+            </Dialog>
+
             {showOndemandDialog && (
             <IntegrationDialog
               user={user}
               service='AWS'
               onSuccess={() => {
+                setShowOndemandDialog(false)
                 setShowSuccessToast(service);
               }}
               onCloseDialog={() => {
