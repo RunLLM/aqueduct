@@ -3,12 +3,9 @@ package v2
 import (
 	"context"
 	"net/http"
-	"strconv"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	"github.com/aqueducthq/aqueduct/cmd/server/request/parser"
-	"github.com/aqueducthq/aqueduct/cmd/server/request/parser"
-	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/functional/slices"
@@ -29,6 +26,7 @@ import (
 // Request:
 //	Headers:
 //		`api-key`: user's API Key
+//  Parameters:
 //		`order_by`:
 //			Optional single field that the query should be ordered. Requires the table prefix.
 //		`limit`:
@@ -71,37 +69,14 @@ func (h *DAGResultsGetHandler) Prepare(r *http.Request) (interface{}, int, error
 		return nil, http.StatusBadRequest, err
 	}
 
-	limit := -1
-	if limitVal := r.Header.Get(routes.DagResultGetLimitHeader); len(limitVal) > 0 {
-		limit, err = strconv.Atoi(limitVal)
-		if err != nil {
-			return nil, http.StatusBadRequest, errors.Wrap(err, "Invalid limit header.")
-		}
+	limit, err := (parser.LimitQueryParser{}).Parse(r)
+	if err != nil {
+		return nil, http.StatusBadRequest, err
 	}
 
-	var orderBy string
-	if orderByVal := r.Header.Get(routes.DagResultGetOrderByHeader); len(orderByVal) > 0 {
-		// Check is a field in workflow_dag_result
-		isColumn := false
-		for _, column := range models.AllDAGResultCols() {
-			if models.DAGResultTable+"."+column == orderByVal {
-				isColumn = true
-				break
-			}
-		}
-		if !isColumn {
-			// Check is a field in workflow_dag
-			for _, column := range models.AllDAGCols() {
-				if models.DagTable+"."+column == orderByVal {
-					isColumn = true
-					break
-				}
-			}
-			if !isColumn {
-				return nil, http.StatusBadRequest, errors.Wrap(err, "Invalid order_by value.")
-			}
-		}
-		orderBy = orderByVal
+	orderBy, err := (parser.OrderByQueryParser{}).Parse(r, models.AllDAGResultCols())
+	if err != nil {
+		return nil, http.StatusBadRequest, err
 	}
 
 	return &dagResultsGetArgs{

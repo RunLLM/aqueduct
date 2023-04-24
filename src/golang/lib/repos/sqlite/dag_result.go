@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"strconv"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -57,12 +56,12 @@ func (*dagResultReader) GetBatch(ctx context.Context, IDs []uuid.UUID, DB databa
 func (*dagResultReader) GetByWorkflow(ctx context.Context, workflowID uuid.UUID, orderBy string, limit int, DB database.Database) ([]models.DAGResult, error) {
 	var orderByQuery string
 	if len(orderBy) > 0 {
-		orderByQuery = " ORDER BY " + orderBy + " DESC"
+		orderByQuery = fmt.Sprintf(" ORDER BY %s.%s DESC", models.DAGResultTable, orderBy)
 	}
 
 	var limitQuery string
 	if limit >= 0 {
-		limitQuery = " LIMIT " + strconv.Itoa(limit)
+		limitQuery = fmt.Sprintf(" LIMIT %s", strconv.Itoa(limit))
 	}
 
 	query := fmt.Sprintf(

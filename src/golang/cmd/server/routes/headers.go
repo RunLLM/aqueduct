@@ -17,10 +17,6 @@ const (
 	StorageMigrationLimitHeader          = "limit"
 	StorageMigrationCompletedSinceHeader = "completed-since"
 
-	// Dag Result Get Header
-	DagResultGetOrderByHeader = "order_by"
-	DagResultGetLimitHeader   = "limit"
-
 	// Export Function headers
 	ExportFnUserFriendlyHeader = "user-friendly"
 
