@@ -9,7 +9,7 @@ export const Card = styled(Box)(() => {
   return {
     borderRadius: 4,
     '&:hover': {
-      backgroundColor: theme.palette.gray[150],
+      backgroundColor: theme.palette.gray[250],
     },
     backgroundColor: theme.palette.gray[25],
     width: '325px',
