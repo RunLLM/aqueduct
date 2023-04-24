@@ -102,14 +102,14 @@ const IntegrationsPage: React.FC<Props> = ({
           <Typography variant="h5" marginBottom={2}>
             Add an Integration
           </Typography>
-          <Typography variant="h6" marginY={2}>
+          {/* <Typography variant="h6" marginY={2}>
             Cloud
           </Typography>
           <AddIntegrations
             user={user}
             category={IntegrationCategories.CLOUD}
             supportedIntegrations={SupportedIntegrations}
-          />
+          /> */}
           <Typography variant="h6" marginY={2}>
             Compute
           </Typography>

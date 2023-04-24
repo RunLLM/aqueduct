@@ -1,9 +1,16 @@
 import { Typography } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Snackbar from '@mui/material/Snackbar';
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import {
+  DialogActions,
+  DialogContent,
+} from '@mui/material';
 
 import { resetConnectNewStatus } from '../../reducers/integration';
 import { AppDispatch } from '../../stores/store';
@@ -144,43 +151,132 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
     </Box>
   );
 
-  return (
-    <Box key={service}>
-      <Box>
-        {iconWrapper}
-        {showDialog && (
-          <IntegrationDialog
-            user={user}
-            service={service}
-            onSuccess={() => {
-              setShowDialog(false);
-              setShowSuccessToast(service);
-            }}
-            onCloseDialog={() => {
-              setShowDialog(false);
-              dispatch(resetConnectNewStatus());
-            }}
-            showMigrationDialog={() => setShowMigrationDialog(true)}
-          />
-        )}
-      </Box>
-      <Snackbar
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        open={showSuccessToast === service}
-        onClose={handleSuccessToastClose}
-        key={'integrations-dialog-success-snackbar'}
-        autoHideDuration={6000}
-      >
-        <Alert
+  if (svc !== 'Kubernetes') {
+    return (
+      <Box key={service}>
+        <Box>
+          {iconWrapper}
+          {showDialog && (
+            <IntegrationDialog
+              user={user}
+              service={service}
+              onSuccess={() => {
+                setShowDialog(false);
+                setShowSuccessToast(service);
+              }}
+              onCloseDialog={() => {
+                setShowDialog(false);
+                dispatch(resetConnectNewStatus());
+              }}
+              showMigrationDialog={() => setShowMigrationDialog(true)}
+            />
+          )}
+        </Box>
+        <Snackbar
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          open={showSuccessToast === service}
           onClose={handleSuccessToastClose}
-          severity="success"
-          sx={{ width: '100%' }}
+          key={'integrations-dialog-success-snackbar'}
+          autoHideDuration={6000}
         >
-          {`Successfully connected to ${service}!`}
-        </Alert>
-      </Snackbar>
-    </Box>
-  );
+          <Alert
+            onClose={handleSuccessToastClose}
+            severity="success"
+            sx={{ width: '100%' }}
+          >
+            {`Successfully connected to ${service}!`}
+          </Alert>
+        </Snackbar>
+      </Box>
+    );
+  } else {
+    const [showKubernetesDialog, setShowKubernetesDialog] = useState(false);
+    const [showOndemandDialog, setShowOndemandDialog] = useState(false);
+    //const [showOriginalDialog, setShowOriginalDialog] = useState(true);
+  
+    const handleOption1Click = () => {
+      setShowKubernetesDialog(true);
+      setShowOndemandDialog(false);
+      setShowDialog(false);
+    };
+  
+    const handleOption2Click = () => {
+      setShowKubernetesDialog(false);
+      setShowOndemandDialog(true);
+      setShowDialog(false);
+    };
+  
+    // const handleCancelClick = () => {
+    //   setShowKubernetesDialog(false);
+    //   setShowOndemandDialog(false);
+    //   setShowDialog(true);
+    // };
+
+    return (
+      <Box key={service}>
+        <Box>
+          {iconWrapper}
+          <>
+            <Dialog open={showDialog} onClose={() => setShowDialog(false)}>
+              <DialogTitle>Kubernetes Integration</DialogTitle>
+              <DialogContent>
+                <Button onClick={handleOption1Click}>I have an existing Kubernetes cluster</Button>
+                <Button onClick={handleOption2Click}>I'd like to create an on-demand Kubernetes integration</Button>
+              </DialogContent>
+              {/* <DialogActions>
+                <Button onClick={handleCancelClick}>Cancel</Button>
+              </DialogActions> */}
+            </Dialog>
+
+            {showKubernetesDialog && (
+              <IntegrationDialog
+                user={user}
+                service={service}
+                onSuccess={() => {
+                  setShowSuccessToast(service);
+                }}
+                onCloseDialog={() => {
+                  setShowKubernetesDialog(false)
+                  dispatch(resetConnectNewStatus());
+                }}
+                showMigrationDialog={() => setShowMigrationDialog(true)}
+              />
+            )}
+
+            {showOndemandDialog && (
+            <IntegrationDialog
+              user={user}
+              service='AWS'
+              onSuccess={() => {
+                setShowSuccessToast(service);
+              }}
+              onCloseDialog={() => {
+                setShowOndemandDialog(false)
+                dispatch(resetConnectNewStatus());
+              }}
+              showMigrationDialog={() => setShowMigrationDialog(true)}
+            />
+            )}
+          </>
+        </Box>
+        <Snackbar
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          open={showSuccessToast === service}
+          onClose={handleSuccessToastClose}
+          key={'integrations-dialog-success-snackbar'}
+          autoHideDuration={6000}
+        >
+          <Alert
+            onClose={handleSuccessToastClose}
+            severity="success"
+            sx={{ width: '100%' }}
+          >
+            {`Successfully connected to ${service}!`}
+          </Alert>
+        </Snackbar>
+      </Box>
+    );
+  }
 };
 
 export default AddIntegrations;
