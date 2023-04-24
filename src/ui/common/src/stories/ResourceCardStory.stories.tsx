@@ -1,8 +1,8 @@
-import { Box } from '@mui/material';
+import {Box} from '@mui/material';
 import React from 'react';
 
-import { IntegrationCard } from '../components/integrations/cards/card';
-import { Card } from '../components/layouts/card';
+import {IntegrationCard} from '../components/integrations/cards/card';
+import {Card} from '../components/layouts/card';
 import {
   AWSCredentialType,
   BigQueryConfig,
@@ -21,6 +21,7 @@ import {
   SlackConfig,
   SnowflakeConfig,
 } from '../utils/integrations';
+import ExecutionStatus from "../utils/shared";
 
 export const ResourceCardStory: React.FC = () => {
   const integrations: Integration[] = [
@@ -36,6 +37,9 @@ export const ResourceCardStory: React.FC = () => {
         password: 'this is a password',
       } as PostgresConfig,
       createdAt: Date.now() / 1000,
+      exec_state: {
+        status: ExecutionStatus.Succeeded,
+      },
     },
     {
       id: '2',
@@ -51,6 +55,9 @@ export const ResourceCardStory: React.FC = () => {
         role: 'SYSADMIN',
       } as SnowflakeConfig,
       createdAt: Date.now() / 1000,
+      exec_state: {
+        status: ExecutionStatus.Succeeded,
+      },
     },
     {
       id: '3',
@@ -64,6 +71,9 @@ export const ResourceCardStory: React.FC = () => {
         password: 'this is a password',
       } as MySqlConfig,
       createdAt: Date.now() / 1000,
+      exec_state: {
+        status: ExecutionStatus.Succeeded,
+      },
     },
     {
       id: '4',
@@ -77,6 +87,9 @@ export const ResourceCardStory: React.FC = () => {
         password: 'this is a password',
       } as RedshiftConfig,
       createdAt: Date.now() / 1000,
+      exec_state: {
+        status: ExecutionStatus.Failed,
+      },
     },
     {
       id: '5',
@@ -90,6 +103,9 @@ export const ResourceCardStory: React.FC = () => {
         password: 'this is a password',
       } as MariaDbConfig,
       createdAt: Date.now() / 1000,
+      exec_state: {
+        status: ExecutionStatus.Failed,
+      },
     },
     {
       id: '6',
@@ -100,6 +116,9 @@ export const ResourceCardStory: React.FC = () => {
         database: 'prod',
       } as MongoDBConfig,
       createdAt: Date.now() / 1000,
+      exec_state: {
+        status: ExecutionStatus.Failed,
+      },
     },
     {
       id: '7',
@@ -110,6 +129,9 @@ export const ResourceCardStory: React.FC = () => {
         service_account_credentials: 'These are service account credentials',
       } as BigQueryConfig,
       createdAt: Date.now() / 1000,
+      exec_state: {
+        status: ExecutionStatus.Running,
+      },
     },
     {
       id: '8',
@@ -124,6 +146,9 @@ export const ResourceCardStory: React.FC = () => {
         config_file_profile: 'default',
       } as S3Config,
       createdAt: Date.now() / 1000,
+      exec_state: {
+        status: ExecutionStatus.Running,
+      },
     },
     {
       id: '9',
@@ -134,6 +159,9 @@ export const ResourceCardStory: React.FC = () => {
         service_account_credentials: 'These are service account credentials',
       } as GCSConfig,
       createdAt: Date.now() / 1000,
+      exec_state: {
+        status: ExecutionStatus.Running,
+      },
     },
     {
       id: '10',
@@ -147,6 +175,9 @@ export const ResourceCardStory: React.FC = () => {
         s3_credentials_profile: 'default',
       },
       createdAt: Date.now() / 1000,
+      exec_state: {
+        status: ExecutionStatus.Succeeded,
+      },
     },
     {
       id: '11',
@@ -157,6 +188,9 @@ export const ResourceCardStory: React.FC = () => {
         cluster_name: 'my_cluster',
       } as KubernetesConfig,
       createdAt: Date.now() / 1000,
+      exec_state: {
+        status: ExecutionStatus.Succeeded,
+      },
     },
     {
       id: '12',
@@ -167,6 +201,9 @@ export const ResourceCardStory: React.FC = () => {
         exec_state: 'this is the exec state',
       } as LambdaConfig,
       createdAt: Date.now() / 1000,
+      exec_state: {
+        status: ExecutionStatus.Succeeded,
+      },
     },
     {
       id: '13',
@@ -180,6 +217,9 @@ export const ResourceCardStory: React.FC = () => {
         instance_pool_id: 'this is the instance pool id',
       } as DatabricksConfig,
       createdAt: Date.now() / 1000,
+      exec_state: {
+        status: ExecutionStatus.Succeeded,
+      },
     },
     {
       id: '14',
@@ -189,6 +229,9 @@ export const ResourceCardStory: React.FC = () => {
         livy_server_url: 'https://my-livy-server.com',
       },
       createdAt: Date.now() / 1000,
+      exec_state: {
+        status: ExecutionStatus.Succeeded,
+      },
     },
     {
       id: '16',
@@ -201,6 +244,9 @@ export const ResourceCardStory: React.FC = () => {
         enabled: 'false',
       } as SlackConfig,
       createdAt: Date.now() / 1000,
+      exec_state: {
+        status: ExecutionStatus.Succeeded,
+      },
     },
     {
       id: '17',
@@ -216,6 +262,9 @@ export const ResourceCardStory: React.FC = () => {
         enabled: 'true',
       } as EmailConfig,
       createdAt: Date.now() / 1000,
+      exec_state: {
+        status: ExecutionStatus.Succeeded,
+      },
     },
     {
       id: '18',
@@ -223,6 +272,9 @@ export const ResourceCardStory: React.FC = () => {
       name: 'Aqueduct Demo',
       config: {},
       createdAt: Date.now() / 1000,
+      exec_state: {
+        status: ExecutionStatus.Succeeded,
+      },
     },
     {
       id: '19',
@@ -230,6 +282,9 @@ export const ResourceCardStory: React.FC = () => {
       name: 'Aqueduct Server',
       config: {},
       createdAt: Date.now() / 1000,
+      exec_state: {
+        status: ExecutionStatus.Succeeded,
+      },
     },
   ];
 

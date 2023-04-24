@@ -1,6 +1,7 @@
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
 import { AqueductDocsLink } from './docs';
+import {ExecState} from "./shared";
 
 export const aqueductDemoName = 'aqueduct_demo';
 export const aqueductComputeName = 'Aqueduct Server';
@@ -18,6 +19,7 @@ export type Integration = {
   name: string;
   config: IntegrationConfig;
   createdAt: number;
+  exec_state: ExecState;
 };
 
 export type CondaConfig = {

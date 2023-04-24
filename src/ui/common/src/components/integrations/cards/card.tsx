@@ -6,7 +6,9 @@ import { Link as RouterLink } from 'react-router-dom';
 import { DataPreviewInfo } from '../../../utils/data';
 import { getPathPrefix } from '../../../utils/getPathPrefix';
 import { Integration } from '../../../utils/integrations';
+import ExecutionStatus from '../../../utils/shared';
 import ExecutionChip from '../../execution/chip';
+import { StatusIndicator } from '../../workflows/workflowStatus';
 import IntegrationLogo from '../logo';
 import { AirflowCard } from './airflowCard';
 import { AqueductDemoCard } from './aqueductDemoCard';
@@ -162,7 +164,16 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-        <Box sx={{ flex: 1, maxWidth: `calc(100% - 24px)` }}>
+        {/*If the execution state doesn't exist, we assume the integration succeeded.*/}
+        <StatusIndicator
+          status={integration.exec_state?.status || ExecutionStatus.Succeeded}
+          size="16px"
+        />
+
+        {/* Subtract the width of the status indicator, padding, and logo respectively. */}
+        <Box
+          sx={{ mx: 1, flex: 1, maxWidth: `calc(100% - 16px - 16px - 24px)` }}
+        >
           <TruncatedText sx={{ fontWeight: 400 }} variant="h6">
             {integration.name}
           </TruncatedText>
