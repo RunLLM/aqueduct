@@ -660,10 +660,6 @@ func ValidatePrerequisites(
 		if awsVersion.LessThan(requiredVersion) {
 			return http.StatusUnprocessableEntity, errors.Wrapf(err, "AWS CLI version 2.11.5 and above is required, but you got %s. Please update!", awsVersion.String())
 		}
-
-		if _, _, err := lib_utils.RunCmd("env", []string{"--version"}, "", false); err != nil {
-			return http.StatusNotFound, errors.Wrap(err, "env (GNU coreutils) executable not found.")
-		}
 	}
 
 	return http.StatusOK, nil
