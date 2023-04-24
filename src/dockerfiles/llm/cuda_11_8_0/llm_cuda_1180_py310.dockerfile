@@ -18,26 +18,12 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
 ENV PATH=$CONDA_DIR/bin:$PATH
 
 COPY ./gpu/py310_env.yml .
-RUN conda init bash && conda env create -f py310_env.yml
+RUN conda env create -f py310_env.yml
 
 ENV PYTHONUNBUFFERED 1
 
-# Download LLaMA 7B
-COPY ./llm/download_model.py .
-RUN conda run -n py310_env pip install huggingface_hub
-RUN conda run -n py310_env python3 download_model.py --repo-id decapoda-research/llama-7b-hf --local-dir /llama-7b
-RUN sed -i 's/LLaMATokenizer/LlamaTokenizer/g' /llama-7b/tokenizer_config.json
-
-# Apply Vicuna's weight conversion script
-RUN conda run -n py310_env pip install fschat==0.2.2
-RUN conda run -n py310_env python3 -m fastchat.model.apply_delta \
-    --base /llama-7b \
-    --target /vicuna-7b \
-    --delta lmsys/vicuna-7b-delta-v1.1
-
 # Install Aqueduct LLM wrapper
-RUN apt install git -y
-RUN conda run -n py310_env pip install "git+https://github.com/aqueducthq/aqueduct-llm@vicuna_7b"
+RUN conda run -n py310_env pip install aqueduct-llm==0.2.11
 
 WORKDIR /
 

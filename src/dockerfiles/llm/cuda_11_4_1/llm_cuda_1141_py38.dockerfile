@@ -1,4 +1,4 @@
-FROM nvidia/cuda:11.8.0-runtime-ubuntu22.04
+FROM nvidia/cuda:11.4.1-runtime-ubuntu20.04
 
 MAINTAINER Aqueduct <hello@aqueducthq.com> version: 0.0.1
 
@@ -18,20 +18,12 @@ RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86
 ENV PATH=$CONDA_DIR/bin:$PATH
 
 COPY ./gpu/py38_env.yml .
-RUN conda init bash && conda env create -f py38_env.yml
+RUN conda env create -f py38_env.yml
 
 ENV PYTHONUNBUFFERED 1
 
-# Download LLaMA 7B
-COPY ./llm/download_model.py .
-RUN conda run -n py38_env pip install huggingface_hub
-RUN conda run -n py38_env python3 download_model.py --repo-id decapoda-research/llama-7b-hf --local-dir /llama-7b
-RUN sed -i 's/LLaMATokenizer/LlamaTokenizer/g' /llama-7b/tokenizer_config.json
-
 # Install Aqueduct LLM wrapper
-RUN apt install git -y
-RUN echo a
-RUN conda run -n py38_env pip install "git+https://github.com/aqueducthq/aqueduct-llm@vicuna_7b"
+RUN conda run -n py38_env pip install aqueduct-llm==0.2.11
 
 WORKDIR /
 
