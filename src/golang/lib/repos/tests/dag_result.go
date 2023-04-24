@@ -38,7 +38,7 @@ func (ts *TestSuite) TestDAGResult_GetByWorkflow() {
 
 	expectedDAGResults := ts.seedDAGResultWithDAG(2, []uuid.UUID{dag.ID, dag.ID})
 
-	actualDAGResults, err := ts.dagResult.GetByWorkflow(ts.ctx, dag.WorkflowID, ts.DB)
+	actualDAGResults, err := ts.dagResult.GetByWorkflow(ts.ctx, dag.WorkflowID, "", -1, ts.DB)
 	require.Nil(ts.T(), err)
 	requireDeepEqualDAGResults(ts.T(), expectedDAGResults, actualDAGResults)
 }
