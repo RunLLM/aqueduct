@@ -16,7 +16,7 @@ func (OrderByQueryParser) Parse(r *http.Request, tableColumns []string) (string,
 	if orderByVal := query.Get("order_by"); len(orderByVal) > 0 {
 		// Check is a field in table
 		isColumn := false
-		for _, column := range tableColumns{
+		for _, column := range tableColumns {
 			if column == orderByVal {
 				isColumn = true
 				break
