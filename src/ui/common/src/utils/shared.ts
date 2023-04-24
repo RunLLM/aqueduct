@@ -1,5 +1,4 @@
-import { ArtifactResultMetadataResponse } from 'src/handlers/responses/artifactDeprecated';
-
+import { ArtifactResultMetadataResponse } from '../handlers/responses/artifactDeprecated';
 import { TableRow } from './data';
 
 export enum AWSCredentialType {

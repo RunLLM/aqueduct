@@ -1,5 +1,5 @@
-// This is being deprecated. Please use `workflowDagResults` combining with
-// `artifactResults` for future development.
+// This is being deprecated. Please use RTK query (AqueductAPI)
+// combined with pages/Workflow.ts for future developments.
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { Edge, Node } from 'reactflow';
 

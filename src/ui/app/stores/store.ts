@@ -12,6 +12,7 @@ import { artifactResultContents as artifactResultContentsReducer } from '@aquedu
 import { artifactResults as artifactResultsReducer } from '@aqueducthq/common';
 import { serverConfig as serverConfigReducer } from '@aqueducthq/common';
 import { workflowHistory as workflowHistoryReducer } from '@aqueducthq/common';
+import { workflowPage as workflowPageReducer } from '@aqueducthq/common';
 import { configureStore } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/dist/query';
 
@@ -31,6 +32,7 @@ export const store = configureStore({
         artifactResultContentsReducer,
         serverConfigReducer,
         workflowHistoryReducer,
+        workflowPageReducer,
     },
 
     middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(aqueductApi.middleware),

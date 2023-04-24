@@ -13,7 +13,7 @@ import Typography from '@mui/material/Typography';
 import { parse } from 'query-string';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { ReactFlowProvider } from 'reactflow';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
@@ -49,10 +49,11 @@ import { Tab, Tabs } from '../../../primitives/Tabs.styles';
 import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowHeader, {
   WorkflowPageContentId,
-} from '../../../workflows/workflowHeader';
+} from '../../../workflows/WorkflowHeader';
 import WorkflowSettings from '../../../workflows/WorkflowSettings';
 import { LayoutProps } from '../../types';
 import RunWorkflowDialog from '../../workflows/components/RunWorkflowDialog';
+import { useWorkflowIds } from './hook';
 
 type WorkflowPageProps = {
   user: UserProfile;
@@ -65,7 +66,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 }) => {
   const navigate = useNavigate();
   const dispatch: AppDispatch = useDispatch();
-  const workflowId = useParams().id;
+  const { workflowId, dagId, dagResultId } = useWorkflowIds(user.apiKey);
   const urlSearchParams = parse(window.location.search);
   const location = useLocation();
   const path = location.pathname;
@@ -489,7 +490,12 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       >
         {workflow.selectedDag && (
           <Box marginBottom={1}>
-            <WorkflowHeader workflowDag={workflow.selectedDag} />
+            <WorkflowHeader
+              apiKey={user.apiKey}
+              workflowId={workflowId}
+              dagId={dagId}
+              dagResultId={dagResultId}
+            />
           </Box>
         )}
 
