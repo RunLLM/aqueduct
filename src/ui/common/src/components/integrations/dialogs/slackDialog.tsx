@@ -30,20 +30,9 @@ export const SlackDefaultsOnCreate = {
   enabled: 'false',
 };
 
-// interface Props {
-//   onUpdateField: (field: keyof SlackConfig, value: string) => void;
-//   value?: SlackConfig;
-// }
-
 export const SlackDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
 }) => {
-  // const [channels, setChannels] = useState(
-  //   value?.channels_serialized
-  //     ? (JSON.parse(value?.channels_serialized) as string[]).join(',')
-  //     : ''
-  // );
-
   const [selectedLevel, setSelectedLevel] = useState(
     SlackDefaultsOnCreate.level
   );
@@ -63,9 +52,6 @@ export const SlackDialog: React.FC<IntegrationDialogProps> = ({
       ? (JSON.parse(channels_serialized) as string[]).join(',')
       : '',
   });
-
-  const enabled = getValues('enabled');
-  const level = getValues('level');
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -96,7 +82,6 @@ export const SlackDialog: React.FC<IntegrationDialogProps> = ({
             .map((r) => r.trim());
 
           const serializedChannels = JSON.stringify(channelsList);
-          //onUpdateField('channels_serialized', serializedChannels);
           setValue('channels_serialized', serializedChannels);
         }}
       />
@@ -136,8 +121,6 @@ export const SlackDialog: React.FC<IntegrationDialogProps> = ({
             level={selectedLevel as NotificationLogLevel}
             onSelectLevel={(level) => {
               setSelectedLevel(level);
-              // TODO: Take out the onUpdateField oncce we migrate to react-hook-form
-              //onUpdateField('level', level);
               setValue('level', level);
             }}
             enabled={notificationsEnabled === 'true'}

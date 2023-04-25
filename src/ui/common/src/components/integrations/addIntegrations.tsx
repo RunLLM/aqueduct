@@ -39,11 +39,6 @@ const AddIntegrations: React.FC<Props> = ({
   };
   const [showMigrationDialog, setShowMigrationDialog] = useState(false);
 
-  // TODO: Add dialog component to the integrationobject that's part of the supportedIntegrations array.
-  // This will let us easily choose which component to use when rendering the dialog.
-  // Not much "inheritence" to be used here, but we can have a common interface for IntegrationDialogs.
-  console.log('addIntegrations supportedIntegrations: ', supportedIntegrations);
-
   return (
     <Box>
       {showMigrationDialog && (

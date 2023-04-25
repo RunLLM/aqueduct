@@ -19,12 +19,6 @@ const Placeholders: GCSConfig = {
   use_as_storage: '',
 };
 
-// type Props = {
-//   onUpdateField: (field: keyof GCSConfig, value: string) => void;
-//   value?: GCSConfig;
-//   editMode: boolean;
-//   setMigrateStorage: React.Dispatch<React.SetStateAction<boolean>>;
-// };
 
 interface GCSDialogProps extends IntegrationDialogProps {
   setMigrateStorage: React.Dispatch<React.SetStateAction<boolean>>;
@@ -35,18 +29,18 @@ export const GCSDialog: React.FC<GCSDialogProps> = ({
   setMigrateStorage,
 }) => {
   // Setup for the checkbox component.
-  const { control, setValue } = useFormContext();
+  const { control, setValue, getValues } = useFormContext();
   const { field } = useController({
     control,
     name: 'use_as_storage',
     defaultValue: 'true',
-    rules: { required: false },
+    rules: { required: true },
   });
 
   const [fileName, setFileName] = useState<string>(null);
   const setFile = (fileData: FileData | null) => {
     setFileName(fileData?.name ?? null);
-    onUpdateField('service_account_credentials', fileData?.data);
+    setValue('service_account_credentials', fileData?.data);
   };
 
   useEffect(() => {
@@ -54,10 +48,10 @@ export const GCSDialog: React.FC<GCSDialogProps> = ({
   }, [setMigrateStorage]);
 
   const fileData =
-    fileName && !!value?.service_account_credentials
+    fileName && !!getValues('service_account_credentials')
       ? {
           name: fileName,
-          data: value.service_account_credentials,
+          data: getValues('service_account_credentials'),
         }
       : null;
 
@@ -107,23 +101,14 @@ export const GCSDialog: React.FC<GCSDialogProps> = ({
         }}
       />
 
-      {/* TODO: get this to work with react-hook-form */}
       <FormControlLabel
         label="Use this integration for Aqueduct metadata storage."
         control={
           <Checkbox
             ref={field.ref}
-            //checked={value?.use_as_storage === 'true'}
             checked={field.value === 'true'}
             onChange={(event) => {
               const updatedValue = event.target.checked ? 'true' : 'false';
-              // onUpdateField(
-              //   'use_as_storage',
-              //   //event.target.checked ? 'true' : 'false'
-              //   updatedValue
-              // );
-
-              // NOTE: can probably just use the setValue pattern here that we're using in all the other dialogs.
               field.onChange(updatedValue);
             }}
             disabled={true}

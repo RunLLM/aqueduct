@@ -16,11 +16,6 @@ const Placeholders: BigQueryConfig = {
   project_id: 'aqueduct_1234',
 };
 
-// type Props = {
-//   onUpdateField: (field: keyof BigQueryConfig, value: string) => void;
-//   value?: BigQueryConfig;
-//   editMode: boolean;
-// };
 
 export const BigQueryDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,

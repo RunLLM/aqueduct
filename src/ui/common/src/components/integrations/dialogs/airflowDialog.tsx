@@ -17,16 +17,10 @@ const Placeholders: AirflowConfig = {
   s3_credentials_profile: 'default',
 };
 
-// type Props = {
-//   //onUpdateField: (field: keyof AirflowConfig, value: string) => void;
-//   //value?: AirflowConfig;
-//   editMode: boolean;
-// };
 
 export const AirflowDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
 }) => {
-  //const [host, setHost] = useState<string>(value?.host ?? '');
   const { register, setValue } = useFormContext();
   // we need two different values so we can strip the protocol from the host
   register('host');
