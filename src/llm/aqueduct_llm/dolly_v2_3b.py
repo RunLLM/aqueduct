@@ -45,6 +45,8 @@ def generate(
 ) -> Union[str, List[str]]:
     """Invoke the Dolly V2 3B model to generate responses.
 
+    The model requires a GPU and at least 8GB of RAM.
+
     Args:
         messages (Union[str, List[str]]): The message(s) to generate responses for.
         do_sample (bool, optional): Whether or not to use sampling. Defaults to True. Default: True

@@ -27,6 +27,8 @@ def generate(
 ) -> Union[str, List[str]]:
     """Invoke the LLaMA 7B model to generate responses.
 
+    The model requires a GPU and at least 16GB of RAM.
+
     Args:
         messages (Union[str, List[str]]): The message(s) to generate responses for.
         max_length (int, optional): The maximum length of the generated response. Default: 100

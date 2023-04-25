@@ -77,6 +77,8 @@ def generate(
 ) -> Union[str, List[str]]:
     """Invoke the Vicuna 7B model to generate responses.
 
+    The model requires a GPU and at least 32GB of RAM.
+
     Args:
         messages (Union[str, List[str]]): The message(s) to generate responses for.
         max_gpu_memory (str, optional): The maximum amount of GPU memory to use. Default: "13GiB"
@@ -131,6 +133,8 @@ def generate(
     for message in messages:
         msg = message
 
+        # Code below is partially copied from
+        # https://github.com/lm-sys/FastChat/blob/main/fastchat/serve/huggingface_api.py
         conv = get_default_conv_template(config.model_path).copy()
         conv.append_message(conv.roles[0], msg)
         conv.append_message(conv.roles[1], None)
