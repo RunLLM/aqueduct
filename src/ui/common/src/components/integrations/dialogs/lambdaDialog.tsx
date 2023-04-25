@@ -1,7 +1,11 @@
 import Box from '@mui/material/Box';
 import React from 'react';
+import { useFormContext } from 'react-hook-form';
 
-import { LambdaConfig } from '../../../utils/integrations';
+import {
+  IntegrationDialogProps,
+  LambdaConfig,
+} from '../../../utils/integrations';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 // TODO: Add exec_state value, or make this value optional.
@@ -10,12 +14,15 @@ const Placeholders: LambdaConfig = {
   exec_state: '',
 };
 
-type Props = {
-  onUpdateField: (field: keyof LambdaConfig, value: string) => void;
-  value?: LambdaConfig;
-};
+// type Props = {
+//   onUpdateField: (field: keyof LambdaConfig, value: string) => void;
+//   value?: LambdaConfig;
+// };
 
-export const LambdaDialog: React.FC<Props> = ({ onUpdateField, value }) => {
+export const LambdaDialog: React.FC<IntegrationDialogProps> = ({
+  editMode = false,
+}) => {
+  const { setValue } = useFormContext();
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
@@ -25,7 +32,7 @@ export const LambdaDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         label="Lambda Role ARN"
         description="ARN for Lambda executor role."
         placeholder={Placeholders.role_arn}
-        onChange={(event) => onUpdateField('role_arn', event.target.value)}
+        onChange={(event) => setValue('role_arn', event.target.value)}
       />
     </Box>
   );

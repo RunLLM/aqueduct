@@ -30,7 +30,6 @@ import {
   aqueductDemoName,
   AthenaConfig,
   AWSConfig,
-  BigQueryConfig,
   DatabricksConfig,
   ECRConfig,
   EmailConfig,
@@ -39,7 +38,6 @@ import {
   Integration,
   IntegrationConfig,
   KubernetesConfig,
-  LambdaConfig,
   MariaDbConfig,
   MongoDBConfig,
   MySqlConfig,
@@ -74,22 +72,17 @@ import {
 } from './emailDialog';
 import { GCSDialog, isGCSConfigComplete } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
-import { isK8sConfigComplete, KubernetesDialog } from './kubernetesDialog';
-import { LambdaDialog } from './lambdaDialog';
-import { isMariaDBConfigComplete, MariaDbDialog } from './mariadbDialog';
-import { isMongoDBConfigComplete, MongoDBDialog } from './mongoDbDialog';
-import { isMySqlConfigComplete, MysqlDialog } from './mysqlDialog';
-import { isPostgresConfigComplete, PostgresDialog } from './postgresDialog';
-import { isRedshiftConfigComplete, RedshiftDialog } from './redshiftDialog';
-import { isS3ConfigComplete, S3Dialog } from './s3Dialog';
-import {
-  isSlackConfigComplete,
-  SlackDefaultsOnCreate,
-  SlackDialog,
-} from './slackDialog';
-import { isSnowflakeConfigComplete, SnowflakeDialog } from './snowflakeDialog';
-import { isSparkConfigComplete, SparkDialog } from './sparkDialog';
-import { isSQLiteConfigComplete, SQLiteDialog } from './sqliteDialog';
+import { isK8sConfigComplete } from './kubernetesDialog';
+import { isMariaDBConfigComplete } from './mariadbDialog';
+import { isMongoDBConfigComplete } from './mongoDbDialog';
+import { isMySqlConfigComplete } from './mysqlDialog';
+import { isPostgresConfigComplete } from './postgresDialog';
+import { isRedshiftConfigComplete } from './redshiftDialog';
+import { isS3ConfigComplete } from './s3Dialog';
+import { isSlackConfigComplete, SlackDefaultsOnCreate } from './slackDialog';
+import { isSnowflakeConfigComplete } from './snowflakeDialog';
+import { isSparkConfigComplete } from './sparkDialog';
+import { isSQLiteConfigComplete } from './sqliteDialog';
 
 type Props = {
   user: UserProfile;
@@ -98,6 +91,7 @@ type Props = {
   onSuccess: () => void;
   showMigrationDialog?: () => void;
   integrationToEdit?: Integration;
+  dialogContent: React.FC;
 };
 
 // Default fields are actual filled form values on 'create' dialog.
@@ -120,6 +114,7 @@ const IntegrationDialog: React.FC<Props> = ({
   onSuccess,
   showMigrationDialog = undefined,
   integrationToEdit = undefined,
+  dialogContent,
 }) => {
   console.log('integrationToEdit: ', integrationToEdit);
   const editMode = !!integrationToEdit;
@@ -258,6 +253,7 @@ const IntegrationDialog: React.FC<Props> = ({
 
   let serviceDialog;
 
+  // Remember to comment this out and take out when done refactoring.
   switch (service) {
     case 'Postgres':
       serviceDialog = (
@@ -483,12 +479,12 @@ const IntegrationDialog: React.FC<Props> = ({
       description="Provide a unique name to refer to this integration."
       placeholder={'my_' + formatService(service) + '_integration'}
       onChange={(event) => {
-        setName(event.target.value);
+        // TODO: remove this setName call when done refactoring.
+        //setName(event.target.value);
         setShouldShowNameError(false);
+        methods.setValue('name', event.target.value);
       }}
       disabled={service === 'Aqueduct Demo'}
-      // don't need to register here since this is already done in the IntegrationTextInputField component
-      //{...methods.register('name')}
     />
   );
 
@@ -519,6 +515,11 @@ const IntegrationDialog: React.FC<Props> = ({
             )}
             {nameInput}
             {serviceDialog}
+
+            {/* Now we can remove the switch statement for SerivceDialog! */}
+            {/* {serviceDialog} */}
+            {/* Bring this dialog back when done getting Kubernetes dialog moved over */}
+            {/*dialogContent({ editMode })*/}
 
             {shouldShowNameError && (
               <Alert sx={{ mt: 2 }} severity="error">

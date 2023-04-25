@@ -4,7 +4,10 @@ import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { EmailConfig } from '../../../utils/integrations';
+import {
+  EmailConfig,
+  IntegrationDialogProps,
+} from '../../../utils/integrations';
 import { NotificationLogLevel } from '../../../utils/notifications';
 import CheckboxEntry from '../../notifications/CheckboxEntry';
 import NotificationLevelSelector from '../../notifications/NotificationLevelSelector';
@@ -38,7 +41,10 @@ type Props = {
   value?: EmailConfig;
 };
 
-export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
+export const EmailDialog: React.FC<IntegrationDialogProps> = ({
+  editMode = false,
+}) => {
+  // TODO: Handle this using the getValues hook from react-hook-form.
   const [receivers, setReceivers] = useState(
     value?.targets_serialized
       ? (JSON.parse(value?.targets_serialized) as string[]).join(',')
@@ -64,7 +70,7 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         label="Host *"
         description="The hostname address of the email SMTP server."
         placeholder={Placeholders.host}
-        onChange={(event) => onUpdateField('host', event.target.value)}
+        onChange={(event) => setValue('host', event.target.value)}
       />
 
       <IntegrationTextInputField
@@ -74,7 +80,7 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         label="Port *"
         description="The port number of the email SMTP server."
         placeholder={Placeholders.port}
-        onChange={(event) => onUpdateField('port', event.target.value)}
+        onChange={(event) => setValue('port', event.target.value)}
       />
 
       <IntegrationTextInputField
@@ -84,7 +90,7 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         label="Sender Address *"
         description="The email address of the sender."
         placeholder={Placeholders.user}
-        onChange={(event) => onUpdateField('user', event.target.value)}
+        onChange={(event) => setValue('user', event.target.value)}
       />
 
       <IntegrationTextInputField
@@ -96,23 +102,22 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         placeholder={Placeholders.password}
         type="password"
         onChange={(event) => {
-          onUpdateField('password', event.target.value);
+          setValue('password', event.target.value);
         }}
       />
 
       <IntegrationTextInputField
-        name="reciever"
+        name="recievers_text"
         spellCheck={false}
         required={true}
         label="Receiver Address *"
         description="The email address(es) of the receiver(s). Use comma to separate different addresses."
         placeholder={Placeholders.reciever}
         onChange={(event) => {
-          setReceivers(event.target.value);
+          setValue('receivers', event.target.value);
           const receiversList = event.target.value
             .split(',')
             .map((r) => r.trim());
-          onUpdateField('targets_serialized', JSON.stringify(receiversList));
           setValue('targets_serialized', JSON.stringify(receiversList));
         }}
       />
@@ -124,7 +129,6 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
           checked={value?.enabled === 'true'}
           disabled={false}
           onChange={(checked) => {
-            onUpdateField('enabled', checked ? 'true' : 'false');
             setValue('enabled', checked ? 'true' : 'false');
           }}
         >
@@ -151,7 +155,6 @@ export const EmailDialog: React.FC<Props> = ({ onUpdateField, value }) => {
           <NotificationLevelSelector
             level={value?.level as NotificationLogLevel}
             onSelectLevel={(level) => {
-              onUpdateField('level', level);
               setValue('level', level);
             }}
             enabled={value?.enabled === 'true'}

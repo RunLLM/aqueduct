@@ -5,7 +5,11 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import { useController, useFormContext } from 'react-hook-form';
 
-import { FileData, GCSConfig } from '../../../utils/integrations';
+import {
+  FileData,
+  GCSConfig,
+  IntegrationDialogProps,
+} from '../../../utils/integrations';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
@@ -15,21 +19,23 @@ const Placeholders: GCSConfig = {
   use_as_storage: '',
 };
 
-type Props = {
-  onUpdateField: (field: keyof GCSConfig, value: string) => void;
-  value?: GCSConfig;
-  editMode: boolean;
-  setMigrateStorage: React.Dispatch<React.SetStateAction<boolean>>;
-};
+// type Props = {
+//   onUpdateField: (field: keyof GCSConfig, value: string) => void;
+//   value?: GCSConfig;
+//   editMode: boolean;
+//   setMigrateStorage: React.Dispatch<React.SetStateAction<boolean>>;
+// };
 
-export const GCSDialog: React.FC<Props> = ({
-  onUpdateField,
-  value,
+interface GCSDialogProps extends IntegrationDialogProps {
+  setMigrateStorage: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export const GCSDialog: React.FC<GCSDialogProps> = ({
   editMode,
   setMigrateStorage,
 }) => {
   // Setup for the checkbox component.
-  const { control } = useFormContext();
+  const { control, setValue } = useFormContext();
   const { field } = useController({
     control,
     name: 'use_as_storage',
@@ -78,7 +84,7 @@ export const GCSDialog: React.FC<Props> = ({
         label="Bucket*"
         description="The name of the GCS bucket."
         placeholder={Placeholders.bucket}
-        onChange={(event) => onUpdateField('bucket', event.target.value)}
+        onChange={(event) => setValue('bucket', event.target.value)}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disabled={editMode}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -111,12 +117,13 @@ export const GCSDialog: React.FC<Props> = ({
             checked={field.value === 'true'}
             onChange={(event) => {
               const updatedValue = event.target.checked ? 'true' : 'false';
-              onUpdateField(
-                'use_as_storage',
-                //event.target.checked ? 'true' : 'false'
-                updatedValue
-              );
+              // onUpdateField(
+              //   'use_as_storage',
+              //   //event.target.checked ? 'true' : 'false'
+              //   updatedValue
+              // );
 
+              // NOTE: can probably just use the setValue pattern here that we're using in all the other dialogs.
               field.onChange(updatedValue);
             }}
             disabled={true}

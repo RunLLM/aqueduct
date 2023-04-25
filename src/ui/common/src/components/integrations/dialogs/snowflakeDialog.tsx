@@ -1,7 +1,11 @@
 import Box from '@mui/material/Box';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useFormContext } from 'react-hook-form';
 
-import { SnowflakeConfig } from '../../../utils/integrations';
+import {
+  IntegrationDialogProps,
+  SnowflakeConfig,
+} from '../../../utils/integrations';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
@@ -15,28 +19,30 @@ const Placeholders: SnowflakeConfig = {
   role: '',
 };
 
-type Props = {
-  onUpdateField: (field: keyof SnowflakeConfig, value: string) => void;
-  value?: SnowflakeConfig;
-  editMode: boolean;
-};
+// type Props = {
+//   onUpdateField: (field: keyof SnowflakeConfig, value: string) => void;
+//   value?: SnowflakeConfig;
+//   editMode: boolean;
+// };
 
-export const SnowflakeDialog: React.FC<Props> = ({
-  onUpdateField,
-  value,
+export const SnowflakeDialog: React.FC<IntegrationDialogProps> = ({
   editMode,
 }) => {
-  const [schema, setSchema] = useState<string>(
-    value?.schema ?? Placeholders.schema
-  );
+  const { setValue, getValues } = useFormContext();
+  const schema = getValues('schema') ?? Placeholders.schema;
+  console.log('snowflakeDialog schema: ', schema);
 
-  useEffect(() => {
-    if (schema) {
-      onUpdateField('schema', schema);
-    } else {
-      onUpdateField('schema', Placeholders.schema);
-    }
-  }, [schema]);
+  // const [schema, setSchema] = useState<string>(
+  //   value?.schema ?? Placeholders.schema
+  // );
+
+  // useEffect(() => {
+  //   if (schema) {
+  //     onUpdateField('schema', schema);
+  //   } else {
+  //     onUpdateField('schema', Placeholders.schema);
+  //   }
+  // }, [schema]);
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -47,9 +53,7 @@ export const SnowflakeDialog: React.FC<Props> = ({
         label="Account Identifier *"
         description="An account identifier for your Snowflake account."
         placeholder={Placeholders.account_identifier}
-        onChange={(event) =>
-          onUpdateField('account_identifier', event.target.value)
-        }
+        onChange={(event) => setValue('account_identifier', event.target.value)}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disabled={editMode}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -62,7 +66,7 @@ export const SnowflakeDialog: React.FC<Props> = ({
         label="Warehouse *"
         description="The name of the Snowflake warehouse to connect to."
         placeholder={Placeholders.warehouse}
-        onChange={(event) => onUpdateField('warehouse', event.target.value)}
+        onChange={(event) => setValue('warehouse', event.target.value)}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disabled={editMode}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -75,7 +79,7 @@ export const SnowflakeDialog: React.FC<Props> = ({
         label="Database *"
         description="The name of the database to connect to."
         placeholder={Placeholders.database}
-        onChange={(event) => onUpdateField('database', event.target.value)}
+        onChange={(event) => setValue('database', event.target.value)}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disabled={editMode}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -88,7 +92,7 @@ export const SnowflakeDialog: React.FC<Props> = ({
         label="Schema"
         description="The name of the schema to connect to. The public schema will be used if none is provided."
         placeholder={Placeholders.schema}
-        onChange={(event) => setSchema(event.target.value)}
+        onChange={(event) => setValue('schema', event.target.value)}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disabled={editMode}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -101,7 +105,7 @@ export const SnowflakeDialog: React.FC<Props> = ({
         label="Username *"
         description="The username of a user with permission to access the database above."
         placeholder={Placeholders.username}
-        onChange={(event) => onUpdateField('username', event.target.value)}
+        onChange={(event) => setValue('username', event.target.value)}
       />
 
       <IntegrationTextInputField
@@ -112,7 +116,7 @@ export const SnowflakeDialog: React.FC<Props> = ({
         description="The password corresponding to the above username."
         placeholder={Placeholders.password}
         type="password"
-        onChange={(event) => onUpdateField('password', event.target.value)}
+        onChange={(event) => setValue('password', event.target.value)}
       />
 
       <IntegrationTextInputField
@@ -122,7 +126,7 @@ export const SnowflakeDialog: React.FC<Props> = ({
         label="Role"
         description="The role to use when accessing the database above."
         placeholder={Placeholders.role}
-        onChange={(event) => onUpdateField('role', event.target.value)}
+        onChange={(event) => setValue('role', event.target.value)}
       />
     </Box>
   );

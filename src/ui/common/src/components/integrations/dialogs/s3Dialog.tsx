@@ -1,11 +1,13 @@
 import { Checkbox, FormControlLabel } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
 import {
   AWSCredentialType,
   FileData,
+  IntegrationDialogProps,
   S3Config,
 } from '../../../utils/integrations';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';
@@ -27,43 +29,61 @@ const Placeholders: S3Config = {
   use_as_storage: '',
 };
 
-type Props = {
-  onUpdateField: (field: keyof S3Config, value: string) => void;
-  value?: S3Config;
-  editMode: boolean;
-  setMigrateStorage: (value: boolean) => void;
-};
+// type Props = {
+//   onUpdateField: (field: keyof S3Config, value: string) => void;
+//   value?: S3Config;
+//   editMode: boolean;
+//   setMigrateStorage: (value: boolean) => void;
+// };
 
-export const S3Dialog: React.FC<Props> = ({
-  onUpdateField,
-  value,
-  editMode,
+interface S3DialogProps extends IntegrationDialogProps {
+  setMigrateStorage: (value: boolean) => void;
+}
+
+export const S3Dialog: React.FC<S3DialogProps> = ({
+  editMode = false,
   setMigrateStorage,
 }) => {
+  const { register, setValue, getValues } = useFormContext();
+  register('use_as_storage');
+  const use_as_storage = getValues('use_as_storage');
   const [fileName, setFileName] = useState<string>(null);
 
+  const [currentTab, setCurrentTab] = useState(AWSCredentialType.AccessKey);
+
   const setFile = (fileData: FileData | null) => {
-    setFileName(fileData?.name ?? null);
-    onUpdateField('config_file_content', fileData?.data);
+    setFileName(fileData?.name ?? '');
+    //onUpdateField('config_file_content', fileData?.data);
+    setValue('config_file_content', fileData?.data);
   };
 
   const fileData =
-    fileName && !!value?.config_file_content
+    fileName && !!getValues('config_file_content')
       ? {
           name: fileName,
-          data: value.config_file_content,
+          data: getValues('config_file_content'),
         }
       : null;
 
-  useEffect(() => {
-    if (!value?.type) {
-      onUpdateField('type', AWSCredentialType.AccessKey);
-    }
+  // const fileData =
+  //   fileName && !!value?.config_file_content
+  //     ? {
+  //         name: fileName,
+  //         data: value.config_file_content,
+  //       }
+  //     : null;
 
-    if (!value?.use_as_storage) {
-      onUpdateField('use_as_storage', 'false');
-    }
-  }, [onUpdateField, value?.type, value?.use_as_storage]);
+  // TODO: Figure out what to do with useAsStorage here.
+
+  // useEffect(() => {
+  //   if (!value?.type) {
+  //     onUpdateField('type', AWSCredentialType.AccessKey);
+  //   }
+
+  //   if (!use_as_storage) {
+  //     onUpdateField('use_as_storage', 'false');
+  //   }
+  // }, [onUpdateField, value?.type, value?.use_as_storage]);
 
   const configProfileInput = (
     <IntegrationTextInputField
@@ -73,9 +93,7 @@ export const S3Dialog: React.FC<Props> = ({
       label="AWS Profile*"
       description="The name of the profile specified in brackets in your credential file."
       placeholder={Placeholders.config_file_profile}
-      onChange={(event) =>
-        onUpdateField('config_file_profile', event.target.value)
-      }
+      onChange={(event) => setValue('config_file_profile', event.target.value)}
     />
   );
 
@@ -91,7 +109,7 @@ export const S3Dialog: React.FC<Props> = ({
         label="AWS Access Key ID*"
         description="The access key ID of your AWS account."
         placeholder={Placeholders.access_key_id}
-        onChange={(event) => onUpdateField('access_key_id', event.target.value)}
+        onChange={(event) => setValue('access_key_id', event.target.value)}
       />
 
       <IntegrationTextInputField
@@ -101,9 +119,7 @@ export const S3Dialog: React.FC<Props> = ({
         label="AWS Secret Access Key*"
         description="The secret access key of your AWS account."
         placeholder={Placeholders.secret_access_key}
-        onChange={(event) =>
-          onUpdateField('secret_access_key', event.target.value)
-        }
+        onChange={(event) => setValue('secret_access_key', event.target.value)}
       />
     </Box>
   );
@@ -125,9 +141,7 @@ export const S3Dialog: React.FC<Props> = ({
         label="AWS Credentials File Path*"
         description={'The path to the credentials file'}
         placeholder={Placeholders.config_file_path}
-        onChange={(event) =>
-          onUpdateField('config_file_path', event.target.value)
-        }
+        onChange={(event) => setValue('config_file_path', event.target.value)}
       />
 
       {configProfileInput}
@@ -177,7 +191,7 @@ export const S3Dialog: React.FC<Props> = ({
         label="Bucket*"
         description="The name of the S3 bucket."
         placeholder={Placeholders.bucket}
-        onChange={(event) => onUpdateField('bucket', event.target.value)}
+        onChange={(event) => setValue('bucket', event.target.value)}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -190,7 +204,7 @@ export const S3Dialog: React.FC<Props> = ({
         label="Region*"
         description="The region the S3 bucket belongs to."
         placeholder={Placeholders.region}
-        onChange={(event) => onUpdateField('region', event.target.value)}
+        onChange={(event) => setValue('region', event.target.value)}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -203,7 +217,7 @@ export const S3Dialog: React.FC<Props> = ({
         label="Directory"
         description="Only applicable when also setting this integration to be the artifact store. This is an optional path to an existing directory in the bucket, to be used as the root of the artifact store. Defaults to the root of the bucket."
         placeholder={Placeholders.root_dir}
-        onChange={(event) => onUpdateField('root_dir', event.target.value)}
+        onChange={(event) => setValue('root_dir', event.target.value)}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -211,8 +225,11 @@ export const S3Dialog: React.FC<Props> = ({
 
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tabs
-          value={value?.type ?? 'access_key'}
-          onChange={(_, value) => onUpdateField('type', value)}
+          value={currentTab}
+          onChange={(_, value) => {
+            setValue('type', value);
+            setCurrentTab(value);
+          }}
         >
           <Tab value={AWSCredentialType.AccessKey} label="Enter Access Keys" />
           <Tab
@@ -225,18 +242,17 @@ export const S3Dialog: React.FC<Props> = ({
           />
         </Tabs>
       </Box>
-      {value?.type === AWSCredentialType.AccessKey && accessKeyTab}
-      {value?.type === AWSCredentialType.ConfigFilePath && configPathTab}
-      {value?.type === AWSCredentialType.ConfigFileContent && configUploadTab}
+      {currentTab === AWSCredentialType.AccessKey && accessKeyTab}
+      {currentTab === AWSCredentialType.ConfigFilePath && configPathTab}
+      {currentTab === AWSCredentialType.ConfigFileContent && configUploadTab}
 
-      {/* TODO: Get this to use react-hook-form */}
       <FormControlLabel
         label="Use this integration for Aqueduct metadata storage."
         control={
           <Checkbox
-            checked={value?.use_as_storage === 'true'}
+            checked={use_as_storage === 'true'}
             onChange={(event) => {
-              onUpdateField(
+              setValue(
                 'use_as_storage',
                 event.target.checked ? 'true' : 'false'
               );
