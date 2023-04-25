@@ -125,7 +125,7 @@ func setupTerraformDirectory(dst string) error {
 		return err
 	}
 
-	_, stdErr, err := lib_utils.RunCmd("cp", []string{"-r", fmt.Sprintf("%s/.", dynamic.TerraformTemplateDir), dst}, "", false)
+	_, stdErr, err := lib_utils.RunCmd("cp", []string{"-r", fmt.Sprintf("%s%s.", dynamic.TerraformTemplateDir, string(filepath.Separator)), dst}, "", false)
 	if err != nil {
 		return errors.New(stdErr)
 	}
