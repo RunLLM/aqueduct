@@ -273,11 +273,11 @@ def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) 
                 aq_config = _parse_config_file()["compute"][integration_name]
                 if aq_config and "conda" in aq_config:
                     client.connect_integration(
-                        integration_name,
+                        "conda",
                         ServiceType.CONDA,
                         {},  # integration_config
                     )
-                    wait_for_conda_integration(client, integration_name)
+                    wait_for_conda_integration(client, "conda")
             else:
                 integration_config = _fetch_integration_credentials("compute", integration_name)
 
