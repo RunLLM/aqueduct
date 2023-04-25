@@ -1,8 +1,8 @@
-import {Box} from '@mui/material';
+import { Box } from '@mui/material';
 import React from 'react';
 
-import {IntegrationCard} from '../components/integrations/cards/card';
-import {Card} from '../components/layouts/card';
+import { IntegrationCard } from '../components/integrations/cards/card';
+import { Card } from '../components/layouts/card';
 import {
   AWSCredentialType,
   BigQueryConfig,
@@ -21,7 +21,7 @@ import {
   SlackConfig,
   SnowflakeConfig,
 } from '../utils/integrations';
-import ExecutionStatus from "../utils/shared";
+import ExecutionStatus from '../utils/shared';
 
 export const ResourceCardStory: React.FC = () => {
   const integrations: Integration[] = [
