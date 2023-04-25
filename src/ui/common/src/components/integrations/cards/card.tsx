@@ -1,13 +1,8 @@
 import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
 import React from 'react';
-import { Link as RouterLink } from 'react-router-dom';
 
-import { DataPreviewInfo } from '../../../utils/data';
-import { getPathPrefix } from '../../../utils/getPathPrefix';
 import { Integration } from '../../../utils/integrations';
 import ExecutionStatus from '../../../utils/shared';
-import ExecutionChip from '../../execution/chip';
 import { StatusIndicator } from '../../workflows/workflowStatus';
 import IntegrationLogo from '../logo';
 import { AirflowCard } from './airflowCard';
@@ -19,7 +14,6 @@ import { EmailCard } from './emailCard';
 import { GCSCard } from './gcsCard';
 import { KubernetesCard } from './kubernetesCard';
 import { LambdaCard } from './lambdaCard';
-import { LoadSpecsCard } from './loadSpecCard';
 import { MariaDbCard } from './mariadbCard';
 import { MongoDBCard } from './mongoDbCard';
 import { MySqlCard } from './mysqlCard';
@@ -30,69 +24,6 @@ import { SlackCard } from './slackCard';
 import { SnowflakeCard } from './snowflakeCard';
 import { SparkCard } from './sparkCard';
 import { TruncatedText } from './text';
-
-type DataProps = {
-  dataPreviewInfo: DataPreviewInfo;
-};
-
-// TODO: what does this do?
-export const DataCard: React.FC<DataProps> = ({ dataPreviewInfo }) => {
-  const dataPreviewInfoVersions = Object.entries(dataPreviewInfo.versions);
-  if (dataPreviewInfoVersions.length > 0) {
-    let [latestDagResultId, latestVersion] = dataPreviewInfoVersions[0];
-    // Find the latest version
-    // note: could also sort the array and get things that way.
-    dataPreviewInfoVersions.forEach(([dagResultId, version]) => {
-      if (version.timestamp > latestVersion.timestamp) {
-        latestDagResultId = dagResultId;
-        latestVersion = version;
-      }
-    });
-
-    const workflowId = dataPreviewInfo.workflow_id;
-    return (
-      <Link
-        underline="none"
-        color="inherit"
-        to={`${getPathPrefix()}/workflow/${workflowId}/result/${latestDagResultId}/artifact/${
-          dataPreviewInfo.artifact_id
-        }`}
-        component={RouterLink}
-      >
-        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Box sx={{ flex: 1 }}>
-              <TruncatedText
-                variant="h6"
-                component="div"
-                sx={{
-                  fontFamily: 'Monospace',
-                  '&:hover': { textDecoration: 'underline' },
-                }}
-              >
-                {dataPreviewInfo.artifact_name}
-              </TruncatedText>
-            </Box>
-            <Box marginLeft={1}>
-              <ExecutionChip status={latestVersion.status} />
-            </Box>
-          </Box>
-          <Box sx={{ fontSize: 1, my: 1 }}>
-            <TruncatedText variant="body2">
-              <strong>Workflow:</strong> {dataPreviewInfo.workflow_name}
-            </TruncatedText>
-            <TruncatedText variant="body2">
-              <strong>Last Updated:</strong>{' '}
-              {new Date(latestVersion.timestamp * 1000).toLocaleString()}
-            </TruncatedText>
-          </Box>
-          <LoadSpecsCard loadSpecs={dataPreviewInfo.load_specs} />
-        </Box>
-      </Link>
-    );
-  }
-  return null;
-};
 
 type IntegrationProps = {
   integration: Integration;

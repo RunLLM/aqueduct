@@ -4,25 +4,16 @@ import React from 'react';
 import { Integration, LambdaConfig } from '../../../utils/integrations';
 import { ExecState, ExecutionStatus } from '../../../utils/shared';
 import LambdaConnectionStatus from '../lambda/lambdaConnectionStatus';
-import { CardTextEntry, TruncatedText } from './text';
+import { ResourceCardText, TruncatedText } from './text';
 
 type Props = {
   integration: Integration;
 };
 
-// This should be set to the minimum width required to display the longest category name on the card.
-const categoryWidth = '120px';
-
 export const LambdaCard: React.FC<Props> = ({ integration }) => {
   const config = integration.config as LambdaConfig;
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-      <CardTextEntry
-        category="Lambda Role ARN: "
-        value={config.role_arn}
-        categoryWidth={categoryWidth}
-      />
-    </Box>
+    <ResourceCardText labels={['Lambda Role ARN']} values={[config.role_arn]} />
   );
 };
 

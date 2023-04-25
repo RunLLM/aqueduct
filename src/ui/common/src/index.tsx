@@ -7,11 +7,9 @@ import AddIntegrations from './components/integrations/addIntegrations';
 import { AqueductDemoCard } from './components/integrations/cards/aqueductDemoCard';
 import { AWSCard } from './components/integrations/cards/awsCard';
 import { BigQueryCard } from './components/integrations/cards/bigqueryCard';
-import { DataCard } from './components/integrations/cards/card';
 import { IntegrationCard } from './components/integrations/cards/card';
 import { DatabricksCard } from './components/integrations/cards/databricksCard';
 import { EmailCard } from './components/integrations/cards/emailCard';
-import { LoadSpecsCard } from './components/integrations/cards/loadSpecCard';
 import { MariaDbCard } from './components/integrations/cards/mariadbCard';
 import { MongoDBCard } from './components/integrations/cards/mongoDbCard';
 import { MySqlCard } from './components/integrations/cards/mysqlCard';
@@ -227,7 +225,6 @@ export {
   CSVDialog,
   DatabricksCard,
   DatabricksDialog,
-  DataCard,
   DataColumnTypeNames,
   DataPage,
   dataPreview,
@@ -289,7 +286,6 @@ export {
   listWorkflowSlice,
   LoadingButton,
   LoadingStatusEnum,
-  LoadSpecsCard,
   LoginPage,
   LogViewer,
   MariaDbCard,
