@@ -17,7 +17,6 @@ const Placeholders: AirflowConfig = {
   s3_credentials_profile: 'default',
 };
 
-
 export const AirflowDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
 }) => {

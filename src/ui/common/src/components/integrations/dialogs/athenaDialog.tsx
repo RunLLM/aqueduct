@@ -32,7 +32,6 @@ const Placeholders: AthenaConfig = {
   output_location: 's3://bucket/path/to/folder/',
 };
 
-
 export const AthenaDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
 }) => {

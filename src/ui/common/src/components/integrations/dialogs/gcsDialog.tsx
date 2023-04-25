@@ -19,7 +19,6 @@ const Placeholders: GCSConfig = {
   use_as_storage: '',
 };
 
-
 interface GCSDialogProps extends IntegrationDialogProps {
   setMigrateStorage: React.Dispatch<React.SetStateAction<boolean>>;
 }

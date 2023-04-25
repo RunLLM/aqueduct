@@ -73,6 +73,7 @@ import {
 import { GCSDialog, isGCSConfigComplete } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { isK8sConfigComplete } from './kubernetesDialog';
+import { isLambaDialogComplete } from './lambdaDialog';
 import { isMariaDBConfigComplete } from './mariadbDialog';
 import { isMongoDBConfigComplete } from './mongoDbDialog';
 import { isMySqlConfigComplete } from './mysqlDialog';

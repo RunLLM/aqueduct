@@ -19,7 +19,6 @@ const Placeholders: DatabricksConfig = {
   instance_pool_id: '123-456-789',
 };
 
-
 export const DatabricksDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
 }) => {
