@@ -7,6 +7,7 @@ from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, LoadUpdateMode
 from aqueduct.integrations.parameters import _validate_parameters
 from aqueduct.integrations.save import _save_artifact
+from aqueduct.integrations.validation import validate_is_connected
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
 from aqueduct.models.integration import Integration, IntegrationInfo
@@ -33,6 +34,7 @@ class MongoDBCollectionIntegration(Integration):
         self._dag = dag
         self._collection_name = collection_name
 
+    @validate_is_connected()
     def find(
         self,
         *args: List[Any],
@@ -156,6 +158,7 @@ class MongoDBCollectionIntegration(Integration):
             # We are in lazy mode.
             return TableArtifact(self._dag, output_artf_id)
 
+    @validate_is_connected()
     def save(self, artifact: BaseArtifact, update_mode: LoadUpdateMode) -> None:
         """Registers a save operator of the given artifact, to be executed when it's computed in a published flow.
 
@@ -188,6 +191,7 @@ class MongoDBIntegration(Integration):
         self._dag = dag
         self._metadata = metadata
 
+    @validate_is_connected()
     def collection(self, name: str) -> MongoDBCollectionIntegration:
         """Returns a specific collection object to call `.find()` method.
 
@@ -203,6 +207,7 @@ class MongoDBIntegration(Integration):
         print("==================== MongoDB Integration  =============================")
         self._metadata.describe()
 
+    @validate_is_connected()
     def save(self, artifact: BaseArtifact, collection: str, update_mode: LoadUpdateMode) -> None:
         """Registers a save operator of the given artifact, to be executed when it's computed in a published flow.
 

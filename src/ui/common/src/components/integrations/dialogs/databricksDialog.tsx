@@ -8,10 +8,11 @@ import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: DatabricksConfig = {
-  workspace_url: 'workspace_url',
-  access_token: 'access_token',
-  s3_instance_profile_arn: 's3_instance_profile_arn',
-  instance_pool_id: 'instance_pool_id',
+  workspace_url: 'https://dbc-your-workspace.cloud.databricks.com',
+  access_token: 'dapi123456789',
+  s3_instance_profile_arn:
+    'arn:aws:iam::123:instance-profile/access-databuckets-arn',
+  instance_pool_id: '123-456-789',
 };
 
 type Props = {

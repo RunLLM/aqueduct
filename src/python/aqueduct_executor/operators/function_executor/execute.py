@@ -142,6 +142,7 @@ def _execute_function(
 def _validate_result_count_and_infer_type(
     spec: FunctionSpec,
     results: List[Any],
+    infer_type_func: Any,
 ) -> List[ArtifactType]:
     """
     Validates that the expected number of results were returned by the Function
@@ -164,10 +165,11 @@ def _validate_result_count_and_infer_type(
             % (len(spec.output_content_paths), len(results)),
         )
 
-    return [infer_artifact_type(res) for res in results]
+    return [infer_type_func(res) for res in results]
 
 
 def _write_artifacts(
+    write_artifact_func: Any,
     results: Any,
     result_types: List[ArtifactType],
     derived_from_bson: bool,
@@ -175,9 +177,10 @@ def _write_artifacts(
     output_metadata_paths: List[str],
     system_metadata: Any,
     storage: Storage,
+    **kwargs: Any,
 ) -> None:
     for i, result in enumerate(results):
-        utils.write_artifact(
+        write_artifact_func(
             storage,
             result_types[i],
             derived_from_bson,
@@ -185,6 +188,7 @@ def _write_artifacts(
             output_metadata_paths[i],
             result,
             system_metadata=system_metadata,
+            **kwargs,
         )
 
 
@@ -239,6 +243,32 @@ def run(spec: FunctionSpec) -> None:
     """
     Executes a function operator.
     """
+    execute_function_spec(
+        spec=spec,
+        read_artifacts_func=utils.read_artifacts,
+        write_artifact_func=utils.write_artifact,
+        infer_type_func=infer_artifact_type,
+    )
+
+
+def execute_function_spec(
+    spec: FunctionSpec,
+    read_artifacts_func: Any,
+    write_artifact_func: Any,
+    infer_type_func: Any,
+    **kwargs: Any,
+) -> None:
+    """
+    Executes a function operator. If run in a Spark environment, it uses the Spark specific utils
+    functions to read/write to storage layer and to infer the type of artifact.
+    The only kwarg we expect is spark_session_obj.
+
+    Args:
+        spec: The spec provided for this operator.
+        read_artifacts_func: function used to read artifacts from storage layer
+        write_artifact_func: function used to write artifacts to storage layer
+        infer_type_func: function used to infer type of artifacts returned by operators.
+    """
     exec_state = ExecutionState(user_logs=Logs())
     storage = parse_storage(spec.storage_config)
     try:
@@ -247,7 +277,12 @@ def run(spec: FunctionSpec) -> None:
         # Read the input data from intermediate storage.
         inputs, _, serialization_types = time_it(
             job_name=spec.name, job_type=spec.type.value, step="Reading Inputs"
-        )(utils.read_artifacts)(storage, spec.input_content_paths, spec.input_metadata_paths)
+        )(read_artifacts_func)(
+            storage=storage,
+            input_paths=spec.input_content_paths,
+            input_metadata_paths=spec.input_metadata_paths,
+            **kwargs,
+        )
 
         # We need to check for BSON_TABLE serialization type at both the top level
         # and within any serialized pickled collection (if it exists).
@@ -275,7 +310,9 @@ def run(spec: FunctionSpec) -> None:
 
         print("Function invoked successfully!")
 
-        result_types = _validate_result_count_and_infer_type(spec, results)
+        result_types = _validate_result_count_and_infer_type(
+            spec=spec, results=results, infer_type_func=infer_type_func
+        )
 
         # Perform type checking on the function output.
         if spec.operator_type == OperatorType.METRIC:
@@ -316,15 +353,15 @@ def run(spec: FunctionSpec) -> None:
             # not before recording the output artifact value (which will be False).
             if not check_passed:
                 print(f"Check Operator did not pass.")
-
-                utils.write_artifact(
-                    storage,
-                    ArtifactType.BOOL,
-                    derived_from_bson,  # derived_from_bson doesn't apply to bool artifact
-                    spec.output_content_paths[0],
-                    spec.output_metadata_paths[0],
-                    check_passed,
+                write_artifact_func(
+                    storage=storage,
+                    artifact_type=ArtifactType.BOOL,
+                    derived_from_bson=derived_from_bson,  # derived_from_bson doesn't apply to bool artifact
+                    output_path=spec.output_content_paths[0],
+                    output_metadata_path=spec.output_metadata_paths[0],
+                    content=check_passed,
                     system_metadata=system_metadata,
+                    **kwargs,
                 )
 
                 check_severity = spec.check_severity
@@ -359,13 +396,15 @@ def run(spec: FunctionSpec) -> None:
         time_it(job_name=spec.name, job_type=spec.type.value, step="Writing Outputs")(
             _write_artifacts
         )(
-            results,
-            result_types,
-            derived_from_bson,
-            spec.output_content_paths,
-            spec.output_metadata_paths,
-            system_metadata,
-            storage,
+            write_artifact_func=write_artifact_func,
+            results=results,
+            result_types=result_types,
+            derived_from_bson=derived_from_bson,
+            output_content_paths=spec.output_content_paths,
+            output_metadata_paths=spec.output_metadata_paths,
+            system_metadata=system_metadata,
+            storage=storage,
+            **kwargs,
         )
 
         # If we made it here, then the operator has succeeded.
