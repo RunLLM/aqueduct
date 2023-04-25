@@ -89,11 +89,11 @@ func (h *DAGResultsGetHandler) Prepare(r *http.Request) (interface{}, int, error
 	}
 
 	return &dagResultsGetArgs{
-		AqContext:  aqContext,
-		workflowID: workflowID,
-		orderBy:    orderBy,
-		orderDescending:    descending,
-		limit:      limit,
+		AqContext:       aqContext,
+		workflowID:      workflowID,
+		orderBy:         orderBy,
+		orderDescending: descending,
+		limit:           limit,
 	}, http.StatusOK, nil
 }
 
