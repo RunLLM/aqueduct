@@ -14,10 +14,6 @@ const Placeholders: LambdaConfig = {
   exec_state: '',
 };
 
-// type Props = {
-//   onUpdateField: (field: keyof LambdaConfig, value: string) => void;
-//   value?: LambdaConfig;
-// };
 
 export const LambdaDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
@@ -38,4 +34,6 @@ export const LambdaDialog: React.FC<IntegrationDialogProps> = ({
   );
 };
 
-// TODO: Add is Lambda dialog complete function.
+export function isLambaDialogComplete(config: LambdaConfig): boolean {
+  return !!config.role_arn;
+}

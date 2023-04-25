@@ -19,11 +19,6 @@ const Placeholders: DatabricksConfig = {
   instance_pool_id: '123-456-789',
 };
 
-// type Props = {
-//   //onUpdateField: (field: keyof DatabricksConfig, value: string) => void;
-//   //value?: DatabricksConfig;
-//   editMode: boolean;
-// };
 
 export const DatabricksDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,

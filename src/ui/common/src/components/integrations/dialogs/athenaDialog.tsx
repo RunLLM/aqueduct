@@ -5,7 +5,6 @@ import { useFormContext } from 'react-hook-form';
 
 import {
   AthenaConfig,
-  //AWSCredentialType,
   FileData,
   IntegrationDialogProps,
 } from '../../../utils/integrations';
@@ -33,16 +32,11 @@ const Placeholders: AthenaConfig = {
   output_location: 's3://bucket/path/to/folder/',
 };
 
-// type Props = {
-//   onUpdateField: (field: keyof AthenaConfig, value: string) => void;
-//   value?: AthenaConfig;
-//   editMode: boolean;
-// };
 
 export const AthenaDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
 }) => {
-  const { register, getValues, setValue } = useFormContext();
+  const { getValues, setValue } = useFormContext();
 
   // Need state variable to change tabs, as the formContext doesn't change as readily.
   const [currentTab, setCurrentTab] = useState(AWSCredentialType.AccessKey);
@@ -166,7 +160,6 @@ export const AthenaDialog: React.FC<IntegrationDialogProps> = ({
         Once connected, you would need to re-upload the file to update the credentials.
       */}
       <IntegrationFileUploadField
-        //field={fileInput}
         name="config_file_content"
         label={'AWS Credentials File*'}
         description={'Upload your credentials file here.'}
@@ -182,8 +175,6 @@ export const AthenaDialog: React.FC<IntegrationDialogProps> = ({
         displayFile={null}
         onReset={() => {
           setFile(null);
-          // Set input to null.
-          //fileInput.onChange(null);
         }}
       />
 
@@ -247,8 +238,6 @@ export const AthenaDialog: React.FC<IntegrationDialogProps> = ({
     </Box>
   );
 };
-
-// TODO: Add custom Control component to render tabs and use that to update form context.
 
 // Required fields are (baseFields):
 // - database

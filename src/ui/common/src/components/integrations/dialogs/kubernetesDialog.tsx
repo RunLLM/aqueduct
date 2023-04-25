@@ -57,7 +57,6 @@ export const KubernetesDialog: React.FC<IntegrationDialogProps> = ({
 
   return (
     <Box sx={{ mt: 2 }}>
-      {/* TODO: get this to work with react-hook-form */}
       {inK8sCluster && (
         <FormControlLabel
           label="Use the same Kubernetes cluster that the server is running on."

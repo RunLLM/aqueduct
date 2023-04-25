@@ -34,13 +34,7 @@ export const IntegrationTextInputField: React.FC<IntegrationTextFieldProps> = ({
   autoComplete,
   name,
 }) => {
-  const { register, formState } = useFormContext();
-
-  console.log('formContext errors: ', formState.errors);
-
-  // TDOO: Show input error in the warning field.
-  //error={errors.name ? true : false}
-  // TODO: figure out how to get this by key/value access.
+  const { register } = useFormContext();
 
   return (
     <Box sx={{ mt: 2 }}>

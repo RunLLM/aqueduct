@@ -33,11 +33,6 @@ const K8sPlaceholders: DynamicK8sConfig = {
   max_gpu_node: '1',
 };
 
-// type Props = {
-//   //onUpdateField: (field: keyof AWSConfig, value: string) => void;
-//   //value?: AWSConfig;
-//   editMode?: boolean;
-// };
 
 export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
   const { register, getValues, setValue } = useFormContext();
@@ -45,15 +40,6 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
   // Need state variable to change tabs, as the formContext doesn't change as readily.
   const [currentTab, setCurrentTab] = useState(AWSCredentialType.AccessKey);
   const [engineTypeTab, setEngineTypeTab] = useState(DynamicEngineType.K8s);
-
-  //const [engineType, setEngineType] = useState(DynamicEngineType.K8s);
-
-  // TODO: Make AccessKey the default value, used as the default tab.
-  // useEffect(() => {
-  //   if (!value?.type) {
-  //     setValue('type', AWSCredentialType.AccessKey);
-  //   }
-  // }, [onUpdateField, value?.type]);
 
   register('engineType', { value: DynamicEngineType.K8s });
   register('type', { value: AWSCredentialType.AccessKey });
@@ -142,7 +128,6 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
       <Typography variant="body2" color="gray.700">
         Optionally configure on-demand Kubernetes cluster parameters.
       </Typography>
-
       <IntegrationTextInputField
         name="keepalive"
         spellCheck={false}
@@ -156,7 +141,6 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
           setValue('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
       />
-
       <IntegrationTextInputField
         name="cpu_node_type"
         spellCheck={false}
