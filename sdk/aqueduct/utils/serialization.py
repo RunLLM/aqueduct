@@ -19,7 +19,6 @@ from aqueduct.utils.type_inference import infer_artifact_type
 from bson import json_util as bson_json_util
 from PIL import Image
 from pydantic import BaseModel
-from pyarrow.lib import ArrowInvalid
 
 from .format import DEFAULT_ENCODING
 from .function_packaging import _make_temp_dir
@@ -51,6 +50,7 @@ class PickleableCollectionSerializationFormat(BaseModel):
 
 def _read_table_content(content: bytes) -> pd.DataFrame:
     return pd.read_json(io.BytesIO(content), orient="table")
+
 
 # Check if the file is parquet deserializable first. If not,
 # we deserialize it as json since existing param artifact is
@@ -370,7 +370,6 @@ def artifact_type_to_serialization_type(
     derived_from_param: bool,
     content: Any,
 ) -> SerializationType:
-    print(derived_from_param)
     if artifact_type == ArtifactType.TABLE:
         if derived_from_bson:
             serialization_type = SerializationType.BSON_TABLE
