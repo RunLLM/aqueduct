@@ -14,7 +14,6 @@ const Placeholders: LambdaConfig = {
   exec_state: '',
 };
 
-
 export const LambdaDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
 }) => {

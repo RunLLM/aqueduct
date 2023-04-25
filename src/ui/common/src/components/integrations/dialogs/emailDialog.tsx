@@ -1,7 +1,7 @@
 import { Divider } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React, { useState } from 'react';
+import React from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import {
@@ -131,7 +131,9 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
         <CheckboxEntry
           checked={enabled === 'true'}
           disabled={false}
-          onChange={(checked) => { setValue('enabled', checked ? 'true' : 'false') }}
+          onChange={(checked) => {
+            setValue('enabled', checked ? 'true' : 'false');
+          }}
         >
           Enable this notification for all workflows.
         </CheckboxEntry>
@@ -155,7 +157,9 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
           </Box>
           <NotificationLevelSelector
             level={level as NotificationLogLevel}
-            onSelectLevel={(level) => { setValue('level', level) }}
+            onSelectLevel={(level) => {
+              setValue('level', level);
+            }}
             enabled={enabled === 'true'}
           />
         </Box>

@@ -33,7 +33,6 @@ const K8sPlaceholders: DynamicK8sConfig = {
   max_gpu_node: '1',
 };
 
-
 export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
   const { register, getValues, setValue } = useFormContext();
 

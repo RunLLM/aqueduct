@@ -60,6 +60,7 @@ import { EmailDefaultsOnCreate, isEmailConfigComplete } from './emailDialog';
 import { isGCSConfigComplete } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { isK8sConfigComplete } from './kubernetesDialog';
+import { isLambaDialogComplete } from './lambdaDialog';
 import { isMariaDBConfigComplete } from './mariadbDialog';
 import { isMongoDBConfigComplete } from './mongoDbDialog';
 import { isMySqlConfigComplete } from './mysqlDialog';
@@ -70,7 +71,6 @@ import { isSlackConfigComplete, SlackDefaultsOnCreate } from './slackDialog';
 import { isSnowflakeConfigComplete } from './snowflakeDialog';
 import { isSparkConfigComplete } from './sparkDialog';
 import { isSQLiteConfigComplete } from './sqliteDialog';
-import { isLambaDialogComplete } from './lambdaDialog';
 
 type Props = {
   user: UserProfile;
@@ -231,7 +231,6 @@ const IntegrationDialog: React.FC<Props> = ({
       <img height="45px" src={SupportedIntegrations[service].logo} />
     </Box>
   );
-
 
   const onConfirmDialog = () => {
     //check that name is unique before connecting.

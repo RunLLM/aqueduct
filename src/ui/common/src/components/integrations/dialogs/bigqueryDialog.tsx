@@ -16,7 +16,6 @@ const Placeholders: BigQueryConfig = {
   project_id: 'aqueduct_1234',
 };
 
-
 export const BigQueryDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
 }) => {
