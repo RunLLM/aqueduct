@@ -29,6 +29,8 @@ import (
 //  Parameters:
 //		`order_by`:
 //			Optional single field that the query should be ordered. Requires the table prefix.
+//		`order_descending`:
+//			Optional boolean specifying whether order_by should be ascending or descending.
 //		`limit`:
 //			Optional limit on the number of storage migrations returned. Defaults to all of them.
 // Response:
@@ -41,6 +43,8 @@ type dagResultsGetArgs struct {
 
 	// A nil value means that the order is not set.
 	orderBy string
+	// Default is descending (true).
+	orderDescending bool
 	// A negative value for limit (eg. -1) means that the limit is not set.
 	limit int
 }
@@ -79,10 +83,16 @@ func (h *DAGResultsGetHandler) Prepare(r *http.Request) (interface{}, int, error
 		return nil, http.StatusBadRequest, err
 	}
 
+	descending, err := (parser.OrderDescendingQueryParser{}).Parse(r)
+	if err != nil {
+		return nil, http.StatusBadRequest, err
+	}
+
 	return &dagResultsGetArgs{
 		AqContext:  aqContext,
 		workflowID: workflowID,
 		orderBy:    orderBy,
+		orderDescending:    descending,
 		limit:      limit,
 	}, http.StatusOK, nil
 }
@@ -104,7 +114,7 @@ func (h *DAGResultsGetHandler) Perform(ctx context.Context, interfaceArgs interf
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
 	}
 
-	dbDAGResults, err := h.DAGResultRepo.GetByWorkflow(ctx, args.workflowID, args.orderBy, args.limit, h.Database)
+	dbDAGResults, err := h.DAGResultRepo.GetByWorkflow(ctx, args.workflowID, args.orderBy, args.limit, args.orderDescending, h.Database)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading dag results.")
 	}

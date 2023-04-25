@@ -184,7 +184,9 @@ func (h *GetWorkflowHandler) Perform(ctx context.Context, interfaceArgs interfac
 		dags[dbDAG.ID] = constructedDAG
 	}
 
-	dagResults, err := h.DAGResultRepo.GetByWorkflow(ctx, args.workflowID, "", -1, h.Database)
+	// Default values to not have an order and not have a limit: Empty string for order_by, -1 for limit
+	// Set true for order_by order (desc/asc) because doesn't matter.
+	dagResults, err := h.DAGResultRepo.GetByWorkflow(ctx, args.workflowID, "", -1, true, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow.")
 	}

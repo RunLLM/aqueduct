@@ -329,46 +329,62 @@ class TestBackend:
 
         fields = ["id", "dag_id", "exec_state"]
 
-        def check_structure(resp):
+        def check_structure(resp, all_succeeded=False):
             for result in resp:
                 for field in fields:
                     assert field in result
-                assert result["exec_state"]["status"] == "succeeded"
-                assert result["exec_state"]["failure_type"] == None
-                assert result["exec_state"]["error"] == None
+                if all_succeeded:
+                    assert result["exec_state"]["status"] == "succeeded"
+                    assert result["exec_state"]["failure_type"] == None
+                    assert result["exec_state"]["error"] == None
 
-        check_structure(resp)
+        check_structure(resp, all_succeeded=True)
 
         # Using the order parameter
         flow_id, n_runs = self.flows["flow_with_failure"]
         resp = self.get_response(
-            self.GET_DAG_RESULTS_TEMPLATE % flow_id,
-            additional_headers={
-                "order_by": "status",
-            },
+            self.GET_DAG_RESULTS_TEMPLATE % flow_id + "?order_by=status",
         ).json()
+
+        check_structure(resp)
         statuses = [result["exec_state"]["status"] for result in resp]
         sorted_statuses = sorted(statuses, reverse=True)  # Descending order
         assert statuses == sorted_statuses
 
+        # Default is descending
+        flow_id, n_runs = self.flows["flow_with_failure"]
+        resp = self.get_response(
+            self.GET_DAG_RESULTS_TEMPLATE % flow_id + "?order_by=status&order_descending=true",
+        ).json()
+
+        check_structure(resp)
+        descending_statuses = [result["exec_state"]["status"] for result in resp]
+        assert statuses == descending_statuses
+
+        # Ascending works
+        flow_id, n_runs = self.flows["flow_with_failure"]
+        resp = self.get_response(
+            self.GET_DAG_RESULTS_TEMPLATE % flow_id + "?order_by=status&order_descending=false",
+        ).json()
+
+        check_structure(resp)
+        ascending_statuses = [result["exec_state"]["status"] for result in resp]
+        assert descending_statuses[::-1] == ascending_statuses
+
         # Using the limit parameter
         resp = self.get_response(
-            self.GET_DAG_RESULTS_TEMPLATE % flow_id,
-            additional_headers={
-                "limit": "1",
-            },
+            self.GET_DAG_RESULTS_TEMPLATE % flow_id + "?limit=1",
         ).json()
+
+        check_structure(resp)
         assert len(resp) == 1
 
         # Using both the order and limit parameters
         resp = self.get_response(
-            self.GET_DAG_RESULTS_TEMPLATE % flow_id,
-            additional_headers={
-                "order_by": "status",
-                "limit": "1",
-            },
+            self.GET_DAG_RESULTS_TEMPLATE % flow_id + "?order_by=status&limit=1",
         ).json()
 
+        check_structure(resp)
         workflow_status = [result["exec_state"]["status"] for result in resp]
         assert len(workflow_status) == 1
         workflow_status = workflow_status[0]

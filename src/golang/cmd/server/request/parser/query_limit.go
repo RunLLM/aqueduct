@@ -17,7 +17,7 @@ func (LimitQueryParser) Parse(r *http.Request) (int, error) {
 	if limitVal := query.Get("limit"); len(limitVal) > 0 {
 		limit, err = strconv.Atoi(limitVal)
 		if err != nil {
-			return -1, errors.Wrap(err, "Invalid limit header.")
+			return -1, errors.Wrap(err, "Invalid limit parameter.")
 		}
 	}
 

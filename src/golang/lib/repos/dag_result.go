@@ -25,7 +25,7 @@ type dagResultReader interface {
 	GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.DAGResult, error)
 
 	// GetByWorkflow returns the DAGResults of all DAGs associated with the Workflow with workflowID.
-	GetByWorkflow(ctx context.Context, workflowID uuid.UUID, orderBy string, limit int, DB database.Database) ([]models.DAGResult, error)
+	GetByWorkflow(ctx context.Context, workflowID uuid.UUID, orderBy string, limit int, orderDescending bool, DB database.Database) ([]models.DAGResult, error)
 
 	// GetKOffsetByWorkflow returns the DAGResults of all DAGs associated with the Workflow with workflowID
 	// except for the last k DAGResults ordered by DAGResult.CreatedAt.

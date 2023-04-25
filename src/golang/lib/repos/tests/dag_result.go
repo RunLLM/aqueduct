@@ -38,7 +38,9 @@ func (ts *TestSuite) TestDAGResult_GetByWorkflow() {
 
 	expectedDAGResults := ts.seedDAGResultWithDAG(2, []uuid.UUID{dag.ID, dag.ID})
 
-	actualDAGResults, err := ts.dagResult.GetByWorkflow(ts.ctx, dag.WorkflowID, "", -1, ts.DB)
+	// Default values to not have an order and not have a limit: Empty string for order_by, -1 for limit
+	// Set true for order_by order (desc/asc) because doesn't matter.
+	actualDAGResults, err := ts.dagResult.GetByWorkflow(ts.ctx, dag.WorkflowID, "", -1, true, ts.DB)
 	require.Nil(ts.T(), err)
 	requireDeepEqualDAGResults(ts.T(), expectedDAGResults, actualDAGResults)
 }
