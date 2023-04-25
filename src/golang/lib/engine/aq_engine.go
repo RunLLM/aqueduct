@@ -1003,6 +1003,10 @@ func (eng *aqEngine) execute(
 			// and check operators with warning severity.
 			if execState.HasBlockingFailure() {
 				log.Infof("Stopping execution of operator %v", op.ID())
+				if execState.Error != nil {
+					log.Infof("Reason: %s", execState.Error.Message())
+				}
+
 				for id, dagOp := range workflowDag.Operators() {
 					log.Infof("Checking status of operator %v", id)
 					// Skip if this operator has already been completed or is in progress.
