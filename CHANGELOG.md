@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.12
+Released on April 25, 2023.
+
+### Enhancements
+* Improves the `describe` method on integration objects in the SDK; if there
+    was an error connecting or validating the integration, the error will be
+    shown.
+* Eagerly validates integration connections, so users will be notified
+    immediately if they are using a mis-configured integration when, for
+    example, attempting to access data.
+* Replaces placeholder values in integration connection forms with more
+    realistic values.
+* Adds support for the most recent version of `numpy`.
+
 ## 0.2.11
 Released on April 18, 2023.
 
