@@ -1,7 +1,11 @@
 import Box from '@mui/material/Box';
 import React from 'react';
+import { useFormContext } from 'react-hook-form';
 
-import { RedshiftConfig } from '../../../utils/integrations';
+import {
+  IntegrationDialogProps,
+  RedshiftConfig,
+} from '../../../utils/integrations';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
@@ -13,17 +17,17 @@ const Placeholders: RedshiftConfig = {
   password: '********',
 };
 
-type Props = {
-  onUpdateField: (field: keyof RedshiftConfig, value: string) => void;
-  value?: RedshiftConfig;
-  editMode: boolean;
-};
+// type Props = {
+//   onUpdateField: (field: keyof RedshiftConfig, value: string) => void;
+//   value?: RedshiftConfig;
+//   editMode: boolean;
+// };
 
-export const RedshiftDialog: React.FC<Props> = ({
-  onUpdateField,
-  value,
-  editMode,
+export const RedshiftDialog: React.FC<IntegrationDialogProps> = ({
+  editMode = false,
 }) => {
+  const { setValue } = useFormContext();
+
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
@@ -33,7 +37,7 @@ export const RedshiftDialog: React.FC<Props> = ({
         label="Host *"
         description="The public endpoint of the Redshift cluster."
         placeholder={Placeholders.host}
-        onChange={(event) => onUpdateField('host', event.target.value)}
+        onChange={(event) => setValue('host', event.target.value)}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -46,7 +50,7 @@ export const RedshiftDialog: React.FC<Props> = ({
         label="Port *"
         description="The port number of the Redshift cluster."
         placeholder={Placeholders.port}
-        onChange={(event) => onUpdateField('port', event.target.value)}
+        onChange={(event) => setValue('port', event.target.value)}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -59,7 +63,7 @@ export const RedshiftDialog: React.FC<Props> = ({
         label="Database *"
         description="The name of the specific database to connect to."
         placeholder={Placeholders.database}
-        onChange={(event) => onUpdateField('database', event.target.value)}
+        onChange={(event) => setValue('database', event.target.value)}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -72,7 +76,7 @@ export const RedshiftDialog: React.FC<Props> = ({
         label="Username *"
         description="The username of a user with access to the above database."
         placeholder={Placeholders.username}
-        onChange={(event) => onUpdateField('username', event.target.value)}
+        onChange={(event) => setValue('username', event.target.value)}
       />
 
       <IntegrationTextInputField
@@ -83,7 +87,7 @@ export const RedshiftDialog: React.FC<Props> = ({
         description="The password corresponding to the above username."
         placeholder={Placeholders.password}
         type="password"
-        onChange={(event) => onUpdateField('password', event.target.value)}
+        onChange={(event) => setValue('password', event.target.value)}
       />
     </Box>
   );

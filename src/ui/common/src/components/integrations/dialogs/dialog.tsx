@@ -30,7 +30,6 @@ import {
   aqueductDemoName,
   AthenaConfig,
   AWSConfig,
-  BigQueryConfig,
   DatabricksConfig,
   EmailConfig,
   formatService,
@@ -38,7 +37,6 @@ import {
   Integration,
   IntegrationConfig,
   KubernetesConfig,
-  LambdaConfig,
   MariaDbConfig,
   MongoDBConfig,
   MySqlConfig,
@@ -53,38 +51,24 @@ import {
   SupportedIntegrations,
 } from '../../../utils/integrations';
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
-import { AirflowDialog, isAirflowConfigComplete } from './airflowDialog';
-import { AthenaDialog, isAthenaConfigComplete } from './athenaDialog';
-import { AWSDialog, isAWSConfigComplete } from './awsDialog';
-import { BigQueryDialog } from './bigqueryDialog';
-import { CondaDialog } from './condaDialog';
-import {
-  DatabricksDialog,
-  isDatabricksConfigComplete,
-} from './databricksDialog';
-import {
-  EmailDefaultsOnCreate,
-  EmailDialog,
-  isEmailConfigComplete,
-} from './emailDialog';
-import { GCSDialog, isGCSConfigComplete } from './gcsDialog';
+import { isAirflowConfigComplete } from './airflowDialog';
+import { isAthenaConfigComplete } from './athenaDialog';
+import { isAWSConfigComplete } from './awsDialog';
+import { isDatabricksConfigComplete } from './databricksDialog';
+import { EmailDefaultsOnCreate, isEmailConfigComplete } from './emailDialog';
+import { isGCSConfigComplete } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
-import { isK8sConfigComplete, KubernetesDialog } from './kubernetesDialog';
-import { LambdaDialog } from './lambdaDialog';
-import { isMariaDBConfigComplete, MariaDbDialog } from './mariadbDialog';
-import { isMongoDBConfigComplete, MongoDBDialog } from './mongoDbDialog';
-import { isMySqlConfigComplete, MysqlDialog } from './mysqlDialog';
-import { isPostgresConfigComplete, PostgresDialog } from './postgresDialog';
-import { isRedshiftConfigComplete, RedshiftDialog } from './redshiftDialog';
-import { isS3ConfigComplete, S3Dialog } from './s3Dialog';
-import {
-  isSlackConfigComplete,
-  SlackDefaultsOnCreate,
-  SlackDialog,
-} from './slackDialog';
-import { isSnowflakeConfigComplete, SnowflakeDialog } from './snowflakeDialog';
-import { isSparkConfigComplete, SparkDialog } from './sparkDialog';
-import { isSQLiteConfigComplete, SQLiteDialog } from './sqliteDialog';
+import { isK8sConfigComplete } from './kubernetesDialog';
+import { isMariaDBConfigComplete } from './mariadbDialog';
+import { isMongoDBConfigComplete } from './mongoDbDialog';
+import { isMySqlConfigComplete } from './mysqlDialog';
+import { isPostgresConfigComplete } from './postgresDialog';
+import { isRedshiftConfigComplete } from './redshiftDialog';
+import { isS3ConfigComplete } from './s3Dialog';
+import { isSlackConfigComplete, SlackDefaultsOnCreate } from './slackDialog';
+import { isSnowflakeConfigComplete } from './snowflakeDialog';
+import { isSparkConfigComplete } from './sparkDialog';
+import { isSQLiteConfigComplete } from './sqliteDialog';
 
 type Props = {
   user: UserProfile;
@@ -93,6 +77,7 @@ type Props = {
   onSuccess: () => void;
   showMigrationDialog?: () => void;
   integrationToEdit?: Integration;
+  dialogContent: React.FC;
 };
 
 // Default fields are actual filled form values on 'create' dialog.
@@ -115,6 +100,7 @@ const IntegrationDialog: React.FC<Props> = ({
   onSuccess,
   showMigrationDialog = undefined,
   integrationToEdit = undefined,
+  dialogContent,
 }) => {
   console.log('integrationToEdit: ', integrationToEdit);
   const editMode = !!integrationToEdit;
@@ -244,187 +230,193 @@ const IntegrationDialog: React.FC<Props> = ({
     </Box>
   );
 
-  let serviceDialog;
+  // TODO: Add service Dialog to the service list.
+  // let serviceDialog;
 
-  switch (service) {
-    case 'Postgres':
-      serviceDialog = (
-        <PostgresDialog
-          onUpdateField={setConfigField}
-          value={config as PostgresConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'Snowflake':
-      serviceDialog = (
-        <SnowflakeDialog
-          onUpdateField={setConfigField}
-          value={config as SnowflakeConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'Aqueduct Demo':
-      serviceDialog = null;
-      break;
-    case 'MySQL':
-      serviceDialog = (
-        <MysqlDialog
-          onUpdateField={setConfigField}
-          value={config as MySqlConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'Redshift':
-      serviceDialog = (
-        <RedshiftDialog
-          onUpdateField={setConfigField}
-          value={config as RedshiftConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'MariaDB':
-      serviceDialog = (
-        <MariaDbDialog
-          onUpdateField={setConfigField}
-          value={config as MariaDbConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'MongoDB':
-      serviceDialog = (
-        <MongoDBDialog
-          onUpdateField={setConfigField}
-          value={config as MongoDBConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'BigQuery':
-      serviceDialog = (
-        <BigQueryDialog
-          onUpdateField={setConfigField}
-          value={config as BigQueryConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'S3':
-      serviceDialog = (
-        <S3Dialog
-          onUpdateField={setConfigField}
-          value={config as S3Config}
-          editMode={editMode}
-          setMigrateStorage={setMigrateStorage}
-        />
-      );
-      break;
-    case 'GCS':
-      const gcsConfig = config as GCSConfig;
-      // GCS can only be used storage currently
-      gcsConfig.use_as_storage = 'true';
-      serviceDialog = (
-        <GCSDialog
-          onUpdateField={setConfigField}
-          value={config as GCSConfig}
-          editMode={editMode}
-          setMigrateStorage={setMigrateStorage}
-        />
-      );
-      break;
-    case 'Athena':
-      serviceDialog = (
-        <AthenaDialog
-          onUpdateField={setConfigField}
-          value={config as AthenaConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'Airflow':
-      serviceDialog = (
-        <AirflowDialog
-          onUpdateField={setConfigField}
-          value={config as AirflowConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'Kubernetes':
-      serviceDialog = (
-        <KubernetesDialog
-          onUpdateField={setConfigField}
-          value={config as KubernetesConfig}
-          apiKey={user.apiKey}
-        />
-      );
-      break;
-    case 'Lambda':
-      serviceDialog = (
-        <LambdaDialog
-          onUpdateField={setConfigField}
-          value={config as LambdaConfig}
-        />
-      );
-      break;
-    case 'SQLite':
-      serviceDialog = (
-        <SQLiteDialog
-          onUpdateField={setConfigField}
-          value={config as SQLiteConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'Conda':
-      serviceDialog = <CondaDialog />;
-      break;
-    case 'Databricks':
-      serviceDialog = (
-        <DatabricksDialog
-          onUpdateField={setConfigField}
-          value={config as DatabricksConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'Email':
-      serviceDialog = (
-        <EmailDialog
-          onUpdateField={setConfigField}
-          value={config as EmailConfig}
-        />
-      );
-      break;
-    case 'Slack':
-      serviceDialog = (
-        <SlackDialog
-          onUpdateField={setConfigField}
-          value={config as SlackConfig}
-        />
-      );
-      break;
-    case 'Spark':
-      serviceDialog = (
-        <SparkDialog
-          onUpdateField={setConfigField}
-          value={config as SparkConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'AWS':
-      serviceDialog = (
-        <AWSDialog onUpdateField={setConfigField} value={config as AWSConfig} />
-      );
-      break;
-    default:
-      return null;
-  }
+  // switch (service) {
+  //   case 'Postgres':
+  //     serviceDialog = (
+  //       <PostgresDialog
+  //         //onUpdateField={setConfigField}
+  //         //value={config as PostgresConfig}
+  //         editMode={editMode}
+  //       />
+  //     );
+  //     break;
+  //   case 'Snowflake':
+  //     serviceDialog = (
+  //       <SnowflakeDialog
+  //         //onUpdateField={setConfigField}
+  //         //value={config as SnowflakeConfig}
+  //         editMode={editMode}
+  //       />
+  //     );
+  //     break;
+  //   case 'Aqueduct Demo':
+  //     serviceDialog = null;
+  //     break;
+  //   case 'MySQL':
+  //     serviceDialog = (
+  //       <MysqlDialog
+  //         //onUpdateField={setConfigField}
+  //         //value={config as MySqlConfig}
+  //         editMode={editMode}
+  //       />
+  //     );
+  //     break;
+  //   case 'Redshift':
+  //     serviceDialog = (
+  //       <RedshiftDialog
+  //         //onUpdateField={setConfigField}
+  //         //value={config as RedshiftConfig}
+  //         editMode={editMode}
+  //       />
+  //     );
+  //     break;
+  //   case 'MariaDB':
+  //     serviceDialog = (
+  //       <MariaDbDialog
+  //         //onUpdateField={setConfigField}
+  //         //value={config as MariaDbConfig}
+  //         editMode={editMode}
+  //       />
+  //     );
+  //     break;
+  //   case 'MongoDB':
+  //     serviceDialog = (
+  //       <MongoDBDialog
+  //         //onUpdateField={setConfigField}
+  //         //value={config as MongoDBConfig}
+  //         editMode={editMode}
+  //       />
+  //     );
+  //     break;
+  //   case 'BigQuery':
+  //     serviceDialog = (
+  //       <BigQueryDialog
+  //         //onUpdateField={setConfigField}
+  //         //value={config as BigQueryConfig}
+  //         editMode={editMode}
+  //       />
+  //     );
+  //     break;
+  //   case 'S3':
+  //     serviceDialog = (
+  //       <S3Dialog
+  //         //onUpdateField={setConfigField}
+  //         //value={config as S3Config}
+  //         editMode={editMode}
+  //         // TODO: Do some testing to make sure storageMigration dialog still works.
+  //         setMigrateStorage={setMigrateStorage}
+  //       />
+  //     );
+  //     break;
+  //   case 'GCS':
+  //     const gcsConfig = config as GCSConfig;
+  //     // GCS can only be used storage currently
+  //     gcsConfig.use_as_storage = 'true';
+  //     serviceDialog = (
+  //       <GCSDialog
+  //         //onUpdateField={setConfigField}
+  //         //value={config as GCSConfig}
+  //         editMode={editMode}
+  //         // TODO: Do some testing to make sure storageMigration dialog still works.
+  //         setMigrateStorage={setMigrateStorage}
+  //       />
+  //     );
+  //     break;
+  //   case 'Athena':
+  //     serviceDialog = (
+  //       <AthenaDialog
+  //         //onUpdateField={setConfigField}
+  //         //value={config as AthenaConfig}
+  //         editMode={editMode}
+  //       />
+  //     );
+  //     break;
+  //   case 'Airflow':
+  //     serviceDialog = (
+  //       <AirflowDialog
+  //         //onUpdateField={setConfigField}
+  //         //value={config as AirflowConfig}
+  //         editMode={editMode}
+  //       />
+  //     );
+  //     break;
+  //   case 'Kubernetes':
+  //     serviceDialog = (
+  //       <KubernetesDialog
+  //       //onUpdateField={setConfigField}
+  //       //value={config as KubernetesConfig}
+  //       //apiKey={user.apiKey}
+  //       />
+  //     );
+  //     break;
+  //   case 'Lambda':
+  //     serviceDialog = (
+  //       <LambdaDialog
+  //       //onUpdateField={setConfigField}
+  //       //value={config as LambdaConfig}
+  //       />
+  //     );
+  //     break;
+  //   case 'SQLite':
+  //     serviceDialog = (
+  //       <SQLiteDialog
+  //         //onUpdateField={setConfigField}
+  //         //value={config as SQLiteConfig}
+  //         editMode={editMode}
+  //       />
+  //     );
+  //     break;
+  //   case 'Conda':
+  //     serviceDialog = <CondaDialog />;
+  //     break;
+  //   case 'Databricks':
+  //     serviceDialog = (
+  //       <DatabricksDialog
+  //         //onUpdateField={setConfigField}
+  //         //value={config as DatabricksConfig}
+  //         editMode={editMode}
+  //       />
+  //     );
+  //     break;
+  //   case 'Email':
+  //     serviceDialog = (
+  //       <EmailDialog
+  //       //onUpdateField={setConfigField}
+  //       //value={config as EmailConfig}
+  //       />
+  //     );
+  //     break;
+  //   case 'Slack':
+  //     serviceDialog = (
+  //       <SlackDialog
+  //       //onUpdateField={setConfigField}
+  //       //value={config as SlackConfig}
+  //       />
+  //     );
+  //     break;
+  //   case 'Spark':
+  //     serviceDialog = (
+  //       <SparkDialog
+  //         //onUpdateField={setConfigField}
+  //         //value={config as SparkConfig}
+  //         editMode={editMode}
+  //       />
+  //     );
+  //     break;
+  //   case 'AWS':
+  //     serviceDialog = (
+  //       <AWSDialog
+  //       //onUpdateField={setConfigField}
+  //       //value={config as AWSConfig}
+  //       />
+  //     );
+  //     break;
+  //   default:
+  //     return null;
+  // }
 
   const onConfirmDialog = () => {
     //check that name is unique before connecting.
@@ -466,12 +458,12 @@ const IntegrationDialog: React.FC<Props> = ({
       description="Provide a unique name to refer to this integration."
       placeholder={'my_' + formatService(service) + '_integration'}
       onChange={(event) => {
-        setName(event.target.value);
+        // TODO: remove this setName call when done refactoring.
+        //setName(event.target.value);
         setShouldShowNameError(false);
+        methods.setValue('name', event.target.value);
       }}
       disabled={service === 'Aqueduct Demo'}
-      // don't need to register here since this is already done in the IntegrationTextInputField component
-      //{...methods.register('name')}
     />
   );
 
@@ -501,7 +493,11 @@ const IntegrationDialog: React.FC<Props> = ({
               </Typography>
             )}
             {nameInput}
-            {serviceDialog}
+
+            {/* Now we can remove the switch statement for SerivceDialog! */}
+            {/* {serviceDialog} */}
+
+            {dialogContent({ editMode })}
 
             {shouldShowNameError && (
               <Alert sx={{ mt: 2 }} severity="error">

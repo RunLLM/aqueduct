@@ -1,4 +1,28 @@
+import React from 'react';
+
+import {
+  AWSDialog,
+  BigQueryDialog,
+  CondaDialog,
+  DatabricksDialog,
+  EmailDialog,
+  MariaDbDialog,
+  MongoDBDialog,
+  MysqlDialog,
+  PostgresDialog,
+  RedshiftDialog,
+  S3Dialog,
+  SlackDialog,
+  SnowflakeDialog,
+  SparkDialog,
+} from '..';
 import { apiAddress } from '../components/hooks/useAqueductConsts';
+import { AirflowDialog } from '../components/integrations/dialogs/airflowDialog';
+import { AthenaDialog } from '../components/integrations/dialogs/athenaDialog';
+import { GCSDialog } from '../components/integrations/dialogs/gcsDialog';
+import { KubernetesDialog } from '../components/integrations/dialogs/kubernetesDialog';
+import { LambdaDialog } from '../components/integrations/dialogs/lambdaDialog';
+import { SQLiteDialog } from '../components/integrations/dialogs/sqliteDialog';
 import UserProfile from './auth';
 import { AqueductDocsLink } from './docs';
 import { ExecState } from './shared';
@@ -304,6 +328,7 @@ export type Info = {
   activated: boolean;
   category: string;
   docs: string;
+  dialog: React.FC<IntegrationDialogProps>;
 };
 
 export type ServiceInfoMap = {
@@ -397,60 +422,89 @@ export const ServiceLogos: ServiceLogo = {
   ['ECR']: `${integrationLogosBucket}/ecr.png`,
 };
 
+export type IntegrationDialogProps = {
+  //onUpdateField: (field: keyof AWSConfig, value: string) => void;
+  //value?: AWSConfig;
+  editMode?: boolean;
+};
+
 export const SupportedIntegrations: ServiceInfoMap = {
   ['Postgres']: {
     logo: ServiceLogos['Postgres'],
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
+    // What is the type of dialog?
+    dialog: () => <PostgresDialog />,
   },
   ['Snowflake']: {
     logo: ServiceLogos['Snowflake'],
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
+    dialog: () => <SnowflakeDialog />,
   },
   ['Redshift']: {
     logo: ServiceLogos['Redshift'],
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
+    dialog: () => <RedshiftDialog />,
   },
   ['BigQuery']: {
     logo: ServiceLogos['BigQuery'],
     activated: true,
     category: IntegrationCategories.DATA,
     docs: `${addingIntegrationLink}/connecting-to-google-bigquery`,
+    dialog: () => <BigQueryDialog />,
   },
   ['MySQL']: {
     logo: ServiceLogos['MySQL'],
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
+    dialog: () => <MysqlDialog />,
   },
   ['MariaDB']: {
     logo: ServiceLogos['MariaDB'],
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
+    dialog: () => <MariaDbDialog />,
   },
   ['S3']: {
     logo: ServiceLogos['S3'],
     activated: true,
     category: IntegrationCategories.DATA,
     docs: `${addingIntegrationLink}/connecting-to-aws-s3`,
+    // TODO: Figure out how to pass in setMigrateStorage to handle storage migrations here.
+    // Believe that setMigrateStorage can just be a redux action called from within this dialog.
+    dialog: () => (
+      <S3Dialog
+        setMigrateStorage={(param) => console.log('setMigrateStorage: ', param)}
+      />
+    ),
   },
   ['GCS']: {
     logo: ServiceLogos['GCS'],
     activated: true,
     category: IntegrationCategories.DATA,
     docs: `${addingIntegrationLink}/connecting-to-google-cloud-storage`,
+    // TODO: Figure out SetMigrateStorage here. This can just be a redux action afaik.
+    // Believe that setMigrateStorage can just be a redux action called from within this dialog.
+    dialog: () => (
+      <GCSDialog
+        setMigrateStorage={(param) => console.log('setMigrateStorage: ', param)}
+      />
+    ),
   },
   ['Aqueduct']: {
     logo: ServiceLogos['Aqueduct'],
     activated: true,
     category: IntegrationCategories.COMPUTE,
     docs: addingIntegrationLink,
+    // TODO: Figure out what to show here.
+    dialog: () => <div />,
   },
   ['Filesystem']: {
     logo: ServiceLogos['Aqueduct'],
@@ -463,66 +517,77 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
+    dialog: () => <SQLiteDialog />,
   },
   ['Athena']: {
     logo: ServiceLogos['Athena'],
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
+    dialog: () => <AthenaDialog />,
   },
   ['Airflow']: {
     logo: ServiceLogos['Airflow'],
     activated: true,
     category: IntegrationCategories.COMPUTE,
     docs: addingIntegrationLink,
+    dialog: () => <AirflowDialog />,
   },
   ['Kubernetes']: {
     logo: ServiceLogos['Kubernetes'],
     activated: true,
     category: IntegrationCategories.COMPUTE,
     docs: `${addingIntegrationLink}/connecting-to-k8s-cluster`,
+    dialog: () => <KubernetesDialog />,
   },
   ['Lambda']: {
     logo: ServiceLogos['Lambda'],
     activated: true,
     category: IntegrationCategories.COMPUTE,
     docs: `${addingIntegrationLink}/connecting-to-aws-lambda`,
+    dialog: () => <LambdaDialog />,
   },
   ['MongoDB']: {
     logo: ServiceLogos['MongoDB'],
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
+    dialog: () => <MongoDBDialog />,
   },
   ['Conda']: {
     logo: ServiceLogos['Conda'],
     activated: true,
     category: IntegrationCategories.COMPUTE,
     docs: `${addingIntegrationLink}/connecting-to-conda`,
+    dialog: () => <CondaDialog />,
   },
   ['Databricks']: {
     logo: ServiceLogos['Databricks'],
     activated: true,
     category: IntegrationCategories.COMPUTE,
     docs: `${addingIntegrationLink}/connecting-to-databricks`,
+    dialog: () => <DatabricksDialog />,
   },
   ['Email']: {
     logo: ServiceLogos['Email'],
     activated: true,
     category: IntegrationCategories.NOTIFICATION,
     docs: `${AqueductDocsLink}/notifications/connecting-to-email`,
+    dialog: () => <EmailDialog />,
   },
   ['Slack']: {
     logo: ServiceLogos['Slack'],
     activated: true,
     category: IntegrationCategories.NOTIFICATION,
     docs: `${AqueductDocsLink}/notifications/connecting-to-slack`,
+    dialog: () => <SlackDialog />,
   },
   ['Spark']: {
     logo: ServiceLogos['Spark'],
     activated: true,
     category: IntegrationCategories.COMPUTE,
     docs: addingIntegrationLink,
+    dialog: () => <SparkDialog />,
   },
   ['AWS']: {
     logo: ServiceLogos['Kubernetes'],
@@ -535,6 +600,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.CLOUD,
     docs: addingIntegrationLink,
+    dialog: () => <AWSDialog />,
   },
   ['GCP']: {
     logo: ServiceLogos['GCP'],

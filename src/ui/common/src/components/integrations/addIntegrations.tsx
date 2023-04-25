@@ -39,6 +39,11 @@ const AddIntegrations: React.FC<Props> = ({
   };
   const [showMigrationDialog, setShowMigrationDialog] = useState(false);
 
+  // TODO: Add dialog component to the integrationobject that's part of the supportedIntegrations array.
+  // This will let us easily choose which component to use when rendering the dialog.
+  // Not much "inheritence" to be used here, but we can have a common interface for IntegrationDialogs.
+  console.log('addIntegrations supportedIntegrations: ', supportedIntegrations);
+
   return (
     <Box>
       {showMigrationDialog && (
@@ -61,6 +66,7 @@ const AddIntegrations: React.FC<Props> = ({
               <AddIntegrationListItem
                 key={svc as string}
                 svc={svc}
+                dialog={integration.dialog}
                 integration={integration}
                 category={category}
                 handleSuccessToastClose={handleSuccessToastClose}
@@ -86,6 +92,7 @@ interface AddIntegrationListItemProps {
   handleSuccessToastClose: () => void;
   setShowSuccessToast: React.Dispatch<React.SetStateAction<Service>>;
   setShowMigrationDialog: React.Dispatch<React.SetStateAction<boolean>>;
+  dialog: React.FC;
 }
 
 const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
@@ -97,6 +104,7 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
   handleSuccessToastClose,
   showSuccessToast,
   setShowSuccessToast,
+  dialog,
 }) => {
   const dispatch: AppDispatch = useDispatch();
   const service = svc as Service;
@@ -291,6 +299,7 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
         {showKubernetesDialog && (
           <IntegrationDialog
             user={user}
+            dialogContent={dialog}
             service={service}
             onSuccess={() => {
               setShowKubernetesDialog(false);

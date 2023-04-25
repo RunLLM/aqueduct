@@ -2,8 +2,12 @@ import { Link } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
+import { useFormContext } from 'react-hook-form';
 
-import { DatabricksConfig } from '../../../utils/integrations';
+import {
+  DatabricksConfig,
+  IntegrationDialogProps,
+} from '../../../utils/integrations';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
@@ -15,17 +19,17 @@ const Placeholders: DatabricksConfig = {
   instance_pool_id: '123-456-789',
 };
 
-type Props = {
-  onUpdateField: (field: keyof DatabricksConfig, value: string) => void;
-  value?: DatabricksConfig;
-  editMode: boolean;
-};
+// type Props = {
+//   //onUpdateField: (field: keyof DatabricksConfig, value: string) => void;
+//   //value?: DatabricksConfig;
+//   editMode: boolean;
+// };
 
-export const DatabricksDialog: React.FC<Props> = ({
-  onUpdateField,
-  value,
-  editMode,
+export const DatabricksDialog: React.FC<IntegrationDialogProps> = ({
+  editMode = false,
 }) => {
+  const { setValue } = useFormContext();
+
   return (
     <Box sx={{ mt: 2 }}>
       <Typography variant="body2">
@@ -42,7 +46,7 @@ export const DatabricksDialog: React.FC<Props> = ({
         spellCheck={false}
         required={true}
         placeholder={Placeholders.workspace_url}
-        onChange={(event) => onUpdateField('workspace_url', event.target.value)}
+        onChange={(event) => setValue('workspace_url', event.target.value)}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -57,7 +61,7 @@ export const DatabricksDialog: React.FC<Props> = ({
         spellCheck={false}
         required={true}
         placeholder={Placeholders.access_token}
-        onChange={(event) => onUpdateField('access_token', event.target.value)}
+        onChange={(event) => setValue('access_token', event.target.value)}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -81,7 +85,7 @@ export const DatabricksDialog: React.FC<Props> = ({
         required={true}
         placeholder={Placeholders.s3_instance_profile_arn}
         onChange={(event) =>
-          onUpdateField('s3_instance_profile_arn', event.target.value)
+          setValue('s3_instance_profile_arn', event.target.value)
         }
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
@@ -105,9 +109,7 @@ export const DatabricksDialog: React.FC<Props> = ({
         spellCheck={false}
         required={false}
         placeholder={Placeholders.instance_pool_id}
-        onChange={(event) =>
-          onUpdateField('instance_pool_id', event.target.value)
-        }
+        onChange={(event) => setValue('instance_pool_id', event.target.value)}
       />
     </Box>
   );

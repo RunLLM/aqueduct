@@ -1,9 +1,12 @@
-// import { yupResolver } from '@hookform/resolvers/yup';
 import Box from '@mui/material/Box';
 import React from 'react';
+import { useFormContext } from 'react-hook-form';
 
 // import * as Yup from 'yup';
-import { MariaDbConfig } from '../../../utils/integrations';
+import {
+  IntegrationDialogProps,
+  MariaDbConfig,
+} from '../../../utils/integrations';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
@@ -15,13 +18,17 @@ const Placeholders: MariaDbConfig = {
   password: '********',
 };
 
-type Props = {
-  onUpdateField: (field: keyof MariaDbConfig, value: string) => void;
-  value?: MariaDbConfig;
-  editMode: boolean;
-};
+// type Props = {
+//   //onUpdateField: (field: keyof MariaDbConfig, value: string) => void;
+//   //value?: MariaDbConfig;
+//   editMode: boolean;
+// };
 
-export const MariaDbDialog: React.FC<Props> = ({ onUpdateField, editMode }) => {
+export const MariaDbDialog: React.FC<IntegrationDialogProps> = ({
+  editMode = false,
+}) => {
+  const { setValue } = useFormContext();
+
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
@@ -31,7 +38,7 @@ export const MariaDbDialog: React.FC<Props> = ({ onUpdateField, editMode }) => {
         spellCheck={false}
         required={true}
         placeholder={Placeholders.host}
-        onChange={(event) => onUpdateField('host', event.target.value)}
+        onChange={(event) => setValue('host', event.target.value)}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -44,7 +51,7 @@ export const MariaDbDialog: React.FC<Props> = ({ onUpdateField, editMode }) => {
         spellCheck={false}
         required={true}
         placeholder={Placeholders.port}
-        onChange={(event) => onUpdateField('port', event.target.value)}
+        onChange={(event) => setValue('port', event.target.value)}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -57,7 +64,7 @@ export const MariaDbDialog: React.FC<Props> = ({ onUpdateField, editMode }) => {
         spellCheck={false}
         required={true}
         placeholder={Placeholders.database}
-        onChange={(event) => onUpdateField('database', event.target.value)}
+        onChange={(event) => setValue('database', event.target.value)}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
@@ -70,7 +77,7 @@ export const MariaDbDialog: React.FC<Props> = ({ onUpdateField, editMode }) => {
         label="Username*"
         description="The username of a user with access to the above database."
         placeholder={Placeholders.username}
-        onChange={(event) => onUpdateField('username', event.target.value)}
+        onChange={(event) => setValue('username', event.target.value)}
       />
 
       <IntegrationTextInputField
@@ -81,7 +88,7 @@ export const MariaDbDialog: React.FC<Props> = ({ onUpdateField, editMode }) => {
         description="The password corresponding to the above username."
         placeholder={Placeholders.password}
         type="password"
-        onChange={(event) => onUpdateField('password', event.target.value)}
+        onChange={(event) => setValue('password', event.target.value)}
       />
     </Box>
   );

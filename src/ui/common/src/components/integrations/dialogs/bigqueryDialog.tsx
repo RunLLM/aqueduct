@@ -1,8 +1,13 @@
 import { Box } from '@mui/material';
 import Link from '@mui/material/Link';
 import React, { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 
-import { BigQueryConfig, FileData } from '../../../utils/integrations';
+import {
+  BigQueryConfig,
+  FileData,
+  IntegrationDialogProps,
+} from '../../../utils/integrations';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
@@ -11,30 +16,48 @@ const Placeholders: BigQueryConfig = {
   project_id: 'aqueduct_1234',
 };
 
-type Props = {
-  onUpdateField: (field: keyof BigQueryConfig, value: string) => void;
-  value?: BigQueryConfig;
-  editMode: boolean;
-};
+// type Props = {
+//   onUpdateField: (field: keyof BigQueryConfig, value: string) => void;
+//   value?: BigQueryConfig;
+//   editMode: boolean;
+// };
 
-export const BigQueryDialog: React.FC<Props> = ({
-  onUpdateField,
-  value,
-  editMode,
+export const BigQueryDialog: React.FC<IntegrationDialogProps> = ({
+  editMode = false,
 }) => {
+  const { setValue, getValues } = useFormContext();
+
   const [fileName, setFileName] = useState<string>(null);
+  // const setFile = (fileData: FileData | null) => {
+  //   console.log('fileData', fileData);
+  //   setFileName(fileData?.name ?? '');
+  //   //onUpdateField('service_account_credentials', fileData?.data);
+  //   setValue('service_account_credentials', fileData?.data);
+  // };
+
   const setFile = (fileData: FileData | null) => {
-    setFileName(fileData?.name ?? null);
-    onUpdateField('service_account_credentials', fileData?.data);
+    setFileName(fileData?.name ?? '');
+    console.log('fileData', fileData);
+
+    //onUpdateField('config_file_content', fileData?.data);
+    setValue('service_account_credentials', fileData?.data);
   };
 
   const fileData =
-    fileName && !!value?.service_account_credentials
+    fileName && !!getValues('service_account_credentials')
       ? {
           name: fileName,
-          data: value.service_account_credentials,
+          data: getValues('service_account_credentials'),
         }
       : null;
+
+  // const fileData =
+  // fileName && !!value?.service_account_credentials
+  //   ? {
+  //       name: fileName,
+  //       data: value.service_account_credentials,
+  //     }
+  //   : null;
 
   const fileUploadDescription = (
     <>
@@ -59,7 +82,7 @@ export const BigQueryDialog: React.FC<Props> = ({
         label="Project ID*"
         description="The BigQuery project ID."
         placeholder={Placeholders.project_id}
-        onChange={(event) => onUpdateField('project_id', event.target.value)}
+        onChange={(event) => setValue('project_id', event.target.value)}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
