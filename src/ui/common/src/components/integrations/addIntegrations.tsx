@@ -216,30 +216,36 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
           {iconWrapper}
           <>
             <Dialog open={showDialog} onClose={() => setShowDialog(false)}>
-              <DialogTitle>
+              <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <IntegrationLogo
                   service={service}
                   activated={integration.activated}
                   size="small"
                 />
-                Connect to Kubernetes
+                <Typography variant="h5" sx={{ color: 'black' }}>
+                  Connect to Kubernetes
+                </Typography>
               </DialogTitle>
               <DialogContent>
-                <Button onClick={handleOption1Click}>
+                <Button sx={{textTransform: 'none', marginBottom: '12px', display: 'flex', gap: '8px'}} onClick={handleOption1Click}>
                   <IntegrationLogo
                     service={service}
                     activated={integration.activated}
                     size="small"
                   />
-                  I have an existing Kubernetes cluster
+                  <Typography variant="body2" sx={{ color: 'black', fontSize: '20px' }}>
+                    I have an existing Kubernetes cluster I'd like to use
+                  </Typography>
                 </Button>
-                <Button onClick={handleOption2Click}>
+                <Button sx={{textTransform: 'none', display: 'flex', gap: '8px'}} onClick={handleOption2Click}>
                   <IntegrationLogo
                       service={'Aqueduct Demo'}
                       activated={integration.activated}
                       size="small"
                   />
-                  I'd like Aqueduct to create & manage a cluster for me
+                  <Typography variant="body2" sx={{ color: 'black', fontSize: '20px' }}>
+                    I'd like Aqueduct to create & manage a cluster for me
+                  </Typography>
                 </Button>
               </DialogContent>
             </Dialog>
@@ -261,11 +267,46 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
             )}
 
             <Dialog open={showSelectProviderDialog} onClose={() => setShowSelectProviderDialog(false)}>
-              <DialogTitle>Aqueduct-managed Kubernetes</DialogTitle>
-              <DialogContent>
-                <Button onClick={handleAwsClick}>AWS</Button>
-                <Button disabled={true}>GCP</Button>
-                <Button disabled={true}>Azure</Button>
+              <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <IntegrationLogo
+                      service={service}
+                      activated={integration.activated}
+                      size="small"
+                />
+                <Typography variant="h5" sx={{ color: 'black' }}>
+                  +
+                </Typography>
+                <IntegrationLogo
+                      service={'Aqueduct Demo'}
+                      activated={integration.activated}
+                      size="small"
+                />
+                <Typography variant="h5" sx={{ color: 'black' }}>
+                Aqueduct-managed Kubernetes
+                </Typography>
+              </DialogTitle>
+              <DialogContent sx={{ display: 'flex', alignItems: 'center', paddingLeft: '54px', gap: '32px', '& button': { backgroundColor: '#F8F8F8' } }}>
+                <Button onClick={handleAwsClick}>
+                  <IntegrationLogo
+                        service={'AWS'}
+                        activated={integration.activated}
+                        size="large"
+                  />
+                </Button>
+                <Button disabled={true}>
+                  <IntegrationLogo
+                        service={'GCP'}
+                        activated={false}
+                        size="large"
+                  />
+                </Button>
+                <Button disabled={true}>
+                  <IntegrationLogo
+                        service={'Azure'}
+                        activated={false}
+                        size="large"
+                  />
+                </Button>
               </DialogContent>
             </Dialog>
 
