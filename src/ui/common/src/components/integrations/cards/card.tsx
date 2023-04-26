@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import React from 'react';
 
 import { Integration } from '../../../utils/integrations';
-import ExecutionStatus from '../../../utils/shared';
+import ExecutionStatus, {isInitial, isLoading} from '../../../utils/shared';
 import { StatusIndicator } from '../../workflows/workflowStatus';
 import IntegrationLogo from '../logo';
 import { AirflowCard } from './airflowCard';
@@ -24,6 +24,9 @@ import { SlackCard } from './slackCard';
 import { SnowflakeCard } from './snowflakeCard';
 import { SparkCard } from './sparkCard';
 import { TruncatedText } from './text';
+import {useSelector} from "react-redux";
+import {RootState} from "../../../stores/store";
+import {CircularProgress} from "@mui/material";
 
 type IntegrationProps = {
   integration: Integration;

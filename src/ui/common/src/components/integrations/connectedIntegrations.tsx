@@ -1,4 +1,4 @@
-import { Typography } from '@mui/material';
+import {CircularProgress, Typography} from '@mui/material';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import React, { useEffect } from 'react';
@@ -16,6 +16,7 @@ import {
 } from '../../utils/integrations';
 import { Card } from '../layouts/card';
 import { ConnectedIntegrationType } from './connectedIntegrationType';
+import {isInitial, isLoading} from "../../utils/shared";
 
 type ConnectedIntegrationsProps = {
   user: UserProfile;
@@ -74,6 +75,24 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
   ) {
     return null;
   }
+
+  // For each integration, count the number of workflows that use it.
+  const listWorkflowState = useSelector(
+      (state: RootState) => state.listWorkflowReducer
+  );
+  if (isInitial(listWorkflowState.loadingStatus) || isLoading(listWorkflowState.loadingStatus)) {
+    return <CircularProgress/>
+  }
+
+  integrations.map((integration) => {
+    // Filter the workflows on listWorkflowState to only those that use this integration.
+    listWorkflowState.workflows.filter((workflow) => {
+      return workflow.spec.integrationRef?.integration === integration.id;
+    })
+  });
+
+
+
 
   return (
     <Box>

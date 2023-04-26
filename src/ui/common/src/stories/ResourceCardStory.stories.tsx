@@ -311,7 +311,7 @@ export const ResourceCardStory: React.FC = () => {
     {
       id: '19',
       service: 'Aqueduct',
-      name: 'Aqueduct Server',
+      name: 'Aqueduct Server 2',
       config: {},
       createdAt: Date.now() / 1000,
       exec_state: {

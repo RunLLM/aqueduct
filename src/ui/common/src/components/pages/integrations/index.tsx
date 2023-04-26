@@ -23,6 +23,7 @@ import { ConnectedIntegrationType } from '../../integrations/connectedIntegratio
 import DefaultLayout from '../../layouts/default';
 import MetadataStorageInfo from '../account/MetadataStorageInfo';
 import { LayoutProps } from '../types';
+import {handleFetchAllWorkflowSummaries} from "../../../reducers/listWorkflowSummaries";
 
 type Props = {
   user: UserProfile;
@@ -50,8 +51,9 @@ const IntegrationsPage: React.FC<Props> = ({
         await dispatch(handleGetServerConfig({ apiKey: user.apiKey }));
       }
     }
-
     fetchServerConfig();
+
+    dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
   }, [user]);
 
   useEffect(() => {
