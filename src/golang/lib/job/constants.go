@@ -27,7 +27,7 @@ const (
 
 	defaultFunctionExtractPath = "/app/function/"
 
-	LlmCuda1141Python38  = "aqueducthq/llm_cuda1141_py38"
+	LlmCuda1141Python38  = "cgwu/llm_cuda1141_py38"
 	LlmCuda1141Python39  = "aqueducthq/llm_cuda1141_py39"
 	LlmCuda1141Python310 = "aqueducthq/llm_cuda1141_py310"
 
