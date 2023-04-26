@@ -1,6 +1,7 @@
 import Box from '@mui/material/Box';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
 import {
   IntegrationDialogProps,
@@ -38,4 +39,10 @@ export const SQLiteDialog: React.FC<IntegrationDialogProps> = ({
 
 export function isSQLiteConfigComplete(config: SQLiteConfig): boolean {
   return !!config.database;
+}
+
+export function getSQLiteValidationSchema() {
+  return Yup.object().shape({
+    database: Yup.string().required('Please enter a path'),
+  });
 }

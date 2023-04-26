@@ -1,6 +1,7 @@
 import Box from '@mui/material/Box';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
 import {
   IntegrationDialogProps,
@@ -13,12 +14,6 @@ const Placeholders: MongoDBConfig = {
   auth_uri: '********',
   database: 'aqueduct-db',
 };
-
-// type Props = {
-//   onUpdateField: (field: keyof MongoDBConfig, value: string) => void;
-//   value?: MongoDBConfig;
-//   editMode: boolean;
-// };
 
 export const MongoDBDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
@@ -55,4 +50,11 @@ export const MongoDBDialog: React.FC<IntegrationDialogProps> = ({
 
 export function isMongoDBConfigComplete(config: MongoDBConfig): boolean {
   return !!config.auth_uri && !!config.database;
+}
+
+export function getMongoDBValidationSchema() {
+  return Yup.object().shape({
+    auth_uri: Yup.string().required('Please enter a URI.'),
+    database: Yup.string().required('Please enter a database name.'),
+  });
 }

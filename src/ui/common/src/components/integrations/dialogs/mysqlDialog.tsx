@@ -1,6 +1,7 @@
 import Box from '@mui/material/Box';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
 import {
   IntegrationDialogProps,
@@ -16,12 +17,6 @@ const Placeholders: MySqlConfig = {
   username: 'aqueduct',
   password: '********',
 };
-
-// type Props = {
-//   onUpdateField: (field: keyof MySqlConfig, value: string) => void;
-//   value?: MySqlConfig;
-//   editMode: boolean;
-// };
 
 export const MysqlDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
@@ -102,4 +97,14 @@ export function isMySqlConfigComplete(config: MySqlConfig): boolean {
     !!config.username &&
     !!config.password
   );
+}
+
+export function getMySQLValidationSchema() {
+  return Yup.object().shape({
+    host: Yup.string().required('Please enter a host'),
+    port: Yup.string().required('Please enter a port'),
+    database: Yup.string().required('Please enter a database'),
+    username: Yup.string().required('Please enter a username'),
+    password: Yup.string().required('Please enter a password'),
+  });
 }

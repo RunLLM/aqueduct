@@ -3,6 +3,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
 import {
   EmailConfig,
@@ -178,4 +179,17 @@ export function isEmailConfigComplete(config: EmailConfig): boolean {
     !!config.targets_serialized &&
     !!config.user
   );
+}
+
+// TODO: Figure out how to set up conditional validation.
+export function getEmailValidationSchema() {
+  return Yup.object().shape({
+    host: Yup.string().required('Please enter a host'),
+    port: Yup.number().required('Please enter a port'),
+    user: Yup.string().required('Please enter a sender address'),
+    password: Yup.string().required('Please enter a sender password'),
+    targets_serialized: Yup.string().required(
+      'Please enter at least one receiver'
+    ),
+  });
 }

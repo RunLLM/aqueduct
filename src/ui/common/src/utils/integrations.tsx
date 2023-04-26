@@ -17,12 +17,43 @@ import {
   SparkDialog,
 } from '..';
 import { apiAddress } from '../components/hooks/useAqueductConsts';
-import { AirflowDialog } from '../components/integrations/dialogs/airflowDialog';
-import { AthenaDialog } from '../components/integrations/dialogs/athenaDialog';
-import { GCSDialog } from '../components/integrations/dialogs/gcsDialog';
-import { KubernetesDialog } from '../components/integrations/dialogs/kubernetesDialog';
-import { LambdaDialog } from '../components/integrations/dialogs/lambdaDialog';
-import { SQLiteDialog } from '../components/integrations/dialogs/sqliteDialog';
+import {
+  AirflowDialog,
+  getAirflowValidationSchema,
+} from '../components/integrations/dialogs/airflowDialog';
+import {
+  AthenaDialog,
+  getAthenaValidationSchema,
+} from '../components/integrations/dialogs/athenaDialog';
+import { getAWSValidationSchema } from '../components/integrations/dialogs/awsDialog';
+import { getBigQueryValidationSchema } from '../components/integrations/dialogs/bigqueryDialog';
+import { getDatabricksValidationSchema } from '../components/integrations/dialogs/databricksDialog';
+import { getEmailValidationSchema } from '../components/integrations/dialogs/emailDialog';
+import {
+  GCSDialog,
+  getGCSValidationSchema,
+} from '../components/integrations/dialogs/gcsDialog';
+import {
+  getKubernetesValidationSchema,
+  KubernetesDialog,
+} from '../components/integrations/dialogs/kubernetesDialog';
+import {
+  getLambdaValidationSchema,
+  LambdaDialog,
+} from '../components/integrations/dialogs/lambdaDialog';
+import { getMariaDBValidationSchema } from '../components/integrations/dialogs/mariadbDialog';
+import { getMongoDBValidationSchema } from '../components/integrations/dialogs/mongoDbDialog';
+import { getMySQLValidationSchema } from '../components/integrations/dialogs/mysqlDialog';
+import { getPostgresValidationSchema } from '../components/integrations/dialogs/postgresDialog';
+import { getRedshiftValidationSchema } from '../components/integrations/dialogs/redshiftDialog';
+import { getS3ValidationSchema } from '../components/integrations/dialogs/s3Dialog';
+import { getSlackValidationSchema } from '../components/integrations/dialogs/slackDialog';
+import { getSnowflakeValidationSchema } from '../components/integrations/dialogs/snowflakeDialog';
+import { getSparkValidationSchema } from '../components/integrations/dialogs/sparkDialog';
+import {
+  getSQLiteValidationSchema,
+  SQLiteDialog,
+} from '../components/integrations/dialogs/sqliteDialog';
 import UserProfile from './auth';
 import { AqueductDocsLink } from './docs';
 import { ExecState } from './shared';
@@ -329,6 +360,9 @@ export type Info = {
   category: string;
   docs: string;
   dialog: React.FC<IntegrationDialogProps>;
+  // TODO: figure out typescript type for yup schema
+  // This may be useful: https://stackoverflow.com/questions/66171196/how-to-use-yups-object-shape-with-typescript
+  validationSchema: any;
 };
 
 export type ServiceInfoMap = {
@@ -436,6 +470,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     docs: addingIntegrationLink,
     // What is the type of dialog?
     dialog: () => <PostgresDialog />,
+    validationSchema: getPostgresValidationSchema(),
   },
   ['Snowflake']: {
     logo: ServiceLogos['Snowflake'],
@@ -443,6 +478,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
     dialog: () => <SnowflakeDialog />,
+    validationSchema: getSnowflakeValidationSchema(),
   },
   ['Redshift']: {
     logo: ServiceLogos['Redshift'],
@@ -450,6 +486,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
     dialog: () => <RedshiftDialog />,
+    validationSchema: getRedshiftValidationSchema(),
   },
   ['BigQuery']: {
     logo: ServiceLogos['BigQuery'],
@@ -457,6 +494,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.DATA,
     docs: `${addingIntegrationLink}/connecting-to-google-bigquery`,
     dialog: () => <BigQueryDialog />,
+    validationSchema: getBigQueryValidationSchema(),
   },
   ['MySQL']: {
     logo: ServiceLogos['MySQL'],
@@ -464,6 +502,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
     dialog: () => <MysqlDialog />,
+    validationSchema: getMySQLValidationSchema(),
   },
   ['MariaDB']: {
     logo: ServiceLogos['MariaDB'],
@@ -471,6 +510,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
     dialog: () => <MariaDbDialog />,
+    validationSchema: getMariaDBValidationSchema(),
   },
   ['S3']: {
     logo: ServiceLogos['S3'],
@@ -484,6 +524,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
         setMigrateStorage={(param) => console.log('setMigrateStorage: ', param)}
       />
     ),
+    validationSchema: getS3ValidationSchema(),
   },
   ['GCS']: {
     logo: ServiceLogos['GCS'],
@@ -497,6 +538,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
         setMigrateStorage={(param) => console.log('setMigrateStorage: ', param)}
       />
     ),
+    validationSchema: getGCSValidationSchema(),
   },
   ['Aqueduct']: {
     logo: ServiceLogos['Aqueduct'],
@@ -505,6 +547,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     docs: addingIntegrationLink,
     // TODO: Figure out what to show here.
     dialog: () => <div />,
+    validationSchema: null,
   },
   ['Filesystem']: {
     logo: ServiceLogos['Aqueduct'],
@@ -518,6 +561,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
     dialog: () => <SQLiteDialog />,
+    validationSchema: getSQLiteValidationSchema(),
   },
   ['Athena']: {
     logo: ServiceLogos['Athena'],
@@ -525,6 +569,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
     dialog: () => <AthenaDialog />,
+    validationSchema: getAthenaValidationSchema(),
   },
   ['Airflow']: {
     logo: ServiceLogos['Airflow'],
@@ -532,6 +577,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.COMPUTE,
     docs: addingIntegrationLink,
     dialog: () => <AirflowDialog />,
+    validationSchema: getAirflowValidationSchema(),
   },
   ['Kubernetes']: {
     logo: ServiceLogos['Kubernetes'],
@@ -539,6 +585,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.COMPUTE,
     docs: `${addingIntegrationLink}/connecting-to-k8s-cluster`,
     dialog: () => <KubernetesDialog />,
+    validationSchema: getKubernetesValidationSchema(),
   },
   ['Lambda']: {
     logo: ServiceLogos['Lambda'],
@@ -546,6 +593,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.COMPUTE,
     docs: `${addingIntegrationLink}/connecting-to-aws-lambda`,
     dialog: () => <LambdaDialog />,
+    validationSchema: getLambdaValidationSchema(),
   },
   ['MongoDB']: {
     logo: ServiceLogos['MongoDB'],
@@ -553,6 +601,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
     dialog: () => <MongoDBDialog />,
+    validationSchema: getMongoDBValidationSchema(),
   },
   ['Conda']: {
     logo: ServiceLogos['Conda'],
@@ -560,6 +609,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.COMPUTE,
     docs: `${addingIntegrationLink}/connecting-to-conda`,
     dialog: () => <CondaDialog />,
+    validationSchema: null,
   },
   ['Databricks']: {
     logo: ServiceLogos['Databricks'],
@@ -567,6 +617,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.COMPUTE,
     docs: `${addingIntegrationLink}/connecting-to-databricks`,
     dialog: () => <DatabricksDialog />,
+    validationSchema: getDatabricksValidationSchema(),
   },
   ['Email']: {
     logo: ServiceLogos['Email'],
@@ -574,6 +625,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.NOTIFICATION,
     docs: `${AqueductDocsLink}/notifications/connecting-to-email`,
     dialog: () => <EmailDialog />,
+    validationSchema: getEmailValidationSchema(),
   },
   ['Slack']: {
     logo: ServiceLogos['Slack'],
@@ -581,6 +633,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.NOTIFICATION,
     docs: `${AqueductDocsLink}/notifications/connecting-to-slack`,
     dialog: () => <SlackDialog />,
+    validationSchema: getSlackValidationSchema(),
   },
   ['Spark']: {
     logo: ServiceLogos['Spark'],
@@ -588,6 +641,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.COMPUTE,
     docs: addingIntegrationLink,
     dialog: () => <SparkDialog />,
+    validationSchema: getSparkValidationSchema(),
   },
   ['AWS']: {
     logo: ServiceLogos['Kubernetes'],
@@ -601,6 +655,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.CLOUD,
     docs: addingIntegrationLink,
     dialog: () => <AWSDialog />,
+    validationSchema: getAWSValidationSchema(),
   },
   ['GCP']: {
     logo: ServiceLogos['GCP'],

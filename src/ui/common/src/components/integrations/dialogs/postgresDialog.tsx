@@ -1,6 +1,7 @@
 import Box from '@mui/material/Box';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
 import {
   IntegrationDialogProps,
@@ -104,4 +105,18 @@ export function isPostgresConfigComplete(config: PostgresConfig): boolean {
     !!config.username &&
     !!config.password
   );
+}
+
+export function getPostgresValidationSchema() {
+  return Yup.object().shape({
+    host: Yup.string().required('Please enter a host'),
+    port: Yup.string().required('Please enter a port'),
+    // to ensure that port is a number:
+    // port: Yup.number()
+    //   .required('Required')
+    //   .typeError('Port must be a number'),
+    database: Yup.string().required('Please enter a database'),
+    username: Yup.string().required('Please enter a username'),
+    password: Yup.string().required('Please enter a password'),
+  });
 }

@@ -3,6 +3,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
 import {
   AWSCredentialType,
@@ -255,4 +256,21 @@ export function isS3ConfigComplete(config: S3Config): boolean {
   }
 
   return false;
+}
+
+// TODO: figure out conditional validation
+export function getS3ValidationSchema() {
+  return Yup.object().shape({
+    bucket: Yup.string().required('Please enter a bucket name'),
+    region: Yup.string().required('Please enter a region'),
+    access_key_id: Yup.string().required('Please enter an access key ID'),
+    secret_access_key: Yup.string().required(
+      'Please enter a secret access key'
+    ),
+    config_file_path: Yup.string().required('Please enter a config file path'),
+    config_file_profile: Yup.string().required('Please enter a profile name'),
+    config_file_content: Yup.string().required(
+      'Please upload a credentials file'
+    ),
+  });
 }

@@ -1,8 +1,8 @@
 import Box from '@mui/material/Box';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
-// import * as Yup from 'yup';
 import {
   IntegrationDialogProps,
   MariaDbConfig,
@@ -17,12 +17,6 @@ const Placeholders: MariaDbConfig = {
   username: 'aqueduct',
   password: '********',
 };
-
-// type Props = {
-//   //onUpdateField: (field: keyof MariaDbConfig, value: string) => void;
-//   //value?: MariaDbConfig;
-//   editMode: boolean;
-// };
 
 export const MariaDbDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
@@ -104,3 +98,13 @@ export const isMariaDBConfigComplete = (config: MariaDbConfig): boolean => {
     !!config.port
   );
 };
+
+export function getMariaDBValidationSchema() {
+  return Yup.object().shape({
+    host: Yup.string().required('Please enter a host'),
+    port: Yup.string().required('Please enter a port'),
+    database: Yup.string().required('Please enter a database'),
+    username: Yup.string().required('Please enter a username'),
+    password: Yup.string().required('Please enter a password'),
+  });
+}

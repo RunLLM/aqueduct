@@ -4,6 +4,7 @@ import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import { useController, useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
 import {
   FileData,
@@ -133,4 +134,13 @@ export function readCredentialsFile(
 
 export function isGCSConfigComplete(config: GCSConfig): boolean {
   return !!config.bucket && !!config.service_account_credentials;
+}
+
+export function getGCSValidationSchema() {
+  return Yup.object().shape({
+    bucket: Yup.string().required('Please enter a bucket name'),
+    service_account_credentials: Yup.string().required(
+      'Please upload a service account key file.'
+    ),
+  });
 }

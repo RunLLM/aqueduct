@@ -1,6 +1,7 @@
 import Box from '@mui/material/Box';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
 import {
   IntegrationDialogProps,
@@ -19,30 +20,10 @@ const Placeholders: SnowflakeConfig = {
   role: '',
 };
 
-// type Props = {
-//   onUpdateField: (field: keyof SnowflakeConfig, value: string) => void;
-//   value?: SnowflakeConfig;
-//   editMode: boolean;
-// };
-
 export const SnowflakeDialog: React.FC<IntegrationDialogProps> = ({
   editMode,
 }) => {
-  const { setValue, getValues } = useFormContext();
-  const schema = getValues('schema') ?? Placeholders.schema;
-  console.log('snowflakeDialog schema: ', schema);
-
-  // const [schema, setSchema] = useState<string>(
-  //   value?.schema ?? Placeholders.schema
-  // );
-
-  // useEffect(() => {
-  //   if (schema) {
-  //     onUpdateField('schema', schema);
-  //   } else {
-  //     onUpdateField('schema', Placeholders.schema);
-  //   }
-  // }, [schema]);
+  const { setValue } = useFormContext();
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -140,4 +121,18 @@ export function isSnowflakeConfigComplete(config: SnowflakeConfig): boolean {
     !!config.warehouse &&
     !!config.database
   );
+}
+
+export function getSnowflakeValidationSchema() {
+  return Yup.object().shape({
+    account_identifier: Yup.string().required(
+      'Please enter an account identifier'
+    ),
+    warehouse: Yup.string().required('Please enter a warehouse'),
+    database: Yup.string().required('Please enter a database'),
+    schema: Yup.string(),
+    username: Yup.string().required('Please enter a username'),
+    password: Yup.string().required('Please enter a password'),
+    role: Yup.string(),
+  });
 }

@@ -3,6 +3,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
 import {
   IntegrationDialogProps,
@@ -136,4 +137,17 @@ export function isSlackConfigComplete(config: SlackConfig): boolean {
   }
 
   return !!config.channels_serialized && !!config.token;
+}
+
+// TODO: Figure out conditional validation
+export function getSlackValidationSchema() {
+  return Yup.object().shape({
+    token: Yup.string().required('Please enter a token'),
+    channels: Yup.string().required('Please enter at least one channel name'),
+    channels_serialized: Yup.string().required(
+      'Please enter at least one channel name'
+    ),
+    level: Yup.string().required('Please select a notification level'),
+    enabled: Yup.string(),
+  });
 }

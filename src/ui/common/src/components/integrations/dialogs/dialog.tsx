@@ -30,6 +30,7 @@ import {
   aqueductDemoName,
   AthenaConfig,
   AWSConfig,
+  BigQueryConfig,
   DatabricksConfig,
   EmailConfig,
   formatService,
@@ -55,6 +56,7 @@ import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
 import { isAirflowConfigComplete } from './airflowDialog';
 import { isAthenaConfigComplete } from './athenaDialog';
 import { isAWSConfigComplete } from './awsDialog';
+import { isBigQueryConfigComplete } from './bigqueryDialog';
 import { isDatabricksConfigComplete } from './databricksDialog';
 import { EmailDefaultsOnCreate, isEmailConfigComplete } from './emailDialog';
 import { isGCSConfigComplete } from './gcsDialog';
@@ -377,6 +379,8 @@ export function isConfigComplete(
       return isAthenaConfigComplete(config as AthenaConfig);
     case 'AWS':
       return isAWSConfigComplete(config as AWSConfig);
+    case 'BigQuery':
+      return isBigQueryConfigComplete(config as BigQueryConfig);
     case 'Conda':
       // Conda only has a name field that the user supplies, so this half of form is always valid.
       return true;
