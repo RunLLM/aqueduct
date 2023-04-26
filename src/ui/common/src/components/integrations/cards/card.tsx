@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import React from 'react';
 
 import { Integration } from '../../../utils/integrations';
-import ExecutionStatus, {isInitial, isLoading} from '../../../utils/shared';
+import ExecutionStatus from '../../../utils/shared';
 import { StatusIndicator } from '../../workflows/workflowStatus';
 import IntegrationLogo from '../logo';
 import { AirflowCard } from './airflowCard';
@@ -100,7 +100,7 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column'}}>
+    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
         {/*If the execution state doesn't exist, we assume the integration succeeded.*/}
         <StatusIndicator
@@ -129,12 +129,18 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
 
       {serviceCard}
 
-      <Box sx={{ position: 'absolute', bottom: paddingBottomForNumWorkflowsMsg, right: paddingRightForNumWorkflowsMsg, textAlign: 'right' }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: paddingBottomForNumWorkflowsMsg,
+          right: paddingRightForNumWorkflowsMsg,
+          textAlign: 'right',
+        }}
+      >
         <TruncatedText variant="caption" sx={{ fontWeight: 300 }}>
           {numWorkflowsUsingMsg}
         </TruncatedText>
       </Box>
-
     </Box>
   );
 };

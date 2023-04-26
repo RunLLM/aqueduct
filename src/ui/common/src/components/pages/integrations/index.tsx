@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { BreadcrumbLink } from '../../../components/layouts/NavBar';
-import {useIntegrationsWorkflowsGetQuery, useStorageMigrationListQuery} from '../../../handlers/AqueductApi';
+import { useStorageMigrationListQuery } from '../../../handlers/AqueductApi';
 import { handleGetServerConfig } from '../../../handlers/getServerConfig';
 import { StorageMigrationResponse } from '../../../handlers/responses/storageMigration';
 import { RootState } from '../../../stores/store';
@@ -23,7 +23,6 @@ import { ConnectedIntegrationType } from '../../integrations/connectedIntegratio
 import DefaultLayout from '../../layouts/default';
 import MetadataStorageInfo from '../account/MetadataStorageInfo';
 import { LayoutProps } from '../types';
-import {handleFetchAllWorkflowSummaries} from "../../../reducers/listWorkflowSummaries";
 
 type Props = {
   user: UserProfile;

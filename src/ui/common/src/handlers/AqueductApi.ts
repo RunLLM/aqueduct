@@ -14,6 +14,11 @@ import {
   DagResultsGetResponse,
 } from './v2/DagResultsGet';
 import {
+  integrationsWorkflowsGetQuery,
+  IntegrationsWorkflowsGetRequest,
+  IntegrationsWorkflowsGetResponse,
+} from './v2/IntegrationsWorkflows';
+import {
   storageMigrationListQuery,
   storageMigrationListRequest,
   storageMigrationListResponse,
@@ -59,11 +64,6 @@ import {
   WorkflowGetResponse,
 } from './v2/WorkflowGet';
 import { workflowsGetQuery, WorkflowsGetRequest } from './v2/WorkflowsGet';
-import {
-  integrationsWorkflowsGetQuery,
-  IntegrationsWorkflowsGetRequest,
-  IntegrationsWorkflowsGetResponse
-} from "./v2/IntegrationsWorkflows";
 
 const { createApi, fetchBaseQuery } = ((rtkQueryRaw as any).default ??
   rtkQueryRaw) as typeof rtkQueryRaw;
@@ -88,7 +88,10 @@ export const aqueductApi = createApi({
       query: (req) => dagResultsGetQuery(req),
       transformErrorResponse,
     }),
-    integrationsWorkflowsGet: builder.query<IntegrationsWorkflowsGetResponse, IntegrationsWorkflowsGetRequest>({
+    integrationsWorkflowsGet: builder.query<
+      IntegrationsWorkflowsGetResponse,
+      IntegrationsWorkflowsGetRequest
+    >({
       query: (req) => integrationsWorkflowsGetQuery(req),
       transformErrorResponse,
     }),
