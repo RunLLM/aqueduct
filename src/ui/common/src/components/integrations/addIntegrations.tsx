@@ -293,6 +293,7 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
 
         {showKubernetesDialog && (
           <IntegrationDialog
+            validationSchema={integration.validationSchema}
             user={user}
             dialogContent={dialog}
             service={service}

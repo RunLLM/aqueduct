@@ -181,7 +181,7 @@ export enum DynamicEngineType {
 }
 
 export type S3Config = {
-  type: AWSCredentialType;
+  type: AWSCredentialType | string;
   bucket: string;
   region: string;
 
@@ -268,7 +268,8 @@ export type SparkConfig = {
 };
 
 export type AWSConfig = {
-  type: AWSCredentialType;
+  // Not sure why this is coming back as null occasionally ...
+  type: AWSCredentialType | string;
   region: string;
   access_key_id: string;
   secret_access_key: string;
