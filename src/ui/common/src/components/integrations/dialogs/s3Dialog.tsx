@@ -18,7 +18,8 @@ import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: S3Config = {
-  type: AWSCredentialType.AccessKey,
+  //type: AWSCredentialType.AccessKey,
+  type: 'access_key',
   bucket: 'aqueduct',
   region: 'us-east-1',
   root_dir: 'path/to/root/',

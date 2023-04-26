@@ -39,6 +39,7 @@ import {
   Integration,
   IntegrationConfig,
   KubernetesConfig,
+  LambdaConfig,
   MariaDbConfig,
   MongoDBConfig,
   MySqlConfig,
@@ -85,6 +86,7 @@ import { isSlackConfigComplete, SlackDefaultsOnCreate } from './slackDialog';
 import { isSnowflakeConfigComplete } from './snowflakeDialog';
 import { isSparkConfigComplete } from './sparkDialog';
 import { isSQLiteConfigComplete } from './sqliteDialog';
+import { isLambaDialogComplete } from './lambdaDialog';
 
 type Props = {
   user: UserProfile;
@@ -94,6 +96,7 @@ type Props = {
   showMigrationDialog?: () => void;
   integrationToEdit?: Integration;
   dialogContent: React.FC;
+  validationSchema: Yup.ObjectSchema<any>;
 };
 
 // Default fields are actual filled form values on 'create' dialog.
@@ -117,8 +120,9 @@ const IntegrationDialog: React.FC<Props> = ({
   showMigrationDialog = undefined,
   integrationToEdit = undefined,
   dialogContent,
+  validationSchema,
 }) => {
-  console.log('integrationToEdit: ', integrationToEdit);
+  const [submitDisabled, setSubmitDisabled] = useState<boolean>(true);
   const editMode = !!integrationToEdit;
   const dispatch: AppDispatch = useDispatch();
   const [config, setConfig] = useState<IntegrationConfig>(
@@ -164,48 +168,47 @@ const IntegrationDialog: React.FC<Props> = ({
       return { ...config, [field]: value };
     });
 
+  // TODO: Going to need to move this to redux so that dialogs that depend on storage
+  // migration can easily trigger the dialog.
   const [migrateStorage, setMigrateStorage] = useState(false);
 
-  // TODO: Figure out how we're going to set up validation schema
-  //const { register, control, handleSubmit, formState } = useForm();
-
-  // How do i use Yup.inferType to get the type of the validationSchema?
-  // Yup.inferType<typeof validationSchema>;
-  //type Inferred = Yup.InferType<typeof validationSchema>;
-
-  const validationSchema = Yup.object().shape({
-    name: Yup.string().required('Please enter a name.'),
-    host: Yup.string().required('Please enter a host url.'),
-    port: Yup.string().required('Please enter a port number.'),
-    //database: Yup.string().required('Please enter a database name.'),
-    //username: Yup.string().required('Please enter a username.'),
-    //password: Yup.string().required('Please enter a password.'),
-  });
-
-  // const {
-  //   register,
-  //   control,
-  //   handleSubmit,
-  //   formState
-  // } = useForm({
-  //   // TODO: Figure out how to get the validationSchema from the appropriate dialog.
-  //   resolver: yupResolver(validationSchema),
-  // });
+  console.log('validationSchema: ', validationSchema);
 
   const methods = useForm({
     // TODO: Figure out how to get the validationSchema from the appropriate dialog.
     resolver: yupResolver(validationSchema),
   });
 
-  const onSubmit = (data: any) => {
-    console.log('inside onSubmit');
-    console.log(JSON.stringify(data, null, 2));
-  };
+  // Check to enable/disable submit button
+  useEffect(() => {
+    // const disableConnect =
+    //   !editMode &&
+    //   (!isConfigComplete(config, service) ||
+    //     name === '' ||
+    //     name === aqueductDemoName);
 
-  console.log('formState from Dialog.tsx: ', methods.formState);
-  console.log('Dialog.tsx touchedFields: ', methods.formState.touchedFields);
-  console.log('Dialog.tsx errors: ', methods.formState.touchedFields);
-  console.log('Dialog.tsx getValues: ', methods.getValues());
+    const subscription = methods.watch(async (value, { name, type }) => {
+      console.log(value, name, type);
+
+      // TODO: Account for editMode, aqueductDemoName and empty name
+      const checkIsFormValid = async () => {
+        const isValidForm = await methods.trigger();
+        console.log('isValidForm: ', isValidForm);
+        if (isValidForm && submitDisabled) {
+          // Form is valid, enable the submit button.
+          setSubmitDisabled(false);
+        } else {
+          // Form is still invalid, disable the submit button.
+          setSubmitDisabled(true);
+        }
+      }
+
+      checkIsFormValid();
+    });
+
+    // Unsubscribe and handle lifecycle changes.
+    return () => subscription.unsubscribe();
+  }, [methods.watch])
 
   useEffect(() => {
     if (isSucceeded(connectStatus)) {
@@ -253,6 +256,8 @@ const IntegrationDialog: React.FC<Props> = ({
     </Box>
   );
 
+  const onConfirmDialog = (data: IntegrationConfig) => {
+    console.log('onConfirmDialog data: ', data);
   let serviceDialog;
 
   // Remember to comment this out and take out when done refactoring.
@@ -457,21 +462,20 @@ const IntegrationDialog: React.FC<Props> = ({
           handleEditIntegration({
             apiKey: user.apiKey,
             integrationId: integrationToEdit.id,
-            name: name,
-            config: config,
+            name: data.name,
+            config: data,
           })
         )
       : dispatch(
           handleConnectToNewIntegration({
             apiKey: user.apiKey,
             service: service,
-            name: name,
-            config: config,
+            name: data.name,
+            config: data,
           })
         );
   };
 
-  // let's see if we can pick up the name field here.
   const nameInput = (
     <IntegrationTextInputField
       name="name"
@@ -481,8 +485,6 @@ const IntegrationDialog: React.FC<Props> = ({
       description="Provide a unique name to refer to this integration."
       placeholder={'my_' + formatService(service) + '_integration'}
       onChange={(event) => {
-        // TODO: remove this setName call when done refactoring.
-        //setName(event.target.value);
         setShouldShowNameError(false);
         methods.setValue('name', event.target.value);
       }}
@@ -560,13 +562,14 @@ const IntegrationDialog: React.FC<Props> = ({
                   'host',
                   'port',
                 ]);
+
                 console.log('triggerParams: ', triggerParams);
+
                 // NOTE: handleSubmit() is a function that returns a function, please call it as so
-                methods.handleSubmit(onSubmit)();
+                methods.handleSubmit(onConfirmDialog)();
               }}
               loading={isLoading(connectStatus)}
-              //disabled={disableConnect}
-              disabled={false}
+              disabled={submitDisabled}
             >
               Confirm
             </LoadingButton>
@@ -578,7 +581,9 @@ const IntegrationDialog: React.FC<Props> = ({
   );
 };
 
-// Helper function to check if the Integration config is completely filled.
+// TODO: Remove me now that this is no longer used :)
+// TODO: refactor this so that we no longer need a switch statement here.
+// Helper function to check if the Resource config is completely filled.
 export function isConfigComplete(
   config: IntegrationConfig,
   service: Service
@@ -604,8 +609,7 @@ export function isConfigComplete(
     case 'Kubernetes':
       return isK8sConfigComplete(config as KubernetesConfig);
     case 'Lambda':
-      // Lambda only has a name field that the user supplies, so this half of form is always valid.
-      return true;
+      return isLambaDialogComplete(config as LambdaConfig);
     case 'MariaDB':
       return isMariaDBConfigComplete(config as MariaDbConfig);
     case 'MongoDB':

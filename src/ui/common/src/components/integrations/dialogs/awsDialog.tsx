@@ -15,7 +15,7 @@ import { Tab, Tabs } from '../../primitives/Tabs.styles';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: AWSConfig = {
-  type: AWSCredentialType.AccessKey,
+  type: 'access_key',
   region: 'us-east-2',
   access_key_id: '',
   secret_access_key: '',
