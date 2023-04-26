@@ -100,6 +100,8 @@ export const isMariaDBConfigComplete = (config: MariaDbConfig): boolean => {
 };
 
 export function getMariaDBValidationSchema() {
+  console.log('inside mariaDB dialog');
+
   return Yup.object().shape({
     host: Yup.string().required('Please enter a host'),
     port: Yup.string().required('Please enter a port'),

@@ -82,6 +82,7 @@ type Props = {
   showMigrationDialog?: () => void;
   integrationToEdit?: Integration;
   dialogContent: React.FC;
+  validationSchema: Yup.ObjectSchema<any>;
 };
 
 // Default fields are actual filled form values on 'create' dialog.
@@ -105,8 +106,8 @@ const IntegrationDialog: React.FC<Props> = ({
   showMigrationDialog = undefined,
   integrationToEdit = undefined,
   dialogContent,
+  validationSchema,
 }) => {
-  console.log('integrationToEdit: ', integrationToEdit);
   const editMode = !!integrationToEdit;
   const dispatch: AppDispatch = useDispatch();
   const [config, setConfig] = useState<IntegrationConfig>(
@@ -161,24 +162,16 @@ const IntegrationDialog: React.FC<Props> = ({
   // Yup.inferType<typeof validationSchema>;
   //type Inferred = Yup.InferType<typeof validationSchema>;
 
-  const validationSchema = Yup.object().shape({
-    name: Yup.string().required('Please enter a name.'),
-    host: Yup.string().required('Please enter a host url.'),
-    port: Yup.string().required('Please enter a port number.'),
-    //database: Yup.string().required('Please enter a database name.'),
-    //username: Yup.string().required('Please enter a username.'),
-    //password: Yup.string().required('Please enter a password.'),
-  });
-
-  // const {
-  //   register,
-  //   control,
-  //   handleSubmit,
-  //   formState
-  // } = useForm({
-  //   // TODO: Figure out how to get the validationSchema from the appropriate dialog.
-  //   resolver: yupResolver(validationSchema),
+  // const validationSchema = Yup.object().shape({
+  //   name: Yup.string().required('Please enter a name.'),
+  //   host: Yup.string().required('Please enter a host url.'),
+  //   port: Yup.string().required('Please enter a port number.'),
+  //   //database: Yup.string().required('Please enter a database name.'),
+  //   //username: Yup.string().required('Please enter a username.'),
+  //   //password: Yup.string().required('Please enter a password.'),
   // });
+
+  console.log('validationSchema: ', validationSchema);
 
   const methods = useForm({
     // TODO: Figure out how to get the validationSchema from the appropriate dialog.

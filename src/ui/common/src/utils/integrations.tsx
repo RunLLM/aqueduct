@@ -1,4 +1,5 @@
 import React from 'react';
+import * as Yup from 'yup';
 
 import {
   AWSDialog,
@@ -362,7 +363,7 @@ export type Info = {
   dialog: React.FC<IntegrationDialogProps>;
   // TODO: figure out typescript type for yup schema
   // This may be useful: https://stackoverflow.com/questions/66171196/how-to-use-yups-object-shape-with-typescript
-  validationSchema: any;
+  validationSchema: Yup.ObjectSchema<any>;
 };
 
 export type ServiceInfoMap = {
