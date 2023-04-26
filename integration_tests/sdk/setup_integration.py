@@ -264,28 +264,30 @@ def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) 
         return
 
     connected_integrations = client.list_integrations()
-    for integration_name in compute_integrations:
-        # Only connect to integrations that don't already exist.
-        if integration_name not in connected_integrations.keys():
-            print(f"Connecting to {integration_name}")
-            if "aqueduct_engine" in compute_integrations:
-                # Connect to conda if specified, otherwise, do nothing for aq engine.
-                aq_config = _parse_config_file()["compute"][integration_name]
-                if aq_config and "conda" in aq_config:
+    for integration_key in compute_integrations:
+        if integration_key == "aqueduct_engine":
+            # Connect to conda if specified, otherwise, do nothing for aq engine.
+            aq_config = _parse_config_file()["compute"][integration_key]
+            if aq_config and "conda" in aq_config:
+                integration_name = aq_config["conda"]
+                if integration_name not in connected_integrations.keys():
                     client.connect_integration(
-                        "conda",
+                        integration_name,
                         ServiceType.CONDA,
                         {},  # integration_config
                     )
-                    wait_for_conda_integration(client, "conda")
-            else:
-                integration_config = _fetch_integration_credentials("compute", integration_name)
+                    wait_for_conda_integration(client, integration_name)
+        # Only connect to integrations that don't already exist.
+        elif integration_key not in connected_integrations.keys():
+            integration_name = integration_key
+            print(f"Connecting to {integration_name}")
+            integration_config = _fetch_integration_credentials("compute", integration_name)
 
-                client.connect_integration(
-                    integration_name,
-                    integration_config["type"],
-                    _sanitize_integration_config_for_connect(integration_config),
-                )
+            client.connect_integration(
+                integration_name,
+                integration_config["type"],
+                _sanitize_integration_config_for_connect(integration_config),
+            )
 
 
 def wait_for_conda_integration(client: Client, name: str):
