@@ -70,10 +70,6 @@ const OperatorsOnIntegration: React.FC = () => {
     operatorsByWorkflow[op.workflow_id].operators.push(op);
   });
 
-  // TODO: REMOVE
-  console.log(workflows);
-  console.log(operators);
-
   if (Object.keys(operatorsByWorkflow).length > 0) {
     return (
       <Box maxWidth="900px">

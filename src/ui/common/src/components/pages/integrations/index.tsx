@@ -50,6 +50,7 @@ const IntegrationsPage: React.FC<Props> = ({
         await dispatch(handleGetServerConfig({ apiKey: user.apiKey }));
       }
     }
+
     fetchServerConfig();
   }, [user]);
 

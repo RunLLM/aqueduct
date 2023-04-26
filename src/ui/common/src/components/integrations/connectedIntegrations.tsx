@@ -129,7 +129,7 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
         {[...integrations]
           .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
           .map((integration, idx) => {
-            // Leave this empty if there was some error fetching.
+            // Leave this empty if there was an error while fetching workflows.
             let numWorkflowsUsingMsg = '';
             const numWorkflowsUsing =
               workflowsByIntegration[integration.id].length;
