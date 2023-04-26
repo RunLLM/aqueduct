@@ -5,7 +5,7 @@ SHELL [ "/bin/bash", "--login", "-c" ]
 MAINTAINER Aqueduct <hello@aqueducthq.com> version: 0.0.1
 
 USER root
-
+RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.list
 RUN apt-get update && \
   apt-get install wget
 
