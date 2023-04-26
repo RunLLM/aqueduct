@@ -1,7 +1,7 @@
 import { Divider } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React from 'react';
+import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import {
@@ -36,23 +36,18 @@ export const EmailDefaultsOnCreate = {
   enabled: 'false',
 };
 
-type Props = {
-  onUpdateField: (field: keyof EmailConfig, value: string) => void;
-  value?: EmailConfig;
-};
-
 export const EmailDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
 }) => {
-  // TODO: keep commented out until this form has been verified working for rerceivers field.
-  // const [receivers, setReceivers] = useState(
-  //   value?.targets_serialized
-  //     ? (JSON.parse(value?.targets_serialized) as string[]).join(',')
-  //     : ''
-  // );
+  const [selectedLevel, setSelectedLevel] = useState(
+    EmailDefaultsOnCreate.level
+  );
+  const [notificationsEnabled, setNotificationsEnabled] = useState(
+    EmailDefaultsOnCreate.enabled
+  );
 
   // Retrieve the form context.
-  const { register, setValue, getValues } = useFormContext();
+  const { register, setValue } = useFormContext();
 
   // Register forms with custom logic.
   register('enabled', { value: EmailDefaultsOnCreate.enabled });
@@ -60,9 +55,6 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
   register('targets_serialized', {
     value: EmailDefaultsOnCreate.targets_serialized,
   });
-
-  const enabled = getValues('enabled');
-  const level = getValues('level');
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -117,7 +109,6 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
         description="The email address(es) of the receiver(s). Use comma to separate different addresses."
         placeholder={Placeholders.reciever}
         onChange={(event) => {
-          //setValue('receivers', event.target.value);
           const receiversList = event.target.value
             .split(',')
             .map((r) => r.trim());
@@ -129,10 +120,12 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
 
       <Box sx={{ mt: 2 }}>
         <CheckboxEntry
-          checked={enabled === 'true'}
+          checked={notificationsEnabled === 'true'}
           disabled={false}
           onChange={(checked) => {
-            setValue('enabled', checked ? 'true' : 'false');
+            const areNotificationsEnabled = checked ? 'true' : 'false';
+            setNotificationsEnabled(areNotificationsEnabled);
+            setValue('enabled', areNotificationsEnabled);
           }}
         >
           Enable this notification for all workflows.
@@ -143,7 +136,7 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
         </Typography>
       </Box>
 
-      {enabled === 'true' && (
+      {notificationsEnabled === 'true' && (
         <Box sx={{ mt: 2 }}>
           <Box sx={{ my: 1 }}>
             <Typography variant="body1" sx={{ fontWeight: 'bold' }}>
@@ -156,11 +149,12 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
             </Typography>
           </Box>
           <NotificationLevelSelector
-            level={level as NotificationLogLevel}
+            level={selectedLevel as NotificationLogLevel}
             onSelectLevel={(level) => {
+              setSelectedLevel(level);
               setValue('level', level);
             }}
-            enabled={enabled === 'true'}
+            enabled={notificationsEnabled === 'true'}
           />
         </Box>
       )}

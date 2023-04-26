@@ -40,17 +40,11 @@ export const SlackDialog: React.FC<IntegrationDialogProps> = ({
     SlackDefaultsOnCreate.enabled
   );
 
-  const { register, setValue, getValues } = useFormContext();
+  const { register, setValue } = useFormContext();
   register('level', { value: SlackDefaultsOnCreate.level });
   register('enabled', { value: SlackDefaultsOnCreate.enabled });
   register('channels_serialized', {
     value: SlackDefaultsOnCreate.channels_serialized,
-  });
-  const channels_serialized = getValues('channels_serialized');
-  register('channels', {
-    value: channels_serialized
-      ? (JSON.parse(channels_serialized) as string[]).join(',')
-      : '',
   });
 
   return (
@@ -93,8 +87,9 @@ export const SlackDialog: React.FC<IntegrationDialogProps> = ({
           checked={notificationsEnabled === 'true'}
           disabled={false}
           onChange={(checked) => {
-            setNotificationsEnabled(checked ? 'true' : 'false');
-            setValue('enabled', checked ? 'true' : 'false');
+            const areNotificationsEnabled = checked ? 'true' : 'false';
+            setNotificationsEnabled(areNotificationsEnabled);
+            setValue('enabled', areNotificationsEnabled);
           }}
         >
           Enable this notification for all workflows.

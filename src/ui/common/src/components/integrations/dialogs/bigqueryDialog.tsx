@@ -19,39 +19,16 @@ const Placeholders: BigQueryConfig = {
 export const BigQueryDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
 }) => {
-  const { setValue, getValues } = useFormContext();
+  const [fileData, setFileData] = useState<FileData | null>(null);
 
-  const [fileName, setFileName] = useState<string>(null);
-  // const setFile = (fileData: FileData | null) => {
-  //   console.log('fileData', fileData);
-  //   setFileName(fileData?.name ?? '');
-  //   //onUpdateField('service_account_credentials', fileData?.data);
-  //   setValue('service_account_credentials', fileData?.data);
-  // };
+  const { setValue } = useFormContext();
 
   const setFile = (fileData: FileData | null) => {
-    setFileName(fileData?.name ?? '');
-    console.log('fileData', fileData);
-
-    //onUpdateField('config_file_content', fileData?.data);
+    // Update the react-hook-form value.
     setValue('service_account_credentials', fileData?.data);
+    // Set state to trigger re-render of file upload field.
+    setFileData(fileData);
   };
-
-  const fileData =
-    fileName && !!getValues('service_account_credentials')
-      ? {
-          name: fileName,
-          data: getValues('service_account_credentials'),
-        }
-      : null;
-
-  // const fileData =
-  // fileName && !!value?.service_account_credentials
-  //   ? {
-  //       name: fileName,
-  //       data: value.service_account_credentials,
-  //     }
-  //   : null;
 
   const fileUploadDescription = (
     <>
@@ -89,7 +66,7 @@ export const BigQueryDialog: React.FC<IntegrationDialogProps> = ({
         required={true}
         file={fileData}
         placeholder={'Upload your service account key file.'}
-        onFiles={(files) => {
+        onFiles={(files: FileList) => {
           const file = files[0];
           readCredentialsFile(file, setFile);
         }}

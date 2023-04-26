@@ -35,43 +35,17 @@ const Placeholders: AthenaConfig = {
 export const AthenaDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
 }) => {
-  const { getValues, setValue } = useFormContext();
-
+  const [fileData, setFileData] = useState<FileData | null>(null);
   // Need state variable to change tabs, as the formContext doesn't change as readily.
   const [currentTab, setCurrentTab] = useState(AWSCredentialType.AccessKey);
-
-  const [fileName, setFileName] = useState<string>(null);
+  const { getValues, setValue } = useFormContext();
 
   const setFile = (fileData: FileData | null) => {
-    setFileName(fileData?.name ?? '');
-    console.log('fileData', fileData);
-
-    //onUpdateField('config_file_content', fileData?.data);
+    // Update the react-hook-form value
     setValue('config_file_content', fileData?.data);
+    // Set state to trigger re-render of file upload field.
+    setFileData(fileData);
   };
-
-  const fileData =
-    fileName && !!getValues('config_file_content')
-      ? {
-          name: fileName,
-          data: getValues('config_file_content'),
-        }
-      : null;
-
-  // const fileData =
-  //   fileName && !!value?.config_file_content
-  //     ? {
-  //         name: fileName,
-  //         data: value.config_file_content,
-  //       }
-  //     : null;
-
-  // TODO: Make this default value for type when registering the type value.
-  // useEffect(() => {
-  //   if (!value?.type) {
-  //     onUpdateField('type', AWSCredentialType.AccessKey);
-  //   }
-  // }, [onUpdateField, value?.type]);
 
   const configProfileInput = (
     <IntegrationTextInputField
@@ -168,8 +142,6 @@ export const AthenaDialog: React.FC<IntegrationDialogProps> = ({
         onFiles={(files) => {
           const file = files[0];
           readCredentialsFile(file, setFile);
-          // Reading file input into the react-hook-form field.
-          //readCredentialsFile(file, fileInput.onChange)
         }}
         displayFile={null}
         onReset={() => {

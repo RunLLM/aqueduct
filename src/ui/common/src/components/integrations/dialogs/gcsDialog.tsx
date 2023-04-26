@@ -27,8 +27,9 @@ export const GCSDialog: React.FC<GCSDialogProps> = ({
   editMode,
   setMigrateStorage,
 }) => {
-  // Setup for the checkbox component.
-  const { control, setValue, getValues } = useFormContext();
+  const [fileData, setFileData] = useState<FileData | null>(null);
+
+  const { control, setValue } = useFormContext();
   const { field } = useController({
     control,
     name: 'use_as_storage',
@@ -36,23 +37,16 @@ export const GCSDialog: React.FC<GCSDialogProps> = ({
     rules: { required: true },
   });
 
-  const [fileName, setFileName] = useState<string>(null);
   const setFile = (fileData: FileData | null) => {
-    setFileName(fileData?.name ?? null);
+    // Update the react-hook-form value.
     setValue('service_account_credentials', fileData?.data);
+    // Set state to trigger re-render of file upload field.
+    setFileData(fileData);
   };
 
   useEffect(() => {
     setMigrateStorage(true);
   }, [setMigrateStorage]);
-
-  const fileData =
-    fileName && !!getValues('service_account_credentials')
-      ? {
-          name: fileName,
-          data: getValues('service_account_credentials'),
-        }
-      : null;
 
   const fileUploadDescription = (
     <>
@@ -124,6 +118,7 @@ export const GCSDialog: React.FC<GCSDialogProps> = ({
   );
 };
 
+// TODO: Move this function to a shared utils file since it is used in multiple places.
 export function readCredentialsFile(
   file: File,
   setFile: (credentials: FileData) => void
