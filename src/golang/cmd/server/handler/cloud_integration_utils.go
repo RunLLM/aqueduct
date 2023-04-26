@@ -128,7 +128,7 @@ func setupTerraformDirectory(dst string) error {
 	_, stdErr, err := lib_utils.RunCmd(
 		"cp",
 		[]string{
-			"-R",
+			"-R", // we could have used -T to not create a directory if the source is a directory, but it's not supported on macOS
 			fmt.Sprintf("%s%s.", dynamic.TerraformTemplateDir, string(filepath.Separator)),
 			dst,
 		},
