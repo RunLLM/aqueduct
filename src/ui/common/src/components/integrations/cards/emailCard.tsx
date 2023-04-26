@@ -28,7 +28,7 @@ export const EmailCard: React.FC<Props> = ({ integration }) => {
 
       {config.enabled !== 'true' && (
         <TruncatedText variant="body2">
-          By default, this notification does NOT apply to all workflows.
+          This notification does <strong style={{ fontWeight: 'bold' }}>not</strong> apply to all workflows.
         </TruncatedText>
       )}
     </Box>
