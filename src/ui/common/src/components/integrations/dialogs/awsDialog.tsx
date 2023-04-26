@@ -2,6 +2,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
 import {
   AWSConfig,
@@ -276,4 +277,21 @@ export function isAWSConfigComplete(config: AWSConfig): boolean {
   }
 
   return false;
+}
+
+export function getAWSValidationSchema() {
+  // TODO: Figure out how to do the conditional logic above using yup validators.
+  // This is a start: https://stackoverflow.com/questions/49394391/conditional-validation-in-yup
+  // For now, we just make everything required ...
+
+  return Yup.object().shape({
+    type: Yup.string().required('Please select a credential type'),
+    access_key_id: Yup.string().required('Please enter an access key ID'),
+    secret_access_key: Yup.string().required(
+      'Please enter a secret access key'
+    ),
+    region: Yup.string().required('Please enter a region'),
+    config_file_profile: Yup.string().required('Please upload a profile'),
+    config_file_path: Yup.string().required('Please enter a profile path'),
+  });
 }

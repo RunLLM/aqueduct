@@ -30,6 +30,7 @@ import {
   aqueductDemoName,
   AthenaConfig,
   AWSConfig,
+  BigQueryConfig,
   DatabricksConfig,
   ECRConfig,
   EmailConfig,

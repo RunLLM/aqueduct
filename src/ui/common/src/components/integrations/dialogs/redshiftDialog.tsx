@@ -1,6 +1,7 @@
 import Box from '@mui/material/Box';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
 import {
   IntegrationDialogProps,
@@ -16,12 +17,6 @@ const Placeholders: RedshiftConfig = {
   username: 'aqueduct',
   password: '********',
 };
-
-// type Props = {
-//   onUpdateField: (field: keyof RedshiftConfig, value: string) => void;
-//   value?: RedshiftConfig;
-//   editMode: boolean;
-// };
 
 export const RedshiftDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
@@ -101,4 +96,14 @@ export function isRedshiftConfigComplete(config: RedshiftConfig): boolean {
     !!config.username &&
     !!config.password
   );
+}
+
+export function getRedshiftValidationSchema() {
+  return Yup.object().shape({
+    host: Yup.string().required('Please enter a host'),
+    port: Yup.string().required('Please enter a port'),
+    database: Yup.string().required('Please enter a database'),
+    username: Yup.string().required('Please enter a username'),
+    password: Yup.string().required('Please enter a password'),
+  });
 }

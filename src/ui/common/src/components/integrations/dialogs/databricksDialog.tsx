@@ -3,6 +3,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
 import {
   DatabricksConfig,
@@ -115,4 +116,15 @@ export function isDatabricksConfigComplete(config: DatabricksConfig): boolean {
     !!config.s3_instance_profile_arn &&
     !!config.workspace_url
   );
+}
+
+export function getDatabricksValidationSchema() {
+  return Yup.object().shape({
+    workspace_url: Yup.string().required('Please enter a workspace URL'),
+    access_token: Yup.string().required('Please enter an access token'),
+    s3_instance_profile_arn: Yup.string().required(
+      'Please enter an instance profile ARN'
+    ),
+    instance_pool_id: Yup.string().required('Please enter an instance pool ID'),
+  });
 }

@@ -1,6 +1,7 @@
 import Box from '@mui/material/Box';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
 import {
   AirflowConfig,
@@ -108,4 +109,19 @@ export function isAirflowConfigComplete(config: AirflowConfig): boolean {
     !!config.password &&
     !!config.s3_credentials_path
   );
+}
+
+export function getAirflowValidationSchema() {
+  const validationSchema = Yup.object().shape({
+    name: Yup.string().required('Please enter a name.'),
+    host: Yup.string().required('Please enter a host url.'),
+    username: Yup.string().required('Please enter a username'),
+    password: Yup.string().required('Please enter a password.'),
+    s3_credentials_path: Yup.string().required(
+      'Please enter an S3 credentials path.'
+    ),
+    s3_credentials_profile: Yup.string(),
+  });
+
+  return validationSchema;
 }

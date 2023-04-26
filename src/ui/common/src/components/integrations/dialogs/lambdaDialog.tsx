@@ -1,6 +1,7 @@
 import Box from '@mui/material/Box';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
 import {
   IntegrationDialogProps,
@@ -35,4 +36,10 @@ export const LambdaDialog: React.FC<IntegrationDialogProps> = ({
 
 export function isLambaDialogComplete(config: LambdaConfig): boolean {
   return !!config.role_arn;
+}
+
+export function getLambdaValidationSchema() {
+  return Yup.object().shape({
+    role_arn: Yup.string().required('Please enter a Lambda Role ARN.'),
+  });
 }

@@ -1,6 +1,7 @@
 import Box from '@mui/material/Box';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
 import {
   IntegrationDialogProps,
@@ -12,12 +13,6 @@ import { IntegrationTextInputField } from './IntegrationTextInputField';
 const Placeholders: SparkConfig = {
   livy_server_url: 'http://cluster-url.com:8998',
 };
-
-// type Props = {
-//   onUpdateField: (field: keyof SparkConfig, value: string) => void;
-//   value?: SparkConfig;
-//   editMode: boolean;
-// };
 
 export const SparkDialog: React.FC<IntegrationDialogProps> = ({ editMode }) => {
   const { setValue } = useFormContext();
@@ -42,4 +37,10 @@ export const SparkDialog: React.FC<IntegrationDialogProps> = ({ editMode }) => {
 
 export function isSparkConfigComplete(config: SparkConfig): boolean {
   return !!config.livy_server_url;
+}
+
+export function getSparkValidationSchema() {
+  return Yup.object().shape({
+    livy_server_url: Yup.string().required('Please enter a Livy Server URL'),
+  });
 }

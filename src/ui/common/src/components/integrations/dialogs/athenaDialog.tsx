@@ -2,6 +2,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
 import {
   AthenaConfig,
@@ -275,4 +276,23 @@ export function isAthenaConfigComplete(config: AthenaConfig): boolean {
   }
 
   return false;
+}
+
+export function getAthenaValidationSchema() {
+  // TODO: Figure out how to do the conditional logic above using yup validators.
+  // This is a start: https://stackoverflow.com/questions/49394391/conditional-validation-in-yup
+  // For now, we just make everything required ...
+
+  return Yup.object().shape({
+    type: Yup.string().required('Please select a credential type'),
+    database: Yup.string().required('Please enter a datrabase name'),
+    output_location: Yup.string().required(
+      'Please enter an S3 output location'
+    ),
+    access_key_id: Yup.string().required('Please enter an access key ID'),
+    secret_access_key: Yup.string().required(
+      'Please enter a secret access key'
+    ),
+    region: Yup.string().required('Please enter a region'),
+  });
 }

@@ -2,6 +2,7 @@ import { Box } from '@mui/material';
 import Link from '@mui/material/Link';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
 import {
   BigQueryConfig,
@@ -114,8 +115,15 @@ export function readCredentialsFile(
   reader.readAsText(file);
 }
 
-export function isBigQueryDialogConfigComplete(
-  config: BigQueryConfig
-): boolean {
+export function isBigQueryConfigComplete(config: BigQueryConfig): boolean {
   return !!config.project_id && !!config.service_account_credentials;
+}
+
+export function getBigQueryValidationSchema() {
+  return Yup.object().shape({
+    project_id: Yup.string().required('Please enter a project ID'),
+    service_account_credentials: Yup.string().required(
+      'Please upload a service account key file'
+    ),
+  });
 }

@@ -3,6 +3,7 @@ import Box from '@mui/material/Box';
 import React from 'react';
 import { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
 import {
   IntegrationDialogProps,
@@ -106,4 +107,12 @@ export function isK8sConfigComplete(config: KubernetesConfig): boolean {
 
   // If the user configures to run compute from within the same k8s cluster, we don't need parameters above.
   return true;
+}
+
+// TODO: figure out conditional validation
+export function getKubernetesValidationSchema() {
+  return Yup.object().shape({
+    kubeconfig_path: Yup.string().required('Please enter a kubeconfig path'),
+    cluster_name: Yup.string().required('Please enter a cluster name'),
+  });
 }
