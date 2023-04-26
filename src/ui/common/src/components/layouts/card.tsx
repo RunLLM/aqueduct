@@ -13,7 +13,8 @@ export const Card = styled(Box)(() => {
     },
     backgroundColor: theme.palette.gray[25],
     width: '325px',
-    height: '144px',
+    height: '150px',
     padding: CardPadding,
+    position: 'relative',
   };
 });

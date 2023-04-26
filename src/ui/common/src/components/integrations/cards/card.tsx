@@ -24,16 +24,20 @@ import { SlackCard } from './slackCard';
 import { SnowflakeCard } from './snowflakeCard';
 import { SparkCard } from './sparkCard';
 import { TruncatedText } from './text';
-import {useSelector} from "react-redux";
-import {RootState} from "../../../stores/store";
-import {CircularProgress} from "@mui/material";
 
 type IntegrationProps = {
   integration: Integration;
+
+  // Eg: "2 workflows using this integration"
+  numWorkflowsUsingMsg: string;
 };
+
+const paddingRightForNumWorkflowsMsg = 8; // pixels
+const paddingBottomForNumWorkflowsMsg = 4; // pixels
 
 export const IntegrationCard: React.FC<IntegrationProps> = ({
   integration,
+  numWorkflowsUsingMsg,
 }) => {
   let serviceCard;
   switch (integration.service) {
@@ -96,7 +100,7 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
   }
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ display: 'flex', flexDirection: 'column'}}>
       <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
         {/*If the execution state doesn't exist, we assume the integration succeeded.*/}
         <StatusIndicator
@@ -124,6 +128,13 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
       </TruncatedText>
 
       {serviceCard}
+
+      <Box sx={{ position: 'absolute', bottom: paddingBottomForNumWorkflowsMsg, right: paddingRightForNumWorkflowsMsg, textAlign: 'right' }}>
+        <TruncatedText variant="caption" sx={{ fontWeight: 300 }}>
+          {numWorkflowsUsingMsg}
+        </TruncatedText>
+      </Box>
+
     </Box>
   );
 };

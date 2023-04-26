@@ -17,56 +17,46 @@ import (
 )
 
 // This file should map directly to
-// src/ui/common/src/handlers/v2/WorkflowsByIntegrationGet.tsx
+// src/ui/common/src/handlers/v2/IntegrationsWorkflows.ts
 //
-// Route: /v2/workflows_by_integration
+// Route: /v2/integrations/workflows
 // Method: GET
 // Request:
 //	Headers:
 //		`api-key`: user's API Key
 // Response:
 //	Body:
-//		Map of integration ID to list of `workflowAndOperators` that use it.
+//		Map of integration ID to list of workflow IDs that use that integration.
 
-type workflowsByIntegrationGetArgs struct {
+type integrationsWorkflowsGetArgs struct {
 	*aq_context.AqContext
 }
 
-type WorkflowsByIntegrationGetHandler struct {
+type IntegrationsWorkflowsGetHandler struct {
 	handler.GetHandler
 
 	Database        database.Database
 	IntegrationRepo repos.Integration
-	WorkflowRepo    repos.Workflow
 	OperatorRepo    repos.Operator
-	DAGRepo         repos.DAG
 }
 
-// workflowAndOperators represents a single workflow and it's operators.
-// This is used as the values in a map keyed by integration ID. The operators
-// in this struct are only those in the workflow that use the given integration.
-type workflowAndOperators struct {
-	workflowID uuid.UUID
-	operators  []models.Operator
-}
-
-func (*WorkflowsByIntegrationGetHandler) Name() string {
+func (*IntegrationsWorkflowsGetHandler) Name() string {
 	return "WorkflowsByIntegrationGet"
 }
 
-func (h *WorkflowsByIntegrationGetHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *IntegrationsWorkflowsGetHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}
 
-	return &workflowsByIntegrationGetArgs{
+	return &integrationsWorkflowsGetArgs{
 		AqContext: aqContext,
 	}, http.StatusOK, nil
 }
 
-func (h *WorkflowsByIntegrationGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*workflowsByIntegrationGetArgs)
+func (h *IntegrationsWorkflowsGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*integrationsWorkflowsGetArgs)
 
 	integrations, err := h.IntegrationRepo.GetByUser(
 		ctx,
@@ -78,9 +68,9 @@ func (h *WorkflowsByIntegrationGetHandler) Perform(ctx context.Context, interfac
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to list integrations.")
 	}
 
-	response := make(map[uuid.UUID][]*workflowAndOperators, len(integrations))
+	response := make(map[uuid.UUID][]uuid.UUID, len(integrations))
 	for _, integration := range integrations {
-		workflowAndOperatorsList, err := h.fetchWorkflowAndOperatorsForIntegration(ctx, args.OrgID, &integration)
+		workflowAndOperatorsList, err := h.fetchWorkflowIDsForIntegration(ctx, args.OrgID, &integration)
 		if err != nil {
 			return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to fetch workflow and operators for integration.")
 		}
@@ -89,13 +79,12 @@ func (h *WorkflowsByIntegrationGetHandler) Perform(ctx context.Context, interfac
 	return response, http.StatusOK, nil
 }
 
-// fetchWorkflowAndOperatorsForIntegration returns a list of workflowAndOperators
-// objects for the given integration.
-func (h *WorkflowsByIntegrationGetHandler) fetchWorkflowAndOperatorsForIntegration(
+// fetchWorkflowIDsForIntegration returns a list of workflow IDs that use the given integration.
+func (h *IntegrationsWorkflowsGetHandler) fetchWorkflowIDsForIntegration(
 	ctx context.Context,
 	orgID string,
 	integration *models.Integration,
-) ([]*workflowAndOperators, error) {
+) ([]uuid.UUID, error) {
 	integrationID := integration.ID
 
 	// If the requested integration is a cloud integration, substitute the cloud integration ID
@@ -128,7 +117,7 @@ func (h *WorkflowsByIntegrationGetHandler) fetchWorkflowAndOperatorsForIntegrati
 
 	// Now, using the operators using this integration, we can infer all the workflows
 	// that also use this integration.
-	operatorsByWorkflowID := make(map[uuid.UUID][]models.Operator, 1)
+	workflowIDs := make([]uuid.UUID, 0, 1)
 
 	operatorIDs := make([]uuid.UUID, 0, len(operators))
 	operatorByIDs := make(map[uuid.UUID]models.Operator, len(operators))
@@ -141,28 +130,7 @@ func (h *WorkflowsByIntegrationGetHandler) fetchWorkflowAndOperatorsForIntegrati
 		return nil, errors.Wrap(err, "Unable to retrieve operator ID information.")
 	}
 	for _, operatorRelation := range operatorRelations {
-		workflowID := operatorRelation.WorkflowID
-		if _, ok := operatorsByWorkflowID[workflowID]; !ok {
-			operatorsByWorkflowID[workflowID] = make([]models.Operator, 0, 1)
-		}
-
-		operatorsByWorkflowID[workflowID] = append(
-			operatorsByWorkflowID[workflowID],
-			operatorByIDs[operatorRelation.OperatorID],
-		)
+		workflowIDs = append(workflowIDs, operatorRelation.WorkflowID)
 	}
-
-	// Convert the workflow -> operators map into a list of workflowAndOperators.
-	workflowAndOperatorsList := make([]*workflowAndOperators, len(operatorsByWorkflowID))
-	for workflowID, operators := range operatorsByWorkflowID {
-		workflowAndOperatorsList = append(
-			workflowAndOperatorsList,
-			&workflowAndOperators{
-				workflowID: workflowID,
-				operators:  operators,
-			},
-		)
-	}
-
-	return workflowAndOperatorsList, nil
+	return workflowIDs, nil
 }

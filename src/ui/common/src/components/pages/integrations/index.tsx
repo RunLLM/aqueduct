@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
 import { BreadcrumbLink } from '../../../components/layouts/NavBar';
-import { useStorageMigrationListQuery } from '../../../handlers/AqueductApi';
+import {useIntegrationsWorkflowsGetQuery, useStorageMigrationListQuery} from '../../../handlers/AqueductApi';
 import { handleGetServerConfig } from '../../../handlers/getServerConfig';
 import { StorageMigrationResponse } from '../../../handlers/responses/storageMigration';
 import { RootState } from '../../../stores/store';
@@ -52,8 +52,6 @@ const IntegrationsPage: React.FC<Props> = ({
       }
     }
     fetchServerConfig();
-
-    dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
   }, [user]);
 
   useEffect(() => {
