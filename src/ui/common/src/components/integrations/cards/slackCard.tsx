@@ -27,7 +27,9 @@ export const SlackCard: React.FC<Props> = ({ integration }) => {
 
       {config.enabled !== 'true' && (
         <Typography variant="body2" sx={{ fontWeight: 300, marginTop: 1 }}>
-          This notification does <strong style={{ fontWeight: 'bold' }}>not</strong> apply to all workflows.
+          This notification does{' '}
+          <strong style={{ fontWeight: 'bold' }}>not</strong> apply to all
+          workflows.
         </Typography>
       )}
     </Box>
