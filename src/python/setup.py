@@ -14,7 +14,7 @@ setup(
     install_requires=install_requires,
     scripts=["bin/aqueduct"],
     packages=find_packages(),
-    description="Prediction Infrastructure for Data Scientists",
+    description="The control center for ML in the cloud",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://www.aqueducthq.com/",

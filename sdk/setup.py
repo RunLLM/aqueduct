@@ -21,7 +21,7 @@ setuptools.setup(
     version="0.2.12",
     author="Aqueduct, Inc.",
     author_email="hello@aqueducthq.com",
-    description="Python SDK for the Aqueduct prediction infrastructure",
+    description="Python SDK for Aqueduct",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/aqueducthq/aqueduct",
