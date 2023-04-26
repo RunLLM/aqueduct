@@ -68,6 +68,14 @@ def read_artifacts_spark(
         # name of the input_path.
         if artifact_type != ArtifactType.TABLE:
             inputs.append(deserialize(serialization_type, artifact_type, storage.get(input_path)))
+        elif artifact_type == ArtifactType.TABLE and serialization_types == SerializationType.PARAM_TABLE:
+            view_path = "global_temp" + "." + convert_path_to_view_name(input_path)
+                spark_df = spark_session_obj.read.parquet(view_path)
+                inputs.append(spark_df)
+            except Exception as e:
+                raise MissingInputPathsException(
+                    "Unable to read inputs artifacts from temp view. Exception: %s" % str(e)
+                )
         else:
             # read from temp view
             try:
@@ -119,11 +127,11 @@ def write_artifact_spark(
             global_view_name = convert_path_to_view_name(output_path)
             spark_df.createOrReplaceGlobalTempView(global_view_name)
             pandas_df = spark_df.limit(100).toPandas()
-            serialized_val = serialize_val_wrapper(pandas_df, serialization_type, derived_from_bson)
+            serialized_val = serialize_val_wrapper(pandas_df, serialization_type, derived_from_bson,False)
             storage.put(output_path, serialized_val)
 
         else:
-            serialized_val = serialize_val_wrapper(content, serialization_type, derived_from_bson)
+            serialized_val = serialize_val_wrapper(content, serialization_type, derived_from_bson,False)
             storage.put(output_path, serialized_val)
 
     output_metadata[_METADATA_SERIALIZATION_TYPE_KEY] = serialization_type
