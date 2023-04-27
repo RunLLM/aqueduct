@@ -18,7 +18,7 @@ def resume_redshift(aws_access_key_id, aws_secret_access_key, retry=0):
     """
     client = _create_client(aws_access_key_id, aws_secret_access_key)
     status = _get_cluster_status(client, CLUSTER_NAME)
-    
+
     if status == STATUS_AVAILABLE:
         # Nothing to do, the cluster is already ready
         pass
@@ -27,16 +27,16 @@ def resume_redshift(aws_access_key_id, aws_secret_access_key, retry=0):
         try:
             client.resume_cluster(ClusterIdentifier=CLUSTER_NAME)
         except InvalidClusterStateFault as e:
-            # This exception handling is required because of a transient issue where 
+            # This exception handling is required because of a transient issue where
             # the cluster has another operation in progress, but the cluster status
             # does not reflect that.
             if retry >= 5:
                 sys.exit(f"Unable to resume cluster due to {e} exception even after 5 retries")
-            
+
             # Sleep and retry
             time.sleep(15)
-            resume_redshift(aws_access_key_id, aws_secret_access_key, retry=retry+1)
-        
+            resume_redshift(aws_access_key_id, aws_secret_access_key, retry=retry + 1)
+
         _wait_for_status(client, STATUS_AVAILABLE)
     elif status == STATUS_PAUSING:
         # First need to wait for cluster to completely pause before resuming it
@@ -47,7 +47,7 @@ def resume_redshift(aws_access_key_id, aws_secret_access_key, retry=0):
         _wait_for_status(client, STATUS_AVAILABLE)
     else:
         sys.exit(f"Cannot resume {CLUSTER_NAME} cluster because it is in the {status} state")
-    
+
     print(f"{CLUSTER_NAME} cluster is ready!")
 
 
@@ -63,15 +63,15 @@ def pause_redshift(aws_access_key_id, aws_secret_access_key, retry=0):
         try:
             client.pause_cluster(ClusterIdentifier=CLUSTER_NAME)
         except InvalidClusterStateFault as e:
-            # This exception handling is required because of a transient issue where 
+            # This exception handling is required because of a transient issue where
             # the cluster has another operation in progress, but the cluster status
             # does not reflect that.
             if retry >= 5:
                 sys.exit(f"Unable to pause cluster due to {e} exception even after 5 retries")
-            
+
             # Sleep and retry
             time.sleep(15)
-            pause_redshift(aws_access_key_id, aws_secret_access_key, retry=retry+1)
+            pause_redshift(aws_access_key_id, aws_secret_access_key, retry=retry + 1)
 
         _wait_for_status(client, STATUS_PAUSED)
     elif status == STATUS_PAUSED:
@@ -86,7 +86,7 @@ def pause_redshift(aws_access_key_id, aws_secret_access_key, retry=0):
         pause_redshift(aws_access_key_id, aws_secret_access_key)
     else:
         sys.exit(f"Cannot pause {CLUSTER_NAME} cluster because it is in the {status} state")
-    
+
     print(f"{CLUSTER_NAME} cluster has been paused")
 
 
@@ -118,10 +118,10 @@ def _get_cluster_status(client, cluster_identifier):
 def _wait_for_status(client, desired_status, timeout=600):
     """
     Waits for the test cluster to reach the desired status. Errors if the timeout
-    is reached. 
+    is reached.
     """
     print(f"Waiting for {CLUSTER_NAME} cluster to enter {desired_status} status...")
-    
+
     status = _get_cluster_status(client, CLUSTER_NAME)
     start = time.time()
     while status != desired_status:
@@ -129,6 +129,5 @@ def _wait_for_status(client, desired_status, timeout=600):
             sys.exit(f"Reached timeout waiting for {CLUSTER_NAME} cluster to reach {status} status")
         time.sleep(15)
         status = _get_cluster_status(client, CLUSTER_NAME)
-    
-    print(f"{CLUSTER_NAME} cluster has reached {status} status")
 
+    print(f"{CLUSTER_NAME} cluster has reached {status} status")
