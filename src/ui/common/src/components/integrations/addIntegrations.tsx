@@ -116,6 +116,7 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
             ? theme.palette.gray['300']
             : 'white',
         },
+        boxSizing: 'initial',
       }}
     >
       <Box
