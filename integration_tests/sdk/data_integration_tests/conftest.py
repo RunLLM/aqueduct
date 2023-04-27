@@ -67,6 +67,8 @@ def flow_manager(client, flow_name, engine):
 
 
 def pytest_sessionfinish(session, exitstatus):
+    # hasattr(session.config, "workerinput") ensures
+    # this only triggers after all workflow finishes.
     if not hasattr(session.config, "workerinput") and not session.config.getoption("keep_flows"):
         client = aq.Client(*get_aqueduct_config())
         delete_all_flows(client)
