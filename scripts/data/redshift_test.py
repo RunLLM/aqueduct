@@ -95,7 +95,7 @@ def _wait_for_status(client, desired_status, timeout=600):
     Waits for the test cluster to reach the desired status. Errors if the timeout
     is reached. 
     """
-    print(f"Waiting for {CLUSTER_NAME} cluster to enter {status} status...")
+    print(f"Waiting for {CLUSTER_NAME} cluster to enter {desired_status} status...")
     
     status = _get_cluster_status(client, CLUSTER_NAME)
     start = time.time()
