@@ -7,52 +7,62 @@ CLUSTER_NAME = "integration-test-shared"
 
 STATUS_AVAILABLE = "available"
 STATUS_PAUSED = "paused"
+STATUS_PAUSING = "pausing"
 STATUS_RESUMING = "resuming"
 
 
 def resume_redshift(aws_access_key_id, aws_secret_access_key):
+    """
+    Resumes the test Redshift cluster.
+    """
     client = _create_client(aws_access_key_id, aws_secret_access_key)
-
     status = _get_cluster_status(client, CLUSTER_NAME)
+    
     if status == STATUS_AVAILABLE:
-        print(f"The {CLUSTER_NAME} cluster is already available, it does not need to be resumed")
+        # Nothing to do, the cluster is already ready
+        pass
     elif status == STATUS_PAUSED:
+        # Cluster can be resumed
         client.resume_cluster(ClusterIdentifier=CLUSTER_NAME)
-
-        # Wait for cluster to be ready
-        timeout = 300 # Timeout after 5 minutes
-        start = time.time()
-        while status != STATUS_AVAILABLE:
-            if time.time() > start + timeout:
-                sys.exit(f"Reached timeout waiting for {CLUSTER_NAME} cluster to resume")
-            time.sleep(15)
-            status = _get_cluster_status(client, CLUSTER_NAME)
+        _wait_for_status(client, STATUS_AVAILABLE)
+    elif status == STATUS_PAUSING:
+        # First need to wait for cluster to completely pause before resuming it
+        _wait_for_status(client, STATUS_PAUSED)
+        resume_redshift(aws_access_key_id, aws_secret_access_key)
+    elif status == STATUS_RESUMING:
+        # Wait for resuming operation to complete
+        _wait_for_status(client, STATUS_AVAILABLE)
     else:
         sys.exit(f"Cannot resume {CLUSTER_NAME} cluster because it is in the {status} state")
+    
+    print(f"{CLUSTER_NAME} cluster is ready!")
 
 
 def pause_redshift(aws_access_key_id, aws_secret_access_key):
+    """
+    Pauses the test Redshift cluster.
+    """
     client = _create_client(aws_access_key_id, aws_secret_access_key)
-
     status = _get_cluster_status(client, CLUSTER_NAME)
 
-    if status == STATUS_RESUMING:
-        # Wait for cluster to be ready before it can be paused
-        timeout = 300 # Timeout after 5 minutes
-        start = time.time()
-        while status == STATUS_RESUMING:
-            if time.time() > start + timeout:
-                sys.exit(f"Reached timeout waiting for {CLUSTER_NAME} cluster to resume before pausing it")
-            time.sleep(15)
-            status = _get_cluster_status(client, CLUSTER_NAME)
-
-
-    if status == STATUS_PAUSED:
-        print(f"The {CLUSTER_NAME} cluster is already paused, it does not need to be paused")
-    elif status == STATUS_AVAILABLE:
+    if status == STATUS_AVAILABLE:
+        # Cluster can be paused
         client.pause_cluster(ClusterIdentifier=CLUSTER_NAME)
+        _wait_for_status(client, STATUS_PAUSED)
+    elif status == STATUS_PAUSED:
+        # Nothing to do, the cluster is already paused
+        pass
+    elif status == STATUS_PAUSING:
+        # Wait for pausing operation to complete
+        _wait_for_status(client, STATUS_PAUSED)
+    elif status == STATUS_RESUMING:
+        # Wait for cluster to finish resuming, before it can be paused
+        _wait_for_status(client, STATUS_AVAILABLE)
+        pause_redshift(aws_access_key_id, aws_secret_access_key)
     else:
         sys.exit(f"Cannot pause {CLUSTER_NAME} cluster because it is in the {status} state")
+    
+    print(f"{CLUSTER_NAME} cluster has been paused")
 
 
 def _create_client(aws_access_key_id, aws_secret_access_key):
@@ -77,9 +87,23 @@ def _get_cluster_status(client, cluster_identifier):
     if "ClusterStatus" not in cluster:
         sys.exit(f"Unable to find {cluster_identifier} cluster status in response")
 
-    status = cluster["ClusterStatus"]
-    if status == "available":
-        return STATUS_AVAILABLE
-    elif status == "paused":
-        return STATUS_PAUSED
-    return status
+    return cluster["ClusterStatus"]
+
+
+def _wait_for_status(client, desired_status, timeout=600):
+    """
+    Waits for the test cluster to reach the desired status. Errors if the timeout
+    is reached. 
+    """
+    print(f"Waiting for {CLUSTER_NAME} cluster to enter {status} status...")
+    
+    status = _get_cluster_status(client, CLUSTER_NAME)
+    start = time.time()
+    while status != desired_status:
+        if time.time() > start + timeout:
+            sys.exit(f"Reached timeout waiting for {CLUSTER_NAME} cluster to reach {status} status")
+        time.sleep(15)
+        status = _get_cluster_status(client, CLUSTER_NAME)
+    
+    print(f"{CLUSTER_NAME} cluster has reached {status} status")
+
