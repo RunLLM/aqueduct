@@ -1,4 +1,5 @@
 import sys
+import time
 
 import boto3
 
@@ -6,6 +7,7 @@ CLUSTER_NAME = "integration-test-shared"
 
 STATUS_AVAILABLE = "available"
 STATUS_PAUSED = "paused"
+STATUS_RESUMING = "resuming"
 
 
 def resume_redshift(aws_access_key_id, aws_secret_access_key):
@@ -16,6 +18,15 @@ def resume_redshift(aws_access_key_id, aws_secret_access_key):
         print(f"The {CLUSTER_NAME} cluster is already available, it does not need to be resumed")
     elif status == STATUS_PAUSED:
         client.resume_cluster(ClusterIdentifier=CLUSTER_NAME)
+
+        # Wait for cluster to be ready
+        timeout = 300 # Timeout after 5 minutes
+        start = time.time()
+        while status != STATUS_AVAILABLE:
+            if time.time() > start + timeout:
+                sys.exit(f"Reached timeout waiting for {CLUSTER_NAME} cluster to resume")
+            time.sleep(15)
+            status = _get_cluster_status(client, CLUSTER_NAME)
     else:
         sys.exit(f"Cannot resume {CLUSTER_NAME} cluster because it is in the {status} state")
 
@@ -24,6 +35,18 @@ def pause_redshift(aws_access_key_id, aws_secret_access_key):
     client = _create_client(aws_access_key_id, aws_secret_access_key)
 
     status = _get_cluster_status(client, CLUSTER_NAME)
+
+    if status == STATUS_RESUMING:
+        # Wait for cluster to be ready before it can be paused
+        timeout = 300 # Timeout after 5 minutes
+        start = time.time()
+        while status == STATUS_RESUMING:
+            if time.time() > start + timeout:
+                sys.exit(f"Reached timeout waiting for {CLUSTER_NAME} cluster to resume before pausing it")
+            time.sleep(15)
+            status = _get_cluster_status(client, CLUSTER_NAME)
+
+
     if status == STATUS_PAUSED:
         print(f"The {CLUSTER_NAME} cluster is already paused, it does not need to be paused")
     elif status == STATUS_AVAILABLE:
