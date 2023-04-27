@@ -7,6 +7,9 @@ src/python/build/
 *.idea/
 *.vscode/
 
+# Intellij IDE
+src/ui/frontend.iml
+
 # Binaries for programs and plugins
 *.exe
 *.exe~

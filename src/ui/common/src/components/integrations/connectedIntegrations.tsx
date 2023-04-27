@@ -1,6 +1,5 @@
 import { Typography } from '@mui/material';
 import Box from '@mui/material/Box';
-import Divider from '@mui/material/Divider';
 import Link from '@mui/material/Link';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -83,7 +82,7 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
       <Box
         sx={{
           display: 'flex',
-          flexDirection: 'column',
+          flexWrap: 'wrap',
           alignItems: 'flex-start',
         }}
       >
@@ -91,18 +90,16 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
           .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
           .map((integration, idx) => {
             return (
-              <Box key={idx} sx={{ width: '90%', maxWidth: '1000px' }}>
+              <Box key={idx} sx={{ mx: 1, my: 1 }}>
                 <Link
                   underline="none"
                   color="inherit"
                   href={`${getPathPrefix()}/integration/${integration.id}`}
                 >
-                  <Card sx={{ my: 2 }}>
+                  <Card>
                     <IntegrationCard integration={integration} />
                   </Card>
                 </Link>
-
-                {idx < integrations.length - 1 && <Divider />}
               </Box>
             );
           })}
