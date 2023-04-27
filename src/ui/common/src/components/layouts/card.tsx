@@ -9,9 +9,11 @@ export const Card = styled(Box)(() => {
   return {
     borderRadius: 4,
     '&:hover': {
-      backgroundColor: theme.palette.blue[50],
+      backgroundColor: theme.palette.gray[250],
     },
-    minWidth: '450px',
+    backgroundColor: theme.palette.gray[25],
+    width: '325px',
+    height: '144px',
     padding: CardPadding,
   };
 });
