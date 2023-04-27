@@ -233,7 +233,7 @@ def delete_all_flows(client: aqueduct.Client) -> None:
             print("Error deleting workflow %s with exception: %s" % (flow_name, e))
         else:
             print("Successfully deleted workflow %s" % flow_name)
-        
+
         # Try deleting Airflow DAG file if it exists
         # TODO - Only do this for Airflow workflows
         dag_path = f"{flow_name}_airflow.py"
