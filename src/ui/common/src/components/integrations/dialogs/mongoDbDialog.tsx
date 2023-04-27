@@ -48,10 +48,6 @@ export const MongoDBDialog: React.FC<IntegrationDialogProps> = ({
   );
 };
 
-export function isMongoDBConfigComplete(config: MongoDBConfig): boolean {
-  return !!config.auth_uri && !!config.database;
-}
-
 export function getMongoDBValidationSchema() {
   return Yup.object().shape({
     auth_uri: Yup.string().required('Please enter a URI.'),

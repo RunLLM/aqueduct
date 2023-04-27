@@ -22,9 +22,7 @@ const Placeholders: KubernetesConfig = {
 export const KubernetesDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
 }) => {
-  const { user, loading } = useUser();
-
-  console.log('loading: ', loading);
+  const { user } = useUser();
 
   const { register, setValue, getValues } = useFormContext();
   const use_same_cluster = getValues('use_same_cluster');
@@ -100,19 +98,16 @@ export const KubernetesDialog: React.FC<IntegrationDialogProps> = ({
   );
 };
 
-export function isK8sConfigComplete(config: KubernetesConfig): boolean {
-  if (config.use_same_cluster !== 'true') {
-    return !!config.kubeconfig_path && !!config.cluster_name;
-  }
-
-  // If the user configures to run compute from within the same k8s cluster, we don't need parameters above.
-  return true;
-}
-
-// TODO: figure out conditional validation
 export function getKubernetesValidationSchema() {
   return Yup.object().shape({
-    kubeconfig_path: Yup.string().required('Please enter a kubeconfig path'),
-    cluster_name: Yup.string().required('Please enter a cluster name'),
+    use_same_cluster: Yup.string(),
+    kubeconfig_path: Yup.string().when('use_same_cluster', {
+      is: 'false',
+      then: Yup.string().required('Please enter a kubeconfig path'),
+    }),
+    cluster_name: Yup.string().when('use_same_cluster', {
+      is: 'false',
+      then: Yup.string().required('Please enter a cluster name'),
+    }),
   });
 }

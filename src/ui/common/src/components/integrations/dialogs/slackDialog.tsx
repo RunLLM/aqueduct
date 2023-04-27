@@ -5,10 +5,7 @@ import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
-import {
-  IntegrationDialogProps,
-  SlackConfig,
-} from '../../../utils/integrations';
+import { IntegrationDialogProps } from '../../../utils/integrations';
 import { NotificationLogLevel } from '../../../utils/notifications';
 import CheckboxEntry from '../../notifications/CheckboxEntry';
 import NotificationLevelSelector from '../../notifications/NotificationLevelSelector';
@@ -132,19 +129,6 @@ export const SlackDialog: React.FC<IntegrationDialogProps> = ({
   );
 };
 
-export function isSlackConfigComplete(config: SlackConfig): boolean {
-  if (config.enabled !== 'true' && config.enabled !== 'false') {
-    return false;
-  }
-
-  if (config.enabled == 'true' && !config.level) {
-    return false;
-  }
-
-  return !!config.channels_serialized && !!config.token;
-}
-
-// TODO: Figure out conditional validation
 export function getSlackValidationSchema() {
   return Yup.object().shape({
     token: Yup.string().required('Please enter a token'),

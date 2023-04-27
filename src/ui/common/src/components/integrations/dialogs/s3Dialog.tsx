@@ -18,6 +18,7 @@ import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: S3Config = {
+  // TODO: Figure out why this type keeps erroring out...
   //type: AWSCredentialType.AccessKey,
   type: 'access_key',
   bucket: 'aqueduct',
@@ -31,13 +32,6 @@ const Placeholders: S3Config = {
   use_as_storage: '',
 };
 
-// type Props = {
-//   onUpdateField: (field: keyof S3Config, value: string) => void;
-//   value?: S3Config;
-//   editMode: boolean;
-//   setMigrateStorage: (value: boolean) => void;
-// };
-
 interface S3DialogProps extends IntegrationDialogProps {
   setMigrateStorage: (value: boolean) => void;
 }
@@ -46,46 +40,22 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
   editMode = false,
   setMigrateStorage,
 }) => {
-  const { register, setValue, getValues } = useFormContext();
+  const [fileData, setFileData] = useState<FileData | null>(null);
+
+  const { register, setValue } = useFormContext();
   register('use_as_storage');
-  const use_as_storage = getValues('use_as_storage');
-  const [fileName, setFileName] = useState<string>(null);
+  const [useAsMetadataStorage, setUseAsMetadataStorage] =
+    useState<string>('false');
 
   const [currentTab, setCurrentTab] = useState(AWSCredentialType.AccessKey);
+  register('type', { value: currentTab, required: true });
 
   const setFile = (fileData: FileData | null) => {
-    setFileName(fileData?.name ?? '');
-    //onUpdateField('config_file_content', fileData?.data);
+    // Update the react-hook-form value
     setValue('config_file_content', fileData?.data);
+    // Set state to trigger re-render of file upload field.
+    setFileData(fileData);
   };
-
-  const fileData =
-    fileName && !!getValues('config_file_content')
-      ? {
-          name: fileName,
-          data: getValues('config_file_content'),
-        }
-      : null;
-
-  // const fileData =
-  //   fileName && !!value?.config_file_content
-  //     ? {
-  //         name: fileName,
-  //         data: value.config_file_content,
-  //       }
-  //     : null;
-
-  // TODO: Figure out what to do with useAsStorage here.
-
-  // useEffect(() => {
-  //   if (!value?.type) {
-  //     onUpdateField('type', AWSCredentialType.AccessKey);
-  //   }
-
-  //   if (!use_as_storage) {
-  //     onUpdateField('use_as_storage', 'false');
-  //   }
-  // }, [onUpdateField, value?.type, value?.use_as_storage]);
 
   const configProfileInput = (
     <IntegrationTextInputField
@@ -150,7 +120,6 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
     </Box>
   );
 
-  // TODO: Get this form field working with react-hook-form
   const configUploadTab = (
     <Box>
       <Typography variant="body2" color="gray.700">
@@ -170,7 +139,7 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
         required={true}
         file={fileData}
         placeholder={''}
-        onFiles={(files) => {
+        onFiles={(files: FileList): void => {
           const file = files[0];
           readCredentialsFile(file, setFile);
         }}
@@ -252,12 +221,16 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
         label="Use this integration for Aqueduct metadata storage."
         control={
           <Checkbox
-            checked={use_as_storage === 'true'}
+            checked={useAsMetadataStorage === 'true'}
             onChange={(event) => {
-              setValue(
-                'use_as_storage',
-                event.target.checked ? 'true' : 'false'
-              );
+              const useAsMetadataStorageChecked = event.target.checked
+                ? 'true'
+                : 'false';
+              // Update the react-hook-form value
+              setValue('use_as_storage', useAsMetadataStorageChecked);
+              // Set state so that we can trigger re-render
+              setUseAsMetadataStorage(useAsMetadataStorageChecked);
+              // Call MigrateStorage callback to show banner
               setMigrateStorage(event.target.checked);
             }}
             disabled={editMode}
@@ -268,39 +241,29 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
   );
 };
 
-export function isS3ConfigComplete(config: S3Config): boolean {
-  if (!config.bucket || !config.region) {
-    return false;
-  }
-
-  if (config.type === AWSCredentialType.AccessKey) {
-    return !!config.access_key_id && !!config.secret_access_key;
-  }
-
-  if (config.type === AWSCredentialType.ConfigFilePath) {
-    return !!config.config_file_profile && !!config.config_file_path;
-  }
-
-  if (config.type === AWSCredentialType.ConfigFileContent) {
-    return !!config.config_file_profile && !!config.config_file_content;
-  }
-
-  return false;
-}
-
-// TODO: figure out conditional validation
 export function getS3ValidationSchema() {
   return Yup.object().shape({
+    type: Yup.string().required('Please select a credential type'),
     bucket: Yup.string().required('Please enter a bucket name'),
     region: Yup.string().required('Please enter a region'),
-    access_key_id: Yup.string().required('Please enter an access key ID'),
+    access_key_id: Yup.string().when('type', {
+      is: 'access_key',
+      then: Yup.string().required('Please enter an access key id'),
+    }),
     secret_access_key: Yup.string().required(
       'Please enter a secret access key'
     ),
-    config_file_path: Yup.string().required('Please enter a config file path'),
-    config_file_profile: Yup.string().required('Please enter a profile name'),
-    config_file_content: Yup.string().required(
-      'Please upload a credentials file'
-    ),
+    config_file_path: Yup.string().when('type', {
+      is: 'config_file_path',
+      then: Yup.string().required('Please enter a profile path'),
+    }),
+    config_file_profile: Yup.string().when('type', {
+      is: 'config_file_path' || 'config_file_content',
+      then: Yup.string().required('Please enter a config file profile'),
+    }),
+    config_file_content: Yup.string().when('type', {
+      is: 'config_file_content',
+      then: Yup.string().required('Please upload a credentials file'),
+    }),
   });
 }

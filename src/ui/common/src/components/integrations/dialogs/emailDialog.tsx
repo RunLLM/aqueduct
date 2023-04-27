@@ -5,10 +5,7 @@ import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
-import {
-  EmailConfig,
-  IntegrationDialogProps,
-} from '../../../utils/integrations';
+import { IntegrationDialogProps } from '../../../utils/integrations';
 import { NotificationLogLevel } from '../../../utils/notifications';
 import CheckboxEntry from '../../notifications/CheckboxEntry';
 import NotificationLevelSelector from '../../notifications/NotificationLevelSelector';
@@ -169,23 +166,23 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
   );
 };
 
-export function isEmailConfigComplete(config: EmailConfig): boolean {
-  if (config.enabled !== 'true' && config.enabled !== 'false') {
-    return false;
-  }
+// export function isEmailConfigComplete(config: EmailConfig): boolean {
+//   if (config.enabled !== 'true' && config.enabled !== 'false') {
+//     return false;
+//   }
 
-  if (config.enabled == 'true' && !config.level) {
-    return false;
-  }
+//   if (config.enabled == 'true' && !config.level) {
+//     return false;
+//   }
 
-  return (
-    !!config.host &&
-    !!config.port &&
-    !!config.password &&
-    !!config.targets_serialized &&
-    !!config.user
-  );
-}
+//   return (
+//     !!config.host &&
+//     !!config.port &&
+//     !!config.password &&
+//     !!config.targets_serialized &&
+//     !!config.user
+//   );
+// }
 
 // TODO: Figure out how to set up conditional validation.
 export function getEmailValidationSchema() {
@@ -197,5 +194,6 @@ export function getEmailValidationSchema() {
     targets_serialized: Yup.string().required(
       'Please enter at least one receiver'
     ),
+    enabled: Yup.string(),
   });
 }

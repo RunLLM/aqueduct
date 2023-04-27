@@ -9,7 +9,6 @@ import {
 } from '../../../utils/integrations';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
-// TODO: Add exec_state value, or make this value optional.
 const Placeholders: LambdaConfig = {
   role_arn: 'arn:aws:iam::123:role/lambda-function-role-arn',
   exec_state: '',
@@ -33,10 +32,6 @@ export const LambdaDialog: React.FC<IntegrationDialogProps> = ({
     </Box>
   );
 };
-
-export function isLambaDialogComplete(config: LambdaConfig): boolean {
-  return !!config.role_arn;
-}
 
 export function getLambdaValidationSchema() {
   return Yup.object().shape({

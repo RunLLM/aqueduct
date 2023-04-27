@@ -36,43 +36,19 @@ const Placeholders: AthenaConfig = {
 export const AthenaDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
 }) => {
-  const { getValues, setValue } = useFormContext();
-
+  const [fileData, setFileData] = useState<FileData | null>(null);
   // Need state variable to change tabs, as the formContext doesn't change as readily.
   const [currentTab, setCurrentTab] = useState(AWSCredentialType.AccessKey);
+  const { setValue, register } = useFormContext();
 
-  const [fileName, setFileName] = useState<string>(null);
+  register('type', { value: currentTab, required: true });
 
   const setFile = (fileData: FileData | null) => {
-    setFileName(fileData?.name ?? '');
-    console.log('fileData', fileData);
-
-    //onUpdateField('config_file_content', fileData?.data);
+    // Update the react-hook-form value
     setValue('config_file_content', fileData?.data);
+    // Set state to trigger re-render of file upload field.
+    setFileData(fileData);
   };
-
-  const fileData =
-    fileName && !!getValues('config_file_content')
-      ? {
-          name: fileName,
-          data: getValues('config_file_content'),
-        }
-      : null;
-
-  // const fileData =
-  //   fileName && !!value?.config_file_content
-  //     ? {
-  //         name: fileName,
-  //         data: value.config_file_content,
-  //       }
-  //     : null;
-
-  // TODO: Make this default value for type when registering the type value.
-  // useEffect(() => {
-  //   if (!value?.type) {
-  //     onUpdateField('type', AWSCredentialType.AccessKey);
-  //   }
-  // }, [onUpdateField, value?.type]);
 
   const configProfileInput = (
     <IntegrationTextInputField
@@ -169,8 +145,6 @@ export const AthenaDialog: React.FC<IntegrationDialogProps> = ({
         onFiles={(files) => {
           const file = files[0];
           readCredentialsFile(file, setFile);
-          // Reading file input into the react-hook-form field.
-          //readCredentialsFile(file, fileInput.onChange)
         }}
         displayFile={null}
         onReset={() => {
@@ -251,48 +225,36 @@ export const AthenaDialog: React.FC<IntegrationDialogProps> = ({
 // When using credentials file, also need:
 // - file path and file content
 // - config_file_profile
-export function isAthenaConfigComplete(config: AthenaConfig): boolean {
-  const baseFields = !!config.database && !!config.output_location;
-
-  if (config.type === AWSCredentialType.AccessKey) {
-    return (
-      baseFields &&
-      !!config.access_key_id &&
-      !!config.secret_access_key &&
-      !!config.region
-    );
-  }
-
-  if (config.type === AWSCredentialType.ConfigFilePath) {
-    return (
-      baseFields && !!config.config_file_profile && !!config.config_file_path
-    );
-  }
-
-  if (config.type === AWSCredentialType.ConfigFileContent) {
-    return (
-      baseFields && !!config.config_file_profile && !!config.config_file_content
-    );
-  }
-
-  return false;
-}
-
 export function getAthenaValidationSchema() {
-  // TODO: Figure out how to do the conditional logic above using yup validators.
-  // This is a start: https://stackoverflow.com/questions/49394391/conditional-validation-in-yup
-  // For now, we just make everything required ...
-
   return Yup.object().shape({
     type: Yup.string().required('Please select a credential type'),
-    database: Yup.string().required('Please enter a datrabase name'),
-    output_location: Yup.string().required(
-      'Please enter an S3 output location'
-    ),
-    access_key_id: Yup.string().required('Please enter an access key ID'),
-    secret_access_key: Yup.string().required(
-      'Please enter a secret access key'
-    ),
-    region: Yup.string().required('Please enter a region'),
+    database: Yup.string().required('Please enter a database name'),
+    output_location: Yup.string().required('Please enter an output location'),
+    access_key_id: Yup.string().when('type', {
+      is: 'access_key',
+      then: Yup.string().required('Please enter an access key id'),
+    }),
+    secret_access_key: Yup.string().when('type', {
+      is: 'access_key',
+      then: Yup.string().required('Please enter a secret access key'),
+    }),
+    region: Yup.string().when('type', {
+      is: 'access_key',
+      then: Yup.string().required('Please enter a region'),
+    }),
+    // config file path stuff goes here
+    config_file_profile: Yup.string().when('type', {
+      is: 'config_file_path' || 'config_file_content',
+      then: Yup.string().required('Please enter a config file profile'),
+    }),
+    config_file_path: Yup.string().when('type', {
+      is: 'config_file_path',
+      then: Yup.string().required('Please enter a config'),
+    }),
+    // config file content goes here.
+    config_file_content: Yup.string().when('type', {
+      is: 'config_file_content',
+      then: Yup.string().required('Please upload a config file.'),
+    }),
   });
 }

@@ -99,19 +99,6 @@ type Props = {
   validationSchema: Yup.ObjectSchema<any>;
 };
 
-// Default fields are actual filled form values on 'create' dialog.
-function defaultFields(service: Service): IntegrationConfig {
-  switch (service) {
-    case 'Email':
-      return EmailDefaultsOnCreate as EmailConfig;
-
-    case 'Slack':
-      return SlackDefaultsOnCreate as SlackConfig;
-  }
-
-  return {};
-}
-
 const IntegrationDialog: React.FC<Props> = ({
   user,
   service,
@@ -125,14 +112,6 @@ const IntegrationDialog: React.FC<Props> = ({
   const [submitDisabled, setSubmitDisabled] = useState<boolean>(true);
   const editMode = !!integrationToEdit;
   const dispatch: AppDispatch = useDispatch();
-  const [config, setConfig] = useState<IntegrationConfig>(
-    editMode
-      ? { ...integrationToEdit.config } // make a copy to avoid accessing a state object
-      : { ...defaultFields(service) }
-  );
-  const [name, setName] = useState<string>(
-    editMode ? integrationToEdit.name : ''
-  );
 
   const [shouldShowNameError, setShouldShowNameError] =
     useState<boolean>(false);
@@ -158,24 +137,12 @@ const IntegrationDialog: React.FC<Props> = ({
     : 0;
 
   const connectStatus = editMode ? editStatus : connectNewStatus;
-  const disableConnect =
-    !editMode &&
-    (!isConfigComplete(config, service) ||
-      name === '' ||
-      name === aqueductDemoName);
-  const setConfigField = (field: string, value: string) =>
-    setConfig((config) => {
-      return { ...config, [field]: value };
-    });
 
   // TODO: Going to need to move this to redux so that dialogs that depend on storage
   // migration can easily trigger the dialog.
   const [migrateStorage, setMigrateStorage] = useState(false);
 
-  console.log('validationSchema: ', validationSchema);
-
   const methods = useForm({
-    // TODO: Figure out how to get the validationSchema from the appropriate dialog.
     resolver: yupResolver(validationSchema),
   });
 
@@ -187,28 +154,25 @@ const IntegrationDialog: React.FC<Props> = ({
     //     name === '' ||
     //     name === aqueductDemoName);
 
-    const subscription = methods.watch(async (value, { name, type }) => {
-      console.log(value, name, type);
-
+    const subscription = methods.watch(async () => {
       // TODO: Account for editMode, aqueductDemoName and empty name
-      const checkIsFormValid = async () => {
-        const isValidForm = await methods.trigger();
-        console.log('isValidForm: ', isValidForm);
-        if (isValidForm && submitDisabled) {
-          // Form is valid, enable the submit button.
-          setSubmitDisabled(false);
-        } else {
+        const checkIsFormValid = async () => {
+          const isValidForm = await methods.trigger();
+          if (isValidForm && submitDisabled) {
+            // Form is valid, enable the submit button.
+            setSubmitDisabled(false);
+          } else {
           // Form is still invalid, disable the submit button.
           setSubmitDisabled(true);
         }
-      }
+      };
 
       checkIsFormValid();
     });
 
     // Unsubscribe and handle lifecycle changes.
     return () => subscription.unsubscribe();
-  }, [methods.watch])
+  }, [methods.watch]);
 
   useEffect(() => {
     if (isSucceeded(connectStatus)) {
@@ -257,7 +221,6 @@ const IntegrationDialog: React.FC<Props> = ({
   );
 
   const onConfirmDialog = (data: IntegrationConfig) => {
-    console.log('onConfirmDialog data: ', data);
   let serviceDialog;
 
   // Remember to comment this out and take out when done refactoring.
@@ -450,7 +413,7 @@ const IntegrationDialog: React.FC<Props> = ({
     //check that name is unique before connecting.
     if (!editMode) {
       for (let i = 0; i < integrations.length; i++) {
-        if (name === integrations[i].name) {
+        if (data.name === integrations[i].name) {
           setShouldShowNameError(true);
           return;
         }
@@ -551,19 +514,6 @@ const IntegrationDialog: React.FC<Props> = ({
             <LoadingButton
               autoFocus
               onClick={async () => {
-                console.log('loading button clicked. Calling handleSubmit()');
-                console.log('formState: ', methods.formState);
-
-                const triggerResult = await methods.trigger();
-                console.log('triggerResult: ', triggerResult);
-
-                const triggerParams = await methods.trigger([
-                  'name',
-                  'host',
-                  'port',
-                ]);
-
-                console.log('triggerParams: ', triggerParams);
 
                 // NOTE: handleSubmit() is a function that returns a function, please call it as so
                 methods.handleSubmit(onConfirmDialog)();

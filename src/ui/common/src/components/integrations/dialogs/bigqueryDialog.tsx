@@ -115,10 +115,6 @@ export function readCredentialsFile(
   reader.readAsText(file);
 }
 
-export function isBigQueryConfigComplete(config: BigQueryConfig): boolean {
-  return !!config.project_id && !!config.service_account_credentials;
-}
-
 export function getBigQueryValidationSchema() {
   return Yup.object().shape({
     project_id: Yup.string().required('Please enter a project ID'),

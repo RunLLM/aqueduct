@@ -113,16 +113,6 @@ export const SnowflakeDialog: React.FC<IntegrationDialogProps> = ({
   );
 };
 
-export function isSnowflakeConfigComplete(config: SnowflakeConfig): boolean {
-  return (
-    !!config.account_identifier &&
-    !!config.username &&
-    !!config.password &&
-    !!config.warehouse &&
-    !!config.database
-  );
-}
-
 export function getSnowflakeValidationSchema() {
   return Yup.object().shape({
     account_identifier: Yup.string().required(

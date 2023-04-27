@@ -110,14 +110,6 @@ export const DatabricksDialog: React.FC<IntegrationDialogProps> = ({
   );
 };
 
-export function isDatabricksConfigComplete(config: DatabricksConfig): boolean {
-  return (
-    !!config.access_token &&
-    !!config.s3_instance_profile_arn &&
-    !!config.workspace_url
-  );
-}
-
 export function getDatabricksValidationSchema() {
   return Yup.object().shape({
     workspace_url: Yup.string().required('Please enter a workspace URL'),
@@ -125,6 +117,6 @@ export function getDatabricksValidationSchema() {
     s3_instance_profile_arn: Yup.string().required(
       'Please enter an instance profile ARN'
     ),
-    instance_pool_id: Yup.string().required('Please enter an instance pool ID'),
+    instance_pool_id: Yup.string(),
   });
 }
