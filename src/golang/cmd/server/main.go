@@ -9,6 +9,7 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/server"
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/connection"
+	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	log "github.com/sirupsen/logrus"
 	"github.com/sirupsen/logrus/hooks/writer"
 	"gopkg.in/natefinch/lumberjack.v2"
@@ -28,18 +29,22 @@ var (
 	disableUsageStats = flag.Bool("disable-usage-stats", false, "Whether to disable usage statistics reporting.")
 
 	envPath             = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "config", "env")
-	allowedEnvironments = map[string]bool{"dev": true, "test": true, "prod": true}
+	allowedEnvironments = map[aq_context.ServerEnvironment]bool{
+		aq_context.DevServerEnvironment:  true,
+		aq_context.TestServerEnvironment: true,
+		aq_context.ProdServerEnvironment: true,
+	}
 )
 
-func parseEnv() string {
-	var environment string
+func parseEnv() aq_context.ServerEnvironment {
+	var environment aq_context.ServerEnvironment
 	if _, err := os.Stat(envPath); err == nil {
 		b, err := os.ReadFile(envPath)
 		if err != nil {
 			log.Fatalf("Unexpected error when reading server environment config.: %v", err)
 		}
 
-		environment = string(b)
+		environment = aq_context.ServerEnvironment(string(b))
 
 		_, ok := allowedEnvironments[environment]
 		if !ok {
@@ -47,7 +52,7 @@ func parseEnv() string {
 			log.Fatalf("Unsupported environment: %v", environment)
 		}
 	} else if errors.Is(err, os.ErrNotExist) {
-		environment = "prod"
+		environment = aq_context.ProdServerEnvironment
 	} else {
 		log.Fatalf("Unexpected error when reading server environment config.: %v", err)
 	}
