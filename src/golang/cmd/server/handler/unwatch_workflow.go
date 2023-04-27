@@ -33,8 +33,7 @@ type UnwatchWorkflowHandler struct {
 
 	Database database.Database
 
-	WatcherRepo  repos.Watcher
-	WorkflowRepo repos.Workflow
+	WatcherRepo repos.Watcher
 }
 
 func (*UnwatchWorkflowHandler) Name() string {
@@ -51,19 +50,6 @@ func (h *UnwatchWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 	workflowId, err := uuid.Parse(workflowIdStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
-	}
-
-	ok, err := h.WorkflowRepo.ValidateOrg(
-		r.Context(),
-		workflowId,
-		aqContext.OrgID,
-		h.Database,
-	)
-	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during workflow ownership validation.")
-	}
-	if !ok {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
 	}
 
 	return &unwatchWorkflowArgs{

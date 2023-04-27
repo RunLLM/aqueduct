@@ -82,7 +82,6 @@ type DeleteWorkflowHandler struct {
 	ExecutionEnvironmentRepo repos.ExecutionEnvironment
 	IntegrationRepo          repos.Integration
 	OperatorRepo             repos.Operator
-	WorkflowRepo             repos.Workflow
 }
 
 func (*DeleteWorkflowHandler) Name() string {
@@ -99,19 +98,6 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
-	}
-
-	ok, err := h.WorkflowRepo.ValidateOrg(
-		r.Context(),
-		workflowID,
-		aqContext.OrgID,
-		h.Database,
-	)
-	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during workflow ownership validation.")
-	}
-	if !ok {
-		return nil, http.StatusBadRequest, errors.New("The organization does not own this workflow.")
 	}
 
 	var input deleteWorkflowInput

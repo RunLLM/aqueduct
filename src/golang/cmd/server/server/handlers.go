@@ -14,18 +14,15 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			WorkflowRepo: s.WorkflowRepo,
 		},
 		routes.DAGRoute: &v2.DAGGetHandler{
-			Database:     s.Database,
-			WorkflowRepo: s.WorkflowRepo,
-			DAGRepo:      s.DAGRepo,
+			Database: s.Database,
+			DAGRepo:  s.DAGRepo,
 		},
 		routes.DAGResultRoute: &v2.DAGResultGetHandler{
 			Database:      s.Database,
-			WorkflowRepo:  s.WorkflowRepo,
 			DAGResultRepo: s.DAGResultRepo,
 		},
 		routes.DAGResultsRoute: &v2.DAGResultsGetHandler{
 			Database:      s.Database,
-			WorkflowRepo:  s.WorkflowRepo,
 			DAGResultRepo: s.DAGResultRepo,
 		},
 		routes.ListStorageMigrationRoute: &v2.ListStorageMigrationsHandler{
@@ -38,13 +35,11 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		},
 		routes.NodesRoute: &v2.NodesGetHandler{
 			Database:     s.Database,
-			WorkflowRepo: s.WorkflowRepo,
 			OperatorRepo: s.OperatorRepo,
 			ArtifactRepo: s.ArtifactRepo,
 		},
 		routes.NodeArtifactRoute: &v2.NodeArtifactGetHandler{
 			Database:     s.Database,
-			WorkflowRepo: s.WorkflowRepo,
 			ArtifactRepo: s.ArtifactRepo,
 		},
 		routes.NodeArtifactResultContentRoute: &v2.NodeArtifactResultContentGetHandler{
@@ -63,18 +58,15 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		},
 		routes.NodeOperatorContentRoute: &v2.NodeOperatorContentGetHandler{
 			Database:     s.Database,
-			WorkflowRepo: s.WorkflowRepo,
 			DAGRepo:      s.DAGRepo,
 			OperatorRepo: s.OperatorRepo,
 		},
 		routes.NodeOperatorRoute: &v2.NodeOperatorGetHandler{
 			Database:     s.Database,
-			WorkflowRepo: s.WorkflowRepo,
 			OperatorRepo: s.OperatorRepo,
 		},
 		routes.NodesResultsRoute: &v2.NodesResultsGetHandler{
 			Database:           s.Database,
-			WorkflowRepo:       s.WorkflowRepo,
 			DAGRepo:            s.DAGRepo,
 			ArtifactRepo:       s.ArtifactRepo,
 			OperatorResultRepo: s.OperatorResultRepo,
@@ -120,7 +112,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			IntegrationRepo:          s.IntegrationRepo,
 			ExecutionEnvironmentRepo: s.ExecutionEnvironmentRepo,
 			OperatorRepo:             s.OperatorRepo,
-			WorkflowRepo:             s.WorkflowRepo,
 		},
 		routes.EditIntegrationRoute: &handler.EditIntegrationHandler{
 			Database:   s.Database,
@@ -193,7 +184,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database: s.Database,
 
 			OperatorRepo: s.OperatorRepo,
-			WorkflowRepo: s.WorkflowRepo,
 		},
 		routes.GetWorkflowRouteV1: &handler.GetWorkflowHandler{
 			Database: s.Database,
@@ -317,8 +307,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		routes.RefreshWorkflowRoute: &handler.RefreshWorkflowHandler{
 			Database: s.Database,
 			Engine:   s.AqEngine,
-
-			WorkflowRepo: s.WorkflowRepo,
 		},
 		routes.RegisterWorkflowRoute: &handler.RegisterWorkflowHandler{
 			Database:      s.Database,

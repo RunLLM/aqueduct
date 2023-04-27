@@ -54,7 +54,6 @@ type DAGResultsGetHandler struct {
 
 	Database database.Database
 
-	WorkflowRepo  repos.Workflow
 	DAGResultRepo repos.DAGResult
 }
 
@@ -99,20 +98,6 @@ func (h *DAGResultsGetHandler) Prepare(r *http.Request) (interface{}, int, error
 
 func (h *DAGResultsGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*dagResultsGetArgs)
-
-	ok, err := h.WorkflowRepo.ValidateOrg(
-		ctx,
-		args.workflowID,
-		args.OrgID,
-		h.Database,
-	)
-	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during workflow ownership validation.")
-	}
-
-	if !ok {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
-	}
 
 	dbDAGResults, err := h.DAGResultRepo.GetByWorkflow(ctx, args.workflowID, args.orderBy, args.limit, args.orderDescending, h.Database)
 	if err != nil {

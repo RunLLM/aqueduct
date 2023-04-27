@@ -6,12 +6,10 @@ import (
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/param"
-	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -39,8 +37,6 @@ type RefreshWorkflowHandler struct {
 
 	Database database.Database
 	Engine   engine.Engine
-
-	WorkflowRepo repos.Workflow
 }
 
 func (*RefreshWorkflowHandler) Name() string {
@@ -48,11 +44,6 @@ func (*RefreshWorkflowHandler) Name() string {
 }
 
 func (h *RefreshWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
-	if err != nil {
-		return nil, statusCode, err
-	}
-
 	workflowIDStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
 	if workflowIDStr == "" {
 		return nil, http.StatusBadRequest, errors.New("no workflow id was specified")
@@ -61,19 +52,6 @@ func (h *RefreshWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
-	}
-
-	ok, err := h.WorkflowRepo.ValidateOrg(
-		r.Context(),
-		workflowID,
-		aqContext.OrgID,
-		h.Database,
-	)
-	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during workflow ownership validation.")
-	}
-	if !ok {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
 	}
 
 	parameters, err := request.ExtractParamsfromRequest(r)

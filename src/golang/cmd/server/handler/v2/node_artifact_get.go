@@ -33,7 +33,6 @@ type NodeArtifactGetHandler struct {
 
 	Database database.Database
 
-	WorkflowRepo repos.Workflow
 	ArtifactRepo repos.Artifact
 }
 
@@ -47,20 +46,6 @@ func (h *NodeArtifactGetHandler) Prepare(r *http.Request) (interface{}, int, err
 
 func (h *NodeArtifactGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*nodeGetArgs)
-
-	ok, err := h.WorkflowRepo.ValidateOrg(
-		ctx,
-		args.workflowID,
-		args.OrgID,
-		h.Database,
-	)
-	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during workflow ownership validation.")
-	}
-
-	if !ok {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
-	}
 
 	dbArtifactNode, err := h.ArtifactRepo.GetNode(ctx, args.nodeID, h.Database)
 	if err != nil {

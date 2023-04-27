@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
-	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -64,11 +63,6 @@ func (*EditWorkflowHandler) Name() string {
 }
 
 func (h *EditWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error) {
-	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
-	if err != nil {
-		return nil, statusCode, err
-	}
-
 	workflowIDStr := chi.URLParam(r, routes.WorkflowIdUrlParam)
 	if workflowIDStr == "" {
 		return nil, http.StatusBadRequest, errors.New("No workflow id was specified.")
@@ -77,19 +71,6 @@ func (h *EditWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error)
 	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
-	}
-
-	ok, err := h.WorkflowRepo.ValidateOrg(
-		r.Context(),
-		workflowID,
-		aqContext.OrgID,
-		h.Database,
-	)
-	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during workflow ownership validation.")
-	}
-	if !ok {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
 	}
 
 	var input editWorkflowInput

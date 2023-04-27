@@ -70,19 +70,6 @@ func (h *GetWorkflowHistoryHandler) Prepare(r *http.Request) (interface{}, int, 
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
 	}
 
-	ok, err := h.WorkflowRepo.ValidateOrg(
-		r.Context(),
-		workflowId,
-		aqContext.OrgID,
-		h.Database,
-	)
-	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during workflow ownership validation.")
-	}
-	if !ok {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
-	}
-
 	return &getWorkflowHistoryArgs{
 		AqContext:  aqContext,
 		workflowId: workflowId,

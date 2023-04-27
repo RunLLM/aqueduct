@@ -40,7 +40,6 @@ type ListWorkflowObjectsHandler struct {
 	Database database.Database
 
 	OperatorRepo repos.Operator
-	WorkflowRepo repos.Workflow
 }
 
 func (*ListWorkflowObjectsHandler) Name() string {
@@ -57,19 +56,6 @@ func (h *ListWorkflowObjectsHandler) Prepare(r *http.Request) (interface{}, int,
 	workflowID, err := uuid.Parse(workflowIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed workflow ID.")
-	}
-
-	ok, err := h.WorkflowRepo.ValidateOrg(
-		r.Context(),
-		workflowID,
-		aqContext.OrgID,
-		h.Database,
-	)
-	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during workflow ownership validation.")
-	}
-	if !ok {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
 	}
 
 	return &ListWorkflowObjectsArgs{

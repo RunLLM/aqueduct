@@ -65,20 +65,6 @@ func (h *WorkflowGetHandler) Prepare(r *http.Request) (interface{}, int, error) 
 func (h *WorkflowGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*workflowGetArgs)
 
-	ok, err := h.WorkflowRepo.ValidateOrg(
-		ctx,
-		args.workflowID,
-		args.OrgID,
-		h.Database,
-	)
-	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during workflow ownership validation.")
-	}
-
-	if !ok {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
-	}
-
 	dbWorkflow, err := h.WorkflowRepo.Get(ctx, args.workflowID, h.Database)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading workflow.")

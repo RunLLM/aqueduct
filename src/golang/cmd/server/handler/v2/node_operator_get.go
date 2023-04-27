@@ -33,7 +33,6 @@ type NodeOperatorGetHandler struct {
 
 	Database database.Database
 
-	WorkflowRepo repos.Workflow
 	OperatorRepo repos.Operator
 }
 
@@ -47,20 +46,6 @@ func (h *NodeOperatorGetHandler) Prepare(r *http.Request) (interface{}, int, err
 
 func (h *NodeOperatorGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*nodeGetArgs)
-
-	ok, err := h.WorkflowRepo.ValidateOrg(
-		ctx,
-		args.workflowID,
-		args.OrgID,
-		h.Database,
-	)
-	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during workflow ownership validation.")
-	}
-
-	if !ok {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
-	}
 
 	dbOperatorNode, err := h.OperatorRepo.GetNode(ctx, args.nodeID, h.Database)
 	if err != nil {

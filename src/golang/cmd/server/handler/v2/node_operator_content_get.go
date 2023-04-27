@@ -37,7 +37,6 @@ type NodeOperatorContentGetHandler struct {
 
 	Database database.Database
 
-	WorkflowRepo repos.Workflow
 	DAGRepo      repos.DAG
 	OperatorRepo repos.Operator
 }
@@ -53,20 +52,6 @@ func (h *NodeOperatorContentGetHandler) Prepare(r *http.Request) (interface{}, i
 func (h *NodeOperatorContentGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*nodeGetArgs)
 	emptyResp := &response.NodeContent{}
-
-	ok, err := h.WorkflowRepo.ValidateOrg(
-		ctx,
-		args.workflowID,
-		args.OrgID,
-		h.Database,
-	)
-	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during workflow ownership validation.")
-	}
-
-	if !ok {
-		return emptyResp, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
-	}
 
 	dbOperator, err := h.OperatorRepo.Get(ctx, args.nodeID, h.Database)
 	if err != nil {
