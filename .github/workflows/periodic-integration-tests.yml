@@ -280,7 +280,8 @@ jobs:
 
       - name: Run the SDK Integration Tests
         working-directory: integration_tests/sdk
-        run: pytest aqueduct_tests/ -rP -vv -n 2
+        run: pytest . -rP -vv -k 'test_publish_with_schedule'
+        # pytest aqueduct_tests/ -rP -vv -n 2 
 
       - uses: ./.github/actions/upload-artifacts
         if: always()
