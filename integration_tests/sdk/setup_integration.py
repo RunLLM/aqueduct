@@ -378,24 +378,24 @@ def is_global_engine_set(name: str) -> bool:
     """
     Returns whether or not the provided compute integration has `set_global_engine` set.
     """
-    test_credentials = _parse_credentials_file()
+    test_config = _parse_credentials_file()
 
-    assert "compute" in test_credentials, "compute section expected in test-credentials.yml"
-    assert name in test_credentials["compute"].keys(), "%s not in test-credentials.yml." % name
+    assert "compute" in test_config, "compute section expected in test-config.yml"
+    assert name in test_config["compute"].keys(), "%s not in test-config.yml." % name
 
-    return "set_global_engine" in test_credentials["compute"][name].keys()
+    return "set_global_engine" in test_config["compute"][name].keys()
 
 
 def is_lazy_set(name: str) -> bool:
     """
     Returns whether or not the provided compute integration has `set_global_lazy` set.
     """
-    test_credentials = _parse_credentials_file()
+    test_config = _parse_config_file()
 
-    assert "compute" in test_credentials, "compute section expected in test-credentials.yml"
-    assert name in test_credentials["compute"].keys(), "%s not in test-credentials.yml." % name
+    assert "compute" in test_config, "compute section expected in test-config.yml"
+    assert name in test_config["compute"].keys(), "%s not in test-config.yml." % name
 
-    return "set_global_lazy" in test_credentials["compute"][name].keys()
+    return "set_global_lazy" in test_config["compute"][name].keys()
 
 
 def list_data_integrations() -> List[str]:
