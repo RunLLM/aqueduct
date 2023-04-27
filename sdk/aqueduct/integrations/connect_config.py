@@ -238,6 +238,13 @@ class SparkConfig(BaseConnectionConfig):
     livy_server_url: str
 
 
+class DatabricksConfig(BaseConnectionConfig):
+    workspace_url: str
+    access_token: str
+    s3_instance_profile_arn: str
+    instance_pool_id: Optional[str] = None
+
+
 class K8sConfig(BaseConnectionConfig):
     kubeconfig_path: str
     cluster_name: str
@@ -263,6 +270,7 @@ IntegrationConfig = Union[
     _AWSConfigWithSerializedConfig,
     _SlackConfigWithStringField,
     SparkConfig,
+    DatabricksConfig,
     K8sConfig,
     CondaConfig,
 ]
@@ -299,6 +307,8 @@ def convert_dict_to_integration_connect_config(
         return CondaConfig(**config_dict)
     elif service == ServiceType.SPARK:
         return SparkConfig(**config_dict)
+    elif service == ServiceType.DATABRICKS:
+        return DatabricksConfig(**config_dict)
     elif service == ServiceType.AWS:
         return AWSConfig(**config_dict)
     elif service == ServiceType.K8S:
