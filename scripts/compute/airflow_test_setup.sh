@@ -14,4 +14,7 @@ export AIRFLOW__API__AUTH_BACKENDS=airflow.api.auth.backend.basic_auth
 # Has scheduler check for new DAGs every 15s
 export AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL=15
 
+# Safety check to ensure that the AIRFLOW_HOME/dags directory actually exists
+mkdir ${AIRFLOW_HOME}/dags
+
 airflow standalone
