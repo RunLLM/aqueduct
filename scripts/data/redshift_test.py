@@ -2,6 +2,7 @@ import sys
 import time
 
 import boto3
+from botocore.errorfactory import InvalidClusterStateFault
 
 CLUSTER_NAME = "integration-test-shared"
 
@@ -11,7 +12,7 @@ STATUS_PAUSING = "pausing"
 STATUS_RESUMING = "resuming"
 
 
-def resume_redshift(aws_access_key_id, aws_secret_access_key):
+def resume_redshift(aws_access_key_id, aws_secret_access_key, retry=0):
     """
     Resumes the test Redshift cluster.
     """
@@ -23,7 +24,19 @@ def resume_redshift(aws_access_key_id, aws_secret_access_key):
         pass
     elif status == STATUS_PAUSED:
         # Cluster can be resumed
-        client.resume_cluster(ClusterIdentifier=CLUSTER_NAME)
+        try:
+            client.resume_cluster(ClusterIdentifier=CLUSTER_NAME)
+        except InvalidClusterStateFault as e:
+            # This exception handling is required because of a transient issue where 
+            # the cluster has another operation in progress, but the cluster status
+            # does not reflect that.
+            if retry >= 5:
+                sys.exit(f"Unable to resume cluster due to {e} exception even after 5 retries")
+            
+            # Sleep and retry
+            time.sleep(15)
+            resume_redshift(aws_access_key_id, aws_secret_access_key, retry=retry+1)
+        
         _wait_for_status(client, STATUS_AVAILABLE)
     elif status == STATUS_PAUSING:
         # First need to wait for cluster to completely pause before resuming it
@@ -38,7 +51,7 @@ def resume_redshift(aws_access_key_id, aws_secret_access_key):
     print(f"{CLUSTER_NAME} cluster is ready!")
 
 
-def pause_redshift(aws_access_key_id, aws_secret_access_key):
+def pause_redshift(aws_access_key_id, aws_secret_access_key, retry=0):
     """
     Pauses the test Redshift cluster.
     """
@@ -47,7 +60,19 @@ def pause_redshift(aws_access_key_id, aws_secret_access_key):
 
     if status == STATUS_AVAILABLE:
         # Cluster can be paused
-        client.pause_cluster(ClusterIdentifier=CLUSTER_NAME)
+        try:
+            client.pause_cluster(ClusterIdentifier=CLUSTER_NAME)
+        except InvalidClusterStateFault as e:
+            # This exception handling is required because of a transient issue where 
+            # the cluster has another operation in progress, but the cluster status
+            # does not reflect that.
+            if retry >= 5:
+                sys.exit(f"Unable to pause cluster due to {e} exception even after 5 retries")
+            
+            # Sleep and retry
+            time.sleep(15)
+            pause_redshift(aws_access_key_id, aws_secret_access_key, retry=retry+1)
+
         _wait_for_status(client, STATUS_PAUSED)
     elif status == STATUS_PAUSED:
         # Nothing to do, the cluster is already paused
