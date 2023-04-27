@@ -266,10 +266,6 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
 };
 
 export function getAWSValidationSchema() {
-  // TODO: Figure out how to do the conditional logic above using yup validators.
-  // This is a start: https://stackoverflow.com/questions/49394391/conditional-validation-in-yup
-  // For now, we just make everything required ...
-
   return Yup.object().shape({
     type: Yup.string().required('Please select a credential type'),
     access_key_id: Yup.string().when('type', {
