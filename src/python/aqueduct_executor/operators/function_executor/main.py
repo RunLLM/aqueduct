@@ -6,7 +6,6 @@ from aqueduct_executor.operators.function_executor.spec import parse_spec
 from aqueduct_executor.operators.utils.utils import time_it
 
 if __name__ == "__main__":
-    print("testing")
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--spec", required=True)
     args = parser.parse_args()
