@@ -2,7 +2,6 @@ import sys
 import time
 
 import boto3
-from botocore.errorfactory import InvalidClusterStateFault
 
 CLUSTER_NAME = "integration-test-shared"
 
@@ -26,7 +25,7 @@ def resume_redshift(aws_access_key_id, aws_secret_access_key, retry=0):
         # Cluster can be resumed
         try:
             client.resume_cluster(ClusterIdentifier=CLUSTER_NAME)
-        except InvalidClusterStateFault as e:
+        except client.exceptions.InvalidClusterStateFault as e:
             # This exception handling is required because of a transient issue where
             # the cluster has another operation in progress, but the cluster status
             # does not reflect that.
@@ -62,7 +61,7 @@ def pause_redshift(aws_access_key_id, aws_secret_access_key, retry=0):
         # Cluster can be paused
         try:
             client.pause_cluster(ClusterIdentifier=CLUSTER_NAME)
-        except InvalidClusterStateFault as e:
+        except client.exceptions.InvalidClusterStateFault as e:
             # This exception handling is required because of a transient issue where
             # the cluster has another operation in progress, but the cluster status
             # does not reflect that.
