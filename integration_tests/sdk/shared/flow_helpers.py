@@ -99,8 +99,8 @@ def publish_flow_test(
         folder_path = os.path.expanduser(AIRFLOW_DAGS_FOLDER)
         shutil.move(dag_path, folder_path)
 
-        print("Sleeping for 20s to wait for Airflow scheduler to pick up new DAG file")
-        time.sleep(20)
+        print("Sleeping for 30s to wait for Airflow scheduler to pick up new DAG file")
+        time.sleep(30)
 
         # Manually trigger a run to match behavior of non-Airflow engines
         client.trigger(flow_id=flow.id())
