@@ -8,8 +8,10 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/dynamic"
 	"github.com/aqueducthq/aqueduct/lib/errors"
+	"github.com/aqueducthq/aqueduct/lib/functional/slices"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/google/uuid"
@@ -17,7 +19,7 @@ import (
 )
 
 // This file should map directly to
-// src/ui/common/src/handlers/v2/IntegrationsWorkflows.ts
+// src/ui/common/src/handlers/v2/IntegrationsWorkflowsGet.ts
 //
 // Route: /v2/integrations/workflows
 // Method: GET
@@ -117,20 +119,17 @@ func (h *IntegrationsWorkflowsGetHandler) fetchWorkflowIDsForIntegration(
 
 	// Now, using the operators using this integration, we can infer all the workflows
 	// that also use this integration.
-	workflowIDs := make([]uuid.UUID, 0, 1)
+	operatorIDs := slices.Map(operators, func(op models.Operator) uuid.UUID {
+		return op.ID
+	})
 
-	operatorIDs := make([]uuid.UUID, 0, len(operators))
-	operatorByIDs := make(map[uuid.UUID]models.Operator, len(operators))
-	for _, op := range operators {
-		operatorIDs = append(operatorIDs, op.ID)
-		operatorByIDs[op.ID] = op
-	}
 	operatorRelations, err := h.OperatorRepo.GetRelationBatch(ctx, operatorIDs, h.Database)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to retrieve operator ID information.")
 	}
-	for _, operatorRelation := range operatorRelations {
-		workflowIDs = append(workflowIDs, operatorRelation.WorkflowID)
-	}
+
+	workflowIDs := slices.Map(operatorRelations, func(operatorRelation views.OperatorRelation) uuid.UUID {
+		return operatorRelation.WorkflowID
+	})
 	return workflowIDs, nil
 }

@@ -17,7 +17,7 @@ import {
   integrationsWorkflowsGetQuery,
   IntegrationsWorkflowsGetRequest,
   IntegrationsWorkflowsGetResponse,
-} from './v2/IntegrationsWorkflows';
+} from './v2/IntegrationsWorkflowsGet';
 import {
   storageMigrationListQuery,
   storageMigrationListRequest,
