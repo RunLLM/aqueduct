@@ -1,13 +1,9 @@
 import Box from '@mui/material/Box';
-import Link from '@mui/material/Link';
-import Typography from '@mui/material/Typography';
 import React from 'react';
-import { Link as RouterLink } from 'react-router-dom';
 
-import { DataPreviewInfo } from '../../../utils/data';
-import { getPathPrefix } from '../../../utils/getPathPrefix';
 import { Integration } from '../../../utils/integrations';
-import ExecutionChip from '../../execution/chip';
+import ExecutionStatus from '../../../utils/shared';
+import { StatusIndicator } from '../../workflows/workflowStatus';
 import IntegrationLogo from '../logo';
 import { AirflowCard } from './airflowCard';
 import { AqueductDemoCard } from './aqueductDemoCard';
@@ -18,7 +14,6 @@ import { EmailCard } from './emailCard';
 import { GCSCard } from './gcsCard';
 import { KubernetesCard } from './kubernetesCard';
 import { LambdaCard } from './lambdaCard';
-import { LoadSpecsCard } from './loadSpecCard';
 import { MariaDbCard } from './mariadbCard';
 import { MongoDBCard } from './mongoDbCard';
 import { MySqlCard } from './mysqlCard';
@@ -28,68 +23,7 @@ import { S3Card } from './s3Card';
 import { SlackCard } from './slackCard';
 import { SnowflakeCard } from './snowflakeCard';
 import { SparkCard } from './sparkCard';
-
-type DataProps = {
-  dataPreviewInfo: DataPreviewInfo;
-};
-
-export const DataCard: React.FC<DataProps> = ({ dataPreviewInfo }) => {
-  const dataPreviewInfoVersions = Object.entries(dataPreviewInfo.versions);
-  if (dataPreviewInfoVersions.length > 0) {
-    let [latestDagResultId, latestVersion] = dataPreviewInfoVersions[0];
-    // Find the latest version
-    // note: could also sort the array and get things that way.
-    dataPreviewInfoVersions.forEach(([dagResultId, version]) => {
-      if (version.timestamp > latestVersion.timestamp) {
-        latestDagResultId = dagResultId;
-        latestVersion = version;
-      }
-    });
-
-    const workflowId = dataPreviewInfo.workflow_id;
-    return (
-      <Link
-        underline="none"
-        color="inherit"
-        to={`${getPathPrefix()}/workflow/${workflowId}/result/${latestDagResultId}/artifact/${
-          dataPreviewInfo.artifact_id
-        }`}
-        component={RouterLink}
-      >
-        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <Box sx={{ flex: 1 }}>
-              <Typography
-                variant="h6"
-                component="div"
-                sx={{
-                  fontFamily: 'Monospace',
-                  '&:hover': { textDecoration: 'underline' },
-                }}
-              >
-                {dataPreviewInfo.artifact_name}
-              </Typography>
-            </Box>
-            <Box marginLeft={1}>
-              <ExecutionChip status={latestVersion.status} />
-            </Box>
-          </Box>
-          <Box sx={{ fontSize: 1, my: 1 }}>
-            <Typography variant="body2">
-              <strong>Workflow:</strong> {dataPreviewInfo.workflow_name}
-            </Typography>
-            <Typography variant="body2">
-              <strong>Last Updated:</strong>{' '}
-              {new Date(latestVersion.timestamp * 1000).toLocaleString()}
-            </Typography>
-          </Box>
-          <LoadSpecsCard loadSpecs={dataPreviewInfo.load_specs} />
-        </Box>
-      </Link>
-    );
-  }
-  return null;
-};
+import { TruncatedText } from './text';
 
 type IntegrationProps = {
   integration: Integration;
@@ -160,21 +94,33 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ display: 'flex', flexDirection: 'row' }}>
-        <Box sx={{ flex: 1 }}>
-          <Typography sx={{ fontFamily: 'Monospace' }} variant="h6">
+      <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+        {/*If the execution state doesn't exist, we assume the integration succeeded.*/}
+        <StatusIndicator
+          status={integration.exec_state?.status || ExecutionStatus.Succeeded}
+          size="16px"
+        />
+
+        {/* Subtract the width of the status indicator, padding, and logo respectively. */}
+        <Box
+          sx={{ mx: 1, flex: 1, maxWidth: `calc(100% - 16px - 16px - 24px)` }}
+        >
+          <TruncatedText sx={{ fontWeight: 400 }} variant="h6">
             {integration.name}
-          </Typography>
+          </TruncatedText>
         </Box>
         <IntegrationLogo service={integration.service} size="small" activated />
       </Box>
 
-      {serviceCard}
-
-      <Typography variant="body2">
-        <strong>Connected On: </strong>
+      <TruncatedText
+        variant="caption"
+        marginBottom={1}
+        sx={{ fontWeight: 300 }}
+      >
         {new Date(integration.createdAt * 1000).toLocaleString()}
-      </Typography>
+      </TruncatedText>
+
+      {serviceCard}
     </Box>
   );
 };

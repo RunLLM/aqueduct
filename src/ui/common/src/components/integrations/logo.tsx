@@ -4,7 +4,7 @@ import { Service, SupportedIntegrations } from '../../utils/integrations';
 
 const sizeMap = {
   large: '85px',
-  small: '32px',
+  small: '24px',
 };
 
 type Props = {
