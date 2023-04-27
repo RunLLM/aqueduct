@@ -35,10 +35,6 @@ export const SparkDialog: React.FC<IntegrationDialogProps> = ({ editMode }) => {
   );
 };
 
-export function isSparkConfigComplete(config: SparkConfig): boolean {
-  return !!config.livy_server_url;
-}
-
 export function getSparkValidationSchema() {
   return Yup.object().shape({
     livy_server_url: Yup.string().required('Please enter a Livy Server URL'),

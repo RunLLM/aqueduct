@@ -88,16 +88,6 @@ export const RedshiftDialog: React.FC<IntegrationDialogProps> = ({
   );
 };
 
-export function isRedshiftConfigComplete(config: RedshiftConfig): boolean {
-  return (
-    !!config.host &&
-    !!config.port &&
-    !!config.database &&
-    !!config.username &&
-    !!config.password
-  );
-}
-
 export function getRedshiftValidationSchema() {
   return Yup.object().shape({
     host: Yup.string().required('Please enter a host'),

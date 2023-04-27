@@ -18,12 +18,6 @@ const Placeholders: PostgresConfig = {
   password: '********',
 };
 
-// type Props = {
-//   //onUpdateField: (field: keyof PostgresConfig, value: string) => void;
-//   //value?: PostgresConfig;
-//   editMode: boolean;
-// };
-
 export const PostgresDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
 }) => {
@@ -97,20 +91,11 @@ export const PostgresDialog: React.FC<IntegrationDialogProps> = ({
   );
 };
 
-export function isPostgresConfigComplete(config: PostgresConfig): boolean {
-  return (
-    !!config.host &&
-    !!config.port &&
-    !!config.database &&
-    !!config.username &&
-    !!config.password
-  );
-}
-
 export function getPostgresValidationSchema() {
   return Yup.object().shape({
     host: Yup.string().required('Please enter a host'),
     port: Yup.string().required('Please enter a port'),
+    // Not sure if we need to enforce that the port's value is a number or not, but here is how we would do it:
     // to ensure that port is a number:
     // port: Yup.number()
     //   .required('Required')

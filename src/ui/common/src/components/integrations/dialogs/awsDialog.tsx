@@ -265,20 +265,6 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
   );
 };
 
-export function isAWSConfigComplete(config: AWSConfig): boolean {
-  if (config.type === AWSCredentialType.AccessKey) {
-    return (
-      !!config.access_key_id && !!config.secret_access_key && !!config.region
-    );
-  }
-
-  if (config.type === AWSCredentialType.ConfigFilePath) {
-    return !!config.config_file_profile && !!config.config_file_path;
-  }
-
-  return false;
-}
-
 export function getAWSValidationSchema() {
   // TODO: Figure out how to do the conditional logic above using yup validators.
   // This is a start: https://stackoverflow.com/questions/49394391/conditional-validation-in-yup
@@ -286,12 +272,25 @@ export function getAWSValidationSchema() {
 
   return Yup.object().shape({
     type: Yup.string().required('Please select a credential type'),
-    access_key_id: Yup.string().required('Please enter an access key ID'),
-    secret_access_key: Yup.string().required(
-      'Please enter a secret access key'
-    ),
-    region: Yup.string().required('Please enter a region'),
-    config_file_profile: Yup.string().required('Please upload a profile'),
-    config_file_path: Yup.string().required('Please enter a profile path'),
+    access_key_id: Yup.string().when('type', {
+      is: 'access_key',
+      then: Yup.string().required('Please enter an access key id'),
+    }),
+    secret_access_key: Yup.string().when('type', {
+      is: 'access_key',
+      then: Yup.string().required('Please enter a secret access key'),
+    }),
+    region: Yup.string().when('type', {
+      is: 'access_key',
+      then: Yup.string().required('Please enter a region'),
+    }),
+    config_file_profile: Yup.string().when('type', {
+      is: 'config_file_path',
+      then: Yup.string().required('Please enter a config file profile'),
+    }),
+    config_file_path: Yup.string().when('type', {
+      is: 'config_file_path',
+      then: Yup.string().required('Please enter a profile path'),
+    }),
   });
 }

@@ -37,10 +37,6 @@ export const SQLiteDialog: React.FC<IntegrationDialogProps> = ({
   );
 };
 
-export function isSQLiteConfigComplete(config: SQLiteConfig): boolean {
-  return !!config.database;
-}
-
 export function getSQLiteValidationSchema() {
   return Yup.object().shape({
     database: Yup.string().required('Please enter a path'),

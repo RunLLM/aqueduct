@@ -88,23 +88,10 @@ export const MariaDbDialog: React.FC<IntegrationDialogProps> = ({
   );
 };
 
-export const isMariaDBConfigComplete = (config: MariaDbConfig): boolean => {
-  return (
-    !!config.database &&
-    !!config.host &&
-    !!config.password &&
-    !!config.port &&
-    !!config.username &&
-    !!config.port
-  );
-};
-
 export function getMariaDBValidationSchema() {
-  console.log('inside mariaDB dialog');
-
   return Yup.object().shape({
     host: Yup.string().required('Please enter a host'),
-    port: Yup.string().required('Please enter a port'),
+    port: Yup.number().required('Please enter a port'),
     database: Yup.string().required('Please enter a database'),
     username: Yup.string().required('Please enter a username'),
     password: Yup.string().required('Please enter a password'),

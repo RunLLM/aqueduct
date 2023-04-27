@@ -100,17 +100,6 @@ export const AirflowDialog: React.FC<IntegrationDialogProps> = ({
   );
 };
 
-export function isAirflowConfigComplete(config: AirflowConfig): boolean {
-  // required fields:
-  // name, host, username, password, s3_credentials_path
-  return (
-    !!config.host &&
-    !!config.username &&
-    !!config.password &&
-    !!config.s3_credentials_path
-  );
-}
-
 export function getAirflowValidationSchema() {
   const validationSchema = Yup.object().shape({
     name: Yup.string().required('Please enter a name.'),

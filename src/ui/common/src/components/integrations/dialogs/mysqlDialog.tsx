@@ -89,20 +89,10 @@ export const MysqlDialog: React.FC<IntegrationDialogProps> = ({
   );
 };
 
-export function isMySqlConfigComplete(config: MySqlConfig): boolean {
-  return (
-    !!config.host &&
-    !!config.port &&
-    !!config.database &&
-    !!config.username &&
-    !!config.password
-  );
-}
-
 export function getMySQLValidationSchema() {
   return Yup.object().shape({
     host: Yup.string().required('Please enter a host'),
-    port: Yup.string().required('Please enter a port'),
+    port: Yup.number().required('Please enter a port'),
     database: Yup.string().required('Please enter a database'),
     username: Yup.string().required('Please enter a username'),
     password: Yup.string().required('Please enter a password'),

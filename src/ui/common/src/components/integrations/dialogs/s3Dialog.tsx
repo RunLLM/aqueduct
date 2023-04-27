@@ -18,6 +18,7 @@ import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: S3Config = {
+  // TODO: Figure out why this type keeps erroring out...
   //type: AWSCredentialType.AccessKey,
   type: 'access_key',
   bucket: 'aqueduct',
@@ -41,12 +42,13 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
 }) => {
   const [fileData, setFileData] = useState<FileData | null>(null);
 
-  const { register, setValue, getValues } = useFormContext();
+  const { register, setValue } = useFormContext();
   register('use_as_storage');
   const [useAsMetadataStorage, setUseAsMetadataStorage] =
     useState<string>('false');
 
   const [currentTab, setCurrentTab] = useState(AWSCredentialType.AccessKey);
+  register('type', { value: currentTab, required: true });
 
   const setFile = (fileData: FileData | null) => {
     // Update the react-hook-form value
@@ -239,39 +241,29 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
   );
 };
 
-export function isS3ConfigComplete(config: S3Config): boolean {
-  if (!config.bucket || !config.region) {
-    return false;
-  }
-
-  if (config.type === AWSCredentialType.AccessKey) {
-    return !!config.access_key_id && !!config.secret_access_key;
-  }
-
-  if (config.type === AWSCredentialType.ConfigFilePath) {
-    return !!config.config_file_profile && !!config.config_file_path;
-  }
-
-  if (config.type === AWSCredentialType.ConfigFileContent) {
-    return !!config.config_file_profile && !!config.config_file_content;
-  }
-
-  return false;
-}
-
-// TODO: figure out conditional validation
 export function getS3ValidationSchema() {
   return Yup.object().shape({
+    type: Yup.string().required('Please select a credential type'),
     bucket: Yup.string().required('Please enter a bucket name'),
     region: Yup.string().required('Please enter a region'),
-    access_key_id: Yup.string().required('Please enter an access key ID'),
+    access_key_id: Yup.string().when('type', {
+      is: 'access_key',
+      then: Yup.string().required('Please enter an access key id'),
+    }),
     secret_access_key: Yup.string().required(
       'Please enter a secret access key'
     ),
-    config_file_path: Yup.string().required('Please enter a config file path'),
-    config_file_profile: Yup.string().required('Please enter a profile name'),
-    config_file_content: Yup.string().required(
-      'Please upload a credentials file'
-    ),
+    config_file_path: Yup.string().when('type', {
+      is: 'config_file_path',
+      then: Yup.string().required('Please enter a profile path'),
+    }),
+    config_file_profile: Yup.string().when('type', {
+      is: 'config_file_path' || 'config_file_content',
+      then: Yup.string().required('Please enter a config file profile'),
+    }),
+    config_file_content: Yup.string().when('type', {
+      is: 'config_file_content',
+      then: Yup.string().required('Please upload a credentials file'),
+    }),
   });
 }

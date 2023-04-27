@@ -26,53 +26,14 @@ import { handleLoadIntegrations } from '../../../reducers/integrations';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import {
-  AirflowConfig,
-  aqueductDemoName,
-  AthenaConfig,
-  AWSConfig,
-  BigQueryConfig,
-  DatabricksConfig,
-  EmailConfig,
   formatService,
-  GCSConfig,
   Integration,
   IntegrationConfig,
-  KubernetesConfig,
-  LambdaConfig,
-  MariaDbConfig,
-  MongoDBConfig,
-  MySqlConfig,
-  PostgresConfig,
-  RedshiftConfig,
-  S3Config,
   Service,
-  SlackConfig,
-  SnowflakeConfig,
-  SparkConfig,
-  SQLiteConfig,
   SupportedIntegrations,
 } from '../../../utils/integrations';
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
-import { isAirflowConfigComplete } from './airflowDialog';
-import { isAthenaConfigComplete } from './athenaDialog';
-import { isAWSConfigComplete } from './awsDialog';
-import { isBigQueryConfigComplete } from './bigqueryDialog';
-import { isDatabricksConfigComplete } from './databricksDialog';
-import { EmailDefaultsOnCreate, isEmailConfigComplete } from './emailDialog';
-import { isGCSConfigComplete } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
-import { isK8sConfigComplete } from './kubernetesDialog';
-import { isLambaDialogComplete } from './lambdaDialog';
-import { isMariaDBConfigComplete } from './mariadbDialog';
-import { isMongoDBConfigComplete } from './mongoDbDialog';
-import { isMySqlConfigComplete } from './mysqlDialog';
-import { isPostgresConfigComplete } from './postgresDialog';
-import { isRedshiftConfigComplete } from './redshiftDialog';
-import { isS3ConfigComplete } from './s3Dialog';
-import { isSlackConfigComplete, SlackDefaultsOnCreate } from './slackDialog';
-import { isSnowflakeConfigComplete } from './snowflakeDialog';
-import { isSparkConfigComplete } from './sparkDialog';
-import { isSQLiteConfigComplete } from './sqliteDialog';
 
 type Props = {
   user: UserProfile;
@@ -84,19 +45,6 @@ type Props = {
   dialogContent: React.FC;
   validationSchema: Yup.ObjectSchema<any>;
 };
-
-// Default fields are actual filled form values on 'create' dialog.
-function defaultFields(service: Service): IntegrationConfig {
-  switch (service) {
-    case 'Email':
-      return EmailDefaultsOnCreate as EmailConfig;
-
-    case 'Slack':
-      return SlackDefaultsOnCreate as SlackConfig;
-  }
-
-  return {};
-}
 
 const IntegrationDialog: React.FC<Props> = ({
   user,
@@ -111,14 +59,6 @@ const IntegrationDialog: React.FC<Props> = ({
   const [submitDisabled, setSubmitDisabled] = useState<boolean>(true);
   const editMode = !!integrationToEdit;
   const dispatch: AppDispatch = useDispatch();
-  const [config, setConfig] = useState<IntegrationConfig>(
-    editMode
-      ? { ...integrationToEdit.config } // make a copy to avoid accessing a state object
-      : { ...defaultFields(service) }
-  );
-  const [name, setName] = useState<string>(
-    editMode ? integrationToEdit.name : ''
-  );
 
   const [shouldShowNameError, setShouldShowNameError] =
     useState<boolean>(false);
@@ -149,10 +89,7 @@ const IntegrationDialog: React.FC<Props> = ({
   // migration can easily trigger the dialog.
   const [migrateStorage, setMigrateStorage] = useState(true);
 
-  console.log('validationSchema: ', validationSchema);
-
   const methods = useForm({
-    // TODO: Figure out how to get the validationSchema from the appropriate dialog.
     resolver: yupResolver(validationSchema),
   });
 
@@ -164,13 +101,10 @@ const IntegrationDialog: React.FC<Props> = ({
     //     name === '' ||
     //     name === aqueductDemoName);
 
-    const subscription = methods.watch(async (value, { name, type }) => {
-      console.log(value, name, type);
-
+    const subscription = methods.watch(async () => {
       // TODO: Account for editMode, aqueductDemoName and empty name
       const checkIsFormValid = async () => {
         const isValidForm = await methods.trigger();
-        console.log('isValidForm: ', isValidForm);
         if (isValidForm && submitDisabled) {
           // Form is valid, enable the submit button.
           setSubmitDisabled(false);
@@ -178,14 +112,14 @@ const IntegrationDialog: React.FC<Props> = ({
           // Form is still invalid, disable the submit button.
           setSubmitDisabled(true);
         }
-      }
+      };
 
       checkIsFormValid();
     });
 
     // Unsubscribe and handle lifecycle changes.
     return () => subscription.unsubscribe();
-  }, [methods.watch])
+  }, [methods.watch]);
 
   useEffect(() => {
     if (isSucceeded(connectStatus)) {
@@ -227,11 +161,10 @@ const IntegrationDialog: React.FC<Props> = ({
   );
 
   const onConfirmDialog = (data: IntegrationConfig) => {
-    console.log('onConfirmDialog data: ', data);
     //check that name is unique before connecting.
     if (!editMode) {
       for (let i = 0; i < integrations.length; i++) {
-        if (name === integrations[i].name) {
+        if (data.name === integrations[i].name) {
           setShouldShowNameError(true);
           return;
         }
@@ -328,7 +261,6 @@ const IntegrationDialog: React.FC<Props> = ({
             <LoadingButton
               autoFocus
               onClick={async () => {
-
                 // NOTE: handleSubmit() is a function that returns a function, please call it as so
                 methods.handleSubmit(onConfirmDialog)();
               }}
@@ -344,60 +276,5 @@ const IntegrationDialog: React.FC<Props> = ({
     </Dialog>
   );
 };
-
-// TODO: Remove me now that this is no longer used :)
-// TODO: refactor this so that we no longer need a switch statement here.
-// Helper function to check if the Integration config is completely filled.
-export function isConfigComplete(
-  config: IntegrationConfig,
-  service: Service
-): boolean {
-  switch (service) {
-    case 'Airflow':
-      return isAirflowConfigComplete(config as AirflowConfig);
-    case 'Athena':
-      return isAthenaConfigComplete(config as AthenaConfig);
-    case 'AWS':
-      return isAWSConfigComplete(config as AWSConfig);
-    case 'BigQuery':
-      return isBigQueryConfigComplete(config as BigQueryConfig);
-    case 'Conda':
-      // Conda only has a name field that the user supplies, so this half of form is always valid.
-      return true;
-    case 'Databricks':
-      return isDatabricksConfigComplete(config as DatabricksConfig);
-    case 'Email':
-      return isEmailConfigComplete(config as EmailConfig);
-    case 'GCS':
-      return isGCSConfigComplete(config as GCSConfig);
-    case 'Kubernetes':
-      return isK8sConfigComplete(config as KubernetesConfig);
-    case 'Lambda':
-      return isLambaDialogComplete(config as LambdaConfig);
-    case 'MariaDB':
-      return isMariaDBConfigComplete(config as MariaDbConfig);
-    case 'MongoDB':
-      return isMongoDBConfigComplete(config as MongoDBConfig);
-    case 'MySQL':
-      return isMySqlConfigComplete(config as MySqlConfig);
-    case 'Postgres':
-      return isPostgresConfigComplete(config as PostgresConfig);
-    case 'Redshift':
-      return isRedshiftConfigComplete(config as RedshiftConfig);
-    case 'S3':
-      return isS3ConfigComplete(config as S3Config);
-    case 'Slack':
-      return isSlackConfigComplete(config as SlackConfig);
-    case 'Spark':
-      return isSparkConfigComplete(config as SparkConfig);
-    case 'Snowflake':
-      return isSnowflakeConfigComplete(config as SnowflakeConfig);
-    case 'SQLite':
-      return isSQLiteConfigComplete(config as SQLiteConfig);
-    default:
-      // Require all integrations to have their own validation function.
-      return false;
-  }
-}
 
 export default IntegrationDialog;
