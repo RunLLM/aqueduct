@@ -214,7 +214,7 @@ jobs:
 
       - name: Install any data connector packages
         run: |
-          aqueduct install redshift
+          pip3 install boto3
 
       - name: Setup Hosted Data Integrations
         working-directory: scripts/data
