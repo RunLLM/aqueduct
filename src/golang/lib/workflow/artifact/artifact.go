@@ -3,7 +3,6 @@ package artifact
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -211,7 +210,9 @@ func (a *ArtifactImpl) updateArtifactResultAfterComputation(
 		models.ArtifactResultMetadata: nil,
 	}
 
-	if a.Computed(ctx) {
+	metadataExists := utils.ObjectExistsInStorage(ctx, a.storageConfig, a.execPaths.ArtifactMetadataPath)
+
+	if a.Computed(ctx) && metadataExists {
 		var artifactResultMetadata shared.ArtifactResultMetadata
 		err := utils.ReadFromStorage(
 			ctx,
@@ -221,11 +222,7 @@ func (a *ArtifactImpl) updateArtifactResultAfterComputation(
 		)
 		if err != nil {
 			log.Errorf("Unable to read artifact result metadata from storage and unmarshal: %v", err)
-			execState.Error.Context = fmt.Sprintf(
-				"%s\nError reading metadata: %v",
-				execState.Error.Context,
-				err,
-			)
+			return
 		}
 		changes[models.ArtifactResultMetadata] = &artifactResultMetadata
 	}
@@ -328,15 +325,17 @@ func (a *ArtifactImpl) GetMetadata(ctx context.Context) (*shared.ArtifactResultM
 			return nil, nil
 		}
 
-		// If the path is not provided, we assume the data is not available.
-		if a.execPaths.ArtifactMetadataPath != "" {
-			var metadata shared.ArtifactResultMetadata
-			err := utils.ReadFromStorage(ctx, a.storageConfig, a.execPaths.ArtifactMetadataPath, &metadata)
-			if err != nil {
-				return nil, err
-			}
-			a.resultMetadata = &metadata
+		// If the path is not available, we assume the data is not available.
+		if !utils.ObjectExistsInStorage(ctx, a.storageConfig, a.execPaths.ArtifactMetadataPath) {
+			return nil, nil
 		}
+
+		var metadata shared.ArtifactResultMetadata
+		err := utils.ReadFromStorage(ctx, a.storageConfig, a.execPaths.ArtifactMetadataPath, &metadata)
+		if err != nil {
+			return nil, err
+		}
+		a.resultMetadata = &metadata
 	}
 
 	return a.resultMetadata, nil
