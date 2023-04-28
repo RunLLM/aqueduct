@@ -56,7 +56,7 @@ func LaunchJob(
 
 	if image != nil {
 		// Add environment variable AQUEDUCT_EXPECTED_VERSION to check potential version mismatch.
-		(*environmentVariables)["AQUEDUCT_EXPECTED_VERSION"] = lib.ServerVersionNumber
+		(*environmentVariables)[AqueductExpectedVersionKeyName] = lib.ServerVersionNumber
 
 		if image.Service != shared.ECR {
 			return errors.Newf("Unsupported image service: %s", image.Service)
