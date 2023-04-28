@@ -103,13 +103,13 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
         setShowDialog(integration.activated);
       }}
       sx={{
-        width: '160px',
-        height: '128px',
+        width: '64px',
+        height: '80px',
         m: 1,
-        px: 2,
-        py: 2,
+        px: 1,
+        py: 1,
         borderRadius: 2,
-        border: `2px solid ${theme.palette.gray['700']}`,
+        //border: `2px solid ${theme.palette.gray['700']}`,
         cursor: integration.activated ? 'pointer' : 'default',
         '&:hover': {
           backgroundColor: integration.activated
@@ -117,11 +117,13 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
             : 'white',
         },
         boxSizing: 'initial',
+        backgroundColor: '#F8F8F8', // gray/light2
       }}
     >
       <Box
-        width="160px"
-        maxWidth="160px"
+        width="100%"
+        maxWidth="100%"
+        height="48px"
         display="flex"
         flexDirection="column"
         alignItems="center"
@@ -129,15 +131,16 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
         <IntegrationLogo
           service={service}
           activated={integration.activated}
-          size="large"
+          size="medium"
         />
       </Box>
       <Typography
         variant={'body1'}
         align={'center'}
         sx={{
-          marginTop: '16px',
+          marginTop: '8px',
           color: integration.activated ? 'inherit' : 'grey',
+          fontSize: '12px',
         }}
       >
         {service}
