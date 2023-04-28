@@ -3,6 +3,7 @@ package routes
 // Please sort the routes by their VALUEs
 const (
 	// V2 routes
+	IntegrationOperatorsRoute      = "/api/v2/integration/{integrationID}/nodes/operators"
 	IntegrationsWorkflowsRoute     = "/api/v2/integrations/workflows"
 	IntegrationWorkflowsRoute      = "/api/v2/integration/{integrationID}/workflows"
 	ListStorageMigrationRoute      = "/api/v2/storage-migrations"
