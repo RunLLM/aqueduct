@@ -17,3 +17,7 @@ export type NodeResultIdParameter = {
 export type WorkflowIdParameter = {
   workflowId: string;
 };
+
+export type IntegrationIdParameter = {
+  integrationId: string;
+};

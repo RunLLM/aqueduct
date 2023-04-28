@@ -1,6 +1,6 @@
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Tooltip } from '@mui/material';
+import { CircularProgress, Tooltip } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
@@ -17,6 +17,7 @@ import IntegrationObjectList from '../../../../components/integrations/integrati
 import OperatorsOnIntegration from '../../../../components/integrations/operatorsOnIntegration';
 import DefaultLayout from '../../../../components/layouts/default';
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
+import { useIntegrationWorkflowsGetQuery } from '../../../../handlers/AqueductApi';
 import { handleGetServerConfig } from '../../../../handlers/getServerConfig';
 import {
   handleListIntegrationObjects,
@@ -37,6 +38,8 @@ import {
 import { isFailed, isLoading, isSucceeded } from '../../../../utils/shared';
 import { ResourceHeaderDetailsCard } from '../../../integrations/cards/headerDetailsCard';
 import { ResourceFieldsDetailsCard } from '../../../integrations/cards/resourceFieldsDetailsCard';
+import { ErrorSnackbar } from '../../../integrations/errorSnackbar';
+import { getNumWorkflowsUsingMessage } from '../../../integrations/numWorkflowsUsingMsg';
 import IntegrationOptions, {
   IntegrationOptionsButtonWidth,
 } from '../../../integrations/options';
@@ -151,6 +154,26 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     fetchServerConfig();
   }, [user.apiKey]);
 
+  const {
+    data: workflowIDs,
+    error: fetchWorkflowsError,
+
+    // Needed to rename this since we're importing an `isLoading` is that was causing problems.
+    isLoading: fetchWorkflowsIsLoading,
+  } = useIntegrationWorkflowsGetQuery({
+    apiKey: user.apiKey,
+    integrationId: integrationId,
+  });
+
+  if (fetchWorkflowsIsLoading) {
+    return <CircularProgress />;
+  }
+
+  let numWorkflowsUsingMsg = '';
+  if (!fetchWorkflowsError) {
+    numWorkflowsUsingMsg = getNumWorkflowsUsingMessage(workflowIDs.length);
+  }
+
   if (!integrations || !selectedIntegration) {
     return null;
   }
@@ -164,6 +187,13 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
       ]}
       user={user}
     >
+      <ErrorSnackbar
+        shouldShow={fetchWorkflowsError !== undefined}
+        errMsg={
+          'Unexpected error occurred when fetching workflows associated with this integration. Please try again.'
+        }
+      />
+
       <Box sx={{ paddingBottom: '4px' }}>
         <Box display="flex" flexDirection="row" alignContent="top">
           <Box
@@ -175,8 +205,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             <Box display="flex" flexDirection="row" alignContent="bottom">
               <ResourceHeaderDetailsCard
                 integration={selectedIntegration}
-                // TODO!!
-                numWorkflowsUsingMsg={'Not currently used.'}
+                numWorkflowsUsingMsg={numWorkflowsUsingMsg}
               />
 
               <Box
