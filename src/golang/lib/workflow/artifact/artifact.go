@@ -207,7 +207,9 @@ func (a *ArtifactImpl) updateArtifactResultAfterComputation(
 	execState *shared.ExecutionState,
 ) {
 	changes := map[string]interface{}{
-		models.ArtifactResultMetadata: nil,
+		models.ArtifactResultMetadata:  nil,
+		models.ArtifactResultStatus:    execState.Status,
+		models.ArtifactResultExecState: execState,
 	}
 
 	metadataExists := utils.ObjectExistsInStorage(ctx, a.storageConfig, a.execPaths.ArtifactMetadataPath)
@@ -226,9 +228,6 @@ func (a *ArtifactImpl) updateArtifactResultAfterComputation(
 		}
 		changes[models.ArtifactResultMetadata] = &artifactResultMetadata
 	}
-
-	changes[models.ArtifactResultStatus] = execState.Status
-	changes[models.ArtifactResultExecState] = execState
 
 	_, err := a.resultRepo.Update(
 		ctx,
