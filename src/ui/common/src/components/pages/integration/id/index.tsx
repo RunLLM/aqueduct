@@ -17,7 +17,7 @@ import IntegrationObjectList from '../../../../components/integrations/integrati
 import OperatorsOnIntegration from '../../../../components/integrations/operatorsOnIntegration';
 import DefaultLayout from '../../../../components/layouts/default';
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
-import { useIntegrationWorkflowsGetQuery } from '../../../../handlers/AqueductApi';
+import {useDagResultsGetQuery, useIntegrationWorkflowsGetQuery} from '../../../../handlers/AqueductApi';
 import { handleGetServerConfig } from '../../../../handlers/getServerConfig';
 import {
   handleListIntegrationObjects,
@@ -85,19 +85,19 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   };
 
   const testConnectStatus = useSelector(
-    (state: RootState) => state.integrationReducer.testConnectStatus
+      (state: RootState) => state.integrationReducer.testConnectStatus
   );
 
   const integrations = useSelector(
-    (state: RootState) => state.integrationsReducer.integrations
+      (state: RootState) => state.integrationsReducer.integrations
   );
 
   const isListObjectsLoading = useSelector((state: RootState) =>
-    isLoading(state.integrationReducer.objectNames.status)
+      isLoading(state.integrationReducer.objectNames.status)
   );
 
   const serverConfig = useSelector(
-    (state: RootState) => state.serverConfigReducer
+      (state: RootState) => state.serverConfigReducer
   );
 
   const selectedIntegration = integrations[integrationId];
@@ -105,13 +105,13 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   // Using the ListIntegrationsRoute.
   // ENG-1036: We should create a route where we can pass in the integrationId and get the associated metadata and switch to using that.
   useEffect(() => {
-    dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
-    dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
+    dispatch(handleLoadIntegrations({apiKey: user.apiKey}));
+    dispatch(handleFetchAllWorkflowSummaries({apiKey: user.apiKey}));
     dispatch(
-      handleLoadIntegrationOperators({
-        apiKey: user.apiKey,
-        integrationId: integrationId,
-      })
+        handleLoadIntegrationOperators({
+          apiKey: user.apiKey,
+          integrationId: integrationId,
+        })
     );
   }, [dispatch, integrationId, user.apiKey]);
 
@@ -134,15 +134,15 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     }
 
     if (
-      selectedIntegration &&
-      SupportedIntegrations[selectedIntegration.service].category ===
+        selectedIntegration &&
+        SupportedIntegrations[selectedIntegration.service].category ===
         IntegrationCategories.DATA
     ) {
       dispatch(
-        handleListIntegrationObjects({
-          apiKey: user.apiKey,
-          integrationId: integrationId,
-        })
+          handleListIntegrationObjects({
+            apiKey: user.apiKey,
+            integrationId: integrationId,
+          })
       );
     }
   }, [selectedIntegration]);
@@ -152,12 +152,15 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   useEffect(() => {
     async function fetchServerConfig() {
       if (user) {
-        await dispatch(handleGetServerConfig({ apiKey: user.apiKey }));
+        await dispatch(handleGetServerConfig({apiKey: user.apiKey}));
       }
     }
 
     fetchServerConfig();
   }, [user.apiKey]);
+
+
+  const [workflowID, setWorkflowId] = useState(null);
 
   const {
     data: workflowIDs,
@@ -169,6 +172,29 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     apiKey: user.apiKey,
     integrationId: integrationId,
   });
+
+  // FOR ANDRE: Example usage to get the latest dag result for one of the workflows.
+  const {data: dagResults, error: testError, isLoading: testIsLoading} = useDagResultsGetQuery({
+    apiKey: user.apiKey,
+    workflowId: workflowID,
+    limit: 1,
+
+    // TODO: for some reason, the skip doesn't quite work, but the page loads regardless of the 400,
+    //  when the first query completes.
+    skip: !workflowID, // Skip the call if the workflowID hasn't been populated yet by the previous call.
+  })
+
+  useEffect(() => {
+    if (workflowIDs && workflowIDs.length > 0) {
+      setWorkflowId(workflowIDs[0]);
+    }
+  }, [workflowIDs]);
+
+  if (!testError && !testIsLoading) {
+    // Prints the dag result of the latest result for this workflow.
+    console.log("DAG RESULTS: ", dagResults);
+  }
+
 
   if (fetchWorkflowsIsLoading) {
     return <CircularProgress />;
