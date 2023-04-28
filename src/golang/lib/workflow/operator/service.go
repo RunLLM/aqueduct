@@ -2,8 +2,10 @@ package operator
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/dynamic"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -13,11 +15,31 @@ import (
 
 func GetOperatorsOnIntegration(
 	ctx context.Context,
-	integrationID uuid.UUID,
+	orgID string,
+	integration *models.Integration,
 	integrationRepo repos.Integration,
 	operatorRepo repos.Operator,
 	DB database.Database,
 ) ([]models.Operator, error) {
+	integrationID := integration.ID
+
+	// If the requested integration is a cloud integration, substitute the cloud integration ID
+	// with the ID of the dynamic k8s integration.
+	if integration.Service == shared.AWS {
+		k8sIntegration, err := integrationRepo.GetByNameAndUser(
+			ctx,
+			fmt.Sprintf("%s:%s", integration.Name, dynamic.K8sIntegrationNameSuffix),
+			uuid.Nil,
+			orgID,
+			DB,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		integrationID = k8sIntegration.ID
+	}
+
 	integrationObject, err := integrationRepo.Get(ctx, integrationID, DB)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to retrieve integration.")

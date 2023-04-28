@@ -55,7 +55,7 @@ func (h *IntegrationWorkflowsGetHandler) Prepare(r *http.Request) (interface{}, 
 
 	return &integrationWorkflowsGetArgs{
 		AqContext:     aqContext,
-		integrationID: integrationID,
+		integrationID: *integrationID,
 	}, http.StatusOK, nil
 }
 
