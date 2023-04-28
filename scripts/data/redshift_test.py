@@ -20,9 +20,11 @@ def resume_redshift(aws_access_key_id, aws_secret_access_key, retry=0):
 
     if status == STATUS_AVAILABLE:
         # Nothing to do, the cluster is already ready
+        print("The cluster is already available. There is no action to take.")
         pass
     elif status == STATUS_PAUSED:
         # Cluster can be resumed
+        print("The cluster is currently paused. We will try to resume it.")
         try:
             client.resume_cluster(ClusterIdentifier=CLUSTER_NAME)
         except client.exceptions.InvalidClusterStateFault as e:
@@ -33,16 +35,23 @@ def resume_redshift(aws_access_key_id, aws_secret_access_key, retry=0):
                 sys.exit(f"Unable to resume cluster due to {e} exception even after 5 retries")
 
             # Sleep and retry
+            print(
+                "There was an InvalidClusterStateFault when resuming the cluster. We will sleep and retry."
+            )
             time.sleep(15)
             resume_redshift(aws_access_key_id, aws_secret_access_key, retry=retry + 1)
 
         _wait_for_status(client, STATUS_AVAILABLE)
     elif status == STATUS_PAUSING:
         # First need to wait for cluster to completely pause before resuming it
+        print(
+            "The cluster is currently pausing so we need to wait for it to fully pause, before resuming it."
+        )
         _wait_for_status(client, STATUS_PAUSED)
         resume_redshift(aws_access_key_id, aws_secret_access_key)
     elif status == STATUS_RESUMING:
         # Wait for resuming operation to complete
+        print("The cluster is currently resuming so we will just wait for it to become available.")
         _wait_for_status(client, STATUS_AVAILABLE)
     else:
         sys.exit(f"Cannot resume {CLUSTER_NAME} cluster because it is in the {status} state")
@@ -59,6 +68,7 @@ def pause_redshift(aws_access_key_id, aws_secret_access_key, retry=0):
 
     if status == STATUS_AVAILABLE:
         # Cluster can be paused
+        print("The cluster is available so we will try to pause it.")
         try:
             client.pause_cluster(ClusterIdentifier=CLUSTER_NAME)
         except client.exceptions.InvalidClusterStateFault as e:
@@ -69,18 +79,26 @@ def pause_redshift(aws_access_key_id, aws_secret_access_key, retry=0):
                 sys.exit(f"Unable to pause cluster due to {e} exception even after 5 retries")
 
             # Sleep and retry
+            print(
+                "There was an InvalidClusterStateFault when pausing the cluster. We will sleep and retry."
+            )
             time.sleep(15)
             pause_redshift(aws_access_key_id, aws_secret_access_key, retry=retry + 1)
 
         _wait_for_status(client, STATUS_PAUSED)
     elif status == STATUS_PAUSED:
         # Nothing to do, the cluster is already paused
+        print("The cluster is already paused. There is no action to take.")
         pass
     elif status == STATUS_PAUSING:
         # Wait for pausing operation to complete
+        print("The cluster is currently pausing so we will just wait for it to become paused.")
         _wait_for_status(client, STATUS_PAUSED)
     elif status == STATUS_RESUMING:
         # Wait for cluster to finish resuming, before it can be paused
+        print(
+            "The cluster is currently resuming so we need to wait for it to become available before pausing it."
+        )
         _wait_for_status(client, STATUS_AVAILABLE)
         pause_redshift(aws_access_key_id, aws_secret_access_key)
     else:
