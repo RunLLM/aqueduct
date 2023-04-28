@@ -75,7 +75,7 @@ func (h *IntegrationsWorkflowsGetHandler) Perform(ctx context.Context, interface
 	for _, integration := range integrations {
 		workflowIDs, err := fetchWorkflowIDsForIntegration(ctx, args.OrgID, &integration, h.IntegrationRepo, h.OperatorRepo, h.Database)
 		if err != nil {
-			return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to fetch workflow and operators for integration.")
+			return nil, http.StatusInternalServerError, errors.Wrapf(err, "Unable to find workflows for integration %s", integration.ID)
 		}
 		response[integration.ID] = workflowIDs
 	}

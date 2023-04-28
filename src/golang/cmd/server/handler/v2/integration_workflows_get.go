@@ -2,7 +2,8 @@ package v2
 
 import (
 	"context"
-	"fmt"
+	"net/http"
+
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	"github.com/aqueducthq/aqueduct/cmd/server/request/parser"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -10,7 +11,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/google/uuid"
-	"net/http"
 )
 
 // This file should map directly to
@@ -64,11 +64,15 @@ func (h *IntegrationWorkflowsGetHandler) Perform(ctx context.Context, interfaceA
 
 	integration, err := h.IntegrationRepo.Get(ctx, args.integrationID, h.Database)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, fmt.Sprintf("Unable to find integration %s", args.integrationID))
+		return nil, http.StatusInternalServerError, errors.Wrapf(err, "Unable to find integration %s", args.integrationID)
 	}
 
 	workflowIDs, err := fetchWorkflowIDsForIntegration(
 		ctx, args.OrgID, integration, h.IntegrationRepo, h.OperatorRepo, h.Database,
 	)
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrapf(err, "Unable to find workflows for integration %s", args.integrationID)
+	}
+
 	return workflowIDs, http.StatusOK, nil
 }
