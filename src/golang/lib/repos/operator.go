@@ -27,6 +27,9 @@ type operatorReader interface {
 	// GetNode returns the OperatorNode view given the operator ID.
 	GetNode(ctx context.Context, ID uuid.UUID, DB database.Database) (*views.OperatorNode, error)
 
+	// GetNodeBatch returns the OperatorNodes the operator IDs.
+	GetNodeBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]views.OperatorNode, error)
+
 	// GetBatch returns the Operators with IDs.
 	GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.Operator, error)
 
