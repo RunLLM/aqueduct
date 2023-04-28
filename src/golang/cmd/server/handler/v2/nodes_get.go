@@ -27,7 +27,7 @@ import (
 //		`api-key`: user's API Key
 // Response:
 //	Body:
-//		serialized `workflow.Response`
+//		serialized `node.Nodes`
 
 type nodesGetArgs struct {
 	*aq_context.AqContext
