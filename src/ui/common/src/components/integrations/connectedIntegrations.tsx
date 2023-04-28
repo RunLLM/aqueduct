@@ -1,10 +1,11 @@
-import { Typography } from '@mui/material';
+import { Alert, CircularProgress, Snackbar, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { IntegrationCard } from '../../components/integrations/cards/card';
+import { useIntegrationsWorkflowsGetQuery } from '../../handlers/AqueductApi';
 import { handleLoadIntegrations } from '../../reducers/integrations';
 import { AppDispatch, RootState } from '../../stores/store';
 import { UserProfile } from '../../utils/auth';
@@ -30,6 +31,12 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
   forceLoad,
   connectedIntegrationType,
 }) => {
+  const [showWorkflowsFetchErrorToast, setShowWorkflowsFetchErrorToast] =
+    useState(false);
+  const handleWorkflowsFetchErrorToastClose = () => {
+    setShowWorkflowsFetchErrorToast(false);
+  };
+
   const dispatch: AppDispatch = useDispatch();
 
   useEffect(() => {
@@ -63,6 +70,31 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
         connectedIntegrationType
     )
   );
+
+  // For each integration, count the number of workflows that use it.
+  // Fetch the number of workflows for each integration.
+  const {
+    data: workflowsByIntegration,
+    error: fetchWorkflowsError,
+    isLoading,
+  } = useIntegrationsWorkflowsGetQuery({ apiKey: user.apiKey });
+
+  // Display an error toast if there was an error fetching the workflows.
+  useEffect(() => {
+    if (fetchWorkflowsError) {
+      setShowWorkflowsFetchErrorToast(true);
+    } else {
+      // Remember to hide this if the error goes away.
+      setShowWorkflowsFetchErrorToast(false);
+    }
+  }, [fetchWorkflowsError]);
+
+  if (isLoading) {
+    return <CircularProgress />;
+  }
+
+  // Had to move this down here because react hooks don't like it when there are early returns
+  // in front of them.
   if (!integrations) {
     return null;
   }
@@ -77,8 +109,24 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
 
   return (
     <Box>
-      <Typography variant="h6">{connectedIntegrationType}</Typography>
+      <Snackbar
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        open={showWorkflowsFetchErrorToast}
+        onClose={handleWorkflowsFetchErrorToastClose}
+        key={'integrations-dialog-success-snackbar'}
+        autoHideDuration={6000}
+      >
+        <Alert
+          onClose={handleWorkflowsFetchErrorToastClose}
+          severity="error"
+          sx={{ width: '100%' }}
+        >
+          Unexpected error occurred when fetching the workflows associated with
+          the integrations.
+        </Alert>
+      </Snackbar>
 
+      <Typography variant="h6">{connectedIntegrationType}</Typography>
       <Box
         sx={{
           display: 'flex',
@@ -89,6 +137,20 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
         {[...integrations]
           .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
           .map((integration, idx) => {
+            // Leave this empty if there was an error while fetching workflows.
+            let numWorkflowsUsingMsg = '';
+            const numWorkflowsUsing =
+              workflowsByIntegration[integration.id].length;
+            if (!fetchWorkflowsError) {
+              if (numWorkflowsUsing > 0) {
+                numWorkflowsUsingMsg = `Used by ${numWorkflowsUsing} ${
+                  numWorkflowsUsing === 1 ? 'workflow' : 'workflows'
+                }`;
+              } else {
+                numWorkflowsUsingMsg = 'Not currently in use';
+              }
+            }
+
             return (
               <Box key={idx} sx={{ mx: 1, my: 1 }}>
                 <Link
@@ -97,7 +159,10 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
                   href={`${getPathPrefix()}/integration/${integration.id}`}
                 >
                   <Card>
-                    <IntegrationCard integration={integration} />
+                    <IntegrationCard
+                      integration={integration}
+                      numWorkflowsUsingMsg={numWorkflowsUsingMsg}
+                    />
                   </Card>
                 </Link>
               </Box>
