@@ -177,7 +177,7 @@ func generateImagePullSecret(image *operator.ImageConfig, k8sClient *kubernetes.
 		return "", errors.Wrap(err, "Unable to read container registry config from vault.")
 	}
 
-	ecrConfig, err := container_registry.UpdateECRCredentialsIfNeeded(config, registryID, vaultObject)
+	ecrConfig, err := container_registry.RefreshECRCredentialsIfNeeded(config, registryID, vaultObject)
 	if err != nil {
 		return "", errors.Wrap(err, "Unable to get ECR config.")
 	}

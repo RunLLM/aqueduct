@@ -150,8 +150,8 @@ func GetECRCredentials(conf *shared.ECRConfig) (ECRCredentials, error) {
 	}, nil
 }
 
-// AuthenticateECRConfig authenticates the given auth config for ECR.
-// It also updates `authConf` with the ECR token, its expiration time, and proxy endpoint.
+// AuthenticateAndUpdateECRConfig authenticates the given auth config for ECR.
+// It *also updates* `authConf` with the ECR token, its expiration time, and proxy endpoint.
 func AuthenticateAndUpdateECRConfig(authConf auth.Config) error {
 	conf, err := lib_utils.ParseECRConfig(authConf)
 	if err != nil {
@@ -184,7 +184,10 @@ func AuthenticateAndUpdateECRConfig(authConf auth.Config) error {
 	return nil
 }
 
-func UpdateECRCredentialsIfNeeded(config auth.Config, registryID uuid.UUID, vaultObject vault.Vault) (*shared.ECRConfig, error) {
+// RefreshECRCredentialsIfNeeded checks if the ECR token has expired.
+// If so, it refreshes the token and writes the updated config to vault.
+// It returns the updated ECR config.
+func RefreshECRCredentialsIfNeeded(config auth.Config, registryID uuid.UUID, vaultObject vault.Vault) (*shared.ECRConfig, error) {
 	ecrConfig, err := lib_utils.ParseECRConfig(config)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to parse ECR config.")
@@ -197,7 +200,7 @@ func UpdateECRCredentialsIfNeeded(config auth.Config, registryID uuid.UUID, vaul
 	}
 
 	if expirationTime < time.Now().Unix() {
-		log.Info("ECR token is expired. Refreshing...")
+		log.Info("ECR token has expired. Refreshing...")
 		if err := AuthenticateAndUpdateECRConfig(config); err != nil {
 			return nil, errors.Wrap(err, "Error updating ECR config.")
 		}
