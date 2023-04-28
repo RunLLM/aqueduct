@@ -1,7 +1,6 @@
 import React from 'react';
 
-import { Integration } from '../../../utils/integrations';
-import { S3Config } from '../../../utils/workflows';
+import { Integration, S3Config } from '../../../utils/integrations';
 import { ResourceCardText } from './text';
 
 type Props = {
