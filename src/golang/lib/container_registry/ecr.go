@@ -22,13 +22,13 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type ECRCredentials struct {
+type ecrCredentials struct {
 	Token         string
 	ExpireAt      int64
 	ProxyEndpoint string
 }
 
-func CreateAWSSessionFromAccessKey(accessKeyID, secretAccessKey, region string) (*session.Session, error) {
+func createAWSSessionFromAccessKey(accessKeyID, secretAccessKey, region string) (*session.Session, error) {
 	creds := credentials.NewStaticCredentials(accessKeyID, secretAccessKey, "")
 	return session.NewSession(&aws.Config{
 		Credentials: creds,
@@ -36,7 +36,7 @@ func CreateAWSSessionFromAccessKey(accessKeyID, secretAccessKey, region string) 
 	})
 }
 
-func CreateAWSSessionFromConfigFile(configFilePath, configFileProfile string) (*session.Session, error) {
+func createAWSSessionFromConfigFile(configFilePath, configFileProfile string) (*session.Session, error) {
 	// If the authentication mode is credential file, we need to retrieve the AWS region via
 	// `aws configure get region` and explicitly pass it to Terraform.
 	region, stderr, err := lib_utils.RunCmd(
@@ -77,12 +77,12 @@ func getECRServiceHandle(conf *shared.ECRConfig) (*ecr.ECR, error) {
 	var err error
 
 	if conf.AccessKeyId != "" && conf.SecretAccessKey != "" && conf.Region != "" {
-		awsSession, err = CreateAWSSessionFromAccessKey(conf.AccessKeyId, conf.SecretAccessKey, conf.Region)
+		awsSession, err = createAWSSessionFromAccessKey(conf.AccessKeyId, conf.SecretAccessKey, conf.Region)
 		if err != nil {
 			return nil, errors.Wrap(err, "Error creating AWS session from access key.")
 		}
 	} else {
-		awsSession, err = CreateAWSSessionFromConfigFile(conf.ConfigFilePath, conf.ConfigFileProfile)
+		awsSession, err = createAWSSessionFromConfigFile(conf.ConfigFilePath, conf.ConfigFileProfile)
 		if err != nil {
 			return nil, errors.Wrap(err, "Error creating AWS session from config file.")
 		}
@@ -122,9 +122,9 @@ func ValidateECRImage(conf *shared.ECRConfig, imageName string) error {
 	return nil
 }
 
-// GetECRToken returns ECRCredentials, which contains the ECR token, its expiration time, and proxy endpoint.
-func GetECRCredentials(conf *shared.ECRConfig) (ECRCredentials, error) {
-	emptyResponse := ECRCredentials{}
+// getECRCredentials returns ECRCredentials, which contains the ECR token, its expiration time, and proxy endpoint.
+func getECRCredentials(conf *shared.ECRConfig) (ecrCredentials, error) {
+	emptyResponse := ecrCredentials{}
 
 	ecrSvc, err := getECRServiceHandle(conf)
 	if err != nil {
@@ -143,7 +143,7 @@ func GetECRCredentials(conf *shared.ECRConfig) (ECRCredentials, error) {
 		return emptyResponse, errors.Wrap(err, "Error decoding token.")
 	}
 
-	return ECRCredentials{
+	return ecrCredentials{
 		Token:         strings.Split(string(decodedToken), ":")[1],
 		ExpireAt:      auth.ExpiresAt.Unix(),
 		ProxyEndpoint: *auth.ProxyEndpoint,
@@ -170,7 +170,7 @@ func AuthenticateAndUpdateECRConfig(authConf auth.Config) error {
 		return errors.New("Either 1) AWS access key ID, secret access key, region, or 2) credential file path, profile must be provided.")
 	}
 
-	ecrCredentials, err := GetECRCredentials(conf)
+	ecrCredentials, err := getECRCredentials(conf)
 	if err != nil {
 		return errors.Wrap(err, "Error getting ECR credentials.")
 	}
