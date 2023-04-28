@@ -11,16 +11,16 @@ import (
 
 type IntegrationIDParser struct{}
 
-func (IntegrationIDParser) Parse(r *http.Request) (uuid.UUID, error) {
+func (IntegrationIDParser) Parse(r *http.Request) (*uuid.UUID, error) {
 	integrationIDStr := (pathParser{URLParam: routes.IntegrationIDParam}).Parse(r)
 
 	id, err := uuid.Parse(integrationIDStr)
 	if err != nil {
-		return uuid.UUID{}, errors.Wrap(
+		return nil, errors.Wrap(
 			err,
 			fmt.Sprintf("Malformed integration ID %s", integrationIDStr),
 		)
 	}
 
-	return id, nil
+	return &id, nil
 }
