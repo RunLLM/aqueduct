@@ -234,6 +234,14 @@ class _EmailConfigWithStringField(BaseConnectionConfig):
     enabled: str
 
 
+class AirflowConfig(BaseConnectionConfig):
+    host: str
+    username: str
+    password: str
+    s3_credentials_path: str
+    s3_credentials_profile: str
+
+
 class SparkConfig(BaseConnectionConfig):
     livy_server_url: str
 
@@ -269,6 +277,7 @@ IntegrationConfig = Union[
     AWSConfig,
     _AWSConfigWithSerializedConfig,
     _SlackConfigWithStringField,
+    AirflowConfig,
     SparkConfig,
     DatabricksConfig,
     K8sConfig,
@@ -305,6 +314,8 @@ def convert_dict_to_integration_connect_config(
         return EmailConfig(**config_dict)
     elif service == ServiceType.CONDA:
         return CondaConfig(**config_dict)
+    elif service == ServiceType.AIRFLOW:
+        return AirflowConfig(**config_dict)
     elif service == ServiceType.SPARK:
         return SparkConfig(**config_dict)
     elif service == ServiceType.DATABRICKS:
