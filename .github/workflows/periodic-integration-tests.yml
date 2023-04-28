@@ -27,7 +27,7 @@ jobs:
       - name: inject dev version
         run: |
           echo 0.1.dev >> sdk/version
-          echo 0.1.dev >> python/src/version
+          echo 0.1.dev >> src/python/version
 
       - name: build sdk
         working-directory: sdk
