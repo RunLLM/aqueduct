@@ -1,6 +1,3 @@
-import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Tooltip } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
@@ -25,7 +22,6 @@ export const ResourceHeaderDetailsCard: React.FC<
       sx={{
         display: 'flex',
         flexDirection: 'column',
-        width: '900px',
       }}
     >
       <Box display="flex" flexDirection="row" alignItems="center">
@@ -47,24 +43,13 @@ export const ResourceHeaderDetailsCard: React.FC<
               }
               size="20px"
             />
-
-            <Box sx={{ ml: 2 }}>
-              <Tooltip title="See more" arrow>
-                <FontAwesomeIcon
-                  icon={faEllipsis}
-                  style={{
-                    transition: 'transform 200ms',
-                  }}
-                />
-              </Tooltip>
-            </Box>
           </Box>
 
-          <Typography variant="caption" sx={{ fontWeight: 300}}>
+          <Typography variant="caption" sx={{ fontWeight: 300 }}>
             {new Date(integration.createdAt * 1000).toLocaleString()}
           </Typography>
 
-          <Typography variant="body2" sx={{ fontWeight: 300}}>
+          <Typography variant="body2" sx={{ fontWeight: 300 }}>
             {numWorkflowsUsingMsg}
           </Typography>
         </Box>

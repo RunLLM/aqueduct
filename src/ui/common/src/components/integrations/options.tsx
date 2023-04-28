@@ -50,7 +50,7 @@ const IntegrationOptions: React.FC<Props> = ({
           setAnchorEl(event.currentTarget);
         }}
         endIcon={<FontAwesomeIcon icon={faCaretDown} size="sm" />}
-        sx={{ width: {IntegrationOptionsButtonWidth}}}
+        sx={{ width: { IntegrationOptionsButtonWidth } }}
       >
         Options
       </Button>
