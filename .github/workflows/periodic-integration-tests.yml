@@ -6,6 +6,59 @@ on:
   workflow_dispatch:
 
 jobs:
+  publish-pypi:
+    # similar to release scripts, but publish to test pypi:
+    # rm -rf dist && rm -rf build
+    # python3 -m build && twine check dist/*
+    # twine upload --repository testpypi dist/*
+    # pip3 install -i https://test.pypi.org/simple/ aqueduct-sdk==0.1.dev
+    name: Publish Test Pypi Packages
+    runs-on: [ubuntu-latest]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: install missing dependencies
+        run: pip install build twine
+
+      - name: inject dev version
+        run: |
+          echo 0.1.dev >> sdk/version
+          echo 0.1.dev >> python/src/version
+
+      - name: build sdk
+        working-directory: sdk
+        run: |
+          rm -rf dist
+          rm -rf build
+          python3 -m build
+          twine check dist/*
+
+      - name: publish sdk
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: sdk/dist
+          password: ${{ secrets.PYPI_API_TOKEN_SDK }}
+
+      - name: build executor
+        working-directory: src/python
+        run: |
+          rm -rf dist
+          rm -rf build
+          python3 -m build
+          twine check dist/*
+
+      - name: publish executor
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: src/python/dist
+          password: ${{ secrets.PYPI_API_TOKEN_EXECUTOR }}
+
   run-k8s-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 360
@@ -15,6 +68,13 @@ jobs:
 
       - uses: ./.github/actions/setup-server
         timeout-minutes: 5
+
+      # https://github.com/marketplace/actions/wait-on-check
+      - name: Wait for package publishing
+        uses: lewagon/wait-on-check-action@v1.3.1
+        with:
+          ref: ${{ github.ref }}
+          check-name: "Publish Test Pypi Packages"
 
       # TODO(ENG-2537): Use our separate GH actions credentials.
       - uses: ./.github/actions/fetch-test-config
@@ -107,6 +167,13 @@ jobs:
 
       - uses: ./.github/actions/setup-server
         timeout-minutes: 5
+
+      # https://github.com/marketplace/actions/wait-on-check
+      - name: Wait for package publishing
+        uses: lewagon/wait-on-check-action@v1.3.1
+        with:
+          ref: ${{ github.ref }}
+          check-name: "Publish Test Pypi Packages"
 
       - uses: conda-incubator/setup-miniconda@v2
         with:
