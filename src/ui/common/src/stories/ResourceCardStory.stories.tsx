@@ -320,6 +320,13 @@ export const ResourceCardStory: React.FC = () => {
     },
   ];
 
+  // Unique messages we want to display.
+  const numWorkflowsUsingMsgs = [
+    'Not currently in use',
+    'Used by 1 workflow',
+    'Used by 2 workflows',
+  ];
+
   // Is missing the <Link> component that encapsulates the <Card> component.
   return (
     <Box
@@ -335,7 +342,12 @@ export const ResourceCardStory: React.FC = () => {
           return (
             <Box key={idx} sx={{ mx: 1, my: 1 }}>
               <Card>
-                <IntegrationCard integration={integration} />
+                <IntegrationCard
+                  integration={integration}
+                  numWorkflowsUsingMsg={
+                    numWorkflowsUsingMsgs[idx % numWorkflowsUsingMsgs.length]
+                  }
+                />
               </Card>
             </Box>
           );

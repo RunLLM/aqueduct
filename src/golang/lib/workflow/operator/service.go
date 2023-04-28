@@ -23,7 +23,7 @@ func GetOperatorsOnIntegration(
 		return nil, errors.Wrap(err, "Unable to retrieve integration.")
 	}
 
-	if shared.IsDatabaseIntegration(integrationObject.Service) {
+	if shared.IsDataIntegration(integrationObject.Service) {
 		return operatorRepo.GetExtractAndLoadOPsByIntegration(ctx, integrationID, DB)
 	}
 
