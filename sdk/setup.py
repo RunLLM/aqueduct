@@ -4,6 +4,10 @@ from pathlib import Path
 
 import setuptools
 
+version = open("version").read()
+if not version:
+    raise Exception("Version file must contain a valid version string.")
+
 readme_path = Path(os.environ["PWD"], "../README.md")
 long_description = open(readme_path).read()
 
@@ -18,7 +22,7 @@ else:
 
 setuptools.setup(
     name="aqueduct-sdk",
-    version="0.2.12",
+    version=version,
     author="Aqueduct, Inc.",
     author_email="hello@aqueducthq.com",
     description="Python SDK for Aqueduct",
