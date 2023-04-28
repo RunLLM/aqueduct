@@ -134,6 +134,7 @@ const IntegrationsPage: React.FC<Props> = ({
                 </Typography>
                 <Box
                   sx={{
+                    borderRadius: 2,
                     backgroundColor: theme.palette.red[100],
                     color: theme.palette.red[600],
                     p: 2,
