@@ -19,9 +19,8 @@ type ResourceCardTextProps = {
 
 const paddingBetweenLabelAndValue = 8; // in pixels
 
-// Use when filling in a single line of text within an integration card.
-// The format is "Label: Value". The label width is set to the maximum of all
-// the provided labels.
+// The format is "Label: Value". The label width is set to the maximum of all the provided labels.
+// The maximum number of fields per
 export const ResourceCardText: React.FC<ResourceCardTextProps> = ({
   labels,
   values,

@@ -7,7 +7,6 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 
-import { DetailIntegrationCard } from '../../../../components/integrations/cards/detailCard';
 import AddTableDialog from '../../../../components/integrations/dialogs/addTableDialog';
 import DeleteIntegrationDialog from '../../../../components/integrations/dialogs/deleteIntegrationDialog';
 import IntegrationDialog from '../../../../components/integrations/dialogs/dialog';
@@ -32,7 +31,9 @@ import {
   SupportedIntegrations,
 } from '../../../../utils/integrations';
 import { isFailed, isLoading, isSucceeded } from '../../../../utils/shared';
-import IntegrationOptions from '../../../integrations/options';
+import { ResourceHeaderDetailsCard } from '../../../integrations/cards/headerDetailsCard';
+import { ResourceFieldsDetailsCard } from '../../../integrations/cards/resourceFieldsDetailsCard';
+import IntegrationOptions, {IntegrationOptionsButtonWidth} from '../../../integrations/options';
 import { LayoutProps } from '../../types';
 
 type IntegrationDetailsPageProps = {
@@ -158,10 +159,13 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     >
       <Box sx={{ paddingBottom: '4px' }}>
         <Box display="flex" flexDirection="row" alignContent="top">
-          <DetailIntegrationCard
-            integration={selectedIntegration}
-            connectStatus={testConnectStatus}
-          />
+          <Box sx={{flex: 1, maxWidth: `calc(100% - ${IntegrationOptionsButtonWidth})`}}>
+            <ResourceHeaderDetailsCard
+                integration={selectedIntegration}
+                numWorkflowsUsingMsg={'Not currently used.'}
+            />
+          </Box>
+
           <IntegrationOptions
             integration={selectedIntegration}
             onUploadCsv={() => setShowAddTableDialog(true)}
@@ -222,6 +226,13 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             .
           </Typography>
         )}
+
+        <Box sx={{ my: 1 }}>
+          <ResourceFieldsDetailsCard
+            integration={selectedIntegration}
+            detailedView={true}
+          />
+        </Box>
 
         {SupportedIntegrations[selectedIntegration.service].category ===
           IntegrationCategories.DATA && (
