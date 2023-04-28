@@ -52,61 +52,19 @@ func LaunchJob(
 	numCompletions := int32(1)
 
 	var imagePullSecretName string
+	var err error
 
 	if image != nil {
+		// Add environment variable AQUEDUCT_EXPECTED_VERSION to check potential version mismatch.
 		(*environmentVariables)["AQUEDUCT_EXPECTED_VERSION"] = lib.ServerVersionNumber
 
-		// Get ECR credentials to authenticate with ECR registry
 		if image.Service != shared.ECR {
 			return errors.Newf("Unsupported image service: %s", image.Service)
 		}
 
-		registryID, err := uuid.Parse(*image.RegistryID)
+		imagePullSecretName, err = generateImagePullSecret(image, k8sClient, namespace)
 		if err != nil {
-			return errors.Wrap(err, "Unable to parse container registry ID.")
-		}
-
-		storageConfig := config.Storage()
-		vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
-		if err != nil {
-			return errors.Wrap(err, "Unable to initialize vault.")
-		}
-
-		config, err := auth.ReadConfigFromSecret(context.Background(), registryID, vaultObject)
-		if err != nil {
-			return errors.Wrap(err, "Unable to read container registry config from vault.")
-		}
-
-		ecrConfig, err := container_registry.UpdateECRCredentialsIfNeeded(config, registryID, vaultObject)
-		if err != nil {
-			return errors.Wrap(err, "Unable to get ECR config.")
-		}
-
-		uid, err := uuid.NewUUID()
-		if err != nil {
-			return errors.Wrap(err, "Unable to generate UUID for Kubernetes image pull secret name.")
-		}
-
-		imagePullSecretName = uid.String()
-
-		authConfig := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      imagePullSecretName,
-				Namespace: namespace,
-			},
-			Type: corev1.SecretTypeDockerConfigJson,
-			Data: map[string][]byte{
-				".dockerconfigjson": []byte(fmt.Sprintf(`{"auths": {"%s": {"username": "AWS", "password": "%s", "email": "none"}}}`, ecrConfig.ProxyEndpoint, ecrConfig.Token)),
-			},
-		}
-
-		// Create a secret with ECR credentials
-		_, err = k8sClient.CoreV1().Secrets(namespace).Create(context.Background(), authConfig, metav1.CreateOptions{})
-		if err != nil {
-			// Double-check that we didn't race against another process to create this secret.
-			if _, secretExistsErr := GetSecret(context.Background(), imagePullSecretName, k8sClient); secretExistsErr != nil {
-				return errors.Wrap(err, "Error while creating ECR Secrets")
-			}
+			return errors.Wrap(err, "Error generating image pull secret.")
 		}
 	}
 
@@ -159,7 +117,7 @@ func LaunchJob(
 		// Assign environment variables from secret references
 		job.Spec.Template.Spec.Containers[0].EnvFrom = generateK8sEnvVarFromSecrets(secretEnvVariables)
 	}
-	_, err := k8sClient.BatchV1().Jobs(job.ObjectMeta.Namespace).Create(context.Background(), &job, createOptions)
+	_, err = k8sClient.BatchV1().Jobs(job.ObjectMeta.Namespace).Create(context.Background(), &job, createOptions)
 	if err != nil {
 		return errors.Wrap(err, "Error launching job.")
 	}
@@ -200,4 +158,56 @@ func GetPod(ctx context.Context, name string, k8sClient *kubernetes.Clientset) (
 		return nil, errors.Newf("Expected job %s to have one pod, but instead got %v.", name, len(podList.Items))
 	}
 	return &podList.Items[0], nil
+}
+
+func generateImagePullSecret(image *operator.ImageConfig, k8sClient *kubernetes.Clientset, namespace string) (string, error) {
+	registryID, err := uuid.Parse(*image.RegistryID)
+	if err != nil {
+		return "", errors.Wrap(err, "Unable to parse container registry ID.")
+	}
+
+	storageConfig := config.Storage()
+	vaultObject, err := vault.NewVault(&storageConfig, config.EncryptionKey())
+	if err != nil {
+		return "", errors.Wrap(err, "Unable to initialize vault.")
+	}
+
+	config, err := auth.ReadConfigFromSecret(context.Background(), registryID, vaultObject)
+	if err != nil {
+		return "", errors.Wrap(err, "Unable to read container registry config from vault.")
+	}
+
+	ecrConfig, err := container_registry.UpdateECRCredentialsIfNeeded(config, registryID, vaultObject)
+	if err != nil {
+		return "", errors.Wrap(err, "Unable to get ECR config.")
+	}
+
+	uid, err := uuid.NewUUID()
+	if err != nil {
+		return "", errors.Wrap(err, "Unable to generate UUID for Kubernetes image pull secret name.")
+	}
+
+	imagePullSecretName := uid.String()
+
+	authConfig := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      imagePullSecretName,
+			Namespace: namespace,
+		},
+		Type: corev1.SecretTypeDockerConfigJson,
+		Data: map[string][]byte{
+			".dockerconfigjson": []byte(fmt.Sprintf(`{"auths": {"%s": {"username": "AWS", "password": "%s", "email": "none"}}}`, ecrConfig.ProxyEndpoint, ecrConfig.Token)),
+		},
+	}
+
+	// Create a secret with ECR credentials
+	_, err = k8sClient.CoreV1().Secrets(namespace).Create(context.Background(), authConfig, metav1.CreateOptions{})
+	if err != nil {
+		// Double-check that we didn't race against another process to create this secret.
+		if _, secretExistsErr := GetSecret(context.Background(), imagePullSecretName, k8sClient); secretExistsErr != nil {
+			return "", errors.Wrap(err, "Error while creating ECR Secrets")
+		}
+	}
+
+	return imagePullSecretName, nil
 }

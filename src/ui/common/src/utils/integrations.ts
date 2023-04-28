@@ -213,6 +213,15 @@ export type DynamicK8sConfig = {
   max_gpu_node: string;
 };
 
+export type ECRConfig = {
+  type: AWSCredentialType;
+  region: string;
+  access_key_id: string;
+  secret_access_key: string;
+  config_file_path: string;
+  config_file_profile: string;
+};
+
 export type IntegrationConfig =
   | PostgresConfig
   | SnowflakeConfig

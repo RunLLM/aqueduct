@@ -104,7 +104,7 @@ func (h *GetImageURLHandler) Perform(ctx context.Context, interfaceArgs interfac
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to parse configuration.")
 	}
 
-	err = container_registry.CheckECRImage(conf, args.imageName)
+	err = container_registry.ValidateECRImage(conf, args.imageName)
 	if err != nil {
 		return emptyResponse, http.StatusUnprocessableEntity, err
 	}

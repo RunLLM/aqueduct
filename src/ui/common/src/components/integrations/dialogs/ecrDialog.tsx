@@ -2,26 +2,22 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React, { useEffect } from 'react';
 
-import {
-  AWSConfig,
-  AWSCredentialType,
-} from '../../../utils/integrations';
+import { AWSCredentialType, ECRConfig } from '../../../utils/integrations';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
-const Placeholders: AWSConfig = {
+const Placeholders: ECRConfig = {
   type: AWSCredentialType.AccessKey,
   region: 'us-east-2',
   access_key_id: '',
   secret_access_key: '',
   config_file_path: '',
   config_file_profile: '',
-  k8s_serialized: '',
 };
 
 type Props = {
-  onUpdateField: (field: keyof AWSConfig, value: string) => void;
-  value?: AWSConfig;
+  onUpdateField: (field: keyof ECRConfig, value: string) => void;
+  value?: ECRConfig;
 };
 
 export const ECRDialog: React.FC<Props> = ({ onUpdateField, value }) => {
@@ -129,3 +125,17 @@ export const ECRDialog: React.FC<Props> = ({ onUpdateField, value }) => {
     </Box>
   );
 };
+
+export function isECRConfigComplete(config: ECRConfig): boolean {
+  if (config.type === AWSCredentialType.AccessKey) {
+    return (
+      !!config.access_key_id && !!config.secret_access_key && !!config.region
+    );
+  }
+
+  if (config.type === AWSCredentialType.ConfigFilePath) {
+    return !!config.config_file_profile && !!config.config_file_path;
+  }
+
+  return false;
+}

@@ -91,7 +91,8 @@ func getECRServiceHandle(conf *shared.ECRConfig) (*ecr.ECR, error) {
 	return ecr.New(awsSession), nil
 }
 
-func CheckECRImage(conf *shared.ECRConfig, imageName string) error {
+// ValidateECRImage validates if the given image exists in ECR based on the credentials provided.
+func ValidateECRImage(conf *shared.ECRConfig, imageName string) error {
 	ecrSvc, err := getECRServiceHandle(conf)
 	if err != nil {
 		return errors.Wrap(err, "Error getting ECR service handle.")
@@ -121,7 +122,7 @@ func CheckECRImage(conf *shared.ECRConfig, imageName string) error {
 	return nil
 }
 
-// GetECRToken gets the ECR token, its expiration time, and proxy endpoint.
+// GetECRToken returns ECRCredentials, which contains the ECR token, its expiration time, and proxy endpoint.
 func GetECRCredentials(conf *shared.ECRConfig) (ECRCredentials, error) {
 	emptyResponse := ECRCredentials{}
 

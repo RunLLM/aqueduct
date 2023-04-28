@@ -28,6 +28,7 @@ import {
   AWSConfig,
   BigQueryConfig,
   DatabricksConfig,
+  ECRConfig,
   EmailConfig,
   formatService,
   GCSConfig,
@@ -52,13 +53,13 @@ import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
 import { AirflowDialog, isAirflowConfigComplete } from './airflowDialog';
 import { AthenaDialog, isAthenaConfigComplete } from './athenaDialog';
 import { AWSDialog, isAWSConfigComplete } from './awsDialog';
-import { ECRDialog } from './ecrDialog';
 import { BigQueryDialog } from './bigqueryDialog';
 import { CondaDialog } from './condaDialog';
 import {
   DatabricksDialog,
   isDatabricksConfigComplete,
 } from './databricksDialog';
+import { ECRDialog, isECRConfigComplete } from './ecrDialog';
 import {
   EmailDefaultsOnCreate,
   EmailDialog,
@@ -536,7 +537,7 @@ export function isConfigComplete(
     case 'SQLite':
       return isSQLiteConfigComplete(config as SQLiteConfig);
     case 'ECR':
-      return isAWSConfigComplete(config as AWSConfig);
+      return isECRConfigComplete(config as ECRConfig);
     default:
       // Require all integrations to have their own validation function.
       return false;

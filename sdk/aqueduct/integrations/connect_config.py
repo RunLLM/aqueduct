@@ -199,6 +199,17 @@ class AWSConfig(BaseConnectionConfig):
     k8s: Optional[DynamicK8sConfig]
 
 
+class ECRConfig(BaseConnectionConfig):
+    # Either 1) all of access_key_id, secret_access_key, region, or 2) both config_file_path and
+    # config_file_profile need to be specified. Any other cases will be rejected by the server's
+    # config validation process.
+    access_key_id: str = ""
+    secret_access_key: str = ""
+    region: str = ""
+    config_file_path: str = ""
+    config_file_profile: str = ""
+
+
 class _AWSConfigWithSerializedConfig(BaseConnectionConfig):
     access_key_id: str = ""
     secret_access_key: str = ""
@@ -256,6 +267,7 @@ IntegrationConfig = Union[
     SQLiteConfig,
     SlackConfig,
     AWSConfig,
+    ECRConfig,
     _AWSConfigWithSerializedConfig,
     _SlackConfigWithStringField,
     SparkConfig,
@@ -297,7 +309,7 @@ def convert_dict_to_integration_connect_config(
     elif service == ServiceType.K8S:
         return K8sConfig(**config_dict)
     elif service == ServiceType.ECR:
-        return AWSConfig(**config_dict)
+        return ECRConfig(**config_dict)
     raise InternalAqueductError("Unexpected Service Type: %s" % service)
 
 

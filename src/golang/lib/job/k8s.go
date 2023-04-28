@@ -103,12 +103,6 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobE
 
 		functionSpec.FunctionExtractPath = defaultFunctionExtractPath
 
-		if functionSpec.Image == nil {
-			log.Error("Function spec does not have an image")
-		} else {
-			log.Errorf("Function spec has an image, name %s, url %s", *functionSpec.Image.RegistryID, *functionSpec.Image.Url)
-		}
-
 		if functionSpec.Resources != nil {
 			if functionSpec.Resources.GPUResourceName != nil {
 				resourceRequest[k8s.GPUResourceName] = *functionSpec.Resources.GPUResourceName
@@ -159,7 +153,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobE
 		containerImage = fmt.Sprintf("%s:%s", containerImage, lib.ServerVersionNumber)
 	}
 
-	// Hack
+	// TODO(cgwu): remove this before merging to `main`
 	if spec.Type() == FunctionJobType {
 		functionSpec, ok := spec.(*FunctionSpec)
 		if !ok {
