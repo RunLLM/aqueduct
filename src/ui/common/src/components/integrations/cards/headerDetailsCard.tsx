@@ -6,6 +6,7 @@ import { Integration } from '../../../utils/integrations';
 import ExecutionStatus from '../../../utils/shared';
 import { StatusIndicator } from '../../workflows/workflowStatus';
 import IntegrationLogo from '../logo';
+import {theme} from "../../../styles/theme/theme";
 
 type ResourceHeaderDetailsCardProps = {
   integration: Integration;
@@ -54,6 +55,25 @@ export const ResourceHeaderDetailsCard: React.FC<
           </Typography>
         </Box>
       </Box>
+
+      { integration.exec_state?.status === ExecutionStatus.Failed && (
+              <Box
+                  sx={{
+                    backgroundColor: theme.palette.red[100],
+                    color: theme.palette.red[600],
+                    p: 2,
+                    paddingBottom: '16px',
+                    paddingTop: '16px',
+                    height: 'fit-content',
+                  }}
+              >
+                <pre style={{ margin: '0px' }}>
+                  {`${integration.exec_state?.error.tip}\n\n${integration.exec_state?.error.context}`}
+                </pre>
+              </Box>
+          )
+      }
+
     </Box>
   );
 };
