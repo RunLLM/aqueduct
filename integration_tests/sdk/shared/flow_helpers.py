@@ -12,6 +12,10 @@ from aqueduct import Flow
 
 from .compute import type_from_engine_name
 
+# This is the folder where Airflow DAG files need to be copied to.
+# This is guaranteed to exist when running integration tests against
+# an Airflow cluster that was spun up using the script in
+# scripts/compute/airflow_test_setup.sh
 AIRFLOW_DAGS_FOLDER = "~/airflow/dags"
 
 
@@ -235,7 +239,7 @@ def delete_all_flows(client: aqueduct.Client) -> None:
             print("Successfully deleted workflow %s" % flow_name)
 
         # Try deleting Airflow DAG file if it exists
-        # TODO - Only do this for Airflow workflows
+        # TODO ENG-2868 - Only do this for Airflow workflows
         dag_path = f"{flow_name}_airflow.py"
         if os.path.exists(dag_path):
             os.remove(dag_path)
