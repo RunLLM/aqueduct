@@ -11,7 +11,7 @@ jobs:
     # rm -rf dist && rm -rf build
     # python3 -m build && twine check dist/*
     # twine upload --repository testpypi dist/*
-    # pip3 install -i https://test.pypi.org/simple/ aqueduct-sdk==0.1.dev
+    # pip3 install -i https://test.pypi.org/simple/ aqueduct-ml
     name: Publish Test Pypi Packages
     runs-on: [ubuntu-latest]
     timeout-minutes: 20
