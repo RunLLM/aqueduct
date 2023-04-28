@@ -4,6 +4,7 @@ import { Service, SupportedIntegrations } from '../../utils/integrations';
 
 const sizeMap = {
   large: '85px',
+  medium: '48px',
   small: '24px',
 };
 
