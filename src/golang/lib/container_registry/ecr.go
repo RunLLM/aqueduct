@@ -19,6 +19,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 )
 
 type ECRCredentials struct {
@@ -149,7 +150,7 @@ func GetECRCredentials(conf *shared.ECRConfig) (ECRCredentials, error) {
 }
 
 // AuthenticateECRConfig authenticates the given auth config for ECR.
-// It also updates the auth config with the ECR token, its expiration time, and proxy endpoint.
+// It also updates `authConf` with the ECR token, its expiration time, and proxy endpoint.
 func AuthenticateAndUpdateECRConfig(authConf auth.Config) error {
 	conf, err := lib_utils.ParseECRConfig(authConf)
 	if err != nil {
@@ -195,6 +196,7 @@ func UpdateECRCredentialsIfNeeded(config auth.Config, registryID uuid.UUID, vaul
 	}
 
 	if expirationTime < time.Now().Unix() {
+		log.Info("ECR token is expired. Refreshing...")
 		if err := AuthenticateAndUpdateECRConfig(config); err != nil {
 			return nil, errors.Wrap(err, "Error updating ECR config.")
 		}

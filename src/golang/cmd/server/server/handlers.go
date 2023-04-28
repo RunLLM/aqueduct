@@ -256,6 +256,11 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 
 			IntegrationRepo: s.IntegrationRepo,
 		},
+		routes.GetImageURLRoute: &handler.GetImageURLHandler{
+			Database: s.Database,
+
+			IntegrationRepo: s.IntegrationRepo,
+		},
 		routes.ListNotificationsRoute: &handler.ListNotificationsHandler{
 			Database: s.Database,
 

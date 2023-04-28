@@ -19,8 +19,10 @@ from aqueduct.constants.enums import (
     FunctionGranularity,
     FunctionType,
     OperatorType,
+    RuntimeType,
 )
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
+from aqueduct.integrations.dynamic_k8s_integration import DynamicK8sIntegration
 from aqueduct.logger import logger
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.operators import (
@@ -457,6 +459,15 @@ def _update_operator_spec_with_image(
     image: Optional[Dict[str, str]] = None,
 ) -> None:
     if image is not None:
+        if spec.engine_config is None or spec.engine_config.type is not RuntimeType.K8S:
+            engine_type = (
+                RuntimeType.AQUEDUCT if spec.engine_config is None else spec.engine_config.type
+            )
+            raise InvalidUserArgumentException(
+                "`image` is only compatible with Kubernetes engine. "
+                "Got engine type: %s. " % engine_type.value
+            )
+
         if not isinstance(image, Dict) or any(not isinstance(k, str) for k in image):
             raise InvalidUserArgumentException("`image` must be a dictionary with string keys.")
 
@@ -476,6 +487,9 @@ def _update_operator_spec_with_image(
 
         if url is None:
             raise InvalidUserArgumentException("`url` must be specified when `image` is set.")
+
+        if len(url.split(":")) != 2:
+            raise InvalidUserArgumentException("Image url must be of the form `repo:tag`.")
 
         spec.image = ImageConfig(
             registry_id=str(connected_integrations[registry_name].id),
@@ -552,6 +566,12 @@ def op(
             "cuda_version" (str):
                 Version of CUDA to use with GPU (only applicable for Kubernetes engine). The currently supported
                 values are "11.4.1" and "11.8.0".
+        image:
+            A dictionary containing the custom image configurations that this operator will run with.
+            The dictionary needs to contain the following keys:
+            "registry_name" (str): The name of the registry integration to use.
+            "url" (str): The full url of the image to use. Example: "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest"
+            It is recommended to get the dictionary via `client.integration("my_registry_name").image("my-image:latest")`
 
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
@@ -568,6 +588,9 @@ def op(
 
         >>> recommendations.get()
     """
+    if isinstance(engine, DynamicK8sIntegration):
+        engine = engine.name()
+
     # Establish parity between `num_outputs` and `outputs`, or raise exception if there is a mismatch.
     if num_outputs is None and outputs is None:
         num_outputs = 1
@@ -681,6 +704,7 @@ def metric(
     output: Optional[str] = None,
     engine: Optional[str] = None,
     resources: Optional[Dict[str, Any]] = None,
+    image: Optional[Dict[str, str]] = None,
 ) -> Union[DecoratedMetricFunction, OutputArtifactFunction]:
     """Decorator that converts regular python functions into a metric.
 
@@ -733,6 +757,17 @@ def metric(
             "gpu_resource_name" (str):
                 Name of the gpu resource to use (only applicable for Kubernetes engine).
 
+                For example, the following value is valid: "nvidia.com/gpu".
+            "cuda_version" (str):
+                Version of CUDA to use with GPU (only applicable for Kubernetes engine). The currently supported
+                values are "11.4.1" and "11.8.0".
+        image:
+            A dictionary containing the custom image configurations that this operator will run with.
+            The dictionary needs to contain the following keys:
+            "registry_name" (str): The name of the registry integration to use.
+            "url" (str): The full url of the image to use. Example: "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest"
+            It is recommended to get the dictionary via `client.integration("my_registry_name").image("my-image:latest")`
+
     Examples:
         The metric name is inferred from the function name. The description is pulled from the function
         docstring or can be explicitly set in the decorator.
@@ -747,6 +782,9 @@ def metric(
 
         >>> churn_metric.get()
     """
+    if isinstance(engine, DynamicK8sIntegration):
+        engine = engine.name()
+
     _typecheck_common_decorator_arguments(description, file_dependencies, requirements)
 
     if output is not None and not isinstance(output, str):
@@ -805,6 +843,7 @@ def metric(
             op_spec = OperatorSpec(metric=metric_spec)
             _update_operator_spec_with_engine(op_spec, engine)
             _update_operator_spec_with_resources(op_spec, resources)
+            _update_operator_spec_with_image(op_spec, image)
 
             output_names = [output] if output is not None else None
             numeric_artifact = wrap_spec(
@@ -862,6 +901,7 @@ def check(
     output: Optional[str] = None,
     engine: Optional[str] = None,
     resources: Optional[Dict[str, Any]] = None,
+    image: Optional[Dict[str, str]] = None,
 ) -> Union[DecoratedCheckFunction, OutputArtifactFunction]:
     """Decorator that converts a regular python function into a check.
 
@@ -917,6 +957,17 @@ def check(
             "gpu_resource_name" (str):
                 Name of the gpu resource to use (only applicable for Kubernetes engine).
 
+                For example, the following value is valid: "nvidia.com/gpu".
+            "cuda_version" (str):
+                Version of CUDA to use with GPU (only applicable for Kubernetes engine). The currently supported
+                values are "11.4.1" and "11.8.0".
+        image:
+            A dictionary containing the custom image configurations that this operator will run with.
+            The dictionary needs to contain the following keys:
+            "registry_name" (str): The name of the registry integration to use.
+            "url" (str): The full url of the image to use. Example: "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest"
+            It is recommended to get the dictionary via `client.integration("my_registry_name").image("my-image:latest")`
+
     Examples:
         The check name is inferred from the function name. The description is pulled from the function
         docstring or can be explicitly set in the decorator.
@@ -933,6 +984,9 @@ def check(
 
         >>> churn_is_low_check.get()
     """
+    if isinstance(engine, DynamicK8sIntegration):
+        engine = engine.name()
+
     _typecheck_common_decorator_arguments(description, file_dependencies, requirements)
 
     if output is not None and not isinstance(output, str):
@@ -988,6 +1042,7 @@ def check(
             op_spec = OperatorSpec(check=check_spec)
             _update_operator_spec_with_engine(op_spec, engine)
             _update_operator_spec_with_resources(op_spec, resources)
+            _update_operator_spec_with_image(op_spec, image)
 
             output_names = [output] if output is not None else None
             bool_artifact = wrap_spec(

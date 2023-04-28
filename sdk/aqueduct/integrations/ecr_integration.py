@@ -21,7 +21,8 @@ class ECRIntegration(Integration):
     def image(self, image_name: str) -> Dict[str, str]:
         """
         Returns a dictionary with the name of the ECR resource and the image url, which can be
-        used as input to the `image` field of an operator's decorator.
+        used as input to the `image` field of an operator's decorator. This method also verifies
+        that the image exists in the ECR repository.
         """
         response = globals.__GLOBAL_API_CLIENT__.get_image_url(
             integration_id=str(self._metadata.id),
