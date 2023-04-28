@@ -6,205 +6,205 @@ on:
   workflow_dispatch:
 
 jobs:
-  # run-k8s-tests:
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 360
-  #   name: SDK Integration Tests against K8s Compute
-  #   steps:
-  #     - uses: actions/checkout@v2
+  run-k8s-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    name: SDK Integration Tests against K8s Compute
+    steps:
+      - uses: actions/checkout@v2
 
-  #     - uses: ./.github/actions/setup-server
-  #       timeout-minutes: 5
+      - uses: ./.github/actions/setup-server
+        timeout-minutes: 5
 
-  #     # TODO(ENG-2537): Use our separate GH actions credentials.
-  #     - uses: ./.github/actions/fetch-test-config
-  #       with:
-  #         aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
-  #         aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
-  #         s3_test_config_path: periodic-compute-test-config.yml
+      # TODO(ENG-2537): Use our separate GH actions credentials.
+      - uses: ./.github/actions/fetch-test-config
+        with:
+          aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
+          s3_test_config_path: periodic-compute-test-config.yml
 
-  #     - name: Install Terraform
-  #       run: |
-  #         wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
-  #         echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-  #         sudo apt update && sudo apt install terraform
+      - name: Install Terraform
+        run: |
+          wget -O- https://apt.releases.hashicorp.com/gpg | gpg --dearmor | sudo tee /usr/share/keyrings/hashicorp-archive-keyring.gpg
+          echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+          sudo apt update && sudo apt install terraform
 
-  #     - name: Create K8s Cluster
-  #       working-directory: integration_tests/sdk/compute/k8s
-  #       run: |
-  #         terraform init
-  #         terraform apply --auto-approve
+      - name: Create K8s Cluster
+        working-directory: integration_tests/sdk/compute/k8s
+        run: |
+          terraform init
+          terraform apply --auto-approve
 
-  #     - name: Update the Kubeconfig file
-  #       working-directory: integration_tests/sdk/compute/k8s
-  #       run: aws eks --region $(terraform output -raw region) update-kubeconfig --name $(terraform output -raw cluster_name)
+      - name: Update the Kubeconfig file
+        working-directory: integration_tests/sdk/compute/k8s
+        run: aws eks --region $(terraform output -raw region) update-kubeconfig --name $(terraform output -raw cluster_name)
 
-  #     - name: Update the test-config file with the appropriate cluster name
-  #       working-directory: integration_tests/sdk
-  #       run: sed -i "s/\(cluster_name:\s*\).*/\1 "$(terraform -chdir=compute/k8s/ output -raw cluster_name)"/" test-credentials.yml
+      - name: Update the test-config file with the appropriate cluster name
+        working-directory: integration_tests/sdk
+        run: sed -i "s/\(cluster_name:\s*\).*/\1 "$(terraform -chdir=compute/k8s/ output -raw cluster_name)"/" test-credentials.yml
 
-  #     - name: Install any data connector packages
-  #       run: |
-  #         aqueduct install s3
-  #         aqueduct install snowflake
+      - name: Install any data connector packages
+        run: |
+          aqueduct install s3
+          aqueduct install snowflake
 
-  #     - name: Run the SDK Integration Tests
-  #       working-directory: integration_tests/sdk
-  #       run: pytest aqueduct_tests/ -rP -vv -n 1
+      - name: Run the SDK Integration Tests
+        working-directory: integration_tests/sdk
+        run: pytest aqueduct_tests/ -rP -vv -n 1
 
-  #     - name: Teardown K8s Cluster
-  #       id: k8s_cleanup # so that we only upload the state on this specific failure.
-  #       if: always()
-  #       uses: nick-fields/retry@v2
-  #       with:
-  #         max_attempts: 2
-  #         retry_on: error
-  #         timeout_minutes: 20
-  #         retry_wait_seconds: 300
-  #         command: |
-  #           cd integration_tests/sdk/compute/k8s
-  #           terraform destroy --auto-approve
+      - name: Teardown K8s Cluster
+        id: k8s_cleanup # so that we only upload the state on this specific failure.
+        if: always()
+        uses: nick-fields/retry@v2
+        with:
+          max_attempts: 2
+          retry_on: error
+          timeout_minutes: 20
+          retry_wait_seconds: 300
+          command: |
+            cd integration_tests/sdk/compute/k8s
+            terraform destroy --auto-approve
 
-  #     # This directory is quite large, so we only upload it on failure.
-  #     - uses: actions/upload-artifact@v3
-  #       if: ${{ failure() && steps.k8s_cleanup.outcome == 'failure' }}
-  #       with:
-  #         name: Terraform State
-  #         path: |
-  #           integration_tests/sdk/compute/k8s/*
+      # This directory is quite large, so we only upload it on failure.
+      - uses: actions/upload-artifact@v3
+        if: ${{ failure() && steps.k8s_cleanup.outcome == 'failure' }}
+        with:
+          name: Terraform State
+          path: |
+            integration_tests/sdk/compute/k8s/*
 
-  #     - uses: ./.github/actions/upload-artifacts
-  #       if: always()
-  #       with:
-  #         prefix: K8s Compute
+      - uses: ./.github/actions/upload-artifacts
+        if: always()
+        with:
+          prefix: K8s Compute
 
-  #     # Sets it as an environmental variable.
-  #     - name: Get the Slack ID for the current oncall
-  #       if: always()
-  #       run: |
-  #         aws s3 cp s3://aqueduct-assets/oncall.yml ./oncall.yml
-  #         echo "ONCALL_SLACK_MEMBER_ID=$(python3 scripts/get_current_oncall.py --file ./oncall.yml)" >> $GITHUB_ENV
+      # Sets it as an environmental variable.
+      - name: Get the Slack ID for the current oncall
+        if: always()
+        run: |
+          aws s3 cp s3://aqueduct-assets/oncall.yml ./oncall.yml
+          echo "ONCALL_SLACK_MEMBER_ID=$(python3 scripts/get_current_oncall.py --file ./oncall.yml)" >> $GITHUB_ENV
 
-  #     - name: Report to Slack on Failure
-  #       if: always()
-  #       uses: ravsamhq/notify-slack-action@v1
-  #       with:
-  #         status: ${{ job.status }}
-  #         notification_title: ""
-  #         message_format: "{emoji} *{workflow}* has {status_message}"
-  #         footer: "{run_url}"
-  #         notify_when: "failure,warnings"
-  #         mention_users: ${{ env.ONCALL_SLACK_MEMBER_ID }}
-  #       env:
-  #         SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
+      - name: Report to Slack on Failure
+        if: always()
+        uses: ravsamhq/notify-slack-action@v1
+        with:
+          status: ${{ job.status }}
+          notification_title: ""
+          message_format: "{emoji} *{workflow}* has {status_message}"
+          footer: "{run_url}"
+          notify_when: "failure,warnings"
+          mention_users: ${{ env.ONCALL_SLACK_MEMBER_ID }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
 
-  # run-tests-conda:
-  #   runs-on: ubuntu-latest-4-cores
-  #   timeout-minutes: 40
-  #   name: All Integration Tests with Conda
-  #   steps:
-  #     - uses: actions/checkout@v2
+  run-tests-conda:
+    runs-on: ubuntu-latest-4-cores
+    timeout-minutes: 40
+    name: All Integration Tests with Conda
+    steps:
+      - uses: actions/checkout@v2
 
-  #     - uses: ./.github/actions/setup-server
-  #       timeout-minutes: 5
+      - uses: ./.github/actions/setup-server
+        timeout-minutes: 5
 
-  #     - uses: conda-incubator/setup-miniconda@v2
-  #       with:
-  #         auto-update-conda: true
-  #         auto-activate-base: false
-  #         python-version: ${{ matrix.python-version }}
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          auto-activate-base: false
+          python-version: ${{ matrix.python-version }}
 
-  #     - name: Install conda build
-  #       run: conda install conda-build
+      - name: Install conda build
+        run: conda install conda-build
 
-  #     - name: Update conda
-  #       run: conda update --all
+      - name: Update conda
+        run: conda update --all
 
-  #     # TODO(ENG-2537): Use our separate GH actions credentials.
-  #     - uses: ./.github/actions/fetch-test-config
-  #       with:
-  #         aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
-  #         aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
-  #         s3_test_config_path: periodic-conda-test-config.yml
+      # TODO(ENG-2537): Use our separate GH actions credentials.
+      - uses: ./.github/actions/fetch-test-config
+        with:
+          aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
+          s3_test_config_path: periodic-conda-test-config.yml
 
-  #     - name: Run the SDK Integration Tests
-  #       timeout-minutes: 30
-  #       working-directory: integration_tests/sdk
-  #       run: python3 run_tests.py -n 8
+      - name: Run the SDK Integration Tests
+        timeout-minutes: 30
+        working-directory: integration_tests/sdk
+        run: python3 run_tests.py -n 8
 
-  #     - name: Set the API key as an env variable.
-  #       run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
+      - name: Set the API key as an env variable.
+        run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
 
-  #     - name: Run the No-Concurrency Integration Tests
-  #       timeout-minutes: 10
-  #       working-directory: integration_tests/no_concurrency
-  #       env:
-  #         SERVER_ADDRESS: localhost:8080
-  #         INTEGRATION: aqueduct_demo
-  #       run: pytest . -rP
+      - name: Run the No-Concurrency Integration Tests
+        timeout-minutes: 10
+        working-directory: integration_tests/no_concurrency
+        env:
+          SERVER_ADDRESS: localhost:8080
+          INTEGRATION: aqueduct_demo
+        run: pytest . -rP
 
-  #     - uses: ./.github/actions/upload-artifacts
-  #       if: always()
-  #       with:
-  #         prefix: Conda
+      - uses: ./.github/actions/upload-artifacts
+        if: always()
+        with:
+          prefix: Conda
 
   run-data-integration-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     name: SDK Integration Tests against Data Connectors
-  #   services:
-  #     mysql:
-  #       image: mysql:8.0
-  #       env:
-  #         MYSQL_USER: aqueduct
-  #         MYSQL_PASSWORD: Password123!
-  #         MYSQL_DATABASE: aqueducttest
-  #         MYSQL_ROOT_PASSWORD: Password123!
-  #       ports:
-  #         # Maps tcp port 3306 on service container to the host
-  #         - 3306:3306
-  #       options: >-
-  #         --name=mysql
-  #         --health-cmd="mysqladmin ping"
-  #         --health-interval=10s
-  #         --health-timeout=5s
-  #         --health-retries=3
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_USER: aqueduct
+          MYSQL_PASSWORD: Password123!
+          MYSQL_DATABASE: aqueducttest
+          MYSQL_ROOT_PASSWORD: Password123!
+        ports:
+          # Maps tcp port 3306 on service container to the host
+          - 3306:3306
+        options: >-
+          --name=mysql
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
 
-  #     postgres:
-  #       image: postgres:15
-  #       env:
-  #         POSTGRES_USER: postgres
-  #         POSTGRES_PASSWORD: aqueduct
-  #         POSTGRES_DB: aqueducttest
-  #       options: >-
-  #         --health-cmd pg_isready
-  #         --health-interval 10s
-  #         --health-timeout 5s
-  #         --health-retries 5
-  #       ports:
-  #         # Maps tcp port 5432 on service container to the host
-  #         - 5432:5432
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: aqueduct
+          POSTGRES_DB: aqueducttest
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
 
-  #     mariadb:
-  #       image: mariadb:10.7
-  #       env:
-  #         MARIADB_USER: aqueduct
-  #         MARIADB_PASSWORD: aqueduct
-  #         MARIADB_ROOT_PASSWORD: aqueduct
-  #         MARIADB_DATABASE: aqueducttest
-  #       options: >-
-  #         --health-cmd="mysqladmin ping"
-  #         --health-interval 10s
-  #         --health-timeout 5s
-  #         --health-retries 5
-  #       ports:
-  #         # Maps tcp port 3306 on service container to 3808 on the host
-  #         - 3808:3306
+      mariadb:
+        image: mariadb:10.7
+        env:
+          MARIADB_USER: aqueduct
+          MARIADB_PASSWORD: aqueduct
+          MARIADB_ROOT_PASSWORD: aqueduct
+          MARIADB_DATABASE: aqueducttest
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps tcp port 3306 on service container to 3808 on the host
+          - 3808:3306
     steps:
       - uses: actions/checkout@v2
 
-      # - uses: ./.github/actions/setup-server
-      #   timeout-minutes: 5
+      - uses: ./.github/actions/setup-server
+        timeout-minutes: 5
 
       - uses: ./.github/actions/fetch-test-config
         with:
@@ -214,20 +214,20 @@ jobs:
 
       - name: Install any data connector packages
         run: |
-          pip3 install boto3
+          aqueduct install redshift
 
       - name: Setup Hosted Data Integrations
         working-directory: scripts/data
         run: python3 setup_hosted.py --aws-key-id ${{ secrets.SAURAV_AWS_ACCESS_KEY_ID }} --aws-secret-key ${{ secrets.SAURAV_AWS_SECRET_ACCESS_KEY }}
 
-      # - name: Run the SDK Data Integration Tests
-      #   working-directory: integration_tests/sdk
-      #   run: python3 run_tests.py --data-integration -n 2
+      - name: Run the SDK Data Integration Tests
+        working-directory: integration_tests/sdk
+        run: python3 run_tests.py --data-integration -n 2
 
-      # - uses: ./.github/actions/upload-artifacts
-      #   if: always()
-      #   with:
-      #     prefix: Data Connectors
+      - uses: ./.github/actions/upload-artifacts
+        if: always()
+        with:
+          prefix: Data Connectors
 
       - name: Teardown Hosted Data Integrations
         if: always()
@@ -235,21 +235,21 @@ jobs:
         run: python3 teardown_hosted.py --aws-key-id ${{ secrets.SAURAV_AWS_ACCESS_KEY_ID }} --aws-secret-key ${{ secrets.SAURAV_AWS_SECRET_ACCESS_KEY }}
 
       # Sets it as an environmental variable.
-      # - name: Get the Slack ID for the current oncall
-      #   if: always()
-      #   run: |
-      #     aws s3 cp s3://aqueduct-assets/oncall.yml ./oncall.yml
-      #     echo "ONCALL_SLACK_MEMBER_ID=$(python3 scripts/get_current_oncall.py --file ./oncall.yml)" >> $GITHUB_ENV
+      - name: Get the Slack ID for the current oncall
+        if: always()
+        run: |
+          aws s3 cp s3://aqueduct-assets/oncall.yml ./oncall.yml
+          echo "ONCALL_SLACK_MEMBER_ID=$(python3 scripts/get_current_oncall.py --file ./oncall.yml)" >> $GITHUB_ENV
 
-      # - name: Report to Slack on Failure
-      #   if: always()
-      #   uses: ravsamhq/notify-slack-action@v1
-      #   with:
-      #     status: ${{ job.status }}
-      #     notification_title: ""
-      #     message_format: "{emoji} *{workflow}* has {status_message}"
-      #     footer: "{run_url}"
-      #     notify_when: "failure,warnings"
-      #     mention_users: ${{ env.ONCALL_SLACK_MEMBER_ID }}
-      #   env:
-      #     SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
+      - name: Report to Slack on Failure
+        if: always()
+        uses: ravsamhq/notify-slack-action@v1
+        with:
+          status: ${{ job.status }}
+          notification_title: ""
+          message_format: "{emoji} *{workflow}* has {status_message}"
+          footer: "{run_url}"
+          notify_when: "failure,warnings"
+          mention_users: ${{ env.ONCALL_SLACK_MEMBER_ID }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
