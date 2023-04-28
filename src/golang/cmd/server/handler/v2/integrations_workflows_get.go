@@ -2,17 +2,14 @@ package v2
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/dynamic"
 	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/functional/slices"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
@@ -91,28 +88,10 @@ func fetchWorkflowIDsForIntegration(
 	operatorRepo repos.Operator,
 	db database.Database,
 ) ([]uuid.UUID, error) {
-	integrationID := integration.ID
-
-	// If the requested integration is a cloud integration, substitute the cloud integration ID
-	// with the ID of the dynamic k8s integration.
-	if integration.Service == shared.AWS {
-		k8sIntegration, err := integrationRepo.GetByNameAndUser(
-			ctx,
-			fmt.Sprintf("%s:%s", integration.Name, dynamic.K8sIntegrationNameSuffix),
-			uuid.Nil,
-			orgID,
-			db,
-		)
-		if err != nil {
-			return nil, err
-		}
-
-		integrationID = k8sIntegration.ID
-	}
-
 	operators, err := operator.GetOperatorsOnIntegration(
 		ctx,
-		integrationID,
+		orgID,
+		integration,
 		integrationRepo,
 		operatorRepo,
 		db,
