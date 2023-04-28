@@ -70,3 +70,7 @@ func NewDAGResultFromDBObject(dbDAGResult *models.DAGResult) *DAGResult {
 		ExecState: execStatePtr,
 	}
 }
+
+type WorkflowIntegrationDetails struct {
+	Workflow Workflow
+}
