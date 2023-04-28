@@ -19,6 +19,11 @@ import {
   IntegrationsWorkflowsGetResponse,
 } from './v2/IntegrationsWorkflowsGet';
 import {
+  integrationWorkflowsGetQuery,
+  IntegrationWorkflowsGetRequest,
+  IntegrationWorkflowsGetResponse,
+} from './v2/IntegrationWorkflowsGet';
+import {
   storageMigrationListQuery,
   storageMigrationListRequest,
   storageMigrationListResponse,
@@ -63,7 +68,11 @@ import {
   WorkflowGetRequest,
   WorkflowGetResponse,
 } from './v2/WorkflowGet';
-import { workflowsGetQuery, WorkflowsGetRequest } from './v2/WorkflowsGet';
+import {
+  workflowsGetQuery,
+  WorkflowsGetRequest,
+  WorkflowsGetResponse,
+} from './v2/WorkflowsGet';
 
 const { createApi, fetchBaseQuery } = ((rtkQueryRaw as any).default ??
   rtkQueryRaw) as typeof rtkQueryRaw;
@@ -86,6 +95,13 @@ export const aqueductApi = createApi({
     }),
     dagResultsGet: builder.query<DagResultsGetResponse, DagResultsGetRequest>({
       query: (req) => dagResultsGetQuery(req),
+      transformErrorResponse,
+    }),
+    integrationWorkflowsGet: builder.query<
+      IntegrationWorkflowsGetResponse,
+      IntegrationWorkflowsGetRequest
+    >({
+      query: (req) => integrationWorkflowsGetQuery(req),
       transformErrorResponse,
     }),
     integrationsWorkflowsGet: builder.query<
@@ -163,6 +179,7 @@ export const {
   useDagGetQuery,
   useDagResultGetQuery,
   useDagResultsGetQuery,
+  useIntegrationWorkflowsGetQuery,
   useIntegrationsWorkflowsGetQuery,
   useStorageMigrationListQuery,
   useNodeArtifactGetQuery,

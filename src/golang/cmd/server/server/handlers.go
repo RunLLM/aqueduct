@@ -85,6 +85,11 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			IntegrationRepo: s.IntegrationRepo,
 			OperatorRepo:    s.OperatorRepo,
 		},
+		routes.IntegrationWorkflowsRoute: &v2.IntegrationWorkflowsGetHandler{
+			Database:        s.Database,
+			IntegrationRepo: s.IntegrationRepo,
+			OperatorRepo:    s.OperatorRepo,
+		},
 
 		// V1 Handlers
 		// (ENG-2715) Remove deprecated ones
