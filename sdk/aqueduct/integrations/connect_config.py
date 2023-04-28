@@ -296,6 +296,8 @@ def convert_dict_to_integration_connect_config(
         return AWSConfig(**config_dict)
     elif service == ServiceType.K8S:
         return K8sConfig(**config_dict)
+    elif service == ServiceType.ECR:
+        return AWSConfig(**config_dict)
     raise InternalAqueductError("Unexpected Service Type: %s" % service)
 
 

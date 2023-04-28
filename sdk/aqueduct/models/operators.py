@@ -204,6 +204,12 @@ class ResourceConfig(BaseModel):
     cuda_version: Optional[str]
 
 
+class ImageConfig(BaseModel):
+    registry_id: str
+    service: ServiceType
+    url: str
+
+
 class OperatorSpec(BaseModel):
     extract: Optional[ExtractSpec]
     load: Optional[LoadSpec]
@@ -213,6 +219,7 @@ class OperatorSpec(BaseModel):
     param: Optional[ParamSpec]
     system_metric: Optional[SystemMetricSpec]
     resources: Optional[ResourceConfig]
+    image: Optional[ImageConfig]
 
     # If set, overwrites any default engine on the DAG.
     engine_config: Optional[EngineConfig]

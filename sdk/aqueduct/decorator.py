@@ -26,6 +26,7 @@ from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.operators import (
     CheckSpec,
     FunctionSpec,
+    ImageConfig,
     MetricSpec,
     Operator,
     OperatorSpec,
@@ -451,6 +452,38 @@ def _update_operator_spec_with_resources(
         )
 
 
+def _update_operator_spec_with_image(
+    spec: OperatorSpec,
+    image: Optional[Dict[str, str]] = None,
+) -> None:
+    if image is not None:
+        if not isinstance(image, Dict) or any(not isinstance(k, str) for k in image):
+            raise InvalidUserArgumentException("`image` must be a dictionary with string keys.")
+
+        registry_name = image.get("registry_name")
+        url = image.get("url")
+
+        if registry_name is None:
+            raise InvalidUserArgumentException(
+                "`registry_name` must be specified when `image` is set."
+            )
+
+        connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
+        if registry_name not in connected_integrations.keys():
+            raise InvalidUserArgumentException(
+                "Registry name `%s` is not one of the connected resources." % registry_name,
+            )
+
+        if url is None:
+            raise InvalidUserArgumentException("`url` must be specified when `image` is set.")
+
+        spec.image = ImageConfig(
+            registry_id=str(connected_integrations[registry_name].id),
+            service=connected_integrations[registry_name].service,
+            url=url,
+        )
+
+
 def op(
     name: Optional[Union[str, UserFunction]] = None,
     description: Optional[str] = None,
@@ -460,6 +493,7 @@ def op(
     num_outputs: Optional[int] = None,
     outputs: Optional[List[str]] = None,
     resources: Optional[Dict[str, Any]] = None,
+    image: Optional[Dict[str, str]] = None,
 ) -> Union[DecoratedFunction, OutputArtifactsFunction]:
     """Decorator that converts regular python functions into an operator.
 
@@ -602,6 +636,7 @@ def op(
 
             _update_operator_spec_with_engine(op_spec, engine)
             _update_operator_spec_with_resources(op_spec, resources)
+            _update_operator_spec_with_image(op_spec, image)
 
             assert isinstance(num_outputs, int)
             return wrap_spec(

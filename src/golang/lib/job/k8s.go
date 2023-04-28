@@ -11,6 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/function"
 	"github.com/dropbox/godropbox/errors"
+	log "github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/kubernetes"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
@@ -92,6 +93,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobE
 	}
 
 	environmentVariables := map[string]string{}
+	var image *operator.ImageConfig
 
 	if spec.Type() == FunctionJobType {
 		functionSpec, ok := spec.(*FunctionSpec)
@@ -100,6 +102,12 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobE
 		}
 
 		functionSpec.FunctionExtractPath = defaultFunctionExtractPath
+
+		if functionSpec.Image == nil {
+			log.Error("Function spec does not have an image")
+		} else {
+			log.Errorf("Function spec has an image, name %s, url %s", *functionSpec.Image.RegistryID, *functionSpec.Image.Url)
+		}
 
 		if functionSpec.Resources != nil {
 			if functionSpec.Resources.GPUResourceName != nil {
@@ -123,19 +131,11 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobE
 				)
 			}
 		}
-	}
 
-	// Encode job spec to prevent data loss
-	serializationType := JsonSerializationType
-	encodedSpec, err := EncodeSpec(spec, serializationType)
-	if err != nil {
-		return systemError(err)
+		image = functionSpec.Image
 	}
-
-	environmentVariables[jobSpecEnvVarKey] = encodedSpec
 
 	secretEnvVars := []string{}
-
 	if spec.HasStorageConfig() {
 		// This job spec has a storage config that k8s needs access to
 		storageConfig, err := spec.GetStorageConfig()
@@ -149,11 +149,34 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobE
 		}
 	}
 
-	containerRepo, err := mapJobTypeToDockerImage(spec, launchGpu, cudaVersion)
+	containerImage, err := mapJobTypeToDockerImage(spec, launchGpu, cudaVersion)
 	if err != nil {
 		return userError(err)
 	}
-	containerImage := fmt.Sprintf("%s:%s", containerRepo, lib.ServerVersionNumber)
+
+	// Only append the version number if the image is not a custom one provided by the user
+	if image == nil {
+		containerImage = fmt.Sprintf("%s:%s", containerImage, lib.ServerVersionNumber)
+	}
+
+	// Hack
+	if spec.Type() == FunctionJobType {
+		functionSpec, ok := spec.(*FunctionSpec)
+		if !ok {
+			return systemError(errors.Newf("Function Spec is expected, but got %v", spec))
+		}
+
+		functionSpec.Image = nil
+	}
+
+	// Encode job spec to prevent data loss
+	serializationType := JsonSerializationType
+	encodedSpec, err := EncodeSpec(spec, serializationType)
+	if err != nil {
+		return systemError(err)
+	}
+
+	environmentVariables[jobSpecEnvVarKey] = encodedSpec
 
 	err = k8s.LaunchJob(
 		name,
@@ -161,6 +184,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobE
 		&environmentVariables,
 		secretEnvVars,
 		&resourceRequest,
+		image,
 		j.k8sClient,
 	)
 	if err != nil {
@@ -200,6 +224,22 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 	}
 
 	var status shared.ExecutionStatus
+	defer func() {
+		// If the job has finished, delete its image pull secret if it exists.
+		if status != shared.PendingExecutionStatus {
+			secrets := job.Spec.Template.Spec.ImagePullSecrets
+			if len(secrets) > 0 {
+				if len(secrets) != 1 {
+					log.Errorf("Expected job %s to have one image pull secret, but instead got %v.", name, len(secrets))
+				}
+
+				if err := k8s.DeleteSecret(ctx, secrets[0].Name, j.k8sClient); err != nil {
+					log.Errorf("Failed to delete image pull secret %s for job %s: %v", secrets[0].Name, name, err)
+				}
+			}
+		}
+	}()
+
 	if job.Status.Succeeded == 1 {
 		status = shared.SucceededExecutionStatus
 	} else if job.Status.Failed == 1 {
@@ -226,12 +266,28 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 		// and not the status of the pod.
 		return status, nil
 	} else {
-		_, err := k8s.GetPod(ctx, name, j.k8sClient)
+		pod, err := k8s.GetPod(ctx, name, j.k8sClient)
 		if err != nil {
 			if err == k8s.ErrNoPodExists {
-				return shared.PendingExecutionStatus, nil
+				status = shared.PendingExecutionStatus
+				return status, nil
 			}
-			return shared.FailedExecutionStatus, systemError(err)
+
+			status = shared.FailedExecutionStatus
+			return status, systemError(err)
+		}
+
+		// Check if the pod is in "ErrImagePull" or "ImagePullBackOff" state
+		for _, containerStatus := range pod.Status.ContainerStatuses {
+			if containerStatus.State.Waiting != nil && (containerStatus.State.Waiting.Reason == "ErrImagePull" || containerStatus.State.Waiting.Reason == "ImagePullBackOff") {
+				if err := k8s.DeleteJob(ctx, name, j.k8sClient); err != nil {
+					status = shared.FailedExecutionStatus
+					return status, systemError(err)
+				}
+
+				status = shared.FailedExecutionStatus
+				return status, userError(errors.Newf("Kubernetes container failed due to error %s. If you are using a custom image, please make sure the container registry resource has access to the image.", containerStatus.State.Waiting.Reason))
+			}
 		}
 
 		status = shared.PendingExecutionStatus
@@ -264,11 +320,15 @@ func mapJobTypeToDockerImage(spec Spec, launchGpu bool, cudaVersion operator.Cud
 		if !ok {
 			return "", errors.New("Unable to determine Python Version.")
 		}
+
 		pythonVersion, err := function.GetPythonVersion(context.TODO(), functionSpec.FunctionPath, &functionSpec.StorageConfig)
 		if err != nil {
 			return "", errors.New("Unable to determine Python Version.")
 		}
-		if launchGpu {
+
+		if functionSpec.Image != nil {
+			return *functionSpec.Image.Url, nil
+		} else if launchGpu {
 			return mapGpuFunctionToDockerImage(pythonVersion, cudaVersion)
 		} else {
 			switch pythonVersion {

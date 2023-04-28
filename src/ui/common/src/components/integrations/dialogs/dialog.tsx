@@ -52,6 +52,7 @@ import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
 import { AirflowDialog, isAirflowConfigComplete } from './airflowDialog';
 import { AthenaDialog, isAthenaConfigComplete } from './athenaDialog';
 import { AWSDialog, isAWSConfigComplete } from './awsDialog';
+import { ECRDialog } from './ecrDialog';
 import { BigQueryDialog } from './bigqueryDialog';
 import { CondaDialog } from './condaDialog';
 import {
@@ -374,6 +375,11 @@ const IntegrationDialog: React.FC<Props> = ({
         <AWSDialog onUpdateField={setConfigField} value={config as AWSConfig} />
       );
       break;
+    case 'ECR':
+      serviceDialog = (
+        <ECRDialog onUpdateField={setConfigField} value={config as AWSConfig} />
+      );
+      break;
     default:
       return null;
   }
@@ -529,6 +535,8 @@ export function isConfigComplete(
       return isSnowflakeConfigComplete(config as SnowflakeConfig);
     case 'SQLite':
       return isSQLiteConfigComplete(config as SQLiteConfig);
+    case 'ECR':
+      return isAWSConfigComplete(config as AWSConfig);
     default:
       // Require all integrations to have their own validation function.
       return false;
