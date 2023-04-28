@@ -61,6 +61,23 @@ var relationalDatabaseIntegrations map[Service]bool = map[Service]bool{
 	MongoDB:      true,
 }
 
+var dataIntegrations map[Service]bool = map[Service]bool{
+	Postgres:     true,
+	Snowflake:    true,
+	MySql:        true,
+	Redshift:     true,
+	MariaDb:      true,
+	SqlServer:    true,
+	BigQuery:     true,
+	GoogleSheets: true,
+	Salesforce:   true,
+	S3:           true,
+	AqueductDemo: true,
+	Sqlite:       true,
+	Athena:       true,
+	MongoDB:      true,
+}
+
 var computeIntegrations map[Service]bool = map[Service]bool{
 	Airflow:    true,
 	Lambda:     true,
@@ -69,6 +86,7 @@ var computeIntegrations map[Service]bool = map[Service]bool{
 	Kubernetes: true,
 	Spark:      true,
 	AWS:        true,
+	Aqueduct:   true,
 }
 
 // ServiceToEngineConfigField contains
@@ -126,12 +144,9 @@ func IsRelationalDatabaseIntegration(service Service) bool {
 	return ok
 }
 
-func IsDatabaseIntegration(service Service) bool {
-	if IsRelationalDatabaseIntegration(service) {
-		return true
-	}
-
-	return service == MongoDB
+func IsDataIntegration(service Service) bool {
+	_, ok := dataIntegrations[service]
+	return ok
 }
 
 func IsComputeIntegration(service Service) bool {

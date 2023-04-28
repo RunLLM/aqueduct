@@ -27,10 +27,14 @@ import { TruncatedText } from './text';
 
 type IntegrationProps = {
   integration: Integration;
+
+  // Eg: "2 workflows using this integration"
+  numWorkflowsUsingMsg: string;
 };
 
 export const IntegrationCard: React.FC<IntegrationProps> = ({
   integration,
+  numWorkflowsUsingMsg,
 }) => {
   let serviceCard;
   switch (integration.service) {
@@ -121,6 +125,19 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
       </TruncatedText>
 
       {serviceCard}
+
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 4,
+          right: 8,
+          textAlign: 'right',
+        }}
+      >
+        <TruncatedText variant="caption" sx={{ fontWeight: 300 }}>
+          {numWorkflowsUsingMsg}
+        </TruncatedText>
+      </Box>
     </Box>
   );
 };

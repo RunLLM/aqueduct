@@ -14,6 +14,11 @@ import {
   DagResultsGetResponse,
 } from './v2/DagResultsGet';
 import {
+  integrationsWorkflowsGetQuery,
+  IntegrationsWorkflowsGetRequest,
+  IntegrationsWorkflowsGetResponse,
+} from './v2/IntegrationsWorkflowsGet';
+import {
   storageMigrationListQuery,
   storageMigrationListRequest,
   storageMigrationListResponse,
@@ -83,6 +88,13 @@ export const aqueductApi = createApi({
       query: (req) => dagResultsGetQuery(req),
       transformErrorResponse,
     }),
+    integrationsWorkflowsGet: builder.query<
+      IntegrationsWorkflowsGetResponse,
+      IntegrationsWorkflowsGetRequest
+    >({
+      query: (req) => integrationsWorkflowsGetQuery(req),
+      transformErrorResponse,
+    }),
     nodeArtifactGet: builder.query<
       NodeArtifactGetResponse,
       NodeArtifactGetRequest
@@ -136,7 +148,7 @@ export const aqueductApi = createApi({
       query: (req) => storageMigrationListQuery(req),
       transformErrorResponse,
     }),
-    workflowsGet: builder.query<WorkflowsGettResponse, WorkflowsGetRequest>({
+    workflowsGet: builder.query<WorkflowsGetResponse, WorkflowsGetRequest>({
       query: (req) => workflowsGetQuery(req),
       transformErrorResponse: transformErrorResponse,
     }),
@@ -151,6 +163,7 @@ export const {
   useDagGetQuery,
   useDagResultGetQuery,
   useDagResultsGetQuery,
+  useIntegrationsWorkflowsGetQuery,
   useStorageMigrationListQuery,
   useNodeArtifactGetQuery,
   useNodeArtifactResultContentGetQuery,
