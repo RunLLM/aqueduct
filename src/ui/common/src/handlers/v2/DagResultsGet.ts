@@ -3,9 +3,10 @@
 
 import { APIKeyParameter } from '../parameters/Header';
 import { WorkflowIdParameter } from '../parameters/Path';
-import { DagResultResponse } from '../responses/Workflow';
+import { DagResultResponse } from '../responses/workflow';
+import {LimitParameter, OrderByParameter, OrderDescParameter} from "../parameters/Query";
 
-export type DagResultsGetRequest = APIKeyParameter & WorkflowIdParameter;
+export type DagResultsGetRequest = APIKeyParameter & WorkflowIdParameter & LimitParameter & OrderByParameter & OrderDescParameter;
 
 export type DagResultsGetResponse = DagResultResponse[];
 
