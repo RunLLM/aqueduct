@@ -24,6 +24,10 @@ func CleanupStorageFiles(ctx context.Context, storageConfig *shared.StorageConfi
 }
 
 func ObjectExistsInStorage(ctx context.Context, storageConfig *shared.StorageConfig, path string) bool {
+	if path == "" {
+		return false
+	}
+
 	return storage.NewStorage(storageConfig).Exists(ctx, path)
 }
 
