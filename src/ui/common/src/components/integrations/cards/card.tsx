@@ -32,9 +32,6 @@ type IntegrationProps = {
   numWorkflowsUsingMsg: string;
 };
 
-const paddingRightForNumWorkflowsMsg = 8; // pixels
-const paddingBottomForNumWorkflowsMsg = 4; // pixels
-
 export const IntegrationCard: React.FC<IntegrationProps> = ({
   integration,
   numWorkflowsUsingMsg,
@@ -132,8 +129,8 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
       <Box
         sx={{
           position: 'absolute',
-          bottom: paddingBottomForNumWorkflowsMsg,
-          right: paddingRightForNumWorkflowsMsg,
+          bottom: 4,
+          right: 8,
           textAlign: 'right',
         }}
       >

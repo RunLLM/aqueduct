@@ -78,11 +78,19 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
     error: fetchWorkflowsError,
     isLoading,
   } = useIntegrationsWorkflowsGetQuery({ apiKey: user.apiKey });
+
+  // Display an error toast if there was an error fetching the workflows.
+  useEffect(() => {
+    if (fetchWorkflowsError) {
+      setShowWorkflowsFetchErrorToast(true);
+    } else {
+      // Remember to hide this if the error goes away.
+      setShowWorkflowsFetchErrorToast(false);
+    }
+  }, [fetchWorkflowsError]);
+
   if (isLoading) {
     return <CircularProgress />;
-  }
-  if (fetchWorkflowsError) {
-    setShowWorkflowsFetchErrorToast(true);
   }
 
   // Had to move this down here because react hooks don't like it when there are early returns
