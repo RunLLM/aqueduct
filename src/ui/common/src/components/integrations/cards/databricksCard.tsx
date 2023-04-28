@@ -5,13 +5,22 @@ import { ResourceCardText } from './text';
 
 type DatabricksCardProps = {
   integration: Integration;
+  detailedView: boolean;
 };
 
 export const DatabricksCard: React.FC<DatabricksCardProps> = ({
   integration,
+  detailedView,
 }) => {
   const config = integration.config as DatabricksConfig;
-  return (
-    <ResourceCardText labels={['Workspace']} values={[config.workspace_url]} />
-  );
+
+  let labels = ['Workspace'];
+  let values = [config.workspace_url];
+
+  if (detailedView) {
+    labels = labels.concat(['Instance Pool ID']);
+    values = values.concat([config.instance_pool_id]);
+  }
+
+  return <ResourceCardText labels={labels} values={values} />;
 };

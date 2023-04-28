@@ -6,20 +6,24 @@ import { ResourceCardText, TruncatedText } from './text';
 
 type Props = {
   integration: Integration;
+  detailedView: boolean;
 };
 
-export const EmailCard: React.FC<Props> = ({ integration }) => {
+export const EmailCard: React.FC<Props> = ({ integration, detailedView }) => {
   const config = integration.config as EmailConfig;
   const targets = JSON.parse(config.targets_serialized) as string[];
 
-  const labels = [
-    targets.length > 1 ? 'Receiver Addresses' : 'Receiver Address',
-  ];
-  const values = [targets.join(', ')];
+  let labels = [targets.length > 1 ? 'Receiver Addresses' : 'Receiver Address'];
+  let values = [targets.join(', ')];
 
   if (config.enabled === 'true') {
     labels.push('Level');
     values.push(config.level[0].toUpperCase() + config.level.slice(1));
+  }
+
+  if (detailedView) {
+    labels = labels.concat(labels, ['Host', 'Port', 'User']);
+    values = values.concat(values, [config.host, config.port, config.user]);
   }
 
   return (
