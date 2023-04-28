@@ -1,3 +1,6 @@
+import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Tooltip } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
@@ -25,6 +28,7 @@ import {
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import { handleFetchAllWorkflowSummaries } from '../../../../reducers/listWorkflowSummaries';
 import { AppDispatch, RootState } from '../../../../stores/store';
+import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
 import {
   IntegrationCategories,
@@ -33,7 +37,9 @@ import {
 import { isFailed, isLoading, isSucceeded } from '../../../../utils/shared';
 import { ResourceHeaderDetailsCard } from '../../../integrations/cards/headerDetailsCard';
 import { ResourceFieldsDetailsCard } from '../../../integrations/cards/resourceFieldsDetailsCard';
-import IntegrationOptions, {IntegrationOptionsButtonWidth} from '../../../integrations/options';
+import IntegrationOptions, {
+  IntegrationOptionsButtonWidth,
+} from '../../../integrations/options';
 import { LayoutProps } from '../../types';
 
 type IntegrationDetailsPageProps = {
@@ -56,6 +62,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   const [showTestConnectToast, setShowTestConnectToast] = useState(false);
   const [showConnectSuccessToast, setShowConnectSuccessToast] = useState(false);
   const [showEditSuccessToast, setShowEditSuccessToast] = useState(false);
+  const [showResourceDetails, setShowResourceDetails] = useState(false);
 
   const handleCloseConnectSuccessToast = () => {
     setShowConnectSuccessToast(false);
@@ -159,11 +166,43 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     >
       <Box sx={{ paddingBottom: '4px' }}>
         <Box display="flex" flexDirection="row" alignContent="top">
-          <Box sx={{flex: 1, maxWidth: `calc(100% - ${IntegrationOptionsButtonWidth})`}}>
-            <ResourceHeaderDetailsCard
+          <Box
+            sx={{
+              flex: 1,
+              maxWidth: `calc(100% - ${IntegrationOptionsButtonWidth})`,
+            }}
+          >
+            <Box display="flex" flexDirection="row" alignContent="bottom">
+              <ResourceHeaderDetailsCard
                 integration={selectedIntegration}
+                // TODO!!
                 numWorkflowsUsingMsg={'Not currently used.'}
-            />
+              />
+
+              <Box
+                sx={{
+                  fontSize: '16px',
+                  p: 1,
+                  ml: 1,
+                  height: '32px',
+                  borderRadius: '8px',
+                  ':hover': {
+                    backgroundColor: theme.palette.gray[50],
+                  },
+                  cursor: 'pointer',
+                }}
+                onClick={() => setShowResourceDetails(!showResourceDetails)}
+              >
+                <Tooltip title="See more" arrow>
+                  <FontAwesomeIcon
+                    icon={faEllipsis}
+                    style={{
+                      transition: 'transform 200ms',
+                    }}
+                  />
+                </Tooltip>
+              </Box>
+            </Box>
           </Box>
 
           <IntegrationOptions
@@ -227,12 +266,14 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           </Typography>
         )}
 
-        <Box sx={{ my: 1 }}>
-          <ResourceFieldsDetailsCard
-            integration={selectedIntegration}
-            detailedView={true}
-          />
-        </Box>
+        {showResourceDetails && (
+          <Box sx={{ my: 1 }}>
+            <ResourceFieldsDetailsCard
+              integration={selectedIntegration}
+              detailedView={true}
+            />
+          </Box>
+        )}
 
         {SupportedIntegrations[selectedIntegration.service].category ===
           IntegrationCategories.DATA && (
