@@ -11,6 +11,8 @@ on:
         required: true
       PYPI_API_TOKEN_EXECUTOR:
         required: true
+      GH_ACCESS_TOKEN:
+        required: true
 
   workflow_dispatch:
 
