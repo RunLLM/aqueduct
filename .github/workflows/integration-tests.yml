@@ -51,7 +51,7 @@ jobs:
         with:
           repository-url: https://test.pypi.org/legacy/
           packages-dir: sdk/dist
-          password: ${{ secrets.PYPI_API_TOKEN_SDK }}
+          password: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
 
       - name: build executor
         working-directory: src/python
