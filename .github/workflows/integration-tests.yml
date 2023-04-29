@@ -33,7 +33,9 @@ jobs:
 
       - name: inject dev version
         run: |
+          rm sdk/version
           echo 0.1.dev >> sdk/version
+          rm src/python/version
           echo 0.1.dev >> src/python/version
 
       - name: build sdk
