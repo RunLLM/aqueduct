@@ -72,18 +72,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 360
     name: SDK Integration Tests against K8s Compute
+    needs: publish-pypi
     steps:
       - uses: actions/checkout@v2
 
       - uses: ./.github/actions/setup-server
         timeout-minutes: 5
-
-      # https://github.com/marketplace/actions/wait-on-check
-      - name: Wait for package publishing
-        uses: lewagon/wait-on-check-action@v1.3.1
         with:
-          ref: ${{ github.ref }}
-          check-name: "Publish Test Pypi Packages"
+          python-pkg-version: ${{ needs.publish-pypi.outputs.version }}
 
       # TODO(ENG-2537): Use our separate GH actions credentials.
       - uses: ./.github/actions/fetch-test-config
@@ -170,19 +166,15 @@ jobs:
   run-tests-conda:
     runs-on: ubuntu-latest-4-cores
     timeout-minutes: 40
+    needs: publish-pypi
     name: All Integration Tests with Conda
     steps:
       - uses: actions/checkout@v2
 
       - uses: ./.github/actions/setup-server
         timeout-minutes: 5
-
-      # https://github.com/marketplace/actions/wait-on-check
-      - name: Wait for package publishing
-        uses: lewagon/wait-on-check-action@v1.3.1
         with:
-          ref: ${{ github.ref }}
-          check-name: "Publish Test Pypi Packages"
+          python-pkg-version: ${{ needs.publish-pypi.outputs.version }}
 
       - uses: conda-incubator/setup-miniconda@v2
         with:

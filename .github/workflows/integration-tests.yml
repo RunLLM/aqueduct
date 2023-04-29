@@ -11,8 +11,6 @@ on:
         required: true
       PYPI_API_TOKEN_EXECUTOR:
         required: true
-      GH_ACCESS_TOKEN:
-        required: true
 
   workflow_dispatch:
 
@@ -79,16 +77,18 @@ jobs:
           packages-dir: src/python/dist
           password: ${{ secrets.PYPI_API_TOKEN_EXECUTOR }}
 
-  wait_for_package:
+  test_server_start:
     runs-on: ubuntu-latest-4-cores
-    timeout-minutes: 40
-    name: Wait for Pypi Packages
+    timeout-minutes: 15
+    name: Test server start
     needs: publish-pypi
     steps:
       - uses: actions/checkout@v2
 
-      - name: Retrieve Package Version
-        run: echo ${{ needs.publish-pypi.outputs.version }}
+      - uses: ./.github/actions/setup-server
+        timeout-minutes: 7
+        with:
+          python-pkg-version: ${{ needs.publish-pypi.outputs.version }}
 
   # run-tests-basic:
   #   runs-on: ubuntu-latest-4-cores
