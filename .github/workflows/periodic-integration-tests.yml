@@ -15,6 +15,8 @@ jobs:
     name: Publish Test Pypi Packages
     runs-on: [ubuntu-latest]
     timeout-minutes: 20
+    permissions:
+      id-token: write
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
@@ -26,8 +28,10 @@ jobs:
 
       - name: inject dev version
         run: |
-          echo 0.1.dev >> sdk/version
-          echo 0.1.dev >> src/python/version
+          rm sdk/version
+          echo 0.1.dev0 >> sdk/version
+          rm src/python/version
+          echo 0.1.dev0 >> src/python/version
 
       - name: build sdk
         working-directory: sdk
