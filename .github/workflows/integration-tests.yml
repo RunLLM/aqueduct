@@ -90,6 +90,7 @@ jobs:
         with:
           ref: ${{ github.ref }}
           check-name: "Publish Test Pypi Packages"
+          repo-token: ${{ secrets.GH_ACCESS_TOKEN }}
 
       - name: Retrieve Package Version
         run: echo ${{ needs.publish-pypi.outputs.version }}
