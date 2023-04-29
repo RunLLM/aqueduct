@@ -171,7 +171,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   }
 
   let numWorkflowsUsingMsg = '';
-  if (!fetchWorkflowsError) {
+  if (!fetchWorkflowsError && workflowIDs) {
     numWorkflowsUsingMsg = getNumWorkflowsUsingMessage(workflowIDs.length);
   }
 
