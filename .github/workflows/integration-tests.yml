@@ -7,6 +7,10 @@ on:
         required: true
       KENNY_AWS_SECRET_ACCESS_KEY:
         required: true
+      PYPI_API_TOKEN_SDK:
+        required: true
+      PYPI_API_TOKEN_EXECUTOR:
+        required: true
 
   workflow_dispatch:
 
