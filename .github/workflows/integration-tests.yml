@@ -37,7 +37,7 @@ jobs:
 
       - name: inject dev version
         run: |
-          echo 0.1.dev$(date +%s) >> $GITHUB_OUTPUT
+          echo version=0.1.dev$(date +%s) >> $GITHUB_OUTPUT
           rm sdk/version
           echo $GITHUB_OUTPUT >> sdk/version
           rm src/python/version
