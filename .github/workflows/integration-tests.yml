@@ -77,7 +77,7 @@ jobs:
           packages-dir: src/python/dist
           password: ${{ secrets.PYPI_API_TOKEN_EXECUTOR }}
 
-  test_server_start:
+  test-server-start:
     runs-on: ubuntu-latest-4-cores
     timeout-minutes: 15
     name: Test server start
