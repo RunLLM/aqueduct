@@ -76,6 +76,24 @@ jobs:
           repository-url: https://test.pypi.org/legacy/
           packages-dir: src/python/dist
           password: ${{ secrets.PYPI_API_TOKEN_EXECUTOR }}
+
+  wait_for_package:
+    runs-on: ubuntu-latest-4-cores
+    timeout-minutes: 40
+    name: Wait for Pypi Packages
+    steps:
+      - uses: actions/checkout@v2
+
+      # https://github.com/marketplace/actions/wait-on-check
+      - name: Wait for package publishing
+        uses: lewagon/wait-on-check-action@v1.3.1
+        with:
+          ref: ${{ github.ref }}
+          check-name: "Publish Test Pypi Packages"
+
+      - name: Retrieve Package Version
+        run: echo ${{ needs.publish-pypi.outputs.version }}
+
   # run-tests-basic:
   #   runs-on: ubuntu-latest-4-cores
   #   timeout-minutes: 40

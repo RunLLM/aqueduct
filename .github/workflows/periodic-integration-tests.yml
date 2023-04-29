@@ -15,6 +15,8 @@ jobs:
     name: Publish Test Pypi Packages
     runs-on: [ubuntu-latest]
     timeout-minutes: 20
+    outputs:
+      version: ${{ steps.inject_version.outputs.version }}
     permissions:
       id-token: write
     steps:
@@ -27,11 +29,14 @@ jobs:
         run: pip install build twine
 
       - name: inject dev version
+        id: inject_version
         run: |
+          export VERSION=0.1.dev$(date +%s)
           rm sdk/version
-          echo 0.1.dev0 >> sdk/version
+          echo $VERSION >> sdk/version
           rm src/python/version
-          echo 0.1.dev0 >> src/python/version
+          echo $VERSION >> src/python/version
+          echo version=$VERSION >> $GITHUB_OUTPUT
 
       - name: build sdk
         working-directory: sdk
