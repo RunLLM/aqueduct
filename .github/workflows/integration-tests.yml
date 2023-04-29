@@ -21,7 +21,7 @@ jobs:
     runs-on: [ubuntu-latest]
     timeout-minutes: 20
     permissions:
-      id-token: write
+      id-token: read|write
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
