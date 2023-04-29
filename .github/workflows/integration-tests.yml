@@ -37,10 +37,11 @@ jobs:
 
       - name: inject dev version
         run: |
+          echo 0.1.dev$(date +%s) >> $GITHUB_OUTPUT
           rm sdk/version
-          echo 0.1.dev+${{ github.ref }} >> sdk/version
+          echo $GITHUB_OUTPUT >> sdk/version
           rm src/python/version
-          echo 0.1.dev+${{ github.ref }} >> src/python/version
+          echo $GITHUB_OUTPUT >> src/python/version
 
       - name: build sdk
         working-directory: sdk
