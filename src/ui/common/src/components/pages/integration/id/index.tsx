@@ -232,6 +232,8 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     return null;
   }
 
+  console.log('selecetd integration: ', selectedIntegration);
+
   return (
     <Layout
       breadcrumbs={[
@@ -397,7 +399,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             >
               Workflows
             </Typography>
-            <OperatorsOnIntegration />
+            <OperatorsOnIntegration integration={selectedIntegration} />
           </Box>
         )}
       </Box>
