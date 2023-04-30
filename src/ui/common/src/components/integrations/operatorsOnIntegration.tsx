@@ -11,8 +11,13 @@ import { isFailed, isInitial, isLoading } from '../../utils/shared';
 import { ListWorkflowSummary } from '../../utils/workflows';
 import WorkflowAccordion from '../workflows/accordion';
 import WorkflowSummaryCard from '../workflows/WorkflowSummaryCard';
+import { Integration } from '../../utils/integrations';
 
-const OperatorsOnIntegration: React.FC = () => {
+type OperatorsOnIntegrationProps = {
+  integration: Integration;
+}
+
+const OperatorsOnIntegration: React.FC<OperatorsOnIntegrationProps> = ({ integration }) => {
   const listWorkflowState = useSelector(
     (state: RootState) => state.listWorkflowReducer
   );
@@ -51,6 +56,7 @@ const OperatorsOnIntegration: React.FC = () => {
 
   const workflows = listWorkflowState.workflows;
   const operators = operatorsState.operators;
+  
 
   const workflowMap: { [id: string]: ListWorkflowSummary } = {};
   workflows.map((wf) => {
@@ -100,14 +106,7 @@ const OperatorsOnIntegration: React.FC = () => {
             console.log(item);
             return (
               <WorkflowSummaryCard
-                expanded={expandedWf === wfId}
-                handleExpand={() => {
-                  if (expandedWf === wfId) {
-                    setExpandedWf('');
-                    return;
-                  }
-                  setExpandedWf(wfId);
-                }}
+                integration={integration}
                 key={wfId}
                 workflow={item.workflow}
                 operators={item.operators}
