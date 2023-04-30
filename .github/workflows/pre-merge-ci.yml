@@ -1,9 +1,6 @@
 name: Pre-Merge Integration tests
 
 on:
-  push:
-    branches:
-      - cgwu_dummy_branch
   pull_request:
     types: [labeled, opened, synchronize, reopened]
 

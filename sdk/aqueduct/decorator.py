@@ -399,6 +399,7 @@ def _update_operator_spec_with_resources(
     spec: OperatorSpec,
     resources: Optional[Dict[str, Any]] = None,
 ) -> None:
+    print("hi")
     if resources is not None:
         if not isinstance(resources, Dict) or any(not isinstance(k, str) for k in resources):
             raise InvalidUserArgumentException("`resources` must be a dictionary with string keys.")
