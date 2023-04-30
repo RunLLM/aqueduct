@@ -78,13 +78,12 @@ def _generate_setup_flow_name(integration: Integration):
 def _publish_missing_artifacts(
     client: Client, artifacts: List[BaseArtifact], flow_name: str
 ) -> None:
-    flow = publish_flow_test(
+    publish_flow_test(
         client,
         artifacts=artifacts,
         name=flow_name,
         engine=None,
     )
-    delete_flow(client, flow.id())
 
 
 def _add_missing_artifacts(
@@ -214,6 +213,7 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
     for integration_name in data_integrations:
         # Only connect to integrations that don't already exist.
         if integration_name not in connected_integrations.keys():
+            print(f"Connecting to {integration_name}")
             integration_config = _fetch_integration_credentials("data", integration_name)
 
             # Stand up the external integration first.
@@ -260,17 +260,27 @@ def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) 
     else:
         compute_integrations = list_compute_integrations()
 
-    # No need to do any setup for the demo db.
-    if "aqueduct_engine" in compute_integrations:
-        compute_integrations.remove("aqueduct_engine")
-
     if len(compute_integrations) == 0:
         return
 
     connected_integrations = client.list_integrations()
-    for integration_name in compute_integrations:
+    for integration_key in compute_integrations:
+        if integration_key == "aqueduct_engine":
+            # Connect to conda if specified, otherwise, do nothing for aq engine.
+            aq_config = _parse_config_file()["compute"][integration_key]
+            if aq_config and "conda" in aq_config:
+                integration_name = aq_config["conda"]
+                if integration_name not in connected_integrations.keys():
+                    client.connect_integration(
+                        integration_name,
+                        ServiceType.CONDA,
+                        {},  # integration_config
+                    )
+                    wait_for_conda_integration(client, integration_name)
         # Only connect to integrations that don't already exist.
-        if integration_name not in connected_integrations.keys():
+        elif integration_key not in connected_integrations.keys():
+            integration_name = integration_key
+            print(f"Connecting to {integration_name}")
             integration_config = _fetch_integration_credentials("compute", integration_name)
 
             client.connect_integration(
@@ -278,6 +288,27 @@ def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) 
                 integration_config["type"],
                 _sanitize_integration_config_for_connect(integration_config),
             )
+
+
+def wait_for_conda_integration(client: Client, name: str):
+    # Try to preview a test function integration it completes successfully.
+    from aqueduct import op
+
+    @op(requirements=["pytest"])
+    def test_conda_fn():
+        return 123
+
+    while True:
+        try:
+            _ = test_conda_fn()
+            return
+        except Exception as e:
+            # Throw if error message is not expected.
+            if "We are still creating base conda environments" not in str(e):
+                raise e
+
+            # Wait and try again if error message is expected.
+            time.sleep(5)
 
 
 def setup_storage_layer(client: Client) -> None:
@@ -336,7 +367,10 @@ def _fetch_integration_credentials(section: str, name: str) -> Dict[str, Any]:
 
     assert (
         name in test_credentials[section]
-    ), "%s Integration `%s` must have its credentials in test-credentials.yml." % (section, name)
+    ), "%s Integration `%s` must have its credentials in test-credentials.yml." % (
+        section,
+        name,
+    )
     return test_credentials[section][name]
 
 
