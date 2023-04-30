@@ -33,7 +33,10 @@ class ECRIntegration(Integration):
             image_name = image_name.split("/")[1]
 
         if len(image_name.split(":")) != 2:
-            raise InvalidUserArgumentException("Image name must be of the form `image:tag`.")
+            if len(image_name.split(":")) == 1:
+                image_name = image_name + ":latest"
+            else:
+                raise InvalidUserArgumentException("Image name must be of the form `image:tag`.")
 
         response = globals.__GLOBAL_API_CLIENT__.get_image_url(
             integration_id=str(self._metadata.id),

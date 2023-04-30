@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/aqueducthq/aqueduct/config"
-	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aqueducthq/aqueduct/lib/container_registry"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
@@ -56,7 +55,7 @@ func LaunchJob(
 
 	if image != nil {
 		// Add environment variable AQUEDUCT_EXPECTED_VERSION to check potential version mismatch.
-		(*environmentVariables)[AqueductExpectedVersionKeyName] = lib.ServerVersionNumber
+		(*environmentVariables)[AqueductExpectedVersionKeyName] = "0.2.13"
 
 		if image.Service != shared.ECR {
 			return errors.Newf("Unsupported image service: %s", image.Service)

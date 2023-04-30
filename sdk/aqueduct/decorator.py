@@ -489,7 +489,10 @@ def _update_operator_spec_with_image(
             raise InvalidUserArgumentException("`url` must be specified when `image` is set.")
 
         if len(url.split(":")) != 2:
-            raise InvalidUserArgumentException("Image url must be of the form `repo:tag`.")
+            if len(url.split(":")) == 1:
+                url = url + ":latest"
+            else:
+                raise InvalidUserArgumentException("Image url must be of the form `repo:tag`.")
 
         spec.image = ImageConfig(
             registry_id=str(connected_integrations[registry_name].id),

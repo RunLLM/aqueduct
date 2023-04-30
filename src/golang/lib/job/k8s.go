@@ -153,7 +153,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobE
 		containerImage = fmt.Sprintf("%s:%s", containerImage, lib.ServerVersionNumber)
 	}
 
-	// TODO(cgwu): remove this before merging to `main`
+	// TODO(cgwu): remove this once the Docker images for the next release (v0.3) are built.
 	if spec.Type() == FunctionJobType {
 		functionSpec, ok := spec.(*FunctionSpec)
 		if !ok {
