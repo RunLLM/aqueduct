@@ -5,7 +5,9 @@ def type_from_engine_name(client, engine: str) -> ServiceType:
     """
     Returns the integration type of an engine from the name.
     """
-    if engine == "aqueduct_engine":
+    assert engine != "aqueduct_engine"
+
+    if engine is None:
         return ServiceType.AQUEDUCT_ENGINE
 
     integration_info_by_name = client.list_integrations()
