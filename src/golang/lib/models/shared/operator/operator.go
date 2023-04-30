@@ -56,6 +56,12 @@ type ImageConfig struct {
 	Url        *string        `json:"url"`
 }
 
+type ImageConfig struct {
+	RegistryID *string        `json:"registry_id"`
+	Service    shared.Service `json:"service"`
+	Url        *string        `json:"url"`
+}
+
 type specUnion struct {
 	Type         Type                        `json:"type"`
 	Function     *function.Function          `json:"function,omitempty"`
