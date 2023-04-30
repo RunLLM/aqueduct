@@ -291,6 +291,20 @@ func ParseAWSConfig(conf auth.Config) (*shared.AWSConfig, error) {
 	}, nil
 }
 
+func ParseECRConfig(conf auth.Config) (*shared.ECRConfig, error) {
+	data, err := conf.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	var c shared.ECRConfig
+	if err := json.Unmarshal(data, &c); err != nil {
+		return nil, err
+	}
+
+	return &c, nil
+}
+
 func ExtractAwsCredentials(config *shared.S3Config) (string, string, error) {
 	var awsAccessKeyId string
 	var awsSecretAccessKey string

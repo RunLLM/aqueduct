@@ -13,6 +13,7 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/airflow"
+	"github.com/aqueducthq/aqueduct/lib/container_registry"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
@@ -522,6 +523,10 @@ func ValidateConfig(
 		return validateAWSConfig(config)
 	}
 
+	if service == shared.ECR {
+		return validateECRConfig(config)
+	}
+
 	jobName := fmt.Sprintf("authenticate-operator-%s", uuid.New().String())
 	if service == shared.Conda {
 		return validateConda()
@@ -694,6 +699,16 @@ func validateAWSConfig(
 	return http.StatusOK, nil
 }
 
+func validateECRConfig(
+	config auth.Config,
+) (int, error) {
+	if err := container_registry.AuthenticateAndUpdateECRConfig(config); err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	return http.StatusOK, nil
+}
+
 // ValidatePrerequisites validates if the integration for the given service can be connected at all.
 // 1) Checks if an integration already exists for unique integrations including conda, email, and slack.
 // 2) Checks if the name has already been taken.
@@ -766,12 +781,29 @@ func ValidatePrerequisites(
 	}
 
 	// For AWS integration, we require the user to have AWS CLI and Terraform installed.
-	// We also require env (GNU coreutils) executable to set the env variables when using the AWS CLI.
 	if svc == shared.AWS {
 		if _, _, err := lib_utils.RunCmd("terraform", []string{"--version"}, "", false); err != nil {
 			return http.StatusNotFound, errors.Wrap(err, "terraform executable not found. Please go to https://developer.hashicorp.com/terraform/downloads to install terraform")
 		}
 
+		awsVersionString, _, err := lib_utils.RunCmd("aws", []string{"--version"}, "", false)
+		if err != nil {
+			return http.StatusNotFound, errors.Wrap(err, "AWS CLI executable not found. Please go to https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html to install AWS CLI")
+		}
+
+		awsVersion, err := version.NewVersion(strings.Split(strings.Split(awsVersionString, " ")[0], "/")[1])
+		if err != nil {
+			return http.StatusUnprocessableEntity, errors.Wrap(err, "Error parsing AWS CLI version")
+		}
+
+		requiredVersion, _ := version.NewVersion("2.11.5")
+		if awsVersion.LessThan(requiredVersion) {
+			return http.StatusUnprocessableEntity, errors.Wrapf(err, "AWS CLI version 2.11.5 and above is required, but you got %s. Please update!", awsVersion.String())
+		}
+	}
+
+	// For ECR integration, we require the user to have AWS CLI installed.
+	if svc == shared.ECR {
 		awsVersionString, _, err := lib_utils.RunCmd("aws", []string{"--version"}, "", false)
 		if err != nil {
 			return http.StatusNotFound, errors.Wrap(err, "AWS CLI executable not found. Please go to https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html to install AWS CLI")

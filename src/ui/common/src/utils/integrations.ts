@@ -213,6 +213,15 @@ export type DynamicK8sConfig = {
   max_gpu_node: string;
 };
 
+export type ECRConfig = {
+  type: AWSCredentialType;
+  region: string;
+  access_key_id: string;
+  secret_access_key: string;
+  config_file_path: string;
+  config_file_profile: string;
+};
+
 export type IntegrationConfig =
   | PostgresConfig
   | SnowflakeConfig
@@ -261,7 +270,8 @@ export type Service =
   | 'Email'
   | 'Slack'
   | 'Spark'
-  | 'AWS';
+  | 'AWS'
+  | 'ECR';
 
 export type Info = {
   logo: string;
@@ -325,6 +335,7 @@ export const IntegrationCategories = {
   DATA: 'data',
   COMPUTE: 'compute',
   CLOUD: 'cloud',
+  CONTAINER_REGISTRY: 'container_registry',
   NOTIFICATION: 'notification',
 };
 
@@ -354,6 +365,8 @@ export const ServiceLogos: ServiceLogo = {
 
   // TODO(ENG-2301): Once task is addressed, remove this duplicate entry.
   ['K8s']: `${integrationLogosBucket}/kubernetes.png`,
+
+  ['ECR']: `${integrationLogosBucket}/ecr.png`,
 };
 
 export const SupportedIntegrations: ServiceInfoMap = {
@@ -481,6 +494,12 @@ export const SupportedIntegrations: ServiceInfoMap = {
     logo: ServiceLogos['AWS'],
     activated: true,
     category: IntegrationCategories.CLOUD,
+    docs: addingIntegrationLink,
+  },
+  ['ECR']: {
+    logo: ServiceLogos['ECR'],
+    activated: true,
+    category: IntegrationCategories.CONTAINER_REGISTRY,
     docs: addingIntegrationLink,
   },
 };

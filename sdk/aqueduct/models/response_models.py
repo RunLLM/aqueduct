@@ -320,3 +320,7 @@ class DynamicEngineStatusResponse(BaseModel):
     id: uuid.UUID
     name: str
     status: K8sClusterStatusType
+
+
+class GetImageURLResponse(BaseModel):
+    url: str

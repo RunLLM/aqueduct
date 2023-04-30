@@ -39,6 +39,7 @@ const (
 	TestIntegrationRoute             = "/api/integration/{integrationId}/test"
 	GetDynamicEngineStatusRoute      = "/api/integration/dynamic-engine/status"
 	EditDynamicEngineRoute           = "/api/integration/dynamic-engine/{integrationId}/edit"
+	GetImageURLRoute                 = "/api/integration/container-registry/url"
 
 	ResetApiKeyRoute = "/api/keys/reset" // nolint:gosec
 
