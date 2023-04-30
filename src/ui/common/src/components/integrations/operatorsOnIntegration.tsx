@@ -10,6 +10,7 @@ import { RootState } from '../../stores/store';
 import { isFailed, isInitial, isLoading } from '../../utils/shared';
 import { ListWorkflowSummary } from '../../utils/workflows';
 import WorkflowAccordion from '../workflows/accordion';
+import WorkflowSummaryCard from '../workflows/WorkflowSummaryCard';
 
 const OperatorsOnIntegration: React.FC = () => {
   const listWorkflowState = useSelector(
@@ -72,23 +73,49 @@ const OperatorsOnIntegration: React.FC = () => {
 
   if (Object.keys(operatorsByWorkflow).length > 0) {
     return (
-      <Box maxWidth="900px">
-        {Object.entries(operatorsByWorkflow).map(([wfId, item]) => (
-          <WorkflowAccordion
-            expanded={expandedWf === wfId}
-            handleExpand={() => {
-              if (expandedWf === wfId) {
-                setExpandedWf('');
-                return;
-              }
-              setExpandedWf(wfId);
-            }}
-            key={wfId}
-            workflow={item.workflow}
-            operators={item.operators}
-          />
-        ))}
-      </Box>
+      <>
+        <Box maxWidth="900px">
+          {Object.entries(operatorsByWorkflow).map(([wfId, item]) => {
+            console.log(item);
+            return (
+              <WorkflowAccordion
+                expanded={expandedWf === wfId}
+                handleExpand={() => {
+                  if (expandedWf === wfId) {
+                    setExpandedWf('');
+                    return;
+                  }
+                  setExpandedWf(wfId);
+                }}
+                key={wfId}
+                workflow={item.workflow}
+                operators={item.operators}
+              />
+            );
+          })}
+        </Box>
+
+        <Box maxWidth="900px">
+          {Object.entries(operatorsByWorkflow).map(([wfId, item]) => {
+            console.log(item);
+            return (
+              <WorkflowSummaryCard
+                expanded={expandedWf === wfId}
+                handleExpand={() => {
+                  if (expandedWf === wfId) {
+                    setExpandedWf('');
+                    return;
+                  }
+                  setExpandedWf(wfId);
+                }}
+                key={wfId}
+                workflow={item.workflow}
+                operators={item.operators}
+              />
+            );
+          })}
+        </Box>
+      </>
     );
   } else {
     return <Box>This integration is not used by any workflows.</Box>;

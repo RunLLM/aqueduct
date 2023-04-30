@@ -1,0 +1,73 @@
+import { faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Box, Link, Typography } from '@mui/material';
+
+import { OperatorsForIntegrationItem } from '../../reducers/integration';
+import { ListWorkflowSummary } from '../../utils/workflows';
+import { StatusIndicator } from './workflowStatus';
+
+type Props = {
+  expanded: boolean;
+  handleExpand?: () => void;
+  workflow?: ListWorkflowSummary;
+  operators: OperatorsForIntegrationItem[];
+};
+
+export const WorkflowSummaryCard: React.FC<Props> = ({
+  expanded,
+  handleExpand,
+  workflow,
+  operators,
+}) => {
+
+  const workflowLink: string = `/workflow/${workflow.id}`;
+
+  return (
+    <Box
+      sx={{
+        width: '240px',
+        minHeight: '80px',
+        backgroundColor: 'gray.100',
+        marginBottom: '16px',
+        borderRadius: '8px',
+      }}
+    >
+      <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
+        <Box
+          sx={{
+            marginRight: '4px',
+            paddingLeft: '16px',
+            maxWidth: '150px',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          <StatusIndicator status={workflow.status} />
+        </Box>
+        <Box sx={{ marginRight: '4px' }}>
+          <Typography variant="body1" sx={{ fontSize: '16px', my: 0 }}>
+            {workflow.name}
+          </Typography>
+          <Typography variant="body1" sx={{ fontSize: '8px' }}>
+            {new Date(workflow.last_run_at * 1000).toLocaleString()}
+          </Typography>
+        </Box>
+        <Box sx={{ marginLeft: '16px', color: 'black' }}>
+          <Link sx={{ color: 'black' }} href={workflowLink}>
+            <FontAwesomeIcon icon={faUpRightFromSquare} />
+          </Link>
+        </Box>
+      </Box>
+
+      <Box sx={{ paddingLeft: '22px' }}>
+          <Typography variant="body1" sx={{ fontSize: '12px', my: 0 }}>
+            {' '}
+            {operators.length} operator(s) using {workflow.name}{' '}
+          </Typography>
+        </Box>
+    </Box>
+  );
+};
+
+export default WorkflowSummaryCard;
+
+//         {new Date(integration.createdAt * 1000).toLocaleString()}
