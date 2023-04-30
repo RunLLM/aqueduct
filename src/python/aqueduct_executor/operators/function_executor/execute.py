@@ -454,7 +454,7 @@ def run_with_setup(spec: FunctionSpec) -> None:
     run(spec)
 
 
-def check_package_version_mismatch():
+def check_package_version_mismatch() -> None:
     expected_version = os.environ.get("AQUEDUCT_EXPECTED_VERSION")
     if expected_version:
         aqueduct_version = subprocess.check_output(["aqueduct", "version"]).decode("utf-8").strip()
