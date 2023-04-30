@@ -5,19 +5,18 @@ import { Box, Link, Typography } from '@mui/material';
 import { OperatorsForIntegrationItem } from '../../reducers/integration';
 import { ListWorkflowSummary } from '../../utils/workflows';
 import { StatusIndicator } from './workflowStatus';
+import { Integration } from '../../utils/integrations';
 
-type Props = {
-  expanded: boolean;
-  handleExpand?: () => void;
+type WorkflowSummaryCardProps = {
   workflow?: ListWorkflowSummary;
   operators: OperatorsForIntegrationItem[];
+  integration: Integration;
 };
 
-export const WorkflowSummaryCard: React.FC<Props> = ({
-  expanded,
-  handleExpand,
+export const WorkflowSummaryCard: React.FC<WorkflowSummaryCardProps> = ({
   workflow,
   operators,
+  integration
 }) => {
 
   const workflowLink: string = `/workflow/${workflow.id}`;
@@ -60,8 +59,7 @@ export const WorkflowSummaryCard: React.FC<Props> = ({
 
       <Box sx={{ paddingLeft: '22px' }}>
           <Typography variant="body1" sx={{ fontSize: '12px', my: 0 }}>
-            {' '}
-            {operators.length} operator(s) using {workflow.name}{' '}
+            {operators.length} {operators.length > 1 ? 'operators' : 'operator'} using {integration.name}
           </Typography>
         </Box>
     </Box>
@@ -69,5 +67,3 @@ export const WorkflowSummaryCard: React.FC<Props> = ({
 };
 
 export default WorkflowSummaryCard;
-
-//         {new Date(integration.createdAt * 1000).toLocaleString()}
