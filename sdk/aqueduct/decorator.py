@@ -492,7 +492,10 @@ def _update_operator_spec_with_image(
             if len(url.split(":")) == 1:
                 url = url + ":latest"
             else:
-                raise InvalidUserArgumentException("Image url must be of the form `repo:tag`.")
+                raise InvalidUserArgumentException(
+                    "Image URL must be in the form of `endpoint/repo:tag`. "
+                    "Such as 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest."
+                )
 
         spec.image = ImageConfig(
             registry_id=str(connected_integrations[registry_name].id),
@@ -573,7 +576,7 @@ def op(
             A dictionary containing the custom image configurations that this operator will run with.
             The dictionary needs to contain the following keys:
             "registry_name" (str): The name of the registry integration to use.
-            "url" (str): The full url of the image to use. Example: "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest"
+            "url" (str): The full URL of the image to use. Example: "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest"
             It is recommended to get the dictionary via `client.integration("my_registry_name").image("my-image:latest")`
 
     Examples:
@@ -768,7 +771,7 @@ def metric(
             A dictionary containing the custom image configurations that this operator will run with.
             The dictionary needs to contain the following keys:
             "registry_name" (str): The name of the registry integration to use.
-            "url" (str): The full url of the image to use. Example: "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest"
+            "url" (str): The full URL of the image to use. Example: "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest"
             It is recommended to get the dictionary via `client.integration("my_registry_name").image("my-image:latest")`
 
     Examples:
@@ -968,7 +971,7 @@ def check(
             A dictionary containing the custom image configurations that this operator will run with.
             The dictionary needs to contain the following keys:
             "registry_name" (str): The name of the registry integration to use.
-            "url" (str): The full url of the image to use. Example: "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest"
+            "url" (str): The full URL of the image to use. Example: "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest"
             It is recommended to get the dictionary via `client.integration("my_registry_name").image("my-image:latest")`
 
     Examples:
