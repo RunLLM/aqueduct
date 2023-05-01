@@ -9,7 +9,7 @@ from aqueduct.utils.utils import generate_engine_config
 
 from aqueduct import globals
 
-supported_llm_models = [
+supported_llms = [
     "llama_7b",
     "vicuna_7b",
     "dolly_v2_3b",
@@ -36,7 +36,7 @@ resource_requests = {
 }
 
 
-def generate_llm_op(
+def _generate_llm_op(
     llm_name: str, column_name: Optional[str] = None, output_column_name: Optional[str] = None
 ) -> Callable[
     [Union[str, List[str], pd.DataFrame], Dict[str, Any]], Union[str, List[str], pd.DataFrame]
@@ -119,16 +119,80 @@ def generate_llm_op(
 
 
 def llm_op(
-    llm_name: str,
+    name: str,
     op_name: Optional[str] = None,
-    engine: Optional[str] = None,
     column_name: Optional[str] = None,
     output_column_name: Optional[str] = None,
+    engine: Optional[str] = None,
 ) -> Union[
     Callable[..., Union[BaseArtifact, List[BaseArtifact]]], BaseArtifact, List[BaseArtifact]
 ]:
-    if llm_name not in supported_llm_models:
-        raise InvalidUserArgumentException(f"Unsupported LLM model {llm_name}")
+    """Generates an Aqueduct operator to run a LLM. Either both column_name and output_column_name must be provided,
+    or neither must be provided. Please refer to the `Returns` section below for their differences.
+
+    Args:
+        name:
+            The name of the LLM to use. Please see aqueduct.supported_llms for a list of supported LLMs.
+        op_name:
+            The name of the operator. If not provided, defaults to the name of the LLM.
+        column_name:
+            The name of the column of the Dataframe to use as input to the LLM. If this field is provided,
+            output_column_name must also be provided.
+        output_column_name:
+            The name of the column of the Dataframe to store the output of the LLM. If this field is provided,
+            column_name must also be provided.
+        engine:
+            The name of the compute integration this operator will run on. Defaults to the Aqueduct engine.
+            We recommend using a Kubernetes engine to run LLM operators, as we have implemented performance
+            optimizations for LLMs on Kubernetes.
+
+    Returns:
+        If column_name and output_column_name are both provided, returns a function that takes in a
+        DataFrame and returns a DataFrame with the output of the LLM appended as a new column:
+
+        def llm_for_table(df: pd.DataFrame, parameters: Dict[str, Any] = {}) -> pd.DataFrame:
+
+        Otherwise, returns a function that takes in a string or list of strings, applies LLM, and
+        returns a string or list of strings:
+
+        def use_llm(messages: Union[str, List[str]], parameters: Dict[str, Any] = {}) -> Union[str, List[str]]:
+
+        In both cases, the function takes in an optional second argument, which is a dictionary of
+        parameters to pass to the LLM. Please refer to the documentation for the LLM you are using
+        for a list of supported parameters. For all LLMs, we support the "prompt" parameter. If the
+        prompt contains {text}, we will replace {text} with the input string(s) before sending to
+        the LLM. If the prompt does not contain {text}, we will prepend the prompt to the input
+        string(s) before sending to the LLM.
+
+    Examples:
+        >>> snowflake = client.integration("snowflake")
+        >>> reviews_table = snowflake.sql("select * from hotel_reviews;")
+
+        >>> from aqueduct import llm_op
+        ... vicuna_table_op = llm_op(
+        ...     name="vicuna_7b",
+        ...     op_name="my_vicuna_operator",
+        ...     column_name="review",
+        ...     output_column_name="response",
+        ...     engine=ondemand_k8s,
+        >>> )
+        ... params = client.create_param(
+        ...     "vicuna_params",
+        ...     default={
+        ...         "prompt": "Respond to the following hotel review as a customer service agent: {text} ",
+        ...         "max_gpu_memory": "13GiB",
+        ...         "temperature": 0.7,
+        ...         "max_new_tokens": 512,
+        ...     }
+        >>> )
+        >>> review_with_response = vicuna_table_op(reviews_table, params)
+
+        `review_with_response` is a Table Artifact with the output of the LLM appended as a new column.
+
+        >>> review_with_response.get()
+    """
+    if name not in supported_llms:
+        raise InvalidUserArgumentException(f"Unsupported LLM model {name}")
 
     kwargs: Dict[str, Any] = {}
     if engine is not None:
@@ -139,17 +203,17 @@ def llm_op(
             engine,
         )
         if engine_config and engine_config.type == RuntimeType.K8S:
-            kwargs["resources"] = resource_requests[llm_name]
+            kwargs["resources"] = resource_requests[name]
 
     if op_name is None:
-        op_name = llm_name
+        op_name = name
 
     return op(
         name=op_name,
         requirements=["aqueduct-llm"],
         **kwargs,
     )(
-        generate_llm_op(
-            llm_name=llm_name, column_name=column_name, output_column_name=output_column_name
+        _generate_llm_op(
+            llm_name=name, column_name=column_name, output_column_name=output_column_name
         )
     )
