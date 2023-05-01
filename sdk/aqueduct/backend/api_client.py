@@ -22,6 +22,7 @@ from aqueduct.models.operators import ParamSpec
 from aqueduct.models.response_models import (
     DeleteWorkflowResponse,
     DynamicEngineStatusResponse,
+    GetImageURLResponse,
     GetVersionResponse,
     GetWorkflowDagResultResponse,
     GetWorkflowResponse,
@@ -78,6 +79,8 @@ class APIClient:
 
     GET_DYNAMIC_ENGINE_STATUS_ROUTE = "/api/integration/dynamic-engine/status"
     EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE = "/api/integration/dynamic-engine/%s/edit"
+
+    GET_IMAGE_URL_ROUTE = "/api/integration/container-registry/url"
 
     # Auth header
     API_KEY_HEADER = "api-key"
@@ -577,3 +580,33 @@ class APIClient:
             logger().warning("Artifact result unavailable due to unsuccessful execution.")
 
         return (return_value, execution_status)
+
+    def get_image_url(
+        self,
+        integration_id: str,
+        service: ServiceType,
+        image_name: str,
+    ) -> GetImageURLResponse:
+        """Makes a request against the /api/integration/container-registry/url endpoint.
+
+        Args:
+            integration_id:
+                Container registry integration ID.
+            service:
+                Container registry service type.
+            image_name:
+                Image name to get the URL for.
+
+        Returns:
+            GetImageURLResponse that contains the URL to the image.
+        """
+        headers = self._generate_auth_headers()
+        headers["integration-id"] = integration_id
+        headers["service"] = service.value
+        headers["image-name"] = image_name
+
+        url = self.construct_full_url(self.GET_IMAGE_URL_ROUTE)
+        resp = requests.get(url, headers=headers)
+        self.raise_errors(resp)
+
+        return GetImageURLResponse(**resp.json())

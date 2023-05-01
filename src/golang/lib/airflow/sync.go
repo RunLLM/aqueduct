@@ -121,7 +121,9 @@ func syncWorkflowDag(
 		return err
 	}
 
-	dagResults, err := dagResultRepo.GetByWorkflow(ctx, dag.WorkflowID, DB)
+	// Default values to not have an order and not have a limit: Empty string for order_by, -1 for limit
+	// Set true for order_by order (desc/asc) because doesn't matter.
+	dagResults, err := dagResultRepo.GetByWorkflow(ctx, dag.WorkflowID, "", -1, true, DB)
 	if err != nil {
 		return err
 	}

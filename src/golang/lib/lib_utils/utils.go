@@ -64,6 +64,7 @@ func RunCmd(command string, args []string, dir string, stream bool) (string, str
 		cmd.Dir = dir
 	}
 
+	log.Infof("Running command %s", cmd.String())
 	if stream {
 		// create pipes for the command's standard output and standard error
 		stdout, err := cmd.StdoutPipe()
@@ -125,7 +126,7 @@ func RunCmd(command string, args []string, dir string, stream bool) (string, str
 
 		err := cmd.Run()
 		if err != nil {
-			errMsg := fmt.Sprintf("Error running command: %s. Stdout: %s, Stderr: %s.", command, outb.String(), errb.String())
+			errMsg := fmt.Sprintf("Error running command: %s. Stdout: %s, Stderr: %s.", cmd.String(), outb.String(), errb.String())
 			return outb.String(), errb.String(), errors.New(errMsg)
 		}
 
@@ -288,6 +289,20 @@ func ParseAWSConfig(conf auth.Config) (*shared.AWSConfig, error) {
 		ConfigFileProfile: c.ConfigFileProfile,
 		K8s:               &dynamicK8sConfig,
 	}, nil
+}
+
+func ParseECRConfig(conf auth.Config) (*shared.ECRConfig, error) {
+	data, err := conf.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	var c shared.ECRConfig
+	if err := json.Unmarshal(data, &c); err != nil {
+		return nil, err
+	}
+
+	return &c, nil
 }
 
 func ExtractAwsCredentials(config *shared.S3Config) (string, string, error) {

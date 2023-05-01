@@ -3,6 +3,7 @@ package sqlite
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -52,13 +53,31 @@ func (*dagResultReader) GetBatch(ctx context.Context, IDs []uuid.UUID, DB databa
 	return getDAGResults(ctx, DB, query, args...)
 }
 
-func (*dagResultReader) GetByWorkflow(ctx context.Context, workflowID uuid.UUID, DB database.Database) ([]models.DAGResult, error) {
+func (*dagResultReader) GetByWorkflow(ctx context.Context, workflowID uuid.UUID, orderBy string, limit int, orderDescending bool, DB database.Database) ([]models.DAGResult, error) {
+	var orderByQuery string
+	if len(orderBy) > 0 {
+		orderByQuery = fmt.Sprintf(" ORDER BY %s.%s", models.DAGResultTable, orderBy)
+		if orderDescending {
+			orderByQuery = orderByQuery + " DESC"
+		} else {
+			orderByQuery = orderByQuery + " ASC"
+		}
+	}
+
+	var limitQuery string
+	if limit == 0 {
+		return []models.DAGResult{}, nil
+	}
+	if limit > 0 {
+		limitQuery = fmt.Sprintf(" LIMIT %s", strconv.Itoa(limit))
+	}
+
 	query := fmt.Sprintf(
 		`SELECT %s 
 		FROM workflow_dag_result, workflow_dag 
 		WHERE 
 			workflow_dag_result.workflow_dag_id = workflow_dag.id 
-			AND workflow_dag.workflow_id = $1;`,
+			AND workflow_dag.workflow_id = $1`+orderByQuery+limitQuery+`;`,
 		models.DAGResultColsWithPrefix(),
 	)
 	args := []interface{}{workflowID}

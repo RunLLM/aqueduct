@@ -199,6 +199,17 @@ class AWSConfig(BaseConnectionConfig):
     k8s: Optional[DynamicK8sConfig]
 
 
+class ECRConfig(BaseConnectionConfig):
+    # Either 1) all of access_key_id, secret_access_key, region, or 2) both config_file_path and
+    # config_file_profile need to be specified. Any other cases will be rejected by the server's
+    # config validation process.
+    access_key_id: str = ""
+    secret_access_key: str = ""
+    region: str = ""
+    config_file_path: str = ""
+    config_file_profile: str = ""
+
+
 class _AWSConfigWithSerializedConfig(BaseConnectionConfig):
     access_key_id: str = ""
     secret_access_key: str = ""
@@ -220,6 +231,10 @@ class EmailConfig(BaseConnectionConfig):
     enabled: bool
 
 
+class CondaConfig(BaseConnectionConfig):
+    pass
+
+
 class _EmailConfigWithStringField(BaseConnectionConfig):
     user: str
     password: str
@@ -230,8 +245,23 @@ class _EmailConfigWithStringField(BaseConnectionConfig):
     enabled: str
 
 
+class AirflowConfig(BaseConnectionConfig):
+    host: str
+    username: str
+    password: str
+    s3_credentials_path: str
+    s3_credentials_profile: str
+
+
 class SparkConfig(BaseConnectionConfig):
     livy_server_url: str
+
+
+class DatabricksConfig(BaseConnectionConfig):
+    workspace_url: str
+    access_token: str
+    s3_instance_profile_arn: str
+    instance_pool_id: Optional[str] = None
 
 
 class K8sConfig(BaseConnectionConfig):
@@ -256,10 +286,14 @@ IntegrationConfig = Union[
     SQLiteConfig,
     SlackConfig,
     AWSConfig,
+    ECRConfig,
     _AWSConfigWithSerializedConfig,
     _SlackConfigWithStringField,
+    AirflowConfig,
     SparkConfig,
+    DatabricksConfig,
     K8sConfig,
+    CondaConfig,
 ]
 
 
@@ -290,12 +324,20 @@ def convert_dict_to_integration_connect_config(
         return SlackConfig(**config_dict)
     elif service == ServiceType.EMAIL:
         return EmailConfig(**config_dict)
+    elif service == ServiceType.CONDA:
+        return CondaConfig(**config_dict)
+    elif service == ServiceType.AIRFLOW:
+        return AirflowConfig(**config_dict)
     elif service == ServiceType.SPARK:
         return SparkConfig(**config_dict)
+    elif service == ServiceType.DATABRICKS:
+        return DatabricksConfig(**config_dict)
     elif service == ServiceType.AWS:
         return AWSConfig(**config_dict)
     elif service == ServiceType.K8S:
         return K8sConfig(**config_dict)
+    elif service == ServiceType.ECR:
+        return ECRConfig(**config_dict)
     raise InternalAqueductError("Unexpected Service Type: %s" % service)
 
 

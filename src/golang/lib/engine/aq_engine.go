@@ -510,7 +510,9 @@ func (eng *aqEngine) DeleteWorkflow(
 		dagIDs = append(dagIDs, dag.ID)
 	}
 
-	dagResultsToDelete, err := eng.DAGResultRepo.GetByWorkflow(ctx, workflowObj.ID, txn)
+	// Default values to not have an order and not have a limit: Empty string for order_by, -1 for limit
+	// Set true for order_by order (desc/asc) because doesn't matter.
+	dagResultsToDelete, err := eng.DAGResultRepo.GetByWorkflow(ctx, workflowObj.ID, "", -1, true, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving workflow dag results.")
 	}
@@ -1003,6 +1005,10 @@ func (eng *aqEngine) execute(
 			// and check operators with warning severity.
 			if execState.HasBlockingFailure() {
 				log.Infof("Stopping execution of operator %v", op.ID())
+				if execState.Error != nil {
+					log.Infof("Reason: %s", execState.Error.Message())
+				}
+
 				for id, dagOp := range workflowDag.Operators() {
 					log.Infof("Checking status of operator %v", id)
 					// Skip if this operator has already been completed or is in progress.
