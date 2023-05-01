@@ -397,6 +397,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             >
               Workflows
             </Typography>
+            {/* TODO: pass down dag results and integrationOperators */}
             <OperatorsOnIntegration integration={selectedIntegration} />
           </Box>
         )}

@@ -80,7 +80,7 @@ const OperatorsOnIntegration: React.FC<OperatorsOnIntegrationProps> = ({ integra
   if (Object.keys(operatorsByWorkflow).length > 0) {
     return (
       <>
-        <Box maxWidth="900px">
+        {/* <Box maxWidth="900px">
           {Object.entries(operatorsByWorkflow).map(([wfId, item]) => {
             console.log(item);
             return (
@@ -99,8 +99,9 @@ const OperatorsOnIntegration: React.FC<OperatorsOnIntegrationProps> = ({ integra
               />
             );
           })}
-        </Box>
+        </Box> */}
 
+        {/* TODO: Turn this into a grid and style appropriately */}
         <Box maxWidth="900px">
           {Object.entries(operatorsByWorkflow).map(([wfId, item]) => {
             console.log(item);
