@@ -45,8 +45,8 @@ export const menuSidebarLink = {
 
 export const menuSidebarLogoLink = {
   /* contains logo of size 48px */
-  width: '48px',
-  height: '48px',
+  width: '100%',
+  height: '64px',
   /* ensures border width is 80px, which maps sidebar */
   paddingLeft: '16px',
   paddingRight: '16px',

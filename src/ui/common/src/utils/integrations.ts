@@ -1,11 +1,23 @@
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
 import { AqueductDocsLink } from './docs';
+import { ExecState } from './shared';
 
 export const aqueductDemoName = 'aqueduct_demo';
+export const aqueductComputeName = 'Aqueduct Server';
 
-export function isDemo(integration: Integration): boolean {
-  return integration.name === aqueductDemoName;
+export function isBuiltinIntegration(integration: Integration): boolean {
+  return (
+    integration.name === aqueductDemoName ||
+    integration.name == aqueductComputeName
+  );
+}
+
+// Certain integrations have no configuration fields to show.
+export function hasConfigFieldsToShow(integration: Integration): boolean {
+  return (
+    integration.name !== aqueductDemoName && integration.service !== 'Conda'
+  );
 }
 
 export type Integration = {
@@ -14,7 +26,7 @@ export type Integration = {
   name: string;
   config: IntegrationConfig;
   createdAt: number;
-  validated: boolean;
+  exec_state: ExecState;
 };
 
 export type CondaConfig = {
@@ -244,7 +256,8 @@ export type IntegrationConfig =
   | EmailConfig
   | SlackConfig
   | SparkConfig
-  | AWSConfig;
+  | AWSConfig
+  | MongoDBConfig;
 
 export type Service =
   | 'Aqueduct'
@@ -256,7 +269,6 @@ export type Service =
   | 'MariaDB'
   | 'S3'
   | 'Athena'
-  | 'CSV'
   | 'GCS'
   | 'Aqueduct Demo'
   | 'Airflow'
@@ -351,7 +363,6 @@ export const ServiceLogos: ServiceLogo = {
   ['MariaDB']: `${integrationLogosBucket}/mariadb.png`,
   ['S3']: `${integrationLogosBucket}/s3.png`,
   ['GCS']: `${integrationLogosBucket}/google-cloud-storage.png`,
-  ['Aqueduct Demo']: `/assets/aqueduct.png`,
   ['SQLite']: `${integrationLogosBucket}/sqlite-square-icon-256x256.png`,
   ['Athena']: `${integrationLogosBucket}/athena.png`,
   ['Airflow']: `${integrationLogosBucket}/airflow.png`,
@@ -422,10 +433,10 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.DATA,
     docs: `${addingIntegrationLink}/connecting-to-google-cloud-storage`,
   },
-  ['Aqueduct Demo']: {
+  ['Aqueduct']: {
     logo: ServiceLogos['Aqueduct'],
     activated: true,
-    category: IntegrationCategories.DATA,
+    category: IntegrationCategories.COMPUTE,
     docs: addingIntegrationLink,
   },
   ['SQLite']: {

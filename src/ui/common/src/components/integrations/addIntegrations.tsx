@@ -54,7 +54,7 @@ const AddIntegrations: React.FC<Props> = ({
       )}
       <Box sx={{ width: '100%', display: 'flex', flexWrap: 'wrap' }}>
         {Object.entries(supportedIntegrations)
-          .filter(([svc]) => svc !== 'Aqueduct Demo')
+          .filter(([svc]) => svc !== 'Aqueduct')
           .sort(([name1], [name2]) => name1.localeCompare(name2))
           .map(([svc, integration]) => {
             return (
@@ -117,24 +117,27 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
         setShowDialog(integration.activated);
       }}
       sx={{
-        width: '160px',
-        height: '128px',
+        width: '64px',
+        height: '80px',
         m: 1,
-        px: 2,
-        py: 2,
+        px: 1,
+        py: 1,
         borderRadius: 2,
-        border: `2px solid ${theme.palette.gray['700']}`,
+        //border: `2px solid ${theme.palette.gray['700']}`,
         cursor: integration.activated ? 'pointer' : 'default',
         '&:hover': {
           backgroundColor: integration.activated
             ? theme.palette.gray['300']
             : 'white',
         },
+        boxSizing: 'initial',
+        backgroundColor: '#F8F8F8', // gray/light2
       }}
     >
       <Box
-        width="160px"
-        maxWidth="160px"
+        width="100%"
+        maxWidth="100%"
+        height="48px"
         display="flex"
         flexDirection="column"
         alignItems="center"
@@ -142,15 +145,16 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
         <IntegrationLogo
           service={service}
           activated={integration.activated}
-          size="large"
+          size="medium"
         />
       </Box>
       <Typography
         variant={'body1'}
         align={'center'}
         sx={{
-          marginTop: '16px',
+          marginTop: '8px',
           color: integration.activated ? 'inherit' : 'grey',
+          fontSize: '12px',
         }}
       >
         {service}
@@ -216,150 +220,154 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
       <Box key={service}>
         <Box>
           {iconWrapper}
-          <>
-            <Dialog open={showDialog} onClose={() => setShowDialog(false)}>
-              <DialogTitle
-                sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}
-              >
-                <IntegrationLogo
-                  service={service}
-                  activated={integration.activated}
-                  size="small"
-                />
+          <Dialog open={showDialog} onClose={() => setShowDialog(false)}>
+            <DialogTitle
+              sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <IntegrationLogo
+                service={service}
+                activated={integration.activated}
+                size="small"
+              />
+              <div>
                 <Typography variant="h5" sx={{ color: 'black' }}>
                   Connect to Kubernetes
                 </Typography>
-              </DialogTitle>
-              <DialogContent>
-                <Button
-                  sx={{
-                    textTransform: 'none',
-                    marginBottom: '12px',
-                    display: 'flex',
-                    gap: '8px',
-                  }}
-                  onClick={handleRegularK8s}
-                >
-                  <IntegrationLogo
-                    service={service}
-                    activated={integration.activated}
-                    size="small"
-                  />
-                  <Typography
-                    variant="body2"
-                    sx={{ color: 'black', fontSize: '20px' }}
-                  >
-                    I have an existing Kubernetes cluster I&apos;d like to use
-                  </Typography>
-                </Button>
-                <Button
-                  sx={{ textTransform: 'none', display: 'flex', gap: '8px' }}
-                  onClick={handleOndemandK8s}
-                >
-                  <IntegrationLogo
-                    service={'Aqueduct Demo'}
-                    activated={SupportedIntegrations['Aqueduct Demo'].activated}
-                    size="small"
-                  />
-                  <Typography
-                    variant="body2"
-                    sx={{ color: 'black', fontSize: '20px' }}
-                  >
-                    I&apos;d like Aqueduct to create & manage a cluster for me
-                  </Typography>
-                </Button>
-              </DialogContent>
-            </Dialog>
-
-            {showKubernetesDialog && (
-              <IntegrationDialog
-                user={user}
-                service={service}
-                onSuccess={() => {
-                  setShowKubernetesDialog(false);
-                  setShowSuccessToast(service);
+              </div>
+            </DialogTitle>
+            <DialogContent>
+              <Button
+                sx={{
+                  textTransform: 'none',
+                  marginBottom: '12px',
+                  display: 'flex',
+                  gap: '8px',
                 }}
-                onCloseDialog={() => {
-                  setShowKubernetesDialog(false);
-                  dispatch(resetConnectNewStatus());
-                }}
-                showMigrationDialog={() => setShowMigrationDialog(true)}
-              />
-            )}
-
-            <Dialog
-              open={showSelectProviderDialog}
-              onClose={() => setShowSelectProviderDialog(false)}
-            >
-              <DialogTitle
-                sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+                onClick={handleRegularK8s}
               >
                 <IntegrationLogo
                   service={service}
                   activated={integration.activated}
                   size="small"
                 />
+                <Typography
+                  variant="body2"
+                  sx={{ color: 'black', fontSize: '20px' }}
+                >
+                  I have an existing Kubernetes cluster I&apos;d like to use
+                </Typography>
+              </Button>
+              <Button
+                sx={{ textTransform: 'none', display: 'flex', gap: '8px' }}
+                onClick={handleOndemandK8s}
+              >
+                <IntegrationLogo
+                  service={'Aqueduct'}
+                  activated={SupportedIntegrations['Aqueduct'].activated}
+                  size="small"
+                />
+                <Typography
+                  variant="body2"
+                  sx={{ color: 'black', fontSize: '20px' }}
+                >
+                  I&apos;d like Aqueduct to create & manage a cluster for me
+                </Typography>
+              </Button>
+            </DialogContent>
+          </Dialog>
+
+          {showKubernetesDialog && (
+            <IntegrationDialog
+              user={user}
+              service={service}
+              onSuccess={() => {
+                setShowKubernetesDialog(false);
+                setShowSuccessToast(service);
+              }}
+              onCloseDialog={() => {
+                setShowKubernetesDialog(false);
+                dispatch(resetConnectNewStatus());
+              }}
+              showMigrationDialog={() => setShowMigrationDialog(true)}
+            />
+          )}
+
+          <Dialog
+            open={showSelectProviderDialog}
+            onClose={() => setShowSelectProviderDialog(false)}
+          >
+            <DialogTitle
+              sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
+              <IntegrationLogo
+                service={service}
+                activated={integration.activated}
+                size="small"
+              />
+              <div>
                 <Typography variant="h5" sx={{ color: 'black' }}>
                   +
                 </Typography>
-                <IntegrationLogo
-                  service={'Aqueduct Demo'}
-                  activated={SupportedIntegrations['Aqueduct Demo'].activated}
-                  size="small"
-                />
+              </div>
+              <IntegrationLogo
+                service={'Aqueduct'}
+                activated={SupportedIntegrations['Aqueduct'].activated}
+                size="small"
+              />
+              <div>
                 <Typography variant="h5" sx={{ color: 'black' }}>
                   Aqueduct-managed Kubernetes
                 </Typography>
-              </DialogTitle>
-              <DialogContent
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  paddingLeft: '54px',
-                  gap: '32px',
-                  '& button': { backgroundColor: '#F8F8F8' },
-                }}
-              >
-                <Button onClick={handleAWSClick}>
-                  <IntegrationLogo
-                    service={'AWS'}
-                    activated={SupportedIntegrations['AWS'].activated}
-                    size="large"
-                  />
-                </Button>
-                <Button disabled={true}>
-                  <IntegrationLogo
-                    service={'GCP'}
-                    activated={SupportedIntegrations['GCP'].activated}
-                    size="large"
-                  />
-                </Button>
-                <Button disabled={true}>
-                  <IntegrationLogo
-                    service={'Azure'}
-                    activated={SupportedIntegrations['Azure'].activated}
-                    size="large"
-                  />
-                </Button>
-              </DialogContent>
-            </Dialog>
+              </div>
+            </DialogTitle>
+            <DialogContent
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                paddingLeft: '54px',
+                gap: '32px',
+                '& button': { backgroundColor: '#F8F8F8' },
+              }}
+            >
+              <Button onClick={handleAWSClick}>
+                <IntegrationLogo
+                  service={'AWS'}
+                  activated={SupportedIntegrations['AWS'].activated}
+                  size="large"
+                />
+              </Button>
+              <Button disabled={true}>
+                <IntegrationLogo
+                  service={'GCP'}
+                  activated={SupportedIntegrations['GCP'].activated}
+                  size="large"
+                />
+              </Button>
+              <Button disabled={true}>
+                <IntegrationLogo
+                  service={'Azure'}
+                  activated={SupportedIntegrations['Azure'].activated}
+                  size="large"
+                />
+              </Button>
+            </DialogContent>
+          </Dialog>
 
-            {showOndemandDialog && (
-              <IntegrationDialog
-                user={user}
-                service="AWS"
-                onSuccess={() => {
-                  setShowOndemandDialog(false);
-                  setShowSuccessToast(service);
-                }}
-                onCloseDialog={() => {
-                  setShowOndemandDialog(false);
-                  dispatch(resetConnectNewStatus());
-                }}
-                showMigrationDialog={() => setShowMigrationDialog(true)}
-              />
-            )}
-          </>
+          {showOndemandDialog && (
+            <IntegrationDialog
+              user={user}
+              service="AWS"
+              onSuccess={() => {
+                setShowOndemandDialog(false);
+                setShowSuccessToast(service);
+              }}
+              onCloseDialog={() => {
+                setShowOndemandDialog(false);
+                dispatch(resetConnectNewStatus());
+              }}
+              showMigrationDialog={() => setShowMigrationDialog(true)}
+            />
+          )}
         </Box>
         <Snackbar
           anchorOrigin={{ vertical: 'top', horizontal: 'center' }}

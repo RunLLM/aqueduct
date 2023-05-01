@@ -1,8 +1,7 @@
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import React from 'react';
 
 import { GCSConfig, Integration } from '../../../utils/integrations';
+import { ResourceCardText } from './text';
 
 type Props = {
   integration: Integration;
@@ -11,12 +10,5 @@ type Props = {
 export const GCSCard: React.FC<Props> = ({ integration }) => {
   const config = integration.config as GCSConfig;
 
-  return (
-    <Box>
-      <Typography variant="body2">
-        <strong>Bucket: </strong>
-        {config.bucket}
-      </Typography>
-    </Box>
-  );
+  return <ResourceCardText labels={['Bucket']} values={[config.bucket]} />;
 };

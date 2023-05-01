@@ -1,9 +1,7 @@
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import React from 'react';
 
-import { Integration } from '../../../utils/integrations';
-import { S3Config } from '../../../utils/workflows';
+import { Integration, S3Config } from '../../../utils/integrations';
+import { ResourceCardText } from './text';
 
 type Props = {
   integration: Integration;
@@ -12,22 +10,12 @@ type Props = {
 export const S3Card: React.FC<Props> = ({ integration }) => {
   const config = integration.config as S3Config;
 
-  return (
-    <Box>
-      <Typography variant="body2">
-        <strong>Bucket: </strong>
-        {config.bucket}
-      </Typography>
-      {config.root_dir?.length > 0 && (
-        <Typography variant="body2">
-          <strong>Root Directory: </strong>
-          {config.root_dir}
-        </Typography>
-      )}
-      <Typography variant="body2">
-        <strong>Region: </strong>
-        {config.region}
-      </Typography>
-    </Box>
-  );
+  const labels = ['Bucket', 'Region'];
+  const values = [config.bucket, config.region];
+  if (config.root_dir?.length > 0) {
+    labels.push('Root Directory');
+    values.push(config.root_dir);
+  }
+
+  return <ResourceCardText labels={labels} values={values} />;
 };

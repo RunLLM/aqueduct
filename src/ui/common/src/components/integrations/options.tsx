@@ -11,17 +11,21 @@ import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 
-import { Integration, isDemo } from '../../utils/integrations';
+import { Integration, isBuiltinIntegration } from '../../utils/integrations';
 import { Button } from '../primitives/Button.styles';
 
 type Props = {
   integration: Integration;
+
+  // Currently unused.
   onUploadCsv?: () => void;
   onTestConnection?: () => void;
   onEdit?: () => void;
   onDeleteIntegration?: () => void;
   allowDeletion: boolean;
 };
+
+export const IntegrationOptionsButtonWidth = '120px';
 
 const IntegrationOptions: React.FC<Props> = ({
   integration,
@@ -39,15 +43,6 @@ const IntegrationOptions: React.FC<Props> = ({
 
   return (
     <Box display="flex" flexDirection="row" sx={{ height: 'fit-content' }}>
-      {isDemo(integration) && (
-        <Button
-          variant="outlined"
-          onClick={onUploadCsv}
-          sx={{ width: '140px', marginRight: 1 }}
-        >
-          Upload CSV
-        </Button>
-      )}
       <Button
         color="primary"
         id={`options-${integration.id}`}
@@ -55,7 +50,7 @@ const IntegrationOptions: React.FC<Props> = ({
           setAnchorEl(event.currentTarget);
         }}
         endIcon={<FontAwesomeIcon icon={faCaretDown} size="sm" />}
-        sx={{ width: '120px' }}
+        sx={{ width: { IntegrationOptionsButtonWidth } }}
       >
         Options
       </Button>
@@ -88,7 +83,7 @@ const IntegrationOptions: React.FC<Props> = ({
           </Typography>
         </MenuItem>
 
-        {!isDemo(integration) && (
+        {!isBuiltinIntegration(integration) && (
           <MenuItem
             onClick={() => {
               setAnchorEl(null);
@@ -101,7 +96,7 @@ const IntegrationOptions: React.FC<Props> = ({
             </Typography>
           </MenuItem>
         )}
-        {!isDemo(integration) && allowDeletion && (
+        {!isBuiltinIntegration(integration) && allowDeletion && (
           <MenuItem
             onClick={() => {
               setAnchorEl(null);

@@ -202,6 +202,7 @@ class ResourceConfig(BaseModel):
     memory_mb: Optional[int]
     gpu_resource_name: Optional[str]
     cuda_version: Optional[str]
+    use_llm: Optional[bool]
 
 
 class ImageConfig(BaseModel):
