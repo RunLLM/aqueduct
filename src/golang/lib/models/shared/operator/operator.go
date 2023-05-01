@@ -47,7 +47,7 @@ type ResourceConfig struct {
 	MemoryMB        *int               `json:"memory_mb,omitempty"`
 	GPUResourceName *string            `json:"gpu_resource_name,omitempty"`
 	CudaVersion     *CudaVersionNumber `json:"cuda_version,omitempty"`
-	UseLlm          *bool              `json:"use_llm,omitempty"`
+	UseLLM          *bool              `json:"use_llm,omitempty"`
 }
 
 type ImageConfig struct {
