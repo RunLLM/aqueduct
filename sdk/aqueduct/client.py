@@ -35,6 +35,7 @@ from aqueduct.integrations.connect_config import (
     prepare_integration_config,
 )
 from aqueduct.integrations.databricks_integration import DatabricksIntegration
+from aqueduct.integrations.dynamic_k8s_integration import DynamicK8sIntegration
 from aqueduct.integrations.ecr_integration import ECRIntegration
 from aqueduct.integrations.google_sheets_integration import GoogleSheetsIntegration
 from aqueduct.integrations.k8s_integration import K8sIntegration
@@ -450,7 +451,7 @@ class Client:
         name: str,
         description: str = "",
         schedule: str = "",
-        engine: Optional[str] = None,
+        engine: Optional[Union[str, DynamicK8sIntegration]] = None,
         artifacts: Optional[Union[BaseArtifact, List[BaseArtifact]]] = None,
         metrics: Optional[List[NumericArtifact]] = None,
         checks: Optional[List[BoolArtifact]] = None,
@@ -524,7 +525,9 @@ class Client:
                 "A non-empty string must be supplied for the flow's name."
             )
 
-        if engine is not None and not isinstance(engine, str):
+        if engine is not None and not (
+            isinstance(engine, str) or isinstance(engine, DynamicK8sIntegration)
+        ):
             raise InvalidUserArgumentException(
                 "`engine` parameter must be a string, got %s." % type(engine)
             )
