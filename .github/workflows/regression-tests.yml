@@ -11,7 +11,7 @@ jobs:
     strategy:
       matrix:
         # These are all the Python versions that we want to regression test with.
-        python-version: ['3.7', '3.8', '3.9', '3.10']
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
 
     name: Run Regressions Tests with Python Version ${{ matrix.python-version }}
     steps:
@@ -22,7 +22,7 @@ jobs:
 
       - name: Set filename for the prev ver server's output logs
         run: echo "SERVER_LOGS_PREV_FILE=logs/server_logs_prev_ver_${{ matrix.python-version }}" >> $GITHUB_ENV
-      
+
       - name: Set filename for the current ver server's output logs
         run: echo "SERVER_LOGS_CURRENT_FILE=logs/server_logs_curr_ver_${{ matrix.python-version }}" >> $GITHUB_ENV
 
@@ -51,7 +51,7 @@ jobs:
       - name: Wait for server
         timeout-minutes: 1
         run: while ! echo exit | nc localhost 8080; do sleep 1; done
-      
+
       - name: Fetch the API key
         run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
 
@@ -68,7 +68,7 @@ jobs:
         timeout-minutes: 5
         run: imgname=old-flow-run-1 npx playwright test tests/screenshot.test.ts
 
-      - name: Trigger new workflow run 
+      - name: Trigger new workflow run
         working-directory: regression_tests
         timeout-minutes: 5
         run: npx playwright test tests/trigger.test.ts --project=chromium
@@ -82,22 +82,22 @@ jobs:
         working-directory: regression_tests
         timeout-minutes: 5
         run: sleep 5 && python3 tests/workflow_comparer.py --server_address localhost:8080 --checkpoint=create --path=checkpoint
-      
+
       # Grabs the pid of the process bound to port 8080 and kills it
       - name: Kill the server
         run: kill -9 $(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')
-      
+
       # install_local.py requires ~/.aqueduct to exist.
       - name: Update aqueduct with latest code
         run: python3 scripts/install_local.py --gobinary --sdk --executor
 
       - name: Start the server again
         run: (aqueduct start --verbose > $SERVER_LOGS_CURRENT_FILE 2>&1 &)
-      
+
       - name: Wait for server again
         timeout-minutes: 5
         run: while ! echo exit | nc localhost 8080; do sleep 1; done
-      
+
       - name: Compare checkpoint of workflow
         working-directory: regression_tests
         timeout-minutes: 5
@@ -107,16 +107,16 @@ jobs:
         working-directory: regression_tests
         timeout-minutes: 5
         run: imgname=old-flow-run-2 npx playwright test tests/screenshot.test.ts
-      
+
       - name: Kill the server
         run: kill -9 $(lsof -nP -iTCP -sTCP:LISTEN | grep 8080 | awk '{print $2}')
-      
+
       - name: clear the server
         run: aqueduct clear
 
       - name: Start the server again
         run: (aqueduct start --verbose > $SERVER_LOGS_CURRENT_FILE 2>&1 &)
-      
+
       - name: Wait for server again
         timeout-minutes: 5
         run: while ! echo exit | nc localhost 8080; do sleep 1; done
@@ -145,7 +145,7 @@ jobs:
         with:
           name: Executor Logs
           path: ~/.aqueduct/server/logs/*
-      
+
       - uses: actions/upload-artifact@v3
         if: always()
         with:
