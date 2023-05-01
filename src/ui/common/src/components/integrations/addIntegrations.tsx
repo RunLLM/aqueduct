@@ -102,6 +102,11 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
   const service = svc as Service;
   const [showDialog, setShowDialog] = useState(false);
 
+  const [showKubernetesDialog, setShowKubernetesDialog] = useState(false);
+  const [showOndemandDialog, setShowOndemandDialog] = useState(false);
+  const [showSelectProviderDialog, setShowSelectProviderDialog] =
+    useState(false);
+
   if (integration.category !== category) {
     return null;
   }
@@ -196,11 +201,6 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
       </Box>
     );
   }
-
-  const [showKubernetesDialog, setShowKubernetesDialog] = useState(false);
-  const [showOndemandDialog, setShowOndemandDialog] = useState(false);
-  const [showSelectProviderDialog, setShowSelectProviderDialog] =
-    useState(false);
 
   const handleRegularK8s = () => {
     setShowKubernetesDialog(true);
