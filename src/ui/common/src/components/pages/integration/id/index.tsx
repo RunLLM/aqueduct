@@ -18,7 +18,6 @@ import OperatorsOnIntegration from '../../../../components/integrations/operator
 import DefaultLayout from '../../../../components/layouts/default';
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import {
-  useDagResultsGetQuery,
   useIntegrationOperatorsGetQuery,
   useIntegrationWorkflowsGetQuery,
 } from '../../../../handlers/AqueductApi';
@@ -40,7 +39,11 @@ import {
   IntegrationCategories,
   SupportedIntegrations,
 } from '../../../../utils/integrations';
-import ExecutionStatus, { isFailed, isLoading, isSucceeded } from '../../../../utils/shared';
+import ExecutionStatus, {
+  isFailed,
+  isLoading,
+  isSucceeded,
+} from '../../../../utils/shared';
 import { ResourceHeaderDetailsCard } from '../../../integrations/cards/headerDetailsCard';
 import { ResourceFieldsDetailsCard } from '../../../integrations/cards/resourceFieldsDetailsCard';
 import { ErrorSnackbar } from '../../../integrations/errorSnackbar';
@@ -174,19 +177,18 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
 
   // FOR ANDRE: Example usage to get the latest dag result for one of the workflows.
   // We will need to do this for every workflow using.
-  const {
-    data: dagResults,
-    error: testError,
-    isLoading: testIsLoading,
-  } = useDagResultsGetQuery({
-    apiKey: user.apiKey,
-    workflowId: workflowID,
-    limit: 1,
-
-    // TODO: for some reason, the skip doesn't quite work, but the page loads regardless of the 400,
-    //  when the first query completes.
-    skip: !workflowID, // Skip the call if the workflowID hasn't been populated yet by the previous call.
-  });
+  // const {
+  //   data: dagResults,
+  //   error: testError,
+  //   isLoading: testIsLoading,
+  // } = useDagResultsGetQuery({
+  //   apiKey: user.apiKey,
+  //   workflowId: workflowID,
+  //   limit: 1,
+  // }, {
+  //   // Skip the call if the workflowID hasn't been populated yet by the previous call.
+  //   skip: !workflowID,
+  // });
 
   useEffect(() => {
     if (workflowIDs && workflowIDs.length > 0) {
@@ -194,10 +196,11 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     }
   }, [workflowIDs]);
 
-  if (!testError && !testIsLoading) {
-    // Prints the dag result of the latest result for this workflow.
-    console.log('DAG RESULTS: ', dagResults);
-  }
+  // if (!testError && !testIsLoading) {
+  //   // Prints the dag result of the latest result for this workflow.
+  //   // This prints out multiple results, we can sort, or take the last one to get the latest.
+  //   console.log('DAG RESULTS: ', dagResults);
+  // }
 
   // FOR ANDRE: Fetch all the operators that are associated with this integration.
   // The operators all have a DagID field on them, which you can combine with the dag_result.DagID to
@@ -213,6 +216,20 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   if (!testOpsErr && !testOpsIsLoading) {
     // Prints the operators associated with this integration.
     console.log('INTEGRATION OPERATORS: ', integrationOperators);
+    // map dagID to operators.
+    // Going to look something like this:
+    // dagID: [operator1, operator 2, etc.]
+    const dagIdToOperatorMap = {};
+    integrationOperators.forEach((operator) => {
+      if (dagIdToOperatorMap[operator.dag_id]) {
+        dagIdToOperatorMap[operator.dag_id].push(operator);
+      } else {
+        dagIdToOperatorMap[operator.dag_id] = [operator];
+      }
+    });
+
+    // Prints the dagIdToOperatorMap
+    console.log('dagIdToOperatorMap: ', dagIdToOperatorMap);
   }
 
   if (fetchWorkflowsIsLoading) {
@@ -228,7 +245,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     return null;
   }
 
-  console.log('selecetd integration: ', selectedIntegration);
+  console.log('selected integration: ', selectedIntegration);
 
   return (
     <Layout
@@ -260,27 +277,27 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
                 numWorkflowsUsingMsg={numWorkflowsUsingMsg}
               />
 
-              { hasConfigFieldsToShow(selectedIntegration) && (
+              {hasConfigFieldsToShow(selectedIntegration) && (
                 <Box
-                    sx={{
-                      fontSize: '16px',
-                      p: 1,
-                      ml: 1,
-                      height: '32px',
-                      borderRadius: '8px',
-                      ':hover': {
-                        backgroundColor: theme.palette.gray[50],
-                      },
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => setShowResourceDetails(!showResourceDetails)}
+                  sx={{
+                    fontSize: '16px',
+                    p: 1,
+                    ml: 1,
+                    height: '32px',
+                    borderRadius: '8px',
+                    ':hover': {
+                      backgroundColor: theme.palette.gray[50],
+                    },
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => setShowResourceDetails(!showResourceDetails)}
                 >
                   <Tooltip title="See more" arrow>
                     <FontAwesomeIcon
-                        icon={faEllipsis}
-                        style={{
-                          transition: 'transform 200ms',
-                        }}
+                      icon={faEllipsis}
+                      style={{
+                        transition: 'transform 200ms',
+                      }}
                     />
                   </Tooltip>
                 </Box>
@@ -311,25 +328,23 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           />
         </Box>
 
-        { selectedIntegration.exec_state?.status === ExecutionStatus.Failed && (
-            <Box
-                sx={{
-                  backgroundColor: theme.palette.red[100],
-                  borderRadius: 2,
-                  color: theme.palette.red[600],
-                  p: 2,
-                  height: 'fit-content',
-                  width: '100%',
-                  my: 1,
-                }}
-            >
-              <Typography variant="body2" style={{ whiteSpace: "pre-wrap"}}>
-                {`${selectedIntegration.exec_state?.error.tip}\n\n${selectedIntegration.exec_state?.error.context}`}
-              </Typography>
-            </Box>
-        )
-        }
-
+        {selectedIntegration.exec_state?.status === ExecutionStatus.Failed && (
+          <Box
+            sx={{
+              backgroundColor: theme.palette.red[100],
+              borderRadius: 2,
+              color: theme.palette.red[600],
+              p: 2,
+              height: 'fit-content',
+              width: '100%',
+              my: 1,
+            }}
+          >
+            <Typography variant="body2" style={{ whiteSpace: 'pre-wrap' }}>
+              {`${selectedIntegration.exec_state?.error.tip}\n\n${selectedIntegration.exec_state?.error.context}`}
+            </Typography>
+          </Box>
+        )}
 
         {serverConfig.config?.storageConfig.integration_name ===
           selectedIntegration.name && (
@@ -397,8 +412,9 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             >
               Workflows
             </Typography>
-            {/* TODO: pass down dag results and integrationOperators */}
-            <OperatorsOnIntegration integration={selectedIntegration} />
+            <OperatorsOnIntegration
+              integration={selectedIntegration}
+            />
           </Box>
         )}
       </Box>

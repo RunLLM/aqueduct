@@ -114,7 +114,10 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
           .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
           .map((integration, idx) => {
             let numWorkflowsUsingMsg = '';
-            if (!fetchWorkflowsError && integration.id in workflowsByIntegration) {
+            if (
+              !fetchWorkflowsError &&
+              integration.id in workflowsByIntegration
+            ) {
               numWorkflowsUsingMsg = getNumWorkflowsUsingMessage(
                 workflowsByIntegration[integration.id].length
               );
