@@ -12,13 +12,20 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type contextKeyType string
+type (
+	contextKeyType    string
+	ServerEnvironment string
+)
 
 const (
 	UserIdKey         contextKeyType = "userId"
 	OrganizationIdKey contextKeyType = "organizationId"
 	UserRequestIdKey  contextKeyType = "userRequestId"
 	UserAuth0IdKey    contextKeyType = "userAuth0Id"
+
+	ProdServerEnvironment ServerEnvironment = "prod"
+	DevServerEnvironment  ServerEnvironment = "dev"
+	TestServerEnvironment ServerEnvironment = "test"
 )
 
 type AqContext struct {

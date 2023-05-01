@@ -23,10 +23,16 @@ import (
 // Method: GET
 // Params:
 //	`workflowId`: ID for `workflow` object
-//  `dagResultID`: ID for `workflow_dag_result` object
 // Request:
 //	Headers:
 //		`api-key`: user's API Key
+//  Parameters:
+//		`order_by`:
+//			Optional single field that the query should be ordered. Requires the table prefix.
+//		`order_descending`:
+//			Optional boolean specifying whether order_by should be ascending or descending.
+//		`limit`:
+//			Optional limit on the number of storage migrations returned. Defaults to all of them.
 // Response:
 //	Body:
 //		serialized `[]response.DAGResult`
@@ -34,6 +40,13 @@ import (
 type dagResultsGetArgs struct {
 	*aq_context.AqContext
 	workflowID uuid.UUID
+
+	// A nil value means that the order is not set.
+	orderBy string
+	// Default is descending (true).
+	orderDescending bool
+	// A negative value for limit (eg. -1) means that the limit is not set.
+	limit int
 }
 
 type DAGResultsGetHandler struct {
@@ -60,9 +73,27 @@ func (h *DAGResultsGetHandler) Prepare(r *http.Request) (interface{}, int, error
 		return nil, http.StatusBadRequest, err
 	}
 
+	limit, err := (parser.LimitQueryParser{}).Parse(r)
+	if err != nil {
+		return nil, http.StatusBadRequest, err
+	}
+
+	orderBy, err := (parser.OrderByQueryParser{}).Parse(r, models.AllDAGResultCols())
+	if err != nil {
+		return nil, http.StatusBadRequest, err
+	}
+
+	descending, err := (parser.OrderDescendingQueryParser{}).Parse(r)
+	if err != nil {
+		return nil, http.StatusBadRequest, err
+	}
+
 	return &dagResultsGetArgs{
-		AqContext:  aqContext,
-		workflowID: workflowID,
+		AqContext:       aqContext,
+		workflowID:      workflowID,
+		orderBy:         orderBy,
+		orderDescending: descending,
+		limit:           limit,
 	}, http.StatusOK, nil
 }
 
@@ -83,7 +114,7 @@ func (h *DAGResultsGetHandler) Perform(ctx context.Context, interfaceArgs interf
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
 	}
 
-	dbDAGResults, err := h.DAGResultRepo.GetByWorkflow(ctx, args.workflowID, h.Database)
+	dbDAGResults, err := h.DAGResultRepo.GetByWorkflow(ctx, args.workflowID, args.orderBy, args.limit, args.orderDescending, h.Database)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading dag results.")
 	}

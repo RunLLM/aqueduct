@@ -28,6 +28,7 @@ import {
   AWSConfig,
   BigQueryConfig,
   DatabricksConfig,
+  ECRConfig,
   EmailConfig,
   formatService,
   GCSConfig,
@@ -58,6 +59,7 @@ import {
   DatabricksDialog,
   isDatabricksConfigComplete,
 } from './databricksDialog';
+import { ECRDialog, isECRConfigComplete } from './ecrDialog';
 import {
   EmailDefaultsOnCreate,
   EmailDialog,
@@ -375,6 +377,11 @@ const IntegrationDialog: React.FC<Props> = ({
         <AWSDialog onUpdateField={setConfigField} value={config as AWSConfig} />
       );
       break;
+    case 'ECR':
+      serviceDialog = (
+        <ECRDialog onUpdateField={setConfigField} value={config as AWSConfig} />
+      );
+      break;
     default:
       return null;
   }
@@ -530,6 +537,8 @@ export function isConfigComplete(
       return isSnowflakeConfigComplete(config as SnowflakeConfig);
     case 'SQLite':
       return isSQLiteConfigComplete(config as SQLiteConfig);
+    case 'ECR':
+      return isECRConfigComplete(config as ECRConfig);
     default:
       // Require all integrations to have their own validation function.
       return false;

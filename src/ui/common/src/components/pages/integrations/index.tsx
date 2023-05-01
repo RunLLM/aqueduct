@@ -127,6 +127,14 @@ const IntegrationsPage: React.FC<Props> = ({
             supportedIntegrations={SupportedIntegrations}
           />
           <Typography variant="h6" marginY={2}>
+            Container Registry
+          </Typography>
+          <AddIntegrations
+            user={user}
+            category={IntegrationCategories.CONTAINER_REGISTRY}
+            supportedIntegrations={SupportedIntegrations}
+          />
+          <Typography variant="h6" marginY={2}>
             Notifications
           </Typography>
           <Typography variant="h6" marginY={2}>

@@ -153,6 +153,7 @@ type FunctionSpec struct {
 	ExpectedOutputArtifactTypes []string                 `json:"expected_output_artifact_types" yaml:"expected_output_artifact_types"`
 	OperatorType                operator.Type            `json:"operator_type" yaml:"operator_type"`
 	Resources                   *operator.ResourceConfig `json:"resources" yaml:"resources"`
+	Image                       *operator.ImageConfig    `json:"image,omitempty" yaml:"image,omitempty"`
 
 	// Specific to the check operator. This is left unset by any other function type.
 	CheckSeverity *check.Level `json:"check_severity" yaml:"check_severity"`

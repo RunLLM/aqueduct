@@ -32,13 +32,13 @@ type DAGResult struct {
 
 // DAGResultCols returns a comma-separated string of all DAGResult columns.
 func DAGResultCols() string {
-	return strings.Join(allDAGResultCols(), ",")
+	return strings.Join(AllDAGResultCols(), ",")
 }
 
 // DAGResultColsWithPrefix returns a comma-separated string of all
 // DAGResult columns prefixed by the table name.
 func DAGResultColsWithPrefix() string {
-	cols := allDAGResultCols()
+	cols := AllDAGResultCols()
 	for i, col := range cols {
 		cols[i] = fmt.Sprintf("%s.%s", DAGResultTable, col)
 	}
@@ -46,7 +46,7 @@ func DAGResultColsWithPrefix() string {
 	return strings.Join(cols, ",")
 }
 
-func allDAGResultCols() []string {
+func AllDAGResultCols() []string {
 	return []string{
 		DAGResultID,
 		DAGResultDagID,
