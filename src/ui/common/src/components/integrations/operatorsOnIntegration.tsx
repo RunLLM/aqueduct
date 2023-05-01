@@ -1,42 +1,35 @@
 import Alert from '@mui/material/Alert';
 import AlertTitle from '@mui/material/AlertTitle';
 import Box from '@mui/material/Box';
-import CircularProgress from '@mui/material/CircularProgress';
-import React, { useState } from 'react';
+import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { OperatorsForIntegrationItem } from '../../reducers/integration';
 import { RootState } from '../../stores/store';
-import { isFailed, isInitial, isLoading } from '../../utils/shared';
-import { ListWorkflowSummary } from '../../utils/workflows';
-import WorkflowAccordion from '../workflows/accordion';
-import WorkflowSummaryCard from '../workflows/WorkflowSummaryCard';
 import { Integration } from '../../utils/integrations';
+import { isFailed, isInitial } from '../../utils/shared';
+import { ListWorkflowSummary } from '../../utils/workflows';
+import WorkflowSummaryCard from '../workflows/WorkflowSummaryCard';
 
 type OperatorsOnIntegrationProps = {
   integration: Integration;
-}
+};
 
-const OperatorsOnIntegration: React.FC<OperatorsOnIntegrationProps> = ({ integration }) => {
+const OperatorsOnIntegration: React.FC<OperatorsOnIntegrationProps> = ({
+  integration,
+}) => {
   const listWorkflowState = useSelector(
     (state: RootState) => state.listWorkflowReducer
   );
   const operatorsState = useSelector((state: RootState) => {
     return state.integrationReducer.operators;
   });
-  const [expandedWf, setExpandedWf] = useState<string>('');
+
   if (
     isInitial(operatorsState.status) ||
     isInitial(listWorkflowState.loadingStatus)
   ) {
     return null;
-  }
-
-  if (
-    isLoading(operatorsState.status) ||
-    isLoading(listWorkflowState.loadingStatus)
-  ) {
-    return <CircularProgress />;
   }
 
   if (
@@ -56,19 +49,18 @@ const OperatorsOnIntegration: React.FC<OperatorsOnIntegrationProps> = ({ integra
 
   const workflows = listWorkflowState.workflows;
   const operators = operatorsState.operators;
-  
 
   const workflowMap: { [id: string]: ListWorkflowSummary } = {};
   workflows.map((wf) => {
     workflowMap[wf.id] = wf;
   });
+
   const operatorsByWorkflow: {
     [id: string]: {
       workflow?: ListWorkflowSummary;
       operators: OperatorsForIntegrationItem[];
     };
   } = {};
-
   operators.map((op) => {
     const wf = workflowMap[op.workflow_id];
     if (!operatorsByWorkflow[op.workflow_id]) {
@@ -79,47 +71,22 @@ const OperatorsOnIntegration: React.FC<OperatorsOnIntegrationProps> = ({ integra
 
   if (Object.keys(operatorsByWorkflow).length > 0) {
     return (
-      <>
-        {/* <Box maxWidth="900px">
-          {Object.entries(operatorsByWorkflow).map(([wfId, item]) => {
-            console.log(item);
-            return (
-              <WorkflowAccordion
-                expanded={expandedWf === wfId}
-                handleExpand={() => {
-                  if (expandedWf === wfId) {
-                    setExpandedWf('');
-                    return;
-                  }
-                  setExpandedWf(wfId);
-                }}
-                key={wfId}
-                workflow={item.workflow}
-                operators={item.operators}
-              />
-            );
-          })}
-        </Box> */}
-
-        {/* TODO: Turn this into a grid and style appropriately */}
-        <Box maxWidth="900px">
-          {Object.entries(operatorsByWorkflow).map(([wfId, item]) => {
-            console.log(item);
-            return (
-              <WorkflowSummaryCard
-                integration={integration}
-                key={wfId}
-                workflow={item.workflow}
-                operators={item.operators}
-              />
-            );
-          })}
-        </Box>
-      </>
+      <Box maxWidth="900px" sx={{ display: 'flex', flexWrap: 'wrap' }}>
+        {Object.entries(operatorsByWorkflow).map(([wfId, item]) => {
+          return (
+            <WorkflowSummaryCard
+              integration={integration}
+              key={wfId}
+              workflow={item.workflow}
+              operators={operatorsByWorkflow[wfId].operators}
+            />
+          );
+        })}
+      </Box>
     );
-  } else {
-    return <Box>This resource is not used by any workflows.</Box>;
   }
+
+  return <Box>This resource is not used by any workflows.</Box>;
 };
 
 export default OperatorsOnIntegration;
