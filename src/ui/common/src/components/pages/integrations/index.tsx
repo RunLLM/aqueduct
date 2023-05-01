@@ -181,14 +181,6 @@ const IntegrationsPage: React.FC<Props> = ({
             supportedIntegrations={SupportedIntegrations}
           />
           <Typography variant="h6" marginY={2}>
-            Cloud
-          </Typography>
-          <AddIntegrations
-            user={user}
-            category={IntegrationCategories.CLOUD}
-            supportedIntegrations={SupportedIntegrations}
-          />
-          <Typography variant="h6" marginY={2}>
             Container Registry
           </Typography>
           <AddIntegrations

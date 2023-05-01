@@ -5,7 +5,6 @@ from typing import List
 
 import numpy as np
 from transformers import Pipeline, PreTrainedTokenizer
-
 from transformers.utils import is_tf_available
 
 if is_tf_available():

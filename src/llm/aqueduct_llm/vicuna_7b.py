@@ -3,7 +3,7 @@ from typing import List, Union
 
 import torch
 from fastchat.conversation import get_default_conv_template
-from fastchat.serve.inference import load_model, compute_skip_echo_len
+from fastchat.serve.inference import compute_skip_echo_len, load_model
 
 default_max_gpu_memory = "13GiB"
 default_temperature = 0.7

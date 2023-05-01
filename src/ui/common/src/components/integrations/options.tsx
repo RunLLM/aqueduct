@@ -92,7 +92,7 @@ const IntegrationOptions: React.FC<Props> = ({
           >
             <FontAwesomeIcon color="gray.800" icon={faPen} width="16px" />
             <Typography color="gray.800" variant="body2" sx={{ marginLeft: 1 }}>
-              Edit Integration
+              Edit Resource
             </Typography>
           </MenuItem>
         )}
@@ -105,7 +105,7 @@ const IntegrationOptions: React.FC<Props> = ({
           >
             <FontAwesomeIcon color="gray.800" icon={faTrash} />
             <Typography color="gray.800" variant="body2" sx={{ marginLeft: 1 }}>
-              Delete Integration
+              Delete Resource
             </Typography>
           </MenuItem>
         )}
