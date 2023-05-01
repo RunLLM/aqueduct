@@ -45,7 +45,7 @@ def _generate_llm_op(
         messages: Union[str, List[str]], parameters: Dict[str, Any] = {}
     ) -> Union[str, List[str]]:
         if not (isinstance(messages, str) or isinstance(messages, list)):
-            raise ValueError("The 'messages' parameter must be a string or list of strings.")
+            raise ValueError("The input must be a string or list of strings.")
 
         module = __import__("aqueduct_llm", fromlist=[llm_name])
         llm = getattr(module, llm_name)
@@ -76,7 +76,7 @@ def _generate_llm_op(
 
     def use_llm_for_table(df: pd.DataFrame, parameters: Dict[str, Any] = {}) -> pd.DataFrame:
         if not isinstance(df, pd.DataFrame):
-            raise ValueError("The 'df' parameter must be a pandas DataFrame.")
+            raise ValueError("The input must be a pandas DataFrame.")
 
         module = __import__("aqueduct_llm", fromlist=[llm_name])
         llm = getattr(module, llm_name)
