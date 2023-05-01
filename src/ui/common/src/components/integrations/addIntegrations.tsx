@@ -1,23 +1,24 @@
 import { Typography } from '@mui/material';
+import { DialogContent } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
 import Snackbar from '@mui/material/Snackbar';
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import {
-  DialogActions,
-  DialogContent,
-} from '@mui/material';
 
 import { resetConnectNewStatus } from '../../reducers/integration';
 import { AppDispatch } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
-import { Info, Service, ServiceInfoMap } from '../../utils/integrations';
+import {
+  Info,
+  Service,
+  ServiceInfoMap,
+  SupportedIntegrations,
+} from '../../utils/integrations';
 import IntegrationDialog from './dialogs/dialog';
 import IntegrationLogo from './logo';
 
@@ -100,6 +101,11 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
   const dispatch: AppDispatch = useDispatch();
   const service = svc as Service;
   const [showDialog, setShowDialog] = useState(false);
+
+  const [showKubernetesDialog, setShowKubernetesDialog] = useState(false);
+  const [showOndemandDialog, setShowOndemandDialog] = useState(false);
+  const [showSelectProviderDialog, setShowSelectProviderDialog] =
+    useState(false);
 
   if (integration.category !== category) {
     return null;
@@ -191,21 +197,17 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
       </Box>
     );
   } else {
-    const [showKubernetesDialog, setShowKubernetesDialog] = useState(false);
-    const [showOndemandDialog, setShowOndemandDialog] = useState(false);
-    const [showSelectProviderDialog, setShowSelectProviderDialog] = useState(false);
-  
-    const handleOption1Click = () => {
+    const handleRegularK8s = () => {
       setShowKubernetesDialog(true);
       setShowDialog(false);
     };
-  
-    const handleOption2Click = () => {
+
+    const handleOndemandK8s = () => {
       setShowSelectProviderDialog(true);
       setShowDialog(false);
     };
 
-    const handleAwsClick = () => {
+    const handleAWSClick = () => {
       setShowOndemandDialog(true);
       setShowSelectProviderDialog(false);
     };
@@ -216,7 +218,9 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
           {iconWrapper}
           <>
             <Dialog open={showDialog} onClose={() => setShowDialog(false)}>
-              <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <DialogTitle
+                sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
                 <IntegrationLogo
                   service={service}
                   activated={integration.activated}
@@ -227,24 +231,41 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
                 </Typography>
               </DialogTitle>
               <DialogContent>
-                <Button sx={{textTransform: 'none', marginBottom: '12px', display: 'flex', gap: '8px'}} onClick={handleOption1Click}>
+                <Button
+                  sx={{
+                    textTransform: 'none',
+                    marginBottom: '12px',
+                    display: 'flex',
+                    gap: '8px',
+                  }}
+                  onClick={handleRegularK8s}
+                >
                   <IntegrationLogo
                     service={service}
                     activated={integration.activated}
                     size="small"
                   />
-                  <Typography variant="body2" sx={{ color: 'black', fontSize: '20px' }}>
-                    I have an existing Kubernetes cluster I'd like to use
+                  <Typography
+                    variant="body2"
+                    sx={{ color: 'black', fontSize: '20px' }}
+                  >
+                    I have an existing Kubernetes cluster I&apos;d like to use
                   </Typography>
                 </Button>
-                <Button sx={{textTransform: 'none', display: 'flex', gap: '8px'}} onClick={handleOption2Click}>
+                <Button
+                  sx={{ textTransform: 'none', display: 'flex', gap: '8px' }}
+                  onClick={handleOndemandK8s}
+                >
                   <IntegrationLogo
-                      service={'Aqueduct Demo'}
-                      activated={integration.activated}
-                      size="small"
+                    service={'Aqueduct Demo'}
+                    activated={SupportedIntegrations['Aqueduct Demo'].activated}
+                    size="small"
                   />
-                  <Typography variant="body2" sx={{ color: 'black', fontSize: '20px' }}>
-                    I'd like Aqueduct to create & manage a cluster for me
+                  <Typography
+                    variant="body2"
+                    sx={{ color: 'black', fontSize: '20px' }}
+                  >
+                    I&apos;d like Aqueduct to create & manage a cluster for me
                   </Typography>
                 </Button>
               </DialogContent>
@@ -255,75 +276,88 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
                 user={user}
                 service={service}
                 onSuccess={() => {
-                  setShowKubernetesDialog(false)
+                  setShowKubernetesDialog(false);
                   setShowSuccessToast(service);
                 }}
                 onCloseDialog={() => {
-                  setShowKubernetesDialog(false)
+                  setShowKubernetesDialog(false);
                   dispatch(resetConnectNewStatus());
                 }}
                 showMigrationDialog={() => setShowMigrationDialog(true)}
               />
             )}
 
-            <Dialog open={showSelectProviderDialog} onClose={() => setShowSelectProviderDialog(false)}>
-              <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Dialog
+              open={showSelectProviderDialog}
+              onClose={() => setShowSelectProviderDialog(false)}
+            >
+              <DialogTitle
+                sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+              >
                 <IntegrationLogo
-                      service={service}
-                      activated={integration.activated}
-                      size="small"
+                  service={service}
+                  activated={integration.activated}
+                  size="small"
                 />
                 <Typography variant="h5" sx={{ color: 'black' }}>
                   +
                 </Typography>
                 <IntegrationLogo
-                      service={'Aqueduct Demo'}
-                      activated={integration.activated}
-                      size="small"
+                  service={'Aqueduct Demo'}
+                  activated={SupportedIntegrations['Aqueduct Demo'].activated}
+                  size="small"
                 />
                 <Typography variant="h5" sx={{ color: 'black' }}>
-                Aqueduct-managed Kubernetes
+                  Aqueduct-managed Kubernetes
                 </Typography>
               </DialogTitle>
-              <DialogContent sx={{ display: 'flex', alignItems: 'center', paddingLeft: '54px', gap: '32px', '& button': { backgroundColor: '#F8F8F8' } }}>
-                <Button onClick={handleAwsClick}>
+              <DialogContent
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  paddingLeft: '54px',
+                  gap: '32px',
+                  '& button': { backgroundColor: '#F8F8F8' },
+                }}
+              >
+                <Button onClick={handleAWSClick}>
                   <IntegrationLogo
-                        service={'AWS'}
-                        activated={integration.activated}
-                        size="large"
+                    service={'AWS'}
+                    activated={SupportedIntegrations['AWS'].activated}
+                    size="large"
                   />
                 </Button>
                 <Button disabled={true}>
                   <IntegrationLogo
-                        service={'GCP'}
-                        activated={false}
-                        size="large"
+                    service={'GCP'}
+                    activated={SupportedIntegrations['GCP'].activated}
+                    size="large"
                   />
                 </Button>
                 <Button disabled={true}>
                   <IntegrationLogo
-                        service={'Azure'}
-                        activated={false}
-                        size="large"
+                    service={'Azure'}
+                    activated={SupportedIntegrations['Azure'].activated}
+                    size="large"
                   />
                 </Button>
               </DialogContent>
             </Dialog>
 
             {showOndemandDialog && (
-            <IntegrationDialog
-              user={user}
-              service='AWS'
-              onSuccess={() => {
-                setShowOndemandDialog(false)
-                setShowSuccessToast(service);
-              }}
-              onCloseDialog={() => {
-                setShowOndemandDialog(false)
-                dispatch(resetConnectNewStatus());
-              }}
-              showMigrationDialog={() => setShowMigrationDialog(true)}
-            />
+              <IntegrationDialog
+                user={user}
+                service="AWS"
+                onSuccess={() => {
+                  setShowOndemandDialog(false);
+                  setShowSuccessToast(service);
+                }}
+                onCloseDialog={() => {
+                  setShowOndemandDialog(false);
+                  dispatch(resetConnectNewStatus());
+                }}
+                showMigrationDialog={() => setShowMigrationDialog(true)}
+              />
             )}
           </>
         </Box>

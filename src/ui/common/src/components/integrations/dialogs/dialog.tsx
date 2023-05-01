@@ -68,7 +68,6 @@ import {
 import { GCSDialog, isGCSConfigComplete } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { isK8sConfigComplete, KubernetesDialog } from './kubernetesDialog';
-import { KubernetesSelectorDialog } from './kubernetesSelectorDialog';
 import { LambdaDialog } from './lambdaDialog';
 import { isMariaDBConfigComplete, MariaDbDialog } from './mariadbDialog';
 import { isMongoDBConfigComplete, MongoDBDialog } from './mongoDbDialog';
