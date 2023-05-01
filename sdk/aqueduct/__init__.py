@@ -4,11 +4,9 @@ from aqueduct.client import Client, get_apikey, global_config
 from aqueduct.constants import exports
 from aqueduct.constants.enums import CheckSeverity, LoadUpdateMode
 from aqueduct.decorator import check, metric, op, to_operator
-from aqueduct.llm_wrapper import llm_op
 from aqueduct.flow import Flow
+from aqueduct.llm_wrapper import llm_op
 from aqueduct.schedule import DayOfMonth, DayOfWeek, Hour, Minute, daily, hourly, monthly, weekly
-
-llm = "llm"
 
 
 # Retrieves all valid import paths for all variables in a given module, using the import path prefix

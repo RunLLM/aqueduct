@@ -35,6 +35,7 @@ from aqueduct.integrations.connect_config import (
     prepare_integration_config,
 )
 from aqueduct.integrations.databricks_integration import DatabricksIntegration
+from aqueduct.integrations.ecr_integration import ECRIntegration
 from aqueduct.integrations.google_sheets_integration import GoogleSheetsIntegration
 from aqueduct.integrations.k8s_integration import K8sIntegration
 from aqueduct.integrations.lambda_integration import LambdaIntegration
@@ -313,6 +314,7 @@ class Client:
         DatabricksIntegration,
         SparkIntegration,
         AWSIntegration,
+        ECRIntegration,
     ]:
         """Retrieves a connected integration object.
 
@@ -388,6 +390,10 @@ class Client:
             return AWSIntegration(
                 metadata=integration_info,
                 k8s_integration_metadata=dynamic_k8s_integration_info,
+            )
+        elif integration_info.service == ServiceType.ECR:
+            return ECRIntegration(
+                metadata=integration_info,
             )
         else:
             raise InvalidIntegrationException(

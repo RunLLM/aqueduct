@@ -465,5 +465,6 @@ func (bfo *baseFunctionOperator) jobSpec(
 		OperatorType:                bfo.Type(),
 		CheckSeverity:               checkSeverity,
 		Resources:                   bfo.dbOperator.Spec.Resources(),
+		Image:                       bfo.dbOperator.Spec.Image(),
 	}
 }

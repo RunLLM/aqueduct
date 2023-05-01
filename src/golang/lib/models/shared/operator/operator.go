@@ -50,6 +50,12 @@ type ResourceConfig struct {
 	UseLlm          *bool              `json:"use_llm,omitempty"`
 }
 
+type ImageConfig struct {
+	RegistryID *string        `json:"registry_id"`
+	Service    shared.Service `json:"service"`
+	Url        *string        `json:"url"`
+}
+
 type specUnion struct {
 	Type         Type                        `json:"type"`
 	Function     *function.Function          `json:"function,omitempty"`
@@ -60,9 +66,10 @@ type specUnion struct {
 	Param        *param.Param                `json:"param,omitempty"`
 	SystemMetric *system_metric.SystemMetric `json:"system_metric,omitempty"`
 
-	// This can currently only be set for operators that has function,
+	// These can currently only be set for operators that has function,
 	// including function, metric, and check.
 	Resources *ResourceConfig `json:"resources,omitempty"`
+	Image     *ImageConfig    `json:"image,omitempty"`
 
 	EngineConfig *shared.EngineConfig `json:"engine_config,omitempty"`
 }
@@ -120,6 +127,10 @@ func (s Spec) HasFunction() bool {
 
 func (s Spec) Resources() *ResourceConfig {
 	return s.spec.Resources
+}
+
+func (s Spec) Image() *ImageConfig {
+	return s.spec.Image
 }
 
 func (s Spec) EngineConfig() *shared.EngineConfig {

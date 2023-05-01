@@ -1,6 +1,5 @@
 import inspect
-import uuid
-import warnings
+import os
 from functools import wraps
 from typing import Any, Callable, Dict, List, Mapping, Optional, Union, cast
 
@@ -22,11 +21,13 @@ from aqueduct.constants.enums import (
     RuntimeType,
 )
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
+from aqueduct.integrations.dynamic_k8s_integration import DynamicK8sIntegration
 from aqueduct.logger import logger
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.operators import (
     CheckSpec,
     FunctionSpec,
+    ImageConfig,
     MetricSpec,
     Operator,
     OperatorSpec,
@@ -34,17 +35,11 @@ from aqueduct.models.operators import (
     get_operator_type,
 )
 from aqueduct.type_annotations import CheckFunction, MetricFunction, Number, UserFunction
-from aqueduct.utils.dag_deltas import (
-    AddOperatorDelta,
-    DAGDelta,
-    RemoveOperatorDelta,
-    apply_deltas_to_dag,
-)
-from aqueduct.utils.function_packaging import serialize_function
+from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.function_packaging import REQUIREMENTS_FILE, serialize_function
 from aqueduct.utils.naming import default_artifact_name_from_op_name, sanitize_artifact_name
 from aqueduct.utils.utils import generate_engine_config, generate_uuid
 
-import aqueduct
 from aqueduct import globals
 
 OutputArtifactFunction = Callable[..., BaseArtifact]
@@ -183,14 +178,18 @@ def _typecheck_op_decorator_arguments(
     description: Optional[str],
     file_dependencies: Optional[List[str]],
     requirements: Optional[Union[str, List[str]]],
-    engine: Optional[str],
+    engine: Optional[Union[str, DynamicK8sIntegration]],
     num_outputs: int,
     outputs: Optional[List[str]],
 ) -> None:
     _typecheck_common_decorator_arguments(description, file_dependencies, requirements)
 
-    if engine is not None and not isinstance(engine, str):
-        raise InvalidUserArgumentException("`engine` must be a string.")
+    if engine is not None and not (
+        isinstance(engine, str) or isinstance(engine, DynamicK8sIntegration)
+    ):
+        raise InvalidUserArgumentException(
+            "`engine` must be a string or a DynamicK8sIntegration object."
+        )
 
     if num_outputs is not None:
         if not isinstance(num_outputs, int) or num_outputs < 1:
@@ -383,7 +382,7 @@ def _convert_memory_string_to_mbs(memory_str: str) -> int:
 
 def _update_operator_spec_with_engine(
     spec: OperatorSpec,
-    engine: Optional[str] = None,
+    engine: Optional[Union[str, DynamicK8sIntegration]] = None,
 ) -> None:
     if engine is not None:
         if globals.__GLOBAL_API_CLIENT__ is None:
@@ -399,15 +398,10 @@ def _update_operator_spec_with_engine(
 
 def _update_operator_spec_with_resources(
     spec: OperatorSpec,
+    llm: bool,
     resources: Optional[Dict[str, Any]] = None,
-    use: Optional[str] = None,
 ) -> None:
-    if use is not None:
-        if use != aqueduct.llm:
-            raise InvalidUserArgumentException(
-                "Currently, the only supported value for `use` is `aqq.llm` (or 'llm')."
-            )
-
+    if llm:
         if resources is None:
             resources = {}
 
@@ -471,53 +465,110 @@ def _check_llm_requirements(spec: OperatorSpec) -> None:
     assert spec.resources is not None
 
     min_required_memory = 8192  # 8GB
-    max_required_memory = 32768  # 32GB
 
-    if spec.engine_config is None or spec.engine_config.type is not RuntimeType.K8S:
-        engine_type = (
-            RuntimeType.AQUEDUCT if spec.engine_config is None else spec.engine_config.type
-        )
-        raise InvalidUserArgumentException(
-            "`use=aqueduct.llm` is only compatible with Kubernetes engine. "
-            "Got engine type: %s. "
-            "If you want to use `aqueduct-llm` with a non-Kubernetes engine, use "
-            "`requirements=['aqueduct-llm']` instead." % engine_type.value
-        )
-    # Check to see if the resources meet the constraints of the LLM.
-    requested_gpu = False  # this is what we default to if gpu_resource_name is not specified.
-    requested_memory = 4096  # 4GB, this is what we defaults to if memory is not specified.
+    if spec.engine_config is not None and spec.engine_config.type is RuntimeType.K8S:
+        # Check to see if the resources meet the constraints of the LLM.
+        requested_gpu = False  # this is what we default to if gpu_resource_name is not specified.
+        requested_memory = 4096  # 4GB, this is what we defaults to if memory is not specified.
 
-    if spec.resources.gpu_resource_name is not None:
-        requested_gpu = True
-    if spec.resources.memory_mb is not None:
-        requested_memory = spec.resources.memory_mb
+        if spec.resources.gpu_resource_name is not None:
+            requested_gpu = True
+        if spec.resources.memory_mb is not None:
+            requested_memory = spec.resources.memory_mb
 
-    if not requested_gpu:
-        raise InvalidUserArgumentException("LLM requires GPU resource but it is not requested.")
+        if not requested_gpu:
+            raise InvalidUserArgumentException("LLM requires GPU resource but it is not requested.")
 
-    if min_required_memory > requested_memory:
-        raise InvalidUserArgumentException(
-            "LLMs require at least %dMB of memory but only %dMB is requested."
-            % (min_required_memory, requested_memory)
-        )
+        if min_required_memory > requested_memory:
+            raise InvalidUserArgumentException(
+                "LLMs require at least %dMB of memory but only %dMB is requested."
+                % (min_required_memory, requested_memory)
+            )
 
-    if max_required_memory > requested_memory:
-        logger().warning(
-            "LLMs can require as much as %dMB of memory but only %dMB is requested. This may lead to out-of-memory errors."
-            % (max_required_memory, requested_memory)
+
+def _check_if_requirements_contain_llm(
+    requirements: Optional[Union[str, List[str]]] = None
+) -> bool:
+    if requirements is None or isinstance(requirements, str):
+        if requirements is None:
+            req_file = REQUIREMENTS_FILE
+        elif isinstance(requirements, str):
+            req_file = requirements
+
+        with open(req_file, "r") as file:
+            for line in file:
+                if not line.startswith("#"):
+                    if "aqueduct-llm" in line:
+                        return True
+            else:
+                return False
+
+    for req in requirements:
+        if "aqueduct-llm" in req:
+            return True
+    return False
+
+
+def _update_operator_spec_with_image(
+    spec: OperatorSpec,
+    image: Optional[Dict[str, str]] = None,
+) -> None:
+    if image is not None:
+        if spec.engine_config is None or spec.engine_config.type is not RuntimeType.K8S:
+            engine_type = (
+                RuntimeType.AQUEDUCT if spec.engine_config is None else spec.engine_config.type
+            )
+            raise InvalidUserArgumentException(
+                "`image` is only compatible with Kubernetes engine. "
+                "Got engine type: %s. " % engine_type.value
+            )
+
+        if not isinstance(image, Dict) or any(not isinstance(k, str) for k in image):
+            raise InvalidUserArgumentException("`image` must be a dictionary with string keys.")
+
+        registry_name = image.get("registry_name")
+        url = image.get("url")
+
+        if registry_name is None:
+            raise InvalidUserArgumentException(
+                "`registry_name` must be specified when `image` is set."
+            )
+
+        connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
+        if registry_name not in connected_integrations.keys():
+            raise InvalidUserArgumentException(
+                "Registry name `%s` is not one of the connected resources." % registry_name,
+            )
+
+        if url is None:
+            raise InvalidUserArgumentException("`url` must be specified when `image` is set.")
+
+        if len(url.split(":")) != 2:
+            if len(url.split(":")) == 1:
+                url = url + ":latest"
+            else:
+                raise InvalidUserArgumentException(
+                    "Image URL must be in the form of `endpoint/repo:tag`. "
+                    "Such as 123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest."
+                )
+
+        spec.image = ImageConfig(
+            registry_id=str(connected_integrations[registry_name].id),
+            service=connected_integrations[registry_name].service,
+            url=url,
         )
 
 
 def op(
     name: Optional[Union[str, UserFunction]] = None,
     description: Optional[str] = None,
-    engine: Optional[str] = None,
+    engine: Optional[Union[str, DynamicK8sIntegration]] = None,
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
     num_outputs: Optional[int] = None,
     outputs: Optional[List[str]] = None,
     resources: Optional[Dict[str, Any]] = None,
-    use: Optional[str] = None,
+    image: Optional[Dict[str, str]] = None,
 ) -> Union[DecoratedFunction, OutputArtifactsFunction]:
     """Decorator that converts regular python functions into an operator.
 
@@ -576,9 +627,12 @@ def op(
             "cuda_version" (str):
                 Version of CUDA to use with GPU (only applicable for Kubernetes engine). The currently supported
                 values are "11.4.1" and "11.8.0".
-        use:
-            Specify which foundation models to use for this operator. Currently, the only supported
-            value is `aq.llm` (or "llm"), which allows this operator to import the aqueduct_llm package.
+        image:
+            A dictionary containing the custom image configurations that this operator will run with.
+            The dictionary needs to contain the following keys:
+            "registry_name" (str): The name of the registry integration to use.
+            "url" (str): The full URL of the image to use. Example: "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest"
+            It is recommended to get the dictionary via `client.integration("my_registry_name").image("my-image:latest")`
 
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
@@ -662,10 +716,14 @@ def op(
             )
 
             _update_operator_spec_with_engine(op_spec, engine)
-            _update_operator_spec_with_resources(op_spec, resources, use)
+            _update_operator_spec_with_resources(
+                op_spec, _check_if_requirements_contain_llm(requirements), resources
+            )
 
             if op_spec.resources is not None and op_spec.resources.use_llm:
                 _check_llm_requirements(op_spec)
+
+            _update_operator_spec_with_image(op_spec, image)
 
             assert isinstance(num_outputs, int)
             return wrap_spec(
@@ -708,9 +766,9 @@ def metric(
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
     output: Optional[str] = None,
-    engine: Optional[str] = None,
+    engine: Optional[Union[str, DynamicK8sIntegration]] = None,
     resources: Optional[Dict[str, Any]] = None,
-    use: Optional[str] = None,
+    image: Optional[Dict[str, str]] = None,
 ) -> Union[DecoratedMetricFunction, OutputArtifactFunction]:
     """Decorator that converts regular python functions into a metric.
 
@@ -762,9 +820,17 @@ def metric(
                 For example, the following values are valid: 100, "100MB", "1GB", "100mb", "1gb".
             "gpu_resource_name" (str):
                 Name of the gpu resource to use (only applicable for Kubernetes engine).
-        use:
-            Specify which foundation models to use for this operator. Currently, the only supported
-            value is `aq.llm` (or "llm"), which allows this operator to import the aqueduct_llm package.
+
+                For example, the following value is valid: "nvidia.com/gpu".
+            "cuda_version" (str):
+                Version of CUDA to use with GPU (only applicable for Kubernetes engine). The currently supported
+                values are "11.4.1" and "11.8.0".
+        image:
+            A dictionary containing the custom image configurations that this operator will run with.
+            The dictionary needs to contain the following keys:
+            "registry_name" (str): The name of the registry integration to use.
+            "url" (str): The full URL of the image to use. Example: "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest"
+            It is recommended to get the dictionary via `client.integration("my_registry_name").image("my-image:latest")`
 
     Examples:
         The metric name is inferred from the function name. The description is pulled from the function
@@ -837,10 +903,14 @@ def metric(
             metric_spec = MetricSpec(function=function_spec)
             op_spec = OperatorSpec(metric=metric_spec)
             _update_operator_spec_with_engine(op_spec, engine)
-            _update_operator_spec_with_resources(op_spec, resources, use)
+            _update_operator_spec_with_resources(
+                op_spec, _check_if_requirements_contain_llm(requirements), resources
+            )
 
             if op_spec.resources is not None and op_spec.resources.use_llm:
                 _check_llm_requirements(op_spec)
+
+            _update_operator_spec_with_image(op_spec, image)
 
             output_names = [output] if output is not None else None
             numeric_artifact = wrap_spec(
@@ -896,9 +966,9 @@ def check(
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
     output: Optional[str] = None,
-    engine: Optional[str] = None,
+    engine: Optional[Union[str, DynamicK8sIntegration]] = None,
     resources: Optional[Dict[str, Any]] = None,
-    use: Optional[str] = None,
+    image: Optional[Dict[str, str]] = None,
 ) -> Union[DecoratedCheckFunction, OutputArtifactFunction]:
     """Decorator that converts a regular python function into a check.
 
@@ -953,9 +1023,17 @@ def check(
                 For example, the following values are valid: 100, "100MB", "1GB", "100mb", "1gb".
             "gpu_resource_name" (str):
                 Name of the gpu resource to use (only applicable for Kubernetes engine).
-        use:
-            Specify which foundation models to use for this operator. Currently, the only supported
-            value is `aq.llm` (or "llm"), which allows this operator to import the aqueduct_llm package.
+
+                For example, the following value is valid: "nvidia.com/gpu".
+            "cuda_version" (str):
+                Version of CUDA to use with GPU (only applicable for Kubernetes engine). The currently supported
+                values are "11.4.1" and "11.8.0".
+        image:
+            A dictionary containing the custom image configurations that this operator will run with.
+            The dictionary needs to contain the following keys:
+            "registry_name" (str): The name of the registry integration to use.
+            "url" (str): The full URL of the image to use. Example: "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest"
+            It is recommended to get the dictionary via `client.integration("my_registry_name").image("my-image:latest")`
 
     Examples:
         The check name is inferred from the function name. The description is pulled from the function
@@ -1027,10 +1105,14 @@ def check(
             check_spec = CheckSpec(level=severity, function=function_spec)
             op_spec = OperatorSpec(check=check_spec)
             _update_operator_spec_with_engine(op_spec, engine)
-            _update_operator_spec_with_resources(op_spec, resources, use)
+            _update_operator_spec_with_resources(
+                op_spec, _check_if_requirements_contain_llm(requirements), resources
+            )
 
             if op_spec.resources is not None and op_spec.resources.use_llm:
                 _check_llm_requirements(op_spec)
+
+            _update_operator_spec_with_image(op_spec, image)
 
             output_names = [output] if output is not None else None
             bool_artifact = wrap_spec(

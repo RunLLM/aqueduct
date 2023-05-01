@@ -7,8 +7,6 @@ from aqueduct.integrations.validation import validate_is_connected
 from aqueduct.models.integration import Integration, IntegrationInfo
 from aqueduct.models.response_models import DynamicEngineStatusResponse
 
-from aqueduct import globals
-
 
 def parse_dynamic_k8s_config(
     config_delta: Union[Dict[str, Union[int, str]], DynamicK8sConfig]
@@ -45,6 +43,8 @@ class DynamicK8sIntegration(Integration):
     @validate_is_connected()
     def status(self) -> str:
         """Get the current status of the dynamic Kubernetes cluster."""
+        from aqueduct import globals
+
         engine_statuses = globals.__GLOBAL_API_CLIENT__.get_dynamic_engine_status(
             engine_integration_ids=[str(self._metadata.id)]
         )
@@ -72,6 +72,8 @@ class DynamicK8sIntegration(Integration):
                 An unexpected error occurred within the Aqueduct cluster.
         """
         config_delta = parse_dynamic_k8s_config(config_delta)
+
+        from aqueduct import globals
 
         engine_statuses = globals.__GLOBAL_API_CLIENT__.get_dynamic_engine_status(
             engine_integration_ids=[str(self._metadata.id)]
@@ -115,6 +117,8 @@ class DynamicK8sIntegration(Integration):
         """
         config_delta = parse_dynamic_k8s_config(config_delta)
 
+        from aqueduct import globals
+
         engine_statuses = globals.__GLOBAL_API_CLIENT__.get_dynamic_engine_status(
             engine_integration_ids=[str(self._metadata.id)]
         )
@@ -155,6 +159,8 @@ class DynamicK8sIntegration(Integration):
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
+        from aqueduct import globals
+
         engine_statuses = globals.__GLOBAL_API_CLIENT__.get_dynamic_engine_status(
             engine_integration_ids=[str(self._metadata.id)]
         )

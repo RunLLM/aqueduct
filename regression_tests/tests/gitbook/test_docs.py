@@ -38,7 +38,22 @@ blacklist_files = [
     "operators/specifying-a-requirements.txt.md",  # Requires specific requirements.txt
 ]
 
-blacklist_snippets = {}
+blacklist_snippets = {
+    "parameters.md": [
+        'from aqueduct.constants.enums import ArtifactType\nlocal_data = client.create_param(\n                    '\
+        'name ="table_data", \n                    '\
+        'default="path/to/data.csv",\n                    '\
+        'use_local=True,\n                    '\
+        'as_type=ArtifactType.TABLE,\n                    '\
+        'format="csv",\n                    ) '
+        ,
+        'client.publish_flow(\n                    '\
+        'name = "local_data_workflow",\n                    '\
+        'artifacts = [local_data, ...],\n                    '\
+        'use_local = True,\n                    ) '
+        ,
+    ]
+}
 
 
 def get_code(page: str) -> List[str]:
@@ -175,7 +190,7 @@ if __name__ == "__main__":
 
             if should_skip_file(file_name):
                 continue
-
+                
             snippets = remove_skipped_snippets(get_code(file))
 
             # If we still have code to run, run it.
