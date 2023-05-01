@@ -20,7 +20,7 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
   user,
 }) => {
   const location = useLocation();
-  const allowedBannerPages = ['/workflows', '/integrations', '/data', '/'];
+  const allowedBannerPages = ['/workflows', '/resources', '/data', '/'];
 
   // By default do not show banner until we know that we have an announcement to show.
   const [shouldShowAnnouncementBanner, setShouldShowAnnouncementBanner] =
