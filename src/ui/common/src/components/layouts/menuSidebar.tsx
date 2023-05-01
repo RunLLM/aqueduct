@@ -187,7 +187,7 @@ const MenuSidebar: React.FC<{
         <Divider sx={{ width: '64px', backgroundColor: 'white' }} />
 
         <Link
-          to={`${getPathPrefix()}/integrations`}
+          to={`${getPathPrefix()}/resources`}
           style={menuSidebarLink}
           underline="none"
           component={RouterLink}
@@ -195,12 +195,12 @@ const MenuSidebar: React.FC<{
           <SidebarButton
             onClick={() => {
               if (onSidebarItemClicked) {
-                onSidebarItemClicked('integrations');
+                onSidebarItemClicked('resources');
               }
             }}
             icon={<FontAwesomeIcon style={menuSidebarIcon} icon={faPlug} />}
-            text="Integrations"
-            selected={currentPage === '/integrations'}
+            text="Resources"
+            selected={currentPage === '/resources'}
           />
         </Link>
 
