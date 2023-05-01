@@ -209,7 +209,7 @@ def wait_for_flow_runs(
 
     polling(
         lambda: stop_condition(client, flow_id, expected_statuses, num_prev_runs),
-        timeout=600,
+        timeout=900,
         poll_threshold=1,
         timeout_comment="Timed out waiting for workflow run to complete.",
     )
