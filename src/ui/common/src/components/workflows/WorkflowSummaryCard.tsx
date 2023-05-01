@@ -20,6 +20,11 @@ export const WorkflowSummaryCard: React.FC<WorkflowSummaryCardProps> = ({
   operators,
   integration
 }) => {
+
+  if (!workflow) {
+    return null;
+  }
+
   const workflowLink = `/workflow/${workflow.id}`;
 
   return (
