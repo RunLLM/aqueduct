@@ -4,7 +4,7 @@ install_requires = open("requirements.txt").read().strip().split("\n")
 
 setup(
     name="aqueduct-llm",
-    version="0.2.11",
+    version="0.0.1",
     install_requires=install_requires,
     packages=find_packages(),
     description="Aqueduct LLM Package",
