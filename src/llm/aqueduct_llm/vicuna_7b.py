@@ -24,7 +24,7 @@ class Config:
         self.debug = False
         self.load_8bit = False
 
-        self.max_gpu_memory = default_max_gpu_memory
+        self.max_gpu_memory = max_gpu_memory
         self.temperature = temperature
         self.max_new_tokens = max_new_tokens
 
