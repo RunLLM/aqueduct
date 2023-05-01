@@ -114,9 +114,9 @@ const IntegrationsPage: React.FC<Props> = ({
             connectedIntegrationType={ConnectedIntegrationType.Data}
           />
           <ConnectedIntegrations
-              user={user}
-              forceLoad={forceLoad}
-              connectedIntegrationType={ConnectedIntegrationType.Other}
+            user={user}
+            forceLoad={forceLoad}
+            connectedIntegrationType={ConnectedIntegrationType.Other}
           />
 
           <Box>
@@ -188,13 +188,13 @@ const IntegrationsPage: React.FC<Props> = ({
             supportedIntegrations={SupportedIntegrations}
           />
           <Typography variant="h6" marginY={2}>
-          Container Registry
+            Container Registry
           </Typography>
           <AddIntegrations
-          user={user}
-          category={IntegrationCategories.CONTAINER_REGISTRY}
-          supportedIntegrations={SupportedIntegrations}
-          /
+            user={user}
+            category={IntegrationCategories.CONTAINER_REGISTRY}
+            supportedIntegrations={SupportedIntegrations}
+          />
 
           <Typography variant="h6" marginY={2}>
             Notifications
