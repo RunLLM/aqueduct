@@ -1,5 +1,7 @@
 import inspect
+import io
 import os
+import zipfile
 from functools import wraps
 from typing import Any, Callable, Dict, List, Mapping, Optional, Union, cast
 
@@ -486,26 +488,27 @@ def _check_llm_requirements(spec: OperatorSpec) -> None:
             )
 
 
-def _check_if_requirements_contain_llm(
-    requirements: Optional[Union[str, List[str]]] = None
-) -> bool:
-    if requirements is None or isinstance(requirements, str):
-        if requirements is None:
-            req_file = REQUIREMENTS_FILE
-        elif isinstance(requirements, str):
-            req_file = requirements
+def _check_if_requirements_contain_llm(zip_file: bytes) -> bool:
+    # create a ZipFile instance from the file-like object
+    with zipfile.ZipFile(io.BytesIO(zip_file), "r") as f:
+        # check if requirements.txt is in the archive
+        for filename in f.namelist():
+            # check if the file name is requirements.txt
+            if os.path.basename(filename) == REQUIREMENTS_FILE:
+                with f.open(filename) as requirements_file:
+                    for line in requirements_file:
+                        package_name = line.decode(
+                            "utf-8"
+                        ).strip()  # decode bytes to str and remove whitespace
 
-        with open(req_file, "r") as file:
-            for line in file:
-                if not line.startswith("#"):
-                    if "aqueduct-llm" in line:
-                        return True
-            else:
-                return False
+                        # skip lines that are commented out
+                        if package_name.startswith("#"):
+                            continue
 
-    for req in requirements:
-        if "aqueduct-llm" in req:
-            return True
+                        # check if aqueduct-llm is one of the requirements
+                        if "aqueduct-llm" in package_name:
+                            return True
+
     return False
 
 
@@ -717,7 +720,7 @@ def op(
 
             _update_operator_spec_with_engine(op_spec, engine)
             _update_operator_spec_with_resources(
-                op_spec, _check_if_requirements_contain_llm(requirements), resources
+                op_spec, _check_if_requirements_contain_llm(zip_file), resources
             )
 
             if op_spec.resources is not None and op_spec.resources.use_llm:
@@ -904,7 +907,7 @@ def metric(
             op_spec = OperatorSpec(metric=metric_spec)
             _update_operator_spec_with_engine(op_spec, engine)
             _update_operator_spec_with_resources(
-                op_spec, _check_if_requirements_contain_llm(requirements), resources
+                op_spec, _check_if_requirements_contain_llm(zip_file), resources
             )
 
             if op_spec.resources is not None and op_spec.resources.use_llm:
@@ -1106,7 +1109,7 @@ def check(
             op_spec = OperatorSpec(check=check_spec)
             _update_operator_spec_with_engine(op_spec, engine)
             _update_operator_spec_with_resources(
-                op_spec, _check_if_requirements_contain_llm(requirements), resources
+                op_spec, _check_if_requirements_contain_llm(zip_file), resources
             )
 
             if op_spec.resources is not None and op_spec.resources.use_llm:
