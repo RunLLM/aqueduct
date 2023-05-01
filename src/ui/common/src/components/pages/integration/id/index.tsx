@@ -36,7 +36,11 @@ import {
   IntegrationCategories,
   SupportedIntegrations,
 } from '../../../../utils/integrations';
-import ExecutionStatus, { isFailed, isLoading, isSucceeded } from '../../../../utils/shared';
+import ExecutionStatus, {
+  isFailed,
+  isLoading,
+  isSucceeded,
+} from '../../../../utils/shared';
 import { ResourceHeaderDetailsCard } from '../../../integrations/cards/headerDetailsCard';
 import { ResourceFieldsDetailsCard } from '../../../integrations/cards/resourceFieldsDetailsCard';
 import { ErrorSnackbar } from '../../../integrations/errorSnackbar';
@@ -209,27 +213,27 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
                 numWorkflowsUsingMsg={numWorkflowsUsingMsg}
               />
 
-              { hasConfigFieldsToShow(selectedIntegration) && (
+              {hasConfigFieldsToShow(selectedIntegration) && (
                 <Box
-                    sx={{
-                      fontSize: '16px',
-                      p: 1,
-                      ml: 1,
-                      height: '32px',
-                      borderRadius: '8px',
-                      ':hover': {
-                        backgroundColor: theme.palette.gray[50],
-                      },
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => setShowResourceDetails(!showResourceDetails)}
+                  sx={{
+                    fontSize: '16px',
+                    p: 1,
+                    ml: 1,
+                    height: '32px',
+                    borderRadius: '8px',
+                    ':hover': {
+                      backgroundColor: theme.palette.gray[50],
+                    },
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => setShowResourceDetails(!showResourceDetails)}
                 >
                   <Tooltip title="See more" arrow>
                     <FontAwesomeIcon
-                        icon={faEllipsis}
-                        style={{
-                          transition: 'transform 200ms',
-                        }}
+                      icon={faEllipsis}
+                      style={{
+                        transition: 'transform 200ms',
+                      }}
                     />
                   </Tooltip>
                 </Box>
@@ -260,25 +264,23 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           />
         </Box>
 
-        { selectedIntegration.exec_state?.status === ExecutionStatus.Failed && (
-            <Box
-                sx={{
-                  backgroundColor: theme.palette.red[100],
-                  borderRadius: 2,
-                  color: theme.palette.red[600],
-                  p: 2,
-                  height: 'fit-content',
-                  width: '100%',
-                  my: 1,
-                }}
-            >
-              <Typography variant="body2" style={{ whiteSpace: "pre-wrap"}}>
-                {`${selectedIntegration.exec_state?.error.tip}\n\n${selectedIntegration.exec_state?.error.context}`}
-              </Typography>
-            </Box>
-        )
-        }
-
+        {selectedIntegration.exec_state?.status === ExecutionStatus.Failed && (
+          <Box
+            sx={{
+              backgroundColor: theme.palette.red[100],
+              borderRadius: 2,
+              color: theme.palette.red[600],
+              p: 2,
+              height: 'fit-content',
+              width: '100%',
+              my: 1,
+            }}
+          >
+            <Typography variant="body2" style={{ whiteSpace: 'pre-wrap' }}>
+              {`${selectedIntegration.exec_state?.error.tip}\n\n${selectedIntegration.exec_state?.error.context}`}
+            </Typography>
+          </Box>
+        )}
 
         {serverConfig.config?.storageConfig.integration_name ===
           selectedIntegration.name && (

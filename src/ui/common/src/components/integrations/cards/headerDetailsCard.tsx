@@ -6,7 +6,6 @@ import { Integration } from '../../../utils/integrations';
 import ExecutionStatus from '../../../utils/shared';
 import { StatusIndicator } from '../../workflows/workflowStatus';
 import IntegrationLogo from '../logo';
-import {theme} from "../../../styles/theme/theme";
 
 type ResourceHeaderDetailsCardProps = {
   integration: Integration;
