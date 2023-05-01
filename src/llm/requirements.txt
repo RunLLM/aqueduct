@@ -1,0 +1,4 @@
+fschat==0.2.2
+accelerate>=0.12.0
+transformers[torch]>=4.25.1
+huggingface_hub
