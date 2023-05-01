@@ -23,7 +23,7 @@ RUN conda env create -f py310_env.yml
 ENV PYTHONUNBUFFERED 1
 
 # Install Aqueduct LLM wrapper
-RUN conda run -n py310_env pip install aqueduct-llm==0.2.12
+RUN conda run -n py310_env pip install aqueduct-llm==0.0.1
 
 WORKDIR /
 
