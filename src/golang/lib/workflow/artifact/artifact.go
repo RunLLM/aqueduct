@@ -207,12 +207,14 @@ func (a *ArtifactImpl) updateArtifactResultAfterComputation(
 	execState *shared.ExecutionState,
 ) {
 	changes := map[string]interface{}{
+		models.ArtifactResultMetadata:  nil,
 		models.ArtifactResultStatus:    execState.Status,
 		models.ArtifactResultExecState: execState,
-		models.ArtifactResultMetadata:  nil,
 	}
 
-	if a.Computed(ctx) {
+	metadataExists := utils.ObjectExistsInStorage(ctx, a.storageConfig, a.execPaths.ArtifactMetadataPath)
+
+	if a.Computed(ctx) && metadataExists {
 		var artifactResultMetadata shared.ArtifactResultMetadata
 		err := utils.ReadFromStorage(
 			ctx,
@@ -319,6 +321,11 @@ func (a *ArtifactImpl) GetMetadata(ctx context.Context) (*shared.ArtifactResultM
 	if a.resultMetadata == nil {
 		if !a.Computed(ctx) {
 			// metadata is not ready yet.
+			return nil, nil
+		}
+
+		// If the path is not available, we assume the data is not available.
+		if !utils.ObjectExistsInStorage(ctx, a.storageConfig, a.execPaths.ArtifactMetadataPath) {
 			return nil, nil
 		}
 

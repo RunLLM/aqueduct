@@ -192,6 +192,17 @@ type AWSConfig struct {
 	K8s               *DynamicK8sConfig `json:"k8s"`
 }
 
+type ECRConfig struct {
+	AccessKeyId       string `json:"access_key_id"`
+	SecretAccessKey   string `json:"secret_access_key"`
+	Region            string `json:"region"`
+	ConfigFilePath    string `json:"config_file_path"`
+	ConfigFileProfile string `json:"config_file_profile"`
+	Token             string `json:"token"`
+	ExpireAt          string `json:"expire_at"`
+	ProxyEndpoint     string `json:"proxy_endpoint"`
+}
+
 type SparkIntegrationConfig struct {
 	// LivyServerURL is the URL of the Livy server that sits in front of the Spark cluster.
 	// This URL is assumed to be accessible by the machine running the Aqueduct server.

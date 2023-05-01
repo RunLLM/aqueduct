@@ -10,7 +10,10 @@ const (
 	IntegrationNameHeader    = "integration-name"
 	IntegrationServiceHeader = "integration-service"
 	IntegrationConfigHeader  = "integration-config"
+	IntegrationIDHeader      = "integration-id"
 	IntegrationIDsHeader     = "integration-ids"
+	ServiceHeader            = "service"
+	ImageNameHeader          = "image-name"
 
 	// Storage Migration Headers
 	StorageMigrationFilterStatusHeader   = "status"

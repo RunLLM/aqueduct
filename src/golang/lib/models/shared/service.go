@@ -37,6 +37,9 @@ const (
 	// Cloud integrations
 	AWS Service = "AWS"
 
+	// Container registry integrations
+	ECR Service = "ECR"
+
 	DemoDbIntegrationName = "aqueduct_demo"
 )
 
@@ -106,7 +109,8 @@ func ParseService(s string) (Service, error) {
 		Email,
 		Slack,
 		Spark,
-		AWS:
+		AWS,
+		ECR:
 		return svc, nil
 	default:
 		return "", errors.Newf("Unknown service: %s", s)

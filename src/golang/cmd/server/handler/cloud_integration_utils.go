@@ -125,7 +125,16 @@ func setupTerraformDirectory(dst string) error {
 		return err
 	}
 
-	_, stdErr, err := lib_utils.RunCmd("cp", []string{"-rT", dynamic.TerraformTemplateDir, dst}, "", false)
+	_, stdErr, err := lib_utils.RunCmd(
+		"cp",
+		[]string{
+			"-R", // we could have used -T to not create a directory if the source is a directory, but it's not supported on macOS
+			fmt.Sprintf("%s%s.", dynamic.TerraformTemplateDir, string(filepath.Separator)),
+			dst,
+		},
+		"",
+		false,
+	)
 	if err != nil {
 		return errors.New(stdErr)
 	}
