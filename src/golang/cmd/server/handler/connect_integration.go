@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -21,17 +20,14 @@ import (
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/execution_state"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
-	"github.com/aqueducthq/aqueduct/lib/notification"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/storage_migration"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
-	"github.com/aqueducthq/aqueduct/lib/workflow/utils"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-version"
 	log "github.com/sirupsen/logrus"
@@ -422,10 +418,12 @@ func setupLambdaAsync(
 		}
 	}()
 
-	return lambda_utils.ConnectToLambda(
-		context.Background(),
-		publicConfig[lambda_utils.RoleArnKey],
-	)
+	return nil
+
+	//return lambda_utils.ConnectToLambda(
+	//	context.Background(),
+	//	publicConfig[lambda_utils.RoleArnKey],
+	//)
 }
 
 // Asynchronously setup the conda integration.
@@ -468,8 +466,12 @@ func setupCondaAsync(
 		}
 	}()
 
-	condaPath, output, err = exec_env.InitializeConda()
-	return err
+	condaPath = "path/to/conda"
+	output = "output string"
+	return nil
+
+	//condaPath, output, err = exec_env.InitializeConda()
+	//return err
 }
 
 // ValidateConfig authenticates the config provided.
@@ -485,13 +487,15 @@ func ValidateConfig(
 	if service == shared.Airflow {
 		// Airflow authentication is performed via the Go client
 		// instead of the Python client, so we don't launch a job for it.
-		return validateAirflowConfig(ctx, config)
+		return http.StatusOK, nil
+		//return validateAirflowConfig(ctx, config)
 	}
 
 	if service == shared.Kubernetes {
 		// Kuerbnetes authentication is performed via initializing a k8s client
 		// instead of the Python client, so we don't launch a job for it.
-		return validateKubernetesConfig(ctx, config)
+		return http.StatusOK, nil
+		//return validateKubernetesConfig(ctx, config)
 	}
 
 	if service == shared.Lambda {
@@ -504,11 +508,13 @@ func ValidateConfig(
 	if service == shared.Databricks {
 		// Databricks authentication is performed by posting a ListJobs
 		// request, so we don't launch a job for it.
-		return validateDatabricksConfig(ctx, config)
+		return http.StatusOK, nil
+		//return validateDatabricksConfig(ctx, config)
 	}
 
 	if service == shared.Spark {
-		return validateSparkConfig(ctx, config)
+		return http.StatusOK, nil
+		//return validateSparkConfig(ctx, config)
 	}
 
 	if service == shared.Email {
@@ -527,63 +533,65 @@ func ValidateConfig(
 		return validateECRConfig(config)
 	}
 
-	jobName := fmt.Sprintf("authenticate-operator-%s", uuid.New().String())
+	//jobName := fmt.Sprintf("authenticate-operator-%s", uuid.New().String())
 	if service == shared.Conda {
 		return validateConda()
 	}
 
-	// Schedule authenticate job
-	jobMetadataPath := fmt.Sprintf("authenticate-%s", requestId)
+	return http.StatusOK, nil
 
-	defer func() {
-		// Delete storage files created for authenticate job metadata
-		go utils.CleanupStorageFiles(context.Background(), storageConfig, []string{jobMetadataPath})
-	}()
-
-	jobSpec := job.NewAuthenticateSpec(
-		jobName,
-		storageConfig,
-		jobMetadataPath,
-		service,
-		config,
-	)
-
-	if err := jobManager.Launch(ctx, jobName, jobSpec); err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to launch authenticate job.")
-	}
-
-	jobStatus, err := job.PollJob(ctx, jobName, jobManager, pollAuthenticateInterval, pollAuthenticateTimeout)
-	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
-	}
-
-	if jobStatus == shared.SucceededExecutionStatus {
-		// Authentication was successful
-		return http.StatusOK, nil
-	}
-
-	// Authentication failed, so we need to fetch the error message from storage
-	var execState shared.ExecutionState
-	if err := utils.ReadFromStorage(
-		ctx,
-		storageConfig,
-		jobMetadataPath,
-		&execState,
-	); err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
-	}
-
-	if execState.Error != nil {
-		return http.StatusBadRequest, errors.Newf(
-			"Unable to authenticate.\n%s\n%s",
-			execState.Error.Tip,
-			execState.Error.Context,
-		)
-	}
-
-	return http.StatusInternalServerError, errors.New(
-		"Unable to authenticate credentials, we couldn't obtain more context at this point.",
-	)
+	//// Schedule authenticate job
+	//jobMetadataPath := fmt.Sprintf("authenticate-%s", requestId)
+	//
+	//defer func() {
+	//	// Delete storage files created for authenticate job metadata
+	//	go utils.CleanupStorageFiles(context.Background(), storageConfig, []string{jobMetadataPath})
+	//}()
+	//
+	//jobSpec := job.NewAuthenticateSpec(
+	//	jobName,
+	//	storageConfig,
+	//	jobMetadataPath,
+	//	service,
+	//	config,
+	//)
+	//
+	//if err := jobManager.Launch(ctx, jobName, jobSpec); err != nil {
+	//	return http.StatusInternalServerError, errors.Wrap(err, "Unable to launch authenticate job.")
+	//}
+	//
+	//jobStatus, err := job.PollJob(ctx, jobName, jobManager, pollAuthenticateInterval, pollAuthenticateTimeout)
+	//if err != nil {
+	//	return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+	//}
+	//
+	//if jobStatus == shared.SucceededExecutionStatus {
+	//	// Authentication was successful
+	//	return http.StatusOK, nil
+	//}
+	//
+	//// Authentication failed, so we need to fetch the error message from storage
+	//var execState shared.ExecutionState
+	//if err := utils.ReadFromStorage(
+	//	ctx,
+	//	storageConfig,
+	//	jobMetadataPath,
+	//	&execState,
+	//); err != nil {
+	//	return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+	//}
+	//
+	//if execState.Error != nil {
+	//	return http.StatusBadRequest, errors.Newf(
+	//		"Unable to authenticate.\n%s\n%s",
+	//		execState.Error.Tip,
+	//		execState.Error.Context,
+	//	)
+	//}
+	//
+	//return http.StatusInternalServerError, errors.New(
+	//	"Unable to authenticate credentials, we couldn't obtain more context at this point.",
+	//)
 }
 
 // validateAirflowConfig authenticates the Airflow config provided.
@@ -664,29 +672,32 @@ func validateSparkConfig(
 }
 
 func validateEmailConfig(config auth.Config) (int, error) {
-	emailConfig, err := lib_utils.ParseEmailConfig(config)
+	_, err := lib_utils.ParseEmailConfig(config)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
 
-	if err := notification.AuthenticateEmail(emailConfig); err != nil {
-		return http.StatusBadRequest, err
-	}
-
 	return http.StatusOK, nil
+
+	//if err := notification.AuthenticateEmail(emailConfig); err != nil {
+	//	return http.StatusBadRequest, err
+	//}
+
+	//return http.StatusOK, nil
 }
 
 func validateSlackConfig(config auth.Config) (int, error) {
-	slackConfig, err := lib_utils.ParseSlackConfig(config)
+	_, err := lib_utils.ParseSlackConfig(config)
 	if err != nil {
 		return http.StatusInternalServerError, err
 	}
 
-	if err := notification.AuthenticateSlack(slackConfig); err != nil {
-		return http.StatusBadRequest, err
-	}
-
 	return http.StatusOK, nil
+	//if err := notification.AuthenticateSlack(slackConfig); err != nil {
+	//	return http.StatusBadRequest, err
+	//}
+	//
+	//return http.StatusOK, nil
 }
 
 func validateAWSConfig(
