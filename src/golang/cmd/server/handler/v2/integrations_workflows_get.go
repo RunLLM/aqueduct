@@ -10,7 +10,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/functional/slices"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/google/uuid"
@@ -111,8 +110,14 @@ func fetchWorkflowIDsForIntegration(
 		return nil, errors.Wrap(err, "Unable to retrieve operator ID information.")
 	}
 
-	workflowIDs := slices.Map(operatorRelations, func(operatorRelation views.OperatorRelation) uuid.UUID {
-		return operatorRelation.WorkflowID
-	})
+	workflowIDSet := make(map[uuid.UUID]bool, len(operatorRelations))
+	workflowIDs := make([]uuid.UUID, 0, len(operatorRelations))
+	for _, operatorRelation := range operatorRelations {
+		if _, ok := workflowIDSet[operatorRelation.WorkflowID]; ok {
+			continue
+		}
+		workflowIDSet[operatorRelation.WorkflowID] = true
+		workflowIDs = append(workflowIDs, operatorRelation.WorkflowID)
+	}
 	return workflowIDs, nil
 }
