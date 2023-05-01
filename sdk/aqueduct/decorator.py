@@ -1,6 +1,7 @@
 import inspect
-import uuid
-import warnings
+import io
+import os
+import zipfile
 from functools import wraps
 from typing import Any, Callable, Dict, List, Mapping, Optional, Union, cast
 
@@ -36,13 +37,8 @@ from aqueduct.models.operators import (
     get_operator_type,
 )
 from aqueduct.type_annotations import CheckFunction, MetricFunction, Number, UserFunction
-from aqueduct.utils.dag_deltas import (
-    AddOperatorDelta,
-    DAGDelta,
-    RemoveOperatorDelta,
-    apply_deltas_to_dag,
-)
-from aqueduct.utils.function_packaging import serialize_function
+from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
+from aqueduct.utils.function_packaging import REQUIREMENTS_FILE, serialize_function
 from aqueduct.utils.naming import default_artifact_name_from_op_name, sanitize_artifact_name
 from aqueduct.utils.utils import generate_engine_config, generate_uuid
 
@@ -184,14 +180,18 @@ def _typecheck_op_decorator_arguments(
     description: Optional[str],
     file_dependencies: Optional[List[str]],
     requirements: Optional[Union[str, List[str]]],
-    engine: Optional[str],
+    engine: Optional[Union[str, DynamicK8sIntegration]],
     num_outputs: int,
     outputs: Optional[List[str]],
 ) -> None:
     _typecheck_common_decorator_arguments(description, file_dependencies, requirements)
 
-    if engine is not None and not isinstance(engine, str):
-        raise InvalidUserArgumentException("`engine` must be a string.")
+    if engine is not None and not (
+        isinstance(engine, str) or isinstance(engine, DynamicK8sIntegration)
+    ):
+        raise InvalidUserArgumentException(
+            "`engine` must be a string or a DynamicK8sIntegration object."
+        )
 
     if num_outputs is not None:
         if not isinstance(num_outputs, int) or num_outputs < 1:
@@ -365,7 +365,7 @@ def _convert_memory_string_to_mbs(memory_str: str) -> int:
     if memory_str[-2:].upper() == "MB":
         multiplier = 1
     elif memory_str[-2:].upper() == "GB":
-        multiplier = 1000
+        multiplier = 1024
     else:
         raise InvalidUserArgumentException(
             "Memory value `%s` is invalid. It must have a suffix that is one of mb/MB/gb/GB."
@@ -384,7 +384,7 @@ def _convert_memory_string_to_mbs(memory_str: str) -> int:
 
 def _update_operator_spec_with_engine(
     spec: OperatorSpec,
-    engine: Optional[str] = None,
+    engine: Optional[Union[str, DynamicK8sIntegration]] = None,
 ) -> None:
     if engine is not None:
         if globals.__GLOBAL_API_CLIENT__ is None:
@@ -400,8 +400,15 @@ def _update_operator_spec_with_engine(
 
 def _update_operator_spec_with_resources(
     spec: OperatorSpec,
+    llm: bool,
     resources: Optional[Dict[str, Any]] = None,
 ) -> None:
+    if llm:
+        if resources is None:
+            resources = {}
+
+        resources[CustomizableResourceType.USE_LLM] = True
+
     if resources is not None:
         if not isinstance(resources, Dict) or any(not isinstance(k, str) for k in resources):
             raise InvalidUserArgumentException("`resources` must be a dictionary with string keys.")
@@ -410,6 +417,7 @@ def _update_operator_spec_with_resources(
         memory = resources.get(CustomizableResourceType.MEMORY)
         gpu_resource_name = resources.get(CustomizableResourceType.GPU_RESOURCE_NAME)
         cuda_version = resources.get(CustomizableResourceType.CUDA_VERSION)
+        use_llm = resources.get(CustomizableResourceType.USE_LLM)
 
         if num_cpus is not None and (not isinstance(num_cpus, int) or num_cpus < 0):
             raise InvalidUserArgumentException(
@@ -451,7 +459,57 @@ def _update_operator_spec_with_resources(
             memory_mb=memory,
             gpu_resource_name=gpu_resource_name,
             cuda_version=cuda_version,
+            use_llm=use_llm,
         )
+
+
+def _check_llm_requirements(spec: OperatorSpec) -> None:
+    assert spec.resources is not None
+
+    min_required_memory = 8192  # 8GB
+
+    if spec.engine_config is not None and spec.engine_config.type is RuntimeType.K8S:
+        # Check to see if the resources meet the constraints of the LLM.
+        requested_gpu = False  # this is what we default to if gpu_resource_name is not specified.
+        requested_memory = 4096  # 4GB, this is what we defaults to if memory is not specified.
+
+        if spec.resources.gpu_resource_name is not None:
+            requested_gpu = True
+        if spec.resources.memory_mb is not None:
+            requested_memory = spec.resources.memory_mb
+
+        if not requested_gpu:
+            raise InvalidUserArgumentException("LLM requires GPU resource but it is not requested.")
+
+        if min_required_memory > requested_memory:
+            raise InvalidUserArgumentException(
+                "LLMs require at least %dMB of memory but only %dMB is requested."
+                % (min_required_memory, requested_memory)
+            )
+
+
+def _check_if_requirements_contain_llm(zip_file: bytes) -> bool:
+    # create a ZipFile instance from the file-like object
+    with zipfile.ZipFile(io.BytesIO(zip_file), "r") as f:
+        # check if requirements.txt is in the archive
+        for filename in f.namelist():
+            # check if the file name is requirements.txt
+            if os.path.basename(filename) == REQUIREMENTS_FILE:
+                with f.open(filename) as requirements_file:
+                    for line in requirements_file:
+                        package_name = line.decode(
+                            "utf-8"
+                        ).strip()  # decode bytes to str and remove whitespace
+
+                        # skip lines that are commented out
+                        if package_name.startswith("#"):
+                            continue
+
+                        # check if aqueduct-llm is one of the requirements
+                        if "aqueduct-llm" in package_name:
+                            return True
+
+    return False
 
 
 def _update_operator_spec_with_image(
@@ -507,7 +565,7 @@ def _update_operator_spec_with_image(
 def op(
     name: Optional[Union[str, UserFunction]] = None,
     description: Optional[str] = None,
-    engine: Optional[str] = None,
+    engine: Optional[Union[str, DynamicK8sIntegration]] = None,
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
     num_outputs: Optional[int] = None,
@@ -594,9 +652,6 @@ def op(
 
         >>> recommendations.get()
     """
-    if isinstance(engine, DynamicK8sIntegration):
-        engine = engine.name()
-
     # Establish parity between `num_outputs` and `outputs`, or raise exception if there is a mismatch.
     if num_outputs is None and outputs is None:
         num_outputs = 1
@@ -664,7 +719,13 @@ def op(
             )
 
             _update_operator_spec_with_engine(op_spec, engine)
-            _update_operator_spec_with_resources(op_spec, resources)
+            _update_operator_spec_with_resources(
+                op_spec, _check_if_requirements_contain_llm(zip_file), resources
+            )
+
+            if op_spec.resources is not None and op_spec.resources.use_llm:
+                _check_llm_requirements(op_spec)
+
             _update_operator_spec_with_image(op_spec, image)
 
             assert isinstance(num_outputs, int)
@@ -708,7 +769,7 @@ def metric(
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
     output: Optional[str] = None,
-    engine: Optional[str] = None,
+    engine: Optional[Union[str, DynamicK8sIntegration]] = None,
     resources: Optional[Dict[str, Any]] = None,
     image: Optional[Dict[str, str]] = None,
 ) -> Union[DecoratedMetricFunction, OutputArtifactFunction]:
@@ -788,9 +849,6 @@ def metric(
 
         >>> churn_metric.get()
     """
-    if isinstance(engine, DynamicK8sIntegration):
-        engine = engine.name()
-
     _typecheck_common_decorator_arguments(description, file_dependencies, requirements)
 
     if output is not None and not isinstance(output, str):
@@ -848,7 +906,13 @@ def metric(
             metric_spec = MetricSpec(function=function_spec)
             op_spec = OperatorSpec(metric=metric_spec)
             _update_operator_spec_with_engine(op_spec, engine)
-            _update_operator_spec_with_resources(op_spec, resources)
+            _update_operator_spec_with_resources(
+                op_spec, _check_if_requirements_contain_llm(zip_file), resources
+            )
+
+            if op_spec.resources is not None and op_spec.resources.use_llm:
+                _check_llm_requirements(op_spec)
+
             _update_operator_spec_with_image(op_spec, image)
 
             output_names = [output] if output is not None else None
@@ -905,7 +969,7 @@ def check(
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
     output: Optional[str] = None,
-    engine: Optional[str] = None,
+    engine: Optional[Union[str, DynamicK8sIntegration]] = None,
     resources: Optional[Dict[str, Any]] = None,
     image: Optional[Dict[str, str]] = None,
 ) -> Union[DecoratedCheckFunction, OutputArtifactFunction]:
@@ -990,9 +1054,6 @@ def check(
 
         >>> churn_is_low_check.get()
     """
-    if isinstance(engine, DynamicK8sIntegration):
-        engine = engine.name()
-
     _typecheck_common_decorator_arguments(description, file_dependencies, requirements)
 
     if output is not None and not isinstance(output, str):
@@ -1047,7 +1108,13 @@ def check(
             check_spec = CheckSpec(level=severity, function=function_spec)
             op_spec = OperatorSpec(check=check_spec)
             _update_operator_spec_with_engine(op_spec, engine)
-            _update_operator_spec_with_resources(op_spec, resources)
+            _update_operator_spec_with_resources(
+                op_spec, _check_if_requirements_contain_llm(zip_file), resources
+            )
+
+            if op_spec.resources is not None and op_spec.resources.use_llm:
+                _check_llm_requirements(op_spec)
+
             _update_operator_spec_with_image(op_spec, image)
 
             output_names = [output] if output is not None else None

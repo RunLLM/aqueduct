@@ -312,7 +312,7 @@ func mapJobTypeToDockerImage(spec Spec, launchGpu bool, cudaVersion operator.Cud
 	case FunctionJobType:
 		functionSpec, ok := spec.(*FunctionSpec)
 		if !ok {
-			return "", errors.New("Unable to determine Python Version.")
+			return "", errors.New("Unable to cast spec to FunctionSpec.")
 		}
 
 		pythonVersion, err := function.GetPythonVersion(context.TODO(), functionSpec.FunctionPath, &functionSpec.StorageConfig)
@@ -322,6 +322,8 @@ func mapJobTypeToDockerImage(spec Spec, launchGpu bool, cudaVersion operator.Cud
 
 		if functionSpec.Image != nil {
 			return *functionSpec.Image.Url, nil
+		} else if functionSpec.Resources.UseLLM != nil && *functionSpec.Resources.UseLLM {
+			return mapLLMToDockerImage(pythonVersion, cudaVersion)
 		} else if launchGpu {
 			return mapGpuFunctionToDockerImage(pythonVersion, cudaVersion)
 		} else {
@@ -404,6 +406,39 @@ func mapGpuFunctionToDockerImage(pythonVersion function.PythonVersion, cudaVersi
 			return GpuCuda1141Python39, nil
 		case function.PythonVersion310:
 			return GpuCuda1141Python310, nil
+		default:
+			return "", errors.New("Unable to determine Python Version.")
+		}
+	default:
+		return "", errors.New("Unsupported CUDA version provided. We currently only support CUDA versions 11.4.1 and 11.8.0")
+	}
+}
+
+func mapLLMToDockerImage(pythonVersion function.PythonVersion, cudaVersion operator.CudaVersionNumber) (string, error) {
+	switch cudaVersion {
+	case operator.Cuda11_8_0:
+		switch pythonVersion {
+		case function.PythonVersion37:
+			return "", errors.Newf("LLM is not supported for Python version %s.", pythonVersion)
+		case function.PythonVersion38:
+			return LlmCuda1180Python38, nil
+		case function.PythonVersion39:
+			return LlmCuda1180Python39, nil
+		case function.PythonVersion310:
+			return LlmCuda1180Python310, nil
+		default:
+			return "", errors.New("Unable to determine Python Version.")
+		}
+	case operator.Cuda11_4_1:
+		switch pythonVersion {
+		case function.PythonVersion37:
+			return "", errors.Newf("LLM is not supported for Python version %s.", pythonVersion)
+		case function.PythonVersion38:
+			return LlmCuda1141Python38, nil
+		case function.PythonVersion39:
+			return LlmCuda1141Python39, nil
+		case function.PythonVersion310:
+			return LlmCuda1141Python310, nil
 		default:
 			return "", errors.New("Unable to determine Python Version.")
 		}
