@@ -32,7 +32,7 @@ export const WorkflowSummaryCard: React.FC<WorkflowSummaryCardProps> = ({
       sx={{
         width: '240px',
         minHeight: '80px',
-        backgroundColor: 'gray.100',
+        backgroundColor: '#F8F8F8',
         marginBottom: '16px',
         marginRight: '16px',
         borderRadius: '8px',
@@ -63,8 +63,8 @@ export const WorkflowSummaryCard: React.FC<WorkflowSummaryCardProps> = ({
           >
             {workflow.name}
           </Typography>
-          <Typography variant="body1" sx={{ fontSize: '8px' }}>
-            {new Date(workflow.last_run_at * 1000).toLocaleString()}
+          <Typography variant="body1" sx={{ fontWeight: 400, fontSize: '10px', color: '#858585' }}>
+            {workflow.last_run_at ? new Date(workflow.last_run_at * 1000).toLocaleString() : ''}
           </Typography>
         </Box>
         <Box sx={{ marginLeft: 'auto', marginRight: '16px' }}>
@@ -75,7 +75,7 @@ export const WorkflowSummaryCard: React.FC<WorkflowSummaryCardProps> = ({
       </Box>
 
       <Box sx={{ paddingLeft: '22px' }}>
-        <Typography variant="body1" sx={{ fontSize: '12px', my: 0 }}>
+        <Typography variant="body1" sx={{ fontWeight: 400, fontSize: '12px', my: 0, color: '#858585' }}>
           {operators.length} {operators.length > 1 ? 'operators' : 'operator'}{' '}
           using {integration.name}
         </Typography>
