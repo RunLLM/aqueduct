@@ -403,29 +403,95 @@ class TestBackend:
         assert workflow_status == sorted_statuses[0]
 
     def test_endpoint_nodes_get(self):
-        # GET_NODES_TEMPLATE = "/api/v2/workflow/%s/dag/%s/nodes"
+        flow_id, n_runs = self.flows["flow_with_metrics_and_checks"]
+        flow = self.client.flow(flow_id)
+        runs = flow.list_runs()
+        resp = self.get_response(self.GET_NODES_TEMPLATE % (flow_id, runs[0]["run_id"])).json()
         pass
 
     def test_endpoint_nodes_results_get(self):
-        # GET_NODES_RESULTS_TEMPLATE = "/api/v2/workflow/%s/dag/%s/nodes/results"
+        flow_id, n_runs = self.flows["flow_with_metrics_and_checks"]
+        flow = self.client.flow(flow_id)
+        runs = flow.list_runs()
+        resp = self.get_response(self.GET_NODES_RESULTS_TEMPLATE % (flow_id, runs[0]["run_id"])).json()
         pass
 
     def test_endpoint_node_artifact_get(self):
-        # GET_NODE_ARTIFACT_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/artifact/%s"
+        flow_id, n_runs = self.flows["flow_with_metrics_and_checks"]
+        flow = self.client.flow(flow_id)
+        runs = flow.list_runs()
+
+        dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
+            flow_id,
+            runs[0]["run_id"],
+        )
+        artifact_ids = dag_result_resp.artifacts.keys()
+        artifact_id = artifact_ids
+
+        resp = self.get_response(self.GET_NODE_ARTIFACT_TEMPLATE % (flow_id, runs[0]["run_id"], artifact_id)).json()
         pass
 
     def test_endpoint_node_artifact_result_content_get(self):
-        # GET_NODE_ARTIFACT_RESULT_CONTENT_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/artifact/%s/result/%s/content"
+        # TODO: Sync with wei for clarification
+        # flow_id, n_runs = self.flows["flow_with_metrics_and_checks"]
+        # flow = self.client.flow(flow_id)
+        # runs = flow.list_runs()
+
+        # dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
+        #     flow_id,
+        #     runs[0]["run_id"],
+        # )
+        # artifact_ids = dag_result_resp.artifacts.keys()
+        # artifact_id = artifact_ids
+
+        # resp = self.get_response(self.GET_NODE_ARTIFACT_RESULT_CONTENT_TEMPLATE % (flow_id, runs[0]["run_id"], artifact_id)).json()
+        # GET_NODE_ARTIFACT_RESULT_CONTENT_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/artifact/%s/result/%s/content" <-- workflow id, dag id, artifact id, dag result id
         pass
 
     def test_endpoint_node_artifact_results_get(self):
+        flow_id, n_runs = self.flows["flow_with_metrics_and_checks"]
+        flow = self.client.flow(flow_id)
+        runs = flow.list_runs()
+
+        dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
+            flow_id,
+            runs[0]["run_id"],
+        )
+        artifact_ids = dag_result_resp.artifacts.keys()
+        artifact_id = artifact_ids
+
+        resp = self.get_response(self.GET_NODE_ARTIFACT_RESULTS_TEMPLATE % (flow_id, runs[0]["run_id"], artifact_id)).json()
         # GET_NODE_ARTIFACT_RESULTS_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/artifact/%s/results"
         pass
 
     def test_endpoint_node_operator_get(self):
+        flow_id, n_runs = self.flows["flow_with_metrics_and_checks"]
+        flow = self.client.flow(flow_id)
+        runs = flow.list_runs()
+
+        dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
+            flow_id,
+            runs[0]["run_id"],
+        )
+        operator_ids = dag_result_resp.operators.keys()
+        operator_id = operator_ids
+
+        resp = self.get_response(self.GET_NODE_OPERATOR_TEMPLATE % (flow_id, runs[0]["run_id"], operator_id)).json()
         # GET_NODE_OPERATOR_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/operator/%s"
         pass
 
     def test_endpoint_node_operator_content_get(self):
+        flow_id, n_runs = self.flows["flow_with_metrics_and_checks"]
+        flow = self.client.flow(flow_id)
+        runs = flow.list_runs()
+
+        dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
+            flow_id,
+            runs[0]["run_id"],
+        )
+        operator_ids = dag_result_resp.operators.keys()
+        operator_id = operator_ids
+
+        resp = self.get_response(self.GET_NODE_OPERATOR_CONTENT_TEMPLATE % (flow_id, runs[0]["run_id"], operator_id)).json()
         # GET_NODE_OPERATOR_CONTENT_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/operator/%s/content"
         pass
