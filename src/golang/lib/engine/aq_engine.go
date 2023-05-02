@@ -17,6 +17,7 @@ import (
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	operator_model "github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -925,6 +926,11 @@ func (eng *aqEngine) execute(
 
 	// Kick off execution by starting all operators that don't have any inputs.
 	for _, op := range dag.Operators() {
+		log.Infof("Dag Operator %s [%d], Type: %s", op.Name(), len(dag.Operators()), op.Type())
+		if op.Type() == operator_model.LoadType {
+			log.Infof("Skipping save operator %s Type: %s", op.Name(), op.Type())
+			continue
+		}
 		if opToDependencyCount[op.ID()] == 0 {
 			inProgressOps[op.ID()] = op
 		}
@@ -952,12 +958,17 @@ func (eng *aqEngine) execute(
 
 	start := time.Now()
 
+	// We defer save operations until all other computer operations are completed successfully.
+	// This flag tracks whether the save operations are scheduled for execution.
+	loadOpsDone := false
+
 	for len(inProgressOps) > 0 {
 		if time.Since(start) > timeConfig.ExecTimeout {
 			return errors.Newf("Reached timeout %s waiting for workflow to complete.", timeConfig.ExecTimeout)
 		}
 
 		for _, op := range inProgressOps {
+			log.Infof("Operator in progress %s [%d], Type: %s", op.Name(), len(inProgressOps), op.Type())
 			if op.Dynamic() && !op.GetDynamicProperties().Prepared() {
 				err = dynamic.PrepareCluster(
 					ctx,
@@ -1079,25 +1090,44 @@ func (eng *aqEngine) execute(
 				}
 
 				for _, nextOp := range nextOps {
+
 					// Decrement the active dependency count for every downstream operator.
 					// Once this count reaches zero, we can schedule the next operator.
 					opToDependencyCount[nextOp.ID()] -= 1
 
 					if opToDependencyCount[nextOp.ID()] < 0 {
-						return errors.Newf("Internal error: operator %s has a negative dependnecy count.", op.Name())
+						return errors.Newf("Internal error: operator %s has a negative dependency count.", op.Name())
 					}
 
 					if opToDependencyCount[nextOp.ID()] == 0 {
 						// Defensive check: do not reschedule an already in-progress operator. This shouldn't actually
 						// matter because we only keep and update a single copy an on operator.
 						if _, ok := inProgressOps[nextOp.ID()]; !ok {
-							inProgressOps[nextOp.ID()] = nextOp
+							// In this pass only pick pending compute operations, and defer the save operations
+							// to the end.
+							if nextOp.Type() != operator_model.LoadType {
+								inProgressOps[nextOp.ID()] = nextOp
+							} else {
+								log.Infof("Skip load operator %s", nextOp.Name())
+							}
 						}
 					}
 				}
 			}
 
 			time.Sleep(timeConfig.OperatorPollInterval)
+		}
+		// There are no more computer operations to run. Run the save (load) operations to persist
+		// artifacts to DB. The save operations are scheduled at the end so data is persisted only if
+		// all preceding compute operations are successful.
+		if len(inProgressOps) == 0 && !loadOpsDone {
+			for _, saveOp := range workflowDag.Operators() {
+				if saveOp.Type() == operator_model.LoadType {
+					log.Infof("Scheduling load operator %s for execution", saveOp.Name())
+					inProgressOps[saveOp.ID()] = saveOp
+				}
+			}
+			loadOpsDone = true
 		}
 	}
 
