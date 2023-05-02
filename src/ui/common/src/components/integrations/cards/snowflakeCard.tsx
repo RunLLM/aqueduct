@@ -28,6 +28,5 @@ export const SnowflakeCard: React.FC<Props> = ({
     }
   }
 
-
   return <ResourceCardText labels={labels} values={values} />;
 };
