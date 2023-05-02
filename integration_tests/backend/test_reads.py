@@ -21,7 +21,6 @@ class TestBackend:
     GET_WORKFLOWS_TEMPLATE = "/api/v2/workflows"
 
     GET_DAG_RESULTS_TEMPLATE = "/api/v2/workflow/%s/results"
-    GET_DAG_RESULTS_TEMPLATE = "/api/v2/workflow/%s/results"
 
     GET_NODES_TEMPLATE = "/api/v2/workflow/%s/dag/%s/nodes"
     GET_NODES_RESULTS_TEMPLATE = "/api/v2/workflow/%s/dag/%s/nodes/results"
@@ -402,3 +401,31 @@ class TestBackend:
         assert len(workflow_status) == 1
         workflow_status = workflow_status[0]
         assert workflow_status == sorted_statuses[0]
+
+    def test_endpoint_nodes_get(self):
+        # GET_NODES_TEMPLATE = "/api/v2/workflow/%s/dag/%s/nodes"
+        pass
+
+    def test_endpoint_nodes_results_get(self):
+        # GET_NODES_RESULTS_TEMPLATE = "/api/v2/workflow/%s/dag/%s/nodes/results"
+        pass
+
+    def test_endpoint_node_artifact_get(self):
+        # GET_NODE_ARTIFACT_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/artifact/%s"
+        pass
+
+    def test_endpoint_node_artifact_result_content_get(self):
+        # GET_NODE_ARTIFACT_RESULT_CONTENT_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/artifact/%s/result/%s/content"
+        pass
+
+    def test_endpoint_node_artifact_results_get(self):
+        # GET_NODE_ARTIFACT_RESULTS_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/artifact/%s/results"
+        pass
+
+    def test_endpoint_node_operator_get(self):
+        # GET_NODE_OPERATOR_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/operator/%s"
+        pass
+
+    def test_endpoint_node_operator_content_get(self):
+        # GET_NODE_OPERATOR_CONTENT_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/operator/%s/content"
+        pass
