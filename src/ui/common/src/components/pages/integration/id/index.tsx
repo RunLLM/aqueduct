@@ -412,9 +412,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             >
               Workflows
             </Typography>
-            <OperatorsOnIntegration
-              integration={selectedIntegration}
-            />
+            <OperatorsOnIntegration integration={selectedIntegration} />
           </Box>
         )}
       </Box>
