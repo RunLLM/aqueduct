@@ -1,4 +1,5 @@
 import { Box } from '@mui/material';
+import React from 'react';
 
 import WorkflowSummaryCard, {
   WorkflowSummaryCardProps,
@@ -43,7 +44,7 @@ export const WorkflowSummaryCardStory: React.FC = () => {
   return (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', alignImems: 'flex-start' }}>
       {workflowSummaries.map((wf) => (
-        <WorkflowSummaryCard {...wf} />
+        <WorkflowSummaryCard key={wf.workflow.id} {...wf} />
       ))}
     </Box>
   );
