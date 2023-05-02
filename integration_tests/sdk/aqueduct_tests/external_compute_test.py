@@ -11,7 +11,9 @@ from .extract import extract
 
 
 @pytest.mark.enable_only_for_external_compute()
-@pytest.mark.skip_for_spark_engines(reason="We don't allow different engine types in conjunction with Spark.")
+@pytest.mark.skip_for_spark_engines(
+    reason="We don't allow different engine types in conjunction with Spark."
+)
 def test_flow_with_multiple_compute_using_op_spec(client, flow_name, data_integration, engine):
     """Runs a workflow both Aqueduct and a third-party compute engine."""
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
