@@ -1,6 +1,7 @@
 import { faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Box, Link, Typography } from '@mui/material';
+import React from 'react';
 
 import { OperatorsForIntegrationItem } from '../../reducers/integration';
 import { Integration } from '../../utils/integrations';

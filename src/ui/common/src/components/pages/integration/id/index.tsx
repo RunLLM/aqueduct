@@ -162,8 +162,6 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     fetchServerConfig();
   }, [user.apiKey]);
 
-  const [workflowID, setWorkflowId] = useState(null);
-
   const {
     data: workflowIDs,
     error: fetchWorkflowsError,
@@ -175,36 +173,6 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     integrationId: integrationId,
   });
 
-  // FOR ANDRE: Example usage to get the latest dag result for one of the workflows.
-  // We will need to do this for every workflow using.
-  // const {
-  //   data: dagResults,
-  //   error: testError,
-  //   isLoading: testIsLoading,
-  // } = useDagResultsGetQuery({
-  //   apiKey: user.apiKey,
-  //   workflowId: workflowID,
-  //   limit: 1,
-  // }, {
-  //   // Skip the call if the workflowID hasn't been populated yet by the previous call.
-  //   skip: !workflowID,
-  // });
-
-  useEffect(() => {
-    if (workflowIDs && workflowIDs.length > 0) {
-      setWorkflowId(workflowIDs[0]);
-    }
-  }, [workflowIDs]);
-
-  // if (!testError && !testIsLoading) {
-  //   // Prints the dag result of the latest result for this workflow.
-  //   // This prints out multiple results, we can sort, or take the last one to get the latest.
-  //   console.log('DAG RESULTS: ', dagResults);
-  // }
-
-  // FOR ANDRE: Fetch all the operators that are associated with this integration.
-  // The operators all have a DagID field on them, which you can combine with the dag_result.DagID to
-  // figure out what operators are associated with each workflow.
   const {
     data: integrationOperators,
     error: testOpsErr,
@@ -214,11 +182,6 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     integrationId: integrationId,
   });
   if (!testOpsErr && !testOpsIsLoading) {
-    // Prints the operators associated with this integration.
-    console.log('INTEGRATION OPERATORS: ', integrationOperators);
-    // map dagID to operators.
-    // Going to look something like this:
-    // dagID: [operator1, operator 2, etc.]
     const dagIdToOperatorMap = {};
     integrationOperators.forEach((operator) => {
       if (dagIdToOperatorMap[operator.dag_id]) {
@@ -227,9 +190,6 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
         dagIdToOperatorMap[operator.dag_id] = [operator];
       }
     });
-
-    // Prints the dagIdToOperatorMap
-    console.log('dagIdToOperatorMap: ', dagIdToOperatorMap);
   }
 
   if (fetchWorkflowsIsLoading) {
