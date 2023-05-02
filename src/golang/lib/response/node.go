@@ -119,12 +119,16 @@ func NewOperatorResultFromDBObject(
 
 type Nodes struct {
 	Operators []Operator `json:"operators"`
-	Artifacts []Artifact `json:"artifacts`
+	Artifacts []Artifact `json:"artifacts"`
+	Metrics []Metric `json:"metrics"`
+	Checks []Check `json:"checks"`
 }
 
 func NewNodesFromDBObjects(
 	operatorNodes []views.OperatorNode,
 	artifactNodes []views.ArtifactNode,
+	metricNodes []views.MetricrNode,
+	checkNodes []views.CheckNode,
 ) *Nodes {
 	return &Nodes{
 		Operators: slices.Map(
@@ -139,12 +143,26 @@ func NewNodesFromDBObjects(
 				return *NewArtifactFromDBObject(&node)
 			},
 		),
+		Metrics: slices.Map(
+			metricNodes,
+			func(node views.MetricNode) Metric {
+				return *NewMetricFromDBObject(&node)
+			},
+		),
+		Checks: slices.Map(
+			checkNodes,
+			func(node views.CheckNode) Check {
+				return *NewCheckFromDBObject(&node)
+			},
+		),
 	}
 }
 
 type NodeResults struct {
 	Operators []OperatorResult `json:"operators"`
 	Artifacts []ArtifactResult `json:"artifacts"`
+	Metrics []MetricResult `json:"metrics"`
+	Checks []CheckResult `json:"checks"`
 }
 
 func NewNodeResultsFromDBObjects(

@@ -54,6 +54,8 @@ import WorkflowHeader, {
 import WorkflowSettings from '../../../workflows/WorkflowSettings';
 import { LayoutProps } from '../../types';
 import RunWorkflowDialog from '../../workflows/components/RunWorkflowDialog';
+import { useNodeArtifactGetQuery, useNodeOperatorGetQuery, useNodesGetQuery, useNodesResultsGetQuery } from '../../../../handlers/AqueductApi';
+
 
 type WorkflowPageProps = {
   user: UserProfile;
@@ -87,6 +89,56 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const drawerIsOpen = currentNode.type !== NodeType.None;
 
   const dagName = workflow.selectedDag?.metadata?.name;
+
+
+  // const { data: NodesData, error: NodesError, isLoading: NodesLoading } = useNodesGetQuery(
+  //   {
+  //     apiKey: user.apiKey,
+  //     workflowId: workflowId,
+  //     dagId: workflow.selectedResult?.id,
+  //   },
+  //   { pollingInterval: 5000 }
+  // )
+  // console.log("NodesData", NodesData);
+
+  // const { data: NodesResultData, error: NodesResultError, isLoading: NodesResultLoading } = useNodesResultsGetQuery(
+  //   {
+  //     apiKey: user.apiKey,
+  //     workflowId: workflowId,
+  //     dagId: workflow.selectedResult?.id,
+  //   },
+  //   { pollingInterval: 5000 }
+  // )
+  // console.log("NodesResultData", NodesResultData);
+  
+  // const { data: NodesArtifactData, error: NodesArtifactError, isLoading: NodesArtifactLoading } = useNodeArtifactGetQuery(
+  //   {
+  //     apiKey: user.apiKey,
+  //     workflowId: workflowId,
+  //     dagId: workflow.selectedResult?.id,
+  //     nodeId: Object.keys(workflow.selectedDag?.artifacts)[0],
+  //   },
+  //   { pollingInterval: 5000 }
+  // )
+  // console.log("NodesArtifactData", NodesArtifactData);
+  
+  // const { data: NodesOpData, error: NodesOpError, isLoading: NodesOpLoading } = useNodeOperatorGetQuery(
+  //   {
+  //     apiKey: user.apiKey,
+  //     workflowId: workflowId,
+  //     dagId: workflow.selectedResult.id,
+  //     nodeId: Object.keys(workflow.selectedDag?.operators)[0],
+  //   },
+  //   { pollingInterval: 5000 }
+  // )
+  // console.log("NodesOpData", NodesOpData);
+  
+
+  // TODO: Add metrics and checks to useNodesGetQuery & useNodesResultsGetQuery
+  // TODO: Remove metrics & checks from useNodeArtifactGetQuery & useNodeOperatorGetQuery & related queries
+  // TODO: Create useNodeMetricGetQuery & useNodeCheckGetQuery + the contents
+
+
 
   // EFFECT 0: Set document title.
   useEffect(() => {
