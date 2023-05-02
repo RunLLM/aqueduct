@@ -462,6 +462,43 @@ func (*operatorReader) GetByEngineIntegrationID(
 	return results, err
 }
 
+func (*operatorReader) GetForAqueductEngine(
+	ctx context.Context,
+	DB database.Database,
+) ([]models.Operator, error) {
+	workflowCondition := `
+		json_extract(workflow_dag.engine_config, '$.type') == 'aqueduct'
+	`
+	operatorCondition := `
+		json_extract(operator.spec, '$.engine_config.type') == 'aqueduct'
+	`
+
+	query := fmt.Sprintf(`
+		SELECT DISTINCT %s FROM
+		operator, workflow_dag, workflow_dag_edge
+		WHERE
+		workflow_dag_edge.workflow_dag_id = workflow_dag.id
+		AND (
+			workflow_dag_edge.from_id = operator.id
+			OR workflow_dag_edge.to_id = operator.id
+		)
+		AND (
+			(
+				json_extract(operator.spec, '$.engine_config') IS NULL
+				AND (%s)
+			)
+			OR (%s)
+		);`,
+		models.OperatorColsWithPrefix(),
+		workflowCondition,
+		operatorCondition,
+	)
+
+	var results []models.Operator
+	err := DB.Query(ctx, &results, query)
+	return results, err
+}
+
 func (*operatorReader) GetUnusedCondaEnvNames(ctx context.Context, DB database.Database) ([]string, error) {
 	// Note that we use `OperatorToArtifactType` as the filtering condition because an operator
 	// is guaranteed to generate at least one artifact, so this filter is guaranteed to capture
