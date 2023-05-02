@@ -17,7 +17,7 @@ import (
 // This file should map directly to
 // src/ui/common/src/handlers/v2/NodesGet.tsx
 //
-// Route: /v2/workflow/{workflowID}/dag/{dagID}
+// Route: /v2/workflow/{workflowID}/dag/{dagID}/nodes
 // Method: GET
 // Params:
 //	`workflowID`: ID for `workflow` object

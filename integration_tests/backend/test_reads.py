@@ -19,8 +19,21 @@ from aqueduct import globals
 class TestBackend:
     # V2
     GET_WORKFLOWS_TEMPLATE = "/api/v2/workflows"
+
+    GET_DAG_RESULTS_TEMPLATE = "/api/v2/workflow/%s/results"
     GET_DAG_RESULTS_TEMPLATE = "/api/v2/workflow/%s/results"
 
+    GET_NODES_TEMPLATE = "/api/v2/workflow/%s/dag/%s/nodes"
+    GET_NODES_RESULTS_TEMPLATE = "/api/v2/workflow/%s/dag/%s/nodes/results"
+
+    GET_NODE_ARTIFACT_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/artifact/%s"
+    GET_NODE_ARTIFACT_RESULT_CONTENT_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/artifact/%s/result/%s/content"
+    GET_NODE_ARTIFACT_RESULTS_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/artifact/%s/results"
+
+    GET_NODE_OPERATOR_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/operator/%s"
+    GET_NODE_OPERATOR_CONTENT_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/operator/%s/content"
+
+    # V1
     LIST_WORKFLOW_SAVED_OBJECTS_TEMPLATE = "/api/workflow/%s/objects"
     GET_TEST_INTEGRATION_TEMPLATE = "/api/integration/%s/test"
     LIST_INTEGRATIONS_TEMPLATE = "/api/integrations"
