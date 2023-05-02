@@ -1,5 +1,43 @@
 # Changelog
 
+## 0.3
+Released on May 3, 2023.
+
+### Key Features
+* Introduces the `aqueduct.llm_op` API and the `aqueduct-llm` package. Aqueduct
+    now has support for invoking LLMs with a single API call and comes with
+    pre-built Docker images optimized for executing LLMs on Kubernetes. The
+    `llm_op` API supports both ad hoc execution, as pictured below, as well as
+    batch execution over a list of inputs or a Pandas `Series`. See our
+    documentation for more details. **TODO: link the word documentation**
+    ```python
+    import aqueduct as aq
+
+    llm_op = aq.llm_op('vicuna-7b', engine='k8s')
+    llm_op('What is the best LLM?')
+
+    ```
+* Reorganizes integrations around the concept of resources. Resources are any
+    external tool, system, or API that Aqueduct can connect to; existing data
+    and compute integrations are automatically converted into resources. A
+    container registry resource is added in this release, and future releases
+    will introduce new resource types. The recommended SDK API for accessing
+    resources is now `client.resource`, with `client.integration` slated to
+    deprecated in a future release.
+* Allows users to specify a custom Docker image when running an Aqueduct
+    operator on Kubernetes. The Docker image is required to have the Aqueduct
+    execturo scaffolding installed; for more details, please see our
+    documentation here. **TODO: link documentation**
+
+### Enhancements
+* Improves logging and error handling when an operator fails because it's able
+    to successfully generate a result, typically in the setup phase.
+* Enables connecting a Databricks cluster to Aqueduct via the Python SDK.
+
+### Bugfixes
+* Fixes bug where installing pre-requisites for using Aqueduct-managed
+    Kubernetes clusters would fail on an M1 Mac with certain configurations.
+
 ## 0.2.12
 Released on April 25, 2023.
 
