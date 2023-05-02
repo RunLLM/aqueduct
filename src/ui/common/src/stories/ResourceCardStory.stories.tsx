@@ -291,7 +291,7 @@ export const ResourceCardStory: React.FC = () => {
         password: 'this is a password',
         targets_serialized: '["myemail@gmail.com"]',
         level: 'warning',
-        enabled: 'true',
+        enabled: 'false',
       } as EmailConfig,
       createdAt: Date.now() / 1000,
       exec_state: {

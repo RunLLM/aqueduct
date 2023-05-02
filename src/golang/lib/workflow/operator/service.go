@@ -49,6 +49,11 @@ func GetOperatorsOnIntegration(
 		return operatorRepo.GetExtractAndLoadOPsByIntegration(ctx, integrationID, DB)
 	}
 
+	// If the integration is the native Aqueduct compute engine, we need a separate query.
+	if integrationObject.Service == shared.Aqueduct {
+		return operatorRepo.GetForAqueductEngine(ctx, DB)
+	}
+
 	if _, ok := shared.ServiceToEngineConfigField[integrationObject.Service]; ok {
 		return operatorRepo.GetByEngineIntegrationID(ctx, integrationID, DB)
 	}
