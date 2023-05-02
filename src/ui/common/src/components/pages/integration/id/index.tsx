@@ -245,8 +245,6 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     return null;
   }
 
-  console.log('selected integration: ', selectedIntegration);
-
   return (
     <Layout
       breadcrumbs={[

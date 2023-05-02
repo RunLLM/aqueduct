@@ -16,6 +16,8 @@ import { S3Card } from './s3Card';
 import { SlackCard } from './slackCard';
 import { SnowflakeCard } from './snowflakeCard';
 import SparkCard from './sparkCard';
+import SQLiteCard from "./sqliteCard";
+import {AthenaCard} from "./athenaCard";
 
 type ResourceFieldsDetailsCardProps = {
   integration: Integration;
@@ -85,6 +87,12 @@ export const ResourceFieldsDetailsCard: React.FC<
     case 'AWS':
       serviceCard = <AWSCard integration={integration} />;
       break;
+    case 'SQLite':
+      serviceCard = <SQLiteCard integration={integration} />
+      break;
+    case 'Athena':
+      serviceCard = <AthenaCard integration={integration} detailedView={detailedView}/>;
+      break
     default:
       serviceCard = null;
   }

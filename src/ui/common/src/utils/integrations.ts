@@ -16,7 +16,7 @@ export function isBuiltinIntegration(integration: Integration): boolean {
 // Certain integrations have no configuration fields to show.
 export function hasConfigFieldsToShow(integration: Integration): boolean {
   return (
-    integration.name !== aqueductDemoName && integration.service !== 'Conda'
+    integration.service !== 'Conda' && integration.name !== aqueductComputeName
   );
 }
 
