@@ -8,6 +8,7 @@ import AWSCard from './awsCard';
 import { BasicDBCard } from './basicDBCard';
 import { BigQueryCard } from './bigqueryCard';
 import { DatabricksCard } from './databricksCard';
+import ECRCard from './ecrCard';
 import { EmailCard } from './emailCard';
 import { GCSCard } from './gcsCard';
 import { KubernetesCard } from './kubernetesCard';
@@ -94,6 +95,9 @@ export const ResourceFieldsDetailsCard: React.FC<
       serviceCard = (
         <AthenaCard integration={integration} detailedView={detailedView} />
       );
+      break;
+    case 'ECR':
+      serviceCard = <ECRCard integration={integration} />;
       break;
     default:
       serviceCard = null;
