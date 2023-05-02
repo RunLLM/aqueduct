@@ -377,7 +377,12 @@ def _fetch_integration_credentials(section: str, name: str) -> Dict[str, Any]:
 def is_global_engine_set(name: str) -> bool:
     """
     Returns whether or not the provided compute integration has `set_global_engine` set.
+
+    If name is None (meaning we are using the Aqueduct Server), we return False.
     """
+    if not name:
+        return False
+
     test_config = _parse_credentials_file()
 
     assert "compute" in test_config, "compute section expected in test-config.yml"
@@ -389,7 +394,12 @@ def is_global_engine_set(name: str) -> bool:
 def is_lazy_set(name: str) -> bool:
     """
     Returns whether or not the provided compute integration has `set_global_lazy` set.
+
+    If name is None (meaning we are using the Aqueduct Server), we return False.
     """
+    if not name:
+        return False
+
     test_config = _parse_config_file()
 
     assert "compute" in test_config, "compute section expected in test-config.yml"
