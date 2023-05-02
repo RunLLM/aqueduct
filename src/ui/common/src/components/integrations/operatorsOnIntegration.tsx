@@ -71,7 +71,7 @@ const OperatorsOnIntegration: React.FC<OperatorsOnIntegrationProps> = ({
 
   if (Object.keys(operatorsByWorkflow).length > 0) {
     return (
-      <Box maxWidth="900px" sx={{ display: 'flex', flexWrap: 'wrap' }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
         {Object.entries(operatorsByWorkflow).map(([wfId, item]) => {
           return (
             <WorkflowSummaryCard
