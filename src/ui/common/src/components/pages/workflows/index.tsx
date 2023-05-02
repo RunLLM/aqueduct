@@ -8,6 +8,7 @@ import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import { CheckLevel } from '../../../utils/operators';
 import ExecutionStatus, { LoadingStatusEnum } from '../../../utils/shared';
+import { WorkflowResponse } from '../../../handlers/responses/Workflow';
 import { reduceEngineTypes } from '../../../utils/workflows';
 import DefaultLayout from '../../layouts/default';
 import { BreadcrumbLink } from '../../layouts/NavBar';
@@ -21,6 +22,7 @@ import CheckItem from './components/CheckItem';
 import ExecutionStatusLink from './components/ExecutionStatusLink';
 import MetricItem from './components/MetricItem';
 import ResourceItem from './components/ResourceItem';
+import { useWorkflowsGetQuery, useDagResultsGetQuery } from '../../../handlers/AqueductApi';
 
 type Props = {
   user: UserProfile;
@@ -34,21 +36,57 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     document.title = 'Workflows | Aqueduct';
   }, []);
 
-  useEffect(() => {
-    dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
-  }, [dispatch, user.apiKey]);
+  let workflowData = null;
 
-  const allWorkflows = useSelector(
-    (state: RootState) => state.listWorkflowReducer
+  const { data, error: workflowError, isLoading: workflowLoading } = useWorkflowsGetQuery(
+    {
+      apiKey: user.apiKey,
+    },
+    { 
+      pollingInterval: 5000,
+      skip: workflowData !== null,
+    }
   );
+  workflowData = data;
+
+  console.log(workflowData, workflowError, workflowLoading);
+// [
+//     {
+//         "id": "6cdea908-c3a7-401e-9081-157fc631e9f4",
+//         "user_id": "3396169c-25cf-4613-9a2c-e7ac91edc4d5",
+//         "name": "hotel_reviews",
+//         "description": "",
+//         "schedule": {
+//             "trigger": "manual",
+//             "cron_schedule": "",
+//             "disable_manual_trigger": false,
+//             "paused": false,
+//             "source_id": "00000000-0000-0000-0000-000000000000"
+//         },
+//         "created_at": "2023-05-01T10:35:57.354686-07:00",
+//         "retention_policy": {
+//             "k_latest_runs": -1
+//         },
+//         "notification_settings": {
+//             "settings": null
+//         }
+//     },
+// ]
+  
+  // useEffect(() => {
+  //   dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
+  // }, [dispatch, user.apiKey]);
+  
+  // const allWorkflows = useSelector(
+  //   (state: RootState) => state.listWorkflowReducer
+  // );
+
+  // workflowTableData = <Element workflowids={workflowData}/>
 
   // If we are still loading the workflows, don't return a page at all.
   // Otherwise, we briefly return a page saying there are no workflows before
   // the workflows snap into place.
-  if (
-    allWorkflows.loadingStatus.loading === LoadingStatusEnum.Loading ||
-    allWorkflows.loadingStatus.loading === LoadingStatusEnum.Initial
-  ) {
+  if (workflowLoading) {
     return null;
   }
 
@@ -62,70 +100,91 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     </Typography>
   );
 
-  const workflows = allWorkflows.workflows;
+  function getLatestDag(id: string) {
+      const { data, error, isLoading } = useDagResultsGetQuery(
+        {
+          apiKey: user.apiKey,
+          workflowId: id,
+        },
+        { pollingInterval: 5000 }
+      );
+      console.log("getLatestDag", id, data, error, isLoading); 
+      if (isLoading) {
+        return {
+          id
+        }
+      } else {
+        return {
+          id
+        }
+      }
+  }
+
+  const workflows = data.map((workflow: WorkflowResponse) => getLatestDag(workflow.id));
+  console.log("workflows", workflows);
 
   /**
    * Iterate through workflows array and map each element to a WorkflowTableRow object.
    */
-  const workflowElements: PaginatedSearchTableRow[] = workflows.map(
-    (workflow) => {
-      const engines = reduceEngineTypes(
-        workflow.engine,
-        workflow.operator_engines.map((x) => (x ? x : workflow.engine))
-      );
+  const workflowElements: PaginatedSearchTableRow[] = data.map(
+    (workflow: WorkflowResponse) => {
+      // const engines = reduceEngineTypes(
+      //   workflow.engine,
+      //   workflow.operator_engines.map((x) => (x ? x : workflow.engine))
+      // );
 
-      let metrics = [];
-      if (workflow?.metrics) {
-        metrics = workflow.metrics.map((metric) => {
-          return {
-            metricId: metric.id,
-            name: metric.name,
-            value: metric.result?.content_serialized ?? '',
-            status:
-              metric.result?.exec_state?.status ?? ExecutionStatus.Unknown,
-          };
-        });
-      }
+      // let metrics = [];
+      // if (workflow?.metrics) {
+      //   metrics = workflow.metrics.map((metric) => {
+      //     return {
+      //       metricId: metric.id,
+      //       name: metric.name,
+      //       value: metric.result?.content_serialized ?? '',
+      //       status:
+      //         metric.result?.exec_state?.status ?? ExecutionStatus.Unknown,
+      //     };
+      //   });
+      // }
 
-      let containsWarning = false;
-      let checks = [];
-      if (workflow.checks) {
-        checks = workflow.checks.map((check) => {
-          const value =
-            check.result?.exec_state.status === 'succeeded' ? 'True' : 'False';
-          const level = check.spec?.check?.level ?? CheckLevel.Warning;
-          const status =
-            check.result?.exec_state?.status ?? ExecutionStatus.Unknown;
+      // let containsWarning = false;
+      // let checks = [];
+      // if (workflow.checks) {
+      //   checks = workflow.checks.map((check) => {
+      //     const value =
+      //       check.result?.exec_state.status === 'succeeded' ? 'True' : 'False';
+      //     const level = check.spec?.check?.level ?? CheckLevel.Warning;
+      //     const status =
+      //       check.result?.exec_state?.status ?? ExecutionStatus.Unknown;
 
-          if (
-            status === ExecutionStatus.Failed &&
-            level === CheckLevel.Warning
-          ) {
-            containsWarning = true;
-          }
+      //     if (
+      //       status === ExecutionStatus.Failed &&
+      //       level === CheckLevel.Warning
+      //     ) {
+      //       containsWarning = true;
+      //     }
 
-          return {
-            checkId: check.id,
-            name: check.name,
-            level,
-            timestamp: check.result?.exec_state?.timestamps?.finished_at ?? '',
-            value,
-            status,
-          };
-        });
-      }
-
+      //     return {
+      //       checkId: check.id,
+      //       name: check.name,
+      //       level,
+      //       timestamp: check.result?.exec_state?.timestamps?.finished_at ?? '',
+      //       value,
+      //       status,
+      //     };
+      //   });
+      // }
+      // - latest dag status + last run + engines + checks / metrics results 
       const workflowTableRow: PaginatedSearchTableRow = {
         name: {
           name: workflow.name,
           url: `/workflow/${workflow.id}`,
           // Show warning badge if there is a warning check
-          status: containsWarning ? ExecutionStatus.Warning : workflow.status,
+          // status: containsWarning ? ExecutionStatus.Warning : workflow.status,
         },
-        last_run: new Date(workflow.last_run_at * 1000),
-        engines,
-        metrics,
-        checks,
+        // last_run: new Date(workflow.last_run_at * 1000),
+        // engines,
+        // metrics,
+        // checks,
       };
 
       return workflowTableRow;
