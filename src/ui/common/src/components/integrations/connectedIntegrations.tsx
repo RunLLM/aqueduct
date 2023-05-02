@@ -111,6 +111,10 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
         }}
       >
         {[...integrations]
+          .filter(
+            (integration) =>
+              !integration.name.endsWith(':aqueduct_ondemand_k8s')
+          )
           .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
           .map((integration, idx) => {
             let numWorkflowsUsingMsg = '';

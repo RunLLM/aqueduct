@@ -283,6 +283,7 @@ export type Service =
   | 'Slack'
   | 'Spark'
   | 'AWS'
+  | 'Amazon'
   | 'GCP'
   | 'Azure'
   | 'ECR';
@@ -506,6 +507,12 @@ export const SupportedIntegrations: ServiceInfoMap = {
     docs: addingIntegrationLink,
   },
   ['AWS']: {
+    logo: ServiceLogos['Kubernetes'],
+    activated: true,
+    category: IntegrationCategories.CLOUD,
+    docs: addingIntegrationLink,
+  },
+  ['Amazon']: {
     logo: ServiceLogos['AWS'],
     activated: true,
     category: IntegrationCategories.CLOUD,

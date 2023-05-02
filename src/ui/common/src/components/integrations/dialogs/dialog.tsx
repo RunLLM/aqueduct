@@ -180,6 +180,13 @@ const IntegrationDialog: React.FC<Props> = ({
     user.apiKey,
   ]);
 
+  let connectionMessage = '';
+  if (service === 'AWS') {
+    connectionMessage = 'Configuring Aqueduct-managed Kubernetes on AWS';
+  } else {
+    connectionMessage = `Connecting to ${service}`;
+  }
+
   const dialogHeader = (
     <Box
       sx={{
@@ -192,7 +199,7 @@ const IntegrationDialog: React.FC<Props> = ({
       <Typography variant="h5">
         {!!integrationToEdit
           ? `Edit ${integrationToEdit.name}`
-          : `Connecting to ${service}`}
+          : `${connectionMessage}`}
       </Typography>
       <img height="45px" src={SupportedIntegrations[service].logo} />
     </Box>

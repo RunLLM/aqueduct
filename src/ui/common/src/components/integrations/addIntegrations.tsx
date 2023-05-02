@@ -1,5 +1,5 @@
 import { Typography } from '@mui/material';
-import { DialogContent } from '@mui/material';
+import { DialogActions, DialogContent } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -212,6 +212,11 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
     setShowDialog(false);
   };
 
+  const handlePrevious = () => {
+    setShowSelectProviderDialog(false);
+    setShowDialog(true);
+  };
+
   const handleAWSClick = () => {
     setShowOndemandDialog(true);
     setShowSelectProviderDialog(false);
@@ -225,23 +230,19 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
           <DialogTitle
             sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}
           >
-            <IntegrationLogo
-              service={service}
-              activated={integration.activated}
-              size="small"
-            />
             <div>
               <Typography variant="h5" sx={{ color: 'black' }}>
                 Connect to Kubernetes
               </Typography>
             </div>
           </DialogTitle>
-          <DialogContent>
+          <DialogContent sx={{ marginTop: '8px' }}>
             <Button
               sx={{
                 textTransform: 'none',
-                marginBottom: '12px',
+                marginBottom: '8px',
                 display: 'flex',
+                alignItems: 'center',
                 gap: '8px',
               }}
               onClick={handleRegularK8s}
@@ -253,13 +254,18 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
               />
               <Typography
                 variant="body2"
-                sx={{ color: 'black', fontSize: '20px' }}
+                sx={{ color: 'black', fontSize: '18px' }}
               >
                 I have an existing Kubernetes cluster I&apos;d like to use
               </Typography>
             </Button>
             <Button
-              sx={{ textTransform: 'none', display: 'flex', gap: '8px' }}
+              sx={{
+                textTransform: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+              }}
               onClick={handleOndemandK8s}
             >
               <IntegrationLogo
@@ -269,12 +275,17 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
               />
               <Typography
                 variant="body2"
-                sx={{ color: 'black', fontSize: '20px' }}
+                sx={{ color: 'black', fontSize: '18px' }}
               >
                 I&apos;d like Aqueduct to create & manage a cluster for me
               </Typography>
             </Button>
           </DialogContent>
+          <DialogActions>
+            <Button autoFocus onClick={() => setShowDialog(false)}>
+              Cancel
+            </Button>
+          </DialogActions>
         </Dialog>
 
         {showKubernetesDialog && (
@@ -301,8 +312,8 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
             sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}
           >
             <IntegrationLogo
-              service={service}
-              activated={integration.activated}
+              service={'Aqueduct'}
+              activated={SupportedIntegrations['Aqueduct'].activated}
               size="small"
             />
             <div>
@@ -311,8 +322,8 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
               </Typography>
             </div>
             <IntegrationLogo
-              service={'Aqueduct'}
-              activated={SupportedIntegrations['Aqueduct'].activated}
+              service={service}
+              activated={integration.activated}
               size="small"
             />
             <div>
@@ -327,13 +338,14 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
               alignItems: 'center',
               paddingLeft: '54px',
               gap: '32px',
+              marginTop: '16px',
               '& button': { backgroundColor: '#F8F8F8' },
             }}
           >
             <Button onClick={handleAWSClick}>
               <IntegrationLogo
-                service={'AWS'}
-                activated={SupportedIntegrations['AWS'].activated}
+                service={'Amazon'}
+                activated={SupportedIntegrations['Amazon'].activated}
                 size="large"
               />
             </Button>
@@ -352,6 +364,17 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
               />
             </Button>
           </DialogContent>
+          <DialogActions>
+            <Button autoFocus onClick={handlePrevious}>
+              Previous
+            </Button>
+            <Button
+              autoFocus
+              onClick={() => setShowSelectProviderDialog(false)}
+            >
+              Cancel
+            </Button>
+          </DialogActions>
         </Dialog>
 
         {showOndemandDialog && (
