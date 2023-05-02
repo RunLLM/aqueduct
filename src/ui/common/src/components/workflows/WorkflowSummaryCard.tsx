@@ -1,11 +1,12 @@
 import { faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Box, Link, Typography } from '@mui/material';
+
 import { OperatorsForIntegrationItem } from '../../reducers/integration';
 import { Integration } from '../../utils/integrations';
 import { ListWorkflowSummary } from '../../utils/workflows';
-import { StatusIndicator } from './workflowStatus';
 import { TruncatedText } from '../integrations/cards/text';
+import { StatusIndicator } from './workflowStatus';
 
 export type WorkflowSummaryCardProps = {
   workflow?: ListWorkflowSummary;
@@ -16,9 +17,8 @@ export type WorkflowSummaryCardProps = {
 export const WorkflowSummaryCard: React.FC<WorkflowSummaryCardProps> = ({
   workflow,
   operators,
-  integration
+  integration,
 }) => {
-
   if (!workflow) {
     return null;
   }
@@ -29,7 +29,7 @@ export const WorkflowSummaryCard: React.FC<WorkflowSummaryCardProps> = ({
     <Box
       sx={{
         width: '325px',
-        minHeight: '150px',
+        minHeight: '96px',
         backgroundColor: '#F8F8F8',
         marginBottom: '16px',
         marginRight: '16px',
@@ -56,11 +56,27 @@ export const WorkflowSummaryCard: React.FC<WorkflowSummaryCardProps> = ({
               {workflow.name}
             </Typography>
           </Box>
-          <Typography variant="body1" sx={{ marginLeft: '8px', fontWeight: 400, fontSize: '10px', color: '#858585' }}>
-            {workflow.last_run_at ? new Date(workflow.last_run_at * 1000).toLocaleString() : `N/A`}
+          <Typography
+            variant="body1"
+            sx={{
+              marginLeft: '8px',
+              fontWeight: 400,
+              fontSize: '10px',
+              color: '#858585',
+            }}
+          >
+            {workflow.last_run_at
+              ? new Date(workflow.last_run_at * 1000).toLocaleString()
+              : `N/A`}
           </Typography>
         </Box>
-        <Box sx={{ marginLeft: 'auto', marginRight: '8px', alignSelf: 'flex-start' }}>
+        <Box
+          sx={{
+            marginLeft: 'auto',
+            marginRight: '8px',
+            alignSelf: 'flex-start',
+          }}
+        >
           <Link sx={{ color: 'black' }} target="_blank" href={workflowLink}>
             <FontAwesomeIcon icon={faUpRightFromSquare} />
           </Link>
@@ -70,9 +86,9 @@ export const WorkflowSummaryCard: React.FC<WorkflowSummaryCardProps> = ({
       <Box
         sx={{
           position: 'relative',
-          top: '72px',
-          right: '8px',
-          textAlign: 'right',
+          top: '20px',
+          left: '8px',
+          textAlign: 'left',
         }}
       >
         <TruncatedText variant="caption" sx={{ fontWeight: 300 }}>
