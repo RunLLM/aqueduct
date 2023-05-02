@@ -267,7 +267,7 @@ export const ResourceCardStory: React.FC = () => {
     {
       id: '20',
       service: 'Slack',
-      name: 'Another Slack',
+      name: 'Slack Enabled',
       config: {
         token: 'xoxb-123456789012-1234567890123-123456789012345678901234',
         channels_serialized: '["#general"]',
@@ -292,6 +292,24 @@ export const ResourceCardStory: React.FC = () => {
         targets_serialized: '["myemail@gmail.com"]',
         level: 'warning',
         enabled: 'false',
+      } as EmailConfig,
+      createdAt: Date.now() / 1000,
+      exec_state: {
+        status: ExecutionStatus.Succeeded,
+      },
+    },
+    {
+      id: '21',
+      service: 'Email',
+      name: 'Email Enabled',
+      config: {
+        host: 'smtp.gmail.com',
+        port: '587',
+        user: 'mysender@gmail.com',
+        password: 'this is a password',
+        targets_serialized: '["myemail@gmail.com"]',
+        level: 'warning',
+        enabled: 'true',
       } as EmailConfig,
       createdAt: Date.now() / 1000,
       exec_state: {
