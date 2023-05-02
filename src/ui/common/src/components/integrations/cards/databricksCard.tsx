@@ -14,8 +14,9 @@ export const DatabricksCard: React.FC<DatabricksCardProps> = ({
 }) => {
   const config = integration.config as DatabricksConfig;
 
-  let labels = ['Workspace'];
-  let values = [config.workspace_url];
+  let labels = ['Workspace', 'S3 Instance Profile ARN'];
+  let values = [config.workspace_url, config.s3_instance_profile_arn];
+
 
   if (detailedView && config.instance_pool_id){
     labels = labels.concat(['Instance Pool ID']);
