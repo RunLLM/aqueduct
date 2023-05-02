@@ -31,7 +31,7 @@ export const EmailCard: React.FC<Props> = ({ integration, detailedView }) => {
       <ResourceCardText labels={labels} values={values} />
 
       {config.enabled !== 'true' && (
-        <TruncatedText variant="body2">
+        <TruncatedText variant="body2" sx={{ fontWeight: 300, marginTop: 1 }}>
           This notification does{' '}
           <strong style={{ fontWeight: 'bold' }}>not</strong> apply to all
           workflows.
