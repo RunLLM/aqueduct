@@ -1,15 +1,13 @@
 import { faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Box, Link, Typography } from '@mui/material';
-
-import { UserProfile } from '../..';
-import { useDagResultsGetQuery } from '../../handlers/AqueductApi';
 import { OperatorsForIntegrationItem } from '../../reducers/integration';
 import { Integration } from '../../utils/integrations';
 import { ListWorkflowSummary } from '../../utils/workflows';
 import { StatusIndicator } from './workflowStatus';
+import { TruncatedText } from '../integrations/cards/text';
 
-type WorkflowSummaryCardProps = {
+export type WorkflowSummaryCardProps = {
   workflow?: ListWorkflowSummary;
   operators: OperatorsForIntegrationItem[];
   integration: Integration;
@@ -30,8 +28,8 @@ export const WorkflowSummaryCard: React.FC<WorkflowSummaryCardProps> = ({
   return (
     <Box
       sx={{
-        width: '240px',
-        minHeight: '80px',
+        width: '325px',
+        minHeight: '150px',
         backgroundColor: '#F8F8F8',
         marginBottom: '16px',
         marginRight: '16px',
@@ -40,45 +38,47 @@ export const WorkflowSummaryCard: React.FC<WorkflowSummaryCardProps> = ({
       }}
     >
       <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-        <Box
-          sx={{
-            marginRight: '4px',
-            paddingLeft: '16px',
-            textOverflow: 'ellipsis',
-          }}
-        >
-          <StatusIndicator status={workflow.status} />
-        </Box>
-        <Box sx={{ marginRight: '4px' }}>
-          <Typography
-            variant="body1"
-            sx={{
-              maxWidth: '150px',
-              overflow: 'hidden',
-              whiteSpace: 'nowrap',
-              textOverflow: 'ellipsis',
-              fontSize: '16px',
-              my: 0,
-            }}
-          >
-            {workflow.name}
-          </Typography>
-          <Typography variant="body1" sx={{ fontWeight: 400, fontSize: '10px', color: '#858585' }}>
-            {workflow.last_run_at ? new Date(workflow.last_run_at * 1000).toLocaleString() : ''}
+        <Box>
+          <Box sx={{ display: 'flex', marginLeft: '8px' }}>
+            <StatusIndicator status={workflow.status} size="16px" />
+            <Typography
+              variant="body1"
+              sx={{
+                marginLeft: '8px',
+                maxWidth: '265px',
+                overflow: 'hidden',
+                whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
+                fontSize: '16px',
+                my: 0,
+              }}
+            >
+              {workflow.name}
+            </Typography>
+          </Box>
+          <Typography variant="body1" sx={{ marginLeft: '8px', fontWeight: 400, fontSize: '10px', color: '#858585' }}>
+            {workflow.last_run_at ? new Date(workflow.last_run_at * 1000).toLocaleString() : `N/A`}
           </Typography>
         </Box>
-        <Box sx={{ marginLeft: 'auto', marginRight: '16px' }}>
+        <Box sx={{ marginLeft: 'auto', marginRight: '8px', alignSelf: 'flex-start' }}>
           <Link sx={{ color: 'black' }} target="_blank" href={workflowLink}>
             <FontAwesomeIcon icon={faUpRightFromSquare} />
           </Link>
         </Box>
       </Box>
 
-      <Box sx={{ paddingLeft: '22px' }}>
-        <Typography variant="body1" sx={{ fontWeight: 400, fontSize: '12px', my: 0, color: '#858585' }}>
+      <Box
+        sx={{
+          position: 'relative',
+          top: '72px',
+          right: '8px',
+          textAlign: 'right',
+        }}
+      >
+        <TruncatedText variant="caption" sx={{ fontWeight: 300 }}>
           {operators.length} {operators.length > 1 ? 'operators' : 'operator'}{' '}
           using {integration.name}
-        </Typography>
+        </TruncatedText>
       </Box>
     </Box>
   );
