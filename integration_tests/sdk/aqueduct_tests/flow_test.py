@@ -322,7 +322,6 @@ def test_publish_flow_without_triggering(client, flow_name, data_integration, en
     assert flow.name() == name
 
 
-# TODO(Hari)
 @pytest.mark.skip_for_spark_engines(
     reason="Spark converts column names to capital, .equals doesn't work."
 )
