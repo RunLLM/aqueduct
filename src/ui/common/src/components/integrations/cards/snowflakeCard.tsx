@@ -18,8 +18,14 @@ export const SnowflakeCard: React.FC<Props> = ({
   let values = [config.account_identifier, config.database, config.username];
 
   if (detailedView) {
-    labels = labels.concat(['Warehouse', 'Schema', 'Role']);
-    values = values.concat([config.warehouse, config.schema, config.role]);
+    labels = labels.concat(['Warehouse', 'Schema']);
+    values = values.concat([config.warehouse, config.schema]);
+
+    // Only show the Role field if it was set.
+    if (config.role) {
+      labels = labels.concat(['Role']);
+      values = values.concat([config.role]);
+    }
   }
 
   return <ResourceCardText labels={labels} values={values} />;

@@ -14,6 +14,11 @@ import {
   DagResultsGetResponse,
 } from './v2/DagResultsGet';
 import {
+  integrationOperatorsGetQuery,
+  IntegrationOperatorsGetRequest,
+  IntegrationOperatorsGetResponse,
+} from './v2/IntegrationOperatorsGet';
+import {
   integrationsWorkflowsGetQuery,
   IntegrationsWorkflowsGetRequest,
   IntegrationsWorkflowsGetResponse,
@@ -95,6 +100,13 @@ export const aqueductApi = createApi({
     }),
     dagResultsGet: builder.query<DagResultsGetResponse, DagResultsGetRequest>({
       query: (req) => dagResultsGetQuery(req),
+      transformErrorResponse,
+    }),
+    integrationOperatorsGet: builder.query<
+      IntegrationOperatorsGetResponse,
+      IntegrationOperatorsGetRequest
+    >({
+      query: (req) => integrationOperatorsGetQuery(req),
       transformErrorResponse,
     }),
     integrationWorkflowsGet: builder.query<
@@ -179,6 +191,7 @@ export const {
   useDagGetQuery,
   useDagResultGetQuery,
   useDagResultsGetQuery,
+  useIntegrationOperatorsGetQuery,
   useIntegrationWorkflowsGetQuery,
   useIntegrationsWorkflowsGetQuery,
   useStorageMigrationListQuery,

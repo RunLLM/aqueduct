@@ -1,6 +1,6 @@
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { CircularProgress, Tooltip } from '@mui/material';
+import { Tooltip } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
@@ -17,7 +17,10 @@ import IntegrationObjectList from '../../../../components/integrations/integrati
 import OperatorsOnIntegration from '../../../../components/integrations/operatorsOnIntegration';
 import DefaultLayout from '../../../../components/layouts/default';
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
-import { useIntegrationWorkflowsGetQuery } from '../../../../handlers/AqueductApi';
+import {
+  useIntegrationOperatorsGetQuery,
+  useIntegrationWorkflowsGetQuery,
+} from '../../../../handlers/AqueductApi';
 import { handleGetServerConfig } from '../../../../handlers/getServerConfig';
 import {
   handleListIntegrationObjects,
@@ -170,8 +173,27 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     integrationId: integrationId,
   });
 
+  const {
+    data: integrationOperators,
+    error: testOpsErr,
+    isLoading: testOpsIsLoading,
+  } = useIntegrationOperatorsGetQuery({
+    apiKey: user.apiKey,
+    integrationId: integrationId,
+  });
+  if (!testOpsErr && !testOpsIsLoading) {
+    const dagIdToOperatorMap = {};
+    integrationOperators.forEach((operator) => {
+      if (dagIdToOperatorMap[operator.dag_id]) {
+        dagIdToOperatorMap[operator.dag_id].push(operator);
+      } else {
+        dagIdToOperatorMap[operator.dag_id] = [operator];
+      }
+    });
+  }
+
   if (fetchWorkflowsIsLoading) {
-    return <CircularProgress />;
+    return null;
   }
 
   let numWorkflowsUsingMsg = '';
@@ -348,7 +370,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             >
               Workflows
             </Typography>
-            <OperatorsOnIntegration />
+            <OperatorsOnIntegration integration={selectedIntegration} />
           </Box>
         )}
       </Box>

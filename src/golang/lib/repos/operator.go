@@ -27,6 +27,9 @@ type operatorReader interface {
 	// GetNode returns the OperatorNode view given the operator ID.
 	GetNode(ctx context.Context, ID uuid.UUID, DB database.Database) (*views.OperatorNode, error)
 
+	// GetNodeBatch returns the OperatorNodes the operator IDs.
+	GetNodeBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]views.OperatorNode, error)
+
 	// GetBatch returns the Operators with IDs.
 	GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.Operator, error)
 
@@ -93,7 +96,12 @@ type operatorReader interface {
 
 	// GetByEngineIntegrationID returns all operators executing on the given engine ID.
 	// This includes all operators with engine_config field to be this ID,
-	GetByEngineIntegrationID(ctx context.Context, integrationID uuid.UUID, DB database.Database) ([]models.Operator, error) // or those who inherit workflow's engine_config that uses this ID.
+	// or those who inherit workflow's engine_config that uses this ID.
+	// This does not work with the Aqueduct Engine resource. For that, use `GetForAqueductEngine`.
+	GetByEngineIntegrationID(ctx context.Context, integrationID uuid.UUID, DB database.Database) ([]models.Operator, error)
+
+	// GetForAqueductEngine returns all operators executed on the native Aqueduct Engine.
+	GetForAqueductEngine(ctx context.Context, DB database.Database) ([]models.Operator, error)
 
 	// ValidateOrg returns whether the Operator was created by the specified organization.
 	ValidateOrg(ctx context.Context, ID uuid.UUID, orgID string, DB database.Database) (bool, error)
