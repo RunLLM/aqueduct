@@ -1,4 +1,3 @@
-import Box from '@mui/material/Box';
 import React from 'react';
 
 import { ECRConfig, Integration } from '../../../utils/integrations';
@@ -29,11 +28,7 @@ export const ECRCard: React.FC<ECRCardProps> = ({ integration }) => {
     values.push(config.config_file_profile);
   }
 
-  return (
-    <Box>
-      <ResourceCardText labels={labels} values={values} />
-    </Box>
-  );
+  return <ResourceCardText labels={labels} values={values} />;
 };
 
 export default ECRCard;
