@@ -280,7 +280,7 @@ class Client:
 
         config = prepare_integration_config(service, config)
 
-        globals.__GLOBAL_API_CLIENT__.connect_resource(name, service, config)
+        globals.__GLOBAL_API_CLIENT__.connect_integration(name, service, config)
         logger().info("Successfully connected to new %s integration `%s`." % (service, name))
 
     def delete_integration(
