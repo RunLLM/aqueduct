@@ -1,8 +1,7 @@
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import React from 'react';
 
 import { AirflowConfig, Integration } from '../../../utils/integrations';
+import { ResourceCardText } from './text';
 
 type Props = {
   integration: Integration;
@@ -11,23 +10,9 @@ type Props = {
 export const AirflowCard: React.FC<Props> = ({ integration }) => {
   const config = integration.config as AirflowConfig;
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-      <Typography variant="body2">
-        <strong>Host: </strong>
-        {config.host}
-      </Typography>
-      <Typography variant="body2">
-        <strong>Username: </strong>
-        {config.username}
-      </Typography>
-      <Typography variant="body2">
-        <strong>S3 Credentials Path: </strong>
-        {config.s3_credentials_path}
-      </Typography>
-      <Typography variant="body2">
-        <strong>S3 Credentials Profile: </strong>
-        {config.s3_credentials_profile}
-      </Typography>
-    </Box>
+    <ResourceCardText
+      labels={['Host', 'Username']}
+      values={[config.host, config.username]}
+    />
   );
 };

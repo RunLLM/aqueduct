@@ -1,10 +1,10 @@
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
 import React from 'react';
 
 import { Integration, LambdaConfig } from '../../../utils/integrations';
 import { ExecState, ExecutionStatus } from '../../../utils/shared';
 import LambdaConnectionStatus from '../lambda/lambdaConnectionStatus';
+import { ResourceCardText, TruncatedText } from './text';
 
 type Props = {
   integration: Integration;
@@ -13,12 +13,7 @@ type Props = {
 export const LambdaCard: React.FC<Props> = ({ integration }) => {
   const config = integration.config as LambdaConfig;
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-      <Typography variant="body2">
-        <strong>Lambda Role ARN: </strong>
-        {config.role_arn}
-      </Typography>
-    </Box>
+    <ResourceCardText labels={['Lambda Role ARN']} values={[config.role_arn]} />
   );
 };
 
@@ -29,10 +24,10 @@ export const LambdaDetailCard: React.FC<Props> = ({ integration }) => {
     : { status: ExecutionStatus.Unknown };
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-      <Typography variant="body2">
+      <TruncatedText variant="body2">
         <strong>Lambda Role ARN: </strong>
         {config.role_arn}
-      </Typography>
+      </TruncatedText>
       <LambdaConnectionStatus state={execState} />
     </Box>
   );

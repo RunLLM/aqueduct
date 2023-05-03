@@ -14,11 +14,7 @@ export const FileMetadataStorageInfo: React.FC<MetadataPreviewProps> = ({
   return (
     <Box sx={{ display: 'flex', height: '85px' }}>
       <Box>
-        <IntegrationLogo
-          service={'Aqueduct Demo'}
-          size={'large'}
-          activated={true}
-        />
+        <IntegrationLogo service={'Aqueduct'} size={'large'} activated={true} />
       </Box>
       <Box sx={{ alignSelf: 'center', marginLeft: 2 }}>
         <Typography
@@ -159,14 +155,7 @@ export const MetadataStorageInfo: React.FC<MetadataStorageInfoProps> = ({
     }
   }
 
-  return (
-    <Box>
-      <Typography variant="h5" marginY={2}>
-        Artifact Storage
-      </Typography>
-      {storageInfo}
-    </Box>
-  );
+  return <Box>{storageInfo}</Box>;
 };
 
 export default MetadataStorageInfo;

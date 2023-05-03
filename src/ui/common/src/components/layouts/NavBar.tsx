@@ -30,8 +30,8 @@ export class BreadcrumbLink {
   static readonly HOME = new BreadcrumbLink(`${pathPrefix}/`, 'Home');
   static readonly DATA = new BreadcrumbLink(`${pathPrefix}/data`, 'Data');
   static readonly INTEGRATIONS = new BreadcrumbLink(
-    `${pathPrefix}/integrations`,
-    'Integrations'
+    `${pathPrefix}/resources`,
+    'Resources'
   );
   static readonly WORKFLOWS = new BreadcrumbLink(
     `${pathPrefix}/workflows`,
