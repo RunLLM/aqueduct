@@ -3,6 +3,7 @@ import { Integration } from 'src/utils/integrations';
 
 import { AirflowCard } from './airflowCard';
 import { AqueductDemoCard } from './aqueductDemoCard';
+import { AthenaCard } from './athenaCard';
 import AWSCard from './awsCard';
 import { BasicDBCard } from './basicDBCard';
 import { BigQueryCard } from './bigqueryCard';
@@ -16,8 +17,7 @@ import { S3Card } from './s3Card';
 import { SlackCard } from './slackCard';
 import { SnowflakeCard } from './snowflakeCard';
 import SparkCard from './sparkCard';
-import SQLiteCard from "./sqliteCard";
-import {AthenaCard} from "./athenaCard";
+import SQLiteCard from './sqliteCard';
 
 type ResourceFieldsDetailsCardProps = {
   integration: Integration;
@@ -88,11 +88,13 @@ export const ResourceFieldsDetailsCard: React.FC<
       serviceCard = <AWSCard integration={integration} />;
       break;
     case 'SQLite':
-      serviceCard = <SQLiteCard integration={integration} />
+      serviceCard = <SQLiteCard integration={integration} />;
       break;
     case 'Athena':
-      serviceCard = <AthenaCard integration={integration} detailedView={detailedView}/>;
-      break
+      serviceCard = (
+        <AthenaCard integration={integration} detailedView={detailedView} />
+      );
+      break;
     default:
       serviceCard = null;
   }
