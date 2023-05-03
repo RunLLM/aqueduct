@@ -283,7 +283,7 @@ class DeleteWorkflowResponse(BaseModel):
     Attributes:
         saved_object_deletion_results:
             Results of deleting saved objects.
-            Key: BaseResource name
+            Key: Resource name
             Value: List of SavedObjectDelete belonging to that integration
     """
 

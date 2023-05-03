@@ -20,7 +20,7 @@ import (
 
 const localHostIP = "localhost"
 
-var ErrIntegrationTypeIsNotNotification = errors.New("BaseResource type is not a notification.")
+var ErrIntegrationTypeIsNotNotification = errors.New("Resource type is not a notification.")
 
 type Notification interface {
 	// `ID()` is the unique identifier, typically mapped to the integration ID.
