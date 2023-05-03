@@ -1,12 +1,12 @@
-from aqueduct.integrations.connect_config import (
+from aqueduct.resources.connect_config import (
     AthenaConfig,
     BigQueryConfig,
     GCSConfig,
-    IntegrationConfig,
     K8sConfig,
     MongoDBConfig,
     MySQLConfig,
     PostgresConfig,
+    ResourceConfig,
     S3Config,
     SnowflakeConfig,
     SparkConfig,

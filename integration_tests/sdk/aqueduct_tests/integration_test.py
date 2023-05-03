@@ -7,7 +7,7 @@ from aqueduct.error import (
     InvalidUserActionException,
     InvalidUserArgumentException,
 )
-from aqueduct.integrations.connect_config import K8sConfig
+from aqueduct.resources.connect_config import K8sConfig
 from pydantic import ValidationError
 
 from aqueduct import global_config
@@ -20,7 +20,7 @@ from .test_functions.simple.model import dummy_sentiment_model
 
 def test_invalid_source_integration(client):
     with pytest.raises(InvalidIntegrationException):
-        client.integration(name="wrong integration name")
+        client.resource(name="wrong integration name")
 
 
 def test_invalid_destination_integration(data_integration):
@@ -40,18 +40,18 @@ def test_invalid_connect_integration(client):
     with pytest.raises(
         InvalidUserActionException, match="An integration with this name already exists."
     ):
-        client.connect_integration("aqueduct_demo", "SQLite", config)
+        client.connect_resource("aqueduct_demo", "SQLite", config)
 
     # Service is invalid.
     with pytest.raises(
         InvalidUserArgumentException,
         match="Service argument must match exactly one of the enum values in ServiceType.",
     ):
-        client.connect_integration("New Integration", "invalid service", config)
+        client.connect_resource("New Resource", "invalid service", config)
 
     # Invalid config raises a pydantic error.
     with pytest.raises(ValidationError):
-        client.connect_integration("New Integration", "SQLite", {})
+        client.connect_resource("New Resource", "SQLite", {})
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S)
@@ -69,7 +69,7 @@ def test_compute_integration_without_cloud_storage(client):
         InvalidRequestError,
         match="You need to setup cloud storage as metadata store before registering compute integration of type Kubernetes.",
     ):
-        client.connect_integration(
+        client.connect_resource(
             name="compute integration without cloud storage",
             service=ServiceType.K8S,
             config=K8sConfig(kubeconfig_path="dummy_path", cluster_name="dummy_name"),
@@ -85,7 +85,7 @@ def test_cannot_delete_artifact_store_integration(client, artifact_store):
         InvalidRequestError,
         match="Cannot delete an integration that is being used as artifact storage.",
     ):
-        client.delete_integration(artifact_store)
+        client.delete_resource(artifact_store)
 
 
 # TODO (ENG-2593): Investigate ways to support relative kubeconfig and aws credential path

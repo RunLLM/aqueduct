@@ -15,7 +15,7 @@ def setup_flow_with_metrics_and_checks(
 ) -> str:
     name = workflow_name if workflow_name else "Test: Flow with Metrics and Checks"
     n_runs = 2
-    integration = client.integration(name=integration_name)
+    integration = client.resource(name=integration_name)
 
     @aqueduct.metric
     def size(df):

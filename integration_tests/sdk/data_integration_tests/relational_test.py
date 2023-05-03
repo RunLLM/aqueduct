@@ -6,8 +6,8 @@ from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.constants.enums import ExecutionStatus
 from aqueduct.error import AqueductError, InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.integrations.sql_integration import RelationalDBIntegration
 from aqueduct.models.operators import RelationalDBExtractParams
+from aqueduct.resources.sql import RelationalDBResource
 
 from aqueduct import LoadUpdateMode, metric, op
 
@@ -22,7 +22,7 @@ from .validation_helpers import check_hotel_reviews_table_artifact
 
 @pytest.fixture(autouse=True)
 def assert_data_integration_is_relational(client, data_integration):
-    assert isinstance(data_integration, RelationalDBIntegration)
+    assert isinstance(data_integration, RelationalDBResource)
 
 
 def _create_successful_sql_artifacts(

@@ -4,10 +4,9 @@ from typing import Optional
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, SalesforceExtractType
-from aqueduct.integrations.validation import validate_is_connected
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
-from aqueduct.models.integration import Integration, IntegrationInfo
+from aqueduct.models.integration import BaseResource, ResourceInfo
 from aqueduct.models.operators import (
     ExtractSpec,
     Operator,
@@ -15,6 +14,7 @@ from aqueduct.models.operators import (
     SalesforceExtractParams,
     SalesforceLoadParams,
 )
+from aqueduct.resources.validation import validate_is_connected
 from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import generate_uuid
 
@@ -22,12 +22,12 @@ from ..utils.naming import default_artifact_name_from_op_name, sanitize_artifact
 from .save import _save_artifact
 
 
-class SalesforceIntegration(Integration):
+class SalesforceResource(BaseResource):
     """
     Class for Salesforce integration.
     """
 
-    def __init__(self, dag: DAG, metadata: IntegrationInfo):
+    def __init__(self, dag: DAG, metadata: ResourceInfo):
         self._dag = dag
         self._metadata = metadata
 
@@ -168,5 +168,5 @@ class SalesforceIntegration(Integration):
 
     def describe(self) -> None:
         """Prints out a human-readable description of the Salesforce integration."""
-        print("==================== Salesforce Integration  =============================")
+        print("==================== Salesforce Resource =============================")
         self._metadata.describe()

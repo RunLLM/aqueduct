@@ -283,6 +283,9 @@ export type Service =
   | 'Slack'
   | 'Spark'
   | 'AWS'
+  | 'Amazon'
+  | 'GCP'
+  | 'Azure'
   | 'ECR';
 
 export type Info = {
@@ -373,6 +376,8 @@ export const ServiceLogos: ServiceLogo = {
   ['Slack']: `${integrationLogosBucket}/slack.png`,
   ['Spark']: `${integrationLogosBucket}/spark-logo-trademark.png`,
   ['AWS']: `${integrationLogosBucket}/aws-logo-trademark.png`,
+  ['GCP']: `${integrationLogosBucket}/gcp.png`,
+  ['Azure']: `${integrationLogosBucket}/azure.png`,
 
   // TODO(ENG-2301): Once task is addressed, remove this duplicate entry.
   ['K8s']: `${integrationLogosBucket}/kubernetes.png`,
@@ -502,8 +507,26 @@ export const SupportedIntegrations: ServiceInfoMap = {
     docs: addingIntegrationLink,
   },
   ['AWS']: {
+    logo: ServiceLogos['Kubernetes'],
+    activated: true,
+    category: IntegrationCategories.CLOUD,
+    docs: addingIntegrationLink,
+  },
+  ['Amazon']: {
     logo: ServiceLogos['AWS'],
     activated: true,
+    category: IntegrationCategories.CLOUD,
+    docs: addingIntegrationLink,
+  },
+  ['GCP']: {
+    logo: ServiceLogos['GCP'],
+    activated: false,
+    category: IntegrationCategories.CLOUD,
+    docs: addingIntegrationLink,
+  },
+  ['Azure']: {
+    logo: ServiceLogos['Azure'],
+    activated: false,
     category: IntegrationCategories.CLOUD,
     docs: addingIntegrationLink,
   },

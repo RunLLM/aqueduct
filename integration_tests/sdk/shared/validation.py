@@ -1,6 +1,6 @@
 import uuid
 
-from aqueduct.models.integration import Integration
+from aqueduct.models.integration import BaseResource
 
 from aqueduct import Client, Flow
 from sdk.shared.globals import artifact_id_to_saved_identifier
@@ -9,7 +9,7 @@ from sdk.shared.globals import artifact_id_to_saved_identifier
 
 
 def fetch_and_validate_saved_object_identifier(
-    data_integration: Integration, flow: Flow, artifact_id: uuid.UUID
+    data_integration: BaseResource, flow: Flow, artifact_id: uuid.UUID
 ) -> str:
     """Validates that the saved object exists according to the Flow API."""
     all_saved_objects = flow.list_saved_objects()[data_integration.name()]

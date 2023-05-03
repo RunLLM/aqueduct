@@ -40,7 +40,7 @@ def preview_artifacts(
     global_engine_config: Optional[EngineConfig] = None
     if globals.__GLOBAL_CONFIG__.engine is not None:
         global_engine_config = generate_engine_config(
-            globals.__GLOBAL_API_CLIENT__.list_integrations(),
+            globals.__GLOBAL_API_CLIENT__.list_resources(),
             globals.__GLOBAL_CONFIG__.engine,
         )
 

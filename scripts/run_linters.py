@@ -27,6 +27,7 @@ def execute_command(args, cwd=None):
 
 def lint_python(cwd):
     execute_command(["black", join(cwd, "src/python"), "--line-length=100"])
+    execute_command(["black", join(cwd, "src/llm"), "--line-length=100"])
     execute_command(["black", join(cwd, "sdk"), "--line-length=100"])
     execute_command(["black", join(cwd, "integration_tests"), "--line-length=100"])
     execute_command(["black", join(cwd, "manual_qa_tests"), "--line-length=100"])

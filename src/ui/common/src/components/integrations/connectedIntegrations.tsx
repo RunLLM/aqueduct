@@ -70,7 +70,7 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
   // For each integration, count the number of workflows that use it.
   // Fetch the number of workflows for each integration.
   const {
-    data: workflowsByIntegration,
+    data: workflowAndDagIDsByIntegration,
     error: fetchWorkflowsError,
     isLoading,
   } = useIntegrationsWorkflowsGetQuery({ apiKey: user.apiKey });
@@ -111,15 +111,20 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
         }}
       >
         {[...integrations]
+          // This is a temporary fix to hide the auto-generated on-demand k8s integration card.
+          .filter(
+            (integration) =>
+              !integration.name.endsWith(':aqueduct_ondemand_k8s')
+          )
           .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
           .map((integration, idx) => {
             let numWorkflowsUsingMsg = '';
             if (
               !fetchWorkflowsError &&
-              integration.id in workflowsByIntegration
+              integration.id in workflowAndDagIDsByIntegration
             ) {
               numWorkflowsUsingMsg = getNumWorkflowsUsingMessage(
-                workflowsByIntegration[integration.id].length
+                workflowAndDagIDsByIntegration[integration.id].length
               );
             }
 
