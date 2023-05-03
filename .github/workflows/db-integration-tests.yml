@@ -1,4 +1,4 @@
-name: Database BaseResource Tests
+name: Database Integration Tests
 
 on:
   pull_request:
@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: Run Database BaseResource Tests
+    name: Run Database Integration Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

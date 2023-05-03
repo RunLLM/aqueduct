@@ -325,7 +325,7 @@ export async function addTable(
 const logoBucket =
   'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos';
 
-// S3 bucket folder for BaseResource logos.
+// S3 bucket folder for Integration logos.
 const integrationLogosBucket =
   'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations';
 

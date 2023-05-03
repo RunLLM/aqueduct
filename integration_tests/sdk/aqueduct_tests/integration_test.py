@@ -47,11 +47,11 @@ def test_invalid_connect_integration(client):
         InvalidUserArgumentException,
         match="Service argument must match exactly one of the enum values in ServiceType.",
     ):
-        client.connect_resource("New BaseResource", "invalid service", config)
+        client.connect_resource("New Resource", "invalid service", config)
 
     # Invalid config raises a pydantic error.
     with pytest.raises(ValidationError):
-        client.connect_resource("New BaseResource", "SQLite", {})
+        client.connect_resource("New Resource", "SQLite", {})
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S)

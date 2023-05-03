@@ -6,7 +6,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
 )
 
-// IntegrationConfig contains credentials for an BaseResource
+// IntegrationConfig contains credentials for a Resource
 type IntegrationConfig map[string]string
 
 func (c *IntegrationConfig) Value() (driver.Value, error) {

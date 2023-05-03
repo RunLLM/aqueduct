@@ -69,7 +69,7 @@ def _fetch_demo_data(demo: RelationalDBResource, table_name: str) -> pd.DataFram
 
 
 def _generate_setup_flow_name(integration: BaseResource):
-    return "Setup Data for %s BaseResource: %s" % (
+    return "Setup Data for %s Resource: %s" % (
         integration.type(),
         integration.name(),
     )
@@ -367,7 +367,7 @@ def _fetch_integration_credentials(section: str, name: str) -> Dict[str, Any]:
 
     assert (
         name in test_credentials[section]
-    ), "%s BaseResource `%s` must have its credentials in test-credentials.yml." % (
+    ), "%s Resource `%s` must have its credentials in test-credentials.yml." % (
         section,
         name,
     )

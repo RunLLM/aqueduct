@@ -6,7 +6,7 @@ const (
 	ApiKeyHeader           = "api-key"
 	SdkClientVersionHeader = "sdk-client-version"
 
-	// BaseResource headers
+	// Resource headers
 	IntegrationNameHeader    = "integration-name"
 	IntegrationServiceHeader = "integration-service"
 	IntegrationConfigHeader  = "integration-config"

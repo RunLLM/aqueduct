@@ -83,7 +83,7 @@ class BaseResource(ABC):
         return hash(self._metadata.name)
 
     def __eq__(self, other: Any) -> bool:
-        """The string and BaseResource object representation are equivalent allowing
+        """The string and resource object representation are equivalent allowing
         the user to access a dictionary keyed by the BaseResource object with the
         integration name as a string and vice versa
         """

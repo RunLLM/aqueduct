@@ -1,4 +1,4 @@
-name: Pre-Merge BaseResource tests
+name: Pre-Merge Integration tests
 
 on:
   pull_request:

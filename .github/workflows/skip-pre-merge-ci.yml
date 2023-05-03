@@ -1,4 +1,4 @@
-name: Skip Pre-Merge BaseResource tests
+name: Skip Pre-Merge Integration tests
 
 on: 
   pull_request:
