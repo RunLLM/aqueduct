@@ -2,10 +2,10 @@ from typing import Dict, Union
 
 from aqueduct.constants.enums import K8sClusterActionType, K8sClusterStatusType
 from aqueduct.error import InvalidIntegrationException, InvalidUserArgumentException
-from aqueduct.integrations.connect_config import DynamicK8sConfig
-from aqueduct.integrations.validation import validate_is_connected
-from aqueduct.models.integration import Integration, IntegrationInfo
+from aqueduct.models.integration import BaseResource, ResourceInfo
 from aqueduct.models.response_models import DynamicEngineStatusResponse
+from aqueduct.resources.connect_config import DynamicK8sConfig
+from aqueduct.resources.validation import validate_is_connected
 
 
 def parse_dynamic_k8s_config(
@@ -32,12 +32,12 @@ def validate_engine_record(
         raise InvalidIntegrationException("Duplicate dynamic engine with name %s!" % name)
 
 
-class DynamicK8sIntegration(Integration):
+class DynamicK8sResource(BaseResource):
     """
     Class for Dynamic K8s integration.
     """
 
-    def __init__(self, metadata: IntegrationInfo):
+    def __init__(self, metadata: ResourceInfo):
         self._metadata = metadata
 
     @validate_is_connected()
@@ -187,5 +187,5 @@ class DynamicK8sIntegration(Integration):
 
     def describe(self) -> None:
         """Prints out a human-readable description of the K8s integration."""
-        print("==================== Dynamic K8s Integration  =============================")
+        print("==================== Dynamic K8s Resource =============================")
         self._metadata.describe()

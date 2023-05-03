@@ -72,7 +72,7 @@ def test_requirements_installation_from_path(client):
     if _transformers_package_exists():
         _uninstall_transformers_package()
 
-    db = client.integration(name=get_integration_name())
+    db = client.resource(name=get_integration_name())
     table = db.sql(query=SENTIMENT_SQL_QUERY)
 
     # Check that no an invalid path fails.
@@ -96,7 +96,7 @@ def test_requirements_installation_from_strings(client):
     if _transformers_package_exists():
         _uninstall_transformers_package()
 
-    db = client.integration(name=get_integration_name())
+    db = client.resource(name=get_integration_name())
     table = db.sql(query=SENTIMENT_SQL_QUERY)
     valid_path_table = sentiment_prediction_with_string_requirements(table)
     assert valid_path_table.get().shape[0] == 100
@@ -110,7 +110,7 @@ def test_default_requirements_installation(client):
     if _transformers_package_exists():
         _uninstall_transformers_package()
 
-    db = client.integration(name=get_integration_name())
+    db = client.resource(name=get_integration_name())
     table = db.sql(query=SENTIMENT_SQL_QUERY)
     valid_path_table = sentiment_prediction_using_transformers(table)
     assert valid_path_table.get().shape[0] == 100

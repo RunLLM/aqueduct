@@ -6,7 +6,7 @@ AnyFunc = Callable[..., Any]
 
 
 def validate_is_connected() -> Callable[[AnyFunc], AnyFunc]:
-    """This decorator, which must be used on an Integration class method,
+    """This decorator, which must be used on a Resource class method,
     ensures that the integration is connected before allowing the method to be called."""
 
     def decorator(method: AnyFunc) -> Callable[[AnyFunc], AnyFunc]:

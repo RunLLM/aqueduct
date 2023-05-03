@@ -22,7 +22,7 @@ def bad_op(_):
 
 
 def deploy(client, integration_name):
-    integration = client.integration(integration_name)
+    integration = client.resource(integration_name)
     reviews = integration.sql("SELECT * FROM hotel_reviews")
     bad_op_artf = bad_op.lazy(reviews)
     row_count_artf = row_count.lazy(bad_op_artf)

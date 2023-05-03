@@ -1,7 +1,7 @@
 import pandas as pd
 import pytest
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.integrations.sql_integration import RelationalDBIntegration
+from aqueduct.resources.sql import RelationalDBResource
 
 from aqueduct import LoadUpdateMode, metric, op
 
@@ -11,7 +11,7 @@ from .save import save
 
 @pytest.fixture(autouse=True)
 def assert_data_integration_is_relational(client, data_integration):
-    assert isinstance(data_integration, RelationalDBIntegration)
+    assert isinstance(data_integration, RelationalDBResource)
 
 
 def test_athena_integration_table_retrieval(client, data_integration):

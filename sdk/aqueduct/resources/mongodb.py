@@ -5,12 +5,9 @@ from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, LoadUpdateMode
-from aqueduct.integrations.parameters import _validate_parameters
-from aqueduct.integrations.save import _save_artifact
-from aqueduct.integrations.validation import validate_is_connected
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
-from aqueduct.models.integration import Integration, IntegrationInfo
+from aqueduct.models.integration import BaseResource, ResourceInfo
 from aqueduct.models.operators import (
     ExtractSpec,
     MongoExtractParams,
@@ -18,6 +15,9 @@ from aqueduct.models.operators import (
     OperatorSpec,
     RelationalDBLoadParams,
 )
+from aqueduct.resources.parameters import _validate_parameters
+from aqueduct.resources.save import _save_artifact
+from aqueduct.resources.validation import validate_is_connected
 from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.naming import default_artifact_name_from_op_name, sanitize_artifact_name
 from aqueduct.utils.utils import generate_uuid
@@ -25,11 +25,11 @@ from aqueduct.utils.utils import generate_uuid
 from aqueduct import globals
 
 
-class MongoDBCollectionIntegration(Integration):
+class MongoDBCollectionIntegration(BaseResource):
     _collection_name: str
     _dag: DAG
 
-    def __init__(self, dag: DAG, metadata: IntegrationInfo, collection_name: str) -> None:
+    def __init__(self, dag: DAG, metadata: ResourceInfo, collection_name: str) -> None:
         self._metadata = metadata
         self._dag = dag
         self._collection_name = collection_name
@@ -179,15 +179,15 @@ class MongoDBCollectionIntegration(Integration):
         )
 
 
-class MongoDBIntegration(Integration):
+class MongoDBResource(BaseResource):
     """
     Class for MongoDB integration. This works similar to mongo's `Database` object:
 
-    mongo_integration = client.integration("my_integration_name")
+    mongo_integration = client.resource("my_resource_name")
     my_table_artifact = mongo_integration.collection("my_collection").find({})
     """
 
-    def __init__(self, dag: DAG, metadata: IntegrationInfo):
+    def __init__(self, dag: DAG, metadata: ResourceInfo):
         self._dag = dag
         self._metadata = metadata
 
@@ -197,14 +197,14 @@ class MongoDBIntegration(Integration):
 
         Example:
 
-        mongo_integration = client.integration("my_integration_name")
-        my_table_artifact = mongo_integration.collection("my_collection").find({})
+        mongo_resource = client.resource("my_resource_name")
+        my_table_artifact = mongo_resource.collection("my_collection").find({})
         """
         return MongoDBCollectionIntegration(self._dag, self._metadata, name)
 
     def describe(self) -> None:
         """Prints out a human-readable description of the MongoDB integration."""
-        print("==================== MongoDB Integration  =============================")
+        print("==================== MongoDB Resource =============================")
         self._metadata.describe()
 
     @validate_is_connected()

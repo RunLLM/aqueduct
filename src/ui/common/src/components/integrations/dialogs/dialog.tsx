@@ -500,7 +500,7 @@ const IntegrationDialog: React.FC<Props> = ({
   );
 };
 
-// Helper function to check if the Integration config is completely filled.
+// Helper function to check if the Resource config is completely filled.
 export function isConfigComplete(
   config: IntegrationConfig,
   service: Service

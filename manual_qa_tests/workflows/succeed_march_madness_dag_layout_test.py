@@ -38,7 +38,7 @@ def generate_submission(model, team_ranks, reg_season_stats, test):
 def deploy(client, integration_name):
     aq.global_config({"lazy": True})
 
-    warehouse = client.integration(integration_name)
+    warehouse = client.resource(integration_name)
     m_regular_season_detailed_results = warehouse.sql(
         "select * from hotel_reviews;", name="reg_season_results"
     )

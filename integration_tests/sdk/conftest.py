@@ -122,7 +122,7 @@ def data_integration(request, pytestconfig, client):
                 "Skipped. Tests are only running against data integration %s." % cmdline_data_flag
             )
 
-    return client.integration(request.param)
+    return client.resource(request.param)
 
 
 @pytest.fixture(scope="function", params=list_compute_integrations())
