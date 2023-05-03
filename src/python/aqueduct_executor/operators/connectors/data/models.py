@@ -18,6 +18,7 @@ class BaseConfig(BaseModel):
     BaseConfig defines the Pydantic Config shared by all connector Config's, e.g.
     postgres.Config, mysql.Config, etc.
     """
+
     exec_state: Optional[str]
 
     class Config:
