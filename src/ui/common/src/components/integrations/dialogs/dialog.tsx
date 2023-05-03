@@ -53,7 +53,10 @@ import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
 import { AirflowDialog, isAirflowConfigComplete } from './airflowDialog';
 import { AthenaDialog, isAthenaConfigComplete } from './athenaDialog';
 import { AWSDialog, isAWSConfigComplete } from './awsDialog';
-import { BigQueryDialog } from './bigqueryDialog';
+import {
+  BigQueryDialog,
+  isBigQueryDialogConfigComplete,
+} from './bigqueryDialog';
 import { CondaDialog } from './condaDialog';
 import {
   DatabricksDialog,
@@ -182,6 +185,13 @@ const IntegrationDialog: React.FC<Props> = ({
     user.apiKey,
   ]);
 
+  let connectionMessage = '';
+  if (service === 'AWS') {
+    connectionMessage = 'Configuring Aqueduct-managed Kubernetes on AWS';
+  } else {
+    connectionMessage = `Connecting to ${service}`;
+  }
+
   const dialogHeader = (
     <Box
       sx={{
@@ -194,7 +204,7 @@ const IntegrationDialog: React.FC<Props> = ({
       <Typography variant="h5">
         {!!integrationToEdit
           ? `Edit ${integrationToEdit.name}`
-          : `Connecting to ${service}`}
+          : `${connectionMessage}`}
       </Typography>
       <img height="45px" src={SupportedIntegrations[service].logo} />
     </Box>
@@ -504,6 +514,8 @@ export function isConfigComplete(
       return isAthenaConfigComplete(config as AthenaConfig);
     case 'AWS':
       return isAWSConfigComplete(config as AWSConfig);
+    case 'BigQuery':
+      return isBigQueryDialogConfigComplete(config as BigQueryConfig);
     case 'Conda':
       // Conda only has a name field that the user supplies, so this half of form is always valid.
       return true;
