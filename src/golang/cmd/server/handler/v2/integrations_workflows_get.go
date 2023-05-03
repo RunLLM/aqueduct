@@ -2,7 +2,6 @@ package v2
 
 import (
 	"context"
-	"github.com/aqueducthq/aqueduct/lib/response"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
@@ -12,6 +11,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/functional/slices"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/response"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/google/uuid"
 )
@@ -116,16 +116,12 @@ func fetchWorkflowAndDagIDsForIntegration(
 	}
 
 	// This map is derived directly from the operators.
-	workflowIDToDagIDs := make(map[uuid.UUID][]uuid.UUID)
+	workflowIDToDagIDs := make(map[uuid.UUID][]uuid.UUID, len(operatorRelations))
 	for _, operatorRelation := range operatorRelations {
-		if _, ok := workflowIDToDagIDs[operatorRelation.WorkflowID]; ok {
-			workflowIDToDagIDs[operatorRelation.WorkflowID] = append(
-				workflowIDToDagIDs[operatorRelation.WorkflowID],
-				operatorRelation.DagID,
-			)
-		} else {
-			workflowIDToDagIDs[operatorRelation.WorkflowID] = []uuid.UUID{operatorRelation.DagID}
-		}
+		workflowIDToDagIDs[operatorRelation.WorkflowID] = append(
+			workflowIDToDagIDs[operatorRelation.WorkflowID],
+			operatorRelation.DagID,
+		)
 	}
 
 	// For each workflow, fetch the latest dag ID. We can use this latest dag ID to filter out any

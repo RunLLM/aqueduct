@@ -2,17 +2,16 @@ package v2
 
 import (
 	"context"
-	"github.com/aqueducthq/aqueduct/lib/errors"
-	"github.com/aqueducthq/aqueduct/lib/functional/slices"
-	"github.com/aqueducthq/aqueduct/lib/models/views"
-	"github.com/aqueducthq/aqueduct/lib/response"
 	"net/http"
-
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	"github.com/aqueducthq/aqueduct/cmd/server/request/parser"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
+	"github.com/aqueducthq/aqueduct/lib/errors"
+	"github.com/aqueducthq/aqueduct/lib/functional/slices"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
+	"github.com/aqueducthq/aqueduct/lib/response"
 	"github.com/google/uuid"
 )
 
