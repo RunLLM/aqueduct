@@ -1,11 +1,9 @@
 name: Python Linter
 
-on:
-  workflow_dispatch:
-
 # We use the Python Black linter.
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [ main ]
     paths:
