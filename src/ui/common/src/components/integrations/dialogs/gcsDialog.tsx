@@ -51,7 +51,7 @@ export const GCSDialog: React.FC<Props> = ({
       <Link
         sx={{ fontSize: 'inherit' }}
         target="_blank"
-        href="https://docs.aqueducthq.com/integrations/adding-an-integration/connecting-to-google-cloud-storage"
+        href="https://docs.aqueducthq.com/integrations/data-systems/non-sql-systems/google-cloud-storage"
       >
         here
       </Link>
