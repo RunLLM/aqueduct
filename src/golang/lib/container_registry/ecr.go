@@ -113,7 +113,7 @@ func ValidateECRImage(conf *shared.ECRConfig, imageName string) error {
 	_, err = ecrSvc.DescribeImages(input)
 	if err != nil {
 		if aerr, ok := err.(awserr.Error); ok && aerr.Code() == "ImageNotFoundException" {
-			return errors.New("Image not found.")
+			return errors.New(aerr.Message())
 		}
 
 		return err

@@ -4,6 +4,11 @@ import { FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import { dagGetQuery, DagGetRequest, DagGetResponse } from './v2/DagGet';
 import {
+  dagOperatorsGetQuery,
+  DagOperatorsGetRequest,
+  DagOperatorsGetResponse,
+} from './v2/DagOperatorsGet';
+import {
   dagResultGetQuery,
   DagResultGetRequest,
   DagResultGetResponse,
@@ -92,6 +97,13 @@ export const aqueductApi = createApi({
   endpoints: (builder) => ({
     dagGet: builder.query<DagGetResponse, DagGetRequest>({
       query: (req) => dagGetQuery(req),
+      transformErrorResponse,
+    }),
+    dagOperatorsGet: builder.query<
+      DagOperatorsGetResponse,
+      DagOperatorsGetRequest
+    >({
+      query: (req) => dagOperatorsGetQuery(req),
       transformErrorResponse,
     }),
     dagResultGet: builder.query<DagResultGetResponse, DagResultGetRequest>({
@@ -189,6 +201,7 @@ export const aqueductApi = createApi({
 
 export const {
   useDagGetQuery,
+  useDagOperatorsGetQuery,
   useDagResultGetQuery,
   useDagResultsGetQuery,
   useIntegrationOperatorsGetQuery,
