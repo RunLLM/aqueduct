@@ -3,7 +3,6 @@ from typing import Optional
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, GoogleSheetsSaveMode
-from aqueduct.resources.validation import validate_is_connected
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
 from aqueduct.models.integration import BaseResource, ResourceInfo
@@ -14,6 +13,7 @@ from aqueduct.models.operators import (
     Operator,
     OperatorSpec,
 )
+from aqueduct.resources.validation import validate_is_connected
 from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import generate_uuid
 

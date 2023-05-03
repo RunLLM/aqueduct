@@ -6,8 +6,8 @@ from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.constants.enums import ExecutionStatus
 from aqueduct.error import AqueductError, InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.resources.sql import RelationalDBResource
 from aqueduct.models.operators import RelationalDBExtractParams
+from aqueduct.resources.sql import RelationalDBResource
 
 from aqueduct import LoadUpdateMode, metric, op
 

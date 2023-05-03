@@ -58,9 +58,7 @@ def test_mongo_fetch_with_filter(client, data_integration: MongoDBResource):
     assert len(actual_data) == len(all_data[all_data["reviewer_nationality"] == " United Kingdom "])
 
 
-def test_mongo_fetch_with_multiple_parametrized_filters(
-    client, data_integration: MongoDBResource
-):
+def test_mongo_fetch_with_multiple_parametrized_filters(client, data_integration: MongoDBResource):
     country1 = client.create_param("param_1", default=" United Kingdom ")
     country2 = client.create_param("param_2", default=" Australia ")
     parameterized_results = data_integration.collection("hotel_reviews").find(

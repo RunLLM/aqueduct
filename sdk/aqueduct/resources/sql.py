@@ -6,9 +6,6 @@ from aqueduct.artifacts.preview import preview_artifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, LoadUpdateMode, ServiceType
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.resources.parameters import _validate_builtin_expansions, _validate_parameters
-from aqueduct.resources.save import _save_artifact
-from aqueduct.resources.validation import validate_is_connected
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
 from aqueduct.models.integration import BaseResource, ResourceInfo
@@ -19,6 +16,9 @@ from aqueduct.models.operators import (
     RelationalDBExtractParams,
     RelationalDBLoadParams,
 )
+from aqueduct.resources.parameters import _validate_builtin_expansions, _validate_parameters
+from aqueduct.resources.save import _save_artifact
+from aqueduct.resources.validation import validate_is_connected
 from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.naming import default_artifact_name_from_op_name, sanitize_artifact_name
 from aqueduct.utils.utils import generate_uuid

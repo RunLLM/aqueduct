@@ -3,7 +3,6 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 from aqueduct.constants.enums import ArtifactType, RuntimeType, ServiceType, TriggerType
 from aqueduct.error import *
-from aqueduct.resources.dynamic_k8s import DynamicK8sResource
 from aqueduct.models.config import (
     AirflowEngineConfig,
     DatabricksEngineConfig,
@@ -15,6 +14,7 @@ from aqueduct.models.config import (
 from aqueduct.models.dag import Schedule
 from aqueduct.models.integration import ResourceInfo
 from aqueduct.models.operators import ParamSpec
+from aqueduct.resources.dynamic_k8s import DynamicK8sResource
 from aqueduct.utils.integration_validation import validate_integration_is_connected
 from croniter import croniter
 

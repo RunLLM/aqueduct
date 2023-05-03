@@ -26,8 +26,14 @@ from aqueduct.error import (
 )
 from aqueduct.flow import Flow
 from aqueduct.github import Github
+from aqueduct.logger import logger
+from aqueduct.models.dag import Metadata, RetentionPolicy
+from aqueduct.models.integration import BaseResource, ResourceInfo
+from aqueduct.models.operators import ParamSpec
+from aqueduct.models.response_models import SavedObjectUpdate
 from aqueduct.resources.airflow import AirflowResource
 from aqueduct.resources.aws import AWSResource
+from aqueduct.resources.aws_lambda import LambdaResource
 from aqueduct.resources.connect_config import (
     BaseConnectionConfig,
     ResourceConfig,
@@ -39,17 +45,11 @@ from aqueduct.resources.dynamic_k8s import DynamicK8sResource
 from aqueduct.resources.ecr import ECRResource
 from aqueduct.resources.google_sheets import GoogleSheetsResource
 from aqueduct.resources.k8s import K8sResource
-from aqueduct.resources.aws_lambda import LambdaResource
 from aqueduct.resources.mongodb import MongoDBResource
 from aqueduct.resources.s3 import S3Resource
 from aqueduct.resources.salesforce import SalesforceResource
 from aqueduct.resources.spark import SparkResource
 from aqueduct.resources.sql import RelationalDBResource
-from aqueduct.logger import logger
-from aqueduct.models.dag import Metadata, RetentionPolicy
-from aqueduct.models.integration import BaseResource, ResourceInfo
-from aqueduct.models.operators import ParamSpec
-from aqueduct.models.response_models import SavedObjectUpdate
 from aqueduct.utils.dag_deltas import (
     SubgraphDAGDelta,
     apply_deltas_to_dag,
@@ -236,7 +236,9 @@ class Client:
         config: Union[Dict[str, str], ResourceConfig],
     ) -> None:
         """Deprecated. Use `client.connect_resource()` instead."""
-        logger().warning("client.connect_integration() will be deprecated soon. Use `client.connect_resource() instead.")
+        logger().warning(
+            "client.connect_integration() will be deprecated soon. Use `client.connect_resource() instead."
+        )
         return self.connect_resource(name, service, config)
 
     def connect_resource(
@@ -288,7 +290,9 @@ class Client:
         name: str,
     ) -> None:
         """Deprecated. Use `client.delete_resource()` instead."""
-        logger().warning("client.delete_integration() will be deprecated soon. Use `client.delete_resource() instead.")
+        logger().warning(
+            "client.delete_integration() will be deprecated soon. Use `client.delete_resource() instead."
+        )
         return self.delete_resource(name)
 
     def delete_resource(
@@ -305,14 +309,16 @@ class Client:
         if name not in existing_integrations.keys():
             raise InvalidIntegrationException("Not connected to integration %s!" % name)
 
-        globals.__GLOBAL_API_CLIENT__.delete_resource(existing_integrations[name].id)
+        globals.__GLOBAL_API_CLIENT__.delete_integration(existing_integrations[name].id)
 
         # Update the connected integrations cached on this object.
         self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_resources()
 
     def list_integrations(self) -> Dict[str, ResourceInfo]:
         """Deprecated. Use `client.list_resources()` instead."""
-        logger().warning("client.list_integrations() will be deprecated soon. Use `client.list_resources() instead.")
+        logger().warning(
+            "client.list_integrations() will be deprecated soon. Use `client.list_resources() instead."
+        )
         return self.list_resources()
 
     def list_resources(self) -> Dict[str, ResourceInfo]:
@@ -325,7 +331,8 @@ class Client:
         return self._connected_integrations
 
     def integration(
-        self, name: str,
+        self,
+        name: str,
     ) -> Union[
         SalesforceResource,
         S3Resource,
@@ -341,7 +348,9 @@ class Client:
         ECRResource,
     ]:
         """Deprecated. Use `client.resource()` instead."""
-        logger().warning("client.integration() will be deprecated soon. Use `client.resource() instead.")
+        logger().warning(
+            "client.integration() will be deprecated soon. Use `client.resource() instead."
+        )
         return self.resource(name)
 
     def resource(

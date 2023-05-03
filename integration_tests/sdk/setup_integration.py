@@ -9,11 +9,11 @@ from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ServiceType
 from aqueduct.error import AqueductError
+from aqueduct.models.integration import BaseResource
 from aqueduct.resources.connect_config import AWSCredentialType
 from aqueduct.resources.mongodb import MongoDBResource
 from aqueduct.resources.s3 import S3Resource
 from aqueduct.resources.sql import RelationalDBResource
-from aqueduct.models.integration import BaseResource
 
 from aqueduct import Client, get_apikey
 from sdk.aqueduct_tests.save import save

@@ -1,5 +1,5 @@
-from aqueduct.resources.dynamic_k8s import DynamicK8sResource
 from aqueduct.models.integration import BaseResource, ResourceInfo
+from aqueduct.resources.dynamic_k8s import DynamicK8sResource
 
 
 class AWSResource(BaseResource):

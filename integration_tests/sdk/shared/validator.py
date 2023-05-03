@@ -3,9 +3,9 @@ from typing import Any, List, Tuple
 
 import pandas as pd
 from aqueduct.constants.enums import LoadUpdateMode
-from aqueduct.resources.sql import RelationalDBResource
 from aqueduct.models.integration import BaseResource
 from aqueduct.models.operators import RelationalDBLoadParams
+from aqueduct.resources.sql import RelationalDBResource
 
 from aqueduct import Client, Flow
 

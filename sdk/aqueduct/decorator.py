@@ -23,7 +23,6 @@ from aqueduct.constants.enums import (
     RuntimeType,
 )
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.resources.dynamic_k8s import DynamicK8sResource
 from aqueduct.logger import logger
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.operators import (
@@ -36,6 +35,7 @@ from aqueduct.models.operators import (
     ResourceConfig,
     get_operator_type,
 )
+from aqueduct.resources.dynamic_k8s import DynamicK8sResource
 from aqueduct.type_annotations import CheckFunction, MetricFunction, Number, UserFunction
 from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.function_packaging import REQUIREMENTS_FILE, serialize_function

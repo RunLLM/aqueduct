@@ -3,9 +3,9 @@ from typing import Optional, Union
 
 from aqueduct.constants.enums import RuntimeType
 from aqueduct.resources.airflow import AirflowResource
+from aqueduct.resources.aws_lambda import LambdaResource
 from aqueduct.resources.databricks import DatabricksResource
 from aqueduct.resources.k8s import K8sResource
-from aqueduct.resources.aws_lambda import LambdaResource
 from aqueduct.resources.spark import SparkResource
 from pydantic import BaseModel
 
