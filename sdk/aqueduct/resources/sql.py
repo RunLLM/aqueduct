@@ -6,12 +6,12 @@ from aqueduct.artifacts.preview import preview_artifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, LoadUpdateMode, ServiceType
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.integrations.parameters import _validate_builtin_expansions, _validate_parameters
-from aqueduct.integrations.save import _save_artifact
-from aqueduct.integrations.validation import validate_is_connected
+from aqueduct.resources.parameters import _validate_builtin_expansions, _validate_parameters
+from aqueduct.resources.save import _save_artifact
+from aqueduct.resources.validation import validate_is_connected
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
-from aqueduct.models.integration import Integration, IntegrationInfo
+from aqueduct.models.integration import BaseResource, ResourceInfo
 from aqueduct.models.operators import (
     ExtractSpec,
     Operator,
@@ -38,12 +38,12 @@ LIST_TABLES_QUERY_SQLITE = "SELECT name AS tablename FROM sqlite_master WHERE ty
 LIST_TABLES_QUERY_ATHENA = "AQUEDUCT_ATHENA_LIST_TABLE"
 
 
-class RelationalDBIntegration(Integration):
+class RelationalDBResource(BaseResource):
     """
     Class for Relational integrations.
     """
 
-    def __init__(self, dag: DAG, metadata: IntegrationInfo):
+    def __init__(self, dag: DAG, metadata: ResourceInfo):
         self._dag = dag
         self._metadata = metadata
 
@@ -271,13 +271,13 @@ class RelationalDBIntegration(Integration):
         """
         Prints out a human-readable description of the SQL integration.
         """
-        print("==================== SQL Integration =============================")
-        print("Integration Information:")
+        print("==================== SQL Resource =============================")
+        print("Resource Information:")
         self._metadata.describe()
 
         # Only list the tables if the integration is connected.
         try:
-            print("Integration Table List Preview:")
+            print("Resource Table List Preview:")
             print(self.list_tables()["name"].head().to_string())
             print("(only first 5 tables are shown)")
         except:

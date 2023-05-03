@@ -3,7 +3,7 @@ from typing import Any, Optional
 
 import pandas as pd
 from aqueduct.constants.enums import ArtifactType
-from aqueduct.integrations.s3_integration import S3Integration
+from aqueduct.resources.s3 import S3Resource
 from PIL import Image
 
 from aqueduct import Client, Flow
@@ -12,9 +12,9 @@ from sdk.shared.validation import fetch_and_validate_saved_object_identifier
 
 class S3DataValidator:
     _client: Client
-    _integration: S3Integration
+    _integration: S3Resource
 
-    def __init__(self, client: Client, integration: S3Integration):
+    def __init__(self, client: Client, integration: S3Resource):
         self._client = client
         self._integration = integration
 

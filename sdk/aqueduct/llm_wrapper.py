@@ -5,7 +5,7 @@ from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import RuntimeType
 from aqueduct.decorator import op
 from aqueduct.error import InvalidUserArgumentException
-from aqueduct.integrations.dynamic_k8s_integration import DynamicK8sIntegration
+from aqueduct.resources.dynamic_k8s import DynamicK8sResource
 from aqueduct.utils.utils import generate_engine_config
 
 from aqueduct import globals
@@ -124,7 +124,7 @@ def llm_op(
     op_name: Optional[str] = None,
     column_name: Optional[str] = None,
     output_column_name: Optional[str] = None,
-    engine: Optional[Union[str, DynamicK8sIntegration]] = None,
+    engine: Optional[Union[str, DynamicK8sResource]] = None,
 ) -> Union[
     Callable[..., Union[BaseArtifact, List[BaseArtifact]]], BaseArtifact, List[BaseArtifact]
 ]:

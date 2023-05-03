@@ -26,28 +26,28 @@ from aqueduct.error import (
 )
 from aqueduct.flow import Flow
 from aqueduct.github import Github
-from aqueduct.integrations.airflow_integration import AirflowIntegration
-from aqueduct.integrations.aws_integration import AWSIntegration
-from aqueduct.integrations.connect_config import (
+from aqueduct.resources.airflow import AirflowResource
+from aqueduct.resources.aws import AWSResource
+from aqueduct.resources.connect_config import (
     BaseConnectionConfig,
-    IntegrationConfig,
+    ResourceConfig,
     convert_dict_to_integration_connect_config,
     prepare_integration_config,
 )
-from aqueduct.integrations.databricks_integration import DatabricksIntegration
-from aqueduct.integrations.dynamic_k8s_integration import DynamicK8sIntegration
-from aqueduct.integrations.ecr_integration import ECRIntegration
-from aqueduct.integrations.google_sheets_integration import GoogleSheetsIntegration
-from aqueduct.integrations.k8s_integration import K8sIntegration
-from aqueduct.integrations.lambda_integration import LambdaIntegration
-from aqueduct.integrations.mongodb_integration import MongoDBIntegration
-from aqueduct.integrations.s3_integration import S3Integration
-from aqueduct.integrations.salesforce_integration import SalesforceIntegration
-from aqueduct.integrations.spark_integration import SparkIntegration
-from aqueduct.integrations.sql_integration import RelationalDBIntegration
+from aqueduct.resources.databricks import DatabricksResource
+from aqueduct.resources.dynamic_k8s import DynamicK8sResource
+from aqueduct.resources.ecr import ECRResource
+from aqueduct.resources.google_sheets import GoogleSheetsResource
+from aqueduct.resources.k8s import K8sResource
+from aqueduct.resources.aws_lambda import LambdaResource
+from aqueduct.resources.mongodb import MongoDBResource
+from aqueduct.resources.s3 import S3Resource
+from aqueduct.resources.salesforce import SalesforceResource
+from aqueduct.resources.spark import SparkResource
+from aqueduct.resources.sql import RelationalDBResource
 from aqueduct.logger import logger
 from aqueduct.models.dag import Metadata, RetentionPolicy
-from aqueduct.models.integration import Integration, IntegrationInfo
+from aqueduct.models.integration import BaseResource, ResourceInfo
 from aqueduct.models.operators import ParamSpec
 from aqueduct.models.response_models import SavedObjectUpdate
 from aqueduct.utils.dag_deltas import (
@@ -56,8 +56,8 @@ from aqueduct.utils.dag_deltas import (
     validate_overwriting_parameters,
 )
 from aqueduct.utils.local_data import validate_local_data
-from aqueduct.utils.serialization import deserialize, extract_val_from_local_data
-from aqueduct.utils.type_inference import _base64_string_to_bytes, infer_artifact_type
+from aqueduct.utils.serialization import extract_val_from_local_data
+from aqueduct.utils.type_inference import infer_artifact_type
 from aqueduct.utils.utils import (
     construct_param_spec,
     find_flow_with_user_supplied_id_and_name,
@@ -154,7 +154,7 @@ class Client:
 
         globals.__GLOBAL_API_CLIENT__.configure(api_key, aqueduct_address)
         self._connected_integrations: Dict[
-            str, IntegrationInfo
+            str, ResourceInfo
         ] = globals.__GLOBAL_API_CLIENT__.list_integrations()
         self._dag = globals.__GLOBAL_DAG__
 
@@ -233,7 +233,7 @@ class Client:
         self,
         name: str,
         service: Union[str, ServiceType],
-        config: Union[Dict[str, str], IntegrationConfig],
+        config: Union[Dict[str, str], ResourceConfig],
     ) -> None:
         """Deprecated. Use `client.connect_resource()` instead."""
         logger().warning("client.connect_integration() will be deprecated soon. Use `client.connect_resource() instead.")
@@ -243,7 +243,7 @@ class Client:
         self,
         name: str,
         service: Union[str, ServiceType],
-        config: Union[Dict[str, str], IntegrationConfig],
+        config: Union[Dict[str, str], ResourceConfig],
     ) -> None:
         """Connects the Aqueduct server to an integration.
 
@@ -310,12 +310,12 @@ class Client:
         # Update the connected integrations cached on this object.
         self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
 
-    def list_integrations(self) -> Dict[str, IntegrationInfo]:
+    def list_integrations(self) -> Dict[str, ResourceInfo]:
         """Deprecated. Use `client.list_resources()` instead."""
         logger().warning("client.list_integrations() will be deprecated soon. Use `client.list_resources() instead.")
         return self.list_resources()
 
-    def list_resources(self) -> Dict[str, IntegrationInfo]:
+    def list_resources(self) -> Dict[str, ResourceInfo]:
         """Retrieves a dictionary of integrations the client can use.
 
         Returns:
@@ -327,18 +327,18 @@ class Client:
     def integration(
         self, name: str,
     ) -> Union[
-        SalesforceIntegration,
-        S3Integration,
-        GoogleSheetsIntegration,
-        RelationalDBIntegration,
-        AirflowIntegration,
-        K8sIntegration,
-        LambdaIntegration,
-        MongoDBIntegration,
-        DatabricksIntegration,
-        SparkIntegration,
-        AWSIntegration,
-        ECRIntegration,
+        SalesforceResource,
+        S3Resource,
+        GoogleSheetsResource,
+        RelationalDBResource,
+        AirflowResource,
+        K8sResource,
+        LambdaResource,
+        MongoDBResource,
+        DatabricksResource,
+        SparkResource,
+        AWSResource,
+        ECRResource,
     ]:
         """Deprecated. Use `client.resource()` instead."""
         logger().warning("client.integration() will be deprecated soon. Use `client.resource() instead.")
@@ -347,18 +347,18 @@ class Client:
     def resource(
         self, name: str
     ) -> Union[
-        SalesforceIntegration,
-        S3Integration,
-        GoogleSheetsIntegration,
-        RelationalDBIntegration,
-        AirflowIntegration,
-        K8sIntegration,
-        LambdaIntegration,
-        MongoDBIntegration,
-        DatabricksIntegration,
-        SparkIntegration,
-        AWSIntegration,
-        ECRIntegration,
+        SalesforceResource,
+        S3Resource,
+        GoogleSheetsResource,
+        RelationalDBResource,
+        AirflowResource,
+        K8sResource,
+        LambdaResource,
+        MongoDBResource,
+        DatabricksResource,
+        SparkResource,
+        AWSResource,
+        ECRResource,
     ]:
         """Retrieves a connected integration object.
 
@@ -382,48 +382,48 @@ class Client:
 
         integration_info = self._connected_integrations[name]
         if integration_info.service in RelationalDBServices:
-            return RelationalDBIntegration(
+            return RelationalDBResource(
                 dag=self._dag,
                 metadata=integration_info,
             )
         elif integration_info.service == ServiceType.SALESFORCE:
-            return SalesforceIntegration(
+            return SalesforceResource(
                 dag=self._dag,
                 metadata=integration_info,
             )
         elif integration_info.service == ServiceType.GOOGLE_SHEETS:
-            return GoogleSheetsIntegration(
+            return GoogleSheetsResource(
                 dag=self._dag,
                 metadata=integration_info,
             )
         elif integration_info.service == ServiceType.S3:
-            return S3Integration(
+            return S3Resource(
                 dag=self._dag,
                 metadata=integration_info,
             )
         elif integration_info.service == ServiceType.AIRFLOW:
-            return AirflowIntegration(
+            return AirflowResource(
                 metadata=integration_info,
             )
         elif integration_info.service == ServiceType.K8S:
-            return K8sIntegration(
+            return K8sResource(
                 metadata=integration_info,
             )
         elif integration_info.service == ServiceType.LAMBDA:
-            return LambdaIntegration(
+            return LambdaResource(
                 metadata=integration_info,
             )
         elif integration_info.service == ServiceType.MONGO_DB:
-            return MongoDBIntegration(
+            return MongoDBResource(
                 dag=self._dag,
                 metadata=integration_info,
             )
         elif integration_info.service == ServiceType.DATABRICKS:
-            return DatabricksIntegration(
+            return DatabricksResource(
                 metadata=integration_info,
             )
         elif integration_info.service == ServiceType.SPARK:
-            return SparkIntegration(
+            return SparkResource(
                 metadata=integration_info,
             )
         elif integration_info.service == ServiceType.AWS:
@@ -431,12 +431,12 @@ class Client:
             dynamic_k8s_integration_info = self._connected_integrations[
                 dynamic_k8s_integration_name
             ]
-            return AWSIntegration(
+            return AWSResource(
                 metadata=integration_info,
                 k8s_integration_metadata=dynamic_k8s_integration_info,
             )
         elif integration_info.service == ServiceType.ECR:
-            return ECRIntegration(
+            return ECRResource(
                 metadata=integration_info,
             )
         else:
@@ -494,7 +494,7 @@ class Client:
         name: str,
         description: str = "",
         schedule: str = "",
-        engine: Optional[Union[str, DynamicK8sIntegration]] = None,
+        engine: Optional[Union[str, DynamicK8sResource]] = None,
         artifacts: Optional[Union[BaseArtifact, List[BaseArtifact]]] = None,
         metrics: Optional[List[NumericArtifact]] = None,
         checks: Optional[List[BoolArtifact]] = None,
@@ -569,7 +569,7 @@ class Client:
             )
 
         if engine is not None and not (
-            isinstance(engine, str) or isinstance(engine, DynamicK8sIntegration)
+            isinstance(engine, str) or isinstance(engine, DynamicK8sResource)
         ):
             raise InvalidUserArgumentException(
                 "`engine` parameter must be a string, got %s." % type(engine)
@@ -799,7 +799,7 @@ class Client:
         flow_id: Optional[Union[str, uuid.UUID]] = None,
         flow_name: Optional[str] = None,
         saved_objects_to_delete: Optional[
-            DefaultDict[Union[str, Integration], List[SavedObjectUpdate]]
+            DefaultDict[Union[str, BaseResource], List[SavedObjectUpdate]]
         ] = None,
         force: bool = False,
     ) -> None:

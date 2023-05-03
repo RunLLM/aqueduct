@@ -1,4 +1,4 @@
-name: Periodic Integration Tests
+name: Periodic BaseResource Tests
 
 on:
   schedule:
@@ -9,7 +9,7 @@ jobs:
   run-k8s-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 360
-    name: SDK Integration Tests against K8s Compute
+    name: SDK BaseResource Tests against K8s Compute
     steps:
       - uses: actions/checkout@v2
 
@@ -48,7 +48,7 @@ jobs:
           aqueduct install s3
           aqueduct install snowflake
 
-      - name: Run the SDK Integration Tests
+      - name: Run the SDK BaseResource Tests
         working-directory: integration_tests/sdk
         run: pytest aqueduct_tests/ -rP -vv -n 1
 
@@ -101,7 +101,7 @@ jobs:
   run-tests-conda:
     runs-on: ubuntu-latest-4-cores
     timeout-minutes: 40
-    name: All Integration Tests with Conda
+    name: All BaseResource Tests with Conda
     steps:
       - uses: actions/checkout@v2
 
@@ -127,7 +127,7 @@ jobs:
           aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
           s3_test_config_path: periodic-conda-test-config.yml
 
-      - name: Run the SDK Integration Tests
+      - name: Run the SDK BaseResource Tests
         timeout-minutes: 30
         working-directory: integration_tests/sdk
         run: python3 run_tests.py -n 8
@@ -135,7 +135,7 @@ jobs:
       - name: Set the API key as an env variable.
         run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
 
-      - name: Run the No-Concurrency Integration Tests
+      - name: Run the No-Concurrency BaseResource Tests
         timeout-minutes: 10
         working-directory: integration_tests/no_concurrency
         env:
@@ -151,7 +151,7 @@ jobs:
   run-data-integration-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    name: SDK Integration Tests against Data Connectors
+    name: SDK BaseResource Tests against Data Connectors
     services:
       mysql:
         image: mysql:8.0
@@ -221,7 +221,7 @@ jobs:
         working-directory: scripts/data
         run: python3 setup_hosted.py --aws-key-id ${{ secrets.SAURAV_AWS_ACCESS_KEY_ID }} --aws-secret-key ${{ secrets.SAURAV_AWS_SECRET_ACCESS_KEY }}
 
-      - name: Run the SDK Data Integration Tests
+      - name: Run the SDK Data BaseResource Tests
         working-directory: integration_tests/sdk
         run: python3 run_tests.py --data-integration -n 2
 

@@ -6,7 +6,7 @@ from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import ArtifactType
 from aqueduct.error import AqueductError, InvalidUserArgumentException
 from aqueduct.flow import Flow
-from aqueduct.integrations.s3_integration import S3Integration
+from aqueduct.resources.s3 import S3Resource
 from PIL import Image
 
 from aqueduct import op
@@ -24,12 +24,12 @@ from sdk.shared.validation import check_artifact_was_computed
 
 @pytest.fixture(autouse=True)
 def assert_data_integration_is_s3(data_integration):
-    assert isinstance(data_integration, S3Integration)
+    assert isinstance(data_integration, S3Resource)
 
 
 def _save_artifact_and_check(
     flow_manager: FlowManager,
-    data_integration: S3Integration,
+    data_integration: S3Resource,
     artifact: BaseArtifact,
     format: Optional[str],
     object_identifier: Optional[str] = None,

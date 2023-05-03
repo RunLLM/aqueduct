@@ -5,7 +5,7 @@ from aqueduct.constants.enums import OperatorType
 from aqueduct.error import InvalidIntegrationException
 from aqueduct.globals import __GLOBAL_API_CLIENT__ as global_api_client
 from aqueduct.models.dag import DAG
-from aqueduct.models.integration import IntegrationInfo
+from aqueduct.models.integration import ResourceInfo
 from aqueduct.models.operators import LoadSpec, Operator, OperatorSpec, UnionLoadParams
 from aqueduct.utils.dag_deltas import (
     AddOperatorDelta,
@@ -19,7 +19,7 @@ from aqueduct.utils.utils import generate_uuid
 def _save_artifact(
     artifact_id: uuid.UUID,
     dag: DAG,
-    integration_info: IntegrationInfo,
+    integration_info: ResourceInfo,
     save_params: UnionLoadParams,
 ) -> None:
     """Configures the given artifact to be written to a specific integration after it's computed in a published flow.

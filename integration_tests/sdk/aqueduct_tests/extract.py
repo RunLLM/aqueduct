@@ -2,8 +2,8 @@ from typing import Optional, Union
 
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import ArtifactType
-from aqueduct.integrations.s3_integration import S3Integration
-from aqueduct.integrations.sql_integration import RelationalDBIntegration
+from aqueduct.resources.s3 import S3Resource
+from aqueduct.resources.sql import RelationalDBResource
 
 from sdk.shared.data_objects import DataObject
 
@@ -24,11 +24,11 @@ def extract(
         obj_identifier = obj_identifier.value
 
     assert isinstance(obj_identifier, str)
-    if isinstance(integration, RelationalDBIntegration):
+    if isinstance(integration, RelationalDBResource):
         return integration.sql(
             query="SELECT * from %s" % obj_identifier, name=op_name, output=output_name, lazy=lazy
         )
-    elif isinstance(integration, S3Integration):
+    elif isinstance(integration, S3Resource):
         return integration.file(
             obj_identifier,
             ArtifactType.TABLE,

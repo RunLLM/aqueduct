@@ -2,11 +2,11 @@ import uuid
 from typing import Optional, Union
 
 from aqueduct.constants.enums import RuntimeType
-from aqueduct.integrations.airflow_integration import AirflowIntegration
-from aqueduct.integrations.databricks_integration import DatabricksIntegration
-from aqueduct.integrations.k8s_integration import K8sIntegration
-from aqueduct.integrations.lambda_integration import LambdaIntegration
-from aqueduct.integrations.spark_integration import SparkIntegration
+from aqueduct.resources.airflow import AirflowResource
+from aqueduct.resources.databricks import DatabricksResource
+from aqueduct.resources.k8s import K8sResource
+from aqueduct.resources.aws_lambda import LambdaResource
+from aqueduct.resources.spark import SparkResource
 from pydantic import BaseModel
 
 

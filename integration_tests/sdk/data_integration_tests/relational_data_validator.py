@@ -3,7 +3,7 @@ from typing import Any, List, Tuple
 
 import pandas as pd
 from aqueduct.constants.enums import LoadUpdateMode
-from aqueduct.integrations.sql_integration import RelationalDBIntegration
+from aqueduct.resources.sql import RelationalDBResource
 from aqueduct.models.operators import RelationalDBLoadParams
 
 from aqueduct import Client, Flow
@@ -15,9 +15,9 @@ class RelationalDataValidator:
     """Tests can request an instance of this class as a fixture, and use it to validate published flow runs."""
 
     _client: Client
-    _integration: RelationalDBIntegration
+    _integration: RelationalDBResource
 
-    def __init__(self, client: Client, integration: RelationalDBIntegration):
+    def __init__(self, client: Client, integration: RelationalDBResource):
         self._client = client
         self._integration = integration
 

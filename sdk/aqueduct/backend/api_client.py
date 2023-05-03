@@ -17,7 +17,7 @@ from aqueduct.error import (
 )
 from aqueduct.logger import logger
 from aqueduct.models.dag import DAG
-from aqueduct.models.integration import Integration, IntegrationInfo
+from aqueduct.models.integration import BaseResource, ResourceInfo
 from aqueduct.models.operators import ParamSpec
 from aqueduct.models.response_models import (
     DeleteWorkflowResponse,
@@ -36,7 +36,7 @@ from aqueduct.models.response_models import (
 from aqueduct.utils.serialization import deserialize
 from pkg_resources import get_distribution, parse_version
 
-from ..integrations.connect_config import DynamicK8sConfig, IntegrationConfig
+from ..resources.connect_config import DynamicK8sConfig, ResourceConfig
 from .response_helpers import (
     _construct_preview_response,
     _handle_preview_resp,
@@ -222,7 +222,7 @@ class APIClient:
         self._check_config()
         return self.HTTPS_PREFIX if self.use_https else self.HTTP_PREFIX
 
-    def list_integrations(self) -> Dict[str, IntegrationInfo]:
+    def list_integrations(self) -> Dict[str, ResourceInfo]:
         url = self.construct_full_url(self.LIST_INTEGRATIONS_ROUTE)
         headers = self._generate_auth_headers()
         resp = requests.get(url, headers=headers)
@@ -233,7 +233,7 @@ class APIClient:
             )
 
         return {
-            integration_info["name"]: IntegrationInfo(**integration_info)
+            integration_info["name"]: ResourceInfo(**integration_info)
             for integration_info in resp.json()
         }
 
@@ -264,7 +264,7 @@ class APIClient:
         return [x for x in resp.json()["object_names"]]
 
     def connect_integration(
-        self, name: str, service: Union[str, ServiceType], config: IntegrationConfig
+        self, name: str, service: Union[str, ServiceType], config: ResourceConfig
     ) -> None:
         integration_service = service
         if isinstance(integration_service, ServiceType):
@@ -509,7 +509,7 @@ class APIClient:
     def delete_workflow(
         self,
         flow_id: str,
-        saved_objects_to_delete: DefaultDict[Union[str, Integration], List[SavedObjectUpdate]],
+        saved_objects_to_delete: DefaultDict[Union[str, BaseResource], List[SavedObjectUpdate]],
         force: bool,
     ) -> DeleteWorkflowResponse:
         headers = self._generate_auth_headers()

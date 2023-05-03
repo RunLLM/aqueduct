@@ -7,7 +7,7 @@ from aqueduct.error import (
     InvalidUserActionException,
     InvalidUserArgumentException,
 )
-from aqueduct.integrations.connect_config import K8sConfig
+from aqueduct.resources.connect_config import K8sConfig
 from pydantic import ValidationError
 
 from aqueduct import global_config
@@ -47,11 +47,11 @@ def test_invalid_connect_integration(client):
         InvalidUserArgumentException,
         match="Service argument must match exactly one of the enum values in ServiceType.",
     ):
-        client.connect_resource("New Integration", "invalid service", config)
+        client.connect_resource("New BaseResource", "invalid service", config)
 
     # Invalid config raises a pydantic error.
     with pytest.raises(ValidationError):
-        client.connect_resource("New Integration", "SQLite", {})
+        client.connect_resource("New BaseResource", "SQLite", {})
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.K8S)

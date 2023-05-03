@@ -1,8 +1,8 @@
-from aqueduct.integrations.connect_config import (
+from aqueduct.resources.connect_config import (
     AthenaConfig,
     BigQueryConfig,
     GCSConfig,
-    IntegrationConfig,
+    ResourceConfig,
     K8sConfig,
     MongoDBConfig,
     MySQLConfig,

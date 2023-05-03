@@ -3,10 +3,10 @@ from typing import Optional
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, GoogleSheetsSaveMode
-from aqueduct.integrations.validation import validate_is_connected
+from aqueduct.resources.validation import validate_is_connected
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
-from aqueduct.models.integration import Integration, IntegrationInfo
+from aqueduct.models.integration import BaseResource, ResourceInfo
 from aqueduct.models.operators import (
     ExtractSpec,
     GoogleSheetsExtractParams,
@@ -21,12 +21,12 @@ from ..utils.naming import default_artifact_name_from_op_name, sanitize_artifact
 from .save import _save_artifact
 
 
-class GoogleSheetsIntegration(Integration):
+class GoogleSheetsResource(BaseResource):
     """
     Class for Google Sheets integration.
     """
 
-    def __init__(self, dag: DAG, metadata: IntegrationInfo):
+    def __init__(self, dag: DAG, metadata: ResourceInfo):
         self._dag = dag
         self._metadata = metadata
 
@@ -129,5 +129,5 @@ class GoogleSheetsIntegration(Integration):
 
     def describe(self) -> None:
         """Prints out a human-readable description of the google sheets integration."""
-        print("==================== Google Sheets Integration  =============================")
+        print("==================== Google Sheets Resource =============================")
         self._metadata.describe()

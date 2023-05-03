@@ -37,7 +37,7 @@ if __name__ == "__main__":
         dest="data_integration_tests",
         default=False,
         action="store_true",
-        help="Run the SDK Data Integration tests.",
+        help="Run the SDK Data BaseResource tests.",
     )
 
     parser.add_argument(
@@ -86,7 +86,7 @@ if __name__ == "__main__":
         )
 
     if args.data_integration_tests:
-        print("Running Data Integration Tests...")
+        print("Running Data BaseResource Tests...")
         _run_tests(
             "data_integration_tests/",
             args.file,

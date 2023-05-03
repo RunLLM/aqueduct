@@ -9,11 +9,11 @@ from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ServiceType
 from aqueduct.error import AqueductError
-from aqueduct.integrations.connect_config import AWSCredentialType
-from aqueduct.integrations.mongodb_integration import MongoDBIntegration
-from aqueduct.integrations.s3_integration import S3Integration
-from aqueduct.integrations.sql_integration import RelationalDBIntegration
-from aqueduct.models.integration import Integration
+from aqueduct.resources.connect_config import AWSCredentialType
+from aqueduct.resources.mongodb import MongoDBResource
+from aqueduct.resources.s3 import S3Resource
+from aqueduct.resources.sql import RelationalDBResource
+from aqueduct.models.integration import BaseResource
 
 from aqueduct import Client, get_apikey
 from sdk.aqueduct_tests.save import save
@@ -55,7 +55,7 @@ def _parse_credentials_file() -> Dict[str, Any]:
     return CACHED_CREDENTIALS
 
 
-def _fetch_demo_data(demo: RelationalDBIntegration, table_name: str) -> pd.DataFrame:
+def _fetch_demo_data(demo: RelationalDBResource, table_name: str) -> pd.DataFrame:
     df = demo.table(table_name)
 
     # Certain tables in our demo db read out some unexpected tokens that
@@ -68,8 +68,8 @@ def _fetch_demo_data(demo: RelationalDBIntegration, table_name: str) -> pd.DataF
     return df
 
 
-def _generate_setup_flow_name(integration: Integration):
-    return "Setup Data for %s Integration: %s" % (
+def _generate_setup_flow_name(integration: BaseResource):
+    return "Setup Data for %s BaseResource: %s" % (
         integration.type(),
         integration.name(),
     )
@@ -88,7 +88,7 @@ def _publish_missing_artifacts(
 
 def _add_missing_artifacts(
     client: Client,
-    integration: Integration,
+    integration: BaseResource,
     existing_names: Set[str],
 ) -> None:
     """Given the names of all objects that already exists in an integration, computes
@@ -129,7 +129,7 @@ def _add_missing_artifacts(
     )
 
 
-def _setup_mongo_db_data(client: Client, mongo_db: MongoDBIntegration) -> None:
+def _setup_mongo_db_data(client: Client, mongo_db: MongoDBResource) -> None:
     # Find all the objects that already exist.
     existing_names = set()
     for object_name in demo_db_tables():
@@ -167,13 +167,13 @@ def _setup_mysql_db():
     _execute_command(["aqueduct", "install", "mysql"])
 
 
-def _setup_relational_data(client: Client, db: RelationalDBIntegration) -> None:
+def _setup_relational_data(client: Client, db: RelationalDBResource) -> None:
     # Find all the tables that already exist.
     existing_table_names = set(db.list_tables()["tablename"])
     _add_missing_artifacts(client, db, existing_table_names)
 
 
-def _setup_s3_data(client: Client, s3: S3Integration):
+def _setup_s3_data(client: Client, s3: S3Resource):
     # Find all the objects that already exist.
     existing_names = set()
     for object_name in demo_db_tables():
@@ -235,7 +235,7 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
 
         # Setup the data in each of these integrations.
         integration = client.integration(integration_name)
-        if isinstance(integration, RelationalDBIntegration):
+        if isinstance(integration, RelationalDBResource):
             _setup_relational_data(client, integration)
         elif integration.type() == ServiceType.S3:
             _setup_s3_data(client, integration)
@@ -367,7 +367,7 @@ def _fetch_integration_credentials(section: str, name: str) -> Dict[str, Any]:
 
     assert (
         name in test_credentials[section]
-    ), "%s Integration `%s` must have its credentials in test-credentials.yml." % (
+    ), "%s BaseResource `%s` must have its credentials in test-credentials.yml." % (
         section,
         name,
     )

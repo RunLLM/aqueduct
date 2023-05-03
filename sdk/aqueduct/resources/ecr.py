@@ -1,22 +1,22 @@
 from typing import Dict
 
 from aqueduct.error import InvalidUserArgumentException
-from aqueduct.models.integration import Integration, IntegrationInfo
+from aqueduct.models.integration import BaseResource, ResourceInfo
 
 from aqueduct import globals
 
 
-class ECRIntegration(Integration):
+class ECRResource(BaseResource):
     """
     Class for ECR integration.
     """
 
-    def __init__(self, metadata: IntegrationInfo):
+    def __init__(self, metadata: ResourceInfo):
         self._metadata = metadata
 
     def describe(self) -> None:
         """Prints out a human-readable description of the ECR integration."""
-        print("==================== ECR Integration  =============================")
+        print("==================== ECR Resource =============================")
         self._metadata.describe()
 
     def image(self, image_name: str) -> Dict[str, str]:

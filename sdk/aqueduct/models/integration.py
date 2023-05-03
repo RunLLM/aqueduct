@@ -9,7 +9,7 @@ from aqueduct.models.utils import human_readable_timestamp
 from pydantic import BaseModel
 
 
-class IntegrationInfo(BaseModel):
+class ResourceInfo(BaseModel):
     id: uuid.UUID
     name: str
     service: ServiceType
@@ -60,12 +60,12 @@ class IntegrationInfo(BaseModel):
         ]
 
 
-class Integration(ABC):
+class BaseResource(ABC):
     """
     Base class for the various integrations Aqueduct interacts with.
     """
 
-    _metadata: IntegrationInfo
+    _metadata: ResourceInfo
 
     def id(self) -> uuid.UUID:
         return self._metadata.id
@@ -83,8 +83,8 @@ class Integration(ABC):
         return hash(self._metadata.name)
 
     def __eq__(self, other: Any) -> bool:
-        """The string and Integration object representation are equivalent allowing
-        the user to access a dictionary keyed by the Integration object with the
+        """The string and BaseResource object representation are equivalent allowing
+        the user to access a dictionary keyed by the BaseResource object with the
         integration name as a string and vice versa
         """
         if type(other) == type(self) and "name" in other._metadata.__dict__:

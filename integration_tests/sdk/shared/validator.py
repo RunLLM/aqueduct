@@ -3,8 +3,8 @@ from typing import Any, List, Tuple
 
 import pandas as pd
 from aqueduct.constants.enums import LoadUpdateMode
-from aqueduct.integrations.sql_integration import RelationalDBIntegration
-from aqueduct.models.integration import Integration
+from aqueduct.resources.sql import RelationalDBResource
+from aqueduct.models.integration import BaseResource
 from aqueduct.models.operators import RelationalDBLoadParams
 
 from aqueduct import Client, Flow
@@ -17,9 +17,9 @@ class Validator:
     """Tests can request an instance of this class as a fixture, and use it to validate published flow runs."""
 
     _client: Client
-    _integration: Integration
+    _integration: BaseResource
 
-    def __init__(self, client: Client, integration: Integration):
+    def __init__(self, client: Client, integration: BaseResource):
         self._client = client
         self._integration = integration
 
@@ -80,7 +80,7 @@ class Validator:
         Note that the updates are typically ordered from most to least recent.
         """
         assert isinstance(
-            self._integration, RelationalDBIntegration
+            self._integration, RelationalDBResource
         ), "Currently, only relational data integrations are supported."
 
         data = self._client.flow(flow.id()).list_saved_objects()

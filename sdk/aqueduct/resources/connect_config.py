@@ -272,7 +272,7 @@ class K8sConfig(BaseConnectionConfig):
     cloud_integration_id: str = ""
 
 
-IntegrationConfig = Union[
+ResourceConfig = Union[
     BigQueryConfig,
     EmailConfig,
     _EmailConfigWithStringField,
@@ -299,7 +299,7 @@ IntegrationConfig = Union[
 
 def convert_dict_to_integration_connect_config(
     service: Union[str, ServiceType], config_dict: Dict[str, str]
-) -> IntegrationConfig:
+) -> ResourceConfig:
     if service == ServiceType.BIGQUERY:
         return BigQueryConfig(**config_dict)
     elif service in [ServiceType.MARIADB, ServiceType.MYSQL]:
@@ -342,9 +342,9 @@ def convert_dict_to_integration_connect_config(
 
 
 def prepare_integration_config(
-    service: Union[str, ServiceType], config: IntegrationConfig
-) -> IntegrationConfig:
-    """Prepares the IntegrationConfig object to be sent to the backend
+    service: Union[str, ServiceType], config: ResourceConfig
+) -> ResourceConfig:
+    """Prepares the ResourceConfig object to be sent to the backend
     as part of a request to connect a new integration.
     """
     if service == ServiceType.BIGQUERY:

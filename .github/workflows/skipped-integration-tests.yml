@@ -1,6 +1,6 @@
 # This is a workaround due to Github Actions limitations on aggregating results from a job matrix.
 
-name: Skipped Integration Tests
+name: Skipped BaseResource Tests
 
 on:
   workflow_call:
@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
-    name: All Integration Tests with Basic Config
+    name: All BaseResource Tests with Basic Config
     steps:
       - run: |
           exit 0
@@ -19,7 +19,7 @@ jobs:
   run-tests-s3-storage:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    name: SDK Integration Tests with S3 Storage Layer
+    name: SDK BaseResource Tests with S3 Storage Layer
     steps:
       - run: |
           exit 0
@@ -27,7 +27,7 @@ jobs:
   run-tests-data-integrations:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    name: SDK Data Integration Tests
+    name: SDK Data BaseResource Tests
     steps:
       - run: |
           exit 0

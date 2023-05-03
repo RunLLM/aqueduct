@@ -2,7 +2,7 @@ import uuid
 from typing import Any
 
 import pandas as pd
-from aqueduct.integrations.mongodb_integration import MongoDBIntegration
+from aqueduct.resources.mongodb import MongoDBResource
 
 from aqueduct import Client, Flow
 from sdk.data_integration_tests.relational_data_validator import RelationalDataValidator
@@ -15,9 +15,9 @@ class MongoDBDataValidator(RelationalDataValidator):
     """Tests can request an instance of this class as a fixture, and use it to validate published flow runs."""
 
     _client: Client
-    _integration: MongoDBIntegration
+    _integration: MongoDBResource
 
-    def __init__(self, client: Client, integration: MongoDBIntegration):
+    def __init__(self, client: Client, integration: MongoDBResource):
         super(MongoDBDataValidator, self).__init__(client, integration)
 
     def check_saved_artifact_data(

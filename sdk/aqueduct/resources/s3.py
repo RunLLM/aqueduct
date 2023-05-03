@@ -4,10 +4,10 @@ from typing import List, Optional, Union
 from aqueduct.artifacts import preview as artifact_utils
 from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, S3TableFormat
-from aqueduct.integrations.validation import validate_is_connected
+from aqueduct.resources.validation import validate_is_connected
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
-from aqueduct.models.integration import Integration, IntegrationInfo
+from aqueduct.models.integration import BaseResource, ResourceInfo
 from aqueduct.models.operators import (
     ExtractSpec,
     Operator,
@@ -43,12 +43,12 @@ def _convert_to_s3_table_format(format: Optional[str]) -> Optional[S3TableFormat
     return format_enum
 
 
-class S3Integration(Integration):
+class S3Resource(BaseResource):
     """
     Class for S3 integration.
     """
 
-    def __init__(self, dag: DAG, metadata: IntegrationInfo):
+    def __init__(self, dag: DAG, metadata: ResourceInfo):
         self._dag = dag
         self._metadata = metadata
 
@@ -209,5 +209,5 @@ class S3Integration(Integration):
 
     def describe(self) -> None:
         """Prints out a human-readable description of the S3 integration."""
-        print("==================== S3 Integration  =============================")
+        print("==================== S3 Resource =============================")
         self._metadata.describe()

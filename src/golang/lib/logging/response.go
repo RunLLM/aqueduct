@@ -20,7 +20,7 @@ const (
 // We register an obfuscation function to alter the header value before logging it
 // the key is the header name whose value is the func to apply to the header value.
 var HeaderObfuscationFunctionMap map[string](func([]string) ([]string, error)) = map[string](func([]string) ([]string, error)){
-	"Integration-Config": ObscurePasswordFromIntegrationConfig,
+	"BaseResource-Config": ObscurePasswordFromIntegrationConfig,
 }
 
 func LogRoute(
