@@ -593,7 +593,7 @@ func validateAirflowConfig(
 	config auth.Config,
 ) (int, error) {
 	if err := airflow.Authenticate(ctx, config); err != nil {
-		return http.StatusBadRequest, err
+		return http.StatusBadRequest, errors.Wrap(err, "Unable to authenticate Airflow credentials. Please check them.")
 	}
 
 	return http.StatusOK, nil

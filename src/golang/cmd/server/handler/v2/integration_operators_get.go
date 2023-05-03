@@ -40,9 +40,10 @@ type integrationOperatorsGetArgs struct {
 type IntegrationOperatorsGetHandler struct {
 	handler.GetHandler
 
-	Database        database.Database
-	IntegrationRepo repos.Integration
-	OperatorRepo    repos.Operator
+	Database           database.Database
+	IntegrationRepo    repos.Integration
+	OperatorRepo       repos.Operator
+	OperatorResultRepo repos.OperatorResult
 }
 
 func (*IntegrationOperatorsGetHandler) Name() string {

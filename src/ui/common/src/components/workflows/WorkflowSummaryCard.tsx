@@ -3,7 +3,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Box, Link, Typography } from '@mui/material';
 import React from 'react';
 
-import { OperatorsForIntegrationItem } from '../../reducers/integration';
+import { OperatorResponse } from '../../handlers/responses/node';
 import { Integration } from '../../utils/integrations';
 import { ListWorkflowSummary } from '../../utils/workflows';
 import { TruncatedText } from '../integrations/cards/text';
@@ -11,7 +11,7 @@ import { StatusIndicator } from './workflowStatus';
 
 export type WorkflowSummaryCardProps = {
   workflow?: ListWorkflowSummary;
-  operators: OperatorsForIntegrationItem[];
+  operators: OperatorResponse[];
   integration: Integration;
 };
 
