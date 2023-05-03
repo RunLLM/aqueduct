@@ -151,7 +151,7 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
           maxWidth="lg"
         >
           <DialogContent>
-            Are you sure you want to delete the integration?
+            Are you sure you want to delete the resource?
           </DialogContent>
           <DialogActions>
             <Button onClick={onCloseDialog}>Cancel</Button>

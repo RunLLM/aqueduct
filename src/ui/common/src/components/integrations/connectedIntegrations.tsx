@@ -111,6 +111,11 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
         }}
       >
         {[...integrations]
+          // This is a temporary fix to hide the auto-generated on-demand k8s integration card.
+          .filter(
+            (integration) =>
+              !integration.name.endsWith(':aqueduct_ondemand_k8s')
+          )
           .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
           .map((integration, idx) => {
             let numWorkflowsUsingMsg = '';

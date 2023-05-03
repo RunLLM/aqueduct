@@ -96,6 +96,8 @@ export function readCredentialsFile(
   reader.readAsText(file);
 }
 
-export function isBigQueryDialogConfigComplete(config: BigQueryConfig): boolean {
+export function isBigQueryDialogConfigComplete(
+  config: BigQueryConfig
+): boolean {
   return !!config.project_id && !!config.service_account_credentials;
 }
