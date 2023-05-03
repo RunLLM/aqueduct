@@ -235,6 +235,16 @@ class Client:
         service: Union[str, ServiceType],
         config: Union[Dict[str, str], IntegrationConfig],
     ) -> None:
+        """Deprecated. Use `client.connect_resource()` instead."""
+        logger().warning("client.connect_integration() will be deprecated soon. Use `client.connect_resource() instead.")
+        return self.connect_resource(name, service, config)
+
+    def connect_resource(
+        self,
+        name: str,
+        service: Union[str, ServiceType],
+        config: Union[Dict[str, str], IntegrationConfig],
+    ) -> None:
         """Connects the Aqueduct server to an integration.
 
         Args:
@@ -270,10 +280,18 @@ class Client:
 
         config = prepare_integration_config(service, config)
 
-        globals.__GLOBAL_API_CLIENT__.connect_integration(name, service, config)
+        globals.__GLOBAL_API_CLIENT__.connect_resource(name, service, config)
         logger().info("Successfully connected to new %s integration `%s`." % (service, name))
 
     def delete_integration(
+        self,
+        name: str,
+    ) -> None:
+        """Deprecated. Use `client.delete_resource()` instead."""
+        logger().warning("client.delete_integration() will be deprecated soon. Use `client.delete_resource() instead.")
+        return self.delete_resource(name)
+
+    def delete_resource(
         self,
         name: str,
     ) -> None:
@@ -287,12 +305,17 @@ class Client:
         if name not in existing_integrations.keys():
             raise InvalidIntegrationException("Not connected to integration %s!" % name)
 
-        globals.__GLOBAL_API_CLIENT__.delete_integration(existing_integrations[name].id)
+        globals.__GLOBAL_API_CLIENT__.delete_resource(existing_integrations[name].id)
 
         # Update the connected integrations cached on this object.
         self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
 
     def list_integrations(self) -> Dict[str, IntegrationInfo]:
+        """Deprecated. Use `client.list_resources()` instead."""
+        logger().warning("client.list_integrations() will be deprecated soon. Use `client.list_resources() instead.")
+        return self.list_resources()
+
+    def list_resources(self) -> Dict[str, IntegrationInfo]:
         """Retrieves a dictionary of integrations the client can use.
 
         Returns:
@@ -302,6 +325,26 @@ class Client:
         return self._connected_integrations
 
     def integration(
+        self, name: str,
+    ) -> Union[
+        SalesforceIntegration,
+        S3Integration,
+        GoogleSheetsIntegration,
+        RelationalDBIntegration,
+        AirflowIntegration,
+        K8sIntegration,
+        LambdaIntegration,
+        MongoDBIntegration,
+        DatabricksIntegration,
+        SparkIntegration,
+        AWSIntegration,
+        ECRIntegration,
+    ]:
+        """Deprecated. Use `client.resource()` instead."""
+        logger().warning("client.integration() will be deprecated soon. Use `client.resource() instead.")
+        return self.resource(name)
+
+    def resource(
         self, name: str
     ) -> Union[
         SalesforceIntegration,

@@ -10,7 +10,7 @@ def connect_slack(
     channel: str,
     level: NotificationLevel,
 ) -> None:
-    client.connect_integration(
+    client.connect_resource(
         "test_slack_notification",
         "Slack",
         SlackConfig(token=token, channels=[channel], level=level, enabled=True),

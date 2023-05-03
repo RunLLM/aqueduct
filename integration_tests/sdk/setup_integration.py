@@ -227,7 +227,7 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
             ):
                 _setup_mysql_db()
 
-            client.connect_integration(
+            client.connect_resource(
                 integration_name,
                 integration_config["type"],
                 _sanitize_integration_config_for_connect(integration_config),
@@ -271,7 +271,7 @@ def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) 
             if aq_config and "conda" in aq_config:
                 integration_name = aq_config["conda"]
                 if integration_name not in connected_integrations.keys():
-                    client.connect_integration(
+                    client.connect_resource(
                         integration_name,
                         ServiceType.CONDA,
                         {},  # integration_config
@@ -283,7 +283,7 @@ def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) 
             print(f"Connecting to {integration_name}")
             integration_config = _fetch_integration_credentials("compute", integration_name)
 
-            client.connect_integration(
+            client.connect_resource(
                 integration_name,
                 integration_config["type"],
                 _sanitize_integration_config_for_connect(integration_config),
@@ -327,7 +327,7 @@ def setup_storage_layer(client: Client) -> None:
         service_type = integration_config["type"]
         integration_config["type"] = AWSCredentialType.CONFIG_FILE_PATH
 
-        client.connect_integration(
+        client.connect_resource(
             name,
             service_type,
             integration_config,
