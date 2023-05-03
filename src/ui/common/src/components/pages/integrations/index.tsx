@@ -98,108 +98,104 @@ const IntegrationsPage: React.FC<Props> = ({
       breadcrumbs={[BreadcrumbLink.HOME, BreadcrumbLink.INTEGRATIONS]}
       user={user}
     >
-      <Box>
+      <Box paddingBottom={4}>
+        <Typography variant="h5" marginBottom={2}>
+          Available Resources
+        </Typography>
+        <ConnectedIntegrations
+          user={user}
+          forceLoad={forceLoad}
+          connectedIntegrationType={ConnectedIntegrationType.Compute}
+        />
+        <ConnectedIntegrations
+          user={user}
+          forceLoad={forceLoad}
+          connectedIntegrationType={ConnectedIntegrationType.Data}
+        />
+        <ConnectedIntegrations
+          user={user}
+          forceLoad={forceLoad}
+          connectedIntegrationType={ConnectedIntegrationType.Other}
+        />
+
         <Box>
-          <Typography variant="h5" marginBottom={2}>
-            Available Resources
+          <Typography variant="h6" marginY={2}>
+            Artifact Storage
           </Typography>
-          <ConnectedIntegrations
-            user={user}
-            forceLoad={forceLoad}
-            connectedIntegrationType={ConnectedIntegrationType.Compute}
-          />
-          <ConnectedIntegrations
-            user={user}
-            forceLoad={forceLoad}
-            connectedIntegrationType={ConnectedIntegrationType.Data}
-          />
-          <ConnectedIntegrations
-            user={user}
-            forceLoad={forceLoad}
-            connectedIntegrationType={ConnectedIntegrationType.Other}
-          />
-
-          <Box>
-            <Typography variant="h6" marginY={2}>
-              Artifact Storage
-            </Typography>
-            <MetadataStorageInfo serverConfig={serverConfig.config} />
-            {!isLoading && lastFailedFormattedTimestamp && (
-              <Box>
-                <Typography
-                  variant="body2"
-                  fontWeight="fontWeightRegular"
-                  marginTop={2}
-                  marginBottom={1}
-                >
-                  The last artifact storage migration, which started at{' '}
-                  {lastFailedFormattedTimestamp}, has failed! As a result, the
-                  artifact storage has not changed from `
-                  {serverConfig.config?.storageConfig.integration_name}`.
-                </Typography>
-                <Box
-                  sx={{
-                    borderRadius: 2,
-                    backgroundColor: theme.palette.red[100],
-                    color: theme.palette.red[600],
-                    p: 2,
-                    paddingBottom: '16px',
-                    paddingTop: '16px',
-                    height: 'fit-content',
-                  }}
-                >
-                  <pre style={{ margin: '0px' }}>
-                    {`${lastMigration[0].execution_state.error.tip}\n\n${lastMigration[0].execution_state.error.context}`}
-                  </pre>
-                </Box>
+          <MetadataStorageInfo serverConfig={serverConfig.config} />
+          {!isLoading && lastFailedFormattedTimestamp && (
+            <Box>
+              <Typography
+                variant="body2"
+                fontWeight="fontWeightRegular"
+                marginTop={2}
+                marginBottom={1}
+              >
+                The last artifact storage migration, which started at{' '}
+                {lastFailedFormattedTimestamp}, has failed! As a result, the
+                artifact storage has not changed from `
+                {serverConfig.config?.storageConfig.integration_name}`.
+              </Typography>
+              <Box
+                sx={{
+                  borderRadius: 2,
+                  backgroundColor: theme.palette.red[100],
+                  color: theme.palette.red[600],
+                  p: 2,
+                  paddingBottom: '16px',
+                  paddingTop: '16px',
+                  height: 'fit-content',
+                }}
+              >
+                <pre style={{ margin: '0px' }}>
+                  {`${lastMigration[0].execution_state.error.tip}\n\n${lastMigration[0].execution_state.error.context}`}
+                </pre>
               </Box>
-            )}
-          </Box>
-
-          <Box marginY={2}>
-            <Divider />
-          </Box>
-
-          <Typography variant="h5" marginY={2}>
-            Add New Resources
-          </Typography>
-
-          <Typography variant="h6" marginY={2}>
-            Compute
-          </Typography>
-          <AddIntegrations
-            user={user}
-            category={IntegrationCategories.COMPUTE}
-            supportedIntegrations={SupportedIntegrations}
-          />
-          <Typography variant="h6" marginY={2}>
-            Data
-          </Typography>
-          <AddIntegrations
-            user={user}
-            category={IntegrationCategories.DATA}
-            supportedIntegrations={SupportedIntegrations}
-          />
-          <Typography variant="h6" marginY={2}>
-            Container Registry
-          </Typography>
-          <AddIntegrations
-            user={user}
-            category={IntegrationCategories.CONTAINER_REGISTRY}
-            supportedIntegrations={SupportedIntegrations}
-          />
-
-          <Typography variant="h6" marginY={2}>
-            Notifications
-          </Typography>
-          <Typography variant="h6" marginY={2}>
-            <AddIntegrations
-              user={user}
-              category={IntegrationCategories.NOTIFICATION}
-              supportedIntegrations={SupportedIntegrations}
-            />
-          </Typography>
+            </Box>
+          )}
         </Box>
+
+        <Box marginY={2}>
+          <Divider />
+        </Box>
+
+        <Typography variant="h5" marginY={2}>
+          Add New Resources
+        </Typography>
+
+        <Typography variant="h6" marginY={2}>
+          Compute
+        </Typography>
+        <AddIntegrations
+          user={user}
+          category={IntegrationCategories.COMPUTE}
+          supportedIntegrations={SupportedIntegrations}
+        />
+        <Typography variant="h6" marginY={2}>
+          Data
+        </Typography>
+        <AddIntegrations
+          user={user}
+          category={IntegrationCategories.DATA}
+          supportedIntegrations={SupportedIntegrations}
+        />
+        <Typography variant="h6" marginY={2}>
+          Container Registry
+        </Typography>
+        <AddIntegrations
+          user={user}
+          category={IntegrationCategories.CONTAINER_REGISTRY}
+          supportedIntegrations={SupportedIntegrations}
+        />
+
+        <Typography variant="h6" marginY={2}>
+          Notifications
+        </Typography>
+        <AddIntegrations
+          user={user}
+          category={IntegrationCategories.NOTIFICATION}
+          supportedIntegrations={SupportedIntegrations}
+        />
       </Box>
 
       <Snackbar
