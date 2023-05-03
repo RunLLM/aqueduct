@@ -88,7 +88,7 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
     }
 
     if (isSucceeded(deleteIntegrationStatus)) {
-      navigate('/integrations', {
+      navigate('/resources', {
         state: {
           deleteIntegrationStatus: deleteIntegrationStatus,
           deleteIntegrationName: integrationName,

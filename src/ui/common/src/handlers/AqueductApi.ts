@@ -4,6 +4,11 @@ import { FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import { dagGetQuery, DagGetRequest, DagGetResponse } from './v2/DagGet';
 import {
+  dagOperatorsGetQuery,
+  DagOperatorsGetRequest,
+  DagOperatorsGetResponse,
+} from './v2/DagOperatorsGet';
+import {
   dagResultGetQuery,
   DagResultGetRequest,
   DagResultGetResponse,
@@ -13,6 +18,11 @@ import {
   DagResultsGetRequest,
   DagResultsGetResponse,
 } from './v2/DagResultsGet';
+import {
+  integrationOperatorsGetQuery,
+  IntegrationOperatorsGetRequest,
+  IntegrationOperatorsGetResponse,
+} from './v2/IntegrationOperatorsGet';
 import {
   integrationsWorkflowsGetQuery,
   IntegrationsWorkflowsGetRequest,
@@ -89,12 +99,26 @@ export const aqueductApi = createApi({
       query: (req) => dagGetQuery(req),
       transformErrorResponse,
     }),
+    dagOperatorsGet: builder.query<
+      DagOperatorsGetResponse,
+      DagOperatorsGetRequest
+    >({
+      query: (req) => dagOperatorsGetQuery(req),
+      transformErrorResponse,
+    }),
     dagResultGet: builder.query<DagResultGetResponse, DagResultGetRequest>({
       query: (req) => dagResultGetQuery(req),
       transformErrorResponse,
     }),
     dagResultsGet: builder.query<DagResultsGetResponse, DagResultsGetRequest>({
       query: (req) => dagResultsGetQuery(req),
+      transformErrorResponse,
+    }),
+    integrationOperatorsGet: builder.query<
+      IntegrationOperatorsGetResponse,
+      IntegrationOperatorsGetRequest
+    >({
+      query: (req) => integrationOperatorsGetQuery(req),
       transformErrorResponse,
     }),
     integrationWorkflowsGet: builder.query<
@@ -177,8 +201,10 @@ export const aqueductApi = createApi({
 
 export const {
   useDagGetQuery,
+  useDagOperatorsGetQuery,
   useDagResultGetQuery,
   useDagResultsGetQuery,
+  useIntegrationOperatorsGetQuery,
   useIntegrationWorkflowsGetQuery,
   useIntegrationsWorkflowsGetQuery,
   useStorageMigrationListQuery,

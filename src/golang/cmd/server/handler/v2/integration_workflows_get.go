@@ -23,7 +23,7 @@ import (
 //		`api-key`: user's API Key
 // Response:
 //	Body:
-//   	A list of workflow IDs that use the given integration.
+//   	A list of `response.WorkflowAndDagID` that use the given integration.
 
 type integrationWorkflowsGetArgs struct {
 	*aq_context.AqContext
@@ -36,6 +36,7 @@ type IntegrationWorkflowsGetHandler struct {
 	Database        database.Database
 	IntegrationRepo repos.Integration
 	OperatorRepo    repos.Operator
+	DAGResultRepo   repos.DAGResult
 }
 
 func (*IntegrationWorkflowsGetHandler) Name() string {
@@ -55,7 +56,7 @@ func (h *IntegrationWorkflowsGetHandler) Prepare(r *http.Request) (interface{}, 
 
 	return &integrationWorkflowsGetArgs{
 		AqContext:     aqContext,
-		integrationID: integrationID,
+		integrationID: *integrationID,
 	}, http.StatusOK, nil
 }
 
@@ -67,12 +68,11 @@ func (h *IntegrationWorkflowsGetHandler) Perform(ctx context.Context, interfaceA
 		return nil, http.StatusInternalServerError, errors.Wrapf(err, "Unable to find integration %s", args.integrationID)
 	}
 
-	workflowIDs, err := fetchWorkflowIDsForIntegration(
-		ctx, args.OrgID, integration, h.IntegrationRepo, h.OperatorRepo, h.Database,
+	workflowAndDagIDs, err := fetchWorkflowAndDagIDsForIntegration(
+		ctx, args.OrgID, integration, h.IntegrationRepo, h.OperatorRepo, h.DAGResultRepo, h.Database,
 	)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrapf(err, "Unable to find workflows for integration %s", args.integrationID)
 	}
-
-	return workflowIDs, http.StatusOK, nil
+	return workflowAndDagIDs, http.StatusOK, nil
 }

@@ -1,6 +1,6 @@
 import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { CircularProgress, Tooltip } from '@mui/material';
+import { Tooltip } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
@@ -14,11 +14,14 @@ import AddTableDialog from '../../../../components/integrations/dialogs/addTable
 import DeleteIntegrationDialog from '../../../../components/integrations/dialogs/deleteIntegrationDialog';
 import IntegrationDialog from '../../../../components/integrations/dialogs/dialog';
 import IntegrationObjectList from '../../../../components/integrations/integrationObjectList';
-import OperatorsOnIntegration from '../../../../components/integrations/operatorsOnIntegration';
 import DefaultLayout from '../../../../components/layouts/default';
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
-import { useIntegrationWorkflowsGetQuery } from '../../../../handlers/AqueductApi';
+import {
+  useIntegrationOperatorsGetQuery,
+  useIntegrationWorkflowsGetQuery,
+} from '../../../../handlers/AqueductApi';
 import { handleGetServerConfig } from '../../../../handlers/getServerConfig';
+import { OperatorResponse } from '../../../../handlers/responses/node';
 import {
   handleListIntegrationObjects,
   handleLoadIntegrationOperators,
@@ -44,6 +47,7 @@ import ExecutionStatus, {
 import { ResourceHeaderDetailsCard } from '../../../integrations/cards/headerDetailsCard';
 import { ResourceFieldsDetailsCard } from '../../../integrations/cards/resourceFieldsDetailsCard';
 import { ErrorSnackbar } from '../../../integrations/errorSnackbar';
+import IntegrationWorkflowSummaryCards from '../../../integrations/integrationWorkflowSummaryCards';
 import { getNumWorkflowsUsingMessage } from '../../../integrations/numWorkflowsUsingMsg';
 import IntegrationOptions, {
   IntegrationOptionsButtonWidth,
@@ -160,7 +164,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   }, [user.apiKey]);
 
   const {
-    data: workflowIDs,
+    data: workflowAndDagIDs,
     error: fetchWorkflowsError,
 
     // Needed to rename this since we're importing an `isLoading` is that was causing problems.
@@ -170,13 +174,48 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     integrationId: integrationId,
   });
 
-  if (fetchWorkflowsIsLoading) {
-    return <CircularProgress />;
+  const {
+    data: integrationOperators,
+    error: testOpsErr,
+    isLoading: testOpsIsLoading,
+  } = useIntegrationOperatorsGetQuery({
+    apiKey: user.apiKey,
+    integrationId: integrationId,
+  });
+
+  // Using the latest `dag_id` as the common key to bind the workflow to its latest operators.
+  const workflowIDToLatestOperators: {
+    [workflowID: string]: OperatorResponse[];
+  } = {};
+  if (workflowAndDagIDs && integrationOperators) {
+    // Reorganize the operators to be keyed by their `dag_id`.
+    const operatorsByDagID: { [dagID: string]: OperatorResponse[] } = {};
+    integrationOperators.forEach((operator) => {
+      if (operatorsByDagID[operator.dag_id]) {
+        operatorsByDagID[operator.dag_id].push(operator);
+      } else {
+        operatorsByDagID[operator.dag_id] = [operator];
+      }
+    });
+
+    workflowAndDagIDs.forEach((workflowAndDagID) => {
+      if (operatorsByDagID[workflowAndDagID.dag_id]) {
+        workflowIDToLatestOperators[workflowAndDagID.id] =
+          operatorsByDagID[workflowAndDagID.dag_id];
+      }
+    });
   }
 
+  if (fetchWorkflowsIsLoading) {
+    return null;
+  }
+
+  // We only count workflows if their latest run has used this resource.
   let numWorkflowsUsingMsg = '';
-  if (!fetchWorkflowsError && workflowIDs) {
-    numWorkflowsUsingMsg = getNumWorkflowsUsingMessage(workflowIDs.length);
+  if (!fetchWorkflowsError && workflowAndDagIDs) {
+    numWorkflowsUsingMsg = getNumWorkflowsUsingMessage(
+      Object.keys(workflowIDToLatestOperators).length
+    );
   }
 
   if (!integrations || !selectedIntegration) {
@@ -348,7 +387,11 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             >
               Workflows
             </Typography>
-            <OperatorsOnIntegration />
+
+            <IntegrationWorkflowSummaryCards
+              integration={selectedIntegration}
+              workflowIDToLatestOperators={workflowIDToLatestOperators}
+            />
           </Box>
         )}
       </Box>

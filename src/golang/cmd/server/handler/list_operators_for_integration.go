@@ -2,15 +2,12 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
-	"github.com/aqueducthq/aqueduct/lib/dynamic"
 	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator"
 	"github.com/dropbox/godropbox/errors"
@@ -92,28 +89,10 @@ func (h *ListOperatorsForIntegrationHandler) Prepare(r *http.Request) (interface
 func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*listOperatorsForIntegrationArgs)
 
-	integrationID := args.integrationObject.ID
-
-	if args.integrationObject.Service == shared.AWS {
-		// If the requested integration is a cloud integration, substitute the cloud integration ID
-		// with the ID of the dynamic k8s integration.
-		k8sIntegration, err := h.IntegrationRepo.GetByNameAndUser(
-			ctx,
-			fmt.Sprintf("%s:%s", args.integrationObject.Name, dynamic.K8sIntegrationNameSuffix),
-			uuid.Nil,
-			args.OrgID,
-			h.Database,
-		)
-		if err != nil {
-			return nil, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve the Aqueduct-generated k8s integration.")
-		}
-
-		integrationID = k8sIntegration.ID
-	}
-
 	operators, err := operator.GetOperatorsOnIntegration(
 		ctx,
-		integrationID,
+		args.OrgID,
+		args.integrationObject,
 		h.IntegrationRepo,
 		h.OperatorRepo,
 		h.Database,
