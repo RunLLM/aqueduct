@@ -1,5 +1,6 @@
-from pydantic import Extra, BaseModel
 from typing import Optional
+
+from pydantic import BaseModel, Extra
 
 
 class BaseSpec(BaseModel):
