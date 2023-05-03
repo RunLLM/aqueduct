@@ -10,6 +10,8 @@ on:
       - 'src/python/**'
       - 'sdk/**'
       - 'integration_tests/**'
+  push:
+    branches: [ investigate-isort-issue ]
 
 jobs:
   lint-src:
