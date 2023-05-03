@@ -107,7 +107,7 @@ def _add_missing_artifacts(
     if len(missing_names) == 0:
         return
 
-    demo = client.integration("aqueduct_demo")
+    demo = client.resource("aqueduct_demo")
     artifacts: List[BaseArtifact] = []
     for table_name in missing_names:
         data = _fetch_demo_data(demo, table_name)
@@ -209,7 +209,7 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
     if len(data_integrations) == 0:
         return
 
-    connected_integrations = client.list_integrations()
+    connected_integrations = client.list_resources()
     for integration_name in data_integrations:
         # Only connect to integrations that don't already exist.
         if integration_name not in connected_integrations.keys():
@@ -234,7 +234,7 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
             )
 
         # Setup the data in each of these integrations.
-        integration = client.integration(integration_name)
+        integration = client.resource(integration_name)
         if isinstance(integration, RelationalDBResource):
             _setup_relational_data(client, integration)
         elif integration.type() == ServiceType.S3:
@@ -263,7 +263,7 @@ def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) 
     if len(compute_integrations) == 0:
         return
 
-    connected_integrations = client.list_integrations()
+    connected_integrations = client.list_resources()
     for integration_key in compute_integrations:
         if integration_key == "aqueduct_engine":
             # Connect to conda if specified, otherwise, do nothing for aq engine.
@@ -317,7 +317,7 @@ def setup_storage_layer(client: Client) -> None:
     if name is None:
         return
 
-    connected_integrations = client.list_integrations()
+    connected_integrations = client.list_resources()
     if name not in connected_integrations.keys():
         integration_config = _fetch_integration_credentials("data", name)
         integration_config["use_as_storage"] = "true"
@@ -336,7 +336,7 @@ def setup_storage_layer(client: Client) -> None:
         # Poll on the server until the integration is ready.
         while True:
             try:
-                _ = client.integration(name)
+                _ = client.resource(name)
             except AqueductError as e:
                 if "The server is currently unavailable due to system maintenance." in str(e):
                     time.sleep(1)

@@ -393,7 +393,7 @@ def _update_operator_spec_with_engine(
             )
 
         spec.engine_config = generate_engine_config(
-            globals.__GLOBAL_API_CLIENT__.list_integrations(),
+            globals.__GLOBAL_API_CLIENT__.list_resources(),
             engine,
         )
 
@@ -537,7 +537,7 @@ def _update_operator_spec_with_image(
                 "`registry_name` must be specified when `image` is set."
             )
 
-        connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
+        connected_integrations = globals.__GLOBAL_API_CLIENT__.list_resources()
         if registry_name not in connected_integrations.keys():
             raise InvalidUserArgumentException(
                 "Registry name `%s` is not one of the connected resources." % registry_name,
@@ -635,7 +635,7 @@ def op(
             The dictionary needs to contain the following keys:
             "registry_name" (str): The name of the registry integration to use.
             "url" (str): The full URL of the image to use. Example: "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest"
-            It is recommended to get the dictionary via `client.integration("my_registry_name").image("my-image:latest")`
+            It is recommended to get the dictionary via `client.resource("my_registry_name").image("my-image:latest")`
 
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
@@ -833,7 +833,7 @@ def metric(
             The dictionary needs to contain the following keys:
             "registry_name" (str): The name of the registry integration to use.
             "url" (str): The full URL of the image to use. Example: "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest"
-            It is recommended to get the dictionary via `client.integration("my_registry_name").image("my-image:latest")`
+            It is recommended to get the dictionary via `client.resource("my_registry_name").image("my-image:latest")`
 
     Examples:
         The metric name is inferred from the function name. The description is pulled from the function
@@ -1036,7 +1036,7 @@ def check(
             The dictionary needs to contain the following keys:
             "registry_name" (str): The name of the registry integration to use.
             "url" (str): The full URL of the image to use. Example: "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest"
-            It is recommended to get the dictionary via `client.integration("my_registry_name").image("my-image:latest")`
+            It is recommended to get the dictionary via `client.resource("my_registry_name").image("my-image:latest")`
 
     Examples:
         The check name is inferred from the function name. The description is pulled from the function

@@ -10,7 +10,7 @@ def type_from_engine_name(client, engine: str) -> ServiceType:
     if engine is None:
         return ServiceType.AQUEDUCT_ENGINE
 
-    integration_info_by_name = client.list_integrations()
+    integration_info_by_name = client.list_resources()
     if engine not in integration_info_by_name.keys():
         raise Exception("Server is not connected to integration `%s`." % engine)
 

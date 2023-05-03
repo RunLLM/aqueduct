@@ -166,7 +166,7 @@ def llm_op(
         string(s) before sending to the LLM.
 
     Examples:
-        >>> snowflake = client.integration("snowflake")
+        >>> snowflake = client.resource("snowflake")
         >>> reviews_table = snowflake.sql("select * from hotel_reviews;")
 
         >>> from aqueduct import llm_op
@@ -200,7 +200,7 @@ def llm_op(
         kwargs["engine"] = engine
 
         engine_config = generate_engine_config(
-            globals.__GLOBAL_API_CLIENT__.list_integrations(),
+            globals.__GLOBAL_API_CLIENT__.list_resources(),
             engine,
         )
         if engine_config and engine_config.type == RuntimeType.K8S:

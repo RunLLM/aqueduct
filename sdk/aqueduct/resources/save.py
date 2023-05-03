@@ -44,7 +44,7 @@ def _save_artifact(
             An error occurred because some necessary fields are missing in the SaveParams.
     """
 
-    integrations_map = global_api_client.list_integrations()
+    integrations_map = global_api_client.list_resources()
     if integration_info.name not in integrations_map:
         raise InvalidIntegrationException(
             "Not connected to integration %s!" % integration_info.name

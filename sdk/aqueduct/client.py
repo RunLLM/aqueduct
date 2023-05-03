@@ -155,7 +155,7 @@ class Client:
         globals.__GLOBAL_API_CLIENT__.configure(api_key, aqueduct_address)
         self._connected_integrations: Dict[
             str, ResourceInfo
-        ] = globals.__GLOBAL_API_CLIENT__.list_integrations()
+        ] = globals.__GLOBAL_API_CLIENT__.list_resources()
         self._dag = globals.__GLOBAL_DAG__
 
         # Will show graph if in an ipynb or Python console, but not if running a Python script.
@@ -262,7 +262,7 @@ class Client:
                 "Service argument must match exactly one of the enum values in ServiceType (case-sensitive)."
             )
 
-        self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
+        self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_resources()
         if name in self._connected_integrations.keys():
             raise InvalidUserActionException(
                 "Cannot connect a new integration with name `%s`. An integration with this name already exists."
@@ -301,14 +301,14 @@ class Client:
             name:
                 The name of the integration to delete.
         """
-        existing_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
+        existing_integrations = globals.__GLOBAL_API_CLIENT__.list_resources()
         if name not in existing_integrations.keys():
             raise InvalidIntegrationException("Not connected to integration %s!" % name)
 
         globals.__GLOBAL_API_CLIENT__.delete_resource(existing_integrations[name].id)
 
         # Update the connected integrations cached on this object.
-        self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
+        self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_resources()
 
     def list_integrations(self) -> Dict[str, ResourceInfo]:
         """Deprecated. Use `client.list_resources()` instead."""
@@ -321,7 +321,7 @@ class Client:
         Returns:
             A dictionary mapping from integration name to additional info.
         """
-        self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
+        self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_resources()
         return self._connected_integrations
 
     def integration(
@@ -375,7 +375,7 @@ class Client:
                 provided integration or the provided integration is of an
                 incompatible type.
         """
-        self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
+        self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_resources()
 
         if name not in self._connected_integrations.keys():
             raise InvalidIntegrationException("Not connected to integration %s!" % name)
@@ -861,7 +861,7 @@ class Client:
         print("============================= Aqueduct Client =============================")
         print("Connected endpoint: %s" % globals.__GLOBAL_API_CLIENT__.aqueduct_address)
         print("Log Level: %s" % logging.getLevelName(logging.root.level))
-        self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
+        self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_resources()
         print("Current Integrations:")
         for integrations in self._connected_integrations:
             print("\t -" + integrations)

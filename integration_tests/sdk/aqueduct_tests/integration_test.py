@@ -20,7 +20,7 @@ from .test_functions.simple.model import dummy_sentiment_model
 
 def test_invalid_source_integration(client):
     with pytest.raises(InvalidIntegrationException):
-        client.integration(name="wrong integration name")
+        client.resource(name="wrong integration name")
 
 
 def test_invalid_destination_integration(data_integration):

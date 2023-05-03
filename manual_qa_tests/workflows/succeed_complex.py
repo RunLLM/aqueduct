@@ -50,7 +50,7 @@ def deploy(client, integration):
             prob_churn=linear_pred_table.join(tree_pred_table).mean(axis=1)
         )
 
-    warehouse = client.integration(name=integration)
+    warehouse = client.resource(name=integration)
     customers_table = warehouse.sql(query="SELECT * FROM customers;")
     features_table = log_featurize(customers_table)
     linear_pred_table = predict_linear(features_table)

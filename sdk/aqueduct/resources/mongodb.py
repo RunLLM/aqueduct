@@ -183,7 +183,7 @@ class MongoDBResource(BaseResource):
     """
     Class for MongoDB integration. This works similar to mongo's `Database` object:
 
-    mongo_integration = client.integration("my_integration_name")
+    mongo_integration = client.resource("my_resource_name")
     my_table_artifact = mongo_integration.collection("my_collection").find({})
     """
 
@@ -197,8 +197,8 @@ class MongoDBResource(BaseResource):
 
         Example:
 
-        mongo_integration = client.integration("my_integration_name")
-        my_table_artifact = mongo_integration.collection("my_collection").find({})
+        mongo_resource = client.resource("my_resource_name")
+        my_table_artifact = mongo_resource.collection("my_collection").find({})
         """
         return MongoDBCollectionIntegration(self._dag, self._metadata, name)
 

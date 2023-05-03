@@ -11,7 +11,7 @@ import aqueduct
 def setup_changing_saves(client: aqueduct.Client, integration_name: str) -> str:
     name = "Test: Changing Saves"
     n_runs = 4
-    integration = client.integration(name=integration_name)
+    integration = client.resource(name=integration_name)
 
     ###
     table = integration.sql(query="SELECT * FROM wine;")

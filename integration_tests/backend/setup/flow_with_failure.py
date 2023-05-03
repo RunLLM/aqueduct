@@ -9,7 +9,7 @@ extract (should succeed) -> bad_op (should fail) -> bad_op_downstream (should ca
 def setup_flow_with_failure(client: aqueduct.Client, integration_name: str) -> str:
     name = "Test: Flow with Failure"
     n_runs = 1
-    integration = client.integration(name=integration_name)
+    integration = client.resource(name=integration_name)
 
     @aqueduct.op
     def bad_op(df):

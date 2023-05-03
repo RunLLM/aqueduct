@@ -222,7 +222,7 @@ class APIClient:
         self._check_config()
         return self.HTTPS_PREFIX if self.use_https else self.HTTP_PREFIX
 
-    def list_integrations(self) -> Dict[str, ResourceInfo]:
+    def list_resources(self) -> Dict[str, ResourceInfo]:
         url = self.construct_full_url(self.LIST_INTEGRATIONS_ROUTE)
         headers = self._generate_auth_headers()
         resp = requests.get(url, headers=headers)
