@@ -14,7 +14,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/response"
 	"github.com/google/uuid"
-	"net/http"
 )
 
 // This file should map directly to
