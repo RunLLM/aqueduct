@@ -1,3 +1,6 @@
+import { faEllipsis } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { CircularProgress, Tooltip } from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
@@ -7,7 +10,6 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 
-import { DetailIntegrationCard } from '../../../../components/integrations/cards/detailCard';
 import AddTableDialog from '../../../../components/integrations/dialogs/addTableDialog';
 import DeleteIntegrationDialog from '../../../../components/integrations/dialogs/deleteIntegrationDialog';
 import IntegrationDialog from '../../../../components/integrations/dialogs/dialog';
@@ -15,6 +17,7 @@ import IntegrationObjectList from '../../../../components/integrations/integrati
 import OperatorsOnIntegration from '../../../../components/integrations/operatorsOnIntegration';
 import DefaultLayout from '../../../../components/layouts/default';
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
+import { useIntegrationWorkflowsGetQuery } from '../../../../handlers/AqueductApi';
 import { handleGetServerConfig } from '../../../../handlers/getServerConfig';
 import {
   handleListIntegrationObjects,
@@ -26,13 +29,25 @@ import {
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import { handleFetchAllWorkflowSummaries } from '../../../../reducers/listWorkflowSummaries';
 import { AppDispatch, RootState } from '../../../../stores/store';
+import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
 import {
+  hasConfigFieldsToShow,
   IntegrationCategories,
   SupportedIntegrations,
 } from '../../../../utils/integrations';
-import { isFailed, isLoading, isSucceeded } from '../../../../utils/shared';
-import IntegrationOptions from '../../../integrations/options';
+import ExecutionStatus, {
+  isFailed,
+  isLoading,
+  isSucceeded,
+} from '../../../../utils/shared';
+import { ResourceHeaderDetailsCard } from '../../../integrations/cards/headerDetailsCard';
+import { ResourceFieldsDetailsCard } from '../../../integrations/cards/resourceFieldsDetailsCard';
+import { ErrorSnackbar } from '../../../integrations/errorSnackbar';
+import { getNumWorkflowsUsingMessage } from '../../../integrations/numWorkflowsUsingMsg';
+import IntegrationOptions, {
+  IntegrationOptionsButtonWidth,
+} from '../../../integrations/options';
 import { LayoutProps } from '../../types';
 
 type IntegrationDetailsPageProps = {
@@ -55,6 +70,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   const [showTestConnectToast, setShowTestConnectToast] = useState(false);
   const [showConnectSuccessToast, setShowConnectSuccessToast] = useState(false);
   const [showEditSuccessToast, setShowEditSuccessToast] = useState(false);
+  const [showResourceDetails, setShowResourceDetails] = useState(false);
 
   const handleCloseConnectSuccessToast = () => {
     setShowConnectSuccessToast(false);
@@ -143,6 +159,26 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     fetchServerConfig();
   }, [user.apiKey]);
 
+  const {
+    data: workflowIDs,
+    error: fetchWorkflowsError,
+
+    // Needed to rename this since we're importing an `isLoading` is that was causing problems.
+    isLoading: fetchWorkflowsIsLoading,
+  } = useIntegrationWorkflowsGetQuery({
+    apiKey: user.apiKey,
+    integrationId: integrationId,
+  });
+
+  if (fetchWorkflowsIsLoading) {
+    return <CircularProgress />;
+  }
+
+  let numWorkflowsUsingMsg = '';
+  if (!fetchWorkflowsError && workflowIDs) {
+    numWorkflowsUsingMsg = getNumWorkflowsUsingMessage(workflowIDs.length);
+  }
+
   if (!integrations || !selectedIntegration) {
     return null;
   }
@@ -156,12 +192,55 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
       ]}
       user={user}
     >
+      <ErrorSnackbar
+        shouldShow={fetchWorkflowsError !== undefined}
+        errMsg={
+          'Unexpected error occurred when fetching workflows associated with this integration. Please try again.'
+        }
+      />
+
       <Box sx={{ paddingBottom: '4px' }}>
         <Box display="flex" flexDirection="row" alignContent="top">
-          <DetailIntegrationCard
-            integration={selectedIntegration}
-            connectStatus={testConnectStatus}
-          />
+          <Box
+            sx={{
+              flex: 1,
+              width: `calc(100% - ${IntegrationOptionsButtonWidth})`,
+            }}
+          >
+            <Box display="flex" flexDirection="row" alignContent="bottom">
+              <ResourceHeaderDetailsCard
+                integration={selectedIntegration}
+                numWorkflowsUsingMsg={numWorkflowsUsingMsg}
+              />
+
+              {hasConfigFieldsToShow(selectedIntegration) && (
+                <Box
+                  sx={{
+                    fontSize: '16px',
+                    p: 1,
+                    ml: 1,
+                    height: '32px',
+                    borderRadius: '8px',
+                    ':hover': {
+                      backgroundColor: theme.palette.gray[50],
+                    },
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => setShowResourceDetails(!showResourceDetails)}
+                >
+                  <Tooltip title="See more" arrow>
+                    <FontAwesomeIcon
+                      icon={faEllipsis}
+                      style={{
+                        transition: 'transform 200ms',
+                      }}
+                    />
+                  </Tooltip>
+                </Box>
+              )}
+            </Box>
+          </Box>
+
           <IntegrationOptions
             integration={selectedIntegration}
             onUploadCsv={() => setShowAddTableDialog(true)}
@@ -184,6 +263,24 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             }
           />
         </Box>
+
+        {selectedIntegration.exec_state?.status === ExecutionStatus.Failed && (
+          <Box
+            sx={{
+              backgroundColor: theme.palette.red[100],
+              borderRadius: 2,
+              color: theme.palette.red[600],
+              p: 2,
+              height: 'fit-content',
+              width: '100%',
+              my: 1,
+            }}
+          >
+            <Typography variant="body2" style={{ whiteSpace: 'pre-wrap' }}>
+              {`${selectedIntegration.exec_state?.error.tip}\n\n${selectedIntegration.exec_state?.error.context}`}
+            </Typography>
+          </Box>
+        )}
 
         {serverConfig.config?.storageConfig.integration_name ===
           selectedIntegration.name && (
@@ -221,6 +318,15 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             </Link>
             .
           </Typography>
+        )}
+
+        {showResourceDetails && (
+          <Box sx={{ my: 1 }}>
+            <ResourceFieldsDetailsCard
+              integration={selectedIntegration}
+              detailedView={true}
+            />
+          </Box>
         )}
 
         {SupportedIntegrations[selectedIntegration.service].category ===

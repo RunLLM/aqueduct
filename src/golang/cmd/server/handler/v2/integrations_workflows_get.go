@@ -44,7 +44,7 @@ type IntegrationsWorkflowsGetHandler struct {
 }
 
 func (*IntegrationsWorkflowsGetHandler) Name() string {
-	return "WorkflowsByIntegrationGet"
+	return "IntegrationsWorkflowsGet"
 }
 
 func (h *IntegrationsWorkflowsGetHandler) Prepare(r *http.Request) (interface{}, int, error) {
@@ -73,32 +73,35 @@ func (h *IntegrationsWorkflowsGetHandler) Perform(ctx context.Context, interface
 
 	response := make(map[uuid.UUID][]uuid.UUID, len(integrations))
 	for _, integration := range integrations {
-		workflowAndOperatorsList, err := h.fetchWorkflowIDsForIntegration(ctx, args.OrgID, &integration)
+		workflowIDs, err := fetchWorkflowIDsForIntegration(ctx, args.OrgID, &integration, h.IntegrationRepo, h.OperatorRepo, h.Database)
 		if err != nil {
-			return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to fetch workflow and operators for integration.")
+			return nil, http.StatusInternalServerError, errors.Wrapf(err, "Unable to find workflows for integration %s", integration.ID)
 		}
-		response[integration.ID] = workflowAndOperatorsList
+		response[integration.ID] = workflowIDs
 	}
 	return response, http.StatusOK, nil
 }
 
 // fetchWorkflowIDsForIntegration returns a list of workflow IDs that use the given integration.
-func (h *IntegrationsWorkflowsGetHandler) fetchWorkflowIDsForIntegration(
+func fetchWorkflowIDsForIntegration(
 	ctx context.Context,
 	orgID string,
 	integration *models.Integration,
+	integrationRepo repos.Integration,
+	operatorRepo repos.Operator,
+	db database.Database,
 ) ([]uuid.UUID, error) {
 	integrationID := integration.ID
 
 	// If the requested integration is a cloud integration, substitute the cloud integration ID
 	// with the ID of the dynamic k8s integration.
 	if integration.Service == shared.AWS {
-		k8sIntegration, err := h.IntegrationRepo.GetByNameAndUser(
+		k8sIntegration, err := integrationRepo.GetByNameAndUser(
 			ctx,
 			fmt.Sprintf("%s:%s", integration.Name, dynamic.K8sIntegrationNameSuffix),
 			uuid.Nil,
 			orgID,
-			h.Database,
+			db,
 		)
 		if err != nil {
 			return nil, err
@@ -110,9 +113,9 @@ func (h *IntegrationsWorkflowsGetHandler) fetchWorkflowIDsForIntegration(
 	operators, err := operator.GetOperatorsOnIntegration(
 		ctx,
 		integrationID,
-		h.IntegrationRepo,
-		h.OperatorRepo,
-		h.Database,
+		integrationRepo,
+		operatorRepo,
+		db,
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to retrieve operators.")
@@ -124,7 +127,7 @@ func (h *IntegrationsWorkflowsGetHandler) fetchWorkflowIDsForIntegration(
 		return op.ID
 	})
 
-	operatorRelations, err := h.OperatorRepo.GetRelationBatch(ctx, operatorIDs, h.Database)
+	operatorRelations, err := operatorRepo.GetRelationBatch(ctx, operatorIDs, db)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to retrieve operator ID information.")
 	}

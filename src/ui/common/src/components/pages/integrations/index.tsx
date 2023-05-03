@@ -5,7 +5,6 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 
-import { BreadcrumbLink } from '../../../components/layouts/NavBar';
 import { useStorageMigrationListQuery } from '../../../handlers/AqueductApi';
 import { handleGetServerConfig } from '../../../handlers/getServerConfig';
 import { StorageMigrationResponse } from '../../../handlers/responses/storageMigration';
@@ -21,6 +20,7 @@ import AddIntegrations from '../../integrations/addIntegrations';
 import { ConnectedIntegrations } from '../../integrations/connectedIntegrations';
 import { ConnectedIntegrationType } from '../../integrations/connectedIntegrationType';
 import DefaultLayout from '../../layouts/default';
+import { BreadcrumbLink } from '../../layouts/NavBar';
 import MetadataStorageInfo from '../account/MetadataStorageInfo';
 import { LayoutProps } from '../types';
 
@@ -55,7 +55,7 @@ const IntegrationsPage: React.FC<Props> = ({
   }, [user]);
 
   useEffect(() => {
-    document.title = 'Integrations | Aqueduct';
+    document.title = 'Resources | Aqueduct';
   }, []);
 
   let deleteIntegrationName = '';
@@ -139,6 +139,7 @@ const IntegrationsPage: React.FC<Props> = ({
                 </Typography>
                 <Box
                   sx={{
+                    borderRadius: 2,
                     backgroundColor: theme.palette.red[100],
                     color: theme.palette.red[600],
                     p: 2,

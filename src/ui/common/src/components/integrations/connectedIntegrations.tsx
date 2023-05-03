@@ -1,7 +1,7 @@
-import { Alert, CircularProgress, Snackbar, Typography } from '@mui/material';
+import { CircularProgress, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { IntegrationCard } from '../../components/integrations/cards/card';
@@ -17,6 +17,8 @@ import {
 } from '../../utils/integrations';
 import { Card } from '../layouts/card';
 import { ConnectedIntegrationType } from './connectedIntegrationType';
+import { ErrorSnackbar } from './errorSnackbar';
+import { getNumWorkflowsUsingMessage } from './numWorkflowsUsingMsg';
 
 type ConnectedIntegrationsProps = {
   user: UserProfile;
@@ -31,12 +33,6 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
   forceLoad,
   connectedIntegrationType,
 }) => {
-  const [showWorkflowsFetchErrorToast, setShowWorkflowsFetchErrorToast] =
-    useState(false);
-  const handleWorkflowsFetchErrorToastClose = () => {
-    setShowWorkflowsFetchErrorToast(false);
-  };
-
   const dispatch: AppDispatch = useDispatch();
 
   useEffect(() => {
@@ -79,16 +75,6 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
     isLoading,
   } = useIntegrationsWorkflowsGetQuery({ apiKey: user.apiKey });
 
-  // Display an error toast if there was an error fetching the workflows.
-  useEffect(() => {
-    if (fetchWorkflowsError) {
-      setShowWorkflowsFetchErrorToast(true);
-    } else {
-      // Remember to hide this if the error goes away.
-      setShowWorkflowsFetchErrorToast(false);
-    }
-  }, [fetchWorkflowsError]);
-
   if (isLoading) {
     return <CircularProgress />;
   }
@@ -109,22 +95,12 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
 
   return (
     <Box>
-      <Snackbar
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        open={showWorkflowsFetchErrorToast}
-        onClose={handleWorkflowsFetchErrorToastClose}
-        key={'integrations-dialog-success-snackbar'}
-        autoHideDuration={6000}
-      >
-        <Alert
-          onClose={handleWorkflowsFetchErrorToastClose}
-          severity="error"
-          sx={{ width: '100%' }}
-        >
-          Unexpected error occurred when fetching the workflows associated with
-          the integrations.
-        </Alert>
-      </Snackbar>
+      <ErrorSnackbar
+        shouldShow={fetchWorkflowsError !== undefined}
+        errMsg={
+          'Unexpected error occurred when fetching the workflows associated with the integrations. Please try again.'
+        }
+      />
 
       <Typography variant="h6">{connectedIntegrationType}</Typography>
       <Box
@@ -137,18 +113,14 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
         {[...integrations]
           .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
           .map((integration, idx) => {
-            // Leave this empty if there was an error while fetching workflows.
             let numWorkflowsUsingMsg = '';
-            const numWorkflowsUsing =
-              workflowsByIntegration[integration.id].length;
-            if (!fetchWorkflowsError) {
-              if (numWorkflowsUsing > 0) {
-                numWorkflowsUsingMsg = `Used by ${numWorkflowsUsing} ${
-                  numWorkflowsUsing === 1 ? 'workflow' : 'workflows'
-                }`;
-              } else {
-                numWorkflowsUsingMsg = 'Not currently in use';
-              }
+            if (
+              !fetchWorkflowsError &&
+              integration.id in workflowsByIntegration
+            ) {
+              numWorkflowsUsingMsg = getNumWorkflowsUsingMessage(
+                workflowsByIntegration[integration.id].length
+              );
             }
 
             return (
@@ -156,7 +128,7 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
                 <Link
                   underline="none"
                   color="inherit"
-                  href={`${getPathPrefix()}/integration/${integration.id}`}
+                  href={`${getPathPrefix()}/resource/${integration.id}`}
                 >
                   <Card>
                     <IntegrationCard
