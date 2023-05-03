@@ -18,6 +18,11 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			WorkflowRepo: s.WorkflowRepo,
 			DAGRepo:      s.DAGRepo,
 		},
+		routes.NodeDagOperatorsRoute: &v2.DagOperatorsGetHandler{
+			Database:     s.Database,
+			WorkflowRepo: s.WorkflowRepo,
+			OperatorRepo: s.OperatorRepo,
+		},
 		routes.DAGResultRoute: &v2.DAGResultGetHandler{
 			Database:      s.Database,
 			WorkflowRepo:  s.WorkflowRepo,
@@ -89,11 +94,13 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database:        s.Database,
 			IntegrationRepo: s.IntegrationRepo,
 			OperatorRepo:    s.OperatorRepo,
+			DAGResultRepo:   s.DAGResultRepo,
 		},
 		routes.IntegrationWorkflowsRoute: &v2.IntegrationWorkflowsGetHandler{
 			Database:        s.Database,
 			IntegrationRepo: s.IntegrationRepo,
 			OperatorRepo:    s.OperatorRepo,
+			DAGResultRepo:   s.DAGResultRepo,
 		},
 
 		// V1 Handlers

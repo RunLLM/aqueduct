@@ -2,6 +2,7 @@ package v2
 
 import (
 	"context"
+	"github.com/aqueducthq/aqueduct/lib/response"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
@@ -25,7 +26,7 @@ import (
 //		`api-key`: user's API Key
 // Response:
 //	Body:
-//		Map of integration ID to list of workflow IDs that use that integration.
+//		Map of integration ID to list of `response.WorkflowAndDagID` that use that integration.
 
 type integrationsWorkflowsGetArgs struct {
 	*aq_context.AqContext
@@ -37,6 +38,7 @@ type IntegrationsWorkflowsGetHandler struct {
 	Database        database.Database
 	IntegrationRepo repos.Integration
 	OperatorRepo    repos.Operator
+	DAGResultRepo   repos.DAGResult
 }
 
 func (*IntegrationsWorkflowsGetHandler) Name() string {
@@ -67,26 +69,29 @@ func (h *IntegrationsWorkflowsGetHandler) Perform(ctx context.Context, interface
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to list integrations.")
 	}
 
-	response := make(map[uuid.UUID][]uuid.UUID, len(integrations))
+	response := make(map[uuid.UUID][]*response.WorkflowAndDagIDs, len(integrations))
 	for _, integration := range integrations {
-		workflowIDs, err := fetchWorkflowIDsForIntegration(ctx, args.OrgID, &integration, h.IntegrationRepo, h.OperatorRepo, h.Database)
+		workflowAndDagIDs, err := fetchWorkflowAndDagIDsForIntegration(ctx, args.OrgID, &integration, h.IntegrationRepo, h.OperatorRepo, h.DAGResultRepo, h.Database)
 		if err != nil {
 			return nil, http.StatusInternalServerError, errors.Wrapf(err, "Unable to find workflows for integration %s", integration.ID)
 		}
-		response[integration.ID] = workflowIDs
+		response[integration.ID] = workflowAndDagIDs
 	}
 	return response, http.StatusOK, nil
 }
 
-// fetchWorkflowIDsForIntegration returns a list of workflow IDs that use the given integration.
-func fetchWorkflowIDsForIntegration(
+// fetchWorkflowAndDagIDsForIntegration returns a list of workflow IDs that use the given integration.
+// We consider a workflow to use a resource if it has run an operator that uses this resource during
+// it's latest run.
+func fetchWorkflowAndDagIDsForIntegration(
 	ctx context.Context,
 	orgID string,
 	integration *models.Integration,
 	integrationRepo repos.Integration,
 	operatorRepo repos.Operator,
+	dagResultRepo repos.DAGResult,
 	db database.Database,
-) ([]uuid.UUID, error) {
+) ([]*response.WorkflowAndDagIDs, error) {
 	operators, err := operator.GetOperatorsOnIntegration(
 		ctx,
 		orgID,
@@ -110,14 +115,50 @@ func fetchWorkflowIDsForIntegration(
 		return nil, errors.Wrap(err, "Unable to retrieve operator ID information.")
 	}
 
-	workflowIDSet := make(map[uuid.UUID]bool, len(operatorRelations))
-	workflowIDs := make([]uuid.UUID, 0, len(operatorRelations))
+	// This map is derived directly from the operators.
+	workflowIDToDagIDs := make(map[uuid.UUID][]uuid.UUID)
 	for _, operatorRelation := range operatorRelations {
-		if _, ok := workflowIDSet[operatorRelation.WorkflowID]; ok {
-			continue
+		if _, ok := workflowIDToDagIDs[operatorRelation.WorkflowID]; ok {
+			workflowIDToDagIDs[operatorRelation.WorkflowID] = append(
+				workflowIDToDagIDs[operatorRelation.WorkflowID],
+				operatorRelation.DagID,
+			)
+		} else {
+			workflowIDToDagIDs[operatorRelation.WorkflowID] = []uuid.UUID{operatorRelation.DagID}
 		}
-		workflowIDSet[operatorRelation.WorkflowID] = true
-		workflowIDs = append(workflowIDs, operatorRelation.WorkflowID)
 	}
-	return workflowIDs, nil
+
+	// For each workflow, fetch the latest dag ID. We can use this latest dag ID to filter out any
+	// workflows had historically used this resource, but no longer do in their latest run.
+	workflowAndDagIDs := make([]*response.WorkflowAndDagIDs, 0, len(workflowIDToDagIDs))
+	for workflowID, dagIDs := range workflowIDToDagIDs {
+		dbDAGResults, err := dagResultRepo.GetByWorkflow(ctx, workflowID, "created_at", 1, true, db)
+		if err != nil {
+			return nil, err
+		}
+
+		// Skip any workflows that have been defined but have not run yet.
+		if len(dbDAGResults) == 1 {
+			latestDagID := dbDAGResults[0].DagID
+
+			found := false
+			for _, dagID := range dagIDs {
+				if dagID == latestDagID {
+					found = true
+					break
+				}
+			}
+
+			// If the latest dag does not have any of the resource operator's on it, that means
+			// that the workflow no longer uses this resource.
+			if found {
+				workflowAndDagIDs = append(workflowAndDagIDs, &response.WorkflowAndDagIDs{
+					WorkflowID: workflowID,
+					DagID:      latestDagID,
+				})
+			}
+		}
+	}
+
+	return workflowAndDagIDs, nil
 }

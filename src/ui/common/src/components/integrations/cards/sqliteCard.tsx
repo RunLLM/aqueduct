@@ -10,12 +10,7 @@ type SQLiteCardProps = {
 export const SQLiteCard: React.FC<SQLiteCardProps> = ({ integration }) => {
   const config = integration.config as SQLiteConfig;
 
-  return (
-      <ResourceCardText
-          labels={['Database']}
-          values={[config.database]}
-      />
-  );
+  return <ResourceCardText labels={['Database']} values={[config.database]} />;
 };
 
 export default SQLiteCard;
