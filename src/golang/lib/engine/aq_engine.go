@@ -926,7 +926,6 @@ func (eng *aqEngine) execute(
 
 	// Kick off execution by starting all operators that don't have any inputs.
 	for _, op := range dag.Operators() {
-		log.Infof("Dag Operator %s [%d], Type: %s", op.Name(), len(dag.Operators()), op.Type())
 		if op.Type() == operator_model.LoadType {
 			log.Infof("Skipping save operator %s Type: %s", op.Name(), op.Type())
 			continue
