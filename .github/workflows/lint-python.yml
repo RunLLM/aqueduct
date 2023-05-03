@@ -5,7 +5,7 @@ name: Python Linter
 on:
   workflow_dispatch:
   pull_request:
-    branches: [ main ]
+    branches: [ investigate-isort-issue ]
     paths:
       - 'src/python/**'
       - 'sdk/**'
