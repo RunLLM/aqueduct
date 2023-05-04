@@ -1,7 +1,7 @@
 # usage: Run this script to generate docs for gitbook repo.
-GITBOOK_REPO=$HOME/dev/aqueducthq/gitbook
+GITBOOK_REPO=$HOME/gitbook
 
-cd ~/dev/aqueducthq/aqueduct/sdk
+cd ~/aqueduct/sdk
 
 bash ../scripts/generate_docs.sh 
 rm -rf $GITBOOK_REPO/api-reference/sdk-reference/package-aqueduct
@@ -9,7 +9,7 @@ mkdir -p $GITBOOK_REPO/api-reference/sdk-reference/package-aqueduct
 cp -r docs/* $GITBOOK_REPO/api-reference/sdk-reference/package-aqueduct
 rm -r docs/
 
-cd ~/dev/aqueducthq/aqueduct
+cd ~/aqueduct
 python3 scripts/convert_nb_to_md.py --input="examples/churn_prediction/Customer Churn Prediction.ipynb" --output=$GITBOOK_REPO/example-workflows/customer-churn-predictor.md
 python3 scripts/convert_nb_to_md.py --input="examples/sentiment-analysis/Sentiment Model.ipynb" --output=$GITBOOK_REPO/example-workflows/sentiment-analysis.md
 python3 scripts/convert_nb_to_md.py --input="examples/wine-ratings-prediction/Predict Missing Wine Ratings.ipynb" --output=$GITBOOK_REPO/example-workflows/wine-ratings-predictor.md
