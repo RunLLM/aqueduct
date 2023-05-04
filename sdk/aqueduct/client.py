@@ -310,12 +310,19 @@ class Client:
                 The name of the integration to delete.
         """
         existing_integrations = globals.__GLOBAL_API_CLIENT__.list_resources()
+
+        # If the user uses the deprecated demo name, and there isn't a resource for this, that means they actually
+        # want to use the new demo name.
+        if (
+            name == DEPRECATED_AQUEDUCT_DEMO_DB_NAME
+            and DEPRECATED_AQUEDUCT_DEMO_DB_NAME not in existing_integrations.keys()
+        ) or name == AQUEDUCT_DEMO_DB_NAME:
+            raise InvalidUserActionException("Cannot delete the Aqueduct demo database: %s" % name)
         if name not in existing_integrations.keys():
             raise InvalidIntegrationException("Not connected to integration %s!" % name)
 
-        globals.__GLOBAL_API_CLIENT__.delete_integration(existing_integrations[name].id)
-
         # Update the connected integrations cached on this object.
+        globals.__GLOBAL_API_CLIENT__.delete_integration(existing_integrations[name].id)
         self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_resources()
 
     def list_integrations(self) -> Dict[str, ResourceInfo]:
