@@ -44,6 +44,8 @@ func CreateTestAccount(
 }
 
 // CheckBuiltinIntegrations returns whether the builtin demo and compute integrations already exist.
+// If we notice that the deprecated demo integration exists, we delete it. We expect the caller to add
+// the appropriate demo integration with `ConnectBuiltinDemoDBIntegration()` next.
 func CheckBuiltinIntegrations(ctx context.Context, s *AqServer, orgID string) (bool, bool, error) {
 	integrations, err := s.IntegrationRepo.GetByOrg(
 		context.Background(),
@@ -57,10 +59,20 @@ func CheckBuiltinIntegrations(ctx context.Context, s *AqServer, orgID string) (b
 	demoConnected := false
 	engineConnected := false
 	for _, integrationObject := range integrations {
-		if integrationObject.Name == shared.DemoDbIntegrationName {
+
+		// If we find the deprecated demo integration, delete it. It is now named something else.
+		if integrationObject.Name == shared.DeprecatedDemoDBResourceName && integrationObject.Service == shared.Sqlite {
+			if err := s.IntegrationRepo.Delete(
+				ctx,
+				integrationObject.ID,
+				s.Database,
+			); err != nil {
+				return false, false, errors.Newf("Unable to delete deprecated demo integration: %v", err)
+			}
+			continue
+		} else if integrationObject.Name == shared.DemoDbIntegrationName {
 			demoConnected = true
-		}
-		if integrationObject.Name == shared.AqueductComputeIntegrationName {
+		} else if integrationObject.Name == shared.AqueductComputeIntegrationName {
 			engineConnected = true
 		}
 

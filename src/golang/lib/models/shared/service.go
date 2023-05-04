@@ -45,6 +45,12 @@ const (
 	// Built-in resource names
 	AqueductComputeIntegrationName = "Aqueduct Server"
 	DemoDbIntegrationName          = "Demo"
+
+	// This is what the demo DB resource used to be called, during release v0.3.1 and before.
+	// If we detect a SQLite resource with this name, we will delete it on startup and
+	// make sure that the new resource name is being used. This means that we prevent anyone
+	// from registering any new SQLite integrations with this name.
+	DeprecatedDemoDBResourceName = "aqueduct_demo"
 )
 
 var relationalDatabaseIntegrations map[Service]bool = map[Service]bool{

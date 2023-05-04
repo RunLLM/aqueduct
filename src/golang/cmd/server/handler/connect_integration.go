@@ -123,6 +123,12 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 		return nil, http.StatusBadRequest, errors.New("Resource name is not provided")
 	}
 
+	// On startup, we currently enforce that such a resource does not exist by forcibly deleting it.
+	// Therefore, we don't want users to be able to create a resource with this name.
+	if name == shared.DeprecatedDemoDBResourceName && service == shared.Sqlite {
+		return nil, http.StatusBadRequest, errors.Newf("%s is a reserved name for SQLite resources.", shared.DeprecatedDemoDBResourceName)
+	}
+
 	if service == shared.Github || service == shared.GoogleSheets {
 		return nil, http.StatusBadRequest, errors.Newf("%s integration type is currently not supported", service)
 	}
