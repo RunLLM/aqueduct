@@ -59,8 +59,6 @@ func CheckBuiltinIntegrations(ctx context.Context, s *AqServer, orgID string) (b
 	demoConnected := false
 	engineConnected := false
 	for _, integrationObject := range integrations {
-
-		// If we find the deprecated demo integration, delete it. It is now named something else.
 		if integrationObject.Name == shared.DeprecatedDemoDBResourceName && integrationObject.Service == shared.Sqlite {
 			if err := s.IntegrationRepo.Delete(
 				ctx,

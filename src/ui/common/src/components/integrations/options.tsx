@@ -83,8 +83,7 @@ const IntegrationOptions: React.FC<Props> = ({
           </Typography>
         </MenuItem>
 
-        {!isBuiltinIntegration(integration) &&
-          integration.service !== 'AWS' && (
+        {integration.service !== 'AWS' && (
             <MenuItem
               onClick={() => {
                 setAnchorEl(null);

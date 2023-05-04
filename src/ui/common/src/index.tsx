@@ -4,7 +4,6 @@ import ExecutionChip from './components/execution/chip';
 import { useAqueductConsts } from './components/hooks/useAqueductConsts';
 import useUser from './components/hooks/useUser';
 import AddIntegrations from './components/integrations/addIntegrations';
-import { AqueductDemoCard } from './components/integrations/cards/aqueductDemoCard';
 import { AWSCard } from './components/integrations/cards/awsCard';
 import { BigQueryCard } from './components/integrations/cards/bigqueryCard';
 import { IntegrationCard } from './components/integrations/cards/card';
@@ -195,7 +194,6 @@ export {
   AddTableDialog,
   aqueductApi,
   AqueductBezier,
-  AqueductDemoCard,
   AqueductQuadratic,
   AqueductStraight,
   archiveNotification,

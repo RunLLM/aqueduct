@@ -349,7 +349,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           </Alert>
         )}
 
-        {selectedIntegration.name === 'aqueduct_demo' && (
+        {selectedIntegration.name === 'Demo' && selectedIntegration.service == 'SQLite' && (
           <Typography variant="body1" sx={{ my: 1 }}>
             You can see the documentation for the Aqueduct Demo database{' '}
             <Link href="https://docs.aqueducthq.com/integrations/aqueduct-demo-integration">

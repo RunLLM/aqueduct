@@ -2,7 +2,6 @@ import React from 'react';
 import { Integration } from 'src/utils/integrations';
 
 import { AirflowCard } from './airflowCard';
-import { AqueductDemoCard } from './aqueductDemoCard';
 import { AthenaCard } from './athenaCard';
 import AWSCard from './awsCard';
 import { BasicDBCard } from './basicDBCard';

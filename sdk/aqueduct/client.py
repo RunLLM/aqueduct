@@ -119,6 +119,10 @@ def get_apikey() -> str:
             exit(1)
 
 
+DEPRECATED_AQUEDUCT_DEMO_DB_NAME = "aqueduct_demo"
+AQUEDUCT_DEMO_DB_NAME = "Demo"
+
+
 class Client:
     """This class allows users to interact with flows on their Aqueduct cluster."""
 
@@ -385,8 +389,19 @@ class Client:
                 incompatible type.
         """
         self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_resources()
+        connected_names = self._connected_integrations.keys()
 
-        if name not in self._connected_integrations.keys():
+        if name == DEPRECATED_AQUEDUCT_DEMO_DB_NAME:
+            # If the user uses the deprecated demo name, and there isn't a resource for this, that means they actually
+            # want to use the new demo name. We implicitly convert this for them, with a warning.
+            if DEPRECATED_AQUEDUCT_DEMO_DB_NAME not in connected_names:
+                logger().warning(
+                    "`%s` is the deprecated name for the aqueduct demo db. Please use `%s` instead."
+                    % (DEPRECATED_AQUEDUCT_DEMO_DB_NAME, AQUEDUCT_DEMO_DB_NAME)
+                )
+                name = AQUEDUCT_DEMO_DB_NAME
+
+        if name not in connected_names:
             raise InvalidIntegrationException("Not connected to integration %s!" % name)
 
         integration_info = self._connected_integrations[name]
