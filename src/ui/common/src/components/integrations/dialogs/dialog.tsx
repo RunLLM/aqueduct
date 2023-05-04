@@ -430,8 +430,8 @@ const IntegrationDialog: React.FC<Props> = ({
       spellCheck={false}
       required={true}
       label="Name*"
-      description="Provide a unique name to refer to this integration."
-      placeholder={'my_' + formatService(service) + '_integration'}
+      description="Provide a unique name to refer to this resource."
+      placeholder={'my_' + formatService(service) + '_resource'}
       onChange={(event) => {
         setName(event.target.value);
         setShouldShowNameError(false);
@@ -447,7 +447,7 @@ const IntegrationDialog: React.FC<Props> = ({
       <DialogContent>
         {editMode && numWorkflows > 0 && (
           <Alert sx={{ mb: 2 }} severity="info">
-            {`Changing this integration will automatically update ${numWorkflows} ${
+            {`Changing this resource will automatically update ${numWorkflows} ${
               numWorkflows === 1 ? 'workflow' : 'workflows'
             }.`}
           </Alert>
@@ -466,9 +466,9 @@ const IntegrationDialog: React.FC<Props> = ({
 
         {shouldShowNameError && (
           <Alert sx={{ mt: 2 }} severity="error">
-            <AlertTitle>Naming Error</AlertTitle>A connected integration already
+            <AlertTitle>Naming Error</AlertTitle>A connected resource already
             exists with this name. Please provide a unique name for your
-            integration.
+            resource.
           </Alert>
         )}
 
