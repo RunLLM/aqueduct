@@ -34,9 +34,11 @@ def generate(
         max_length (int, optional): The maximum length of the generated response. Default: 100
 
     Examples:
+        ```python
         >>> from aqueduct_llm import llama_7b
         >>> llama_7b.generate("What's the best LLM?", max_length=100)
         "LLaMA 7B is the best LLM!"
+        ```
     """
     config = Config(max_length=max_length)
     config.describe()

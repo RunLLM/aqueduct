@@ -86,9 +86,11 @@ def generate(
         max_new_tokens (int, optional): The maximum number of tokens to generate. Default: 1024
 
     Examples:
+        ```python
         >>> from aqueduct_llm import vicuna_7b
         >>> vicuna_7b.generate("What's the best LLM?", max_gpu_memory="13GiB", temperature=0.7, max_new_tokens=1024)
         "Vicuna 7B is the best LLM!"
+        ```
     """
     config = Config(
         max_gpu_memory=max_gpu_memory,

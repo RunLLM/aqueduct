@@ -9,6 +9,7 @@ echo "### package aqueduct
 * [\`error\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/aqueduct.error)
 * [\`flow\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/aqueduct.flow)
 * [\`schedule\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/aqueduct.schedule)
+* [\`llm_op\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/aqueduct.llm_op)
 ### package aqueduct.artifacts
 * [\`bool_artifact\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.artifacts/aqueduct.artifacts.bool_artifact)
 * [\`generic_artifact\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.artifacts/aqueduct.artifacts.generic_artifact)
@@ -34,6 +35,7 @@ pydoc-markdown -I . --render-toc -m aqueduct.decorator > docs/aqueduct.decorator
 pydoc-markdown -I . --render-toc -m aqueduct.error > docs/aqueduct.error.md
 pydoc-markdown -I . --render-toc -m aqueduct.flow > docs/aqueduct.flow.md
 pydoc-markdown -I . --render-toc -m aqueduct.schedule > docs/aqueduct.schedule.md
+pydoc-markdown -I . --render-toc -m aqueduct.llm_op > docs/aqueduct.llm_op.md
 
 mkdir docs/package-aqueduct.artifacts
 
