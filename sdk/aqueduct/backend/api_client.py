@@ -148,8 +148,9 @@ class APIClient:
     def _check_config(self) -> None:
         if not self.configured:
             raise Exception(
-                "API client has not been configured, please complete the configuration \
-                by initializing an Aqueduct client with the api key and the server address."
+                "API client has not been configured, please complete the configuration "
+                "by initializing an Aqueduct client via: "
+                "`client = aqueduct.Client(api_key, aqueduct_address)`"
             )
 
     def _generate_auth_headers(self) -> Dict[str, str]:
