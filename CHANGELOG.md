@@ -13,8 +13,8 @@ Released on May 3, 2023.
     ```python
     import aqueduct as aq
 
-    llm_op = aq.llm_op('vicuna-7b', engine='k8s')
-    llm_op('What is the best LLM?')
+    vicuna = aq.llm_op('vicuna-7b', engine='k8s')
+    vicuna('What is the best LLM?')
 
     ```
 * Reorganizes integrations around the concept of resources. Resources are any
@@ -26,7 +26,7 @@ Released on May 3, 2023.
     deprecated in a future release.
 * Allows users to specify a custom Docker image when running an Aqueduct
     operator on Kubernetes. The Docker image is required to have the Aqueduct
-    execturo scaffolding installed; for more details, please see our
+    executor scaffolding installed; for more details, please see our
     documentation here. **TODO: link documentation**
 
 ### Enhancements
