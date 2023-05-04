@@ -11,9 +11,10 @@ Released on May 4, 2023.
     batch execution over a list of inputs or a Pandas `Series`. See our
     [documentation](https://docs.aqueducthq.com/llms) for more details.
     ```python
-    import aqueduct as aq
+    from aqueduct import Client, llm_op
 
-    vicuna = aq.llm_op('vicuna-7b', engine='k8s')
+    client = Client() # initialize Aqueduct client so we can check if the engine name below is valid
+    vicuna = llm_op('vicuna_7b', engine='my_k8s_engine')
     vicuna('What is the best LLM?')
 
     ```
