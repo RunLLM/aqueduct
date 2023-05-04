@@ -1,7 +1,7 @@
 # Changelog
 
-## 0.3
-Released on May 3, 2023.
+## 0.3.1
+Released on May 4, 2023.
 
 ### Key Features
 * Introduces the `aqueduct.llm_op` API and the `aqueduct-llm` package. Aqueduct
@@ -9,7 +9,7 @@ Released on May 3, 2023.
     pre-built Docker images optimized for executing LLMs on Kubernetes. The
     `llm_op` API supports both ad hoc execution, as pictured below, as well as
     batch execution over a list of inputs or a Pandas `Series`. See our
-    documentation for more details. **TODO: link the word documentation**
+    [documentation](https://docs.aqueducthq.com/llms) for more details.
     ```python
     import aqueduct as aq
 
@@ -27,7 +27,7 @@ Released on May 3, 2023.
 * Allows users to specify a custom Docker image when running an Aqueduct
     operator on Kubernetes. The Docker image is required to have the Aqueduct
     executor scaffolding installed; for more details, please see our
-    documentation here. **TODO: link documentation**
+    documentation [here](https://docs.aqueducthq.com/integrations/container-registries/ecr).
 
 ### Enhancements
 * Improves logging and error handling when an operator fails because it's able
