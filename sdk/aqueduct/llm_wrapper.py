@@ -165,6 +165,8 @@ def llm_op(
         string(s) before sending to the LLM.
     Examples:
         ```python
+        >>> from aqueduct import Client
+        >>> client = Client()
         >>> snowflake = client.resource("snowflake")
         >>> reviews_table = snowflake.sql("select * from hotel_reviews;")
         >>> from aqueduct import llm_op
