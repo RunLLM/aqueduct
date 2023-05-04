@@ -364,7 +364,7 @@ func mapJobTypeToDockerImage(spec Spec, launchGpu bool, cudaVersion operator.Cud
 
 func mapIntegrationServiceToDockerImage(service shared.Service) (string, error) {
 	switch service {
-	case shared.Postgres, shared.Redshift, shared.AqueductDemo:
+	case shared.Postgres, shared.Redshift:
 		return PostgresConnectorDockerImage, nil
 	case shared.Snowflake:
 		return SnowflakeConnectorDockerImage, nil

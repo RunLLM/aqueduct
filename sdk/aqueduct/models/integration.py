@@ -54,7 +54,6 @@ class ResourceInfo(BaseModel):
             ServiceType.MARIADB,
             ServiceType.SQLSERVER,
             ServiceType.BIGQUERY,
-            ServiceType.AQUEDUCTDEMO,
             ServiceType.SQLITE,
             ServiceType.ATHENA,
         ]

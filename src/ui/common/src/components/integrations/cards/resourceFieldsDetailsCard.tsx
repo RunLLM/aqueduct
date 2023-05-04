@@ -45,9 +45,6 @@ export const ResourceFieldsDetailsCard: React.FC<
         <SnowflakeCard integration={integration} detailedView={detailedView} />
       );
       break;
-    case 'Aqueduct Demo':
-      serviceCard = <AqueductDemoCard integration={integration} />;
-      break;
     case 'MongoDB':
       serviceCard = <MongoDBCard integration={integration} />;
       break;

@@ -258,7 +258,7 @@ func mapIntegrationServiceToLambdaFunction(service shared.Service) (string, erro
 	switch service {
 	case shared.Snowflake:
 		return lambda_utils.SnowflakeLambdaFunction, nil
-	case shared.Postgres, shared.Redshift, shared.AqueductDemo:
+	case shared.Postgres, shared.Redshift:
 		return lambda_utils.PostgresLambdaFunction, nil
 	case shared.BigQuery:
 		return lambda_utils.BigQueryLambdaFunction, nil

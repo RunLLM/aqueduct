@@ -229,9 +229,6 @@ const IntegrationDialog: React.FC<Props> = ({
         />
       );
       break;
-    case 'Aqueduct Demo':
-      serviceDialog = null;
-      break;
     case 'MySQL':
       serviceDialog = (
         <MysqlDialog
@@ -437,7 +434,6 @@ const IntegrationDialog: React.FC<Props> = ({
         setShouldShowNameError(false);
       }}
       value={name}
-      disabled={service === 'Aqueduct Demo'}
     />
   );
 
