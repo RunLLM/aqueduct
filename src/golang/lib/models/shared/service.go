@@ -44,7 +44,7 @@ const (
 
 	// Built-in resource names
 	AqueductComputeIntegrationName = "Aqueduct Server"
-	DemoDbIntegrationName          = "aqueduct_demo"
+	DemoDbIntegrationName          = "Demo"
 )
 
 var relationalDatabaseIntegrations map[Service]bool = map[Service]bool{
