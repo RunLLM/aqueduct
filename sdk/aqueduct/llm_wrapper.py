@@ -141,7 +141,7 @@ def llm_op(
         output_column_name:
             The name of the column of the Dataframe to store the output of the LLM. If this field is provided,
             column_name must also be provided.
-            
+
         engine:
             The name of the compute resource this operator will run on. Defaults to the Aqueduct engine.
             We recommend using a Kubernetes engine to run LLM operators, as we have implemented performance
