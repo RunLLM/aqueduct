@@ -137,6 +137,9 @@ def test_publish_with_schedule(client, flow_name, data_integration, engine):
     )
 
 
+@pytest.mark.skip_for_spark_engines(
+    reason="Multiple Databricks cluster spinup takes longer than timeout."
+)
 def test_publish_flow_with_cascading_trigger(client, flow_name, data_integration, engine):
     """Tests publishing a flow that is set to run on a cascading trigger."""
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
@@ -319,6 +322,9 @@ def test_publish_flow_without_triggering(client, flow_name, data_integration, en
     assert flow.name() == name
 
 
+@pytest.mark.skip_for_spark_engines(
+    reason="Spark converts column names to capital, .equals doesn't work."
+)
 def test_get_artifact_from_flow(client, flow_name, data_integration, engine):
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
     output_artifact = dummy_sentiment_model(table_artifact)
@@ -353,6 +359,9 @@ def test_get_artifact_reuse_for_computation(client, flow_name, data_integration,
         output_artifact = dummy_sentiment_model(artifact_return)
 
 
+@pytest.mark.skip_for_spark_engines(
+    reason="Wating for 4 workflows takes longer than timeout period."
+)
 def test_multiple_flows_with_same_schedule(client, flow_name, data_integration, engine):
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
     output_artifact = dummy_sentiment_model(table_artifact)

@@ -46,6 +46,9 @@ def test_artifact_name_sanitization(client, data_integration):
     assert c(output).name() == "whitespace around me"
 
 
+@pytest.mark.skip_for_spark_engines(
+    reason="Spark converts column names to capital, .equals doesn't work."
+)
 def test_extract_with_default_name_collision(client, flow_name, engine, data_integration):
     # In the case where no explicit name is supplied, we expect new extract
     # operators to always be created.
@@ -76,6 +79,9 @@ def test_extract_with_default_name_collision(client, flow_name, engine, data_int
     assert flow_run.artifact(table_artifact_1.name() + " (1)").get().equals(table_artifact_1.get())
 
 
+@pytest.mark.skip_for_spark_engines(
+    reason="Spark converts column names to capital, .equals doesn't work."
+)
 def test_extract_with_op_name_collision(client, data_integration, engine, flow_name):
     """Artifact names are the only collisions we care about. We will deduplicate them, but allow
     for operator name duplicates."""
@@ -105,6 +111,9 @@ def test_extract_with_op_name_collision(client, data_integration, engine, flow_n
     assert flow_run.artifact("sql query artifact (1)").get().equals(table_1)
 
 
+@pytest.mark.skip_for_spark_engines(
+    reason="Spark converts column names to capital, .equals doesn't work."
+)
 def test_extract_with_artifact_name_collision(client, data_integration, engine, flow_name):
     output = extract(data_integration, DataObject.SENTIMENT, output_name="hotel reviews")
     assert output.name() == "hotel reviews"
@@ -249,6 +258,9 @@ def _run_noop_check(input):
     return foo(input)
 
 
+@pytest.mark.skip_for_spark_engines(
+    reason="Spark converts column names to capital, .equals doesn't work."
+)
 def test_artifact_name_collisions_across_operator_types(
     client, data_integration, engine, flow_name
 ):
