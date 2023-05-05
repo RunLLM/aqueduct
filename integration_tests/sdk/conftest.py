@@ -122,6 +122,10 @@ def data_integration(request, pytestconfig, client):
                 "Skipped. Tests are only running against data integration %s." % cmdline_data_flag
             )
 
+    # Translate aqueduct_demo -> Demo integration.
+    if request.param == "aqueduct_demo":
+        return client.resource("Demo")
+
     return client.resource(request.param)
 
 

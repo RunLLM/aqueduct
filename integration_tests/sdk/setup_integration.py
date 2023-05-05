@@ -107,7 +107,7 @@ def _add_missing_artifacts(
     if len(missing_names) == 0:
         return
 
-    demo = client.resource("aqueduct_demo")
+    demo = client.resource("Demo")
     artifacts: List[BaseArtifact] = []
     for table_name in missing_names:
         data = _fetch_demo_data(demo, table_name)
@@ -205,6 +205,8 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
     # No need to do any setup for the demo db.
     if "aqueduct_demo" in data_integrations:
         data_integrations.remove("aqueduct_demo")
+    if "Demo" in data_integrations:
+        data_integrations.remove("Demo")
 
     if len(data_integrations) == 0:
         return

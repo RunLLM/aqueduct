@@ -64,7 +64,6 @@ class RelationalDBResource(BaseResource):
 
         if self.type() in [
             ServiceType.POSTGRES,
-            ServiceType.AQUEDUCTDEMO,
             ServiceType.REDSHIFT,
         ]:
             list_tables_query = LIST_TABLES_QUERY_PG

@@ -40,7 +40,7 @@ def test_invalid_connect_integration(client):
     with pytest.raises(
         InvalidUserActionException, match="An integration with this name already exists."
     ):
-        client.connect_resource("aqueduct_demo", "SQLite", config)
+        client.connect_resource("Demo", "SQLite", config)
 
     # Service is invalid.
     with pytest.raises(

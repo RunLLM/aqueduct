@@ -75,7 +75,6 @@ export enum ServiceType {
   MariaDB = 'MariaDB',
   SQLServer = 'SQL Server',
   BigQuery = 'BigQuery',
-  AqueductDemo = 'Aqueduct Demo',
   SQLite = 'SQLite',
   Athena = 'Athena',
   S3 = 'S3',
@@ -90,7 +89,6 @@ export enum RelationalDBServices {
   MariaDB = 'MariaDB',
   SQLServer = 'SQL Server',
   BigQuery = 'BigQuery',
-  AqueductDemo = 'Aqueduct Demo',
   SQLite = 'SQLite',
   Athena = 'Athena',
 }

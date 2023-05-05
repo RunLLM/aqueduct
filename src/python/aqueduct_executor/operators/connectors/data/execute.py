@@ -305,7 +305,7 @@ def setup_connector(
 ) -> connector.DataConnector:
     # prevent isort from moving around type: ignore comments which will cause mypy issues.
     # isort: off
-    if connector_name == common.Name.AQUEDUCT_DEMO or connector_name == common.Name.POSTGRES:
+    if connector_name == common.Name.POSTGRES:
         try:
             import psycopg2
         except:

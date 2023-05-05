@@ -201,7 +201,7 @@ class Github:
             ```
             Then to use it:
             ```
-            warehouse = aqueduct_client.resource(name="aqueduct_demo")
+            warehouse = aqueduct_client.resource(name="Demo")
             gh = aqueduct_client.github(repo=<repo_name>, branch=<branch_name>)
             reviews = warehouse.sql(
                 query=gh.query(path="queries/hotel.sql")
