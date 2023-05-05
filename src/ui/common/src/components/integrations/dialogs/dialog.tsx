@@ -150,8 +150,7 @@ const IntegrationDialog: React.FC<Props> = ({
 
   const connectStatus = editMode ? editStatus : connectNewStatus;
   const disableConnect =
-    !editMode &&
-    (!isConfigComplete(config, service) || name === '');
+    !editMode && (!isConfigComplete(config, service) || name === '');
   const setConfigField = (field: string, value: string) =>
     setConfig((config) => {
       return { ...config, [field]: value };

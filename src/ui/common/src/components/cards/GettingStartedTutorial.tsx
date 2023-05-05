@@ -126,8 +126,8 @@ const GettingStartedTutorial: React.FC<GettingStartedTutorialProps> = ({
                         resources
                       </Link>{' '}
                       page and connect a database. If you don&apos;t have a
-                      database handy, you can use the <code>Demo</code>{' '}
-                      database -- see the documentation{' '}
+                      database handy, you can use the <code>Demo</code> database
+                      -- see the documentation{' '}
                       <Link href="https://docs.aqueducthq.com/example-workflows/demo-data-warehouse">
                         here
                       </Link>

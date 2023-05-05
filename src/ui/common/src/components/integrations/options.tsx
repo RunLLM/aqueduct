@@ -84,22 +84,18 @@ const IntegrationOptions: React.FC<Props> = ({
         </MenuItem>
 
         {integration.service !== 'AWS' && (
-            <MenuItem
-              onClick={() => {
-                setAnchorEl(null);
-                onEdit();
-              }}
-            >
-              <FontAwesomeIcon color="gray.800" icon={faPen} width="16px" />
-              <Typography
-                color="gray.800"
-                variant="body2"
-                sx={{ marginLeft: 1 }}
-              >
-                Edit Resource
-              </Typography>
-            </MenuItem>
-          )}
+          <MenuItem
+            onClick={() => {
+              setAnchorEl(null);
+              onEdit();
+            }}
+          >
+            <FontAwesomeIcon color="gray.800" icon={faPen} width="16px" />
+            <Typography color="gray.800" variant="body2" sx={{ marginLeft: 1 }}>
+              Edit Resource
+            </Typography>
+          </MenuItem>
+        )}
         {!isBuiltinIntegration(integration) && allowDeletion && (
           <MenuItem
             onClick={() => {
