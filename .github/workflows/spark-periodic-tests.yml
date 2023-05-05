@@ -56,3 +56,92 @@ jobs:
           mention_users: ${{ env.ONCALL_SLACK_MEMBER_ID }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
+  
+  run-spark-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 480
+    name: SDK Integration Tests against Spark EMR
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: ./.github/actions/setup-server
+        timeout-minutes: 5
+
+      # TODO(ENG-2537): Use our separate GH actions credentials.
+      - uses: ./.github/actions/fetch-test-config
+        with:
+          aws_access_key_id: ${{ secrets.HARI_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.HARI_SECRET_ACCESS_KEY }}
+          s3_test_config_path: periodic-spark-test-config.yml
+
+      - name: Install any data connector packages
+        run: |
+          aqueduct install s3
+          aqueduct install snowflake
+
+      # TODO(ENG-2537): Use our separate GH actions credentials.
+      - name: Spin up EMR cluster
+        run: |
+          cluster_id=$(aws emr create-cluster \
+          --name "aqueduct_test" \
+          --release-label "emr-6.9.0" \
+          --service-role "${{ secrets.HARI_EMR_DEFAULT_ROLE }}" \
+          --ec2-attributes '{"InstanceProfile":"EMR_EC2_DefaultRole","EmrManagedMasterSecurityGroup":"${{ secrets.HARI_EMR_MAIN_SECURITY_GROUP }}","EmrManagedSlaveSecurityGroup":"${{ secrets.HARI_EMR_WORKER_SECURITY_GROUP }}","KeyName":"${{ secrets.HARI_AWS_KEYPAIR }}","AdditionalMasterSecurityGroups":[],"AdditionalSlaveSecurityGroups":[],"SubnetId":"${{ secrets.HARI_EMR_SUBNET_ID }}"}' \
+          --applications Name=Hadoop Name=Hive Name=Livy Name=Spark Name=Zeppelin \
+          --instance-groups '[{"InstanceCount":1,"InstanceGroupType":"MASTER","Name":"Primary","InstanceType":"m5.2xlarge","EbsConfiguration":{"EbsBlockDeviceConfigs":[{"VolumeSpecification":{"VolumeType":"gp2","SizeInGB":32},"VolumesPerInstance":4}]}},{"InstanceCount":1,"InstanceGroupType":"CORE","Name":"Core","InstanceType":"m5.2xlarge","EbsConfiguration":{"EbsBlockDeviceConfigs":[{"VolumeSpecification":{"VolumeType":"gp2","SizeInGB":32},"VolumesPerInstance":4}]}},{"InstanceCount":2,"InstanceGroupType":"TASK","Name":"Task - 1","InstanceType":"m5.2xlarge","EbsConfiguration":{"EbsBlockDeviceConfigs":[{"VolumeSpecification":{"VolumeType":"gp2","SizeInGB":32},"VolumesPerInstance":4}]}}]' \
+          --scale-down-behavior "TERMINATE_AT_TASK_COMPLETION" \
+          --os-release-label "2.0.20221210.1" \
+          --region "us-east-2" \
+          --query 'ClusterId' \
+          --output text)          
+          echo $cluster_id
+          echo "cluster_id=$cluster_id" >> $GITHUB_ENV
+
+      - name: Wait for EMR cluster to be ready
+        run: |
+          aws emr wait cluster-running --cluster-id "${{ env.cluster_id }}"
+
+      - name: Get Livy Server URL
+        id: get-livy-server-url
+        run: |
+          livy_server_url=$(aws emr describe-cluster --cluster-id ${{ env.cluster_id }} --query 'Cluster.MasterPublicDnsName' --output text):8998
+          echo "livy_server_url=http://$livy_server_url" >> $GITHUB_ENV
+      
+      - name: Update the test-credentials file with the appropriate livy server url
+        working-directory: integration_tests/sdk
+        run: sed -i "s#\(livy_server_url:\s*\).*#\1$(echo "${{ env.livy_server_url }}")#" test-credentials.yml
+
+      - name: Run the SDK Integration Tests
+        working-directory: integration_tests/sdk
+        run: pytest aqueduct_tests/ -rP -vv -n 2
+      
+      - name: Tear Down EMR cluster
+        id: tear-down-emr-cluster
+        if: always()
+        run: |
+          aws emr terminate-clusters --cluster-ids ${{ env.cluster_id }}
+      
+      - uses: ./.github/actions/upload-artifacts
+        if: always()
+        with:
+          prefix: Spark Compute
+      
+      # Sets it as an environmental variable.
+      - name: Get the Slack ID for the current oncall
+        if: always()
+        run: |
+          aws s3 cp s3://aqueduct-assets/oncall.yml ./oncall.yml
+          echo "ONCALL_SLACK_MEMBER_ID=$(python3 scripts/get_current_oncall.py --file ./oncall.yml)" >> $GITHUB_ENV
+
+      - name: Report to Slack on Failure
+        if: always()
+        uses: ravsamhq/notify-slack-action@v1
+        with:
+          status: ${{ job.status }}
+          notification_title: ""
+          message_format: "{emoji} *{workflow}* has {status_message}"
+          footer: "{run_url}"
+          notify_when: "failure,warnings"
+          mention_users: ${{ env.ONCALL_SLACK_MEMBER_ID }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
