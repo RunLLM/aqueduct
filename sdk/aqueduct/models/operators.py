@@ -17,7 +17,7 @@ from aqueduct.constants.enums import (
 )
 from aqueduct.error import AqueductError, UnsupportedFeatureException
 from aqueduct.models.config import EngineConfig
-from aqueduct.models.integration import IntegrationInfo
+from aqueduct.models.integration import ResourceInfo
 from pydantic import BaseModel, Extra
 
 

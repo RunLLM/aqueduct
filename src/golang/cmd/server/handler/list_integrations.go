@@ -92,7 +92,7 @@ func (h *ListIntegrationsHandler) Perform(ctx context.Context, interfaceArgs int
 	return responses, http.StatusOK, nil
 }
 
-// Helper function to convert an Integration object into an integrationResponse
+// Helper function to convert an resource object into an integrationResponse
 func convertIntegrationObjectToResponse(integrationObject *models.Integration) (*integrationResponse, error) {
 	execState, err := execution_state.ExtractConnectionState(integrationObject)
 	if err != nil {

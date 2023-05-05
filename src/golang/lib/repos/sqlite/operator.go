@@ -123,17 +123,30 @@ func (*operatorReader) Get(ctx context.Context, ID uuid.UUID, DB database.Databa
 	return getOperator(ctx, DB, query, args...)
 }
 
-func (*operatorReader) GetNode(ctx context.Context, ID uuid.UUID, DB database.Database) (*views.OperatorNode, error) {
+func (r *operatorReader) GetNode(ctx context.Context, ID uuid.UUID, DB database.Database) (*views.OperatorNode, error) {
+	nodes, err := r.GetNodeBatch(ctx, []uuid.UUID{ID}, DB)
+	if err != nil {
+		return nil, err
+	}
+	return &nodes[0], nil
+}
+
+func (*operatorReader) GetNodeBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]views.OperatorNode, error) {
+	if len(IDs) == 0 {
+		return nil, errors.New("Provided empty IDs list.")
+	}
+
 	query := fmt.Sprintf(
-		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s = $1",
+		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s IN (%s)",
 		views.OperatorNodeView,
 		operatorNodeViewSubQuery,
 		views.OperatorNodeCols(),
 		views.OperatorNodeView,
 		models.OperatorID,
+		stmt_preparers.GenerateArgsList(len(IDs), 1),
 	)
-	args := []interface{}{ID}
-	return getOperatorNode(ctx, DB, query, args...)
+	args := stmt_preparers.CastIdsListToInterfaceList(IDs)
+	return getOperatorNodes(ctx, DB, query, args...)
 }
 
 func (*operatorReader) GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.Operator, error) {
@@ -449,6 +462,43 @@ func (*operatorReader) GetByEngineIntegrationID(
 	return results, err
 }
 
+func (*operatorReader) GetForAqueductEngine(
+	ctx context.Context,
+	DB database.Database,
+) ([]models.Operator, error) {
+	workflowCondition := `
+		json_extract(workflow_dag.engine_config, '$.type') == 'aqueduct'
+	`
+	operatorCondition := `
+		json_extract(operator.spec, '$.engine_config.type') == 'aqueduct'
+	`
+
+	query := fmt.Sprintf(`
+		SELECT DISTINCT %s FROM
+		operator, workflow_dag, workflow_dag_edge
+		WHERE
+		workflow_dag_edge.workflow_dag_id = workflow_dag.id
+		AND (
+			workflow_dag_edge.from_id = operator.id
+			OR workflow_dag_edge.to_id = operator.id
+		)
+		AND (
+			(
+				json_extract(operator.spec, '$.engine_config') IS NULL
+				AND (%s)
+			)
+			OR (%s)
+		);`,
+		models.OperatorColsWithPrefix(),
+		workflowCondition,
+		operatorCondition,
+	)
+
+	var results []models.Operator
+	err := DB.Query(ctx, &results, query)
+	return results, err
+}
+
 func (*operatorReader) GetUnusedCondaEnvNames(ctx context.Context, DB database.Database) ([]string, error) {
 	// Note that we use `OperatorToArtifactType` as the filtering condition because an operator
 	// is guaranteed to generate at least one artifact, so this filter is guaranteed to capture
@@ -644,23 +694,6 @@ func getOperators(ctx context.Context, DB database.Database, query string, args 
 	var operators []models.Operator
 	err := DB.Query(ctx, &operators, query, args...)
 	return operators, err
-}
-
-func getOperatorNode(ctx context.Context, DB database.Database, query string, args ...interface{}) (*views.OperatorNode, error) {
-	nodes, err := getOperatorNodes(ctx, DB, query, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(nodes) == 0 {
-		return nil, database.ErrNoRows()
-	}
-
-	if len(nodes) != 1 {
-		return nil, errors.Newf("Expected 1 Operator but got %v", len(nodes))
-	}
-
-	return &nodes[0], nil
 }
 
 func getOperatorNodes(ctx context.Context, DB database.Database, query string, args ...interface{}) ([]views.OperatorNode, error) {

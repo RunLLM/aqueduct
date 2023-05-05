@@ -70,3 +70,8 @@ func NewDAGResultFromDBObject(dbDAGResult *models.DAGResult) *DAGResult {
 		ExecState: execStatePtr,
 	}
 }
+
+type WorkflowAndDagIDs struct {
+	WorkflowID uuid.UUID `json:"id"`
+	DagID      uuid.UUID `json:"dag_id"`
+}

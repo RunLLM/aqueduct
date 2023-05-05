@@ -1,9 +1,10 @@
+import time
 import uuid
 from datetime import datetime, timedelta
 
 import pandas as pd
 import pytest
-from aqueduct.constants.enums import ExecutionStatus
+from aqueduct.constants.enums import ExecutionStatus, LoadUpdateMode
 from aqueduct.error import InvalidRequestError, InvalidUserArgumentException
 
 import aqueduct
@@ -616,3 +617,35 @@ def test_delete_flow_with_name(client, flow_name, engine):
         client.delete_flow(flow_id=flow.id(), flow_name="not a real flow")
 
     client.delete_flow(flow_name=flow.name())
+
+
+def test_flow_with_failed_compute_operators(
+    client, flow_name, data_integration, engine, data_validator
+):
+    """
+    Test if one or more compute operators fail, then the save/load operator does not succeed also.
+    """
+
+    @op
+    def bar(arg):
+        return 5 / 0
+
+    @op
+    def baz(arg):
+        time.sleep(10)
+        return arg
+
+    table_name = generate_table_name()
+    result = data_integration.sql("select * from hotel_reviews limit 5")
+    test_data = bar.lazy(baz.lazy(result))
+    save(data_integration, result, name=table_name, update_mode=LoadUpdateMode.REPLACE)
+
+    publish_flow_test(
+        client,
+        artifacts=[test_data, result],
+        name=flow_name(),
+        engine=engine,
+        expected_statuses=[ExecutionStatus.FAILED],
+    )
+
+    data_validator.check_saved_artifact_data_does_not_exist(result.id())
