@@ -322,7 +322,7 @@ func mapJobTypeToDockerImage(spec Spec, launchGpu bool, cudaVersion operator.Cud
 
 		if functionSpec.Image != nil {
 			return *functionSpec.Image.Url, nil
-		} else if functionSpec.Resources.UseLLM != nil && *functionSpec.Resources.UseLLM {
+		} else if functionSpec.Resources != nil && functionSpec.Resources.UseLLM != nil && *functionSpec.Resources.UseLLM {
 			return mapLLMToDockerImage(pythonVersion, cudaVersion)
 		} else if launchGpu {
 			return mapGpuFunctionToDockerImage(pythonVersion, cudaVersion)
