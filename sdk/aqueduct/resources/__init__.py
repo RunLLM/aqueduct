@@ -1,0 +1,15 @@
+from aqueduct.resources.connect_config import (
+    AthenaConfig,
+    BigQueryConfig,
+    GCSConfig,
+    K8sConfig,
+    MongoDBConfig,
+    MySQLConfig,
+    PostgresConfig,
+    ResourceConfig,
+    S3Config,
+    SnowflakeConfig,
+    SparkConfig,
+    SQLiteConfig,
+    SqlServerConfig,
+)

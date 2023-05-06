@@ -122,12 +122,12 @@ const GettingStartedTutorial: React.FC<GettingStartedTutorialProps> = ({
                   <li>
                     <Typography variant="body1">
                       First go to the{' '}
-                      <Link href={`${getPathPrefix()}/integrations`}>
-                        integrations
+                      <Link href={`${getPathPrefix()}/resources`}>
+                        resources
                       </Link>{' '}
                       page and connect a database. If you don&apos;t have a
-                      database handy, you can use the <code>aqueduct_demo</code>{' '}
-                      database -- see the documentation{' '}
+                      database handy, you can use the <code>Demo</code> database
+                      -- see the documentation{' '}
                       <Link href="https://docs.aqueducthq.com/example-workflows/demo-data-warehouse">
                         here
                       </Link>

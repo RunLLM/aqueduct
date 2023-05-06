@@ -34,3 +34,8 @@ export type DagResultResponse = {
   dag_id: string;
   exec_state: ExecState;
 };
+
+export type WorkflowAndDagIDResponse = {
+  id: string;
+  dag_id: string;
+};

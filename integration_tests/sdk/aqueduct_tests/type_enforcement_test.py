@@ -46,6 +46,7 @@ def test_flow_fails_on_unexpected_type_output_for_lazy(client, flow_name, engine
     )
 
 
+@pytest.mark.skip_for_global_lazy_execution(reason="This test requires global eager execution.")
 def test_preview_artifact_backfilled_with_wrong_type(client):
     """An error should be thrown if an upstream operator is previewed with the wrong type."""
     type_toggle = client.create_param("output_type_toggle", True)

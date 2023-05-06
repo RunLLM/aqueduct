@@ -1,5 +1,5 @@
 .DEFAULT_GOAL = all
-VERSION = 0.2.12
+VERSION = 0.3.1
 
 # By default, turn off the Makefile practice of printing each command before
 # you run it.
@@ -166,6 +166,23 @@ publish-spark-conda:
 	docker push aqueducthq/spark-py38-env:$(VERSION)
 	docker push aqueducthq/spark-py39-env:$(VERSION)
 	docker push aqueducthq/spark-py310-env:$(VERSION)
+
+# Building LLM images
+build-llm:
+	docker build . -t aqueducthq/llm_cuda1141_py38:$(VERSION) -f llm/cuda_11_4_1/llm_cuda_1141_py38.dockerfile
+	docker build . -t aqueducthq/llm_cuda1141_py39:$(VERSION) -f llm/cuda_11_4_1/llm_cuda_1141_py39.dockerfile
+	docker build . -t aqueducthq/llm_cuda1141_py310:$(VERSION) -f llm/cuda_11_4_1/llm_cuda_1141_py310.dockerfile
+	docker build . -t aqueducthq/llm_cuda1180_py38:$(VERSION) -f llm/cuda_11_8_0/llm_cuda_1180_py38.dockerfile
+	docker build . -t aqueducthq/llm_cuda1180_py39:$(VERSION) -f llm/cuda_11_8_0/llm_cuda_1180_py39.dockerfile
+	docker build . -t aqueducthq/llm_cuda1180_py310:$(VERSION) -f llm/cuda_11_8_0/llm_cuda_1180_py310.dockerfile
+
+publish-llm:
+	docker push aqueducthq/llm_cuda1141_py38:$(VERSION)
+	docker push aqueducthq/llm_cuda1141_py39:$(VERSION)
+	docker push aqueducthq/llm_cuda1141_py310:$(VERSION)
+	docker push aqueducthq/llm_cuda1180_py38:$(VERSION)
+	docker push aqueducthq/llm_cuda1180_py39:$(VERSION)
+	docker push aqueducthq/llm_cuda1180_py310:$(VERSION)
 
 .PHONY:
 

@@ -5,6 +5,7 @@ from aqueduct.constants import exports
 from aqueduct.constants.enums import CheckSeverity, LoadUpdateMode
 from aqueduct.decorator import check, metric, op, to_operator
 from aqueduct.flow import Flow
+from aqueduct.llm_wrapper import llm_op, supported_llms
 from aqueduct.schedule import DayOfMonth, DayOfWeek, Hour, Minute, daily, hourly, monthly, weekly
 
 

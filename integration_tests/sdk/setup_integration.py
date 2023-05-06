@@ -9,11 +9,11 @@ from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ServiceType
 from aqueduct.error import AqueductError
-from aqueduct.integrations.connect_config import AWSCredentialType
-from aqueduct.integrations.mongodb_integration import MongoDBIntegration
-from aqueduct.integrations.s3_integration import S3Integration
-from aqueduct.integrations.sql_integration import RelationalDBIntegration
-from aqueduct.models.integration import Integration
+from aqueduct.models.integration import BaseResource
+from aqueduct.resources.connect_config import AWSCredentialType
+from aqueduct.resources.mongodb import MongoDBResource
+from aqueduct.resources.s3 import S3Resource
+from aqueduct.resources.sql import RelationalDBResource
 
 from aqueduct import Client, get_apikey
 from sdk.aqueduct_tests.save import save
@@ -55,7 +55,7 @@ def _parse_credentials_file() -> Dict[str, Any]:
     return CACHED_CREDENTIALS
 
 
-def _fetch_demo_data(demo: RelationalDBIntegration, table_name: str) -> pd.DataFrame:
+def _fetch_demo_data(demo: RelationalDBResource, table_name: str) -> pd.DataFrame:
     df = demo.table(table_name)
 
     # Certain tables in our demo db read out some unexpected tokens that
@@ -68,8 +68,8 @@ def _fetch_demo_data(demo: RelationalDBIntegration, table_name: str) -> pd.DataF
     return df
 
 
-def _generate_setup_flow_name(integration: Integration):
-    return "Setup Data for %s Integration: %s" % (
+def _generate_setup_flow_name(integration: BaseResource):
+    return "Setup Data for %s Resource: %s" % (
         integration.type(),
         integration.name(),
     )
@@ -88,7 +88,7 @@ def _publish_missing_artifacts(
 
 def _add_missing_artifacts(
     client: Client,
-    integration: Integration,
+    integration: BaseResource,
     existing_names: Set[str],
 ) -> None:
     """Given the names of all objects that already exists in an integration, computes
@@ -107,7 +107,7 @@ def _add_missing_artifacts(
     if len(missing_names) == 0:
         return
 
-    demo = client.integration("aqueduct_demo")
+    demo = client.resource("Demo")
     artifacts: List[BaseArtifact] = []
     for table_name in missing_names:
         data = _fetch_demo_data(demo, table_name)
@@ -129,7 +129,7 @@ def _add_missing_artifacts(
     )
 
 
-def _setup_mongo_db_data(client: Client, mongo_db: MongoDBIntegration) -> None:
+def _setup_mongo_db_data(client: Client, mongo_db: MongoDBResource) -> None:
     # Find all the objects that already exist.
     existing_names = set()
     for object_name in demo_db_tables():
@@ -167,13 +167,13 @@ def _setup_mysql_db():
     _execute_command(["aqueduct", "install", "mysql"])
 
 
-def _setup_relational_data(client: Client, db: RelationalDBIntegration) -> None:
+def _setup_relational_data(client: Client, db: RelationalDBResource) -> None:
     # Find all the tables that already exist.
     existing_table_names = set(db.list_tables()["tablename"])
     _add_missing_artifacts(client, db, existing_table_names)
 
 
-def _setup_s3_data(client: Client, s3: S3Integration):
+def _setup_s3_data(client: Client, s3: S3Resource):
     # Find all the objects that already exist.
     existing_names = set()
     for object_name in demo_db_tables():
@@ -205,11 +205,13 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
     # No need to do any setup for the demo db.
     if "aqueduct_demo" in data_integrations:
         data_integrations.remove("aqueduct_demo")
+    if "Demo" in data_integrations:
+        data_integrations.remove("Demo")
 
     if len(data_integrations) == 0:
         return
 
-    connected_integrations = client.list_integrations()
+    connected_integrations = client.list_resources()
     for integration_name in data_integrations:
         # Only connect to integrations that don't already exist.
         if integration_name not in connected_integrations.keys():
@@ -227,15 +229,15 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
             ):
                 _setup_mysql_db()
 
-            client.connect_integration(
+            client.connect_resource(
                 integration_name,
                 integration_config["type"],
                 _sanitize_integration_config_for_connect(integration_config),
             )
 
         # Setup the data in each of these integrations.
-        integration = client.integration(integration_name)
-        if isinstance(integration, RelationalDBIntegration):
+        integration = client.resource(integration_name)
+        if isinstance(integration, RelationalDBResource):
             _setup_relational_data(client, integration)
         elif integration.type() == ServiceType.S3:
             _setup_s3_data(client, integration)
@@ -263,7 +265,7 @@ def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) 
     if len(compute_integrations) == 0:
         return
 
-    connected_integrations = client.list_integrations()
+    connected_integrations = client.list_resources()
     for integration_key in compute_integrations:
         if integration_key == "aqueduct_engine":
             # Connect to conda if specified, otherwise, do nothing for aq engine.
@@ -271,7 +273,7 @@ def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) 
             if aq_config and "conda" in aq_config:
                 integration_name = aq_config["conda"]
                 if integration_name not in connected_integrations.keys():
-                    client.connect_integration(
+                    client.connect_resource(
                         integration_name,
                         ServiceType.CONDA,
                         {},  # integration_config
@@ -283,7 +285,7 @@ def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) 
             print(f"Connecting to {integration_name}")
             integration_config = _fetch_integration_credentials("compute", integration_name)
 
-            client.connect_integration(
+            client.connect_resource(
                 integration_name,
                 integration_config["type"],
                 _sanitize_integration_config_for_connect(integration_config),
@@ -317,7 +319,7 @@ def setup_storage_layer(client: Client) -> None:
     if name is None:
         return
 
-    connected_integrations = client.list_integrations()
+    connected_integrations = client.list_resources()
     if name not in connected_integrations.keys():
         integration_config = _fetch_integration_credentials("data", name)
         integration_config["use_as_storage"] = "true"
@@ -327,7 +329,7 @@ def setup_storage_layer(client: Client) -> None:
         service_type = integration_config["type"]
         integration_config["type"] = AWSCredentialType.CONFIG_FILE_PATH
 
-        client.connect_integration(
+        client.connect_resource(
             name,
             service_type,
             integration_config,
@@ -336,7 +338,7 @@ def setup_storage_layer(client: Client) -> None:
         # Poll on the server until the integration is ready.
         while True:
             try:
-                _ = client.integration(name)
+                _ = client.resource(name)
             except AqueductError as e:
                 if "The server is currently unavailable due to system maintenance." in str(e):
                     time.sleep(1)
@@ -367,7 +369,7 @@ def _fetch_integration_credentials(section: str, name: str) -> Dict[str, Any]:
 
     assert (
         name in test_credentials[section]
-    ), "%s Integration `%s` must have its credentials in test-credentials.yml." % (
+    ), "%s Resource `%s` must have its credentials in test-credentials.yml." % (
         section,
         name,
     )
@@ -377,25 +379,35 @@ def _fetch_integration_credentials(section: str, name: str) -> Dict[str, Any]:
 def is_global_engine_set(name: str) -> bool:
     """
     Returns whether or not the provided compute integration has `set_global_engine` set.
+
+    If name is None (meaning we are using the Aqueduct Server), we return False.
     """
-    test_credentials = _parse_credentials_file()
+    if not name:
+        return False
 
-    assert "compute" in test_credentials, "compute section expected in test-credentials.yml"
-    assert name in test_credentials["compute"].keys(), "%s not in test-credentials.yml." % name
+    test_config = _parse_credentials_file()
 
-    return "set_global_engine" in test_credentials["compute"][name].keys()
+    assert "compute" in test_config, "compute section expected in test-config.yml"
+    assert name in test_config["compute"].keys(), "%s not in test-config.yml." % name
+
+    return "set_global_engine" in test_config["compute"][name].keys()
 
 
 def is_lazy_set(name: str) -> bool:
     """
     Returns whether or not the provided compute integration has `set_global_lazy` set.
+
+    If name is None (meaning we are using the Aqueduct Server), we return False.
     """
-    test_credentials = _parse_credentials_file()
+    if not name:
+        return False
 
-    assert "compute" in test_credentials, "compute section expected in test-credentials.yml"
-    assert name in test_credentials["compute"].keys(), "%s not in test-credentials.yml." % name
+    test_config = _parse_config_file()
 
-    return "set_global_lazy" in test_credentials["compute"][name].keys()
+    assert "compute" in test_config, "compute section expected in test-config.yml"
+    assert name in test_config["compute"].keys(), "%s not in test-config.yml." % name
+
+    return "set_global_lazy" in test_config["compute"][name].keys()
 
 
 def list_data_integrations() -> List[str]:

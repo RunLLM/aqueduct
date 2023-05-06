@@ -1,7 +1,7 @@
 {
   "name": "@aqueducthq/common",
   "author": "Aqueduct <hello@aqueducthq.com>",
-  "version": "0.2.12",
+  "version": "0.3.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "alias": {
@@ -39,6 +39,7 @@
     "@fortawesome/free-brands-svg-icons": "^6.2.1",
     "@fortawesome/free-solid-svg-icons": "^6.2.1",
     "@fortawesome/react-fontawesome": "^0.2.0",
+    "@tag0/use-text-width": "^1.2.0",
     "@monaco-editor/react": "^4.4.5",
     "@mui/lab": "5.0.0-alpha.117",
     "@mui/material": "5.11.6",

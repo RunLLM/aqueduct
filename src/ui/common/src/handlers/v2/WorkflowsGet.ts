@@ -2,7 +2,7 @@
 // src/golang/cmd/server/handler/v2/workflows_get.go
 
 import { APIKeyParameter } from '../parameters/Header';
-import { WorkflowResponse } from '../responses/Workflow';
+import { WorkflowResponse } from '../responses/workflow';
 
 export type WorkflowsGetRequest = APIKeyParameter;
 

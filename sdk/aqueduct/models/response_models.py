@@ -283,7 +283,7 @@ class DeleteWorkflowResponse(BaseModel):
     Attributes:
         saved_object_deletion_results:
             Results of deleting saved objects.
-            Key: Integration name
+            Key: Resource name
             Value: List of SavedObjectDelete belonging to that integration
     """
 
@@ -320,3 +320,7 @@ class DynamicEngineStatusResponse(BaseModel):
     id: uuid.UUID
     name: str
     status: K8sClusterStatusType
+
+
+class GetImageURLResponse(BaseModel):
+    url: str

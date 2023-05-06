@@ -77,7 +77,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - uses: ./.github/actions/setup-server
-        timeout-minutes: 5
+        timeout-minutes: 7
         with:
           python-pkg-version: ${{ needs.publish-pypi.outputs.version }}
 
@@ -172,7 +172,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - uses: ./.github/actions/setup-server
-        timeout-minutes: 5
+        timeout-minutes: 7
         with:
           python-pkg-version: ${{ needs.publish-pypi.outputs.version }}
 
@@ -272,7 +272,7 @@ jobs:
       - uses: actions/checkout@v2
 
       - uses: ./.github/actions/setup-server
-        timeout-minutes: 5
+        timeout-minutes: 7
 
       - uses: ./.github/actions/fetch-test-config
         with:
@@ -285,6 +285,7 @@ jobs:
           aqueduct install redshift
 
       - name: Setup Hosted Data Integrations
+        timeout-minutes: 20
         working-directory: scripts/data
         run: python3 setup_hosted.py --aws-key-id ${{ secrets.SAURAV_AWS_ACCESS_KEY_ID }} --aws-secret-key ${{ secrets.SAURAV_AWS_SECRET_ACCESS_KEY }}
 
@@ -298,6 +299,7 @@ jobs:
           prefix: Data Connectors
 
       - name: Teardown Hosted Data Integrations
+        timeout-minutes: 20
         if: always()
         working-directory: scripts/data
         run: python3 teardown_hosted.py --aws-key-id ${{ secrets.SAURAV_AWS_ACCESS_KEY_ID }} --aws-secret-key ${{ secrets.SAURAV_AWS_SECRET_ACCESS_KEY }}

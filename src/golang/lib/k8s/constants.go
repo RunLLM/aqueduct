@@ -26,6 +26,8 @@ const (
 	AwsAccessKeyIdName       = "AWS_ACCESS_KEY_ID"
 	AwsAccessKeyName         = "AWS_SECRET_ACCESS_KEY"
 
+	AqueductExpectedVersionKeyName = "AQUEDUCT_EXPECTED_VERSION"
+
 	DefaultCudaVersion = "11.4.1"
 	Cuda11_4_1         = "11.4.1"
 	Cuda11_8_0         = "11.8.0"

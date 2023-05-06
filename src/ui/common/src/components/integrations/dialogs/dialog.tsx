@@ -23,11 +23,11 @@ import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import {
   AirflowConfig,
-  aqueductDemoName,
   AthenaConfig,
   AWSConfig,
   BigQueryConfig,
   DatabricksConfig,
+  ECRConfig,
   EmailConfig,
   formatService,
   GCSConfig,
@@ -52,12 +52,16 @@ import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
 import { AirflowDialog, isAirflowConfigComplete } from './airflowDialog';
 import { AthenaDialog, isAthenaConfigComplete } from './athenaDialog';
 import { AWSDialog, isAWSConfigComplete } from './awsDialog';
-import { BigQueryDialog } from './bigqueryDialog';
+import {
+  BigQueryDialog,
+  isBigQueryDialogConfigComplete,
+} from './bigqueryDialog';
 import { CondaDialog } from './condaDialog';
 import {
   DatabricksDialog,
   isDatabricksConfigComplete,
 } from './databricksDialog';
+import { ECRDialog, isECRConfigComplete } from './ecrDialog';
 import {
   EmailDefaultsOnCreate,
   EmailDialog,
@@ -146,10 +150,7 @@ const IntegrationDialog: React.FC<Props> = ({
 
   const connectStatus = editMode ? editStatus : connectNewStatus;
   const disableConnect =
-    !editMode &&
-    (!isConfigComplete(config, service) ||
-      name === '' ||
-      name === aqueductDemoName);
+    !editMode && (!isConfigComplete(config, service) || name === '');
   const setConfigField = (field: string, value: string) =>
     setConfig((config) => {
       return { ...config, [field]: value };
@@ -178,6 +179,13 @@ const IntegrationDialog: React.FC<Props> = ({
     user.apiKey,
   ]);
 
+  let connectionMessage = '';
+  if (service === 'AWS') {
+    connectionMessage = 'Configuring Aqueduct-managed Kubernetes on AWS';
+  } else {
+    connectionMessage = `Connecting to ${service}`;
+  }
+
   const dialogHeader = (
     <Box
       sx={{
@@ -190,7 +198,7 @@ const IntegrationDialog: React.FC<Props> = ({
       <Typography variant="h5">
         {!!integrationToEdit
           ? `Edit ${integrationToEdit.name}`
-          : `Connecting to ${service}`}
+          : `${connectionMessage}`}
       </Typography>
       <img height="45px" src={SupportedIntegrations[service].logo} />
     </Box>
@@ -216,9 +224,6 @@ const IntegrationDialog: React.FC<Props> = ({
           editMode={editMode}
         />
       );
-      break;
-    case 'Aqueduct Demo':
-      serviceDialog = null;
       break;
     case 'MySQL':
       serviceDialog = (
@@ -374,6 +379,11 @@ const IntegrationDialog: React.FC<Props> = ({
         <AWSDialog onUpdateField={setConfigField} value={config as AWSConfig} />
       );
       break;
+    case 'ECR':
+      serviceDialog = (
+        <ECRDialog onUpdateField={setConfigField} value={config as AWSConfig} />
+      );
+      break;
     default:
       return null;
   }
@@ -413,14 +423,13 @@ const IntegrationDialog: React.FC<Props> = ({
       spellCheck={false}
       required={true}
       label="Name*"
-      description="Provide a unique name to refer to this integration."
-      placeholder={'my_' + formatService(service) + '_integration'}
+      description="Provide a unique name to refer to this resource."
+      placeholder={'my_' + formatService(service) + '_resource'}
       onChange={(event) => {
         setName(event.target.value);
         setShouldShowNameError(false);
       }}
       value={name}
-      disabled={service === 'Aqueduct Demo'}
     />
   );
 
@@ -430,7 +439,7 @@ const IntegrationDialog: React.FC<Props> = ({
       <DialogContent>
         {editMode && numWorkflows > 0 && (
           <Alert sx={{ mb: 2 }} severity="info">
-            {`Changing this integration will automatically update ${numWorkflows} ${
+            {`Changing this resource will automatically update ${numWorkflows} ${
               numWorkflows === 1 ? 'workflow' : 'workflows'
             }.`}
           </Alert>
@@ -449,9 +458,9 @@ const IntegrationDialog: React.FC<Props> = ({
 
         {shouldShowNameError && (
           <Alert sx={{ mt: 2 }} severity="error">
-            <AlertTitle>Naming Error</AlertTitle>A connected integration already
+            <AlertTitle>Naming Error</AlertTitle>A connected resource already
             exists with this name. Please provide a unique name for your
-            integration.
+            resource.
           </Alert>
         )}
 
@@ -483,7 +492,7 @@ const IntegrationDialog: React.FC<Props> = ({
   );
 };
 
-// Helper function to check if the Integration config is completely filled.
+// Helper function to check if the Resource config is completely filled.
 export function isConfigComplete(
   config: IntegrationConfig,
   service: Service
@@ -495,6 +504,8 @@ export function isConfigComplete(
       return isAthenaConfigComplete(config as AthenaConfig);
     case 'AWS':
       return isAWSConfigComplete(config as AWSConfig);
+    case 'BigQuery':
+      return isBigQueryDialogConfigComplete(config as BigQueryConfig);
     case 'Conda':
       // Conda only has a name field that the user supplies, so this half of form is always valid.
       return true;
@@ -529,6 +540,8 @@ export function isConfigComplete(
       return isSnowflakeConfigComplete(config as SnowflakeConfig);
     case 'SQLite':
       return isSQLiteConfigComplete(config as SQLiteConfig);
+    case 'ECR':
+      return isECRConfigComplete(config as ECRConfig);
     default:
       // Require all integrations to have their own validation function.
       return false;

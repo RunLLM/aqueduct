@@ -31,11 +31,12 @@ func (sc *StaticConfig) PublicConfig() map[string]string {
 	sensitiveKeys := []string{
 		"auth_uri",                    // MongoDB config.
 		"password",                    // most integration configs have this field.
-		"token",                       // slack config
+		"token",                       // slack, ECR config
 		"service_account_credentials", // S3 config.
 		"config_file_content",         // S3 config.
 		"access_key_id",               // AWS config.
 		"secret_access_key",           // AWS config.
+		"expire_at",                   // ECR config.
 	}
 
 	for key, val := range sc.Conf {
@@ -59,4 +60,9 @@ func sliceContains(s []string, elem string) bool {
 func (sc *StaticConfig) Refresh(ctx context.Context) (bool, error) {
 	// staticConfig does not need to be refreshed
 	return false, nil
+}
+
+// Set sets a key-value pair in the Config.
+func (sc *StaticConfig) Set(key, value string) {
+	sc.Conf[key] = value
 }

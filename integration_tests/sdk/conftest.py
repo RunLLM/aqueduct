@@ -1,4 +1,4 @@
-from typing import Optional
+import os
 
 import pytest
 from aqueduct.constants.enums import ServiceType
@@ -18,6 +18,7 @@ from sdk.setup_integration import (
     setup_storage_layer,
 )
 from sdk.shared import globals as test_globals
+from sdk.shared.compute import type_from_engine_name
 from sdk.shared.utils import generate_new_flow_name
 from sdk.shared.validator import Validator
 
@@ -63,6 +64,10 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers",
         "skip_for_spark_engines: the test only runs for non-Spark compute engines.",
+    )
+    config.addinivalue_line(
+        "markers",
+        "skip_for_global_lazy_execution: the test only runs when eager execution is default.",
     )
 
 
@@ -121,7 +126,11 @@ def data_integration(request, pytestconfig, client):
                 "Skipped. Tests are only running against data integration %s." % cmdline_data_flag
             )
 
-    return client.integration(request.param)
+    # Translate aqueduct_demo -> Demo integration.
+    if request.param == "aqueduct_demo":
+        return client.resource("Demo")
+
+    return client.resource(request.param)
 
 
 @pytest.fixture(scope="function", params=list_compute_integrations())
@@ -169,16 +178,6 @@ def use_deprecated(pytestconfig):
     test_globals.use_deprecated_code_paths = pytestconfig.getoption("deprecated")
 
 
-def _type_from_engine_name(client, engine: str) -> ServiceType:
-    assert engine != "aqueduct_engine"
-
-    integration_info_by_name = client.list_integrations()
-    if engine not in integration_info_by_name.keys():
-        raise Exception("Server is not connected to integration `%s`." % engine)
-
-    return integration_info_by_name[engine].service
-
-
 # Pulled from: https://stackoverflow.com/questions/28179026/how-to-skip-a-pytest-using-an-external-fixture
 @pytest.fixture(autouse=True)
 def enable_only_for_engine_type(request, client, engine):
@@ -206,7 +205,7 @@ def enable_only_for_engine_type(request, client, engine):
                     % ",".join(enabled_engine_types)
                 )
 
-        if _type_from_engine_name(client, engine) not in enabled_engine_types:
+        if type_from_engine_name(client, engine) not in enabled_engine_types:
             pytest.skip(
                 "Skipped for engine integration `%s`, since it is not of type `%s`."
                 % (engine, ",".join(enabled_engine_types))
@@ -219,13 +218,20 @@ def skip_for_spark_engines(request, client, engine, reason=None):
     (Databricks or Spark)
     """
     if request.node.get_closest_marker("skip_for_spark_engines"):
-        if engine and _type_from_engine_name(client, engine) in [
+        if engine and type_from_engine_name(client, engine) in [
             ServiceType.DATABRICKS,
             ServiceType.SPARK,
         ]:
             pytest.skip(
                 "Skipped for engine integration `%s`, since it is a spark-based engine." % engine
             )
+
+
+@pytest.fixture(autouse=True)
+def skip_for_global_lazy_execution(request, engine, reason=None):
+    if request.node.get_closest_marker("skip_for_global_lazy_execution"):
+        if is_lazy_set(engine):
+            pytest.skip("Skipped for global lazy execution")
 
 
 @pytest.fixture(autouse=True)
@@ -258,7 +264,7 @@ def must_have_gpu(pytestconfig, request, client, engine):
 
     if pytestconfig.getoption("gpu"):
         assert (
-            _type_from_engine_name(client, engine) == ServiceType.K8S
+            type_from_engine_name(client, engine) == ServiceType.K8S
         ), "@pytest.mark.must_have_gpu only works with K8s engine!"
     else:
         pytest.skip("Skipped since --gpu flag is not provided")
