@@ -39,12 +39,13 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
         <IntegrationLogo service={integration.service} size="small" activated />
       </Box>
 
+      {/*Leave this empty if integration.createdAt isn't set.*/}
       <TruncatedText
         variant="caption"
         marginBottom={1}
         sx={{ fontWeight: 300 }}
       >
-        {new Date(integration.createdAt * 1000).toLocaleString()}
+        {integration.createdAt ? new Date(integration.createdAt * 1000).toLocaleString() : '  '}
       </TruncatedText>
 
       <ResourceFieldsDetailsCard

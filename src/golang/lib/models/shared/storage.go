@@ -2,6 +2,7 @@ package shared
 
 import (
 	"database/sql/driver"
+	"github.com/google/uuid"
 
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/dropbox/godropbox/errors"
@@ -28,8 +29,12 @@ type StorageConfigPublic struct {
 	FileConfig      *FileConfig      `json:"fileConfig,omitempty"`
 	GCSConfigPublic *GCSConfigPublic `json:"gcsConfig,omitempty"`
 
-	// Empty means that the local filesystem is being used as storage.
-	IntegrationName string `json:"integration_name,omitempty"`
+	// These fields do not exist on the config file, but are pulled in from the database.
+	// Empty fields here mean that the local filesystem is being used as storage.
+	IntegrationID   uuid.UUID       `json:"integration_id,omitempty"`
+	IntegrationName string          `json:"integration_name,omitempty"`
+	ConnectedAt     int64           `json:"connected_at,omitempty"`
+	ExecState       *ExecutionState `json:"exec_state,omitempty"`
 }
 
 type S3Config struct {

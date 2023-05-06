@@ -18,6 +18,7 @@ import { SlackCard } from './slackCard';
 import { SnowflakeCard } from './snowflakeCard';
 import SparkCard from './sparkCard';
 import SQLiteCard from './sqliteCard';
+import FilesystemCard from "./filesystemCard";
 
 type ResourceFieldsDetailsCardProps = {
   integration: Integration;
@@ -94,6 +95,9 @@ export const ResourceFieldsDetailsCard: React.FC<
       break;
     case 'ECR':
       serviceCard = <ECRCard integration={integration} />;
+      break;
+    case 'Filesystem':
+      serviceCard = <FilesystemCard integration={integration}/>
       break;
     default:
       serviceCard = null;

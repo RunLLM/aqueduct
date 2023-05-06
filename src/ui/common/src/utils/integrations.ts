@@ -234,6 +234,11 @@ export type ECRConfig = {
   config_file_profile: string;
 };
 
+// This is a UI-only config type we construct just to display the Filesystem artifact storage card.
+export type FilesystemConfig = {
+  location: string;
+};
+
 export type IntegrationConfig =
   | PostgresConfig
   | SnowflakeConfig
@@ -257,7 +262,8 @@ export type IntegrationConfig =
   | SlackConfig
   | SparkConfig
   | AWSConfig
-  | MongoDBConfig;
+  | MongoDBConfig
+  | FilesystemConfig;
 
 export type Service =
   | 'Aqueduct'
@@ -285,7 +291,8 @@ export type Service =
   | 'Amazon'
   | 'GCP'
   | 'Azure'
-  | 'ECR';
+  | 'ECR'
+  | 'Filesystem' ; // Filesystem is intended to be a UI-concept only for now.
 
 export type Info = {
   logo: string;
@@ -437,6 +444,12 @@ export const SupportedIntegrations: ServiceInfoMap = {
     logo: ServiceLogos['Aqueduct'],
     activated: true,
     category: IntegrationCategories.COMPUTE,
+    docs: addingIntegrationLink,
+  },
+  ['Filesystem']: {
+    logo: ServiceLogos['Aqueduct'],
+    activated: true,
+    category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
   },
   ['SQLite']: {

@@ -54,7 +54,9 @@ func (h *GetConfigHandler) Perform(ctx context.Context, interfaceArgs interface{
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve storage config.")
 	}
-	// Fetch the integration name as well, since that isn't recorded in the config.
+
+	// There are a number of fields we need to augment the response with, which aren't directly fetched from
+	// the config file. These include resource name, connected-at timestamp, and execution state.
 	currStorageMigrationObj, err := h.StorageMigrationRepo.Current(ctx, h.Database)
 	if err != nil && !errors.Is(err, database.ErrNoRows()) {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error when fetchin current storage integration.")
@@ -64,9 +66,17 @@ func (h *GetConfigHandler) Perform(ctx context.Context, interfaceArgs interface{
 		if err != nil {
 			return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error when fetching current storage integration.")
 		}
+		storageConfigPublic.IntegrationID = integrationObj.ID
 		storageConfigPublic.IntegrationName = integrationObj.Name
+		storageConfigPublic.ConnectedAt = currStorageMigrationObj.ExecState.Timestamps.RegisteredAt.Unix()
+		storageConfigPublic.ExecState = &currStorageMigrationObj.ExecState
+	} else {
+		// If there was no previous storage migration, we must be using the local filesystem.
+		storageConfigPublic.IntegrationName = "Filesystem"
+		storageConfigPublic.ExecState = &shared.ExecutionState{
+			Status: shared.SucceededExecutionStatus,
+		}
 	}
-	// Continue without populating the integration name if there was no previous storage migration.
 
 	return getConfigResponse{
 		AqPath:              config.AqueductPath(),
