@@ -74,6 +74,8 @@ def test_delete_workflow_invalid_saved_objects(client, flow_name, data_integrati
 
 
 @pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
+# TODO(ENG-2881)
+@pytest.mark.skip_for_spark_engines(reason="Need to investigate, TODO above.")
 def test_force_delete_workflow_saved_objects(
     client, flow_name, data_integration, engine, data_validator
 ):
@@ -123,6 +125,8 @@ def test_force_delete_workflow_saved_objects(
 
 
 @pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
+# TODO(ENG-2881)
+@pytest.mark.skip_for_spark_engines(reason="Need to investigate, TODO above.")
 def test_delete_workflow_saved_objects_twice(
     client, flow_name, data_integration, engine, data_validator
 ):

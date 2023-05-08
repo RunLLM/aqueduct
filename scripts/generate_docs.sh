@@ -9,6 +9,7 @@ echo "### package aqueduct
 * [\`error\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/aqueduct.error)
 * [\`flow\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/aqueduct.flow)
 * [\`schedule\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/aqueduct.schedule)
+* [\`llm_op\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/aqueduct.llm_op)
 ### package aqueduct.artifacts
 * [\`bool_artifact\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.artifacts/aqueduct.artifacts.bool_artifact)
 * [\`generic_artifact\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.artifacts/aqueduct.artifacts.generic_artifact)
@@ -21,12 +22,19 @@ echo "### package aqueduct
 ### package aqueduct.models
 * [\`models.integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.models/aqueduct.models.integration)
 * [\`models.operators\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.models/aqueduct.models.operators)
-### package aqueduct.integrations
-* [\`integrations.dynamic_k8s_integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.integrations/aqueduct.integrations.dynamic_k8s_integration)
-* [\`integrations.google_sheets_integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.integrations/aqueduct.integrations.google_sheets_integration)
-* [\`integrations.s3_integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.integrations/aqueduct.integrations.s3_integration)
-* [\`integrations.salesforce_integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.integrations/aqueduct.integrations.salesforce_integration)
-* [\`integrations.sql_integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.integrations/aqueduct.integrations.sql_integration)" > docs/README.md
+### package aqueduct.resources
+* [\`resources.airflow\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.airflow)
+* [\`resources.aws_lambda\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.aws_lambda)
+* [\`resources.databricks\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.databricks)
+* [\`resources.dynamic\_k8s\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.dynamic\_k8s)
+* [\`resources.ecr\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.ecr)
+* [\`resources.k8s\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.k8s)
+* [\`resources.google\_sheets\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.google\_sheets)
+* [\`resources.mongodb\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.mongodb)
+* [\`resources.s3\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.s3)
+* [\`resources.salesforce\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.salesforce)
+* [\`resources.spark\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.spark)
+* [\`resources.sql\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.sql)" > docs/README.md
 
 
 pydoc-markdown -I . --render-toc -m aqueduct.client > docs/aqueduct.client.md
@@ -34,6 +42,7 @@ pydoc-markdown -I . --render-toc -m aqueduct.decorator > docs/aqueduct.decorator
 pydoc-markdown -I . --render-toc -m aqueduct.error > docs/aqueduct.error.md
 pydoc-markdown -I . --render-toc -m aqueduct.flow > docs/aqueduct.flow.md
 pydoc-markdown -I . --render-toc -m aqueduct.schedule > docs/aqueduct.schedule.md
+pydoc-markdown -I . --render-toc -m aqueduct.llm_wrapper > docs/aqueduct.llm_op.md
 
 mkdir docs/package-aqueduct.artifacts
 
@@ -68,17 +77,31 @@ echo "### package aqueduct.models
 pydoc-markdown -I . --render-toc -m aqueduct.models.integration > docs/package-aqueduct.models/aqueduct.models.integration.md
 pydoc-markdown -I . --render-toc -m aqueduct.models.operators > docs/package-aqueduct.models/aqueduct.models.operators.md
 
-mkdir docs/package-aqueduct.integrations
+mkdir docs/package-aqueduct.resources
 
-echo "### package aqueduct.integrations
-* [\`integrations.dynamic_k8s_integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.integrations/aqueduct.integrations.dynamic_k8s_integration)
-* [\`integrations.google_sheets_integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.integrations/aqueduct.integrations.google_sheets_integration)
-* [\`integrations.s3_integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.integrations/aqueduct.integrations.s3_integration)
-* [\`integrations.salesforce_integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.integrations/aqueduct.integrations.salesforce_integration)
-* [\`integrations.sql_integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.integrations/aqueduct.integrations.sql_integration)" > docs/package-aqueduct.integrations/README.md
+echo "### package aqueduct.resources
+* [\`resources.airflow\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.airflow)
+* [\`resources.aws_lambda\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.aws_lambda)
+* [\`resources.databricks\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.databricks)
+* [\`resources.dynamic\_k8s\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.dynamic\_k8s)
+* [\`resources.ecr\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.ecr)
+* [\`resources.k8s\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.k8s)
+* [\`resources.google\_sheets\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.google\_sheets)
+* [\`resources.mongodb\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.mongodb)
+* [\`resources.s3\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.s3)
+* [\`resources.salesforce\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.salesforce)
+* [\`resources.spark\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.spark)
+* [\`resources.sql\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.sql)" > docs/package-aqueduct.resources/README.md
 
-pydoc-markdown -I . --render-toc -m aqueduct.integrations.dynamic_k8s_integration > docs/package-aqueduct.integrations/aqueduct.integrations.dynamic_k8s_integration.md
-pydoc-markdown -I . --render-toc -m aqueduct.integrations.google_sheets_integration > docs/package-aqueduct.integrations/aqueduct.integrations.google_sheets_integration.md
-pydoc-markdown -I . --render-toc -m aqueduct.integrations.s3_integration > docs/package-aqueduct.integrations/aqueduct.integrations.s3_integration.md
-pydoc-markdown -I . --render-toc -m aqueduct.integrations.salesforce_integration > docs/package-aqueduct.integrations/aqueduct.integrations.salesforce_integration.md
-pydoc-markdown -I . --render-toc -m aqueduct.integrations.sql_integration > docs/package-aqueduct.integrations/aqueduct.integrations.sql_integration.md
+pydoc-markdown -I . --render-toc -m aqueduct.resources.airflow > docs/package-aqueduct.resources/aqueduct.resources.airflow.md
+pydoc-markdown -I . --render-toc -m aqueduct.resources.aws_lambda > docs/package-aqueduct.resources/aqueduct.resources.aws_lambda.md
+pydoc-markdown -I . --render-toc -m aqueduct.resources.databricks > docs/package-aqueduct.resources/aqueduct.resources.databricks.md
+pydoc-markdown -I . --render-toc -m aqueduct.resources.dynamic_k8s > docs/package-aqueduct.resources/aqueduct.resources.dynamic_k8s.md
+pydoc-markdown -I . --render-toc -m aqueduct.resources.ecr > docs/package-aqueduct.resources/aqueduct.resources.ecr.md
+pydoc-markdown -I . --render-toc -m aqueduct.resources.k8s > docs/package-aqueduct.resources/aqueduct.resources.k8s.md
+pydoc-markdown -I . --render-toc -m aqueduct.resources.google_sheets > docs/package-aqueduct.resources/aqueduct.resources.google_sheets.md
+pydoc-markdown -I . --render-toc -m aqueduct.resources.mongodb > docs/package-aqueduct.resources/aqueduct.resources.mongodb.md
+pydoc-markdown -I . --render-toc -m aqueduct.resources.s3 > docs/package-aqueduct.resources/aqueduct.resources.s3.md
+pydoc-markdown -I . --render-toc -m aqueduct.resources.salesforce > docs/package-aqueduct.resources/aqueduct.resources.salesforce.md
+pydoc-markdown -I . --render-toc -m aqueduct.resources.spark > docs/package-aqueduct.resources/aqueduct.resources.spark.md
+pydoc-markdown -I . --render-toc -m aqueduct.resources.sql > docs/package-aqueduct.resources/aqueduct.resources.sql.md

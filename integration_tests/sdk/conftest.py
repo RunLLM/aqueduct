@@ -65,6 +65,10 @@ def pytest_configure(config):
         "markers",
         "skip_for_spark_engines: the test only runs for non-Spark compute engines.",
     )
+    config.addinivalue_line(
+        "markers",
+        "skip_for_global_lazy_execution: the test only runs when eager execution is default.",
+    )
 
 
 def pytest_cmdline_main(config):
@@ -121,6 +125,10 @@ def data_integration(request, pytestconfig, client):
             pytest.skip(
                 "Skipped. Tests are only running against data integration %s." % cmdline_data_flag
             )
+
+    # Translate aqueduct_demo -> Demo integration.
+    if request.param == "aqueduct_demo":
+        return client.resource("Demo")
 
     return client.resource(request.param)
 
@@ -217,6 +225,13 @@ def skip_for_spark_engines(request, client, engine, reason=None):
             pytest.skip(
                 "Skipped for engine integration `%s`, since it is a spark-based engine." % engine
             )
+
+
+@pytest.fixture(autouse=True)
+def skip_for_global_lazy_execution(request, engine, reason=None):
+    if request.node.get_closest_marker("skip_for_global_lazy_execution"):
+        if is_lazy_set(engine):
+            pytest.skip("Skipped for global lazy execution")
 
 
 @pytest.fixture(autouse=True)

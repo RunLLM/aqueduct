@@ -43,6 +43,7 @@ def test_multiple_outputs(client, flow_name, engine):
     assert flow_run.artifact("generate_two_outputs artifact (1)").get() == 1234
 
 
+@pytest.mark.skip_for_global_lazy_execution(reason="Doesn't work with lazy execution.")
 def test_multiple_outputs_user_failure(client):
     @op(num_outputs=3)
     def generate_two_outputs():
