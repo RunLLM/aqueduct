@@ -13,8 +13,10 @@ if __name__ == "__main__":
             [
                 "pip",
                 "install",
-                "-i",
+                "--index-url",
                 "https://test.pypi.org/simple/",
+                "--extra-index-url",  # allows dependencies from pypi
+                "https://pypi.org/simple",
                 f"aqueduct-ml={args.version_tag}",
             ]
         )
@@ -28,4 +30,4 @@ if __name__ == "__main__":
     spec_json = base64.b64decode(args.spec)
     spec = parse_spec(spec_json)
 
-    execute.run(spec, version_tag)
+    execute.run(spec, args.version_tag)

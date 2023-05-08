@@ -56,8 +56,10 @@ func createBaseEnvs() error {
 				envName,
 				"pip3",
 				"install",
-				"-i",
+				"--index-url",
 				"https://test.pypi.org/simple/",
+				"--extra-index-url", // allows dependencies from pypi
+				"https://pypi.org/simple",
 				fmt.Sprintf("aqueduct-ml==%s", versionTag),
 			}
 		}
