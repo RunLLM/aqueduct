@@ -77,11 +77,11 @@ jobs:
           packages-dir: src/python/dist
           password: ${{ secrets.PYPI_API_TOKEN_EXECUTOR }}
 
-  test-server-start:
+  run-tests-conda:
     runs-on: ubuntu-latest-4-cores
-    timeout-minutes: 15
-    name: Test server start
+    timeout-minutes: 40
     needs: publish-pypi
+    name: All Integration Tests with Conda
     steps:
       - uses: actions/checkout@v2
 
@@ -89,3 +89,43 @@ jobs:
         timeout-minutes: 7
         with:
           python-pkg-version: ${{ needs.publish-pypi.outputs.version }}
+
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          auto-update-conda: true
+          auto-activate-base: false
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install conda build
+        run: conda install conda-build
+
+      - name: Update conda
+        run: conda update --all
+
+      # TODO(ENG-2537): Use our separate GH actions credentials.
+      - uses: ./.github/actions/fetch-test-config
+        with:
+          aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
+          s3_test_config_path: periodic-conda-test-config.yml
+
+      - name: Run the SDK Integration Tests
+        timeout-minutes: 30
+        working-directory: integration_tests/sdk
+        run: python3 run_tests.py -n 8
+
+      - name: Set the API key as an env variable.
+        run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
+
+      - name: Run the No-Concurrency Integration Tests
+        timeout-minutes: 10
+        working-directory: integration_tests/no_concurrency
+        env:
+          SERVER_ADDRESS: localhost:8080
+          INTEGRATION: aqueduct_demo
+        run: pytest . -rP
+
+      - uses: ./.github/actions/upload-artifacts
+        if: always()
+        with:
+          prefix: Conda
