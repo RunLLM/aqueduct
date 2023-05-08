@@ -145,7 +145,7 @@ install_process = subprocess.run([
 	"https://test.pypi.org/simple/",
 	"--extra-index-url",
 	"https://pypi.org/simple",
-	f"aqueduct-ml=%s",
+	f"aqueduct-ml==%s",
 ])
 print(install_process.stderr)
 print(install_process.stdout)
