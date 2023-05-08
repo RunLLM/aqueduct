@@ -42,14 +42,6 @@ runs:
       shell: bash
       run: pip3 install SQLAlchemy==1.4.46
 
-    - name: Retrieve Pypi package version
-      shell: bash
-      run: echo ${{ inputs.python-pkg-version }}
-
-    - name: Start the server
-      shell: bash
-      run: (aqueduct start --verbose > $SERVER_LOGS_FILE 2>&1 &)
-
     - name: Wait for server
       shell: bash
       run: while ! echo exit | nc localhost 8080; do sleep 1; done
@@ -63,6 +55,12 @@ runs:
     - name: Update aqueduct with latest code
       shell: bash
       run: python3 scripts/install_local.py -g -s -e
+
+    - name: Update Pypi package version
+      shell: bash
+      run: |
+        echo pypi version (latest release if not specified): ${{ inputs.python-pkg-version }}
+        if [ "${{ inputs.python-pkg-version }}" ]; then echo ${{ inputs.python-pkg-version }} >> $HOME/.aqueduct/server/config/config.yml; fi
 
     - name: Start the server again
       shell: bash
