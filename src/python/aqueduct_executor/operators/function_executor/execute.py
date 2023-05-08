@@ -241,6 +241,7 @@ def cleanup(spec: FunctionSpec) -> None:
 
 
 def run(spec: FunctionSpec) -> None:
+    print("new pkg")
     """
     Executes a function operator.
     """
