@@ -8,12 +8,15 @@ import requests
 import utils
 from exec_state import assert_exec_state
 from setup.changing_saves_workflow import setup_changing_saves
+from setup.flow_with_multiple_operators import setup_flow_with_multiple_operators
 from setup.flow_with_failure import setup_flow_with_failure
 from setup.flow_with_metrics_and_checks import setup_flow_with_metrics_and_checks
 from setup.flow_with_sleep import setup_flow_with_sleep
 
 import aqueduct
 from aqueduct import globals
+from aqueduct_executor.operators.utils.enums import JobType
+from aqueduct.models.response_models import GetDagResultResponse, GetOperatorResultResponse, GetArtifactResultResponse, GetNodeOperatorResponse, GetNodeArtifactResponse
 
 
 class TestBackend:
@@ -21,9 +24,9 @@ class TestBackend:
     GET_WORKFLOWS_TEMPLATE = "/api/v2/workflows"
 
     GET_DAG_RESULTS_TEMPLATE = "/api/v2/workflow/%s/results"
+    GET_NODES_RESULTS_TEMPLATE = "/api/v2/workflow/%s/result/%s/nodes/results"
 
     GET_NODES_TEMPLATE = "/api/v2/workflow/%s/dag/%s/nodes"
-    GET_NODES_RESULTS_TEMPLATE = "/api/v2/workflow/%s/dag/%s/nodes/results"
 
     GET_NODE_ARTIFACT_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/artifact/%s"
     GET_NODE_ARTIFACT_RESULT_CONTENT_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/artifact/%s/result/%s/content"
@@ -50,6 +53,7 @@ class TestBackend:
         cls.integration = cls.client.integration(name=pytest.integration)
         cls.flows = {
             "changing_saves": setup_changing_saves(cls.client, pytest.integration),
+            "flow_with_multiple_operators": setup_flow_with_multiple_operators(cls.client, pytest.integration),
             "flow_with_failure": setup_flow_with_failure(cls.client, pytest.integration),
             "flow_with_metrics_and_checks": setup_flow_with_metrics_and_checks(
                 cls.client,
@@ -339,16 +343,13 @@ class TestBackend:
 
     #     assert len(resp) == n_runs
 
-    #     fields = ["id", "dag_id", "exec_state"]
-
     #     def check_structure(resp, all_succeeded=False):
     #         for result in resp:
-    #             for field in fields:
-    #                 assert field in result
+    #             result = GetDagResultResponse(**result)
     #             if all_succeeded:
-    #                 assert result["exec_state"]["status"] == "succeeded"
-    #                 assert result["exec_state"]["failure_type"] == None
-    #                 assert result["exec_state"]["error"] == None
+    #                 assert result.exec_state.status == "succeeded"
+    #                 assert result.exec_state.failure_type == None
+    #                 assert result.exec_state.error == None
 
     #     check_structure(resp, all_succeeded=True)
 
@@ -402,22 +403,32 @@ class TestBackend:
     #     workflow_status = workflow_status[0]
     #     assert workflow_status == sorted_statuses[0]
 
-    def test_endpoint_nodes_get(self):
-        flow_id, n_runs = self.flows["flow_with_metrics_and_checks"]
-        flow = self.client.flow(flow_id)
-        runs = flow.list_runs()
-        resp = self.get_response(self.GET_NODES_TEMPLATE % (flow_id, runs[0]["run_id"])).json()
-        print(resp)
+    # def test_endpoint_nodes_get(self):
+    #     flow_id, n_runs = self.flows["flow_with_multiple_operators"]
+    #     flow = self.client.flow(flow_id)
+    #     runs = flow.list_runs()
+    #     resp = self.get_response(self.GET_NODES_TEMPLATE % (flow_id, runs[0]["run_id"])).json()
+    #
+    #     # TODO: Investigate output
+    #     # >> {'operators': [], 'Artifacts': []}
 
     # def test_endpoint_nodes_results_get(self):
-    #     flow_id, n_runs = self.flows["flow_with_metrics_and_checks"]
+    #     flow_id, _ = self.flows["flow_with_multiple_operators"]
     #     flow = self.client.flow(flow_id)
     #     runs = flow.list_runs()
     #     resp = self.get_response(self.GET_NODES_RESULTS_TEMPLATE % (flow_id, runs[0]["run_id"])).json()
-    #     pass
+    #     assert 'operators' in resp.keys()
+    #     assert 'artifacts' in resp.keys()
+    #     assert len(resp['operators']) == len(resp['artifacts'])
+    #     for op in resp['operators']:
+    #         result = GetOperatorResultResponse(**op)
+    #         result.exec_state.status == 'succeeded'
+    #     for op in resp['artifacts']:
+    #         result = GetArtifactResultResponse(**op)
+    #         result.exec_state.status == 'succeeded'
 
     # def test_endpoint_node_artifact_get(self):
-    #     flow_id, n_runs = self.flows["flow_with_metrics_and_checks"]
+    #     flow_id, n_runs = self.flows["flow_with_multiple_operators"]
     #     flow = self.client.flow(flow_id)
     #     runs = flow.list_runs()
 
@@ -425,31 +436,20 @@ class TestBackend:
     #         flow_id,
     #         runs[0]["run_id"],
     #     )
-    #     artifact_ids = dag_result_resp.artifacts.keys()
-    #     artifact_id = artifact_ids
-
-    #     resp = self.get_response(self.GET_NODE_ARTIFACT_TEMPLATE % (flow_id, runs[0]["run_id"], artifact_id)).json()
-    #     pass
+    #     artifact_ids = list(dag_result_resp.artifacts.keys())
+    #     artifact_id = str(artifact_ids[0])
+    #     all_output_counts = []
+    #     for artifact_id in artifact_ids:
+    #         artifact_id = str(artifact_id)
+    #         resp = self.get_response(self.GET_NODE_ARTIFACT_TEMPLATE % (flow_id, runs[0]["run_id"], artifact_id)).json()
+    #         result = GetNodeArtifactResponse(**resp)
+    #         all_output_counts.append(len(result.outputs))
+    #     assert sum(all_output_counts) == len(all_output_counts)-1
+    #     assert set(all_output_counts) == set([0, 1])
 
     # def test_endpoint_node_artifact_result_content_get(self):
     #     # TODO: Sync with wei for clarification
-    #     # flow_id, n_runs = self.flows["flow_with_metrics_and_checks"]
-    #     # flow = self.client.flow(flow_id)
-    #     # runs = flow.list_runs()
-
-    #     # dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
-    #     #     flow_id,
-    #     #     runs[0]["run_id"],
-    #     # )
-    #     # artifact_ids = dag_result_resp.artifacts.keys()
-    #     # artifact_id = artifact_ids
-
-    #     # resp = self.get_response(self.GET_NODE_ARTIFACT_RESULT_CONTENT_TEMPLATE % (flow_id, runs[0]["run_id"], artifact_id)).json()
-    #     # GET_NODE_ARTIFACT_RESULT_CONTENT_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/artifact/%s/result/%s/content" <-- workflow id, dag id, artifact id, dag result id
-    #     pass
-
-    # def test_endpoint_node_artifact_results_get(self):
-    #     flow_id, n_runs = self.flows["flow_with_metrics_and_checks"]
+    #     flow_id, n_runs = self.flows["flow_with_multiple_operators"]
     #     flow = self.client.flow(flow_id)
     #     runs = flow.list_runs()
 
@@ -460,26 +460,50 @@ class TestBackend:
     #     artifact_ids = dag_result_resp.artifacts.keys()
     #     artifact_id = artifact_ids
 
-    #     resp = self.get_response(self.GET_NODE_ARTIFACT_RESULTS_TEMPLATE % (flow_id, runs[0]["run_id"], artifact_id)).json()
-    #     pass
+    #     resp = self.get_response(self.GET_NODE_ARTIFACT_RESULT_CONTENT_TEMPLATE % (flow_id, runs[0]["run_id"], artifact_id)).json()
+    #     GET_NODE_ARTIFACT_RESULT_CONTENT_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/artifact/%s/result/%s/content" <-- workflow id, dag id, artifact id, dag result id
+
+    # def test_endpoint_node_artifact_results_get(self):
+    #     flow_id, n_runs = self.flows["flow_with_multiple_operators"]
+    #     flow = self.client.flow(flow_id)
+    #     runs = flow.list_runs()
+    #     dag_id = runs[0]["run_id"]
+
+    #     dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
+    #         flow_id,
+    #         dag_id,
+    #     )
+    #     artifact_ids = list(dag_result_resp.artifacts.keys())
+    #     artifact_id = str(artifact_ids[0])
+
+    #     resp = self.get_response(self.GET_NODE_ARTIFACT_RESULTS_TEMPLATE % (flow_id, dag_id, artifact_id)).json()
+    #     for result in resp:
+    #         result = GetArtifactResultResponse(**result)
 
     # def test_endpoint_node_operator_get(self):
-    #     flow_id, n_runs = self.flows["flow_with_metrics_and_checks"]
+    #     flow_id, n_runs = self.flows["flow_with_multiple_operators"]
     #     flow = self.client.flow(flow_id)
     #     runs = flow.list_runs()
+    #     dag_id = runs[0]["run_id"]
 
     #     dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
     #         flow_id,
-    #         runs[0]["run_id"],
+    #         dag_id,
     #     )
-    #     operator_ids = dag_result_resp.operators.keys()
-    #     operator_id = operator_ids
+    #     operator_ids = list(dag_result_resp.operators.keys())
+    #     operator_id = str(operator_ids[0])
 
-    #     resp = self.get_response(self.GET_NODE_OPERATOR_TEMPLATE % (flow_id, runs[0]["run_id"], operator_id)).json()
-    #     pass
+    #     resp = self.get_response(self.GET_NODE_OPERATOR_TEMPLATE % (flow_id, dag_id, operator_id)).json()
+        
+    #     result = GetNodeOperatorResponse(**resp)
+    #     assert str(result.id) == operator_id
+    #     assert str(result.dag_id) == dag_id
+    #
+    #     # TODO: Investigate error
+    #     # assert str(result.dag_id) == dag_id failed
 
     # def test_endpoint_node_operator_content_get(self):
-    #     flow_id, n_runs = self.flows["flow_with_metrics_and_checks"]
+    #     flow_id, n_runs = self.flows["flow_with_multiple_operators"]
     #     flow = self.client.flow(flow_id)
     #     runs = flow.list_runs()
 
@@ -487,8 +511,11 @@ class TestBackend:
     #         flow_id,
     #         runs[0]["run_id"],
     #     )
-    #     operator_ids = dag_result_resp.operators.keys()
-    #     operator_id = operator_ids
+    #     operator_ids = list(dag_result_resp.operators.keys())
+    #     operator_id = str(operator_ids[0])
 
-    #     resp = self.get_response(self.GET_NODE_OPERATOR_CONTENT_TEMPLATE % (flow_id, runs[0]["run_id"], operator_id)).json()
-    #     pass
+    #     resp = self.get_response(self.GET_NODE_OPERATOR_CONTENT_TEMPLATE % (flow_id, runs[0]["run_id"], operator_id))
+    #     print(resp.text)
+
+    #     # TODO: Investigate output
+    #     # >> {"error":"Unexpected error reading DAG.\nQuery returned no rows."}

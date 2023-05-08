@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Union, Optional
 
 from aqueduct.constants.enums import (
     ArtifactType,
@@ -21,7 +21,114 @@ class ArtifactResult(BaseModel):
     artifact_type: ArtifactType
     content: bytes
 
+# V2 Responses
+class GetDagResultResponse(BaseModel):
+    """Represents the result of a single workflow run.
 
+    Attributes:
+        id:
+            The id of the workflow run. This is the same id users can use to fetch
+            FlowRuns.
+        dag_id:
+            This id can be used to find the corresponding workflow dag version.
+        exec_state:
+            The execution state of the run result.
+
+    """
+    id: uuid.UUID
+    dag_id: uuid.UUID
+    exec_state: ExecutionState
+
+class GetOperatorResultResponse(BaseModel):
+    """Represents the result of a single operator in a workflow run.
+
+    Attributes:
+        id:
+            The id of the operator node result.
+        exec_state:
+            The execution state of the run result.
+    """
+    id: uuid.UUID
+    exec_state: ExecutionState
+
+class GetArtifactResultResponse(BaseModel):
+    """Represents the result of a single artifact in a workflow run.
+
+    Attributes:
+        id:
+            The id of the artifact node result.
+        serialization_type:
+            What is being serialized.
+        content_path:
+            Path to get content.
+        content_serialized:
+            If the content is too big, none. Otherwise, the content.
+        exec_state:
+            The execution state of the run result.
+    """
+    id: uuid.UUID
+    serialization_type: SerializationType
+    content_path: str
+    content_serialized: Optional[str]
+    exec_state: ExecutionState
+
+class GetNodeOperatorResponse(BaseModel):
+    """Represents a single operator in a workflow run.
+
+    Attributes:
+        id:
+            The id of the operator node.
+        dag_id:
+            This id can be used to find the corresponding workflow dag version.
+        name:
+            The name of the operator.
+        description:
+            The description of the operator.
+        spec:
+            The operator spec.
+        inputs:
+            The id(s) of the input artifact(s) of the operator.
+        outputs:
+            The id(s) of the output artifact(s) of the operator.
+
+    """
+    id: uuid.UUID
+    dag_id: uuid.UUID
+    name: str
+    description: str
+    spec: OperatorSpec
+    inputs: List[uuid.UUID]
+    outputs: List[uuid.UUID]
+
+class GetNodeArtifactResponse(BaseModel):
+    """Represents a single artifact in a workflow run.
+
+    Attributes:
+        id:
+            The id of the artifact node.
+        dag_id:
+            This id can be used to find the corresponding workflow dag version.
+        name:
+            The name of the artifact.
+        description:
+            The description of the artifact.
+        type:
+            The artifact type.
+        input:
+            The id of the input operator.
+        outputs:
+            The id(s) of the operator(s) that take this artifact as input.
+
+    """
+    id: uuid.UUID
+    dag_id: uuid.UUID
+    name: str
+    description: str
+    type: ArtifactType
+    input: uuid.UUID
+    outputs: List[uuid.UUID]
+
+# V1 Responses
 class PreviewResponse(BaseModel):
     """This is the response object returned by api_client.preview().
 
