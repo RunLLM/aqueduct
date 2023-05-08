@@ -293,7 +293,7 @@ export type Service =
   | 'GCP'
   | 'Azure'
   | 'ECR'
-  | 'Filesystem'; // Filesystem is intended to be a UI-concept only for now.
+  | 'Filesystem';
 
 export type Info = {
   logo: string;
@@ -359,6 +359,7 @@ export const IntegrationCategories = {
   CLOUD: 'cloud',
   CONTAINER_REGISTRY: 'container_registry',
   NOTIFICATION: 'notification',
+  ARTIFACT_STORAGE: 'artifact_storage',
 };
 
 export const ServiceLogos: ServiceLogo = {
@@ -450,7 +451,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['Filesystem']: {
     logo: ServiceLogos['Aqueduct'],
     activated: true,
-    category: IntegrationCategories.DATA,
+    category: IntegrationCategories.ARTIFACT_STORAGE,
     docs: addingIntegrationLink,
   },
   ['SQLite']: {

@@ -3,8 +3,6 @@ package handler
 import (
 	"context"
 	"net/http"
-
-
 	"github.com/aqueducthq/aqueduct/config"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
