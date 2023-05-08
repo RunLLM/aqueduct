@@ -6,6 +6,9 @@ import argparse
 import subprocess
 import sys
 
+# Version Injection
+%s
+
 from aqueduct_executor.operators.spark.execute_function import run
 from aqueduct_executor.operators.function_executor import (
 	extract_function,
@@ -23,6 +26,9 @@ run(spec, spark_session_obj)
 	ParamEntrypoint = `import argparse
 import base64
 
+# Version Injection
+%s
+
 from aqueduct_executor.operators.param_executor import execute
 from aqueduct_executor.operators.param_executor.spec import parse_spec
 
@@ -34,6 +40,9 @@ execute.run(spec)
 
 	SystemMetricEntrypoint = `import argparse
 import base64
+
+# Version Injection
+%s
 
 from aqueduct_executor.operators.system_metric_executor import execute
 from aqueduct_executor.operators.system_metric_executor.spec import parse_spec
@@ -47,6 +56,9 @@ execute.run(spec)
 
 	DataEntrypoint = `import argparse
 import base64
+
+# Version Injection
+%s
 
 from aqueduct_executor.operators.spark.execute_data import run
 from aqueduct_executor.operators.connectors.data.spec import parse_spec

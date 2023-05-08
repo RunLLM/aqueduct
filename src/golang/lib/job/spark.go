@@ -6,6 +6,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/spark"
 	"github.com/dropbox/godropbox/errors"
@@ -131,6 +132,24 @@ func (j *SparkJobManager) mapJobTypeToScript(spec Spec) (string, error) {
 	storageConfig.S3Config.AWSSecretAccessKey = j.conf.AwsSecretAccessKey
 	var scriptString string
 	log.Infof("JobType : %s", spec.Type())
+
+	versionInjection := ""
+	versionTag := config.VersionTag()
+	if versionTag != "" {
+		versionInjection = fmt.Sprintf(`
+import subprocess
+install_process = subprocess.run([
+	"pip",
+	"install",
+	"-i",
+	"https://test.pypi.org/simple/",
+	f"aqueduct-ml=%s",
+])
+print(install_process.stderr)
+print(install_process.stdout)
+install_process.check_returncode()
+		`, versionTag)
+	}
 	if spec.Type() == FunctionJobType {
 		functionSpec, ok := spec.(*FunctionSpec)
 		if !ok {
@@ -143,28 +162,28 @@ func (j *SparkJobManager) mapJobTypeToScript(spec Spec) (string, error) {
 			return "", err
 		}
 
-		scriptString = fmt.Sprintf(spark.FunctionEntrypoint, specStr)
+		scriptString = fmt.Sprintf(spark.FunctionEntrypoint, specStr, versionInjection)
 	} else if spec.Type() == ParamJobType {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
 			return "", err
 		}
 
-		scriptString = fmt.Sprintf(spark.ParamEntrypoint, specStr)
+		scriptString = fmt.Sprintf(spark.ParamEntrypoint, specStr, versionInjection)
 	} else if IsDataType(spec.Type()) {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
 			return "", err
 		}
 
-		scriptString = fmt.Sprintf(spark.DataEntrypoint, specStr)
+		scriptString = fmt.Sprintf(spark.DataEntrypoint, specStr, versionInjection)
 	} else if spec.Type() == SystemMetricJobType {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
 			return "", err
 		}
 
-		scriptString = fmt.Sprintf(spark.SystemMetricEntrypoint, specStr)
+		scriptString = fmt.Sprintf(spark.SystemMetricEntrypoint, specStr, versionInjection)
 	} else {
 		return "", errors.New("Unsupported JobType was passed in.")
 	}

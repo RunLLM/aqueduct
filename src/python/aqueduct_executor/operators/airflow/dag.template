@@ -25,6 +25,22 @@ VENV_REQUIREMENTS=[
 
 def invoke_task(spec, **kwargs):
     '''
+    Install specific version if version_tag is provided.
+    '''
+    if "{{ version_tag }}":
+        import subprocess
+        install_process = subprocess.run([
+            "pip",
+            "install",
+            "-i",
+            "https://test.pypi.org/simple/",
+            f"aqueduct-ml={{ version_tag }}",
+        ])
+        print(install_process.stderr)
+        print(install_process.stdout)
+        install_process.check_returncode()
+    
+    '''
     Check the spec type and invoke the correct operator.
     First, append the dag_run_id to all of the storage paths in the spec.
     '''

@@ -22,6 +22,7 @@ type serverConfiguration struct {
 	RetentionJobPeriod string                `yaml:"retentionJobPeriod"`
 	ApiKey             string                `yaml:"apiKey"`
 	StorageConfig      *shared.StorageConfig `yaml:"storageConfig"`
+	VersionTag         string                `yaml:"versionTag"`
 }
 
 // AqueductPath is the filepath to the Aqueduct installation.
@@ -47,6 +48,10 @@ func APIKey() string {
 // Storage returns the storage layer config.
 func Storage() shared.StorageConfig {
 	return *globalConfig.StorageConfig
+}
+
+func VersionTag() string {
+	return globalConfig.VersionTag
 }
 
 // UpdateStorage updates the storage layer config.

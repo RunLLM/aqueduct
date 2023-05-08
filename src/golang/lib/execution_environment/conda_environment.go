@@ -6,6 +6,7 @@ import (
 	"path"
 	"strings"
 
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	log "github.com/sirupsen/logrus"
@@ -38,13 +39,27 @@ func createBaseEnvs() error {
 			return err
 		}
 
-		args = []string{
-			"run",
-			"-n",
-			envName,
-			"pip3",
-			"install",
-			fmt.Sprintf("aqueduct-ml==%s", lib.ServerVersionNumber),
+		versionTag := config.VersionTag()
+		if versionTag == "" {
+			args = []string{
+				"run",
+				"-n",
+				envName,
+				"pip3",
+				"install",
+				fmt.Sprintf("aqueduct-ml==%s", lib.ServerVersionNumber),
+			}
+		} else {
+			args = []string{
+				"run",
+				"-n",
+				envName,
+				"pip3",
+				"install",
+				"-i",
+				"https://test.pypi.org/simple/",
+				fmt.Sprintf("aqueduct-ml==%s", versionTag),
+			}
 		}
 		_, _, err = lib_utils.RunCmd(CondaCmdPrefix, args, "", false)
 		if err != nil {
