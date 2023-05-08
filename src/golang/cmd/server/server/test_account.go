@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"os"
+	"path"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -45,7 +47,7 @@ func CreateTestAccount(
 
 // CheckBuiltinIntegrations returns whether the builtin demo and compute integrations already exist.
 // If we notice that the deprecated demo integration exists, we delete it. We expect the caller to add
-// the appropriate demo integration with `ConnectBuiltinDemoDBIntegration()` next.
+// the appropriate demo integration with `connectBuiltinDemoDBIntegration()` next.
 func CheckBuiltinIntegrations(ctx context.Context, s *AqServer, orgID string) (bool, bool, error) {
 	integrations, err := s.IntegrationRepo.GetByOrg(
 		context.Background(),
@@ -83,9 +85,77 @@ func CheckBuiltinIntegrations(ctx context.Context, s *AqServer, orgID string) (b
 	return demoConnected, engineConnected, nil
 }
 
-// ConnectBuiltinDemoDBIntegration adds the builtin demo data integrations for the specified
+// connectBuiltinResources checks for any missing built-in integrations, and connects them if they are missing.
+// If the deprecated demo db name still exists in the database, we delete it before connecting the new one.
+func connectBuiltinResources(
+	ctx context.Context,
+	s *AqServer,
+	orgID string,
+	user *models.User,
+	integrationRepo repos.Integration,
+	db database.Database,
+) error {
+	integrations, err := s.IntegrationRepo.GetByOrg(
+		context.Background(),
+		orgID,
+		s.Database,
+	)
+	if err != nil {
+		return errors.Newf("Unable to get connected integrations: %v", err)
+	}
+
+	demoConnected := false
+	engineConnected := false
+	filesystemConnected := false
+	for _, integrationObject := range integrations {
+		if integrationObject.Name == shared.DeprecatedDemoDBResourceName && integrationObject.Service == shared.Sqlite {
+			if err := s.IntegrationRepo.Delete(
+				ctx,
+				integrationObject.ID,
+				s.Database,
+			); err != nil {
+				return errors.Newf("Unable to delete deprecated demo integration: %v", err)
+			}
+			continue
+		} else if integrationObject.Name == shared.DemoDbIntegrationName {
+			demoConnected = true
+		} else if integrationObject.Name == shared.AqueductComputeIntegrationName {
+			engineConnected = true
+		} else if integrationObject.Name == shared.ArtifactStorageIntegrationName {
+			filesystemConnected = true
+		}
+
+		if demoConnected && engineConnected && filesystemConnected {
+			// Builtin resources already connected
+			return nil
+		}
+	}
+
+	if !demoConnected {
+		err = connectBuiltinDemoDBIntegration(ctx, user, integrationRepo, db)
+		if err != nil {
+			return err
+		}
+	}
+
+	if !engineConnected {
+		err = connectBuiltinComputeIntegration(ctx, user, integrationRepo, db)
+		if err != nil {
+			return err
+		}
+	}
+	if !filesystemConnected {
+		err = connectBuiltinArtifactStorageIntegration(ctx, user, integrationRepo, db)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// connectBuiltinDemoDBIntegration adds the builtin demo data integrations for the specified
 // user's organization. It returns an error, if any.
-func ConnectBuiltinDemoDBIntegration(
+func connectBuiltinDemoDBIntegration(
 	ctx context.Context,
 	user *models.User,
 	integrationRepo repos.Integration,
@@ -114,7 +184,7 @@ func ConnectBuiltinDemoDBIntegration(
 	return nil
 }
 
-func ConnectBuiltinComputeIntegration(
+func connectBuiltinComputeIntegration(
 	ctx context.Context,
 	user *models.User,
 	integrationRepo repos.Integration,
@@ -131,6 +201,38 @@ func ConnectBuiltinComputeIntegration(
 			Name:     shared.AqueductComputeIntegrationName,
 			Service:  shared.Aqueduct,
 			Config:   auth.NewStaticConfig(map[string]string{}),
+			UserOnly: false,
+		},
+		integrationRepo,
+		db,
+	); err != nil {
+		return err
+	}
+	return nil
+}
+
+func connectBuiltinArtifactStorageIntegration(
+	ctx context.Context,
+	user *models.User,
+	integrationRepo repos.Integration,
+	db database.Database,
+) error {
+	// TODO(ENG-2941): This is currently duplicated in src/golang/config/config.go.
+	defaultStoragePath := path.Join(os.Getenv("HOME"), ".aqueduct", "server", "storage")
+
+	if _, _, err := handler.ConnectIntegration(
+		ctx,
+		nil, // Not registering an AWS integration.
+		&handler.ConnectIntegrationArgs{
+			AqContext: &aq_context.AqContext{
+				User:      *user,
+				RequestID: uuid.New().String(),
+			},
+			Name:    shared.ArtifactStorageIntegrationName,
+			Service: shared.Filesystem,
+			Config: auth.NewStaticConfig(map[string]string{
+				"location": defaultStoragePath,
+			}),
 			UserOnly: false,
 		},
 		integrationRepo,

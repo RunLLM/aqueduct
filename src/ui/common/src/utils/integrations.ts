@@ -3,13 +3,15 @@ import UserProfile from './auth';
 import { AqueductDocsLink } from './docs';
 import { ExecState } from './shared';
 
-export const aqueductDemoName = 'aqueduct_demo';
+export const aqueductDemoName = 'Demo';
 export const aqueductComputeName = 'Aqueduct Server';
+export const aqueductStorageName = 'Filesystem';
 
 export function isBuiltinIntegration(integration: Integration): boolean {
   return (
     integration.name === aqueductDemoName ||
-    integration.name == aqueductComputeName
+    integration.name == aqueductComputeName ||
+    integration.name == aqueductStorageName
   );
 }
 
@@ -234,7 +236,6 @@ export type ECRConfig = {
   config_file_profile: string;
 };
 
-// This is a UI-only config type we construct just to display the Filesystem artifact storage card.
 export type FilesystemConfig = {
   location: string;
 };
@@ -292,7 +293,7 @@ export type Service =
   | 'GCP'
   | 'Azure'
   | 'ECR'
-  | 'Filesystem' ; // Filesystem is intended to be a UI-concept only for now.
+  | 'Filesystem'; // Filesystem is intended to be a UI-concept only for now.
 
 export type Info = {
   logo: string;

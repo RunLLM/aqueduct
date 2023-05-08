@@ -39,12 +39,14 @@ const (
 	// Container registry integrations
 	ECR Service = "ECR"
 
-	// Aqueduct compute is the only build-in resource type.
-	Aqueduct Service = "Aqueduct"
+	// Service types for our built-in, Aqueduct-specific resources.
+	Aqueduct   Service = "Aqueduct"
+	Filesystem Service = "Filesystem"
 
 	// Built-in resource names
 	AqueductComputeIntegrationName = "Aqueduct Server"
 	DemoDbIntegrationName          = "Demo"
+	ArtifactStorageIntegrationName = "Filesystem"
 
 	// This is what the demo DB resource used to be called, during release v0.3.1 and before.
 	// If we detect a SQLite resource with this name, we will delete it on startup and

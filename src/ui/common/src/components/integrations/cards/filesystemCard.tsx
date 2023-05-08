@@ -7,10 +7,12 @@ type FilesystemCardProps = {
   integration: Integration;
 };
 
-export const FilesystemCard: React.FC<FilesystemCardProps> = ({ integration }) => {
+export const FilesystemCard: React.FC<FilesystemCardProps> = ({
+  integration,
+}) => {
   const config = integration.config as FilesystemConfig;
 
-  const labels = ["location"];
+  const labels = ['location'];
   const values = [config.location];
   return <ResourceCardText labels={labels} values={values} />;
 };

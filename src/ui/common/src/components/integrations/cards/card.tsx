@@ -45,7 +45,9 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
         marginBottom={1}
         sx={{ fontWeight: 300 }}
       >
-        {integration.createdAt ? new Date(integration.createdAt * 1000).toLocaleString() : '  '}
+        {integration.createdAt
+          ? new Date(integration.createdAt * 1000).toLocaleString()
+          : '  '}
       </TruncatedText>
 
       <ResourceFieldsDetailsCard
