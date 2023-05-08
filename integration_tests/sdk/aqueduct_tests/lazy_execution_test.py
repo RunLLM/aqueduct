@@ -58,6 +58,7 @@ def test_lazy_operators(client):
     assert check_result._get_content() == True
 
 
+@pytest.mark.skip_for_global_lazy_execution(reason="Test doesn't work with global lazy exeuction.")
 def test_eager_operator_after_lazy(client):
     @op
     def foo():
@@ -172,6 +173,7 @@ def test_lazy_global_config(client, data_integration):
         global_config({"lazy": False})
 
 
+@pytest.mark.skip_for_global_lazy_execution(reason="Test doesn't work with global lazy exeuction.")
 def test_lazy_artifacts_backfilled_by_downstream(client):
     @op
     def generate_number():
@@ -249,7 +251,7 @@ def test_lazy_artifact_with_save(client, flow_name, data_integration, engine, da
     )
 
 
-@pytest.mark.skip_for_spark_engines(reason="We by default run Spark engines in lazy mode.")
+@pytest.mark.skip_for_global_lazy_execution(reason="Test doesn't work with global lazy exeuction.")
 def test_eager_then_lazy(client):
     """For an operator, checks that we can switch its execution mode from eager to lazy."""
 

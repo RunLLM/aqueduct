@@ -36,7 +36,7 @@ func (e *Extract) UnmarshalJSON(data []byte) error {
 	// Initialize correct destination struct for this operator's Extract.Parameters
 	var params ExtractParams
 	switch e.Service {
-	case shared.Postgres, shared.AqueductDemo:
+	case shared.Postgres:
 		params = &PostgresExtractParams{}
 	case shared.Athena:
 		params = &AthenaExtractParams{}

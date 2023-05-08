@@ -21,7 +21,7 @@ import (
 const (
 	// Defaults used for seeding database records
 	testOrgID              = "aqueduct-test"
-	testIntegrationService = shared.AqueductDemo
+	testIntegrationService = shared.Sqlite
 )
 
 // seedStorageMigraton creates a 5 storage migration records, alternating between

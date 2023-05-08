@@ -107,7 +107,7 @@ def _add_missing_artifacts(
     if len(missing_names) == 0:
         return
 
-    demo = client.resource("aqueduct_demo")
+    demo = client.resource("Demo")
     artifacts: List[BaseArtifact] = []
     for table_name in missing_names:
         data = _fetch_demo_data(demo, table_name)
@@ -205,6 +205,8 @@ def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> 
     # No need to do any setup for the demo db.
     if "aqueduct_demo" in data_integrations:
         data_integrations.remove("aqueduct_demo")
+    if "Demo" in data_integrations:
+        data_integrations.remove("Demo")
 
     if len(data_integrations) == 0:
         return
@@ -377,25 +379,35 @@ def _fetch_integration_credentials(section: str, name: str) -> Dict[str, Any]:
 def is_global_engine_set(name: str) -> bool:
     """
     Returns whether or not the provided compute integration has `set_global_engine` set.
+
+    If name is None (meaning we are using the Aqueduct Server), we return False.
     """
-    test_credentials = _parse_credentials_file()
+    if not name:
+        return False
 
-    assert "compute" in test_credentials, "compute section expected in test-credentials.yml"
-    assert name in test_credentials["compute"].keys(), "%s not in test-credentials.yml." % name
+    test_config = _parse_credentials_file()
 
-    return "set_global_engine" in test_credentials["compute"][name].keys()
+    assert "compute" in test_config, "compute section expected in test-config.yml"
+    assert name in test_config["compute"].keys(), "%s not in test-config.yml." % name
+
+    return "set_global_engine" in test_config["compute"][name].keys()
 
 
 def is_lazy_set(name: str) -> bool:
     """
     Returns whether or not the provided compute integration has `set_global_lazy` set.
+
+    If name is None (meaning we are using the Aqueduct Server), we return False.
     """
-    test_credentials = _parse_credentials_file()
+    if not name:
+        return False
 
-    assert "compute" in test_credentials, "compute section expected in test-credentials.yml"
-    assert name in test_credentials["compute"].keys(), "%s not in test-credentials.yml." % name
+    test_config = _parse_config_file()
 
-    return "set_global_lazy" in test_credentials["compute"][name].keys()
+    assert "compute" in test_config, "compute section expected in test-config.yml"
+    assert name in test_config["compute"].keys(), "%s not in test-config.yml." % name
+
+    return "set_global_lazy" in test_config["compute"][name].keys()
 
 
 def list_data_integrations() -> List[str]:

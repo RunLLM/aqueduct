@@ -270,7 +270,6 @@ export type Service =
   | 'S3'
   | 'Athena'
   | 'GCS'
-  | 'Aqueduct Demo'
   | 'Airflow'
   | 'Kubernetes'
   | 'SQLite'

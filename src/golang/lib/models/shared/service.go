@@ -39,26 +39,31 @@ const (
 	// Container registry integrations
 	ECR Service = "ECR"
 
-	// Built-in integrations
-	Aqueduct     Service = "Aqueduct"
-	AqueductDemo Service = "Aqueduct Demo"
+	// Aqueduct compute is the only build-in resource type.
+	Aqueduct Service = "Aqueduct"
 
+	// Built-in resource names
 	AqueductComputeIntegrationName = "Aqueduct Server"
-	DemoDbIntegrationName          = "aqueduct_demo"
+	DemoDbIntegrationName          = "Demo"
+
+	// This is what the demo DB resource used to be called, during release v0.3.1 and before.
+	// If we detect a SQLite resource with this name, we will delete it on startup and
+	// make sure that the new resource name is being used. This means that we prevent anyone
+	// from registering any new SQLite integrations with this name.
+	DeprecatedDemoDBResourceName = "aqueduct_demo"
 )
 
 var relationalDatabaseIntegrations map[Service]bool = map[Service]bool{
-	Postgres:     true,
-	Snowflake:    true,
-	MySql:        true,
-	Redshift:     true,
-	MariaDb:      true,
-	SqlServer:    true,
-	BigQuery:     true,
-	AqueductDemo: true,
-	Sqlite:       true,
-	Athena:       true,
-	MongoDB:      true,
+	Postgres:  true,
+	Snowflake: true,
+	MySql:     true,
+	Redshift:  true,
+	MariaDb:   true,
+	SqlServer: true,
+	BigQuery:  true,
+	Sqlite:    true,
+	Athena:    true,
+	MongoDB:   true,
 }
 
 var dataIntegrations map[Service]bool = map[Service]bool{
@@ -72,7 +77,6 @@ var dataIntegrations map[Service]bool = map[Service]bool{
 	GoogleSheets: true,
 	Salesforce:   true,
 	S3:           true,
-	AqueductDemo: true,
 	Sqlite:       true,
 	Athena:       true,
 	MongoDB:      true,
@@ -118,7 +122,6 @@ func ParseService(s string) (Service, error) {
 		Salesforce,
 		S3,
 		Athena,
-		AqueductDemo,
 		Github,
 		Sqlite,
 		Airflow,

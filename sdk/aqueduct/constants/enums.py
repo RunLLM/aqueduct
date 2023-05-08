@@ -61,7 +61,6 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     MARIADB = "MariaDB"
     SQLSERVER = "SQL Server"
     BIGQUERY = "BigQuery"
-    AQUEDUCTDEMO = "Aqueduct Demo"
     GITHUB = "Github"
     SALESFORCE = "Salesforce"
     GOOGLE_SHEETS = "Google Sheets"
@@ -93,7 +92,6 @@ class RelationalDBServices(str, Enum, metaclass=MetaEnum):
     MARIADB = "MariaDB"
     SQLSERVER = "SQL Server"
     BIGQUERY = "BigQuery"
-    AQUEDUCTDEMO = "Aqueduct Demo"
     SQLITE = "SQLite"
     ATHENA = "Athena"
 

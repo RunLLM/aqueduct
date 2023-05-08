@@ -23,7 +23,6 @@ import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import {
   AirflowConfig,
-  aqueductDemoName,
   AthenaConfig,
   AWSConfig,
   BigQueryConfig,
@@ -151,10 +150,7 @@ const IntegrationDialog: React.FC<Props> = ({
 
   const connectStatus = editMode ? editStatus : connectNewStatus;
   const disableConnect =
-    !editMode &&
-    (!isConfigComplete(config, service) ||
-      name === '' ||
-      name === aqueductDemoName);
+    !editMode && (!isConfigComplete(config, service) || name === '');
   const setConfigField = (field: string, value: string) =>
     setConfig((config) => {
       return { ...config, [field]: value };
@@ -228,9 +224,6 @@ const IntegrationDialog: React.FC<Props> = ({
           editMode={editMode}
         />
       );
-      break;
-    case 'Aqueduct Demo':
-      serviceDialog = null;
       break;
     case 'MySQL':
       serviceDialog = (
@@ -437,7 +430,6 @@ const IntegrationDialog: React.FC<Props> = ({
         setShouldShowNameError(false);
       }}
       value={name}
-      disabled={service === 'Aqueduct Demo'}
     />
   );
 

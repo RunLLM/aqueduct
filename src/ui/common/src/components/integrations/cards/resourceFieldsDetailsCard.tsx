@@ -2,7 +2,6 @@ import React from 'react';
 import { Integration } from 'src/utils/integrations';
 
 import { AirflowCard } from './airflowCard';
-import { AqueductDemoCard } from './aqueductDemoCard';
 import { AthenaCard } from './athenaCard';
 import AWSCard from './awsCard';
 import { BasicDBCard } from './basicDBCard';
@@ -44,9 +43,6 @@ export const ResourceFieldsDetailsCard: React.FC<
       serviceCard = (
         <SnowflakeCard integration={integration} detailedView={detailedView} />
       );
-      break;
-    case 'Aqueduct Demo':
-      serviceCard = <AqueductDemoCard integration={integration} />;
       break;
     case 'MongoDB':
       serviceCard = <MongoDBCard integration={integration} />;
