@@ -20,7 +20,7 @@ if __name__ == "__main__":
                 "https://test.pypi.org/simple/",
                 "--extra-index-url",  # allows dependencies from pypi
                 "https://pypi.org/simple",
-                f"aqueduct-ml={args.version_tag}",
+                f"aqueduct-ml=={args.version_tag}",
             ]
         )
         print(install_process.stderr)
