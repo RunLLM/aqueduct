@@ -64,7 +64,7 @@ runs:
       shell: bash
       run: |
         echo pypi version (latest release if not specified): ${{ inputs.python-pkg-version }}
-        if [ "${{ inputs.python-pkg-version }}" ]; then echo "${{ inputs.python-pkg-version }} >> $HOME/.aqueduct/server/config/config.yml; fi
+        if [ "${{ inputs.python-pkg-version }}" ]; then echo "versionTag: ${{ inputs.python-pkg-version }}" >> $HOME/.aqueduct/server/config/config.yml; fi
 
     - name: Start the server again
       shell: bash
