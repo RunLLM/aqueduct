@@ -58,6 +58,12 @@ const IntegrationDialog: React.FC<Props> = ({
 }) => {
   const [showDialog, setShowDialog] = useState<boolean>(true);
   const [submitDisabled, setSubmitDisabled] = useState<boolean>(true);
+  const [migrateStorage, setMigrateStorage] = useState(false);
+
+  const methods = useForm({
+    resolver: yupResolver(validationSchema),
+  });
+
   const editMode = !!integrationToEdit;
   const dispatch: AppDispatch = useDispatch();
 
@@ -79,11 +85,6 @@ const IntegrationDialog: React.FC<Props> = ({
   const integrations = useSelector((state: RootState) =>
     Object.values(state.integrationsReducer.integrations)
   );
-
-  // Make sure that the user object is ready.
-  if (!user) {
-    return null;
-  }
 
   const numWorkflows = new Set(operators.map((x) => x.workflow_id)).size;
 
@@ -127,12 +128,6 @@ const IntegrationDialog: React.FC<Props> = ({
           })
         );
   };
-
-  const [migrateStorage, setMigrateStorage] = useState(false);
-
-  const methods = useForm({
-    resolver: yupResolver(validationSchema),
-  });
 
   // Check to enable/disable submit button
   useEffect(() => {
@@ -198,6 +193,11 @@ const IntegrationDialog: React.FC<Props> = ({
       disabled={service === 'Aqueduct Demo'}
     />
   );
+
+  // Make sure that the user object is ready.
+  if (!user) {
+    return null;
+  }
 
   return (
     <Dialog

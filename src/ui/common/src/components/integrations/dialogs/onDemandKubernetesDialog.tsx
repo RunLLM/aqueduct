@@ -178,9 +178,7 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
           loading={loading}
           disabled={disabled}
           onSubmit={async () => {
-            console.log('Submitting form');
             await methods.handleSubmit((data) => {
-              console.log('handleSubmnit data: ', data);
               // Remove the name field from request body to avoid pydantic errors.
               // Name needs to be passed in as a header instead. Dunno why it's not part of the body :shrug:
               const name = data.name;
@@ -188,8 +186,6 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
               // Remove extraneous fields if they are added when filling out the form.
               delete data.k8s_type;
               delete data.type;
-
-              console.log('data before dispatch: ', data);
 
               dispatch(
                 handleConnectToNewIntegration({
@@ -339,9 +335,7 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
           loading={loading}
           disabled={disabled}
           onSubmit={async () => {
-            console.log('Submitting AWS form.');
             await methods.handleSubmit((data) => {
-              console.log('handleSubmnit data: ', data);
               // Remove the name field from request body to avoid pydantic errors.
               // Name needs to be passed in as a header instead. Dunno why it's not part of the body :shrug:
               const name = data.name;
@@ -349,8 +343,6 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
               // Remove extraneous fields if they are added when filling out the form.
               delete data.k8s_type;
               delete data.type;
-
-              console.log('data before dispatch: ', data);
 
               dispatch(
                 handleConnectToNewIntegration({
