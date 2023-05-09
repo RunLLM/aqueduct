@@ -146,7 +146,9 @@ const IntegrationDialog: React.FC<Props> = ({
     Object.values(state.integrationsReducer.integrations)
   );
 
-  const numWorkflows = new Set(operators.map((x) => x.workflow_id)).size;
+  const numWorkflows = operators
+    ? new Set(operators.map((x) => x.workflow_id)).size
+    : 0;
 
   const connectStatus = editMode ? editStatus : connectNewStatus;
   const disableConnect =
