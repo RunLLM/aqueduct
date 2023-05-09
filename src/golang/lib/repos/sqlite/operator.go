@@ -176,7 +176,7 @@ func (*operatorReader) GetByDAG(ctx context.Context, dagID uuid.UUID, DB databas
 			UNION 
 			SELECT to_id 
 			FROM workflow_dag_edge 
-			WHERE workflow_dag_id = $1 AND type = '%s'
+			WHERE workflow_dag_id = $1 AND type = '%sintegration'
 		)`,
 		models.OperatorCols(),
 		shared.OperatorToArtifactDAGEdge,
