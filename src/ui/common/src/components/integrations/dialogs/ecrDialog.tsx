@@ -1,13 +1,20 @@
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React, { useEffect } from 'react';
+import React, { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
-import { AWSCredentialType, ECRConfig } from '../../../utils/integrations';
+import {
+  AWSCredentialType,
+  ECRConfig,
+  IntegrationDialogProps,
+} from '../../../utils/integrations';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: ECRConfig = {
-  type: AWSCredentialType.AccessKey,
+  //type: AWSCredentialType.AccessKey,
+  type: 'access_key',
   region: 'us-east-2',
   access_key_id: '',
   secret_access_key: '',
@@ -15,29 +22,23 @@ const Placeholders: ECRConfig = {
   config_file_profile: '',
 };
 
-type Props = {
-  onUpdateField: (field: keyof ECRConfig, value: string) => void;
-  value?: ECRConfig;
-};
+export const ECRDialog: React.FC<IntegrationDialogProps> = ({
+  editMode = false,
+}) => {
+  const { register, setValue } = useFormContext();
+  const [currentTab, setCurrentTab] = useState(AWSCredentialType.AccessKey);
 
-export const ECRDialog: React.FC<Props> = ({ onUpdateField, value }) => {
-  useEffect(() => {
-    if (!value?.type) {
-      onUpdateField('type', AWSCredentialType.AccessKey);
-    }
-  }, [onUpdateField, value?.type]);
+  register('type', { value: AWSCredentialType.AccessKey });
 
   const configProfileInput = (
     <IntegrationTextInputField
+      name="config_file_profile"
       spellCheck={false}
       required={true}
       label="AWS Profile*"
       description="The name of the profile specified in brackets in your credential file."
       placeholder={Placeholders.config_file_profile}
-      onChange={(event) =>
-        onUpdateField('config_file_profile', event.target.value)
-      }
-      value={value?.config_file_profile ?? ''}
+      onChange={(event) => setValue('config_file_profile', event.target.value)}
     />
   );
 
@@ -47,35 +48,33 @@ export const ECRDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         Manually enter your AWS credentials.
       </Typography>
       <IntegrationTextInputField
+        name="access_key_id"
         spellCheck={false}
         required={true}
         label="AWS Access Key ID*"
         description="The access key ID of your AWS account."
         placeholder={Placeholders.access_key_id}
-        onChange={(event) => onUpdateField('access_key_id', event.target.value)}
-        value={value?.access_key_id ?? ''}
+        onChange={(event) => setValue('access_key_id', event.target.value)}
       />
 
       <IntegrationTextInputField
+        name="secret_access_key"
         spellCheck={false}
         required={true}
         label="AWS Secret Access Key*"
         description="The secret access key of your AWS account."
         placeholder={Placeholders.secret_access_key}
-        onChange={(event) =>
-          onUpdateField('secret_access_key', event.target.value)
-        }
-        value={value?.secret_access_key ?? ''}
+        onChange={(event) => setValue('secret_access_key', event.target.value)}
       />
 
       <IntegrationTextInputField
+        name="region"
         spellCheck={false}
         required={true}
         label="AWS Region*"
         description="The region of your AWS account."
         placeholder={Placeholders.region}
-        onChange={(event) => onUpdateField('region', event.target.value)}
-        value={value?.region ?? ''}
+        onChange={(event) => setValue('region', event.target.value)}
       />
     </Box>
   );
@@ -91,15 +90,13 @@ export const ECRDialog: React.FC<Props> = ({ onUpdateField, value }) => {
         automatically apply to this integration.
       </Typography>
       <IntegrationTextInputField
+        name="config_file_path"
         spellCheck={false}
         required={true}
         label="AWS Credentials File Path*"
         description={'The path to the credentials file'}
         placeholder={Placeholders.config_file_path}
-        onChange={(event) =>
-          onUpdateField('config_file_path', event.target.value)
-        }
-        value={value?.config_file_path ?? ''}
+        onChange={(event) => setValue('config_file_path', event.target.value)}
       />
 
       {configProfileInput}
@@ -110,8 +107,11 @@ export const ECRDialog: React.FC<Props> = ({ onUpdateField, value }) => {
     <Box sx={{ mt: 2 }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tabs
-          value={value?.type ?? 'access_key'}
-          onChange={(_, value) => onUpdateField('type', value)}
+          value={currentTab}
+          onChange={(_, value) => {
+            setValue('type', value);
+            setCurrentTab(value);
+          }}
         >
           <Tab value={AWSCredentialType.AccessKey} label="Enter Access Keys" />
           <Tab
@@ -120,22 +120,36 @@ export const ECRDialog: React.FC<Props> = ({ onUpdateField, value }) => {
           />
         </Tabs>
       </Box>
-      {value?.type === AWSCredentialType.AccessKey && accessKeyTab}
-      {value?.type === AWSCredentialType.ConfigFilePath && configPathTab}
+      {currentTab === AWSCredentialType.AccessKey && accessKeyTab}
+      {currentTab === AWSCredentialType.ConfigFilePath && configPathTab}
     </Box>
   );
 };
 
-export function isECRConfigComplete(config: ECRConfig): boolean {
-  if (config.type === AWSCredentialType.AccessKey) {
-    return (
-      !!config.access_key_id && !!config.secret_access_key && !!config.region
-    );
-  }
-
-  if (config.type === AWSCredentialType.ConfigFilePath) {
-    return !!config.config_file_profile && !!config.config_file_path;
-  }
-
-  return false;
+// NOTE: This is the same validationschema as that of awsDialog.tsx.
+// Should we consolidate the two into one? I'm not sure if we wish to support other fields in the future.
+export function getECRValidationSchema() {
+  return Yup.object().shape({
+    type: Yup.string().required('Please select a credential type'),
+    access_key_id: Yup.string().when('type', {
+      is: 'access_key',
+      then: Yup.string().required('Please enter an access key id'),
+    }),
+    secret_access_key: Yup.string().when('type', {
+      is: 'access_key',
+      then: Yup.string().required('Please enter a secret access key'),
+    }),
+    region: Yup.string().when('type', {
+      is: 'access_key',
+      then: Yup.string().required('Please enter a region'),
+    }),
+    config_file_profile: Yup.string().when('type', {
+      is: 'config_file_path',
+      then: Yup.string().required('Please enter a config file profile'),
+    }),
+    config_file_path: Yup.string().when('type', {
+      is: 'config_file_path',
+      then: Yup.string().required('Please enter a profile path'),
+    }),
+  });
 }

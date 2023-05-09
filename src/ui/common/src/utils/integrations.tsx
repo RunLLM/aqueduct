@@ -26,17 +26,25 @@ import {
   getAthenaValidationSchema,
 } from '../components/integrations/dialogs/athenaDialog';
 import { getAWSValidationSchema } from '../components/integrations/dialogs/awsDialog';
+import {
+  AzureDialog,
+  getAzureValidationSchema,
+} from '../components/integrations/dialogs/azureDialog';
 import { getBigQueryValidationSchema } from '../components/integrations/dialogs/bigqueryDialog';
 import { getDatabricksValidationSchema } from '../components/integrations/dialogs/databricksDialog';
+import {
+  ECRDialog,
+  getECRValidationSchema,
+} from '../components/integrations/dialogs/ecrDialog';
 import { getEmailValidationSchema } from '../components/integrations/dialogs/emailDialog';
+import {
+  GCPDialog,
+  getGCPValidationSchema,
+} from '../components/integrations/dialogs/gcpDialog';
 import {
   GCSDialog,
   getGCSValidationSchema,
 } from '../components/integrations/dialogs/gcsDialog';
-import {
-  getKubernetesValidationSchema,
-  KubernetesDialog,
-} from '../components/integrations/dialogs/kubernetesDialog';
 import {
   getLambdaValidationSchema,
   LambdaDialog,
@@ -44,6 +52,9 @@ import {
 import { getMariaDBValidationSchema } from '../components/integrations/dialogs/mariadbDialog';
 import { getMongoDBValidationSchema } from '../components/integrations/dialogs/mongoDbDialog';
 import { getMySQLValidationSchema } from '../components/integrations/dialogs/mysqlDialog';
+import OnDemandKubernetesDialog, {
+  getOnDemandKubernetesValidationSchema,
+} from '../components/integrations/dialogs/onDemandKubernetesDialog';
 import { getPostgresValidationSchema } from '../components/integrations/dialogs/postgresDialog';
 import { getRedshiftValidationSchema } from '../components/integrations/dialogs/redshiftDialog';
 import { getS3ValidationSchema } from '../components/integrations/dialogs/s3Dialog';
@@ -458,9 +469,11 @@ export const ServiceLogos: ServiceLogo = {
 };
 
 export type IntegrationDialogProps = {
-  //onUpdateField: (field: keyof AWSConfig, value: string) => void;
-  //value?: AWSConfig;
   editMode?: boolean;
+  onCloseDialog?: () => void;
+  loading: boolean;
+  disabled: boolean;
+  setMigrateStorage?: (migrate: boolean) => void;
 };
 
 export const SupportedIntegrations: ServiceInfoMap = {
@@ -469,8 +482,14 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
-    // What is the type of dialog?
-    dialog: () => <PostgresDialog />,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+      <PostgresDialog
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
     validationSchema: getPostgresValidationSchema(),
   },
   ['Snowflake']: {
@@ -478,7 +497,14 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
-    dialog: () => <SnowflakeDialog />,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+      <SnowflakeDialog
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
     validationSchema: getSnowflakeValidationSchema(),
   },
   ['Redshift']: {
@@ -486,7 +512,14 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
-    dialog: () => <RedshiftDialog />,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+      <RedshiftDialog
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
     validationSchema: getRedshiftValidationSchema(),
   },
   ['BigQuery']: {
@@ -494,7 +527,14 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.DATA,
     docs: `${addingIntegrationLink}/connecting-to-google-bigquery`,
-    dialog: () => <BigQueryDialog />,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+      <BigQueryDialog
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
     validationSchema: getBigQueryValidationSchema(),
   },
   ['MySQL']: {
@@ -502,7 +542,14 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
-    dialog: () => <MysqlDialog />,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+      <MysqlDialog
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
     validationSchema: getMySQLValidationSchema(),
   },
   ['MariaDB']: {
@@ -510,7 +557,14 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
-    dialog: () => <MariaDbDialog />,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+      <MariaDbDialog
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
     validationSchema: getMariaDBValidationSchema(),
   },
   ['S3']: {
@@ -518,11 +572,19 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.DATA,
     docs: `${addingIntegrationLink}/connecting-to-aws-s3`,
-    // TODO: Figure out how to pass in setMigrateStorage to handle storage migrations here.
-    // Believe that setMigrateStorage can just be a redux action called from within this dialog.
-    dialog: () => (
+    dialog: ({
+      editMode,
+      onCloseDialog,
+      loading,
+      disabled,
+      setMigrateStorage,
+    }) => (
       <S3Dialog
-        setMigrateStorage={(param) => console.log('setMigrateStorage: ', param)}
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+        setMigrateStorage={setMigrateStorage}
       />
     ),
     validationSchema: getS3ValidationSchema(),
@@ -532,11 +594,19 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.DATA,
     docs: `${addingIntegrationLink}/connecting-to-google-cloud-storage`,
-    // TODO: Figure out SetMigrateStorage here. This can just be a redux action afaik.
-    // Believe that setMigrateStorage can just be a redux action called from within this dialog.
-    dialog: () => (
+    dialog: ({
+      editMode,
+      onCloseDialog,
+      loading,
+      disabled,
+      setMigrateStorage,
+    }) => (
       <GCSDialog
-        setMigrateStorage={(param) => console.log('setMigrateStorage: ', param)}
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+        setMigrateStorage={setMigrateStorage}
       />
     ),
     validationSchema: getGCSValidationSchema(),
@@ -547,7 +617,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.COMPUTE,
     docs: addingIntegrationLink,
     // TODO: Figure out what to show here.
-    dialog: () => <div />,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => <div />,
     validationSchema: null,
   },
   ['Filesystem']: {
@@ -561,7 +631,14 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
-    dialog: () => <SQLiteDialog />,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+      <SQLiteDialog
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
     validationSchema: getSQLiteValidationSchema(),
   },
   ['Athena']: {
@@ -569,7 +646,14 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
-    dialog: () => <AthenaDialog />,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+      <AthenaDialog
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
     validationSchema: getAthenaValidationSchema(),
   },
   ['Airflow']: {
@@ -577,23 +661,59 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.COMPUTE,
     docs: addingIntegrationLink,
-    dialog: () => <AirflowDialog />,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+      <AirflowDialog
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
     validationSchema: getAirflowValidationSchema(),
   },
   ['Kubernetes']: {
     logo: ServiceLogos['Kubernetes'],
     activated: true,
     category: IntegrationCategories.COMPUTE,
-    docs: `${addingIntegrationLink}/connecting-to-k8s-cluster`,
-    dialog: () => <KubernetesDialog />,
-    validationSchema: getKubernetesValidationSchema(),
+    docs: addingIntegrationLink,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+      <OnDemandKubernetesDialog
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
+    validationSchema: getOnDemandKubernetesValidationSchema(),
   },
+  // ['Kubernetes']: {
+  //   logo: ServiceLogos['Kubernetes'],
+  //   activated: true,
+  //   category: IntegrationCategories.COMPUTE,
+  //   docs: `${addingIntegrationLink}/connecting-to-k8s-cluster`,
+  //   dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+  //     <KubernetesDialog
+  //       editMode={editMode}
+  //       onCloseDialog={onCloseDialog}
+  //       loading={loading}
+  //       disabled={disabled}
+  //     />
+  //   ),
+  //   validationSchema: getKubernetesValidationSchema(),
+  // },
   ['Lambda']: {
     logo: ServiceLogos['Lambda'],
     activated: true,
     category: IntegrationCategories.COMPUTE,
     docs: `${addingIntegrationLink}/connecting-to-aws-lambda`,
-    dialog: () => <LambdaDialog />,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+      <LambdaDialog
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
     validationSchema: getLambdaValidationSchema(),
   },
   ['MongoDB']: {
@@ -601,7 +721,14 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
-    dialog: () => <MongoDBDialog />,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+      <MongoDBDialog
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
     validationSchema: getMongoDBValidationSchema(),
   },
   ['Conda']: {
@@ -609,7 +736,14 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.COMPUTE,
     docs: `${addingIntegrationLink}/connecting-to-conda`,
-    dialog: () => <CondaDialog />,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+      <CondaDialog
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
     validationSchema: null,
   },
   ['Databricks']: {
@@ -617,7 +751,14 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.COMPUTE,
     docs: `${addingIntegrationLink}/connecting-to-databricks`,
-    dialog: () => <DatabricksDialog />,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+      <DatabricksDialog
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
     validationSchema: getDatabricksValidationSchema(),
   },
   ['Email']: {
@@ -625,7 +766,14 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.NOTIFICATION,
     docs: `${AqueductDocsLink}/notifications/connecting-to-email`,
-    dialog: () => <EmailDialog />,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+      <EmailDialog
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
     validationSchema: getEmailValidationSchema(),
   },
   ['Slack']: {
@@ -633,7 +781,14 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.NOTIFICATION,
     docs: `${AqueductDocsLink}/notifications/connecting-to-slack`,
-    dialog: () => <SlackDialog />,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+      <SlackDialog
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
     validationSchema: getSlackValidationSchema(),
   },
   ['Spark']: {
@@ -641,21 +796,45 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.COMPUTE,
     docs: addingIntegrationLink,
-    dialog: () => <SparkDialog />,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+      <SparkDialog
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
     validationSchema: getSparkValidationSchema(),
   },
+  // Not sure the difference between this one and the Amazon one below.
   ['AWS']: {
     logo: ServiceLogos['Kubernetes'],
     activated: true,
     category: IntegrationCategories.CLOUD,
     docs: addingIntegrationLink,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+      <AWSDialog
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
+    validationSchema: getAWSValidationSchema(),
   },
   ['Amazon']: {
     logo: ServiceLogos['AWS'],
     activated: true,
     category: IntegrationCategories.CLOUD,
     docs: addingIntegrationLink,
-    dialog: () => <AWSDialog />,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+      <AWSDialog
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
     validationSchema: getAWSValidationSchema(),
   },
   ['GCP']: {
@@ -663,18 +842,45 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: false,
     category: IntegrationCategories.CLOUD,
     docs: addingIntegrationLink,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+      <GCPDialog
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
+    validationSchema: getGCPValidationSchema(),
   },
   ['Azure']: {
     logo: ServiceLogos['Azure'],
     activated: false,
     category: IntegrationCategories.CLOUD,
     docs: addingIntegrationLink,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+      <AzureDialog
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
+    validationSchema: getAzureValidationSchema(),
   },
   ['ECR']: {
     logo: ServiceLogos['ECR'],
     activated: true,
     category: IntegrationCategories.CONTAINER_REGISTRY,
     docs: addingIntegrationLink,
+    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+      <ECRDialog
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
+    validationSchema: getECRValidationSchema(),
   },
 };
 

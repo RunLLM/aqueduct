@@ -13,8 +13,8 @@ import {
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
-import React, { useEffect, useState } from 'react';
-import { FormProvider, useForm } from 'react-hook-form';
+import React, { MouseEventHandler, useEffect, useState } from 'react';
+import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
 import * as Yup from 'yup';
 
@@ -26,67 +26,14 @@ import { handleLoadIntegrations } from '../../../reducers/integrations';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import {
-  AirflowConfig,
-  aqueductDemoName,
-  AthenaConfig,
-  AWSConfig,
-  BigQueryConfig,
-  DatabricksConfig,
-  ECRConfig,
-  EmailConfig,
   formatService,
-  GCSConfig,
   Integration,
   IntegrationConfig,
-  KubernetesConfig,
-  LambdaConfig,
-  MariaDbConfig,
-  MongoDBConfig,
-  MySqlConfig,
-  PostgresConfig,
-  RedshiftConfig,
-  S3Config,
   Service,
-  SlackConfig,
-  SnowflakeConfig,
-  SparkConfig,
-  SQLiteConfig,
   SupportedIntegrations,
 } from '../../../utils/integrations';
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
-import { AirflowDialog, isAirflowConfigComplete } from './airflowDialog';
-import { AthenaDialog, isAthenaConfigComplete } from './athenaDialog';
-import { AWSDialog, isAWSConfigComplete } from './awsDialog';
-import {
-  BigQueryDialog,
-  isBigQueryDialogConfigComplete,
-} from './bigqueryDialog';
-import { CondaDialog } from './condaDialog';
-import {
-  DatabricksDialog,
-  isDatabricksConfigComplete,
-} from './databricksDialog';
-import { ECRDialog, isECRConfigComplete } from './ecrDialog';
-import {
-  EmailDefaultsOnCreate,
-  EmailDialog,
-  isEmailConfigComplete,
-} from './emailDialog';
-import { GCSDialog, isGCSConfigComplete } from './gcsDialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
-import { isK8sConfigComplete } from './kubernetesDialog';
-import { isLambaDialogComplete } from './lambdaDialog';
-import { isMariaDBConfigComplete } from './mariadbDialog';
-import { isMongoDBConfigComplete } from './mongoDbDialog';
-import { isMySqlConfigComplete } from './mysqlDialog';
-import { isPostgresConfigComplete } from './postgresDialog';
-import { isRedshiftConfigComplete } from './redshiftDialog';
-import { isS3ConfigComplete } from './s3Dialog';
-import { isSlackConfigComplete, SlackDefaultsOnCreate } from './slackDialog';
-import { isSnowflakeConfigComplete } from './snowflakeDialog';
-import { isSparkConfigComplete } from './sparkDialog';
-import { isSQLiteConfigComplete } from './sqliteDialog';
-import { isLambaDialogComplete } from './lambdaDialog';
 
 type Props = {
   user: UserProfile;
@@ -109,6 +56,7 @@ const IntegrationDialog: React.FC<Props> = ({
   dialogContent,
   validationSchema,
 }) => {
+  const [showDialog, setShowDialog] = useState<boolean>(true);
   const [submitDisabled, setSubmitDisabled] = useState<boolean>(true);
   const editMode = !!integrationToEdit;
   const dispatch: AppDispatch = useDispatch();
@@ -132,14 +80,53 @@ const IntegrationDialog: React.FC<Props> = ({
     Object.values(state.integrationsReducer.integrations)
   );
 
-  const numWorkflows = operators
-    ? new Set(operators.map((x) => x.workflow_id)).size
-    : 0;
+  // Make sure that the user object is ready.
+  if (!user) {
+    return null;
+  }
+
+  const numWorkflows = new Set(operators.map((x) => x.workflow_id)).size;
 
   const connectStatus = editMode ? editStatus : connectNewStatus;
 
-  // TODO: Going to need to move this to redux so that dialogs that depend on storage
-  // migration can easily trigger the dialog.
+  const onConfirmDialog = (
+    data: IntegrationConfig,
+    user: UserProfile,
+    editMode = false,
+    integrationId?: string
+  ) => {
+    console.log('onConfirmDialog data', data);
+    console.log('onConfirmDialog integrations: ', integrations);
+    // TODO: Figure out better way to handle this check to ensure integrations have unique names.
+    //check that name is unique before connecting.
+    if (!editMode) {
+      for (let i = 0; i < integrations.length; i++) {
+        if (data.name === integrations[i].name) {
+          setShouldShowNameError(true);
+          return;
+        }
+      }
+    }
+
+    return editMode
+      ? dispatch(
+          handleEditIntegration({
+            apiKey: user.apiKey,
+            integrationId: integrationToEdit.id,
+            name: data.name,
+            config: data,
+          })
+        )
+      : dispatch(
+          handleConnectToNewIntegration({
+            apiKey: user.apiKey,
+            service: service,
+            name: data.name,
+            config: data,
+          })
+        );
+  };
+
   const [migrateStorage, setMigrateStorage] = useState(false);
 
   const methods = useForm({
@@ -148,20 +135,14 @@ const IntegrationDialog: React.FC<Props> = ({
 
   // Check to enable/disable submit button
   useEffect(() => {
-    // const disableConnect =
-    //   !editMode &&
-    //   (!isConfigComplete(config, service) ||
-    //     name === '' ||
-    //     name === aqueductDemoName);
-
     const subscription = methods.watch(async () => {
       // TODO: Account for editMode, aqueductDemoName and empty name
-        const checkIsFormValid = async () => {
-          const isValidForm = await methods.trigger();
-          if (isValidForm && submitDisabled) {
-            // Form is valid, enable the submit button.
-            setSubmitDisabled(false);
-          } else {
+      const checkIsFormValid = async () => {
+        const isValidForm = await methods.trigger();
+        if (isValidForm && submitDisabled) {
+          // Form is valid, enable the submit button.
+          setSubmitDisabled(false);
+        } else {
           // Form is still invalid, disable the submit button.
           setSubmitDisabled(true);
         }
@@ -195,248 +176,11 @@ const IntegrationDialog: React.FC<Props> = ({
     user.apiKey,
   ]);
 
-  let connectionMessage = '';
-  if (service === 'AWS') {
-    connectionMessage = 'Configuring Aqueduct-managed Kubernetes on AWS';
-  } else {
-    connectionMessage = `Connecting to ${service}`;
-  }
-
-  const dialogHeader = (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '100%',
-      }}
-    >
-      <Typography variant="h5">
-        {!!integrationToEdit
-          ? `Edit ${integrationToEdit.name}`
-          : `${connectionMessage}`}
-      </Typography>
-      <img height="45px" src={SupportedIntegrations[service].logo} />
-    </Box>
-  );
-
-  const onConfirmDialog = (data: IntegrationConfig) => {
-  let serviceDialog;
-
-  // Remember to comment this out and take out when done refactoring.
-  switch (service) {
-    case 'Postgres':
-      serviceDialog = (
-        <PostgresDialog
-          onUpdateField={setConfigField}
-          value={config as PostgresConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'Snowflake':
-      serviceDialog = (
-        <SnowflakeDialog
-          onUpdateField={setConfigField}
-          value={config as SnowflakeConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'Aqueduct Demo':
-      serviceDialog = null;
-      break;
-    case 'MySQL':
-      serviceDialog = (
-        <MysqlDialog
-          onUpdateField={setConfigField}
-          value={config as MySqlConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'Redshift':
-      serviceDialog = (
-        <RedshiftDialog
-          onUpdateField={setConfigField}
-          value={config as RedshiftConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'MariaDB':
-      serviceDialog = (
-        <MariaDbDialog
-          onUpdateField={setConfigField}
-          value={config as MariaDbConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'MongoDB':
-      serviceDialog = (
-        <MongoDBDialog
-          onUpdateField={setConfigField}
-          value={config as MongoDBConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'BigQuery':
-      serviceDialog = (
-        <BigQueryDialog
-          onUpdateField={setConfigField}
-          value={config as BigQueryConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'S3':
-      serviceDialog = (
-        <S3Dialog
-          onUpdateField={setConfigField}
-          value={config as S3Config}
-          editMode={editMode}
-          setMigrateStorage={setMigrateStorage}
-        />
-      );
-      break;
-    case 'GCS':
-      const gcsConfig = config as GCSConfig;
-      // GCS can only be used storage currently
-      gcsConfig.use_as_storage = 'true';
-      serviceDialog = (
-        <GCSDialog
-          onUpdateField={setConfigField}
-          value={config as GCSConfig}
-          editMode={editMode}
-          setMigrateStorage={setMigrateStorage}
-        />
-      );
-      break;
-    case 'Athena':
-      serviceDialog = (
-        <AthenaDialog
-          onUpdateField={setConfigField}
-          value={config as AthenaConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'Airflow':
-      serviceDialog = (
-        <AirflowDialog
-          onUpdateField={setConfigField}
-          value={config as AirflowConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'Kubernetes':
-      serviceDialog = (
-        <KubernetesDialog
-          onUpdateField={setConfigField}
-          value={config as KubernetesConfig}
-          apiKey={user.apiKey}
-        />
-      );
-      break;
-    case 'Lambda':
-      serviceDialog = (
-        <LambdaDialog
-          onUpdateField={setConfigField}
-          value={config as LambdaConfig}
-        />
-      );
-      break;
-    case 'SQLite':
-      serviceDialog = (
-        <SQLiteDialog
-          onUpdateField={setConfigField}
-          value={config as SQLiteConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'Conda':
-      serviceDialog = <CondaDialog />;
-      break;
-    case 'Databricks':
-      serviceDialog = (
-        <DatabricksDialog
-          onUpdateField={setConfigField}
-          value={config as DatabricksConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'Email':
-      serviceDialog = (
-        <EmailDialog
-          onUpdateField={setConfigField}
-          value={config as EmailConfig}
-        />
-      );
-      break;
-    case 'Slack':
-      serviceDialog = (
-        <SlackDialog
-          onUpdateField={setConfigField}
-          value={config as SlackConfig}
-        />
-      );
-      break;
-    case 'Spark':
-      serviceDialog = (
-        <SparkDialog
-          onUpdateField={setConfigField}
-          value={config as SparkConfig}
-          editMode={editMode}
-        />
-      );
-      break;
-    case 'AWS':
-      serviceDialog = (
-        <AWSDialog onUpdateField={setConfigField} value={config as AWSConfig} />
-      );
-      break;
-    case 'ECR':
-      serviceDialog = (
-        <ECRDialog onUpdateField={setConfigField} value={config as AWSConfig} />
-      );
-      break;
-    default:
-      return null;
-  }
-
-  const onConfirmDialog = () => {
-    //check that name is unique before connecting.
-    if (!editMode) {
-      for (let i = 0; i < integrations.length; i++) {
-        if (data.name === integrations[i].name) {
-          setShouldShowNameError(true);
-          return;
-        }
-      }
+  const handleCloseDialog = () => {
+    if (onCloseDialog) {
+      onCloseDialog();
     }
-
-    return editMode
-      ? dispatch(
-          handleEditIntegration({
-            apiKey: user.apiKey,
-            integrationId: integrationToEdit.id,
-            name: data.name,
-            config: data,
-          })
-        )
-      : dispatch(
-          handleConnectToNewIntegration({
-            apiKey: user.apiKey,
-            service: service,
-            name: data.name,
-            config: data,
-          })
-        );
+    setShowDialog(false);
   };
 
   const nameInput = (
@@ -456,10 +200,20 @@ const IntegrationDialog: React.FC<Props> = ({
   );
 
   return (
-    <Dialog open={true} onClose={onCloseDialog} fullWidth maxWidth="lg">
+    <Dialog
+      open={showDialog}
+      onClose={handleCloseDialog}
+      fullWidth
+      maxWidth="lg"
+    >
       <FormProvider {...methods}>
         <form>
-          <DialogTitle>{dialogHeader}</DialogTitle>
+          {service !== 'Kubernetes' && (
+            <DialogHeader
+              integrationToEdit={integrationToEdit}
+              service={service}
+            />
+          )}
           <DialogContent>
             {editMode && numWorkflows > 0 && (
               <Alert sx={{ mb: 2 }} severity="info">
@@ -480,13 +234,15 @@ const IntegrationDialog: React.FC<Props> = ({
                 .
               </Typography>
             )}
-            {nameInput}
-            {serviceDialog}
+            {/* TODO: refactor how layouts are handled, several integrations are special cased here. */}
+            {service !== 'Kubernetes' && nameInput}
 
-            {/* Now we can remove the switch statement for SerivceDialog! */}
-            {/* {serviceDialog} */}
-            {/* Bring this dialog back when done getting Kubernetes dialog moved over */}
-            {/*dialogContent({ editMode })*/}
+            {dialogContent({
+              editMode,
+              onCloseDialog: handleCloseDialog,
+              loading: isLoading(connectStatus),
+              disabled: submitDisabled,
+            })}
 
             {shouldShowNameError && (
               <Alert sx={{ mt: 2 }} severity="error">
@@ -507,85 +263,102 @@ const IntegrationDialog: React.FC<Props> = ({
               </Alert>
             )}
           </DialogContent>
-          <DialogActions>
-            <Button autoFocus onClick={onCloseDialog}>
-              Cancel
-            </Button>
-            <LoadingButton
-              autoFocus
-              onClick={async () => {
-
-                // NOTE: handleSubmit() is a function that returns a function, please call it as so
-                methods.handleSubmit(onConfirmDialog)();
-              }}
+          {service !== 'Kubernetes' && (
+            <DialogActionButtons
+              onCloseDialog={handleCloseDialog}
               loading={isLoading(connectStatus)}
               disabled={submitDisabled}
-            >
-              Confirm
-            </LoadingButton>
-          </DialogActions>
+              onSubmit={async () => {
+                await methods.handleSubmit((data, event) => {
+                  return onConfirmDialog(
+                    data,
+                    user,
+                    editMode,
+                    integrationToEdit?.id
+                  );
+                })(); // Remember the last two parens to call the function!
+              }}
+            />
+          )}
         </form>
       </FormProvider>
-      <DevTool control={methods.control} /> {/* set up the dev tool */}
+      <DevTool control={methods.control} />{' '}
+      {/* set up the dev tool for debugging forms (only runs in dev mode) */}
     </Dialog>
   );
 };
 
-// TODO: Remove me now that this is no longer used :)
-// TODO: refactor this so that we no longer need a switch statement here.
-// Helper function to check if the Resource config is completely filled.
-export function isConfigComplete(
-  config: IntegrationConfig,
-  service: Service
-): boolean {
-  switch (service) {
-    case 'Airflow':
-      return isAirflowConfigComplete(config as AirflowConfig);
-    case 'Athena':
-      return isAthenaConfigComplete(config as AthenaConfig);
-    case 'AWS':
-      return isAWSConfigComplete(config as AWSConfig);
-    case 'BigQuery':
-      return isBigQueryDialogConfigComplete(config as BigQueryConfig);
-    case 'Conda':
-      // Conda only has a name field that the user supplies, so this half of form is always valid.
-      return true;
-    case 'Databricks':
-      return isDatabricksConfigComplete(config as DatabricksConfig);
-    case 'Email':
-      return isEmailConfigComplete(config as EmailConfig);
-    case 'GCS':
-      return isGCSConfigComplete(config as GCSConfig);
-    case 'Kubernetes':
-      return isK8sConfigComplete(config as KubernetesConfig);
-    case 'Lambda':
-      return isLambaDialogComplete(config as LambdaConfig);
-    case 'MariaDB':
-      return isMariaDBConfigComplete(config as MariaDbConfig);
-    case 'MongoDB':
-      return isMongoDBConfigComplete(config as MongoDBConfig);
-    case 'MySQL':
-      return isMySqlConfigComplete(config as MySqlConfig);
-    case 'Postgres':
-      return isPostgresConfigComplete(config as PostgresConfig);
-    case 'Redshift':
-      return isRedshiftConfigComplete(config as RedshiftConfig);
-    case 'S3':
-      return isS3ConfigComplete(config as S3Config);
-    case 'Slack':
-      return isSlackConfigComplete(config as SlackConfig);
-    case 'Spark':
-      return isSparkConfigComplete(config as SparkConfig);
-    case 'Snowflake':
-      return isSnowflakeConfigComplete(config as SnowflakeConfig);
-    case 'SQLite':
-      return isSQLiteConfigComplete(config as SQLiteConfig);
-    case 'ECR':
-      return isECRConfigComplete(config as ECRConfig);
-    default:
-      // Require all integrations to have their own validation function.
-      return false;
+type DialogActionButtonProps = {
+  onCloseDialog: () => void;
+  loading: boolean;
+  disabled: boolean;
+  onSubmit: MouseEventHandler<HTMLButtonElement> | undefined;
+};
+
+export const DialogActionButtons: React.FC<DialogActionButtonProps> = ({
+  editMode = false,
+  onCloseDialog,
+  loading,
+  disabled,
+  onSubmit,
+}) => {
+  const methods = useFormContext();
+  return (
+    <DialogActions>
+      <Button autoFocus onClick={onCloseDialog}>
+        Cancel
+      </Button>
+      <LoadingButton
+        autoFocus
+        onClick={() => {
+          onSubmit();
+        }}
+        loading={loading}
+        disabled={disabled}
+      >
+        Confirm
+      </LoadingButton>
+    </DialogActions>
+  );
+};
+
+const getConnectionMessage = (service: Service) => {
+  if (service === 'AWS') {
+    return 'Configuring Aqueduct-managed Kubernetes on AWS';
+  } else {
+    return `Connecting to ${service}`;
   }
-}
+};
+
+type DialogHeaderProps = {
+  integrationToEdit: Integration | undefined;
+  service: Service;
+};
+export const DialogHeader: React.FC<DialogHeaderProps> = ({
+  integrationToEdit,
+  service,
+}) => {
+  const connectionMessage = getConnectionMessage(service);
+
+  return (
+    <DialogTitle>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          width: '100%',
+        }}
+      >
+        <Typography variant="h5">
+          {!!integrationToEdit
+            ? `Edit ${integrationToEdit.name}`
+            : `${connectionMessage}`}
+        </Typography>
+        <img height="45px" src={SupportedIntegrations[service].logo} />
+      </Box>
+    </DialogTitle>
+  );
+};
 
 export default IntegrationDialog;
