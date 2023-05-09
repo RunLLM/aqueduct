@@ -519,7 +519,6 @@ class TestBackend:
             operator_id = str(operator_ids[0])
 
             resp = self.get_response(self.GET_NODE_OPERATOR_TEMPLATE % (flow_id, dag_id, operator_id)).json()
-            print(resp)
             result = GetNodeOperatorResponse(**resp)
             assert str(result.id) == operator_id
             assert result.dag_id == dag_id
