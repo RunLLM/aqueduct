@@ -63,7 +63,7 @@ runs:
     - name: Update Pypi package version
       shell: bash
       run: |
-        if [ "${{ inputs.python-pkg-version }}" ]; then echo "versionTag: ${{ inputs.python-pkg-version }}" >> $HOME/.aqueduct/server/config/config.yml; fi
+        if [ "${{ inputs.python-pkg-version }}" ]; then echo -e "\nversionTag: ${{ inputs.python-pkg-version }}" >> $HOME/.aqueduct/server/config/config.yml; fi
         cat $HOME/.aqueduct/server/config/config.yml
 
     - name: Start the server again
