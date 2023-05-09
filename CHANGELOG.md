@@ -6,8 +6,6 @@ Released on May 10, 2023.
 ### Enhancements
 * Improves error handling when the user attempts to take an action without
     connecting to the Aqueduct server.
-* Updates the artifact storage card on the UI to be consistent with other
-    resource cards.
 * When connecting an S3 resource to Aqueduct, if the specified subdirectory
     does not exist, it is now automatically created.
 
