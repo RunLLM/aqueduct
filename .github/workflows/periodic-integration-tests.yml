@@ -217,7 +217,7 @@ jobs:
           aqueduct install redshift
 
       - name: Setup Hosted Data Integrations
-        timeout-minutes: 20
+        timeout-minutes: 25
         working-directory: scripts/data
         run: python3 setup_hosted.py --aws-key-id ${{ secrets.SAURAV_AWS_ACCESS_KEY_ID }} --aws-secret-key ${{ secrets.SAURAV_AWS_SECRET_ACCESS_KEY }}
 
@@ -231,7 +231,7 @@ jobs:
           prefix: Data Connectors
 
       - name: Teardown Hosted Data Integrations
-        timeout-minutes: 20
+        timeout-minutes: 25
         if: always()
         working-directory: scripts/data
         run: python3 teardown_hosted.py --aws-key-id ${{ secrets.SAURAV_AWS_ACCESS_KEY_ID }} --aws-secret-key ${{ secrets.SAURAV_AWS_SECRET_ACCESS_KEY }}
