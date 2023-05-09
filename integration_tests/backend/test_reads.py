@@ -50,7 +50,7 @@ class TestBackend:
     @classmethod
     def setup_class(cls):
         cls.client = aqueduct.Client()
-        cls.integration = cls.client.integration(name=pytest.integration)
+        cls.integration = cls.client.resource(name=pytest.integration)
         cls.flows = {
             "changing_saves": setup_changing_saves(cls.client, pytest.integration),
             "flow_with_multiple_operators": setup_flow_with_multiple_operators(cls.client, pytest.integration),
@@ -404,63 +404,63 @@ class TestBackend:
         assert workflow_status == sorted_statuses[0]
 
     def test_endpoint_nodes_get(self):
-        flow_id, _ = self.flows["flow_with_multiple_operators"]
-        flow = self.client.flow(flow_id)
-        workflow_resp = flow._get_workflow_resp()
-        dag_id = list(workflow_resp.workflow_dags.keys())[0]
-        resp = self.get_response(self.GET_NODES_TEMPLATE % (flow_id, dag_id)).json()
+        for flow_id, _ in [self.flows["flow_with_metrics_and_checks"], self.flows["flow_with_multiple_operators"]]:
+            flow = self.client.flow(flow_id)
+            workflow_resp = flow._get_workflow_resp()
+            dag_id = list(workflow_resp.workflow_dags.keys())[0]
+            resp = self.get_response(self.GET_NODES_TEMPLATE % (flow_id, dag_id)).json()
 
-        all_output_counts = []
-        for artifact in resp['operators']:
-            result = GetNodeOperatorResponse(**artifact)
-            all_output_counts.append(len(result.outputs))
-        assert sum(all_output_counts) == len(all_output_counts)
-        assert set(all_output_counts) == set([1])
+            all_output_counts = []
+            for artifact in resp['operators']:
+                result = GetNodeOperatorResponse(**artifact)
+                all_output_counts.append(len(result.outputs))
+            assert sum(all_output_counts) == len(all_output_counts)
+            assert set(all_output_counts) == set([1])
 
-        all_output_counts = []
-        for artifact in resp['artifacts']:
-            result = GetNodeArtifactResponse(**artifact)
-            all_output_counts.append(len(result.outputs))
-        assert sum(all_output_counts) == len(all_output_counts)-1
-        assert set(all_output_counts) == set([0, 1])
+            all_output_counts = []
+            for artifact in resp['artifacts']:
+                result = GetNodeArtifactResponse(**artifact)
+                all_output_counts.append(len(result.outputs))
+            assert sum(all_output_counts) == len(all_output_counts)-1
+            assert set(all_output_counts) == set([0, 1])
 
     def test_endpoint_nodes_results_get(self):
-        flow_id, _ = self.flows["flow_with_multiple_operators"]
-        flow = self.client.flow(flow_id)
-        workflow_resp = flow._get_workflow_resp()
-        dag_id = workflow_resp.workflow_dag_results[0].workflow_dag_id
-        resp = self.get_response(self.GET_NODES_RESULTS_TEMPLATE % (flow_id, dag_id)).json()
-        assert 'operators' in resp.keys()
-        assert 'artifacts' in resp.keys()
-        assert len(resp['operators']) == len(resp['artifacts'])
-        for op in resp['operators']:
-            result = GetOperatorResultResponse(**op)
-            result.exec_state.status == 'succeeded'
-        for artf in resp['artifacts']:
-            result = GetArtifactResultResponse(**artf)
-            result.exec_state.status == 'succeeded'
+        for flow_id, _ in [self.flows["flow_with_metrics_and_checks"], self.flows["flow_with_multiple_operators"]]:
+            flow = self.client.flow(flow_id)
+            workflow_resp = flow._get_workflow_resp()
+            dag_result_id = workflow_resp.workflow_dag_results[0].id
+            resp = self.get_response(self.GET_NODES_RESULTS_TEMPLATE % (flow_id, dag_result_id)).json()
+            assert 'operators' in resp.keys()
+            assert 'artifacts' in resp.keys()
+            assert len(resp['operators']) == len(resp['artifacts'])
+            for op in resp['operators']:
+                result = GetOperatorResultResponse(**op)
+                result.exec_state.status == 'succeeded'
+            for artf in resp['artifacts']:
+                result = GetArtifactResultResponse(**artf)
+                result.exec_state.status == 'succeeded'
 
     def test_endpoint_node_artifact_get(self):
-        flow_id, _ = self.flows["flow_with_multiple_operators"]
-        flow = self.client.flow(flow_id)
-        workflow_resp = flow._get_workflow_resp()
-        dag_id = workflow_resp.workflow_dag_results[0].workflow_dag_id
-        dag_result_id = workflow_resp.workflow_dag_results[0].id
+        for flow_id, _ in [self.flows["flow_with_metrics_and_checks"], self.flows["flow_with_multiple_operators"]]:
+            flow = self.client.flow(flow_id)
+            workflow_resp = flow._get_workflow_resp()
+            dag_id = workflow_resp.workflow_dag_results[0].workflow_dag_id
+            dag_result_id = workflow_resp.workflow_dag_results[0].id
 
-        dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
-            flow_id,
-            dag_result_id,
-        )
-        artifact_ids = list(dag_result_resp.artifacts.keys())
-        artifact_id = str(artifact_ids[0])
-        all_output_counts = []
-        for artifact_id in artifact_ids:
-            artifact_id = str(artifact_id)
-            resp = self.get_response(self.GET_NODE_ARTIFACT_TEMPLATE % (flow_id, dag_id, artifact_id)).json()
-            result = GetNodeArtifactResponse(**resp)
-            all_output_counts.append(len(result.outputs))
-        assert sum(all_output_counts) == len(all_output_counts)-1
-        assert set(all_output_counts) == set([0, 1])
+            dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
+                flow_id,
+                dag_result_id,
+            )
+            artifact_ids = list(dag_result_resp.artifacts.keys())
+            artifact_id = str(artifact_ids[0])
+            all_output_counts = []
+            for artifact_id in artifact_ids:
+                artifact_id = str(artifact_id)
+                resp = self.get_response(self.GET_NODE_ARTIFACT_TEMPLATE % (flow_id, dag_id, artifact_id)).json()
+                result = GetNodeArtifactResponse(**resp)
+                all_output_counts.append(len(result.outputs))
+            assert sum(all_output_counts) == len(all_output_counts)-1
+            assert set(all_output_counts) == set([0, 1])
 
     # def test_endpoint_node_artifact_result_content_get(self):
     #     flow_id, n_runs = self.flows["flow_with_multiple_operators"]
@@ -487,42 +487,42 @@ class TestBackend:
     #     # >> {"error":"Unexpected error reading DAG.\nQuery returned no rows."}
 
     def test_endpoint_node_artifact_results_get(self):
-        flow_id, _ = self.flows["flow_with_multiple_operators"]
-        flow = self.client.flow(flow_id)
-        workflow_resp = flow._get_workflow_resp()
-        dag_id = workflow_resp.workflow_dag_results[0].workflow_dag_id
-        dag_result_id = workflow_resp.workflow_dag_results[0].id
+        for flow_id, _ in [self.flows["flow_with_metrics_and_checks"], self.flows["flow_with_multiple_operators"]]:
+            flow = self.client.flow(flow_id)
+            workflow_resp = flow._get_workflow_resp()
+            dag_id = workflow_resp.workflow_dag_results[0].workflow_dag_id
+            dag_result_id = workflow_resp.workflow_dag_results[0].id
 
-        dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
-            flow_id,
-            dag_result_id,
-        )
-        artifact_ids = list(dag_result_resp.artifacts.keys())
-        artifact_id = str(artifact_ids[0])
+            dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
+                flow_id,
+                dag_result_id,
+            )
+            artifact_ids = list(dag_result_resp.artifacts.keys())
+            artifact_id = str(artifact_ids[0])
 
-        resp = self.get_response(self.GET_NODE_ARTIFACT_RESULTS_TEMPLATE % (flow_id, dag_id, artifact_id)).json()
-        for result in resp:
-            result = GetArtifactResultResponse(**result)
+            resp = self.get_response(self.GET_NODE_ARTIFACT_RESULTS_TEMPLATE % (flow_id, dag_id, artifact_id)).json()
+            for result in resp:
+                result = GetArtifactResultResponse(**result)
 
     def test_endpoint_node_operator_get(self):
-        flow_id, _ = self.flows["flow_with_multiple_operators"]
-        flow = self.client.flow(flow_id)
-        workflow_resp = flow._get_workflow_resp()
-        dag_id = workflow_resp.workflow_dag_results[0].workflow_dag_id
-        dag_result_id = workflow_resp.workflow_dag_results[0].id
+        for flow_id, _ in [self.flows["flow_with_metrics_and_checks"], self.flows["flow_with_multiple_operators"]]:
+            flow = self.client.flow(flow_id)
+            workflow_resp = flow._get_workflow_resp()
+            dag_id = workflow_resp.workflow_dag_results[0].workflow_dag_id
+            dag_result_id = workflow_resp.workflow_dag_results[0].id
 
-        dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
-            flow_id,
-            dag_result_id,
-        )
-        operator_ids = list(dag_result_resp.operators.keys())
-        operator_id = str(operator_ids[0])
+            dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
+                flow_id,
+                dag_result_id,
+            )
+            operator_ids = list(dag_result_resp.operators.keys())
+            operator_id = str(operator_ids[0])
 
-        resp = self.get_response(self.GET_NODE_OPERATOR_TEMPLATE % (flow_id, dag_id, operator_id)).json()
-        
-        result = GetNodeOperatorResponse(**resp)
-        assert str(result.id) == operator_id
-        assert result.dag_id == dag_id
+            resp = self.get_response(self.GET_NODE_OPERATOR_TEMPLATE % (flow_id, dag_id, operator_id)).json()
+            print(resp)
+            result = GetNodeOperatorResponse(**resp)
+            assert str(result.id) == operator_id
+            assert result.dag_id == dag_id
 
     # def test_endpoint_node_operator_content_get(self):
     #     flow_id, n_runs = self.flows["flow_with_multiple_operators"]
