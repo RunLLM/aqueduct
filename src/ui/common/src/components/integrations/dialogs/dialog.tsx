@@ -112,7 +112,7 @@ const IntegrationDialog: React.FC<Props> = ({
       ? dispatch(
           handleEditIntegration({
             apiKey: user.apiKey,
-            integrationId: integrationToEdit.id,
+            integrationId: integrationId,
             name: data.name,
             config: data,
           })
