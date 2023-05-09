@@ -10,7 +10,6 @@ import {
   KubernetesConfig,
 } from '../../../utils/integrations';
 import { apiAddress } from '../../hooks/useAqueductConsts';
-import useUser from '../../hooks/useUser';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: KubernetesConfig = {
@@ -21,9 +20,8 @@ const Placeholders: KubernetesConfig = {
 
 export const KubernetesDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
+  user,
 }) => {
-  const { user } = useUser();
-
   const { register, setValue, getValues } = useFormContext();
   const use_same_cluster = getValues('use_same_cluster');
 

@@ -469,6 +469,7 @@ export const ServiceLogos: ServiceLogo = {
 };
 
 export type IntegrationDialogProps = {
+  user: UserProfile;
   editMode?: boolean;
   onCloseDialog?: () => void;
   loading: boolean;
@@ -482,8 +483,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <PostgresDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -497,8 +499,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <SnowflakeDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -512,8 +515,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <RedshiftDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -527,8 +531,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.DATA,
     docs: `${addingIntegrationLink}/connecting-to-google-bigquery`,
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <BigQueryDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -542,8 +547,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <MysqlDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -557,8 +563,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <MariaDbDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -573,6 +580,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.DATA,
     docs: `${addingIntegrationLink}/connecting-to-aws-s3`,
     dialog: ({
+      user,
       editMode,
       onCloseDialog,
       loading,
@@ -580,6 +588,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
       setMigrateStorage,
     }) => (
       <S3Dialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -595,6 +604,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.DATA,
     docs: `${addingIntegrationLink}/connecting-to-google-cloud-storage`,
     dialog: ({
+      user,
       editMode,
       onCloseDialog,
       loading,
@@ -602,6 +612,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
       setMigrateStorage,
     }) => (
       <GCSDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -617,7 +628,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.COMPUTE,
     docs: addingIntegrationLink,
     // TODO: Figure out what to show here.
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => <div />,
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => <div />,
     validationSchema: null,
   },
   ['Filesystem']: {
@@ -631,8 +642,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <SQLiteDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -646,8 +658,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <AthenaDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -661,8 +674,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.COMPUTE,
     docs: addingIntegrationLink,
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <AirflowDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -676,8 +690,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.COMPUTE,
     docs: addingIntegrationLink,
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <OnDemandKubernetesDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -706,8 +721,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.COMPUTE,
     docs: `${addingIntegrationLink}/connecting-to-aws-lambda`,
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <LambdaDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -721,8 +737,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <MongoDBDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -736,8 +753,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.COMPUTE,
     docs: `${addingIntegrationLink}/connecting-to-conda`,
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <CondaDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -751,8 +769,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.COMPUTE,
     docs: `${addingIntegrationLink}/connecting-to-databricks`,
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <DatabricksDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -766,8 +785,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.NOTIFICATION,
     docs: `${AqueductDocsLink}/notifications/connecting-to-email`,
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <EmailDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -781,8 +801,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.NOTIFICATION,
     docs: `${AqueductDocsLink}/notifications/connecting-to-slack`,
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <SlackDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -796,8 +817,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.COMPUTE,
     docs: addingIntegrationLink,
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <SparkDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -812,8 +834,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.CLOUD,
     docs: addingIntegrationLink,
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <AWSDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -827,8 +850,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.CLOUD,
     docs: addingIntegrationLink,
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <AWSDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -842,8 +866,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: false,
     category: IntegrationCategories.CLOUD,
     docs: addingIntegrationLink,
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <GCPDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -857,8 +882,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: false,
     category: IntegrationCategories.CLOUD,
     docs: addingIntegrationLink,
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <AzureDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
@@ -872,8 +898,9 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.CONTAINER_REGISTRY,
     docs: addingIntegrationLink,
-    dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <ECRDialog
+        user={user}
         editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}

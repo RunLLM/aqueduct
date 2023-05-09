@@ -104,12 +104,10 @@ const IntegrationDialog: React.FC<Props> = ({
       }
     }
 
-    console.log('data before delete', data);
     // We do this so we can collect name form inputs inside the same form context.
     const name = data.name;
     // remove the name key from data so pydantic doesn't throw error.
     delete data.name;
-    console.log('data after delete: ', data);
 
     return editMode
       ? dispatch(
@@ -240,6 +238,7 @@ const IntegrationDialog: React.FC<Props> = ({
             {service !== 'Kubernetes' && nameInput}
 
             {dialogContent({
+              user,
               editMode,
               onCloseDialog: handleCloseDialog,
               loading: isLoading(connectStatus),
@@ -298,6 +297,7 @@ type DialogActionButtonProps = {
 };
 
 export const DialogActionButtons: React.FC<DialogActionButtonProps> = ({
+  user,
   editMode = false,
   onCloseDialog,
   loading,
