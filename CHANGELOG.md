@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.2
+Released on May 10, 2023.
+
+### Enhancements
+* Improves error handling when the user attempts to take an action without
+    connecting to the Aqueduct server.
+* Updates the artifact storage card on the UI to be consistent with other
+    resource cards.
+* When connecting an S3 resource to Aqueduct, if the specified subdirectory
+    does not exist, it is now automatically created.
+
+### Bugfixes
+* Replaces outdated integration terminology on the UI.
+* Fixes bug where previously created resource names were not editable.
+
 ## 0.3.1
 Released on May 4, 2023.
 
@@ -38,6 +53,9 @@ Released on May 4, 2023.
 ### Bugfixes
 * Fixes bug where installing pre-requisites for using Aqueduct-managed
     Kubernetes clusters would fail on an M1 Mac with certain configurations.
+
+## 0.3.0
+Note: Due to a technical issue, v0.3.0 was immediately replaced by v0.3.1.
 
 ## 0.2.12
 Released on April 25, 2023.
