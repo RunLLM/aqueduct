@@ -7,6 +7,7 @@ const sizeMap = {
   large: '85px',
   medium: '48px',
   small: '24px',
+  tiny: '18px',
 };
 
 type Props = {

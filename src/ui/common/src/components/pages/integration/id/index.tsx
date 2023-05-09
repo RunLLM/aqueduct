@@ -35,7 +35,6 @@ import { AppDispatch, RootState } from '../../../../stores/store';
 import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
 import {
-  hasConfigFieldsToShow,
   IntegrationCategories,
   isNotificationIntegration,
 } from '../../../../utils/integrations';
@@ -257,7 +256,6 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
                 numWorkflowsUsingMsg={numWorkflowsUsingMsg}
               />
 
-              {hasConfigFieldsToShow(selectedIntegration) && (
                 <Box
                   sx={{
                     fontSize: '16px',
@@ -281,7 +279,6 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
                     />
                   </Tooltip>
                 </Box>
-              )}
             </Box>
           </Box>
 

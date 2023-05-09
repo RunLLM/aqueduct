@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/aqueducthq/aqueduct/lib/aqueduct_compute"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/execution_state"
@@ -82,7 +83,23 @@ func (h *ListIntegrationsHandler) Perform(ctx context.Context, interfaceArgs int
 
 	responses := make([]integrationResponse, 0, len(integrations))
 	for _, integrationObject := range integrations {
-		response, err := convertIntegrationObjectToResponse(&integrationObject)
+		var response *integrationResponse
+		var err error
+
+		// We do not send conda resources down as its own standalone resource. Instead, we embed it within the
+		// Aqueduct compute resource.
+		if integrationObject.Service == shared.Conda {
+			continue
+		} else if integrationObject.Name == shared.AqueductComputeIntegrationName {
+			var aqConfig shared.IntegrationConfig
+			aqConfig, err = aqueduct_compute.ConstructAqueductComputeResourceConfig(ctx, args.ID, h.IntegrationRepo, h.Database)
+			if err != nil {
+				return emptyResponse, http.StatusInternalServerError, errors.Wrapf(err, "Unable to create aqueduct compute config!")
+			}
+			response, err = convertIntegrationObjectToResponse(&integrationObject, aqConfig)
+		} else {
+			response, err = convertIntegrationObjectToResponse(&integrationObject, integrationObject.Config)
+		}
 		if err != nil {
 			return emptyResponse, http.StatusInternalServerError, errors.Wrapf(err, "Unable to create integration response for %s.", integrationObject.Name)
 		}
@@ -93,7 +110,7 @@ func (h *ListIntegrationsHandler) Perform(ctx context.Context, interfaceArgs int
 }
 
 // Helper function to convert an resource object into an integrationResponse
-func convertIntegrationObjectToResponse(integrationObject *models.Integration) (*integrationResponse, error) {
+func convertIntegrationObjectToResponse(integrationObject *models.Integration, config shared.IntegrationConfig) (*integrationResponse, error) {
 	execState, err := execution_state.ExtractConnectionState(integrationObject)
 	if err != nil {
 		return nil, err
@@ -103,7 +120,7 @@ func convertIntegrationObjectToResponse(integrationObject *models.Integration) (
 		ID:        integrationObject.ID,
 		Service:   integrationObject.Service,
 		Name:      integrationObject.Name,
-		Config:    integrationObject.Config,
+		Config:    config,
 		CreatedAt: integrationObject.CreatedAt.Unix(),
 		ExecState: execState,
 	}, nil

@@ -2,6 +2,7 @@ import React from 'react';
 import { Integration } from 'src/utils/integrations';
 
 import { AirflowCard } from './airflowCard';
+import { AqueductCard } from './aqueductCard';
 import { AthenaCard } from './athenaCard';
 import AWSCard from './awsCard';
 import { BasicDBCard } from './basicDBCard';
@@ -32,6 +33,9 @@ export const ResourceFieldsDetailsCard: React.FC<
 > = ({ integration, detailedView }) => {
   let serviceCard;
   switch (integration.service) {
+    case 'Aqueduct':
+      serviceCard = <AqueductCard integration={integration} detailedView={detailedView}/>;
+      break;
     case 'Postgres':
     case 'MySQL':
     case 'Redshift':

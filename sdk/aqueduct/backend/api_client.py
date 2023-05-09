@@ -233,6 +233,10 @@ class APIClient:
                 "Unable to create flow. Must be connected to at least one integration!"
             )
 
+        for integration_info in resp.json():
+            if integration_info["name"] == "Aqueduct Server":
+                print(integration_info)
+
         return {
             integration_info["name"]: ResourceInfo(**integration_info)
             for integration_info in resp.json()
