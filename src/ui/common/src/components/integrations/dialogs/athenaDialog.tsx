@@ -242,7 +242,6 @@ export function getAthenaValidationSchema() {
       is: 'access_key',
       then: Yup.string().required('Please enter a region'),
     }),
-    // config file path stuff goes here
     config_file_profile: Yup.string().when('type', {
       is: 'config_file_path' || 'config_file_content',
       then: Yup.string().required('Please enter a config file profile'),
@@ -251,7 +250,6 @@ export function getAthenaValidationSchema() {
       is: 'config_file_path',
       then: Yup.string().required('Please enter a config'),
     }),
-    // config file content goes here.
     config_file_content: Yup.string().when('type', {
       is: 'config_file_content',
       then: Yup.string().required('Please upload a config file.'),

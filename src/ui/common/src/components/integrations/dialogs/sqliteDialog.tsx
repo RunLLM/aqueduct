@@ -14,12 +14,6 @@ const Placeholders: SQLiteConfig = {
   database: '/path/to/sqlite.db',
 };
 
-// type Props = {
-//   onUpdateField: (field: keyof SQLiteConfig, value: string) => void;
-//   value?: SQLiteConfig;
-//   editMode: boolean;
-// };
-
 export const SQLiteDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
 }) => {

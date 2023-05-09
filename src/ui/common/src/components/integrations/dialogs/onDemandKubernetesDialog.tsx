@@ -151,7 +151,7 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
               dispatch(
                 handleConnectToNewIntegration({
                   apiKey: user.apiKey,
-                  service: 'Kubernetes' as Service,
+                  service: 'Kubernetes',
                   name: data.name,
                   config: data,
                 })

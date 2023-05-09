@@ -94,6 +94,7 @@ export const PostgresDialog: React.FC<IntegrationDialogProps> = ({
 export function getPostgresValidationSchema() {
   return Yup.object().shape({
     host: Yup.string().required('Please enter a host'),
+    // NOTE: we don't yet ahve enforcement to make sure port is number on backend, so we leave as string for now.
     port: Yup.string().required('Please enter a port'),
     // Not sure if we need to enforce that the port's value is a number or not, but here is how we would do it:
     // to ensure that port is a number:

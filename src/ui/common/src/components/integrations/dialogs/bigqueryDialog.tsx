@@ -23,18 +23,9 @@ export const BigQueryDialog: React.FC<IntegrationDialogProps> = ({
   const { setValue, getValues } = useFormContext();
 
   const [fileName, setFileName] = useState<string>(null);
-  // const setFile = (fileData: FileData | null) => {
-  //   console.log('fileData', fileData);
-  //   setFileName(fileData?.name ?? '');
-  //   //onUpdateField('service_account_credentials', fileData?.data);
-  //   setValue('service_account_credentials', fileData?.data);
-  // };
 
   const setFile = (fileData: FileData | null) => {
     setFileName(fileData?.name ?? '');
-    console.log('fileData', fileData);
-
-    //onUpdateField('config_file_content', fileData?.data);
     setValue('service_account_credentials', fileData?.data);
   };
 
@@ -45,14 +36,6 @@ export const BigQueryDialog: React.FC<IntegrationDialogProps> = ({
           data: getValues('service_account_credentials'),
         }
       : null;
-
-  // const fileData =
-  // fileName && !!value?.service_account_credentials
-  //   ? {
-  //       name: fileName,
-  //       data: value.service_account_credentials,
-  //     }
-  //   : null;
 
   const fileUploadDescription = (
     <>

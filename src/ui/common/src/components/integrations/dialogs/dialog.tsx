@@ -95,10 +95,6 @@ const IntegrationDialog: React.FC<Props> = ({
     editMode = false,
     integrationId?: string
   ) => {
-    console.log('onConfirmDialog data', data);
-    console.log('onConfirmDialog integrations: ', integrations);
-    // TODO: Figure out better way to handle this check to ensure integrations have unique names.
-    //check that name is unique before connecting.
     if (!editMode) {
       for (let i = 0; i < integrations.length; i++) {
         if (data.name === integrations[i].name) {
@@ -108,12 +104,19 @@ const IntegrationDialog: React.FC<Props> = ({
       }
     }
 
+    console.log('data before delete', data);
+    // We do this so we can collect name form inputs inside the same form context.
+    const name = data.name;
+    // remove the name key from data so pydantic doesn't throw error.
+    delete data.name;
+    console.log('data after delete: ', data);
+
     return editMode
       ? dispatch(
           handleEditIntegration({
             apiKey: user.apiKey,
             integrationId: integrationId,
-            name: data.name,
+            name: name,
             config: data,
           })
         )
@@ -121,7 +124,7 @@ const IntegrationDialog: React.FC<Props> = ({
           handleConnectToNewIntegration({
             apiKey: user.apiKey,
             service: service,
-            name: data.name,
+            name: name,
             config: data,
           })
         );
@@ -136,7 +139,6 @@ const IntegrationDialog: React.FC<Props> = ({
   // Check to enable/disable submit button
   useEffect(() => {
     const subscription = methods.watch(async () => {
-      // TODO: Account for editMode, aqueductDemoName and empty name
       const checkIsFormValid = async () => {
         const isValidForm = await methods.trigger();
         if (isValidForm && submitDisabled) {
@@ -234,7 +236,7 @@ const IntegrationDialog: React.FC<Props> = ({
                 .
               </Typography>
             )}
-            {/* TODO: refactor how layouts are handled, several integrations are special cased here. */}
+
             {service !== 'Kubernetes' && nameInput}
 
             {dialogContent({
