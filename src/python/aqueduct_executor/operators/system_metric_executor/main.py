@@ -1,5 +1,6 @@
 import argparse
 import base64
+import sys
 
 from aqueduct_executor.operators.system_metric_executor import execute
 from aqueduct_executor.operators.system_metric_executor.spec import parse_spec
@@ -14,6 +15,8 @@ if __name__ == "__main__":
 
         install_process = subprocess.run(
             [
+                sys.executable,
+                "-m",
                 "pip",
                 "install",
                 "--index-url",

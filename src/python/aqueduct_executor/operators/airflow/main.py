@@ -1,5 +1,6 @@
 import argparse
 import base64
+import sys
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -11,6 +12,8 @@ if __name__ == "__main__":
 
         install_process = subprocess.run(
             [
+                sys.executable,
+                "-m",
                 "pip",
                 "install",
                 "--index-url",

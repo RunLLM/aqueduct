@@ -130,7 +130,10 @@ func CreateTask(
 		DependsOn:     taskDependenciesList,
 		SparkPythonTask: &jobs.SparkPythonTask{
 			PythonFile: pythonFilePath,
-			Parameters: []string{"--spec", specStr},
+			Parameters: []string{
+				"--spec", specStr,
+				"--version-tag", config.VersionTag(),
+			},
 		},
 		Libraries: []libraries.Library{
 			{
