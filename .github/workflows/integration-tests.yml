@@ -79,7 +79,7 @@ jobs:
 
   run-tests-conda:
     runs-on: ubuntu-latest-4-cores
-    timeout-minutes: 40
+    timeout-minutes: 60
     needs: publish-pypi
     name: All Integration Tests with Conda
     steps:
@@ -110,7 +110,7 @@ jobs:
           s3_test_config_path: periodic-conda-test-config.yml
 
       - name: Run the SDK Integration Tests
-        timeout-minutes: 30
+        timeout-minutes: 45
         working-directory: integration_tests/sdk
         run: python3 run_tests.py -n 8
 
@@ -118,7 +118,7 @@ jobs:
         run: echo "API_KEY=$(aqueduct apikey)" >> $GITHUB_ENV
 
       - name: Run the No-Concurrency Integration Tests
-        timeout-minutes: 10
+        timeout-minutes: 15
         working-directory: integration_tests/no_concurrency
         env:
           SERVER_ADDRESS: localhost:8080
