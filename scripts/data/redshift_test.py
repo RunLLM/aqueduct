@@ -132,7 +132,7 @@ def _get_cluster_status(client, cluster_identifier):
     return cluster["ClusterStatus"]
 
 
-def _wait_for_status(client, desired_status, timeout=600):
+def _wait_for_status(client, desired_status, timeout=900):
     """
     Waits for the test cluster to reach the desired status. Errors if the timeout
     is reached.

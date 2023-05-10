@@ -165,7 +165,7 @@ jobs:
 
   run-tests-conda:
     runs-on: ubuntu-latest-4-cores
-    timeout-minutes: 60
+    timeout-minutes: 50
     needs: publish-pypi
     name: All Integration Tests with Conda
     steps:
@@ -196,7 +196,7 @@ jobs:
           s3_test_config_path: periodic-conda-test-config.yml
 
       - name: Run the SDK Integration Tests
-        timeout-minutes: 45
+        timeout-minutes: 40
         working-directory: integration_tests/sdk
         run: python3 run_tests.py -n 8
 
@@ -285,7 +285,7 @@ jobs:
           aqueduct install redshift
 
       - name: Setup Hosted Data Integrations
-        timeout-minutes: 20
+        timeout-minutes: 25
         working-directory: scripts/data
         run: python3 setup_hosted.py --aws-key-id ${{ secrets.SAURAV_AWS_ACCESS_KEY_ID }} --aws-secret-key ${{ secrets.SAURAV_AWS_SECRET_ACCESS_KEY }}
 
@@ -299,7 +299,7 @@ jobs:
           prefix: Data Connectors
 
       - name: Teardown Hosted Data Integrations
-        timeout-minutes: 20
+        timeout-minutes: 25
         if: always()
         working-directory: scripts/data
         run: python3 teardown_hosted.py --aws-key-id ${{ secrets.SAURAV_AWS_ACCESS_KEY_ID }} --aws-secret-key ${{ secrets.SAURAV_AWS_SECRET_ACCESS_KEY }}
