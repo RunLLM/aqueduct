@@ -14,6 +14,8 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
+	"github.com/xitongsys/parquet-go-source/buffer"
+	"github.com/xitongsys/parquet-go/reader"
 )
 
 const sampleTableRow = 500
@@ -376,31 +378,44 @@ func (a *ArtifactImpl) SampleContent(ctx context.Context) ([]byte, bool, error) 
 
 	// For table types, we returns a down-sampled table when possible
 	if metadata.SerializationType == shared.TableSerialization {
-		// The over-simplified type for table orient.
+		readBuffer := buffer.NewBufferFileFromBytes(content)
+		parquetReader, err := reader.NewParquetReader(
+			readBuffer,
+			nil,
+			4, //parallel number.
+		)
+		if err != nil {
+			return nil, false, err
+		}
+		parquetTable, err := parquetReader.ReadByNumber(sampleTableRow)
+		if err != nil {
+			return nil, false, err
+		}
 		type table struct {
 			Schema map[string]interface{} `json:"schema"`
 			Data   []interface{}          `json:"data"`
 		}
-
 		var t table
+		schema := make(map[string]interface{})
 
-		err := json.Unmarshal(content, &t)
+		schemaFromParquet, _ := parquetReader.SchemaHandler.GetType(parquetReader.SchemaHandler.GetRootInName())
+
+		for i := 0; i < schemaFromParquet.NumField(); i++ {
+			schema[schemaFromParquet.Field(i).Name] = schemaFromParquet.Field(i).Type.String()[1:]
+		}
+
+		t.Data = parquetTable
+		t.Schema = schema
+
+		jsonTable, err := json.Marshal(t)
+
 		if err != nil {
 			return nil, false, err
 		}
-
-		if len(t.Data) <= sampleTableRow {
-			// If the table is small, return the original content
-			return content, false, nil
+		if int(parquetReader.GetNumRows()) < sampleTableRow {
+			return jsonTable, false, nil
 		}
-
-		t.Data = t.Data[:sampleTableRow]
-		downsampledContent, err := json.Marshal(t)
-		if err != nil {
-			return nil, false, err
-		}
-
-		return downsampledContent, true, nil
+		return jsonTable, true, nil
 	}
 
 	if metadata.SerializationType == shared.BsonTableSerialization {

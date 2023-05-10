@@ -48,7 +48,7 @@ class PickleableCollectionSerializationFormat(BaseModel):
 
 
 def _read_table_content(content: bytes) -> pd.DataFrame:
-    return pd.read_json(io.BytesIO(content), orient="table")
+    return pd.read_parquet(io.BytesIO(content))
 
 
 def _read_bson_table_content(content: bytes) -> pd.DataFrame:
@@ -247,8 +247,8 @@ def deserialize_from_local_data(
 def _write_table_output(output: pd.DataFrame) -> bytes:
     # This serialization format should also be consistent with go code in
     # src/golang/lib/workflow/artifact/artifact.go SampleContent() method.
-    output_str = cast(str, output.to_json(orient="table", date_format="iso", index=False))
-    return output_str.encode(DEFAULT_ENCODING)
+    output_str = cast(str, output.to_parquet(index=False))
+    return output_str
 
 
 def _write_bson_table_output(output: pd.DataFrame) -> bytes:
@@ -430,3 +430,18 @@ def extract_val_from_local_data(
         local_data_serialization_format, artifact_type, local_data_path
     )
     return deserialized_val
+
+def deserialize_from_artifact_result_data(
+    serialization_type: Union[SerializationType, S3SerializationType],
+    artifact_type: ArtifactType,
+    content: bytes,  
+) -> Any:
+    # Table artifact first tries to deserialize by json format. If failed to deserialize, deserialize in parquet format.
+    if artifact_type == ArtifactType.TABLE:
+        try:
+            desieralized_content = pd.read_json(io.BytesIO(content), orient="table")
+            return desieralized_content
+        except:
+            pass
+
+    return deserialize(serialization_type,artifact_type,content)

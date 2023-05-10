@@ -33,7 +33,7 @@ from aqueduct.models.response_models import (
     RegisterWorkflowResponse,
     SavedObjectUpdate,
 )
-from aqueduct.utils.serialization import deserialize
+from aqueduct.utils.serialization import deserialize_from_artifact_result_data
 from pkg_resources import get_distribution, parse_version
 
 from ..resources.connect_config import DynamicK8sConfig, ResourceConfig
@@ -67,7 +67,7 @@ class APIClient:
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
     GET_WORKFLOW_DAG_RESULT_TEMPLATE = "/api/workflow/%s/result/%s"
     LIST_WORKFLOW_SAVED_OBJECTS_ROUTE = "/api/workflow/%s/objects"
-    GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact/%s/%s/result"
+    GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact/%s/%s/%s/result"
 
     LIST_WORKFLOWS_ROUTE = "/api/workflows"
     REFRESH_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/refresh"
@@ -575,7 +575,7 @@ class APIClient:
 
         return_value = None
         if "data" in parsed_response:
-            return_value = deserialize(serialization_type, artifact_type, parsed_response["data"])
+            return_value = deserialize_from_artifact_result_data(serialization_type, artifact_type, parsed_response["data"])
 
         if execution_status != ExecutionStatus.SUCCEEDED:
             logger().warning("Artifact result unavailable due to unsuccessful execution.")

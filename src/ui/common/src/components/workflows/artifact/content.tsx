@@ -7,7 +7,7 @@ import React from 'react';
 import { ArtifactResultResponse } from '../../../handlers/responses/artifactDeprecated';
 import { ContentWithLoadingStatus } from '../../../reducers/artifactResultContents';
 import { SerializationType } from '../../../utils/artifacts';
-import { Data, inferSchema, TableRow } from '../../../utils/data';
+import { Data, inferSchema, parseParquetData,TableRow } from '../../../utils/data';
 import { isFailed, isInitial, isLoading } from '../../../utils/shared';
 import PaginatedTable from '../../tables/PaginatedTable';
 
@@ -74,7 +74,7 @@ const ArtifactContent: React.FC<Props> = ({
           break;
         }
 
-        contentComponent = <PaginatedTable data={rawData as Data} />;
+        contentComponent = <PaginatedTable data={parseParquetData(rawData)} />;
         break;
       } catch (err) {
         return (
