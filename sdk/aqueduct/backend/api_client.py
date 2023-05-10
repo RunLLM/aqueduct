@@ -67,7 +67,7 @@ class APIClient:
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
     GET_WORKFLOW_DAG_RESULT_TEMPLATE = "/api/workflow/%s/result/%s"
     LIST_WORKFLOW_SAVED_OBJECTS_ROUTE = "/api/workflow/%s/objects"
-    GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact/%s/%s/%s/result"
+    GET_ARTIFACT_RESULT_TEMPLATE = "/api/artifact/%s/%s/result"
 
     LIST_WORKFLOWS_ROUTE = "/api/workflows"
     REFRESH_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/refresh"

@@ -440,8 +440,10 @@ def deserialize_from_artifact_result_data(
     if artifact_type == ArtifactType.TABLE:
         try:
             desieralized_content = pd.read_json(io.BytesIO(content), orient="table")
-            return desieralized_content
         except:
-            pass
+            metadata = json.load(io.BytesIO(content))
+            desieralized_content = pd.DataFrame(metadata["data"])
+
+        return desieralized_content
 
     return deserialize(serialization_type,artifact_type,content)
