@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux';
 
 import {
   useDagGetQuery,
-  useDagResultsGetQuery,
+  useDagResultGetQuery,
   useNodesGetQuery,
   useWorkflowGetQuery,
 } from '../../handlers/AqueductApi';
@@ -27,7 +27,7 @@ export const WorkflowPageContentId = 'workflow-page-main';
 type Props = {
   apiKey: string;
   workflowId: string;
-  dagId: string;
+  dagId?: string;
   dagResultId?: string;
 };
 
@@ -65,11 +65,19 @@ const WorkflowHeader: React.FC<Props> = ({
   useLayoutEffect(getContainerSize, [currentNode]);
 
   const [showDescription, setShowDescription] = useState(false);
-  const { data: workflow } = useWorkflowGetQuery({ apiKey, workflowId });
-  const { data: dag } = useDagGetQuery({ apiKey, workflowId, dagId });
-  const { data: dagResults } = useDagResultsGetQuery({ apiKey, workflowId });
+  const { data: workflow } = useWorkflowGetQuery(
+    { apiKey, workflowId },
+    { skip: !workflowId }
+  );
+  const { data: dag } = useDagGetQuery(
+    { apiKey, workflowId, dagId },
+    { skip: !workflowId || !dagId }
+  );
+  const { data: dagResult } = useDagResultGetQuery(
+    { apiKey, workflowId, dagResultId },
+    { skip: !workflowId || !dagResultId }
+  );
   const { data: nodes } = useNodesGetQuery({ apiKey, workflowId, dagId });
-  const dagResult = dagResults.filter((x) => x.dag_id === dagResultId)[0];
 
   if (!dag || !workflow || !nodes) {
     // We simply do not render if main data is not available.
@@ -120,7 +128,7 @@ const WorkflowHeader: React.FC<Props> = ({
           </Typography>
 
           <Box ml={2}>
-            <VersionSelector apiKey={apiKey} workflowId={workflowId} />
+            <VersionSelector apiKey={apiKey} />
           </Box>
         </Box>
 

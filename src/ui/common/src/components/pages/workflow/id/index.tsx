@@ -490,7 +490,12 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       >
         {workflow.selectedDag && (
           <Box marginBottom={1}>
-            <WorkflowHeader workflowDag={workflow.selectedDag} />
+            <WorkflowHeader
+              apiKey={user.apiKey}
+              workflowId={workflowId}
+              dagId={dagId}
+              dagResultId={dagResultId}
+            />
           </Box>
         )}
 

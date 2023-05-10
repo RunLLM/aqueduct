@@ -15,7 +15,7 @@ import { isInitial } from '../../../../utils/shared';
 
 export type useWorkflowIdsOutputs = {
   workflowId: string;
-  dagId: string;
+  dagId?: string;
   dagResultId?: string;
 };
 
@@ -51,6 +51,7 @@ export function useWorkflowIds(apiKey: string): useWorkflowIdsOutputs {
   const dagResult = dagResultIdParam
     ? (dagResults ?? []).filter((r) => r.id === dagResultIdParam)[0]
     : dagResults[0];
+
   useEffect(() => {
     if (dagResult !== undefined) {
       dispatch(
@@ -76,7 +77,7 @@ export function useWorkflowIds(apiKey: string): useWorkflowIdsOutputs {
 
   return {
     workflowId: wfIdParam,
-    dagId: dagResult?.dag_id,
+    dagId: dagResult?.dag_id ?? dagIdParam,
     dagResultId: dagResult?.id,
   };
 }

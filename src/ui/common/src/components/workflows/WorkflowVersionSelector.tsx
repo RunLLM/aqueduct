@@ -13,8 +13,8 @@ import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDagResultsGetQuery } from 'src/handlers/AqueductApi';
 
+import { useDagResultsGetQuery } from '../../handlers/AqueductApi';
 import { theme } from '../../styles/theme/theme';
 import ExecutionStatus from '../../utils/shared';
 import { useWorkflowIds } from '../pages/workflow/id/hook';
