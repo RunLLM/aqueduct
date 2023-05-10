@@ -12,7 +12,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
-	"net/http"
 )
 
 type getConfigArgs struct {
