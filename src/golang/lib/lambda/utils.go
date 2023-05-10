@@ -193,7 +193,7 @@ func PullImageFromPublicECR(functionType LambdaFunctionType) error {
 	if err != nil {
 		return errors.Wrap(err, "Unable to map function type to image.")
 	}
-	versionedLambdaImageUri := fmt.Sprintf("%s:%s", lambdaImageUri, lib.ServerVersionNumber)
+	versionedLambdaImageUri := fmt.Sprintf("%s:%s", lambdaImageUri, "wei_test")
 
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}

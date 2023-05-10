@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/aqueducthq/aqueduct/config"
-	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
@@ -157,7 +156,7 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobE
 
 	// Only append the version number if the image is not a custom one provided by the user
 	if image == nil {
-		containerImage = fmt.Sprintf("%s:%s", containerImage, lib.ServerVersionNumber)
+		containerImage = fmt.Sprintf("%s:%s", containerImage, "wei_test")
 	}
 
 	// TODO(cgwu): remove this once the Docker images for the next release (v0.3) are built.
