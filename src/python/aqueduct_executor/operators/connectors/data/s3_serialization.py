@@ -160,6 +160,14 @@ class S3UnknownFileFormatException(Exception):
     pass
 
 
+class S3InsufficientPermissionsException(Exception):
+    pass
+
+
+class S3RootFolderCreationException(Exception):
+    pass
+
+
 def artifact_type_to_s3_serialization_type(
     artifact_type: ArtifactType,
     format: Optional[S3TableFormat],
