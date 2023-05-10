@@ -5,7 +5,7 @@
     <img src="https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/aqueduct-logo-two-tone/1x/aqueduct-logo-two-tone-1x.png" width="40%" />
   </a>
   
-  <h2 style="border: 0px white;">The Python API to run machine learning in your cloud</h2>
+  <h2 style="border: 0px white;">Run LLMs and ML on any cloud infrastructure</h2>
 
 ### 📢 [Slack](https://slack.aqueducthq.com)&nbsp;&nbsp;|&nbsp;&nbsp;🗺️ [Roadmap](https://roadmap.aqueducthq.com)&nbsp;&nbsp;|&nbsp;&nbsp;🐞 [Report a bug](https://github.com/aqueducthq/aqueduct/issues/new?assignees=&labels=bug&template=bug_report.md&title=%5BBUG%5D)&nbsp;&nbsp;|&nbsp;&nbsp;✍️ [Blog](https://blog.aqueducthq.com)
 
@@ -18,7 +18,7 @@
 [![Tests](https://github.com/aqueducthq/aqueduct/actions/workflows/integration-tests.yml/badge.svg)](https://github.com/aqueducthq/aqueduct/actions/workflows/integration-tests.yml)
 </div>
 
-**Aqueduct enables you to easily define, run, and manage AI & ML tasks on any cloud infrastructure. [Check out our quickstart guide! →](https://docs.aqueducthq.com/quickstart-guide)**
+**Aqueduct is an MLOps framework that allows you to define and deploy machine learning and LLM workloads on any cloud infrastructure. [Check out our quickstart guide! →](https://docs.aqueducthq.com/quickstart-guide)**
 
 <p align="center">
   <img src="https://user-images.githubusercontent.com/867892/230214641-b0aec53b-4988-4581-84ed-134f97ed9276.png" width="80%" />
@@ -41,23 +41,31 @@ Aqueduct's Python native API allows you to define ML tasks in regular Python cod
 For example, we can define a pipeline that trains a model on Kubernetes using a GPU and validates that model in AWS Lambda in a few lines of Python: 
 
 ```python
+# Use an existing LLM.
+vicuna = aq.llm_op('vicuna_7b', engine='eks-us-east-2')
+features = vicuna(
+    raw_logs,
+    { 
+        prompt: 
+        "Turn this log entry into a CSV: {text}" 
+    }
+)
+
+# Or write a custom op on your favorite infrastructure!
 @op(
-  engine='eks-us-east-2', 
+  engine='kubernetes',
+  # Get a GPU.
   resources={'gpu_resource_name': 'nvidia.com/gpu'}
 )
-def train(features):
-  return model.train(features)
+def train(featurized_logs):
+  return model.train(features) # Train your model.
 
-@metric(engine='lambda-us-east-2')
-def validate(model):
-    return validation_test(model)
-
-validate(train(features))
+train(features)
 ```
 
 Once you publish this workflow to Aqueduct, you can see it on the UI: 
 
-![image](https://user-images.githubusercontent.com/867892/228295996-4ba3de23-3106-431d-93a9-afd8d77a707b.png)
+![image](https://github.com/aqueducthq/aqueduct/assets/867892/d0561772-8799-4046-92ae-3c975d70e47d)
 
 To see how to build your first workflow, check out our **[quickstart guide! →](https://docs.aqueducthq.com/quickstart-guide)**
 
