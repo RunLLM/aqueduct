@@ -123,7 +123,8 @@ def _execute_function(
 
     @exec_state.user_fn_redirected(failure_tip=TIP_OP_EXECUTION)
     def _invoke() -> Any:
-        return invoke(*inputs)
+        invoke(*inputs)
+        return 15
 
     results = _invoke()
     if len(spec.output_content_paths) == 1:
