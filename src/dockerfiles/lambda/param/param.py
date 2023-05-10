@@ -1,7 +1,5 @@
 import base64
-
-from aqueduct_executor.operators.param_executor import execute
-from aqueduct_executor.operators.param_executor.spec import parse_spec
+import sys
 
 
 def handler(event, context):
@@ -10,6 +8,8 @@ def handler(event, context):
     if version_tag:
         import subprocess
         install_process = subprocess.run([
+            sys.executable,
+            "-m",
             "pip",
             "install",
             "-i",
@@ -22,6 +22,9 @@ def handler(event, context):
 
     input_spec = event["Spec"]
 
+    from aqueduct_executor.operators.param_executor import execute
+    from aqueduct_executor.operators.param_executor.spec import parse_spec
+    
     spec_json = base64.b64decode(input_spec)
     spec = parse_spec(spec_json)
 

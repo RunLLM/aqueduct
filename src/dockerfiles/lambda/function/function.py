@@ -2,13 +2,6 @@ import base64
 import subprocess
 import sys
 
-from aqueduct_executor.operators.function_executor import (
-    execute,
-    extract_function,
-    install_requirements,
-)
-from aqueduct_executor.operators.function_executor.spec import parse_spec
-
 
 def pip_freeze(local_deps_path):
     subprocess.run([sys.executable, "-m", "pip", "freeze", ">>", local_deps_path])
@@ -24,6 +17,8 @@ def handler(event, context):
     if version_tag:
         import subprocess
         install_process = subprocess.run([
+            sys.executable,
+            "-m",
             "pip",
             "install",
             "-i",
@@ -36,6 +31,12 @@ def handler(event, context):
 
     input_spec = event["Spec"]
 
+    from aqueduct_executor.operators.function_executor import (
+        execute,
+        extract_function,
+        install_requirements,
+    )
+    from aqueduct_executor.operators.function_executor.spec import parse_spec
     spec_json = base64.b64decode(input_spec)
     spec = parse_spec(spec_json)
 
