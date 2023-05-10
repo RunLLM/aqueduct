@@ -29,7 +29,11 @@ def invoke_task(spec, **kwargs):
     '''
     if "{{ version_tag }}":
         import subprocess
+        import sys
+
         install_process = subprocess.run([
+            sys.executable,
+            "-m",
             "pip",
             "install",
             "--index-url",

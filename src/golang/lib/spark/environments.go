@@ -79,6 +79,8 @@ func RunSparkImage(
 		"docker",
 		"run",
 		"-e",
+		// TODO (wei, hari): add a version tag env var and install
+		// test pypi if in-line version injection does not work.
 		fmt.Sprintf("DEPENDENCIES=%s", dependencyList),
 		"-e",
 		fmt.Sprintf("ENV_FILE_NAME=%s", envFileName),
