@@ -6,11 +6,14 @@ const (
 	ApiKeyHeader           = "api-key"
 	SdkClientVersionHeader = "sdk-client-version"
 
-	// Integration headers
+	// Resource headers
 	IntegrationNameHeader    = "integration-name"
 	IntegrationServiceHeader = "integration-service"
 	IntegrationConfigHeader  = "integration-config"
+	IntegrationIDHeader      = "integration-id"
 	IntegrationIDsHeader     = "integration-ids"
+	ServiceHeader            = "service"
+	ImageNameHeader          = "image-name"
 
 	// Storage Migration Headers
 	StorageMigrationFilterStatusHeader   = "status"

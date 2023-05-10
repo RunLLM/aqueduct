@@ -16,6 +16,7 @@ import (
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/request_id"
 	"github.com/aqueducthq/aqueduct/cmd/server/middleware/usage"
 	"github.com/aqueducthq/aqueduct/config"
+	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	"github.com/aqueducthq/aqueduct/lib/job"
@@ -64,11 +65,11 @@ type AqServer struct {
 	RequestMutex sync.RWMutex
 
 	// The environment in which the server runs. This is for usage stats collection purpose.
-	Environment       string
+	Environment       aq_context.ServerEnvironment
 	DisableUsageStats bool
 }
 
-func NewAqServer(environment string, externalIP string, port int, disableUsageStats bool) *AqServer {
+func NewAqServer(environment aq_context.ServerEnvironment, externalIP string, port int, disableUsageStats bool) *AqServer {
 	ctx := context.Background()
 	aqPath := config.AqueductPath()
 
@@ -134,14 +135,21 @@ func NewAqServer(environment string, externalIP string, port int, disableUsageSt
 		log.Fatal(err)
 	}
 
-	demoConnected, err := CheckBuiltinIntegration(ctx, s, accountOrganizationId)
+	// If the deprecated demo db name still exists in the database, we delete it in this check too.
+	demoDBConnected, aqEngineConnected, err := CheckBuiltinIntegrations(ctx, s, accountOrganizationId)
 	if err != nil {
 		db.Close()
 		log.Fatal(err)
 	}
-
-	if !demoConnected {
-		err = ConnectBuiltinIntegration(ctx, testUser, s.IntegrationRepo, s.Database)
+	if !demoDBConnected {
+		err = ConnectBuiltinDemoDBIntegration(ctx, testUser, s.IntegrationRepo, s.Database)
+		if err != nil {
+			db.Close()
+			log.Fatal(err)
+		}
+	}
+	if !aqEngineConnected {
+		err = ConnectBuiltinComputeIntegration(ctx, testUser, s.IntegrationRepo, s.Database)
 		if err != nil {
 			db.Close()
 			log.Fatal(err)
@@ -276,7 +284,7 @@ func (s *AqServer) AddHandler(route string, handlerObj handler.Handler) {
 	middleware := alice.New()
 
 	if !s.DisableUsageStats {
-		middleware = middleware.Append(usage.WithUsageStats(s.Environment))
+		middleware = middleware.Append(usage.WithUsageStats(string(s.Environment)))
 	}
 
 	if handlerObj.AuthMethod() == handler.ApiKeyAuthMethod {

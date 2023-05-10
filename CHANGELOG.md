@@ -1,5 +1,58 @@
 # Changelog
 
+## 0.3.1
+Released on May 4, 2023.
+
+### Key Features
+* Introduces the `aqueduct.llm_op` API and the `aqueduct-llm` package. Aqueduct
+    now has support for invoking LLMs with a single API call and comes with
+    pre-built Docker images optimized for executing LLMs on Kubernetes. The
+    `llm_op` API supports both ad hoc execution, as pictured below, as well as
+    batch execution over a list of inputs or a Pandas `Series`. See our
+    [documentation](https://docs.aqueducthq.com/llms) for more details.
+    ```python
+    from aqueduct import Client, llm_op
+
+    client = Client() # initialize Aqueduct client so we can check if the engine name below is valid
+    vicuna = llm_op('vicuna_7b', engine='my_k8s_engine')
+    vicuna('What is the best LLM?')
+
+    ```
+* Reorganizes integrations around the concept of resources. Resources are any
+    external tool, system, or API that Aqueduct can connect to; existing data
+    and compute integrations are automatically converted into resources. A
+    container registry resource is added in this release, and future releases
+    will introduce new resource types. The recommended SDK API for accessing
+    resources is now `client.resource`, with `client.integration` slated to
+    deprecated in a future release.
+* Allows users to specify a custom Docker image when running an Aqueduct
+    operator on Kubernetes. The Docker image is required to have the Aqueduct
+    executor scaffolding installed; for more details, please see our
+    documentation [here](https://docs.aqueducthq.com/integrations/container-registries/ecr).
+
+### Enhancements
+* Improves logging and error handling when an operator fails because it's able
+    to successfully generate a result, typically in the setup phase.
+* Enables connecting a Databricks cluster to Aqueduct via the Python SDK.
+
+### Bugfixes
+* Fixes bug where installing pre-requisites for using Aqueduct-managed
+    Kubernetes clusters would fail on an M1 Mac with certain configurations.
+
+## 0.2.12
+Released on April 25, 2023.
+
+### Enhancements
+* Improves the `describe` method on integration objects in the SDK; if there
+    was an error connecting or validating the integration, the error will be
+    shown.
+* Eagerly validates integration connections, so users will be notified
+    immediately if they are using a mis-configured integration when, for
+    example, attempting to access data.
+* Replaces placeholder values in integration connection forms with more
+    realistic values.
+* Adds support for the most recent version of `numpy`.
+
 ## 0.2.11
 Released on April 18, 2023.
 

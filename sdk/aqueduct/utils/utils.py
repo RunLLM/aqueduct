@@ -12,8 +12,9 @@ from aqueduct.models.config import (
     SparkEngineConfig,
 )
 from aqueduct.models.dag import Schedule
-from aqueduct.models.integration import IntegrationInfo
+from aqueduct.models.integration import ResourceInfo
 from aqueduct.models.operators import ParamSpec
+from aqueduct.resources.dynamic_k8s import DynamicK8sResource
 from aqueduct.utils.integration_validation import validate_integration_is_connected
 from croniter import croniter
 
@@ -146,12 +147,16 @@ def construct_param_spec(
 
 
 def generate_engine_config(
-    integrations: Dict[str, IntegrationInfo], integration_name: Optional[str]
+    integrations: Dict[str, ResourceInfo],
+    integration_name: Optional[Union[str, DynamicK8sResource]],
 ) -> Optional[EngineConfig]:
     """Generates an EngineConfig from an integration info object.
 
     Both None and "Aqueduct" (case-insensitive) map to the Aqueduct Engine.
     """
+    if isinstance(integration_name, DynamicK8sResource):
+        integration_name = integration_name.name()
+
     if integration_name is None or integration_name.lower() == "aqueduct":
         return None
 

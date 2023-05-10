@@ -3,8 +3,8 @@ name: Mypy
 on:
   pull_request:
     paths:
-      - 'sdk/aqueduct/**'
-      - 'src/python/**'
+      - "sdk/aqueduct/**"
+      - "src/python/**"
 
 jobs:
   sdk:
@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 5
     strategy:
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10']
+        python-version: ["3.7", "3.8", "3.9", "3.10"]
 
     name: Mypy SDK
     steps:
@@ -40,7 +40,7 @@ jobs:
     timeout-minutes: 5
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10']
+        python-version: ["3.8", "3.9", "3.10"]
 
     name: Mypy Executor
     steps:

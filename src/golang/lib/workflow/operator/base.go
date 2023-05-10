@@ -443,6 +443,7 @@ func (bfo *baseFunctionOperator) jobSpec(
 
 	inputContentPaths, inputMetadataPaths := unzipExecPathsToRawPaths(bfo.inputExecPaths)
 	outputContentPaths, outputMetadataPaths := unzipExecPathsToRawPaths(bfo.outputExecPaths)
+
 	return &job.FunctionSpec{
 		BasePythonSpec: job.NewBasePythonSpec(
 			job.FunctionJobType,
@@ -464,5 +465,6 @@ func (bfo *baseFunctionOperator) jobSpec(
 		OperatorType:                bfo.Type(),
 		CheckSeverity:               checkSeverity,
 		Resources:                   bfo.dbOperator.Spec.Resources(),
+		Image:                       bfo.dbOperator.Spec.Image(),
 	}
 }

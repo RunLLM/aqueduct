@@ -10,6 +10,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
@@ -89,9 +90,14 @@ func (h *TestIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 	if errors.Is(err, database.ErrNoRows()) {
 		return emptyResp, http.StatusBadRequest, err
 	}
-
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve integration")
+	}
+
+	// No need to do any further verification for Aqueduct Compute.
+	// The fact that it even got here means it works.
+	if integrationObject.Name == shared.AqueductComputeIntegrationName {
+		return emptyResp, http.StatusOK, nil
 	}
 
 	storageConfig := config.Storage()

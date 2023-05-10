@@ -17,6 +17,7 @@ import (
 	shared_utils "github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	operator_model "github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/param"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
@@ -510,7 +511,9 @@ func (eng *aqEngine) DeleteWorkflow(
 		dagIDs = append(dagIDs, dag.ID)
 	}
 
-	dagResultsToDelete, err := eng.DAGResultRepo.GetByWorkflow(ctx, workflowObj.ID, txn)
+	// Default values to not have an order and not have a limit: Empty string for order_by, -1 for limit
+	// Set true for order_by order (desc/asc) because doesn't matter.
+	dagResultsToDelete, err := eng.DAGResultRepo.GetByWorkflow(ctx, workflowObj.ID, "", -1, true, txn)
 	if err != nil {
 		return errors.Wrap(err, "Unexpected error occurred while retrieving workflow dag results.")
 	}
@@ -923,6 +926,9 @@ func (eng *aqEngine) execute(
 
 	// Kick off execution by starting all operators that don't have any inputs.
 	for _, op := range dag.Operators() {
+		if op.Type() == operator_model.LoadType {
+			continue
+		}
 		if opToDependencyCount[op.ID()] == 0 {
 			inProgressOps[op.ID()] = op
 		}
@@ -949,6 +955,10 @@ func (eng *aqEngine) execute(
 	}()
 
 	start := time.Now()
+
+	// We defer save operations until all other computer operations are completed successfully.
+	// This flag tracks whether the save operations are scheduled for execution.
+	loadOpsDone := false
 
 	for len(inProgressOps) > 0 {
 		if time.Since(start) > timeConfig.ExecTimeout {
@@ -1003,6 +1013,10 @@ func (eng *aqEngine) execute(
 			// and check operators with warning severity.
 			if execState.HasBlockingFailure() {
 				log.Infof("Stopping execution of operator %v", op.ID())
+				if execState.Error != nil {
+					log.Infof("Reason: %s", execState.Error.Message())
+				}
+
 				for id, dagOp := range workflowDag.Operators() {
 					log.Infof("Checking status of operator %v", id)
 					// Skip if this operator has already been completed or is in progress.
@@ -1073,25 +1087,41 @@ func (eng *aqEngine) execute(
 				}
 
 				for _, nextOp := range nextOps {
+
 					// Decrement the active dependency count for every downstream operator.
 					// Once this count reaches zero, we can schedule the next operator.
 					opToDependencyCount[nextOp.ID()] -= 1
 
 					if opToDependencyCount[nextOp.ID()] < 0 {
-						return errors.Newf("Internal error: operator %s has a negative dependnecy count.", op.Name())
+						return errors.Newf("Internal error: operator %s has a negative dependency count.", op.Name())
 					}
 
 					if opToDependencyCount[nextOp.ID()] == 0 {
 						// Defensive check: do not reschedule an already in-progress operator. This shouldn't actually
 						// matter because we only keep and update a single copy an on operator.
 						if _, ok := inProgressOps[nextOp.ID()]; !ok {
-							inProgressOps[nextOp.ID()] = nextOp
+							// In this pass only pick pending compute operations, and defer the save operations
+							// to the end.
+							if nextOp.Type() != operator_model.LoadType {
+								inProgressOps[nextOp.ID()] = nextOp
+							}
 						}
 					}
 				}
 			}
 
 			time.Sleep(timeConfig.OperatorPollInterval)
+		}
+		// There are no more computer operations to run. Run the save (load) operations to persist
+		// artifacts to DB. The save operations are scheduled at the end so data is persisted only if
+		// all preceding compute operations are successful.
+		if len(inProgressOps) == 0 && !loadOpsDone {
+			for _, saveOp := range workflowDag.Operators() {
+				if saveOp.Type() == operator_model.LoadType {
+					inProgressOps[saveOp.ID()] = saveOp
+				}
+			}
+			loadOpsDone = true
 		}
 	}
 

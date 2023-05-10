@@ -3,7 +3,7 @@
 
 import { APIKeyParameter } from '../parameters/Header';
 import { DagIdParameter, WorkflowIdParameter } from '../parameters/Path';
-import { DagResponse } from '../responses/Workflow';
+import { DagResponse } from '../responses/workflow';
 
 export type DagGetRequest = APIKeyParameter &
   DagIdParameter &
