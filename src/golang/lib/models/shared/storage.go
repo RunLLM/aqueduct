@@ -2,6 +2,7 @@ package shared
 
 import (
 	"database/sql/driver"
+
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"

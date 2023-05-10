@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"net/http"
+
 	"github.com/aqueducthq/aqueduct/config"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -11,6 +12,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
+	"net/http"
 )
 
 type getConfigArgs struct {
