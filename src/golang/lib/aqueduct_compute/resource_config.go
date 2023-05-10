@@ -13,7 +13,7 @@ import (
 
 const (
 	// Only set if the conda is registered. Represents the json-serialized string of the Conda resource config.
-	CondaConfigKey = "conda"
+	CondaConfigKey = "conda_config_serialized"
 
 	// Only set if the conda is not registered.
 	PythonVersionKey = "python_version"

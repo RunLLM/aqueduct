@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
 import React from 'react';
 
-import {AqueductComputeConfig, Integration} from '../../../utils/integrations';
+import {AqueductComputeConfig, Integration, resourceStatus} from '../../../utils/integrations';
 import ExecutionStatus, {ExecState} from '../../../utils/shared';
 import { StatusIndicator } from '../../workflows/workflowStatus';
 import IntegrationLogo from '../logo';
@@ -19,25 +19,11 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
   integration,
   numWorkflowsUsingMsg,
 }) => {
-
-  // If the exec_state doesn't exist on the resource, we assume the integration succeeded.
-  // Moreover, if the resource is a Aqueduct compute, we need to also check the status of any
-  // registered conda resouce!
-  let status = integration.exec_state?.status || ExecutionStatus.Succeeded;
-  if (integration.service == "Aqueduct" && integration.exec_state.status == ExecutionStatus.Succeeded){
-    const aqConfig = integration.config as AqueductComputeConfig
-    if (aqConfig.conda_config_serialized) {
-      const serialized_conda_exec_state = JSON.parse(aqConfig.conda_config_serialized)["exec_state"]
-      const conda_exec_state = JSON.parse(serialized_conda_exec_state) as ExecState
-      status = conda_exec_state.status
-    }
-  }
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
         <StatusIndicator
-          status={status}
+          status={resourceStatus(integration)}
           size="16px"
         />
 

@@ -37,6 +37,9 @@ import UserProfile from '../../../../utils/auth';
 import {
   IntegrationCategories,
   isNotificationIntegration,
+  AqueductComputeConfig,
+  isCondaRegistered,
+  SupportedIntegrations,
 } from '../../../../utils/integrations';
 import ExecutionStatus, {
   isFailed,
@@ -70,6 +73,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAddTableDialog, setShowAddTableDialog] = useState(false);
   const [showDeleteTableDialog, setShowDeleteTableDialog] = useState(false);
+  const [showDeleteCondaDialog, setShowDeleteCondaDialog] = useState(false);
 
   const [showTestConnectToast, setShowTestConnectToast] = useState(false);
   const [showConnectSuccessToast, setShowConnectSuccessToast] = useState(false);
@@ -296,7 +300,13 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             }}
             onEdit={() => setShowEditDialog(true)}
             onDeleteIntegration={() => {
-              setShowDeleteTableDialog(true);
+              // We need another variable to control for Conda deletion, since it's the only deletion
+              // where the resource being deleted isn't the selected integration.
+              if (selectedIntegration.service == "Aqueduct" && isCondaRegistered(selectedIntegration as AqueductComputeConfig) {
+                setShowDeleteCondaDialog(true);
+              } else {
+                setShowDeleteTableDialog(true);
+              }
             }}
             allowDeletion={
               serverConfig.config?.storageConfig.integration_name !==

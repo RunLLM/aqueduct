@@ -30,6 +30,10 @@ func ValidateCondaDevelop() error {
 
 // Returns the Conda path and std outputs, in addition to any errors.
 func InitializeConda() (string, string, error) {
+
+	// TODO: REMOVE
+	//return "", "", errors.Newf("This is a scary conda error")
+
 	out, _, err := lib_utils.RunCmd(CondaCmdPrefix, []string{"info", "--base"}, "", false)
 	if err != nil {
 		return "", out, errors.Wrap(err, "Failed to run Conda command.")

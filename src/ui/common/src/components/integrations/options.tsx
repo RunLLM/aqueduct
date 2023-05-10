@@ -11,8 +11,9 @@ import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 
-import { Integration, isBuiltinIntegration } from '../../utils/integrations';
+import {AqueductComputeConfig, Integration, isBuiltinIntegration, isCondaRegistered} from '../../utils/integrations';
 import { Button } from '../primitives/Button.styles';
+import {AqueductConfig} from "../../utils/engine";
 
 type Props = {
   integration: Integration;
@@ -40,6 +41,16 @@ const IntegrationOptions: React.FC<Props> = ({
   const onMenuClose = () => {
     setAnchorEl(null);
   };
+
+  // Disallow any deletion for the built-in resources, unless Conda was registered.
+  let deletionMenuItem = "Delete Resource";
+  if (isBuiltinIntegration(integration)) {
+    allowDeletion = false;
+  }
+  if (integration.service === 'Aqueduct' && isCondaRegistered(integration as AqueductComputeConfig)) {
+    allowDeletion = true;
+    deletionMenuItem = "Delete Conda";
+  }
 
   return (
     <Box display="flex" flexDirection="row" sx={{ height: 'fit-content' }}>
@@ -110,7 +121,7 @@ const IntegrationOptions: React.FC<Props> = ({
           >
             <FontAwesomeIcon color="gray.800" icon={faTrash} />
             <Typography color="gray.800" variant="body2" sx={{ marginLeft: 1 }}>
-              Delete Resource
+              {deletionMenuItem}
             </Typography>
           </MenuItem>
         )}
