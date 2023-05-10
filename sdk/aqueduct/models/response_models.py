@@ -21,6 +21,7 @@ class ArtifactResult(BaseModel):
     artifact_type: ArtifactType
     content: bytes
 
+
 # V2 Responses
 class GetDagResultResponse(BaseModel):
     """Represents the result of a single workflow run.
@@ -35,9 +36,11 @@ class GetDagResultResponse(BaseModel):
             The execution state of the run result.
 
     """
+
     id: uuid.UUID
     dag_id: uuid.UUID
     exec_state: ExecutionState
+
 
 class GetOperatorResultResponse(BaseModel):
     """Represents the result of a single operator in a workflow run.
@@ -48,8 +51,10 @@ class GetOperatorResultResponse(BaseModel):
         exec_state:
             The execution state of the run result.
     """
+
     id: uuid.UUID
     exec_state: ExecutionState
+
 
 class GetArtifactResultResponse(BaseModel):
     """Represents the result of a single artifact in a workflow run.
@@ -66,11 +71,13 @@ class GetArtifactResultResponse(BaseModel):
         exec_state:
             The execution state of the run result.
     """
+
     id: uuid.UUID
     serialization_type: SerializationType
     content_path: str
     content_serialized: Optional[str]
     exec_state: ExecutionState
+
 
 class GetNodeOperatorResponse(BaseModel):
     """Represents a single operator in a workflow run.
@@ -92,6 +99,7 @@ class GetNodeOperatorResponse(BaseModel):
             The id(s) of the output artifact(s) of the operator.
 
     """
+
     id: uuid.UUID
     dag_id: uuid.UUID
     name: str
@@ -99,6 +107,7 @@ class GetNodeOperatorResponse(BaseModel):
     spec: OperatorSpec
     inputs: List[uuid.UUID]
     outputs: List[uuid.UUID]
+
 
 class GetNodeArtifactResponse(BaseModel):
     """Represents a single artifact in a workflow run.
@@ -120,6 +129,7 @@ class GetNodeArtifactResponse(BaseModel):
             The id(s) of the operator(s) that take this artifact as input.
 
     """
+
     id: uuid.UUID
     dag_id: uuid.UUID
     name: str
@@ -127,6 +137,7 @@ class GetNodeArtifactResponse(BaseModel):
     type: ArtifactType
     input: uuid.UUID
     outputs: List[uuid.UUID]
+
 
 # V1 Responses
 class PreviewResponse(BaseModel):

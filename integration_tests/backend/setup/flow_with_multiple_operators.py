@@ -36,6 +36,8 @@ def setup_flow_with_multiple_operators(
     df3 = op3(df2)
     df4 = op4(df3)
 
-    flow = client.publish_flow(artifacts=[df1, df2, df3, df4], name=name, description="Test description.")
+    flow = client.publish_flow(
+        artifacts=[df1, df2, df3, df4], name=name, description="Test description."
+    )
 
     return flow.id(), n_runs
