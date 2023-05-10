@@ -5,15 +5,12 @@ export type PerDagPageState = {
 };
 
 type PerWorkflowPageState = {
-  dagId: string;
-  dagResultId?: string;
   perDagPageStates: {
     [dagOrResultId: string]: PerDagPageState;
   };
 };
 
 export type WorkflowPageState = {
-  workflowId?: string;
   perWorkflowPageStates: {
     [workflowId: string]: PerWorkflowPageState;
   };
@@ -22,11 +19,10 @@ export type WorkflowPageState = {
 const initialState: WorkflowPageState = { perWorkflowPageStates: {} };
 function initializePerWorkflowPageStateIfNotExists(
   state: WorkflowPageState,
-  workflowId: string,
-  dagId: string,
+  workflowId: string
 ) {
   if (!state.perWorkflowPageStates[workflowId]) {
-    state.perWorkflowPageStates[workflowId] = { dagId, perDagPageStates: {} };
+    state.perWorkflowPageStates[workflowId] = { perDagPageStates: {} };
   }
 }
 
@@ -34,29 +30,32 @@ export const workflowPageSlice = createSlice({
   name: 'workflowPage',
   initialState,
   reducers: {
-    selectDag: (state, { payload }: PayloadAction<{ workflowId: string; dagId: string }>) => {
-      initializePerWorkflowPageStateIfNotExists(state, payload.workflowId, payload.dagId);
-      state.perWorkflowPageStates[payload.workflowId].perDagPageStates[payload.dagId] = {}
-    },
-    selectDagResult: (
+    initializeDagOrResultPageIfNotExists: (
       state,
-      { payload }: PayloadAction<{ workflowId: string; dagId: string; dagResultId: string }>
+      {
+        payload,
+      }: PayloadAction<{
+        workflowId: string;
+        dagId: string;
+        dagResultId?: string;
+      }>
     ) => {
-      initializePerWorkflowPageStateIfNotExists(state, payload.workflowId, payload.dagId);
-      state.perWorkflowPageStates[payload.workflowId].dagResultId =
-        payload.dagResultId;
+      initializePerWorkflowPageStateIfNotExists(state, payload.workflowId);
+      const pageKey = payload.dagResultId ?? payload.dagId;
+
       if (
         !state.perWorkflowPageStates[payload.workflowId].perDagPageStates[
-        payload.dagResultId
+          pageKey
         ]
       ) {
         state.perWorkflowPageStates[payload.workflowId].perDagPageStates[
-          payload.dagResultId
+          pageKey
         ] = {};
       }
     },
   },
 });
 
-export const { selectDag, selectDagResult } = workflowPageSlice.actions;
+export const { initializeDagOrResultPageIfNotExists } =
+  workflowPageSlice.actions;
 export default workflowPageSlice.reducer;

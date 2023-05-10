@@ -12,26 +12,20 @@ import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
-import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { useDagResultsGetQuery } from 'src/handlers/AqueductApi';
 
-import { RootState } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import ExecutionStatus from '../../utils/shared';
+import { useWorkflowIds } from '../pages/workflow/id/hook';
 
 type Props = {
   apiKey: string;
-  workflowId: string;
 };
 
-export const VersionSelector: React.FC<Props> = ({ apiKey, workflowId }) => {
+export const VersionSelector: React.FC<Props> = ({ apiKey }) => {
   const navigate = useNavigate();
-  const pageState = useSelector(
-    (state: RootState) =>
-      state.workflowPageReducer.perWorkflowPageStates[workflowId]
-  );
-  const dagResultId = pageState?.dagResultId;
+  const { workflowId, dagResultId } = useWorkflowIds(apiKey);
 
   const { data: dagResults } = useDagResultsGetQuery({ apiKey, workflowId });
   const [menuAnchor, setMenuAnchor] = useState<HTMLButtonElement | null>(null);
@@ -89,7 +83,11 @@ export const VersionSelector: React.FC<Props> = ({ apiKey, workflowId }) => {
           value={idx}
           key={r.id}
           onClick={() => {
-            navigate(`?workflowDagId=${encodeURI(r.dag_id)}&workflowDagResultId=${encodeURI(r.id)}`);
+            navigate(
+              `?workflowDagId=${encodeURI(
+                r.dag_id
+              )}&workflowDagResultId=${encodeURI(r.id)}`
+            );
           }}
           sx={{
             backgroundColor: selected ? selectedBackground : defaultBackground,

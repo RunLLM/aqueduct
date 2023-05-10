@@ -3,21 +3,21 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
+import { useDagResultsGetQuery } from '../../../../handlers/AqueductApi';
 import { handleGetWorkflowDag } from '../../../../handlers/getWorkflowDag';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
+import { initializeDagOrResultPageIfNotExists } from '../../../../reducers/pages/Workflow';
 import { WorkflowDagResultWithLoadingStatus } from '../../../../reducers/workflowDagResults';
 import { WorkflowDagWithLoadingStatus } from '../../../../reducers/workflowDags';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
 import { isInitial } from '../../../../utils/shared';
-import { useDagResultsGetQuery } from '../../../../handlers/AqueductApi';
-import { selectDagResult } from '../../../../reducers/pages/Workflow';
 
 export type useWorkflowIdsOutputs = {
   workflowId: string;
   dagId: string;
   dagResultId?: string;
-}
+};
 
 export type useWorkflowOutputs = {
   breadcrumbs: BreadcrumbLink[];
@@ -28,17 +28,57 @@ export type useWorkflowOutputs = {
   workflowDagResultWithLoadingStatus: WorkflowDagResultWithLoadingStatus;
 };
 
-export default function useWorkflowIds(apiKey: string): useWorkflowIdsOutputs {
+// useWorkflowIds ensures we use the URL parameter as ground-truth for fetching
+// workflow, dag, and result IDs. It includes additional hooks to ensure
+// redux states are in-sync.
+// This hook should be used for all pages that need to access a single DAG (or DAG result)
+// data.
+export function useWorkflowIds(apiKey: string): useWorkflowIdsOutputs {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { workflowId: wfIdParam, workflowDagId: dagIdParam, workflowDagResultId: dagResultIdParam } = useParams();
-  const { data: dagResults } = useDagResultsGetQuery({ apiKey, workflowId: wfIdParam });
+  const {
+    id: wfIdParam,
+    workflowDagId: dagIdParam,
+    workflowDagResultId: dagResultIdParam,
+  } = useParams();
+
+  const { data: dagResults } = useDagResultsGetQuery(
+    { apiKey, workflowId: wfIdParam },
+    { skip: !wfIdParam }
+  );
+
   // Select the first availale dag result if ID is not provided.
-  const dagResult = dagResultIdParam ? (dagResults ?? []).filter(r => r.id === dagResultIdParam) : dagResults[0]
-  const workflowPageState = useSelector((state: RootState) => state.workflowPageReducer)
+  const dagResult = dagResultIdParam
+    ? (dagResults ?? []).filter((r) => r.id === dagResultIdParam)[0]
+    : dagResults[0];
   useEffect(() => {
-    dispatch(selectDagResult({ workflowId, dagResultId: workflowDagResultId }))
-  }, [wfIdParam, dagIdParam, dagResultIdParam])
+    if (dagResult !== undefined) {
+      dispatch(
+        initializeDagOrResultPageIfNotExists({
+          workflowId: wfIdParam,
+          dagId: dagResult.dag_id,
+          dagResultId: dagResult.id,
+        })
+      );
+
+      if (
+        dagIdParam !== dagResult.dag_id ||
+        dagResultIdParam !== dagResult.id
+      ) {
+        navigate(
+          `?workflowDagId=${encodeURI(
+            dagResult.dag_id
+          )}&workflowDagResultId=${encodeURI(dagResult.id)}`
+        );
+      }
+    }
+  }, [wfIdParam, dagIdParam, dagResultIdParam, dagResult]);
+
+  return {
+    workflowId: wfIdParam,
+    dagId: dagResult?.dag_id,
+    dagResultId: dagResult?.id,
+  };
 }
 
 export default function useWorkflow(
