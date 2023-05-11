@@ -378,11 +378,36 @@ func (a *ArtifactImpl) SampleContent(ctx context.Context) ([]byte, bool, error) 
 
 	// For table types, we returns a down-sampled table when possible
 	if metadata.SerializationType == shared.TableSerialization {
+		type table struct {
+			Schema map[string]interface{} `json:"schema"`
+			Data   []interface{}          `json:"data"`
+		}
+		var t table
+		err := json.Unmarshal(content, &t)
+
+		// If a table artifact can be deserialized by json.Unmarshal(),
+		// it is then an outdated Json artifact. We proceed with old method.
+		if err == nil {
+			if len(t.Data) <= sampleTableRow {
+				// If the table is small, return the original content
+				return content, false, nil
+			}
+
+			t.Data = t.Data[:sampleTableRow]
+			downsampledContent, err := json.Marshal(t)
+			if err != nil {
+				return nil, false, err
+			}
+
+			return downsampledContent, true, nil
+		}
+
 		readBuffer := buffer.NewBufferFileFromBytes(content)
 		parquetReader, err := reader.NewParquetReader(
 			readBuffer,
 			nil,
-			4, //parallel number.
+			// Number of parallel read.
+			4,
 		)
 		if err != nil {
 			return nil, false, err
@@ -391,11 +416,6 @@ func (a *ArtifactImpl) SampleContent(ctx context.Context) ([]byte, bool, error) 
 		if err != nil {
 			return nil, false, err
 		}
-		type table struct {
-			Schema map[string]interface{} `json:"schema"`
-			Data   []interface{}          `json:"data"`
-		}
-		var t table
 		schema := make(map[string]interface{})
 
 		schemaFromParquet, _ := parquetReader.SchemaHandler.GetType(parquetReader.SchemaHandler.GetRootInName())
@@ -408,7 +428,6 @@ func (a *ArtifactImpl) SampleContent(ctx context.Context) ([]byte, bool, error) 
 		t.Schema = schema
 
 		jsonTable, err := json.Marshal(t)
-
 		if err != nil {
 			return nil, false, err
 		}

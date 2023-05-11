@@ -44,11 +44,11 @@ export type Data = {
   data: TableRow[];
   status?: string;
 };
-export type ParquetDataSchema = { [key: string]: string}
+export type ParquetDataSchema = { [key: string]: string };
 export type ParquetData = {
-  schema?:  ParquetDataSchema;
+  schema?: ParquetDataSchema;
   data: TableRow[];
-}
+};
 
 export type DataPreviewLoadSpec = {
   service: Service;
@@ -94,13 +94,11 @@ export function inferSchema(
   };
 }
 
-export function parseParquetData(
-  rawData: any
-): Data {
-  if("pandas_version" in rawData){
-    return rawData as Data
-  }else{
-    const parquetData = rawData as ParquetData
+export function parseParquetData(rawData: any): Data {
+  if ('pandas_version' in rawData) {
+    return rawData as Data;
+  } else {
+    const parquetData = rawData as ParquetData;
     const schemaFromParquet = {
       fields: Object.keys(parquetData.schema).map((col) => ({
         name: col,
@@ -112,6 +110,6 @@ export function parseParquetData(
     return {
       schema: schemaFromParquet,
       data: rawData.data,
-    }
+    };
   }
 }

@@ -7,7 +7,7 @@ import React from 'react';
 import { ArtifactResultResponse } from '../../../handlers/responses/artifactDeprecated';
 import { ContentWithLoadingStatus } from '../../../reducers/artifactResultContents';
 import { SerializationType } from '../../../utils/artifacts';
-import { Data, inferSchema, parseParquetData,TableRow } from '../../../utils/data';
+import { inferSchema, parseParquetData, TableRow } from '../../../utils/data';
 import { isFailed, isInitial, isLoading } from '../../../utils/shared';
 import PaginatedTable from '../../tables/PaginatedTable';
 

@@ -247,7 +247,7 @@ def deserialize_from_local_data(
 def _write_table_output(output: pd.DataFrame) -> bytes:
     # This serialization format should also be consistent with go code in
     # src/golang/lib/workflow/artifact/artifact.go SampleContent() method.
-    output_str = cast(str, output.to_parquet(index=False))
+    output_str = output.to_parquet(index=False)
     return output_str
 
 
