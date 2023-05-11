@@ -6,9 +6,12 @@ import ArtifactDetailsPage from '../components/pages/artifact/id';
 import CheckDetailsPage from '../components/pages/check/id';
 import MetricDetailsPage from '../components/pages/metric/id';
 import OperatorDetailsPage from '../components/pages/operator/id';
-import { NodeType, SelectedNode, selectNode } from '../reducers/nodeSelection';
+import { ArtifactResponse, OperatorResponse } from '../handlers/responses/node';
+import { NodeType, selectNode } from '../reducers/nodeSelection';
+import { NodeSelection } from '../reducers/pages/Workflow';
 import { AppDispatch } from '../stores/store';
 import UserProfile from './auth';
+import { OperatorType } from './operators';
 import { ReactFlowNodeData } from './reactflow';
 
 /**
@@ -25,10 +28,11 @@ export const sideSheetSwitcher = (dispatch: AppDispatch) => {
 
 export function getDataSideSheetContent(
   user: UserProfile,
-  currentNode: SelectedNode,
-  workflowIdProp: string,
-  workflowDagIdProp: string | undefined,
-  workflowDagResultIdProp: string | undefined
+  selectedNodeState: NodeSelection,
+  selectedNode: OperatorResponse | ArtifactResponse,
+  workflowId: string,
+  dagId: string | undefined,
+  dagResultId: string | undefined
 ): React.ReactElement {
   const SideSheetLayout = ({ children }) => {
     return (
@@ -38,65 +42,58 @@ export function getDataSideSheetContent(
     );
   };
 
-  switch (currentNode.type) {
-    case NodeType.BoolArtifact:
-    case NodeType.NumericArtifact:
-    case NodeType.TableArtifact:
-    case NodeType.JsonArtifact:
-    case NodeType.StringArtifact:
-    case NodeType.ImageArtifact:
-    case NodeType.DictArtifact:
-    case NodeType.ListArtifact:
-    case NodeType.GenericArtifact:
-      return (
-        <ArtifactDetailsPage
-          user={user}
-          Layout={SideSheetLayout}
-          artifactIdProp={currentNode.id}
-          workflowDagIdProp={workflowDagIdProp}
-          workflowDagResultIdProp={workflowDagResultIdProp}
-          workflowIdProp={workflowIdProp}
-          sideSheetMode={true}
-        />
-      );
-    case NodeType.CheckOp:
-      return (
-        <CheckDetailsPage
-          user={user}
-          Layout={SideSheetLayout}
-          operatorIdProp={currentNode.id}
-          workflowDagIdProp={workflowDagIdProp}
-          workflowDagResultIdProp={workflowDagResultIdProp}
-          workflowIdProp={workflowIdProp}
-          sideSheetMode={true}
-        />
-      );
-    case NodeType.MetricOp:
-      return (
-        <MetricDetailsPage
-          user={user}
-          Layout={SideSheetLayout}
-          operatorIdProp={currentNode.id}
-          workflowDagIdProp={workflowDagIdProp}
-          workflowDagResultIdProp={workflowDagResultIdProp}
-          workflowIdProp={workflowIdProp}
-          sideSheetMode={true}
-        />
-      );
-    case NodeType.ExtractOp:
-    case NodeType.LoadOp:
-    case NodeType.FunctionOp: {
-      return (
-        <OperatorDetailsPage
-          user={user}
-          Layout={SideSheetLayout}
-          operatorIdProp={currentNode.id}
-          workflowDagIdProp={workflowDagIdProp}
-          workflowDagResultIdProp={workflowDagResultIdProp}
-          workflowIdProp={workflowIdProp}
-          sideSheetMode={true}
-        />
-      );
-    }
+  if (selectedNodeState.nodeType === 'artifacts') {
+    return (
+      <ArtifactDetailsPage
+        user={user}
+        Layout={SideSheetLayout}
+        artifactIdProp={selectedNodeState.nodeId}
+        workflowDagIdProp={dagId}
+        workflowDagResultIdProp={dagResultId}
+        workflowIdProp={workflowId}
+        sideSheetMode={true}
+      />
+    );
   }
+
+  const opNode = selectedNode as OperatorResponse;
+  if (opNode.spec?.type === OperatorType.Metric) {
+    return (
+      <MetricDetailsPage
+        user={user}
+        Layout={SideSheetLayout}
+        operatorIdProp={selectedNodeState.nodeId}
+        workflowDagIdProp={dagId}
+        workflowDagResultIdProp={dagResultId}
+        workflowIdProp={workflowId}
+        sideSheetMode={true}
+      />
+    );
+  }
+
+  if (opNode.spec?.type === OperatorType.Check) {
+    return (
+      <CheckDetailsPage
+        user={user}
+        Layout={SideSheetLayout}
+        operatorIdProp={selectedNodeState.nodeId}
+        workflowDagIdProp={dagId}
+        workflowDagResultIdProp={dagResultId}
+        workflowIdProp={workflowId}
+        sideSheetMode={true}
+      />
+    );
+  }
+
+  return (
+    <OperatorDetailsPage
+      user={user}
+      Layout={SideSheetLayout}
+      operatorIdProp={selectedNodeState.nodeId}
+      workflowDagIdProp={dagId}
+      workflowDagResultIdProp={dagResultId}
+      workflowIdProp={workflowId}
+      sideSheetMode={true}
+    />
+  );
 }

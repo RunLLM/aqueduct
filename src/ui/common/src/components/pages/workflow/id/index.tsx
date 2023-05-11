@@ -2,9 +2,7 @@ import {
   faArrowRotateRight,
   faChevronRight,
   faCirclePlay,
-  faUpRightAndDownLeftFromCenter,
 } from '@fortawesome/free-solid-svg-icons';
-import { faCircleDown } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Drawer, Snackbar, Tooltip } from '@mui/material';
 import Box from '@mui/material/Box';
@@ -22,13 +20,11 @@ import {
   useWorkflowGetQuery,
 } from '../../../../handlers/AqueductApi';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
-import { NodeType } from '../../../../reducers/nodeSelection';
 import { selectNode } from '../../../../reducers/pages/Workflow';
 import { handleGetSelectDagPosition } from '../../../../reducers/workflow';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
-import { handleExportFunction } from '../../../../utils/operators';
 import { WidthTransition } from '../../../../utils/shared';
 import {
   getDataSideSheetContent,
@@ -44,6 +40,7 @@ import ReactFlowCanvas from '../../../workflows/ReactFlowCanvas';
 import WorkflowHeader, {
   WorkflowPageContentId,
 } from '../../../workflows/WorkflowHeader';
+import WorkflowNodeSidesheetActions from '../../../workflows/WorkflowNodeSidesheetActions';
 import WorkflowSettings from '../../../workflows/WorkflowSettings';
 import { LayoutProps } from '../../types';
 import RunWorkflowDialog from '../../workflows/components/RunWorkflowDialog';
@@ -164,77 +161,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     (selectedNodeState.nodeType === 'operators'
       ? 'Operator Node'
       : 'Artifact Node');
-  const getNodeActionButton = () => {
-    const buttonStyle = {
-      fontSize: '20px',
-      mr: 1,
-    };
-
-    let navigateButton;
-    let includeExportOpButton = true;
-
-    if (!dagResultId) {
-      return null;
-    } else {
-      let navigationUrl;
-      if (currentNode.type === NodeType.TableArtifact) {
-        navigationUrl = `/workflow/${workflowId}/result/${dagResultId}/artifact/${currentNode.id}`;
-        includeExportOpButton = false;
-      } else if (currentNode.type === NodeType.FunctionOp) {
-        navigationUrl = `/workflow/${workflowId}/result/${dagResultId}/operator/${currentNode.id}`;
-      } else if (currentNode.type === NodeType.MetricOp) {
-        navigationUrl = `/workflow/${workflowId}/result/${dagResultId}/metric/${currentNode.id}`;
-      } else if (currentNode.type === NodeType.CheckOp) {
-        navigationUrl = `/workflow/${workflowId}/result/${dagResultId}/check/${currentNode.id}`;
-      } else {
-        return null; // This is a load or save operator.
-      }
-
-      navigateButton = (
-        <Button
-          variant="text"
-          sx={buttonStyle}
-          onClick={() => {
-            navigate(navigationUrl);
-          }}
-        >
-          <Tooltip title="Expand Details" arrow>
-            <FontAwesomeIcon icon={faUpRightAndDownLeftFromCenter} />
-          </Tooltip>
-        </Button>
-      );
-    }
-
-    const operator = (workflow.selectedDag?.operators ?? {})[currentNode.id];
-    const exportOpButton = (
-      <Button
-        onClick={async () => {
-          await handleExportFunction(
-            user,
-            currentNode.id,
-            `${operator?.name ?? 'function'}.zip`
-          );
-        }}
-        variant="text"
-        sx={buttonStyle}
-      >
-        <Tooltip title="Download Code" arrow>
-          <FontAwesomeIcon icon={faCircleDown} />
-        </Tooltip>
-      </Button>
-    );
-
-    return (
-      <Box display="flex" alignItems="center" flex={1} mr={3}>
-        {/* This flex grown box right aligns the two buttons below.*/}
-        <Box flex={1} />
-        <Box display="flex" alignItems="center">
-          {includeExportOpButton && exportOpButton}
-          {navigateButton}
-        </Box>
-      </Box>
-    );
-  };
 
   const drawerHeaderHeightInPx = 64;
 
@@ -474,24 +400,37 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 </Typography>
               </Box>
 
-              {getNodeActionButton()}
+              {dagResultId && !!selectedNode && !!selectedNodeState && (
+                <Box mr={3}>
+                  <WorkflowNodeSidesheetActions
+                    user={user}
+                    workflowId={workflowId}
+                    dagResultId={dagResultId}
+                    selectedNodeState={selectedNodeState}
+                    selectedNode={selectedNode}
+                  />
+                </Box>
+              )}
             </Box>
           </Box>
-          <Box
-            sx={{
-              overflow: 'auto',
-              flexGrow: 1,
-              marginBottom: DefaultLayoutMargin,
-            }}
-          >
-            {getDataSideSheetContent(
-              user,
-              currentNode,
-              workflowId,
-              dagId,
-              dagResultId
-            )}
-          </Box>
+          {selectedNodeState && selectedNode && (
+            <Box
+              sx={{
+                overflow: 'auto',
+                flexGrow: 1,
+                marginBottom: DefaultLayoutMargin,
+              }}
+            >
+              {getDataSideSheetContent(
+                user,
+                selectedNodeState,
+                selectedNode,
+                workflowId,
+                dagId,
+                dagResultId
+              )}
+            </Box>
+          )}
         </Box>
       </Drawer>
 
