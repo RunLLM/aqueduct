@@ -211,11 +211,6 @@ class ImageConfig(BaseModel):
     url: str
 
 
-class ImageConfig(BaseModel):
-    registry_id: str
-    service: ServiceType
-    url: str
-
 
 class OperatorSpec(BaseModel):
     extract: Optional[ExtractSpec]
