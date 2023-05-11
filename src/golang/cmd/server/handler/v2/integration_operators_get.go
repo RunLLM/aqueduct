@@ -88,7 +88,7 @@ func (h *IntegrationOperatorsGetHandler) Perform(ctx context.Context, interfaceA
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve operators.")
 	}
 	if len(operators) == 0 {
-		return []response.Operator{}, http.StatusOK, nil
+		return []*response.Operator{}, http.StatusOK, nil
 	}
 
 	operatorIDs := slices.Map(operators, func(op models.Operator) uuid.UUID {

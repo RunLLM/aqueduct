@@ -101,7 +101,7 @@ func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interf
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve operators.")
 	}
 	if len(operators) == 0 {
-		return []listOperatorsForIntegrationItem{}, http.StatusOK, nil
+		return listOperatorsForIntegrationResponse{OperatorWithIds: []listOperatorsForIntegrationItem{}}, http.StatusOK, nil
 	}
 
 	operatorIDs := make([]uuid.UUID, 0, len(operators))
