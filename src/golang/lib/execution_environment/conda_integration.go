@@ -32,7 +32,7 @@ func ValidateCondaDevelop() error {
 func InitializeConda() (string, string, error) {
 
 	// TODO: REMOVE
-	//return "", "", errors.Newf("This is a scary conda error")
+	return "", "", errors.Newf("This is a scary conda error")
 
 	out, _, err := lib_utils.RunCmd(CondaCmdPrefix, []string{"info", "--base"}, "", false)
 	if err != nil {

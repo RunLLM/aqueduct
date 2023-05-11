@@ -34,7 +34,9 @@ export const ResourceFieldsDetailsCard: React.FC<
   let serviceCard;
   switch (integration.service) {
     case 'Aqueduct':
-      serviceCard = <AqueductCard integration={integration} detailedView={detailedView}/>;
+      serviceCard = (
+        <AqueductCard integration={integration} detailedView={detailedView} />
+      );
       break;
     case 'Postgres':
     case 'MySQL':

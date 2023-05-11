@@ -13,7 +13,9 @@ import (
 
 const (
 	// Only set if the conda is registered. Represents the json-serialized string of the Conda resource config.
-	CondaConfigKey = "conda_config_serialized"
+	CondaConfigKey     = "conda_config_serialized"
+	CondaResourceIDKey = "conda_resource_id"
+	CondaNameIDKey     = "conda_resource_name"
 
 	// Only set if the conda is not registered.
 	PythonVersionKey = "python_version"
@@ -40,6 +42,9 @@ func ConstructAqueductComputeResourceConfig(
 			return nil, err
 		}
 		config[CondaConfigKey] = string(condaSerialized)
+		config[CondaResourceIDKey] = condaResource.ID.String()
+		config[CondaNameIDKey] = condaResource.Name
+
 	} else {
 		config[PythonVersionKey] = execution_environment.GetServerPythonVersion()
 	}

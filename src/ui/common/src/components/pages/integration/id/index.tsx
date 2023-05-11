@@ -36,9 +36,8 @@ import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
 import {
   IntegrationCategories,
+  resourceExecState,
   isNotificationIntegration,
-  AqueductComputeConfig,
-  isCondaRegistered,
   SupportedIntegrations,
 } from '../../../../utils/integrations';
 import ExecutionStatus, {
@@ -73,7 +72,6 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showAddTableDialog, setShowAddTableDialog] = useState(false);
   const [showDeleteTableDialog, setShowDeleteTableDialog] = useState(false);
-  const [showDeleteCondaDialog, setShowDeleteCondaDialog] = useState(false);
 
   const [showTestConnectToast, setShowTestConnectToast] = useState(false);
   const [showConnectSuccessToast, setShowConnectSuccessToast] = useState(false);
@@ -230,6 +228,8 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     return null;
   }
 
+  const selectedIntegrationExecState = resourceExecState(selectedIntegration);
+
   return (
     <Layout
       breadcrumbs={[
@@ -260,29 +260,29 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
                 numWorkflowsUsingMsg={numWorkflowsUsingMsg}
               />
 
-                <Box
-                  sx={{
-                    fontSize: '16px',
-                    p: 1,
-                    ml: 1,
-                    height: '32px',
-                    borderRadius: '8px',
-                    ':hover': {
-                      backgroundColor: theme.palette.gray[50],
-                    },
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => setShowResourceDetails(!showResourceDetails)}
-                >
-                  <Tooltip title="See more" arrow>
-                    <FontAwesomeIcon
-                      icon={faEllipsis}
-                      style={{
-                        transition: 'transform 200ms',
-                      }}
-                    />
-                  </Tooltip>
-                </Box>
+              <Box
+                sx={{
+                  fontSize: '16px',
+                  p: 1,
+                  ml: 1,
+                  height: '32px',
+                  borderRadius: '8px',
+                  ':hover': {
+                    backgroundColor: theme.palette.gray[50],
+                  },
+                  cursor: 'pointer',
+                }}
+                onClick={() => setShowResourceDetails(!showResourceDetails)}
+              >
+                <Tooltip title="See more" arrow>
+                  <FontAwesomeIcon
+                    icon={faEllipsis}
+                    style={{
+                      transition: 'transform 200ms',
+                    }}
+                  />
+                </Tooltip>
+              </Box>
             </Box>
           </Box>
 
@@ -300,13 +300,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             }}
             onEdit={() => setShowEditDialog(true)}
             onDeleteIntegration={() => {
-              // We need another variable to control for Conda deletion, since it's the only deletion
-              // where the resource being deleted isn't the selected integration.
-              if (selectedIntegration.service == "Aqueduct" && isCondaRegistered(selectedIntegration as AqueductComputeConfig) {
-                setShowDeleteCondaDialog(true);
-              } else {
-                setShowDeleteTableDialog(true);
-              }
+              setShowDeleteTableDialog(true);
             }}
             allowDeletion={
               serverConfig.config?.storageConfig.integration_name !==
@@ -315,7 +309,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           />
         </Box>
 
-        {selectedIntegration.exec_state?.status === ExecutionStatus.Failed && (
+        {selectedIntegrationExecState.status === ExecutionStatus.Failed && (
           <Box
             sx={{
               backgroundColor: theme.palette.red[100],
@@ -328,7 +322,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             }}
           >
             <Typography variant="body2" style={{ whiteSpace: 'pre-wrap' }}>
-              {`${selectedIntegration.exec_state?.error.tip}\n\n${selectedIntegration.exec_state?.error.context}`}
+              {`${selectedIntegrationExecState.error.tip}\n\n${selectedIntegrationExecState?.error.context}`}
             </Typography>
           </Box>
         )}

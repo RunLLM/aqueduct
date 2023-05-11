@@ -86,11 +86,9 @@ func (h *ListIntegrationsHandler) Perform(ctx context.Context, interfaceArgs int
 		var response *integrationResponse
 		var err error
 
-		// We do not send conda resources down as its own standalone resource. Instead, we embed it within the
-		// Aqueduct compute resource.
-		if integrationObject.Service == shared.Conda {
-			continue
-		} else if integrationObject.Name == shared.AqueductComputeIntegrationName {
+		// If there is a Conda resource registered, embed additional configuration information inside Aqueduct Compute.
+		// Otherwise, we simply note the current server's python version.
+		if integrationObject.Name == shared.AqueductComputeIntegrationName {
 			var aqConfig shared.IntegrationConfig
 			aqConfig, err = aqueduct_compute.ConstructAqueductComputeResourceConfig(ctx, args.ID, h.IntegrationRepo, h.Database)
 			if err != nil {

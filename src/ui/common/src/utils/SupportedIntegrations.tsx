@@ -105,24 +105,34 @@ export function isNotificationIntegration(integration: Integration): boolean {
   return integration.service == 'Email' || integration.service == 'Slack';
 }
 
-export function resourceStatus(integration: Integration): ExecutionStatus {
+export function resourceExecState(integration: Integration): ExecState {
   // If an exec_state doesn't exist, we currently assume that it is a legacy resource that has succeeded.
-  let status = integration.exec_state?.status || ExecutionStatus.Succeeded;
+  const status = integration.exec_state?.status || ExecutionStatus.Succeeded;
 
   // For Aqueduct compute, we'll also need to look at the status of any registered Conda.
-  if (integration.service == "Aqueduct" && integration.exec_state.status == ExecutionStatus.Succeeded){
-    const aqConfig = integration.config as AqueductComputeConfig
+  if (
+    integration.service == 'Aqueduct' &&
+    isCondaRegistered(integration) &&
+    integration.exec_state.status == ExecutionStatus.Succeeded
+  ) {
+    const aqConfig = integration.config as AqueductComputeConfig;
     if (aqConfig.conda_config_serialized) {
-      const serialized_conda_exec_state = JSON.parse(aqConfig.conda_config_serialized)["exec_state"]
-      const conda_exec_state = JSON.parse(serialized_conda_exec_state) as ExecState
-      status = conda_exec_state.status
+      const serialized_conda_exec_state = JSON.parse(
+        aqConfig.conda_config_serialized
+      )['exec_state'];
+      const conda_exec_state = JSON.parse(
+        serialized_conda_exec_state
+      ) as ExecState;
+      return conda_exec_state;
     }
   }
-  return status
+
+  return integration.exec_state || { status: ExecutionStatus.Succeeded };
 }
 
-export function isCondaRegistered(aqConfig: AqueductComputeConfig): boolean {
-  return aqConfig.conda_config_serialized != undefined
+export function isCondaRegistered(integration: Integration): boolean {
+  const aqConfig = integration.config as AqueductComputeConfig;
+  return aqConfig?.conda_config_serialized != undefined;
 }
 
 export type Integration = {
@@ -135,12 +145,14 @@ export type Integration = {
 };
 
 export type AqueductComputeConfig = {
-  // Either the python version of the server or the registered conda field should be set,
+  // Either the python version of the server or the conda fields should be set,
   // but not both.
   python_version?: string;
 
   // Deserialize this to obtain the `CondaConfig`.
   conda_config_serialized?: string;
+  conda_resource_id?: string;
+  conda_resource_name?: string;
 };
 
 export type CondaConfig = {

@@ -2,8 +2,7 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 
-import {Integration, resourceStatus} from '../../../utils/integrations';
-import ExecutionStatus from '../../../utils/shared';
+import { Integration, resourceExecState } from '../../../utils/integrations';
 import { StatusIndicator } from '../../workflows/workflowStatus';
 import IntegrationLogo from '../logo';
 
@@ -38,7 +37,7 @@ export const ResourceHeaderDetailsCard: React.FC<
             </Typography>
 
             <StatusIndicator
-              status={resourceStatus(integration)}
+              status={resourceExecState(integration).status}
               size="20px"
             />
           </Box>

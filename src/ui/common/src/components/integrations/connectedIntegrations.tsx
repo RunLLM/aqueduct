@@ -117,9 +117,11 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
       >
         {[...integrations]
           // This is a temporary fix to hide the auto-generated on-demand k8s integration card.
+          // This also filters out any Conda resource, since that is merged in with the Aqueduct Server card.
           .filter(
             (integration) =>
-              !integration.name.endsWith(':aqueduct_ondemand_k8s')
+              !integration.name.endsWith(':aqueduct_ondemand_k8s') &&
+              integration.service != 'Conda'
           )
           .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
           .map((integration, idx) => {

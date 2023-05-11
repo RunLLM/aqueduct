@@ -1,8 +1,7 @@
 import Box from '@mui/material/Box';
 import React from 'react';
 
-import {AqueductComputeConfig, Integration, resourceStatus} from '../../../utils/integrations';
-import ExecutionStatus, {ExecState} from '../../../utils/shared';
+import { Integration, resourceExecState } from '../../../utils/integrations';
 import { StatusIndicator } from '../../workflows/workflowStatus';
 import IntegrationLogo from '../logo';
 import { ResourceFieldsDetailsCard } from './resourceFieldsDetailsCard';
@@ -23,7 +22,7 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
         <StatusIndicator
-          status={resourceStatus(integration)}
+          status={resourceExecState(integration).status}
           size="16px"
         />
 

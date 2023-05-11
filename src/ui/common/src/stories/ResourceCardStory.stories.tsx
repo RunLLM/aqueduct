@@ -333,7 +333,7 @@ const ResourceCard: React.FC = () => {
       service: 'Aqueduct',
       name: 'Aqueduct Server',
       config: {
-        python_version: "Python 3.8.10",
+        python_version: 'Python 3.8.10',
       } as AqueductComputeConfig,
       createdAt: Date.now() / 1000,
       exec_state: {
@@ -342,23 +342,24 @@ const ResourceCard: React.FC = () => {
     },
     {
       id: '22',
-      service: "Aqueduct",
+      service: 'Aqueduct',
       name: 'Aqueduct Conda',
       config: {
-        conda_config_serialized: '{' +
-            '"conda_path":"/Users/kennethxu/opt/anaconda3",' +
-            '"exec_state":"{' +
-              '\\"user_logs\\":null,' +
-              '\\"status\\":\\"succeeded\\",' +
-              '\\"failure_type\\":null,' +
-              '\\"error\\":null,' +
-              '\\"timestamps\\":{\\"registered_at\\":null,\\"pending_at\\":null,\\"running_at\\":\\"2023-05-09T15:51:22.674257-07:00\\",\\"finished_at\\":\\"2023-05-09T15:54:30.699374-07:00\\"}}"}'
+        conda_config_serialized:
+          '{' +
+          '"conda_path":"/Users/kennethxu/opt/anaconda3",' +
+          '"exec_state":"{' +
+          '\\"user_logs\\":null,' +
+          '\\"status\\":\\"succeeded\\",' +
+          '\\"failure_type\\":null,' +
+          '\\"error\\":null,' +
+          '\\"timestamps\\":{\\"registered_at\\":null,\\"pending_at\\":null,\\"running_at\\":\\"2023-05-09T15:51:22.674257-07:00\\",\\"finished_at\\":\\"2023-05-09T15:54:30.699374-07:00\\"}}"}',
       } as AqueductComputeConfig,
       createdAt: Date.now() / 1000,
       exec_state: {
         status: ExecutionStatus.Succeeded,
       },
-    }
+    },
   ];
 
   // Unique messages we want to display.
