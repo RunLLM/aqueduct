@@ -178,19 +178,20 @@ const IntegrationDialog: React.FC<Props> = ({
     setShowDialog(false);
   };
 
+  // For Conda, we provide a default name, and don't allow the user to change it.
   const nameInput = (
     <IntegrationTextInputField
       name="name"
       spellCheck={false}
       required={true}
       label="Name*"
-      description="Provide a unique name to refer to this integration."
-      placeholder={'my_' + formatService(service) + '_integration'}
+      description="Provide a unique name to refer to this resource."
+      placeholder={'my_' + formatService(service) + '_resource'}
       onChange={(event) => {
         setShouldShowNameError(false);
         methods.setValue('name', event.target.value);
       }}
-      disabled={service === 'Aqueduct Demo'}
+      disabled={service === 'Aqueduct Demo' || service === 'Conda'}
     />
   );
 

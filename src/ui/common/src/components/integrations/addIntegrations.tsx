@@ -3,13 +3,13 @@ import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Snackbar from '@mui/material/Snackbar';
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import {useDispatch, useSelector} from 'react-redux';
 
 import { resetConnectNewStatus } from '../../reducers/integration';
-import { AppDispatch } from '../../stores/store';
+import {AppDispatch, RootState} from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
-import { Info, Service, ServiceInfoMap } from '../../utils/integrations';
+import { Info, IntegrationCategories, Service, ServiceInfoMap, SupportedIntegrations } from '../../utils/integrations';
 import IntegrationDialog from './dialogs/dialog';
 import IntegrationLogo from './logo';
 
@@ -96,6 +96,14 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
   const service = svc as Service;
   const [showDialog, setShowDialog] = useState(false);
 
+  // If this is a conda integration, check if it has already been registered.
+  let isDisabled = false;
+  const resources = useSelector((state: RootState) => state.integrationsReducer.integrations);
+  if (svc === 'Conda') {
+    const existingConda = Object.values(resources).find((item) => item.name === 'Conda');
+    isDisabled = existingConda !== undefined
+  }
+
   if (integration.category !== category) {
     return null;
   }
@@ -120,7 +128,7 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
             : 'white',
         },
         boxSizing: 'initial',
-        backgroundColor: '#F8F8F8', // gray/light2
+        backgroundColor: isDisabled ? theme.palette.gray['300'] : theme.palette.gray['25'],
       }}
     >
       <Box
@@ -151,11 +159,18 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
     </Box>
   );
 
+
+  // For services that require asynchronous connection steps, we show a more realistic message.
+  let successMsg = 'Successfully connected to ${service}!'
+  if (service === 'Conda' || service === 'Lambda') {
+    successMsg = 'Connecting to ${service}...'
+  }
+
   return (
     <Box key={service}>
       <Box>
         {iconWrapper}
-        {showDialog && (
+        {showDialog && !isDisabled && (
           <IntegrationDialog
             validationSchema={integration.validationSchema}
             dialogContent={integration.dialog}
@@ -185,7 +200,7 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
           severity="success"
           sx={{ width: '100%' }}
         >
-          {`Successfully connected to ${service}!`}
+          {successMsg}
         </Alert>
       </Snackbar>
     </Box>
