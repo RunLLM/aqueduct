@@ -19,7 +19,6 @@ const (
 	GoogleSheets Service = "Google Sheets"
 	Salesforce   Service = "Salesforce"
 	S3           Service = "S3"
-	AqueductDemo Service = "Aqueduct Demo"
 	Github       Service = "Github"
 	Sqlite       Service = "SQLite"
 	Airflow      Service = "Airflow"
@@ -40,10 +39,34 @@ const (
 	// Container registry integrations
 	ECR Service = "ECR"
 
-	DemoDbIntegrationName = "aqueduct_demo"
+	// Aqueduct compute is the only build-in resource type.
+	Aqueduct Service = "Aqueduct"
+
+	// Built-in resource names
+	AqueductComputeIntegrationName = "Aqueduct Server"
+	DemoDbIntegrationName          = "Demo"
+
+	// This is what the demo DB resource used to be called, during release v0.3.1 and before.
+	// If we detect a SQLite resource with this name, we will delete it on startup and
+	// make sure that the new resource name is being used. This means that we prevent anyone
+	// from registering any new SQLite integrations with this name.
+	DeprecatedDemoDBResourceName = "aqueduct_demo"
 )
 
 var relationalDatabaseIntegrations map[Service]bool = map[Service]bool{
+	Postgres:  true,
+	Snowflake: true,
+	MySql:     true,
+	Redshift:  true,
+	MariaDb:   true,
+	SqlServer: true,
+	BigQuery:  true,
+	Sqlite:    true,
+	Athena:    true,
+	MongoDB:   true,
+}
+
+var dataIntegrations map[Service]bool = map[Service]bool{
 	Postgres:     true,
 	Snowflake:    true,
 	MySql:        true,
@@ -51,7 +74,9 @@ var relationalDatabaseIntegrations map[Service]bool = map[Service]bool{
 	MariaDb:      true,
 	SqlServer:    true,
 	BigQuery:     true,
-	AqueductDemo: true,
+	GoogleSheets: true,
+	Salesforce:   true,
+	S3:           true,
 	Sqlite:       true,
 	Athena:       true,
 	MongoDB:      true,
@@ -65,6 +90,7 @@ var computeIntegrations map[Service]bool = map[Service]bool{
 	Kubernetes: true,
 	Spark:      true,
 	AWS:        true,
+	Aqueduct:   true,
 }
 
 // ServiceToEngineConfigField contains
@@ -96,7 +122,6 @@ func ParseService(s string) (Service, error) {
 		Salesforce,
 		S3,
 		Athena,
-		AqueductDemo,
 		Github,
 		Sqlite,
 		Airflow,
@@ -122,12 +147,9 @@ func IsRelationalDatabaseIntegration(service Service) bool {
 	return ok
 }
 
-func IsDatabaseIntegration(service Service) bool {
-	if IsRelationalDatabaseIntegration(service) {
-		return true
-	}
-
-	return service == MongoDB
+func IsDataIntegration(service Service) bool {
+	_, ok := dataIntegrations[service]
+	return ok
 }
 
 func IsComputeIntegration(service Service) bool {

@@ -322,7 +322,7 @@ func mapJobTypeToDockerImage(spec Spec, launchGpu bool, cudaVersion operator.Cud
 
 		if functionSpec.Image != nil {
 			return *functionSpec.Image.Url, nil
-		} else if functionSpec.Resources.UseLLM != nil && *functionSpec.Resources.UseLLM {
+		} else if functionSpec.Resources != nil && functionSpec.Resources.UseLLM != nil && *functionSpec.Resources.UseLLM {
 			return mapLLMToDockerImage(pythonVersion, cudaVersion)
 		} else if launchGpu {
 			return mapGpuFunctionToDockerImage(pythonVersion, cudaVersion)
@@ -364,7 +364,7 @@ func mapJobTypeToDockerImage(spec Spec, launchGpu bool, cudaVersion operator.Cud
 
 func mapIntegrationServiceToDockerImage(service shared.Service) (string, error) {
 	switch service {
-	case shared.Postgres, shared.Redshift, shared.AqueductDemo:
+	case shared.Postgres, shared.Redshift:
 		return PostgresConnectorDockerImage, nil
 	case shared.Snowflake:
 		return SnowflakeConnectorDockerImage, nil

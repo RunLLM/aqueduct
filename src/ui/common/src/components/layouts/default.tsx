@@ -1,4 +1,4 @@
-import { createTheme, ThemeProvider } from '@mui/material';
+import { createTheme, CssBaseline, ThemeProvider } from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
@@ -49,6 +49,8 @@ export const DefaultLayout: React.FC<Props> = ({
 
   return (
     <ThemeProvider theme={muiTheme}>
+      {/*This is provided by the MUI library that helps ensure consistent styling of HTML elements across different browsers by resetting some of their default styles to a common baseline.*/}
+      <CssBaseline />
       <Box
         sx={{
           width: '100%',

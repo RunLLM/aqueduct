@@ -135,14 +135,21 @@ func NewAqServer(environment aq_context.ServerEnvironment, externalIP string, po
 		log.Fatal(err)
 	}
 
-	demoConnected, err := CheckBuiltinIntegration(ctx, s, accountOrganizationId)
+	// If the deprecated demo db name still exists in the database, we delete it in this check too.
+	demoDBConnected, aqEngineConnected, err := CheckBuiltinIntegrations(ctx, s, accountOrganizationId)
 	if err != nil {
 		db.Close()
 		log.Fatal(err)
 	}
-
-	if !demoConnected {
-		err = ConnectBuiltinIntegration(ctx, testUser, s.IntegrationRepo, s.Database)
+	if !demoDBConnected {
+		err = ConnectBuiltinDemoDBIntegration(ctx, testUser, s.IntegrationRepo, s.Database)
+		if err != nil {
+			db.Close()
+			log.Fatal(err)
+		}
+	}
+	if !aqEngineConnected {
+		err = ConnectBuiltinComputeIntegration(ctx, testUser, s.IntegrationRepo, s.Database)
 		if err != nil {
 			db.Close()
 			log.Fatal(err)

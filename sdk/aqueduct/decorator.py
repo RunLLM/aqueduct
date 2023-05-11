@@ -23,7 +23,6 @@ from aqueduct.constants.enums import (
     RuntimeType,
 )
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
-from aqueduct.integrations.dynamic_k8s_integration import DynamicK8sIntegration
 from aqueduct.logger import logger
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.operators import (
@@ -36,6 +35,7 @@ from aqueduct.models.operators import (
     ResourceConfig,
     get_operator_type,
 )
+from aqueduct.resources.dynamic_k8s import DynamicK8sResource
 from aqueduct.type_annotations import CheckFunction, MetricFunction, Number, UserFunction
 from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.function_packaging import REQUIREMENTS_FILE, serialize_function
@@ -180,17 +180,17 @@ def _typecheck_op_decorator_arguments(
     description: Optional[str],
     file_dependencies: Optional[List[str]],
     requirements: Optional[Union[str, List[str]]],
-    engine: Optional[Union[str, DynamicK8sIntegration]],
+    engine: Optional[Union[str, DynamicK8sResource]],
     num_outputs: int,
     outputs: Optional[List[str]],
 ) -> None:
     _typecheck_common_decorator_arguments(description, file_dependencies, requirements)
 
     if engine is not None and not (
-        isinstance(engine, str) or isinstance(engine, DynamicK8sIntegration)
+        isinstance(engine, str) or isinstance(engine, DynamicK8sResource)
     ):
         raise InvalidUserArgumentException(
-            "`engine` must be a string or a DynamicK8sIntegration object."
+            "`engine` must be a string or a DynamicK8sResource object."
         )
 
     if num_outputs is not None:
@@ -384,7 +384,7 @@ def _convert_memory_string_to_mbs(memory_str: str) -> int:
 
 def _update_operator_spec_with_engine(
     spec: OperatorSpec,
-    engine: Optional[Union[str, DynamicK8sIntegration]] = None,
+    engine: Optional[Union[str, DynamicK8sResource]] = None,
 ) -> None:
     if engine is not None:
         if globals.__GLOBAL_API_CLIENT__ is None:
@@ -393,7 +393,7 @@ def _update_operator_spec_with_engine(
             )
 
         spec.engine_config = generate_engine_config(
-            globals.__GLOBAL_API_CLIENT__.list_integrations(),
+            globals.__GLOBAL_API_CLIENT__.list_resources(),
             engine,
         )
 
@@ -537,7 +537,7 @@ def _update_operator_spec_with_image(
                 "`registry_name` must be specified when `image` is set."
             )
 
-        connected_integrations = globals.__GLOBAL_API_CLIENT__.list_integrations()
+        connected_integrations = globals.__GLOBAL_API_CLIENT__.list_resources()
         if registry_name not in connected_integrations.keys():
             raise InvalidUserArgumentException(
                 "Registry name `%s` is not one of the connected resources." % registry_name,
@@ -565,7 +565,7 @@ def _update_operator_spec_with_image(
 def op(
     name: Optional[Union[str, UserFunction]] = None,
     description: Optional[str] = None,
-    engine: Optional[Union[str, DynamicK8sIntegration]] = None,
+    engine: Optional[Union[str, DynamicK8sResource]] = None,
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
     num_outputs: Optional[int] = None,
@@ -635,7 +635,7 @@ def op(
             The dictionary needs to contain the following keys:
             "registry_name" (str): The name of the registry integration to use.
             "url" (str): The full URL of the image to use. Example: "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest"
-            It is recommended to get the dictionary via `client.integration("my_registry_name").image("my-image:latest")`
+            It is recommended to get the dictionary via `client.resource("my_registry_name").image("my-image:latest")`
 
     Examples:
         The op name is inferred from the function name. The description is pulled from the function
@@ -769,7 +769,7 @@ def metric(
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
     output: Optional[str] = None,
-    engine: Optional[Union[str, DynamicK8sIntegration]] = None,
+    engine: Optional[Union[str, DynamicK8sResource]] = None,
     resources: Optional[Dict[str, Any]] = None,
     image: Optional[Dict[str, str]] = None,
 ) -> Union[DecoratedMetricFunction, OutputArtifactFunction]:
@@ -833,7 +833,7 @@ def metric(
             The dictionary needs to contain the following keys:
             "registry_name" (str): The name of the registry integration to use.
             "url" (str): The full URL of the image to use. Example: "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest"
-            It is recommended to get the dictionary via `client.integration("my_registry_name").image("my-image:latest")`
+            It is recommended to get the dictionary via `client.resource("my_registry_name").image("my-image:latest")`
 
     Examples:
         The metric name is inferred from the function name. The description is pulled from the function
@@ -969,7 +969,7 @@ def check(
     file_dependencies: Optional[List[str]] = None,
     requirements: Optional[Union[str, List[str]]] = None,
     output: Optional[str] = None,
-    engine: Optional[Union[str, DynamicK8sIntegration]] = None,
+    engine: Optional[Union[str, DynamicK8sResource]] = None,
     resources: Optional[Dict[str, Any]] = None,
     image: Optional[Dict[str, str]] = None,
 ) -> Union[DecoratedCheckFunction, OutputArtifactFunction]:
@@ -1036,7 +1036,7 @@ def check(
             The dictionary needs to contain the following keys:
             "registry_name" (str): The name of the registry integration to use.
             "url" (str): The full URL of the image to use. Example: "123456789012.dkr.ecr.us-east-1.amazonaws.com/my-image:latest"
-            It is recommended to get the dictionary via `client.integration("my_registry_name").image("my-image:latest")`
+            It is recommended to get the dictionary via `client.resource("my_registry_name").image("my-image:latest")`
 
     Examples:
         The check name is inferred from the function name. The description is pulled from the function

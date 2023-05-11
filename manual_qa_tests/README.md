@@ -25,12 +25,12 @@ To run with more flexibility, configure the following commandline flags:
 * **Workflow Details** Page: Each page should reflect the **workflow description**. Pay attention to any noted **sidesheets** behaviors in the description.
 * **Integration** Page:
     * There should be **1** *Cloud* integration, **11** *Data* integrations, **6** *Compute* integrations, and **2** *Notifications* integrations.
-    * If you are not using additional integration, `aqueduct_demo` should be the only available one. If you have passed in slack arguments to `initialize.py`, there should be two.
+    * If you are not using additional integration, `Demo` should be the only available one. If you have passed in slack arguments to `initialize.py`, there should be two.
 * **Integration Details** Page:
-    * In the **Workflows** section of the `aqueduct_demo` page:
+    * In the **Workflows** section of the `Demo` page:
         * There should be **13** workflows if using `--example-notebooks`
         * There should be **7** workflows if **not** using `--example-notebooks`
-    * If you are using `aqueduct_demo`, there should be **8** tables in **Data** section.
+    * If you are using `Demo`, there should be **8** tables in **Data** section.
 * **Data** Page: There should be **7** data rows available.
 * **Slack channel**:
     * If Slack flags are set, there should be **15** new notifications.

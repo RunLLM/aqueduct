@@ -25,7 +25,7 @@ RUN	wget --quiet https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -O aws
     unzip awscliv2.zip && ./aws/install 
 
 RUN conda activate py39_env
-RUN pip install conda-pack aqueduct-ml==0.2.12
+RUN pip install conda-pack aqueduct-ml==0.3.2
 
 COPY ./spark/create-conda-env.sh /
 

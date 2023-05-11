@@ -63,7 +63,7 @@ const IntegrationObjectList: React.FC<Props> = ({ user, integration }) => {
 
   if (integration.service === 'S3') {
     return (
-      <Alert severity="warning" sx={{ width: '80%', mt: 2 }}>
+      <Alert severity="warning" sx={{ width: '100%', mt: 2 }}>
         <>
           We currently do not support listing data in an S3 bucket. But
           don&apos;t worry&mdash;we&apos;re working on adding this feature! If

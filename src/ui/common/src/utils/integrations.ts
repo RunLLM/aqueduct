@@ -1,11 +1,23 @@
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
 import { AqueductDocsLink } from './docs';
+import { ExecState } from './shared';
 
 export const aqueductDemoName = 'aqueduct_demo';
+export const aqueductComputeName = 'Aqueduct Server';
 
-export function isDemo(integration: Integration): boolean {
-  return integration.name === aqueductDemoName;
+export function isBuiltinIntegration(integration: Integration): boolean {
+  return (
+    integration.name === aqueductDemoName ||
+    integration.name == aqueductComputeName
+  );
+}
+
+// Certain integrations have no configuration fields to show.
+export function hasConfigFieldsToShow(integration: Integration): boolean {
+  return (
+    integration.service !== 'Conda' && integration.name !== aqueductComputeName
+  );
 }
 
 export type Integration = {
@@ -14,7 +26,7 @@ export type Integration = {
   name: string;
   config: IntegrationConfig;
   createdAt: number;
-  validated: boolean;
+  exec_state: ExecState;
 };
 
 export type CondaConfig = {
@@ -244,7 +256,8 @@ export type IntegrationConfig =
   | EmailConfig
   | SlackConfig
   | SparkConfig
-  | AWSConfig;
+  | AWSConfig
+  | MongoDBConfig;
 
 export type Service =
   | 'Aqueduct'
@@ -256,9 +269,7 @@ export type Service =
   | 'MariaDB'
   | 'S3'
   | 'Athena'
-  | 'CSV'
   | 'GCS'
-  | 'Aqueduct Demo'
   | 'Airflow'
   | 'Kubernetes'
   | 'SQLite'
@@ -271,6 +282,9 @@ export type Service =
   | 'Slack'
   | 'Spark'
   | 'AWS'
+  | 'Amazon'
+  | 'GCP'
+  | 'Azure'
   | 'ECR';
 
 export type Info = {
@@ -349,7 +363,6 @@ export const ServiceLogos: ServiceLogo = {
   ['MariaDB']: `${integrationLogosBucket}/mariadb.png`,
   ['S3']: `${integrationLogosBucket}/s3.png`,
   ['GCS']: `${integrationLogosBucket}/google-cloud-storage.png`,
-  ['Aqueduct Demo']: `/assets/aqueduct.png`,
   ['SQLite']: `${integrationLogosBucket}/sqlite-square-icon-256x256.png`,
   ['Athena']: `${integrationLogosBucket}/athena.png`,
   ['Airflow']: `${integrationLogosBucket}/airflow.png`,
@@ -362,6 +375,8 @@ export const ServiceLogos: ServiceLogo = {
   ['Slack']: `${integrationLogosBucket}/slack.png`,
   ['Spark']: `${integrationLogosBucket}/spark-logo-trademark.png`,
   ['AWS']: `${integrationLogosBucket}/aws-logo-trademark.png`,
+  ['GCP']: `${integrationLogosBucket}/gcp.png`,
+  ['Azure']: `${integrationLogosBucket}/azure.png`,
 
   // TODO(ENG-2301): Once task is addressed, remove this duplicate entry.
   ['K8s']: `${integrationLogosBucket}/kubernetes.png`,
@@ -418,10 +433,10 @@ export const SupportedIntegrations: ServiceInfoMap = {
     category: IntegrationCategories.DATA,
     docs: `${addingIntegrationLink}/connecting-to-google-cloud-storage`,
   },
-  ['Aqueduct Demo']: {
+  ['Aqueduct']: {
     logo: ServiceLogos['Aqueduct'],
     activated: true,
-    category: IntegrationCategories.DATA,
+    category: IntegrationCategories.COMPUTE,
     docs: addingIntegrationLink,
   },
   ['SQLite']: {
@@ -491,8 +506,26 @@ export const SupportedIntegrations: ServiceInfoMap = {
     docs: addingIntegrationLink,
   },
   ['AWS']: {
+    logo: ServiceLogos['Kubernetes'],
+    activated: true,
+    category: IntegrationCategories.CLOUD,
+    docs: addingIntegrationLink,
+  },
+  ['Amazon']: {
     logo: ServiceLogos['AWS'],
     activated: true,
+    category: IntegrationCategories.CLOUD,
+    docs: addingIntegrationLink,
+  },
+  ['GCP']: {
+    logo: ServiceLogos['GCP'],
+    activated: false,
+    category: IntegrationCategories.CLOUD,
+    docs: addingIntegrationLink,
+  },
+  ['Azure']: {
+    logo: ServiceLogos['Azure'],
+    activated: false,
     category: IntegrationCategories.CLOUD,
     docs: addingIntegrationLink,
   },

@@ -92,7 +92,7 @@ type ConnectIntegrationArgs struct {
 	*aq_context.AqContext
 	Name         string         // User specified name for the integration
 	Service      shared.Service // Name of the service to connect (e.g. Snowflake, Postgres)
-	Config       auth.Config    // Integration config
+	Config       auth.Config    // Resource config
 	UserOnly     bool           // Whether the integration is only accessible by the user or the entire org
 	SetAsStorage bool           // Whether the integration should be used as the storage layer
 }
@@ -120,7 +120,13 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 	}
 
 	if name == "" {
-		return nil, http.StatusBadRequest, errors.New("Integration name is not provided")
+		return nil, http.StatusBadRequest, errors.New("Resource name is not provided")
+	}
+
+	// On startup, we currently enforce that such a resource does not exist by forcibly deleting it.
+	// Therefore, we don't want users to be able to create a resource with this name.
+	if name == shared.DeprecatedDemoDBResourceName && service == shared.Sqlite {
+		return nil, http.StatusBadRequest, errors.Newf("%s is a reserved name for SQLite resources.", shared.DeprecatedDemoDBResourceName)
 	}
 
 	if service == shared.Github || service == shared.GoogleSheets {
@@ -206,7 +212,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 
 		newStorageConfig, err := storage.ConvertIntegrationConfigToStorageConfig(args.Service, confData)
 		if err != nil {
-			return emptyResp, http.StatusBadRequest, errors.Wrap(err, "Integration config is malformed.")
+			return emptyResp, http.StatusBadRequest, errors.Wrap(err, "Resource config is malformed.")
 		}
 
 		err = storage_migration.Perform(
@@ -302,7 +308,7 @@ func ConnectIntegration(
 	}
 
 	// The initial integration entry has been written. Any errors from this point on will need to update
-	// the that entry to reflect the failure. Note that this defer is only relevant for q
+	// the that entry to reflect the failure.
 	defer func() {
 		if err != nil {
 			execution_state.UpdateOnFailure(
@@ -593,7 +599,7 @@ func validateAirflowConfig(
 	config auth.Config,
 ) (int, error) {
 	if err := airflow.Authenticate(ctx, config); err != nil {
-		return http.StatusBadRequest, err
+		return http.StatusBadRequest, errors.Wrap(err, "Unable to authenticate Airflow credentials. Please check them.")
 	}
 
 	return http.StatusOK, nil
