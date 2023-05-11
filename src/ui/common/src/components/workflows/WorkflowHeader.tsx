@@ -77,7 +77,10 @@ const WorkflowHeader: React.FC<Props> = ({
         { apiKey, workflowId, dagResultId },
         { skip: !workflowId || !dagResultId }
     );
-    const { data: nodes } = useNodesGetQuery({ apiKey, workflowId, dagId });
+    const { data: nodes } = useNodesGetQuery(
+        { apiKey, workflowId, dagId },
+        { skip: !workflowId || !dagId }
+    );
 
     if (!dag || !workflow || !nodes) {
         // We simply do not render if main data is not available.
