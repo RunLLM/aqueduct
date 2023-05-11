@@ -42,13 +42,6 @@ type Props = {
 export const EmailDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
 }) => {
-  // TODO: keep commented out until this form has been verified working for rerceivers field.
-  // const [receivers, setReceivers] = useState(
-  //   value?.targets_serialized
-  //     ? (JSON.parse(value?.targets_serialized) as string[]).join(',')
-  //     : ''
-  // );
-
   // Retrieve the form context.
   const { register, setValue, getValues } = useFormContext();
 
@@ -166,25 +159,6 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
   );
 };
 
-// export function isEmailConfigComplete(config: EmailConfig): boolean {
-//   if (config.enabled !== 'true' && config.enabled !== 'false') {
-//     return false;
-//   }
-
-//   if (config.enabled == 'true' && !config.level) {
-//     return false;
-//   }
-
-//   return (
-//     !!config.host &&
-//     !!config.port &&
-//     !!config.password &&
-//     !!config.targets_serialized &&
-//     !!config.user
-//   );
-// }
-
-// TODO: Figure out how to set up conditional validation.
 export function getEmailValidationSchema() {
   return Yup.object().shape({
     host: Yup.string().required('Please enter a host'),

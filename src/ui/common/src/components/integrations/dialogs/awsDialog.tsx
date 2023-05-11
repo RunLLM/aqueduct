@@ -6,16 +6,16 @@ import * as Yup from 'yup';
 
 import {
   AWSConfig,
-  AWSCredentialType,
   DynamicEngineType,
   DynamicK8sConfig,
   IntegrationDialogProps,
 } from '../../../utils/integrations';
+import { AWSCredentialType } from '../../../utils/shared';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: AWSConfig = {
-  type: 'access_key',
+  type: AWSCredentialType.AccessKey,
   region: 'us-east-2',
   access_key_id: '',
   secret_access_key: '',
@@ -266,10 +266,6 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
 };
 
 export function getAWSValidationSchema() {
-  // TODO: Figure out how to do the conditional logic above using yup validators.
-  // This is a start: https://stackoverflow.com/questions/49394391/conditional-validation-in-yup
-  // For now, we just make everything required ...
-
   return Yup.object().shape({
     type: Yup.string().required('Please select a credential type'),
     access_key_id: Yup.string().when('type', {

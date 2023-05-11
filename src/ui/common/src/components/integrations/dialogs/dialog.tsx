@@ -243,6 +243,7 @@ const IntegrationDialog: React.FC<Props> = ({
               onCloseDialog: handleCloseDialog,
               loading: isLoading(connectStatus),
               disabled: submitDisabled,
+              setMigrateStorage,
             })}
 
             {shouldShowNameError && (

@@ -4,17 +4,13 @@ import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
-import {
-  AWSCredentialType,
-  ECRConfig,
-  IntegrationDialogProps,
-} from '../../../utils/integrations';
+import { ECRConfig, IntegrationDialogProps } from '../../../utils/integrations';
+import { AWSCredentialType } from '../../../utils/shared';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: ECRConfig = {
-  //type: AWSCredentialType.AccessKey,
-  type: 'access_key',
+  type: AWSCredentialType.AccessKey,
   region: 'us-east-2',
   access_key_id: '',
   secret_access_key: '',
@@ -26,7 +22,9 @@ export const ECRDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
 }) => {
   const { register, setValue } = useFormContext();
-  const [currentTab, setCurrentTab] = useState(AWSCredentialType.AccessKey);
+  const [currentTab, setCurrentTab] = useState<AWSCredentialType>(
+    AWSCredentialType.AccessKey
+  );
 
   register('type', { value: AWSCredentialType.AccessKey });
 

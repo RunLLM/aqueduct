@@ -67,7 +67,7 @@ import {
 } from '../components/integrations/dialogs/sqliteDialog';
 import UserProfile from './auth';
 import { AqueductDocsLink } from './docs';
-import { ExecState } from './shared';
+import { AWSCredentialType, ExecState } from './shared';
 
 export const aqueductDemoName = 'Demo';
 export const aqueductComputeName = 'Aqueduct Server';
@@ -180,18 +180,12 @@ export type SalesforceConfig = {
   code?: string;
 };
 
-export enum AWSCredentialType {
-  AccessKey = 'access_key',
-  ConfigFilePath = 'config_file_path',
-  ConfigFileContent = 'config_file_content',
-}
-
 export enum DynamicEngineType {
   K8s = 'k8s',
 }
 
 export type S3Config = {
-  type: AWSCredentialType | string;
+  type: AWSCredentialType;
   bucket: string;
   region: string;
 
@@ -278,8 +272,7 @@ export type SparkConfig = {
 };
 
 export type AWSConfig = {
-  // Not sure why this is coming back as null occasionally ...
-  type: AWSCredentialType | string;
+  type: AWSCredentialType;
   region: string;
   access_key_id: string;
   secret_access_key: string;

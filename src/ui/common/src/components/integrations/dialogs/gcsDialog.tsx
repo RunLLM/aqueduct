@@ -43,10 +43,6 @@ export const GCSDialog: React.FC<GCSDialogProps> = ({
     setValue('service_account_credentials', fileData?.data);
   };
 
-  useEffect(() => {
-    setMigrateStorage(true);
-  }, [setMigrateStorage]);
-
   const fileData =
     fileName && !!getValues('service_account_credentials')
       ? {
@@ -68,6 +64,12 @@ export const GCSDialog: React.FC<GCSDialogProps> = ({
       <> to create a service account and get the service account key file.</>
     </>
   );
+
+  useEffect(() => {
+    if (setMigrateStorage) {
+      setMigrateStorage(true);
+    }
+  }, [setMigrateStorage]);
 
   return (
     <Box sx={{ mt: 2 }}>

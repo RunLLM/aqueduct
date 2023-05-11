@@ -6,11 +6,11 @@ import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
 import {
-  AWSCredentialType,
   FileData,
   IntegrationDialogProps,
   S3Config,
 } from '../../../utils/integrations';
+import { AWSCredentialType } from '../../../utils/shared';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';
 import { readCredentialsFile } from './bigqueryDialog';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
@@ -18,9 +18,7 @@ import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: S3Config = {
-  // TODO: Figure out why this type keeps erroring out...
-  //type: AWSCredentialType.AccessKey,
-  type: 'access_key',
+  type: AWSCredentialType.AccessKey,
   bucket: 'aqueduct',
   region: 'us-east-1',
   root_dir: 'path/to/root/',
@@ -47,7 +45,9 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
   const [useAsMetadataStorage, setUseAsMetadataStorage] =
     useState<string>('false');
 
-  const [currentTab, setCurrentTab] = useState(AWSCredentialType.AccessKey);
+  const [currentTab, setCurrentTab] = useState<AWSCredentialType>(
+    AWSCredentialType['AccessKey']
+  );
   register('type', { value: currentTab, required: true });
 
   const setFile = (fileData: FileData | null) => {

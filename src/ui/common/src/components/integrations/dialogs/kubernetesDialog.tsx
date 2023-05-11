@@ -33,7 +33,7 @@ export const KubernetesDialog: React.FC<IntegrationDialogProps> = ({
 
   const [inK8sCluster, setInK8sCluster] = useState(false);
 
-  // TODO: Move this route over to RTK query
+  // TODO: https://linear.app/aqueducthq/issue/ENG-2964/move-k8s-use-same-cluster-request-to-rtkquery
   useEffect(() => {
     const fetchEnvironment = async () => {
       const environmentResponse = await fetch(`${apiAddress}/api/environment`, {
