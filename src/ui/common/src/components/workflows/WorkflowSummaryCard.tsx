@@ -15,6 +15,8 @@ export type WorkflowSummaryCardProps = {
   integration: Integration;
 };
 
+// If the operator list is empty, we don't display the `<num> operators using <resource` message
+// at all. This is necessary for notification resources, which are more of a workflow concept.
 export const WorkflowSummaryCard: React.FC<WorkflowSummaryCardProps> = ({
   workflow,
   operators,
@@ -84,19 +86,21 @@ export const WorkflowSummaryCard: React.FC<WorkflowSummaryCardProps> = ({
         </Box>
       </Box>
 
-      <Box
-        sx={{
-          position: 'relative',
-          top: '20px',
-          left: '8px',
-          textAlign: 'left',
-        }}
-      >
-        <TruncatedText variant="caption" sx={{ fontWeight: 300 }}>
-          {operators.length} {operators.length > 1 ? 'operators' : 'operator'}{' '}
-          using {integration.name}
-        </TruncatedText>
-      </Box>
+      {operators.length > 0 && (
+        <Box
+          sx={{
+            position: 'relative',
+            top: '20px',
+            left: '8px',
+            textAlign: 'left',
+          }}
+        >
+          <TruncatedText variant="caption" sx={{ fontWeight: 300 }}>
+            {operators.length} {operators.length > 1 ? 'operators' : 'operator'}{' '}
+            using {integration.name}
+          </TruncatedText>
+        </Box>
+      )}
     </Box>
   );
 };
