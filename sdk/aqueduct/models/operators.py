@@ -211,7 +211,6 @@ class ImageConfig(BaseModel):
     url: str
 
 
-
 class OperatorSpec(BaseModel):
     extract: Optional[ExtractSpec]
     load: Optional[LoadSpec]
