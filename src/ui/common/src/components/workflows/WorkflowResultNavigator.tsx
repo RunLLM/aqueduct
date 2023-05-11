@@ -43,9 +43,7 @@ const WorkflowResultNavigator: React.FC<Props> = ({ apiKey }) => {
             sx={{ fontSize: '28px', width: '100%' }}
             variant="text"
             onClick={() => {
-              navigate(
-                `?workflowDagId=${earlierResult.dag_id}&workflowDagResultId=${earlierResult.id}`
-              );
+              navigate(`/workflow/${workflowId}/result/${earlierResult.id}`);
             }}
             disabled={!earlierResult}
           >
@@ -60,9 +58,7 @@ const WorkflowResultNavigator: React.FC<Props> = ({ apiKey }) => {
             sx={{ fontSize: '28px', width: '100%' }}
             variant="text"
             onClick={() => {
-              navigate(
-                `?workflowDagId=${laterResult.dag_id}&workflowDagResultId=${laterResult.id}`
-              );
+              navigate(`/workflow/${workflowId}/result/${laterResult.id}`);
             }}
             disabled={!laterResult}
           >

@@ -83,11 +83,7 @@ export const VersionSelector: React.FC<Props> = ({ apiKey }) => {
           value={idx}
           key={r.id}
           onClick={() => {
-            navigate(
-              `?workflowDagId=${encodeURI(
-                r.dag_id
-              )}&workflowDagResultId=${encodeURI(r.id)}`
-            );
+            navigate(`result/${encodeURI(r.id)}`);
           }}
           sx={{
             backgroundColor: selected ? selectedBackground : defaultBackground,
