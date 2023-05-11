@@ -11,6 +11,84 @@ import (
 
 // This file should map exactly to
 // `src/ui/common/src/handlers/responses/node.ts`
+type MergedNode struct {
+	ID          uuid.UUID           `json:"id"`
+	DagID       uuid.UUID           `json:"dag_id"`
+	ArtifactID       uuid.UUID           `json:"artifact_id"`
+	Name        string              `json:"name"`
+	Description string              `json:"description"`
+	Spec        *operator.Spec `json:"spec"`
+	Type        shared.ArtifactType `json:"type"`
+
+	// Upstream artifact ID, could be multiple or empty.
+	Inputs []uuid.UUID `json:"inputs"`
+
+	// Downstream operator IDs, could be multiple or empty.
+	Outputs []uuid.UUID `json:"outputs"`
+}
+
+func NewMergedNodeFromDBObject(dbMergedNode *views.MergedNode) *MergedNode {
+	return &MergedNode{
+		ID:          dbMergedNode.ID,
+		DagID:       dbMergedNode.DagID,
+		ArtifactID: dbMergedNode.ArtifactID,
+		Name:        dbMergedNode.Name,
+		Description: dbMergedNode.Description,
+		Spec:        dbMergedNode.Spec,
+		Type:        dbMergedNode.Type,
+		Inputs:       dbMergedNode.Inputs,
+		Outputs:     dbMergedNode.Outputs,
+	}
+}
+
+
+type MergedNodeResult struct {
+	// Operator ID
+	ID        uuid.UUID              `json:"id"`
+	OperatorExecState *shared.ExecutionState `json:"operator_exec_state"`
+
+	ArtifactID                uuid.UUID                        `json:"artifact_id"`
+	SerializationType shared.ArtifactSerializationType `json:"serialization_type"`
+
+	// If `ContentSerialized` is set, the content is small and we directly send
+	// it as a part of response. It's consistent with the object stored in `ContentPath`.
+	// The value is the string representation of the file stored in that path.
+	//
+	// Otherwise, the content is large and
+	// one should send an additional request to fetch the content.
+	ContentPath       string  `json:"content_path"`
+	ContentSerialized *string `json:"content_serialized"`
+
+	ArtifactExecState *shared.ExecutionState `json:"artifact_exec_state"`
+}
+
+func NewMergedNodeResultFromDBObject(
+	dbMergedNodeResult *models.MergedNodeResult,
+	content *string,
+) *MergedNodeResult {
+	result := &MergedNodeResult{
+		ID:                dbMergedNodeResult.ID,
+		ArtifactID:                dbMergedNodeResult.ArtifactID,
+		SerializationType: dbMergedNodeResult.Metadata.SerializationType,
+		ContentPath:       dbMergedNodeResult.ContentPath,
+		ContentSerialized: content,
+	}
+
+	if !dbMergedNodeResult.OperatorExecState.IsNull {
+		// make a copy of execState's value
+		execStateVal := dbMergedNodeResult.OperatorExecState.ExecutionState
+		result.OperatorExecState = &execStateVal
+	}
+
+	if !dbMergedNodeResult.ArtifactExecState.IsNull {
+		// make a copy of execState's value
+		execStateVal := dbMergedNodeResult.ArtifactExecState.ExecutionState
+		result.ArtifactExecState = &execStateVal
+	}
+
+	return result
+}
+
 type Artifact struct {
 	ID          uuid.UUID           `json:"id"`
 	DagID       uuid.UUID           `json:"dag_id"`
@@ -120,8 +198,8 @@ func NewOperatorResultFromDBObject(
 type Nodes struct {
 	Operators []Operator `json:"operators"`
 	Artifacts []Artifact `json:"artifacts"`
-	Metrics []Metric `json:"metrics"`
-	Checks []Check `json:"checks"`
+	Metrics []MergedNode `json:"metrics"`
+	Checks []MergedNode `json:"checks"`
 }
 
 func NewNodesFromDBObjects(
@@ -161,8 +239,8 @@ func NewNodesFromDBObjects(
 type NodeResults struct {
 	Operators []OperatorResult `json:"operators"`
 	Artifacts []ArtifactResult `json:"artifacts"`
-	Metrics []MetricResult `json:"metrics"`
-	Checks []CheckResult `json:"checks"`
+	Metrics []MergedNodeResult `json:"metrics"`
+	Checks []MergedNodeResult `json:"checks"`
 }
 
 func NewNodeResultsFromDBObjects(
