@@ -36,8 +36,8 @@ import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
 import {
   IntegrationCategories,
-  resourceExecState,
   isNotificationIntegration,
+  resourceExecState,
   SupportedIntegrations,
 } from '../../../../utils/integrations';
 import ExecutionStatus, {

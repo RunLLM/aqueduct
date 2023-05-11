@@ -116,7 +116,7 @@ const IntegrationOptions: React.FC<Props> = ({
               </Typography>
             </MenuItem>
           )}
-        {!isBuiltinIntegration(integration) && allowDeletion && (
+        {allowDeletion && (
           <MenuItem
             onClick={() => {
               setAnchorEl(null);

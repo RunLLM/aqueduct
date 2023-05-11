@@ -102,7 +102,7 @@ export function isBuiltinIntegration(integration: Integration): boolean {
 }
 
 export function isNotificationIntegration(integration: Integration): boolean {
-  return integration.service == 'Email' || integration.service == 'Slack';
+  return integration?.service == 'Email' || integration?.service == 'Slack';
 }
 
 export function resourceExecState(integration: Integration): ExecState {
@@ -128,6 +128,18 @@ export function resourceExecState(integration: Integration): ExecState {
   }
 
   return integration.exec_state || { status: ExecutionStatus.Succeeded };
+}
+
+// The only resource that does not necessarily display the same service type as
+// on the integration itself is Conda.
+export function resolveDisplayService(integration: Integration): Service {
+  if (integration.service === 'Aqueduct') {
+    const aqConfig = integration.config as AqueductComputeConfig;
+    if (aqConfig.conda_config_serialized) {
+      return 'Conda';
+    }
+  }
+  return integration.service;
 }
 
 export function isCondaRegistered(integration: Integration): boolean {

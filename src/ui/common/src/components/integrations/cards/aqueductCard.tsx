@@ -54,21 +54,20 @@ export const AqueductCard: React.FC<Props> = ({
 
     let conda_msg: string;
     if (conda_exec_state.status === ExecutionStatus.Succeeded && finished_at) {
-      conda_msg = 'Connected on ' + new Date(finished_at).toLocaleString();
+      conda_msg = 'Conda connected on ' + new Date(finished_at).toLocaleString();
     } else if (
       conda_exec_state.status == ExecutionStatus.Failed &&
       finished_at
     ) {
       conda_msg =
-        'Failed to connect on ' + new Date(finished_at).toLocaleString();
+        'Conda failed to connect on ' + new Date(finished_at).toLocaleString();
     } else {
-      conda_msg = 'Connecting...';
+      conda_msg = 'Conda connecting...';
     }
 
     return (
       <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-        <IntegrationLogo service="Conda" size="tiny" activated />
-        <Typography variant="caption" sx={{ ml: 1, fontWeight: 300 }}>
+        <Typography variant="caption" sx={{ fontWeight: 300 }}>
           {conda_msg}
         </Typography>
       </Box>

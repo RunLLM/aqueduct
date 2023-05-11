@@ -1,7 +1,11 @@
 import Box from '@mui/material/Box';
 import React from 'react';
 
-import { Integration, resourceExecState } from '../../../utils/integrations';
+import {
+  Integration,
+  resolveDisplayService,
+  resourceExecState,
+} from '../../../utils/integrations';
 import { StatusIndicator } from '../../workflows/workflowStatus';
 import IntegrationLogo from '../logo';
 import { ResourceFieldsDetailsCard } from './resourceFieldsDetailsCard';
@@ -34,7 +38,11 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
             {integration.name}
           </TruncatedText>
         </Box>
-        <IntegrationLogo service={integration.service} size="small" activated />
+        <IntegrationLogo
+          service={resolveDisplayService(integration)}
+          size="small"
+          activated
+        />
       </Box>
 
       {/*Leave this empty if integration.createdAt isn't set.*/}
