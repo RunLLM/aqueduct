@@ -38,8 +38,8 @@ export function useWorkflowIds(apiKey: string): useWorkflowIdsOutputs {
   const navigate = useNavigate();
   const {
     id: wfIdParam,
-    workflowDagId: dagIdParam,
-    workflowDagResultId: dagResultIdParam,
+    dagId: dagIdParam,
+    dagResultId: dagResultIdParam,
   } = useParams();
 
   const { data: dagResults } = useDagResultsGetQuery(
@@ -62,19 +62,11 @@ export function useWorkflowIds(apiKey: string): useWorkflowIdsOutputs {
         })
       );
 
-      if (
-        dagIdParam !== dagResult.dag_id ||
-        dagResultIdParam !== dagResult.id
-      ) {
-        navigate(
-          `?workflowDagId=${encodeURI(
-            dagResult.dag_id
-          )}&workflowDagResultId=${encodeURI(dagResult.id)}`,
-          { replace: true },
-        );
+      if (!dagResultIdParam) {
+        navigate(`result/${encodeURI(dagResult.id)}`, { replace: true });
       }
     }
-  }, [wfIdParam, dagIdParam, dagResultIdParam, dagResult]);
+  }, [wfIdParam, dagResultIdParam, dagResult]);
 
   return {
     workflowId: wfIdParam,
