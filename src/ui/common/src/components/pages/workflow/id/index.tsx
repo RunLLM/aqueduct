@@ -1,6 +1,5 @@
 import {
   faArrowRotateRight,
-  faChevronLeft,
   faChevronRight,
   faCirclePlay,
   faUpRightAndDownLeftFromCenter,
@@ -10,32 +9,29 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Drawer, Snackbar, Tooltip } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import { parse } from 'query-string';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ReactFlowProvider } from 'reactflow';
+import WorkflowResultNavigator from 'src/components/workflows/WorkflowResultNavigator';
 
-import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
-import { handleGetWorkflowHistory } from '../../../../handlers/getWorkflowHistory';
+import {
+  aqueductApi,
+  useDagResultGetQuery,
+  useDagResultsGetQuery,
+  useWorkflowGetQuery,
+} from '../../../../handlers/AqueductApi';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import {
   NodeType,
   resetSelectedNode,
 } from '../../../../reducers/nodeSelection';
-import {
-  handleGetArtifactResults,
-  handleGetOperatorResults,
-  handleGetSelectDagPosition,
-  handleGetWorkflow,
-  resetState,
-  selectResultIdx,
-} from '../../../../reducers/workflow';
+import { handleGetSelectDagPosition } from '../../../../reducers/workflow';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
 import { handleExportFunction } from '../../../../utils/operators';
-import { LoadingStatusEnum, WidthTransition } from '../../../../utils/shared';
+import { WidthTransition } from '../../../../utils/shared';
 import {
   getDataSideSheetContent,
   sideSheetSwitcher,
@@ -53,7 +49,7 @@ import WorkflowHeader, {
 import WorkflowSettings from '../../../workflows/WorkflowSettings';
 import { LayoutProps } from '../../types';
 import RunWorkflowDialog from '../../workflows/components/RunWorkflowDialog';
-import { useWorkflowIds } from './hook';
+import { useWorkflowBreadcrumbs, useWorkflowIds } from './hook';
 
 type WorkflowPageProps = {
   user: UserProfile;
@@ -67,13 +63,32 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const navigate = useNavigate();
   const dispatch: AppDispatch = useDispatch();
   const { workflowId, dagId, dagResultId } = useWorkflowIds(user.apiKey);
-  const urlSearchParams = parse(window.location.search);
-  const location = useLocation();
-  const path = location.pathname;
+  const breadcrumbs = useWorkflowBreadcrumbs(
+    user.apiKey,
+    workflowId,
+    dagId,
+    dagResultId,
+    'Workflow'
+  );
+  const {
+    data: workflow,
+    isLoading: wfLoading,
+    error: wfError,
+  } = useWorkflowGetQuery(
+    { apiKey: user.apiKey, workflowId },
+    { skip: !workflowId }
+  );
+  const { data: dagResult } = useDagResultGetQuery(
+    { apiKey: user.apiKey, workflowId, dagResultId },
+    { skip: !workflowId || !dagResultId }
+  );
+  const { data: dagResults } = useDagResultsGetQuery(
+    { apiKey: user.apiKey, workflowId },
+    { skip: !workflowId }
+  );
 
   const [currentTab, setCurrentTab] = useState<string>('Details');
   const [showRunWorkflowDialog, setShowRunWorkflowDialog] = useState(false);
-  const [selectedResultIdx, setSelectedResultIdx] = useState(0);
 
   const [updateMessage, setUpdateMessage] = useState<string>('');
   const [showUpdateMessage, setShowUpdateMessage] = useState<boolean>(false);
@@ -82,104 +97,27 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const currentNode = useSelector(
     (state: RootState) => state.nodeSelectionReducer.selected
   );
-  const workflow = useSelector((state: RootState) => state.workflowReducer);
+
   const switchSideSheet = sideSheetSwitcher(dispatch);
   const drawerIsOpen = currentNode.type !== NodeType.None;
 
-  const dagName = workflow.selectedDag?.metadata?.name;
+  const onPaneClicked = (event: React.MouseEvent) => {
+    event.preventDefault();
 
-  // EFFECT 0: Set document title.
+    // Reset selected node
+    dispatch(resetSelectedNode());
+  };
+
   useEffect(() => {
-    if (workflow.selectedDag !== undefined) {
-      document.title = `${dagName} | Aqueduct`;
+    if (workflow !== undefined) {
+      document.title = `${workflow.name} | Aqueduct`;
     }
-  }, [workflow.selectedDag, dagName]);
+  }, [workflow]);
 
-  const resetWorkflowState = useCallback(() => {
-    dispatch(resetState());
-  }, [dispatch]);
-
-  // EFFECT 1: Manage state on browser history change.
-  // This effect adds the resetWorkflowState callback to be used when the user
-  // accesses the page history. In this case, we reset the state of the Redux
-  // workflow store, so we don't accidentally cache information across workflow
-  // versions.
+  // Load Integrations
   useEffect(() => {
-    window.onpopstate = () => {
-      resetWorkflowState();
-    };
-
-    resetWorkflowState();
-  }, [resetWorkflowState]);
-
-  // EFFECT 2: Set URL search param on version change.
-  // When the selected workflow run changes, we update the URL search param accordingly.
-  // This is important for two reasons:
-  // 1. It makes the URL sharable.
-  // 2. We rely on this to track what workflow version we're currently displaying.
-  useEffect(() => {
-    if (
-      workflow.selectedResult !== undefined &&
-      !urlSearchParams.workflowDagResultId
-    ) {
-      navigate(
-        `?workflowDagResultId=${encodeURI(workflow.selectedResult.id)}`,
-        { replace: true }
-      );
-    }
-  }, [workflow.selectedResult, urlSearchParams, navigate]);
-
-  // EFFECT 3: Load workflow metadata.
-  // This useEffect is effectively only called on component mount. It loads
-  // the base workflow metadata as well as metadata about any integrations
-  // in order to populate the UI.
-  useEffect(() => {
-    dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
     dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
   }, [dispatch, user.apiKey, workflowId]);
-
-  // EFFECT 4: Gather selected workflow index.
-  // When the workflow Redux store's DAG results are populated or when we navigate
-  // to a different version, we iterate through the full list of results and set the
-  // index in both Redux and in our local state.
-  // NOTE(vikram): There are two annoying bits of tech debt in this code:
-  // 1. It's not clear that this needs to be a different from Effect 2 the one where we
-  // navigate to a different search param. They seem to be focused on the same bits of
-  // functionality. (See ENG-2569.)
-  // 2. Less critical, but it's annoying that we have to track selectedResultIdx in local
-  // React state. This is not explicitly exposed by the Redux store, but it should be.
-  useEffect(() => {
-    if (workflow.dagResults && workflow.dagResults.length > 0) {
-      let workflowDagResultIndex = 0;
-      const { workflowDagResultId } = urlSearchParams;
-
-      // Iterate through all the results and check which one's ID matches the ID of
-      // the Redux store's selected DAG result.
-      for (let i = 0; i < workflow.dagResults.length; i++) {
-        if (workflow.dagResults[i].id === workflowDagResultId) {
-          workflowDagResultIndex = i;
-          break;
-        }
-      }
-
-      if (
-        !!workflow.selectedResult &&
-        workflowDagResultId !== workflow.selectedResult.id
-      ) {
-        // this is where selectedDag gets set
-        dispatch(selectResultIdx(workflowDagResultIndex));
-      }
-
-      // This is outside the if statement because this is not automatically kept in sync with
-      // the Redux store.
-      setSelectedResultIdx(workflowDagResultIndex);
-    }
-  }, [
-    workflow.dagResults,
-    urlSearchParams,
-    workflow.selectedResult?.id,
-    dispatch,
-  ]);
 
   // EFFECT 5: DAG positioning.
   // This effect uses the Elk algorithm to load the node positioning for the DAG.
@@ -196,166 +134,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     }
   }, [dispatch, user.apiKey, workflow.selectedDag]);
 
-  /**
-   * This function dispatches calls to fetch artifact results and contents.
-   *
-   * This function is only activated when another similar fetch request
-   * hasn't already been triggered.
-   *
-   * @param nodeId the UUID of the artifact for which we're retrieving
-   * details.
-   * @param metadataOnly if set to to true, only the status of the artifact
-   * will be retrieved but the data itself will be skipped
-   * @param force whether to reload the results regardless of whether
-   * they are cached.
-   */
-  const getArtifactResultDetails = useCallback(
-    (nodeId: string, metadataOnly: boolean, force = false) => {
-      const artf = (workflow.selectedDag?.artifacts ?? {})[nodeId];
-      if (!artf || !workflow.selectedResult) {
-        return;
-      }
-
-      if (!(nodeId in workflow.artifactResults) || force) {
-        dispatch(
-          handleGetArtifactResults({
-            apiKey: user.apiKey,
-            workflowDagResultId: workflow.selectedResult.id,
-            artifactId: nodeId,
-            metadataOnly: metadataOnly,
-          })
-        );
-      }
-    },
-    [
-      dispatch,
-      user.apiKey,
-      workflow.artifactResults,
-      workflow.selectedDag?.artifacts,
-      workflow.selectedResult,
-    ]
-  );
-
-  /**
-   * This function fetches both the metadata of a particular operator as well
-   * as the results of the artifacts that were both inputs and outputs for
-   * this operator.
-   *
-   * This function is only activated when another similar fetch request
-   * hasn't already been triggered.
-   *
-   * @param nodeId the UUID of an artifact for which we're retrieving
-   * results.
-   * @param force whether to reload the results regardless of whether
-   * they are cached.
-   */
-  const getOperatorResultDetails = useCallback(
-    (nodeId: string, force = false) => {
-      // Verify the node is indeed an operator, and a result is selected
-      const op = (workflow.selectedDag?.operators ?? {})[nodeId];
-      if (!op || !workflow.selectedResult) {
-        return;
-      }
-
-      if (!(nodeId in workflow.operatorResults) || force) {
-        dispatch(
-          handleGetOperatorResults({
-            apiKey: user.apiKey,
-            workflowDagResultId: workflow.selectedResult.id,
-            operatorId: nodeId,
-          })
-        );
-      }
-
-      if (op.spec.metric || op.spec.check) {
-        for (const artfId of [...op.outputs]) {
-          // We set metadataOnly to false because for metric and check, we want to also show
-          // their values on the workflow page.
-          getArtifactResultDetails(artfId, false, force);
-        }
-      } else {
-        for (const artfId of [...op.outputs]) {
-          getArtifactResultDetails(artfId, true, force);
-        }
-      }
-    },
-    [
-      dispatch,
-      getArtifactResultDetails,
-      user.apiKey,
-      workflow.operatorResults,
-      workflow.selectedDag?.operators,
-      workflow.selectedResult,
-    ]
-  );
-
-  // EFFECT 6: Load operator and artifact metadta.
-  // This effect loads the relevant metadata for each operator and artifact when either the
-  // selected node changes or when the selected workflow run changes. This is probably a
-  // little sloppy at the moment because we're pushing error checks into the helper functions
-  // and blindly calling them, which is opaque/confusing to read.
-  useEffect(() => {
-    getOperatorResultDetails(currentNode.id);
-    getArtifactResultDetails(currentNode.id, true);
-  }, [
-    currentNode?.id,
-    getArtifactResultDetails,
-    getOperatorResultDetails,
-    workflow.selectedResult?.id,
-  ]);
-
-  const onPaneClicked = (event: React.MouseEvent) => {
-    event.preventDefault();
-
-    // Reset selected node
-    dispatch(resetSelectedNode());
-  };
-
-  const selectedDag = workflow.selectedDag;
-  // This function retrieves all of the node metadata in this workflow DAG result.
-  // The `force` flag forces a reload even if the data is already present. This is
-  // used to refresh the state of a DAG that's already been loaded.
-  const getDagResultDetails = (force = false) => {
-    if (
-      (workflow.loadingStatus.loading === LoadingStatusEnum.Succeeded &&
-        !!selectedDag) ||
-      force
-    ) {
-      for (const op of Object.values(selectedDag.operators)) {
-        // We don't need to call getArtifactResultDetails because
-        // getOperatorResultDetails automatically does that for us.
-        getOperatorResultDetails(op.id, force);
-      }
-    }
-  };
-
-  // EFFECT 7: Load full DAG metadata.
-  // This effect loads all of the metadata associated with a particular workflow run.
-  // Both this an Effect 6 are run on every workflow run ID change, which might be
-  // duplicative (ENG-2569).
-  useEffect(getDagResultDetails, [
-    getOperatorResultDetails,
-    selectedDag,
-    workflow.loadingStatus.loading,
-    workflow.selectedResult?.id,
-  ]);
-
-  useEffect(() => {
-    dispatch(
-      handleGetWorkflowHistory({
-        apiKey: user.apiKey,
-        workflowId: workflowId,
-      })
-    );
-  }, [user.apiKey]);
-
   // This workflow doesn't exist.
-  if (workflow.loadingStatus.loading === LoadingStatusEnum.Failed) {
+  if (wfError) {
     navigate('/404');
     return null;
   }
 
-  if (workflow.loadingStatus.loading !== LoadingStatusEnum.Succeeded) {
+  if (wfLoading) {
     return null;
   }
 
@@ -391,19 +176,19 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     let navigateButton;
     let includeExportOpButton = true;
 
-    if (!workflow.selectedResult) {
+    if (!dagResultId) {
       return null;
     } else {
       let navigationUrl;
       if (currentNode.type === NodeType.TableArtifact) {
-        navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/artifact/${currentNode.id}`;
+        navigationUrl = `/workflow/${workflowId}/result/${dagResultId}/artifact/${currentNode.id}`;
         includeExportOpButton = false;
       } else if (currentNode.type === NodeType.FunctionOp) {
-        navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/operator/${currentNode.id}`;
+        navigationUrl = `/workflow/${workflowId}/result/${dagResultId}/operator/${currentNode.id}`;
       } else if (currentNode.type === NodeType.MetricOp) {
-        navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/metric/${currentNode.id}`;
+        navigationUrl = `/workflow/${workflowId}/result/${dagResultId}/metric/${currentNode.id}`;
       } else if (currentNode.type === NodeType.CheckOp) {
-        navigationUrl = `/workflow/${workflowId}/result/${workflow.selectedResult.id}/check/${currentNode.id}`;
+        navigationUrl = `/workflow/${workflowId}/result/${dagResultId}/check/${currentNode.id}`;
       } else {
         return null; // This is a load or save operator.
       }
@@ -462,17 +247,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
   return (
     <Layout
-      breadcrumbs={[
-        BreadcrumbLink.HOME,
-        BreadcrumbLink.WORKFLOWS,
-        new BreadcrumbLink(path, dagName),
-      ]}
+      breadcrumbs={breadcrumbs}
       user={user}
       onBreadCrumbClicked={() => {
-        resetWorkflowState();
+        return;
       }}
       onSidebarItemClicked={() => {
-        resetWorkflowState();
+        return;
       }}
     >
       <Box
@@ -488,19 +269,17 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
         }}
         id={WorkflowPageContentId}
       >
-        {workflow.selectedDag && (
-          <Box marginBottom={1}>
-            <WorkflowHeader
-              apiKey={user.apiKey}
-              workflowId={workflowId}
-              dagId={dagId}
-              dagResultId={dagResultId}
-            />
-          </Box>
-        )}
+        <Box marginBottom={1}>
+          <WorkflowHeader
+            apiKey={user.apiKey}
+            workflowId={workflowId}
+            dagId={dagId}
+            dagResultId={dagResultId}
+          />
+        </Box>
 
         {/*Show any workflow-level errors at the top of the workflow details page.*/}
-        {workflow.selectedResult?.exec_state?.error && (
+        {dagResult?.exec_state?.error && (
           <Box
             sx={{
               backgroundColor: theme.palette.red[100],
@@ -521,7 +300,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           >
             <pre
               style={{ margin: '0px' }}
-            >{`${workflow.selectedResult.exec_state.error.tip}\n\n${workflow.selectedResult.exec_state.error.context}`}</pre>
+            >{`${dagResult.exec_state.error.tip}\n\n${dagResult.exec_state.error.context}`}</pre>
           </Box>
         )}
 
@@ -583,59 +362,14 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           {/* These controls are automatically hidden when the side sheet is open. */}
           {/* Tooltips don't show up if the child is disabled so we wrap the button with a Box.  */}
           <Box width="100px" ml={2} display={drawerIsOpen ? 'none' : 'block'}>
-            {workflow.dagResults && workflow.dagResults.length > 1 && (
+            {dagResults !== undefined && dagResults.length > 0 && (
               <Box
-                display="flex"
                 mb={2}
                 pb={2}
                 width="100%"
                 sx={{ borderBottom: `1px solid ${theme.palette.gray[600]}` }}
               >
-                <Tooltip title="Previous Run" arrow>
-                  <Box sx={{ px: 0, flex: 1 }}>
-                    <Button
-                      sx={{ fontSize: '28px', width: '100%' }}
-                      variant="text"
-                      onClick={() => {
-                        // This might be confusing, but index 0 is the most recent run, so incrementing the index goes
-                        // to an *earlier* run.
-                        dispatch(selectResultIdx(selectedResultIdx + 1));
-                        navigate(
-                          `?workflowDagResultId=${
-                            workflow.dagResults[selectedResultIdx + 1].id
-                          }`
-                        );
-                      }}
-                      disabled={
-                        selectedResultIdx === workflow.dagResults.length - 1
-                      }
-                    >
-                      <FontAwesomeIcon icon={faChevronLeft} />
-                    </Button>
-                  </Box>
-                </Tooltip>
-
-                <Tooltip title="Next Run" arrow>
-                  <Box sx={{ px: 0, flex: 1 }}>
-                    <Button
-                      sx={{ fontSize: '28px', width: '100%' }}
-                      variant="text"
-                      onClick={() => {
-                        // This might be confusing, but index 0 is the most recent run, so decrementing the index goes
-                        // to a *newer* run.
-                        dispatch(selectResultIdx(selectedResultIdx - 1));
-                        navigate(
-                          `?workflowDagResultId=${
-                            workflow.dagResults[selectedResultIdx - 1].id
-                          }`
-                        );
-                      }}
-                      disabled={selectedResultIdx === 0}
-                    >
-                      <FontAwesomeIcon icon={faChevronRight} />
-                    </Button>
-                  </Box>
-                </Tooltip>
+                <WorkflowResultNavigator apiKey={user.apiKey} />
               </Box>
             )}
 
@@ -661,14 +395,27 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 sx={{ width: '100%', py: 1, fontSize: '32px' }}
                 variant="text"
                 onClick={() => {
-                  // When the button is clicked, load all of the metadata of each of the nodes again.
-                  getDagResultDetails(true);
-
-                  // Also refresh the history of workflow runs to update the status.
+                  // refresh node results, result history, and current result
                   dispatch(
-                    handleGetWorkflowHistory({
+                    aqueductApi.endpoints.nodesResultsGet.initiate({
                       apiKey: user.apiKey,
-                      workflowId: workflowId,
+                      workflowId,
+                      dagResultId,
+                    })
+                  );
+
+                  dispatch(
+                    aqueductApi.endpoints.dagResultGet.initiate({
+                      apiKey: user.apiKey,
+                      workflowId,
+                      dagResultId,
+                    })
+                  );
+
+                  dispatch(
+                    aqueductApi.endpoints.dagResultsGet.initiate({
+                      apiKey: user.apiKey,
+                      workflowId,
                     })
                   );
                 }}
@@ -744,8 +491,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
               user,
               currentNode,
               workflowId,
-              selectedDag.id,
-              workflow.selectedResult?.id
+              dagId,
+              dagResultId
             )}
           </Box>
         </Box>

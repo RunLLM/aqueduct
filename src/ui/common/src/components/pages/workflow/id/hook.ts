@@ -1,31 +1,19 @@
 import { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
-import { useDagResultsGetQuery } from '../../../../handlers/AqueductApi';
-import { handleGetWorkflowDag } from '../../../../handlers/getWorkflowDag';
-import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
+import {
+  useDagResultsGetQuery,
+  useWorkflowGetQuery,
+} from '../../../../handlers/AqueductApi';
 import { initializeDagOrResultPageIfNotExists } from '../../../../reducers/pages/Workflow';
-import { WorkflowDagResultWithLoadingStatus } from '../../../../reducers/workflowDagResults';
-import { WorkflowDagWithLoadingStatus } from '../../../../reducers/workflowDags';
-import { AppDispatch, RootState } from '../../../../stores/store';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
-import { isInitial } from '../../../../utils/shared';
 
 export type useWorkflowIdsOutputs = {
   workflowId: string;
   dagId?: string;
   dagResultId?: string;
-};
-
-export type useWorkflowOutputs = {
-  breadcrumbs: BreadcrumbLink[];
-  workflowId: string;
-  workflowDagId: string;
-  workflowDagResultId: string;
-  workflowDagWithLoadingStatus: WorkflowDagWithLoadingStatus;
-  workflowDagResultWithLoadingStatus: WorkflowDagResultWithLoadingStatus;
 };
 
 // useWorkflowIds ensures we use the URL parameter as ground-truth for fetching
@@ -70,7 +58,7 @@ export function useWorkflowIds(apiKey: string): useWorkflowIdsOutputs {
           `?workflowDagId=${encodeURI(
             dagResult.dag_id
           )}&workflowDagResultId=${encodeURI(dagResult.id)}`,
-          { replace: true },
+          { replace: true }
         );
       }
     }
@@ -83,90 +71,39 @@ export function useWorkflowIds(apiKey: string): useWorkflowIdsOutputs {
   };
 }
 
-export default function useWorkflow(
+export function useWorkflowBreadcrumbs(
   apiKey: string,
-  workflowIdProp: string | undefined,
-  workflowDagIdProp: string | undefined,
-  workflowDagResultIdProp: string | undefined,
-  title = 'Workflow'
-): useWorkflowOutputs {
-  const dispatch: AppDispatch = useDispatch();
-  let { workflowId, workflowDagId, workflowDagResultId } = useParams();
-
-  if (workflowIdProp) {
-    workflowId = workflowIdProp;
-  }
-
-  if (workflowDagIdProp) {
-    workflowDagId = workflowDagIdProp;
-  }
-
-  if (workflowDagResultIdProp) {
-    workflowDagResultId = workflowDagResultIdProp;
-  }
-
-  const workflowDagResultWithLoadingStatus = useSelector(
-    (state: RootState) =>
-      state.workflowDagResultsReducer.results[workflowDagResultId]
-  );
-
-  const workflowDagWithLoadingStatus = useSelector(
-    (state: RootState) => state.workflowDagsReducer.results[workflowDagId]
+  workflowId: string | undefined,
+  dagId: string | undefined,
+  dagResultId: string | undefined,
+  defaultTitle = 'Workflow'
+): BreadcrumbLink[] {
+  const { data: workflow } = useWorkflowGetQuery(
+    { apiKey, workflowId },
+    { skip: !workflowId }
   );
 
   const pathPrefix = getPathPrefix();
-  const workflowLink = `${pathPrefix}/workflow/${workflowId}?workflowDagResultId=${workflowDagResultId}`;
-  const breadcrumbs = [
+  let workflowLink = `${pathPrefix}/workflow/${workflowId}`;
+  if (dagId || dagResultId) {
+    workflowLink += '?';
+  }
+
+  if (dagId) {
+    workflowLink += `workflowDagId=${dagId}`;
+  }
+
+  if (dagId && dagResultId) {
+    workflowLink += '&';
+  }
+
+  if (dagResultId) {
+    workflowLink += `workflowDagResultId=${dagResultId}`;
+  }
+
+  return [
     BreadcrumbLink.HOME,
     BreadcrumbLink.WORKFLOWS,
-    new BreadcrumbLink(
-      workflowLink,
-      workflowDagResultWithLoadingStatus?.result?.name ?? title
-    ),
+    new BreadcrumbLink(workflowLink, workflow?.name ?? defaultTitle),
   ];
-
-  useEffect(() => {
-    if (
-      // Load workflow dag result if it's not cached
-      (!workflowDagResultWithLoadingStatus ||
-        isInitial(workflowDagResultWithLoadingStatus.status)) &&
-      workflowDagResultId
-    ) {
-      dispatch(
-        handleGetWorkflowDagResult({
-          apiKey: apiKey,
-          workflowId,
-          workflowDagResultId,
-        })
-      );
-    }
-
-    if (
-      (!workflowDagWithLoadingStatus ||
-        isInitial(workflowDagWithLoadingStatus.status)) &&
-      !workflowDagResultId &&
-      workflowDagId
-    ) {
-      dispatch(
-        handleGetWorkflowDag({ apiKey: apiKey, workflowId, workflowDagId })
-      );
-    }
-  }, [
-    dispatch,
-    apiKey,
-    workflowDagResultId,
-    workflowDagId,
-    workflowDagWithLoadingStatus,
-    workflowDagResultWithLoadingStatus,
-    workflowId,
-  ]);
-
-  return {
-    breadcrumbs,
-    workflowId,
-    workflowDagId,
-    workflowDagResultId,
-    workflowDagWithLoadingStatus,
-    workflowDagResultWithLoadingStatus,
-  };
 }
