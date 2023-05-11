@@ -7,7 +7,6 @@ import {
   Integration,
 } from '../../../utils/integrations';
 import { ExecState, ExecutionStatus } from '../../../utils/shared';
-import IntegrationLogo from '../logo';
 import { ResourceCardText } from './text';
 
 type Props = {
@@ -47,14 +46,15 @@ export const AqueductCard: React.FC<Props> = ({
       );
     }
 
-    // For an Aqueduct + Conda summary card, display the conda + a message about its current status.
+    // For an Aqueduct + Conda summary card, display a message about Conda's current status.
     const conda_exec_state = JSON.parse(conda_config.exec_state) as ExecState;
     const finished_at: string | undefined =
       conda_exec_state.timestamps?.finished_at;
 
     let conda_msg: string;
     if (conda_exec_state.status === ExecutionStatus.Succeeded && finished_at) {
-      conda_msg = 'Conda connected on ' + new Date(finished_at).toLocaleString();
+      conda_msg =
+        'Conda connected on ' + new Date(finished_at).toLocaleString();
     } else if (
       conda_exec_state.status == ExecutionStatus.Failed &&
       finished_at
