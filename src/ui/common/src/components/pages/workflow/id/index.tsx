@@ -22,10 +22,8 @@ import {
   useWorkflowGetQuery,
 } from '../../../../handlers/AqueductApi';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
-import {
-  NodeType,
-  resetSelectedNode,
-} from '../../../../reducers/nodeSelection';
+import { NodeType } from '../../../../reducers/nodeSelection';
+import { selectNode } from '../../../../reducers/pages/Workflow';
 import { handleGetSelectDagPosition } from '../../../../reducers/workflow';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import { theme } from '../../../../styles/theme/theme';
@@ -49,7 +47,12 @@ import WorkflowHeader, {
 import WorkflowSettings from '../../../workflows/WorkflowSettings';
 import { LayoutProps } from '../../types';
 import RunWorkflowDialog from '../../workflows/components/RunWorkflowDialog';
-import { useWorkflowBreadcrumbs, useWorkflowIds } from './hook';
+import {
+  useWorkflowBreadcrumbs,
+  useWorkflowIds,
+  useWorkflowNodes,
+  useWorkflowNodesResults,
+} from './hook';
 
 type WorkflowPageProps = {
   user: UserProfile;
@@ -86,6 +89,12 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     { apiKey: user.apiKey, workflowId },
     { skip: !workflowId }
   );
+  const nodes = useWorkflowNodes(user.apiKey, workflowId, dagId);
+  const nodeResults = useWorkflowNodesResults(
+    user.apiKey,
+    workflowId,
+    dagResultId
+  );
 
   const [currentTab, setCurrentTab] = useState<string>('Details');
   const [showRunWorkflowDialog, setShowRunWorkflowDialog] = useState(false);
@@ -94,18 +103,24 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const [showUpdateMessage, setShowUpdateMessage] = useState<boolean>(false);
   const [updateSucceeded, setUpdateSucceeded] = useState<boolean>(false);
 
-  const currentNode = useSelector(
-    (state: RootState) => state.nodeSelectionReducer.selected
+  const selectedNodeState = useSelector(
+    (state: RootState) =>
+      state.workflowPageReducer.perWorkflowPageStates[workflowId]?.SelectedNode
   );
 
+  const selectedNode =
+    nodes[selectedNodeState.nodeType][selectedNodeState.nodeId];
+  const selectedNodeResult =
+    nodeResults[selectedNodeState.nodeType][selectedNodeState.nodeId];
+
   const switchSideSheet = sideSheetSwitcher(dispatch);
-  const drawerIsOpen = currentNode.type !== NodeType.None;
+  const drawerIsOpen = !!selectedNode;
 
   const onPaneClicked = (event: React.MouseEvent) => {
     event.preventDefault();
 
     // Reset selected node
-    dispatch(resetSelectedNode());
+    dispatch(selectNode({ workflowId, selection: undefined }));
   };
 
   useEffect(() => {
@@ -144,29 +159,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     return null;
   }
 
-  const getNodeLabel = () => {
-    if (
-      currentNode.type === NodeType.TableArtifact ||
-      currentNode.type === NodeType.NumericArtifact ||
-      currentNode.type === NodeType.BoolArtifact ||
-      currentNode.type === NodeType.JsonArtifact ||
-      currentNode.type === NodeType.StringArtifact ||
-      currentNode.type === NodeType.ImageArtifact ||
-      currentNode.type === NodeType.DictArtifact ||
-      currentNode.type == NodeType.ListArtifact ||
-      currentNode.type === NodeType.GenericArtifact
-    ) {
-      if (selectedDag.artifacts[currentNode.id]) {
-        return selectedDag.artifacts[currentNode.id].name;
-      }
-      return 'Artifact Node';
-    } else {
-      if (selectedDag.operators[currentNode.id]) {
-        return selectedDag.operators[currentNode.id].name;
-      }
-      return 'Operator Node';
-    }
-  };
+  const nodeLabel =
+    selectedNode.name ??
+    (selectedNodeState.nodeType === 'operators'
+      ? 'Operator Node'
+      : 'Artifact Node');
   const getNodeActionButton = () => {
     const buttonStyle = {
       fontSize: '20px',
@@ -473,7 +470,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                   overflow="hidden"
                   whiteSpace="nowrap"
                 >
-                  {getNodeLabel()}
+                  {nodeLabel}
                 </Typography>
               </Box>
 

@@ -16,6 +16,7 @@ export type ArtifactResponse = {
 
 export type ArtifactResultResponse = {
   id: string;
+  artifact_id: string;
   serialization_type: SerializationType;
   content_path: string;
   content_serialized: string;
@@ -34,6 +35,7 @@ export type OperatorResponse = {
 
 export type OperatorResultResponse = {
   id: string;
+  operator_id: string;
   exec_state?: ExecState;
 };
 

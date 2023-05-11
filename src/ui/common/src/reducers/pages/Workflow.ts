@@ -1,10 +1,17 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-export type PerDagPageState = {
-  // TODO: Add selected nodes, etc. here
+import { NodesResponse } from '../../handlers/responses/node';
+
+// For now, this is an empty object.
+export type PerDagPageState = Record<string, never>;
+
+export type NodeSelection = {
+  nodeType: keyof NodesResponse;
+  nodeId: string;
 };
 
 type PerWorkflowPageState = {
+  SelectedNode?: NodeSelection;
   perDagPageStates: {
     [dagOrResultId: string]: PerDagPageState;
   };
@@ -53,9 +60,19 @@ export const workflowPageSlice = createSlice({
         ] = {};
       }
     },
+    selectNode: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{ workflowId: string; selection?: NodeSelection }>
+    ) => {
+      initializePerWorkflowPageStateIfNotExists(state, payload.workflowId);
+      state.perWorkflowPageStates[payload.workflowId].SelectedNode =
+        payload.selection;
+    },
   },
 });
 
-export const { initializeDagOrResultPageIfNotExists } =
+export const { initializeDagOrResultPageIfNotExists, selectNode } =
   workflowPageSlice.actions;
 export default workflowPageSlice.reducer;

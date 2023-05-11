@@ -5,8 +5,16 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import {
   useDagResultsGetQuery,
+  useNodesGetQuery,
+  useNodesResultsGetQuery,
   useWorkflowGetQuery,
 } from '../../../../handlers/AqueductApi';
+import {
+  ArtifactResponse,
+  ArtifactResultResponse,
+  OperatorResponse,
+  OperatorResultResponse,
+} from '../../../../handlers/responses/node';
 import { initializeDagOrResultPageIfNotExists } from '../../../../reducers/pages/Workflow';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
 
@@ -14,6 +22,16 @@ export type useWorkflowIdsOutputs = {
   workflowId: string;
   dagId?: string;
   dagResultId?: string;
+};
+
+export type useWorkflowNodesOutputs = {
+  operators: { [id: string]: OperatorResponse };
+  artifacts: { [id: string]: ArtifactResponse };
+};
+
+export type useWorkflowNodesResultsOutputs = {
+  operators: { [id: string]: OperatorResultResponse };
+  artifacts: { [id: string]: ArtifactResultResponse };
 };
 
 // useWorkflowIds ensures we use the URL parameter as ground-truth for fetching
@@ -106,4 +124,42 @@ export function useWorkflowBreadcrumbs(
     BreadcrumbLink.WORKFLOWS,
     new BreadcrumbLink(workflowLink, workflow?.name ?? defaultTitle),
   ];
+}
+
+export function useWorkflowNodes(
+  apiKey: string,
+  workflowId: string,
+  dagId: string | undefined
+): useWorkflowNodesOutputs {
+  const { data: nodes } = useNodesGetQuery(
+    { apiKey, workflowId, dagId },
+    { skip: !workflowId || !dagId }
+  );
+  return {
+    operators: Object.fromEntries(
+      (nodes?.operators ?? []).map((op) => [op.id, op])
+    ),
+    artifacts: Object.fromEntries(
+      (nodes?.artifacts ?? []).map((artf) => [artf.id, artf])
+    ),
+  };
+}
+
+export function useWorkflowNodesResults(
+  apiKey: string,
+  workflowId: string,
+  dagResultId: string | undefined
+): useWorkflowNodesResultsOutputs {
+  const { data: nodeResults } = useNodesResultsGetQuery(
+    { apiKey, workflowId, dagResultId },
+    { skip: !workflowId || !dagResultId }
+  );
+  return {
+    operators: Object.fromEntries(
+      (nodeResults?.operators ?? []).map((op) => [op.operator_id, op])
+    ),
+    artifacts: Object.fromEntries(
+      (nodeResults?.artifacts ?? []).map((artf) => [artf.artifact_id, artf])
+    ),
+  };
 }
