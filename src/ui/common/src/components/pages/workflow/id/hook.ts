@@ -69,7 +69,8 @@ export function useWorkflowIds(apiKey: string): useWorkflowIdsOutputs {
         navigate(
           `?workflowDagId=${encodeURI(
             dagResult.dag_id
-          )}&workflowDagResultId=${encodeURI(dagResult.id)}`
+          )}&workflowDagResultId=${encodeURI(dagResult.id)}`,
+          { replace: true },
         );
       }
     }
