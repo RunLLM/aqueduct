@@ -1,8 +1,14 @@
 import { Box } from '@mui/material';
 import Link from '@mui/material/Link';
 import React, { useState } from 'react';
+import { useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
-import { BigQueryConfig, FileData } from '../../../utils/integrations';
+import {
+  BigQueryConfig,
+  FileData,
+  IntegrationDialogProps,
+} from '../../../utils/integrations';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
@@ -11,28 +17,23 @@ const Placeholders: BigQueryConfig = {
   project_id: 'aqueduct_1234',
 };
 
-type Props = {
-  onUpdateField: (field: keyof BigQueryConfig, value: string) => void;
-  value?: BigQueryConfig;
-  editMode: boolean;
-};
-
-export const BigQueryDialog: React.FC<Props> = ({
-  onUpdateField,
-  value,
-  editMode,
+export const BigQueryDialog: React.FC<IntegrationDialogProps> = ({
+  editMode = false,
 }) => {
+  const { setValue, getValues } = useFormContext();
+
   const [fileName, setFileName] = useState<string>(null);
+
   const setFile = (fileData: FileData | null) => {
-    setFileName(fileData?.name ?? null);
-    onUpdateField('service_account_credentials', fileData?.data);
+    setFileName(fileData?.name ?? '');
+    setValue('service_account_credentials', fileData?.data);
   };
 
   const fileData =
-    fileName && !!value?.service_account_credentials
+    fileName && !!getValues('service_account_credentials')
       ? {
           name: fileName,
-          data: value.service_account_credentials,
+          data: getValues('service_account_credentials'),
         }
       : null;
 
@@ -53,19 +54,20 @@ export const BigQueryDialog: React.FC<Props> = ({
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="project_id"
         spellCheck={false}
         required={true}
         label="Project ID*"
         description="The BigQuery project ID."
         placeholder={Placeholders.project_id}
-        onChange={(event) => onUpdateField('project_id', event.target.value)}
-        value={value?.project_id ?? ''}
+        onChange={(event) => setValue('project_id', event.target.value)}
         disabled={editMode}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationFileUploadField
+        name="service_account_credentials"
         label={'Service Account Credentials*'}
         description={fileUploadDescription}
         required={true}
@@ -96,8 +98,11 @@ export function readCredentialsFile(
   reader.readAsText(file);
 }
 
-export function isBigQueryDialogConfigComplete(
-  config: BigQueryConfig
-): boolean {
-  return !!config.project_id && !!config.service_account_credentials;
+export function getBigQueryValidationSchema() {
+  return Yup.object().shape({
+    project_id: Yup.string().required('Please enter a project ID'),
+    service_account_credentials: Yup.string().required(
+      'Please upload a service account key file'
+    ),
+  });
 }

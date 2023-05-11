@@ -3,8 +3,14 @@ import Box from '@mui/material/Box';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
+import { useController, useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
-import { FileData, GCSConfig } from '../../../utils/integrations';
+import {
+  FileData,
+  GCSConfig,
+  IntegrationDialogProps,
+} from '../../../utils/integrations';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { IntegrationFileUploadField } from './IntegrationFileUploadField';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
@@ -14,34 +20,34 @@ const Placeholders: GCSConfig = {
   use_as_storage: '',
 };
 
-type Props = {
-  onUpdateField: (field: keyof GCSConfig, value: string) => void;
-  value?: GCSConfig;
-  editMode: boolean;
+interface GCSDialogProps extends IntegrationDialogProps {
   setMigrateStorage: React.Dispatch<React.SetStateAction<boolean>>;
-};
+}
 
-export const GCSDialog: React.FC<Props> = ({
-  onUpdateField,
-  value,
+export const GCSDialog: React.FC<GCSDialogProps> = ({
   editMode,
   setMigrateStorage,
 }) => {
+  // Setup for the checkbox component.
+  const { control, setValue, getValues } = useFormContext();
+  const { field } = useController({
+    control,
+    name: 'use_as_storage',
+    defaultValue: 'true',
+    rules: { required: true },
+  });
+
   const [fileName, setFileName] = useState<string>(null);
   const setFile = (fileData: FileData | null) => {
     setFileName(fileData?.name ?? null);
-    onUpdateField('service_account_credentials', fileData?.data);
+    setValue('service_account_credentials', fileData?.data);
   };
 
-  useEffect(() => {
-    setMigrateStorage(true);
-  }, [setMigrateStorage]);
-
   const fileData =
-    fileName && !!value?.service_account_credentials
+    fileName && !!getValues('service_account_credentials')
       ? {
           name: fileName,
-          data: value.service_account_credentials,
+          data: getValues('service_account_credentials'),
         }
       : null;
 
@@ -59,22 +65,29 @@ export const GCSDialog: React.FC<Props> = ({
     </>
   );
 
+  useEffect(() => {
+    if (setMigrateStorage) {
+      setMigrateStorage(true);
+    }
+  }, [setMigrateStorage]);
+
   return (
     <Box sx={{ mt: 2 }}>
       <IntegrationTextInputField
+        name="bucket"
         spellCheck={false}
         required={true}
         label="Bucket*"
         description="The name of the GCS bucket."
         placeholder={Placeholders.bucket}
-        onChange={(event) => onUpdateField('bucket', event.target.value)}
-        value={value?.bucket ?? ''}
+        onChange={(event) => setValue('bucket', event.target.value)}
         warning={editMode ? undefined : readOnlyFieldWarning}
         disabled={editMode}
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
       <IntegrationFileUploadField
+        name="service_account_credentials"
         label={'Service Account Credentials*'}
         description={fileUploadDescription}
         required={true}
@@ -94,13 +107,12 @@ export const GCSDialog: React.FC<Props> = ({
         label="Use this integration for Aqueduct metadata storage."
         control={
           <Checkbox
-            checked={value?.use_as_storage === 'true'}
-            onChange={(event) =>
-              onUpdateField(
-                'use_as_storage',
-                event.target.checked ? 'true' : 'false'
-              )
-            }
+            ref={field.ref}
+            checked={field.value === 'true'}
+            onChange={(event) => {
+              const updatedValue = event.target.checked ? 'true' : 'false';
+              field.onChange(updatedValue);
+            }}
             disabled={true}
           />
         }
@@ -127,6 +139,11 @@ export function readCredentialsFile(
   reader.readAsText(file);
 }
 
-export function isGCSConfigComplete(config: GCSConfig): boolean {
-  return !!config.bucket && !!config.service_account_credentials;
+export function getGCSValidationSchema() {
+  return Yup.object().shape({
+    bucket: Yup.string().required('Please enter a bucket name'),
+    service_account_credentials: Yup.string().required(
+      'Please upload a service account key file.'
+    ),
+  });
 }

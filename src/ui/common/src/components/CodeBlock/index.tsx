@@ -5,9 +5,14 @@ import { docco } from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 type Props = {
   language: string;
   children: string;
+  styleOverrides?: React.CSSProperties;
 };
 
-export const CodeBlock: React.FC<Props> = ({ language, children }) => {
+export const CodeBlock: React.FC<Props> = ({
+  language,
+  children,
+  styleOverrides,
+}) => {
   return (
     <SyntaxHighlighter
       language={language}
@@ -17,6 +22,7 @@ export const CodeBlock: React.FC<Props> = ({ language, children }) => {
         padding: '15px',
         // overrides built-in margin
         margin: '0px',
+        ...styleOverrides,
       }}
     >
       {children}
