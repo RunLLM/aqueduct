@@ -343,6 +343,7 @@ export const handleEditIntegration = createAsyncThunk<
     thunkAPI
   ) => {
     const { apiKey, integrationId, name, config } = args;
+
     Object.keys(config).forEach((k) => {
       if (!config[k]) {
         config[k] = '';

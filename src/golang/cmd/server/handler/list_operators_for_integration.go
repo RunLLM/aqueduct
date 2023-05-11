@@ -26,7 +26,7 @@ import (
 //		serialized `listOperatorsForIntegrationResponse`
 //
 // `listOperatorsForIntegration` lists all operators associated with
-// the given integraion. Together we provide the following information for
+// the given integration. Together we provide the following information for
 // each associated operator:
 //  `workflow_id`: the workflow associated with this operator
 //	`workflow_dag_id`: the workflow dag associated with this operator
@@ -99,6 +99,9 @@ func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interf
 	)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve operators.")
+	}
+	if len(operators) == 0 {
+		return listOperatorsForIntegrationResponse{OperatorWithIds: []listOperatorsForIntegrationItem{}}, http.StatusOK, nil
 	}
 
 	operatorIDs := make([]uuid.UUID, 0, len(operators))

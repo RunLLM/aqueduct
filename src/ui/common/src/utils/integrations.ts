@@ -15,6 +15,10 @@ export function isBuiltinIntegration(integration: Integration): boolean {
   );
 }
 
+export function isNotificationIntegration(integration: Integration): boolean {
+  return integration.service == 'Email' || integration.service == 'Slack';
+}
+
 // Certain integrations have no configuration fields to show.
 export function hasConfigFieldsToShow(integration: Integration): boolean {
   return (

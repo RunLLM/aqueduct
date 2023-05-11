@@ -159,6 +159,10 @@ func IsComputeIntegration(service Service) bool {
 	return ok
 }
 
+func IsNotificationResource(service Service) bool {
+	return service == Email || service == Slack
+}
+
 // IsUserOnlyIntegration returns whether the specified service is only accessible by the user.
 func IsUserOnlyIntegration(svc Service) bool {
 	userSpecific := []Service{GoogleSheets, Github}

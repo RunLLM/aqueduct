@@ -37,6 +37,7 @@ import UserProfile from '../../../../utils/auth';
 import {
   hasConfigFieldsToShow,
   IntegrationCategories,
+  isNotificationIntegration,
   SupportedIntegrations,
 } from '../../../../utils/integrations';
 import ExecutionStatus, {
@@ -199,7 +200,11 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     });
 
     workflowAndDagIDs.forEach((workflowAndDagID) => {
-      if (operatorsByDagID[workflowAndDagID.dag_id]) {
+      // If we're displaying a notification, there won't be only operators, but we
+      // want to include the workflows.
+      if (isNotificationIntegration(selectedIntegration)) {
+        workflowIDToLatestOperators[workflowAndDagID.id] = [];
+      } else if (operatorsByDagID[workflowAndDagID.dag_id]) {
         workflowIDToLatestOperators[workflowAndDagID.id] =
           operatorsByDagID[workflowAndDagID.dag_id];
       }
@@ -377,24 +382,16 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           />
         )}
 
-        {SupportedIntegrations[selectedIntegration.service].category !==
-          IntegrationCategories.NOTIFICATION && (
-          <Box sx={{ mt: 4 }}>
-            <Typography
-              variant="h5"
-              gutterBottom
-              component="div"
-              sx={{ mb: 4 }}
-            >
-              Workflows
-            </Typography>
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h5" gutterBottom component="div" sx={{ mb: 4 }}>
+            Workflows
+          </Typography>
 
-            <IntegrationWorkflowSummaryCards
-              integration={selectedIntegration}
-              workflowIDToLatestOperators={workflowIDToLatestOperators}
-            />
-          </Box>
-        )}
+          <IntegrationWorkflowSummaryCards
+            integration={selectedIntegration}
+            workflowIDToLatestOperators={workflowIDToLatestOperators}
+          />
+        </Box>
       </Box>
 
       {showAddTableDialog && (
