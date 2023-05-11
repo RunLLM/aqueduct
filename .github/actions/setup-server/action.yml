@@ -16,7 +16,7 @@ runs:
     # Write the selection to `.python-version` to be consumed by the setup-python action.
     - name: Select random python version
       shell: bash
-      run: echo 3.$(($RANDOM % 4 + 7)) >> .python-version
+      run: echo 3.9 >> .python-version
 
     - name: Set up Python
       uses: actions/setup-python@v4
