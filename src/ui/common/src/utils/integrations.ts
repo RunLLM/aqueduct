@@ -3,13 +3,15 @@ import UserProfile from './auth';
 import { AqueductDocsLink } from './docs';
 import { ExecState } from './shared';
 
-export const aqueductDemoName = 'aqueduct_demo';
+export const aqueductDemoName = 'Demo';
 export const aqueductComputeName = 'Aqueduct Server';
+export const aqueductStorageName = 'Filesystem';
 
 export function isBuiltinIntegration(integration: Integration): boolean {
   return (
     integration.name === aqueductDemoName ||
-    integration.name == aqueductComputeName
+    integration.name == aqueductComputeName ||
+    integration.name == aqueductStorageName
   );
 }
 
@@ -234,6 +236,10 @@ export type ECRConfig = {
   config_file_profile: string;
 };
 
+export type FilesystemConfig = {
+  location: string;
+};
+
 export type IntegrationConfig =
   | PostgresConfig
   | SnowflakeConfig
@@ -257,7 +263,8 @@ export type IntegrationConfig =
   | SlackConfig
   | SparkConfig
   | AWSConfig
-  | MongoDBConfig;
+  | MongoDBConfig
+  | FilesystemConfig;
 
 export type Service =
   | 'Aqueduct'
@@ -285,7 +292,8 @@ export type Service =
   | 'Amazon'
   | 'GCP'
   | 'Azure'
-  | 'ECR';
+  | 'ECR'
+  | 'Filesystem';
 
 export type Info = {
   logo: string;
@@ -351,6 +359,7 @@ export const IntegrationCategories = {
   CLOUD: 'cloud',
   CONTAINER_REGISTRY: 'container_registry',
   NOTIFICATION: 'notification',
+  ARTIFACT_STORAGE: 'artifact_storage',
 };
 
 export const ServiceLogos: ServiceLogo = {
@@ -437,6 +446,12 @@ export const SupportedIntegrations: ServiceInfoMap = {
     logo: ServiceLogos['Aqueduct'],
     activated: true,
     category: IntegrationCategories.COMPUTE,
+    docs: addingIntegrationLink,
+  },
+  ['Filesystem']: {
+    logo: ServiceLogos['Aqueduct'],
+    activated: true,
+    category: IntegrationCategories.ARTIFACT_STORAGE,
     docs: addingIntegrationLink,
   },
   ['SQLite']: {
