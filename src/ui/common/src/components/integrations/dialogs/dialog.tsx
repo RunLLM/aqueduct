@@ -171,21 +171,6 @@ const IntegrationDialog: React.FC<Props> = ({
     user.apiKey,
   ]);
 
-
-  let connectionMessage = '';
-  if (service === 'AWS') {
-    connectionMessage = 'Configuring Aqueduct-managed Kubernetes on AWS';
-  } else {
-    connectionMessage = `Connecting to ${service}`;
-  }
-
-  // For Conda, we provide a default name, and don't allow the user to ever change it.
-  useEffect(() => {
-    if (service == 'Conda') {
-      setName('Conda');
-    }
-  }, [service]);
-
   const handleCloseDialog = () => {
     if (onCloseDialog) {
       onCloseDialog();
@@ -205,7 +190,6 @@ const IntegrationDialog: React.FC<Props> = ({
         setShouldShowNameError(false);
         methods.setValue('name', event.target.value);
       }}
-      disabled={service === 'Aqueduct Demo' || service === 'Conda'}
     />
   );
 
@@ -250,7 +234,7 @@ const IntegrationDialog: React.FC<Props> = ({
               </Typography>
             )}
 
-            {service !== 'Kubernetes' && nameInput}
+            {service !== 'Kubernetes' && service !== 'Conda' && nameInput}
 
             {dialogContent({
               user,

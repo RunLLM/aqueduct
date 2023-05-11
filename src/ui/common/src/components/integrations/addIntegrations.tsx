@@ -9,7 +9,7 @@ import { resetConnectNewStatus } from '../../reducers/integration';
 import { AppDispatch, RootState } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
-import { Info, IntegrationCategories, Service, ServiceInfoMap, SupportedIntegrations } from '../../utils/integrations';
+import { Info, Service, ServiceInfoMap } from '../../utils/integrations';
 import IntegrationDialog from './dialogs/dialog';
 import IntegrationLogo from './logo';
 
@@ -163,11 +163,10 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
     </Box>
   );
 
-
   // For services that require asynchronous connection steps, we show a more realistic message.
-  let successMsg = 'Successfully connected to ${service}!'
+  let successMsg = `Successfully connected to ${service}!`;
   if (service === 'Conda' || service === 'Lambda') {
-    successMsg = 'Connecting to ${service}...'
+    successMsg = `Connecting to ${service}...`;
   }
 
   return (

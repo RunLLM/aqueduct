@@ -15,7 +15,9 @@ import {
   Integration,
   isBuiltinIntegration,
   isCondaRegistered,
+  resourceExecState,
 } from '../../utils/integrations';
+import ExecutionStatus from '../../utils/shared';
 import { Button } from '../primitives/Button.styles';
 
 type Props = {
@@ -45,13 +47,18 @@ const IntegrationOptions: React.FC<Props> = ({
     setAnchorEl(null);
   };
 
-  // Disallow any deletion for the built-in resources, unless Conda was registered.
+  // Disallow any deletion for the built-in resources, unless Conda has completed registration.
   let deletionMenuItem = 'Delete Resource';
   if (isBuiltinIntegration(integration)) {
     allowDeletion = false;
   }
 
-  if (integration.service === 'Aqueduct' && isCondaRegistered(integration)) {
+  if (
+    integration.service === 'Aqueduct' &&
+    isCondaRegistered(integration) &&
+    (resourceExecState(integration).status === ExecutionStatus.Succeeded ||
+      resourceExecState(integration).status === ExecutionStatus.Failed)
+  ) {
     allowDeletion = true;
     deletionMenuItem = 'Delete Conda';
   }
