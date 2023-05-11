@@ -374,6 +374,15 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           </Box>
         )}
 
+        {showResourceDetails && (
+          <Box sx={{ my: 1 }}>
+            <ResourceFieldsDetailsCard
+              integration={selectedIntegration}
+              detailedView={true}
+            />
+          </Box>
+        )}
+
         {SupportedIntegrations[selectedIntegration.service].category ===
           IntegrationCategories.DATA && (
           <IntegrationObjectList

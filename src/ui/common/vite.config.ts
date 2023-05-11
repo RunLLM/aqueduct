@@ -16,6 +16,7 @@ export default defineConfig(() => {
             }
         },
         build: {
+            sourcemap: 'inline',
             commonjsOptions: {
                 include: ['src/index.tsx'],
             },
