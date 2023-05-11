@@ -364,7 +364,7 @@ export type Info = {
   activated: boolean;
   category: string;
   docs: string;
-  dialog: React.FC<IntegrationDialogProps>;
+  dialog?: React.FC<IntegrationDialogProps>;
   // TODO: figure out typescript type for yup schema
   // This may be useful: https://stackoverflow.com/questions/66171196/how-to-use-yups-object-shape-with-typescript
   validationSchema: any;
@@ -629,6 +629,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.ARTIFACT_STORAGE,
     docs: addingIntegrationLink,
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => null,
+    validationSchema: getSQLiteValidationSchema(),
   },
   ['SQLite']: {
     logo: ServiceLogos['SQLite'],
