@@ -38,13 +38,13 @@ import {
   hasConfigFieldsToShow,
   IntegrationCategories,
   isNotificationIntegration,
-  SupportedIntegrations,
 } from '../../../../utils/integrations';
 import ExecutionStatus, {
   isFailed,
   isLoading,
   isSucceeded,
 } from '../../../../utils/shared';
+import SupportedIntegrations from '../../../../utils/SupportedIntegrations';
 import { ResourceHeaderDetailsCard } from '../../../integrations/cards/headerDetailsCard';
 import { ResourceFieldsDetailsCard } from '../../../integrations/cards/resourceFieldsDetailsCard';
 import { ErrorSnackbar } from '../../../integrations/errorSnackbar';

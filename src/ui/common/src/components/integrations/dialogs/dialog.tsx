@@ -30,9 +30,9 @@ import {
   Integration,
   IntegrationConfig,
   Service,
-  SupportedIntegrations,
 } from '../../../utils/integrations';
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
+import SupportedIntegrations from '../../../utils/SupportedIntegrations';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 type Props = {

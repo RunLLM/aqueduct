@@ -1,4 +1,5 @@
 import { Box, Typography } from '@mui/material';
+import { ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import CheckItem, {
@@ -229,4 +230,8 @@ export const DataListTable: React.FC = () => {
   );
 };
 
-export default DataListTable;
+export default {
+  title: 'Components/DataListTable',
+  component: DataListTable,
+  argTypes: {},
+} as ComponentMeta<typeof DataListTable>;
