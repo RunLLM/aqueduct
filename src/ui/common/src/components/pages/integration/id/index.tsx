@@ -38,7 +38,6 @@ import {
   hasConfigFieldsToShow,
   IntegrationCategories,
   isNotificationIntegration,
-  SupportedIntegrations,
 } from '../../../../utils/integrations';
 import ExecutionStatus, {
   isFailed,
@@ -54,6 +53,7 @@ import IntegrationOptions, {
   IntegrationOptionsButtonWidth,
 } from '../../../integrations/options';
 import { LayoutProps } from '../../types';
+import SupportedIntegrations from '../../../../utils/SupportedIntegrations';
 
 type IntegrationDetailsPageProps = {
   user: UserProfile;

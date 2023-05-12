@@ -13,12 +13,12 @@ import { getPathPrefix } from '../../utils/getPathPrefix';
 import {
   Integration,
   IntegrationCategories,
-  SupportedIntegrations,
 } from '../../utils/integrations';
 import { Card } from '../layouts/card';
 import { ConnectedIntegrationType } from './connectedIntegrationType';
 import { ErrorSnackbar } from './errorSnackbar';
 import { getNumWorkflowsUsingMessage } from './numWorkflowsUsingMsg';
+import SupportedIntegrations from '../../utils/SupportedIntegrations';
 
 type ConnectedIntegrationsProps = {
   user: UserProfile;
@@ -69,7 +69,7 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
 
   const integrations = useSelector((state: RootState) =>
     Object.values(state.integrationsReducer.integrations).filter(
-      (integration) =>
+      (integration: Integration) =>
         integrationToConnectedIntegrationType(integration) ===
         connectedIntegrationType
     )

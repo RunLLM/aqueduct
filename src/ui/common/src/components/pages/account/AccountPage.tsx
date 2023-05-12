@@ -16,7 +16,6 @@ import UserProfile from '../../../utils/auth';
 import {
   Integration,
   IntegrationCategories,
-  SupportedIntegrations,
 } from '../../../utils/integrations';
 import {
   isFailed,
@@ -33,6 +32,7 @@ import AccountNotificationSettingsSelector, {
 } from '../../notifications/AccountNotificationSettingsSelector';
 import { LayoutProps } from '../types';
 import MetadataStorageInfo from './MetadataStorageInfo';
+import SupportedIntegrations from '../../../utils/SupportedIntegrations';
 
 type AccountPageProps = {
   user: UserProfile;

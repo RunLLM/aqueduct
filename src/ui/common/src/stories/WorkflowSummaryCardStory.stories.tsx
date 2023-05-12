@@ -6,6 +6,7 @@ import WorkflowSummaryCard, {
 } from '../components/workflows/WorkflowSummaryCard';
 import { EngineType } from '../utils/engine';
 import ExecutionStatus from '../utils/shared';
+import { ComponentMeta } from '@storybook/react';
 
 export const WorkflowSummaryCardStory: React.FC = () => {
   const workflowSummaries: WorkflowSummaryCardProps[] = [
@@ -50,4 +51,8 @@ export const WorkflowSummaryCardStory: React.FC = () => {
   );
 };
 
-export default WorkflowSummaryCardStory;
+export default {
+  title: 'Components/Workflow Summary Card',
+  component: WorkflowSummaryCard,
+  argTypes: {},
+} as ComponentMeta<typeof WorkflowSummaryCard> ;

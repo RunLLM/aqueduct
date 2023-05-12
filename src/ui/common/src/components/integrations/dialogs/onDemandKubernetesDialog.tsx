@@ -13,13 +13,13 @@ import { handleConnectToNewIntegration } from '../../../reducers/integration';
 import { AppDispatch } from '../../../stores/store';
 import {
   IntegrationDialogProps,
-  SupportedIntegrations,
 } from '../../../utils/integrations';
 import IntegrationLogo from '../logo';
 import { AWSDialog } from './awsDialog';
 import { DialogActionButtons, DialogHeader } from './dialog';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { KubernetesDialog } from './kubernetesDialog';
+import SupportedIntegrations from '../../../utils/SupportedIntegrations';
 
 const K8S_TYPES = {
   // INITIAL step is when user is choosing to connect to their own or aqueduct cluster.

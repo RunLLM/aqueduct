@@ -53,7 +53,6 @@ import {
 } from '../../utils/cron';
 import {
   IntegrationCategories,
-  SupportedIntegrations,
 } from '../../utils/integrations';
 import { UpdateMode } from '../../utils/operators';
 import ExecutionStatus, { LoadingStatusEnum } from '../../utils/shared';
@@ -71,6 +70,7 @@ import { LoadingButton } from '../primitives/LoadingButton.styles';
 import StorageSelector from './storageSelector';
 import TriggerSourceSelector from './triggerSourceSelector';
 import WorkflowNotificationSettings from './WorkflowNotificationSettings';
+import { SupportedIntegrations } from '../../utils/SupportedIntegrations';
 
 type PeriodicScheduleSelectorProps = {
   cronString: string;

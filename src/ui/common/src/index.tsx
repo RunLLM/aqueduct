@@ -153,7 +153,6 @@ import {
   addTable,
   formatService,
   ServiceLogos,
-  SupportedIntegrations,
 } from './utils/integrations';
 import { dateString } from './utils/metadata';
 import {
@@ -181,6 +180,7 @@ import ExecutionStatus, {
   WidthTransition,
 } from './utils/shared';
 import { getDataSideSheetContent, sideSheetSwitcher } from './utils/sidesheets';
+import SupportedIntegrations from './utils/SupportedIntegrations';
 import {
   normalizeGetWorkflowResponse,
   normalizeWorkflowDag,

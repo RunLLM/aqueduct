@@ -3,6 +3,7 @@ import React from 'react';
 import { ResourceHeaderDetailsCard } from '../components/integrations/cards/headerDetailsCard';
 import { Integration, SlackConfig } from '../utils/integrations';
 import ExecutionStatus from '../utils/shared';
+import { ComponentMeta } from '@storybook/react';
 
 export const ResourceHeaderDetailsCardStory: React.FC = () => {
   const testIntegration: Integration = {
@@ -29,4 +30,8 @@ export const ResourceHeaderDetailsCardStory: React.FC = () => {
   );
 };
 
-export default ResourceHeaderDetailsCardStory;
+export default {
+  title: 'Components/Resource Header Details Card',
+  component: ResourceHeaderDetailsCard,
+  argTypes: {},
+} as ComponentMeta<typeof ResourceHeaderDetailsCard>;

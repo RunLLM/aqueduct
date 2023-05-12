@@ -1,3 +1,4 @@
+import { ComponentMeta } from '@storybook/react';
 import { Box } from '@mui/material';
 import React from 'react';
 
@@ -62,4 +63,8 @@ export const PaginatedTableStory: React.FC = () => {
   );
 };
 
-export default PaginatedTableStory;
+export default {
+  title: 'Components/PaginatedTable',
+  component: PaginatedTableStory,
+  argTypes: {}
+} as ComponentMeta<typeof PaginatedTableStory>;

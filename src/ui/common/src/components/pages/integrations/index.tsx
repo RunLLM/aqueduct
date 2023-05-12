@@ -13,7 +13,6 @@ import { theme } from '../../../styles/theme/theme';
 import UserProfile from '../../../utils/auth';
 import {
   IntegrationCategories,
-  SupportedIntegrations,
 } from '../../../utils/integrations';
 import { LoadingStatus, LoadingStatusEnum } from '../../../utils/shared';
 import AddIntegrations from '../../integrations/addIntegrations';
@@ -23,6 +22,7 @@ import DefaultLayout from '../../layouts/default';
 import { BreadcrumbLink } from '../../layouts/NavBar';
 import MetadataStorageInfo from '../account/MetadataStorageInfo';
 import { LayoutProps } from '../types';
+import SupportedIntegrations from '../../../utils/SupportedIntegrations';
 
 type Props = {
   user: UserProfile;

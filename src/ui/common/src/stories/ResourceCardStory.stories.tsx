@@ -1,10 +1,10 @@
+import { ComponentMeta } from '@storybook/react';
 import { Box } from '@mui/material';
 import React from 'react';
 
 import { IntegrationCard } from '../components/integrations/cards/card';
 import { Card } from '../components/layouts/card';
 import {
-  AWSCredentialType,
   BigQueryConfig,
   DatabricksConfig,
   EmailConfig,
@@ -21,9 +21,9 @@ import {
   SlackConfig,
   SnowflakeConfig,
 } from '../utils/integrations';
-import ExecutionStatus from '../utils/shared';
+import ExecutionStatus, { AWSCredentialType } from '../utils/shared';
 
-export const ResourceCardStory: React.FC = () => {
+const ResourceCardStory: React.FC = () => {
   const integrations: Integration[] = [
     {
       id: '1',
@@ -374,4 +374,8 @@ export const ResourceCardStory: React.FC = () => {
   );
 };
 
-export default ResourceCardStory;
+export default {
+  title: 'Test/ResourceCard',
+  component: ResourceCardStory,
+  argTypes: {}
+} as ComponentMeta<typeof ResourceCardStory>;

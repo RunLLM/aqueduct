@@ -1,6 +1,7 @@
 import React from 'react';
 
-import { Service, SupportedIntegrations } from '../../utils/integrations';
+import { Service } from '../../utils/integrations';
+import { SupportedIntegrations } from '../../utils/SupportedIntegrations';
 
 const sizeMap = {
   large: '85px',
