@@ -133,6 +133,11 @@ class SubgraphDAGDelta(DAGDelta):
                 )
                 load_operator_ids.extend([op.id for op in load_ops])
 
+                # These load operators may also have input parameters, so we'll need to fetch those too.
+                for load_op in load_ops:
+                    upstream_artifact_ids.update(set(load_op.inputs[:-1]))
+
+
             # The operator who's output is the current artifact.
             curr_op = dag.must_get_operator(with_output_artifact_id=curr_artifact_id)
             candidate_next_artifact_ids = copy.copy(curr_op.inputs)

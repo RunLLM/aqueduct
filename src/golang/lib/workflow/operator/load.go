@@ -33,7 +33,8 @@ func newLoadOperator(
 	inputs := base.inputs
 	outputs := base.outputs
 
-	if len(inputs) != 1 {
+	// We currently support a single optional parameter.
+	if len(inputs) == 0 || len(inputs) > 2 {
 		return nil, errWrongNumInputs
 	}
 	if len(outputs) != 0 {
