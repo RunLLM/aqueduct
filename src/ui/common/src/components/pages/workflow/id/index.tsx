@@ -234,7 +234,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
               </Box>
             )}
 
-            {currentTab === 'Settings' && workflow.selectedDag && (
+            {/*currentTab === 'Settings' && workflow.selectedDag && (
               <Box sx={{ paddingBottom: '24px' }}>
                 <WorkflowSettings
                   user={user}
@@ -258,7 +258,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                   }
                 />
               </Box>
-            )}
+                )*/}
           </Box>
 
           {/* These controls are automatically hidden when the side sheet is open. */}
