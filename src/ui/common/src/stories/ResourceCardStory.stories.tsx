@@ -1,5 +1,5 @@
 import { Box } from '@mui/material';
-import { ComponentMeta } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { IntegrationCard } from '../components/integrations/cards/card';
@@ -23,7 +23,7 @@ import {
 } from '../utils/integrations';
 import ExecutionStatus, { AWSCredentialType } from '../utils/shared';
 
-const ResourceCardStory: React.FC = () => {
+const ResourceCard: React.FC = () => {
   const integrations: Integration[] = [
     {
       id: '1',
@@ -374,8 +374,14 @@ const ResourceCardStory: React.FC = () => {
   );
 };
 
+const ResourceCardTemplate: ComponentStory<typeof ResourceCard> = (args) => (
+  <ResourceCard {...args} />
+);
+
+export const ResourceCardStory = ResourceCardTemplate.bind({});
+
 export default {
   title: 'Test/ResourceCard',
-  component: ResourceCardStory,
+  component: ResourceCard,
   argTypes: {},
-} as ComponentMeta<typeof ResourceCardStory>;
+} as ComponentMeta<typeof ResourceCard>;
