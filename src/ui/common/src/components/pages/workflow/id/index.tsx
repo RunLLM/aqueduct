@@ -328,13 +328,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Box>
         </Box>
 
-        <RunWorkflowDialog
+        {/*<RunWorkflowDialog
           user={user}
           workflowDag={workflow.selectedDag}
           workflowId={workflowId}
           open={showRunWorkflowDialog}
           setOpen={setShowRunWorkflowDialog}
-        />
+              />*/}
       </Box>
 
       <Drawer
