@@ -3,6 +3,7 @@ import sys
 from typing import Any
 
 from aqueduct_executor.operators.connectors.data import common, config, connector, extract
+from aqueduct_executor.operators.connectors.data.load import RelationalParams
 from aqueduct_executor.operators.connectors.data.spec import (
     AQUEDUCT_DEMO_NAME,
     AuthenticateSpec,
@@ -265,22 +266,34 @@ def run_load(
 ) -> None:
     inputs, input_types, _ = read_artifacts_func(
         storage=storage,
-        input_paths=[spec.input_content_path],
-        input_metadata_paths=[spec.input_metadata_path],
+        input_paths=spec.input_content_paths,
+        input_metadata_paths=spec.input_metadata_paths,
         **kwargs,
     )
-    if len(inputs) != 1:
-        raise Exception("Expected 1 input artifact, but got %d" % len(inputs))
+    if len(inputs) == 0:
+        raise Exception("Expected at least one input artifact!" % len(inputs))
+    if len(inputs) > 2:
+        raise Exception("Unexpected number of inputs to save operator: %v.", len(inputs))
 
+    # Handle any parameterization of the save queries here. Currently, we only support
+    # the parameterization of the `table_name` for SQL connectors.
+    if len(inputs) > 1:
+        if not isinstance(spec.parameters, RelationalParams):
+            raise Exception("Only relational database resources support parameterized saves.")
+
+        assert len(spec.parameters.table) == 0, "A parameterized relational save spec should have an empty table name."
+        assert isinstance(inputs[0], str), "Relational saves can only have string parameters."
+        spec.parameters.table = inputs[0]
+
+    # Any parameters are expected to have been resolved by the time we get here.
     @exec_state.user_fn_redirected(failure_tip=TIP_LOAD)
     def _load() -> None:
         if is_spark:
-            op.load_spark(spec.parameters, inputs[0], input_types[0])  # type: ignore
+            op.load_spark(spec.parameters, inputs[-1], input_types[-1])  # type: ignore
         else:
-            op.load(spec.parameters, inputs[0], input_types[0])
+            op.load(spec.parameters, inputs[-1], input_types[-1])
 
     _load()
-
 
 def run_load_table(
     spec: LoadTableSpec,

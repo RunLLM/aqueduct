@@ -108,8 +108,8 @@ class LoadSpec(models.BaseSpec):
     connector_name: common.Name
     connector_config: config.Config
     parameters: load.Params
-    input_content_path: str
-    input_metadata_path: str
+    input_content_paths: List[str]
+    input_metadata_paths: List[str]
 
     # validators
     _unwrap_connector_config = validator("connector_config", allow_reuse=True, pre=True)(
