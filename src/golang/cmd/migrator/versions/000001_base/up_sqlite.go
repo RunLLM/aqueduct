@@ -97,7 +97,7 @@ CREATE TABLE IF NOT EXISTS operator_result (
 CREATE TABLE IF NOT EXISTS artifact_result (
     id BLOB NOT NULL PRIMARY KEY,
     workflow_dag_result_id BLOB NOT NULL REFERENCES workflow_dag_result (id),
-    artifact_id BLOB NOT NULL REFERENCES artifact (id),
+    artifact_ids BLOB NOT NULL REFERENCES artifact (id),
     content_path TEXT NOT NULL,
     status TEXT NOT NULL,
     metadata BLOB

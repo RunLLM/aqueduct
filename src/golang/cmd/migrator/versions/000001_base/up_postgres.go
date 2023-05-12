@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS operator_result (
 CREATE TABLE IF NOT EXISTS artifact_result (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     workflow_dag_result_id UUID NOT NULL REFERENCES workflow_dag_result (id),
-    artifact_id UUID NOT NULL REFERENCES artifact (id),
+    artifact_ids UUID NOT NULL REFERENCES artifact (id),
     content_path VARCHAR NOT NULL,
     status VARCHAR NOT NULL,
     metadata JSONB

@@ -14,7 +14,7 @@ const (
 	// ArtifactResult table column names
 	ArtifactResultID          = "id"
 	ArtifactResultDAGResultID = "workflow_dag_result_id"
-	ArtifactResultArtifactID  = "artifact_id"
+	ArtifactResultArtifactID  = "artifact_ids"
 	ArtifactResultContentPath = "content_path"
 
 	// `Status` is initialized to "PENDING" for each new artifact result.
@@ -32,7 +32,7 @@ const (
 type ArtifactResult struct {
 	ID          uuid.UUID                         `db:"id" json:"id"`
 	DAGResultID uuid.UUID                         `db:"workflow_dag_result_id" json:"workflow_dag_result_id"`
-	ArtifactID  uuid.UUID                         `db:"artifact_id" json:"artifact_id"`
+	ArtifactID  uuid.UUID                         `db:"artifact_ids" json:"artifact_ids"`
 	ContentPath string                            `db:"content_path" json:"content_path"`
 	Status      shared.ExecutionStatus            `db:"status" json:"status"`
 	ExecState   shared.NullExecutionState         `db:"execution_state" json:"execution_state"`

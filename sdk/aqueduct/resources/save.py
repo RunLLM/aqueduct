@@ -1,5 +1,5 @@
 import uuid
-from typing import List
+from typing import List, Union
 
 from aqueduct.constants.enums import OperatorType
 from aqueduct.error import InvalidIntegrationException
@@ -17,7 +17,7 @@ from aqueduct.utils.utils import generate_uuid
 
 
 def _save_artifact(
-    artifact_id: uuid.UUID,
+    artifact_ids: Union[uuid.UUID, List[uuid.UUID]],
     dag: DAG,
     integration_info: ResourceInfo,
     save_params: UnionLoadParams,
@@ -25,8 +25,9 @@ def _save_artifact(
     """Configures the given artifact to be written to a specific integration after it's computed in a published flow.
 
     Args:
-        artifact_id:
-            The artifact who's contents will be saved.
+        artifact_ids:
+            Can either be a single ID, or any number of IDs. In the latter case, that means that the first n-1 artifacts
+            are parameters to the save operators. The nth artifact is the one that will be saved.
         dag:
             The dag object that we will attach the load operator to.
         integration_info:
@@ -43,6 +44,8 @@ def _save_artifact(
         InvalidUserArgumentException:
             An error occurred because some necessary fields are missing in the SaveParams.
     """
+    if not isinstance(artifact_ids, list):
+        artifact_ids = [artifact_ids]
 
     integrations_map = global_api_client.list_resources()
     if integration_info.name not in integrations_map:
@@ -56,10 +59,12 @@ def _save_artifact(
     save_op_name = "save to %s" % integration_info.name
 
     # Replace any existing save operator on this artifact that goes to the same integration.
+    artifact_id_to_save = artifact_ids[-1]
+
     deltas: List[DAGDelta] = []
     existing_save_ops = dag.list_operators(
         filter_to=[OperatorType.LOAD],
-        on_artifact_id=artifact_id,
+        on_artifact_id=artifact_id_to_save,
     )
     for op in existing_save_ops:
         assert op.spec.load is not None
@@ -79,7 +84,7 @@ def _save_artifact(
                         parameters=save_params,
                     )
                 ),
-                inputs=[artifact_id],
+                inputs=artifact_ids,
             ),
             output_artifacts=[],
         )

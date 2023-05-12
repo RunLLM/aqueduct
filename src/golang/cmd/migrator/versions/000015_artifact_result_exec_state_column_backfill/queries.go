@@ -21,7 +21,7 @@ func getExecStateForEachArtifactResult(ctx context.Context, db database.Database
 		INNER JOIN operator ON operator_result.operator_id=operator.id
 		INNER JOIN workflow_dag_edge ON operator.id=workflow_dag_edge.from_id
 		INNER JOIN artifact ON workflow_dag_edge.to_id=artifact.id
-		INNER JOIN artifact_result ON artifact.id=artifact_result.artifact_id;
+		INNER JOIN artifact_result ON artifact.id=artifact_result.artifact_ids;
 	`
 
 	var info []artifactOperatorExecState

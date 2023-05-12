@@ -74,9 +74,9 @@ func (*dagReader) GetByArtifactResultBatch(ctx context.Context, artifactResultID
 		WHERE 
 			workflow_dag_edge.workflow_dag_id = workflow_dag.id
 			AND (
-				workflow_dag_edge.from_id = artifact_result.artifact_id
+				workflow_dag_edge.from_id = artifact_result.artifact_ids
 				OR 
-				workflow_dag_edge.to_id = artifact_result.artifact_id
+				workflow_dag_edge.to_id = artifact_result.artifact_ids
 			)
 			AND artifact_result.id IN (%s);`,
 		models.DAGColsWithPrefix(),

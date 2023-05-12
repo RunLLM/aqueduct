@@ -329,7 +329,7 @@ func (*operatorReader) GetLoadOPSpecsByOrg(ctx context.Context, orgID string, DB
 	// organization.
 	query := fmt.Sprintf(
 		`SELECT DISTINCT 
-			workflow_dag_edge.from_id AS artifact_id, 
+			workflow_dag_edge.from_id AS artifact_ids, 
 			artifact.name AS artifact_name, 
 		 	operator.id AS load_operator_id, 
 			workflow.name AS workflow_name, 
