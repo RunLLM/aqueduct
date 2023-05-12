@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Dict, List, Union, Optional
+from typing import Dict, List, Optional, Union
 
 from aqueduct.constants.enums import (
     ArtifactType,
