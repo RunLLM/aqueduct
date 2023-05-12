@@ -1,12 +1,13 @@
 import os
 import pickle
+import uuid
 from typing import Dict, List
 
 import pandas as pd
 import pytest
 from aqueduct.artifacts.generic_artifact import GenericArtifact
 from aqueduct.artifacts.numeric_artifact import NumericArtifact
-from aqueduct.constants.enums import ArtifactType, ExecutionStatus
+from aqueduct.constants.enums import ArtifactType, ExecutionStatus, LoadUpdateMode
 from aqueduct.error import (
     AqueductError,
     ArtifactNeverComputedException,
@@ -20,8 +21,10 @@ from aqueduct import metric, op
 
 from ..shared.data_objects import DataObject
 from ..shared.flow_helpers import publish_flow_test, trigger_flow_test
+from ..shared.globals import artifact_id_to_saved_identifier
 from ..shared.relational import all_relational_DBs
 from .extract import extract
+from .save import save
 
 
 @metric
@@ -655,3 +658,43 @@ def test_local_tf_keras_data(client, flow_name, engine):
         engine=engine,
         use_local=True,
     )
+
+
+@pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
+def test_save_table_name_parameterized(client, data_validator, data_integration, flow_name, engine):
+    table_to_save = extract(data_integration, DataObject.SENTIMENT)
+
+    initial_table_name = "output_" + str(uuid.uuid4()).replace("-", "_")
+    table_name_param = client.create_param("table name param", default=initial_table_name)
+    save(
+        data_integration, table_to_save, table_name_param, update_mode=LoadUpdateMode.FAIL
+    )  # must create a new table.
+    flow = publish_flow_test(client, table_to_save, engine=engine, name=flow_name())
+
+    # Check that the appropriate table was written to.
+    data_validator.check_saved_artifact_data(
+        flow, table_to_save.id(), expected_data=table_to_save.get()
+    )
+
+    # Trigger a with a different output table name.
+    new_table_name = "output_" + str(uuid.uuid4()).replace("-", "_")
+    trigger_flow_test(
+        client,
+        flow,
+        parameters={"table name param": new_table_name},
+    )
+
+    # Check that the appropriate table was written to this second time.
+    # In order for this to work, we need to alter the global save map that this test suite uses to look up
+    # artifact -> saved table name relationships.
+    artifact_id_to_saved_identifier[table_to_save.id()] = new_table_name
+    data_validator.check_saved_artifact_data(
+        flow, table_to_save.id(), expected_data=table_to_save.get()
+    )
+
+
+@pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
+def test_failing_save_table_name_parameterized(
+    client, data_validator, data_integration, flow_name, engine
+):
+    pass

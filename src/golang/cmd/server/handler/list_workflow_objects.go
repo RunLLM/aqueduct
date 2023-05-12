@@ -83,6 +83,12 @@ func (h *ListWorkflowObjectsHandler) Perform(ctx context.Context, interfaceArgs 
 
 	emptyResp := ListWorkflowObjectsResponse{}
 
+	// TODO: fetch all load operators, not just distinct cases. Look for any that have parameterized inputs
+	//  and update their table names accordingly, by querying the history of that parameter:
+	//    operator -> dag_id -> dag_results ----> artifact_results -> ContentPath -> table_name
+	//             -> input artifact id -----|
+	// This means one load operator can be expanded into many depending on the artifact results.
+
 	// Get all specs for the workflow.
 	operatorList, err := h.OperatorRepo.GetDistinctLoadOPsByWorkflow(ctx, args.workflowId, h.Database)
 	if err != nil {

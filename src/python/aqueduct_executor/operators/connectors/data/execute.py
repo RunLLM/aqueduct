@@ -271,7 +271,7 @@ def run_load(
         **kwargs,
     )
     if len(inputs) == 0:
-        raise Exception("Expected at least one input artifact!" % len(inputs))
+        raise Exception("Expected at least one input artifact!")
     if len(inputs) > 2:
         raise Exception("Unexpected number of inputs to save operator: %v.", len(inputs))
 
@@ -281,7 +281,9 @@ def run_load(
         if not isinstance(spec.parameters, RelationalParams):
             raise Exception("Only relational database resources support parameterized saves.")
 
-        assert len(spec.parameters.table) == 0, "A parameterized relational save spec should have an empty table name."
+        assert (
+            len(spec.parameters.table) == 0
+        ), "A parameterized relational save spec should have an empty table name."
         assert isinstance(inputs[0], str), "Relational saves can only have string parameters."
         spec.parameters.table = inputs[0]
 
@@ -294,6 +296,7 @@ def run_load(
             op.load(spec.parameters, inputs[-1], input_types[-1])
 
     _load()
+
 
 def run_load_table(
     spec: LoadTableSpec,

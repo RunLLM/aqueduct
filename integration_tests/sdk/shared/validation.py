@@ -16,6 +16,11 @@ def fetch_and_validate_saved_object_identifier(
     all_saved_object_identifiers = [item.spec.identifier() for item in all_saved_objects]
 
     saved_object_identifier = artifact_id_to_saved_identifier[str(artifact_id)]
+
+    print(all_saved_objects)
+    print(artifact_id_to_saved_identifier)
+    print(saved_object_identifier)
+
     assert saved_object_identifier in all_saved_object_identifiers
     return saved_object_identifier
 

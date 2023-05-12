@@ -137,7 +137,6 @@ class SubgraphDAGDelta(DAGDelta):
                 for load_op in load_ops:
                     upstream_artifact_ids.update(set(load_op.inputs[:-1]))
 
-
             # The operator who's output is the current artifact.
             curr_op = dag.must_get_operator(with_output_artifact_id=curr_artifact_id)
             candidate_next_artifact_ids = copy.copy(curr_op.inputs)

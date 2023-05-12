@@ -1,5 +1,6 @@
-from typing import Optional
+from typing import Optional, Union
 
+from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import S3TableFormat
 from aqueduct.resources.mongodb import MongoDBResource
@@ -15,7 +16,7 @@ from ..shared.naming import generate_table_name
 def save(
     integration,
     artifact: TableArtifact,
-    name: Optional[str] = None,
+    name: Optional[Union[str, BaseArtifact]] = None,
     update_mode: Optional[LoadUpdateMode] = None,
 ):
     """Saves an artifact into the integration.
@@ -35,6 +36,7 @@ def save(
 
     elif isinstance(integration, S3Resource):
         assert update_mode == LoadUpdateMode.REPLACE, "S3 only supports replacement update."
+        assert isinstance(name, str)
         integration.save(artifact, name, S3TableFormat.PARQUET)
     elif isinstance(integration, MongoDBResource):
         integration.collection(name).save(artifact, update_mode)
@@ -42,4 +44,6 @@ def save(
         raise Exception("Unexpected data integration type provided in test: %s", type(integration))
 
     # Record where the artifact was saved, so we can validate the data later, after the flow is published.
+    if isinstance(name , BaseArtifact):
+        name = name.get()
     artifact_id_to_saved_identifier[str(artifact.id())] = name
