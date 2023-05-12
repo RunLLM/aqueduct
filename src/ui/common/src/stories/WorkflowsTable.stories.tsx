@@ -222,9 +222,9 @@ const WorkflowsTable: React.FC = () => {
   );
 };
 
-const meta: Meta <typeof WorkflowsTable> = {
+const meta: Meta<typeof WorkflowsTable> = {
   title: 'Components/WorkflowsTable',
-  component: WorkflowsTable
+  component: WorkflowsTable,
 };
 
 export default meta;
