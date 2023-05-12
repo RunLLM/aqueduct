@@ -6,7 +6,6 @@ import (
 	"path"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/spark"
 	"github.com/dropbox/godropbox/errors"
@@ -133,25 +132,6 @@ func (j *SparkJobManager) mapJobTypeToScript(spec Spec) (string, error) {
 	var scriptString string
 	log.Infof("JobType : %s", spec.Type())
 
-	versionInjection := ""
-	versionTag := config.VersionTag()
-	if versionTag != "" {
-		versionInjection = fmt.Sprintf(`
-import subprocess
-install_process = subprocess.run([
-	"pip",
-	"install",
-	"--index-url",
-	"https://test.pypi.org/simple/",
-	"--extra-index-url",
-	"https://pypi.org/simple",
-	f"aqueduct-ml==%s",
-])
-print(install_process.stderr)
-print(install_process.stdout)
-install_process.check_returncode()
-		`, versionTag)
-	}
 	if spec.Type() == FunctionJobType {
 		functionSpec, ok := spec.(*FunctionSpec)
 		if !ok {
@@ -164,28 +144,28 @@ install_process.check_returncode()
 			return "", err
 		}
 
-		scriptString = fmt.Sprintf(spark.FunctionEntrypoint, specStr, versionInjection)
+		scriptString = fmt.Sprintf(spark.FunctionEntrypoint, specStr)
 	} else if spec.Type() == ParamJobType {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
 			return "", err
 		}
 
-		scriptString = fmt.Sprintf(spark.ParamEntrypoint, specStr, versionInjection)
+		scriptString = fmt.Sprintf(spark.ParamEntrypoint, specStr)
 	} else if IsDataType(spec.Type()) {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
 			return "", err
 		}
 
-		scriptString = fmt.Sprintf(spark.DataEntrypoint, specStr, versionInjection)
+		scriptString = fmt.Sprintf(spark.DataEntrypoint, specStr)
 	} else if spec.Type() == SystemMetricJobType {
 		specStr, err := EncodeSpec(spec, JsonSerializationType)
 		if err != nil {
 			return "", err
 		}
 
-		scriptString = fmt.Sprintf(spark.SystemMetricEntrypoint, specStr, versionInjection)
+		scriptString = fmt.Sprintf(spark.SystemMetricEntrypoint, specStr)
 	} else {
 		return "", errors.New("Unsupported JobType was passed in.")
 	}

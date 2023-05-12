@@ -79,8 +79,6 @@ func RunSparkImage(
 		"docker",
 		"run",
 		"-e",
-		// TODO (wei, hari): add a version tag env var and install
-		// test pypi if in-line version injection does not work.
 		fmt.Sprintf("DEPENDENCIES=%s", dependencyList),
 		"-e",
 		fmt.Sprintf("ENV_FILE_NAME=%s", envFileName),
@@ -92,6 +90,8 @@ func RunSparkImage(
 		fmt.Sprintf("AWS_REGION=%s", region),
 		"-e",
 		fmt.Sprintf("S3_BUCKET=%s", bucket),
+		"-e",
+		fmt.Sprintf("VERSION_TAG=\"%s\"", config.VersionTag()),
 		versionedSparkImage,
 	)
 	stdout := &bytes.Buffer{}
