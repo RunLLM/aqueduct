@@ -1,3 +1,4 @@
+import { ComponentMeta } from '@storybook/react';
 import { Box, Typography } from '@mui/material';
 import React from 'react';
 
@@ -229,4 +230,8 @@ export const DataListTable: React.FC = () => {
   );
 };
 
-export default DataListTable;
+export default {
+  title: 'Components/DataListTable',
+  component: DataListTable,
+  argTypes: {},
+} as ComponentMeta<typeof DataListTable>;
