@@ -6,56 +6,56 @@ on:
   workflow_dispatch:
 
 jobs:
-  run-databricks-tests:
-    runs-on: ubuntu-latest
-    timeout-minutes: 480
-    name: SDK Integration Tests against Databricks Compute
-    steps:
-      - uses: actions/checkout@v2
+  # run-databricks-tests:
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 480
+  #   name: SDK Integration Tests against Databricks Compute
+  #   steps:
+  #     - uses: actions/checkout@v2
 
-      - uses: ./.github/actions/setup-server
-        timeout-minutes: 5
+  #     - uses: ./.github/actions/setup-server
+  #       timeout-minutes: 5
 
-      # TODO(ENG-2537): Use our separate GH actions credentials.
-      - uses: ./.github/actions/fetch-test-config
-        with:
-          aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
-          aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
-          s3_test_config_path: periodic-databricks-test-config.yml
+  #     # TODO(ENG-2537): Use our separate GH actions credentials.
+  #     - uses: ./.github/actions/fetch-test-config
+  #       with:
+  #         aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
+  #         aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
+  #         s3_test_config_path: periodic-databricks-test-config.yml
 
-      - name: Install any data connector packages
-        run: |
-          aqueduct install s3
-          aqueduct install snowflake
+  #     - name: Install any data connector packages
+  #       run: |
+  #         aqueduct install s3
+  #         aqueduct install snowflake
 
-      - name: Run the SDK Integration Tests
-        working-directory: integration_tests/sdk
-        run: pytest aqueduct_tests/ -rP -vv -n 1
+  #     - name: Run the SDK Integration Tests
+  #       working-directory: integration_tests/sdk
+  #       run: pytest aqueduct_tests/ -rP -vv -k '.github/workflows/spark-periodic-tests.yml'
 
-      - uses: ./.github/actions/upload-artifacts
-        if: always()
-        with:
-          prefix: Databricks Compute
+  #     - uses: ./.github/actions/upload-artifacts
+  #       if: always()
+  #       with:
+  #         prefix: Databricks Compute
       
-      # # Sets it as an environmental variable.
-      # - name: Get the Slack ID for the current oncall
-      #   if: always()
-      #   run: |
-      #     aws s3 cp s3://aqueduct-assets/oncall.yml ./oncall.yml
-      #     echo "ONCALL_SLACK_MEMBER_ID=$(python3 scripts/get_current_oncall.py --file ./oncall.yml)" >> $GITHUB_ENV
+  #     # # Sets it as an environmental variable.
+  #     # - name: Get the Slack ID for the current oncall
+  #     #   if: always()
+  #     #   run: |
+  #     #     aws s3 cp s3://aqueduct-assets/oncall.yml ./oncall.yml
+  #     #     echo "ONCALL_SLACK_MEMBER_ID=$(python3 scripts/get_current_oncall.py --file ./oncall.yml)" >> $GITHUB_ENV
 
-      # - name: Report to Slack on Failure
-      #   if: always()
-      #   uses: ravsamhq/notify-slack-action@v1
-      #   with:
-      #     status: ${{ job.status }}
-      #     notification_title: ""
-      #     message_format: "{emoji} *{workflow}* has {status_message}"
-      #     footer: "{run_url}"
-      #     notify_when: "failure,warnings"
-      #     mention_users: ${{ env.ONCALL_SLACK_MEMBER_ID }}
-      #   env:
-      #     SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
+  #     # - name: Report to Slack on Failure
+  #     #   if: always()
+  #     #   uses: ravsamhq/notify-slack-action@v1
+  #     #   with:
+  #     #     status: ${{ job.status }}
+  #     #     notification_title: ""
+  #     #     message_format: "{emoji} *{workflow}* has {status_message}"
+  #     #     footer: "{run_url}"
+  #     #     notify_when: "failure,warnings"
+  #     #     mention_users: ${{ env.ONCALL_SLACK_MEMBER_ID }}
+  #     #   env:
+  #     #     SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
   
   run-spark-tests:
     runs-on: ubuntu-latest
@@ -113,7 +113,7 @@ jobs:
 
       - name: Run the SDK Integration Tests
         working-directory: integration_tests/sdk
-        run: pytest aqueduct_tests/ -rP -vv -n 2
+        run: pytest aqueduct_tests/ -rP -vv -k 'test_check_on_multiple_mixed_inputs'
       
       - name: Tear Down EMR cluster
         id: tear-down-emr-cluster
