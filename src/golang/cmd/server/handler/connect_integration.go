@@ -177,6 +177,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		args.Name,
 		args.ID,
 		args.OrgID,
+		args.Config,
 		h.IntegrationRepo,
 		h.Database,
 	)
@@ -639,7 +640,7 @@ func validateKubernetesConfig(
 	ctx context.Context,
 	config auth.Config,
 ) (int, error) {
-	if err := engine.AuthenticateK8sConfig(ctx, config); err != nil {
+	if err := engine.AuthenticateAndUpdateK8sConfig(ctx, config); err != nil {
 		return http.StatusBadRequest, err
 	}
 
@@ -724,6 +725,7 @@ func ValidatePrerequisites(
 	name string,
 	userID uuid.UUID,
 	orgID string,
+	conf auth.Config,
 	integrationRepo repos.Integration,
 	DB database.Database,
 ) (int, error) {
@@ -823,6 +825,37 @@ func ValidatePrerequisites(
 		requiredVersion, _ := version.NewVersion("2.11.5")
 		if awsVersion.LessThan(requiredVersion) {
 			return http.StatusUnprocessableEntity, errors.Wrapf(err, "AWS CLI version 2.11.5 and above is required, but you got %s. Please update!", awsVersion.String())
+		}
+	}
+
+	// For on-demand GKE resource, we require the user to have Terraform, gcloud, and gcloud gke-gcloud-auth-plugin plugin installed.
+	if svc == shared.Kubernetes {
+		// Parse the config and see if cloud provider is GCP
+		k8sConf, err := lib_utils.ParseK8sConfig(conf)
+		if err != nil {
+			return http.StatusInternalServerError, errors.Wrap(err, "Unable to parse Kubernetes configuration.")
+		}
+
+		if k8sConf.CloudProvider == shared.GCPProvider {
+			if _, _, err := lib_utils.RunCmd("terraform", []string{"--version"}, "", false); err != nil {
+				return http.StatusNotFound, errors.Wrap(err, "terraform executable not found. Please go to https://developer.hashicorp.com/terraform/downloads to install terraform")
+			}
+
+			_, _, err := lib_utils.RunCmd("gcloud", []string{"--version"}, "", false)
+			if err != nil {
+				return http.StatusNotFound, errors.Wrap(err, "gcloud executable not found. Please go to https://cloud.google.com/sdk/docs/install to install gcloud")
+			}
+
+			// TODO: check version lowerbound?
+
+			componentsOutput, _, err := lib_utils.RunCmd("gcloud", []string{"components", "list"}, "", false)
+			if err != nil {
+				return http.StatusUnprocessableEntity, errors.Wrap(err, "Error listing gcloud components")
+			}
+
+			if !strings.Contains(componentsOutput, "gke-gcloud-auth-plugin") {
+				return http.StatusUnprocessableEntity, errors.New("gke-gcloud-auth-plugin is not installed. Please run `gcloud components install gke-gcloud-auth-plugin` to install it.")
+			}
 		}
 	}
 

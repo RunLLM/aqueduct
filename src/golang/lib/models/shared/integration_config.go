@@ -59,6 +59,8 @@ const (
 	K8sStatusKey             string = "status"
 	K8sLastUsedTimestampKey  string = "last_used_timestamp"
 
+	K8sCloudProviderKey string = "cloud_provider"
+
 	// Dynamic k8s cluster config keys
 	K8sKeepaliveKey   string = "keepalive"
 	K8sCpuNodeTypeKey string = "cpu_node_type"
@@ -77,20 +79,37 @@ const (
 	// Dynamic k8s cluster config default values
 	K8sMinimumKeepalive   int    = 600
 	K8sDefaultKeepalive   int    = 1200
-	K8sDefaultCpuNodeType string = "t3.xlarge"
-	K8sDefaultGpuNodeType string = "p2.xlarge"
+	EKSDefaultCpuNodeType string = "t3.xlarge"
+	EKSDefaultGpuNodeType string = "p2.xlarge"
 	K8sDefaultMinCpuNode  int    = 1
 	K8sDefaultMaxCpuNode  int    = 1
 	K8sDefaultMinGpuNode  int    = 0
 	K8sDefaultMaxGpuNode  int    = 1
+	GKEDefaultCpuNodeType string = "n1-standard-4"
+	GKEDefaultGpuNodeType string = "nvidia-tesla-t4"
 )
 
+type CloudProviderType string
+
+const (
+	AWSProvider CloudProviderType = "AWS"
+	GCPProvider CloudProviderType = "GCP"
+)
+
+type GCPConfig struct {
+	Region            string `json:"region" yaml:"region"`
+	Zone              string `json:"zone" yaml:"zone"`
+	ServiceAccountKey string `json:"service_account_key"  yaml:"service_account_key"`
+}
+
 type K8sIntegrationConfig struct {
-	KubeconfigPath     string     `json:"kubeconfig_path" yaml:"kubeconfigPath"`
-	ClusterName        string     `json:"cluster_name"  yaml:"clusterName"`
-	UseSameCluster     ConfigBool `json:"use_same_cluster"  yaml:"useSameCluster"`
-	Dynamic            ConfigBool `json:"dynamic"  yaml:"dynamic"`
-	CloudIntegrationId string     `json:"cloud_integration_id"  yaml:"cloud_integration_id"`
+	KubeconfigPath     string            `json:"kubeconfig_path" yaml:"kubeconfigPath"`
+	ClusterName        string            `json:"cluster_name"  yaml:"clusterName"`
+	UseSameCluster     ConfigBool        `json:"use_same_cluster"  yaml:"useSameCluster"`
+	Dynamic            ConfigBool        `json:"dynamic"  yaml:"dynamic"`
+	CloudIntegrationId string            `json:"cloud_integration_id"  yaml:"cloud_integration_id"`
+	CloudProvider      CloudProviderType `json:"cloud_provider"  yaml:"cloud_provider"`
+	GCPConfig          *GCPConfig        `json:"gcp_config"  yaml:"gcp_config"`
 }
 
 type LambdaIntegrationConfig struct {

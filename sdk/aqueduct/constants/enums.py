@@ -82,6 +82,11 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     ECR = "ECR"
 
 
+class CloudProviderType(str, Enum, metaclass=MetaEnum):
+    AWS = "AWS"
+    GCP = "GCP"
+
+
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
     """Must match the corresponding entries in `ServiceType` exactly."""
 

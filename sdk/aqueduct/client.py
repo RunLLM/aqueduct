@@ -44,7 +44,6 @@ from aqueduct.resources.databricks import DatabricksResource
 from aqueduct.resources.dynamic_k8s import DynamicK8sResource
 from aqueduct.resources.ecr import ECRResource
 from aqueduct.resources.google_sheets import GoogleSheetsResource
-from aqueduct.resources.k8s import K8sResource
 from aqueduct.resources.mongodb import MongoDBResource
 from aqueduct.resources.s3 import S3Resource
 from aqueduct.resources.salesforce import SalesforceResource
@@ -350,13 +349,13 @@ class Client:
         GoogleSheetsResource,
         RelationalDBResource,
         AirflowResource,
-        K8sResource,
         LambdaResource,
         MongoDBResource,
         DatabricksResource,
         SparkResource,
         AWSResource,
         ECRResource,
+        DynamicK8sResource,
     ]:
         """Deprecated. Use `client.resource()` instead."""
         logger().warning(
@@ -372,13 +371,13 @@ class Client:
         GoogleSheetsResource,
         RelationalDBResource,
         AirflowResource,
-        K8sResource,
         LambdaResource,
         MongoDBResource,
         DatabricksResource,
         SparkResource,
         AWSResource,
         ECRResource,
+        DynamicK8sResource,
     ]:
         """Retrieves a connected integration object.
 
@@ -437,7 +436,7 @@ class Client:
                 metadata=integration_info,
             )
         elif integration_info.service == ServiceType.K8S:
-            return K8sResource(
+            return DynamicK8sResource(
                 metadata=integration_info,
             )
         elif integration_info.service == ServiceType.LAMBDA:
