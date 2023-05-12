@@ -2,7 +2,11 @@ import { Link, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React from 'react';
 
-export const CondaDialog: React.FC = ({}) => {
+import { IntegrationDialogProps } from '../../../utils/integrations';
+
+export const CondaDialog: React.FC<IntegrationDialogProps> = ({
+  editMode = false,
+}) => {
   return (
     <Box sx={{ mt: 2 }}>
       <Typography variant="body2">

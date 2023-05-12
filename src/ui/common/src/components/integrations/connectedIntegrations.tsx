@@ -54,6 +54,14 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
         IntegrationCategories.CLOUD
     ) {
       return ConnectedIntegrationType.Compute;
+
+      // The "Artifact Storage" is currently only used to filter out the 'Filesystem' integration
+      // from the connected integrations.
+    } else if (
+      SupportedIntegrations[integration.service].category ===
+      IntegrationCategories.ARTIFACT_STORAGE
+    ) {
+      return ConnectedIntegrationType.ArtifactStorage;
     } else {
       return ConnectedIntegrationType.Other;
     }
