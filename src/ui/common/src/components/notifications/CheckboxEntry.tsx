@@ -21,7 +21,9 @@ const CheckboxEntry: React.FC<Props> = ({
       <Checkbox
         checked={checked}
         disabled={disabled}
-        onChange={(event) => onChange(event.target.checked)}
+        onChange={(event) => {
+          onChange(event.target.checked);
+        }}
         // Overrides default checkbox behavior.
         // The `padding` is particularly important as the checkbox has a default padding of 9.
         sx={{

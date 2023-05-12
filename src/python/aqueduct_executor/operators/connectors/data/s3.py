@@ -1,4 +1,5 @@
 import json
+from http import HTTPStatus
 from typing import Any, Dict, List, Optional
 
 import numpy as np
@@ -7,6 +8,8 @@ from aqueduct.utils.serialization import deserialize
 from aqueduct_executor.operators.connectors.data import connector, extract, load
 from aqueduct_executor.operators.connectors.data.config import S3Config
 from aqueduct_executor.operators.connectors.data.s3_serialization import (
+    S3InsufficientPermissionsException,
+    S3RootFolderCreationException,
     S3UnknownFileFormatException,
     S3UnsupportedArtifactTypeException,
     _s3_deserialization_function_mapping,
@@ -38,13 +41,27 @@ class S3Connector(connector.DataConnector):
                 % str(e)
             )
 
-        # Check that any user-supplied root directory exists.
-        if self.root_dir != "":
-            # If nothing is returned by this filter call, then the directory does not exist.
-            if len(list(self.s3.Bucket(self.bucket).objects.filter(Prefix=self.root_dir))) == 0:
-                raise Exception(
-                    "Supplied root directory `%s` does not exist in bucket %s."
-                    % (self.root_dir, self.bucket)
+        # Check that any user-supplied root directory exists. If the object key name does not exist,
+        # create a new one.
+        try:
+            if self.root_dir != "":
+                # If nothing is returned by this filter call, then the directory does not exist.
+                if len(list(self.s3.Bucket(self.bucket).objects.filter(Prefix=self.root_dir))) == 0:
+                    if not self.root_dir.endswith("/"):
+                        self.root_dir = self.root_dir + "/"
+                    bucket = self.s3.Bucket(self.bucket)
+                    bucket.put_object(Bucket=self.bucket, Key=self.root_dir)
+        except ClientError as e:
+            status_code = e.response["ResponseMetadata"]["HTTPStatusCode"]
+            if status_code == HTTPStatus.FORBIDDEN:
+                raise S3InsufficientPermissionsException(
+                    "The specified root folder {} does not exist and you do not have permission to modify the bucket {} to create the folder.".format(
+                        self.root_dir, self.bucket
+                    )
+                )
+            else:
+                raise S3RootFolderCreationException(
+                    "Failed to create root folder in bucket {} with {}".format(self.bucket, str(e))
                 )
 
     def discover(self) -> List[str]:

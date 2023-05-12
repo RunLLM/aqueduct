@@ -35,8 +35,10 @@ type IntegrationWorkflowsGetHandler struct {
 
 	Database        database.Database
 	IntegrationRepo repos.Integration
-	OperatorRepo    repos.Operator
+	WorkflowRepo    repos.Workflow
+	DAGRepo         repos.DAG
 	DAGResultRepo   repos.DAGResult
+	OperatorRepo    repos.Operator
 }
 
 func (*IntegrationWorkflowsGetHandler) Name() string {
@@ -69,7 +71,7 @@ func (h *IntegrationWorkflowsGetHandler) Perform(ctx context.Context, interfaceA
 	}
 
 	workflowAndDagIDs, err := fetchWorkflowAndDagIDsForIntegration(
-		ctx, args.OrgID, integration, h.IntegrationRepo, h.OperatorRepo, h.DAGResultRepo, h.Database,
+		ctx, args.OrgID, integration, h.IntegrationRepo, h.WorkflowRepo, h.OperatorRepo, h.DAGRepo, h.DAGResultRepo, h.Database,
 	)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrapf(err, "Unable to find workflows for integration %s", args.integrationID)

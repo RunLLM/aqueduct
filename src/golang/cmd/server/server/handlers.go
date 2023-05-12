@@ -93,14 +93,18 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		routes.IntegrationsWorkflowsRoute: &v2.IntegrationsWorkflowsGetHandler{
 			Database:        s.Database,
 			IntegrationRepo: s.IntegrationRepo,
-			OperatorRepo:    s.OperatorRepo,
+			WorkflowRepo:    s.WorkflowRepo,
+			DAGRepo:         s.DAGRepo,
 			DAGResultRepo:   s.DAGResultRepo,
+			OperatorRepo:    s.OperatorRepo,
 		},
 		routes.IntegrationWorkflowsRoute: &v2.IntegrationWorkflowsGetHandler{
 			Database:        s.Database,
 			IntegrationRepo: s.IntegrationRepo,
-			OperatorRepo:    s.OperatorRepo,
+			WorkflowRepo:    s.WorkflowRepo,
+			DAGRepo:         s.DAGRepo,
 			DAGResultRepo:   s.DAGResultRepo,
+			OperatorRepo:    s.OperatorRepo,
 		},
 
 		// V1 Handlers

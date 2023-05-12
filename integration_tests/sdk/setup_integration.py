@@ -390,6 +390,9 @@ def is_global_engine_set(name: str) -> bool:
     assert "compute" in test_config, "compute section expected in test-config.yml"
     assert name in test_config["compute"].keys(), "%s not in test-config.yml." % name
 
+    if not isinstance(test_config["compute"][name], Dict):
+        return False
+
     return "set_global_engine" in test_config["compute"][name].keys()
 
 
@@ -406,6 +409,9 @@ def is_lazy_set(name: str) -> bool:
 
     assert "compute" in test_config, "compute section expected in test-config.yml"
     assert name in test_config["compute"].keys(), "%s not in test-config.yml." % name
+
+    if not isinstance(test_config["compute"][name], Dict):
+        return False
 
     return "set_global_lazy" in test_config["compute"][name].keys()
 
