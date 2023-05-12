@@ -12,8 +12,10 @@ def handler(event, context):
             "-m",
             "pip",
             "install",
-            "-i",
+            "--index-url",
             "https://test.pypi.org/simple/",
+            "--extra-index-url",  # allows dependencies from pypi
+            "https://pypi.org/simple",
             f"aqueduct-ml={version_tag}",
         ])
         print(install_process.stderr)

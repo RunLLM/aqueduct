@@ -112,18 +112,6 @@ func CreateTask(
 		taskDependenciesList = append(taskDependenciesList, jobs.TaskDependenciesItem{TaskKey: taskName})
 	}
 
-	aqueductPackage := &libraries.PythonPyPiLibrary{
-		Package: fmt.Sprintf("aqueduct-ml==%v", lib.ServerVersionNumber),
-	}
-
-	versionTag := config.VersionTag()
-	if versionTag != "" {
-		aqueductPackage = &libraries.PythonPyPiLibrary{
-			Package: fmt.Sprintf("aqueduct-ml==%v", versionTag),
-			Repo:    "https://test.pypi.org/simple/",
-		}
-	}
-
 	task := &jobs.JobTaskSettings{
 		TaskKey:       name,
 		JobClusterKey: jobClusterKey,
@@ -137,7 +125,9 @@ func CreateTask(
 		},
 		Libraries: []libraries.Library{
 			{
-				Pypi: aqueductPackage,
+				Pypi: &libraries.PythonPyPiLibrary{
+					Package: fmt.Sprintf("aqueduct-ml==%v", lib.ServerVersionNumber),
+				},
 			},
 			{
 				Pypi: &libraries.PythonPyPiLibrary{
