@@ -103,6 +103,7 @@ import {
   WorkflowsGetRequest,
   WorkflowsGetResponse,
 } from './v2/WorkflowsGet';
+import { EnvironmentPlugin } from 'webpack';
 
 const { createApi, fetchBaseQuery } = ((rtkQueryRaw as any).default ??
   rtkQueryRaw) as typeof rtkQueryRaw;
@@ -132,6 +133,10 @@ export const aqueductApi = createApi({
     }),
     dagResultsGet: builder.query<DagResultsGetResponse, DagResultsGetRequest>({
       query: (req) => dagResultsGetQuery(req),
+      transformErrorResponse,
+    }),
+    environmentGet: builder.query<EnvironmentGetResponse, EnvironmentGetRequest>({
+      query: (req) => environmentGetQuery(req),
       transformErrorResponse,
     }),
     integrationOperatorsGet: builder.query<
@@ -246,6 +251,7 @@ export const {
   useDagOperatorsGetQuery,
   useDagResultGetQuery,
   useDagResultsGetQuery,
+  useEnvironmentGetQuery,
   useIntegrationOperatorsGetQuery,
   useIntegrationWorkflowsGetQuery,
   useIntegrationsWorkflowsGetQuery,

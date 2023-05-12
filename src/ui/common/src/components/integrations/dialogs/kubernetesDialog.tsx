@@ -44,6 +44,7 @@ export const KubernetesDialog: React.FC<IntegrationDialogProps> = ({
       });
 
       const responseBody = await environmentResponse.json();
+      console.log('responseBody: ', responseBody);
       setInK8sCluster(responseBody['inK8sCluster']);
     };
 
