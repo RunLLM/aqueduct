@@ -7,12 +7,12 @@ import CheckDetailsPage from '../components/pages/check/id';
 import MetricDetailsPage from '../components/pages/metric/id';
 import OperatorDetailsPage from '../components/pages/operator/id';
 import { ArtifactResponse, OperatorResponse } from '../handlers/responses/node';
+import { ReactFlowNodeData } from '../positioning/positioning';
 import { NodeType, selectNode } from '../reducers/nodeSelection';
 import { NodeSelection } from '../reducers/pages/Workflow';
 import { AppDispatch } from '../stores/store';
 import UserProfile from './auth';
 import { OperatorType } from './operators';
-import { ReactFlowNodeData } from './reactflow';
 
 /**
  * This function takes in a dispatch call (which must be created in a

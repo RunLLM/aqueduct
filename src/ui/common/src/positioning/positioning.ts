@@ -9,6 +9,7 @@ import {
   OperatorResponse,
   OperatorResultResponse,
 } from '../handlers/responses/node';
+import { DagResponse } from '../handlers/responses/workflow';
 import { OperatorType } from '../utils/operators';
 
 type Layer = { ids: string[]; numActiveEdges: number };
@@ -24,6 +25,7 @@ export type ReactFlowNodeData = {
   targetHandlePosition?: Position;
   nodeType: keyof NodesGetResponse;
   nodeId: string;
+  dag: DagResponse;
 
   // Hack for merged metrics / checks for now.
   // We should be able to use a single node / result
@@ -194,6 +196,7 @@ function collapsePosition(
 
 export function getOperatorNode(
   op: OperatorResponse,
+  dag: DagResponse,
   pos: NodePosition,
   opResult?: OperatorResultResponse | undefined
 ): Node<ReactFlowNodeData> {
@@ -202,6 +205,7 @@ export function getOperatorNode(
     type: 'operators',
     draggable: false,
     data: {
+      dag,
       nodeType: 'operators',
       nodeId: op.id,
       operator: op,
@@ -213,6 +217,7 @@ export function getOperatorNode(
 
 export function getArtifactNode(
   artf: ArtifactResponse,
+  dag: DagResponse,
   pos: NodePosition,
   artfResult?: ArtifactResultResponse | undefined
 ): Node<ReactFlowNodeData> {
@@ -221,6 +226,7 @@ export function getArtifactNode(
     type: 'artifacts',
     draggable: false,
     data: {
+      dag,
       nodeType: 'artifacts',
       nodeId: artf.id,
       artifact: artf,
@@ -241,6 +247,7 @@ export function getEdges(operators: {
         type: 'curved', // Op inputs are curved edges
         source: artfId,
         target: op.id,
+        container: 'root',
       });
     });
     op.outputs.forEach((artfId) => {
@@ -249,6 +256,7 @@ export function getEdges(operators: {
         type: 'straight',
         source: op.id,
         target: artfId,
+        container: 'root',
       });
     });
   });
@@ -256,6 +264,7 @@ export function getEdges(operators: {
 }
 
 export function visualizeDag(
+  dag: DagResponse,
   nodes: NodesMap,
   nodeResults?: NodeResultsMap | undefined
 ): VisualizedDag {
@@ -268,7 +277,12 @@ export function visualizeDag(
         return null;
       }
 
-      return getOperatorNode(op, pos, (nodeResults?.operators ?? {})[op.id]);
+      return getOperatorNode(
+        op,
+        dag,
+        pos,
+        (nodeResults?.operators ?? {})[op.id]
+      );
     })
     .filter((x) => x !== null);
   const artfNodeComponents = Object.values(nodes.artifacts)
@@ -280,6 +294,7 @@ export function visualizeDag(
 
       return getArtifactNode(
         artf,
+        dag,
         pos,
         (nodeResults?.artifacts ?? {})[artf.id]
       );

@@ -15,21 +15,18 @@ import WorkflowResultNavigator from 'src/components/workflows/WorkflowResultNavi
 
 import {
   aqueductApi,
+  useDagGetQuery,
   useDagResultGetQuery,
   useDagResultsGetQuery,
   useWorkflowGetQuery,
 } from '../../../../handlers/AqueductApi';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import { selectNode } from '../../../../reducers/pages/Workflow';
-import { handleGetSelectDagPosition } from '../../../../reducers/workflow';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
 import { WidthTransition } from '../../../../utils/shared';
-import {
-  getDataSideSheetContent,
-  sideSheetSwitcher,
-} from '../../../../utils/sidesheets';
+import { getDataSideSheetContent } from '../../../../utils/sidesheets';
 import DefaultLayout, {
   DefaultLayoutMargin,
   SidesheetWidth,
@@ -78,6 +75,10 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     { apiKey: user.apiKey, workflowId },
     { skip: !workflowId }
   );
+  const { data: dag } = useDagGetQuery(
+    { apiKey: user.apiKey, workflowId, dagId },
+    { skip: !workflowId || !dagId }
+  );
   const { data: dagResult } = useDagResultGetQuery(
     { apiKey: user.apiKey, workflowId, dagResultId },
     { skip: !workflowId || !dagResultId }
@@ -110,15 +111,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const selectedNodeResult =
     nodeResults[selectedNodeState.nodeType][selectedNodeState.nodeId];
 
-  const switchSideSheet = sideSheetSwitcher(dispatch);
   const drawerIsOpen = !!selectedNode;
-
-  const onPaneClicked = (event: React.MouseEvent) => {
-    event.preventDefault();
-
-    // Reset selected node
-    dispatch(selectNode({ workflowId, selection: undefined }));
-  };
 
   useEffect(() => {
     if (workflow !== undefined) {
@@ -130,21 +123,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   useEffect(() => {
     dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
   }, [dispatch, user.apiKey, workflowId]);
-
-  // EFFECT 5: DAG positioning.
-  // This effect uses the Elk algorithm to load the node positioning for the DAG.
-  // See ENG-2568 for more on how this interaction needs to be cleaned up.
-  useEffect(() => {
-    if (workflow.selectedDag) {
-      dispatch(
-        handleGetSelectDagPosition({
-          apiKey: user.apiKey,
-          operators: workflow.selectedDag?.operators,
-          artifacts: workflow.selectedDag?.artifacts,
-        })
-      );
-    }
-  }, [dispatch, user.apiKey, workflow.selectedDag]);
 
   // This workflow doesn't exist.
   if (wfError) {
@@ -234,7 +212,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
         <Box display="flex" height="100%">
           <Box flex={1} height="100%">
-            {currentTab === 'Details' && (
+            {currentTab === 'Details' && !!dag && !!nodes && (
               <Box
                 sx={{
                   flexDirection: 'column',
@@ -247,8 +225,9 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 <ReactFlowProvider>
                   <Box sx={{ flexGrow: 1 }}>
                     <ReactFlowCanvas
-                      switchSideSheet={switchSideSheet}
-                      onPaneClicked={onPaneClicked}
+                      nodes={nodes}
+                      nodeResults={nodeResults}
+                      dag={dag}
                     />
                   </Box>
                 </ReactFlowProvider>
@@ -384,7 +363,9 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             <Box display="flex">
               <Box
                 sx={{ cursor: 'pointer', m: 1, alignSelf: 'center' }}
-                onClick={onPaneClicked}
+                onClick={() =>
+                  dispatch(selectNode({ workflowId, selection: undefined }))
+                }
               >
                 <FontAwesomeIcon icon={faChevronRight} />
               </Box>
