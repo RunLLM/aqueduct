@@ -136,6 +136,8 @@ class RelationalDBResource(BaseResource):
         Returns:
             TableArtifact representing result of the SQL query.
         """
+        print("Inside of sql function")
+        print("parameters: ", parameters)
         if globals.__GLOBAL_CONFIG__.lazy:
             lazy = True
 
@@ -237,7 +239,7 @@ class RelationalDBResource(BaseResource):
             return TableArtifact(self._dag, sql_output_artifact_id)
 
     @validate_is_connected()
-    def save(self, artifact: BaseArtifact, table_name: str, update_mode: LoadUpdateMode) -> None:
+    def save(self, artifact: BaseArtifact, table_name: str, update_mode: LoadUpdateMode, parameters: Optional[List[BaseArtifact]] = None) -> None:
         """Registers a save operator of the given artifact, to be executed when it's computed in a published flow.
 
         Args:
@@ -249,6 +251,9 @@ class RelationalDBResource(BaseResource):
                 Defines the semantics of the save if a table already exists.
                 Options are "replace", "append" (row-wise), or "fail" (if table already exists).
         """
+        print("inside save")
+        print('parameters', str(parameters))
+
         if self.type() == ServiceType.ATHENA:
             raise InvalidUserActionException(
                 "Save operation not supported for %s." % self.type().value
@@ -264,6 +269,7 @@ class RelationalDBResource(BaseResource):
             self._dag,
             self._metadata,
             save_params=RelationalDBLoadParams(table=table_name, update_mode=update_mode),
+            parameters=parameters,
         )
 
     def describe(self) -> None:

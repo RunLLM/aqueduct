@@ -28,6 +28,9 @@ def deploy(client, integration_name):
     empty_str = client.create_param("empty_str", default="")
 
     reviews = integration.sql("SELECT * FROM $1", parameters=[table_param])
+
+    integration.save(reviews, "reviews", "apppend", parameters=[bound, empty_str, table_param])
+
     check(reviews, bound)
     empty_str_check(reviews, empty_str)
     flow = client.publish_flow(

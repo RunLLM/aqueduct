@@ -127,6 +127,7 @@ class LoadSpec(BaseModel):
     service: ServiceType
     integration_id: uuid.UUID
     parameters: UnionLoadParams
+    additional_parameters: Optional[List[BaseArtifact]] = None
 
     def identifier(self) -> str:
         if isinstance(self.parameters, RelationalDBLoadParams):

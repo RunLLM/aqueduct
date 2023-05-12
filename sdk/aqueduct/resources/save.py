@@ -21,6 +21,7 @@ def _save_artifact(
     dag: DAG,
     integration_info: ResourceInfo,
     save_params: UnionLoadParams,
+    parameters: Optional[List[BaseArtifact]] = None,
 ) -> None:
     """Configures the given artifact to be written to a specific integration after it's computed in a published flow.
 
@@ -43,6 +44,7 @@ def _save_artifact(
         InvalidUserArgumentException:
             An error occurred because some necessary fields are missing in the SaveParams.
     """
+    print('_save_artifact params: ', parameters)
 
     integrations_map = global_api_client.list_resources()
     if integration_info.name not in integrations_map:
@@ -77,6 +79,7 @@ def _save_artifact(
                         service=integration_info.service,
                         integration_id=integration_info.id,
                         parameters=save_params,
+                        additional_parameters=parameters
                     )
                 ),
                 inputs=[artifact_id],
