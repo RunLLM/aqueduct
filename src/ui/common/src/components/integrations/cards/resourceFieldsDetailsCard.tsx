@@ -9,6 +9,7 @@ import { BigQueryCard } from './bigqueryCard';
 import { DatabricksCard } from './databricksCard';
 import ECRCard from './ecrCard';
 import { EmailCard } from './emailCard';
+import FilesystemCard from './filesystemCard';
 import { GCSCard } from './gcsCard';
 import { KubernetesCard } from './kubernetesCard';
 import { LambdaCard } from './lambdaCard';
@@ -94,6 +95,9 @@ export const ResourceFieldsDetailsCard: React.FC<
       break;
     case 'ECR':
       serviceCard = <ECRCard integration={integration} />;
+      break;
+    case 'Filesystem':
+      serviceCard = <FilesystemCard integration={integration} />;
       break;
     default:
       serviceCard = null;
