@@ -73,7 +73,7 @@ func CreateJob(
 			InstanceProfileArn: s3InstanceProfileArn,
 		},
 	}
-	if instancePoolID != nil {
+	if instancePoolID != nil && *instancePoolID != "" {
 		jobCluster.InstancePoolId = *instancePoolID
 	} else {
 		jobCluster.NodeTypeId = DefaultNodeTypeID
