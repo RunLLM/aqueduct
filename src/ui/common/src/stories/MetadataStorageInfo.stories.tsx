@@ -2,11 +2,7 @@ import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import { ServerConfig } from '../components/pages/account/AccountPage';
-import MetadataStorageInfo, {
-  FileMetadataStorageInfo,
-  GCSMetadataStorageInfo,
-  S3MetadataStorageInfo,
-} from '../components/pages/account/MetadataStorageInfo';
+import MetadataStorageInfo from '../components/pages/account/MetadataStorageInfo';
 
 const mockServerConfig: ServerConfig = {
   aqPath: 'mockAqPath',
@@ -29,7 +25,7 @@ const mockServerConfig: ServerConfig = {
 
 const MetadataTemplate: ComponentStory<typeof MetadataStorageInfo> = (args) => (
   <MetadataStorageInfo {...args} />
-)
+);
 
 export const MetadataStorageInfoStory = MetadataTemplate.bind({});
 MetadataStorageInfoStory.args = {

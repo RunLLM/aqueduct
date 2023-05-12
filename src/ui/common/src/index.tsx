@@ -149,11 +149,7 @@ import {
 } from './utils/cron';
 import { DataColumnTypeNames } from './utils/data';
 import fetchUser from './utils/fetchUser';
-import {
-  addTable,
-  formatService,
-  ServiceLogos,
-} from './utils/integrations';
+import { addTable, formatService, ServiceLogos } from './utils/integrations';
 import { dateString } from './utils/metadata';
 import {
   archiveNotification,

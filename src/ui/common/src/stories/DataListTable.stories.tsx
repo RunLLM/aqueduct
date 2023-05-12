@@ -1,5 +1,5 @@
-import { ComponentMeta } from '@storybook/react';
 import { Box, Typography } from '@mui/material';
+import { ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import CheckItem, {

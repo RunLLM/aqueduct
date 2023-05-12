@@ -51,11 +51,10 @@ import {
   getNextUpdateTime,
   PeriodUnit,
 } from '../../utils/cron';
-import {
-  IntegrationCategories,
-} from '../../utils/integrations';
+import { IntegrationCategories } from '../../utils/integrations';
 import { UpdateMode } from '../../utils/operators';
 import ExecutionStatus, { LoadingStatusEnum } from '../../utils/shared';
+import { SupportedIntegrations } from '../../utils/SupportedIntegrations';
 import {
   getSavedObjectIdentifier,
   NotificationSettingsMap,
@@ -70,7 +69,6 @@ import { LoadingButton } from '../primitives/LoadingButton.styles';
 import StorageSelector from './storageSelector';
 import TriggerSourceSelector from './triggerSourceSelector';
 import WorkflowNotificationSettings from './WorkflowNotificationSettings';
-import { SupportedIntegrations } from '../../utils/SupportedIntegrations';
 
 type PeriodicScheduleSelectorProps = {
   cronString: string;

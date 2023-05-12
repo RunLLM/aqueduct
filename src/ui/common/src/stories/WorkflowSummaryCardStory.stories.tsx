@@ -1,4 +1,5 @@
 import { Box } from '@mui/material';
+import { ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import WorkflowSummaryCard, {
@@ -6,7 +7,6 @@ import WorkflowSummaryCard, {
 } from '../components/workflows/WorkflowSummaryCard';
 import { EngineType } from '../utils/engine';
 import ExecutionStatus from '../utils/shared';
-import { ComponentMeta } from '@storybook/react';
 
 export const WorkflowSummaryCardStory: React.FC = () => {
   const workflowSummaries: WorkflowSummaryCardProps[] = [
@@ -55,4 +55,4 @@ export default {
   title: 'Components/Workflow Summary Card',
   component: WorkflowSummaryCard,
   argTypes: {},
-} as ComponentMeta<typeof WorkflowSummaryCard> ;
+} as ComponentMeta<typeof WorkflowSummaryCard>;

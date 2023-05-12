@@ -1,5 +1,5 @@
-import { ComponentMeta } from '@storybook/react';
 import { Box } from '@mui/material';
+import { ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import { IntegrationCard } from '../components/integrations/cards/card';
@@ -377,5 +377,5 @@ const ResourceCardStory: React.FC = () => {
 export default {
   title: 'Test/ResourceCard',
   component: ResourceCardStory,
-  argTypes: {}
+  argTypes: {},
 } as ComponentMeta<typeof ResourceCardStory>;

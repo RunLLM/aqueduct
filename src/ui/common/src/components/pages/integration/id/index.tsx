@@ -44,6 +44,7 @@ import ExecutionStatus, {
   isLoading,
   isSucceeded,
 } from '../../../../utils/shared';
+import SupportedIntegrations from '../../../../utils/SupportedIntegrations';
 import { ResourceHeaderDetailsCard } from '../../../integrations/cards/headerDetailsCard';
 import { ResourceFieldsDetailsCard } from '../../../integrations/cards/resourceFieldsDetailsCard';
 import { ErrorSnackbar } from '../../../integrations/errorSnackbar';
@@ -53,7 +54,6 @@ import IntegrationOptions, {
   IntegrationOptionsButtonWidth,
 } from '../../../integrations/options';
 import { LayoutProps } from '../../types';
-import SupportedIntegrations from '../../../../utils/SupportedIntegrations';
 
 type IntegrationDetailsPageProps = {
   user: UserProfile;

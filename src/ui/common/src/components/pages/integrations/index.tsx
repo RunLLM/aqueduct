@@ -11,10 +11,9 @@ import { StorageMigrationResponse } from '../../../handlers/responses/storageMig
 import { RootState } from '../../../stores/store';
 import { theme } from '../../../styles/theme/theme';
 import UserProfile from '../../../utils/auth';
-import {
-  IntegrationCategories,
-} from '../../../utils/integrations';
+import { IntegrationCategories } from '../../../utils/integrations';
 import { LoadingStatus, LoadingStatusEnum } from '../../../utils/shared';
+import SupportedIntegrations from '../../../utils/SupportedIntegrations';
 import AddIntegrations from '../../integrations/addIntegrations';
 import { ConnectedIntegrations } from '../../integrations/connectedIntegrations';
 import { ConnectedIntegrationType } from '../../integrations/connectedIntegrationType';
@@ -22,7 +21,6 @@ import DefaultLayout from '../../layouts/default';
 import { BreadcrumbLink } from '../../layouts/NavBar';
 import MetadataStorageInfo from '../account/MetadataStorageInfo';
 import { LayoutProps } from '../types';
-import SupportedIntegrations from '../../../utils/SupportedIntegrations';
 
 type Props = {
   user: UserProfile;

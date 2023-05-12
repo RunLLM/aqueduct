@@ -1,9 +1,9 @@
+import { ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import { ResourceHeaderDetailsCard } from '../components/integrations/cards/headerDetailsCard';
 import { Integration, SlackConfig } from '../utils/integrations';
 import ExecutionStatus from '../utils/shared';
-import { ComponentMeta } from '@storybook/react';
 
 export const ResourceHeaderDetailsCardStory: React.FC = () => {
   const testIntegration: Integration = {

@@ -1,4 +1,5 @@
 import { Box } from '@mui/material';
+import type { Meta } from '@storybook/react';
 import React from 'react';
 
 import {
@@ -6,6 +7,10 @@ import {
   CheckPreview,
 } from '../components/pages/workflows/components/CheckItem';
 import ExecutionStatusLink from '../components/pages/workflows/components/ExecutionStatusLink';
+import {
+  MetricItem,
+  MetricPreview,
+} from '../components/pages/workflows/components/MetricItem';
 import ResourceItem from '../components/pages/workflows/components/ResourceItem';
 import PaginatedSearchTable, {
   PaginatedSearchTableData,
@@ -13,8 +18,6 @@ import PaginatedSearchTable, {
 import { ServiceLogos } from '../utils/integrations';
 import { CheckLevel } from '../utils/operators';
 import ExecutionStatus from '../utils/shared';
-import { ComponentMeta } from '@storybook/react';
-import { MetricItem, MetricPreview } from '../components/pages/workflows/components/MetricItem';
 
 const WorkflowsTable: React.FC = () => {
   const checkPreviews: CheckPreview[] = [
@@ -219,8 +222,9 @@ const WorkflowsTable: React.FC = () => {
   );
 };
 
-export default {
+const meta: Meta <typeof WorkflowsTable> = {
   title: 'Components/WorkflowsTable',
-  component: WorkflowsTable,
-  argTypes: {},
-} as ComponentMeta<typeof WorkflowsTable>;
+  component: WorkflowsTable
+};
+
+export default meta;

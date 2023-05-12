@@ -23,6 +23,7 @@ import {
   isLoading,
   isSucceeded,
 } from '../../../utils/shared';
+import SupportedIntegrations from '../../../utils/SupportedIntegrations';
 import CodeBlock from '../../CodeBlock';
 import { useAqueductConsts } from '../../hooks/useAqueductConsts';
 import DefaultLayout from '../../layouts/default';
@@ -32,7 +33,6 @@ import AccountNotificationSettingsSelector, {
 } from '../../notifications/AccountNotificationSettingsSelector';
 import { LayoutProps } from '../types';
 import MetadataStorageInfo from './MetadataStorageInfo';
-import SupportedIntegrations from '../../../utils/SupportedIntegrations';
 
 type AccountPageProps = {
   user: UserProfile;

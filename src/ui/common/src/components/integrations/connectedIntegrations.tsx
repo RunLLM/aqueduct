@@ -10,15 +10,12 @@ import { handleLoadIntegrations } from '../../reducers/integrations';
 import { AppDispatch, RootState } from '../../stores/store';
 import { UserProfile } from '../../utils/auth';
 import { getPathPrefix } from '../../utils/getPathPrefix';
-import {
-  Integration,
-  IntegrationCategories,
-} from '../../utils/integrations';
+import { Integration, IntegrationCategories } from '../../utils/integrations';
+import SupportedIntegrations from '../../utils/SupportedIntegrations';
 import { Card } from '../layouts/card';
 import { ConnectedIntegrationType } from './connectedIntegrationType';
 import { ErrorSnackbar } from './errorSnackbar';
 import { getNumWorkflowsUsingMessage } from './numWorkflowsUsingMsg';
-import SupportedIntegrations from '../../utils/SupportedIntegrations';
 
 type ConnectedIntegrationsProps = {
   user: UserProfile;

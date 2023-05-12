@@ -1,4 +1,3 @@
-
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
 import { AWSCredentialType, ExecState } from './shared';
@@ -352,7 +351,6 @@ const logoBucket =
 // S3 bucket folder for Integration logos.
 const integrationLogosBucket =
   'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations';
-
 
 export const IntegrationCategories = {
   DATA: 'data',
