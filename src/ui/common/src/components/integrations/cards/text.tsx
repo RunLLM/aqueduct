@@ -22,7 +22,7 @@ const paddingBetweenLabelAndValue = 8; // in pixels
 // Maximum number of rows to show before creating a new column.
 const maxNumRows = 3;
 
-function chunkList(list: string[], chunkSize: number): any[][] {
+function chunkList(list: string[], chunkSize: number): string[][] {
   return Array.from({ length: Math.ceil(list.length / chunkSize) }, (_, index) =>
       list.slice(index * chunkSize, index * chunkSize + chunkSize)
   );
@@ -69,4 +69,26 @@ export const ResourceCardText: React.FC<ResourceCardTextProps> = ({
       ))}
     </Box>
   );
+
+
+  // return (
+  //     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+  //       {labels.map((_, index) => (
+  //           <Box key={index} sx={{ display: 'flex', flexWrap: 'nowrap' }}>
+  //             <TruncatedText
+  //                 variant="body2"
+  //                 sx={{ fontWeight: 300, width: `${labelWidthNum}px` }}
+  //             >
+  //               {labels[index]}
+  //             </TruncatedText>
+  //             <TruncatedText
+  //                 variant="body2"
+  //                 sx={{ width: `calc(100% - ${labelWidthNum}px)` }}
+  //             >
+  //               {values[index]}
+  //             </TruncatedText>
+  //           </Box>
+  //       ))}
+  //     </Box>
+  // );
 };
