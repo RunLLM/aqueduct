@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/aqueducthq/aqueduct/config"
-	"github.com/aqueducthq/aqueduct/lib"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
 	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -113,7 +112,7 @@ func PullSparkImage(pythonVersion string) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "Unable to map function type to image.")
 	}
-	versionedSparkImage := fmt.Sprintf("%s:%s", sparkImage, lib.ServerVersionNumber)
+	versionedSparkImage := fmt.Sprintf("%s:%s", sparkImage, "hari_test")
 
 	stdout := &bytes.Buffer{}
 	stderr := &bytes.Buffer{}
