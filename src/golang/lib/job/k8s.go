@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
@@ -46,6 +47,9 @@ func setupNamespaceAndSecrets(k8sClient *kubernetes.Clientset, conf *K8sJobManag
 		if _, secretExistsErr := k8s.GetSecret(context.Background(), k8s.AwsCredentialsSecretName, k8sClient); secretExistsErr != nil {
 			return errors.Wrap(err, "Error while creating K8s Secrets")
 		}
+	} else {
+		log.Error("Successfully created K8s Secrets, waiting 10 seconds before proceeding...")
+		time.Sleep(10 * time.Second)
 	}
 
 	return nil

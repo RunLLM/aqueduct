@@ -280,6 +280,8 @@ class K8sConfig(BaseConnectionConfig):
     cloud_provider: Optional[CloudProviderType]
     gcp_config: Optional[GCPConfig]
     # cluster_config: Optional[DynamicK8sConfig]
+    min_cpu_node: Optional[str]
+    max_cpu_node: Optional[str]
 
 
 class _K8sConfigWithSerializedConfig(BaseConnectionConfig):
@@ -290,6 +292,8 @@ class _K8sConfigWithSerializedConfig(BaseConnectionConfig):
     # cloud_integration_id: str = ""
     cloud_provider: Optional[CloudProviderType]
     gcp_config_serialized: Optional[str]  # this is a json-serialized string of GCPConfig
+    min_cpu_node: Optional[str]
+    max_cpu_node: Optional[str]
 
 
 ResourceConfig = Union[
@@ -433,6 +437,8 @@ def _prepare_k8s_config(config: K8sConfig) -> _K8sConfigWithSerializedConfig:
         gcp_config_serialized=(
             None if config.gcp_config is None else config.gcp_config.json(exclude_none=True)
         ),
+        min_cpu_node=config.min_cpu_node,
+        max_cpu_node=config.max_cpu_node,
     )
 
 
