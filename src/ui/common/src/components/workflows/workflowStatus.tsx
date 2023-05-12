@@ -2,7 +2,7 @@ import {
   faCircleCheck,
   faCircleExclamation,
   faCircleQuestion,
-  faListOl,
+  faRegistered,
   faSpinner,
   faTriangleExclamation,
   faX,
@@ -111,7 +111,7 @@ export const StatusIndicator: React.FC<IndicatorProps> = ({
       break;
 
     case ExecutionStatus.Registered:
-      icon = faListOl;
+      icon = faRegistered;
       break;
 
     case ExecutionStatus.Succeeded:
