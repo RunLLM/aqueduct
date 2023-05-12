@@ -49,6 +49,16 @@ export type NodeResultsResponse = {
   artifacts: ArtifactResultResponse[];
 };
 
+export type NodesMap = {
+  operators: { [id: string]: OperatorResponse };
+  artifacts: { [id: string]: ArtifactResponse };
+};
+
+export type NodeResultsMap = {
+  operators: { [id: string]: OperatorResultResponse };
+  artifacts: { [id: string]: ArtifactResultResponse };
+};
+
 export type NodeContentResponse = {
   name: string;
   data: string;

@@ -9,12 +9,7 @@ import {
   useNodesResultsGetQuery,
   useWorkflowGetQuery,
 } from '../../../../handlers/AqueductApi';
-import {
-  ArtifactResponse,
-  ArtifactResultResponse,
-  OperatorResponse,
-  OperatorResultResponse,
-} from '../../../../handlers/responses/node';
+import { NodeResultsMap, NodesMap } from '../../../../handlers/responses/node';
 import { initializeDagOrResultPageIfNotExists } from '../../../../reducers/pages/Workflow';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
 
@@ -22,16 +17,6 @@ export type useWorkflowIdsOutputs = {
   workflowId: string;
   dagId?: string;
   dagResultId?: string;
-};
-
-export type useWorkflowNodesOutputs = {
-  operators: { [id: string]: OperatorResponse };
-  artifacts: { [id: string]: ArtifactResponse };
-};
-
-export type useWorkflowNodesResultsOutputs = {
-  operators: { [id: string]: OperatorResultResponse };
-  artifacts: { [id: string]: ArtifactResultResponse };
 };
 
 // useWorkflowIds ensures we use the URL parameter as ground-truth for fetching
@@ -122,7 +107,7 @@ export function useWorkflowNodes(
   apiKey: string,
   workflowId: string,
   dagId: string | undefined
-): useWorkflowNodesOutputs {
+): NodesMap {
   const { data: nodes } = useNodesGetQuery(
     { apiKey, workflowId, dagId },
     { skip: !workflowId || !dagId }
@@ -141,7 +126,7 @@ export function useWorkflowNodesResults(
   apiKey: string,
   workflowId: string,
   dagResultId: string | undefined
-): useWorkflowNodesResultsOutputs {
+): NodeResultsMap {
   const { data: nodeResults } = useNodesResultsGetQuery(
     { apiKey, workflowId, dagResultId },
     { skip: !workflowId || !dagResultId }
