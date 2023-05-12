@@ -279,7 +279,7 @@ class K8sConfig(BaseConnectionConfig):
     # cloud_integration_id: str = ""
     cloud_provider: Optional[CloudProviderType]
     gcp_config: Optional[GCPConfig]
-    # cluster_config: Optional[DynamicK8sConfig]
+    cluster_config: Optional[DynamicK8sConfig]
 
 
 class _K8sConfigWithSerializedConfig(BaseConnectionConfig):
@@ -290,6 +290,7 @@ class _K8sConfigWithSerializedConfig(BaseConnectionConfig):
     # cloud_integration_id: str = ""
     cloud_provider: Optional[CloudProviderType]
     gcp_config_serialized: Optional[str]  # this is a json-serialized string of GCPConfig
+    cluster_config_serialized: Optional[str] # this is a json-serialized string of cluster configuration
 
 
 ResourceConfig = Union[
@@ -433,6 +434,9 @@ def _prepare_k8s_config(config: K8sConfig) -> _K8sConfigWithSerializedConfig:
         gcp_config_serialized=(
             None if config.gcp_config is None else config.gcp_config.json(exclude_none=True)
         ),
+        cluster_config_serialized=(
+            None if config.cluster_config is None else config.cluster_config.json(exclude_none=True)
+        )
     )
 
 
