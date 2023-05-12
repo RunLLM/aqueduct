@@ -142,8 +142,6 @@ func ParseK8sConfig(conf auth.Config) (*shared.K8sIntegrationConfig, error) {
 		return nil, err
 	}
 
-	log.Errorf("logging marshalled config: %s", string(data))
-
 	var c struct {
 		KubeconfigPath      string                   `json:"kubeconfig_path"`
 		ClusterName         string                   `json:"cluster_name"`
