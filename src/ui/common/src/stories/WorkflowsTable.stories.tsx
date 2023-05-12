@@ -1,5 +1,5 @@
 import { Box } from '@mui/material';
-import type { Meta } from '@storybook/react';
+import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
 import {
@@ -222,9 +222,14 @@ const WorkflowsTable: React.FC = () => {
   );
 };
 
-const meta: Meta<typeof WorkflowsTable> = {
+export default {
   title: 'Components/WorkflowsTable',
   component: WorkflowsTable,
-};
+  argTypes: {},
+} as ComponentMeta<typeof WorkflowsTable>;
 
-export default meta;
+const WorkflowsTableTemplate: ComponentStory<typeof WorkflowsTable> = () => (
+  <WorkflowsTable />
+);
+
+export const WorkflowsTableStory = WorkflowsTableTemplate.bind({});
