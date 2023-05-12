@@ -55,7 +55,7 @@ func (*artifactResultReader) GetBatch(ctx context.Context, IDs []uuid.UUID, DB d
 
 func (*artifactResultReader) GetByArtifact(ctx context.Context, artifactID uuid.UUID, DB database.Database) ([]models.ArtifactResult, error) {
 	query := fmt.Sprintf(
-		`SELECT %s FROM artifact_result WHERE artifact_ids = $1;`,
+		`SELECT %s FROM artifact_result WHERE artifact_id = $1;`,
 		models.ArtifactResultCols(),
 	)
 	args := []interface{}{artifactID}
@@ -78,7 +78,7 @@ func (*artifactResultReader) GetByArtifactNameAndWorkflow(
 			workflow_dag_edge.to_id = artifact.id
 		)
 		AND workflow_dag_edge.workflow_dag_id = workflow_dag.id
-		AND artifact_result.artifact_ids = artifact.id;`,
+		AND artifact_result.artifact_id = artifact.id;`,
 		models.ArtifactResultColsWithPrefix(),
 	)
 	args := []interface{}{workflowID, artifactName}
@@ -94,7 +94,7 @@ func (*artifactResultReader) GetByArtifactAndDAGResult(
 	query := fmt.Sprintf(
 		`SELECT %s 
 		FROM artifact_result 
-		WHERE workflow_dag_result_id = $1 AND artifact_ids = $2;`,
+		WHERE workflow_dag_result_id = $1 AND artifact_id = $2;`,
 		models.ArtifactResultCols(),
 	)
 	args := []interface{}{dagResultID, artifactID}
@@ -119,7 +119,7 @@ func (*artifactResultReader) GetStatusByArtifactBatch(
 ) ([]views.ArtifactResultStatus, error) {
 	query := fmt.Sprintf(
 		`SELECT 
-			artifact_result.artifact_ids, 
+			artifact_result.artifact_id, 
 			artifact_result.id as artifact_result_id,
 			artifact_result.workflow_dag_result_id, 
 			artifact_result.status,
@@ -129,7 +129,7 @@ func (*artifactResultReader) GetStatusByArtifactBatch(
 		FROM artifact_result, workflow_dag_result 
 		WHERE 
 			artifact_result.workflow_dag_result_id = workflow_dag_result.id 
-			AND artifact_result.artifact_ids IN (%s);`,
+			AND artifact_result.artifact_id IN (%s);`,
 		stmt_preparers.GenerateArgsList(len(artifactIDs), 1),
 	)
 
@@ -147,7 +147,7 @@ func (*artifactResultReader) GetByArtifactBatch(
 ) ([]models.ArtifactResult, error) {
 	query := fmt.Sprintf(
 		`SELECT %s FROM artifact_result
-		WHERE artifact_result.artifact_ids IN (%s);`,
+		WHERE artifact_result.artifact_id IN (%s);`,
 		models.ArtifactResultCols(),
 		stmt_preparers.GenerateArgsList(len(artifactIDs), 1),
 	)
@@ -187,7 +187,7 @@ func (*artifactResultReader) GetWithArtifactOfMetricsByDAGResultBatch(
 			AND workflow_dag_edge.from_id = operator.id
 			AND workflow_dag_edge.workflow_dag_id = workflow_dag.id
 			AND json_extract(operator.spec, '$.type') = '%s'
-			AND artifact_result.artifact_ids = artifact.id
+			AND artifact_result.artifact_id = artifact.id
 			AND artifact_result.workflow_dag_result_id IN (%s);`,
 		operator.MetricType,
 		stmt_preparers.GenerateArgsList(len(dagResultIDs), 1),

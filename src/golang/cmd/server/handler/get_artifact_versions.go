@@ -36,7 +36,7 @@ type artifactVersions struct {
 	ArtifactName        string                        `json:"artifact_name"`
 	WorkflowID          uuid.UUID                     `json:"workflow_id"`
 	WorkflowDagResultID uuid.UUID                     `json:"workflow_dag_result_id"`
-	ArtifactID          uuid.UUID                     `json:"artifact_ids"`
+	ArtifactID          uuid.UUID                     `json:"artifact_id"`
 	LoadSpecs           []connector.Load              `json:"load_specs"`
 	Versions            map[uuid.UUID]artifactVersion `json:"versions"`
 }

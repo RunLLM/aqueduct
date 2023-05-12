@@ -73,7 +73,7 @@ func (s *AqServer) backfillKilledJobs(ctx context.Context) error {
 		shared.CanceledExecutionStatus,
 		txn,
 	); err != nil {
-		return errors.Wrap(err, "Failed to update batch status for operator results.")
+		return err
 	}
 
 	if _, err := s.OperatorResultRepo.UpdateBatchStatusByStatus(
@@ -82,7 +82,7 @@ func (s *AqServer) backfillKilledJobs(ctx context.Context) error {
 		shared.CanceledExecutionStatus,
 		txn,
 	); err != nil {
-		return errors.Wrap(err, "Failed to update batch status for operator results.")
+		return err
 	}
 
 	if _, err := s.ArtifactResultRepo.UpdateBatchStatusByStatus(
@@ -91,7 +91,7 @@ func (s *AqServer) backfillKilledJobs(ctx context.Context) error {
 		shared.CanceledExecutionStatus,
 		txn,
 	); err != nil {
-		return errors.Wrap(err, "Failed to update batch status for artifact results.")
+		return err
 	}
 
 	if _, err := s.ArtifactResultRepo.UpdateBatchStatusByStatus(
@@ -100,7 +100,7 @@ func (s *AqServer) backfillKilledJobs(ctx context.Context) error {
 		shared.CanceledExecutionStatus,
 		txn,
 	); err != nil {
-		return errors.Wrap(err, "Failed to update batch status for artifact results.")
+		return err
 	}
 
 	if _, err := s.DAGResultRepo.UpdateBatchStatusByStatus(
@@ -109,7 +109,7 @@ func (s *AqServer) backfillKilledJobs(ctx context.Context) error {
 		shared.CanceledExecutionStatus,
 		txn,
 	); err != nil {
-		return errors.Wrap(err, "Failed to update batch status for DAG results.")
+		return err
 	}
 
 	if _, err := s.DAGResultRepo.UpdateBatchStatusByStatus(
@@ -118,7 +118,7 @@ func (s *AqServer) backfillKilledJobs(ctx context.Context) error {
 		shared.CanceledExecutionStatus,
 		txn,
 	); err != nil {
-		return errors.Wrap(err, "Failed to update batch status for DAG results.")
+		return err
 	}
 
 	storageConfig := config.Storage()

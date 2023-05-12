@@ -175,7 +175,7 @@ type artifactResult struct {
 }
 
 func getArtifactResult(ctx context.Context, db database.Database, artifactId uuid.UUID) ([]artifactResult, error) {
-	query := "SELECT id, metadata, content_path, status FROM artifact_result WHERE artifact_ids = $1;"
+	query := "SELECT id, metadata, content_path, status FROM artifact_result WHERE artifact_id = $1;"
 
 	var result []artifactResult
 	err := db.Query(ctx, &result, query, artifactId)

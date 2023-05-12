@@ -133,7 +133,7 @@ func (*operatorResultReader) GetCheckStatusByArtifactBatch(
 	// `artifactIds` list (`from_id` in `artifactIds`).
 	query := fmt.Sprintf(
 		`SELECT DISTINCT
-			workflow_dag_edge.from_id AS artifact_ids,
+			workflow_dag_edge.from_id AS artifact_id,
 			operator.name AS operator_name,
 		 	operator_result.execution_state as metadata,
 			operator_result.workflow_dag_result_id 
@@ -159,11 +159,11 @@ func (*operatorResultReader) GetStatusByDAGResultAndArtifactBatch(
 	artifactIDs []uuid.UUID,
 	DB database.Database,
 ) ([]views.OperatorResultStatus, error) {
-	// Get all unique artifact_ids, execution_state, workflow_dag_result_id for all `workflow_dag_result_id`s
-	// in `workflowDagResultIds` and `artifact_ids`s in `artifactIds`.
+	// Get all unique artifact_id, execution_state, workflow_dag_result_id for all `workflow_dag_result_id`s
+	// in `workflowDagResultIds` and `artifact_id`s in `artifactIds`.
 	query := fmt.Sprintf(
 		`SELECT DISTINCT 
-			workflow_dag_edge.to_id AS artifact_ids,
+			workflow_dag_edge.to_id AS artifact_id,
 			operator_result.execution_state as metadata,
 			operator_result.workflow_dag_result_id,
 			NULL AS operator_name  

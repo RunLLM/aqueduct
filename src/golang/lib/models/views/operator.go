@@ -18,7 +18,7 @@ type LoadOperator struct {
 
 // LoadOperatorSpec is a wrapper around a Load Operator's spec and other metadata
 type LoadOperatorSpec struct {
-	ArtifactID   uuid.UUID     `db:"artifact_ids" json:"artifact_ids"`
+	ArtifactID   uuid.UUID     `db:"artifact_id" json:"artifact_id"`
 	ArtifactName string        `db:"artifact_name" json:"artifact_name"`
 	OperatorID   uuid.UUID     `db:"load_operator_id" json:"load_operator_id"`
 	WorkflowName string        `db:"workflow_name" json:"workflow_name"`
