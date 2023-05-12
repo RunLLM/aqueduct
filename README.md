@@ -46,7 +46,7 @@ vicuna = aq.llm_op('vicuna_7b', engine='eks-us-east-2')
 features = vicuna(
     raw_logs,
     { 
-        prompt: 
+        "prompt": 
         "Turn this log entry into a CSV: {text}" 
     }
 )

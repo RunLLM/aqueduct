@@ -2,8 +2,13 @@ import { Checkbox, FormControlLabel } from '@mui/material';
 import Box from '@mui/material/Box';
 import React from 'react';
 import { useEffect, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
+import * as Yup from 'yup';
 
-import { KubernetesConfig } from '../../../utils/integrations';
+import {
+  IntegrationDialogProps,
+  KubernetesConfig,
+} from '../../../utils/integrations';
 import { apiAddress } from '../../hooks/useAqueductConsts';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
@@ -13,30 +18,28 @@ const Placeholders: KubernetesConfig = {
   use_same_cluster: 'false',
 };
 
-type Props = {
-  onUpdateField: (field: keyof KubernetesConfig, value: string) => void;
-  value?: KubernetesConfig;
-  apiKey: string;
-};
-
-export const KubernetesDialog: React.FC<Props> = ({
-  onUpdateField,
-  value,
-  apiKey,
+export const KubernetesDialog: React.FC<IntegrationDialogProps> = ({
+  editMode = false,
+  user,
 }) => {
-  const [inK8sCluster, setInK8sCluster] = useState(false);
-  useEffect(() => {
-    if (!value?.use_same_cluster) {
-      onUpdateField('use_same_cluster', 'false');
-    }
-  }, [apiKey, onUpdateField, value?.use_same_cluster]);
+  const { register, setValue, getValues } = useFormContext();
+  const use_same_cluster = getValues('use_same_cluster');
 
+  register('use_same_cluster');
+
+  useEffect(() => {
+    setValue('use_same_cluster', 'false');
+  }, []);
+
+  const [inK8sCluster, setInK8sCluster] = useState(false);
+
+  // TODO: https://linear.app/aqueducthq/issue/ENG-2964/move-k8s-use-same-cluster-request-to-rtkquery
   useEffect(() => {
     const fetchEnvironment = async () => {
       const environmentResponse = await fetch(`${apiAddress}/api/environment`, {
         method: 'GET',
         headers: {
-          'api-key': apiKey,
+          'api-key': user.apiKey,
         },
       });
 
@@ -44,8 +47,10 @@ export const KubernetesDialog: React.FC<Props> = ({
       setInK8sCluster(responseBody['inK8sCluster']);
     };
 
-    fetchEnvironment().catch(console.error);
-  }, [apiKey]);
+    if (user) {
+      fetchEnvironment().catch(console.error);
+    }
+  }, [user]);
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -54,9 +59,9 @@ export const KubernetesDialog: React.FC<Props> = ({
           label="Use the same Kubernetes cluster that the server is running on."
           control={
             <Checkbox
-              checked={value?.use_same_cluster === 'true'}
+              checked={use_same_cluster === 'true'}
               onChange={(event) =>
-                onUpdateField(
+                setValue(
                   'use_same_cluster',
                   event.target.checked ? 'true' : 'false'
                 )
@@ -67,37 +72,40 @@ export const KubernetesDialog: React.FC<Props> = ({
       )}
 
       <IntegrationTextInputField
+        name="kubeconfig_path"
         spellCheck={false}
-        required={!(value?.use_same_cluster === 'true')}
+        required={!(use_same_cluster === 'true')}
         label="Kubernetes Config Path*"
         description="The path to the kubeconfig file."
         placeholder={Placeholders.kubeconfig_path}
-        onChange={(event) =>
-          onUpdateField('kubeconfig_path', event.target.value)
-        }
-        value={value?.kubeconfig_path ?? ''}
-        disabled={value?.use_same_cluster === 'true'}
+        onChange={(event) => setValue('kubeconfig_path', event.target.value)}
+        disabled={use_same_cluster === 'true'}
       />
 
       <IntegrationTextInputField
+        name="cluster_name"
         spellCheck={false}
-        required={!(value?.use_same_cluster === 'true')}
+        required={!(use_same_cluster === 'true')}
         label="Cluster Name*"
         description="The name of the cluster that will be used."
         placeholder={Placeholders.cluster_name}
-        onChange={(event) => onUpdateField('cluster_name', event.target.value)}
-        value={value?.cluster_name ?? ''}
-        disabled={value?.use_same_cluster === 'true'}
+        onChange={(event) => setValue('cluster_name', event.target.value)}
+        disabled={use_same_cluster === 'true'}
       />
     </Box>
   );
 };
 
-export function isK8sConfigComplete(config: KubernetesConfig): boolean {
-  if (config.use_same_cluster !== 'true') {
-    return !!config.kubeconfig_path && !!config.cluster_name;
-  }
-
-  // If the user configures to run compute from within the same k8s cluster, we don't need parameters above.
-  return true;
+export function getKubernetesValidationSchema() {
+  return Yup.object().shape({
+    use_same_cluster: Yup.string(),
+    kubeconfig_path: Yup.string().when('use_same_cluster', {
+      is: 'false',
+      then: Yup.string().required('Please enter a kubeconfig path'),
+    }),
+    cluster_name: Yup.string().when('use_same_cluster', {
+      is: 'false',
+      then: Yup.string().required('Please enter a cluster name'),
+    }),
+  });
 }
