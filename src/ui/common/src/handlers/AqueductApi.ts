@@ -64,6 +64,26 @@ import {
   NodeOperatorGetResponse,
 } from './v2/NodeOperatorGet';
 import {
+  nodeCheckResultContentGetQuery,
+  NodeCheckResultContentGetRequest,
+  NodeCheckResultContentGetResponse,
+} from './v2/NodeCheckResultContentGet';
+import {
+  nodeCheckGetQuery,
+  NodeCheckGetRequest,
+  NodeCheckGetResponse,
+} from './v2/NodeCheckGet';
+import {
+  nodeMetricResultContentGetQuery,
+  NodeMetricResultContentGetRequest,
+  NodeMetricResultContentGetResponse,
+} from './v2/NodeMetricResultContentGet';
+import {
+  nodeMetricGetQuery,
+  NodeMetricGetRequest,
+  NodeMetricGetResponse,
+} from './v2/NodeMetricGet';
+import {
   nodesGetQuery,
   NodesGetRequest,
   NodesGetResponse,
@@ -170,6 +190,34 @@ export const aqueductApi = createApi({
       query: (req) => nodeOperatorContentGetQuery(req),
       transformErrorResponse,
     }),
+    nodeMetricGet: builder.query<
+      NodeMetricGetResponse,
+      NodeMetricGetRequest
+    >({
+      query: (req) => nodeMetricGetQuery(req),
+      transformErrorResponse,
+    }),
+    nodeMetricResultContentGet: builder.query<
+      NodeMetricResultContentGetResponse,
+      NodeMetricResultContentGetRequest
+    >({
+      query: (req) => nodeMetricResultContentGetQuery(req),
+      transformErrorResponse,
+    }),
+    nodeCheckGet: builder.query<
+      NodeCheckGetResponse,
+      NodeCheckGetRequest
+    >({
+      query: (req) => nodeCheckGetQuery(req),
+      transformErrorResponse,
+    }),
+    nodeCheckResultContentGet: builder.query<
+      NodeCheckResultContentGetResponse,
+      NodeCheckResultContentGetRequest
+    >({
+      query: (req) => nodeCheckResultContentGetQuery(req),
+      transformErrorResponse,
+    }),
     nodesGet: builder.query<NodesGetResponse, NodesGetRequest>({
       query: (req) => nodesGetQuery(req),
       transformErrorResponse,
@@ -213,6 +261,10 @@ export const {
   useNodeArtifactResultsGetQuery,
   useNodeOperatorGetQuery,
   useNodeOperatorContentGetQuery,
+  useNodeMetricGetQuery,
+  useNodeMetricResultContentGetQuery,
+  useNodeCheckGetQuery,
+  useNodeCheckResultContentGetQuery,
   useNodesGetQuery,
   useNodesResultsGetQuery,
   useWorkflowGetQuery,

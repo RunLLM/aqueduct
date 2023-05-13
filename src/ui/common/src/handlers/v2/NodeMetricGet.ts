@@ -1,18 +1,10 @@
 // This file should map exactly to
 // src/golang/cmd/server/handler/v2/node_metric_get.go
 
-import { APIKeyParameter } from '../parameters/Header';
-import {
-  DagIdParameter,
-  NodeIdParameter,
-  WorkflowIdParameter,
-} from '../parameters/Path';
 import { MergedNodeResponse } from '../responses/Node';
+import { NodeArtifactGetRequest } from './NodeArtifactGet';
 
-export type NodeMetricGetRequest = APIKeyParameter &
-  DagIdParameter &
-  NodeIdParameter &
-  WorkflowIdParameter;
+export type NodeMetricGetRequest = NodeArtifactGetRequest;
 
 export type NodeMetricGetResponse = MergedNodeResponse;
 

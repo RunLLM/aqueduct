@@ -1,28 +1,15 @@
 // This file should map exactly to
-// src/golang/cmd/server/handler/v2/node_artifact_result_content_get.go
+// src/golang/cmd/server/handler/v2/node_check_result_content_get.go
 
-import { APIKeyParameter } from '../parameters/Header';
-import {
-  DagIdParameter,
-  NodeIdParameter,
-  NodeResultIdParameter,
-  WorkflowIdParameter,
-} from '../parameters/Path';
+import { NodeArtifactResultContentGetRequest, NodeArtifactResultContentGetResponse } from './NodeArtifactResultContentGet';
 
-export type NodeArtifactResultContentGetRequest = APIKeyParameter &
-  DagIdParameter &
-  NodeIdParameter &
-  WorkflowIdParameter &
-  NodeResultIdParameter;
+export type NodeCheckResultContentGetRequest = NodeArtifactResultContentGetRequest;
 
-export type NodeArtifactResultContentGetResponse = {
-  is_downsampled: boolean;
-  content: string;
-};
+export type NodeCheckResultContentGetResponse = NodeArtifactResultContentGetResponse;
 
-export const nodeArtifactResultContentGetQuery = (
-  req: NodeArtifactResultContentGetRequest
+export const nodeCheckResultContentGetQuery = (
+  req: NodeCheckResultContentGetRequest
 ) => ({
-  url: `workflow/${req.workflowId}/dag/${req.dagId}/node/artifact/${req.nodeId}/result/${req.nodeResultId}/content`,
+  url: `workflow/${req.workflowId}/dag/${req.dagId}/node/check/${req.nodeId}/result/${req.nodeResultId}/content`,
   headers: { 'api-key': req.apiKey },
 });

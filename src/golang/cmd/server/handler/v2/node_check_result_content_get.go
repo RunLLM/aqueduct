@@ -25,7 +25,7 @@ const (
 // This file should map directly to
 // src/ui/common/src/handlers/v2/NodeCheckResultContentGet.tsx
 //
-// Route: /api/v2/workflow/{workflowID}/dag/{dagID}/node/artifact/{nodeID}/result/{nodeResultID}/content
+// Route: /api/v2/workflow/{workflowID}/dag/{dagID}/node/check/{nodeID}/result/{nodeResultID}/content
 // Method: GET
 // Params:
 //	`workflowID`: ID for `workflow` object
@@ -39,13 +39,14 @@ const (
 //	Body:
 //		`response.NodeContent`
 
-type NodeArtifactResultContentGetHandler struct {
+type NodeCheckResultContentGetHandler struct {
 	handler.GetHandler
 
 	Database database.Database
 
 	WorkflowRepo       repos.Workflow
 	DAGRepo            repos.DAG
+	OperatorRepo repos.Operator
 	ArtifactRepo       repos.Artifact
 	ArtifactResultRepo repos.ArtifactResult
 }
@@ -63,11 +64,11 @@ type nodeResultGetResponse struct {
 	Content       []byte `json:"content"`
 }
 
-func (*NodeArtifactResultContentGetHandler) Name() string {
-	return "NodeArtifactResultContentGet"
+func (*NodeCheckResultContentGetHandler) Name() string {
+	return "NodeCheckResultContentGet"
 }
 
-func (h *NodeArtifactResultContentGetHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *NodeCheckResultContentGetHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
@@ -102,7 +103,7 @@ func (h *NodeArtifactResultContentGetHandler) Prepare(r *http.Request) (interfac
 	}, http.StatusOK, nil
 }
 
-func (h *NodeArtifactResultContentGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+func (h *NodeCheckResultContentGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*nodeResultGetArgs)
 	emptyResp := &nodeResultGetResponse{}
 
@@ -115,7 +116,12 @@ func (h *NodeArtifactResultContentGetHandler) Perform(ctx context.Context, inter
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow dag.")
 	}
 
-	dbArtifact, err := h.ArtifactRepo.Get(ctx, args.nodeID, h.Database)
+	dbMergedNode, err := h.OperatorRepo.GetMergedNode(ctx, args.nodeID, h.Database)
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading check node.")
+	}
+
+	dbArtifact, err := h.ArtifactRepo.Get(ctx, dbMergedNode.ArtifactID, h.Database)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving artifact result.")
 	}
@@ -172,7 +178,7 @@ func (h *NodeArtifactResultContentGetHandler) Perform(ctx context.Context, inter
 // 1: "metadata" contains a json serialized blob of artifact result metadata.
 // 2: "data" contains the artifact result data blob generated the serialization method
 // specified in the metadata field.
-func (*NodeArtifactResultContentGetHandler) SendResponse(w http.ResponseWriter, interfaceResp interface{}) {
+func (*NodeCheckResultContentGetHandler) SendResponse(w http.ResponseWriter, interfaceResp interface{}) {
 	resp := interfaceResp.(*nodeResultGetResponse)
 	multipartWriter := multipart.NewWriter(w)
 	defer multipartWriter.Close()
