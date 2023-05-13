@@ -23,7 +23,7 @@ const (
 )
 
 // This file should map directly to
-// src/ui/common/src/handlers/v2/NodeArtifactResultContentGet.tsx
+// src/ui/common/src/handlers/v2/NodeMetricResultContentGet.tsx
 //
 // Route: /api/v2/workflow/{workflowID}/dag/{dagID}/node/artifact/{nodeID}/result/{nodeResultID}/content
 // Method: GET

@@ -36,7 +36,9 @@ func NewMergedNodeFromDBObject(dbMergedNode *views.MergedNode) *MergedNode {
 		Description: dbMergedNode.Description,
 		Spec:        dbMergedNode.Spec,
 		Type:        dbMergedNode.Type,
+		// Inputs to the metric operator
 		Inputs:       dbMergedNode.Inputs,
+		// Outputs of the metric artifact
 		Outputs:     dbMergedNode.Outputs,
 	}
 }

@@ -12,40 +12,39 @@ import (
 )
 
 // This file should map directly to
-// src/ui/common/src/handlers/v2/NodeArtifactGet.tsx
+// src/ui/common/src/handlers/v2/NodeCheckGet.tsx
 //
-// Route: /api/v2/workflow/{workflowID}/dag/{dagID}/node/artifact/{nodeID}
+// Route: /api/v2/workflow/{workflowID}/dag/{dagID}/node/check/{nodeID}
 // Method: GET
 // Params:
 //	`workflowID`: ID for `workflow` object
 //  `dagID`: ID for `workflow_dag` object
-//	`nodeID`: ID for operator object
+//	`nodeID`: ID for check operator object
 // Request:
 //	Headers:
 //		`api-key`: user's API Key
 // Response:
 //	Body:
-//		`response.Artifact`
+//		`response.MergedNode`
 
-type NodeArtifactGetHandler struct {
+type NodeCheckGetHandler struct {
 	nodeGetHandler
 	handler.GetHandler
 
 	Database database.Database
 
-	WorkflowRepo repos.Workflow
-	ArtifactRepo repos.Artifact
+	OperatorRepo repos.Operator
 }
 
-func (*NodeArtifactGetHandler) Name() string {
-	return "NodeArtifactGet"
+func (*NodeCheckGetHandler) Name() string {
+	return "NodeCheckGet"
 }
 
-func (h *NodeArtifactGetHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *NodeCheckGetHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	return h.nodeGetHandler.Prepare(r)
 }
 
-func (h *NodeArtifactGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+func (h *NodeCheckGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*nodeGetArgs)
 
 	ok, err := h.WorkflowRepo.ValidateOrg(
@@ -61,11 +60,19 @@ func (h *NodeArtifactGetHandler) Perform(ctx context.Context, interfaceArgs inte
 	if !ok {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
 	}
-
-	dbArtifactNode, err := h.ArtifactRepo.GetNode(ctx, args.nodeID, h.Database)
+	
+	dbOperator, err := h.OperatorRepo.Get(ctx, args.nodeID, h.Database)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading artifact node.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading operator.")
+	}
+	if dbOperator.Spec.Type != CheckType {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Node ID does not belong to a check operator.")
 	}
 
-	return response.NewArtifactFromDBObject(dbArtifactNode), http.StatusOK, nil
+	dbMergedNode, err := h.OperatorRepo.GetMergedNode(ctx, args.nodeID, h.Database)
+	if err != nil {
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading check node.")
+	}
+
+	return response.NewMergedNodeFromDBObject(dbMergedNode), http.StatusOK, nil
 }
