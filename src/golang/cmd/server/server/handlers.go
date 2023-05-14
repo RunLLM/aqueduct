@@ -218,8 +218,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		routes.ListWorkflowObjectsRoute: &handler.ListWorkflowObjectsHandler{
 			Database: s.Database,
 
-			OperatorRepo: s.OperatorRepo,
-			WorkflowRepo: s.WorkflowRepo,
+			OperatorRepo:       s.OperatorRepo,
+			WorkflowRepo:       s.WorkflowRepo,
+			WorkflowDagRepo:    s.DAGRepo,
+			ArtifactResultRepo: s.ArtifactResultRepo,
 		},
 		routes.GetWorkflowRouteV1: &handler.GetWorkflowHandler{
 			Database: s.Database,

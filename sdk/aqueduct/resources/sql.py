@@ -278,6 +278,9 @@ class RelationalDBResource(BaseResource):
             table_name_str = ""
             # Prepend any parameter artifacts.
             artifact_ids = [table_name_artifact.id()] + artifact_ids
+        else:
+            if table_name_str == "":
+                raise InvalidUserArgumentException("Cannot save to an empty table name.")
 
         # Non-tabular data cannot be saved into relational data stores.
         if artifact.type() not in [ArtifactType.UNTYPED, ArtifactType.TABLE]:
