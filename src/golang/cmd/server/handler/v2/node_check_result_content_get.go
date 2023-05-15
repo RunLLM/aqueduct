@@ -17,11 +17,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const (
-	formIsDownsampledField = "is_downsampled"
-	formContentField       = "content"
-)
-
 // This file should map directly to
 // src/ui/common/src/handlers/v2/NodeCheckResultContentGet.tsx
 //
@@ -49,19 +44,6 @@ type NodeCheckResultContentGetHandler struct {
 	OperatorRepo repos.Operator
 	ArtifactRepo       repos.Artifact
 	ArtifactResultRepo repos.ArtifactResult
-}
-
-type nodeResultGetArgs struct {
-	*aq_context.AqContext
-	workflowID   uuid.UUID
-	dagID        uuid.UUID
-	nodeID       uuid.UUID
-	nodeResultID uuid.UUID
-}
-
-type nodeResultGetResponse struct {
-	IsDownsampled bool   `json:"is_downsampled"`
-	Content       []byte `json:"content"`
 }
 
 func (*NodeCheckResultContentGetHandler) Name() string {

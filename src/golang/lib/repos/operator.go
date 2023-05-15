@@ -27,8 +27,14 @@ type operatorReader interface {
 	// GetNode returns the OperatorNode view given the operator ID.
 	GetNode(ctx context.Context, ID uuid.UUID, DB database.Database) (*views.OperatorNode, error)
 
-	// GetNodeBatch returns the OperatorNodes the operator IDs.
+	// GetNodeBatch returns the OperatorNode views given the operator IDs.
 	GetNodeBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]views.OperatorNode, error)
+
+	// GetMergedNode returns the MergedNode view given the operator ID.
+	GetMergedNode(ctx context.Context, ID uuid.UUID, DB database.Database) (*views.MergedNode, error)
+	
+	// GetMergedNodeBatch returns the MergedNode views given the operator IDs.
+	GetMergedNodeBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]views.MergedNode, error)
 
 	// GetBatch returns the Operators with IDs.
 	GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.Operator, error)

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/shared/operator"
 	"github.com/google/uuid"
 )
 
@@ -52,7 +52,7 @@ func MergedNodeColsWithPrefix() string {
 }
 
 func allMergedNodeCols() []string {
-	mergedNodeCols = append(
+	return []string{
 		MergedNodeID,
 		MergedNodeDagID,
 		MergedNodeArtifactID,
@@ -62,7 +62,5 @@ func allMergedNodeCols() []string {
 		MergedNodeType,
 		MergedNodeInputs,
 		MergedNodeOutputs,
-	)
-
-	return mergedNodeCols
+	}
 }

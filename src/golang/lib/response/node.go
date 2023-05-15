@@ -34,7 +34,7 @@ func NewMergedNodeFromDBObject(dbMergedNode *views.MergedNode) *MergedNode {
 		ArtifactID: dbMergedNode.ArtifactID,
 		Name:        dbMergedNode.Name,
 		Description: dbMergedNode.Description,
-		Spec:        dbMergedNode.Spec,
+		Spec:        &dbMergedNode.Spec,
 		Type:        dbMergedNode.Type,
 		// Inputs to the metric operator
 		Inputs:       dbMergedNode.Inputs,
@@ -65,7 +65,7 @@ type MergedNodeResult struct {
 }
 
 func NewMergedNodeResultFromDBObject(
-	dbMergedNodeResult *models.MergedNodeResult,
+	dbMergedNodeResult *views.MergedNodeResult,
 	content *string,
 ) *MergedNodeResult {
 	result := &MergedNodeResult{
@@ -200,15 +200,15 @@ func NewOperatorResultFromDBObject(
 type Nodes struct {
 	Operators []Operator `json:"operators"`
 	Artifacts []Artifact `json:"artifacts"`
-	Metrics []MergedNode `json:"metrics"`
-	Checks []MergedNode `json:"checks"`
+	// Metrics []MergedNode `json:"metrics"`
+	// Checks []MergedNode `json:"checks"`
 }
 
 func NewNodesFromDBObjects(
 	operatorNodes []views.OperatorNode,
 	artifactNodes []views.ArtifactNode,
-	metricNodes []views.MetricrNode,
-	checkNodes []views.CheckNode,
+	// metricNodes []views.MergedNode,
+	// checkNodes []views.MergedNode,
 ) *Nodes {
 	return &Nodes{
 		Operators: slices.Map(
@@ -223,18 +223,18 @@ func NewNodesFromDBObjects(
 				return *NewArtifactFromDBObject(&node)
 			},
 		),
-		Metrics: slices.Map(
-			metricNodes,
-			func(node views.MetricNode) Metric {
-				return *NewMetricFromDBObject(&node)
-			},
-		),
-		Checks: slices.Map(
-			checkNodes,
-			func(node views.CheckNode) Check {
-				return *NewCheckFromDBObject(&node)
-			},
-		),
+		// Metrics: slices.Map(
+		// 	metricNodes,
+		// 	func(node views.MergedNode) MergedNode {
+		// 		return *NewMergedNodeFromDBObject(&node)
+		// 	},
+		// ),
+		// Checks: slices.Map(
+		// 	checkNodes,
+		// 	func(node views.MergedNode) MergedNode {
+		// 		return *NewMergedNodeFromDBObject(&node)
+		// 	},
+		// ),
 	}
 }
 

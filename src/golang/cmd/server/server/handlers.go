@@ -75,7 +75,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database:           s.Database,
 			WorkflowRepo:       s.WorkflowRepo,
 			DAGRepo:            s.DAGRepo,
-			OperatorRepo repos.Operator
+			OperatorRepo: s.OperatorRepo,
 			ArtifactRepo:       s.ArtifactRepo,
 			ArtifactResultRepo: s.ArtifactResultRepo,
 		},
@@ -88,7 +88,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database:           s.Database,
 			WorkflowRepo:       s.WorkflowRepo,
 			DAGRepo:            s.DAGRepo,
-			OperatorRepo repos.Operator
+			OperatorRepo: s.OperatorRepo,
 			ArtifactRepo:       s.ArtifactRepo,
 			ArtifactResultRepo: s.ArtifactResultRepo,
 		},

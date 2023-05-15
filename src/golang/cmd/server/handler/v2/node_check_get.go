@@ -33,6 +33,7 @@ type NodeCheckGetHandler struct {
 
 	Database database.Database
 
+	WorkflowRepo       repos.Workflow
 	OperatorRepo repos.Operator
 }
 
@@ -65,7 +66,7 @@ func (h *NodeCheckGetHandler) Perform(ctx context.Context, interfaceArgs interfa
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading operator.")
 	}
-	if dbOperator.Spec.Type != CheckType {
+	if dbOperator.Spec.IsCheck() {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Node ID does not belong to a check operator.")
 	}
 
