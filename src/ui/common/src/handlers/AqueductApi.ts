@@ -19,6 +19,10 @@ import {
   DagResultsGetResponse,
 } from './v2/DagResultsGet';
 import {
+  environmentGetQuery,
+  EnvironmentGetRequest,
+} from './v2/EnvironmentGet';
+import {
   integrationOperatorsGetQuery,
   IntegrationOperatorsGetRequest,
   IntegrationOperatorsGetResponse,
@@ -103,7 +107,6 @@ import {
   WorkflowsGetRequest,
   WorkflowsGetResponse,
 } from './v2/WorkflowsGet';
-import { EnvironmentPlugin } from 'webpack';
 
 const { createApi, fetchBaseQuery } = ((rtkQueryRaw as any).default ??
   rtkQueryRaw) as typeof rtkQueryRaw;
