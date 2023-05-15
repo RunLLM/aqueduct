@@ -24,7 +24,7 @@ export const CondaDialog: React.FC<IntegrationDialogProps> = ({
         required={true}
         label="Name*"
         description="Provide a unique name to refer to this integration."
-        placeholder={'my_kubernetes_integration'}
+        placeholder={'This placeholder should be overwritten.'}
         onChange={(event) => {
           setValue('name', event.target.value);
         }}

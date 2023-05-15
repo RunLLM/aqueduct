@@ -77,7 +77,7 @@ func (h *DeleteIntegrationHandler) Prepare(r *http.Request) (interface{}, int, e
 	}
 
 	// Built-in resources cannot be deleted.
-	if integrationObject.Service == shared.Aqueduct || integrationObject.Service == shared.Filesystem || (integrationObject.Name == shared.DemoDbIntegrationName && integrationObject.Service == shared.Sqlite) {
+	if shared.IsBuiltinIntegration(integrationObject.Name, integrationObject.Service) {
 		return nil, http.StatusBadRequest, errors.New("Cannot delete built-in resources.")
 	}
 
