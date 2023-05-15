@@ -97,7 +97,17 @@ func RunSparkImage(
 	stderr := &bytes.Buffer{}
 	cmd.Stdout = stdout
 	cmd.Stderr = stderr
+	log.Info(fmt.Sprintf("DEPENDENCIES=%s", dependencyList))
+	log.Info(fmt.Sprintf("ENV_FILE_NAME=%s", envFileName))
+	log.Info(fmt.Sprintf("AWS_ACCESS_KEY_ID=%s", accessKeyID))
+	log.Info(fmt.Sprintf("AWS_SECRET_ACCESS_KEY=%s", secretAccessKey))
+	log.Info(fmt.Sprintf("AWS_REGION=%s", region))
+	log.Info(fmt.Sprintf("S3_BUCKET=%s", bucket))
+	log.Info(fmt.Sprintf("VERSION_TAG=\"%s\"", config.VersionTag()))
+	log.Info(cmd.String())
 	err := cmd.Run()
+	log.Info(stdout.String())
+	log.Info(stderr.String())
 	if err != nil {
 		log.Info(stdout.String())
 		log.Info(stderr.String())
