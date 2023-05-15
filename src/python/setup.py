@@ -3,14 +3,20 @@ from pathlib import Path
 
 from setuptools import find_packages, setup
 
+version = open("version").read()
+if not version:
+    raise Exception("Version file must contain a valid version string.")
+
 install_requires = open("requirements.txt").read().strip().split("\n")
+# We expect the SDK version to be always consistent with the executor version
+install_requires.append(f"aqueduct-sdk=={version}")
 
 readme_path = Path(os.environ["PWD"], "../../README.md")
 long_description = open(readme_path).read()
 
 setup(
     name="aqueduct-ml",
-    version="0.2.12",
+    version=version,
     install_requires=install_requires,
     scripts=["bin/aqueduct"],
     packages=find_packages(),

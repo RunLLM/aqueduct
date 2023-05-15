@@ -2,6 +2,7 @@ import importlib
 import json
 import os
 import shutil
+import subprocess
 import sys
 import tracemalloc
 import uuid
@@ -272,6 +273,8 @@ def execute_function_spec(
     exec_state = ExecutionState(user_logs=Logs())
     storage = parse_storage(spec.storage_config)
     try:
+        check_package_version_mismatch()
+
         validate_spec(spec)
 
         # Read the input data from intermediate storage.
@@ -449,3 +452,18 @@ def run_with_setup(spec: FunctionSpec) -> None:
         os.system("{} -m pip install -r {}".format(sys.executable, requirements_path))
 
     run(spec)
+
+
+def check_package_version_mismatch() -> None:
+    expected_version = os.environ.get("AQUEDUCT_EXPECTED_VERSION")
+    if expected_version:
+        aqueduct_version = subprocess.check_output(["aqueduct", "version"]).decode("utf-8").strip()
+
+        print(
+            f"Comparing Aqueduct version ({aqueduct_version}) to expected version ({expected_version})"
+        )
+        if aqueduct_version != expected_version:
+            raise ExecFailureException(
+                failure_type=FailureType.USER_FATAL,
+                tip=f"Aqueduct version ({aqueduct_version}) does not match expected version ({expected_version})",
+            )

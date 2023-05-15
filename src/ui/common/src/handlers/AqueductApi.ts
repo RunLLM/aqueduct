@@ -4,6 +4,11 @@ import { FetchBaseQueryError } from '@reduxjs/toolkit/query/react';
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import { dagGetQuery, DagGetRequest, DagGetResponse } from './v2/DagGet';
 import {
+  dagOperatorsGetQuery,
+  DagOperatorsGetRequest,
+  DagOperatorsGetResponse,
+} from './v2/DagOperatorsGet';
+import {
   dagResultGetQuery,
   DagResultGetRequest,
   DagResultGetResponse,
@@ -13,6 +18,21 @@ import {
   DagResultsGetRequest,
   DagResultsGetResponse,
 } from './v2/DagResultsGet';
+import {
+  integrationOperatorsGetQuery,
+  IntegrationOperatorsGetRequest,
+  IntegrationOperatorsGetResponse,
+} from './v2/IntegrationOperatorsGet';
+import {
+  integrationsWorkflowsGetQuery,
+  IntegrationsWorkflowsGetRequest,
+  IntegrationsWorkflowsGetResponse,
+} from './v2/IntegrationsWorkflowsGet';
+import {
+  integrationWorkflowsGetQuery,
+  IntegrationWorkflowsGetRequest,
+  IntegrationWorkflowsGetResponse,
+} from './v2/IntegrationWorkflowsGet';
 import {
   storageMigrationListQuery,
   storageMigrationListRequest,
@@ -44,6 +64,26 @@ import {
   NodeOperatorGetResponse,
 } from './v2/NodeOperatorGet';
 import {
+  nodeCheckResultContentGetQuery,
+  NodeCheckResultContentGetRequest,
+  NodeCheckResultContentGetResponse,
+} from './v2/NodeCheckResultContentGet';
+import {
+  nodeCheckGetQuery,
+  NodeCheckGetRequest,
+  NodeCheckGetResponse,
+} from './v2/NodeCheckGet';
+import {
+  nodeMetricResultContentGetQuery,
+  NodeMetricResultContentGetRequest,
+  NodeMetricResultContentGetResponse,
+} from './v2/NodeMetricResultContentGet';
+import {
+  nodeMetricGetQuery,
+  NodeMetricGetRequest,
+  NodeMetricGetResponse,
+} from './v2/NodeMetricGet';
+import {
   nodesGetQuery,
   NodesGetRequest,
   NodesGetResponse,
@@ -58,7 +98,15 @@ import {
   WorkflowGetRequest,
   WorkflowGetResponse,
 } from './v2/WorkflowGet';
+<<<<<<< HEAD
 import { workflowsGetQuery, WorkflowsGetRequest, WorkflowsGetResponse } from './v2/WorkflowsGet';
+=======
+import {
+  workflowsGetQuery,
+  WorkflowsGetRequest,
+  WorkflowsGetResponse,
+} from './v2/WorkflowsGet';
+>>>>>>> c29c6299ebba625f19931e934b527e28b752b34a
 
 const { createApi, fetchBaseQuery } = ((rtkQueryRaw as any).default ??
   rtkQueryRaw) as typeof rtkQueryRaw;
@@ -75,12 +123,40 @@ export const aqueductApi = createApi({
       query: (req) => dagGetQuery(req),
       transformErrorResponse,
     }),
+    dagOperatorsGet: builder.query<
+      DagOperatorsGetResponse,
+      DagOperatorsGetRequest
+    >({
+      query: (req) => dagOperatorsGetQuery(req),
+      transformErrorResponse,
+    }),
     dagResultGet: builder.query<DagResultGetResponse, DagResultGetRequest>({
       query: (req) => dagResultGetQuery(req),
       transformErrorResponse,
     }),
     dagResultsGet: builder.query<DagResultsGetResponse, DagResultsGetRequest>({
       query: (req) => dagResultsGetQuery(req),
+      transformErrorResponse,
+    }),
+    integrationOperatorsGet: builder.query<
+      IntegrationOperatorsGetResponse,
+      IntegrationOperatorsGetRequest
+    >({
+      query: (req) => integrationOperatorsGetQuery(req),
+      transformErrorResponse,
+    }),
+    integrationWorkflowsGet: builder.query<
+      IntegrationWorkflowsGetResponse,
+      IntegrationWorkflowsGetRequest
+    >({
+      query: (req) => integrationWorkflowsGetQuery(req),
+      transformErrorResponse,
+    }),
+    integrationsWorkflowsGet: builder.query<
+      IntegrationsWorkflowsGetResponse,
+      IntegrationsWorkflowsGetRequest
+    >({
+      query: (req) => integrationsWorkflowsGetQuery(req),
       transformErrorResponse,
     }),
     nodeArtifactGet: builder.query<
@@ -118,6 +194,34 @@ export const aqueductApi = createApi({
       query: (req) => nodeOperatorContentGetQuery(req),
       transformErrorResponse,
     }),
+    nodeMetricGet: builder.query<
+      NodeMetricGetResponse,
+      NodeMetricGetRequest
+    >({
+      query: (req) => nodeMetricGetQuery(req),
+      transformErrorResponse,
+    }),
+    nodeMetricResultContentGet: builder.query<
+      NodeMetricResultContentGetResponse,
+      NodeMetricResultContentGetRequest
+    >({
+      query: (req) => nodeMetricResultContentGetQuery(req),
+      transformErrorResponse,
+    }),
+    nodeCheckGet: builder.query<
+      NodeCheckGetResponse,
+      NodeCheckGetRequest
+    >({
+      query: (req) => nodeCheckGetQuery(req),
+      transformErrorResponse,
+    }),
+    nodeCheckResultContentGet: builder.query<
+      NodeCheckResultContentGetResponse,
+      NodeCheckResultContentGetRequest
+    >({
+      query: (req) => nodeCheckResultContentGetQuery(req),
+      transformErrorResponse,
+    }),
     nodesGet: builder.query<NodesGetResponse, NodesGetRequest>({
       query: (req) => nodesGetQuery(req),
       transformErrorResponse,
@@ -149,14 +253,22 @@ export const aqueductApi = createApi({
 
 export const {
   useDagGetQuery,
+  useDagOperatorsGetQuery,
   useDagResultGetQuery,
   useDagResultsGetQuery,
+  useIntegrationOperatorsGetQuery,
+  useIntegrationWorkflowsGetQuery,
+  useIntegrationsWorkflowsGetQuery,
   useStorageMigrationListQuery,
   useNodeArtifactGetQuery,
   useNodeArtifactResultContentGetQuery,
   useNodeArtifactResultsGetQuery,
   useNodeOperatorGetQuery,
   useNodeOperatorContentGetQuery,
+  useNodeMetricGetQuery,
+  useNodeMetricResultContentGetQuery,
+  useNodeCheckGetQuery,
+  useNodeCheckResultContentGetQuery,
   useNodesGetQuery,
   useNodesResultsGetQuery,
   useWorkflowGetQuery,

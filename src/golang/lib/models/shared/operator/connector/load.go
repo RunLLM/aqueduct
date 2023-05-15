@@ -37,7 +37,7 @@ func (l *Load) UnmarshalJSON(data []byte) error {
 	// Initialize correct destination struct for this operator's Load.Parameters
 	var params LoadParams
 	switch l.Service {
-	case shared.Postgres, shared.AqueductDemo:
+	case shared.Postgres:
 		params = &PostgresLoadParams{}
 	case shared.Snowflake:
 		params = &SnowflakeLoadParams{}

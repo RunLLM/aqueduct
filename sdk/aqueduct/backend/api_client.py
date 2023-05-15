@@ -17,11 +17,12 @@ from aqueduct.error import (
 )
 from aqueduct.logger import logger
 from aqueduct.models.dag import DAG
-from aqueduct.models.integration import Integration, IntegrationInfo
+from aqueduct.models.integration import BaseResource, ResourceInfo
 from aqueduct.models.operators import ParamSpec
 from aqueduct.models.response_models import (
     DeleteWorkflowResponse,
     DynamicEngineStatusResponse,
+    GetImageURLResponse,
     GetVersionResponse,
     GetWorkflowDagResultResponse,
     GetWorkflowResponse,
@@ -35,7 +36,7 @@ from aqueduct.models.response_models import (
 from aqueduct.utils.serialization import deserialize
 from pkg_resources import get_distribution, parse_version
 
-from ..integrations.connect_config import DynamicK8sConfig, IntegrationConfig
+from ..resources.connect_config import DynamicK8sConfig, ResourceConfig
 from .response_helpers import (
     _construct_preview_response,
     _handle_preview_resp,
@@ -78,6 +79,8 @@ class APIClient:
 
     GET_DYNAMIC_ENGINE_STATUS_ROUTE = "/api/integration/dynamic-engine/status"
     EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE = "/api/integration/dynamic-engine/%s/edit"
+
+    GET_IMAGE_URL_ROUTE = "/api/integration/container-registry/url"
 
     # Auth header
     API_KEY_HEADER = "api-key"
@@ -145,8 +148,9 @@ class APIClient:
     def _check_config(self) -> None:
         if not self.configured:
             raise Exception(
-                "API client has not been configured, please complete the configuration \
-                by initializing an Aqueduct client with the api key and the server address."
+                "API client has not been configured, please complete the configuration "
+                "by initializing an Aqueduct client via: "
+                "`client = aqueduct.Client(api_key, aqueduct_address)`"
             )
 
     def _generate_auth_headers(self) -> Dict[str, str]:
@@ -219,7 +223,7 @@ class APIClient:
         self._check_config()
         return self.HTTPS_PREFIX if self.use_https else self.HTTP_PREFIX
 
-    def list_integrations(self) -> Dict[str, IntegrationInfo]:
+    def list_resources(self) -> Dict[str, ResourceInfo]:
         url = self.construct_full_url(self.LIST_INTEGRATIONS_ROUTE)
         headers = self._generate_auth_headers()
         resp = requests.get(url, headers=headers)
@@ -230,7 +234,7 @@ class APIClient:
             )
 
         return {
-            integration_info["name"]: IntegrationInfo(**integration_info)
+            integration_info["name"]: ResourceInfo(**integration_info)
             for integration_info in resp.json()
         }
 
@@ -261,7 +265,7 @@ class APIClient:
         return [x for x in resp.json()["object_names"]]
 
     def connect_integration(
-        self, name: str, service: Union[str, ServiceType], config: IntegrationConfig
+        self, name: str, service: Union[str, ServiceType], config: ResourceConfig
     ) -> None:
         integration_service = service
         if isinstance(integration_service, ServiceType):
@@ -506,7 +510,7 @@ class APIClient:
     def delete_workflow(
         self,
         flow_id: str,
-        saved_objects_to_delete: DefaultDict[Union[str, Integration], List[SavedObjectUpdate]],
+        saved_objects_to_delete: DefaultDict[Union[str, BaseResource], List[SavedObjectUpdate]],
         force: bool,
     ) -> DeleteWorkflowResponse:
         headers = self._generate_auth_headers()
@@ -577,3 +581,33 @@ class APIClient:
             logger().warning("Artifact result unavailable due to unsuccessful execution.")
 
         return (return_value, execution_status)
+
+    def get_image_url(
+        self,
+        integration_id: str,
+        service: ServiceType,
+        image_name: str,
+    ) -> GetImageURLResponse:
+        """Makes a request against the /api/integration/container-registry/url endpoint.
+
+        Args:
+            integration_id:
+                Container registry integration ID.
+            service:
+                Container registry service type.
+            image_name:
+                Image name to get the URL for.
+
+        Returns:
+            GetImageURLResponse that contains the URL to the image.
+        """
+        headers = self._generate_auth_headers()
+        headers["integration-id"] = integration_id
+        headers["service"] = service.value
+        headers["image-name"] = image_name
+
+        url = self.construct_full_url(self.GET_IMAGE_URL_ROUTE)
+        resp = requests.get(url, headers=headers)
+        self.raise_errors(resp)
+
+        return GetImageURLResponse(**resp.json())

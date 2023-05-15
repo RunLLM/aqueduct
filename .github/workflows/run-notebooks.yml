@@ -3,14 +3,14 @@ name: Run Notebooks
 on:
   workflow_dispatch:
   push:
-    branches: [ main ]
+    branches: [main]
     paths:
-      - 'src/golang/**'
-      - 'src/python/**'
-      - 'sdk/aqueduct/**'
+      - "src/golang/**"
+      - "src/python/**"
+      - "sdk/aqueduct/**"
   pull_request:
     paths:
-      - '.github/workflows/run-notebooks.yml'
+      - ".github/workflows/run-notebooks.yml"
       - "examples/churn_prediction/Customer Churn Tutorial.ipynb"
       - "examples/sentiment_analysis/Sentiment Model.ipynb"
       - "examples/diabetes-classifier/Classifying Diabetes Risk.ipynb"
@@ -33,7 +33,7 @@ jobs:
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
         with:
-          python-version: '3.8'
+          python-version: "3.8"
 
       - name: Set up GOPATH variable
         run: echo "GOPATH=$(echo $HOME)" >> $GITHUB_ENV
@@ -117,7 +117,7 @@ jobs:
       - name: Run Imported Function Notebook
         timeout-minutes: 10
         run: python3 examples/run_notebook.py --path "integration_tests/notebook/imported_function.ipynb"
-      
+
       - name: Run Util File Dependency Notebook
         timeout-minutes: 10
         run: python3 examples/run_notebook.py --path "integration_tests/notebook/util_dependency.ipynb"
@@ -133,10 +133,10 @@ jobs:
         uses: ravsamhq/notify-slack-action@v1
         with:
           status: ${{ job.status }}
-          notification_title: ''
-          message_format: '{emoji} *{workflow}* has {status_message}'
-          footer: '{run_url}'
-          notify_when: 'failure,warnings'
-          mention_users: 'U025MDH5KS6,U01JEUX1J2Y,U01J8Q1HUBC'
+          notification_title: ""
+          message_format: "{emoji} *{workflow}* has {status_message}"
+          footer: "{run_url}"
+          notify_when: "failure,warnings"
+          mention_users: "U025MDH5KS6,U01JEUX1J2Y,U01J8Q1HUBC"
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}

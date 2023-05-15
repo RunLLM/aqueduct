@@ -1,11 +1,28 @@
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
-import { AqueductDocsLink } from './docs';
+import { AWSCredentialType, ExecState } from './shared';
 
-export const aqueductDemoName = 'aqueduct_demo';
+export const aqueductDemoName = 'Demo';
+export const aqueductComputeName = 'Aqueduct Server';
+export const aqueductStorageName = 'Filesystem';
 
-export function isDemo(integration: Integration): boolean {
-  return integration.name === aqueductDemoName;
+export function isBuiltinIntegration(integration: Integration): boolean {
+  return (
+    integration.name === aqueductDemoName ||
+    integration.name == aqueductComputeName ||
+    integration.name == aqueductStorageName
+  );
+}
+
+export function isNotificationIntegration(integration: Integration): boolean {
+  return integration.service == 'Email' || integration.service == 'Slack';
+}
+
+// Certain integrations have no configuration fields to show.
+export function hasConfigFieldsToShow(integration: Integration): boolean {
+  return (
+    integration.service !== 'Conda' && integration.name !== aqueductComputeName
+  );
 }
 
 export type Integration = {
@@ -14,7 +31,7 @@ export type Integration = {
   name: string;
   config: IntegrationConfig;
   createdAt: number;
-  validated: boolean;
+  exec_state: ExecState;
 };
 
 export type CondaConfig = {
@@ -95,12 +112,6 @@ export type SalesforceConfig = {
   instance_url?: string;
   code?: string;
 };
-
-export enum AWSCredentialType {
-  AccessKey = 'access_key',
-  ConfigFilePath = 'config_file_path',
-  ConfigFileContent = 'config_file_content',
-}
 
 export enum DynamicEngineType {
   K8s = 'k8s',
@@ -213,6 +224,19 @@ export type DynamicK8sConfig = {
   max_gpu_node: string;
 };
 
+export type ECRConfig = {
+  type: AWSCredentialType;
+  region: string;
+  access_key_id: string;
+  secret_access_key: string;
+  config_file_path: string;
+  config_file_profile: string;
+};
+
+export type FilesystemConfig = {
+  location: string;
+};
+
 export type IntegrationConfig =
   | PostgresConfig
   | SnowflakeConfig
@@ -235,7 +259,9 @@ export type IntegrationConfig =
   | EmailConfig
   | SlackConfig
   | SparkConfig
-  | AWSConfig;
+  | AWSConfig
+  | MongoDBConfig
+  | FilesystemConfig;
 
 export type Service =
   | 'Aqueduct'
@@ -247,9 +273,7 @@ export type Service =
   | 'MariaDB'
   | 'S3'
   | 'Athena'
-  | 'CSV'
   | 'GCS'
-  | 'Aqueduct Demo'
   | 'Airflow'
   | 'Kubernetes'
   | 'SQLite'
@@ -261,13 +285,22 @@ export type Service =
   | 'Email'
   | 'Slack'
   | 'Spark'
-  | 'AWS';
+  | 'AWS'
+  | 'Amazon'
+  | 'GCP'
+  | 'Azure'
+  | 'ECR'
+  | 'Filesystem';
 
 export type Info = {
   logo: string;
   activated: boolean;
   category: string;
   docs: string;
+  dialog?: React.FC<IntegrationDialogProps>;
+  // TODO: figure out typescript type for yup schema
+  // This may be useful: https://stackoverflow.com/questions/66171196/how-to-use-yups-object-shape-with-typescript
+  validationSchema: any;
 };
 
 export type ServiceInfoMap = {
@@ -319,13 +352,13 @@ const logoBucket =
 const integrationLogosBucket =
   'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations';
 
-const addingIntegrationLink = `${AqueductDocsLink}/integrations/adding-an-integration`;
-
 export const IntegrationCategories = {
   DATA: 'data',
   COMPUTE: 'compute',
   CLOUD: 'cloud',
+  CONTAINER_REGISTRY: 'container_registry',
   NOTIFICATION: 'notification',
+  ARTIFACT_STORAGE: 'artifact_storage',
 };
 
 export const ServiceLogos: ServiceLogo = {
@@ -338,7 +371,6 @@ export const ServiceLogos: ServiceLogo = {
   ['MariaDB']: `${integrationLogosBucket}/mariadb.png`,
   ['S3']: `${integrationLogosBucket}/s3.png`,
   ['GCS']: `${integrationLogosBucket}/google-cloud-storage.png`,
-  ['Aqueduct Demo']: `/assets/aqueduct.png`,
   ['SQLite']: `${integrationLogosBucket}/sqlite-square-icon-256x256.png`,
   ['Athena']: `${integrationLogosBucket}/athena.png`,
   ['Airflow']: `${integrationLogosBucket}/airflow.png`,
@@ -351,138 +383,22 @@ export const ServiceLogos: ServiceLogo = {
   ['Slack']: `${integrationLogosBucket}/slack.png`,
   ['Spark']: `${integrationLogosBucket}/spark-logo-trademark.png`,
   ['AWS']: `${integrationLogosBucket}/aws-logo-trademark.png`,
+  ['GCP']: `${integrationLogosBucket}/gcp.png`,
+  ['Azure']: `${integrationLogosBucket}/azure.png`,
 
   // TODO(ENG-2301): Once task is addressed, remove this duplicate entry.
   ['K8s']: `${integrationLogosBucket}/kubernetes.png`,
+
+  ['ECR']: `${integrationLogosBucket}/ecr.png`,
 };
 
-export const SupportedIntegrations: ServiceInfoMap = {
-  ['Postgres']: {
-    logo: ServiceLogos['Postgres'],
-    activated: true,
-    category: IntegrationCategories.DATA,
-    docs: addingIntegrationLink,
-  },
-  ['Snowflake']: {
-    logo: ServiceLogos['Snowflake'],
-    activated: true,
-    category: IntegrationCategories.DATA,
-    docs: addingIntegrationLink,
-  },
-  ['Redshift']: {
-    logo: ServiceLogos['Redshift'],
-    activated: true,
-    category: IntegrationCategories.DATA,
-    docs: addingIntegrationLink,
-  },
-  ['BigQuery']: {
-    logo: ServiceLogos['BigQuery'],
-    activated: true,
-    category: IntegrationCategories.DATA,
-    docs: `${addingIntegrationLink}/connecting-to-google-bigquery`,
-  },
-  ['MySQL']: {
-    logo: ServiceLogos['MySQL'],
-    activated: true,
-    category: IntegrationCategories.DATA,
-    docs: addingIntegrationLink,
-  },
-  ['MariaDB']: {
-    logo: ServiceLogos['MariaDB'],
-    activated: true,
-    category: IntegrationCategories.DATA,
-    docs: addingIntegrationLink,
-  },
-  ['S3']: {
-    logo: ServiceLogos['S3'],
-    activated: true,
-    category: IntegrationCategories.DATA,
-    docs: `${addingIntegrationLink}/connecting-to-aws-s3`,
-  },
-  ['GCS']: {
-    logo: ServiceLogos['GCS'],
-    activated: true,
-    category: IntegrationCategories.DATA,
-    docs: `${addingIntegrationLink}/connecting-to-google-cloud-storage`,
-  },
-  ['Aqueduct Demo']: {
-    logo: ServiceLogos['Aqueduct'],
-    activated: true,
-    category: IntegrationCategories.DATA,
-    docs: addingIntegrationLink,
-  },
-  ['SQLite']: {
-    logo: ServiceLogos['SQLite'],
-    activated: true,
-    category: IntegrationCategories.DATA,
-    docs: addingIntegrationLink,
-  },
-  ['Athena']: {
-    logo: ServiceLogos['Athena'],
-    activated: true,
-    category: IntegrationCategories.DATA,
-    docs: addingIntegrationLink,
-  },
-  ['Airflow']: {
-    logo: ServiceLogos['Airflow'],
-    activated: true,
-    category: IntegrationCategories.COMPUTE,
-    docs: addingIntegrationLink,
-  },
-  ['Kubernetes']: {
-    logo: ServiceLogos['Kubernetes'],
-    activated: true,
-    category: IntegrationCategories.COMPUTE,
-    docs: `${addingIntegrationLink}/connecting-to-k8s-cluster`,
-  },
-  ['Lambda']: {
-    logo: ServiceLogos['Lambda'],
-    activated: true,
-    category: IntegrationCategories.COMPUTE,
-    docs: `${addingIntegrationLink}/connecting-to-aws-lambda`,
-  },
-  ['MongoDB']: {
-    logo: ServiceLogos['MongoDB'],
-    activated: true,
-    category: IntegrationCategories.DATA,
-    docs: addingIntegrationLink,
-  },
-  ['Conda']: {
-    logo: ServiceLogos['Conda'],
-    activated: true,
-    category: IntegrationCategories.COMPUTE,
-    docs: `${addingIntegrationLink}/connecting-to-conda`,
-  },
-  ['Databricks']: {
-    logo: ServiceLogos['Databricks'],
-    activated: true,
-    category: IntegrationCategories.COMPUTE,
-    docs: `${addingIntegrationLink}/connecting-to-databricks`,
-  },
-  ['Email']: {
-    logo: ServiceLogos['Email'],
-    activated: true,
-    category: IntegrationCategories.NOTIFICATION,
-    docs: `${AqueductDocsLink}/notifications/connecting-to-email`,
-  },
-  ['Slack']: {
-    logo: ServiceLogos['Slack'],
-    activated: true,
-    category: IntegrationCategories.NOTIFICATION,
-    docs: `${AqueductDocsLink}/notifications/connecting-to-slack`,
-  },
-  ['Spark']: {
-    logo: ServiceLogos['Spark'],
-    activated: true,
-    category: IntegrationCategories.COMPUTE,
-    docs: addingIntegrationLink,
-  },
-  ['AWS']: {
-    logo: ServiceLogos['AWS'],
-    activated: true,
-    category: IntegrationCategories.CLOUD,
-    docs: addingIntegrationLink,
-  },
+export type IntegrationDialogProps = {
+  user: UserProfile;
+  editMode?: boolean;
+  onCloseDialog?: () => void;
+  loading: boolean;
+  disabled: boolean;
+  setMigrateStorage?: (migrate: boolean) => void;
 };
 
 // Helper function to format integration service

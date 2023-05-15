@@ -69,7 +69,7 @@ def deploy_flow(name, deploy_fn, api_key, address, data_integration) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--addr", default="localhost:8080")
-    parser.add_argument("--data-integration", default="aqueduct_demo")
+    parser.add_argument("--data-integration", default="Demo")
     parser.add_argument("--api-key", default="")
     # parser.add_argument("-q", "--quiet", action="store_true")
     parser.add_argument("--example-notebooks", action="store_true")

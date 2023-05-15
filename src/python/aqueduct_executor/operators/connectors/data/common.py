@@ -15,7 +15,6 @@ class Name(Enum, metaclass=enums.MetaEnum):
     S3 = "S3"
     ATHENA = "Athena"
     SQLITE = "SQLite"
-    AQUEDUCT_DEMO = "Aqueduct Demo"
     GCS = "GCS"
     MONGO_DB = "MongoDB"
 

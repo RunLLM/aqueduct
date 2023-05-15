@@ -61,7 +61,6 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     MARIADB = "MariaDB"
     SQLSERVER = "SQL Server"
     BIGQUERY = "BigQuery"
-    AQUEDUCTDEMO = "Aqueduct Demo"
     GITHUB = "Github"
     SALESFORCE = "Salesforce"
     GOOGLE_SHEETS = "Google Sheets"
@@ -74,12 +73,14 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     LAMBDA = "Lambda"
     MONGO_DB = "MongoDB"
     CONDA = "Conda"
-    AQUEDUCT_ENGINE = "Aqueduct Engine"
+    AQUEDUCT_ENGINE = "Aqueduct"
     DATABRICKS = "Databricks"
     EMAIL = "Email"
     SLACK = "Slack"
     SPARK = "Spark"
     AWS = "AWS"
+    ECR = "ECR"
+    FILESYSTEM = "Filesystem"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
@@ -92,7 +93,6 @@ class RelationalDBServices(str, Enum, metaclass=MetaEnum):
     MARIADB = "MariaDB"
     SQLSERVER = "SQL Server"
     BIGQUERY = "BigQuery"
-    AQUEDUCTDEMO = "Aqueduct Demo"
     SQLITE = "SQLite"
     ATHENA = "Athena"
 
@@ -262,3 +262,4 @@ class CustomizableResourceType(str, Enum, metaclass=MetaEnum):
     MEMORY = "memory"
     GPU_RESOURCE_NAME = "gpu_resource_name"
     CUDA_VERSION = "cuda_version"
+    USE_LLM = "use_llm"

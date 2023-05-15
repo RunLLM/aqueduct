@@ -6,7 +6,11 @@ import pytest
 # If a disallowed data integration is used, all tests in the file will be skipped.
 from aqueduct.constants.enums import ServiceType
 
+import aqueduct as aq
 from sdk.data_integration_tests.flow_manager import FlowManager
+
+from ..setup_integration import get_aqueduct_config
+from ..shared.flow_helpers import delete_all_flows
 
 allowed_data_integrations_by_file = {
     "relational_test": [
@@ -56,7 +60,15 @@ def flow_manager(client, flow_name, engine):
     data integration tests usually don't care about.
 
     This allows test cases in this suite to import one fixture in order to publish flows,
-    instead of three. Data Integration tests usually don't care about how flows are published,
+    instead of three. Data integration tests usually don't care about how flows are published,
     as it is mostly a mechanism by which data can be saved.
     """
     return FlowManager(client, flow_name, engine)
+
+
+def pytest_sessionfinish(session, exitstatus):
+    # hasattr(session.config, "workerinput") ensures
+    # this only triggers after all workflow finishes.
+    if not hasattr(session.config, "workerinput") and not session.config.getoption("keep_flows"):
+        client = aq.Client(*get_aqueduct_config())
+        delete_all_flows(client)

@@ -31,6 +31,9 @@ def test_handle_bad_op_error(client, data_integration):
         output_artifact.get()
 
 
+@pytest.mark.skip_for_global_lazy_execution(
+    reason="With lazy execution, the value of output_artifact is a list."
+)
 def test_handle_bad_op_with_multiple_outputs(client, data_integration):
     table_artifact = extract(data_integration, DataObject.SENTIMENT)
 

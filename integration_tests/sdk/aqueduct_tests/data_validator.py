@@ -2,7 +2,7 @@ import uuid
 from typing import Any
 
 import pandas as pd
-from aqueduct.models.integration import Integration
+from aqueduct.models.integration import BaseResource
 
 from aqueduct import Client, Flow
 
@@ -15,9 +15,9 @@ class DataValidator:
     """Tests can request an instance of this class as a fixture, and use it to validate published flow runs."""
 
     _client: Client
-    _integration: Integration
+    _integration: BaseResource
 
-    def __init__(self, client: Client, integration: Integration):
+    def __init__(self, client: Client, integration: BaseResource):
         self._client = client
         self._integration = integration
 

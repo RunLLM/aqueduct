@@ -45,13 +45,14 @@ const AddIntegrations: React.FC<Props> = ({
       )}
       <Box sx={{ width: '100%', display: 'flex', flexWrap: 'wrap' }}>
         {Object.entries(supportedIntegrations)
-          .filter(([svc]) => svc !== 'Aqueduct Demo')
+          .filter(([svc]) => svc !== 'Aqueduct')
           .sort(([name1], [name2]) => name1.localeCompare(name2))
           .map(([svc, integration]) => {
             return (
               <AddIntegrationListItem
                 key={svc as string}
                 svc={svc}
+                dialog={integration.dialog}
                 integration={integration}
                 category={category}
                 handleSuccessToastClose={handleSuccessToastClose}
@@ -77,6 +78,7 @@ interface AddIntegrationListItemProps {
   handleSuccessToastClose: () => void;
   setShowSuccessToast: React.Dispatch<React.SetStateAction<Service>>;
   setShowMigrationDialog: React.Dispatch<React.SetStateAction<boolean>>;
+  dialog: React.FC;
 }
 
 const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
@@ -88,6 +90,7 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
   handleSuccessToastClose,
   showSuccessToast,
   setShowSuccessToast,
+  dialog,
 }) => {
   const dispatch: AppDispatch = useDispatch();
   const service = svc as Service;
@@ -103,24 +106,27 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
         setShowDialog(integration.activated);
       }}
       sx={{
-        width: '160px',
-        height: '128px',
+        width: '64px',
+        height: '80px',
         m: 1,
-        px: 2,
-        py: 2,
+        px: 1,
+        py: 1,
         borderRadius: 2,
-        border: `2px solid ${theme.palette.gray['700']}`,
+        //border: `2px solid ${theme.palette.gray['700']}`,
         cursor: integration.activated ? 'pointer' : 'default',
         '&:hover': {
           backgroundColor: integration.activated
             ? theme.palette.gray['300']
             : 'white',
         },
+        boxSizing: 'initial',
+        backgroundColor: '#F8F8F8', // gray/light2
       }}
     >
       <Box
-        width="160px"
-        maxWidth="160px"
+        width="100%"
+        maxWidth="100%"
+        height="48px"
         display="flex"
         flexDirection="column"
         alignItems="center"
@@ -128,15 +134,16 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
         <IntegrationLogo
           service={service}
           activated={integration.activated}
-          size="large"
+          size="medium"
         />
       </Box>
       <Typography
         variant={'body1'}
         align={'center'}
         sx={{
-          marginTop: '16px',
+          marginTop: '8px',
           color: integration.activated ? 'inherit' : 'grey',
+          fontSize: '12px',
         }}
       >
         {service}
@@ -150,6 +157,8 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
         {iconWrapper}
         {showDialog && (
           <IntegrationDialog
+            validationSchema={integration.validationSchema}
+            dialogContent={integration.dialog}
             user={user}
             service={service}
             onSuccess={() => {

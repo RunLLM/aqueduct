@@ -14,7 +14,7 @@ the delay retrieving its status is less than 60s.
 def setup_flow_with_sleep(client: aqueduct.Client, integration_name: str) -> str:
     name = "Test: Flow with Sleep"
     n_runs = 1
-    integration = client.integration(name=integration_name)
+    integration = client.resource(name=integration_name)
 
     @aqueduct.op
     def sleeping_op(df):

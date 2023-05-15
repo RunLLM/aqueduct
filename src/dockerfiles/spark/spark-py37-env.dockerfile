@@ -5,7 +5,7 @@ SHELL [ "/bin/bash", "--login", "-c" ]
 MAINTAINER Aqueduct <hello@aqueducthq.com> version: 0.0.1
 
 USER root
-
+RUN echo "deb http://archive.debian.org/debian stretch main" > /etc/apt/sources.list
 RUN apt-get update && \
   apt-get install wget
 
@@ -25,7 +25,7 @@ RUN	wget --quiet https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip -O aws
     unzip awscliv2.zip && ./aws/install 
 
 RUN conda activate py37_env
-RUN pip install conda-pack aqueduct-ml==0.2.12
+RUN pip install conda-pack aqueduct-ml==0.3.2
 
 COPY ./spark/create-conda-env.sh /
 

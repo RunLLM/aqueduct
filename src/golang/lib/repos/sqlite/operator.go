@@ -93,6 +93,152 @@ const operatorNodeViewSubQuery = `
 	WHERE op_with_outputs.outputs IS NULL
 `
 
+ const mergedNodeViewSubQuery = `
+	WITH
+		operator_node AS (
+			WITH op_with_outputs AS ( -- Aggregate outputs
+				SELECT
+					operator.id AS id,
+					workflow_dag.id AS dag_id,
+					operator.name AS name,
+					operator.description AS description,
+					operator.spec AS spec,
+					operator.execution_environment_id AS execution_environment_id,
+					CAST( json_group_array( -- Group to_ids and idx into one array
+						json_object(
+							'value', workflow_dag_edge.to_id,
+							'idx', workflow_dag_edge.idx
+						)
+					) AS BLOB) AS outputs
+				FROM
+					operator, workflow_dag, workflow_dag_edge
+				WHERE
+					workflow_dag.id = workflow_dag_edge.workflow_dag_id
+					AND operator.id = workflow_dag_edge.from_id
+				GROUP BY
+					workflow_dag.id, operator.id
+			),
+			op_with_inputs AS ( -- Aggregate inputs
+				SELECT
+					operator.id AS id,
+					workflow_dag.id AS dag_id,
+					operator.name AS name,
+					operator.description AS description,
+					operator.spec AS spec,
+					operator.execution_environment_id AS execution_environment_id,
+					CAST( json_group_array( -- Group from_ids and idx into one array
+						json_object(
+							'value', workflow_dag_edge.from_id,
+							'idx', workflow_dag_edge.idx
+						)
+					) AS BLOB) AS inputs
+				FROM
+					operator, workflow_dag, workflow_dag_edge
+				WHERE
+					workflow_dag.id = workflow_dag_edge.workflow_dag_id
+					AND operator.id = workflow_dag_edge.to_id
+				GROUP BY
+					workflow_dag.id, operator.id
+			)
+			SELECT -- A full outer join to include operators without inputs / outputs.
+				op_with_outputs.id AS id,
+				op_with_outputs.dag_id AS dag_id,
+				op_with_outputs.name AS name,
+				op_with_outputs.description AS description,
+				op_with_outputs.spec AS spec,
+				op_with_outputs.execution_environment_id AS execution_environment_id,
+				op_with_outputs.outputs AS outputs,
+				op_with_inputs.inputs AS inputs
+			FROM
+				op_with_outputs LEFT JOIN op_with_inputs
+			ON
+				op_with_outputs.id = op_with_inputs.id
+				AND op_with_outputs.dag_id = op_with_inputs.dag_id
+			UNION ALL
+			SELECT
+				op_with_inputs.id AS id,
+				op_with_inputs.dag_id AS dag_id,
+				op_with_inputs.name AS name,
+				op_with_inputs.description AS description,
+				op_with_inputs.spec AS spec,
+				op_with_inputs.execution_environment_id AS execution_environment_id,
+				op_with_outputs.outputs AS outputs,
+				op_with_inputs.inputs AS inputs
+			FROM
+				op_with_inputs LEFT JOIN op_with_outputs
+			ON
+				op_with_outputs.id = op_with_inputs.id
+				AND op_with_outputs.dag_id = op_with_inputs.dag_id
+			WHERE op_with_outputs.outputs IS NULL
+		), 
+		artifact_node AS (
+			WITH artf_with_outputs AS ( -- Aggregate outputs
+				SELECT
+					artifact.id AS id,
+					workflow_dag.id AS dag_id,
+					artifact.name AS name,
+					artifact.description AS description,
+					artifact.type as type,
+					CAST( json_group_array( -- Group to_ids and idx into one array
+						json_object(
+							'value', workflow_dag_edge.to_id,
+							'idx', workflow_dag_edge.idx
+						)
+					) AS BLOB) AS outputs
+				FROM
+					artifact, workflow_dag, workflow_dag_edge
+				WHERE
+					workflow_dag.id = workflow_dag_edge.workflow_dag_id
+					AND artifact.id = workflow_dag_edge.from_id
+				GROUP BY
+					workflow_dag.id, artifact.id
+			),
+			artf_with_input AS ( -- No need to group as input is unique
+				SELECT
+					artifact.id AS id,
+					workflow_dag.id AS dag_id,
+					artifact.name AS name,
+					artifact.description AS description,
+					artifact.type as type,
+					workflow_dag_edge.from_id AS input
+				FROM
+					artifact, workflow_dag, workflow_dag_edge
+				WHERE
+					workflow_dag.id = workflow_dag_edge.workflow_dag_id
+					AND artifact.id = workflow_dag_edge.to_id
+			)
+			SELECT -- just do input LEFT JOIN outputs as all artifacts have inputs
+				artf_with_input.id AS id,
+				artf_with_input.dag_id AS dag_id,
+				artf_with_input.name AS name,
+				artf_with_input.description AS description,
+				artf_with_input.type AS type,
+				artf_with_outputs.outputs AS outputs,
+				artf_with_input.input AS input
+			FROM
+				artf_with_input LEFT JOIN artf_with_outputs
+			ON
+				artf_with_outputs.id = artf_with_input.id
+				AND artf_with_outputs.dag_id = artf_with_input.dag_id
+		)
+	SELECT 
+		operator_node.id AS id,
+		operator_node.name AS name,
+		operator_node.description AS description,
+		operator_node.spec AS spec,
+		operator_node.execution_environment_id AS execution_environment_id,
+		operator_node.dag_id AS dag_id,
+		operator_node.inputs AS inputs,
+		artifact_node.id AS artifact_id,
+		artifact_node.type AS type,
+		artifact_node.outputs AS outputs
+	FROM 
+		operator_node LEFT JOIN 
+		artifact_node 
+	ON
+		artifact_node.input = operator_node.id
+`
+
 type operatorRepo struct {
 	operatorReader
 	operatorWriter
@@ -123,17 +269,56 @@ func (*operatorReader) Get(ctx context.Context, ID uuid.UUID, DB database.Databa
 	return getOperator(ctx, DB, query, args...)
 }
 
-func (*operatorReader) GetNode(ctx context.Context, ID uuid.UUID, DB database.Database) (*views.OperatorNode, error) {
+func (r *operatorReader) GetNode(ctx context.Context, ID uuid.UUID, DB database.Database) (*views.OperatorNode, error) {
+	nodes, err := r.GetNodeBatch(ctx, []uuid.UUID{ID}, DB)
+	if err != nil {
+		return nil, err
+	}
+	return &nodes[0], nil
+}
+
+func (*operatorReader) GetNodeBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]views.OperatorNode, error) {
+	if len(IDs) == 0 {
+		return nil, errors.New("Provided empty IDs list.")
+	}
+
 	query := fmt.Sprintf(
-		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s = $1",
+		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s IN (%s)",
 		views.OperatorNodeView,
 		operatorNodeViewSubQuery,
 		views.OperatorNodeCols(),
 		views.OperatorNodeView,
 		models.OperatorID,
+		stmt_preparers.GenerateArgsList(len(IDs), 1),
 	)
-	args := []interface{}{ID}
-	return getOperatorNode(ctx, DB, query, args...)
+	args := stmt_preparers.CastIdsListToInterfaceList(IDs)
+	return getOperatorNodes(ctx, DB, query, args...)
+}
+
+func (r *operatorReader) GetMergedNode(ctx context.Context, ID uuid.UUID, DB database.Database) (*views.MergedNode, error) {
+	nodes, err := r.GetMergedNodeBatch(ctx, []uuid.UUID{ID}, DB)
+	if err != nil {
+		return nil, err
+	}
+	return &nodes[0], nil
+}
+
+func (*operatorReader) GetMergedNodeBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]views.MergedNode, error) {
+	if len(IDs) == 0 {
+		return nil, errors.New("Provided empty IDs list.")
+	}
+
+	query := fmt.Sprintf(
+		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s IN (%s)",
+		views.MergedNodeView,
+		mergedNodeViewSubQuery,
+		views.MergedNodeCols(),
+		views.MergedNodeView,
+		views.MergedNodeID,
+		stmt_preparers.GenerateArgsList(len(IDs), 1),
+	)
+	args := stmt_preparers.CastIdsListToInterfaceList(IDs)
+	return getMergedNodes(ctx, DB, query, args...)
 }
 
 func (*operatorReader) GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.Operator, error) {
@@ -449,6 +634,43 @@ func (*operatorReader) GetByEngineIntegrationID(
 	return results, err
 }
 
+func (*operatorReader) GetForAqueductEngine(
+	ctx context.Context,
+	DB database.Database,
+) ([]models.Operator, error) {
+	workflowCondition := `
+		json_extract(workflow_dag.engine_config, '$.type') == 'aqueduct'
+	`
+	operatorCondition := `
+		json_extract(operator.spec, '$.engine_config.type') == 'aqueduct'
+	`
+
+	query := fmt.Sprintf(`
+		SELECT DISTINCT %s FROM
+		operator, workflow_dag, workflow_dag_edge
+		WHERE
+		workflow_dag_edge.workflow_dag_id = workflow_dag.id
+		AND (
+			workflow_dag_edge.from_id = operator.id
+			OR workflow_dag_edge.to_id = operator.id
+		)
+		AND (
+			(
+				json_extract(operator.spec, '$.engine_config') IS NULL
+				AND (%s)
+			)
+			OR (%s)
+		);`,
+		models.OperatorColsWithPrefix(),
+		workflowCondition,
+		operatorCondition,
+	)
+
+	var results []models.Operator
+	err := DB.Query(ctx, &results, query)
+	return results, err
+}
+
 func (*operatorReader) GetUnusedCondaEnvNames(ctx context.Context, DB database.Database) ([]string, error) {
 	// Note that we use `OperatorToArtifactType` as the filtering condition because an operator
 	// is guaranteed to generate at least one artifact, so this filter is guaranteed to capture
@@ -646,27 +868,16 @@ func getOperators(ctx context.Context, DB database.Database, query string, args 
 	return operators, err
 }
 
-func getOperatorNode(ctx context.Context, DB database.Database, query string, args ...interface{}) (*views.OperatorNode, error) {
-	nodes, err := getOperatorNodes(ctx, DB, query, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(nodes) == 0 {
-		return nil, database.ErrNoRows()
-	}
-
-	if len(nodes) != 1 {
-		return nil, errors.Newf("Expected 1 Operator but got %v", len(nodes))
-	}
-
-	return &nodes[0], nil
-}
-
 func getOperatorNodes(ctx context.Context, DB database.Database, query string, args ...interface{}) ([]views.OperatorNode, error) {
 	var operatorNodes []views.OperatorNode
 	err := DB.Query(ctx, &operatorNodes, query, args...)
 	return operatorNodes, err
+}
+
+func getMergedNodes(ctx context.Context, DB database.Database, query string, args ...interface{}) ([]views.MergedNode, error) {
+	var mergedNodes []views.MergedNode
+	err := DB.Query(ctx, &mergedNodes, query, args...)
+	return mergedNodes, err
 }
 
 func getOperator(ctx context.Context, DB database.Database, query string, args ...interface{}) (*models.Operator, error) {

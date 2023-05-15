@@ -16,7 +16,6 @@ import UserProfile from '../../../utils/auth';
 import {
   Integration,
   IntegrationCategories,
-  SupportedIntegrations,
 } from '../../../utils/integrations';
 import {
   isFailed,
@@ -24,6 +23,7 @@ import {
   isLoading,
   isSucceeded,
 } from '../../../utils/shared';
+import SupportedIntegrations from '../../../utils/SupportedIntegrations';
 import CodeBlock from '../../CodeBlock';
 import { useAqueductConsts } from '../../hooks/useAqueductConsts';
 import DefaultLayout from '../../layouts/default';
@@ -207,7 +207,12 @@ client = aqueduct.Client(
 
       {notificationSection}
 
-      <MetadataStorageInfo serverConfig={serverConfig.config} />
+      <Box>
+        <Typography variant="h5" marginY={2}>
+          Artifact Storage
+        </Typography>
+        <MetadataStorageInfo serverConfig={serverConfig.config} />
+      </Box>
 
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}

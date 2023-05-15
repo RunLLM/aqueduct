@@ -39,3 +39,7 @@ jobs:
       - name: Build OSS app
         working-directory: ./src/ui/app
         run: npm run build
+
+      - name: Build Storybook
+        working-directory: ./src/ui/common
+        run: npm run build-storybook

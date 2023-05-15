@@ -17,7 +17,7 @@ import (
 // This file should map directly to
 // src/ui/common/src/handlers/v2/NodesGet.tsx
 //
-// Route: /v2/workflow/{workflowID}/dag/{dagID}
+// Route: /v2/workflow/{workflowID}/dag/{dagID}/nodes
 // Method: GET
 // Params:
 //	`workflowID`: ID for `workflow` object
@@ -27,7 +27,7 @@ import (
 //		`api-key`: user's API Key
 // Response:
 //	Body:
-//		serialized `workflow.Response`
+//		serialized `node.Nodes`
 
 type nodesGetArgs struct {
 	*aq_context.AqContext
@@ -99,8 +99,20 @@ func (h *NodesGetHandler) Perform(ctx context.Context, interfaceArgs interface{}
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading artifact nodes.")
 	}
 
+	// dbMetricNodes, err := h.OperatorRepo.GetMergedNodesByDAG(ctx, args.dagID, h.Database)
+	// if err != nil {
+	// 	return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading metric nodes.")
+	// }
+
+	// dbCheckNodes, err := h.OperatorRepo.GetMergedNodesByDAG(ctx, args.dagID, h.Database)
+	// if err != nil {
+	// 	return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading check nodes.")
+	// }
+
 	return response.NewNodesFromDBObjects(
 		dbOperatorNodes,
 		dbArtifactNodes,
+		// dbMetricNodes,
+		// dbCheckNodes,
 	), http.StatusOK, nil
 }

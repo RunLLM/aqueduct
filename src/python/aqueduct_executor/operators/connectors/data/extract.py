@@ -3,7 +3,7 @@ import re
 import uuid
 from typing import Any, Dict, List, Optional, Union
 
-from aqueduct.integrations.parameters import BUILT_IN_EXPANSIONS, TAG_PATTERN
+from aqueduct.resources.parameters import BUILT_IN_EXPANSIONS, TAG_PATTERN
 from aqueduct_executor.operators.connectors.data import common, models
 from aqueduct_executor.operators.utils.enums import ArtifactType
 from pydantic import parse_obj_as

@@ -4,6 +4,8 @@ GITBOOK_REPO=$HOME/gitbook
 cd ~/aqueduct/sdk
 
 bash ../scripts/generate_docs.sh 
+rm -rf $GITBOOK_REPO/api-reference/sdk-reference/package-aqueduct
+mkdir -p $GITBOOK_REPO/api-reference/sdk-reference/package-aqueduct
 cp -r docs/* $GITBOOK_REPO/api-reference/sdk-reference/package-aqueduct
 rm -r docs/
 

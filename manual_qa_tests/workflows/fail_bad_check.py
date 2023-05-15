@@ -17,7 +17,7 @@ def bad_check(count):
 
 
 def deploy(client, integration_name):
-    integration = client.integration(integration_name)
+    integration = client.resource(integration_name)
     reviews = integration.sql("SELECT * FROM hotel_reviews")
     row_count_artf = row_count(reviews)
     # using lazy() to bypass preview

@@ -13,7 +13,7 @@ from aqueduct_executor.operators.utils import enums
 from aqueduct_executor.operators.utils.storage import config as sconfig
 from pydantic import parse_obj_as, validator
 
-AQUEDUCT_DEMO_NAME = "aqueduct_demo"
+AQUEDUCT_DEMO_NAME = "Demo"
 
 
 def unwrap_connector_config(cls, connector_config, values):  # type: ignore
