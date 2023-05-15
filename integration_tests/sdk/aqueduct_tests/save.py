@@ -44,6 +44,6 @@ def save(
         raise Exception("Unexpected data integration type provided in test: %s", type(integration))
 
     # Record where the artifact was saved, so we can validate the data later, after the flow is published.
-    if isinstance(name , BaseArtifact):
+    if isinstance(name, BaseArtifact):
         name = name.get()
     artifact_id_to_saved_identifier[str(artifact.id())] = name

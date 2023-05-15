@@ -357,38 +357,6 @@ func (*operatorReader) GetLoadOPSpecsByOrg(ctx context.Context, orgID string, DB
 	return specs, err
 }
 
-func (*operatorReader) GetLoadOPSpecsByWorkflow(ctx context.Context, workflowID uuid.UUID, DB database.Database) ([]views.LoadOperatorSpec, error) {
-	// Get the artifact id, artifact name, operator id, workflow name, workflow id,
-	// and operator spec of all load operators (`to_id`s) and the artifact(s) going to
-	// that operator (`from_id`s; these artifacts are the objects that will be saved
-	// by the operator to the integration) in the specified workflow.
-	query := fmt.Sprintf(
-		`SELECT DISTINCT 
-			workflow_dag_edge.from_id AS artifact_id, 
-			artifact.name AS artifact_name, 
-		 	operator.id AS load_operator_id, 
-			workflow.name AS workflow_name, 
-			workflow.id AS workflow_id, 
-			workflow_dag_edge.workflow_dag_id AS workflow_dag_id,
-			operator.spec 
-		 FROM 
-		 	workflow, workflow_dag, workflow_dag_edge, operator, artifact
-		 WHERE 
-		 	workflow.id = workflow_dag.workflow_id 
-			AND workflow_dag.id = workflow_dag_edge.workflow_dag_id 
-			AND workflow_dag_edge.to_id = operator.id 
-			AND artifact.id = workflow_dag_edge.from_id 
-			AND json_extract(operator.spec, '$.type') = '%s' 
-			AND workflow.id = $1;`,
-		operator.LoadType,
-	)
-	args := []interface{}{workflowID}
-
-	var specs []views.LoadOperatorSpec
-	err := DB.Query(ctx, &specs, query, args...)
-	return specs, err
-}
-
 func (*operatorReader) GetRelationBatch(
 	ctx context.Context,
 	IDs []uuid.UUID,

@@ -84,9 +84,6 @@ type operatorReader interface {
 	// organization's Workflows.
 	GetLoadOPSpecsByOrg(ctx context.Context, orgID string, DB database.Database) ([]views.LoadOperatorSpec, error)
 
-	// GetLoadOPSpecsByWorkflow returns a LoadOperatorSpec for each Load Operator in the specified workflow.
-	GetLoadOPSpecsByWorkflow(ctx context.Context, workflowID uuid.UUID, DB database.Database) ([]views.LoadOperatorSpec, error)
-
 	// GetRelationBatch returns an OperatorRelation for each Operator in IDs.
 	GetRelationBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]views.OperatorRelation, error)
 

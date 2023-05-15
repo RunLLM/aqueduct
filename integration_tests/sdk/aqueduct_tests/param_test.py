@@ -693,9 +693,12 @@ def test_save_table_name_parameterized(client, data_validator, data_integration,
     )
 
     # Check that a non-string parameter will fail.
-    with pytest.raises(InvalidUserArgumentException, match="A parameter value for `table_name` must be of string type"):
+    with pytest.raises(
+        InvalidUserArgumentException,
+        match="A parameter value for `table_name` must be of string type",
+    ):
         numeric_param = client.create_param("number", default=123)
-        save(
-            data_integration, table_to_save, numeric_param, update_mode=LoadUpdateMode.FAIL
-        )
-    trigger_flow_test(client, flow, parameters={"table name param": 123}, expected_status=ExecutionStatus.FAILED)
+        save(data_integration, table_to_save, numeric_param, update_mode=LoadUpdateMode.FAIL)
+    trigger_flow_test(
+        client, flow, parameters={"table name param": 123}, expected_status=ExecutionStatus.FAILED
+    )

@@ -2,6 +2,8 @@ package handler
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -16,7 +18,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 )
 
 // Route: /workflow/{workflowId}/objects
@@ -106,6 +107,8 @@ func (h *ListWorkflowObjectsHandler) Perform(ctx context.Context, interfaceArgs 
 	}, http.StatusOK, nil
 }
 
+// GetDistinctSaveOpsByWorkflow returns a definitive list of all distinct save operators for a given workflow.
+// Fills in any parameterized fields on the operators.
 func GetDistinctSaveOpsByWorkflow(
 	ctx context.Context,
 	workflowID uuid.UUID,

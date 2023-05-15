@@ -4,9 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/aqueducthq/aqueduct/lib/functional/slices"
-	"github.com/aqueducthq/aqueduct/lib/models"
-	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"net/http"
 	"time"
 
@@ -16,9 +13,12 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
+	"github.com/aqueducthq/aqueduct/lib/functional/slices"
 	"github.com/aqueducthq/aqueduct/lib/job"
+	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/connector"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
@@ -214,11 +214,11 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 					}
 
 					for _, saveOp := range saveOpsList {
-						saveOpsByIntegrationName[integrationName] = append(saveOpsByIntegrationName[integrationName], saveOp)
+						saveOpsByIntegrationName[saveOp.IntegrationName] = append(saveOpsByIntegrationName[saveOp.IntegrationName], saveOpsList...)
 					}
 				}
 
-				// Check for existance in the parameter-expanded list.
+				// Check for existence in the parameter-expanded list.
 				for _, saveOp := range saveOpsByIntegrationName[integrationName] {
 					relationalLoad, ok := connector.CastToRelationalDBLoadParams(saveOp.Spec.Parameters)
 					if !ok {
