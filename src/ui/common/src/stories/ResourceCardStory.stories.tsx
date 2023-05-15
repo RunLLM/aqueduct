@@ -22,8 +22,7 @@ import {
   SlackConfig,
   SnowflakeConfig,
 } from '../utils/integrations';
-import ExecutionStatus, {AWSCredentialType} from '../utils/shared';
-import {AqueductConfig} from "../utils/engine";
+import ExecutionStatus, { AWSCredentialType } from '../utils/shared';
 
 const ResourceCard: React.FC = () => {
   const integrations: Integration[] = [
