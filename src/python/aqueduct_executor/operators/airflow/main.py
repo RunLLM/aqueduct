@@ -7,9 +7,10 @@ from aqueduct_executor.operators.airflow.spec import parse_spec
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-s", "--spec", required=True)
+    parser.add_argument("-v", "--version-tag", required=True)
     args = parser.parse_args()
 
     spec_json = base64.b64decode(args.spec)
     spec = parse_spec(spec_json)
 
-    execute.run(spec)
+    execute.run(spec, args.version_tag)
