@@ -7,9 +7,7 @@ on:
 jobs:
   trigger-integration-tests:
     if: contains(github.event.pull_request.labels.*.name, 'run_integration_test')
-    uses: aqueducthq/aqueduct/.github/workflows/integration-tests.yml@eng-2854-fix-the-aqueduct-ml-version-mismatch-bug-2
+    uses: aqueducthq/aqueduct/.github/workflows/integration-tests.yml@main
     secrets:
       KENNY_AWS_ACCESS_KEY_ID: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
       KENNY_AWS_SECRET_ACCESS_KEY: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
-      PYPI_API_TOKEN_SDK: ${{ secrets.PYPI_API_TOKEN_SDK }}
-      PYPI_API_TOKEN_EXECUTOR: ${{ secrets.PYPI_API_TOKEN_EXECUTOR }}
