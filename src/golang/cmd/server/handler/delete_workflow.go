@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/aqueducthq/aqueduct/lib/functional/slices"
+	"github.com/aqueducthq/aqueduct/lib/models"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"net/http"
 	"time"
 
@@ -83,6 +86,8 @@ type DeleteWorkflowHandler struct {
 	IntegrationRepo          repos.Integration
 	OperatorRepo             repos.Operator
 	WorkflowRepo             repos.Workflow
+	DagRepo                  repos.DAG
+	ArtifactResultRepo       repos.ArtifactResult
 }
 
 func (*DeleteWorkflowHandler) Name() string {
@@ -171,6 +176,11 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 
 	// Check objects in list are valid
 	objCount := 0
+
+	// This only ever needs to be loaded in the case we are potentially dealing with parameterized saves.
+	// These save operators have any parameterized values filled in.
+	var saveOpsByIntegrationName map[string][]views.LoadOperator
+
 	for integrationName, savedObjectList := range args.ExternalDelete {
 		for _, name := range savedObjectList {
 			touchedOperators, err := h.OperatorRepo.GetLoadOPsByWorkflowAndIntegration(
@@ -183,26 +193,65 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 			if err != nil {
 				return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
 			}
-			// No operator had touched the object at the specified integration.
+
+			// No operator had touched the object at the specified integration. However, this does not mean that the object is
+			// invalid. We need to consider the case where the object was part of a parameterized saved.
+			var touchedOperatorLoadParams []connector.LoadParams
 			if len(touchedOperators) == 0 {
-				return resp, http.StatusBadRequest, errors.New("Object list not valid. Make sure all objects are touched by the workflow.")
+				// Fetch and cache this map once for performance.
+				if saveOpsByIntegrationName == nil {
+					saveOpsByIntegrationName = make(map[string][]views.LoadOperator)
+					saveOpsList, err := GetDistinctSaveOpsByWorkflow(
+						ctx,
+						args.WorkflowID,
+						h.OperatorRepo,
+						h.DagRepo,
+						h.ArtifactResultRepo,
+						h.Database,
+					)
+					if err != nil {
+						return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
+					}
+
+					for _, saveOp := range saveOpsList {
+						saveOpsByIntegrationName[integrationName] = append(saveOpsByIntegrationName[integrationName], saveOp)
+					}
+				}
+
+				// Check for existance in the parameter-expanded list.
+				for _, saveOp := range saveOpsByIntegrationName[integrationName] {
+					relationalLoad, ok := connector.CastToRelationalDBLoadParams(saveOp.Spec.Parameters)
+					if !ok {
+						return resp, http.StatusBadRequest, errors.New("Unexpected error occurred when validating objects.")
+					}
+
+					if relationalLoad.Table == name {
+						touchedOperatorLoadParams = append(touchedOperatorLoadParams, saveOp.Spec.Parameters)
+					}
+				}
+				// If, after this more thorough check, there still aren't any valid operators, then we give up.
+				if len(touchedOperatorLoadParams) == 0 {
+					return resp, http.StatusBadRequest, errors.New("Object list not valid. Make sure all objects are touched by the workflow.")
+				}
+			} else {
+				touchedOperatorLoadParams = slices.Map(
+					touchedOperators,
+					func(operator models.Operator) connector.LoadParams {
+						return operator.Spec.Load().Parameters
+					},
+				)
 			}
+
 			if !args.Force {
 				// Check none have UpdateMode=append.
-				for _, touchedOperator := range touchedOperators {
-					load := touchedOperator.Spec.Load()
-					if load == nil {
-						return resp, http.StatusBadRequest, errors.New("Unexpected error occurred while validating objects.")
-					}
-					loadParams := load.Parameters
-
-					relationalLoad, ok := connector.CastToRelationalDBLoadParams(loadParams)
+				for _, touchedLoadParams := range touchedOperatorLoadParams {
+					relationalLoad, ok := connector.CastToRelationalDBLoadParams(touchedLoadParams)
 					// Check not updating anything in the integration.
 					if ok {
 						if relationalLoad.UpdateMode == "append" {
 							return resp, http.StatusBadRequest, errors.New("Some objects(s) in list were updated in append mode. If you are sure you want to delete everything, set `force=True`.")
 						}
-					} else if googleSheets, ok := loadParams.(*connector.GoogleSheetsLoadParams); ok {
+					} else if googleSheets, ok := touchedLoadParams.(*connector.GoogleSheetsLoadParams); ok {
 						if googleSheets.SaveMode == "NEWSHEET" {
 							return resp, http.StatusBadRequest, errors.New("Some objects(s) in list were updated in append mode. If you are sure you want to delete everything, set `force=True`.")
 						}

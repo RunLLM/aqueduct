@@ -91,6 +91,11 @@ func CastToRelationalDBLoadParams(params LoadParams) (*RelationalDBLoadParams, b
 		return &mongo.RelationalDBLoadParams, true
 	}
 
+	generic, ok := params.(*GenericRelationalDBLoadParams)
+	if ok {
+		return &generic.RelationalDBLoadParams, true
+	}
+
 	return nil, false
 }
 

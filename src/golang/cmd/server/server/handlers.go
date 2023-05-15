@@ -147,6 +147,8 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			ExecutionEnvironmentRepo: s.ExecutionEnvironmentRepo,
 			OperatorRepo:             s.OperatorRepo,
 			WorkflowRepo:             s.WorkflowRepo,
+			DagRepo:                  s.DAGRepo,
+			ArtifactResultRepo:       s.ArtifactResultRepo,
 		},
 		routes.EditIntegrationRoute: &handler.EditIntegrationHandler{
 			Database:   s.Database,

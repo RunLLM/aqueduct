@@ -87,34 +87,43 @@ func (h *ListWorkflowObjectsHandler) Prepare(r *http.Request) (interface{}, int,
 
 func (h *ListWorkflowObjectsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*ListWorkflowObjectsArgs)
-
 	emptyResp := ListWorkflowObjectsResponse{}
 
-	// Get all specs for the workflow.
-	operatorList, err := h.OperatorRepo.GetDistinctLoadOPsByWorkflow(ctx, args.workflowId, h.Database)
-	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred when retrieving workflow objects.")
-	}
-
-	// If there are any parameterized save operators, update the list with any successfully saved table names.
-	operatorList, err = h.expandOperatorListWithParameterizedTableNames(ctx, operatorList)
+	saveOpList, err := GetDistinctSaveOpsByWorkflow(
+		ctx,
+		args.workflowId,
+		h.OperatorRepo,
+		h.WorkflowDagRepo,
+		h.ArtifactResultRepo,
+		h.Database,
+	)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, err
 	}
 
 	return ListWorkflowObjectsResponse{
-		LoadDetails: operatorList,
+		LoadDetails: saveOpList,
 	}, http.StatusOK, nil
 }
 
-// expandOperatorListWithParameterTableNames checks the list of save operators for any that have parameterized table names.
-// Since these parameterized names are not present on the operator spec, but are instead filled in on the fly at runtime,
-// we need to fetch those table names from storage. This requires potentially expanding a single save operator into multiple,
-// each of which represents a unique table name that was saved to.
-func (h *ListWorkflowObjectsHandler) expandOperatorListWithParameterizedTableNames(
+func GetDistinctSaveOpsByWorkflow(
 	ctx context.Context,
-	saveOpList []views.LoadOperator,
+	workflowID uuid.UUID,
+	operatorRepo repos.Operator,
+	workflowDagRepo repos.DAG,
+	artifactResultRepo repos.ArtifactResult,
+	db database.Database,
 ) ([]views.LoadOperator, error) {
+	// Get all distinct specs for the workflow.
+	saveOpList, err := operatorRepo.GetDistinctLoadOPsByWorkflow(ctx, workflowID, db)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unexpected error occurred when retrieving workflow objects.")
+	}
+
+	// Now, we check the list of save operators for any that have parameterized table names.
+	// Since these parameterized names are not present on the operator spec, but are instead filled in on the fly at runtime,
+	// we need to fetch those table names from storage. This requires potentially expanding a single save operator into multiple,
+	// each of which represents a unique table name that was saved to.
 	saveOpIDsToExpand := make([]uuid.UUID, 0, len(saveOpList))
 	for _, op := range saveOpList {
 		relationalLoadParams, isRelational := connector.CastToRelationalDBLoadParams(op.Spec.Parameters)
@@ -131,7 +140,7 @@ func (h *ListWorkflowObjectsHandler) expandOperatorListWithParameterizedTableNam
 	}
 
 	// Fetch each of the load operators	that need to be expanded.
-	saveOps, err := h.OperatorRepo.GetNodeBatch(ctx, saveOpIDsToExpand, h.Database)
+	saveOps, err := operatorRepo.GetNodeBatch(ctx, saveOpIDsToExpand, db)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unexpected error occurred when fetching parameterized save operators.")
 	}
@@ -150,7 +159,7 @@ func (h *ListWorkflowObjectsHandler) expandOperatorListWithParameterizedTableNam
 
 	paramArtifactResultsBySavedOpID := make(map[uuid.UUID][]models.ArtifactResult, len(paramArtifactIDBySaveOpID))
 	for saveOpID, paramArtifactID := range paramArtifactIDBySaveOpID {
-		paramArtifactResults, err := h.ArtifactResultRepo.GetByArtifact(ctx, paramArtifactID, h.Database)
+		paramArtifactResults, err := artifactResultRepo.GetByArtifact(ctx, paramArtifactID, db)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Unable to fetch artifact result for artifact %s", paramArtifactID)
 		}
@@ -166,7 +175,7 @@ func (h *ListWorkflowObjectsHandler) expandOperatorListWithParameterizedTableNam
 				return artifactResult.ID
 			},
 		)
-		dagByArtifactResultID, err := h.WorkflowDagRepo.GetByArtifactResultBatch(ctx, paramArtifactResultIDs, h.Database)
+		dagByArtifactResultID, err := workflowDagRepo.GetByArtifactResultBatch(ctx, paramArtifactResultIDs, db)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unexpected error when fetching DAGs from artifact results.")
 		}
