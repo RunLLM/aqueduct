@@ -108,7 +108,7 @@ func (h *ListWorkflowObjectsHandler) Perform(ctx context.Context, interfaceArgs 
 }
 
 // GetDistinctSaveOpsByWorkflow returns a definitive list of all distinct save operators for a given workflow.
-// Fills in any parameterized fields on the operators.
+// Fills in any parameterized fields on the operator specs.
 func GetDistinctSaveOpsByWorkflow(
 	ctx context.Context,
 	workflowID uuid.UUID,
