@@ -10,16 +10,15 @@ import RequireOperator from '../../../operators/RequireOperator';
 import OperatorSpecDetails from '../../../workflows/operator/specDetails';
 import RequireDagOrResult from '../../../workflows/RequireDagOrResult';
 import { LayoutProps } from '../../types';
-import useWorkflow from '../../workflow/id/hook';
+import useWorkflow, { useWorkflowBreadcrumbs, useWorkflowIds, useWorkflowNodes, useWorkflowNodesResults } from '../../workflow/id/hook';
 import useOpeartor from './hook';
+import { useParams } from 'react-router-dom';
+import UserProfile from '../../../../utils/auth';
 
 type OperatorDetailsPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
-  workflowIdProp?: string;
-  workflowDagIdProp?: string;
-  workflowDagResultIdProp?: string;
-  operatorIdProp?: string;
+  nodeId?: string;
   sideSheetMode?: boolean;
 };
 
@@ -27,65 +26,48 @@ type OperatorDetailsPageProps = {
 const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   user,
   Layout = DefaultLayout,
-  workflowIdProp,
-  workflowDagIdProp,
-  workflowDagResultIdProp,
-  operatorIdProp,
+  nodeId,
   sideSheetMode = false,
 }) => {
-  const {
-    breadcrumbs: wfBreadcrumbs,
-    workflowId,
-    workflowDagId,
-    workflowDagResultId,
-    workflowDagWithLoadingStatus,
-    workflowDagResultWithLoadingStatus,
-  } = useWorkflow(
-    user.apiKey,
-    workflowIdProp,
-    workflowDagIdProp,
-    workflowDagResultIdProp
-  );
+  const { workflowId, dagId, dagResultId } = useWorkflowIds(user.apiKey)
 
-  const { breadcrumbs, operator } = useOpeartor(
-    operatorIdProp,
-    wfBreadcrumbs,
-    workflowDagWithLoadingStatus,
-    workflowDagResultWithLoadingStatus,
-    !sideSheetMode
-  );
+  const { nodeId: nodeIdParam } = useParams();
+  if (!nodeId) {
+    nodeId = nodeIdParam
+  }
 
-  const logs = operator?.result?.exec_state?.user_logs ?? {};
-  const operatorError = operator?.result?.exec_state?.error;
+  const breadcrumbs = useWorkflowBreadcrumbs(user.apiKey, workflowId, dagId, dagResultId, "Operator")
+
+  const nodes = useWorkflowNodes(user.apiKey, workflowId, dagId)
+  const nodeResults = useWorkflowNodesResults(user.apiKey, workflowId, dagResultId)
+
+  const node = nodes.operators[nodeId]
+  const nodeResult = nodeResults.operators[nodeId]
+
+  const logs = nodeResult?.exec_state?.user_logs ?? {};
+  const operatorError = nodeResult?.exec_state?.error;
 
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
-      <RequireDagOrResult
+      <WithOperatorHeader
+        workflowId={workflowId}
+        dagId={dagId}
+        dagResultId={dagResultId}
         dagWithLoadingStatus={workflowDagWithLoadingStatus}
         dagResultWithLoadingStatus={workflowDagResultWithLoadingStatus}
+        operator={operator}
+        sideSheetMode={sideSheetMode}
       >
-        <RequireOperator operator={operator}>
-          <WithOperatorHeader
-            workflowId={workflowId}
-            dagId={workflowDagId}
-            dagResultId={workflowDagResultId}
-            dagWithLoadingStatus={workflowDagWithLoadingStatus}
-            dagResultWithLoadingStatus={workflowDagResultWithLoadingStatus}
-            operator={operator}
-            sideSheetMode={sideSheetMode}
-          >
-            <Box>
-              <Typography variant="h6" fontWeight="normal">
-                Logs
-              </Typography>
-              {logs !== {} && <LogViewer logs={logs} err={operatorError} />}
-            </Box>
+        <Box>
+          <Typography variant="h6" fontWeight="normal">
+            Logs
+          </Typography>
+          {!!logs && <LogViewer logs={logs} err={operatorError} />}
+        </Box>
 
-            <Divider sx={{ my: '32px' }} />
-            <OperatorSpecDetails user={user} operator={operator} />
-          </WithOperatorHeader>
-        </RequireOperator>
-      </RequireDagOrResult>
+        <Divider sx={{ my: '32px' }} />
+        <OperatorSpecDetails user={user} operator={node} />
+      </WithOperatorHeader>
     </Layout>
   );
 };

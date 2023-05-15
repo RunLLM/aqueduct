@@ -28,7 +28,7 @@ export function useWorkflowIds(apiKey: string): useWorkflowIdsOutputs {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const {
-    id: wfIdParam,
+    workflowId: wfIdParam,
     dagId: dagIdParam,
     dagResultId: dagResultIdParam,
   } = useParams();

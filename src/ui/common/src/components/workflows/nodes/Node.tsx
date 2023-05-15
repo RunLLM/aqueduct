@@ -64,7 +64,7 @@ const checkNodeStatusLabels = {
   [ExecutionStatus.Unknown]: 'Unknown',
 };
 
-const artifactTypeToIconMapping = {
+export const artifactTypeToIconMapping = {
   [ArtifactType.String]: faFileText,
   [ArtifactType.Bool]: faCircleCheck,
   [ArtifactType.Numeric]: faHashtag,
@@ -212,8 +212,8 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
          * if the status is either pending or failed/canceled/etc., the preview will be
          * NaN. This only applies to metric operators. */}
         {!!data.artifactResult?.content_serialized &&
-        data.operator?.spec?.type === OperatorType.Metric &&
-        status === ExecutionStatus.Succeeded
+          data.operator?.spec?.type === OperatorType.Metric &&
+          status === ExecutionStatus.Succeeded
           ? parseMetricResult(data.artifactResult?.content_serialized, 3)
           : statusLabels[status]}
       </Typography>

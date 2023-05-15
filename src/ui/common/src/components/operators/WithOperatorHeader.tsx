@@ -7,10 +7,6 @@ import { Box, Divider, Typography } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { DagResultResponse } from '../../handlers/responses/dagDeprecated';
-import { OperatorResultResponse } from '../../handlers/responses/operatorDeprecated';
-import { WorkflowDagResultWithLoadingStatus } from '../../reducers/workflowDagResults';
-import { WorkflowDagWithLoadingStatus } from '../../reducers/workflowDags';
 import { RootState } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import { OperatorType } from '../../utils/operators';
@@ -19,14 +15,16 @@ import DetailsPageHeader from '../pages/components/DetailsPageHeader';
 import SaveDetails from '../pages/components/SaveDetails';
 import ResourceItem from '../pages/workflows/components/ResourceItem';
 import ArtifactSummaryList from '../workflows/artifact/summaryList';
+import { NodeResultsMap, NodesMap, OperatorResponse, OperatorResultResponse } from '../../handlers/responses/node';
 
 type Props = {
   workflowId: string;
   dagId: string;
-  dagResultId: string;
-  dagWithLoadingStatus?: WorkflowDagWithLoadingStatus;
-  dagResultWithLoadingStatus?: WorkflowDagResultWithLoadingStatus;
-  operator?: OperatorResultResponse;
+  dagResultId?: string;
+  nodes: NodesMap;
+  operator: OperatorResponse;
+  operatorResult?: OperatorResultResponse;
+  nodeResults?: NodeResultsMap;
   sideSheetMode?: boolean;
   children?: React.ReactElement | React.ReactElement[];
 };
@@ -35,9 +33,10 @@ const WithOperatorHeader: React.FC<Props> = ({
   workflowId,
   dagId,
   dagResultId,
-  dagWithLoadingStatus,
-  dagResultWithLoadingStatus,
+  nodes,
   operator,
+  operatorResult,
+  nodeResults,
   sideSheetMode,
   children,
 }) => {
@@ -45,22 +44,10 @@ const WithOperatorHeader: React.FC<Props> = ({
     (state: RootState) => state.integrationsReducer
   );
 
-  if (!operator) {
-    return null;
-  }
-
-  if (!dagWithLoadingStatus && !dagResultWithLoadingStatus) {
-    return null;
-  }
-
-  const dagResult =
-    dagResultWithLoadingStatus?.result ??
-    (dagWithLoadingStatus?.result as DagResultResponse);
-
-  const operatorStatus = operator?.result?.exec_state?.status;
+  const operatorStatus = operatorResult?.exec_state?.status;
   const mapArtifacts = (artfIds: string[]) =>
     artfIds
-      .map((artifactId) => (dagResult?.artifacts ?? {})[artifactId])
+      .map((artifactId) => (nodes ?? {})[artifactId])
       .filter((artf) => !!artf);
   const inputs = mapArtifacts(operator.inputs);
   const outputs = mapArtifacts(operator.outputs);
@@ -165,6 +152,7 @@ const WithOperatorHeader: React.FC<Props> = ({
                 workflowId={workflowId}
                 dagId={dagId}
                 dagResultId={dagResultId}
+                nodes={nodes}
                 artifactResults={outputs}
                 appearance={
                   operator.spec?.type === OperatorType.Metric ? 'value' : 'link'

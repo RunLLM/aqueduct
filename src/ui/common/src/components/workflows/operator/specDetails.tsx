@@ -21,12 +21,13 @@ import {
 } from '../../../utils/operators';
 import { CodeBlock } from '../../CodeBlock';
 import { Button } from '../../primitives/Button.styles';
+import { OperatorResponse } from '../../../handlers/responses/node';
 
 const MAX_FILE_RENDER_SIZE = 100000000; // 100M
 
 type Props = {
   user: UserProfile;
-  operator: OperatorResultResponse;
+  operator: OperatorResponse;
 };
 
 // Checked with file size=313285391 and handles that smoothly once loaded. However, takes a while to load.
@@ -158,9 +159,8 @@ const SpecDetails: React.FC<Props> = ({ user, operator }) => {
           </Box>
         );
         const hasChainTag = queries.some((q) => q.includes(PREV_TABLE_TAG));
-        tooltips = `These queries are chained. ${
-          hasChainTag ? chainTagTooltips : ''
-        }`;
+        tooltips = `These queries are chained. ${hasChainTag ? chainTagTooltips : ''
+          }`;
       } else {
         content = renderQuery(relationalParams.query);
       }
