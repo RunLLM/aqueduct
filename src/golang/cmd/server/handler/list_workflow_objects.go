@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"net/http"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -17,6 +16,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
+	"net/http"
 )
 
 // Route: /workflow/{workflowId}/objects
@@ -97,7 +97,7 @@ func (h *ListWorkflowObjectsHandler) Perform(ctx context.Context, interfaceArgs 
 	}
 
 	// If there are any parameterized save operators, update the list with any successfully saved table names.
-	operatorList, err = h.ExpandOperatorListWithParameterizedTableNames(ctx, operatorList)
+	operatorList, err = h.expandOperatorListWithParameterizedTableNames(ctx, operatorList)
 	if err != nil {
 		return emptyResp, http.StatusInternalServerError, err
 	}
@@ -107,15 +107,18 @@ func (h *ListWorkflowObjectsHandler) Perform(ctx context.Context, interfaceArgs 
 	}, http.StatusOK, nil
 }
 
-// TODO: We look for any loads that were parameterized. In such cases, we have to go and fetch their corresponding parameter
-// input artifact results and update the table name accordingly.
-func (h *ListWorkflowObjectsHandler) ExpandOperatorListWithParameterizedTableNames(
+// expandOperatorListWithParameterTableNames checks the list of save operators for any that have parameterized table names.
+// Since these parameterized names are not present on the operator spec, but are instead filled in on the fly at runtime,
+// we need to fetch those table names from storage. This requires potentially expanding a single save operator into multiple,
+// each of which represents a unique table name that was saved to.
+func (h *ListWorkflowObjectsHandler) expandOperatorListWithParameterizedTableNames(
 	ctx context.Context,
 	saveOpList []views.LoadOperator,
 ) ([]views.LoadOperator, error) {
 	saveOpIDsToExpand := make([]uuid.UUID, 0, len(saveOpList))
 	for _, op := range saveOpList {
-		if relationalLoadParams := op.Spec.Parameters.(*connector.GenericRelationalDBLoadParams); relationalLoadParams != nil {
+		relationalLoadParams, isRelational := connector.CastToRelationalDBLoadParams(op.Spec.Parameters)
+		if isRelational {
 			if relationalLoadParams.Table == "" {
 				saveOpIDsToExpand = append(saveOpIDsToExpand, op.OperatorID)
 			}
