@@ -272,7 +272,7 @@ def _write_bytes_output(output: bytes) -> bytes:
 
 
 def _write_pickle_output(output: Any) -> bytes:
-    return bytes(pickle.dumps(output))
+    return bytes(pickle.dumps(output, protocol=pickle.DEFAULT_PROTOCOL))
 
 
 def _write_json_output(output: Any) -> bytes:
