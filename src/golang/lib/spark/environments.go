@@ -91,7 +91,7 @@ func RunSparkImage(
 		"-e",
 		fmt.Sprintf("S3_BUCKET=%s", bucket),
 		"-e",
-		fmt.Sprintf("VERSION_TAG=\"%s\"", config.VersionTag()),
+		fmt.Sprintf("VERSION_TAG=%s", config.VersionTag()),
 		versionedSparkImage,
 	)
 	stdout := &bytes.Buffer{}
