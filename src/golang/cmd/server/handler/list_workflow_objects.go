@@ -90,7 +90,7 @@ func (h *ListWorkflowObjectsHandler) Perform(ctx context.Context, interfaceArgs 
 	args := interfaceArgs.(*ListWorkflowObjectsArgs)
 	emptyResp := ListWorkflowObjectsResponse{}
 
-	saveOpList, err := GetDistinctSaveOpsByWorkflow(
+	saveOpList, err := GetDistinctLoadOpsByWorkflow(
 		ctx,
 		args.workflowId,
 		h.OperatorRepo,
@@ -107,9 +107,9 @@ func (h *ListWorkflowObjectsHandler) Perform(ctx context.Context, interfaceArgs 
 	}, http.StatusOK, nil
 }
 
-// GetDistinctSaveOpsByWorkflow returns a definitive list of all distinct save operators for a given workflow.
+// GetDistinctLoadOpsByWorkflow returns a definitive list of all distinct save operators for a given workflow.
 // Fills in any parameterized fields on the operator specs.
-func GetDistinctSaveOpsByWorkflow(
+func GetDistinctLoadOpsByWorkflow(
 	ctx context.Context,
 	workflowID uuid.UUID,
 	operatorRepo repos.Operator,

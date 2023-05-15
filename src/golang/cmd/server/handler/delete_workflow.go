@@ -13,9 +13,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
-	"github.com/aqueducthq/aqueduct/lib/functional/slices"
 	"github.com/aqueducthq/aqueduct/lib/job"
-	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/connector"
 	"github.com/aqueducthq/aqueduct/lib/models/views"
@@ -177,69 +175,42 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	// Check objects in list are valid
 	objCount := 0
 
-	// This only ever needs to be loaded in the case we are potentially dealing with parameterized saves.
-	// These save operators have any parameterized values filled in.
-	var saveOpsByIntegrationName map[string][]views.LoadOperator
+	// These fetched save operators have any parameterized values filled in.
+	saveOpsByIntegrationName := make(map[string][]views.LoadOperator, 1)
+	saveOpsList, err := GetDistinctLoadOpsByWorkflow(
+		ctx,
+		args.WorkflowID,
+		h.OperatorRepo,
+		h.DagRepo,
+		h.ArtifactResultRepo,
+		h.Database,
+	)
+	if err != nil {
+		return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
+	}
+	for _, saveOp := range saveOpsList {
+		saveOpsByIntegrationName[saveOp.IntegrationName] = append(saveOpsByIntegrationName[saveOp.IntegrationName], saveOpsList...)
+	}
 
 	for integrationName, savedObjectList := range args.ExternalDelete {
 		for _, name := range savedObjectList {
-			touchedOperators, err := h.OperatorRepo.GetLoadOPsByWorkflowAndIntegration(
-				ctx,
-				args.WorkflowID,
-				nameToID[integrationName],
-				name,
-				h.Database,
-			)
-			if err != nil {
-				return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
+			var touchedOperatorLoadParams []connector.LoadParams
+
+			// Check for existence in the parameter-expanded list.
+			for _, saveOp := range saveOpsByIntegrationName[integrationName] {
+				relationalLoad, ok := connector.CastToRelationalDBLoadParams(saveOp.Spec.Parameters)
+				if ok && relationalLoad.Table == name {
+					touchedOperatorLoadParams = append(touchedOperatorLoadParams, saveOp.Spec.Parameters)
+				}
+
+				nonRelationalLoad, ok := connector.CastToNonRelationalLoadParams(saveOp.Spec.Parameters)
+				if ok && nonRelationalLoad.Filepath == name {
+					touchedOperatorLoadParams = append(touchedOperatorLoadParams, saveOp.Spec.Parameters)
+				}
 			}
 
-			// No operator had touched the object at the specified integration. However, this does not mean that the object is
-			// invalid. We need to consider the case where the object was part of a parameterized saved.
-			var touchedOperatorLoadParams []connector.LoadParams
-			if len(touchedOperators) == 0 {
-				// Fetch and cache this map once for performance.
-				if saveOpsByIntegrationName == nil {
-					saveOpsByIntegrationName = make(map[string][]views.LoadOperator)
-					saveOpsList, err := GetDistinctSaveOpsByWorkflow(
-						ctx,
-						args.WorkflowID,
-						h.OperatorRepo,
-						h.DagRepo,
-						h.ArtifactResultRepo,
-						h.Database,
-					)
-					if err != nil {
-						return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
-					}
-
-					for _, saveOp := range saveOpsList {
-						saveOpsByIntegrationName[saveOp.IntegrationName] = append(saveOpsByIntegrationName[saveOp.IntegrationName], saveOpsList...)
-					}
-				}
-
-				// Check for existence in the parameter-expanded list.
-				for _, saveOp := range saveOpsByIntegrationName[integrationName] {
-					relationalLoad, ok := connector.CastToRelationalDBLoadParams(saveOp.Spec.Parameters)
-					if !ok {
-						return resp, http.StatusBadRequest, errors.New("Unexpected error occurred when validating objects.")
-					}
-
-					if relationalLoad.Table == name {
-						touchedOperatorLoadParams = append(touchedOperatorLoadParams, saveOp.Spec.Parameters)
-					}
-				}
-				// If, after this more thorough check, there still aren't any valid operators, then we give up.
-				if len(touchedOperatorLoadParams) == 0 {
-					return resp, http.StatusBadRequest, errors.New("Object list not valid. Make sure all objects are touched by the workflow.")
-				}
-			} else {
-				touchedOperatorLoadParams = slices.Map(
-					touchedOperators,
-					func(operator models.Operator) connector.LoadParams {
-						return operator.Spec.Load().Parameters
-					},
-				)
+			if len(touchedOperatorLoadParams) == 0 {
+				return resp, http.StatusBadRequest, errors.New("Object list not valid. Make sure all objects are touched by the workflow.")
 			}
 
 			if !args.Force {
