@@ -30,9 +30,9 @@ import {
   Integration,
   IntegrationConfig,
   Service,
-  SupportedIntegrations,
 } from '../../../utils/integrations';
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
+import SupportedIntegrations from '../../../utils/SupportedIntegrations';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 type Props = {
@@ -112,21 +112,21 @@ const IntegrationDialog: React.FC<Props> = ({
 
     return editMode
       ? dispatch(
-          handleEditIntegration({
-            apiKey: user.apiKey,
-            integrationId: integrationId,
-            name: name,
-            config: data,
-          })
-        )
+        handleEditIntegration({
+          apiKey: user.apiKey,
+          integrationId: integrationId,
+          name: name,
+          config: data,
+        })
+      )
       : dispatch(
-          handleConnectToNewIntegration({
-            apiKey: user.apiKey,
-            service: service,
-            name: name,
-            config: data,
-          })
-        );
+        handleConnectToNewIntegration({
+          apiKey: user.apiKey,
+          service: service,
+          name: name,
+          config: data,
+        })
+      );
   };
 
   // Check to enable/disable submit button
@@ -217,9 +217,8 @@ const IntegrationDialog: React.FC<Props> = ({
           <DialogContent>
             {editMode && numWorkflows > 0 && (
               <Alert sx={{ mb: 2 }} severity="info">
-                {`Changing this integration will automatically update ${numWorkflows} ${
-                  numWorkflows === 1 ? 'workflow' : 'workflows'
-                }.`}
+                {`Changing this integration will automatically update ${numWorkflows} ${numWorkflows === 1 ? 'workflow' : 'workflows'
+                  }.`}
               </Alert>
             )}
             {(service === 'Email' || service === 'Slack') && (

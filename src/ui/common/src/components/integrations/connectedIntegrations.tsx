@@ -10,11 +10,8 @@ import { handleLoadIntegrations } from '../../reducers/integrations';
 import { AppDispatch, RootState } from '../../stores/store';
 import { UserProfile } from '../../utils/auth';
 import { getPathPrefix } from '../../utils/getPathPrefix';
-import {
-  Integration,
-  IntegrationCategories,
-  SupportedIntegrations,
-} from '../../utils/integrations';
+import { Integration, IntegrationCategories } from '../../utils/integrations';
+import SupportedIntegrations from '../../utils/SupportedIntegrations';
 import { Card } from '../layouts/card';
 import { ConnectedIntegrationType } from './connectedIntegrationType';
 import { ErrorSnackbar } from './errorSnackbar';
@@ -69,7 +66,7 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
 
   const integrations = useSelector((state: RootState) =>
     Object.values(state.integrationsReducer.integrations).filter(
-      (integration) =>
+      (integration: Integration) =>
         integrationToConnectedIntegrationType(integration) ===
         connectedIntegrationType
     )

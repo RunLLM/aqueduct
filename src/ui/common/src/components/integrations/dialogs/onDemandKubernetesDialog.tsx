@@ -11,10 +11,8 @@ import * as Yup from 'yup';
 
 import { handleConnectToNewIntegration } from '../../../reducers/integration';
 import { AppDispatch } from '../../../stores/store';
-import {
-  IntegrationDialogProps,
-  SupportedIntegrations,
-} from '../../../utils/integrations';
+import { IntegrationDialogProps } from '../../../utils/integrations';
+import SupportedIntegrations from '../../../utils/SupportedIntegrations';
 import IntegrationLogo from '../logo';
 import { AWSDialog } from './awsDialog';
 import { DialogActionButtons, DialogHeader } from './dialog';

@@ -38,13 +38,13 @@ import {
   hasConfigFieldsToShow,
   IntegrationCategories,
   isNotificationIntegration,
-  SupportedIntegrations,
 } from '../../../../utils/integrations';
 import ExecutionStatus, {
   isFailed,
   isLoading,
   isSucceeded,
 } from '../../../../utils/shared';
+import SupportedIntegrations from '../../../../utils/SupportedIntegrations';
 import { ResourceHeaderDetailsCard } from '../../../integrations/cards/headerDetailsCard';
 import { ResourceFieldsDetailsCard } from '../../../integrations/cards/resourceFieldsDetailsCard';
 import { ErrorSnackbar } from '../../../integrations/errorSnackbar';
@@ -141,7 +141,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     if (
       selectedIntegration &&
       SupportedIntegrations[selectedIntegration.service].category ===
-        IntegrationCategories.DATA
+      IntegrationCategories.DATA
     ) {
       dispatch(
         handleListIntegrationObjects({
@@ -328,12 +328,12 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
 
         {serverConfig.config?.storageConfig.integration_name ===
           selectedIntegration.name && (
-          <Alert severity="info" sx={{ marginTop: 2 }}>
-            This integration cannot be deleted because it is currently being
-            used as artifact storage. To delete this integration, please migrate
-            your artifact storage elsewhere first.
-          </Alert>
-        )}
+            <Alert severity="info" sx={{ marginTop: 2 }}>
+              This integration cannot be deleted because it is currently being
+              used as artifact storage. To delete this integration, please migrate
+              your artifact storage elsewhere first.
+            </Alert>
+          )}
 
         {showDeleteTableDialog && (
           <DeleteIntegrationDialog
@@ -385,11 +385,11 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
 
         {SupportedIntegrations[selectedIntegration.service].category ===
           IntegrationCategories.DATA && (
-          <IntegrationObjectList
-            user={user}
-            integration={selectedIntegration}
-          />
-        )}
+            <IntegrationObjectList
+              user={user}
+              integration={selectedIntegration}
+            />
+          )}
 
         <Box sx={{ mt: 4 }}>
           <Typography variant="h5" gutterBottom component="div" sx={{ mb: 4 }}>

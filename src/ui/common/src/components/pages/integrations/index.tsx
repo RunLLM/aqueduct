@@ -11,11 +11,9 @@ import { StorageMigrationResponse } from '../../../handlers/responses/storageMig
 import { RootState } from '../../../stores/store';
 import { theme } from '../../../styles/theme/theme';
 import UserProfile from '../../../utils/auth';
-import {
-  IntegrationCategories,
-  SupportedIntegrations,
-} from '../../../utils/integrations';
+import { IntegrationCategories } from '../../../utils/integrations';
 import { LoadingStatus, LoadingStatusEnum } from '../../../utils/shared';
+import SupportedIntegrations from '../../../utils/SupportedIntegrations';
 import AddIntegrations from '../../integrations/addIntegrations';
 import { ConnectedIntegrations } from '../../integrations/connectedIntegrations';
 import { ConnectedIntegrationType } from '../../integrations/connectedIntegrationType';
