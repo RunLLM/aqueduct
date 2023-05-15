@@ -63,15 +63,15 @@ export type OperatorResultResponse = {
 export type NodesResponse = {
   operators: OperatorResponse[];
   artifacts: ArtifactResponse[];
-  metrics: MergedNodeResponse[];
-  checks: MergedNodeResponse[];
+  // metrics: MergedNodeResponse[];
+  // checks: MergedNodeResponse[];
 };
 
 export type NodeResultsResponse = {
   operators: OperatorResultResponse[];
   artifacts: ArtifactResultResponse[];
-  metrics: MergedNodeResultResponse[];
-  checks: MergedNodeResultResponse[];
+  // metrics: MergedNodeResultResponse[];
+  // checks: MergedNodeResultResponse[];
 };
 
 export type NodeContentResponse = {

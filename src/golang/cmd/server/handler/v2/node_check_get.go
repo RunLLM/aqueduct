@@ -66,7 +66,7 @@ func (h *NodeCheckGetHandler) Perform(ctx context.Context, interfaceArgs interfa
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading operator.")
 	}
-	if dbOperator.Spec.IsCheck() {
+	if !dbOperator.Spec.IsCheck() {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Node ID does not belong to a check operator.")
 	}
 

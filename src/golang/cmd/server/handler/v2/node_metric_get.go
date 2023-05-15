@@ -66,7 +66,7 @@ func (h *NodeMetricGetHandler) Perform(ctx context.Context, interfaceArgs interf
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading operator.")
 	}
-	if dbOperator.Spec.IsMetric() {
+	if !dbOperator.Spec.IsMetric() {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Node ID does not belong to a metric operator.")
 	}
 

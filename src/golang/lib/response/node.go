@@ -241,8 +241,8 @@ func NewNodesFromDBObjects(
 type NodeResults struct {
 	Operators []OperatorResult `json:"operators"`
 	Artifacts []ArtifactResult `json:"artifacts"`
-	Metrics []MergedNodeResult `json:"metrics"`
-	Checks []MergedNodeResult `json:"checks"`
+	// Metrics []MergedNodeResult `json:"metrics"`
+	// Checks []MergedNodeResult `json:"checks"`
 }
 
 func NewNodeResultsFromDBObjects(
