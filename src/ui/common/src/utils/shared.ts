@@ -2,6 +2,12 @@ import { ArtifactResultMetadataResponse } from 'src/handlers/responses/artifactD
 
 import { TableRow } from './data';
 
+export enum AWSCredentialType {
+  AccessKey = 'access_key',
+  ConfigFilePath = 'config_file_path',
+  ConfigFileContent = 'config_file_content',
+}
+
 export enum LoadingStatusEnum {
   Initial = 'initial',
   Loading = 'loading',

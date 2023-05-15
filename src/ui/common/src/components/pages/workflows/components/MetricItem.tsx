@@ -58,7 +58,7 @@ interface MetricItemProps {
   metrics: MetricPreview[];
 }
 
-const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
+export const MetricItem: React.FC<MetricItemProps> = ({ metrics }) => {
   const [expanded, setExpanded] = useState<boolean>(false);
   const metricList = [];
 

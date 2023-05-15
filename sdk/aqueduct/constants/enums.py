@@ -80,6 +80,7 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     SPARK = "Spark"
     AWS = "AWS"
     ECR = "ECR"
+    FILESYSTEM = "Filesystem"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
