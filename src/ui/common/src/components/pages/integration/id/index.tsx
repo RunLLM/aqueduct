@@ -366,7 +366,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           )}
 
         {showResourceDetails && (
-          <Box sx={{ my: 1 }}>
+          <Box sx={{ my: 1, mt: 2 }}>
             <ResourceFieldsDetailsCard
               integration={selectedIntegration}
               detailedView={true}

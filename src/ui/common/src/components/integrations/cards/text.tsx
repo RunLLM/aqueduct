@@ -23,11 +23,13 @@ const paddingBetweenLabelAndValue = 8; // in pixels
 const maxNumRows = 3;
 
 function chunkList(list: string[], chunkSize: number): string[][] {
-  return Array.from({ length: Math.ceil(list.length / chunkSize) }, (_, index) =>
-      list.slice(index * chunkSize, index * chunkSize + chunkSize)
+  return Array.from(
+    { length: Math.ceil(list.length / chunkSize) },
+    (_, index) => list.slice(index * chunkSize, index * chunkSize + chunkSize)
   );
 }
 
+// ASSUMPTION: if using for the resource summary card, labels.length <= maxNumRows!
 // The format is "Label: Value". The label width is set to the maximum of all the provided labels.
 export const ResourceCardText: React.FC<ResourceCardTextProps> = ({
   labels,
@@ -40,55 +42,51 @@ export const ResourceCardText: React.FC<ResourceCardTextProps> = ({
   const labelWidthNum = Math.max(...labels.map(useLabelWidth));
 
   // Chunk the fields into their respective columns.
-  const chunkedLabels = chunkList(labels, maxNumRows)
-  const chunkedValues = chunkList(values, maxNumRows)
+  const chunkedLabels = chunkList(labels, maxNumRows);
+  const chunkedValues = chunkList(values, maxNumRows);
 
-  console.log("Labels: ", chunkedLabels)
-
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'row'}}>
-      {chunkedLabels.map((labelsForColumn, colIndex) => (
-          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-            {labelsForColumn.map((_, index) => (
-                <Box key={index} sx={{ display: 'flex', flexWrap: 'nowrap' }}>
-                  <TruncatedText
-                      variant="body2"
-                      sx={{ fontWeight: 300, width: `${labelWidthNum}px` }}
-                  >
-                    {labelsForColumn[index]}
-                  </TruncatedText>
-                  <TruncatedText
-                      variant="body2"
-                      sx={{ width: `calc(100% - ${labelWidthNum}px)` }}
-                  >
-                    {chunkedValues[colIndex][index]}
-                  </TruncatedText>
-                </Box>
-            ))}
+  const labelAndValueColumn = (labelsForColumn: string[], colIndex: number) => {
+    // Only set the left margin for columns after the first one.
+    return (
+      <Box
+        key={colIndex}
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          ml: colIndex > 0 ? 2 : 0,
+        }}
+      >
+        {labelsForColumn.map((_, rowIndex) => (
+          <Box key={rowIndex} sx={{ display: 'flex', flexWrap: 'nowrap' }}>
+            <TruncatedText
+              variant="body2"
+              sx={{ fontWeight: 300, width: `${labelWidthNum}px` }}
+            >
+              {labelsForColumn[rowIndex]}
+            </TruncatedText>
+            <TruncatedText
+              variant="body2"
+              sx={{ width: `calc(100% - ${labelWidthNum}px)` }}
+            >
+              {chunkedValues[colIndex][rowIndex]}
+            </TruncatedText>
           </Box>
-      ))}
-    </Box>
-  );
+        ))}
+      </Box>
+    );
+  };
 
-
-  // return (
-  //     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-  //       {labels.map((_, index) => (
-  //           <Box key={index} sx={{ display: 'flex', flexWrap: 'nowrap' }}>
-  //             <TruncatedText
-  //                 variant="body2"
-  //                 sx={{ fontWeight: 300, width: `${labelWidthNum}px` }}
-  //             >
-  //               {labels[index]}
-  //             </TruncatedText>
-  //             <TruncatedText
-  //                 variant="body2"
-  //                 sx={{ width: `calc(100% - ${labelWidthNum}px)` }}
-  //             >
-  //               {values[index]}
-  //             </TruncatedText>
-  //           </Box>
-  //       ))}
-  //     </Box>
-  // );
+  // We need to separate the multi-column case from the single-column one, since the latter is used in the
+  // resource summary card, and the additional row flow messes up the width calculation.
+  if (chunkedLabels.length > 1) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+        {chunkedLabels.map((labelsForColumn, colIndex) =>
+          labelAndValueColumn(labelsForColumn, colIndex)
+        )}
+      </Box>
+    );
+  } else {
+    return labelAndValueColumn(chunkedLabels[0], 0);
+  }
 };
