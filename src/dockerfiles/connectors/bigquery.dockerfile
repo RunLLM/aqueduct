@@ -9,4 +9,4 @@ RUN pip3 install google-cloud-bigquery
 
 ENV PYTHONUNBUFFERED 1
 
-CMD python3 -m aqueduct_executor.operators.connectors.data.main --spec "$JOB_SPEC"
+CMD python3 -m aqueduct_executor.operators.connectors.data.main --spec "$JOB_SPEC" --version-tag "$VERSION_TAG"
