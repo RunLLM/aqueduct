@@ -14,10 +14,10 @@ import (
 type MergedNode struct {
 	ID          uuid.UUID           `json:"id"`
 	DagID       uuid.UUID           `json:"dag_id"`
-	ArtifactID       uuid.UUID           `json:"artifact_id"`
+	ArtifactID  uuid.UUID           `json:"artifact_id"`
 	Name        string              `json:"name"`
 	Description string              `json:"description"`
-	Spec        *operator.Spec `json:"spec"`
+	Spec        *operator.Spec      `json:"spec"`
 	Type        shared.ArtifactType `json:"type"`
 
 	// Upstream artifact ID, could be multiple or empty.
@@ -31,25 +31,24 @@ func NewMergedNodeFromDBObject(dbMergedNode *views.MergedNode) *MergedNode {
 	return &MergedNode{
 		ID:          dbMergedNode.ID,
 		DagID:       dbMergedNode.DagID,
-		ArtifactID: dbMergedNode.ArtifactID,
+		ArtifactID:  dbMergedNode.ArtifactID,
 		Name:        dbMergedNode.Name,
 		Description: dbMergedNode.Description,
 		Spec:        &dbMergedNode.Spec,
 		Type:        dbMergedNode.Type,
 		// Inputs to the metric operator
-		Inputs:       dbMergedNode.Inputs,
+		Inputs: dbMergedNode.Inputs,
 		// Outputs of the metric artifact
-		Outputs:     dbMergedNode.Outputs,
+		Outputs: dbMergedNode.Outputs,
 	}
 }
 
-
 type MergedNodeResult struct {
 	// Operator ID
-	ID        uuid.UUID              `json:"id"`
+	ID                uuid.UUID              `json:"id"`
 	OperatorExecState *shared.ExecutionState `json:"operator_exec_state"`
 
-	ArtifactID                uuid.UUID                        `json:"artifact_id"`
+	ArtifactID        uuid.UUID                        `json:"artifact_id"`
 	SerializationType shared.ArtifactSerializationType `json:"serialization_type"`
 
 	// If `ContentSerialized` is set, the content is small and we directly send
@@ -70,7 +69,7 @@ func NewMergedNodeResultFromDBObject(
 ) *MergedNodeResult {
 	result := &MergedNodeResult{
 		ID:                dbMergedNodeResult.ID,
-		ArtifactID:                dbMergedNodeResult.ArtifactID,
+		ArtifactID:        dbMergedNodeResult.ArtifactID,
 		SerializationType: dbMergedNodeResult.Metadata.SerializationType,
 		ContentPath:       dbMergedNodeResult.ContentPath,
 		ContentSerialized: content,

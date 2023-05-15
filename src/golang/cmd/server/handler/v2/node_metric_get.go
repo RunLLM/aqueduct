@@ -33,7 +33,7 @@ type NodeMetricGetHandler struct {
 
 	Database database.Database
 
-	WorkflowRepo       repos.Workflow
+	WorkflowRepo repos.Workflow
 	OperatorRepo repos.Operator
 }
 
@@ -61,7 +61,7 @@ func (h *NodeMetricGetHandler) Perform(ctx context.Context, interfaceArgs interf
 	if !ok {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
 	}
-	
+
 	dbOperator, err := h.OperatorRepo.Get(ctx, args.nodeID, h.Database)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading operator.")

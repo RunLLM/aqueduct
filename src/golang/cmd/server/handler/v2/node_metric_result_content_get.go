@@ -41,7 +41,7 @@ type NodeMetricResultContentGetHandler struct {
 
 	WorkflowRepo       repos.Workflow
 	DAGRepo            repos.DAG
-	OperatorRepo repos.Operator
+	OperatorRepo       repos.Operator
 	ArtifactRepo       repos.Artifact
 	ArtifactResultRepo repos.ArtifactResult
 }
