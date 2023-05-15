@@ -35,9 +35,10 @@ import { AppDispatch, RootState } from '../../../../stores/store';
 import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
 import {
-  hasConfigFieldsToShow,
   IntegrationCategories,
   isNotificationIntegration,
+  resourceExecState,
+  SupportedIntegrations,
 } from '../../../../utils/integrations';
 import ExecutionStatus, {
   isFailed,
@@ -227,6 +228,8 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     return null;
   }
 
+  const selectedIntegrationExecState = resourceExecState(selectedIntegration);
+
   return (
     <Layout
       breadcrumbs={[
@@ -257,31 +260,29 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
                 numWorkflowsUsingMsg={numWorkflowsUsingMsg}
               />
 
-              {hasConfigFieldsToShow(selectedIntegration) && (
-                <Box
-                  sx={{
-                    fontSize: '16px',
-                    p: 1,
-                    ml: 1,
-                    height: '32px',
-                    borderRadius: '8px',
-                    ':hover': {
-                      backgroundColor: theme.palette.gray[50],
-                    },
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => setShowResourceDetails(!showResourceDetails)}
-                >
-                  <Tooltip title="See more" arrow>
-                    <FontAwesomeIcon
-                      icon={faEllipsis}
-                      style={{
-                        transition: 'transform 200ms',
-                      }}
-                    />
-                  </Tooltip>
-                </Box>
-              )}
+              <Box
+                sx={{
+                  fontSize: '16px',
+                  p: 1,
+                  ml: 1,
+                  height: '32px',
+                  borderRadius: '8px',
+                  ':hover': {
+                    backgroundColor: theme.palette.gray[50],
+                  },
+                  cursor: 'pointer',
+                }}
+                onClick={() => setShowResourceDetails(!showResourceDetails)}
+              >
+                <Tooltip title="See more" arrow>
+                  <FontAwesomeIcon
+                    icon={faEllipsis}
+                    style={{
+                      transition: 'transform 200ms',
+                    }}
+                  />
+                </Tooltip>
+              </Box>
             </Box>
           </Box>
 
@@ -308,7 +309,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           />
         </Box>
 
-        {selectedIntegration.exec_state?.status === ExecutionStatus.Failed && (
+        {selectedIntegrationExecState.status === ExecutionStatus.Failed && (
           <Box
             sx={{
               backgroundColor: theme.palette.red[100],
@@ -321,7 +322,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             }}
           >
             <Typography variant="body2" style={{ whiteSpace: 'pre-wrap' }}>
-              {`${selectedIntegration.exec_state?.error.tip}\n\n${selectedIntegration.exec_state?.error.context}`}
+              {`${selectedIntegrationExecState.error.tip}\n\n${selectedIntegrationExecState?.error.context}`}
             </Typography>
           </Box>
         )}

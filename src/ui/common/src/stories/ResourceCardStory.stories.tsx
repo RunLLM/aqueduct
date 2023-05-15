@@ -5,6 +5,7 @@ import React from 'react';
 import { IntegrationCard } from '../components/integrations/cards/card';
 import { Card } from '../components/layouts/card';
 import {
+  AqueductComputeConfig,
   BigQueryConfig,
   DatabricksConfig,
   EmailConfig,
@@ -151,7 +152,7 @@ const ResourceCard: React.FC = () => {
       },
     },
     {
-      id: '21',
+      id: '9',
       service: 'S3',
       name: 'ANother S3 Resource',
       config: {
@@ -167,7 +168,7 @@ const ResourceCard: React.FC = () => {
       },
     },
     {
-      id: '9',
+      id: '10',
       service: 'GCS',
       name: 'GCS Resource',
       config: {
@@ -180,7 +181,7 @@ const ResourceCard: React.FC = () => {
       },
     },
     {
-      id: '10',
+      id: '11',
       service: 'Airflow',
       name: 'My Airflow Compute',
       config: {
@@ -196,7 +197,7 @@ const ResourceCard: React.FC = () => {
       },
     },
     {
-      id: '11',
+      id: '12',
       service: 'Kubernetes',
       name: 'My Kubernetes Compute and long name',
       config: {
@@ -209,7 +210,7 @@ const ResourceCard: React.FC = () => {
       },
     },
     {
-      id: '12',
+      id: '13',
       service: 'Lambda',
       name: 'My Lambda Compute',
       config: {
@@ -222,7 +223,7 @@ const ResourceCard: React.FC = () => {
       },
     },
     {
-      id: '13',
+      id: '14',
       service: 'Databricks',
       name: 'My Databricks Compute',
       config: {
@@ -238,7 +239,7 @@ const ResourceCard: React.FC = () => {
       },
     },
     {
-      id: '14',
+      id: '15',
       service: 'Spark',
       name: 'My Spark Compute',
       config: {
@@ -265,7 +266,7 @@ const ResourceCard: React.FC = () => {
       },
     },
     {
-      id: '20',
+      id: '17',
       service: 'Slack',
       name: 'Slack Enabled',
       config: {
@@ -281,7 +282,7 @@ const ResourceCard: React.FC = () => {
     },
 
     {
-      id: '17',
+      id: '18',
       service: 'Email',
       name: 'Email Notifications',
       config: {
@@ -299,7 +300,7 @@ const ResourceCard: React.FC = () => {
       },
     },
     {
-      id: '21',
+      id: '19',
       service: 'Email',
       name: 'Email Enabled',
       config: {
@@ -317,7 +318,7 @@ const ResourceCard: React.FC = () => {
       },
     },
     {
-      id: '18',
+      id: '20',
       service: 'SQLite',
       name: 'Aqueduct Demo',
       config: {},
@@ -327,10 +328,32 @@ const ResourceCard: React.FC = () => {
       },
     },
     {
-      id: '19',
+      id: '21',
       service: 'Aqueduct',
       name: 'Aqueduct Server',
-      config: {},
+      config: {
+        python_version: 'Python 3.8.10',
+      } as AqueductComputeConfig,
+      createdAt: Date.now() / 1000,
+      exec_state: {
+        status: ExecutionStatus.Succeeded,
+      },
+    },
+    {
+      id: '22',
+      service: 'Aqueduct',
+      name: 'Aqueduct Conda',
+      config: {
+        conda_config_serialized:
+          '{' +
+          '"conda_path":"/Users/kennethxu/opt/anaconda3",' +
+          '"exec_state":"{' +
+          '\\"user_logs\\":null,' +
+          '\\"status\\":\\"succeeded\\",' +
+          '\\"failure_type\\":null,' +
+          '\\"error\\":null,' +
+          '\\"timestamps\\":{\\"registered_at\\":null,\\"pending_at\\":null,\\"running_at\\":\\"2023-05-09T15:51:22.674257-07:00\\",\\"finished_at\\":\\"2023-05-09T15:54:30.699374-07:00\\"}}"}',
+      } as AqueductComputeConfig,
       createdAt: Date.now() / 1000,
       exec_state: {
         status: ExecutionStatus.Succeeded,

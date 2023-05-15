@@ -19,7 +19,10 @@ import {
   BigQueryDialog,
   getBigQueryValidationSchema,
 } from '../components/integrations/dialogs/bigqueryDialog';
-import { CondaDialog } from '../components/integrations/dialogs/condaDialog';
+import {
+  CondaDialog,
+  getCondaValidationSchema,
+} from '../components/integrations/dialogs/condaDialog';
 import {
   DatabricksDialog,
   getDatabricksValidationSchema,
@@ -382,7 +385,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
         disabled={disabled}
       />
     ),
-    validationSchema: null,
+    validationSchema: getCondaValidationSchema(),
   },
   ['Databricks']: {
     logo: ServiceLogos['Databricks'],

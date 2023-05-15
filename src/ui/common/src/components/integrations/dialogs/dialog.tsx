@@ -184,13 +184,12 @@ const IntegrationDialog: React.FC<Props> = ({
       spellCheck={false}
       required={true}
       label="Name*"
-      description="Provide a unique name to refer to this integration."
-      placeholder={'my_' + formatService(service) + '_integration'}
+      description="Provide a unique name to refer to this resource."
+      placeholder={'my_' + formatService(service) + '_resource'}
       onChange={(event) => {
         setShouldShowNameError(false);
         methods.setValue('name', event.target.value);
       }}
-      disabled={service === 'Aqueduct Demo'}
     />
   );
 
@@ -235,7 +234,7 @@ const IntegrationDialog: React.FC<Props> = ({
               </Typography>
             )}
 
-            {service !== 'Kubernetes' && nameInput}
+            {service !== 'Kubernetes' && service !== 'Conda' && nameInput}
 
             {dialogContent({
               user,

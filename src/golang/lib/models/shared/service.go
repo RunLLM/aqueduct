@@ -144,6 +144,10 @@ func ParseService(s string) (Service, error) {
 	}
 }
 
+func IsBuiltinIntegration(name string, service Service) bool {
+	return (service == Aqueduct || service == Filesystem || (name == DemoDbIntegrationName && service == Sqlite))
+}
+
 func IsRelationalDatabaseIntegration(service Service) bool {
 	_, ok := relationalDatabaseIntegrations[service]
 	return ok

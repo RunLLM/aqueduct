@@ -2,8 +2,11 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 
-import { Integration } from '../../../utils/integrations';
-import ExecutionStatus from '../../../utils/shared';
+import {
+  Integration,
+  resolveDisplayService,
+  resourceExecState,
+} from '../../../utils/integrations';
 import { StatusIndicator } from '../../workflows/workflowStatus';
 import IntegrationLogo from '../logo';
 
@@ -26,7 +29,7 @@ export const ResourceHeaderDetailsCard: React.FC<
     >
       <Box display="flex" flexDirection="row" alignItems="center">
         <IntegrationLogo
-          service={integration.service}
+          service={resolveDisplayService(integration)}
           size="medium"
           activated
         />
@@ -38,9 +41,7 @@ export const ResourceHeaderDetailsCard: React.FC<
             </Typography>
 
             <StatusIndicator
-              status={
-                integration.exec_state?.status || ExecutionStatus.Succeeded
-              }
+              status={resourceExecState(integration).status}
               size="20px"
             />
           </Box>
