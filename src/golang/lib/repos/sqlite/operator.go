@@ -93,7 +93,7 @@ const operatorNodeViewSubQuery = `
 	WHERE op_with_outputs.outputs IS NULL
 `
 
- const mergedNodeViewSubQuery = `
+const mergedNodeViewSubQuery = `
 	WITH
 		operator_node AS (
 			WITH op_with_outputs AS ( -- Aggregate outputs

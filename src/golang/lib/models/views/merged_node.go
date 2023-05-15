@@ -10,28 +10,28 @@ import (
 )
 
 const (
-	MergedNodeView    = "merged_node"
-	MergedNodeID = "id"
-	MergedNodeDagID = "dag_id"
-	MergedNodeArtifactID = "artifact_id"
-	MergedNodeName = "name"
+	MergedNodeView        = "merged_node"
+	MergedNodeID          = "id"
+	MergedNodeDagID       = "dag_id"
+	MergedNodeArtifactID  = "artifact_id"
+	MergedNodeName        = "name"
 	MergedNodeDescription = "description"
-	MergedNodeSpec = "spec"
-	MergedNodeType = "type"
-	MergedNodeInputs = "inputs"
-	MergedNodeOutputs = "outputs"
+	MergedNodeSpec        = "spec"
+	MergedNodeType        = "type"
+	MergedNodeInputs      = "inputs"
+	MergedNodeOutputs     = "outputs"
 )
 
 type MergedNode struct {
 	ID          uuid.UUID           `db:"id" json:"id"`
 	DagID       uuid.UUID           `db:"dag_id" json:"dag_id"`
-	ArtifactID          uuid.UUID           `db:"artifact_id" json:"artifact_id"`
+	ArtifactID  uuid.UUID           `db:"artifact_id" json:"artifact_id"`
 	Name        string              `db:"name" json:"name"`
 	Description string              `db:"description" json:"description"`
-	Spec                   operator.Spec  `db:"spec" json:"spec"`
+	Spec        operator.Spec       `db:"spec" json:"spec"`
 	Type        shared.ArtifactType `db:"type" json:"type"`
 
-	Inputs   shared.NullableIndexedList[uuid.UUID]                             `db:"inputs" json:"inputs"`
+	Inputs  shared.NullableIndexedList[uuid.UUID] `db:"inputs" json:"inputs"`
 	Outputs shared.NullableIndexedList[uuid.UUID] `db:"outputs" json:"outputs"`
 }
 

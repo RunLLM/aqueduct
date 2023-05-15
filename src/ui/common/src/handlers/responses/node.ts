@@ -19,7 +19,7 @@ export type MergedNodeResponse = {
 export type MergedNodeResultResponse = {
   id: string;
   operator_exec_state?: ExecState;
-  
+
   artifact_id?: string;
   serialization_type?: SerializationType;
   content_path?: string;

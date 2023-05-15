@@ -32,7 +32,7 @@ type operatorReader interface {
 
 	// GetMergedNode returns the MergedNode view given the operator ID.
 	GetMergedNode(ctx context.Context, ID uuid.UUID, DB database.Database) (*views.MergedNode, error)
-	
+
 	// GetMergedNodeBatch returns the MergedNode views given the operator IDs.
 	GetMergedNodeBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]views.MergedNode, error)
 

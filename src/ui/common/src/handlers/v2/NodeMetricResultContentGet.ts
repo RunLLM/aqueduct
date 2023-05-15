@@ -1,11 +1,16 @@
 // This file should map exactly to
 // src/golang/cmd/server/handler/v2/node_metric_result_content_get.go
 
-import { NodeArtifactResultContentGetRequest, NodeArtifactResultContentGetResponse } from './NodeArtifactResultContentGet';
+import {
+  NodeArtifactResultContentGetRequest,
+  NodeArtifactResultContentGetResponse,
+} from './NodeArtifactResultContentGet';
 
-export type NodeMetricResultContentGetRequest = NodeArtifactResultContentGetRequest;
+export type NodeMetricResultContentGetRequest =
+  NodeArtifactResultContentGetRequest;
 
-export type NodeMetricResultContentGetResponse = NodeArtifactResultContentGetResponse;
+export type NodeMetricResultContentGetResponse =
+  NodeArtifactResultContentGetResponse;
 
 export const nodeMetricResultContentGetQuery = (
   req: NodeMetricResultContentGetRequest
