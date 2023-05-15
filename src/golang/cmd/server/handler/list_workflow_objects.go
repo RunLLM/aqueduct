@@ -197,7 +197,7 @@ func GetDistinctLoadOpsByWorkflow(
 			// we simply continue onwards - perhaps the execution had failed.
 			contentBytes, err := storageObj.Get(ctx, paramArtifactResultByID[artifactResultID].ContentPath)
 			if err != nil {
-				log.Warn("Unable to fetch content for artifact result %s: %v", artifactResultID, err)
+				log.Warnf("Unable to fetch content for artifact result %s: %v", artifactResultID, err)
 				continue
 			}
 			tableNameByParamArtifactResultID[artifactResultID] = string(contentBytes)
@@ -215,7 +215,7 @@ func GetDistinctLoadOpsByWorkflow(
 					tableNames[tableName] = true
 				} else {
 					// No table names were found for this save operator, so let's skip the operator it altogether.
-					log.Warn("Excluding %s from the returned list of save operators because we could not find any successfully saved table names for it.", saveOp.OperatorID)
+					log.Warnf("Excluding %s from the returned list of save operators because we could not find any successfully saved table names for it.", saveOp.OperatorID)
 					continue
 				}
 			}
