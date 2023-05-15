@@ -687,14 +687,15 @@ def test_save_table_name_parameterized(client, data_validator, data_integration,
     # Check that the appropriate table was written to this second time.
     # In order for this to work, we need to alter the global save map that this test suite uses to look up
     # artifact -> saved table name relationships.
-    artifact_id_to_saved_identifier[table_to_save.id()] = new_table_name
+    artifact_id_to_saved_identifier[str(table_to_save.id())] = new_table_name
     data_validator.check_saved_artifact_data(
         flow, table_to_save.id(), expected_data=table_to_save.get()
     )
 
-
-@pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
-def test_failing_save_table_name_parameterized(
-    client, data_validator, data_integration, flow_name, engine
-):
-    pass
+    # Check that a non-string parameter will fail.
+    with pytest.raises(InvalidUserArgumentException, match="A parameter value for `table_name` must be of string type"):
+        numeric_param = client.create_param("number", default=123)
+        save(
+            data_integration, table_to_save, numeric_param, update_mode=LoadUpdateMode.FAIL
+        )
+    trigger_flow_test(client, flow, parameters={"table name param": 123}, expected_status=ExecutionStatus.FAILED)
