@@ -49,6 +49,8 @@ class BigQueryConnector(connector.DataConnector):
         if artifact_type != ArtifactType.TABLE:
             raise Exception("The data being loaded must be of type table, found %s" % artifact_type)
 
+        # The expected table name format is <DATASET>.<TABLE> so we try to parse
+        # just the dataset name here.
         parts = params.table.split(".")
         if len(parts) == 0:
             raise Exception(
