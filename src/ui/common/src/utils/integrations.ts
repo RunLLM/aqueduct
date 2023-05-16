@@ -399,11 +399,6 @@ const logoBucket =
 const integrationLogosBucket =
   'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations';
 
-const resourceLogosBucket = 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos';
-
-// TODO: REMOVE
-const testLogosBucket = 'https://test-kenny.s3.us-east-2.amazonaws.com';
-
 export const IntegrationCategories = {
   DATA: 'data',
   COMPUTE: 'compute',
@@ -417,23 +412,23 @@ export const ServiceLogos: ServiceLogo = {
   ['Aqueduct']: `${logoBucket}/aqueduct-logo-two-tone/small/2x/aqueduct-logo-two-tone-small%402x.png`,
   ['Postgres']: `${integrationLogosBucket}/440px-Postgresql_elephant.svg.png`,
   ['Snowflake']: `${integrationLogosBucket}/51-513957_periscope-data-partners-snowflake-computing-logo.png`,
-  ['Redshift']: `${testLogosBucket}/amazon-redshift.png`,
+  ['Redshift']: `${integrationLogosBucket}/amazon-redshift.png`,
   ['BigQuery']: `${integrationLogosBucket}/google-bigquery-logo-1.svg`,
-  ['MySQL']: `${testLogosBucket}/mysql.png`,
-  ['MariaDB']: `${testLogosBucket}/mariadb.png`,
-  ['S3']: `${testLogosBucket}/s3.png`,
+  ['MySQL']: `${integrationLogosBucket}/mysql.png`,
+  ['MariaDB']: `${integrationLogosBucket}/mariadb.png`,
+  ['S3']: `${integrationLogosBucket}/s3.png`,
   ['GCS']: `${integrationLogosBucket}/google-cloud-storage.png`,
   ['SQLite']: `${integrationLogosBucket}/sqlite-square-icon-256x256.png`,
   ['Athena']: `${integrationLogosBucket}/athena.png`,
   ['Airflow']: `${integrationLogosBucket}/airflow.png`,
   ['Kubernetes']: `${integrationLogosBucket}/kubernetes.png`,
-  ['Lambda']: `${testLogosBucket}/Lambda.png`,
+  ['Lambda']: `${integrationLogosBucket}/Lambda.png`,
   ['MongoDB']: `${integrationLogosBucket}/mongo.png`,
   ['Conda']: `${integrationLogosBucket}/conda.png`,
   ['Databricks']: `${integrationLogosBucket}/databricks_logo.png`,
   ['Email']: `${integrationLogosBucket}/email.png`,
   ['Slack']: `${integrationLogosBucket}/slack.png`,
-  ['Spark']: `${resourceLogosBucket}/spark-logo-only.png`,
+  ['Spark']: `${integrationLogosBucket}/spark-logo-trademark.png`,
   ['AWS']: `${integrationLogosBucket}/aws-logo-trademark.png`,
   ['GCP']: `${integrationLogosBucket}/gcp.png`,
   ['Azure']: `${integrationLogosBucket}/azure.png`,
