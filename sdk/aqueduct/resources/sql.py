@@ -250,7 +250,8 @@ class RelationalDBResource(BaseResource):
                 The artifact to save into this sql integration.
             table_name:
                 The table to save the artifact to. You can also parameterize this field by passing
-                a string parameter here.
+                a string parameter here. When this save is parameterized, the table name parameter
+                will always be ordered before the artifact in the save operator's input list.
             update_mode:
                 Defines the semantics of the save if a table already exists.
                 Options are "replace", "append" (row-wise), or "fail" (if table already exists).
@@ -276,7 +277,8 @@ class RelationalDBResource(BaseResource):
 
             # This is unset in the LoadParams, since we're parameterizing it.
             table_name_str = ""
-            # Prepend any parameter artifacts.
+
+            # Assumption: All parameter artifacts are prepended to the operator's input list.
             artifact_ids = [table_name_artifact.id()] + artifact_ids
         else:
             if table_name_str == "":

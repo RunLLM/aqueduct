@@ -148,14 +148,16 @@ func GetDistinctLoadOpsByWorkflow(
 		return nil, errors.Wrap(err, "Unexpected error occurred when fetching parameterized save operators.")
 	}
 
-	// Use the save operator's ID as the primary key for organization when fetching the artifacts and then their corresponding
-	// artifact results.
+	// Use the save operator's ID as the primary key for organization purposes while fetching the artifacts and
+	// then their corresponding artifact results.
 	paramArtifactIDBySaveOpID := make(map[uuid.UUID]uuid.UUID, len(saveOps))
 	for _, saveOp := range saveOps {
 		if len([]uuid.UUID(saveOp.Inputs)) < 2 {
 			return nil, errors.Newf("Expected parameterized save operator %s to have multiple inputs!", saveOp.ID)
 		}
 
+		// Assumption: The parameters to a save operator always come before the actual artifact to save.
+		// There is only one parameter we allow for relational saves.
 		tableNameParamArtifactID := saveOp.Inputs[0]
 		paramArtifactIDBySaveOpID[saveOp.ID] = tableNameParamArtifactID
 	}
