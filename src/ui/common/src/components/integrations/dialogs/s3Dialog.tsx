@@ -52,7 +52,7 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
 
   const setFile = (fileData: FileData | null) => {
     // Update the react-hook-form value
-    setValue('config_file_content', fileData?.data);
+    setValue('config_file_content', fileData);
     // Set state to trigger re-render of file upload field.
     setFileData(fileData);
   };
@@ -199,6 +199,8 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
           value={currentTab}
           onChange={(_, value) => {
             setValue('type', value);
+            // reset config_file_profile when changing tabs.
+            setValue('config_file_profile', '', { shouldDirty: false, shouldTouch: false });
             setCurrentTab(value);
           }}
         >
@@ -262,21 +264,27 @@ export function getS3ValidationSchema() {
       otherwise: null,
     }),
     config_file_profile: Yup.string().when('type', {
-      is: 'config_file_path' || 'config_file_content',
+      is: (value) => value === 'config_file_path' || value === 'config_file_content',
       then: Yup.string().required('Please enter a config file profile'),
       otherwise: null,
     }),
     config_file_content: Yup.string().when('type', {
-      is: 'config_file_content',
+      is: (value) => value === 'config_file_content',
       then: Yup.string()
-        .transform((value) => {
-          if (!value?.data) {
-            return null;
-          }
+      .transform((value) => {
+        // Depending on if dragged and dropped or uploaded via file picker, we can get two different things.
+        if (typeof value === 'object') {
           return value.data;
-        })
-        .required('Please upload a credentials file'),
-        otherwise: null,
+        } else if (typeof value === 'string') {
+          const parsed = JSON.parse(value);
+          console.log('parsed: ', parsed);
+          return parsed.data;
+        }
+
+        return value;
+      })
+      .required('Please upload a credentials file'),
+      otherwise: null,
     }),
   });
 }
