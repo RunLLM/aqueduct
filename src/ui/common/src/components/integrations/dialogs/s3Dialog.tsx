@@ -200,7 +200,10 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
           onChange={(_, value) => {
             setValue('type', value);
             // reset config_file_profile when changing tabs.
-            setValue('config_file_profile', '', { shouldDirty: false, shouldTouch: false });
+            setValue('config_file_profile', '', {
+              shouldDirty: false,
+              shouldTouch: false,
+            });
             setCurrentTab(value);
           }}
         >
@@ -264,26 +267,26 @@ export function getS3ValidationSchema() {
       otherwise: null,
     }),
     config_file_profile: Yup.string().when('type', {
-      is: (value) => value === 'config_file_path' || value === 'config_file_content',
+      is: (value) =>
+        value === 'config_file_path' || value === 'config_file_content',
       then: Yup.string().required('Please enter a config file profile'),
       otherwise: null,
     }),
     config_file_content: Yup.string().when('type', {
       is: (value) => value === 'config_file_content',
       then: Yup.string()
-      .transform((value) => {
-        // Depending on if dragged and dropped or uploaded via file picker, we can get two different things.
-        if (typeof value === 'object') {
-          return value.data;
-        } else if (typeof value === 'string') {
-          const parsed = JSON.parse(value);
-          console.log('parsed: ', parsed);
-          return parsed.data;
-        }
+        .transform((value) => {
+          // Depending on if dragged and dropped or uploaded via file picker, we can get two different things.
+          if (typeof value === 'object') {
+            return value.data;
+          } else if (typeof value === 'string') {
+            const parsed = JSON.parse(value);
+            return parsed.data;
+          }
 
-        return value;
-      })
-      .required('Please upload a credentials file'),
+          return value;
+        })
+        .required('Please upload a credentials file'),
       otherwise: null,
     }),
   });
