@@ -7,6 +7,7 @@ from aqueduct_executor.operators.utils.enums import ArtifactType
 from aqueduct_executor.operators.utils.saved_object_delete import SavedObjectDelete
 from aqueduct_executor.operators.utils.utils import delete_object
 from google.cloud import bigquery
+from google.cloud.exceptions import NotFound
 from google.oauth2 import service_account
 
 
@@ -47,6 +48,24 @@ class BigQueryConnector(connector.DataConnector):
     def load(self, params: load.RelationalParams, df: Any, artifact_type: ArtifactType) -> None:
         if artifact_type != ArtifactType.TABLE:
             raise Exception("The data being loaded must be of type table, found %s" % artifact_type)
+
+        # The expected table name format is <DATASET>.<TABLE> so we try to parse
+        # just the dataset name here.
+        parts = params.table.split(".")
+        if len(parts) == 0:
+            raise Exception(
+                "Invalid name provided for BigQuery dataset and table: %s" % params.table
+            )
+
+        # Check if dataset actually exists
+        dataset_id = parts[0]
+        try:
+            self.client.get_dataset(dataset_id)
+        except NotFound:
+            raise Exception(
+                "The dataset %s does not exist. Please save to a dataset that already exists."
+                % dataset_id
+            )
 
         update_mode = params.update_mode
         write_disposition = bigquery.WriteDisposition.WRITE_TRUNCATE  # Default
