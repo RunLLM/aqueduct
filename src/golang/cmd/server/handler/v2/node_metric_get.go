@@ -25,7 +25,7 @@ import (
 //		`api-key`: user's API Key
 // Response:
 //	Body:
-//		`response.MergedNode`
+//		`response.OperatorWithArtifactNode`
 
 type NodeMetricGetHandler struct {
 	nodeGetHandler
@@ -70,10 +70,10 @@ func (h *NodeMetricGetHandler) Perform(ctx context.Context, interfaceArgs interf
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Node ID does not belong to a metric operator.")
 	}
 
-	dbMergedNode, err := h.OperatorRepo.GetMergedNode(ctx, args.nodeID, h.Database)
+	dbOperatorWithArtifactNode, err := h.OperatorRepo.GetOperatorWithArtifactNode(ctx, args.nodeID, h.Database)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading metric node.")
 	}
 
-	return response.NewMergedNodeFromDBObject(dbMergedNode), http.StatusOK, nil
+	return response.NewOperatorWithArtifactNodeFromDBObject(dbOperatorWithArtifactNode), http.StatusOK, nil
 }

@@ -10,19 +10,19 @@ import (
 )
 
 const (
-	MergedNodeView        = "merged_node"
-	MergedNodeID          = "id"
-	MergedNodeDagID       = "dag_id"
-	MergedNodeArtifactID  = "artifact_id"
-	MergedNodeName        = "name"
-	MergedNodeDescription = "description"
-	MergedNodeSpec        = "spec"
-	MergedNodeType        = "type"
-	MergedNodeInputs      = "inputs"
-	MergedNodeOutputs     = "outputs"
+	OperatorWithArtifactNodeView        = "merged_node"
+	OperatorWithArtifactNodeID          = "id"
+	OperatorWithArtifactNodeDagID       = "dag_id"
+	OperatorWithArtifactNodeArtifactID  = "artifact_id"
+	OperatorWithArtifactNodeName        = "name"
+	OperatorWithArtifactNodeDescription = "description"
+	OperatorWithArtifactNodeSpec        = "spec"
+	OperatorWithArtifactNodeType        = "type"
+	OperatorWithArtifactNodeInputs      = "inputs"
+	OperatorWithArtifactNodeOutputs     = "outputs"
 )
 
-type MergedNode struct {
+type OperatorWithArtifactNode struct {
 	ID          uuid.UUID           `db:"id" json:"id"`
 	DagID       uuid.UUID           `db:"dag_id" json:"dag_id"`
 	ArtifactID  uuid.UUID           `db:"artifact_id" json:"artifact_id"`
@@ -35,32 +35,32 @@ type MergedNode struct {
 	Outputs shared.NullableIndexedList[uuid.UUID] `db:"outputs" json:"outputs"`
 }
 
-// MergedNodeCols returns a comma-separated string of all merged node columns.
-func MergedNodeCols() string {
-	return strings.Join(allMergedNodeCols(), ",")
+// OperatorWithArtifactNodeCols returns a comma-separated string of all merged node columns.
+func OperatorWithArtifactNodeCols() string {
+	return strings.Join(allOperatorWithArtifactNodeCols(), ",")
 }
 
-// MergedNodeColsWithPrefix returns a comma-separated string of all
+// OperatorWithArtifactNodeColsWithPrefix returns a comma-separated string of all
 // merged node columns prefixed by the view name.
-func MergedNodeColsWithPrefix() string {
-	cols := allMergedNodeCols()
+func OperatorWithArtifactNodeColsWithPrefix() string {
+	cols := allOperatorWithArtifactNodeCols()
 	for i, col := range cols {
-		cols[i] = fmt.Sprintf("%s.%s", MergedNodeView, col)
+		cols[i] = fmt.Sprintf("%s.%s", OperatorWithArtifactNodeView, col)
 	}
 
 	return strings.Join(cols, ",")
 }
 
-func allMergedNodeCols() []string {
+func allOperatorWithArtifactNodeCols() []string {
 	return []string{
-		MergedNodeID,
-		MergedNodeDagID,
-		MergedNodeArtifactID,
-		MergedNodeName,
-		MergedNodeDescription,
-		MergedNodeSpec,
-		MergedNodeType,
-		MergedNodeInputs,
-		MergedNodeOutputs,
+		OperatorWithArtifactNodeID,
+		OperatorWithArtifactNodeDagID,
+		OperatorWithArtifactNodeArtifactID,
+		OperatorWithArtifactNodeName,
+		OperatorWithArtifactNodeDescription,
+		OperatorWithArtifactNodeSpec,
+		OperatorWithArtifactNodeType,
+		OperatorWithArtifactNodeInputs,
+		OperatorWithArtifactNodeOutputs,
 	}
 }

@@ -139,7 +139,7 @@ class GetNodeArtifactResponse(BaseModel):
     outputs: List[uuid.UUID]
 
 
-class GetMergedNodeResponse(BaseModel):
+class GetOperatorWithArtifactNodeResponse(BaseModel):
     """Represents a single merged node (metric or check) in a workflow run.
 
     Attributes:
