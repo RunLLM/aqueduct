@@ -276,7 +276,6 @@ export function getS3ValidationSchema() {
           return value.data;
         })
         .required('Please upload a credentials file'),
-        // TODO: transform this file to get the data field that comese out.
         otherwise: null,
     }),
   });
