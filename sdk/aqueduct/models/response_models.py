@@ -174,6 +174,7 @@ class GetOperatorWithArtifactNodeResponse(BaseModel):
     inputs: List[uuid.UUID]
     outputs: List[uuid.UUID]
 
+
 # V1 Responses
 class PreviewResponse(BaseModel):
     """This is the response object returned by api_client.preview().

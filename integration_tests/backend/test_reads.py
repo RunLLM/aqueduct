@@ -7,12 +7,12 @@ import pytest
 import requests
 import utils
 from aqueduct.models.response_models import (
-    GetOperatorWithArtifactNodeResponse,
     GetArtifactResultResponse,
     GetDagResultResponse,
     GetNodeArtifactResponse,
     GetNodeOperatorResponse,
     GetOperatorResultResponse,
+    GetOperatorWithArtifactNodeResponse,
 )
 from aqueduct_executor.operators.utils.enums import JobType
 from exec_state import assert_exec_state
@@ -45,11 +45,15 @@ class TestBackend:
     GET_NODE_OPERATOR_CONTENT_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/operator/%s/content"
 
     GET_NODE_METRIC_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/metric/%s"
-    GET_NODE_METRIC_RESULT_CONTENT_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/metric/%s/result/%s/content"
-    
+    GET_NODE_METRIC_RESULT_CONTENT_TEMPLATE = (
+        "/api/v2/workflow/%s/dag/%s/node/metric/%s/result/%s/content"
+    )
+
     GET_NODE_CHECK_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/check/%s"
-    GET_NODE_CHECK_RESULT_CONTENT_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/check/%s/result/%s/content"
-    
+    GET_NODE_CHECK_RESULT_CONTENT_TEMPLATE = (
+        "/api/v2/workflow/%s/dag/%s/node/check/%s/result/%s/content"
+    )
+
     # V1
     LIST_WORKFLOW_SAVED_OBJECTS_TEMPLATE = "/api/workflow/%s/objects"
     GET_TEST_INTEGRATION_TEMPLATE = "/api/integration/%s/test"
@@ -593,7 +597,11 @@ class TestBackend:
             flow_id,
             dag_result_id,
         )
-        operator_ids = [id for id in dag_result_resp.operators.keys() if dag_result_resp.operators[id].spec.metric]
+        operator_ids = [
+            id
+            for id in dag_result_resp.operators.keys()
+            if dag_result_resp.operators[id].spec.metric
+        ]
         operator_id = str(operator_ids[0])
 
         resp = self.get_response(
@@ -631,7 +639,7 @@ class TestBackend:
 
     #     resp = self.get_response(self.LIST_ARTIFACT_RESULTS_TEMPLATE % (flow_id, artifact_id)).json()
     #     results = resp["results"]
-    #     # One of these should be correct for the DAG run and can get result content. 
+    #     # One of these should be correct for the DAG run and can get result content.
     #     for artifact_result in results:
     #         resp = self.get_response(
     #             self.GET_NODE_METRIC_RESULT_CONTENT_TEMPLATE % (flow_id, dag_id, operator_id, artifact_result["id"])
@@ -648,7 +656,11 @@ class TestBackend:
             flow_id,
             dag_result_id,
         )
-        operator_ids = [id for id in dag_result_resp.operators.keys() if dag_result_resp.operators[id].spec.check]
+        operator_ids = [
+            id
+            for id in dag_result_resp.operators.keys()
+            if dag_result_resp.operators[id].spec.check
+        ]
         operator_id = str(operator_ids[0])
 
         resp = self.get_response(
@@ -686,7 +698,7 @@ class TestBackend:
 
     #     resp = self.get_response(self.LIST_ARTIFACT_RESULTS_TEMPLATE % (flow_id, artifact_id)).json()
     #     results = resp["results"]
-    #     # One of these should be correct for the DAG run and can get result content. 
+    #     # One of these should be correct for the DAG run and can get result content.
     #     for artifact_result in results:
     #         resp = self.get_response(
     #             self.GET_NODE_CHECK_RESULT_CONTENT_TEMPLATE % (flow_id, dag_id, operator_id, artifact_result["id"])
