@@ -29,7 +29,8 @@ export const GCSDialog: React.FC<GCSDialogProps> = ({
   setMigrateStorage,
 }) => {
   // Setup for the checkbox component.
-  const { control, setValue, getValues } = useFormContext();
+  const { control, setValue } = useFormContext();
+  const [fileData, setFileData] = useState<FileData | null>(null);
   const { field } = useController({
     control,
     name: 'use_as_storage',
@@ -37,19 +38,10 @@ export const GCSDialog: React.FC<GCSDialogProps> = ({
     rules: { required: true },
   });
 
-  const [fileName, setFileName] = useState<string>(null);
   const setFile = (fileData: FileData | null) => {
-    setFileName(fileData?.name ?? null);
     setValue('service_account_credentials', fileData?.data);
+    setFileData(fileData);
   };
-
-  const fileData =
-    fileName && !!getValues('service_account_credentials')
-      ? {
-          name: fileName,
-          data: getValues('service_account_credentials'),
-        }
-      : null;
 
   const fileUploadDescription = (
     <>
@@ -141,9 +133,16 @@ export function readCredentialsFile(
 
 export function getGCSValidationSchema() {
   return Yup.object().shape({
+    name: Yup.string().required('Please enter a name'),
     bucket: Yup.string().required('Please enter a bucket name'),
-    service_account_credentials: Yup.string().required(
-      'Please upload a service account key file.'
-    ),
+    service_account_credentials: Yup.string()
+      .transform((value) => {
+        if (!value?.data) {
+          return null;
+        }
+
+        return value.data;
+      })
+      .required('Please upload a service account key file.'),
   });
 }

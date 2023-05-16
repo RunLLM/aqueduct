@@ -38,7 +38,7 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
   editMode = false,
   setMigrateStorage,
 }) => {
-  const [fileData, setFileData] = useState<FileData | null>(null);
+  const [fileData, setFileData] = useState<string | null>(null);
 
   const { register, setValue } = useFormContext();
   register('use_as_storage');
@@ -54,7 +54,7 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
     // Update the react-hook-form value
     setValue('config_file_content', fileData?.data);
     // Set state to trigger re-render of file upload field.
-    setFileData(fileData);
+    setFileData(fileData?.data);
   };
 
   const configProfileInput = (
@@ -263,7 +263,15 @@ export function getS3ValidationSchema() {
     }),
     config_file_content: Yup.string().when('type', {
       is: 'config_file_content',
-      then: Yup.string().required('Please upload a credentials file'),
+      then: Yup.string()
+        .transform((value) => { 
+          if (!value?.data) {
+            return null;
+          }
+
+          return value.data;
+        })
+        .required('Please upload a credentials file'),
     }),
   });
 }
