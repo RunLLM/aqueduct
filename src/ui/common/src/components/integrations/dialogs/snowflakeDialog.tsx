@@ -120,7 +120,7 @@ export function getSnowflakeValidationSchema() {
     ),
     warehouse: Yup.string().required('Please enter a warehouse'),
     database: Yup.string().required('Please enter a database'),
-    schema: Yup.string(),
+    schema: Yup.string().transform((value) => value || 'public'),
     username: Yup.string().required('Please enter a username'),
     password: Yup.string().required('Please enter a password'),
     role: Yup.string(),
