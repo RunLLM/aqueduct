@@ -99,6 +99,7 @@ func (h *NodesGetHandler) Perform(ctx context.Context, interfaceArgs interface{}
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading artifact nodes.")
 	}
 
+	// TODO: ENG-2987 Create separate sections for Metrics/Checks
 	// dbMetricNodes, err := h.OperatorRepo.GetOperatorWithArtifactNodesByDAG(ctx, args.dagID, h.Database)
 	// if err != nil {
 	// 	return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading metric nodes.")
@@ -112,6 +113,7 @@ func (h *NodesGetHandler) Perform(ctx context.Context, interfaceArgs interface{}
 	return response.NewNodesFromDBObjects(
 		dbOperatorNodes,
 		dbArtifactNodes,
+		// TODO: ENG-2987 Create separate sections for Metrics/Checks
 		// dbMetricNodes,
 		// dbCheckNodes,
 	), http.StatusOK, nil
