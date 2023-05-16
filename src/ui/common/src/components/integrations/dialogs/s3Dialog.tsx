@@ -249,21 +249,35 @@ export function getS3ValidationSchema() {
     access_key_id: Yup.string().when('type', {
       is: 'access_key',
       then: Yup.string().required('Please enter an access key id'),
+      otherwise: null,
     }),
-    secret_access_key: Yup.string().required(
-      'Please enter a secret access key'
-    ),
+    secret_access_key: Yup.string().when('type', {
+      is: 'access_key',
+      then: Yup.string().required('Please enter a secret access key'),
+      otherwise: null,
+    }),
     config_file_path: Yup.string().when('type', {
       is: 'config_file_path',
       then: Yup.string().required('Please enter a profile path'),
+      otherwise: null,
     }),
     config_file_profile: Yup.string().when('type', {
       is: 'config_file_path' || 'config_file_content',
       then: Yup.string().required('Please enter a config file profile'),
+      otherwise: null,
     }),
     config_file_content: Yup.string().when('type', {
       is: 'config_file_content',
-      then: Yup.string().required('Please upload a credentials file'),
+      then: Yup.string()
+        .transform((value) => {
+          if (!value?.data) {
+            return null;
+          }
+          return value.data;
+        })
+        .required('Please upload a credentials file'),
+        // TODO: transform this file to get the data field that comese out.
+        otherwise: null,
     }),
   });
 }
