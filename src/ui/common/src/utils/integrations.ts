@@ -428,7 +428,7 @@ export const ServiceLogos: ServiceLogo = {
   ['Databricks']: `${integrationLogosBucket}/databricks_logo.png`,
   ['Email']: `${integrationLogosBucket}/email.png`,
   ['Slack']: `${integrationLogosBucket}/slack.png`,
-  ['Spark']: `${integrationLogosBucket}/spark-logo-trademark.png`,
+  ['Spark']: `${logoBucket}/spark-logo-only.png`,
   ['AWS']: `${integrationLogosBucket}/aws-logo-trademark.png`,
   ['GCP']: `${integrationLogosBucket}/gcp.png`,
   ['Azure']: `${integrationLogosBucket}/azure.png`,
