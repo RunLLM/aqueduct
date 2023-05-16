@@ -46,12 +46,8 @@ import AccountNotificationSettingsSelector from './components/notifications/Acco
 import NotificationLevelSelector from './components/notifications/NotificationLevelSelector';
 import { NotificationListItem } from './components/notifications/NotificationListItem';
 import NotificationsPopover from './components/notifications/NotificationsPopover';
-import RequireOperator from './components/operators/RequireOperator';
 import AccountPage from './components/pages/account/AccountPage';
 import ArtifactDetailsPage from './components/pages/artifact/id';
-import useArtifact, {
-  useArtifactHistory,
-} from './components/pages/artifact/id/hook';
 import CheckDetailsPage from './components/pages/check/id';
 import DataPage from './components/pages/data';
 import ErrorPage from './components/pages/ErrorPage';
@@ -61,7 +57,6 @@ import IntegrationsPage from './components/pages/integrations';
 import LoginPage from './components/pages/LoginPage';
 import MetricDetailsPage from './components/pages/metric/id';
 import OperatorDetailsPage from './components/pages/operator/id';
-import useOpeartor from './components/pages/operator/id/hook';
 import WorkflowPage from './components/pages/workflow/id';
 import WorkflowsPage from './components/pages/workflows';
 import { Button } from './components/primitives/Button.styles';
@@ -315,7 +310,6 @@ export {
   ReactflowNodeType,
   RedshiftDialog,
   RequireDagOrResult,
-  RequireOperator,
   resetConnectNewStatus,
   resetSelectedNode,
   resetTestConnectStatus,
@@ -339,9 +333,6 @@ export {
   Tabs,
   theme,
   useAqueductConsts,
-  useArtifact,
-  useArtifactHistory,
-  useOpeartor,
   UserProfile,
   useUser,
   VersionSelector,

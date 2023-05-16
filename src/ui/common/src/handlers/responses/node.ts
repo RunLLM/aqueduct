@@ -1,7 +1,7 @@
 // This file should map exactly to
 // `src/golang/lib/response/node.go`
 import { ArtifactType, SerializationType } from '../../utils/artifacts';
-import { OperatorSpec } from '../../utils/operators';
+import { OperatorSpec, OperatorType } from '../../utils/operators';
 import { ExecState } from '../../utils/shared';
 
 export type ArtifactResponse = {
@@ -63,3 +63,34 @@ export type NodeContentResponse = {
   name: string;
   data: string;
 };
+
+export function getMetricsAndChecksOnArtifact(
+  nodes: NodesMap,
+  artifactId: string
+): { checks: OperatorResponse[]; metrics: OperatorResponse[] } {
+  const metricsOp = Object.values(nodes.operators).filter(
+    (op) =>
+      op.inputs.includes(artifactId) &&
+      (op.spec?.type === OperatorType.Metric ||
+        op.spec?.type === OperatorType.SystemMetric)
+  );
+  const checksOp = Object.values(nodes.operators).filter(
+    (op) =>
+      op.inputs.includes(artifactId) && op.spec?.type === OperatorType.Check
+  );
+
+  const metricsArtfIds = metricsOp.flatMap((op) => {
+    return op !== undefined ? op.outputs : [];
+  });
+
+  const metricsArtf = metricsArtfIds.map((id) => nodes.artifacts[id]);
+  const metricsDownstreamIds = metricsArtf.flatMap((artf) => artf.outputs);
+
+  const metricsDownstreamOps = metricsDownstreamIds.map(
+    (id) => nodes.operators[id]
+  );
+
+  checksOp.push(...metricsDownstreamOps);
+
+  return { checks: checksOp, metrics: metricsOp };
+}

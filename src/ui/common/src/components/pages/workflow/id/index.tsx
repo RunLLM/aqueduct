@@ -11,8 +11,8 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { ReactFlowProvider } from 'reactflow';
-import WorkflowResultNavigator from 'src/components/workflows/WorkflowResultNavigator';
 
+import WorkflowResultNavigator from '../../../../components/workflows/WorkflowResultNavigator';
 import {
   aqueductApi,
   useDagGetQuery,
@@ -38,9 +38,7 @@ import WorkflowHeader, {
   WorkflowPageContentId,
 } from '../../../workflows/WorkflowHeader';
 import WorkflowNodeSidesheetActions from '../../../workflows/WorkflowNodeSidesheetActions';
-import WorkflowSettings from '../../../workflows/WorkflowSettings';
 import { LayoutProps } from '../../types';
-import RunWorkflowDialog from '../../workflows/components/RunWorkflowDialog';
 import {
   useWorkflowBreadcrumbs,
   useWorkflowIds,
@@ -402,14 +400,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 marginBottom: DefaultLayoutMargin,
               }}
             >
-              {getDataSideSheetContent(
-                user,
-                selectedNodeState,
-                selectedNode,
-                workflowId,
-                dagId,
-                dagResultId
-              )}
+              {getDataSideSheetContent(user, selectedNodeState, selectedNode)}
             </Box>
           )}
         </Box>

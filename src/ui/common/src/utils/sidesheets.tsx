@@ -29,10 +29,7 @@ export const sideSheetSwitcher = (dispatch: AppDispatch) => {
 export function getDataSideSheetContent(
   user: UserProfile,
   selectedNodeState: NodeSelection,
-  selectedNode: OperatorResponse | ArtifactResponse,
-  workflowId: string,
-  dagId: string | undefined,
-  dagResultId: string | undefined
+  selectedNode: OperatorResponse | ArtifactResponse
 ): React.ReactElement {
   const SideSheetLayout = ({ children }) => {
     return (
@@ -47,10 +44,7 @@ export function getDataSideSheetContent(
       <ArtifactDetailsPage
         user={user}
         Layout={SideSheetLayout}
-        artifactIdProp={selectedNodeState.nodeId}
-        workflowDagIdProp={dagId}
-        workflowDagResultIdProp={dagResultId}
-        workflowIdProp={workflowId}
+        nodeId={selectedNodeState.nodeId}
         sideSheetMode={true}
       />
     );
@@ -62,10 +56,7 @@ export function getDataSideSheetContent(
       <MetricDetailsPage
         user={user}
         Layout={SideSheetLayout}
-        operatorIdProp={selectedNodeState.nodeId}
-        workflowDagIdProp={dagId}
-        workflowDagResultIdProp={dagResultId}
-        workflowIdProp={workflowId}
+        nodeId={selectedNodeState.nodeId}
         sideSheetMode={true}
       />
     );
@@ -76,10 +67,7 @@ export function getDataSideSheetContent(
       <CheckDetailsPage
         user={user}
         Layout={SideSheetLayout}
-        operatorIdProp={selectedNodeState.nodeId}
-        workflowDagIdProp={dagId}
-        workflowDagResultIdProp={dagResultId}
-        workflowIdProp={workflowId}
+        nodeId={selectedNodeState.nodeId}
         sideSheetMode={true}
       />
     );
@@ -89,10 +77,7 @@ export function getDataSideSheetContent(
     <OperatorDetailsPage
       user={user}
       Layout={SideSheetLayout}
-      operatorIdProp={selectedNodeState.nodeId}
-      workflowDagIdProp={dagId}
-      workflowDagResultIdProp={dagResultId}
-      workflowIdProp={workflowId}
+      nodeId={selectedNodeState.nodeId}
       sideSheetMode={true}
     />
   );

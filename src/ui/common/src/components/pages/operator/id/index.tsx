@@ -2,18 +2,20 @@ import { Divider } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
+import { useParams } from 'react-router-dom';
 
 import DefaultLayout from '../../../../components/layouts/default';
 import LogViewer from '../../../../components/LogViewer';
 import WithOperatorHeader from '../../../../components/operators/WithOperatorHeader';
-import RequireOperator from '../../../operators/RequireOperator';
-import OperatorSpecDetails from '../../../workflows/operator/specDetails';
-import RequireDagOrResult from '../../../workflows/RequireDagOrResult';
-import { LayoutProps } from '../../types';
-import useWorkflow, { useWorkflowBreadcrumbs, useWorkflowIds, useWorkflowNodes, useWorkflowNodesResults } from '../../workflow/id/hook';
-import useOpeartor from './hook';
-import { useParams } from 'react-router-dom';
 import UserProfile from '../../../../utils/auth';
+import OperatorSpecDetails from '../../../workflows/operator/specDetails';
+import { LayoutProps } from '../../types';
+import {
+  useWorkflowBreadcrumbs,
+  useWorkflowIds,
+  useWorkflowNodes,
+  useWorkflowNodesResults,
+} from '../../workflow/id/hook';
 
 type OperatorDetailsPageProps = {
   user: UserProfile;
@@ -29,20 +31,30 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
   nodeId,
   sideSheetMode = false,
 }) => {
-  const { workflowId, dagId, dagResultId } = useWorkflowIds(user.apiKey)
+  const { workflowId, dagId, dagResultId } = useWorkflowIds(user.apiKey);
 
   const { nodeId: nodeIdParam } = useParams();
   if (!nodeId) {
-    nodeId = nodeIdParam
+    nodeId = nodeIdParam;
   }
 
-  const breadcrumbs = useWorkflowBreadcrumbs(user.apiKey, workflowId, dagId, dagResultId, "Operator")
+  const breadcrumbs = useWorkflowBreadcrumbs(
+    user.apiKey,
+    workflowId,
+    dagId,
+    dagResultId,
+    'Operator'
+  );
 
-  const nodes = useWorkflowNodes(user.apiKey, workflowId, dagId)
-  const nodeResults = useWorkflowNodesResults(user.apiKey, workflowId, dagResultId)
+  const nodes = useWorkflowNodes(user.apiKey, workflowId, dagId);
+  const nodeResults = useWorkflowNodesResults(
+    user.apiKey,
+    workflowId,
+    dagResultId
+  );
 
-  const node = nodes.operators[nodeId]
-  const nodeResult = nodeResults.operators[nodeId]
+  const node = nodes.operators[nodeId];
+  const nodeResult = nodeResults.operators[nodeId];
 
   const logs = nodeResult?.exec_state?.user_logs ?? {};
   const operatorError = nodeResult?.exec_state?.error;
@@ -53,9 +65,10 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
         workflowId={workflowId}
         dagId={dagId}
         dagResultId={dagResultId}
-        dagWithLoadingStatus={workflowDagWithLoadingStatus}
-        dagResultWithLoadingStatus={workflowDagResultWithLoadingStatus}
-        operator={operator}
+        nodes={nodes}
+        nodeResults={nodeResults}
+        operator={node}
+        operatorResult={nodeResult}
         sideSheetMode={sideSheetMode}
       >
         <Box>

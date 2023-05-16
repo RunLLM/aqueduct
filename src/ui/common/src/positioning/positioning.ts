@@ -1,5 +1,4 @@
 import { Edge, Node, Position } from 'reactflow';
-import { NodesGetResponse } from 'src/handlers/v2/NodesGet';
 
 import {
   ArtifactResponse,
@@ -10,6 +9,7 @@ import {
   OperatorResultResponse,
 } from '../handlers/responses/node';
 import { DagResponse } from '../handlers/responses/workflow';
+import { NodesGetResponse } from '../handlers/v2/NodesGet';
 import { OperatorType } from '../utils/operators';
 
 type Layer = { ids: string[]; numActiveEdges: number };

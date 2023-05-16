@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react';
 
 import MultiFileViewer from '../../../components/MultiFileViewer';
 import { InfoTooltip } from '../../../components/pages/components/InfoTooltip';
-import { OperatorResultResponse } from '../../../handlers/responses/operatorDeprecated';
+import { OperatorResponse } from '../../../handlers/responses/node';
 import UserProfile from '../../../utils/auth';
 import {
   exportFunction,
@@ -21,7 +21,6 @@ import {
 } from '../../../utils/operators';
 import { CodeBlock } from '../../CodeBlock';
 import { Button } from '../../primitives/Button.styles';
-import { OperatorResponse } from '../../../handlers/responses/node';
 
 const MAX_FILE_RENDER_SIZE = 100000000; // 100M
 
@@ -159,8 +158,9 @@ const SpecDetails: React.FC<Props> = ({ user, operator }) => {
           </Box>
         );
         const hasChainTag = queries.some((q) => q.includes(PREV_TABLE_TAG));
-        tooltips = `These queries are chained. ${hasChainTag ? chainTagTooltips : ''
-          }`;
+        tooltips = `These queries are chained. ${
+          hasChainTag ? chainTagTooltips : ''
+        }`;
       } else {
         content = renderQuery(relationalParams.query);
       }

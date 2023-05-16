@@ -7,6 +7,12 @@ import { Box, Divider, Typography } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
 
+import {
+  NodeResultsMap,
+  NodesMap,
+  OperatorResponse,
+  OperatorResultResponse,
+} from '../../handlers/responses/node';
 import { RootState } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import { OperatorType } from '../../utils/operators';
@@ -15,7 +21,6 @@ import DetailsPageHeader from '../pages/components/DetailsPageHeader';
 import SaveDetails from '../pages/components/SaveDetails';
 import ResourceItem from '../pages/workflows/components/ResourceItem';
 import ArtifactSummaryList from '../workflows/artifact/summaryList';
-import { NodeResultsMap, NodesMap, OperatorResponse, OperatorResultResponse } from '../../handlers/responses/node';
 
 type Props = {
   workflowId: string;
@@ -136,7 +141,9 @@ const WithOperatorHeader: React.FC<Props> = ({
                 workflowId={workflowId}
                 dagId={dagId}
                 dagResultId={dagResultId}
-                artifactResults={inputs}
+                nodes={nodes}
+                nodeResults={nodeResults}
+                artifactIds={operator.inputs}
                 collapsePrimitives={operator.spec?.type !== OperatorType.Check}
                 appearance={
                   operator.spec?.type === OperatorType.Metric ? 'value' : 'link'
@@ -153,7 +160,8 @@ const WithOperatorHeader: React.FC<Props> = ({
                 dagId={dagId}
                 dagResultId={dagResultId}
                 nodes={nodes}
-                artifactResults={outputs}
+                nodeResults={nodeResults}
+                artifactIds={operator.outputs}
                 appearance={
                   operator.spec?.type === OperatorType.Metric ? 'value' : 'link'
                 }

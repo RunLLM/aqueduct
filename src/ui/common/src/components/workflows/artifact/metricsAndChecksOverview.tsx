@@ -2,7 +2,10 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 
-import { ArtifactResultResponse } from '../../../handlers/responses/artifactDeprecated';
+import {
+  NodeResultsMap,
+  OperatorResponse,
+} from '../../../handlers/responses/node';
 import { DataSchema } from '../../../utils/data';
 import OperatorExecStateTable, {
   OperatorExecStateTableType,
@@ -20,22 +23,22 @@ const schema: DataSchema = {
 };
 
 type MetricsOverviewProps = {
-  metrics: ArtifactResultResponse[];
+  nodeResults?: NodeResultsMap;
+  metrics: OperatorResponse[];
 };
 
 export const MetricsOverview: React.FC<MetricsOverviewProps> = ({
+  nodeResults,
   metrics,
 }) => {
   const metricTableEntries = {
     schema: schema,
-    data: metrics.map((metricArtf) => {
-      let title = metricArtf.name;
-      if (title.endsWith('artifact') || title.endsWith('Aritfact')) {
-        title = title.slice(0, 0 - 'artifact'.length);
-      }
-
-      const value = metricArtf.result?.content_serialized;
-      const status = metricArtf.result?.exec_state?.status;
+    data: metrics.map((metricOp) => {
+      const title = metricOp.name;
+      const opResult = (nodeResults?.operators ?? {})[metricOp.id];
+      const artfResult = (nodeResults?.artifacts ?? {})[metricOp.outputs[0]];
+      const value = artfResult?.content_serialized;
+      const status = opResult?.exec_state?.status;
 
       return {
         title,
@@ -71,20 +74,22 @@ export const MetricsOverview: React.FC<MetricsOverviewProps> = ({
 };
 
 export type ChecksOverviewProps = {
-  checks: ArtifactResultResponse[];
+  nodeResults?: NodeResultsMap;
+  checks: OperatorResponse[];
 };
 
-export const ChecksOverview: React.FC<ChecksOverviewProps> = ({ checks }) => {
+export const ChecksOverview: React.FC<ChecksOverviewProps> = ({
+  nodeResults,
+  checks,
+}) => {
   const checkTableEntries = {
     schema: schema,
-    data: checks.map((checkArtf) => {
-      let name = checkArtf.name;
-      if (name.endsWith('artifact') || name.endsWith('Aritfact')) {
-        name = name.slice(0, 0 - 'artifact'.length);
-      }
+    data: checks.map((checkOp) => {
+      const name = checkOp.name;
+      const artfResult = (nodeResults?.artifacts ?? {})[checkOp.outputs[0]];
       return {
         title: name,
-        value: checkArtf.result?.content_serialized,
+        value: artfResult?.content_serialized,
       };
     }),
   };
