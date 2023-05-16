@@ -83,6 +83,7 @@ import {
   WorkflowsGetRequest,
   WorkflowsGetResponse,
 } from './v2/WorkflowsGet';
+import { dagsGetQuery, DagsGetRequest, DagsGetResponse } from './v2/DagsGet';
 
 const { createApi, fetchBaseQuery } = ((rtkQueryRaw as any).default ??
   rtkQueryRaw) as typeof rtkQueryRaw;
@@ -104,6 +105,10 @@ export const aqueductApi = createApi({
       DagOperatorsGetRequest
     >({
       query: (req) => dagOperatorsGetQuery(req),
+      transformErrorResponse,
+    }),
+    dagsGet: builder.query<DagsGetResponse, DagsGetRequest>({
+      query: (req) => dagsGetQuery(req),
       transformErrorResponse,
     }),
     dagResultGet: builder.query<DagResultGetResponse, DagResultGetRequest>({
@@ -201,6 +206,7 @@ export const aqueductApi = createApi({
 
 export const {
   useDagGetQuery,
+  useDagsGetQuery,
   useDagOperatorsGetQuery,
   useDagResultGetQuery,
   useDagResultsGetQuery,

@@ -29,6 +29,7 @@ class TestBackend:
     # V2
     GET_WORKFLOWS_TEMPLATE = "/api/v2/workflows"
 
+    GET_DAGS_TEMPLATE = "/api/v2/workflow/%s/dags"
     GET_DAG_RESULTS_TEMPLATE = "/api/v2/workflow/%s/results"
     GET_NODES_RESULTS_TEMPLATE = "/api/v2/workflow/%s/result/%s/nodes/results"
 
@@ -346,6 +347,16 @@ class TestBackend:
                 for key in keys:
                     assert key in v2_workflow
                 assert v2_workflow["user_id"] == user_id
+
+    def test_endpoint_workflow_dags_get(self):
+        flow_id, _ = self.flows["flow_with_metrics_and_checks"]
+        resp = self.get_response(self.GET_DAGS_TEMPLATE % flow_id)
+        resp = resp.json()
+
+        assert len(resp) == 2
+        assert "id" in resp[0]
+        assert resp[0]["workflow_id"] == str(flow_id)
+        assert "created_at" in resp[0]
 
     def test_endpoint_dag_results_get(self):
         flow_id, n_runs = self.flows["flow_with_metrics_and_checks"]

@@ -9,6 +9,7 @@ const (
 	ListStorageMigrationRoute      = "/api/v2/storage-migrations"
 	WorkflowsRoute                 = "/api/v2/workflows"
 	WorkflowRoute                  = "/api/v2/workflow/{workflowID}"
+	DAGsRoute                      = "/api/v2/workflow/{workflowID}/dags"
 	DAGRoute                       = "/api/v2/workflow/{workflowID}/dag/{dagID}"
 	DAGResultsRoute                = "/api/v2/workflow/{workflowID}/results"
 	DAGResultRoute                 = "/api/v2/workflow/{workflowID}/result/{dagResultID}"
