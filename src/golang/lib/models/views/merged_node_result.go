@@ -9,19 +9,19 @@ import (
 )
 
 const (
-	MergedNodeResultTable = "merged_node_result"
+	OperatorWithArtifactNodeResultTable = "merged_node_result"
 
-	// MergedNodeResult table column names
-	MergedNodeResultID                = "id"
-	MergedNodeResultOperatorExecState = "operator_exec_state"
-	MergedNodeResultArtifactID        = "artifact_id"
-	MergedNodeResultMetadata          = "metadata"
-	MergedNodeResultContentPath       = "content_path"
-	MergedNodeResultArtifactExecState = "artifact_exec_state"
+	// OperatorWithArtifactNodeResult table column names
+	OperatorWithArtifactNodeResultID                = "id"
+	OperatorWithArtifactNodeResultOperatorExecState = "operator_exec_state"
+	OperatorWithArtifactNodeResultArtifactID        = "artifact_id"
+	OperatorWithArtifactNodeResultMetadata          = "metadata"
+	OperatorWithArtifactNodeResultContentPath       = "content_path"
+	OperatorWithArtifactNodeResultArtifactExecState = "artifact_exec_state"
 )
 
-// An MergedNodeResult maps to the merged_node_result table.
-type MergedNodeResult struct {
+// An OperatorWithArtifactNodeResult maps to the merged_node_result table.
+type OperatorWithArtifactNodeResult struct {
 	ID                uuid.UUID                         `db:"id" json:"id"`
 	OperatorExecState shared.NullExecutionState         `db:"operator_exec_state" json:"operator_exec_state"`
 	ArtifactID        uuid.UUID                         `db:"artifact_id" json:"artifact_id"`
@@ -30,29 +30,29 @@ type MergedNodeResult struct {
 	ArtifactExecState shared.NullExecutionState         `db:"artifact_exec_state" json:"artifact_exec_state"`
 }
 
-// MergedNodeResultCols returns a comma-separated string of all MergedNodeResult columns.
-func MergedNodeResultCols() string {
-	return strings.Join(allMergedNodeResultCols(), ",")
+// OperatorWithArtifactNodeResultCols returns a comma-separated string of all OperatorWithArtifactNodeResult columns.
+func OperatorWithArtifactNodeResultCols() string {
+	return strings.Join(allOperatorWithArtifactNodeResultCols(), ",")
 }
 
-// MergedNodeResultColsWithPrefix returns a comma-separated string of all
-// MergedNodeResult columns prefixed by the table name.
-func MergedNodeResultColsWithPrefix() string {
-	cols := allMergedNodeResultCols()
+// OperatorWithArtifactNodeResultColsWithPrefix returns a comma-separated string of all
+// OperatorWithArtifactNodeResult columns prefixed by the table name.
+func OperatorWithArtifactNodeResultColsWithPrefix() string {
+	cols := allOperatorWithArtifactNodeResultCols()
 	for i, col := range cols {
-		cols[i] = fmt.Sprintf("%s.%s", MergedNodeResultTable, col)
+		cols[i] = fmt.Sprintf("%s.%s", OperatorWithArtifactNodeResultTable, col)
 	}
 
 	return strings.Join(cols, ",")
 }
 
-func allMergedNodeResultCols() []string {
+func allOperatorWithArtifactNodeResultCols() []string {
 	return []string{
-		MergedNodeResultID,
-		MergedNodeResultOperatorExecState,
-		MergedNodeResultArtifactID,
-		MergedNodeResultMetadata,
-		MergedNodeResultContentPath,
-		MergedNodeResultArtifactExecState,
+		OperatorWithArtifactNodeResultID,
+		OperatorWithArtifactNodeResultOperatorExecState,
+		OperatorWithArtifactNodeResultArtifactID,
+		OperatorWithArtifactNodeResultMetadata,
+		OperatorWithArtifactNodeResultContentPath,
+		OperatorWithArtifactNodeResultArtifactExecState,
 	}
 }

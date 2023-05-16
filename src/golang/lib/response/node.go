@@ -11,7 +11,7 @@ import (
 
 // This file should map exactly to
 // `src/ui/common/src/handlers/responses/node.ts`
-type MergedNode struct {
+type OperatorWithArtifactNode struct {
 	ID          uuid.UUID           `json:"id"`
 	DagID       uuid.UUID           `json:"dag_id"`
 	ArtifactID  uuid.UUID           `json:"artifact_id"`
@@ -20,30 +20,30 @@ type MergedNode struct {
 	Spec        *operator.Spec      `json:"spec"`
 	Type        shared.ArtifactType `json:"type"`
 
-	// Upstream artifact ID, could be multiple or empty.
+	// Upstream artifact IDs, could be multiple or empty.
 	Inputs []uuid.UUID `json:"inputs"`
 
 	// Downstream operator IDs, could be multiple or empty.
 	Outputs []uuid.UUID `json:"outputs"`
 }
 
-func NewMergedNodeFromDBObject(dbMergedNode *views.MergedNode) *MergedNode {
-	return &MergedNode{
-		ID:          dbMergedNode.ID,
-		DagID:       dbMergedNode.DagID,
-		ArtifactID:  dbMergedNode.ArtifactID,
-		Name:        dbMergedNode.Name,
-		Description: dbMergedNode.Description,
-		Spec:        &dbMergedNode.Spec,
-		Type:        dbMergedNode.Type,
+func NewOperatorWithArtifactNodeFromDBObject(dbOperatorWithArtifactNode *views.OperatorWithArtifactNode) *OperatorWithArtifactNode {
+	return &OperatorWithArtifactNode{
+		ID:          dbOperatorWithArtifactNode.ID,
+		DagID:       dbOperatorWithArtifactNode.DagID,
+		ArtifactID:  dbOperatorWithArtifactNode.ArtifactID,
+		Name:        dbOperatorWithArtifactNode.Name,
+		Description: dbOperatorWithArtifactNode.Description,
+		Spec:        &dbOperatorWithArtifactNode.Spec,
+		Type:        dbOperatorWithArtifactNode.Type,
 		// Inputs to the metric operator
-		Inputs: dbMergedNode.Inputs,
+		Inputs: dbOperatorWithArtifactNode.Inputs,
 		// Outputs of the metric artifact
-		Outputs: dbMergedNode.Outputs,
+		Outputs: dbOperatorWithArtifactNode.Outputs,
 	}
 }
 
-type MergedNodeResult struct {
+type OperatorWithArtifactNodeResult struct {
 	// Operator ID
 	ID                uuid.UUID              `json:"id"`
 	OperatorExecState *shared.ExecutionState `json:"operator_exec_state"`
@@ -63,27 +63,27 @@ type MergedNodeResult struct {
 	ArtifactExecState *shared.ExecutionState `json:"artifact_exec_state"`
 }
 
-func NewMergedNodeResultFromDBObject(
-	dbMergedNodeResult *views.MergedNodeResult,
+func NewOperatorWithArtifactNodeResultFromDBObject(
+	dbOperatorWithArtifactNodeResult *views.OperatorWithArtifactNodeResult,
 	content *string,
-) *MergedNodeResult {
-	result := &MergedNodeResult{
-		ID:                dbMergedNodeResult.ID,
-		ArtifactID:        dbMergedNodeResult.ArtifactID,
-		SerializationType: dbMergedNodeResult.Metadata.SerializationType,
-		ContentPath:       dbMergedNodeResult.ContentPath,
+) *OperatorWithArtifactNodeResult {
+	result := &OperatorWithArtifactNodeResult{
+		ID:                dbOperatorWithArtifactNodeResult.ID,
+		ArtifactID:        dbOperatorWithArtifactNodeResult.ArtifactID,
+		SerializationType: dbOperatorWithArtifactNodeResult.Metadata.SerializationType,
+		ContentPath:       dbOperatorWithArtifactNodeResult.ContentPath,
 		ContentSerialized: content,
 	}
 
-	if !dbMergedNodeResult.OperatorExecState.IsNull {
+	if !dbOperatorWithArtifactNodeResult.OperatorExecState.IsNull {
 		// make a copy of execState's value
-		execStateVal := dbMergedNodeResult.OperatorExecState.ExecutionState
+		execStateVal := dbOperatorWithArtifactNodeResult.OperatorExecState.ExecutionState
 		result.OperatorExecState = &execStateVal
 	}
 
-	if !dbMergedNodeResult.ArtifactExecState.IsNull {
+	if !dbOperatorWithArtifactNodeResult.ArtifactExecState.IsNull {
 		// make a copy of execState's value
-		execStateVal := dbMergedNodeResult.ArtifactExecState.ExecutionState
+		execStateVal := dbOperatorWithArtifactNodeResult.ArtifactExecState.ExecutionState
 		result.ArtifactExecState = &execStateVal
 	}
 
@@ -199,15 +199,15 @@ func NewOperatorResultFromDBObject(
 type Nodes struct {
 	Operators []Operator `json:"operators"`
 	Artifacts []Artifact `json:"artifacts"`
-	// Metrics []MergedNode `json:"metrics"`
-	// Checks []MergedNode `json:"checks"`
+	// Metrics []OperatorWithArtifactNode `json:"metrics"`
+	// Checks []OperatorWithArtifactNode `json:"checks"`
 }
 
 func NewNodesFromDBObjects(
 	operatorNodes []views.OperatorNode,
 	artifactNodes []views.ArtifactNode,
-	// metricNodes []views.MergedNode,
-	// checkNodes []views.MergedNode,
+	// metricNodes []views.OperatorWithArtifactNode,
+	// checkNodes []views.OperatorWithArtifactNode,
 ) *Nodes {
 	return &Nodes{
 		Operators: slices.Map(
@@ -224,14 +224,14 @@ func NewNodesFromDBObjects(
 		),
 		// Metrics: slices.Map(
 		// 	metricNodes,
-		// 	func(node views.MergedNode) MergedNode {
-		// 		return *NewMergedNodeFromDBObject(&node)
+		// 	func(node views.OperatorWithArtifactNode) OperatorWithArtifactNode {
+		// 		return *NewOperatorWithArtifactNodeFromDBObject(&node)
 		// 	},
 		// ),
 		// Checks: slices.Map(
 		// 	checkNodes,
-		// 	func(node views.MergedNode) MergedNode {
-		// 		return *NewMergedNodeFromDBObject(&node)
+		// 	func(node views.OperatorWithArtifactNode) OperatorWithArtifactNode {
+		// 		return *NewOperatorWithArtifactNodeFromDBObject(&node)
 		// 	},
 		// ),
 	}
@@ -240,8 +240,8 @@ func NewNodesFromDBObjects(
 type NodeResults struct {
 	Operators []OperatorResult `json:"operators"`
 	Artifacts []ArtifactResult `json:"artifacts"`
-	// Metrics []MergedNodeResult `json:"metrics"`
-	// Checks []MergedNodeResult `json:"checks"`
+	// Metrics []OperatorWithArtifactNodeResult `json:"metrics"`
+	// Checks []OperatorWithArtifactNodeResult `json:"checks"`
 }
 
 func NewNodeResultsFromDBObjects(

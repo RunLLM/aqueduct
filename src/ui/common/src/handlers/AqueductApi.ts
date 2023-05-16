@@ -54,26 +54,6 @@ import {
   NodeArtifactResultsGetResponse,
 } from './v2/NodeArtifactResultsGet';
 import {
-  nodeCheckGetQuery,
-  NodeCheckGetRequest,
-  NodeCheckGetResponse,
-} from './v2/NodeCheckGet';
-import {
-  nodeCheckResultContentGetQuery,
-  NodeCheckResultContentGetRequest,
-  NodeCheckResultContentGetResponse,
-} from './v2/NodeCheckResultContentGet';
-import {
-  nodeMetricGetQuery,
-  NodeMetricGetRequest,
-  NodeMetricGetResponse,
-} from './v2/NodeMetricGet';
-import {
-  nodeMetricResultContentGetQuery,
-  NodeMetricResultContentGetRequest,
-  NodeMetricResultContentGetResponse,
-} from './v2/NodeMetricResultContentGet';
-import {
   nodeOperatorContentGetQuery,
   NodeOperatorContentGetRequest,
   NodeOperatorContentGetResponse,
@@ -83,6 +63,26 @@ import {
   NodeOperatorGetRequest,
   NodeOperatorGetResponse,
 } from './v2/NodeOperatorGet';
+import {
+  nodeCheckResultContentGetQuery,
+  NodeCheckResultContentGetRequest,
+  NodeCheckResultContentGetResponse,
+} from './v2/NodeCheckResultContentGet';
+import {
+  nodeCheckGetQuery,
+  NodeCheckGetRequest,
+  NodeCheckGetResponse,
+} from './v2/NodeCheckGet';
+import {
+  nodeMetricResultContentGetQuery,
+  NodeMetricResultContentGetRequest,
+  NodeMetricResultContentGetResponse,
+} from './v2/NodeMetricResultContentGet';
+import {
+  nodeMetricGetQuery,
+  NodeMetricGetRequest,
+  NodeMetricGetResponse,
+} from './v2/NodeMetricGet';
 import {
   nodesGetQuery,
   NodesGetRequest,
@@ -98,15 +98,11 @@ import {
   WorkflowGetRequest,
   WorkflowGetResponse,
 } from './v2/WorkflowGet';
-<<<<<<< HEAD
-import { workflowsGetQuery, WorkflowsGetRequest, WorkflowsGetResponse } from './v2/WorkflowsGet';
-=======
 import {
   workflowsGetQuery,
   WorkflowsGetRequest,
   WorkflowsGetResponse,
 } from './v2/WorkflowsGet';
->>>>>>> c29c6299ebba625f19931e934b527e28b752b34a
 
 const { createApi, fetchBaseQuery } = ((rtkQueryRaw as any).default ??
   rtkQueryRaw) as typeof rtkQueryRaw;
@@ -194,7 +190,10 @@ export const aqueductApi = createApi({
       query: (req) => nodeOperatorContentGetQuery(req),
       transformErrorResponse,
     }),
-    nodeMetricGet: builder.query<NodeMetricGetResponse, NodeMetricGetRequest>({
+    nodeMetricGet: builder.query<
+      NodeMetricGetResponse,
+      NodeMetricGetRequest
+    >({
       query: (req) => nodeMetricGetQuery(req),
       transformErrorResponse,
     }),
@@ -205,7 +204,10 @@ export const aqueductApi = createApi({
       query: (req) => nodeMetricResultContentGetQuery(req),
       transformErrorResponse,
     }),
-    nodeCheckGet: builder.query<NodeCheckGetResponse, NodeCheckGetRequest>({
+    nodeCheckGet: builder.query<
+      NodeCheckGetResponse,
+      NodeCheckGetRequest
+    >({
       query: (req) => nodeCheckGetQuery(req),
       transformErrorResponse,
     }),

@@ -4,7 +4,7 @@ import { ArtifactType, SerializationType } from '../../utils/artifacts';
 import { OperatorSpec } from '../../utils/operators';
 import { ExecState } from '../../utils/shared';
 
-export type MergedNodeResponse = {
+export type OperatorWithArtifactNodeResponse = {
   id: string;
   dag_id: string;
   artifact_id?: string;
@@ -16,7 +16,7 @@ export type MergedNodeResponse = {
   outputs: string[];
 };
 
-export type MergedNodeResultResponse = {
+export type OperatorWithArtifactNodeResultResponse = {
   id: string;
   operator_exec_state?: ExecState;
 
@@ -63,15 +63,15 @@ export type OperatorResultResponse = {
 export type NodesResponse = {
   operators: OperatorResponse[];
   artifacts: ArtifactResponse[];
-  // metrics: MergedNodeResponse[];
-  // checks: MergedNodeResponse[];
+  // metrics: OperatorWithArtifactNodeResponse[];
+  // checks: OperatorWithArtifactNodeResponse[];
 };
 
 export type NodeResultsResponse = {
   operators: OperatorResultResponse[];
   artifacts: ArtifactResultResponse[];
-  // metrics: MergedNodeResultResponse[];
-  // checks: MergedNodeResultResponse[];
+  // metrics: OperatorWithArtifactNodeResultResponse[];
+  // checks: OperatorWithArtifactNodeResultResponse[];
 };
 
 export type NodeContentResponse = {
