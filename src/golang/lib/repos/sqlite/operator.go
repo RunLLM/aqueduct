@@ -114,8 +114,8 @@ var mergedNodeViewSubQuery = fmt.Sprintf(`
 	ON
 		artifact_node.input = operator_node.id
 `,
-operatorNodeViewSubQuery,
-artifactNodeViewSubQuery,
+	operatorNodeViewSubQuery,
+	artifactNodeViewSubQuery,
 )
 
 type operatorRepo struct {

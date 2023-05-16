@@ -63,7 +63,7 @@ export type OperatorResultResponse = {
 export type NodesResponse = {
   operators: OperatorResponse[];
   artifacts: ArtifactResponse[];
-	// TODO: ENG-2987 Create separate sections for Metrics/Checks
+  // TODO: ENG-2987 Create separate sections for Metrics/Checks
   // metrics: OperatorWithArtifactNodeResponse[];
   // checks: OperatorWithArtifactNodeResponse[];
 };
@@ -71,7 +71,7 @@ export type NodesResponse = {
 export type NodeResultsResponse = {
   operators: OperatorResultResponse[];
   artifacts: ArtifactResultResponse[];
-	// TODO: ENG-2987 Create separate sections for Metrics/Checks
+  // TODO: ENG-2987 Create separate sections for Metrics/Checks
   // metrics: OperatorWithArtifactNodeResultResponse[];
   // checks: OperatorWithArtifactNodeResultResponse[];
 };
