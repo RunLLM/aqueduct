@@ -16,11 +16,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const (
-	formIsDownsampledField = "is_downsampled"
-	formContentField       = "content"
-)
-
 // This file should map directly to
 // src/ui/common/src/handlers/v2/NodeArtifactResultContentGet.tsx
 //
