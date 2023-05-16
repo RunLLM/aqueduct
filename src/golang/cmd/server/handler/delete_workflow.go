@@ -16,6 +16,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/connector"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
@@ -83,6 +84,8 @@ type DeleteWorkflowHandler struct {
 	IntegrationRepo          repos.Integration
 	OperatorRepo             repos.Operator
 	WorkflowRepo             repos.Workflow
+	DagRepo                  repos.DAG
+	ArtifactResultRepo       repos.ArtifactResult
 }
 
 func (*DeleteWorkflowHandler) Name() string {
@@ -171,38 +174,55 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 
 	// Check objects in list are valid
 	objCount := 0
+
+	// These fetched save operators have any parameterized values filled in.
+	saveOpsByIntegrationName := make(map[string][]views.LoadOperator, 1)
+	saveOpsList, err := GetDistinctLoadOpsByWorkflow(
+		ctx,
+		args.WorkflowID,
+		h.OperatorRepo,
+		h.DagRepo,
+		h.ArtifactResultRepo,
+		h.Database,
+	)
+	if err != nil {
+		return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
+	}
+	for _, saveOp := range saveOpsList {
+		saveOpsByIntegrationName[saveOp.IntegrationName] = append(saveOpsByIntegrationName[saveOp.IntegrationName], saveOpsList...)
+	}
+
 	for integrationName, savedObjectList := range args.ExternalDelete {
 		for _, name := range savedObjectList {
-			touchedOperators, err := h.OperatorRepo.GetLoadOPsByWorkflowAndIntegration(
-				ctx,
-				args.WorkflowID,
-				nameToID[integrationName],
-				name,
-				h.Database,
-			)
-			if err != nil {
-				return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
+			var touchedOperatorLoadParams []connector.LoadParams
+
+			// Check for existence in the parameter-expanded list.
+			for _, saveOp := range saveOpsByIntegrationName[integrationName] {
+				relationalLoad, ok := connector.CastToRelationalDBLoadParams(saveOp.Spec.Parameters)
+				if ok && relationalLoad.Table == name {
+					touchedOperatorLoadParams = append(touchedOperatorLoadParams, saveOp.Spec.Parameters)
+				}
+
+				nonRelationalLoad, ok := connector.CastToNonRelationalLoadParams(saveOp.Spec.Parameters)
+				if ok && nonRelationalLoad.Filepath == name {
+					touchedOperatorLoadParams = append(touchedOperatorLoadParams, saveOp.Spec.Parameters)
+				}
 			}
-			// No operator had touched the object at the specified integration.
-			if len(touchedOperators) == 0 {
+
+			if len(touchedOperatorLoadParams) == 0 {
 				return resp, http.StatusBadRequest, errors.New("Object list not valid. Make sure all objects are touched by the workflow.")
 			}
+
 			if !args.Force {
 				// Check none have UpdateMode=append.
-				for _, touchedOperator := range touchedOperators {
-					load := touchedOperator.Spec.Load()
-					if load == nil {
-						return resp, http.StatusBadRequest, errors.New("Unexpected error occurred while validating objects.")
-					}
-					loadParams := load.Parameters
-
-					relationalLoad, ok := connector.CastToRelationalDBLoadParams(loadParams)
+				for _, touchedLoadParams := range touchedOperatorLoadParams {
+					relationalLoad, ok := connector.CastToRelationalDBLoadParams(touchedLoadParams)
 					// Check not updating anything in the integration.
 					if ok {
 						if relationalLoad.UpdateMode == "append" {
 							return resp, http.StatusBadRequest, errors.New("Some objects(s) in list were updated in append mode. If you are sure you want to delete everything, set `force=True`.")
 						}
-					} else if googleSheets, ok := loadParams.(*connector.GoogleSheetsLoadParams); ok {
+					} else if googleSheets, ok := touchedLoadParams.(*connector.GoogleSheetsLoadParams); ok {
 						if googleSheets.SaveMode == "NEWSHEET" {
 							return resp, http.StatusBadRequest, errors.New("Some objects(s) in list were updated in append mode. If you are sure you want to delete everything, set `force=True`.")
 						}

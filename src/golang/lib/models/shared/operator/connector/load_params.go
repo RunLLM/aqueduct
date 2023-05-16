@@ -29,20 +29,25 @@ type SqliteLoadParams struct{ RelationalDBLoadParams }
 
 type MongoDBLoadParams struct{ RelationalDBLoadParams }
 
-type GoogleSheetsLoadParams struct {
+type NonRelationalLoadParams struct {
 	Filepath string `json:"filepath"`
+}
+
+type GoogleSheetsLoadParams struct {
+	NonRelationalLoadParams
 	SaveMode string `json:"save_mode"`
 }
 
-type SalesforceLoadParams struct {
-	Object string `json:"object"`
-}
-
 type S3LoadParams struct {
-	Filepath string `json:"filepath"`
+	NonRelationalLoadParams
 
 	// Pointer because it must be deserialized into an Optional[S3TableFormat] on the python operator side.
 	Format *string `json:"format"`
+}
+
+// Not currently used.
+type SalesforceLoadParams struct {
+	Object string `json:"object"`
 }
 
 func CastToRelationalDBLoadParams(params LoadParams) (*RelationalDBLoadParams, bool) {
@@ -89,6 +94,25 @@ func CastToRelationalDBLoadParams(params LoadParams) (*RelationalDBLoadParams, b
 	mongo, ok := params.(*MongoDBLoadParams)
 	if ok {
 		return &mongo.RelationalDBLoadParams, true
+	}
+
+	generic, ok := params.(*GenericRelationalDBLoadParams)
+	if ok {
+		return &generic.RelationalDBLoadParams, true
+	}
+
+	return nil, false
+}
+
+func CastToNonRelationalLoadParams(params LoadParams) (*NonRelationalLoadParams, bool) {
+	googleSheets, ok := params.(*GoogleSheetsLoadParams)
+	if ok {
+		return &googleSheets.NonRelationalLoadParams, true
+	}
+
+	s3, ok := params.(*S3LoadParams)
+	if ok {
+		return &s3.NonRelationalLoadParams, true
 	}
 
 	return nil, false

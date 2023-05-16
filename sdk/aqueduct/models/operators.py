@@ -95,6 +95,8 @@ class ExtractSpec(BaseModel):
 
 
 class RelationalDBLoadParams(BaseModel):
+    # If this field is parameterized, then it is expected to be empty.
+    # Instead, we will feed the parameter artifact into the save operator.
     table: str
     update_mode: LoadUpdateMode
 

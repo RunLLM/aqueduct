@@ -147,6 +147,8 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			ExecutionEnvironmentRepo: s.ExecutionEnvironmentRepo,
 			OperatorRepo:             s.OperatorRepo,
 			WorkflowRepo:             s.WorkflowRepo,
+			DagRepo:                  s.DAGRepo,
+			ArtifactResultRepo:       s.ArtifactResultRepo,
 		},
 		routes.EditIntegrationRoute: &handler.EditIntegrationHandler{
 			Database:   s.Database,
@@ -218,8 +220,10 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 		routes.ListWorkflowObjectsRoute: &handler.ListWorkflowObjectsHandler{
 			Database: s.Database,
 
-			OperatorRepo: s.OperatorRepo,
-			WorkflowRepo: s.WorkflowRepo,
+			OperatorRepo:       s.OperatorRepo,
+			WorkflowRepo:       s.WorkflowRepo,
+			WorkflowDagRepo:    s.DAGRepo,
+			ArtifactResultRepo: s.ArtifactResultRepo,
 		},
 		routes.GetWorkflowRouteV1: &handler.GetWorkflowHandler{
 			Database: s.Database,
