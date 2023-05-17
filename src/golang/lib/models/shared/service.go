@@ -39,12 +39,14 @@ const (
 	// Container registry integrations
 	ECR Service = "ECR"
 
-	// Aqueduct compute is the only build-in resource type.
-	Aqueduct Service = "Aqueduct"
+	// Service types for our built-in, Aqueduct-specific resources.
+	Aqueduct   Service = "Aqueduct"
+	Filesystem Service = "Filesystem"
 
 	// Built-in resource names
 	AqueductComputeIntegrationName = "Aqueduct Server"
 	DemoDbIntegrationName          = "Demo"
+	ArtifactStorageIntegrationName = "Filesystem"
 
 	// This is what the demo DB resource used to be called, during release v0.3.1 and before.
 	// If we detect a SQLite resource with this name, we will delete it on startup and
@@ -142,6 +144,10 @@ func ParseService(s string) (Service, error) {
 	}
 }
 
+func IsBuiltinIntegration(name string, service Service) bool {
+	return (service == Aqueduct || service == Filesystem || (name == DemoDbIntegrationName && service == Sqlite))
+}
+
 func IsRelationalDatabaseIntegration(service Service) bool {
 	_, ok := relationalDatabaseIntegrations[service]
 	return ok
@@ -155,6 +161,10 @@ func IsDataIntegration(service Service) bool {
 func IsComputeIntegration(service Service) bool {
 	_, ok := computeIntegrations[service]
 	return ok
+}
+
+func IsNotificationResource(service Service) bool {
+	return service == Email || service == Slack
 }
 
 // IsUserOnlyIntegration returns whether the specified service is only accessible by the user.

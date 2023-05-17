@@ -33,7 +33,8 @@ func newLoadOperator(
 	inputs := base.inputs
 	outputs := base.outputs
 
-	if len(inputs) != 1 {
+	// We currently support a single optional parameter.
+	if len(inputs) == 0 || len(inputs) > 2 {
 		return nil, errWrongNumInputs
 	}
 	if len(outputs) != 0 {
@@ -55,6 +56,8 @@ func newLoadOperator(
 func (lo *loadOperatorImpl) JobSpec() (returnedSpec job.Spec) {
 	spec := lo.dbOperator.Spec.Load()
 
+	inputContentPaths, inputMetadataPaths := unzipExecPathsToRawPaths(lo.inputExecPaths)
+
 	return &job.LoadSpec{
 		BasePythonSpec: job.NewBasePythonSpec(
 			job.LoadJobType,
@@ -62,11 +65,11 @@ func (lo *loadOperatorImpl) JobSpec() (returnedSpec job.Spec) {
 			*lo.storageConfig,
 			lo.metadataPath,
 		),
-		ConnectorName:     spec.Service,
-		ConnectorConfig:   lo.config,
-		Parameters:        spec.Parameters,
-		InputContentPath:  lo.inputExecPaths[0].ArtifactContentPath,
-		InputMetadataPath: lo.inputExecPaths[0].ArtifactMetadataPath,
+		ConnectorName:      spec.Service,
+		ConnectorConfig:    lo.config,
+		Parameters:         spec.Parameters,
+		InputContentPaths:  inputContentPaths,
+		InputMetadataPaths: inputMetadataPaths,
 	}
 }
 

@@ -13,7 +13,12 @@ import {
 } from '../../../reducers/integration';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
-import { IntegrationConfig, Service } from '../../../utils/integrations';
+import {
+  AqueductComputeConfig,
+  aqueductComputeName,
+  IntegrationConfig,
+  Service,
+} from '../../../utils/integrations';
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
 import { convertIntegrationConfigToServerConfig } from '../../../utils/storage';
 
@@ -62,6 +67,17 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
   config,
   onCloseDialog,
 }) => {
+  // If the resource is the Aqueduct Server, we need to translate the fields so that
+  // we delete the registered Conda resource, not the Aqueduct Server itself. Deleting
+  // the vanilla Aqueduct Server is not possible.
+  if (integrationName === aqueductComputeName) {
+    const aqConfig = config as AqueductComputeConfig;
+    integrationId = aqConfig.conda_resource_id;
+    integrationName = aqConfig.conda_resource_name;
+    integrationType = 'Conda';
+    config = JSON.parse(aqConfig.conda_config_serialized);
+  }
+
   const dispatch: AppDispatch = useDispatch();
   const navigate = useNavigate();
   const [isConnecting, setIsConnecting] = useState(false);

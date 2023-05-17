@@ -51,12 +51,10 @@ import {
   getNextUpdateTime,
   PeriodUnit,
 } from '../../utils/cron';
-import {
-  IntegrationCategories,
-  SupportedIntegrations,
-} from '../../utils/integrations';
+import { IntegrationCategories } from '../../utils/integrations';
 import { UpdateMode } from '../../utils/operators';
 import ExecutionStatus, { LoadingStatusEnum } from '../../utils/shared';
+import { SupportedIntegrations } from '../../utils/SupportedIntegrations';
 import {
   getSavedObjectIdentifier,
   NotificationSettingsMap,
