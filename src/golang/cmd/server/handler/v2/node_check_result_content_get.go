@@ -88,9 +88,9 @@ func (h *NodeCheckResultContentGetHandler) Perform(ctx context.Context, interfac
 	args := interfaceArgs.(*nodeResultGetArgs)
 	emptyResp := &nodeResultGetResponse{}
 
-	dag, err := h.DAGRepo.GetByDAGResult(
+	dag, err := h.DAGRepo.Get(
 		ctx,
-		args.nodeResultID,
+		args.dagID,
 		h.Database,
 	)
 	if err != nil {
@@ -148,8 +148,6 @@ func (h *NodeCheckResultContentGetHandler) Perform(ctx context.Context, interfac
 			return emptyResp, http.StatusOK, nil
 		}
 
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve data for the artifact result.")
-	} else if !errors.Is(err, storage.ErrObjectDoesNotExist()) {
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve data for the artifact result.")
 	}
 
