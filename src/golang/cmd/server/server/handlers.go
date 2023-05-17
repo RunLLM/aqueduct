@@ -171,6 +171,16 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			OperatorRepo: s.OperatorRepo,
 			WorkflowRepo: s.WorkflowRepo,
 		},
+		routes.WorkflowEditPostRoute: &handler.EditWorkflowHandler{
+			Database: s.Database,
+			Engine:   s.AqEngine,
+
+			ArtifactRepo: s.ArtifactRepo,
+			DAGRepo:      s.DAGRepo,
+			DAGEdgeRepo:  s.DAGEdgeRepo,
+			OperatorRepo: s.OperatorRepo,
+			WorkflowRepo: s.WorkflowRepo,
+		},
 		routes.ExportFunctionRoute: &handler.ExportFunctionHandlerDeprecated{
 			Database: s.Database,
 
@@ -355,6 +365,12 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			IntegrationRepo: s.IntegrationRepo,
 		},
 		routes.RefreshWorkflowRoute: &handler.RefreshWorkflowHandler{
+			Database: s.Database,
+			Engine:   s.AqEngine,
+
+			WorkflowRepo: s.WorkflowRepo,
+		},
+		routes.WorkflowTriggerPostRoute: &handler.RefreshWorkflowHandler{
 			Database: s.Database,
 			Engine:   s.AqEngine,
 

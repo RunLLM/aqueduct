@@ -7,7 +7,7 @@ import {
   NodeIdParameter,
   WorkflowIdParameter,
 } from '../parameters/Path';
-import { ArtifactResponse } from '../responses/Node';
+import { ArtifactResponse } from '../responses/node';
 
 export type NodeArtifactGetRequest = APIKeyParameter &
   DagIdParameter &

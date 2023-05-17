@@ -22,6 +22,19 @@ const (
 	NodeOperatorContentRoute       = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/operator/{nodeID}/content"
 	NodesResultsRoute              = "/api/v2/workflow/{workflowID}/result/{dagResultID}/nodes/results"
 
+	// V2 hacky routes
+	// This route is supposed to be `v2/workflow/{workflowId}` with PATCH method.
+	// However, it requires significant refactor of handler interfaces as we assumed
+	// routes is unique per handler.
+	// For now, we simply use the same handler for this route and v1 workflow edit route.
+	WorkflowEditPostRoute = "/api/v2/workflow/{workflowId}/edit"
+
+	// This route is supposed to be `v2/workflow/{workflowId}` with POST method.
+	// However, it requires significant refactor of handler interfaces as we assumed
+	// routes is unique per handler.
+	// For now, we simply use the same handler for this route and v1 workflow edit route.
+	WorkflowTriggerPostRoute = "/api/v2/workflow/{workflowId}/trigger"
+
 	// V1 routes
 	GetArtifactVersionsRoute = "/api/artifact/versions"
 	GetArtifactResultRoute   = "/api/artifact/{workflowDagResultId}/{artifactId}/result"
