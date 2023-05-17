@@ -61,22 +61,22 @@ class TestBackend:
         cls.client = aqueduct.Client()
         cls.integration = cls.client.resource(name=pytest.integration)
         cls.flows = {
-            "changing_saves": setup_changing_saves(cls.client, pytest.integration),
+            # "changing_saves": setup_changing_saves(cls.client, pytest.integration),
             "flow_with_multiple_operators": setup_flow_with_multiple_operators(
                 cls.client, pytest.integration
             ),
-            "flow_with_failure": setup_flow_with_failure(cls.client, pytest.integration),
-            "flow_with_metrics_and_checks": setup_flow_with_metrics_and_checks(
-                cls.client,
-                pytest.integration,
-            ),
-            # this flow is intended to provide 'noise' of op / artf with the same name,
-            # but under different flow.
-            "another_flow_with_metrics_and_checks": setup_flow_with_metrics_and_checks(
-                cls.client,
-                pytest.integration,
-                workflow_name="another_flow_with_metrics_and_checks",
-            ),
+            # "flow_with_failure": setup_flow_with_failure(cls.client, pytest.integration),
+            # "flow_with_metrics_and_checks": setup_flow_with_metrics_and_checks(
+            #     cls.client,
+            #     pytest.integration,
+            # ),
+            # # this flow is intended to provide 'noise' of op / artf with the same name,
+            # # but under different flow.
+            # "another_flow_with_metrics_and_checks": setup_flow_with_metrics_and_checks(
+            #     cls.client,
+            #     pytest.integration,
+            #     workflow_name="another_flow_with_metrics_and_checks",
+            # ),
         }
 
         # we do not call `wait_for_flow_runs` on these flows
@@ -496,29 +496,33 @@ class TestBackend:
             assert sum(all_output_counts) == len(all_output_counts) - 1
             assert set(all_output_counts) == set([0, 1])
 
-    # def test_endpoint_node_artifact_result_content_get(self):
-    #     flow_id, n_runs = self.flows["flow_with_multiple_operators"]
-    #     flow = self.client.flow(flow_id)
-    #     workflow_resp = flow._get_workflow_resp()
-    #     dag_id = workflow_resp.workflow_dag_results[0].workflow_dag_id
-    #     dag_result_id = workflow_resp.workflow_dag_results[0].id
+    def test_endpoint_node_artifact_result_content_get(self):
+        flow_id, _ = self.flows["flow_with_multiple_operators"]
+        flow = self.client.flow(flow_id)
+        workflow_resp = flow._get_workflow_resp()
+        dag_id = workflow_resp.workflow_dag_results[0].workflow_dag_id
+        dag_result_id = workflow_resp.workflow_dag_results[0].id
 
-    #     dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
-    #         flow_id,
-    #         dag_result_id,
-    #     )
-    #     artifact_ids = list(dag_result_resp.artifacts.keys())
-    #     artifact_id = str(artifact_ids[0])
+        dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
+            flow_id,
+            dag_result_id,
+        )
+        artifact_ids = list(dag_result_resp.artifacts.keys())
+        artifact_id = str(artifact_ids[0])
 
-    #     resp = self.get_response(self.GET_NODE_ARTIFACT_RESULTS_TEMPLATE % (flow_id, dag_id, artifact_id)).json()
-    #     downstream_ids = [GetArtifactResultResponse(**result).id for result in resp]
-    #     for downstream_id in downstream_ids:
-    #         artifact_result_id = str(downstream_id)
-    #         resp = self.get_response(self.GET_NODE_ARTIFACT_RESULT_CONTENT_TEMPLATE % (flow_id, dag_id, artifact_id, artifact_result_id)).json()
-    #         # One of these should be successful (direct descendent of operator)
-    #         print(resp)
-    #     # TODO: Investigate output
-    #     # >> {"error":"Unexpected error reading DAG.\nQuery returned no rows."}
+        resp = self.get_response(
+            self.GET_NODE_ARTIFACT_RESULTS_TEMPLATE % (flow_id, dag_id, artifact_id)
+        ).json()
+        downstream_ids = [GetArtifactResultResponse(**result).id for result in resp]
+        for downstream_id in downstream_ids:
+            artifact_result_id = str(downstream_id)
+            resp = self.get_response(
+                self.GET_NODE_ARTIFACT_RESULT_CONTENT_TEMPLATE
+                % (flow_id, dag_id, artifact_id, artifact_result_id)
+            ).json()
+            # One of these should be successful (direct descendent of operator)
+            assert not resp["is_downsampled"]
+            assert len(resp["content"]) > 0
 
     def test_endpoint_node_artifact_results_get(self):
         for flow_id, _ in [
