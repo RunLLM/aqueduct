@@ -35,8 +35,9 @@ import { AppDispatch, RootState } from '../../../../stores/store';
 import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
 import {
-  hasConfigFieldsToShow,
   IntegrationCategories,
+  isNotificationIntegration,
+  resourceExecState,
   SupportedIntegrations,
 } from '../../../../utils/integrations';
 import ExecutionStatus, {
@@ -44,6 +45,7 @@ import ExecutionStatus, {
   isLoading,
   isSucceeded,
 } from '../../../../utils/shared';
+import SupportedIntegrations from '../../../../utils/SupportedIntegrations';
 import { ResourceHeaderDetailsCard } from '../../../integrations/cards/headerDetailsCard';
 import { ResourceFieldsDetailsCard } from '../../../integrations/cards/resourceFieldsDetailsCard';
 import { ErrorSnackbar } from '../../../integrations/errorSnackbar';
@@ -199,7 +201,11 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     });
 
     workflowAndDagIDs.forEach((workflowAndDagID) => {
-      if (operatorsByDagID[workflowAndDagID.dag_id]) {
+      // If we're displaying a notification, there won't be only operators, but we
+      // want to include the workflows.
+      if (isNotificationIntegration(selectedIntegration)) {
+        workflowIDToLatestOperators[workflowAndDagID.id] = [];
+      } else if (operatorsByDagID[workflowAndDagID.dag_id]) {
         workflowIDToLatestOperators[workflowAndDagID.id] =
           operatorsByDagID[workflowAndDagID.dag_id];
       }
@@ -221,6 +227,8 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   if (!integrations || !selectedIntegration) {
     return null;
   }
+
+  const selectedIntegrationExecState = resourceExecState(selectedIntegration);
 
   return (
     <Layout
@@ -252,31 +260,29 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
                 numWorkflowsUsingMsg={numWorkflowsUsingMsg}
               />
 
-              {hasConfigFieldsToShow(selectedIntegration) && (
-                <Box
-                  sx={{
-                    fontSize: '16px',
-                    p: 1,
-                    ml: 1,
-                    height: '32px',
-                    borderRadius: '8px',
-                    ':hover': {
-                      backgroundColor: theme.palette.gray[50],
-                    },
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => setShowResourceDetails(!showResourceDetails)}
-                >
-                  <Tooltip title="See more" arrow>
-                    <FontAwesomeIcon
-                      icon={faEllipsis}
-                      style={{
-                        transition: 'transform 200ms',
-                      }}
-                    />
-                  </Tooltip>
-                </Box>
-              )}
+              <Box
+                sx={{
+                  fontSize: '16px',
+                  p: 1,
+                  ml: 1,
+                  height: '32px',
+                  borderRadius: '8px',
+                  ':hover': {
+                    backgroundColor: theme.palette.gray[50],
+                  },
+                  cursor: 'pointer',
+                }}
+                onClick={() => setShowResourceDetails(!showResourceDetails)}
+              >
+                <Tooltip title="See more" arrow>
+                  <FontAwesomeIcon
+                    icon={faEllipsis}
+                    style={{
+                      transition: 'transform 200ms',
+                    }}
+                  />
+                </Tooltip>
+              </Box>
             </Box>
           </Box>
 
@@ -303,7 +309,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           />
         </Box>
 
-        {selectedIntegration.exec_state?.status === ExecutionStatus.Failed && (
+        {selectedIntegrationExecState.status === ExecutionStatus.Failed && (
           <Box
             sx={{
               backgroundColor: theme.palette.red[100],
@@ -316,7 +322,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             }}
           >
             <Typography variant="body2" style={{ whiteSpace: 'pre-wrap' }}>
-              {`${selectedIntegration.exec_state?.error.tip}\n\n${selectedIntegration.exec_state?.error.context}`}
+              {`${selectedIntegrationExecState.error.tip}\n\n${selectedIntegrationExecState?.error.context}`}
             </Typography>
           </Box>
         )}
@@ -361,7 +367,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           )}
 
         {showResourceDetails && (
-          <Box sx={{ my: 1 }}>
+          <Box sx={{ my: 1, mt: 2 }}>
             <ResourceFieldsDetailsCard
               integration={selectedIntegration}
               detailedView={true}
@@ -377,24 +383,16 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           />
         )}
 
-        {SupportedIntegrations[selectedIntegration.service].category !==
-          IntegrationCategories.NOTIFICATION && (
-          <Box sx={{ mt: 4 }}>
-            <Typography
-              variant="h5"
-              gutterBottom
-              component="div"
-              sx={{ mb: 4 }}
-            >
-              Workflows
-            </Typography>
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h5" gutterBottom component="div" sx={{ mb: 4 }}>
+            Workflows
+          </Typography>
 
-            <IntegrationWorkflowSummaryCards
-              integration={selectedIntegration}
-              workflowIDToLatestOperators={workflowIDToLatestOperators}
-            />
-          </Box>
-        )}
+          <IntegrationWorkflowSummaryCards
+            integration={selectedIntegration}
+            workflowIDToLatestOperators={workflowIDToLatestOperators}
+          />
+        </Box>
       </Box>
 
       {showAddTableDialog && (

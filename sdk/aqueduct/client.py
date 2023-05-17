@@ -286,8 +286,8 @@ class Client:
 
         config = prepare_integration_config(service, config)
 
+        logger().info("Connecting to new %s integration `%s`..." % (service, name))
         globals.__GLOBAL_API_CLIENT__.connect_integration(name, service, config)
-        logger().info("Successfully connected to new %s integration `%s`." % (service, name))
 
     def delete_integration(
         self,

@@ -197,11 +197,11 @@ type DeleteSavedObjectsSpec struct {
 
 type LoadSpec struct {
 	BasePythonSpec
-	ConnectorName     shared.Service       `json:"connector_name"  yaml:"connector_name"`
-	ConnectorConfig   auth.Config          `json:"connector_config"  yaml:"connector_config"`
-	Parameters        connector.LoadParams `json:"parameters"  yaml:"parameters"`
-	InputContentPath  string               `json:"input_content_path"  yaml:"input_content_path"`
-	InputMetadataPath string               `json:"input_metadata_path"  yaml:"input_metadata_path"`
+	ConnectorName      shared.Service       `json:"connector_name"  yaml:"connector_name"`
+	ConnectorConfig    auth.Config          `json:"connector_config"  yaml:"connector_config"`
+	Parameters         connector.LoadParams `json:"parameters"  yaml:"parameters"`
+	InputContentPaths  []string             `json:"input_content_paths"  yaml:"input_content_paths"`
+	InputMetadataPaths []string             `json:"input_metadata_paths"  yaml:"input_metadata_paths"`
 }
 
 type LoadTableSpec struct {
@@ -493,11 +493,11 @@ func NewLoadTableSpec(
 				StorageConfig: *storageConfig,
 				MetadataPath:  metadataPath,
 			},
-			ConnectorName:     connectorName,
-			ConnectorConfig:   connectorConfig,
-			Parameters:        parameters,
-			InputContentPath:  inputContentPath,
-			InputMetadataPath: inputMetadataPath,
+			ConnectorName:      connectorName,
+			ConnectorConfig:    connectorConfig,
+			Parameters:         parameters,
+			InputContentPaths:  []string{inputContentPath},
+			InputMetadataPaths: []string{inputMetadataPath},
 		},
 	}
 }

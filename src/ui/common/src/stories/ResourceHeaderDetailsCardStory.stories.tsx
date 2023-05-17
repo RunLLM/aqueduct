@@ -1,3 +1,4 @@
+import { ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import { ResourceHeaderDetailsCard } from '../components/integrations/cards/headerDetailsCard';
@@ -29,4 +30,8 @@ export const ResourceHeaderDetailsCardStory: React.FC = () => {
   );
 };
 
-export default ResourceHeaderDetailsCardStory;
+export default {
+  title: 'Components/Resource Header Details Card',
+  component: ResourceHeaderDetailsCard,
+  argTypes: {},
+} as ComponentMeta<typeof ResourceHeaderDetailsCard>;
