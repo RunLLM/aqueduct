@@ -2,7 +2,7 @@ name: Spark Periodic Integration Tests
 
 on:
   schedule:
-    - cron: "0 4 * * 5" # Run at 4AM PST on every Friday
+    - cron: "0 21 * * 4" # Run at 9PM PST on every Thursday
   workflow_dispatch:
 
 jobs:
