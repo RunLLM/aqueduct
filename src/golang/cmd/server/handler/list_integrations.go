@@ -88,7 +88,7 @@ func (h *ListIntegrationsHandler) Perform(ctx context.Context, interfaceArgs int
 
 		// If there is a Conda resource registered, embed additional configuration information inside Aqueduct Compute.
 		// Otherwise, we simply note the current server's python version.
-		if integrationObject.Name == shared.AqueductComputeIntegrationName {
+		if integrationObject.Name == shared.AqueductComputeName {
 			var aqConfig shared.IntegrationConfig
 			aqConfig, err = aqueduct_compute.ConstructAqueductComputeResourceConfig(ctx, args.ID, h.IntegrationRepo, h.Database)
 			if err != nil {

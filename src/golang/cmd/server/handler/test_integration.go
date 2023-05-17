@@ -96,7 +96,7 @@ func (h *TestIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 
 	// No need to do any further verification for Aqueduct Compute.
 	// The fact that it even got here means it works.
-	if integrationObject.Name == shared.AqueductComputeIntegrationName {
+	if integrationObject.Name == shared.AqueductComputeName {
 		return emptyResp, http.StatusOK, nil
 	}
 

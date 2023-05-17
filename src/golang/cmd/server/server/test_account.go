@@ -70,9 +70,9 @@ func CheckBuiltinIntegrations(ctx context.Context, s *AqServer, orgID string) (b
 				return false, false, errors.Newf("Unable to delete deprecated demo integration: %v", err)
 			}
 			continue
-		} else if integrationObject.Name == shared.DemoDbIntegrationName {
+		} else if integrationObject.Name == shared.DemoDbName {
 			demoConnected = true
-		} else if integrationObject.Name == shared.AqueductComputeIntegrationName {
+		} else if integrationObject.Name == shared.AqueductComputeName {
 			engineConnected = true
 		}
 
@@ -117,11 +117,11 @@ func connectBuiltinResources(
 				return errors.Newf("Unable to delete deprecated demo integration: %v", err)
 			}
 			continue
-		} else if integrationObject.Name == shared.DemoDbIntegrationName {
+		} else if integrationObject.Name == shared.DemoDbName {
 			demoConnected = true
-		} else if integrationObject.Name == shared.AqueductComputeIntegrationName {
+		} else if integrationObject.Name == shared.AqueductComputeName {
 			engineConnected = true
-		} else if integrationObject.Name == shared.ArtifactStorageIntegrationName {
+		} else if integrationObject.Name == shared.ArtifactStorageResourceName {
 			filesystemConnected = true
 		}
 
@@ -170,7 +170,7 @@ func connectBuiltinDemoDBIntegration(
 				User:      *user,
 				RequestID: uuid.New().String(),
 			},
-			Name:     shared.DemoDbIntegrationName,
+			Name:     shared.DemoDbName,
 			Service:  shared.Sqlite,
 			Config:   builtinConfig,
 			UserOnly: false,
@@ -198,7 +198,7 @@ func connectBuiltinComputeIntegration(
 				User:      *user,
 				RequestID: uuid.New().String(),
 			},
-			Name:     shared.AqueductComputeIntegrationName,
+			Name:     shared.AqueductComputeName,
 			Service:  shared.Aqueduct,
 			Config:   auth.NewStaticConfig(map[string]string{}),
 			UserOnly: false,
@@ -228,7 +228,7 @@ func connectBuiltinArtifactStorageIntegration(
 				User:      *user,
 				RequestID: uuid.New().String(),
 			},
-			Name:    shared.ArtifactStorageIntegrationName,
+			Name:    shared.ArtifactStorageResourceName,
 			Service: shared.Filesystem,
 			Config: auth.NewStaticConfig(map[string]string{
 				"location": defaultStoragePath,

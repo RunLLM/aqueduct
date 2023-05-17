@@ -69,7 +69,7 @@ func (h *GetConfigHandler) Perform(ctx context.Context, interfaceArgs interface{
 	}
 	if err != nil {
 		// If there was no previous storage migration, we must be using the local filesystem.
-		integrationObj, err = h.IntegrationRepo.GetByNameAndUser(ctx, shared.ArtifactStorageIntegrationName, args.ID, args.OrgID, h.Database)
+		integrationObj, err = h.IntegrationRepo.GetByNameAndUser(ctx, shared.ArtifactStorageResourceName, args.ID, args.OrgID, h.Database)
 		if err != nil {
 			return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error when fetching current storage integration.")
 		}

@@ -174,7 +174,7 @@ func (h *EditIntegrationHandler) Prepare(r *http.Request) (interface{}, int, err
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to edit integration.")
 	}
 
-	if name == shared.DemoDbIntegrationName {
+	if name == shared.DemoDbName {
 		return nil, http.StatusBadRequest, errors.New("`aqueduct_demo` is reserved for demo integration. Please use another name.")
 	}
 
@@ -201,7 +201,7 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve integration")
 	}
 
-	if integrationObject.Name == shared.DemoDbIntegrationName {
+	if integrationObject.Name == shared.DemoDbName {
 		return emptyResp, http.StatusBadRequest, errors.New("You cannot edit demo DB credentials.")
 	}
 

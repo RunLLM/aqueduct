@@ -117,7 +117,7 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to retrieve integration.")
 	}
 
-	if !shared.IsRelationalDatabaseIntegration(integrationObject.Service) {
+	if !shared.IsRelationalDatabaseResource(integrationObject.Service) {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Preview table request is only allowed for relational databases.")
 	}
 

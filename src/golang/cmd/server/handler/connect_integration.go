@@ -761,7 +761,7 @@ func ValidatePrerequisites(
 		return http.StatusOK, nil
 	}
 
-	if svc != shared.Conda && shared.IsComputeIntegration(svc) {
+	if svc != shared.Conda && shared.IsComputeResource(svc) {
 		// For all non-conda compute integrations, we require the metadata store to be cloud storage.
 		if config.Storage().Type == shared.FileStorageType {
 			return http.StatusBadRequest, errors.Newf("You need to setup cloud storage as metadata store before registering compute integration of type %s.", svc)

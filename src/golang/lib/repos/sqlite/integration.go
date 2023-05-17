@@ -122,7 +122,7 @@ func (*integrationReader) ValidateOwnership(ctx context.Context, integrationID u
 	if err != nil {
 		return false, err
 	}
-	userOnly := shared.IsUserOnlyIntegration(integrationObject.Service)
+	userOnly := shared.IsUserOnlyResource(integrationObject.Service)
 
 	if userOnly {
 		query := `SELECT COUNT(*) AS count FROM integration WHERE id = $1 AND user_id = $2;`
