@@ -32,8 +32,9 @@ func NewIntegrationRepo() repos.Integration {
 
 func (*integrationReader) Get(ctx context.Context, ID uuid.UUID, DB database.Database) (*models.Resource, error) {
 	query := fmt.Sprintf(
-		`SELECT %s FROM integration WHERE id = $1;`,
+		`SELECT %s FROM %s WHERE id = $1;`,
 		models.ResourceCols(),
+		models.ResourceTable,
 	)
 	args := []interface{}{ID}
 
@@ -42,8 +43,9 @@ func (*integrationReader) Get(ctx context.Context, ID uuid.UUID, DB database.Dat
 
 func (*integrationReader) GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.Resource, error) {
 	query := fmt.Sprintf(
-		`SELECT %s FROM integration WHERE id IN (%s);`,
+		`SELECT %s FROM %s WHERE id IN (%s);`,
 		models.ResourceCols(),
+		models.ResourceTable,
 		stmt_preparers.GenerateArgsList(len(IDs), 1),
 	)
 	args := stmt_preparers.CastIdsListToInterfaceList(IDs)
@@ -53,8 +55,9 @@ func (*integrationReader) GetBatch(ctx context.Context, IDs []uuid.UUID, DB data
 
 func (*integrationReader) GetByConfigField(ctx context.Context, fieldName string, fieldValue string, DB database.Database) ([]models.Resource, error) {
 	query := fmt.Sprintf(
-		"SELECT %s FROM integration WHERE json_extract(config, $1) = $2;",
+		"SELECT %s FROM %s WHERE json_extract(config, $1) = $2;",
 		models.ResourceCols(),
+		models.ResourceTable,
 	)
 
 	// The full 'where' condition becomes
@@ -75,8 +78,9 @@ func (*integrationReader) GetByNameAndUser(
 	DB database.Database,
 ) (*models.Resource, error) {
 	query := fmt.Sprintf(
-		`SELECT %s FROM integration WHERE name = $1 AND organization_id = $2 AND (user_id IS NULL OR user_id = $3);`,
+		`SELECT %s FROM %s WHERE name = $1 AND organization_id = $2 AND (user_id IS NULL OR user_id = $3);`,
 		models.ResourceCols(),
+		models.ResourceTable,
 	)
 	args := []interface{}{integrationName, orgID, userID}
 	return getIntegration(ctx, DB, query, args...)
@@ -84,8 +88,9 @@ func (*integrationReader) GetByNameAndUser(
 
 func (*integrationReader) GetByOrg(ctx context.Context, orgId string, DB database.Database) ([]models.Resource, error) {
 	query := fmt.Sprintf(
-		`SELECT %s FROM integration WHERE organization_id = $1 AND user_id IS NULL;`,
+		`SELECT %s FROM %s WHERE organization_id = $1 AND user_id IS NULL;`,
 		models.ResourceCols(),
+		models.ResourceTable,
 	)
 	args := []interface{}{orgId}
 	return getIntegrations(ctx, DB, query, args...)
@@ -93,8 +98,9 @@ func (*integrationReader) GetByOrg(ctx context.Context, orgId string, DB databas
 
 func (*integrationReader) GetByServiceAndUser(ctx context.Context, service shared.Service, userID uuid.UUID, DB database.Database) ([]models.Resource, error) {
 	query := fmt.Sprintf(
-		`SELECT %s FROM integration WHERE service = $1 AND user_id = $2;`,
+		`SELECT %s FROM %s WHERE service = $1 AND user_id = $2;`,
 		models.ResourceCols(),
+		models.ResourceTable,
 	)
 	args := []interface{}{service, userID}
 	return getIntegrations(ctx, DB, query, args...)
@@ -102,8 +108,9 @@ func (*integrationReader) GetByServiceAndUser(ctx context.Context, service share
 
 func (*integrationReader) GetByUser(ctx context.Context, orgID string, userID uuid.UUID, DB database.Database) ([]models.Resource, error) {
 	query := fmt.Sprintf(
-		`SELECT %s FROM integration WHERE organization_id = $1 AND (user_id IS NULL OR user_id = $2);`,
+		`SELECT %s FROM %s WHERE organization_id = $1 AND (user_id IS NULL OR user_id = $2);`,
 		models.ResourceCols(),
+		models.ResourceTable,
 	)
 	args := []interface{}{orgID, userID}
 	return getIntegrations(ctx, DB, query, args...)
@@ -113,8 +120,9 @@ func (*integrationReader) ValidateOwnership(ctx context.Context, integrationID u
 	var count countResult
 
 	query := fmt.Sprintf(
-		`SELECT %s FROM integration WHERE id = $1;`,
+		`SELECT %s FROM %s WHERE id = $1;`,
 		models.ResourceCols(),
+		models.ResourceTable,
 	)
 	args := []interface{}{integrationID}
 
@@ -125,13 +133,13 @@ func (*integrationReader) ValidateOwnership(ctx context.Context, integrationID u
 	userOnly := shared.IsUserOnlyResource(integrationObject.Service)
 
 	if userOnly {
-		query := `SELECT COUNT(*) AS count FROM integration WHERE id = $1 AND user_id = $2;`
+		query := fmt.Sprintf(`SELECT COUNT(*) AS count FROM %s WHERE id = $1 AND user_id = $2;`, models.ResourceTable)
 		err := DB.Query(ctx, &count, query, integrationID, userID)
 		if err != nil {
 			return false, err
 		}
 	} else {
-		query := `SELECT COUNT(*) AS count FROM integration WHERE id = $1 AND organization_id = $2;`
+		query := fmt.Sprintf(`SELECT COUNT(*) AS count FROM %s WHERE id = $1 AND organization_id = $2;`, models.ResourceTable)
 		err := DB.Query(ctx, &count, query, integrationID, orgID)
 		if err != nil {
 			return false, err
@@ -213,7 +221,7 @@ func (*integrationWriter) CreateForUser(
 }
 
 func (*integrationWriter) Delete(ctx context.Context, ID uuid.UUID, DB database.Database) error {
-	query := `DELETE FROM integration WHERE id = $1;`
+	query := fmt.Sprintf(`DELETE FROM %s WHERE id = $1;`, models.ResourceTable)
 	return DB.Execute(ctx, query, ID)
 }
 

@@ -10,8 +10,8 @@ import (
 
 // LoadOperator contains metadata about a Load Operator
 type LoadOperator struct {
-	OperatorID      uuid.UUID      `db:"operator_id" json:"operator_id"`
-	OperatorName    string         `db:"operator_name" json:"operator_name"`
+	OperatorID   uuid.UUID      `db:"operator_id" json:"operator_id"`
+	OperatorName string         `db:"operator_name" json:"operator_name"`
 	ModifiedAt   time.Time      `db:"modified_at" json:"modified_at"`
 	ResourceName string         `db:"integration_name" json:"integration_name"`
 	Spec         connector.Load `db:"spec" json:"spec"`

@@ -20,7 +20,7 @@ import yaml
 from packaging.version import parse as parse_version
 from tqdm import tqdm
 
-SCHEMA_VERSION = "26"
+SCHEMA_VERSION = "27"
 CHUNK_SIZE = 4096
 
 # Connector Package Version Bounds

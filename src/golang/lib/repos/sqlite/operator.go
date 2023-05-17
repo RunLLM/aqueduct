@@ -217,13 +217,13 @@ func (*operatorReader) GetDistinctLoadOPsByWorkflow(
 		operator.id AS operator_id,
 		operator.name AS operator_name, 
 		workflow_dag.created_at AS modified_at,
-		integration.name AS integration_name,
+		resource.name AS integration_name,
 		CAST(json_extract(operator.spec, '$.load') AS BLOB) AS spec 	
 	FROM 
-		operator, integration, workflow_dag_edge, workflow_dag
+		operator, resource, workflow_dag_edge, workflow_dag
 	WHERE (
 		json_extract(operator.spec, '$.type')='load' AND 
-		integration.id = json_extract(operator.spec, '$.load.integration_id') AND
+		resource.id = json_extract(operator.spec, '$.load.integration_id') AND
 		( 
 			workflow_dag_edge.from_id = operator.id OR 
 			workflow_dag_edge.to_id = operator.id 
@@ -233,7 +233,7 @@ func (*operatorReader) GetDistinctLoadOPsByWorkflow(
 	)
 	GROUP BY
 		operator.name,
-		integration.name,
+		resource.name,
 		json_extract(operator.spec, '$.load')	
 	ORDER BY modified_at DESC;
 	`
