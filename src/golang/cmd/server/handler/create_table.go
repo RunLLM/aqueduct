@@ -140,7 +140,7 @@ func CreateTable(
 	ctx context.Context,
 	args *CreateTableArgs,
 	contentPath string,
-	integrationObject *models.Integration,
+	integrationObject *models.Resource,
 	vaultObject vault.Vault,
 	storageConfig *shared.StorageConfig,
 	jobManager job.JobManager,

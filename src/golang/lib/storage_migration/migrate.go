@@ -26,7 +26,7 @@ import (
 func Perform(
 	ctx context.Context,
 	orgID string,
-	destIntegrationObj *models.Integration,
+	destIntegrationObj *models.Resource,
 	newStorageConfig *shared.StorageConfig,
 	pauseServer func(),
 	restartServer func(),

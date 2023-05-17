@@ -19,7 +19,7 @@ import (
 func GetOperatorsOnIntegration(
 	ctx context.Context,
 	orgID string,
-	integration *models.Integration,
+	integration *models.Resource,
 	integrationRepo repos.Integration,
 	operatorRepo repos.Operator,
 	DB database.Database,
@@ -77,7 +77,7 @@ func GetOperatorsOnIntegration(
 // GetWorkflowIDsUsingNotification returns the list of all workflow IDs using the given notification resource.
 func GetWorkflowIDsUsingNotification(
 	ctx context.Context,
-	integrationObject *models.Integration,
+	integrationObject *models.Resource,
 	workflowRepo repos.Workflow,
 	DB database.Database,
 ) ([]uuid.UUID, error) {

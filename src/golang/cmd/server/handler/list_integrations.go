@@ -43,12 +43,12 @@ type listIntegrationsArgs struct {
 type listIntegrationsResponse []integrationResponse
 
 type integrationResponse struct {
-	ID        uuid.UUID                `json:"id"`
-	Service   shared.Service           `json:"service"`
-	Name      string                   `json:"name"`
-	Config    shared.IntegrationConfig `json:"config"`
-	CreatedAt int64                    `json:"createdAt"`
-	ExecState *shared.ExecutionState   `json:"exec_state"`
+	ID        uuid.UUID              `json:"id"`
+	Service   shared.Service         `json:"service"`
+	Name      string                 `json:"name"`
+	Config    shared.ResourceConfig  `json:"config"`
+	CreatedAt int64                  `json:"createdAt"`
+	ExecState *shared.ExecutionState `json:"exec_state"`
 }
 
 func (*ListIntegrationsHandler) Name() string {
@@ -89,7 +89,7 @@ func (h *ListIntegrationsHandler) Perform(ctx context.Context, interfaceArgs int
 		// If there is a Conda resource registered, embed additional configuration information inside Aqueduct Compute.
 		// Otherwise, we simply note the current server's python version.
 		if integrationObject.Name == shared.AqueductComputeName {
-			var aqConfig shared.IntegrationConfig
+			var aqConfig shared.ResourceConfig
 			aqConfig, err = aqueduct_compute.ConstructAqueductComputeResourceConfig(ctx, args.ID, h.IntegrationRepo, h.Database)
 			if err != nil {
 				return emptyResponse, http.StatusInternalServerError, errors.Wrapf(err, "Unable to create aqueduct compute config!")
@@ -108,7 +108,7 @@ func (h *ListIntegrationsHandler) Perform(ctx context.Context, interfaceArgs int
 }
 
 // Helper function to convert an resource object into an integrationResponse
-func convertIntegrationObjectToResponse(integrationObject *models.Integration, config shared.IntegrationConfig) (*integrationResponse, error) {
+func convertIntegrationObjectToResponse(integrationObject *models.Resource, config shared.ResourceConfig) (*integrationResponse, error) {
 	execState, err := execution_state.ExtractConnectionState(integrationObject)
 	if err != nil {
 		return nil, err

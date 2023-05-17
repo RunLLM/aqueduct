@@ -248,7 +248,7 @@ func ConnectIntegration(
 	args *ConnectIntegrationArgs,
 	integrationRepo repos.Integration,
 	DB database.Database,
-) (_ *models.Integration, _ int, err error) {
+) (_ *models.Resource, _ int, err error) {
 	// Extract non-confidential config
 	publicConfig := args.Config.PublicConfig()
 
@@ -264,7 +264,7 @@ func ConnectIntegration(
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	var integrationObject *models.Integration
+	var integrationObject *models.Resource
 	if args.UserOnly {
 		// This is a user-specific integration
 		integrationObject, err = integrationRepo.CreateForUser(
@@ -273,7 +273,7 @@ func ConnectIntegration(
 			args.ID,
 			args.Service,
 			args.Name,
-			(*shared.IntegrationConfig)(&publicConfig),
+			(*shared.ResourceConfig)(&publicConfig),
 			txn,
 		)
 	} else {
@@ -282,7 +282,7 @@ func ConnectIntegration(
 			args.OrgID,
 			args.Service,
 			args.Name,
-			(*shared.IntegrationConfig)(&publicConfig),
+			(*shared.ResourceConfig)(&publicConfig),
 			txn,
 		)
 	}
@@ -316,7 +316,7 @@ func ConnectIntegration(
 				"", // outputs
 				err.Error(),
 				string(args.Service),
-				(*shared.IntegrationConfig)(&publicConfig),
+				(*shared.ResourceConfig)(&publicConfig),
 				&runningAt,
 				integrationObject.ID,
 				integrationRepo,
@@ -381,7 +381,7 @@ func ConnectIntegration(
 		err = execution_state.UpdateOnSuccess(
 			ctx,
 			string(args.Service),
-			(*shared.IntegrationConfig)(&publicConfig),
+			(*shared.ResourceConfig)(&publicConfig),
 			&runningAt,
 			integrationObject.ID,
 			integrationRepo,
@@ -409,7 +409,7 @@ func setupLambdaAsync(
 				"", // outputs
 				err.Error(),
 				string(shared.Lambda),
-				(*shared.IntegrationConfig)(&publicConfig),
+				(*shared.ResourceConfig)(&publicConfig),
 				&runningAt,
 				integrationID,
 				integrationRepo,
@@ -419,7 +419,7 @@ func setupLambdaAsync(
 			_ = execution_state.UpdateOnSuccess(
 				context.Background(),
 				string(shared.Lambda),
-				(*shared.IntegrationConfig)(&publicConfig),
+				(*shared.ResourceConfig)(&publicConfig),
 				&runningAt,
 				integrationID,
 				integrationRepo,
@@ -454,7 +454,7 @@ func setupCondaAsync(
 				output,
 				err.Error(),
 				string(shared.Conda),
-				(*shared.IntegrationConfig)(&publicConfig),
+				(*shared.ResourceConfig)(&publicConfig),
 				&runningAt,
 				integrationID,
 				integrationRepo,
@@ -465,7 +465,7 @@ func setupCondaAsync(
 			_ = execution_state.UpdateOnSuccess(
 				context.Background(),
 				string(shared.Conda),
-				(*shared.IntegrationConfig)(&publicConfig),
+				(*shared.ResourceConfig)(&publicConfig),
 				&runningAt,
 				integrationID,
 				integrationRepo,
@@ -619,13 +619,13 @@ func checkIntegrationSetStorage(svc shared.Service, conf auth.Config) (bool, err
 
 	switch svc {
 	case shared.S3:
-		var c shared.S3IntegrationConfig
+		var c shared.S3ResourceConfig
 		if err := json.Unmarshal(data, &c); err != nil {
 			return false, err
 		}
 		return bool(c.UseAsStorage), nil
 	case shared.GCS:
-		var c shared.GCSIntegrationConfig
+		var c shared.GCSResourceConfig
 		if err := json.Unmarshal(data, &c); err != nil {
 			return false, err
 		}

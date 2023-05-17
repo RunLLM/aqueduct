@@ -94,18 +94,18 @@ func (ts *TestSuite) TestOperator_GetDistinctLoadOPsByWorkflow() {
 	for _, expectedLoadOperator := range expectedOperators {
 		load := expectedLoadOperator.Spec.Load()
 		loadParams := load.Parameters
-		integration, err := ts.integration.Get(ts.ctx, load.IntegrationId, ts.DB)
+		integration, err := ts.integration.Get(ts.ctx, load.ResourceId, ts.DB)
 		require.Nil(ts.T(), err)
 
 		expectedLoadOperators = append(expectedLoadOperators, views.LoadOperator{
-			OperatorID:      expectedLoadOperator.ID,
-			OperatorName:    expectedLoadOperator.Name,
-			ModifiedAt:      dag.CreatedAt,
-			IntegrationName: integration.Name,
+			OperatorID:   expectedLoadOperator.ID,
+			OperatorName: expectedLoadOperator.Name,
+			ModifiedAt:   dag.CreatedAt,
+			ResourceName: integration.Name,
 			Spec: connector.Load{
-				Service:       testIntegrationService,
-				IntegrationId: integration.ID,
-				Parameters:    loadParams,
+				Service:    testIntegrationService,
+				ResourceId: integration.ID,
+				Parameters: loadParams,
 			},
 		})
 	}
@@ -128,7 +128,7 @@ func (ts *TestSuite) TestOperator_GetLoadOPsByWorkflowAndIntegration() {
 	loadParams := load.Parameters
 	relationalLoad, ok := connector.CastToRelationalDBLoadParams(loadParams)
 	require.True(ts.T(), ok)
-	integration, err := ts.integration.Get(ts.ctx, load.IntegrationId, ts.DB)
+	integration, err := ts.integration.Get(ts.ctx, load.ResourceId, ts.DB)
 	require.Nil(ts.T(), err)
 
 	actualOperators, err := ts.operator.GetLoadOPsByWorkflowAndIntegration(ts.ctx, dag.WorkflowID, integration.ID, relationalLoad.Table, ts.DB)
@@ -149,7 +149,7 @@ func (ts *TestSuite) TestOperator_GetLoadOPsByIntegration() {
 	loadParams := load.Parameters
 	relationalLoad, ok := connector.CastToRelationalDBLoadParams(loadParams)
 	require.True(ts.T(), ok)
-	integration, err := ts.integration.Get(ts.ctx, load.IntegrationId, ts.DB)
+	integration, err := ts.integration.Get(ts.ctx, load.ResourceId, ts.DB)
 	require.Nil(ts.T(), err)
 
 	actualOperators, err := ts.operator.GetLoadOPsByIntegration(ts.ctx, integration.ID, relationalLoad.Table, ts.DB)
@@ -177,7 +177,7 @@ func (ts *TestSuite) TestOperator_GetByEngineIntegrationID() {
 			models.DagEngineConfig: &shared.EngineConfig{
 				Type: shared.LambdaEngineType,
 				LambdaConfig: &shared.LambdaConfig{
-					IntegrationID: lambdaIntegrationID,
+					ResourceID: lambdaIntegrationID,
 				},
 			},
 		},
@@ -189,7 +189,7 @@ func (ts *TestSuite) TestOperator_GetByEngineIntegrationID() {
 		&shared.EngineConfig{
 			Type: shared.K8sEngineType,
 			K8sConfig: &shared.K8sConfig{
-				IntegrationID: k8sIntegrationID,
+				ResourceID: k8sIntegrationID,
 			},
 		},
 	)

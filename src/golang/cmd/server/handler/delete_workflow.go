@@ -189,7 +189,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 		return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
 	}
 	for _, saveOp := range saveOpsList {
-		saveOpsByIntegrationName[saveOp.IntegrationName] = append(saveOpsByIntegrationName[saveOp.IntegrationName], saveOpsList...)
+		saveOpsByIntegrationName[saveOp.ResourceName] = append(saveOpsByIntegrationName[saveOp.ResourceName], saveOpsList...)
 	}
 
 	for integrationName, savedObjectList := range args.ExternalDelete {

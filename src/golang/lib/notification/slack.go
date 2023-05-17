@@ -15,11 +15,11 @@ import (
 const maxChannelLimit = 2000
 
 type SlackNotification struct {
-	integration *models.Integration
+	integration *models.Resource
 	conf        *shared.SlackConfig
 }
 
-func newSlackNotification(integration *models.Integration, conf *shared.SlackConfig) *SlackNotification {
+func newSlackNotification(integration *models.Resource, conf *shared.SlackConfig) *SlackNotification {
 	return &SlackNotification{integration: integration, conf: conf}
 }
 

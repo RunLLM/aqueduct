@@ -13,7 +13,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func convertS3IntegrationtoStorageConfig(c *shared.S3IntegrationConfig) (*shared.StorageConfig, error) {
+func convertS3IntegrationtoStorageConfig(c *shared.S3ResourceConfig) (*shared.StorageConfig, error) {
 	// Users provide AWS credentials for an S3 integration via one of the following:
 	//  1. AWS Access Key and Secret Key
 	//  2. Credentials file content
@@ -89,7 +89,7 @@ func convertS3IntegrationtoStorageConfig(c *shared.S3IntegrationConfig) (*shared
 	return storageConfig, nil
 }
 
-func convertGCSIntegrationtoStorageConfig(c *shared.GCSIntegrationConfig) *shared.StorageConfig {
+func convertGCSIntegrationtoStorageConfig(c *shared.GCSResourceConfig) *shared.StorageConfig {
 	return &shared.StorageConfig{
 		Type: shared.GCSStorageType,
 		GCSConfig: &shared.GCSConfig{
@@ -105,14 +105,14 @@ func ConvertIntegrationConfigToStorageConfig(
 ) (*shared.StorageConfig, error) {
 	switch svc {
 	case shared.S3:
-		var c shared.S3IntegrationConfig
+		var c shared.S3ResourceConfig
 		if err := json.Unmarshal(confData, &c); err != nil {
 			return nil, err
 		}
 
 		return convertS3IntegrationtoStorageConfig(&c)
 	case shared.GCS:
-		var c shared.GCSIntegrationConfig
+		var c shared.GCSResourceConfig
 		if err := json.Unmarshal(confData, &c); err != nil {
 			return nil, err
 		}

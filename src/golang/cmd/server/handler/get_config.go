@@ -59,7 +59,7 @@ func (h *GetConfigHandler) Perform(ctx context.Context, interfaceArgs interface{
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve storage config.")
 	}
 
-	var integrationObj *models.Integration
+	var integrationObj *models.Resource
 
 	// There are a number of fields we need to augment the response with, which aren't directly fetched from
 	// the config file. These include resource name, connected-at timestamp, and execution state.
@@ -80,15 +80,15 @@ func (h *GetConfigHandler) Perform(ctx context.Context, interfaceArgs interface{
 		storageConfigPublic.ConnectedAt = integrationObj.CreatedAt.Unix()
 		storageConfigPublic.ExecState = execState
 	} else {
-		integrationObj, err = h.IntegrationRepo.Get(ctx, currStorageMigrationObj.DestIntegrationID, h.Database)
+		integrationObj, err = h.IntegrationRepo.Get(ctx, currStorageMigrationObj.DestResourceID, h.Database)
 		if err != nil {
 			return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error when fetching current storage integration.")
 		}
 		storageConfigPublic.ConnectedAt = currStorageMigrationObj.ExecState.Timestamps.RegisteredAt.Unix()
 		storageConfigPublic.ExecState = &currStorageMigrationObj.ExecState
 	}
-	storageConfigPublic.IntegrationID = integrationObj.ID
-	storageConfigPublic.IntegrationName = integrationObj.Name
+	storageConfigPublic.ResourceID = integrationObj.ID
+	storageConfigPublic.ResourceName = integrationObj.Name
 
 	return getConfigResponse{
 		AqPath:              config.AqueductPath(),

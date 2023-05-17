@@ -12,9 +12,9 @@ import (
 type LoadOperator struct {
 	OperatorID      uuid.UUID      `db:"operator_id" json:"operator_id"`
 	OperatorName    string         `db:"operator_name" json:"operator_name"`
-	ModifiedAt      time.Time      `db:"modified_at" json:"modified_at"`
-	IntegrationName string         `db:"integration_name" json:"integration_name"`
-	Spec            connector.Load `db:"spec" json:"spec"`
+	ModifiedAt   time.Time      `db:"modified_at" json:"modified_at"`
+	ResourceName string         `db:"integration_name" json:"integration_name"`
+	Spec         connector.Load `db:"spec" json:"spec"`
 }
 
 // LoadOperatorSpec is a wrapper around a Load Operator's spec and other metadata

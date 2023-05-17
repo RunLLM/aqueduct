@@ -44,7 +44,7 @@ func (ex *DynamicTeardownExecutor) Run(ctx context.Context) error {
 		wg.Add(1) // increment the WaitGroup counter
 		// We use go routines to delete the clusters in parallel.
 		// Terraform has timeout built in so we won't run forever even during the error case.
-		go func(dynamicIntegration *models.Integration) {
+		go func(dynamicIntegration *models.Resource) {
 			log.Infof("Checking dynamic integration %s, whose terraform directory is %s", dynamicIntegration.Name, dynamicIntegration.Config[shared.K8sTerraformPathKey])
 			defer wg.Done() // decrement the WaitGroup counter when the goroutine completes
 

@@ -14,11 +14,11 @@ import (
 )
 
 type EmailNotification struct {
-	integration *models.Integration
+	integration *models.Resource
 	conf        *shared.EmailConfig
 }
 
-func newEmailNotification(integration *models.Integration, conf *shared.EmailConfig) *EmailNotification {
+func newEmailNotification(integration *models.Resource, conf *shared.EmailConfig) *EmailNotification {
 	return &EmailNotification{integration: integration, conf: conf}
 }
 

@@ -30,7 +30,7 @@ import (
 // The `DeleteIntegrationHandler` does a best effort at deleting an integration.
 type deleteIntegrationArgs struct {
 	*aq_context.AqContext
-	integrationObject            *models.Integration
+	integrationObject            *models.Resource
 	skipActiveWorkflowValidation bool
 }
 
@@ -71,7 +71,7 @@ func (h *DeleteIntegrationHandler) Prepare(r *http.Request) (interface{}, int, e
 	}
 
 	if integrationObject.Service == shared.Kubernetes {
-		if _, ok := integrationObject.Config[shared.K8sCloudIntegrationIdKey]; ok {
+		if _, ok := integrationObject.Config[shared.K8sCloudResourceIdKey]; ok {
 			return nil, http.StatusUnprocessableEntity, errors.Wrap(err, "Cannot delete the Aqueduct-generated k8s integration. Please delete the corresponding cloud integration instead.")
 		}
 	}
@@ -101,7 +101,7 @@ func (h *DeleteIntegrationHandler) Prepare(r *http.Request) (interface{}, int, e
 	if err != nil && !aq_errors.Is(err, database.ErrNoRows()) {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving current storage migration entry.")
 	}
-	if currentStorageMigrationEntry != nil && currentStorageMigrationEntry.DestIntegrationID == integrationObject.ID {
+	if currentStorageMigrationEntry != nil && currentStorageMigrationEntry.DestResourceID == integrationObject.ID {
 		return nil, http.StatusBadRequest, errors.New("Cannot delete an integration that is being used as artifact storage.")
 	}
 
@@ -180,7 +180,7 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 func validateNoActiveWorkflowOnIntegration(
 	ctx context.Context,
 	aqContext *aq_context.AqContext,
-	integrationObject *models.Integration,
+	integrationObject *models.Resource,
 	operatorRepo repos.Operator,
 	dagRepo repos.DAG,
 	integrationRepo repos.Integration,
@@ -218,7 +218,7 @@ func validateNoActiveWorkflowOnIntegration(
 // created.
 func cleanUpIntegration(
 	ctx context.Context,
-	integrationObject *models.Integration,
+	integrationObject *models.Resource,
 	operatorRepo repos.Operator,
 	workflowRepo repos.Workflow,
 	vaultObject vault.Vault,

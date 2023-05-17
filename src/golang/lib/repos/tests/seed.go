@@ -62,12 +62,12 @@ func (ts *TestSuite) seedStorageMigration() []models.StorageMigration {
 }
 
 // seedIntegration creates count integration records for the given user.
-func (ts *TestSuite) seedIntegrationWithUser(count int, userID uuid.UUID) []models.Integration {
-	integrations := make([]models.Integration, 0, count)
+func (ts *TestSuite) seedIntegrationWithUser(count int, userID uuid.UUID) []models.Resource {
+	integrations := make([]models.Resource, 0, count)
 
 	for i := 0; i < count; i++ {
 		name := randString(10)
-		config := make(shared.IntegrationConfig)
+		config := make(shared.ResourceConfig)
 		config[randString(10)] = randString(10)
 		integration, err := ts.integration.CreateForUser(
 			ts.ctx,
@@ -87,7 +87,7 @@ func (ts *TestSuite) seedIntegrationWithUser(count int, userID uuid.UUID) []mode
 }
 
 // seedIntegration creates count integration records and a new user that owns all of them.
-func (ts *TestSuite) seedIntegration(count int) []models.Integration {
+func (ts *TestSuite) seedIntegration(count int) []models.Resource {
 	users := ts.seedUser(1)
 	return ts.seedIntegrationWithUser(count, users[0].ID)
 }
@@ -460,9 +460,9 @@ func (ts *TestSuite) seedOperatorAndDAG(artifactID uuid.UUID, dagID uuid.UUID, u
 	case operator.ExtractType:
 		spec = operator.NewSpecFromExtract(
 			connector.Extract{
-				Service:       shared.Postgres,
-				IntegrationId: uuid.New(),
-				Parameters:    &connector.PostgresExtractParams{},
+				Service:    shared.Postgres,
+				ResourceId: uuid.New(),
+				Parameters: &connector.PostgresExtractParams{},
 			},
 		)
 	case operator.LoadType:
@@ -470,8 +470,8 @@ func (ts *TestSuite) seedOperatorAndDAG(artifactID uuid.UUID, dagID uuid.UUID, u
 		loadIntegration := loadIntegrations[0]
 		spec = operator.NewSpecFromLoad(
 			connector.Load{
-				Service:       loadIntegration.Service,
-				IntegrationId: loadIntegration.ID,
+				Service:    loadIntegration.Service,
+				ResourceId: loadIntegration.ID,
 				Parameters: &connector.PostgresLoadParams{
 					RelationalDBLoadParams: connector.RelationalDBLoadParams{
 						Table:      randString(10),
@@ -537,16 +537,16 @@ func (ts *TestSuite) seedOperatorAndDAGOperatorToArtifact(artifactID uuid.UUID, 
 	case operator.ExtractType:
 		spec = operator.NewSpecFromExtract(
 			connector.Extract{
-				Service:       shared.Postgres,
-				IntegrationId: uuid.New(),
-				Parameters:    &connector.PostgresExtractParams{},
+				Service:    shared.Postgres,
+				ResourceId: uuid.New(),
+				Parameters: &connector.PostgresExtractParams{},
 			},
 		)
 	case operator.LoadType:
 		spec = operator.NewSpecFromLoad(
 			connector.Load{
-				Service:       shared.Postgres,
-				IntegrationId: uuid.New(),
+				Service:    shared.Postgres,
+				ResourceId: uuid.New(),
 				Parameters: &connector.PostgresLoadParams{
 					RelationalDBLoadParams: connector.RelationalDBLoadParams{
 						Table:      randString(10),
@@ -779,9 +779,9 @@ func (ts *TestSuite) seedComplexWorkflow() (
 
 	extract_spec := operator.NewSpecFromExtract(
 		connector.Extract{
-			Service:       shared.Postgres,
-			IntegrationId: uuid.New(),
-			Parameters:    &connector.PostgresExtractParams{},
+			Service:    shared.Postgres,
+			ResourceId: uuid.New(),
+			Parameters: &connector.PostgresExtractParams{},
 		},
 	)
 

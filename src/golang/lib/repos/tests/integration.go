@@ -105,10 +105,10 @@ func (ts *TestSuite) TestIntegration_ValidateOwnership() {
 
 func (ts *TestSuite) TestIntegration_Create() {
 	name := randString(10)
-	config := make(shared.IntegrationConfig)
+	config := make(shared.ResourceConfig)
 	config[randString(10)] = randString(10)
 
-	expectedIntegration := &models.Integration{
+	expectedIntegration := &models.Resource{
 		OrgID: testOrgID,
 		UserID: utils.NullUUID{
 			IsNull: true,
@@ -134,10 +134,10 @@ func (ts *TestSuite) TestIntegration_CreateForUser() {
 		IsNull: false,
 	}
 	name := randString(10)
-	config := make(shared.IntegrationConfig)
+	config := make(shared.ResourceConfig)
 	config[randString(10)] = randString(10)
 
-	expectedIntegration := &models.Integration{
+	expectedIntegration := &models.Resource{
 		UserID:  userID,
 		OrgID:   testOrgID,
 		Service: testIntegrationService,
@@ -176,12 +176,12 @@ func (ts *TestSuite) TestIntegration_Update() {
 	integration := integrations[0]
 
 	name := randString(10)
-	config := make(shared.IntegrationConfig)
+	config := make(shared.ResourceConfig)
 	config[randString(10)] = randString(10)
 
 	changes := map[string]interface{}{
-		models.IntegrationName:   name,
-		models.IntegrationConfig: &config,
+		models.ResourceName:   name,
+		models.ResourceConfig: &config,
 	}
 
 	newIntegration, err := ts.integration.Update(ts.ctx, integration.ID, changes, ts.DB)

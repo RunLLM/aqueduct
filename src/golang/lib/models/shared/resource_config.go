@@ -16,8 +16,8 @@ const (
 	ConfigFileContentS3ConfigType S3ConfigType = "config_file_content"
 )
 
-// S3IntegrationConfig contains the fields for connecting an S3 integration.
-type S3IntegrationConfig struct {
+// S3ResourceConfig contains the fields for connecting an S3 resource.
+type S3ResourceConfig struct {
 	Type              S3ConfigType `json:"type"`
 	Bucket            string       `json:"bucket"`
 	Region            string       `json:"region"`
@@ -30,11 +30,11 @@ type S3IntegrationConfig struct {
 	UseAsStorage      ConfigBool   `json:"use_as_storage"`
 }
 
-// AirflowIntegrationConfig contains the fields for connecting an Airflow integration.
-type AirflowIntegrationConfig struct{}
+// AirflowResourceConfig contains the fields for connecting an Airflow resource.
+type AirflowResourceConfig struct{}
 
-// GCSIntegrationConfig contains the fields for connecting a Google Cloud Storage integration.
-type GCSIntegrationConfig struct {
+// GCSResourceConfig contains the fields for connecting a Google Cloud Storage resource.
+type GCSResourceConfig struct {
 	GCSConfig
 	UseAsStorage ConfigBool `json:"use_as_storage"`
 }
@@ -50,14 +50,14 @@ const (
 
 	DynamicK8sClusterStatusPollPeriod time.Duration = 10
 
-	K8sTerraformPathKey      string = "terraform_path"
-	K8sKubeconfigPathKey     string = "kubeconfig_path"
-	K8sClusterNameKey        string = "cluster_name"
-	K8sDynamicKey            string = "dynamic"
-	K8sCloudIntegrationIdKey string = "cloud_integration_id"
-	K8sUseSameClusterKey     string = "use_same_cluster"
-	K8sStatusKey             string = "status"
-	K8sLastUsedTimestampKey  string = "last_used_timestamp"
+	K8sTerraformPathKey     string = "terraform_path"
+	K8sKubeconfigPathKey    string = "kubeconfig_path"
+	K8sClusterNameKey       string = "cluster_name"
+	K8sDynamicKey           string = "dynamic"
+	K8sCloudResourceIdKey   string = "cloud_integration_id"
+	K8sUseSameClusterKey    string = "use_same_cluster"
+	K8sStatusKey            string = "status"
+	K8sLastUsedTimestampKey string = "last_used_timestamp"
 
 	// Dynamic k8s cluster config keys
 	K8sKeepaliveKey   string = "keepalive"
@@ -85,20 +85,20 @@ const (
 	K8sDefaultMaxGpuNode  int    = 1
 )
 
-type K8sIntegrationConfig struct {
-	KubeconfigPath     string     `json:"kubeconfig_path" yaml:"kubeconfigPath"`
-	ClusterName        string     `json:"cluster_name"  yaml:"clusterName"`
-	UseSameCluster     ConfigBool `json:"use_same_cluster"  yaml:"useSameCluster"`
-	Dynamic            ConfigBool `json:"dynamic"  yaml:"dynamic"`
-	CloudIntegrationId string     `json:"cloud_integration_id"  yaml:"cloud_integration_id"`
+type K8sResourceConfig struct {
+	KubeconfigPath  string     `json:"kubeconfig_path" yaml:"kubeconfigPath"`
+	ClusterName     string     `json:"cluster_name"  yaml:"clusterName"`
+	UseSameCluster  ConfigBool `json:"use_same_cluster"  yaml:"useSameCluster"`
+	Dynamic         ConfigBool `json:"dynamic"  yaml:"dynamic"`
+	CloudResourceId string     `json:"cloud_integration_id"  yaml:"cloud_integration_id"`
 }
 
-type LambdaIntegrationConfig struct {
+type LambdaResourceConfig struct {
 	RoleArn   string `json:"role_arn" yaml:"roleArn"`
 	ExecState string `json:"exec_state" yaml:"execState"`
 }
 
-type DatabricksIntegrationConfig struct {
+type DatabricksResourceConfig struct {
 	// WorkspaceURL is the full url for the Databricks workspace that
 	// Aqueduct operators will run on.
 	WorkspaceURL string `json:"workspace_url" yaml:"workspaceUrl"`
@@ -203,7 +203,7 @@ type ECRConfig struct {
 	ProxyEndpoint     string `json:"proxy_endpoint"`
 }
 
-type SparkIntegrationConfig struct {
+type SparkResourceConfig struct {
 	// LivyServerURL is the URL of the Livy server that sits in front of the Spark cluster.
 	// This URL is assumed to be accessible by the machine running the Aqueduct server.
 	LivyServerURL string `yaml:"baseUrl" json:"livy_server_url"`

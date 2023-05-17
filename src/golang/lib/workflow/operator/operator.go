@@ -146,7 +146,7 @@ func NewOperator(
 	var dProperties *dynamicProperties
 
 	if opEngineConfig.Type == shared.K8sEngineType {
-		k8sIntegrationId := opEngineConfig.K8sConfig.IntegrationID
+		k8sIntegrationId := opEngineConfig.K8sConfig.ResourceID
 		config, err := auth.ReadConfigFromSecret(ctx, k8sIntegrationId, vaultObject)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to read k8s config from vault.")

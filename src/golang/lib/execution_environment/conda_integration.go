@@ -49,7 +49,7 @@ func GetCondaIntegration(
 	userID uuid.UUID,
 	integrationRepo repos.Integration,
 	DB database.Database,
-) (*models.Integration, error) {
+) (*models.Resource, error) {
 	integrations, err := integrationRepo.GetByServiceAndUser(
 		ctx,
 		shared.Conda,

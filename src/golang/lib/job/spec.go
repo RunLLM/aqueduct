@@ -140,20 +140,20 @@ func (bs *BasePythonSpec) GetStorageConfig() (*shared.StorageConfig, error) {
 
 type FunctionSpec struct {
 	BasePythonSpec
-	FunctionPath                string                   `json:"function_path"  yaml:"function_path"`
-	FunctionExtractPath         string                   `json:"function_extract_path" yaml:"function_extract_path"`
-	EntryPointFile              string                   `json:"entry_point_file"  yaml:"entry_point_file"`
-	EntryPointClass             string                   `json:"entry_point_class"  yaml:"entry_point_class"`
-	EntryPointMethod            string                   `json:"entry_point_method"  yaml:"entry_point_method"`
-	CustomArgs                  string                   `json:"custom_args"  yaml:"custom_args"`
-	InputContentPaths           []string                 `json:"input_content_paths"  yaml:"input_content_paths"`
-	InputMetadataPaths          []string                 `json:"input_metadata_paths"  yaml:"input_metadata_paths"`
-	OutputContentPaths          []string                 `json:"output_content_paths"  yaml:"output_content_paths"`
-	OutputMetadataPaths         []string                 `json:"output_metadata_paths"  yaml:"output_metadata_paths"`
-	ExpectedOutputArtifactTypes []string                 `json:"expected_output_artifact_types" yaml:"expected_output_artifact_types"`
-	OperatorType                operator.Type            `json:"operator_type" yaml:"operator_type"`
-	Resources                   *operator.ResourceConfig `json:"resources" yaml:"resources"`
-	Image                       *operator.ImageConfig    `json:"image,omitempty" yaml:"image,omitempty"`
+	FunctionPath                string                           `json:"function_path"  yaml:"function_path"`
+	FunctionExtractPath         string                           `json:"function_extract_path" yaml:"function_extract_path"`
+	EntryPointFile              string                           `json:"entry_point_file"  yaml:"entry_point_file"`
+	EntryPointClass             string                           `json:"entry_point_class"  yaml:"entry_point_class"`
+	EntryPointMethod            string                           `json:"entry_point_method"  yaml:"entry_point_method"`
+	CustomArgs                  string                           `json:"custom_args"  yaml:"custom_args"`
+	InputContentPaths           []string                         `json:"input_content_paths"  yaml:"input_content_paths"`
+	InputMetadataPaths          []string                         `json:"input_metadata_paths"  yaml:"input_metadata_paths"`
+	OutputContentPaths          []string                         `json:"output_content_paths"  yaml:"output_content_paths"`
+	OutputMetadataPaths         []string                         `json:"output_metadata_paths"  yaml:"output_metadata_paths"`
+	ExpectedOutputArtifactTypes []string                         `json:"expected_output_artifact_types" yaml:"expected_output_artifact_types"`
+	OperatorType                operator.Type                    `json:"operator_type" yaml:"operator_type"`
+	Resources                   *operator.ComputeResourcesConfig `json:"resources" yaml:"resources"`
+	Image                       *operator.ImageConfig            `json:"image,omitempty" yaml:"image,omitempty"`
 
 	// Specific to the check operator. This is left unset by any other function type.
 	CheckSeverity *check.Level `json:"check_severity" yaml:"check_severity"`

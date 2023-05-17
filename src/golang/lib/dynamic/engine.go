@@ -108,7 +108,7 @@ func CreateOrUpdateK8sCluster(
 	ctx context.Context,
 	configDelta *shared.DynamicK8sConfig,
 	action k8sClusterActionType, // can either be k8sClusterCreateAction or k8sClusterUpdateAction
-	engineIntegration *models.Integration,
+	engineIntegration *models.Resource,
 	integrationRepo repos.Integration,
 	vaultObject vault.Vault,
 	db database.Database,
@@ -258,7 +258,7 @@ func CreateOrUpdateK8sCluster(
 func DeleteK8sCluster(
 	ctx context.Context,
 	skipPodsStatusCheck bool,
-	engineIntegration *models.Integration,
+	engineIntegration *models.Resource,
 	integrationRepo repos.Integration,
 	vaultObject vault.Vault,
 	db database.Database,
@@ -346,7 +346,7 @@ func UpdateClusterLastUsedTimestamp(
 		ctx,
 		engineIntegration.ID,
 		map[string]interface{}{
-			models.IntegrationConfig: &(engineIntegration.Config),
+			models.ResourceConfig: &(engineIntegration.Config),
 		},
 		db,
 	)
@@ -380,7 +380,7 @@ func updateClusterStatus(
 		ctx,
 		engineIntegration.ID,
 		map[string]interface{}{
-			models.IntegrationConfig: &(engineIntegration.Config),
+			models.ResourceConfig: &(engineIntegration.Config),
 		},
 		db,
 	)
@@ -429,7 +429,7 @@ func updateClusterConfig(
 		ctx,
 		engineIntegration.ID,
 		map[string]interface{}{
-			models.IntegrationConfig: &(engineIntegration.Config),
+			models.ResourceConfig: &(engineIntegration.Config),
 		},
 		db,
 	)
@@ -447,7 +447,7 @@ func updateClusterConfig(
 // Terminated.
 func ResyncClusterState(
 	ctx context.Context,
-	engineIntegration *models.Integration,
+	engineIntegration *models.Resource,
 	integrationRepo repos.Integration,
 	vaultObject vault.Vault,
 	db database.Database,
@@ -491,11 +491,11 @@ func ResyncClusterState(
 
 func PollClusterStatus(
 	ctx context.Context,
-	engineIntegration *models.Integration,
+	engineIntegration *models.Resource,
 	integrationRepo repos.Integration,
 	vaultObject vault.Vault,
 	db database.Database,
-) (*models.Integration, error) {
+) (*models.Resource, error) {
 	if err := ResyncClusterState(ctx, engineIntegration, integrationRepo, vaultObject, db); err != nil {
 		return nil, errors.Wrap(err, "Failed to resync cluster state")
 	}
@@ -592,7 +592,7 @@ func generateTerraformVariables(
 
 func runTerraformApply(
 	awsConfig *shared.AWSConfig,
-	engineIntegration *models.Integration,
+	engineIntegration *models.Resource,
 ) error {
 	terraformArgs, err := generateTerraformVariables(awsConfig, engineIntegration.Config)
 	if err != nil {
@@ -719,13 +719,13 @@ func GenerateClusterName() (string, error) {
 
 func fetchAWSCredential(
 	ctx context.Context,
-	engineIntegration *models.Integration,
+	engineIntegration *models.Resource,
 	vaultObject vault.Vault,
 ) (*shared.AWSConfig, error) {
-	if _, ok := engineIntegration.Config[shared.K8sCloudIntegrationIdKey]; !ok {
+	if _, ok := engineIntegration.Config[shared.K8sCloudResourceIdKey]; !ok {
 		return nil, errors.New("No cloud integration ID found in the engine integration object.")
 	}
-	cloudIntegrationId, err := uuid.Parse(engineIntegration.Config[shared.K8sCloudIntegrationIdKey])
+	cloudIntegrationId, err := uuid.Parse(engineIntegration.Config[shared.K8sCloudResourceIdKey])
 	if err != nil {
 		return nil, errors.Wrap(err, "Failed to parse cloud integration ID")
 	}

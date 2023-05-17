@@ -30,7 +30,7 @@ func ScheduleExtract(
 	jobManager job.JobManager,
 	vaultObject vault.Vault,
 ) (string, error) {
-	config, err := auth.ReadConfigFromSecret(ctx, spec.IntegrationId, vaultObject)
+	config, err := auth.ReadConfigFromSecret(ctx, spec.ResourceId, vaultObject)
 	if err != nil {
 		return "", err
 	}

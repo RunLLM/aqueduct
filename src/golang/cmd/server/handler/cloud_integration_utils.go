@@ -67,15 +67,15 @@ func setupCloudIntegration(
 	}
 
 	dynamicK8sConfig := map[string]string{
-		shared.K8sTerraformPathKey:      terraformPath,
-		shared.K8sKubeconfigPathKey:     kubeconfigPath,
-		shared.K8sClusterNameKey:        clusterName,
-		shared.K8sDynamicKey:            strconv.FormatBool(true),
-		shared.K8sCloudIntegrationIdKey: cloudIntegration.ID.String(),
-		shared.K8sUseSameClusterKey:     strconv.FormatBool(false),
-		shared.K8sStatusKey:             string(shared.K8sClusterTerminatedStatus),
-		shared.K8sDesiredCpuNodeKey:     config.MinCpuNode,
-		shared.K8sDesiredGpuNodeKey:     config.MinGpuNode,
+		shared.K8sTerraformPathKey:   terraformPath,
+		shared.K8sKubeconfigPathKey:  kubeconfigPath,
+		shared.K8sClusterNameKey:     clusterName,
+		shared.K8sDynamicKey:         strconv.FormatBool(true),
+		shared.K8sCloudResourceIdKey: cloudIntegration.ID.String(),
+		shared.K8sUseSameClusterKey:  strconv.FormatBool(false),
+		shared.K8sStatusKey:          string(shared.K8sClusterTerminatedStatus),
+		shared.K8sDesiredCpuNodeKey:  config.MinCpuNode,
+		shared.K8sDesiredGpuNodeKey:  config.MinGpuNode,
 	}
 
 	for k, v := range config.ToMap() {

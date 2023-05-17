@@ -92,9 +92,9 @@ func ValidateDagOperatorIntegrationOwnership(
 	for _, operator := range operators {
 		var integrationID uuid.UUID
 		if operator.Spec.IsExtract() {
-			integrationID = operator.Spec.Extract().IntegrationId
+			integrationID = operator.Spec.Extract().ResourceId
 		} else if operator.Spec.IsLoad() {
-			integrationID = operator.Spec.Load().IntegrationId
+			integrationID = operator.Spec.Load().ResourceId
 		} else {
 			continue
 		}

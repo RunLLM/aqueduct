@@ -91,7 +91,7 @@ func (h *IntegrationsWorkflowsGetHandler) Perform(ctx context.Context, interface
 func fetchWorkflowAndDagIDsForIntegration(
 	ctx context.Context,
 	orgID string,
-	integration *models.Integration,
+	integration *models.Resource,
 	integrationRepo repos.Integration,
 	workflowRepo repos.Workflow,
 	operatorRepo repos.Operator,

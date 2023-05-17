@@ -152,9 +152,9 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 	jobName, err := scheduler.ScheduleExtract(
 		ctx,
 		connector.Extract{
-			Service:       integrationObject.Service,
-			IntegrationId: integrationObject.ID,
-			Parameters:    queryParams,
+			Service:    integrationObject.Service,
+			ResourceId: integrationObject.ID,
+			Parameters: queryParams,
 		},
 		operatorMetadataPath,
 		[]string{}, /* inputParamNames */

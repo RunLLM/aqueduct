@@ -86,7 +86,7 @@ func syncWorkflowDag(
 	// Read Airflow credentials from vault
 	authConf, err := auth.ReadConfigFromSecret(
 		ctx,
-		dag.EngineConfig.AirflowConfig.IntegrationID,
+		dag.EngineConfig.AirflowConfig.ResourceID,
 		vault,
 	)
 	if err != nil {

@@ -42,7 +42,7 @@ func (*storageMigrationWriter) Create(
 ) (*models.StorageMigration, error) {
 	cols := []string{
 		models.StorageMigrationID,
-		models.StorageMigrationDestIntegrationID,
+		models.StorageMigrationDestResourceID,
 		models.StorageMigrationExecutionState,
 		models.StorageMigrationCurrent,
 	}

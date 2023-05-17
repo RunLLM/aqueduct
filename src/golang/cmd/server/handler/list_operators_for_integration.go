@@ -42,7 +42,7 @@ type listOperatorsForIntegrationItem struct {
 
 type listOperatorsForIntegrationArgs struct {
 	*aq_context.AqContext
-	integrationObject *models.Integration
+	integrationObject *models.Resource
 }
 
 type listOperatorsForIntegrationResponse struct {

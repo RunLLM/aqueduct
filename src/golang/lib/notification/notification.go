@@ -67,7 +67,7 @@ func GetNotificationsFromUser(
 		return nil, err
 	}
 
-	allIntegrations := make([]models.Integration, 0, len(emailIntegrations)+len(slackIntegrations))
+	allIntegrations := make([]models.Resource, 0, len(emailIntegrations)+len(slackIntegrations))
 	allIntegrations = append(allIntegrations, emailIntegrations...)
 	allIntegrations = append(allIntegrations, slackIntegrations...)
 	notifications := make([]Notification, 0, len(allIntegrations))
@@ -86,7 +86,7 @@ func GetNotificationsFromUser(
 
 func NewNotificationFromIntegration(
 	ctx context.Context,
-	integrationObject *models.Integration,
+	integrationObject *models.Resource,
 	vaultObject vault.Vault,
 ) (Notification, error) {
 	if integrationObject.Service == shared.Email {

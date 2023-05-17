@@ -81,7 +81,7 @@ func SerializedSuccess(runningAt *time.Time) string {
 func UpdateOnSuccess(
 	ctx context.Context,
 	integrationType string,
-	integrationConfig *shared.IntegrationConfig,
+	integrationConfig *shared.ResourceConfig,
 	runningAt *time.Time,
 	integrationID uuid.UUID,
 	integrationRepo repos.Integration,
@@ -89,13 +89,13 @@ func UpdateOnSuccess(
 ) error {
 	integrationConfigMap := (map[string]string)(*integrationConfig)
 	integrationConfigMap[ExecStateKey] = SerializedSuccess(runningAt)
-	updatedIntegrationConfig := (*shared.IntegrationConfig)(&integrationConfigMap)
+	updatedIntegrationConfig := (*shared.ResourceConfig)(&integrationConfigMap)
 
 	_, err := integrationRepo.Update(
 		ctx,
 		integrationID,
 		map[string]interface{}{
-			models.IntegrationConfig: updatedIntegrationConfig,
+			models.ResourceConfig: updatedIntegrationConfig,
 		},
 		DB,
 	)
@@ -111,7 +111,7 @@ func UpdateOnFailure(
 	outputs string,
 	msg string,
 	integrationType string,
-	integrationConfig *shared.IntegrationConfig,
+	integrationConfig *shared.ResourceConfig,
 	runningAt *time.Time,
 	integrationID uuid.UUID,
 	integrationRepo repos.Integration,
@@ -119,13 +119,13 @@ func UpdateOnFailure(
 ) {
 	integrationConfigMap := (map[string]string)(*integrationConfig)
 	integrationConfigMap[ExecStateKey] = SerializedFailure(outputs, msg, runningAt)
-	updatedIntegrationConfig := (*shared.IntegrationConfig)(&integrationConfigMap)
+	updatedIntegrationConfig := (*shared.ResourceConfig)(&integrationConfigMap)
 
 	_, err := integrationRepo.Update(
 		ctx,
 		integrationID,
 		map[string]interface{}{
-			models.IntegrationConfig: updatedIntegrationConfig,
+			models.ResourceConfig: updatedIntegrationConfig,
 		},
 		DB,
 	)
@@ -139,7 +139,7 @@ func UpdateOnFailure(
 // we can assume that this is a legacy entry from before we always wrote
 // an execution state. In this case, we always return success.
 func ExtractConnectionState(
-	integrationObject *models.Integration,
+	integrationObject *models.Resource,
 ) (*shared.ExecutionState, error) {
 	stateSerialized, ok := integrationObject.Config[ExecStateKey]
 	if !ok {

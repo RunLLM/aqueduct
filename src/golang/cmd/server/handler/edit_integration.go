@@ -289,13 +289,13 @@ func UpdateIntegration(
 ) (int, error) {
 	changedFields := make(map[string]interface{}, 2)
 	if newName != "" {
-		changedFields[models.IntegrationName] = newName
+		changedFields[models.ResourceName] = newName
 	}
 
 	if newConfig != nil {
 		// Extract non-confidential config
 		publicConfig := newConfig.PublicConfig()
-		changedFields[models.IntegrationConfig] = (*shared.IntegrationConfig)(&publicConfig)
+		changedFields[models.ResourceConfig] = (*shared.ResourceConfig)(&publicConfig)
 	}
 
 	txn, err := DB.BeginTx(ctx)
