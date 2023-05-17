@@ -20,22 +20,12 @@ const Placeholders: BigQueryConfig = {
 export const BigQueryDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
 }) => {
-  const { setValue, getValues } = useFormContext();
-
-  const [fileName, setFileName] = useState<string>(null);
-
+  const { setValue } = useFormContext();
+  const [fileData, setFileData] = useState<FileData | null>(null);
   const setFile = (fileData: FileData | null) => {
-    setFileName(fileData?.name ?? '');
     setValue('service_account_credentials', fileData?.data);
+    setFileData(fileData);
   };
-
-  const fileData =
-    fileName && !!getValues('service_account_credentials')
-      ? {
-          name: fileName,
-          data: getValues('service_account_credentials'),
-        }
-      : null;
 
   const fileUploadDescription = (
     <>
@@ -100,9 +90,15 @@ export function readCredentialsFile(
 
 export function getBigQueryValidationSchema() {
   return Yup.object().shape({
+    name: Yup.string().required('Please enter a name'),
     project_id: Yup.string().required('Please enter a project ID'),
-    service_account_credentials: Yup.string().required(
-      'Please upload a service account key file'
-    ),
+    service_account_credentials: Yup.string()
+      .transform((value) => {
+        if (!value?.data) {
+          return null;
+        }
+        return value.data;
+      })
+      .required('Please upload a service account key file'),
   });
 }
