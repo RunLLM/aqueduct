@@ -2,7 +2,6 @@ package v2
 
 import (
 	"context"
-	"mime/multipart"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
@@ -15,11 +14,6 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/aqueducthq/aqueduct/lib/workflow/artifact"
 	"github.com/google/uuid"
-)
-
-const (
-	formIsDownsampledField = "is_downsampled"
-	formContentField       = "content"
 )
 
 // This file should map directly to
@@ -106,9 +100,9 @@ func (h *NodeArtifactResultContentGetHandler) Perform(ctx context.Context, inter
 	args := interfaceArgs.(*nodeResultGetArgs)
 	emptyResp := &nodeResultGetResponse{}
 
-	dag, err := h.DAGRepo.GetByDAGResult(
+	dag, err := h.DAGRepo.Get(
 		ctx,
-		args.nodeResultID,
+		args.dagID,
 		h.Database,
 	)
 	if err != nil {
@@ -161,53 +155,7 @@ func (h *NodeArtifactResultContentGetHandler) Perform(ctx context.Context, inter
 		}
 
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve data for the artifact result.")
-	} else if !errors.Is(err, storage.ErrObjectDoesNotExist()) {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve data for the artifact result.")
 	}
 
 	return &nodeResultGetResponse{IsDownsampled: isDownsampled, Content: data}, http.StatusOK, nil
-}
-
-// This custom implementation of SendResponse constructs a multipart form response with two fields:
-// 1: "metadata" contains a json serialized blob of artifact result metadata.
-// 2: "data" contains the artifact result data blob generated the serialization method
-// specified in the metadata field.
-func (*NodeArtifactResultContentGetHandler) SendResponse(w http.ResponseWriter, interfaceResp interface{}) {
-	resp := interfaceResp.(*nodeResultGetResponse)
-	multipartWriter := multipart.NewWriter(w)
-	defer multipartWriter.Close()
-
-	w.Header().Set("Content-Type", multipartWriter.FormDataContentType())
-
-	// The second argument is the file name, which is redundant but required by the UI to parse the file correctly.
-	formFieldWriter, err := multipartWriter.CreateFormFile(formIsDownsampledField, formIsDownsampledField)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if resp.IsDownsampled {
-		_, err = formFieldWriter.Write([]byte{1})
-	} else {
-		_, err = formFieldWriter.Write([]byte{0})
-	}
-
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if len(resp.Content) > 0 {
-		formFieldWriter, err = multipartWriter.CreateFormFile(formContentField, formContentField)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-
-		_, err = formFieldWriter.Write(resp.Content)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
 }

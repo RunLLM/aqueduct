@@ -10,11 +10,8 @@ import { handleLoadIntegrations } from '../../reducers/integrations';
 import { AppDispatch, RootState } from '../../stores/store';
 import { UserProfile } from '../../utils/auth';
 import { getPathPrefix } from '../../utils/getPathPrefix';
-import {
-  Integration,
-  IntegrationCategories,
-  SupportedIntegrations,
-} from '../../utils/integrations';
+import { Integration, IntegrationCategories } from '../../utils/integrations';
+import SupportedIntegrations from '../../utils/SupportedIntegrations';
 import { Card } from '../layouts/card';
 import { ConnectedIntegrationType } from './connectedIntegrationType';
 import { ErrorSnackbar } from './errorSnackbar';
@@ -54,6 +51,14 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
         IntegrationCategories.CLOUD
     ) {
       return ConnectedIntegrationType.Compute;
+
+      // The "Artifact Storage" is currently only used to filter out the 'Filesystem' integration
+      // from the connected integrations.
+    } else if (
+      SupportedIntegrations[integration.service].category ===
+      IntegrationCategories.ARTIFACT_STORAGE
+    ) {
+      return ConnectedIntegrationType.ArtifactStorage;
     } else {
       return ConnectedIntegrationType.Other;
     }
@@ -61,7 +66,7 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
 
   const integrations = useSelector((state: RootState) =>
     Object.values(state.integrationsReducer.integrations).filter(
-      (integration) =>
+      (integration: Integration) =>
         integrationToConnectedIntegrationType(integration) ===
         connectedIntegrationType
     )
@@ -112,9 +117,11 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
       >
         {[...integrations]
           // This is a temporary fix to hide the auto-generated on-demand k8s integration card.
+          // This also filters out any Conda resource, since that is merged in with the Aqueduct Server card.
           .filter(
             (integration) =>
-              !integration.name.endsWith(':aqueduct_ondemand_k8s')
+              !integration.name.endsWith(':aqueduct_ondemand_k8s') &&
+              integration.service != 'Conda'
           )
           .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
           .map((integration, idx) => {

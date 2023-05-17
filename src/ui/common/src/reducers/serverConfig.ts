@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 import { handleGetServerConfig } from '../handlers/getServerConfig';
-import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
+import { ExecState, LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 
 export type ServerConfig = {
   aqPath: string;
@@ -9,7 +9,10 @@ export type ServerConfig = {
   apiKey: string;
   storageConfig: {
     type: string;
+    integration_id?: string;
     integration_name: string;
+    connected_at?: number;
+    exec_state: ExecState;
     fileConfig?: {
       directory: string;
     };

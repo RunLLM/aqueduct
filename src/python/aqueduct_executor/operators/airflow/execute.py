@@ -29,7 +29,7 @@ class Task:
         self.alias = alias
 
 
-def run(spec: spec.CompileAirflowSpec) -> None:
+def run(spec: spec.CompileAirflowSpec, version_tag: str) -> None:
     """
     Executes a compile airflow operator.
     """
@@ -39,7 +39,7 @@ def run(spec: spec.CompileAirflowSpec) -> None:
     exec_state = ExecutionState(user_logs=Logs())
 
     try:
-        dag_file = compile(spec)
+        dag_file = compile(spec, version_tag)
         utils.write_compile_airflow_output(storage, spec.output_content_path, dag_file)
         utils.write_exec_state(storage, spec.metadata_path, exec_state)
     except Exception:
@@ -48,7 +48,7 @@ def run(spec: spec.CompileAirflowSpec) -> None:
         sys.exit(1)
 
 
-def compile(spec: spec.CompileAirflowSpec) -> bytes:
+def compile(spec: spec.CompileAirflowSpec, version_tag: str) -> bytes:
     """
     Takes a CompileAirflowSpec and generates an Airflow DAG specification Python file.
     It returns the DAG file.
@@ -84,6 +84,7 @@ def compile(spec: spec.CompileAirflowSpec) -> bytes:
         tasks=tasks,
         edges=edges,
         task_to_alias=task_to_alias,
+        version_tag=version_tag,
     )
 
     return str.encode(r)

@@ -3,9 +3,7 @@ package handler
 import (
 	"context"
 	"net/http"
-	"os/exec"
 	"strconv"
-	"strings"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
@@ -359,22 +357,14 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		}
 	}()
 
-	// This is best-effort
-	var version strings.Builder
+	// This fetch is best-effort.
+	var version string
 	if args.dagSummary.Dag.EngineConfig.Type == shared.AqueductEngineType {
-		cmd := exec.Command(
-			"python3",
-			"--version",
-		)
-		cmd.Stdout = &version
-		err := cmd.Run()
-		if err != nil {
-			log.Errorf("Could not get Python version on server: %v", err)
-		}
+		version = exec_env.GetServerPythonVersion()
 	}
 
 	return registerWorkflowResponse{
 		Id:            workflowId,
-		PythonVersion: version.String(),
+		PythonVersion: version,
 	}, http.StatusOK, nil
 }

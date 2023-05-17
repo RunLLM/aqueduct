@@ -1,5 +1,9 @@
 name: Setup Server
 description: "Sets up a server and installs the appropriate environment."
+inputs:
+  python-pkg-version:
+    description: "Specifies test Pypi package version number if not using the latest release."
+    required: false
 
 runs:
   using: composite
@@ -55,6 +59,12 @@ runs:
     - name: Update aqueduct with latest code
       shell: bash
       run: python3 scripts/install_local.py -g -s -e
+
+    - name: Update Pypi package version
+      shell: bash
+      run: |
+        if [ "${{ inputs.python-pkg-version }}" ]; then echo -e "\nversionTag: ${{ inputs.python-pkg-version }}" >> $HOME/.aqueduct/server/config/config.yml; fi
+        cat $HOME/.aqueduct/server/config/config.yml
 
     - name: Start the server again
       shell: bash
