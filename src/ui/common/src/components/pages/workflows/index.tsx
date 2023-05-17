@@ -41,10 +41,6 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   const { data, error: workflowError, isLoading: workflowLoading } = useWorkflowsGetQuery(
     {
       apiKey: user.apiKey,
-    },
-    { 
-      pollingInterval: 5000,
-      skip: workflowData !== null,
     }
   );
   workflowData = data;
@@ -100,34 +96,11 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     </Typography>
   );
 
-  function getLatestDag(id: string) {
-      const { data, error, isLoading } = useDagResultsGetQuery(
-        {
-          apiKey: user.apiKey,
-          workflowId: id,
-        },
-        { pollingInterval: 5000 }
-      );
-      console.log("getLatestDag", id, data, error, isLoading); 
-      if (isLoading) {
-        return {
-          id
-        }
-      } else {
-        return {
-          id
-        }
-      }
-  }
-
-  const workflows = data.map((workflow: WorkflowResponse) => getLatestDag(workflow.id));
-  console.log("workflows", workflows);
-
   /**
    * Iterate through workflows array and map each element to a WorkflowTableRow object.
    */
-  const workflowElements: PaginatedSearchTableRow[] = data.map(
-    (workflow: WorkflowResponse) => {
+  // const workflowElements: PaginatedSearchTableRow[] = data.map(
+  //   (workflow: WorkflowResponse) => {
       // const engines = reduceEngineTypes(
       //   workflow.engine,
       //   workflow.operator_engines.map((x) => (x ? x : workflow.engine))
@@ -174,22 +147,22 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       //   });
       // }
       // - latest dag status + last run + engines + checks / metrics results 
-      const workflowTableRow: PaginatedSearchTableRow = {
-        name: {
-          name: workflow.name,
-          url: `/workflow/${workflow.id}`,
-          // Show warning badge if there is a warning check
-          // status: containsWarning ? ExecutionStatus.Warning : workflow.status,
-        },
-        // last_run: new Date(workflow.last_run_at * 1000),
-        // engines,
-        // metrics,
-        // checks,
-      };
+  //     const workflowTableRow: PaginatedSearchTableRow = {
+  //       name: {
+  //         name: workflow.name,
+  //         url: `/workflow/${workflow.id}`,
+  //         // Show warning badge if there is a warning check
+  //         // status: containsWarning ? ExecutionStatus.Warning : workflow.status,
+  //       },
+  //       // last_run: new Date(workflow.last_run_at * 1000),
+  //       // engines,
+  //       // metrics,
+  //       // checks,
+  //     };
 
-      return workflowTableRow;
-    }
-  );
+  //     return workflowTableRow;
+  //   }
+  // );
 
   const sortColumns = [
     {
@@ -210,19 +183,19 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     },
   ];
 
-  const workflowTableData: PaginatedSearchTableData = {
-    schema: {
-      fields: [
-        { name: 'name', type: 'varchar' },
-        { name: 'last_run', displayName: 'Last Run', type: 'varchar' },
-        { name: 'engines', type: 'varchar' },
-        { name: 'metrics', type: 'varchar' },
-        { name: 'checks', type: 'varchar' },
-      ],
-      pandas_version: '1.5.1',
-    },
-    data: workflowElements,
-  };
+  // const workflowTableData: PaginatedSearchTableData = {
+  //   schema: {
+  //     fields: [
+  //       { name: 'name', type: 'varchar' },
+  //       { name: 'last_run', displayName: 'Last Run', type: 'varchar' },
+  //       { name: 'engines', type: 'varchar' },
+  //       { name: 'metrics', type: 'varchar' },
+  //       { name: 'checks', type: 'varchar' },
+  //     ],
+  //     pandas_version: '1.5.1',
+  //   },
+  //   data: workflowElements,
+  // };
 
   const onGetColumnValue = (row, column) => {
     let value = row[column.name];
@@ -287,9 +260,9 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       breadcrumbs={[BreadcrumbLink.HOME, BreadcrumbLink.WORKFLOWS]}
       user={user}
     >
-      {workflowTableData.data.length > 0 ? (
+      {workflowData && workflowData.length > 0 ? (
         <PaginatedSearchTable
-          data={workflowTableData}
+          data={workflowData}
           searchEnabled={true}
           onGetColumnValue={onGetColumnValue}
           onChangeRowsPerPage={onChangeRowsPerPage}

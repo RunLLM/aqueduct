@@ -199,6 +199,7 @@ func NewOperatorResultFromDBObject(
 type Nodes struct {
 	Operators []Operator `json:"operators"`
 	Artifacts []Artifact `json:"artifacts"`
+	// TODO: ENG-2987 Create separate sections for Metrics/Checks
 	// Metrics []OperatorWithArtifactNode `json:"metrics"`
 	// Checks []OperatorWithArtifactNode `json:"checks"`
 }
@@ -206,6 +207,7 @@ type Nodes struct {
 func NewNodesFromDBObjects(
 	operatorNodes []views.OperatorNode,
 	artifactNodes []views.ArtifactNode,
+	// TODO: ENG-2987 Create separate sections for Metrics/Checks
 	// metricNodes []views.OperatorWithArtifactNode,
 	// checkNodes []views.OperatorWithArtifactNode,
 ) *Nodes {
@@ -222,6 +224,7 @@ func NewNodesFromDBObjects(
 				return *NewArtifactFromDBObject(&node)
 			},
 		),
+		// TODO: ENG-2987 Create separate sections for Metrics/Checks
 		// Metrics: slices.Map(
 		// 	metricNodes,
 		// 	func(node views.OperatorWithArtifactNode) OperatorWithArtifactNode {
@@ -240,6 +243,7 @@ func NewNodesFromDBObjects(
 type NodeResults struct {
 	Operators []OperatorResult `json:"operators"`
 	Artifacts []ArtifactResult `json:"artifacts"`
+	// TODO: ENG-2987 Create separate sections for Metrics/Checks
 	// Metrics []OperatorWithArtifactNodeResult `json:"metrics"`
 	// Checks []OperatorWithArtifactNodeResult `json:"checks"`
 }

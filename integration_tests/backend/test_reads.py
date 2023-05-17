@@ -7,7 +7,7 @@ import pytest
 import requests
 import utils
 from aqueduct.models.response_models import (
-    GetMergedNodeResponse,
+    GetOperatorWithArtifactNodeResponse,
     GetArtifactResultResponse,
     GetDagResultResponse,
     GetNodeArtifactResponse,
@@ -492,6 +492,8 @@ class TestBackend:
             assert sum(all_output_counts) == len(all_output_counts) - 1
             assert set(all_output_counts) == set([0, 1])
 
+    # TODO: ENG-2943 Investigate output
+    # >> {"error":"Unexpected error reading DAG.\nQuery returned no rows."}
     # def test_endpoint_node_artifact_result_content_get(self):
     #     flow_id, n_runs = self.flows["flow_with_multiple_operators"]
     #     flow = self.client.flow(flow_id)
@@ -513,8 +515,6 @@ class TestBackend:
     #         resp = self.get_response(self.GET_NODE_ARTIFACT_RESULT_CONTENT_TEMPLATE % (flow_id, dag_id, artifact_id, artifact_result_id)).json()
     #         # One of these should be successful (direct descendent of operator)
     #         print(resp)
-    #     # TODO: Investigate output
-    #     # >> {"error":"Unexpected error reading DAG.\nQuery returned no rows."}
 
     def test_endpoint_node_artifact_results_get(self):
         for flow_id, _ in [
@@ -563,6 +563,8 @@ class TestBackend:
             assert str(result.id) == operator_id
             assert result.dag_id == dag_id
 
+    # TODO: ENG-2943 Investigate output
+    # >> {"error":"Unexpected error reading DAG.\nQuery returned no rows."}
     # def test_endpoint_node_operator_content_get(self):
     #     flow_id, n_runs = self.flows["flow_with_multiple_operators"]
     #     flow = self.client.flow(flow_id)
@@ -579,9 +581,6 @@ class TestBackend:
 
     #     resp = self.get_response(self.GET_NODE_OPERATOR_CONTENT_TEMPLATE % (flow_id, dag_id, operator_id))
     #     print(resp.text)
-
-    #     # TODO: Investigate output
-    #     # >> {"error":"Unexpected error reading DAG.\nQuery returned no rows."}
 
     def test_endpoint_node_metric_get(self):
         flow_id, _ = self.flows["flow_with_metrics_and_checks"]
@@ -600,12 +599,14 @@ class TestBackend:
         resp = self.get_response(
             self.GET_NODE_METRIC_TEMPLATE % (flow_id, dag_id, operator_id)
         ).json()
-        result = GetMergedNodeResponse(**resp)
+        result = GetOperatorWithArtifactNodeResponse(**resp)
         assert str(result.id) == operator_id
         assert result.dag_id == dag_id
         assert len(result.inputs) == 1
         assert len(result.outputs) == 1
 
+    # TODO: ENG-2943 Investigate output
+    # >> {"error":"Unexpected error occurred when retrieving workflow dag.\nQuery returned no rows."}
     # def test_endpoint_node_metric_result_content_get(self):
     #     flow_id, _ = self.flows["flow_with_metrics_and_checks"]
     #     flow = self.client.flow(flow_id)
@@ -624,7 +625,7 @@ class TestBackend:
     #         self.GET_NODE_METRIC_TEMPLATE % (flow_id, dag_id, operator_id)
     #     ).json()
 
-    #     result = GetMergedNodeResponse(**resp)
+    #     result = GetOperatorWithArtifactNodeResponse(**resp)
 
     #     artifact_id = result.artifact_id
 
@@ -635,9 +636,6 @@ class TestBackend:
     #         resp = self.get_response(
     #             self.GET_NODE_METRIC_RESULT_CONTENT_TEMPLATE % (flow_id, dag_id, operator_id, artifact_result["id"])
     #         ).json()
-
-    #         # TODO: Investigate output
-    #         # >> {"error":"Unexpected error occurred when retrieving workflow dag.\nQuery returned no rows."}
 
     def test_endpoint_node_check_get(self):
         flow_id, _ = self.flows["flow_with_metrics_and_checks"]
@@ -656,12 +654,14 @@ class TestBackend:
         resp = self.get_response(
             self.GET_NODE_CHECK_TEMPLATE % (flow_id, dag_id, operator_id)
         ).json()
-        result = GetMergedNodeResponse(**resp)
+        result = GetOperatorWithArtifactNodeResponse(**resp)
         assert str(result.id) == operator_id
         assert result.dag_id == dag_id
         assert len(result.inputs) == 1
         assert len(result.outputs) == 0
 
+    # TODO: ENG-2943 Investigate output
+    # >> {"error":"Unexpected error occurred when retrieving workflow dag.\nQuery returned no rows."}
     # def test_endpoint_node_check_result_content_get(self):
     #     flow_id, _ = self.flows["flow_with_metrics_and_checks"]
     #     flow = self.client.flow(flow_id)
@@ -680,7 +680,7 @@ class TestBackend:
     #         self.GET_NODE_CHECK_TEMPLATE % (flow_id, dag_id, operator_id)
     #     ).json()
 
-    #     result = GetMergedNodeResponse(**resp)
+    #     result = GetOperatorWithArtifactNodeResponse(**resp)
 
     #     artifact_id = result.artifact_id
 
@@ -691,6 +691,3 @@ class TestBackend:
     #         resp = self.get_response(
     #             self.GET_NODE_CHECK_RESULT_CONTENT_TEMPLATE % (flow_id, dag_id, operator_id, artifact_result["id"])
     #         ).json()
-
-    #         # TODO: Investigate output
-    #         # >> {"error":"Unexpected error occurred when retrieving workflow dag.\nQuery returned no rows."}

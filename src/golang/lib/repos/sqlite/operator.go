@@ -97,14 +97,25 @@ var mergedNodeViewSubQuery = fmt.Sprintf(`
 	WITH
 		operator_node AS (%s), 
 		artifact_node AS (%s)
+	SELECT 
+		operator_node.id AS id,
+		operator_node.name AS name,
+		operator_node.description AS description,
+		operator_node.spec AS spec,
+		operator_node.execution_environment_id AS execution_environment_id,
+		operator_node.dag_id AS dag_id,
+		operator_node.inputs AS inputs,
+		artifact_node.id AS artifact_id,
+		artifact_node.type AS type,
+		artifact_node.outputs AS outputs
 	FROM 
 		operator_node LEFT JOIN 
 		artifact_node 
 	ON
 		artifact_node.input = operator_node.id
 `,
-operatorNodeViewSubQuery,
-artifactNodeViewSubQuery,
+	operatorNodeViewSubQuery,
+	artifactNodeViewSubQuery,
 )
 
 type operatorRepo struct {

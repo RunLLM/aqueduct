@@ -2,7 +2,6 @@ package v2
 
 import (
 	"context"
-	"mime/multipart"
 	"net/http"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
@@ -143,6 +142,7 @@ func (h *NodeMetricResultContentGetHandler) Perform(ctx context.Context, interfa
 	)
 
 	data, isDownsampled, err := artifactObject.SampleContent(ctx)
+	// Should not be downsampled.
 	if err != nil || isDownsampled {
 		if errors.Is(err, storage.ErrObjectDoesNotExist()) {
 			return emptyResp, http.StatusOK, nil

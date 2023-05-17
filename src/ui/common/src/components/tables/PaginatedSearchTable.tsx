@@ -23,6 +23,7 @@ import React, { useEffect, useState } from 'react';
 import { theme } from '../../styles/theme/theme';
 import { DataSchema } from '../../utils/data';
 import { Button } from '../primitives/Button.styles';
+import { WorkflowsGetResponse } from '../../handlers/v2/WorkflowsGet';
 
 export type PaginatedSearchTableElement =
   | string
@@ -34,11 +35,6 @@ export type PaginatedSearchTableElement =
 export type PaginatedSearchTableRow = {
   [key: string]: PaginatedSearchTableElement;
 };
-
-export interface PaginatedSearchTableData {
-  schema?: DataSchema;
-  data: PaginatedSearchTableRow[];
-}
 
 export type SortColumn = {
   // The name of the column by which to sort.
@@ -55,8 +51,24 @@ enum SortType {
   Descending,
 }
 
+interface PaginatedSearchTableRowProps {
+  data: WorkflowsGetResponse;
+  show: boolean;
+}
+
+const PaginatedSearchTableRow: React.FC<PaginatedSearchTableRowProps> = ({
+  data,
+  show = true,
+}) => {
+  if (show) {
+    return <TableRow>
+      
+    </TableRow>
+  }
+};
+
 export interface PaginatedSearchTableProps {
-  data: PaginatedSearchTableData;
+  data: WorkflowsGetResponse;
   searchEnabled?: boolean;
   onGetColumnValue?: (row, column) => PaginatedSearchTableElement;
   onShouldInclude?: (rowItem, searchQuery, searchColumn) => boolean;
@@ -90,6 +102,13 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
     sortColumn: { name: null, sortAccessPath: [] as string[] },
     sortType: SortType.None,
   });
+  data = {
+    data:[],
+    schema: {
+      fields:[],
+    },
+  };
+  // TODO EUNICE: Filter WorkflowsGetResponse then for each row in the filtered WorkflowsGetResponse make row
   const [rows, setRows] = useState([...data.data]);
 
   const columns = data.schema.fields;
