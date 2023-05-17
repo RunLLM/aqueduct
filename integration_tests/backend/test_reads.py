@@ -6,8 +6,10 @@ from pathlib import Path
 import pytest
 import requests
 import utils
+from aqueduct.constants.enums import RuntimeType
 from aqueduct.models.response_models import (
     GetArtifactResultResponse,
+    GetDagResponse,
     GetDagResultResponse,
     GetNodeArtifactResponse,
     GetNodeOperatorResponse,
@@ -354,9 +356,11 @@ class TestBackend:
         resp = resp.json()
 
         assert len(resp) == 2
-        assert "id" in resp[0]
-        assert resp[0]["workflow_id"] == str(flow_id)
-        assert "created_at" in resp[0]
+        for dag_dict in resp:
+            dag = GetDagResponse(**dag_dict)
+            assert dag.workflow_id == flow_id
+            assert dag.created_at != ""
+            assert dag.engine_config.type == RuntimeType.AQUEDUCT
 
     def test_endpoint_dag_results_get(self):
         flow_id, n_runs = self.flows["flow_with_metrics_and_checks"]
