@@ -18,6 +18,7 @@ import {
   DagResultsGetRequest,
   DagResultsGetResponse,
 } from './v2/DagResultsGet';
+import { dagsGetQuery, DagsGetRequest, DagsGetResponse } from './v2/DagsGet';
 import {
   integrationOperatorsGetQuery,
   IntegrationOperatorsGetRequest,
@@ -74,6 +75,11 @@ import {
   NodesResultsGetResponse,
 } from './v2/NodesResultsGet';
 import {
+  workflowEditPostQuery,
+  WorkflowEditPostRequest,
+  WorkflowEditPostResponse,
+} from './v2/WorkflowEditPost';
+import {
   workflowGetQuery,
   WorkflowGetRequest,
   WorkflowGetResponse,
@@ -83,6 +89,11 @@ import {
   WorkflowsGetRequest,
   WorkflowsGetResponse,
 } from './v2/WorkflowsGet';
+import {
+  workflowTriggerPostQuery,
+  WorkflowTriggerPostRequest,
+  WorkflowTriggerPostResponse,
+} from './v2/WorkflowTriggerPost';
 
 const { createApi, fetchBaseQuery } = ((rtkQueryRaw as any).default ??
   rtkQueryRaw) as typeof rtkQueryRaw;
@@ -104,6 +115,10 @@ export const aqueductApi = createApi({
       DagOperatorsGetRequest
     >({
       query: (req) => dagOperatorsGetQuery(req),
+      transformErrorResponse,
+    }),
+    dagsGet: builder.query<DagsGetResponse, DagsGetRequest>({
+      query: (req) => dagsGetQuery(req),
       transformErrorResponse,
     }),
     dagResultGet: builder.query<DagResultGetResponse, DagResultGetRequest>({
@@ -188,6 +203,20 @@ export const aqueductApi = createApi({
       query: (req) => storageMigrationListQuery(req),
       transformErrorResponse,
     }),
+    workflowEditPost: builder.mutation<
+      WorkflowEditPostResponse,
+      WorkflowEditPostRequest
+    >({
+      query: (req) => workflowEditPostQuery(req),
+      transformErrorResponse: transformErrorResponse,
+    }),
+    workflowTriggerPost: builder.mutation<
+      WorkflowTriggerPostResponse,
+      WorkflowTriggerPostRequest
+    >({
+      query: (req) => workflowTriggerPostQuery(req),
+      transformErrorResponse: transformErrorResponse,
+    }),
     workflowsGet: builder.query<WorkflowsGetResponse, WorkflowsGetRequest>({
       query: (req) => workflowsGetQuery(req),
       transformErrorResponse: transformErrorResponse,
@@ -201,6 +230,7 @@ export const aqueductApi = createApi({
 
 export const {
   useDagGetQuery,
+  useDagsGetQuery,
   useDagOperatorsGetQuery,
   useDagResultGetQuery,
   useDagResultsGetQuery,
@@ -217,4 +247,6 @@ export const {
   useNodesResultsGetQuery,
   useWorkflowGetQuery,
   useWorkflowsGetQuery,
+  useWorkflowEditPostMutation,
+  useWorkflowTriggerPostMutation,
 } = aqueductApi;

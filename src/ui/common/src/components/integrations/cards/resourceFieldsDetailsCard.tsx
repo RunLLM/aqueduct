@@ -2,6 +2,7 @@ import React from 'react';
 import { Integration } from 'src/utils/integrations';
 
 import { AirflowCard } from './airflowCard';
+import { AqueductCard } from './aqueductCard';
 import { AthenaCard } from './athenaCard';
 import AWSCard from './awsCard';
 import { BasicDBCard } from './basicDBCard';
@@ -9,6 +10,7 @@ import { BigQueryCard } from './bigqueryCard';
 import { DatabricksCard } from './databricksCard';
 import ECRCard from './ecrCard';
 import { EmailCard } from './emailCard';
+import FilesystemCard from './filesystemCard';
 import { GCSCard } from './gcsCard';
 import { KubernetesCard } from './kubernetesCard';
 import { LambdaCard } from './lambdaCard';
@@ -31,6 +33,11 @@ export const ResourceFieldsDetailsCard: React.FC<
 > = ({ integration, detailedView }) => {
   let serviceCard;
   switch (integration.service) {
+    case 'Aqueduct':
+      serviceCard = (
+        <AqueductCard integration={integration} detailedView={detailedView} />
+      );
+      break;
     case 'Postgres':
     case 'MySQL':
     case 'Redshift':
@@ -94,6 +101,9 @@ export const ResourceFieldsDetailsCard: React.FC<
       break;
     case 'ECR':
       serviceCard = <ECRCard integration={integration} />;
+      break;
+    case 'Filesystem':
+      serviceCard = <FilesystemCard integration={integration} />;
       break;
     default:
       serviceCard = null;

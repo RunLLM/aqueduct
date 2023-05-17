@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-co-op/gocron"
@@ -288,6 +289,8 @@ func (j *ProcessJobManager) mapJobTypeToCmd(jobName string, spec Spec) (*exec.Cm
 			fmt.Sprintf("%s.%s", j.conf.PythonExecutorPackage, compileAirflowPythonPath),
 			"--spec",
 			specStr,
+			"--version-tag",
+			config.VersionTag(),
 		), nil
 	} else {
 		return nil, errors.New("Unsupported JobType was passed in.")

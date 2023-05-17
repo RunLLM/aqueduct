@@ -150,12 +150,7 @@ import {
 } from './utils/cron';
 import { DataColumnTypeNames } from './utils/data';
 import fetchUser from './utils/fetchUser';
-import {
-  addTable,
-  formatService,
-  ServiceLogos,
-  SupportedIntegrations,
-} from './utils/integrations';
+import { addTable, formatService, ServiceLogos } from './utils/integrations';
 import { dateString } from './utils/metadata';
 import {
   archiveNotification,
@@ -182,6 +177,7 @@ import ExecutionStatus, {
   WidthTransition,
 } from './utils/shared';
 import { getDataSideSheetContent, sideSheetSwitcher } from './utils/sidesheets';
+import SupportedIntegrations from './utils/SupportedIntegrations';
 import {
   normalizeGetWorkflowResponse,
   normalizeWorkflowDag,

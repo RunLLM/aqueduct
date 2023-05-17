@@ -126,7 +126,7 @@ func NewOperatorResultFromDBObject(
 
 type Nodes struct {
 	Operators []Operator `json:"operators"`
-	Artifacts []Artifact `json:"artifacts`
+	Artifacts []Artifact `json:"artifacts"`
 }
 
 func NewNodesFromDBObjects(

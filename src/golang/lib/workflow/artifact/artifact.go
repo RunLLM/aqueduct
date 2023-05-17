@@ -132,8 +132,12 @@ func NewArtifactFromDBObjects(
 	DB database.Database,
 ) Artifact {
 	var resultMetadata *shared.ArtifactResultMetadata
-	if !dbArtifactResult.Metadata.IsNull {
+	var contentPath string
+	var artifactResultId uuid.UUID
+	if dbArtifactResult != nil && !dbArtifactResult.Metadata.IsNull {
 		resultMetadata = &dbArtifactResult.Metadata.ArtifactResultMetadata
+		contentPath = dbArtifactResult.ContentPath
+		artifactResultId = dbArtifactResult.ID
 	}
 
 	return &ArtifactImpl{
@@ -143,11 +147,11 @@ func NewArtifactFromDBObjects(
 		description:  dbArtifact.Description,
 		artifactType: dbArtifact.Type,
 		execPaths: &utils.ExecPaths{
-			ArtifactContentPath: dbArtifactResult.ContentPath,
+			ArtifactContentPath: contentPath,
 		},
 		repo:                artifactRepo,
 		resultRepo:          artifactResultRepo,
-		resultID:            dbArtifactResult.ID,
+		resultID:            artifactResultId,
 		resultMetadata:      resultMetadata,
 		previewCacheManager: previewCacheManager,
 		resultsPersisted:    true,

@@ -98,6 +98,7 @@ func (ts *TestSuite) TestOperator_GetDistinctLoadOPsByWorkflow() {
 		require.Nil(ts.T(), err)
 
 		expectedLoadOperators = append(expectedLoadOperators, views.LoadOperator{
+			OperatorID:      expectedLoadOperator.ID,
 			OperatorName:    expectedLoadOperator.Name,
 			ModifiedAt:      dag.CreatedAt,
 			IntegrationName: integration.Name,

@@ -70,7 +70,7 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     workflowDagResultWithLoadingStatus?.result ??
     (workflowDagWithLoadingStatus?.result as DagResultResponse);
   const { metrics, checks } = dagResult
-    ? getMetricsAndChecksOnArtifact(dagResult, artifact.id)
+    ? getMetricsAndChecksOnArtifact(dagResult, artifact?.id)
     : { metrics: [], checks: [] };
 
   if (!artifact) {

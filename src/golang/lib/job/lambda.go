@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/config"
 	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/function"
@@ -159,7 +160,10 @@ func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) J
 		return systemError(err)
 	}
 
-	lambdaFunctionRequest := map[string]string{"Spec": encodedSpec}
+	lambdaFunctionRequest := map[string]string{
+		"Spec":       encodedSpec,
+		"VersionTag": config.VersionTag(),
+	}
 	payload, err := json.Marshal(lambdaFunctionRequest)
 	if err != nil {
 		return systemError(errors.Wrap(err, "Unable to marshal request payload."))

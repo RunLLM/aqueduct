@@ -19,6 +19,7 @@ import (
 // This file should map directly to
 // src/ui/common/src/handlers/v2/NodeArtifactResultsGet.tsx
 //
+// Returns all downstream artifact results
 // Route: /api/v2/workflow/{workflowID}/dag/{dagID}/node/artifact/{nodeID}/results
 // Method: GET
 // Params:

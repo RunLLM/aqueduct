@@ -90,6 +90,8 @@ func RunSparkImage(
 		fmt.Sprintf("AWS_REGION=%s", region),
 		"-e",
 		fmt.Sprintf("S3_BUCKET=%s", bucket),
+		"-e",
+		fmt.Sprintf("VERSION_TAG=%s", config.VersionTag()),
 		versionedSparkImage,
 	)
 	stdout := &bytes.Buffer{}
