@@ -30,12 +30,12 @@ type GetDynamicEngineStatusHandler struct {
 
 	Database database.Database
 
-	IntegrationRepo repos.Integration
+	ResourceRepo repos.Resource
 }
 
 type getDynamicEngineStatusArgs struct {
 	*aq_context.AqContext
-	integrationIds []uuid.UUID
+	resourceIds []uuid.UUID
 }
 
 type getDynamicEngineStatusResponse []dynamicEngineStatusResponse
@@ -56,25 +56,25 @@ func (*GetDynamicEngineStatusHandler) Prepare(r *http.Request) (interface{}, int
 		return nil, statusCode, err
 	}
 
-	var integrationIdsStr []string
-	integrationIdsJson := r.Header.Get(routes.IntegrationIDsHeader)
-	err = json.Unmarshal([]byte(integrationIdsJson), &integrationIdsStr)
+	var resourceIdsStr []string
+	resourceIdsJson := r.Header.Get(routes.IntegrationIDsHeader)
+	err = json.Unmarshal([]byte(resourceIdsJson), &resourceIdsStr)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Error unmarshalling integration IDs.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Error unmarshalling resource IDs.")
 	}
 
-	integrationIds := make([]uuid.UUID, 0, len(integrationIdsStr))
-	for _, integrationIdStr := range integrationIdsStr {
-		integrationId, err := uuid.Parse(integrationIdStr)
+	resourceIds := make([]uuid.UUID, 0, len(resourceIdsStr))
+	for _, resourceIdStr := range resourceIdsStr {
+		resourceId, err := uuid.Parse(resourceIdStr)
 		if err != nil {
-			return nil, http.StatusBadRequest, errors.Wrap(err, "Error parsing integration ID.")
+			return nil, http.StatusBadRequest, errors.Wrap(err, "Error parsing resource ID.")
 		}
-		integrationIds = append(integrationIds, integrationId)
+		resourceIds = append(resourceIds, resourceId)
 	}
 
 	return &getDynamicEngineStatusArgs{
-		AqContext:      aqContext,
-		integrationIds: integrationIds,
+		AqContext:   aqContext,
+		resourceIds: resourceIds,
 	}, http.StatusOK, nil
 }
 
@@ -83,23 +83,23 @@ func (h *GetDynamicEngineStatusHandler) Perform(ctx context.Context, interfaceAr
 
 	emptyResponse := getDynamicEngineStatusResponse{}
 
-	integrations, err := h.IntegrationRepo.GetBatch(
+	resources, err := h.ResourceRepo.GetBatch(
 		ctx,
-		args.integrationIds,
+		args.resourceIds,
 		h.Database,
 	)
 	if err != nil {
-		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get engine integrations.")
+		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get engine resources.")
 	}
 
-	responses := make([]dynamicEngineStatusResponse, 0, len(integrations))
-	for _, integrationObject := range integrations {
-		if _, ok := integrationObject.Config[shared.K8sDynamicKey]; ok {
-			if integrationObject.Config[shared.K8sDynamicKey] == strconv.FormatBool(true) {
+	responses := make([]dynamicEngineStatusResponse, 0, len(resources))
+	for _, resourceObject := range resources {
+		if _, ok := resourceObject.Config[shared.K8sDynamicKey]; ok {
+			if resourceObject.Config[shared.K8sDynamicKey] == strconv.FormatBool(true) {
 				response := dynamicEngineStatusResponse{
-					ID:     integrationObject.ID,
-					Name:   integrationObject.Name,
-					Status: shared.K8sClusterStatusType(integrationObject.Config[shared.K8sStatusKey]),
+					ID:     resourceObject.ID,
+					Name:   resourceObject.Name,
+					Status: shared.K8sClusterStatusType(resourceObject.Config[shared.K8sStatusKey]),
 				}
 				responses = append(responses, response)
 			}

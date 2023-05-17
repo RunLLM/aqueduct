@@ -84,7 +84,7 @@ func UpdateOnSuccess(
 	integrationConfig *shared.ResourceConfig,
 	runningAt *time.Time,
 	integrationID uuid.UUID,
-	integrationRepo repos.Integration,
+	integrationRepo repos.Resource,
 	DB database.Database,
 ) error {
 	integrationConfigMap := (map[string]string)(*integrationConfig)
@@ -114,7 +114,7 @@ func UpdateOnFailure(
 	integrationConfig *shared.ResourceConfig,
 	runningAt *time.Time,
 	integrationID uuid.UUID,
-	integrationRepo repos.Integration,
+	integrationRepo repos.Resource,
 	DB database.Database,
 ) {
 	integrationConfigMap := (map[string]string)(*integrationConfig)

@@ -37,20 +37,20 @@ type integrationOperatorsGetArgs struct {
 	integrationID uuid.UUID
 }
 
-type IntegrationOperatorsGetHandler struct {
+type ResourceOperatorsGetHandler struct {
 	handler.GetHandler
 
 	Database           database.Database
-	IntegrationRepo    repos.Integration
+	ResourceRepo       repos.Resource
 	OperatorRepo       repos.Operator
 	OperatorResultRepo repos.OperatorResult
 }
 
-func (*IntegrationOperatorsGetHandler) Name() string {
+func (*ResourceOperatorsGetHandler) Name() string {
 	return "IntegrationOperatorsGet"
 }
 
-func (h *IntegrationOperatorsGetHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *ResourceOperatorsGetHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
@@ -68,19 +68,19 @@ func (h *IntegrationOperatorsGetHandler) Prepare(r *http.Request) (interface{}, 
 	}, http.StatusOK, nil
 }
 
-func (h *IntegrationOperatorsGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+func (h *ResourceOperatorsGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*integrationOperatorsGetArgs)
 
-	integration, err := h.IntegrationRepo.Get(ctx, args.integrationID, h.Database)
+	integration, err := h.ResourceRepo.Get(ctx, args.integrationID, h.Database)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrapf(err, "Unable to find integration %s", args.integrationID)
 	}
 
-	operators, err := operator.GetOperatorsOnIntegration(
+	operators, err := operator.GetOperatorsOnResource(
 		ctx,
 		args.OrgID,
 		integration,
-		h.IntegrationRepo,
+		h.ResourceRepo,
 		h.OperatorRepo,
 		h.Database,
 	)

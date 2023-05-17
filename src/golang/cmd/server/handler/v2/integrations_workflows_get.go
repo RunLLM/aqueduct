@@ -33,22 +33,22 @@ type integrationsWorkflowsGetArgs struct {
 	*aq_context.AqContext
 }
 
-type IntegrationsWorkflowsGetHandler struct {
+type ResourcesWorkflowsGetHandler struct {
 	handler.GetHandler
 
-	Database        database.Database
-	IntegrationRepo repos.Integration
-	WorkflowRepo    repos.Workflow
-	DAGRepo         repos.DAG
-	DAGResultRepo   repos.DAGResult
-	OperatorRepo    repos.Operator
+	Database      database.Database
+	ResourceRepo  repos.Resource
+	WorkflowRepo  repos.Workflow
+	DAGRepo       repos.DAG
+	DAGResultRepo repos.DAGResult
+	OperatorRepo  repos.Operator
 }
 
-func (*IntegrationsWorkflowsGetHandler) Name() string {
+func (*ResourcesWorkflowsGetHandler) Name() string {
 	return "IntegrationsWorkflowsGet"
 }
 
-func (h *IntegrationsWorkflowsGetHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *ResourcesWorkflowsGetHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
@@ -59,10 +59,10 @@ func (h *IntegrationsWorkflowsGetHandler) Prepare(r *http.Request) (interface{},
 	}, http.StatusOK, nil
 }
 
-func (h *IntegrationsWorkflowsGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+func (h *ResourcesWorkflowsGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*integrationsWorkflowsGetArgs)
 
-	integrations, err := h.IntegrationRepo.GetByUser(
+	integrations, err := h.ResourceRepo.GetByUser(
 		ctx,
 		args.OrgID,
 		args.ID,
@@ -76,7 +76,7 @@ func (h *IntegrationsWorkflowsGetHandler) Perform(ctx context.Context, interface
 	for _, integration := range integrations {
 		workflowAndDagIDs, err := fetchWorkflowAndDagIDsForIntegration(
 			ctx,
-			args.OrgID, &integration, h.IntegrationRepo, h.WorkflowRepo, h.OperatorRepo, h.DAGRepo, h.DAGResultRepo, h.Database)
+			args.OrgID, &integration, h.ResourceRepo, h.WorkflowRepo, h.OperatorRepo, h.DAGRepo, h.DAGResultRepo, h.Database)
 		if err != nil {
 			return nil, http.StatusInternalServerError, errors.Wrapf(err, "Unable to find workflows for integration %s", integration.ID)
 		}
@@ -92,7 +92,7 @@ func fetchWorkflowAndDagIDsForIntegration(
 	ctx context.Context,
 	orgID string,
 	integration *models.Resource,
-	integrationRepo repos.Integration,
+	integrationRepo repos.Resource,
 	workflowRepo repos.Workflow,
 	operatorRepo repos.Operator,
 	dagRepo repos.DAG,
@@ -123,7 +123,7 @@ func fetchWorkflowAndDagIDsForIntegration(
 		return workflowAndDagIDs, nil
 
 	} else {
-		operators, err := operator.GetOperatorsOnIntegration(
+		operators, err := operator.GetOperatorsOnResource(
 			ctx,
 			orgID,
 			integration,

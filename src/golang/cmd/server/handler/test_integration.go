@@ -18,9 +18,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /integration/{integrationId}/test
+// Route: /integration/{resourceID}/test
 // Method: POST
-// Params: integrationId
+// Params: resourceID
 // Request:
 //
 //	Headers:
@@ -29,42 +29,42 @@ import (
 // Response: none, we expect caller to determine success / failure based on
 // http status in addition to error message.
 //
-// TestIntegrationHandler tries to connect to an existing integration.
-type TestIntegrationHandler struct {
+// TestResourceHandler tries to connect to an existing integration.
+type TestResourceHandler struct {
 	PostHandler
 
 	Database   database.Database
 	JobManager job.JobManager
 
-	IntegrationRepo repos.Integration
+	ResourceRepo repos.Resource
 }
 
-type TestIntegrationArgs struct {
+type TestResourceArgs struct {
 	*aq_context.AqContext
-	IntegrationId uuid.UUID
+	ResourceId uuid.UUID
 }
 
-type TestIntegrationResponse struct{}
+type TestResourceResponse struct{}
 
-func (*TestIntegrationHandler) Name() string {
+func (*TestResourceHandler) Name() string {
 	return "TestIntegration"
 }
 
-func (h *TestIntegrationHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *TestResourceHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}
 
-	integrationIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
-	integrationID, err := uuid.Parse(integrationIDStr)
+	resourceIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
+	resourceID, err := uuid.Parse(resourceIDStr)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed resource ID.")
 	}
 
-	hasPermission, err := h.IntegrationRepo.ValidateOwnership(
+	hasPermission, err := h.ResourceRepo.ValidateOwnership(
 		r.Context(),
-		integrationID,
+		resourceID,
 		aqContext.OrgID,
 		aqContext.ID,
 		h.Database,
@@ -74,29 +74,29 @@ func (h *TestIntegrationHandler) Prepare(r *http.Request) (interface{}, int, err
 	}
 
 	if !hasPermission {
-		return nil, http.StatusForbidden, errors.New("You don't have permission to access this integration.")
+		return nil, http.StatusForbidden, errors.New("You don't have permission to access this resource.")
 	}
 
-	return &TestIntegrationArgs{AqContext: aqContext, IntegrationId: integrationID}, http.StatusOK, nil
+	return &TestResourceArgs{AqContext: aqContext, ResourceId: resourceID}, http.StatusOK, nil
 }
 
-func (h *TestIntegrationHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*TestIntegrationArgs)
-	ID := args.IntegrationId
+func (h *TestResourceHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*TestResourceArgs)
+	ID := args.ResourceId
 
-	emptyResp := TestIntegrationResponse{}
+	emptyResp := TestResourceResponse{}
 
-	integrationObject, err := h.IntegrationRepo.Get(ctx, ID, h.Database)
+	resourceObject, err := h.ResourceRepo.Get(ctx, ID, h.Database)
 	if errors.Is(err, database.ErrNoRows()) {
 		return emptyResp, http.StatusBadRequest, err
 	}
 	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve integration")
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve resource")
 	}
 
 	// No need to do any further verification for Aqueduct Compute.
 	// The fact that it even got here means it works.
-	if integrationObject.Name == shared.AqueductComputeName {
+	if resourceObject.Name == shared.AqueductComputeName {
 		return emptyResp, http.StatusOK, nil
 	}
 
@@ -111,12 +111,12 @@ func (h *TestIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve secrets")
 	}
 
-	// Validate integration config
+	// Validate resource config
 	statusCode, err := ValidateConfig(
 		ctx,
 		args.RequestID,
 		config,
-		integrationObject.Service,
+		resourceObject.Service,
 		h.JobManager,
 		args.StorageConfig,
 	)

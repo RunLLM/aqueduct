@@ -99,7 +99,7 @@ func convertGCSIntegrationtoStorageConfig(c *shared.GCSResourceConfig) *shared.S
 	}
 }
 
-func ConvertIntegrationConfigToStorageConfig(
+func ConvertResourceConfigToStorageConfig(
 	svc shared.Service,
 	confData []byte,
 ) (*shared.StorageConfig, error) {

@@ -30,22 +30,22 @@ type integrationWorkflowsGetArgs struct {
 	integrationID uuid.UUID
 }
 
-type IntegrationWorkflowsGetHandler struct {
+type ResourceWorkflowsGetHandler struct {
 	handler.GetHandler
 
-	Database        database.Database
-	IntegrationRepo repos.Integration
-	WorkflowRepo    repos.Workflow
-	DAGRepo         repos.DAG
-	DAGResultRepo   repos.DAGResult
-	OperatorRepo    repos.Operator
+	Database      database.Database
+	ResourceRepo  repos.Resource
+	WorkflowRepo  repos.Workflow
+	DAGRepo       repos.DAG
+	DAGResultRepo repos.DAGResult
+	OperatorRepo  repos.Operator
 }
 
-func (*IntegrationWorkflowsGetHandler) Name() string {
+func (*ResourceWorkflowsGetHandler) Name() string {
 	return "IntegrationWorkflowsGet"
 }
 
-func (h *IntegrationWorkflowsGetHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *ResourceWorkflowsGetHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
@@ -62,16 +62,16 @@ func (h *IntegrationWorkflowsGetHandler) Prepare(r *http.Request) (interface{}, 
 	}, http.StatusOK, nil
 }
 
-func (h *IntegrationWorkflowsGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+func (h *ResourceWorkflowsGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*integrationWorkflowsGetArgs)
 
-	integration, err := h.IntegrationRepo.Get(ctx, args.integrationID, h.Database)
+	integration, err := h.ResourceRepo.Get(ctx, args.integrationID, h.Database)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrapf(err, "Unable to find integration %s", args.integrationID)
 	}
 
 	workflowAndDagIDs, err := fetchWorkflowAndDagIDsForIntegration(
-		ctx, args.OrgID, integration, h.IntegrationRepo, h.WorkflowRepo, h.OperatorRepo, h.DAGRepo, h.DAGResultRepo, h.Database,
+		ctx, args.OrgID, integration, h.ResourceRepo, h.WorkflowRepo, h.OperatorRepo, h.DAGRepo, h.DAGResultRepo, h.Database,
 	)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrapf(err, "Unable to find workflows for integration %s", args.integrationID)

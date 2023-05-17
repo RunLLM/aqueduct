@@ -51,7 +51,7 @@ type Repos struct {
 	DAGEdgeRepo              repos.DAGEdge
 	DAGResultRepo            repos.DAGResult
 	ExecutionEnvironmentRepo repos.ExecutionEnvironment
-	IntegrationRepo          repos.Integration
+	ResourceRepo             repos.Resource
 	NotificationRepo         repos.Notification
 	OperatorRepo             repos.Operator
 	OperatorResultRepo       repos.OperatorResult
@@ -854,7 +854,7 @@ func (eng *aqEngine) executeWithEngine(
 			opExecMode,
 			databricksJobManager,
 			vaultObject,
-			eng.IntegrationRepo,
+			eng.ResourceRepo,
 			eng.Database,
 		)
 	default:
@@ -879,7 +879,7 @@ func onFinishExecution(
 	dag dag_utils.WorkflowDag,
 	execMode operator.ExecutionMode,
 	vaultObject vault.Vault,
-	integrationRepo repos.Integration,
+	integrationRepo repos.Resource,
 	DB database.Database,
 ) {
 	// Wait a little bit for all active operators to finish before exiting on failure.
@@ -949,7 +949,7 @@ func (eng *aqEngine) execute(
 			workflowDag,
 			opExecMode,
 			vaultObject,
-			eng.IntegrationRepo,
+			eng.ResourceRepo,
 			eng.Database,
 		)
 	}()
@@ -971,7 +971,7 @@ func (eng *aqEngine) execute(
 					ctx,
 					&shared.DynamicK8sConfig{}, // empty configDelta map
 					op.GetDynamicProperties().GetEngineIntegrationId(),
-					eng.IntegrationRepo,
+					eng.ResourceRepo,
 					vaultObject,
 					eng.Database,
 				)
@@ -1068,7 +1068,7 @@ func (eng *aqEngine) execute(
 				err = dynamic.UpdateClusterLastUsedTimestamp(
 					ctx,
 					op.GetDynamicProperties().GetEngineIntegrationId(),
-					eng.IntegrationRepo,
+					eng.ResourceRepo,
 					eng.Database,
 				)
 				if err != nil {

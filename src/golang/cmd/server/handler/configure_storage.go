@@ -17,7 +17,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /config/storage/{integrationID}
+// Route: /config/storage/{resourceID}
 // Method: POST
 // Request:
 //
@@ -33,7 +33,7 @@ type ConfigureStorageHandler struct {
 	ArtifactRepo         repos.Artifact
 	ArtifactResultRepo   repos.ArtifactResult
 	DAGRepo              repos.DAG
-	IntegrationRepo      repos.Integration
+	ResourceRepo         repos.Resource
 	OperatorRepo         repos.Operator
 	StorageMigrationRepo repos.StorageMigration
 
@@ -43,9 +43,9 @@ type ConfigureStorageHandler struct {
 
 type configureStorageArgs struct {
 	*aq_context.AqContext
-	// This is the ID of the integration to use as the new storage layer.
+	// This is the ID of the resource to use as the new storage layer.
 	// It should only be set if configureLocalStorage is false.
-	storageIntegrationID  uuid.UUID
+	storageResourceID     uuid.UUID
 	configureLocalStorage bool
 }
 
@@ -59,16 +59,16 @@ func (h *ConfigureStorageHandler) Prepare(r *http.Request) (interface{}, int, er
 		return nil, statusCode, errors.Wrap(err, "Unable to configure storage layer.")
 	}
 
-	integrationIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
+	resourceIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
 
-	if integrationIDStr != "local" {
+	if resourceIDStr != "local" {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "We currently only support changing the storage layer to the local filesystem from this route.")
 	}
 
 	return &configureStorageArgs{
 		AqContext: aqContext,
 		// TODO ENG-2574: Add support for switching to non-local storage
-		storageIntegrationID:  uuid.Nil,
+		storageResourceID:     uuid.Nil,
 		configureLocalStorage: true,
 	}, http.StatusOK, nil
 }
@@ -97,14 +97,14 @@ func (h *ConfigureStorageHandler) Perform(ctx context.Context, interfaceArgs int
 	err := storage_migration.Perform(
 		ctx,
 		args.OrgID,
-		nil, /* destIntegrationObj */
+		nil, /* destResourceObj */
 		&newStorageConfig,
 		h.PauseServerFn,
 		h.RestartServerFn,
 		h.ArtifactRepo,
 		h.ArtifactResultRepo,
 		h.DAGRepo,
-		h.IntegrationRepo,
+		h.ResourceRepo,
 		h.OperatorRepo,
 		h.StorageMigrationRepo,
 		h.Database,

@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/suite"
 )
 
-// TestSuite contains all fields that are needed by the database integration
+// TestSuite contains all fields that are needed by the database resource
 // tests. Each test case should be implemented as a method of TestSuite.
 type TestSuite struct {
 	suite.Suite
@@ -26,7 +26,7 @@ type TestSuite struct {
 	dagEdge              repos.DAGEdge
 	dagResult            repos.DAGResult
 	executionEnvironment repos.ExecutionEnvironment
-	integration          repos.Integration
+	resource             repos.Resource
 	notification         repos.Notification
 	operator             repos.Operator
 	operatorResult       repos.OperatorResult
@@ -58,7 +58,7 @@ func (ts *TestSuite) SetupSuite() {
 	ts.dagEdge = sqlite.NewDAGEdgeRepo()
 	ts.dagResult = sqlite.NewDAGResultRepo()
 	ts.executionEnvironment = sqlite.NewExecutionEnvironmentRepo()
-	ts.integration = sqlite.NewIntegrationRepo()
+	ts.resource = sqlite.NewResourceRepo()
 	ts.notification = sqlite.NewNotificationRepo()
 	ts.operator = sqlite.NewOperatorRepo()
 	ts.operatorResult = sqlite.NewOperatorResultRepo()

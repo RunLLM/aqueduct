@@ -9,9 +9,9 @@ import (
 	"github.com/dropbox/godropbox/errors"
 )
 
-// ParseIntegrationServiceFromRequest parses the integration service, and whether the
+// ParseResourceServiceFromRequest parses the integration service, and whether the
 // service is user only.
-func ParseIntegrationServiceFromRequest(r *http.Request) (shared.Service, bool, error) {
+func ParseResourceServiceFromRequest(r *http.Request) (shared.Service, bool, error) {
 	serviceStr := r.Header.Get(routes.IntegrationServiceHeader)
 	service, err := shared.ParseService(serviceStr)
 	if err != nil {
@@ -21,9 +21,9 @@ func ParseIntegrationServiceFromRequest(r *http.Request) (shared.Service, bool, 
 	return service, isUserOnlyIntegration(service), nil
 }
 
-// ParseIntegrationConfigFromRequest parses the integration name and configuration,
+// ParseResourceConfigFromRequest parses the integration name and configuration,
 // from the request
-func ParseIntegrationConfigFromRequest(r *http.Request) (string, map[string]string, error) {
+func ParseResourceConfigFromRequest(r *http.Request) (string, map[string]string, error) {
 	configHeader := r.Header.Get(routes.IntegrationConfigHeader)
 	var configuration map[string]string
 	if len(configHeader) > 0 {

@@ -81,12 +81,12 @@ func Validate(
 	return checkUnexecutableOperator(dag)
 }
 
-func ValidateDagOperatorIntegrationOwnership(
+func ValidateDagOperatorResourceOwnership(
 	ctx context.Context,
 	operators map[uuid.UUID]models.Operator,
 	orgID string,
 	userID uuid.UUID,
-	integrationRepo repos.Integration,
+	integrationRepo repos.Resource,
 	DB database.Database,
 ) (bool, error) {
 	for _, operator := range operators {

@@ -26,29 +26,29 @@ import (
 func Perform(
 	ctx context.Context,
 	orgID string,
-	destIntegrationObj *models.Resource,
+	destResourceObj *models.Resource,
 	newStorageConfig *shared.StorageConfig,
 	pauseServer func(),
 	restartServer func(),
 	artifactRepo repos.Artifact,
 	artifactResultRepo repos.ArtifactResult,
 	DAGRepo repos.DAG,
-	integrationRepo repos.Integration,
+	integrationRepo repos.Resource,
 	operatorRepo repos.Operator,
 	storageMigrationRepo repos.StorageMigration,
 	DB database.Database,
 ) error {
-	destIntegrationName := "Local Filesystem"
-	var destIntegrationID *uuid.UUID
-	if destIntegrationObj != nil {
-		destIntegrationName = destIntegrationObj.Name
-		destIntegrationID = &destIntegrationObj.ID
+	destResourceName := "Local Filesystem"
+	var destResourceID *uuid.UUID
+	if destResourceObj != nil {
+		destResourceName = destResourceObj.Name
+		destResourceID = &destResourceObj.ID
 	}
 
 	// Begin recording the storage migration lifecycle.
 	storageMigrationObj, err := storageMigrationRepo.Create(
 		ctx,
-		destIntegrationID,
+		destResourceID,
 		DB,
 	)
 	if err != nil {
@@ -76,7 +76,7 @@ func Perform(
 					// This can be a system error too. But no one cares right now.
 					shared.UserFatalFailure,
 					&shared.Error{
-						Tip:     fmt.Sprintf("Failure occurred when migrating to the new storage integration `%s`.", destIntegrationName),
+						Tip:     fmt.Sprintf("Failure occurred when migrating to the new storage integration `%s`.", destResourceName),
 						Context: err.Error(),
 					},
 				)
@@ -255,7 +255,7 @@ func MigrateStorageAndVault(
 	artifactRepo repos.Artifact,
 	artifactResultRepo repos.ArtifactResult,
 	operatorRepo repos.Operator,
-	integrationRepo repos.Integration,
+	integrationRepo repos.Resource,
 	DB database.Database,
 ) (*StorageCleanupConfig, error) {
 	log.Infof("Migrating from %v to %v", *oldConf, *newConf)

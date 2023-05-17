@@ -28,10 +28,10 @@ const (
 	PollPreviewTableTimeout  = 60 * time.Second
 )
 
-// Route: /integration/{integrationId}/preview
+// Route: /integration/{resourceID}/preview
 // Method: GET
 // Params:
-//	`integrationId`: ID of the relational database integration
+//	`resourceID`: ID of the relational database integration
 // Request:
 //	Headers:
 //		`api-key`: user's API Key
@@ -42,8 +42,8 @@ const (
 
 type previewTableArgs struct {
 	*aq_context.AqContext
-	integrationID uuid.UUID
-	tableName     string
+	resourceID uuid.UUID
+	tableName  string
 }
 
 type previewTableResponse struct {
@@ -56,7 +56,7 @@ type PreviewTableHandler struct {
 	Database   database.Database
 	JobManager job.JobManager
 
-	IntegrationRepo repos.Integration
+	ResourceRepo repos.Resource
 }
 
 func (*PreviewTableHandler) Name() string {
@@ -73,10 +73,10 @@ func (h *PreviewTableHandler) Prepare(r *http.Request) (interface{}, int, error)
 		return nil, statusCode, err
 	}
 
-	integrationIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
-	integrationID, err := uuid.Parse(integrationIDStr)
+	resourceIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
+	resourceID, err := uuid.Parse(resourceIDStr)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed resource ID.")
 	}
 
 	tableName := r.Header.Get(routes.TableNameHeader)
@@ -84,40 +84,40 @@ func (h *PreviewTableHandler) Prepare(r *http.Request) (interface{}, int, error)
 		return nil, http.StatusBadRequest, errors.Wrap(err, "No table name specified.")
 	}
 
-	ok, err := h.IntegrationRepo.ValidateOwnership(
+	ok, err := h.ResourceRepo.ValidateOwnership(
 		r.Context(),
-		integrationID,
+		resourceID,
 		aqContext.OrgID,
 		aqContext.ID,
 		h.Database,
 	)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during integration ownership validation.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during resource ownership validation.")
 	}
 	if !ok {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this integration.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this resource.")
 	}
 
 	return &previewTableArgs{
-		AqContext:     aqContext,
-		integrationID: integrationID,
-		tableName:     tableName,
+		AqContext:  aqContext,
+		resourceID: resourceID,
+		tableName:  tableName,
 	}, http.StatusOK, nil
 }
 
 func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*previewTableArgs)
 
-	integrationObject, err := h.IntegrationRepo.Get(
+	resourceObject, err := h.ResourceRepo.Get(
 		ctx,
-		args.integrationID,
+		args.resourceID,
 		h.Database,
 	)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to retrieve integration.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to retrieve resource.")
 	}
 
-	if !shared.IsRelationalDatabaseResource(integrationObject.Service) {
+	if !shared.IsRelationalDatabaseResource(resourceObject.Service) {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Preview table request is only allowed for relational databases.")
 	}
 
@@ -131,7 +131,7 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 	}()
 
 	var queryParams connector.ExtractParams
-	if integrationObject.Service == shared.MongoDB {
+	if resourceObject.Service == shared.MongoDB {
 		// This triggers `db.my_table.find({})`
 		queryParams = &connector.MongoDBExtractParams{
 			Collection:      args.tableName,
@@ -152,8 +152,8 @@ func (h *PreviewTableHandler) Perform(ctx context.Context, interfaceArgs interfa
 	jobName, err := scheduler.ScheduleExtract(
 		ctx,
 		connector.Extract{
-			Service:    integrationObject.Service,
-			ResourceId: integrationObject.ID,
+			Service:    resourceObject.Service,
+			ResourceId: resourceObject.ID,
 			Parameters: queryParams,
 		},
 		operatorMetadataPath,

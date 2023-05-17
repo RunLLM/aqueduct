@@ -14,23 +14,23 @@ import (
 	"github.com/google/uuid"
 )
 
-type integrationRepo struct {
-	integrationReader
-	integrationWriter
+type resourceRepo struct {
+	resourceReader
+	resourceWriter
 }
 
-type integrationReader struct{}
+type resourceReader struct{}
 
-type integrationWriter struct{}
+type resourceWriter struct{}
 
-func NewIntegrationRepo() repos.Integration {
-	return &integrationRepo{
-		integrationReader: integrationReader{},
-		integrationWriter: integrationWriter{},
+func NewResourceRepo() repos.Resource {
+	return &resourceRepo{
+		resourceReader: resourceReader{},
+		resourceWriter: resourceWriter{},
 	}
 }
 
-func (*integrationReader) Get(ctx context.Context, ID uuid.UUID, DB database.Database) (*models.Resource, error) {
+func (*resourceReader) Get(ctx context.Context, ID uuid.UUID, DB database.Database) (*models.Resource, error) {
 	query := fmt.Sprintf(
 		`SELECT %s FROM %s WHERE id = $1;`,
 		models.ResourceCols(),
@@ -38,10 +38,10 @@ func (*integrationReader) Get(ctx context.Context, ID uuid.UUID, DB database.Dat
 	)
 	args := []interface{}{ID}
 
-	return getIntegration(ctx, DB, query, args...)
+	return getResource(ctx, DB, query, args...)
 }
 
-func (*integrationReader) GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.Resource, error) {
+func (*resourceReader) GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.Resource, error) {
 	query := fmt.Sprintf(
 		`SELECT %s FROM %s WHERE id IN (%s);`,
 		models.ResourceCols(),
@@ -50,10 +50,10 @@ func (*integrationReader) GetBatch(ctx context.Context, IDs []uuid.UUID, DB data
 	)
 	args := stmt_preparers.CastIdsListToInterfaceList(IDs)
 
-	return getIntegrations(ctx, DB, query, args...)
+	return getResources(ctx, DB, query, args...)
 }
 
-func (*integrationReader) GetByConfigField(ctx context.Context, fieldName string, fieldValue string, DB database.Database) ([]models.Resource, error) {
+func (*resourceReader) GetByConfigField(ctx context.Context, fieldName string, fieldValue string, DB database.Database) ([]models.Resource, error) {
 	query := fmt.Sprintf(
 		"SELECT %s FROM %s WHERE json_extract(config, $1) = $2;",
 		models.ResourceCols(),
@@ -67,12 +67,12 @@ func (*integrationReader) GetByConfigField(ctx context.Context, fieldName string
 	// to prevent injection.
 	args := []interface{}{"$." + fieldName, fieldValue}
 
-	return getIntegrations(ctx, DB, query, args...)
+	return getResources(ctx, DB, query, args...)
 }
 
-func (*integrationReader) GetByNameAndUser(
+func (*resourceReader) GetByNameAndUser(
 	ctx context.Context,
-	integrationName string,
+	resourceName string,
 	userID uuid.UUID,
 	orgID string,
 	DB database.Database,
@@ -82,41 +82,41 @@ func (*integrationReader) GetByNameAndUser(
 		models.ResourceCols(),
 		models.ResourceTable,
 	)
-	args := []interface{}{integrationName, orgID, userID}
-	return getIntegration(ctx, DB, query, args...)
+	args := []interface{}{resourceName, orgID, userID}
+	return getResource(ctx, DB, query, args...)
 }
 
-func (*integrationReader) GetByOrg(ctx context.Context, orgId string, DB database.Database) ([]models.Resource, error) {
+func (*resourceReader) GetByOrg(ctx context.Context, orgId string, DB database.Database) ([]models.Resource, error) {
 	query := fmt.Sprintf(
 		`SELECT %s FROM %s WHERE organization_id = $1 AND user_id IS NULL;`,
 		models.ResourceCols(),
 		models.ResourceTable,
 	)
 	args := []interface{}{orgId}
-	return getIntegrations(ctx, DB, query, args...)
+	return getResources(ctx, DB, query, args...)
 }
 
-func (*integrationReader) GetByServiceAndUser(ctx context.Context, service shared.Service, userID uuid.UUID, DB database.Database) ([]models.Resource, error) {
+func (*resourceReader) GetByServiceAndUser(ctx context.Context, service shared.Service, userID uuid.UUID, DB database.Database) ([]models.Resource, error) {
 	query := fmt.Sprintf(
 		`SELECT %s FROM %s WHERE service = $1 AND user_id = $2;`,
 		models.ResourceCols(),
 		models.ResourceTable,
 	)
 	args := []interface{}{service, userID}
-	return getIntegrations(ctx, DB, query, args...)
+	return getResources(ctx, DB, query, args...)
 }
 
-func (*integrationReader) GetByUser(ctx context.Context, orgID string, userID uuid.UUID, DB database.Database) ([]models.Resource, error) {
+func (*resourceReader) GetByUser(ctx context.Context, orgID string, userID uuid.UUID, DB database.Database) ([]models.Resource, error) {
 	query := fmt.Sprintf(
 		`SELECT %s FROM %s WHERE organization_id = $1 AND (user_id IS NULL OR user_id = $2);`,
 		models.ResourceCols(),
 		models.ResourceTable,
 	)
 	args := []interface{}{orgID, userID}
-	return getIntegrations(ctx, DB, query, args...)
+	return getResources(ctx, DB, query, args...)
 }
 
-func (*integrationReader) ValidateOwnership(ctx context.Context, integrationID uuid.UUID, orgID string, userID uuid.UUID, DB database.Database) (bool, error) {
+func (*resourceReader) ValidateOwnership(ctx context.Context, resourceID uuid.UUID, orgID string, userID uuid.UUID, DB database.Database) (bool, error) {
 	var count countResult
 
 	query := fmt.Sprintf(
@@ -124,23 +124,23 @@ func (*integrationReader) ValidateOwnership(ctx context.Context, integrationID u
 		models.ResourceCols(),
 		models.ResourceTable,
 	)
-	args := []interface{}{integrationID}
+	args := []interface{}{resourceID}
 
-	integrationObject, err := getIntegration(ctx, DB, query, args...)
+	resourceObject, err := getResource(ctx, DB, query, args...)
 	if err != nil {
 		return false, err
 	}
-	userOnly := shared.IsUserOnlyResource(integrationObject.Service)
+	userOnly := shared.IsUserOnlyResource(resourceObject.Service)
 
 	if userOnly {
 		query := fmt.Sprintf(`SELECT COUNT(*) AS count FROM %s WHERE id = $1 AND user_id = $2;`, models.ResourceTable)
-		err := DB.Query(ctx, &count, query, integrationID, userID)
+		err := DB.Query(ctx, &count, query, resourceID, userID)
 		if err != nil {
 			return false, err
 		}
 	} else {
 		query := fmt.Sprintf(`SELECT COUNT(*) AS count FROM %s WHERE id = $1 AND organization_id = $2;`, models.ResourceTable)
-		err := DB.Query(ctx, &count, query, integrationID, orgID)
+		err := DB.Query(ctx, &count, query, resourceID, orgID)
 		if err != nil {
 			return false, err
 		}
@@ -149,7 +149,7 @@ func (*integrationReader) ValidateOwnership(ctx context.Context, integrationID u
 	return count.Count == 1, nil
 }
 
-func (*integrationWriter) Create(
+func (*resourceWriter) Create(
 	ctx context.Context,
 	orgID string,
 	service shared.Service,
@@ -180,10 +180,10 @@ func (*integrationWriter) Create(
 		config,
 		time.Now(),
 	}
-	return getIntegration(ctx, DB, query, args...)
+	return getResource(ctx, DB, query, args...)
 }
 
-func (*integrationWriter) CreateForUser(
+func (*resourceWriter) CreateForUser(
 	ctx context.Context,
 	orgID string,
 	userID uuid.UUID,
@@ -217,39 +217,39 @@ func (*integrationWriter) CreateForUser(
 		config,
 		time.Now(),
 	}
-	return getIntegration(ctx, DB, query, args...)
+	return getResource(ctx, DB, query, args...)
 }
 
-func (*integrationWriter) Delete(ctx context.Context, ID uuid.UUID, DB database.Database) error {
+func (*resourceWriter) Delete(ctx context.Context, ID uuid.UUID, DB database.Database) error {
 	query := fmt.Sprintf(`DELETE FROM %s WHERE id = $1;`, models.ResourceTable)
 	return DB.Execute(ctx, query, ID)
 }
 
-func (*integrationWriter) Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.Resource, error) {
-	var integration models.Resource
-	err := repos.UpdateRecordToDest(ctx, &integration, changes, models.ResourceTable, models.ResourceID, ID, models.ResourceCols(), DB)
-	return &integration, err
+func (*resourceWriter) Update(ctx context.Context, ID uuid.UUID, changes map[string]interface{}, DB database.Database) (*models.Resource, error) {
+	var resource models.Resource
+	err := repos.UpdateRecordToDest(ctx, &resource, changes, models.ResourceTable, models.ResourceID, ID, models.ResourceCols(), DB)
+	return &resource, err
 }
 
-func getIntegrations(ctx context.Context, DB database.Database, query string, args ...interface{}) ([]models.Resource, error) {
-	var integrations []models.Resource
-	err := DB.Query(ctx, &integrations, query, args...)
-	return integrations, err
+func getResources(ctx context.Context, DB database.Database, query string, args ...interface{}) ([]models.Resource, error) {
+	var resources []models.Resource
+	err := DB.Query(ctx, &resources, query, args...)
+	return resources, err
 }
 
-func getIntegration(ctx context.Context, DB database.Database, query string, args ...interface{}) (*models.Resource, error) {
-	integrations, err := getIntegrations(ctx, DB, query, args...)
+func getResource(ctx context.Context, DB database.Database, query string, args ...interface{}) (*models.Resource, error) {
+	resources, err := getResources(ctx, DB, query, args...)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(integrations) == 0 {
+	if len(resources) == 0 {
 		return nil, database.ErrNoRows()
 	}
 
-	if len(integrations) != 1 {
-		return nil, errors.Newf("Expected 1 integration but got %v", len(integrations))
+	if len(resources) != 1 {
+		return nil, errors.Newf("Expected 1 resource but got %v", len(resources))
 	}
 
-	return &integrations[0], nil
+	return &resources[0], nil
 }

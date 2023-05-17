@@ -15,15 +15,15 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /integration/{integrationId}/operators
+// Route: /integration/{resourceID}/operators
 // Method: GET
-// Params: integrationId
+// Params: resourceID
 // Request:
 //	Headers:
 //		`api-key`: user's API Key
 // Response:
 //	Body:
-//		serialized `listOperatorsForIntegrationResponse`
+//		serialized `listOperatorsForResourceResponse`
 //
 // `listOperatorsForIntegration` lists all operators associated with
 // the given integration. Together we provide the following information for
@@ -33,67 +33,67 @@ import (
 //	`is_active`: whether the operator is being used in the latest version of the workflow.
 //				 This is the equivalent to whether `workflow_dag_id` is the latest for the `workflow_id`
 
-type listOperatorsForIntegrationItem struct {
+type listOperatorsForResourceItem struct {
 	Operator      *models.Operator `json:"operator"`
 	WorkflowId    uuid.UUID        `json:"workflow_id"`
 	WorkflowDagId uuid.UUID        `json:"workflow_dag_id"`
 	IsActive      bool             `json:"is_active"`
 }
 
-type listOperatorsForIntegrationArgs struct {
+type listOperatorsForResourceArgs struct {
 	*aq_context.AqContext
-	integrationObject *models.Resource
+	resourceObject *models.Resource
 }
 
-type listOperatorsForIntegrationResponse struct {
-	OperatorWithIds []listOperatorsForIntegrationItem `json:"operator_with_ids"`
+type listOperatorsForResourceResponse struct {
+	OperatorWithIds []listOperatorsForResourceItem `json:"operator_with_ids"`
 }
 
-type ListOperatorsForIntegrationHandler struct {
+type ListOperatorsResourecHandler struct {
 	GetHandler
 
 	Database database.Database
 
-	DAGRepo         repos.DAG
-	IntegrationRepo repos.Integration
-	OperatorRepo    repos.Operator
+	DAGRepo      repos.DAG
+	ResourceRepo repos.Resource
+	OperatorRepo repos.Operator
 }
 
-func (*ListOperatorsForIntegrationHandler) Name() string {
+func (*ListOperatorsResourecHandler) Name() string {
 	return "ListOperatorsForIntegration"
 }
 
-func (h *ListOperatorsForIntegrationHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *ListOperatorsResourecHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statuscode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statuscode, err
 	}
 
-	integrationIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
-	integrationID, err := uuid.Parse(integrationIDStr)
+	resourceIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
+	resourceID, err := uuid.Parse(resourceIDStr)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed resource ID.")
 	}
 
-	integrationObject, err := h.IntegrationRepo.Get(r.Context(), integrationID, h.Database)
+	resourceObject, err := h.ResourceRepo.Get(r.Context(), resourceID, h.Database)
 	if err != nil {
-		return nil, http.StatusNotFound, errors.Wrap(err, "Failed to retrieve integration object.")
+		return nil, http.StatusNotFound, errors.Wrap(err, "Failed to retrieve resource object.")
 	}
 
-	return &listOperatorsForIntegrationArgs{
-		AqContext:         aqContext,
-		integrationObject: integrationObject,
+	return &listOperatorsForResourceArgs{
+		AqContext:      aqContext,
+		resourceObject: resourceObject,
 	}, http.StatusOK, nil
 }
 
-func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*listOperatorsForIntegrationArgs)
+func (h *ListOperatorsResourecHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*listOperatorsForResourceArgs)
 
-	operators, err := operator.GetOperatorsOnIntegration(
+	operators, err := operator.GetOperatorsOnResource(
 		ctx,
 		args.OrgID,
-		args.integrationObject,
-		h.IntegrationRepo,
+		args.resourceObject,
+		h.ResourceRepo,
 		h.OperatorRepo,
 		h.Database,
 	)
@@ -101,7 +101,7 @@ func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interf
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve operators.")
 	}
 	if len(operators) == 0 {
-		return listOperatorsForIntegrationResponse{OperatorWithIds: []listOperatorsForIntegrationItem{}}, http.StatusOK, nil
+		return listOperatorsForResourceResponse{OperatorWithIds: []listOperatorsForResourceItem{}}, http.StatusOK, nil
 	}
 
 	operatorIDs := make([]uuid.UUID, 0, len(operators))
@@ -133,7 +133,7 @@ func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interf
 	}
 
 	// Combine all fetched results
-	results := make([]listOperatorsForIntegrationItem, 0, len(operatorRelations))
+	results := make([]listOperatorsForResourceItem, 0, len(operatorRelations))
 	for _, operatorRelation := range operatorRelations {
 		op, ok := operatorByIDs[operatorRelation.OperatorID]
 		if !ok {
@@ -146,12 +146,12 @@ func (h *ListOperatorsForIntegrationHandler) Perform(ctx context.Context, interf
 		}
 
 		active := latestDagId == operatorRelation.DagID
-		results = append(results, listOperatorsForIntegrationItem{
+		results = append(results, listOperatorsForResourceItem{
 			Operator:      &op,
 			WorkflowId:    operatorRelation.WorkflowID,
 			WorkflowDagId: operatorRelation.DagID,
 			IsActive:      active,
 		})
 	}
-	return listOperatorsForIntegrationResponse{OperatorWithIds: results}, http.StatusOK, nil
+	return listOperatorsForResourceResponse{OperatorWithIds: results}, http.StatusOK, nil
 }

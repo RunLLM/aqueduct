@@ -61,9 +61,9 @@ var pathConfigKeys = map[string]bool{
 //
 // Response: none
 //
-// If this route finishes successfully, then an integration entry is guaranteed to have been created
+// If this route finishes successfully, then an resource entry is guaranteed to have been created
 // in the database.
-type ConnectIntegrationHandler struct {
+type ConnectResourceHandler struct {
 	PostHandler
 
 	Database   database.Database
@@ -72,7 +72,7 @@ type ConnectIntegrationHandler struct {
 	ArtifactRepo         repos.Artifact
 	ArtifactResultRepo   repos.ArtifactResult
 	DAGRepo              repos.DAG
-	IntegrationRepo      repos.Integration
+	ResourceRepo         repos.Resource
 	StorageMigrationRepo repos.StorageMigration
 	OperatorRepo         repos.Operator
 
@@ -80,7 +80,7 @@ type ConnectIntegrationHandler struct {
 	RestartServer func()
 }
 
-func (*ConnectIntegrationHandler) Headers() []string {
+func (*ConnectResourceHandler) Headers() []string {
 	return []string{
 		routes.IntegrationNameHeader,
 		routes.IntegrationServiceHeader,
@@ -88,35 +88,35 @@ func (*ConnectIntegrationHandler) Headers() []string {
 	}
 }
 
-type ConnectIntegrationArgs struct {
+type ConnectResourceArgs struct {
 	*aq_context.AqContext
-	Name         string         // User specified name for the integration
+	Name         string         // User specified name for the resource
 	Service      shared.Service // Name of the service to connect (e.g. Snowflake, Postgres)
 	Config       auth.Config    // Resource config
-	UserOnly     bool           // Whether the integration is only accessible by the user or the entire org
-	SetAsStorage bool           // Whether the integration should be used as the storage layer
+	UserOnly     bool           // Whether the resource is only accessible by the user or the entire org
+	SetAsStorage bool           // Whether the resource should be used as the storage layer
 }
 
-type ConnectIntegrationResponse struct{}
+type ConnectResourceResponse struct{}
 
-func (*ConnectIntegrationHandler) Name() string {
-	return "ConnectIntegration"
+func (*ConnectResourceHandler) Name() string {
+	return "ConnectResource"
 }
 
-func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *ConnectResourceHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
-		return nil, statusCode, errors.Wrap(err, "Unable to connect integration.")
+		return nil, statusCode, errors.Wrap(err, "Unable to connect resource.")
 	}
 
-	service, userOnly, err := request.ParseIntegrationServiceFromRequest(r)
+	service, userOnly, err := request.ParseResourceServiceFromRequest(r)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to connect integration.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to connect resource.")
 	}
 
-	name, configMap, err := request.ParseIntegrationConfigFromRequest(r)
+	name, configMap, err := request.ParseResourceConfigFromRequest(r)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to connect integration.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to connect resource.")
 	}
 
 	if name == "" {
@@ -130,7 +130,7 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 	}
 
 	if service == shared.Github || service == shared.GoogleSheets {
-		return nil, http.StatusBadRequest, errors.Newf("%s integration type is currently not supported", service)
+		return nil, http.StatusBadRequest, errors.Newf("%s resource type is currently not supported", service)
 	}
 
 	if err = convertToAbsolutePath(configMap); err != nil {
@@ -150,13 +150,13 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 
 	staticConfig := auth.NewStaticConfig(configMap)
 
-	// Check if this integration should be used as the new storage layer
-	setStorage, err := checkIntegrationSetStorage(service, staticConfig)
+	// Check if this resource should be used as the new storage layer
+	setStorage, err := checkIfUseResourceAsStorage(service, staticConfig)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to connect integration.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to connect resource.")
 	}
 
-	return &ConnectIntegrationArgs{
+	return &ConnectResourceArgs{
 		AqContext:    aqContext,
 		Service:      service,
 		Name:         name,
@@ -166,10 +166,10 @@ func (h *ConnectIntegrationHandler) Prepare(r *http.Request) (interface{}, int, 
 	}, http.StatusOK, nil
 }
 
-func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*ConnectIntegrationArgs)
+func (h *ConnectResourceHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*ConnectResourceArgs)
 
-	emptyResp := ConnectIntegrationResponse{}
+	emptyResp := ConnectResourceResponse{}
 
 	statusCode, err := ValidatePrerequisites(
 		ctx,
@@ -177,14 +177,14 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		args.Name,
 		args.ID,
 		args.OrgID,
-		h.IntegrationRepo,
+		h.ResourceRepo,
 		h.Database,
 	)
 	if err != nil {
 		return emptyResp, statusCode, err
 	}
 
-	// Validate integration config
+	// Validate resource config
 	statusCode, err = ValidateConfig(
 		ctx,
 		args.RequestID,
@@ -197,9 +197,9 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		return emptyResp, statusCode, err
 	}
 
-	// Assumption: we are always ADDING a new integration, so `integrationObj` must be a freshly created integration entry.
-	// Note that the config of this returned `integrationObj` may be outdated.
-	integrationObj, statusCode, err := ConnectIntegration(ctx, h, args, h.IntegrationRepo, h.Database)
+	// Assumption: we are always ADDING a new resource, so `resourceObj` must be a freshly created resource entry.
+	// Note that the config of this returned `resourceObj` may be outdated.
+	resourceObj, statusCode, err := ConnectResource(ctx, h, args, h.ResourceRepo, h.Database)
 	if err != nil {
 		return emptyResp, statusCode, err
 	}
@@ -210,7 +210,7 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 			return nil, http.StatusInternalServerError, err
 		}
 
-		newStorageConfig, err := storage.ConvertIntegrationConfigToStorageConfig(args.Service, confData)
+		newStorageConfig, err := storage.ConvertResourceConfigToStorageConfig(args.Service, confData)
 		if err != nil {
 			return emptyResp, http.StatusBadRequest, errors.Wrap(err, "Resource config is malformed.")
 		}
@@ -218,14 +218,14 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 		err = storage_migration.Perform(
 			ctx,
 			args.OrgID,
-			integrationObj,
+			resourceObj,
 			newStorageConfig,
 			h.PauseServer,
 			h.RestartServer,
 			h.ArtifactRepo,
 			h.ArtifactResultRepo,
 			h.DAGRepo,
-			h.IntegrationRepo,
+			h.ResourceRepo,
 			h.OperatorRepo,
 			h.StorageMigrationRepo,
 			h.Database,
@@ -238,36 +238,36 @@ func (h *ConnectIntegrationHandler) Perform(ctx context.Context, interfaceArgs i
 	return emptyResp, http.StatusOK, nil
 }
 
-// ConnectIntegration connects a new integration specified by `args`.
-// It returns the integration object, the status code for the request and an error, if any.
-// If an error is returns, the integration object is guaranteed to be nil. Conversely, the integration
+// ConnectResource connects a new resource specified by `args`.
+// It returns the resource object, the status code for the request and an error, if any.
+// If an error is returns, the resource object is guaranteed to be nil. Conversely, the resource
 // object is always well-formed on success.
-func ConnectIntegration(
+func ConnectResource(
 	ctx context.Context,
-	h *ConnectIntegrationHandler, // This only needs to be non-nil if the integration can be AWS.
-	args *ConnectIntegrationArgs,
-	integrationRepo repos.Integration,
+	h *ConnectResourceHandler, // This only needs to be non-nil if the resource can be AWS.
+	args *ConnectResourceArgs,
+	resourceRepo repos.Resource,
 	DB database.Database,
 ) (_ *models.Resource, _ int, err error) {
 	// Extract non-confidential config
 	publicConfig := args.Config.PublicConfig()
 
-	// Always create the integration entry with a running state to start.
+	// Always create the resource entry with a running state to start.
 	runningAt := time.Now()
 	publicConfig[exec_env.ExecStateKey] = execution_state.SerializedRunning(&runningAt)
 
-	// Must open a transaction to write the initial integration state, because the AWS integration
+	// Must open a transaction to write the initial resource state, because the AWS resource
 	// may need to perform multiple writes.
 	txn, err := DB.BeginTx(ctx)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect resource.")
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	var integrationObject *models.Resource
+	var resourceObject *models.Resource
 	if args.UserOnly {
-		// This is a user-specific integration
-		integrationObject, err = integrationRepo.CreateForUser(
+		// This is a user-specific resource
+		resourceObject, err = resourceRepo.CreateForUser(
 			ctx,
 			args.OrgID,
 			args.ID,
@@ -277,7 +277,7 @@ func ConnectIntegration(
 			txn,
 		)
 	} else {
-		integrationObject, err = integrationRepo.Create(
+		resourceObject, err = resourceRepo.Create(
 			ctx,
 			args.OrgID,
 			args.Service,
@@ -287,14 +287,14 @@ func ConnectIntegration(
 		)
 	}
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect resource.")
 	}
 
 	if args.Service == shared.AWS {
 		if h == nil {
-			return nil, http.StatusInternalServerError, errors.New("Internal error: No route handler present when registering an AWS integration.")
+			return nil, http.StatusInternalServerError, errors.New("Internal error: No route handler present when registering an AWS resource.")
 		}
-		if statusCode, err := setupCloudIntegration(
+		if statusCode, err := setupCloudResource(
 			ctx,
 			args,
 			h,
@@ -304,10 +304,10 @@ func ConnectIntegration(
 		}
 	}
 	if err := txn.Commit(ctx); err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect resource.")
 	}
 
-	// The initial integration entry has been written. Any errors from this point on will need to update
+	// The initial resource entry has been written. Any errors from this point on will need to update
 	// the that entry to reflect the failure.
 	defer func() {
 		if err != nil {
@@ -318,8 +318,8 @@ func ConnectIntegration(
 				string(args.Service),
 				(*shared.ResourceConfig)(&publicConfig),
 				&runningAt,
-				integrationObject.ID,
-				integrationRepo,
+				resourceObject.ID,
+				resourceRepo,
 				DB,
 			)
 		}
@@ -334,18 +334,18 @@ func ConnectIntegration(
 	// Store config (including confidential information) in vault
 	if err := auth.WriteConfigToSecret(
 		ctx,
-		integrationObject.ID,
+		resourceObject.ID,
 		args.Config,
 		vaultObject,
 	); err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to connect resource.")
 	}
 
-	// For those integrations that require asynchronous setup, we spin those up here. When those goroutines are
-	// complete, they write their results back to the config column of their integration entry.
+	// For those resources that require asynchronous setup, we spin those up here. When those goroutines are
+	// complete, they write their results back to the config column of their resource entry.
 	// Note that kicking off any asynchronous setup is the last thing this method does. This ensures that there
 	// will never be any status update races between the goroutines and the main thread.
-	// TODO(ENG-2523): move base conda env creation outside of ConnectIntegration.
+	// TODO(ENG-2523): move base conda env creation outside of ConnectResource.
 	if args.Service == shared.Conda {
 		go func() {
 			// We must copy the Database inside the goroutine, because the underlying DB connection
@@ -356,7 +356,7 @@ func ConnectIntegration(
 				return
 			}
 
-			condaErr := setupCondaAsync(integrationRepo, integrationObject.ID, publicConfig, runningAt, condaDB)
+			condaErr := setupCondaAsync(resourceRepo, resourceObject.ID, publicConfig, runningAt, condaDB)
 			if condaErr != nil {
 				log.Errorf("Conda setup failed: %v", condaErr)
 			}
@@ -371,7 +371,7 @@ func ConnectIntegration(
 				return
 			}
 
-			lambdaErr := setupLambdaAsync(integrationRepo, integrationObject.ID, publicConfig, runningAt, lambdaDB)
+			lambdaErr := setupLambdaAsync(resourceRepo, resourceObject.ID, publicConfig, runningAt, lambdaDB)
 			if lambdaErr != nil {
 				log.Errorf("Lambda setup failed: %v", lambdaErr)
 			}
@@ -383,21 +383,21 @@ func ConnectIntegration(
 			string(args.Service),
 			(*shared.ResourceConfig)(&publicConfig),
 			&runningAt,
-			integrationObject.ID,
-			integrationRepo,
+			resourceObject.ID,
+			resourceRepo,
 			DB,
 		)
 		if err != nil {
 			return nil, http.StatusInternalServerError, err
 		}
 	}
-	return integrationObject, http.StatusOK, nil
+	return resourceObject, http.StatusOK, nil
 }
 
-// Asynchronously setup the lambda integration.
+// Asynchronously setup the lambda resource.
 func setupLambdaAsync(
-	integrationRepo repos.Integration,
-	integrationID uuid.UUID,
+	resourceRepo repos.Resource,
+	resourceID uuid.UUID,
 	publicConfig map[string]string,
 	runningAt time.Time,
 	DB database.Database,
@@ -411,8 +411,8 @@ func setupLambdaAsync(
 				string(shared.Lambda),
 				(*shared.ResourceConfig)(&publicConfig),
 				&runningAt,
-				integrationID,
-				integrationRepo,
+				resourceID,
+				resourceRepo,
 				DB,
 			)
 		} else {
@@ -421,8 +421,8 @@ func setupLambdaAsync(
 				string(shared.Lambda),
 				(*shared.ResourceConfig)(&publicConfig),
 				&runningAt,
-				integrationID,
-				integrationRepo,
+				resourceID,
+				resourceRepo,
 				DB,
 			)
 		}
@@ -434,10 +434,10 @@ func setupLambdaAsync(
 	)
 }
 
-// Asynchronously setup the conda integration.
+// Asynchronously setup the conda resource.
 func setupCondaAsync(
-	integrationRepo repos.Integration,
-	integrationID uuid.UUID,
+	resourceRepo repos.Resource,
+	resourceID uuid.UUID,
 	publicConfig map[string]string,
 	runningAt time.Time,
 	DB database.Database,
@@ -445,7 +445,7 @@ func setupCondaAsync(
 	var condaPath string
 	var output string
 	defer func() {
-		// Update both the conda path and execution state of the integration's config.
+		// Update both the conda path and execution state of the resource's config.
 		publicConfig[exec_env.CondaPathKey] = condaPath
 
 		if err != nil {
@@ -456,8 +456,8 @@ func setupCondaAsync(
 				string(shared.Conda),
 				(*shared.ResourceConfig)(&publicConfig),
 				&runningAt,
-				integrationID,
-				integrationRepo,
+				resourceID,
+				resourceRepo,
 				DB,
 			)
 		} else {
@@ -467,8 +467,8 @@ func setupCondaAsync(
 				string(shared.Conda),
 				(*shared.ResourceConfig)(&publicConfig),
 				&runningAt,
-				integrationID,
-				integrationRepo,
+				resourceID,
+				resourceRepo,
 				DB,
 			)
 		}
@@ -560,7 +560,7 @@ func ValidateConfig(
 
 	jobStatus, err := job.PollJob(ctx, jobName, jobManager, pollAuthenticateInterval, pollAuthenticateTimeout)
 	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect resource.")
 	}
 
 	if jobStatus == shared.SucceededExecutionStatus {
@@ -576,7 +576,7 @@ func ValidateConfig(
 		jobMetadataPath,
 		&execState,
 	); err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect integration.")
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to connect resource.")
 	}
 
 	if execState.Error != nil {
@@ -605,8 +605,8 @@ func validateAirflowConfig(
 	return http.StatusOK, nil
 }
 
-// checkIntegrationSetStorage returns whether this integration should be used as the storage layer.
-func checkIntegrationSetStorage(svc shared.Service, conf auth.Config) (bool, error) {
+// checkIfUseResourceAsStorage returns whether this resource should be used as the storage layer.
+func checkIfUseResourceAsStorage(svc shared.Service, conf auth.Config) (bool, error) {
 	if svc != shared.S3 && svc != shared.GCS {
 		// Only S3 and GCS can be used for storage
 		return false, nil
@@ -715,8 +715,8 @@ func validateECRConfig(
 	return http.StatusOK, nil
 }
 
-// ValidatePrerequisites validates if the integration for the given service can be connected at all.
-// 1) Checks if an integration already exists for unique integrations including conda, email, and slack.
+// ValidatePrerequisites validates if the resource for the given service can be connected at all.
+// 1) Checks if an resource already exists for unique resources including conda, email, and slack.
 // 2) Checks if the name has already been taken.
 func ValidatePrerequisites(
 	ctx context.Context,
@@ -724,30 +724,30 @@ func ValidatePrerequisites(
 	name string,
 	userID uuid.UUID,
 	orgID string,
-	integrationRepo repos.Integration,
+	resourceRepo repos.Resource,
 	DB database.Database,
 ) (int, error) {
 	// We expect the new name to be unique.
-	_, err := integrationRepo.GetByNameAndUser(ctx, name, userID, orgID, DB)
+	_, err := resourceRepo.GetByNameAndUser(ctx, name, userID, orgID, DB)
 	if err == nil {
-		return http.StatusBadRequest, errors.Newf("Cannot connect to an integration %s, since it already exists.", name)
+		return http.StatusBadRequest, errors.Newf("Cannot connect to an resource %s, since it already exists.", name)
 	}
 	if !errors.Is(err, database.ErrNoRows()) {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to query for existing integrations.")
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to query for existing resources.")
 	}
 
 	if svc == shared.Conda {
-		condaIntegration, err := exec_env.GetCondaIntegration(
-			ctx, userID, integrationRepo, DB,
+		condaResource, err := exec_env.GetCondaResource(
+			ctx, userID, resourceRepo, DB,
 		)
 		if err != nil {
 			return http.StatusInternalServerError, errors.Wrap(err, "Unable to verify if conda is connected.")
 		}
 
-		if condaIntegration != nil {
+		if condaResource != nil {
 			return http.StatusBadRequest, errors.Newf(
-				"You already have conda integration %s connected.",
-				condaIntegration.Name,
+				"You already have conda resource %s connected.",
+				condaResource.Name,
 			)
 		}
 
@@ -762,31 +762,31 @@ func ValidatePrerequisites(
 	}
 
 	if svc != shared.Conda && shared.IsComputeResource(svc) {
-		// For all non-conda compute integrations, we require the metadata store to be cloud storage.
+		// For all non-conda compute resources, we require the metadata store to be cloud storage.
 		if config.Storage().Type == shared.FileStorageType {
-			return http.StatusBadRequest, errors.Newf("You need to setup cloud storage as metadata store before registering compute integration of type %s.", svc)
+			return http.StatusBadRequest, errors.Newf("You need to setup cloud storage as metadata store before registering compute resource of type %s.", svc)
 		}
 	}
 
-	// These integrations should be unique.
+	// These resources should be unique.
 	if svc == shared.Email || svc == shared.Slack {
-		integrations, err := integrationRepo.GetByServiceAndUser(ctx, svc, userID, DB)
+		resources, err := resourceRepo.GetByServiceAndUser(ctx, svc, userID, DB)
 		if err != nil {
 			return http.StatusInternalServerError, errors.Wrap(err, "Unable to verify if email is connected.")
 		}
 
-		if len(integrations) > 0 {
+		if len(resources) > 0 {
 			return http.StatusBadRequest, errors.Newf(
-				"You already have an %s integration %s connected.",
+				"You already have an %s resource %s connected.",
 				svc,
-				integrations[0].Name,
+				resources[0].Name,
 			)
 		}
 
 		return http.StatusOK, nil
 	}
 
-	// For AWS integration, we require the user to have AWS CLI and Terraform installed.
+	// For AWS resource, we require the user to have AWS CLI and Terraform installed.
 	if svc == shared.AWS {
 		if _, _, err := lib_utils.RunCmd("terraform", []string{"--version"}, "", false); err != nil {
 			return http.StatusNotFound, errors.Wrap(err, "terraform executable not found. Please go to https://developer.hashicorp.com/terraform/downloads to install terraform")
@@ -808,7 +808,7 @@ func ValidatePrerequisites(
 		}
 	}
 
-	// For ECR integration, we require the user to have AWS CLI installed.
+	// For ECR resource, we require the user to have AWS CLI installed.
 	if svc == shared.ECR {
 		awsVersionString, _, err := lib_utils.RunCmd("aws", []string{"--version"}, "", false)
 		if err != nil {

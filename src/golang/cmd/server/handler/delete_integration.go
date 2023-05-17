@@ -19,134 +19,134 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /integration/{integrationId}/delete
+// Route: /integration/{resourceID}/delete
 // Method: POST
 // Params:
-//	`integrationId`: ID for `integration` object
+//	`resourceID`: ID for `integration` object
 // Request:
 //	Headers:
 //		`api-key`: user's API Key
 
-// The `DeleteIntegrationHandler` does a best effort at deleting an integration.
-type deleteIntegrationArgs struct {
+// The `DeleteResourceHandler` does a best effort at deleting an integration.
+type deleteResourceArgs struct {
 	*aq_context.AqContext
-	integrationObject            *models.Resource
+	resourceObject               *models.Resource
 	skipActiveWorkflowValidation bool
 }
 
-type deleteIntegrationResponse struct{}
+type deleteResourceResponse struct{}
 
-type DeleteIntegrationHandler struct {
+type DeleteResourceHandler struct {
 	PostHandler
 
 	Database database.Database
 
 	DAGRepo                  repos.DAG
 	ExecutionEnvironmentRepo repos.ExecutionEnvironment
-	IntegrationRepo          repos.Integration
+	ResourceRepo             repos.Resource
 	OperatorRepo             repos.Operator
 	StorageMigrationRepo     repos.StorageMigration
 	WorkflowRepo             repos.Workflow
 }
 
-func (*DeleteIntegrationHandler) Name() string {
+func (*DeleteResourceHandler) Name() string {
 	return "DeleteIntegration"
 }
 
-func (h *DeleteIntegrationHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *DeleteResourceHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statuscode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statuscode, err
 	}
 
-	integrationIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
-	integrationID, err := uuid.Parse(integrationIDStr)
+	resourceIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
+	resourceID, err := uuid.Parse(resourceIDStr)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed resource ID.")
 	}
 
-	integrationObject, err := h.IntegrationRepo.Get(r.Context(), integrationID, h.Database)
+	resourceObject, err := h.ResourceRepo.Get(r.Context(), resourceID, h.Database)
 	if err != nil {
-		return nil, http.StatusNotFound, errors.Wrap(err, "Failed to retrieve integration object.")
+		return nil, http.StatusNotFound, errors.Wrap(err, "Failed to retrieve resource object.")
 	}
 
-	if integrationObject.Service == shared.Kubernetes {
-		if _, ok := integrationObject.Config[shared.K8sCloudResourceIdKey]; ok {
-			return nil, http.StatusUnprocessableEntity, errors.Wrap(err, "Cannot delete the Aqueduct-generated k8s integration. Please delete the corresponding cloud integration instead.")
+	if resourceObject.Service == shared.Kubernetes {
+		if _, ok := resourceObject.Config[shared.K8sCloudResourceIdKey]; ok {
+			return nil, http.StatusUnprocessableEntity, errors.Wrap(err, "Cannot delete the Aqueduct-generated k8s resource. Please delete the corresponding cloud resource instead.")
 		}
 	}
 
 	// Built-in resources cannot be deleted.
-	if shared.IsBuiltinResource(integrationObject.Name, integrationObject.Service) {
+	if shared.IsBuiltinResource(resourceObject.Name, resourceObject.Service) {
 		return nil, http.StatusBadRequest, errors.New("Cannot delete built-in resources.")
 	}
 
-	ok, err := h.IntegrationRepo.ValidateOwnership(
+	ok, err := h.ResourceRepo.ValidateOwnership(
 		r.Context(),
-		integrationID,
+		resourceID,
 		aqContext.OrgID,
 		aqContext.ID,
 		h.Database,
 	)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during integration ownership validation.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during resource ownership validation.")
 	}
 
 	if !ok {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this integration.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this resource.")
 	}
 
-	// Check that we can't delete an integration that is being used as artifact storage.
+	// Check that we can't delete an resource that is being used as artifact storage.
 	currentStorageMigrationEntry, err := h.StorageMigrationRepo.Current(r.Context(), h.Database)
 	if err != nil && !aq_errors.Is(err, database.ErrNoRows()) {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while retrieving current storage migration entry.")
 	}
-	if currentStorageMigrationEntry != nil && currentStorageMigrationEntry.DestResourceID == integrationObject.ID {
-		return nil, http.StatusBadRequest, errors.New("Cannot delete an integration that is being used as artifact storage.")
+	if currentStorageMigrationEntry != nil && currentStorageMigrationEntry.DestResourceID == resourceObject.ID {
+		return nil, http.StatusBadRequest, errors.New("Cannot delete an resource that is being used as artifact storage.")
 	}
 
-	return &deleteIntegrationArgs{
+	return &deleteResourceArgs{
 		AqContext:                    aqContext,
-		integrationObject:            integrationObject,
+		resourceObject:               resourceObject,
 		skipActiveWorkflowValidation: false,
 	}, http.StatusOK, nil
 }
 
-func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*deleteIntegrationArgs)
-	emptyResp := deleteIntegrationResponse{}
+func (h *DeleteResourceHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*deleteResourceArgs)
+	emptyResp := deleteResourceResponse{}
 
 	if !args.skipActiveWorkflowValidation {
-		if statusCode, err := validateNoActiveWorkflowOnIntegration(
+		if statusCode, err := validateNoActiveWorkflowOnResource(
 			ctx,
 			args.AqContext,
-			args.integrationObject,
+			args.resourceObject,
 			h.OperatorRepo,
 			h.DAGRepo,
-			h.IntegrationRepo,
+			h.ResourceRepo,
 			h.Database,
 		); err != nil {
 			return emptyResp, statusCode, err
 		}
 	}
 
-	if args.integrationObject.Service == shared.AWS {
-		// Note that this will make a call to DeleteIntegrationHandler.Perform() to delete the
-		// Aqueduct-generated dynamic k8s integration.
-		if statusCode, err := deleteCloudIntegrationHelper(ctx, args, h); err != nil {
+	if args.resourceObject.Service == shared.AWS {
+		// Note that this will make a call to DeleteResourceHandler.Perform() to delete the
+		// Aqueduct-generated dynamic k8s resource.
+		if statusCode, err := deleteCloudResourceHelper(ctx, args, h); err != nil {
 			return emptyResp, statusCode, err
 		}
 	}
 
 	txn, err := h.Database.BeginTx(ctx)
 	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to delete integration.")
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to delete resource.")
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	err = h.IntegrationRepo.Delete(ctx, args.integrationObject.ID, txn)
+	err = h.ResourceRepo.Delete(ctx, args.resourceObject.ID, txn)
 	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting integration.")
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while deleting resource.")
 	}
 
 	storageConfig := config.Storage()
@@ -155,76 +155,76 @@ func (h *DeleteIntegrationHandler) Perform(ctx context.Context, interfaceArgs in
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
 	}
 
-	if err := cleanUpIntegration(
+	if err := cleanUpResource(
 		ctx,
-		args.integrationObject,
+		args.resourceObject,
 		h.OperatorRepo,
 		h.WorkflowRepo,
 		vaultObject,
 		txn,
 	); err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to delete integration.")
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to delete resource.")
 	}
 
 	if err := txn.Commit(ctx); err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to delete integration.")
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to delete resource.")
 	}
 
 	return emptyResp, http.StatusOK, nil
 }
 
-// validateNoActiveWorkflowOnIntegration
-// verifies there's no active workflow using the integration given the integration ID.
+// validateNoActiveWorkflowOnResource
+// verifies there's no active workflow using the resource given the resource ID.
 // It errors if there's any error occurred and passes if there's indeed no active workflow
-// using that integration.
-func validateNoActiveWorkflowOnIntegration(
+// using that resource.
+func validateNoActiveWorkflowOnResource(
 	ctx context.Context,
 	aqContext *aq_context.AqContext,
-	integrationObject *models.Resource,
+	resourceObject *models.Resource,
 	operatorRepo repos.Operator,
 	dagRepo repos.DAG,
-	integrationRepo repos.Integration,
+	resourceRepo repos.Resource,
 	DB database.Database,
 ) (int, error) {
-	interfaceResp, code, err := (&ListOperatorsForIntegrationHandler{
+	interfaceResp, code, err := (&ListOperatorsResourecHandler{
 		Database: DB,
 
-		DAGRepo:         dagRepo,
-		IntegrationRepo: integrationRepo,
-		OperatorRepo:    operatorRepo,
-	}).Perform(ctx, &listOperatorsForIntegrationArgs{AqContext: aqContext, integrationObject: integrationObject})
+		DAGRepo:      dagRepo,
+		ResourceRepo: resourceRepo,
+		OperatorRepo: operatorRepo,
+	}).Perform(ctx, &listOperatorsForResourceArgs{AqContext: aqContext, resourceObject: resourceObject})
 	if err != nil {
-		return code, errors.Wrap(err, "Error getting operators on this integration.")
+		return code, errors.Wrap(err, "Error getting operators on this resource.")
 	}
 
-	operatorsOnIntegrationResp, ok := interfaceResp.(listOperatorsForIntegrationResponse)
+	operatorsOnResourceResp, ok := interfaceResp.(listOperatorsForResourceResponse)
 	if !ok {
-		return http.StatusInternalServerError, errors.New("Error getting operators on this integration.")
+		return http.StatusInternalServerError, errors.New("Error getting operators on this resource.")
 	}
 
-	operatorsOnIntegration := operatorsOnIntegrationResp.OperatorWithIds
-	for _, opState := range operatorsOnIntegration {
+	operatorsOnResource := operatorsOnResourceResp.OperatorWithIds
+	for _, opState := range operatorsOnResource {
 		if opState.IsActive {
-			return http.StatusBadRequest, errors.New("We cannot delete this integration. There are still active workflows using it.")
+			return http.StatusBadRequest, errors.New("We cannot delete this resource. There are still active workflows using it.")
 		}
 	}
 
 	return http.StatusOK, nil
 }
 
-// cleanUpIntegration deletes any side effects of an integration
+// cleanUpResource deletes any side effects of an resource
 // in Aqueduct system.
 // For example, credentials stored in vault or base conda environments
 // created.
-func cleanUpIntegration(
+func cleanUpResource(
 	ctx context.Context,
-	integrationObject *models.Resource,
+	resourceObject *models.Resource,
 	operatorRepo repos.Operator,
 	workflowRepo repos.Workflow,
 	vaultObject vault.Vault,
 	DB database.Database,
 ) error {
-	if integrationObject.Service == shared.Conda {
+	if resourceObject.Service == shared.Conda {
 		// Best effort to clean up
 		err := exec_env.CleanupUnusedEnvironments(
 			ctx, operatorRepo, DB,
@@ -236,12 +236,12 @@ func cleanUpIntegration(
 		return exec_env.DeleteBaseEnvs()
 	}
 
-	if integrationObject.Service == shared.Email || integrationObject.Service == shared.Slack {
-		err := workflowRepo.RemoveNotificationFromSettings(ctx, integrationObject.ID, DB)
+	if resourceObject.Service == shared.Email || resourceObject.Service == shared.Slack {
+		err := workflowRepo.RemoveNotificationFromSettings(ctx, resourceObject.ID, DB)
 		if err != nil {
 			return err
 		}
 	}
 
-	return vaultObject.Delete(ctx, integrationObject.ID.String())
+	return vaultObject.Delete(ctx, resourceObject.ID.String())
 }

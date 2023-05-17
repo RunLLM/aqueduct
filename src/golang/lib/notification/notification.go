@@ -53,7 +53,7 @@ type Notification interface {
 func GetNotificationsFromUser(
 	ctx context.Context,
 	userID uuid.UUID,
-	integrationRepo repos.Integration,
+	integrationRepo repos.Resource,
 	vaultObject vault.Vault,
 	DB database.Database,
 ) ([]Notification, error) {

@@ -23,26 +23,26 @@ import (
 //	Headers:
 //		`api-key`: user's API Key
 //
-// Response: serialized `listIntegrationsResponse` containing all integrations accessible by the user.
+// Response: serialized `listResourceResponse` containing all integrations accessible by the user.
 //
 // The caller must read the "exec_state" field on the result to determine if the integration was successfully
 // registered.
 
-type ListIntegrationsHandler struct {
+type ListResourcesHandler struct {
 	GetHandler
 
 	Database database.Database
 
-	IntegrationRepo repos.Integration
+	ResourceRepo repos.Resource
 }
 
-type listIntegrationsArgs struct {
+type listResourceArgs struct {
 	*aq_context.AqContext
 }
 
-type listIntegrationsResponse []integrationResponse
+type listResourceResponse []resourceResponse
 
-type integrationResponse struct {
+type resourceResponse struct {
 	ID        uuid.UUID              `json:"id"`
 	Service   shared.Service         `json:"service"`
 	Name      string                 `json:"name"`
@@ -51,55 +51,55 @@ type integrationResponse struct {
 	ExecState *shared.ExecutionState `json:"exec_state"`
 }
 
-func (*ListIntegrationsHandler) Name() string {
+func (*ListResourcesHandler) Name() string {
 	return "ListIntegrations"
 }
 
-func (*ListIntegrationsHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (*ListResourcesHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
 	}
 
-	return &listIntegrationsArgs{
+	return &listResourceArgs{
 		AqContext: aqContext,
 	}, http.StatusOK, nil
 }
 
-func (h *ListIntegrationsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*listIntegrationsArgs)
+func (h *ListResourcesHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*listResourceArgs)
 
-	emptyResponse := listIntegrationsResponse{}
+	emptyResponse := listResourceResponse{}
 
-	integrations, err := h.IntegrationRepo.GetByUser(
+	resources, err := h.ResourceRepo.GetByUser(
 		ctx,
 		args.OrgID,
 		args.ID,
 		h.Database,
 	)
 	if err != nil {
-		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to list integrations.")
+		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to list resources.")
 	}
 
-	responses := make([]integrationResponse, 0, len(integrations))
-	for _, integrationObject := range integrations {
-		var response *integrationResponse
+	responses := make([]resourceResponse, 0, len(resources))
+	for _, resourceObject := range resources {
+		var response *resourceResponse
 		var err error
 
 		// If there is a Conda resource registered, embed additional configuration information inside Aqueduct Compute.
 		// Otherwise, we simply note the current server's python version.
-		if integrationObject.Name == shared.AqueductComputeName {
+		if resourceObject.Name == shared.AqueductComputeName {
 			var aqConfig shared.ResourceConfig
-			aqConfig, err = aqueduct_compute.ConstructAqueductComputeResourceConfig(ctx, args.ID, h.IntegrationRepo, h.Database)
+			aqConfig, err = aqueduct_compute.ConstructAqueductComputeResourceConfig(ctx, args.ID, h.ResourceRepo, h.Database)
 			if err != nil {
 				return emptyResponse, http.StatusInternalServerError, errors.Wrapf(err, "Unable to create aqueduct compute config!")
 			}
-			response, err = convertIntegrationObjectToResponse(&integrationObject, aqConfig)
+			response, err = convertResourceObjectToResponse(&resourceObject, aqConfig)
 		} else {
-			response, err = convertIntegrationObjectToResponse(&integrationObject, integrationObject.Config)
+			response, err = convertResourceObjectToResponse(&resourceObject, resourceObject.Config)
 		}
 		if err != nil {
-			return emptyResponse, http.StatusInternalServerError, errors.Wrapf(err, "Unable to create integration response for %s.", integrationObject.Name)
+			return emptyResponse, http.StatusInternalServerError, errors.Wrapf(err, "Unable to create resource response for %s.", resourceObject.Name)
 		}
 		responses = append(responses, *response)
 	}
@@ -107,19 +107,19 @@ func (h *ListIntegrationsHandler) Perform(ctx context.Context, interfaceArgs int
 	return responses, http.StatusOK, nil
 }
 
-// Helper function to convert an resource object into an integrationResponse
-func convertIntegrationObjectToResponse(integrationObject *models.Resource, config shared.ResourceConfig) (*integrationResponse, error) {
-	execState, err := execution_state.ExtractConnectionState(integrationObject)
+// Helper function to convert an resource object into an resourceResponse
+func convertResourceObjectToResponse(resourceObject *models.Resource, config shared.ResourceConfig) (*resourceResponse, error) {
+	execState, err := execution_state.ExtractConnectionState(resourceObject)
 	if err != nil {
 		return nil, err
 	}
 
-	return &integrationResponse{
-		ID:        integrationObject.ID,
-		Service:   integrationObject.Service,
-		Name:      integrationObject.Name,
+	return &resourceResponse{
+		ID:        resourceObject.ID,
+		Service:   resourceObject.Service,
+		Name:      resourceObject.Name,
 		Config:    config,
-		CreatedAt: integrationObject.CreatedAt.Unix(),
+		CreatedAt: resourceObject.CreatedAt.Unix(),
 		ExecState: execState,
 	}, nil
 }

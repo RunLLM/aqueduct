@@ -24,7 +24,7 @@ func getNotifications(
 	ctx context.Context,
 	wfDag dag.WorkflowDag,
 	vaultObject vault.Vault,
-	integrationRepo repos.Integration,
+	integrationRepo repos.Resource,
 	DB database.Database,
 ) ([]notification.Notification, error) {
 	return notification.GetNotificationsFromUser(
@@ -41,7 +41,7 @@ func sendNotifications(
 	wfDag dag.WorkflowDag,
 	content *notificationContentStruct,
 	vaultObject vault.Vault,
-	integrationRepo repos.Integration,
+	integrationRepo repos.Resource,
 	DB database.Database,
 ) error {
 	if content == nil {

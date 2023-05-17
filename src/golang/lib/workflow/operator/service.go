@@ -16,11 +16,11 @@ import (
 )
 
 // GetOperatorsOnIntegraiton will return an empty list for notification resources.
-func GetOperatorsOnIntegration(
+func GetOperatorsOnResource(
 	ctx context.Context,
 	orgID string,
 	integration *models.Resource,
-	integrationRepo repos.Integration,
+	integrationRepo repos.Resource,
 	operatorRepo repos.Operator,
 	DB database.Database,
 ) ([]models.Operator, error) {
@@ -35,7 +35,7 @@ func GetOperatorsOnIntegration(
 	if integration.Service == shared.AWS {
 		k8sIntegration, err := integrationRepo.GetByNameAndUser(
 			ctx,
-			fmt.Sprintf("%s:%s", integration.Name, dynamic.K8sIntegrationNameSuffix),
+			fmt.Sprintf("%s:%s", integration.Name, dynamic.K8sResourceNameSuffix),
 			uuid.Nil,
 			orgID,
 			DB,

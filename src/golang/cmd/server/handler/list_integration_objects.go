@@ -22,70 +22,70 @@ import (
 
 // Doesn't currently work for S3 because it's too expensive to list.
 
-// Route: /integration/{integrationId}/objects
+// Route: /resource/{resourceID}/objects
 // Method: GET
 // Params:
-//	`integrationId`: ID for `integration` object
+//	`resourceID`: ID for `resource` object
 // Request:
 //	Headers:
 //		`api-key`: user's API Key
 //
-// Response: objects written by workflows at the integration.
+// Response: objects written by workflows at the resource.
 
-// Get objects from the specified integration.
-type ListIntegrationObjectsHandler struct {
+// Get objects from the specified resource.
+type ListResourceObjectsHandler struct {
 	GetHandler
 
 	Database   database.Database
 	JobManager job.JobManager
 
-	IntegrationRepo repos.Integration
+	ResourceRepo repos.Resource
 }
 
-type ListIntegrationObjectsArgs struct {
+type ListResourceObjectsArgs struct {
 	*aq_context.AqContext
-	integrationID uuid.UUID
+	resourceID uuid.UUID
 }
 
-type ListIntegrationObjectsResponse struct {
+type ListResourceObjectsResponse struct {
 	ObjectNames []string `json:"object_names"`
 }
 
-func (*ListIntegrationObjectsHandler) Name() string {
+func (*ListResourceObjectsHandler) Name() string {
 	return "IntegrationObjects"
 }
 
-func (h *ListIntegrationObjectsHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *ListResourceObjectsHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, errors.Wrap(err, "Unable to parse arguments.")
 	}
 
-	integrationIdStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
-	integrationId, err := uuid.Parse(integrationIdStr)
+	resourceIdStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
+	resourceId, err := uuid.Parse(resourceIdStr)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed resource ID.")
 	}
 
-	return &ListIntegrationObjectsArgs{
-		AqContext:     aqContext,
-		integrationID: integrationId,
+	return &ListResourceObjectsArgs{
+		AqContext:  aqContext,
+		resourceID: resourceId,
 	}, http.StatusOK, nil
 }
 
-func (h *ListIntegrationObjectsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*ListIntegrationObjectsArgs)
+func (h *ListResourceObjectsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*ListResourceObjectsArgs)
 
-	integrationObject, err := h.IntegrationRepo.Get(
+	resourceObject, err := h.ResourceRepo.Get(
 		ctx,
-		args.integrationID,
+		args.resourceID,
 		h.Database,
 	)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to retrieve integration.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to retrieve resource.")
 	}
 
-	if !shared.IsRelationalDatabaseResource(integrationObject.Service) {
+	if !shared.IsRelationalDatabaseResource(resourceObject.Service) {
 		return nil, http.StatusBadRequest, errors.New("List objects request is only allowed for relational databases. (Too expensive to list objects for S3)")
 	}
 
@@ -103,28 +103,28 @@ func (h *ListIntegrationObjectsHandler) Perform(ctx context.Context, interfaceAr
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
 	}
 
-	config, err := auth.ReadConfigFromSecret(ctx, integrationObject.ID, vaultObject)
+	config, err := auth.ReadConfigFromSecret(ctx, resourceObject.ID, vaultObject)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to parse integration config.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to parse resource config.")
 	}
 
-	jobName := fmt.Sprintf("integration-objects-%s", uuid.New().String())
+	jobName := fmt.Sprintf("resource-objects-%s", uuid.New().String())
 	jobSpec := job.NewDiscoverSpec(
 		jobName,
 		args.StorageConfig,
 		jobMetadataPath,
-		integrationObject.Service,
+		resourceObject.Service,
 		config,
 		jobResultPath,
 	)
 
 	if err := h.JobManager.Launch(ctx, jobName, jobSpec); err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to launch integration objects job.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to launch resource objects job.")
 	}
 
 	jobStatus, err := job.PollJob(ctx, jobName, h.JobManager, pollDiscoverInterval, pollDiscoverTimeout)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while waiting for integration objects job to finish.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error while waiting for resource objects job to finish.")
 	}
 
 	if jobStatus == shared.FailedExecutionStatus {
@@ -155,7 +155,7 @@ func (h *ListIntegrationObjectsHandler) Perform(ctx context.Context, interfaceAr
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve object names from storage.")
 	}
 
-	return ListIntegrationObjectsResponse{
+	return ListResourceObjectsResponse{
 		ObjectNames: objectNames,
 	}, http.StatusOK, nil
 }

@@ -48,7 +48,7 @@ type operatorReader interface {
 	GetDistinctLoadOPsByWorkflow(ctx context.Context, workflowID uuid.UUID, DB database.Database) ([]views.LoadOperator, error)
 
 	// GetExtractAndLoadOPsByIntegration returns all Extract and Load Operators
-	// using the Integration specified.
+	// using the Resource specified.
 	GetExtractAndLoadOPsByIntegration(
 		ctx context.Context,
 		integrationID uuid.UUID,
@@ -63,7 +63,7 @@ type operatorReader interface {
 		DB database.Database,
 	) (map[uuid.UUID][]shared.EngineType, error)
 
-	// GetLoadOPsByWorkflowAndIntegration returns the Operators in a Workflow related to an Integration.
+	// GetLoadOPsByWorkflowAndIntegration returns the Operators in a Workflow related to an Resource.
 	GetLoadOPsByWorkflowAndIntegration(
 		ctx context.Context,
 		workflowID uuid.UUID,

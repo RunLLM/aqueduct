@@ -34,8 +34,8 @@ const (
 )
 
 const (
-	stateLockErrMsg          = "Error acquiring the state lock"
-	K8sIntegrationNameSuffix = "aqueduct_ondemand_k8s"
+	stateLockErrMsg       = "Error acquiring the state lock"
+	K8sResourceNameSuffix = "aqueduct_ondemand_k8s"
 )
 
 var TerraformTemplateDir = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "template", "aws", "eks")
@@ -45,7 +45,7 @@ func PrepareCluster(
 	ctx context.Context,
 	configDelta *shared.DynamicK8sConfig,
 	engineIntegrationId uuid.UUID,
-	integrationRepo repos.Integration,
+	integrationRepo repos.Resource,
 	vaultObject vault.Vault,
 	db database.Database,
 ) error {
@@ -109,7 +109,7 @@ func CreateOrUpdateK8sCluster(
 	configDelta *shared.DynamicK8sConfig,
 	action k8sClusterActionType, // can either be k8sClusterCreateAction or k8sClusterUpdateAction
 	engineIntegration *models.Resource,
-	integrationRepo repos.Integration,
+	integrationRepo repos.Resource,
 	vaultObject vault.Vault,
 	db database.Database,
 ) error {
@@ -259,7 +259,7 @@ func DeleteK8sCluster(
 	ctx context.Context,
 	skipPodsStatusCheck bool,
 	engineIntegration *models.Resource,
-	integrationRepo repos.Integration,
+	integrationRepo repos.Resource,
 	vaultObject vault.Vault,
 	db database.Database,
 ) error {
@@ -328,7 +328,7 @@ func DeleteK8sCluster(
 func UpdateClusterLastUsedTimestamp(
 	ctx context.Context,
 	engineIntegrationId uuid.UUID,
-	integrationRepo repos.Integration,
+	integrationRepo repos.Resource,
 	db database.Database,
 ) error {
 	engineIntegration, err := integrationRepo.Get(
@@ -363,7 +363,7 @@ func updateClusterStatus(
 	ctx context.Context,
 	status shared.K8sClusterStatusType,
 	engineIntegrationId uuid.UUID,
-	integrationRepo repos.Integration,
+	integrationRepo repos.Resource,
 	db database.Database,
 ) error {
 	engineIntegration, err := integrationRepo.Get(
@@ -398,7 +398,7 @@ func updateClusterConfig(
 	action k8sClusterActionType,
 	configDeltaMap map[string]string,
 	engineIntegrationId uuid.UUID,
-	integrationRepo repos.Integration,
+	integrationRepo repos.Resource,
 	db database.Database,
 ) error {
 	if len(configDeltaMap) == 0 {
@@ -448,7 +448,7 @@ func updateClusterConfig(
 func ResyncClusterState(
 	ctx context.Context,
 	engineIntegration *models.Resource,
-	integrationRepo repos.Integration,
+	integrationRepo repos.Resource,
 	vaultObject vault.Vault,
 	db database.Database,
 ) error {
@@ -492,7 +492,7 @@ func ResyncClusterState(
 func PollClusterStatus(
 	ctx context.Context,
 	engineIntegration *models.Resource,
-	integrationRepo repos.Integration,
+	integrationRepo repos.Resource,
 	vaultObject vault.Vault,
 	db database.Database,
 ) (*models.Resource, error) {

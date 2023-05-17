@@ -32,7 +32,7 @@ func ExecuteDatabricks(
 	opExecMode operator.ExecutionMode,
 	databricksJobManager *job.DatabricksJobManager,
 	vaultObject vault.Vault,
-	integrationRepo repos.Integration,
+	integrationRepo repos.Resource,
 	DB database.Database,
 ) (err error) {
 	inProgressOps := workflowRunMetadata.InProgressOps

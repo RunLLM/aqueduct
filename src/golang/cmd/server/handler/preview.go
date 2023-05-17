@@ -69,7 +69,7 @@ type PreviewHandler struct {
 	AqEngine      engine.AqEngine
 
 	ExecutionEnvironmentRepo repos.ExecutionEnvironment
-	IntegrationRepo          repos.Integration
+	ResourceRepo             repos.Resource
 }
 
 func (*PreviewHandler) Name() string {
@@ -142,12 +142,12 @@ func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
 		return nil, statusCode, err
 	}
 
-	ok, err := dag_utils.ValidateDagOperatorIntegrationOwnership(
+	ok, err := dag_utils.ValidateDagOperatorResourceOwnership(
 		r.Context(),
 		dagSummary.Dag.Operators,
 		aqContext.OrgID,
 		aqContext.ID,
-		h.IntegrationRepo,
+		h.ResourceRepo,
 		h.Database,
 	)
 	if err != nil {
@@ -199,7 +199,7 @@ func (h *PreviewHandler) Perform(ctx context.Context, interfaceArgs interface{})
 		ctx,
 		args.ID,
 		args.DagSummary,
-		h.IntegrationRepo,
+		h.ResourceRepo,
 		execEnvByOpId,
 		h.Database,
 	)
@@ -311,7 +311,7 @@ func setupCondaEnv(
 	ctx context.Context,
 	userID uuid.UUID,
 	dagSummary *request.DagSummary,
-	integrationRepo repos.Integration,
+	integrationRepo repos.Resource,
 	envByOperator map[uuid.UUID]exec_env.ExecutionEnvironment,
 	DB database.Database,
 ) (status int, err error) {
@@ -322,7 +322,7 @@ func setupCondaEnv(
 		}
 	}()
 
-	condaIntegration, err := exec_env.GetCondaIntegration(ctx, userID, integrationRepo, DB)
+	condaIntegration, err := exec_env.GetCondaResource(ctx, userID, integrationRepo, DB)
 	if err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "error getting conda integration.")
 	}

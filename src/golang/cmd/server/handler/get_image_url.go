@@ -37,7 +37,7 @@ type GetImageURLHandler struct {
 
 	Database database.Database
 
-	IntegrationRepo repos.Integration
+	ResourceRepo repos.Resource
 }
 
 type getImageURLArgs struct {

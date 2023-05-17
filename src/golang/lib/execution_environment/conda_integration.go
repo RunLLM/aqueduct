@@ -44,10 +44,10 @@ func InitializeConda() (string, string, error) {
 	return condaPath, out, nil
 }
 
-func GetCondaIntegration(
+func GetCondaResource(
 	ctx context.Context,
 	userID uuid.UUID,
-	integrationRepo repos.Integration,
+	integrationRepo repos.Resource,
 	DB database.Database,
 ) (*models.Resource, error) {
 	integrations, err := integrationRepo.GetByServiceAndUser(

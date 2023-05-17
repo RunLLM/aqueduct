@@ -94,7 +94,7 @@ func (ts *TestSuite) TestOperator_GetDistinctLoadOPsByWorkflow() {
 	for _, expectedLoadOperator := range expectedOperators {
 		load := expectedLoadOperator.Spec.Load()
 		loadParams := load.Parameters
-		integration, err := ts.integration.Get(ts.ctx, load.ResourceId, ts.DB)
+		integration, err := ts.resource.Get(ts.ctx, load.ResourceId, ts.DB)
 		require.Nil(ts.T(), err)
 
 		expectedLoadOperators = append(expectedLoadOperators, views.LoadOperator{
@@ -103,7 +103,7 @@ func (ts *TestSuite) TestOperator_GetDistinctLoadOPsByWorkflow() {
 			ModifiedAt:   dag.CreatedAt,
 			ResourceName: integration.Name,
 			Spec: connector.Load{
-				Service:    testIntegrationService,
+				Service:    testResourceService,
 				ResourceId: integration.ID,
 				Parameters: loadParams,
 			},
@@ -128,7 +128,7 @@ func (ts *TestSuite) TestOperator_GetLoadOPsByWorkflowAndIntegration() {
 	loadParams := load.Parameters
 	relationalLoad, ok := connector.CastToRelationalDBLoadParams(loadParams)
 	require.True(ts.T(), ok)
-	integration, err := ts.integration.Get(ts.ctx, load.ResourceId, ts.DB)
+	integration, err := ts.resource.Get(ts.ctx, load.ResourceId, ts.DB)
 	require.Nil(ts.T(), err)
 
 	actualOperators, err := ts.operator.GetLoadOPsByWorkflowAndIntegration(ts.ctx, dag.WorkflowID, integration.ID, relationalLoad.Table, ts.DB)
@@ -149,7 +149,7 @@ func (ts *TestSuite) TestOperator_GetLoadOPsByIntegration() {
 	loadParams := load.Parameters
 	relationalLoad, ok := connector.CastToRelationalDBLoadParams(loadParams)
 	require.True(ts.T(), ok)
-	integration, err := ts.integration.Get(ts.ctx, load.ResourceId, ts.DB)
+	integration, err := ts.resource.Get(ts.ctx, load.ResourceId, ts.DB)
 	require.Nil(ts.T(), err)
 
 	actualOperators, err := ts.operator.GetLoadOPsByIntegration(ts.ctx, integration.ID, relationalLoad.Table, ts.DB)

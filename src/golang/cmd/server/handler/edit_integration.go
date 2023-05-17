@@ -20,9 +20,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /integration/{integrationId}/edit
+// Route: /integration/{resourceID}/edit
 // Method: POST
-// Params: integrationId
+// Params: resourceID
 // Request:
 //
 //	Headers:
@@ -33,13 +33,13 @@ import (
 //							can be empty if there's no config updates.
 //
 // Response: none
-type EditIntegrationHandler struct {
+type EditResourceHandler struct {
 	PostHandler
 
 	Database   database.Database
 	JobManager job.JobManager
 
-	IntegrationRepo repos.Integration
+	ResourceRepo repos.Resource
 }
 
 var serviceToReadOnlyFields = map[shared.Service]map[string]bool{
@@ -77,23 +77,23 @@ var serviceToReadOnlyFields = map[shared.Service]map[string]bool{
 	},
 }
 
-func (*EditIntegrationHandler) Headers() []string {
+func (*EditResourceHandler) Headers() []string {
 	return []string{
 		routes.IntegrationNameHeader,
 		routes.IntegrationConfigHeader,
 	}
 }
 
-type EditIntegrationArgs struct {
+type EditResourceArgs struct {
 	*aq_context.AqContext
 	Name          string
-	IntegrationID uuid.UUID
+	ResourceID    uuid.UUID
 	UpdatedFields map[string]string
 }
 
-type EditIntegrationResponse struct{}
+type EditResourceResponse struct{}
 
-func (*EditIntegrationHandler) Name() string {
+func (*EditResourceHandler) Name() string {
 	return "EditIntegration"
 }
 
@@ -142,66 +142,66 @@ func updateConfig(
 	return updated, http.StatusOK, nil
 }
 
-func (h *EditIntegrationHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *EditResourceHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
-		return nil, statusCode, errors.Wrap(err, "Unable to edit integration.")
+		return nil, statusCode, errors.Wrap(err, "Unable to edit resource.")
 	}
 
-	integrationIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
-	integrationID, err := uuid.Parse(integrationIDStr)
+	resourceIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
+	resourceID, err := uuid.Parse(resourceIDStr)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed resource ID.")
 	}
 
-	hasPermission, err := h.IntegrationRepo.ValidateOwnership(
+	hasPermission, err := h.ResourceRepo.ValidateOwnership(
 		r.Context(),
-		integrationID,
+		resourceID,
 		aqContext.OrgID,
 		aqContext.ID,
 		h.Database,
 	)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Error validating integration ownership.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Error validating resource ownership.")
 	}
 
 	if !hasPermission {
-		return nil, http.StatusForbidden, errors.New("You don't have permission to edit this integration")
+		return nil, http.StatusForbidden, errors.New("You don't have permission to edit this resource")
 	}
 
-	name, configMap, err := request.ParseIntegrationConfigFromRequest(r)
+	name, configMap, err := request.ParseResourceConfigFromRequest(r)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to edit integration.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to edit resource.")
 	}
 
 	if name == shared.DemoDbName {
-		return nil, http.StatusBadRequest, errors.New("`aqueduct_demo` is reserved for demo integration. Please use another name.")
+		return nil, http.StatusBadRequest, errors.New("`aqueduct_demo` is reserved for demo resource. Please use another name.")
 	}
 
-	return &EditIntegrationArgs{
+	return &EditResourceArgs{
 		AqContext:     aqContext,
-		IntegrationID: integrationID,
+		ResourceID:    resourceID,
 		Name:          name,
 		UpdatedFields: configMap,
 	}, http.StatusOK, nil
 }
 
-func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*EditIntegrationArgs)
-	ID := args.IntegrationID
+func (h *EditResourceHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*EditResourceArgs)
+	ID := args.ResourceID
 
-	emptyResp := EditIntegrationResponse{}
+	emptyResp := EditResourceResponse{}
 
-	integrationObject, err := h.IntegrationRepo.Get(ctx, ID, h.Database)
+	resourceObject, err := h.ResourceRepo.Get(ctx, ID, h.Database)
 	if errors.Is(err, database.ErrNoRows()) {
 		return emptyResp, http.StatusBadRequest, err
 	}
 
 	if err != nil {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve integration")
+		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve resource")
 	}
 
-	if integrationObject.Name == shared.DemoDbName {
+	if resourceObject.Name == shared.DemoDbName {
 		return emptyResp, http.StatusBadRequest, errors.New("You cannot edit demo DB credentials.")
 	}
 
@@ -218,10 +218,10 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 
 	staticConfig, ok := config.(*auth.StaticConfig)
 	if !ok {
-		return emptyResp, http.StatusInternalServerError, errors.New("Editing for this integration type is not currently supported.")
+		return emptyResp, http.StatusInternalServerError, errors.New("Editing for this resource type is not currently supported.")
 	}
 
-	configUpdated, status, err := updateConfig(staticConfig.Conf, integrationObject.Service, args.UpdatedFields)
+	configUpdated, status, err := updateConfig(staticConfig.Conf, resourceObject.Service, args.UpdatedFields)
 	if err != nil {
 		// Do not wrap err here since `updateConfig` returns a proper top-level message.
 		return emptyResp, status, err
@@ -229,13 +229,13 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 
 	if !configUpdated {
 		// handle name update if necessary:
-		if args.Name != "" && args.Name != integrationObject.Name {
-			status, err = UpdateIntegration(
+		if args.Name != "" && args.Name != resourceObject.Name {
+			status, err = UpdateResource(
 				ctx,
-				integrationObject.ID,
+				resourceObject.ID,
 				args.Name,
 				nil,
-				h.IntegrationRepo,
+				h.ResourceRepo,
 				h.Database,
 				vaultObject,
 			)
@@ -247,12 +247,12 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 		return emptyResp, http.StatusOK, nil
 	}
 
-	// Validate integration config
+	// Validate resource config
 	statusCode, err := ValidateConfig(
 		ctx,
 		args.RequestID,
 		staticConfig,
-		integrationObject.Service,
+		resourceObject.Service,
 		h.JobManager,
 		args.StorageConfig,
 	)
@@ -260,12 +260,12 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 		return emptyResp, statusCode, err
 	}
 
-	if statusCode, err := UpdateIntegration(
+	if statusCode, err := UpdateResource(
 		ctx,
-		integrationObject.ID,
+		resourceObject.ID,
 		args.Name,
 		staticConfig,
-		h.IntegrationRepo,
+		h.ResourceRepo,
 		h.Database,
 		vaultObject,
 	); err != nil {
@@ -275,15 +275,15 @@ func (h *EditIntegrationHandler) Perform(ctx context.Context, interfaceArgs inte
 	return emptyResp, http.StatusOK, nil
 }
 
-// UpdateIntegration updates an existing integration
+// UpdateResource updates an existing resource
 // given the `newName` and / or `newConfig`.
 
-func UpdateIntegration(
+func UpdateResource(
 	ctx context.Context,
-	integrationID uuid.UUID,
+	resourceID uuid.UUID,
 	newName string,
 	newConfig auth.Config,
-	integrationRepo repos.Integration,
+	resourceRepo repos.Resource,
 	DB database.Database,
 	vaultObject vault.Vault,
 ) (int, error) {
@@ -300,34 +300,34 @@ func UpdateIntegration(
 
 	txn, err := DB.BeginTx(ctx)
 	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to update integration.")
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to update resource.")
 	}
 	defer database.TxnRollbackIgnoreErr(ctx, txn)
 
-	_, err = integrationRepo.Update(
+	_, err = resourceRepo.Update(
 		ctx,
-		integrationID,
+		resourceID,
 		changedFields,
 		txn,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to update integration.")
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to update resource.")
 	}
 
 	// Store config (including confidential information) as in vault
 	if newConfig != nil {
 		if err := auth.WriteConfigToSecret(
 			ctx,
-			integrationID,
+			resourceID,
 			newConfig,
 			vaultObject,
 		); err != nil {
-			return http.StatusInternalServerError, errors.Wrap(err, "Unable to update integration.")
+			return http.StatusInternalServerError, errors.Wrap(err, "Unable to update resource.")
 		}
 	}
 
 	if err := txn.Commit(ctx); err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to update integration.")
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to update resource.")
 	}
 
 	return http.StatusOK, nil

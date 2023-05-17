@@ -21,11 +21,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Route: /api/integration/dynamic-engine/{integrationId}/edit
+// Route: /api/integration/dynamic-engine/{resourceID}/edit
 // Method: POST
 // Params:
 //
-//	`integrationId`: ID of the dynamic engine integration
+//	`resourceID`: ID of the dynamic engine integration
 //
 // Request:
 //
@@ -37,14 +37,14 @@ type EditDynamicEngineHandler struct {
 
 	Database database.Database
 
-	IntegrationRepo repos.Integration
+	ResourceRepo repos.Resource
 }
 
 type editDynamicEngineArgs struct {
 	*aq_context.AqContext
-	action        dynamicEngineAction
-	integrationId uuid.UUID
-	configDelta   *shared.DynamicK8sConfig
+	action      dynamicEngineAction
+	resourceID  uuid.UUID
+	configDelta *shared.DynamicK8sConfig
 }
 
 func (*EditDynamicEngineHandler) Name() string {
@@ -115,10 +115,10 @@ func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, err
 	}
 
 	return &editDynamicEngineArgs{
-		AqContext:     aqContext,
-		action:        dynamicEngineAction(action),
-		integrationId: integrationId,
-		configDelta:   &configDelta,
+		AqContext:   aqContext,
+		action:      dynamicEngineAction(action),
+		resourceID:  integrationId,
+		configDelta: &configDelta,
 	}, http.StatusOK, nil
 }
 
@@ -126,9 +126,9 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 	args := interfaceArgs.(*editDynamicEngineArgs)
 	emptyResponse := response.EmptyResponse{}
 
-	dynamicEngineIntegration, err := h.IntegrationRepo.Get(
+	dynamicEngineIntegration, err := h.ResourceRepo.Get(
 		ctx,
-		args.integrationId,
+		args.resourceID,
 		h.Database,
 	)
 	if err != nil {
@@ -150,8 +150,8 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 		err = dynamic.PrepareCluster(
 			ctx,
 			args.configDelta,
-			args.integrationId,
-			h.IntegrationRepo,
+			args.resourceID,
+			h.ResourceRepo,
 			vaultObject,
 			h.Database,
 		)
@@ -180,7 +180,7 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 			args.configDelta,
 			dynamic.K8sClusterUpdateAction,
 			dynamicEngineIntegration,
-			h.IntegrationRepo,
+			h.ResourceRepo,
 			vaultObject,
 			h.Database,
 		); err != nil {
@@ -202,7 +202,7 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 					ctx,
 					forceDelete,
 					dynamicEngineIntegration,
-					h.IntegrationRepo,
+					h.ResourceRepo,
 					vaultObject,
 					h.Database,
 				); err != nil {
@@ -213,7 +213,7 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 			} else if dynamicEngineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
 				return emptyResponse, http.StatusOK, nil
 			} else {
-				dynamicEngineIntegration, err = dynamic.PollClusterStatus(ctx, dynamicEngineIntegration, h.IntegrationRepo, vaultObject, h.Database)
+				dynamicEngineIntegration, err = dynamic.PollClusterStatus(ctx, dynamicEngineIntegration, h.ResourceRepo, vaultObject, h.Database)
 				if err != nil {
 					return emptyResponse, http.StatusInternalServerError, err
 				}

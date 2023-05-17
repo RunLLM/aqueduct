@@ -25,10 +25,10 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /integration/{integrationId}/create
+// Route: /integration/{resourceID}/create
 // Method: POST
 // Params:
-//	`integrationId`: ID for `integration` object
+//	`resourceID`: ID for `integration` object
 //	** ONLY SUPPORTS CREATING TABLES FOR THE DEMO DB **
 // Request:
 //	Headers:
@@ -49,7 +49,7 @@ type CreateTableHandler struct {
 	Database   database.Database
 	JobManager job.JobManager
 
-	IntegrationRepo repos.Integration
+	ResourceRepo repos.Resource
 }
 
 type CreateTableArgs struct {
@@ -93,7 +93,7 @@ func (h *CreateTableHandler) Prepare(r *http.Request) (interface{}, int, error) 
 func (h *CreateTableHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*CreateTableArgs)
 
-	integrationObject, err := h.IntegrationRepo.Get(
+	integrationObject, err := h.ResourceRepo.Get(
 		ctx,
 		args.integrationId,
 		h.Database,

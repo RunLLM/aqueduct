@@ -17,7 +17,7 @@ type Repos struct {
 	DAGEdgeRepo              repos.DAGEdge
 	DAGResultRepo            repos.DAGResult
 	ExecutionEnvironmentRepo repos.ExecutionEnvironment
-	IntegrationRepo          repos.Integration
+	ResourceRepo             repos.Resource
 	StorageMigrationRepo     repos.StorageMigration
 	NotificationRepo         repos.Notification
 	OperatorRepo             repos.Operator
@@ -36,7 +36,7 @@ func CreateRepos() *Repos {
 		DAGEdgeRepo:              sqlite.NewDAGEdgeRepo(),
 		DAGResultRepo:            sqlite.NewDAGResultRepo(),
 		ExecutionEnvironmentRepo: sqlite.NewExecutionEnvironmentRepo(),
-		IntegrationRepo:          sqlite.NewIntegrationRepo(),
+		ResourceRepo:             sqlite.NewResourceRepo(),
 		StorageMigrationRepo:     sqlite.NewStorageMigrationRepo(),
 		NotificationRepo:         sqlite.NewNotificationRepo(),
 		OperatorRepo:             sqlite.NewOperatorRepo(),
@@ -56,7 +56,7 @@ func GetEngineRepos(repos *Repos) *engine.Repos {
 		DAGEdgeRepo:              repos.DAGEdgeRepo,
 		DAGResultRepo:            repos.DAGResultRepo,
 		ExecutionEnvironmentRepo: repos.ExecutionEnvironmentRepo,
-		IntegrationRepo:          repos.IntegrationRepo,
+		ResourceRepo:             repos.ResourceRepo,
 		NotificationRepo:         repos.NotificationRepo,
 		OperatorRepo:             repos.OperatorRepo,
 		OperatorResultRepo:       repos.OperatorResultRepo,

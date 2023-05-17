@@ -18,15 +18,15 @@ import (
 	"github.com/google/uuid"
 )
 
-// setupCloudIntegration sets up the cloud integration's Terraform directory, registers a k8s
-// integration and run `terraform init` to initialize the Terraform workspace.
-func setupCloudIntegration(
+// setupCloudResource sets up the cloud resource's Terraform directory, registers a k8s
+// resource and run `terraform init` to initialize the Terraform workspace.
+func setupCloudResource(
 	ctx context.Context,
-	args *ConnectIntegrationArgs,
-	h *ConnectIntegrationHandler,
+	args *ConnectResourceArgs,
+	h *ConnectResourceHandler,
 	db database.Database,
 ) (int, error) {
-	cloudIntegration, err := h.IntegrationRepo.GetByNameAndUser(
+	cloudResource, err := h.ResourceRepo.GetByNameAndUser(
 		ctx,
 		args.Name,
 		uuid.Nil,
@@ -34,7 +34,7 @@ func setupCloudIntegration(
 		db,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve cloud integration.")
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve cloud resource.")
 	}
 
 	terraformPath := filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "cloud_integration", args.Name, "eks")
@@ -71,7 +71,7 @@ func setupCloudIntegration(
 		shared.K8sKubeconfigPathKey:  kubeconfigPath,
 		shared.K8sClusterNameKey:     clusterName,
 		shared.K8sDynamicKey:         strconv.FormatBool(true),
-		shared.K8sCloudResourceIdKey: cloudIntegration.ID.String(),
+		shared.K8sCloudResourceIdKey: cloudResource.ID.String(),
 		shared.K8sUseSameClusterKey:  strconv.FormatBool(false),
 		shared.K8sStatusKey:          string(shared.K8sClusterTerminatedStatus),
 		shared.K8sDesiredCpuNodeKey:  config.MinCpuNode,
@@ -86,28 +86,28 @@ func setupCloudIntegration(
 		return http.StatusBadRequest, err
 	}
 
-	// Register a dynamic k8s integration.
-	connectIntegrationArgs := &ConnectIntegrationArgs{
+	// Register a dynamic k8s resource.
+	connectResourceArgs := &ConnectResourceArgs{
 		AqContext:    args.AqContext,
-		Name:         fmt.Sprintf("%s:%s", args.Name, dynamic.K8sIntegrationNameSuffix),
+		Name:         fmt.Sprintf("%s:%s", args.Name, dynamic.K8sResourceNameSuffix),
 		Service:      shared.Kubernetes,
 		Config:       auth.NewStaticConfig(dynamicK8sConfig),
 		UserOnly:     false,
 		SetAsStorage: false,
 	}
 
-	_, _, err = (&ConnectIntegrationHandler{
+	_, _, err = (&ConnectResourceHandler{
 		Database:   db,
 		JobManager: h.JobManager,
 
 		ArtifactRepo:       h.ArtifactRepo,
 		ArtifactResultRepo: h.ArtifactResultRepo,
 		DAGRepo:            h.DAGRepo,
-		IntegrationRepo:    h.IntegrationRepo,
+		ResourceRepo:       h.ResourceRepo,
 		OperatorRepo:       h.OperatorRepo,
-	}).Perform(ctx, connectIntegrationArgs)
+	}).Perform(ctx, connectResourceArgs)
 	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Unable to register dynamic k8s integration.")
+		return http.StatusInternalServerError, errors.Wrap(err, "Unable to register dynamic k8s resource.")
 	}
 
 	if _, _, err := lib_utils.RunCmd("terraform", []string{"init"}, terraformPath, true); err != nil {
@@ -118,7 +118,7 @@ func setupCloudIntegration(
 }
 
 // setupTerraformDirectory copies all files and folders in the Terraform template directory to the
-// cloud integration's destination directory, which is ~/.aqueduct/server/cloud_integration/<name>/eks.
+// cloud resource's destination directory, which is ~/.aqueduct/server/cloud_integration/<name>/eks.
 func setupTerraformDirectory(dst string) error {
 	// Create the destination directory if it doesn't exist.
 	if err := os.MkdirAll(dst, 0o755); err != nil {
@@ -142,46 +142,46 @@ func setupTerraformDirectory(dst string) error {
 	return nil
 }
 
-// deleteCloudIntegrationHelper does the following:
-// 1. Verifies that there is no workflow using the dynamic k8s integration.
+// deleteCloudResourceHelper does the following:
+// 1. Verifies that there is no workflow using the dynamic k8s resource.
 // 2. Deletes the EKS cluster if it's running.
-// 3. Deletes the cloud integration directory.
-// 4. Deletes the Aqueduct-generated dynamic k8s integration.
-func deleteCloudIntegrationHelper(
+// 3. Deletes the cloud resource directory.
+// 4. Deletes the Aqueduct-generated dynamic k8s resource.
+func deleteCloudResourceHelper(
 	ctx context.Context,
-	args *deleteIntegrationArgs,
-	h *DeleteIntegrationHandler,
+	args *deleteResourceArgs,
+	h *DeleteResourceHandler,
 ) (int, error) {
-	k8sIntegration, err := h.IntegrationRepo.GetByNameAndUser(
+	k8sResource, err := h.ResourceRepo.GetByNameAndUser(
 		ctx,
-		fmt.Sprintf("%s:%s", args.integrationObject.Name, dynamic.K8sIntegrationNameSuffix),
+		fmt.Sprintf("%s:%s", args.resourceObject.Name, dynamic.K8sResourceNameSuffix),
 		uuid.Nil,
 		args.OrgID,
 		h.Database,
 	)
 	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve the Aqueduct-generated k8s integration.")
+		return http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve the Aqueduct-generated k8s resource.")
 	}
 
 	// Delete the EKS cluster
 	editDynamicEngineArgs := &editDynamicEngineArgs{
-		AqContext:     args.AqContext,
-		action:        forceDeleteAction,
-		integrationId: k8sIntegration.ID,
-		configDelta:   &shared.DynamicK8sConfig{},
+		AqContext:   args.AqContext,
+		action:      forceDeleteAction,
+		resourceID:  k8sResource.ID,
+		configDelta: &shared.DynamicK8sConfig{},
 	}
 	_, statusCode, err := (&EditDynamicEngineHandler{
-		Database:        h.Database,
-		IntegrationRepo: h.IntegrationRepo,
+		Database:     h.Database,
+		ResourceRepo: h.ResourceRepo,
 	}).Perform(ctx, editDynamicEngineArgs)
 	if err != nil {
 		return statusCode, errors.Wrap(err, "Failed to delete the dynamic k8s cluster.")
 	}
 
-	// Clean up the cloud integration directory
+	// Clean up the cloud resource directory
 	_, stdErr, err := lib_utils.RunCmd("rm", []string{
 		"-rf",
-		path.Dir(k8sIntegration.Config[shared.K8sTerraformPathKey]),
+		path.Dir(k8sResource.Config[shared.K8sTerraformPathKey]),
 	}, // get the parent dir of Terraform path
 		"",
 		false,
@@ -190,19 +190,19 @@ func deleteCloudIntegrationHelper(
 		return http.StatusInternalServerError, errors.New(stdErr)
 	}
 
-	deleteK8sIntegrationArgs := &deleteIntegrationArgs{
-		AqContext:         args.AqContext,
-		integrationObject: k8sIntegration,
+	deleteK8sResourceArgs := &deleteResourceArgs{
+		AqContext:      args.AqContext,
+		resourceObject: k8sResource,
 		// We already validated this above, so we skip the validation during the deletion of the
-		// dynamic k8s integration. There may be race conditions where new workflows are deployed
+		// dynamic k8s resource. There may be race conditions where new workflows are deployed
 		// while we clean up the EKS cluster, but in these rare cases we just let the user delete
 		// the broken workflows themselves afterwards.
 		skipActiveWorkflowValidation: true,
 	}
 
-	_, statusCode, err = h.Perform(ctx, deleteK8sIntegrationArgs)
+	_, statusCode, err = h.Perform(ctx, deleteK8sResourceArgs)
 	if err != nil {
-		return statusCode, errors.Wrap(err, "Failed to delete the Aqueduct-generated k8s integration.")
+		return statusCode, errors.Wrap(err, "Failed to delete the Aqueduct-generated k8s resource.")
 	}
 
 	return http.StatusOK, nil
