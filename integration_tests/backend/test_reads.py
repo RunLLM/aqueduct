@@ -13,6 +13,7 @@ from aqueduct.models.response_models import (
     GetDagResultResponse,
     GetNodeArtifactResponse,
     GetNodeOperatorResponse,
+    GetNodeResultContentResponse,
     GetOperatorResultResponse,
     GetOperatorWithArtifactNodeResponse,
 )
@@ -74,22 +75,22 @@ class TestBackend:
         cls.client = aqueduct.Client()
         cls.integration = cls.client.resource(name=pytest.integration)
         cls.flows = {
-            # "changing_saves": setup_changing_saves(cls.client, pytest.integration),
+            "changing_saves": setup_changing_saves(cls.client, pytest.integration),
             "flow_with_multiple_operators": setup_flow_with_multiple_operators(
                 cls.client, pytest.integration
             ),
-            # "flow_with_failure": setup_flow_with_failure(cls.client, pytest.integration),
-            # "flow_with_metrics_and_checks": setup_flow_with_metrics_and_checks(
-            #     cls.client,
-            #     pytest.integration,
-            # ),
-            # # this flow is intended to provide 'noise' of op / artf with the same name,
-            # # but under different flow.
-            # "another_flow_with_metrics_and_checks": setup_flow_with_metrics_and_checks(
-            #     cls.client,
-            #     pytest.integration,
-            #     workflow_name="another_flow_with_metrics_and_checks",
-            # ),
+            "flow_with_failure": setup_flow_with_failure(cls.client, pytest.integration),
+            "flow_with_metrics_and_checks": setup_flow_with_metrics_and_checks(
+                cls.client,
+                pytest.integration,
+            ),
+            # this flow is intended to provide 'noise' of op / artf with the same name,
+            # but under different flow.
+            "another_flow_with_metrics_and_checks": setup_flow_with_metrics_and_checks(
+                cls.client,
+                pytest.integration,
+                workflow_name="another_flow_with_metrics_and_checks",
+            ),
         }
 
         # we do not call `wait_for_flow_runs` on these flows
@@ -536,10 +537,10 @@ class TestBackend:
                 % (flow_id, dag_id, artifact_id, artifact_result_id)
             )
             assert resp.ok
-            resp_dict = resp.json()
+            resp_obj = GetNodeResultContentResponse(**resp.json())
             # One of these should be successful (direct descendent of operator)
-            assert not resp_dict["is_downsampled"]
-            assert len(resp_dict["content"]) > 0
+            assert not resp_obj.is_downsampled
+            assert len(resp_obj.content) > 0
 
     def test_endpoint_node_artifact_results_get(self):
         for flow_id, _ in [
@@ -602,10 +603,10 @@ class TestBackend:
         operator_ids = list(dag_result_resp.operators.keys())
         operator_id = str(operator_ids[0])
 
-        resp = self.get_response(self.GET_NODE_OPERATOR_CONTENT_TEMPLATE % (flow_id, dag_id, operator_id))
-        # The response is a form data. For now, we simply check and ensure the response doesn't contain
-        # any error.
-        assert "error" not in resp
+        resp = self.get_response(
+            self.GET_NODE_OPERATOR_CONTENT_TEMPLATE % (flow_id, dag_id, operator_id)
+        )
+        # The response is a form data. For now, we simply check the response's code.
         assert resp.ok
 
     def test_endpoint_node_metric_get(self):
@@ -646,7 +647,11 @@ class TestBackend:
             flow_id,
             dag_result_id,
         )
-        operator_ids = [id for id in dag_result_resp.operators.keys() if dag_result_resp.operators[id].spec.metric]
+        operator_ids = [
+            id
+            for id in dag_result_resp.operators.keys()
+            if dag_result_resp.operators[id].spec.metric
+        ]
         operator_id = str(operator_ids[0])
 
         resp = self.get_response(
@@ -657,14 +662,21 @@ class TestBackend:
 
         artifact_id = result.artifact_id
 
-        resp = self.get_response(self.LIST_ARTIFACT_RESULTS_TEMPLATE % (flow_id, artifact_id)).json()
+        resp = self.get_response(
+            self.LIST_ARTIFACT_RESULTS_TEMPLATE % (flow_id, artifact_id)
+        ).json()
         results = resp["results"]
         # One of these should be correct for the DAG run and can get result content.
         for artifact_result in results:
             resp = self.get_response(
-                self.GET_NODE_METRIC_RESULT_CONTENT_TEMPLATE % (flow_id, dag_id, operator_id, artifact_result["id"])
+                self.GET_NODE_METRIC_RESULT_CONTENT_TEMPLATE
+                % (flow_id, dag_id, operator_id, artifact_result["id"])
             )
             assert resp.ok
+            resp_obj = GetNodeResultContentResponse(**resp.json())
+            # One of these should be successful (direct descendent of operator)
+            assert not resp_obj.is_downsampled
+            assert len(resp_obj.content) > 0
 
     def test_endpoint_node_check_get(self):
         flow_id, _ = self.flows["flow_with_metrics_and_checks"]
@@ -704,7 +716,11 @@ class TestBackend:
             flow_id,
             dag_result_id,
         )
-        operator_ids = [id for id in dag_result_resp.operators.keys() if dag_result_resp.operators[id].spec.check]
+        operator_ids = [
+            id
+            for id in dag_result_resp.operators.keys()
+            if dag_result_resp.operators[id].spec.check
+        ]
         operator_id = str(operator_ids[0])
 
         resp = self.get_response(
@@ -715,11 +731,18 @@ class TestBackend:
 
         artifact_id = result.artifact_id
 
-        resp = self.get_response(self.LIST_ARTIFACT_RESULTS_TEMPLATE % (flow_id, artifact_id)).json()
+        resp = self.get_response(
+            self.LIST_ARTIFACT_RESULTS_TEMPLATE % (flow_id, artifact_id)
+        ).json()
         results = resp["results"]
         # One of these should be correct for the DAG run and can get result content.
         for artifact_result in results:
             resp = self.get_response(
-                self.GET_NODE_CHECK_RESULT_CONTENT_TEMPLATE % (flow_id, dag_id, operator_id, artifact_result["id"])
+                self.GET_NODE_CHECK_RESULT_CONTENT_TEMPLATE
+                % (flow_id, dag_id, operator_id, artifact_result["id"])
             )
             assert resp.ok
+            resp_obj = GetNodeResultContentResponse(**resp.json())
+            # One of these should be successful (direct descendent of operator)
+            assert not resp_obj.is_downsampled
+            assert len(resp_obj.content) > 0
