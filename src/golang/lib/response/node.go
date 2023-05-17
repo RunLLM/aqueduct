@@ -11,6 +11,85 @@ import (
 
 // This file should map exactly to
 // `src/ui/common/src/handlers/responses/node.ts`
+type OperatorWithArtifactNode struct {
+	ID          uuid.UUID           `json:"id"`
+	DagID       uuid.UUID           `json:"dag_id"`
+	ArtifactID  uuid.UUID           `json:"artifact_id"`
+	Name        string              `json:"name"`
+	Description string              `json:"description"`
+	Spec        *operator.Spec      `json:"spec"`
+	Type        shared.ArtifactType `json:"type"`
+
+	// Upstream artifact IDs, could be multiple or empty.
+	Inputs []uuid.UUID `json:"inputs"`
+
+	// Downstream operator IDs, could be multiple or empty.
+	Outputs []uuid.UUID `json:"outputs"`
+}
+
+func NewOperatorWithArtifactNodeFromDBObject(dbOperatorWithArtifactNode *views.OperatorWithArtifactNode) *OperatorWithArtifactNode {
+	return &OperatorWithArtifactNode{
+		ID:          dbOperatorWithArtifactNode.ID,
+		DagID:       dbOperatorWithArtifactNode.DagID,
+		ArtifactID:  dbOperatorWithArtifactNode.ArtifactID,
+		Name:        dbOperatorWithArtifactNode.Name,
+		Description: dbOperatorWithArtifactNode.Description,
+		Spec:        &dbOperatorWithArtifactNode.Spec,
+		Type:        dbOperatorWithArtifactNode.Type,
+		// Inputs to the metric operator
+		Inputs: dbOperatorWithArtifactNode.Inputs,
+		// Outputs of the metric artifact
+		Outputs: dbOperatorWithArtifactNode.Outputs,
+	}
+}
+
+type OperatorWithArtifactNodeResult struct {
+	// Operator ID
+	ID                uuid.UUID              `json:"id"`
+	OperatorExecState *shared.ExecutionState `json:"operator_exec_state"`
+
+	ArtifactID        uuid.UUID                        `json:"artifact_id"`
+	SerializationType shared.ArtifactSerializationType `json:"serialization_type"`
+
+	// If `ContentSerialized` is set, the content is small and we directly send
+	// it as a part of response. It's consistent with the object stored in `ContentPath`.
+	// The value is the string representation of the file stored in that path.
+	//
+	// Otherwise, the content is large and
+	// one should send an additional request to fetch the content.
+	ContentPath       string  `json:"content_path"`
+	ContentSerialized *string `json:"content_serialized"`
+
+	ArtifactExecState *shared.ExecutionState `json:"artifact_exec_state"`
+}
+
+func NewOperatorWithArtifactNodeResultFromDBObject(
+	dbOperatorWithArtifactNodeResult *views.OperatorWithArtifactNodeResult,
+	content *string,
+) *OperatorWithArtifactNodeResult {
+	result := &OperatorWithArtifactNodeResult{
+		ID:                dbOperatorWithArtifactNodeResult.ID,
+		ArtifactID:        dbOperatorWithArtifactNodeResult.ArtifactID,
+		SerializationType: dbOperatorWithArtifactNodeResult.Metadata.SerializationType,
+		ContentPath:       dbOperatorWithArtifactNodeResult.ContentPath,
+		ContentSerialized: content,
+	}
+
+	if !dbOperatorWithArtifactNodeResult.OperatorExecState.IsNull {
+		// make a copy of execState's value
+		execStateVal := dbOperatorWithArtifactNodeResult.OperatorExecState.ExecutionState
+		result.OperatorExecState = &execStateVal
+	}
+
+	if !dbOperatorWithArtifactNodeResult.ArtifactExecState.IsNull {
+		// make a copy of execState's value
+		execStateVal := dbOperatorWithArtifactNodeResult.ArtifactExecState.ExecutionState
+		result.ArtifactExecState = &execStateVal
+	}
+
+	return result
+}
+
 type Artifact struct {
 	ID          uuid.UUID           `json:"id"`
 	DagID       uuid.UUID           `json:"dag_id"`
@@ -120,11 +199,17 @@ func NewOperatorResultFromDBObject(
 type Nodes struct {
 	Operators []Operator `json:"operators"`
 	Artifacts []Artifact `json:"artifacts"`
+	// TODO: ENG-2987 Create separate sections for Metrics/Checks
+	// Metrics []OperatorWithArtifactNode `json:"metrics"`
+	// Checks []OperatorWithArtifactNode `json:"checks"`
 }
 
 func NewNodesFromDBObjects(
 	operatorNodes []views.OperatorNode,
 	artifactNodes []views.ArtifactNode,
+	// TODO: ENG-2987 Create separate sections for Metrics/Checks
+	// metricNodes []views.OperatorWithArtifactNode,
+	// checkNodes []views.OperatorWithArtifactNode,
 ) *Nodes {
 	return &Nodes{
 		Operators: slices.Map(
@@ -139,12 +224,28 @@ func NewNodesFromDBObjects(
 				return *NewArtifactFromDBObject(&node)
 			},
 		),
+		// TODO: ENG-2987 Create separate sections for Metrics/Checks
+		// Metrics: slices.Map(
+		// 	metricNodes,
+		// 	func(node views.OperatorWithArtifactNode) OperatorWithArtifactNode {
+		// 		return *NewOperatorWithArtifactNodeFromDBObject(&node)
+		// 	},
+		// ),
+		// Checks: slices.Map(
+		// 	checkNodes,
+		// 	func(node views.OperatorWithArtifactNode) OperatorWithArtifactNode {
+		// 		return *NewOperatorWithArtifactNodeFromDBObject(&node)
+		// 	},
+		// ),
 	}
 }
 
 type NodeResults struct {
 	Operators []OperatorResult `json:"operators"`
 	Artifacts []ArtifactResult `json:"artifacts"`
+	// TODO: ENG-2987 Create separate sections for Metrics/Checks
+	// Metrics []OperatorWithArtifactNodeResult `json:"metrics"`
+	// Checks []OperatorWithArtifactNodeResult `json:"checks"`
 }
 
 func NewNodeResultsFromDBObjects(
