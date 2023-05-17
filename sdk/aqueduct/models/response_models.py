@@ -30,6 +30,11 @@ class GetDagResponse(BaseModel):
     engine_config: EngineConfig
 
 
+class GetNodeResultContentResponse(BaseModel):
+    is_downsampled: bool
+    content: str
+
+
 class GetDagResultResponse(BaseModel):
     """Represents the result of a single workflow run.
 
@@ -143,6 +148,42 @@ class GetNodeArtifactResponse(BaseModel):
     description: str
     type: ArtifactType
     input: uuid.UUID
+    outputs: List[uuid.UUID]
+
+
+class GetOperatorWithArtifactNodeResponse(BaseModel):
+    """Represents a single merged node (metric or check) in a workflow run.
+
+    Attributes:
+        id:
+            The id of the operator node.
+        artifact_id:
+            The id of the artifact node.
+        dag_id:
+            This id can be used to find the corresponding workflow dag version.
+        name:
+            The name of the operator.
+        description:
+            The description of the operator.
+        type:
+            The artifact type.
+        spec:
+            The operator spec.
+        inputs:
+            The id(s) of the input artifact(s) of the operator.
+        outputs:
+            The id(s) of the operator(s) that take this artifact as input.
+
+    """
+
+    id: uuid.UUID
+    dag_id: uuid.UUID
+    artifact_id: uuid.UUID
+    name: str
+    description: str
+    spec: OperatorSpec
+    type: ArtifactType
+    inputs: List[uuid.UUID]
     outputs: List[uuid.UUID]
 
 
