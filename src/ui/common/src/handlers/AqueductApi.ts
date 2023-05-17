@@ -18,6 +18,7 @@ import {
   DagResultsGetRequest,
   DagResultsGetResponse,
 } from './v2/DagResultsGet';
+import { dagsGetQuery, DagsGetRequest, DagsGetResponse } from './v2/DagsGet';
 import {
   integrationOperatorsGetQuery,
   IntegrationOperatorsGetRequest,
@@ -83,7 +84,6 @@ import {
   WorkflowsGetRequest,
   WorkflowsGetResponse,
 } from './v2/WorkflowsGet';
-import { dagsGetQuery, DagsGetRequest, DagsGetResponse } from './v2/DagsGet';
 
 const { createApi, fetchBaseQuery } = ((rtkQueryRaw as any).default ??
   rtkQueryRaw) as typeof rtkQueryRaw;

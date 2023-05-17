@@ -5,7 +5,7 @@ import { APIKeyParameter } from '../parameters/Header';
 import { WorkflowIdParameter } from '../parameters/Path';
 import { DagResponse } from '../responses/workflow';
 
-export type DagsGetRequest = APIKeyParameter & WorkflowIdParameter
+export type DagsGetRequest = APIKeyParameter & WorkflowIdParameter;
 
 export type DagsGetResponse = DagResponse[];
 
