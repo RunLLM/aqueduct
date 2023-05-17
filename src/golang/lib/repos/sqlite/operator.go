@@ -93,6 +93,31 @@ const operatorNodeViewSubQuery = `
 	WHERE op_with_outputs.outputs IS NULL
 `
 
+var mergedNodeViewSubQuery = fmt.Sprintf(`
+	WITH
+		operator_node AS (%s), 
+		artifact_node AS (%s)
+	SELECT 
+		operator_node.id AS id,
+		operator_node.name AS name,
+		operator_node.description AS description,
+		operator_node.spec AS spec,
+		operator_node.execution_environment_id AS execution_environment_id,
+		operator_node.dag_id AS dag_id,
+		operator_node.inputs AS inputs,
+		artifact_node.id AS artifact_id,
+		artifact_node.type AS type,
+		artifact_node.outputs AS outputs
+	FROM 
+		operator_node LEFT JOIN 
+		artifact_node 
+	ON
+		artifact_node.input = operator_node.id
+`,
+	operatorNodeViewSubQuery,
+	artifactNodeViewSubQuery,
+)
+
 type operatorRepo struct {
 	operatorReader
 	operatorWriter
@@ -147,6 +172,32 @@ func (*operatorReader) GetNodeBatch(ctx context.Context, IDs []uuid.UUID, DB dat
 	)
 	args := stmt_preparers.CastIdsListToInterfaceList(IDs)
 	return getOperatorNodes(ctx, DB, query, args...)
+}
+
+func (r *operatorReader) GetOperatorWithArtifactNode(ctx context.Context, ID uuid.UUID, DB database.Database) (*views.OperatorWithArtifactNode, error) {
+	nodes, err := r.GetOperatorWithArtifactNodeBatch(ctx, []uuid.UUID{ID}, DB)
+	if err != nil {
+		return nil, err
+	}
+	return &nodes[0], nil
+}
+
+func (*operatorReader) GetOperatorWithArtifactNodeBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]views.OperatorWithArtifactNode, error) {
+	if len(IDs) == 0 {
+		return nil, errors.New("Provided empty IDs list.")
+	}
+
+	query := fmt.Sprintf(
+		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s IN (%s)",
+		views.OperatorWithArtifactNodeView,
+		mergedNodeViewSubQuery,
+		views.OperatorWithArtifactNodeCols(),
+		views.OperatorWithArtifactNodeView,
+		views.OperatorWithArtifactNodeID,
+		stmt_preparers.GenerateArgsList(len(IDs), 1),
+	)
+	args := stmt_preparers.CastIdsListToInterfaceList(IDs)
+	return getOperatorWithArtifactNodes(ctx, DB, query, args...)
 }
 
 func (*operatorReader) GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.Operator, error) {
@@ -703,6 +754,12 @@ func getOperatorNodes(ctx context.Context, DB database.Database, query string, a
 	var operatorNodes []views.OperatorNode
 	err := DB.Query(ctx, &operatorNodes, query, args...)
 	return operatorNodes, err
+}
+
+func getOperatorWithArtifactNodes(ctx context.Context, DB database.Database, query string, args ...interface{}) ([]views.OperatorWithArtifactNode, error) {
+	var mergedNodes []views.OperatorWithArtifactNode
+	err := DB.Query(ctx, &mergedNodes, query, args...)
+	return mergedNodes, err
 }
 
 func getOperator(ctx context.Context, DB database.Database, query string, args ...interface{}) (*models.Operator, error) {
