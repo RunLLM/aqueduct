@@ -9,9 +9,9 @@ import (
 	"github.com/google/uuid"
 )
 
-type IntegrationIDParser struct{}
+type ResourceIDParser struct{}
 
-func (IntegrationIDParser) Parse(r *http.Request) (*uuid.UUID, error) {
+func (ResourceIDParser) Parse(r *http.Request) (*uuid.UUID, error) {
 	integrationIDStr := (pathParser{URLParam: routes.IntegrationIDParam}).Parse(r)
 
 	id, err := uuid.Parse(integrationIDStr)

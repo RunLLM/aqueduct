@@ -32,9 +32,9 @@ import (
 //	Body:
 //    A list of `response.operators` that use the given integration.
 
-type integrationOperatorsGetArgs struct {
+type resourceOperatorsGetArgs struct {
 	*aq_context.AqContext
-	integrationID uuid.UUID
+	resourceID uuid.UUID
 }
 
 type ResourceOperatorsGetHandler struct {
@@ -56,30 +56,30 @@ func (h *ResourceOperatorsGetHandler) Prepare(r *http.Request) (interface{}, int
 		return nil, statusCode, err
 	}
 
-	integrationID, err := (parser.IntegrationIDParser{}).Parse(r)
+	resourceID, err := (parser.ResourceIDParser{}).Parse(r)
 	if err != nil {
 		return nil, http.StatusBadRequest, err
 	}
 
-	return &integrationOperatorsGetArgs{
+	return &resourceOperatorsGetArgs{
 		AqContext: aqContext,
 
-		integrationID: *integrationID,
+		resourceID: *resourceID,
 	}, http.StatusOK, nil
 }
 
 func (h *ResourceOperatorsGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*integrationOperatorsGetArgs)
+	args := interfaceArgs.(*resourceOperatorsGetArgs)
 
-	integration, err := h.ResourceRepo.Get(ctx, args.integrationID, h.Database)
+	resource, err := h.ResourceRepo.Get(ctx, args.resourceID, h.Database)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrapf(err, "Unable to find integration %s", args.integrationID)
+		return nil, http.StatusInternalServerError, errors.Wrapf(err, "Unable to find resource %s", args.resourceID)
 	}
 
 	operators, err := operator.GetOperatorsOnResource(
 		ctx,
 		args.OrgID,
-		integration,
+		resource,
 		h.ResourceRepo,
 		h.OperatorRepo,
 		h.Database,

@@ -29,7 +29,7 @@ import (
 //	Body:
 //		Map of integration ID to list of `response.WorkflowAndDagID` that use that integration.
 
-type integrationsWorkflowsGetArgs struct {
+type resourcesWorkflowsGetArgs struct {
 	*aq_context.AqContext
 }
 
@@ -54,45 +54,45 @@ func (h *ResourcesWorkflowsGetHandler) Prepare(r *http.Request) (interface{}, in
 		return nil, statusCode, err
 	}
 
-	return &integrationsWorkflowsGetArgs{
+	return &resourcesWorkflowsGetArgs{
 		AqContext: aqContext,
 	}, http.StatusOK, nil
 }
 
 func (h *ResourcesWorkflowsGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*integrationsWorkflowsGetArgs)
+	args := interfaceArgs.(*resourcesWorkflowsGetArgs)
 
-	integrations, err := h.ResourceRepo.GetByUser(
+	resources, err := h.ResourceRepo.GetByUser(
 		ctx,
 		args.OrgID,
 		args.ID,
 		h.Database,
 	)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to list integrations.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to list resources.")
 	}
 
-	response := make(map[uuid.UUID][]*response.WorkflowAndDagIDs, len(integrations))
-	for _, integration := range integrations {
-		workflowAndDagIDs, err := fetchWorkflowAndDagIDsForIntegration(
+	resp := make(map[uuid.UUID][]*response.WorkflowAndDagIDs, len(resources))
+	for _, resource := range resources {
+		workflowAndDagIDs, err := fetchWorkflowAndDagIDsForResource(
 			ctx,
-			args.OrgID, &integration, h.ResourceRepo, h.WorkflowRepo, h.OperatorRepo, h.DAGRepo, h.DAGResultRepo, h.Database)
+			args.OrgID, &resource, h.ResourceRepo, h.WorkflowRepo, h.OperatorRepo, h.DAGRepo, h.DAGResultRepo, h.Database)
 		if err != nil {
-			return nil, http.StatusInternalServerError, errors.Wrapf(err, "Unable to find workflows for integration %s", integration.ID)
+			return nil, http.StatusInternalServerError, errors.Wrapf(err, "Unable to find workflows for resource %s", resource.ID)
 		}
-		response[integration.ID] = workflowAndDagIDs
+		resp[resource.ID] = workflowAndDagIDs
 	}
-	return response, http.StatusOK, nil
+	return resp, http.StatusOK, nil
 }
 
-// fetchWorkflowAndDagIDsForIntegration returns a list of workflow IDs that use the given integration.
+// fetchWorkflowAndDagIDsForResource returns a list of workflow IDs that use the given resource.
 // We consider a workflow to use a resource if it has run an operator that uses this resource during
 // it's latest run.
-func fetchWorkflowAndDagIDsForIntegration(
+func fetchWorkflowAndDagIDsForResource(
 	ctx context.Context,
 	orgID string,
-	integration *models.Resource,
-	integrationRepo repos.Resource,
+	resource *models.Resource,
+	resourceRepo repos.Resource,
 	workflowRepo repos.Workflow,
 	operatorRepo repos.Operator,
 	dagRepo repos.DAG,
@@ -102,8 +102,8 @@ func fetchWorkflowAndDagIDsForIntegration(
 	// For performance reasons, we split out the workflows fetching for notifications, since for these
 	// resources, you can fetch the workflow IDs that use them directly, instead of having to go through
 	// operators.
-	if shared.IsNotificationResource(integration.Service) {
-		workflowIDs, err := operator.GetWorkflowIDsUsingNotification(ctx, integration, workflowRepo, db)
+	if shared.IsNotificationResource(resource.Service) {
+		workflowIDs, err := operator.GetWorkflowIDsUsingNotification(ctx, resource, workflowRepo, db)
 		if err != nil {
 			return nil, err
 		}
@@ -126,8 +126,8 @@ func fetchWorkflowAndDagIDsForIntegration(
 		operators, err := operator.GetOperatorsOnResource(
 			ctx,
 			orgID,
-			integration,
-			integrationRepo,
+			resource,
+			resourceRepo,
 			operatorRepo,
 			db,
 		)
@@ -135,8 +135,8 @@ func fetchWorkflowAndDagIDsForIntegration(
 			return nil, errors.Wrap(err, "Unable to retrieve operators.")
 		}
 
-		// Now, using the operators using this integration, we can infer all the workflows
-		// that also use this integration.
+		// Now, using the operators using this resource, we can infer all the workflows
+		// that also use this resource.
 		operatorIDs := slices.Map(operators, func(op models.Operator) uuid.UUID {
 			return op.ID
 		})

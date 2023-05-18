@@ -25,9 +25,9 @@ import (
 //	Body:
 //   	A list of `response.WorkflowAndDagID` that use the given integration.
 
-type integrationWorkflowsGetArgs struct {
+type resourceWorkflowsGetArgs struct {
 	*aq_context.AqContext
-	integrationID uuid.UUID
+	resourceID uuid.UUID
 }
 
 type ResourceWorkflowsGetHandler struct {
@@ -51,30 +51,30 @@ func (h *ResourceWorkflowsGetHandler) Prepare(r *http.Request) (interface{}, int
 		return nil, statusCode, err
 	}
 
-	integrationID, err := (parser.IntegrationIDParser{}).Parse(r)
+	resourceID, err := (parser.ResourceIDParser{}).Parse(r)
 	if err != nil {
 		return nil, http.StatusBadRequest, err
 	}
 
-	return &integrationWorkflowsGetArgs{
-		AqContext:     aqContext,
-		integrationID: *integrationID,
+	return &resourceWorkflowsGetArgs{
+		AqContext:  aqContext,
+		resourceID: *resourceID,
 	}, http.StatusOK, nil
 }
 
 func (h *ResourceWorkflowsGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*integrationWorkflowsGetArgs)
+	args := interfaceArgs.(*resourceWorkflowsGetArgs)
 
-	integration, err := h.ResourceRepo.Get(ctx, args.integrationID, h.Database)
+	resource, err := h.ResourceRepo.Get(ctx, args.resourceID, h.Database)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrapf(err, "Unable to find integration %s", args.integrationID)
+		return nil, http.StatusInternalServerError, errors.Wrapf(err, "Unable to find resource %s", args.resourceID)
 	}
 
-	workflowAndDagIDs, err := fetchWorkflowAndDagIDsForIntegration(
-		ctx, args.OrgID, integration, h.ResourceRepo, h.WorkflowRepo, h.OperatorRepo, h.DAGRepo, h.DAGResultRepo, h.Database,
+	workflowAndDagIDs, err := fetchWorkflowAndDagIDsForResource(
+		ctx, args.OrgID, resource, h.ResourceRepo, h.WorkflowRepo, h.OperatorRepo, h.DAGRepo, h.DAGResultRepo, h.Database,
 	)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrapf(err, "Unable to find workflows for integration %s", args.integrationID)
+		return nil, http.StatusInternalServerError, errors.Wrapf(err, "Unable to find workflows for resource %s", args.resourceID)
 	}
 	return workflowAndDagIDs, http.StatusOK, nil
 }
