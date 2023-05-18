@@ -7,12 +7,12 @@ import CheckDetailsPage from '../components/pages/check/id';
 import MetricDetailsPage from '../components/pages/metric/id';
 import OperatorDetailsPage from '../components/pages/operator/id';
 import { ArtifactResponse, OperatorResponse } from '../handlers/responses/node';
+import { ReactFlowNodeData } from '../positioning/positioning';
 import { NodeType, selectNode } from '../reducers/nodeSelection';
 import { NodeSelection } from '../reducers/pages/Workflow';
 import { AppDispatch } from '../stores/store';
 import UserProfile from './auth';
 import { OperatorType } from './operators';
-import { ReactFlowNodeData } from './reactflow';
 
 /**
  * This function takes in a dispatch call (which must be created in a
@@ -29,10 +29,7 @@ export const sideSheetSwitcher = (dispatch: AppDispatch) => {
 export function getDataSideSheetContent(
   user: UserProfile,
   selectedNodeState: NodeSelection,
-  selectedNode: OperatorResponse | ArtifactResponse,
-  workflowId: string,
-  dagId: string | undefined,
-  dagResultId: string | undefined
+  selectedNode: OperatorResponse | ArtifactResponse
 ): React.ReactElement {
   const SideSheetLayout = ({ children }) => {
     return (
@@ -47,10 +44,7 @@ export function getDataSideSheetContent(
       <ArtifactDetailsPage
         user={user}
         Layout={SideSheetLayout}
-        artifactIdProp={selectedNodeState.nodeId}
-        workflowDagIdProp={dagId}
-        workflowDagResultIdProp={dagResultId}
-        workflowIdProp={workflowId}
+        nodeId={selectedNodeState.nodeId}
         sideSheetMode={true}
       />
     );
@@ -62,10 +56,7 @@ export function getDataSideSheetContent(
       <MetricDetailsPage
         user={user}
         Layout={SideSheetLayout}
-        operatorIdProp={selectedNodeState.nodeId}
-        workflowDagIdProp={dagId}
-        workflowDagResultIdProp={dagResultId}
-        workflowIdProp={workflowId}
+        nodeId={selectedNodeState.nodeId}
         sideSheetMode={true}
       />
     );
@@ -76,10 +67,7 @@ export function getDataSideSheetContent(
       <CheckDetailsPage
         user={user}
         Layout={SideSheetLayout}
-        operatorIdProp={selectedNodeState.nodeId}
-        workflowDagIdProp={dagId}
-        workflowDagResultIdProp={dagResultId}
-        workflowIdProp={workflowId}
+        nodeId={selectedNodeState.nodeId}
         sideSheetMode={true}
       />
     );
@@ -89,10 +77,7 @@ export function getDataSideSheetContent(
     <OperatorDetailsPage
       user={user}
       Layout={SideSheetLayout}
-      operatorIdProp={selectedNodeState.nodeId}
-      workflowDagIdProp={dagId}
-      workflowDagResultIdProp={dagResultId}
-      workflowIdProp={workflowId}
+      nodeId={selectedNodeState.nodeId}
       sideSheetMode={true}
     />
   );
