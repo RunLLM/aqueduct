@@ -9,7 +9,7 @@ from aqueduct.constants.enums import ServiceType
 import aqueduct as aq
 from sdk.data_integration_tests.flow_manager import FlowManager
 
-from ..setup_integration import get_aqueduct_config
+from ..setup_resource import get_aqueduct_config
 from ..shared.flow_helpers import delete_all_flows
 
 allowed_data_integrations_by_file = {

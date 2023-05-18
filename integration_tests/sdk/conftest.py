@@ -5,7 +5,7 @@ from aqueduct.constants.enums import ServiceType
 from aqueduct.models.dag import DAG, Metadata
 
 from aqueduct import Client, global_config, globals
-from sdk.setup_integration import (
+from sdk.setup_resource import (
     get_aqueduct_config,
     get_artifact_store_name,
     has_storage_config,

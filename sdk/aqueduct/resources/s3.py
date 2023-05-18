@@ -6,7 +6,7 @@ from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, S3TableFormat
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
-from aqueduct.models.integration import BaseResource, ResourceInfo
+from aqueduct.models.resource import BaseResource, ResourceInfo
 from aqueduct.models.operators import (
     ExtractSpec,
     Operator,
@@ -45,7 +45,7 @@ def _convert_to_s3_table_format(format: Optional[str]) -> Optional[S3TableFormat
 
 class S3Resource(BaseResource):
     """
-    Class for S3 integration.
+    Class for S3 resource.
     """
 
     def __init__(self, dag: DAG, metadata: ResourceInfo):
@@ -65,7 +65,7 @@ class S3Resource(BaseResource):
         lazy: bool = False,
     ) -> BaseArtifact:
         """
-        Reads one or more files from the S3 integration.
+        Reads one or more files from the S3 resource.
 
         Args:
             filepaths:
@@ -113,7 +113,7 @@ class S3Resource(BaseResource):
             )
         format_enum = _convert_to_s3_table_format(format)
 
-        integration_info = self._metadata
+        resource_info = self._metadata
         op_name = name or "%s query" % self.name()
         artifact_name = output or default_artifact_name_from_op_name(op_name)
 
@@ -142,8 +142,8 @@ class S3Resource(BaseResource):
                         description=description,
                         spec=OperatorSpec(
                             extract=ExtractSpec(
-                                service=integration_info.service,
-                                integration_id=integration_info.id,
+                                service=resource_info.service,
+                                resource_id=resource_info.id,
                                 parameters=S3ExtractParams(
                                     filepath=json.dumps(filepaths),
                                     artifact_type=artifact_type,
@@ -187,7 +187,7 @@ class S3Resource(BaseResource):
         """
         if artifact.type() == ArtifactType.TABLE and format is None:
             raise InvalidUserArgumentException(
-                "You must supply a file format when saving tabular data into S3 integration `%s`."
+                "You must supply a file format when saving tabular data into S3 resource `%s`."
                 % self.name(),
             )
         elif (
@@ -208,6 +208,6 @@ class S3Resource(BaseResource):
         )
 
     def describe(self) -> None:
-        """Prints out a human-readable description of the S3 integration."""
+        """Prints out a human-readable description of the S3 resource."""
         print("==================== S3 Resource =============================")
         self._metadata.describe()

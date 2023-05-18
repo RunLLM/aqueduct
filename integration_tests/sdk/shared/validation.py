@@ -1,6 +1,6 @@
 import uuid
 
-from aqueduct.models.integration import BaseResource
+from aqueduct.models.resource import BaseResource
 
 from aqueduct import Client, Flow
 from sdk.shared.globals import artifact_id_to_saved_identifier

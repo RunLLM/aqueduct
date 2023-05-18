@@ -2,7 +2,7 @@ import uuid
 from typing import Any
 
 import pandas as pd
-from aqueduct.models.integration import BaseResource
+from aqueduct.models.resource import BaseResource
 
 from aqueduct import Client, Flow
 

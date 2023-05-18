@@ -3,7 +3,7 @@ from typing import List
 from aqueduct.constants.enums import RelationalDBServices, ServiceType
 
 # Default BigQuery dataset used for integration tests
-BIG_QUERY_TEST_DATASET = "integration_test"
+BIG_QUERY_TEST_DATASET = "integratioLn_test"
 
 
 def all_relational_DBs() -> List[ServiceType]:

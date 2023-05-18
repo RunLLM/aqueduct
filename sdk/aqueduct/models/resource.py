@@ -41,11 +41,11 @@ class ResourceInfo(BaseModel):
         return json.dumps(description_map, sort_keys=False, indent=4)
 
     def describe(self) -> None:
-        """Prints out a human-readable description of the integration."""
+        """Prints out a human-readable description of the resource."""
         print(repr(self))
 
     def is_relational(self) -> bool:
-        """Returns whether the integration connects to a relational data store."""
+        """Returns whether the resource connects to a relational data store."""
         return self.service in [
             ServiceType.POSTGRES,
             ServiceType.SNOWFLAKE,
@@ -61,7 +61,7 @@ class ResourceInfo(BaseModel):
 
 class BaseResource(ABC):
     """
-    Base class for the various integrations Aqueduct interacts with.
+    Base class for the various resources Aqueduct interacts with.
     """
 
     _metadata: ResourceInfo
@@ -76,7 +76,7 @@ class BaseResource(ABC):
         return self._metadata.service
 
     def __hash__(self) -> int:
-        """An integration is uniquely identified by its name.
+        """An resource is uniquely identified by its name.
         Ref: https://docs.python.org/3.5/reference/datamodel.html#object.__hash__
         """
         return hash(self._metadata.name)
@@ -84,7 +84,7 @@ class BaseResource(ABC):
     def __eq__(self, other: Any) -> bool:
         """The string and resource object representation are equivalent allowing
         the user to access a dictionary keyed by the BaseResource object with the
-        integration name as a string and vice versa
+        resource name as a string and vice versa
         """
         if type(other) == type(self) and "name" in other._metadata.__dict__:
             return bool(self._metadata.name == other._metadata.name)

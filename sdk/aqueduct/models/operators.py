@@ -17,13 +17,13 @@ from aqueduct.constants.enums import (
 )
 from aqueduct.error import AqueductError, UnsupportedFeatureException
 from aqueduct.models.config import EngineConfig
-from aqueduct.models.integration import ResourceInfo
+from aqueduct.models.resource import ResourceInfo
 from pydantic import BaseModel, Extra
 
 
 class GithubMetadata(BaseModel):
     """
-    Specifies a destination in github integration.
+    Specifies a destination in github resource.
     There are two ways to specify the content:
     -   by `path`, which points to a file or dir in the github repo.
     -   from `repo_config_content_type` and `repo_config_content_name`, which points to
@@ -90,7 +90,7 @@ UnionExtractParams = Union[
 
 class ExtractSpec(BaseModel):
     service: ServiceType
-    integration_id: uuid.UUID
+    resource_id: uuid.UUID
     parameters: UnionExtractParams
 
 
@@ -127,7 +127,7 @@ UnionLoadParams = Union[
 # Class expected by backend for a load operator.
 class LoadSpec(BaseModel):
     service: ServiceType
-    integration_id: uuid.UUID
+    resource_id: uuid.UUID
     parameters: UnionLoadParams
 
     def identifier(self) -> str:
@@ -136,7 +136,7 @@ class LoadSpec(BaseModel):
         elif isinstance(self.parameters, S3LoadParams):
             return self.parameters.filepath
         raise UnsupportedFeatureException(
-            "identifier() is currently unsupported for data integration type %s."
+            "identifier() is currently unsupported for data resource type %s."
             % self.service.value
         )
 
@@ -147,7 +147,7 @@ class LoadSpec(BaseModel):
             self.parameters.filepath = new_obj_identifier
         else:
             raise UnsupportedFeatureException(
-                "set_identifier() is currently unsupported for data integration type %s."
+                "set_identifier() is currently unsupported for data resource type %s."
                 % self.service.value
             )
 

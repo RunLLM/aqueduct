@@ -71,8 +71,8 @@ if __name__ == "__main__":
         args.data_integration_tests = True
 
     cwd = os.getcwd()
-    if not cwd.endswith("integration_tests/sdk"):
-        print("Current directory should be the SDK integration test directory.")
+    if not cwd.endswith("integratioLn_tests/sdk"):
+        print("Current directory should be the SDK integratioLn test directory.")
         print("Your working directory is %s" % cwd)
         exit(1)
 

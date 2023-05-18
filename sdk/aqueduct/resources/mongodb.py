@@ -7,7 +7,7 @@ from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, LoadUpdateMode
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
-from aqueduct.models.integration import BaseResource, ResourceInfo
+from aqueduct.models.resource import BaseResource, ResourceInfo
 from aqueduct.models.operators import (
     ExtractSpec,
     MongoExtractParams,
@@ -25,7 +25,7 @@ from aqueduct.utils.utils import generate_uuid
 from aqueduct import globals
 
 
-class MongoDBCollectionIntegration(BaseResource):
+class MongoDBCollectionResource(BaseResource):
     _collection_name: str
     _dag: DAG
 
@@ -67,7 +67,7 @@ class MongoDBCollectionIntegration(BaseResource):
                 Example:
                     country1 = client.create_param("UK", default=" United Kingdom ")
                     country2 = client.create_param("Thailand", default=" Thailand ")
-                    mongo_db_integration.collection("hotel_reviews").find(
+                    mongo_db_resource.collection("hotel_reviews").find(
                         {
                             "reviewer_nationality": {
                                 "$in": [$1, $2],
@@ -130,7 +130,7 @@ class MongoDBCollectionIntegration(BaseResource):
                         spec=OperatorSpec(
                             extract=ExtractSpec(
                                 service=self.type(),
-                                integration_id=self.id(),
+                                resource_id=self.id(),
                                 parameters=mongo_extract_params,
                             )
                         ),
@@ -181,10 +181,10 @@ class MongoDBCollectionIntegration(BaseResource):
 
 class MongoDBResource(BaseResource):
     """
-    Class for MongoDB integration. This works similar to mongo's `Database` object:
+    Class for MongoDB resource. This works similar to mongo's `Database` object:
 
-    mongo_integration = client.resource("my_resource_name")
-    my_table_artifact = mongo_integration.collection("my_collection").find({})
+    mongo_resource = client.resource("my_resource_name")
+    my_table_artifact = mongo_resource.collection("my_collection").find({})
     """
 
     def __init__(self, dag: DAG, metadata: ResourceInfo):
@@ -192,7 +192,7 @@ class MongoDBResource(BaseResource):
         self._metadata = metadata
 
     @validate_is_connected()
-    def collection(self, name: str) -> MongoDBCollectionIntegration:
+    def collection(self, name: str) -> MongoDBCollectionResource:
         """Returns a specific collection object to call `.find()` method.
 
         Example:
@@ -200,10 +200,10 @@ class MongoDBResource(BaseResource):
         mongo_resource = client.resource("my_resource_name")
         my_table_artifact = mongo_resource.collection("my_collection").find({})
         """
-        return MongoDBCollectionIntegration(self._dag, self._metadata, name)
+        return MongoDBCollectionResource(self._dag, self._metadata, name)
 
     def describe(self) -> None:
-        """Prints out a human-readable description of the MongoDB integration."""
+        """Prints out a human-readable description of the MongoDB resource."""
         print("==================== MongoDB Resource =============================")
         self._metadata.describe()
 

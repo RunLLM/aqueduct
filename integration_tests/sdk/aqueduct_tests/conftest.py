@@ -3,7 +3,7 @@ from aqueduct.constants.enums import ServiceType
 
 import aqueduct as aq
 
-from ..setup_integration import get_aqueduct_config
+from ..setup_resource import get_aqueduct_config
 from ..shared.flow_helpers import delete_all_flows
 from .data_validator import DataValidator
 
