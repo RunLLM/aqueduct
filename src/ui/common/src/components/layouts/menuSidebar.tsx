@@ -13,9 +13,9 @@ import Divider from '@mui/material/Divider';
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
-import UserProfile from 'src/utils/auth';
 
 import { AppDispatch } from '../../stores/store';
+import UserProfile from '../../utils/auth';
 import { getPathPrefix } from '../../utils/getPathPrefix';
 import { apiAddress } from '../hooks/useAqueductConsts';
 import {

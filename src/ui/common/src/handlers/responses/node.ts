@@ -1,7 +1,7 @@
 // This file should map exactly to
 // `src/golang/lib/response/node.go`
 import { ArtifactType, SerializationType } from '../../utils/artifacts';
-import { OperatorSpec } from '../../utils/operators';
+import { OperatorSpec, OperatorType } from '../../utils/operators';
 import { ExecState } from '../../utils/shared';
 
 export type OperatorWithArtifactNodeResponse = {
@@ -39,6 +39,7 @@ export type ArtifactResponse = {
 
 export type ArtifactResultResponse = {
   id: string;
+  artifact_id: string;
   serialization_type: SerializationType;
   content_path: string;
   content_serialized: string;
@@ -57,6 +58,7 @@ export type OperatorResponse = {
 
 export type OperatorResultResponse = {
   id: string;
+  operator_id: string;
   exec_state?: ExecState;
 };
 
@@ -76,7 +78,48 @@ export type NodeResultsResponse = {
   // checks: OperatorWithArtifactNodeResultResponse[];
 };
 
+export type NodesMap = {
+  operators: { [id: string]: OperatorResponse };
+  artifacts: { [id: string]: ArtifactResponse };
+};
+
+export type NodeResultsMap = {
+  operators: { [id: string]: OperatorResultResponse };
+  artifacts: { [id: string]: ArtifactResultResponse };
+};
+
 export type NodeContentResponse = {
   name: string;
   data: string;
 };
+
+export function getMetricsAndChecksOnArtifact(
+  nodes: NodesMap,
+  artifactId: string
+): { checks: OperatorResponse[]; metrics: OperatorResponse[] } {
+  const metricsOp = Object.values(nodes.operators).filter(
+    (op) =>
+      op.inputs.includes(artifactId) &&
+      (op.spec?.type === OperatorType.Metric ||
+        op.spec?.type === OperatorType.SystemMetric)
+  );
+  const checksOp = Object.values(nodes.operators).filter(
+    (op) =>
+      op.inputs.includes(artifactId) && op.spec?.type === OperatorType.Check
+  );
+
+  const metricsArtfIds = metricsOp.flatMap((op) => {
+    return op !== undefined ? op.outputs : [];
+  });
+
+  const metricsArtf = metricsArtfIds.map((id) => nodes.artifacts[id]);
+  const metricsDownstreamIds = metricsArtf.flatMap((artf) => artf.outputs);
+
+  const metricsDownstreamOps = metricsDownstreamIds.map(
+    (id) => nodes.operators[id]
+  );
+
+  checksOp.push(...metricsDownstreamOps);
+
+  return { checks: checksOp, metrics: metricsOp };
+}

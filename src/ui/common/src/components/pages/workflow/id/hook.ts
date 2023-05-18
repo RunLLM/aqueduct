@@ -5,8 +5,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import {
   useDagResultsGetQuery,
+  useNodesGetQuery,
+  useNodesResultsGetQuery,
   useWorkflowGetQuery,
 } from '../../../../handlers/AqueductApi';
+import { NodeResultsMap, NodesMap } from '../../../../handlers/responses/node';
 import { initializeDagOrResultPageIfNotExists } from '../../../../reducers/pages/Workflow';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
 
@@ -25,7 +28,7 @@ export function useWorkflowIds(apiKey: string): useWorkflowIdsOutputs {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const {
-    id: wfIdParam,
+    workflowId: wfIdParam,
     dagId: dagIdParam,
     dagResultId: dagResultIdParam,
   } = useParams();
@@ -98,4 +101,42 @@ export function useWorkflowBreadcrumbs(
     BreadcrumbLink.WORKFLOWS,
     new BreadcrumbLink(workflowLink, workflow?.name ?? defaultTitle),
   ];
+}
+
+export function useWorkflowNodes(
+  apiKey: string,
+  workflowId: string,
+  dagId: string | undefined
+): NodesMap {
+  const { data: nodes } = useNodesGetQuery(
+    { apiKey, workflowId, dagId },
+    { skip: !workflowId || !dagId }
+  );
+  return {
+    operators: Object.fromEntries(
+      (nodes?.operators ?? []).map((op) => [op.id, op])
+    ),
+    artifacts: Object.fromEntries(
+      (nodes?.artifacts ?? []).map((artf) => [artf.id, artf])
+    ),
+  };
+}
+
+export function useWorkflowNodesResults(
+  apiKey: string,
+  workflowId: string,
+  dagResultId: string | undefined
+): NodeResultsMap {
+  const { data: nodeResults } = useNodesResultsGetQuery(
+    { apiKey, workflowId, dagResultId },
+    { skip: !workflowId || !dagResultId }
+  );
+  return {
+    operators: Object.fromEntries(
+      (nodeResults?.operators ?? []).map((op) => [op.operator_id, op])
+    ),
+    artifacts: Object.fromEntries(
+      (nodeResults?.artifacts ?? []).map((artf) => [artf.artifact_id, artf])
+    ),
+  };
 }

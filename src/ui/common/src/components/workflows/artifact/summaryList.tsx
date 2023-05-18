@@ -5,18 +5,20 @@ import Typography from '@mui/material/Typography';
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
-import { ArtifactResultResponse } from '../../../handlers/responses/artifactDeprecated';
+import { NodeResultsMap, NodesMap } from '../../../handlers/responses/node';
 import { theme } from '../../../styles/theme/theme';
 import { getPathPrefix } from '../../../utils/getPathPrefix';
 import { OperatorType } from '../../../utils/operators';
-import { artifactTypeToIconMapping } from '../nodes/nodeTypes';
+import { artifactTypeToIconMapping } from '../nodes/Node';
 
 type Props = {
   title: string;
-  workflowId: string;
   dagId: string;
-  dagResultId: string;
-  artifactResults: ArtifactResultResponse[];
+  dagResultId?: string;
+  workflowId: string;
+  nodes: NodesMap;
+  nodeResults?: NodeResultsMap;
+  artifactIds: string[];
   collapsePrimitives?: boolean;
   // When appearance is set to 'value', we will display the value
   // instead of a link whenever possible.
@@ -28,92 +30,104 @@ const SummaryList: React.FC<Props> = ({
   workflowId,
   dagId,
   dagResultId,
-  artifactResults,
+  nodes,
+  nodeResults,
+  artifactIds,
   appearance = 'link',
   collapsePrimitives = true,
 }) => {
-  const items = artifactResults.map((artifactResult, index) => {
-    let content = null,
-      link = null;
+  const items = artifactIds
+    .map((artfId, index) => {
+      const artf = nodes.artifacts[artfId];
+      const artfResult = (nodeResults?.artifacts ?? {})[artfId];
+      if (!artf) {
+        return null;
+      }
 
-    let linkType = 'artifact';
-    let linkTarget = artifactResult.id;
-    const dagLinkSegment = dagResultId
-      ? `result/${dagResultId}`
-      : `dag/${dagId}`;
-    if (
-      artifactResult.operatorType === OperatorType.Metric ||
-      artifactResult.operatorType === OperatorType.Check
-    ) {
-      // For checks & metrics, we want to the URL to be of the form /metric/{operatorId}, which is why we set both the
-      // linkType and linkTarget here.
-      linkType = artifactResult.operatorType;
-      linkTarget = artifactResult.from;
-    }
+      let content = null,
+        link = null;
 
-    if (
-      artifactResult.result?.content_serialized &&
-      appearance === 'value' &&
-      collapsePrimitives
-    ) {
-      content = artifactResult.result.content_serialized;
-    } else if (artifactResult.result?.content_serialized) {
-      // Show the name and the value and link it.
-      link = `${getPathPrefix()}/workflow/${workflowId}/${dagLinkSegment}/${linkType}/${linkTarget}`;
-      content = `${artifactResult.name} (${artifactResult.result.content_serialized})`;
-    } else {
-      // Show only the name and link it.
-      link = `${getPathPrefix()}/workflow/${workflowId}/${dagLinkSegment}/${linkType}/${linkTarget}`;
-      content = artifactResult.name;
-    }
+      let linkType = 'artifact';
+      let linkTarget = artfId;
+      const dagLinkSegment = dagResultId
+        ? `result/${dagResultId}`
+        : `dag/${dagId}`;
 
-    const element = (
-      <Box
-        key={artifactResult.id}
-        display="flex"
-        p={1}
-        sx={{
-          alignItems: 'center',
-          '&:hover': { backgroundColor: 'gray.100' },
-          borderBottom:
-            index === artifactResults.length - 1
-              ? ''
-              : `1px solid ${theme.palette.gray[400]}`,
-        }}
-      >
-        <Box display="flex" sx={{ alignItems: 'center' }}>
-          <Box
-            sx={{
-              width: '16px',
-              height: '16px',
-            }}
-          >
-            <FontAwesomeIcon
-              fontSize="16px"
-              color={`${theme.palette.gray[700]}`}
-              icon={artifactTypeToIconMapping[artifactResult.type]}
-            />
-          </Box>
-          <Typography ml="16px">{content}</Typography>
-        </Box>
-      </Box>
-    );
+      const fromOpType = nodes.operators[artf.input]?.spec?.type;
+      if (
+        fromOpType === OperatorType.Metric ||
+        fromOpType === OperatorType.Check
+      ) {
+        // For checks & metrics, we want to the URL to be of the form /metric/{operatorId}, which is why we set both the
+        // linkType and linkTarget here.
+        linkType = fromOpType;
+        linkTarget = artf.input;
+      }
 
-    if (link) {
-      return (
-        <Link
-          to={link}
-          component={RouterLink}
-          sx={{ textDecoration: 'none' }}
-          key={artifactResult.id}
+      if (
+        artfResult?.content_serialized &&
+        appearance === 'value' &&
+        collapsePrimitives
+      ) {
+        content = artfResult.content_serialized;
+      } else if (artfResult?.content_serialized) {
+        // Show the name and the value and link it.
+        link = `${getPathPrefix()}/workflow/${workflowId}/${dagLinkSegment}/${linkType}/${linkTarget}`;
+        content = `${artf.name} (${artfResult.content_serialized})`;
+      } else {
+        // Show only the name and link it.
+        link = `${getPathPrefix()}/workflow/${workflowId}/${dagLinkSegment}/${linkType}/${linkTarget}`;
+        content = artf.name;
+      }
+
+      const element = (
+        <Box
+          key={artfId}
+          display="flex"
+          p={1}
+          sx={{
+            alignItems: 'center',
+            '&:hover': { backgroundColor: 'gray.100' },
+            borderBottom:
+              index === artifactIds.length - 1
+                ? ''
+                : `1px solid ${theme.palette.gray[400]}`,
+          }}
         >
-          {element}
-        </Link>
+          <Box display="flex" sx={{ alignItems: 'center' }}>
+            <Box
+              sx={{
+                width: '16px',
+                height: '16px',
+              }}
+            >
+              <FontAwesomeIcon
+                fontSize="16px"
+                color={`${theme.palette.gray[700]}`}
+                icon={artifactTypeToIconMapping[artf.type]}
+              />
+            </Box>
+            <Typography ml="16px">{content}</Typography>
+          </Box>
+        </Box>
       );
-    }
 
-    return element;
-  });
+      if (link) {
+        return (
+          <Link
+            to={link}
+            component={RouterLink}
+            sx={{ textDecoration: 'none' }}
+            key={artfId}
+          >
+            {element}
+          </Link>
+        );
+      }
+
+      return element;
+    })
+    .filter((x) => !!x);
 
   return (
     <Box>

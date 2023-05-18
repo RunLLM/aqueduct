@@ -2,21 +2,25 @@ import { Alert, Box, Divider, Typography } from '@mui/material';
 import React from 'react';
 
 import ArtifactContent from '../../../../../components/workflows/artifact/content';
-import { ArtifactResultResponse } from '../../../../../handlers/responses/artifactDeprecated';
-import { ContentWithLoadingStatus } from '../../../../../reducers/artifactResultContents';
+import { ArtifactResultResponse } from '../../../../../handlers/responses/node';
+import { ArtifactResultContent } from '../../../../../utils/artifacts';
 
 type PreviewProps = {
   upstreamPending: boolean;
   previewAvailable: boolean;
-  artifact: ArtifactResultResponse;
-  contentWithLoadingStatus: ContentWithLoadingStatus;
+  artifactResult?: ArtifactResultResponse;
+  content: ArtifactResultContent;
+  contentLoading: boolean;
+  contentError: string;
 };
 
 export const Preview: React.FC<PreviewProps> = ({
   upstreamPending,
   previewAvailable,
-  artifact,
-  contentWithLoadingStatus,
+  artifactResult,
+  content,
+  contentLoading,
+  contentError,
 }) => {
   let preview = (
     <>
@@ -57,8 +61,10 @@ export const Preview: React.FC<PreviewProps> = ({
             Preview
           </Typography>
           <ArtifactContent
-            artifact={artifact}
-            contentWithLoadingStatus={contentWithLoadingStatus}
+            artifactResult={artifactResult}
+            content={content}
+            contentLoading={contentLoading}
+            contentError={contentError}
           />
         </Box>
 

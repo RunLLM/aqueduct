@@ -40,8 +40,9 @@ const WorkflowHeader: React.FC<Props> = ({
   dagResultId,
 }) => {
   // TODO: Refactor
-  const currentNode = useSelector(
-    (state: RootState) => state.nodeSelectionReducer.selected
+  const nodeSelectionState = useSelector(
+    (state: RootState) =>
+      state.workflowPageReducer.perWorkflowPageStates[workflowId]?.SelectedNode
   );
 
   // NOTE: The 1000 here is just a placeholder. By the time the page snaps into place,
@@ -60,9 +61,8 @@ const WorkflowHeader: React.FC<Props> = ({
     }
   };
 
-  // TODO (ENG-2302): useLayoutEffect here. May want to figure out some way to debounce as it gets called quite quickly when resizing.
   window.addEventListener('resize', getContainerSize);
-  useLayoutEffect(getContainerSize, [currentNode]);
+  useLayoutEffect(getContainerSize, [nodeSelectionState]);
 
   const [showDescription, setShowDescription] = useState(false);
   const { data: workflow } = useWorkflowGetQuery(
