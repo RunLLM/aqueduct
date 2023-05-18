@@ -108,7 +108,7 @@ func (ts *TestSuite) TearDownTest() {
 	DELETE FROM artifact;
 	DELETE FROM artifact_result;
 	DELETE FROM execution_environment;
-	DELETE FROM integration;
+	DELETE FROM resource;
 	DELETE FROM notification;
 	DELETE FROM operator;
 	DELETE FROM operator_result;
