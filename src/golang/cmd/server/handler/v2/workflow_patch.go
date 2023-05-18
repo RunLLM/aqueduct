@@ -1,10 +1,11 @@
-package handler
+package v2
 
 import (
 	"context"
 	"encoding/json"
 	"net/http"
 
+	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -18,7 +19,11 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /workflow/{workflowId}/edit
+// Route:
+//
+//	/workflow/{workflowId}/edit
+//	v2/workflow/{workflowId}/edit
+//
 // Method: POST
 // Params: workflowId
 // Request:
@@ -26,11 +31,11 @@ import (
 //	Headers:
 //		`api-key`: user's API Key
 //	Body:
-//		serialized `editWorkflowInput` object.
+//		serialized `workflowPatchInput` object.
 //
 // Response: none
-type EditWorkflowHandler struct {
-	PostHandler
+type WorkflowPatchHandler struct {
+	handler.PostHandler
 
 	Database database.Database
 	Engine   engine.Engine
@@ -42,7 +47,7 @@ type EditWorkflowHandler struct {
 	WorkflowRepo repos.Workflow
 }
 
-type editWorkflowInput struct {
+type workflowPatchInput struct {
 	WorkflowName         string                       `json:"name"`
 	WorkflowDescription  string                       `json:"description"`
 	Schedule             *shared.Schedule             `json:"schedule"`
@@ -50,7 +55,7 @@ type editWorkflowInput struct {
 	NotificationSettings *shared.NotificationSettings `json:"notification_settings"`
 }
 
-type editWorkflowArgs struct {
+type workflowPatchArgs struct {
 	workflowId           uuid.UUID
 	workflowName         string
 	workflowDescription  string
@@ -59,11 +64,11 @@ type editWorkflowArgs struct {
 	notificationSettings *shared.NotificationSettings
 }
 
-func (*EditWorkflowHandler) Name() string {
-	return "EditWorkflow"
+func (*WorkflowPatchHandler) Name() string {
+	return "WorkflowPatch"
 }
 
-func (h *EditWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *WorkflowPatchHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
@@ -92,7 +97,7 @@ func (h *EditWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error)
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
 	}
 
-	var input editWorkflowInput
+	var input workflowPatchInput
 	err = json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.New("Unable to parse JSON input.")
@@ -117,7 +122,7 @@ func (h *EditWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error)
 		return nil, http.StatusBadRequest, errors.New("Edit request issued without any updates specified.")
 	}
 
-	return &editWorkflowArgs{
+	return &workflowPatchArgs{
 		workflowId:           workflowID,
 		workflowName:         input.WorkflowName,
 		workflowDescription:  input.WorkflowDescription,
@@ -127,8 +132,8 @@ func (h *EditWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error)
 	}, http.StatusOK, nil
 }
 
-func (h *EditWorkflowHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*editWorkflowArgs)
+func (h *WorkflowPatchHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*workflowPatchArgs)
 	txn, err := h.Database.BeginTx(ctx)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to update workflow.")
