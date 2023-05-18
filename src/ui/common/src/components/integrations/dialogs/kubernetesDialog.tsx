@@ -11,6 +11,8 @@ import {
 } from '../../../utils/integrations';
 import { apiAddress } from '../../hooks/useAqueductConsts';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { useEnvironmentGetQuery } from '../../../handlers/AqueductApi';
+import { APIKeyParameter } from '../../../handlers/parameters/Header';
 
 const Placeholders: KubernetesConfig = {
   kubeconfig_path: '/home/ubuntu/.kube/config',
@@ -24,6 +26,13 @@ export const KubernetesDialog: React.FC<IntegrationDialogProps> = ({
 }) => {
   const { register, setValue, getValues } = useFormContext();
   const use_same_cluster = getValues('use_same_cluster');
+  if (user) {
+    const { data, error, isLoading } = useEnvironmentGetQuery({ apiKey: user.apiKey });
+    console.log('error: ', error);
+    console.log('isLoading: ', isLoading);
+    console.log('data: ', data);
+  }
+
 
   register('use_same_cluster');
 
@@ -34,24 +43,24 @@ export const KubernetesDialog: React.FC<IntegrationDialogProps> = ({
   const [inK8sCluster, setInK8sCluster] = useState(false);
 
   // TODO: https://linear.app/aqueducthq/issue/ENG-2964/move-k8s-use-same-cluster-request-to-rtkquery
-  useEffect(() => {
-    const fetchEnvironment = async () => {
-      const environmentResponse = await fetch(`${apiAddress}/api/environment`, {
-        method: 'GET',
-        headers: {
-          'api-key': user.apiKey,
-        },
-      });
+  // useEffect(() => {
+  //   const fetchEnvironment = async () => {
+  //     const environmentResponse = await fetch(`${apiAddress}/api/environment`, {
+  //       method: 'GET',
+  //       headers: {
+  //         'api-key': user.apiKey,
+  //       },
+  //     });
 
-      const responseBody = await environmentResponse.json();
-      console.log('responseBody: ', responseBody);
-      setInK8sCluster(responseBody['inK8sCluster']);
-    };
+  //     const responseBody = await environmentResponse.json();
+  //     console.log('responseBody: ', responseBody);
+  //     //setInK8sCluster(responseBody['inK8sCluster']);
+  //   };
 
-    if (user) {
-      fetchEnvironment().catch(console.error);
-    }
-  }, [user]);
+  //   if (user) {
+  //     fetchEnvironment().catch(console.error);
+  //   }
+  // }, [user]);
 
   return (
     <Box sx={{ mt: 2 }}>

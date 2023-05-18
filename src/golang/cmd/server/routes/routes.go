@@ -24,6 +24,7 @@ const (
 	NodeDagOperatorsRoute          = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/operators"
 	NodeOperatorContentRoute       = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/operator/{nodeID}/content"
 	NodesResultsRoute              = "/api/v2/workflow/{workflowID}/result/{dagResultID}/nodes/results"
+	GetServerEnvironmentRoute      = "/api/v2/environment"
 
 	// V1 routes
 	GetArtifactVersionsRoute = "/api/artifact/versions"
@@ -73,6 +74,5 @@ const (
 	GetWorkflowDagResultRoute    = "/api/workflow/{workflowId}/result/{workflowDagResultId}"
 	GetWorkflowHistoryRoute      = "/api/workflow/{workflowId}/history"
 
-	GetServerVersionRoute     = "/api/version"
-	GetServerEnvironmentRoute = "/api/environment"
+	GetServerVersionRoute = "/api/version"
 )

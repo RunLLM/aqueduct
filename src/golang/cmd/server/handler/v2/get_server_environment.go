@@ -1,10 +1,11 @@
-package handler
+package v2
 
 import (
 	"context"
 	"net/http"
 	"os"
 
+	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	"github.com/aqueducthq/aqueduct/lib"
 )
 
@@ -16,7 +17,9 @@ type getServerEnvironmentResponse struct {
 	Version      string `json:"version"`
 }
 
-// Route: /api/environment
+// Route: /api/v2/environment
+// This file should map directly to
+// src/ui/common/src/handlers/v2/EnvironmentGet.tsx
 // Method: GET
 // Request:
 //
@@ -25,7 +28,7 @@ type getServerEnvironmentResponse struct {
 //
 // Response: Aqueduct server's environment variables.
 type GetServerEnvironmentHandler struct {
-	GetHandler
+	handler.GetHandler
 }
 
 func (*GetServerEnvironmentHandler) Name() string {
