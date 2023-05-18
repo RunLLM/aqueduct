@@ -32,17 +32,21 @@ import Snackbar from '@mui/material/Snackbar';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import React, { useCallback, useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import React, { useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
-import { WorkflowResponse } from '../../handlers/responses/workflow';
-import { handleFetchAllWorkflowSummaries } from '../../reducers/listWorkflowSummaries';
 import {
-  handleDeleteWorkflow,
-  handleListWorkflowSavedObjects,
-} from '../../reducers/workflow';
-import { AppDispatch, RootState } from '../../stores/store';
+  useWorkflowDeletePostMutation,
+  useWorkflowEditPostMutation,
+  useWorkflowObjectsGetQuery,
+  useWorkflowsGetQuery,
+} from '../../handlers/AqueductApi';
+import {
+  DagResponse,
+  WorkflowResponse,
+} from '../../handlers/responses/workflow';
+import { RootState } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
 import {
@@ -54,7 +58,7 @@ import {
 } from '../../utils/cron';
 import { IntegrationCategories } from '../../utils/integrations';
 import { UpdateMode } from '../../utils/operators';
-import ExecutionStatus, { LoadingStatusEnum } from '../../utils/shared';
+import ExecutionStatus from '../../utils/shared';
 import { SupportedIntegrations } from '../../utils/SupportedIntegrations';
 import {
   getSavedObjectIdentifier,
@@ -63,13 +67,11 @@ import {
   SavedObject,
   WorkflowUpdateTrigger,
 } from '../../utils/workflows';
-import { useAqueductConsts } from '../hooks/useAqueductConsts';
 import { Button } from '../primitives/Button.styles';
 import { LoadingButton } from '../primitives/LoadingButton.styles';
 import StorageSelector from './storageSelector';
 import TriggerSourceSelector from './triggerSourceSelector';
 import WorkflowNotificationSettings from './WorkflowNotificationSettings';
-import { useWorkflowObjectsGetQuery, useWorkflowsGetQuery } from 'src/handlers/AqueductApi';
 
 type PeriodicScheduleSelectorProps = {
   cronString: string;
@@ -227,10 +229,7 @@ const RetentionPolicySelector: React.FC<RetentionPolicyProps> = ({
 type WorkflowSettingsProps = {
   user: UserProfile;
   workflow: WorkflowResponse;
-  onSettingsSave: () => void;
-  onSetShowUpdateMessage: (shouldShow: boolean) => void;
-  onSetUpdateSucceeded: (isSuccessful: boolean) => void;
-  onSetUpdateMessage: (updateMessage: string) => void;
+  dag: DagResponse;
 };
 
 // Returns whether `updated` is different from `existing`.
@@ -257,18 +256,33 @@ function IsNotificationSettingsMapUpdated(
 
 const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   user,
+  dag,
   workflow,
-  onSettingsSave,
-  onSetShowUpdateMessage,
-  onSetUpdateSucceeded,
-  onSetUpdateMessage,
 }) => {
-  const { apiAddress } = useAqueductConsts();
   const navigate = useNavigate();
 
-  const dispatch: AppDispatch = useDispatch();
-  const { data: workflows } = useWorkflowsGetQuery({ apiKey: user.apiKey })
-  const { data: savedObjects } = useWorkflowObjectsGetQuery({ apiKey: user.apiKey, workflowId: workflow.id })
+  const { data: workflows } = useWorkflowsGetQuery({ apiKey: user.apiKey });
+  const {
+    data: savedObjects,
+    error: savedObjectsError,
+    isSuccess: savedObjectSuccess,
+  } = useWorkflowObjectsGetQuery({
+    apiKey: user.apiKey,
+    workflowId: workflow.id,
+  });
+  const [
+    deleteWorkflow,
+    {
+      data: deleteWorkflowResponse,
+      isLoading: deleteWorkflowLoading,
+      error: deleteWorkflowError,
+      isSuccess: deleteWorkflowSuccess,
+      reset: resetDeleteWorkflow,
+    },
+  ] = useWorkflowDeletePostMutation();
+
+  const [editWorkflow, { isLoading: isEditWorkflowLoading }] =
+    useWorkflowEditPostMutation();
 
   const [selectedObjects, setSelectedObjects] = useState(
     new Set<SavedObject>()
@@ -424,67 +438,38 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   };
 
   // State that controls the Snackbar for an attempted workflow deletion.
-  const [deleteMessage, setDeleteMessage] = useState('');
-  const [showDeleteMessage, setShowDeleteMessage] = useState(false);
-
-  // State that controls the Snackbar for an attempted workflow settings
-  // update.
-  const [isUpdating, setIsUpdating] = useState<boolean>(false);
-  const [deleteSucceeded, setDeleteSucceeded] = useState<boolean>(false);
-
-  const savedObjectsDeletionResponse = useSelector(
-    (state: RootState) => state.workflowReducer.savedObjectDeletion
-  );
-
-  const deleteWorkflowResults = savedObjectsDeletionResponse.result;
-  const deleteWorkflowResultsStatus =
-    savedObjectsDeletionResponse.loadingStatus.loading;
+  const deleteMessage = deleteWorkflowSuccess
+    ? 'Successfully deleted your workflow. Redirecting you to the workflows page...'
+    : deleteWorkflowError
+    ? `We were unable to delete your workflow: ${deleteWorkflowError}`
+    : '';
 
   useEffect(() => {
-    if (
-      deleteWorkflowResultsStatus === LoadingStatusEnum.Succeeded ||
-      deleteWorkflowResultsStatus === LoadingStatusEnum.Failed
-    ) {
+    if (deleteWorkflowSuccess || !!deleteWorkflowError) {
       if (showDeleteDialog) {
         setShowDeleteDialog(false);
       }
-      if (deleteWorkflowResultsStatus === LoadingStatusEnum.Succeeded) {
-        setDeleteSucceeded(true);
+
+      if (deleteWorkflowSuccess) {
         if (selectedObjects.size > 0) {
           if (!showSavedObjectDeletionResultsDialog) {
             setShowSavedObjectDeletionResultsDialog(true);
           }
         } else {
-          setDeleteMessage(
-            'Successfully deleted your workflow. Redirecting you to the workflows page...'
-          );
-          setShowDeleteMessage(true);
           navigate('/workflows');
         }
-      } else if (deleteWorkflowResultsStatus === LoadingStatusEnum.Failed) {
-        setDeleteSucceeded(false);
-        setDeleteMessage(
-          `We were unable to delete your workflow: ${savedObjectsDeletionResponse.loadingStatus.err}`
-        );
-        setShowDeleteMessage(true);
+      } else {
         setDeleteValidation('');
       }
     }
-  }, [
-    deleteWorkflowResultsStatus,
-    navigate,
-    savedObjectsDeletionResponse.loadingStatus.err,
-    selectedObjects.size,
-    showDeleteDialog,
-    showSavedObjectDeletionResultsDialog,
-    setShowSavedObjectDeletionResultsDialog,
-  ]);
+  }, [deleteWorkflowSuccess, deleteWorkflowError, navigate]);
 
   const updateSettings = (event) => {
     event.preventDefault();
-    setIsUpdating(true);
 
-    const changes = {
+    editWorkflow({
+      apiKey: user.apiKey,
+      workflowId: workflow.id,
       name: name === workflow.name ? '' : name,
       description: name === workflow.description ? '' : description,
       schedule: {
@@ -501,31 +486,6 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       notification_settings: isNotificationSettingsUpdated
         ? { settings: normalizedNotificationSettingsMap }
         : undefined,
-    };
-
-    fetch(`${apiAddress}/api/workflow/${workflow.id}/edit`, {
-      method: 'POST',
-      headers: {
-        'api-key': user.apiKey,
-      },
-      body: JSON.stringify(changes),
-    }).then((res) => {
-      res.json().then((body) => {
-        if (res.ok) {
-          onSetUpdateSucceeded(true);
-          onSetUpdateMessage('Sucessfully updated your workflow.');
-        } else {
-          onSetUpdateSucceeded(false);
-          onSetUpdateMessage(
-            `There was an unexpected error while updating your workflow: ${body.error}`
-          );
-        }
-
-        onSetShowUpdateMessage(true);
-        if (onSettingsSave) {
-          onSettingsSave();
-        }
-      });
     });
   };
 
@@ -650,11 +610,10 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         )}
 
         <Box sx={{ my: 2 }}>
-          {savedObjectsStatus === LoadingStatusEnum.Succeeded &&
-            listSavedObjects}
-          {savedObjectsStatus === LoadingStatusEnum.Failed && (
+          {savedObjectSuccess && listSavedObjects}
+          {savedObjectsError && (
             <Alert severity="error" sx={{ marginTop: 2 }}>
-              {`Unable to retrieve list of saved objects. Failed with error: ${savedObjectsResponse.loadingStatus.err}`}
+              {`Unable to retrieve list of saved objects. Failed with error: ${savedObjectsError}`}
             </Alert>
           )}
         </Box>
@@ -703,17 +662,28 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         <LoadingButton
           variant="contained"
           color="error"
-          loading={deleteWorkflowResultsStatus === LoadingStatusEnum.Loading}
+          loading={deleteWorkflowLoading}
           disabled={deleteValidation !== name}
           onClick={(event) => {
             event.preventDefault();
-            dispatch(
-              handleDeleteWorkflow({
-                apiKey: user.apiKey,
-                workflowId: workflow.id,
-                selectedObjects: selectedObjects,
-              })
-            );
+            const external_delete = {};
+
+            selectedObjects.forEach((object) => {
+              if (!external_delete[object.integration_name]) {
+                external_delete[object.integration_name] = [];
+              }
+
+              external_delete[object.integration_name].push(
+                JSON.stringify(object.spec)
+              );
+            });
+
+            deleteWorkflow({
+              apiKey: user.apiKey,
+              workflowId: workflow.id,
+              force: true,
+              external_delete,
+            });
           }}
         >
           Delete
@@ -725,7 +695,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   let successfullyDeleted = 0;
   let unsuccessfullyDeleted = 0;
 
-  Object.entries(deleteWorkflowResults).map((workflowResults) =>
+  Object.entries(deleteWorkflowResponse).map((workflowResults) =>
     workflowResults[1].map((objectResult) => {
       if (objectResult.exec_state.status === ExecutionStatus.Succeeded) {
         successfullyDeleted += 1;
@@ -734,9 +704,10 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       }
     })
   );
+
   const savedObjectDeletionResultsDialog = (
     <Dialog
-      open={showSavedObjectDeletionResultsDialog}
+      open={deleteWorkflowSuccess}
       onClose={() => navigate('/workflows')}
       maxWidth="sm"
       fullWidth
@@ -768,14 +739,14 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         </Typography>
 
         <List dense={true}>
-          {Object.entries(deleteWorkflowResults)
+          {Object.entries(deleteWorkflowResponse)
             .map(([integrationName, objectResults]) =>
               objectResults.map((objectResult) => (
                 <>
                   <ListItem key={`${integrationName}-${objectResult.name}`}>
                     <ListItemIcon style={{ minWidth: '30px' }}>
                       {objectResult.exec_state.status ===
-                        ExecutionStatus.Succeeded ? (
+                      ExecutionStatus.Succeeded ? (
                         <FontAwesomeIcon
                           icon={faCircleCheck}
                           style={{
@@ -801,13 +772,13 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
                   </ListItem>
                   {objectResult.exec_state.status ===
                     ExecutionStatus.Failed && (
-                      <Alert icon={false} severity="error">
-                        <AlertTitle>
-                          Failed to delete {objectResult.name}.
-                        </AlertTitle>
-                        <pre>{objectResult.exec_state.error.context}</pre>
-                      </Alert>
-                    )}
+                    <Alert icon={false} severity="error">
+                      <AlertTitle>
+                        Failed to delete {objectResult.name}.
+                      </AlertTitle>
+                      <pre>{objectResult.exec_state.error.context}</pre>
+                    </Alert>
+                  )}
                 </>
               ))
             )
@@ -870,7 +841,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         </Box>
       </Box>
 
-      {dagResults && dagResults.length > 0 && <StorageSelector />}
+      <StorageSelector dag={dag} />
 
       <Box sx={{ my: 2 }}>
         <Typography style={{ fontWeight: 'bold' }}> Schedule </Typography>
@@ -934,7 +905,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       </Button>
 
       <LoadingButton
-        loading={isUpdating}
+        loading={isEditWorkflowLoading}
         onClick={updateSettings}
         sx={{ my: 1 }}
         color="primary"
@@ -959,14 +930,14 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        open={showDeleteMessage}
-        onClose={() => setShowDeleteMessage(false)}
+        open={!!deleteMessage}
+        onClose={() => resetDeleteWorkflow()}
         key={'workflowdelete-snackbar'}
         autoHideDuration={6000}
       >
         <Alert
-          onClose={() => setShowDeleteMessage(false)}
-          severity={deleteSucceeded ? 'success' : 'error'}
+          onClose={() => resetDeleteWorkflow()}
+          severity={deleteWorkflowSuccess ? 'success' : 'error'}
           sx={{ width: '100%' }}
         >
           {deleteMessage}

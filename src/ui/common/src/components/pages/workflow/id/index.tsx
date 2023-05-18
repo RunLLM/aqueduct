@@ -18,6 +18,7 @@ import {
   useDagGetQuery,
   useDagResultGetQuery,
   useDagResultsGetQuery,
+  useWorkflowEditPostMutation,
   useWorkflowGetQuery,
 } from '../../../../handlers/AqueductApi';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
@@ -97,9 +98,20 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const [currentTab, setCurrentTab] = useState<string>('Details');
   const [showRunWorkflowDialog, setShowRunWorkflowDialog] = useState(false);
 
-  const [updateMessage, setUpdateMessage] = useState<string>('');
-  const [showUpdateMessage, setShowUpdateMessage] = useState<boolean>(false);
-  const [updateSucceeded, setUpdateSucceeded] = useState<boolean>(false);
+  const [
+    _,
+    {
+      isSuccess: editWorkflowSuccess,
+      error: editWorkflowError,
+      reset: resetEditWorkflow,
+    },
+  ] = useWorkflowEditPostMutation();
+
+  const editWorkflowMessage = editWorkflowSuccess
+    ? 'Sucessfully updated your workflow.'
+    : editWorkflowError
+    ? `There was an unexpected error while updating your workflow: ${editWorkflowError}`
+    : '';
 
   const selectedNodeState = useSelector(
     (state: RootState) =>
@@ -232,29 +244,9 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
               </Box>
             )}
 
-            {currentTab === 'Settings' && !!workflow && (
+            {currentTab === 'Settings' && !!workflow && !!dag && (
               <Box sx={{ paddingBottom: '24px' }}>
-                <WorkflowSettings
-                  user={user}
-                  workflow={workflow}
-                  onSettingsSave={() => {
-                    setShowUpdateMessage(true);
-                    // Show toast message for a few seconds and then update the current tab.
-                    setTimeout(() => {
-                      // Refresh the page to send user to Details tab with latest information.
-                      window.location.reload();
-                    }, 3000);
-                  }}
-                  onSetShowUpdateMessage={(shouldShow) =>
-                    setShowUpdateMessage(shouldShow)
-                  }
-                  onSetUpdateSucceeded={(isSuccessful) =>
-                    setUpdateSucceeded(isSuccessful)
-                  }
-                  onSetUpdateMessage={(updateMessage) =>
-                    setUpdateMessage(updateMessage)
-                  }
-                />
+                <WorkflowSettings user={user} dag={dag} workflow={workflow} />
               </Box>
             )}
           </Box>
@@ -411,17 +403,17 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        open={showUpdateMessage}
-        onClose={() => setShowUpdateMessage(false)}
+        open={!!editWorkflowMessage}
+        onClose={() => resetEditWorkflow()}
         key={'settingsupdate-snackbar'}
         autoHideDuration={3000}
       >
         <Alert
-          onClose={() => setShowUpdateMessage(false)}
-          severity={updateSucceeded ? 'success' : 'error'}
+          onClose={() => resetEditWorkflow()}
+          severity={editWorkflowSuccess ? 'success' : 'error'}
           sx={{ width: '100%' }}
         >
-          {updateMessage}
+          {editWorkflowMessage}
         </Alert>
       </Snackbar>
     </Layout>
