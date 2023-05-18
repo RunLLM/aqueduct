@@ -1,5 +1,5 @@
 // This file should map exactly to
-// src/golang/cmd/server/handler/edit_workflow.go
+// src/golang/cmd/server/handler/v2/workflow_post.go
 
 import { APIKeyParameter } from '../parameters/Header';
 import { WorkflowIdParameter } from '../parameters/Path';

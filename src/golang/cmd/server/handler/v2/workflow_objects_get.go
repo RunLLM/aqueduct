@@ -1,9 +1,10 @@
-package handler
+package v2
 
 import (
 	"context"
 	"net/http"
 
+	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
 	"github.com/aqueducthq/aqueduct/lib/database"
@@ -20,7 +21,8 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Route: /workflow/{workflowId}/objects
+// Route:
+//	v2/workflow/{workflowId}/objects
 // Method: GET
 // Params:
 //	`workflowId`: ID for `workflow` object
@@ -31,17 +33,17 @@ import (
 //	Body:
 //		all objects written by `workflowId`
 
-type ListWorkflowObjectsArgs struct {
+type WorkflowObjectsGetArgs struct {
 	*aq_context.AqContext
 	workflowId uuid.UUID
 }
 
-type ListWorkflowObjectsResponse struct {
+type WorkflowObjectsGetResponse struct {
 	LoadDetails []views.LoadOperator `json:"object_details"`
 }
 
-type ListWorkflowObjectsHandler struct {
-	GetHandler
+type WorkflowObjectsGetHandler struct {
+	handler.GetHandler
 
 	Database database.Database
 
@@ -51,11 +53,11 @@ type ListWorkflowObjectsHandler struct {
 	ArtifactResultRepo repos.ArtifactResult
 }
 
-func (*ListWorkflowObjectsHandler) Name() string {
-	return "ListWorkflowObjects"
+func (*WorkflowObjectsGetHandler) Name() string {
+	return "WorkflowObjectsGet"
 }
 
-func (h *ListWorkflowObjectsHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *WorkflowObjectsGetHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
@@ -80,15 +82,15 @@ func (h *ListWorkflowObjectsHandler) Prepare(r *http.Request) (interface{}, int,
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this workflow.")
 	}
 
-	return &ListWorkflowObjectsArgs{
+	return &WorkflowObjectsGetArgs{
 		AqContext:  aqContext,
 		workflowId: workflowID,
 	}, http.StatusOK, nil
 }
 
-func (h *ListWorkflowObjectsHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*ListWorkflowObjectsArgs)
-	emptyResp := ListWorkflowObjectsResponse{}
+func (h *WorkflowObjectsGetHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*WorkflowObjectsGetArgs)
+	emptyResp := WorkflowObjectsGetResponse{}
 
 	saveOpList, err := GetDistinctLoadOpsByWorkflow(
 		ctx,
@@ -102,7 +104,7 @@ func (h *ListWorkflowObjectsHandler) Perform(ctx context.Context, interfaceArgs 
 		return emptyResp, http.StatusInternalServerError, err
 	}
 
-	return ListWorkflowObjectsResponse{
+	return WorkflowObjectsGetResponse{
 		LoadDetails: saveOpList,
 	}, http.StatusOK, nil
 }
