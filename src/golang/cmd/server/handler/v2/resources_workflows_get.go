@@ -45,7 +45,7 @@ type ResourcesWorkflowsGetHandler struct {
 }
 
 func (*ResourcesWorkflowsGetHandler) Name() string {
-	return "IntegrationsWorkflowsGet"
+	return "ResourcesWorkflowsGet"
 }
 
 func (h *ResourcesWorkflowsGetHandler) Prepare(r *http.Request) (interface{}, int, error) {

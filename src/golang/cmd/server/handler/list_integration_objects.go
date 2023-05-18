@@ -52,7 +52,7 @@ type ListResourceObjectsResponse struct {
 }
 
 func (*ListResourceObjectsHandler) Name() string {
-	return "IntegrationObjects"
+	return "ResourceObjects"
 }
 
 func (h *ListResourceObjectsHandler) Prepare(r *http.Request) (interface{}, int, error) {

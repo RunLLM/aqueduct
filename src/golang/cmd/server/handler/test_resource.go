@@ -47,7 +47,7 @@ type TestResourceArgs struct {
 type TestResourceResponse struct{}
 
 func (*TestResourceHandler) Name() string {
-	return "TestIntegration"
+	return "TestResource"
 }
 
 func (h *TestResourceHandler) Prepare(r *http.Request) (interface{}, int, error) {

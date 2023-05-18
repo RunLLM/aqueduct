@@ -94,7 +94,7 @@ type EditResourceArgs struct {
 type EditResourceResponse struct{}
 
 func (*EditResourceHandler) Name() string {
-	return "EditIntegration"
+	return "EditResource"
 }
 
 // `updateConfig` updates `curConfigToUpdate` *in-place* with `newConfig` with
