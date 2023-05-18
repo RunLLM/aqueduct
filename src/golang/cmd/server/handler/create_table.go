@@ -71,7 +71,7 @@ func (h *CreateTableHandler) Prepare(r *http.Request) (interface{}, int, error) 
 		return nil, statusCode, errors.Wrap(err, "Unable to parse arguments.")
 	}
 	tableName := r.Header.Get(routes.TableNameHeader)
-	integrationIdStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
+	integrationIdStr := chi.URLParam(r, routes.ResourceIDUrlParam)
 	integrationId, err := uuid.Parse(integrationIdStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")

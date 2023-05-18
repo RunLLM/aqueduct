@@ -7,15 +7,15 @@ const (
 	OperatorIdUrlParam          = "operatorId"
 	ArtifactIdUrlParam          = "artifactId"
 	NotificationIdUrlParam      = "notificationId"
-	IntegrationIdUrlParam       = "integrationId"
+	ResourceIDUrlParam          = "resourceID"
 
 	// v2 params
 	// Each V2 parameters should have a corresponding parser
 	// in request/parser package.
-	WorkflowIDParam    = "workflowID"
-	DagIDParam         = "dagID"
-	DAGResultIDParam   = "dagResultID"
-	NodeIDParam        = "nodeID"
-	NodeResultIDParam  = "nodeResultID"
-	IntegrationIDParam = "integrationID"
+	WorkflowIDParam   = "workflowID"
+	DagIDParam        = "dagID"
+	DAGResultIDParam  = "dagResultID"
+	NodeIDParam       = "nodeID"
+	NodeResultIDParam = "nodeResultID"
+	ResourceIDParam   = "resourceID"
 )

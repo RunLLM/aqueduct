@@ -148,7 +148,7 @@ func (h *EditResourceHandler) Prepare(r *http.Request) (interface{}, int, error)
 		return nil, statusCode, errors.Wrap(err, "Unable to edit resource.")
 	}
 
-	resourceIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
+	resourceIDStr := chi.URLParam(r, routes.ResourceIDUrlParam)
 	resourceID, err := uuid.Parse(resourceIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed resource ID.")

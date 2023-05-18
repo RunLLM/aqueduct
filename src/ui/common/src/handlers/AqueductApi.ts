@@ -22,7 +22,7 @@ import {
   integrationOperatorsGetQuery,
   IntegrationOperatorsGetRequest,
   IntegrationOperatorsGetResponse,
-} from './v2/IntegrationOperatorsGet';
+} from './v2/ResourceOperatorsGet';
 import {
   integrationsWorkflowsGetQuery,
   IntegrationsWorkflowsGetRequest,

@@ -67,7 +67,7 @@ func (h *DiscoverHandler) Prepare(r *http.Request) (interface{}, int, error) {
 		return nil, statusCode, err
 	}
 
-	resourceIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
+	resourceIDStr := chi.URLParam(r, routes.ResourceIDUrlParam)
 	resourceID, err := uuid.Parse(resourceIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed resource ID.")

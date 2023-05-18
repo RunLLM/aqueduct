@@ -19,18 +19,18 @@ import (
 )
 
 // This file should map directly to
-// src/ui/common/src/handlers/v2/IntegrationOperatorsGet.ts
+// src/ui/common/src/handlers/v2/ResourceOperatorsGet.ts
 //
-// Route: /api/v2/integration/{integrationID}/nodes/operators
+// Route: /api/v2/resource/{resourceID}/nodes/operators
 // Method: GET
 // Params:
-// 	`integrationID`: ID for `integration` object
+// 	`resourceID`: ID for `resource` object
 // Request:
 //	Headers:
 //		`api-key`: user's API Key
 // Response:
 //	Body:
-//    A list of `response.operators` that use the given integration.
+//    A list of `response.operators` that use the given resource.
 
 type resourceOperatorsGetArgs struct {
 	*aq_context.AqContext
@@ -47,7 +47,7 @@ type ResourceOperatorsGetHandler struct {
 }
 
 func (*ResourceOperatorsGetHandler) Name() string {
-	return "IntegrationOperatorsGet"
+	return "ResourceOperatorsGet"
 }
 
 func (h *ResourceOperatorsGetHandler) Prepare(r *http.Request) (interface{}, int, error) {

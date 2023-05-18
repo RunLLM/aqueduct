@@ -85,12 +85,12 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			OperatorResultRepo: s.OperatorResultRepo,
 			ArtifactResultRepo: s.ArtifactResultRepo,
 		},
-		routes.IntegrationOperatorsRoute: &v2.ResourceOperatorsGetHandler{
+		routes.ResourceOperatorsRoute: &v2.ResourceOperatorsGetHandler{
 			Database:     s.Database,
 			ResourceRepo: s.ResourceRepo,
 			OperatorRepo: s.OperatorRepo,
 		},
-		routes.IntegrationsWorkflowsRoute: &v2.ResourcesWorkflowsGetHandler{
+		routes.ResourcesWorkflowsRoute: &v2.ResourcesWorkflowsGetHandler{
 			Database:      s.Database,
 			ResourceRepo:  s.ResourceRepo,
 			WorkflowRepo:  s.WorkflowRepo,

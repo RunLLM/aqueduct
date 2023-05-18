@@ -84,7 +84,7 @@ func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, err
 		return nil, statusCode, err
 	}
 
-	integrationIdStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
+	integrationIdStr := chi.URLParam(r, routes.ResourceIDUrlParam)
 	integrationId, err := uuid.Parse(integrationIdStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed dynamic engine integration ID.")

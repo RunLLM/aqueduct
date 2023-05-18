@@ -18,9 +18,9 @@ import (
 )
 
 // This file should map directly to
-// src/ui/common/src/handlers/v2/IntegrationsWorkflowsGet.ts
+// src/ui/common/src/handlers/v2/ResourcesWorkflowsGet.ts
 //
-// Route: /v2/integrations/workflows
+// Route: /v2/resources/workflows
 // Method: GET
 // Request:
 //	Headers:

@@ -61,7 +61,7 @@ func (h *ListResourceObjectsHandler) Prepare(r *http.Request) (interface{}, int,
 		return nil, statusCode, errors.Wrap(err, "Unable to parse arguments.")
 	}
 
-	resourceIdStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
+	resourceIdStr := chi.URLParam(r, routes.ResourceIDUrlParam)
 	resourceId, err := uuid.Parse(resourceIdStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed resource ID.")

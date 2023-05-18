@@ -69,7 +69,7 @@ func (h *ListOperatorsResourecHandler) Prepare(r *http.Request) (interface{}, in
 		return nil, statuscode, err
 	}
 
-	resourceIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
+	resourceIDStr := chi.URLParam(r, routes.ResourceIDUrlParam)
 	resourceID, err := uuid.Parse(resourceIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed resource ID.")

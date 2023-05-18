@@ -59,7 +59,7 @@ func (h *ConfigureStorageHandler) Prepare(r *http.Request) (interface{}, int, er
 		return nil, statusCode, errors.Wrap(err, "Unable to configure storage layer.")
 	}
 
-	resourceIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
+	resourceIDStr := chi.URLParam(r, routes.ResourceIDUrlParam)
 
 	if resourceIDStr != "local" {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "We currently only support changing the storage layer to the local filesystem from this route.")
