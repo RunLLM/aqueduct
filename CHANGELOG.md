@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.3.3
+Released on May 17, 2023.
+
+### Enhancements
+* Adds ability to use a parameter in save operators to dynamically name saves.
+* Updates the artifact storage card on the resources page to be consistent with
+    other resource cards.
+* Shows how many workflows are using notification resources.
+* Improves form validation with `react-hook-forms`.
+* Replaces the icon that signifies a workflow that has been registered but not
+    executed.
+* On the resouces page, displays the Conda integration as modifying the Aqueduct
+    server execution layer rather than as a separate execution layer.
+* Improves BigQuery error checking to ensure that a dataset exists before
+    accessing it.
+
+### Bugfixes
+* Fixes bug where documentation links on the home page were broken.
+* Fixes bug where the SDK's generated docstrings were broken.
+
 ## 0.3.2
 Released on May 10, 2023.
 
