@@ -11,8 +11,8 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { ReactFlowProvider } from 'reactflow';
-import WorkflowResultNavigator from 'src/components/workflows/WorkflowResultNavigator';
 
+import WorkflowResultNavigator from '../../../../components/workflows/WorkflowResultNavigator';
 import {
   aqueductApi,
   useDagGetQuery,
@@ -38,9 +38,7 @@ import WorkflowHeader, {
   WorkflowPageContentId,
 } from '../../../workflows/WorkflowHeader';
 import WorkflowNodeSidesheetActions from '../../../workflows/WorkflowNodeSidesheetActions';
-import WorkflowSettings from '../../../workflows/WorkflowSettings';
 import { LayoutProps } from '../../types';
-import RunWorkflowDialog from '../../workflows/components/RunWorkflowDialog';
 import {
   useWorkflowBreadcrumbs,
   useWorkflowIds,
@@ -234,7 +232,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
               </Box>
             )}
 
-            {currentTab === 'Settings' && workflow.selectedDag && (
+            {/*currentTab === 'Settings' && workflow.selectedDag && (
               <Box sx={{ paddingBottom: '24px' }}>
                 <WorkflowSettings
                   user={user}
@@ -258,7 +256,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                   }
                 />
               </Box>
-            )}
+                )*/}
           </Box>
 
           {/* These controls are automatically hidden when the side sheet is open. */}
@@ -328,13 +326,13 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Box>
         </Box>
 
-        <RunWorkflowDialog
+        {/*<RunWorkflowDialog
           user={user}
           workflowDag={workflow.selectedDag}
           workflowId={workflowId}
           open={showRunWorkflowDialog}
           setOpen={setShowRunWorkflowDialog}
-        />
+              />*/}
       </Box>
 
       <Drawer
@@ -402,14 +400,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 marginBottom: DefaultLayoutMargin,
               }}
             >
-              {getDataSideSheetContent(
-                user,
-                selectedNodeState,
-                selectedNode,
-                workflowId,
-                dagId,
-                dagResultId
-              )}
+              {getDataSideSheetContent(user, selectedNodeState, selectedNode)}
             </Box>
           )}
         </Box>

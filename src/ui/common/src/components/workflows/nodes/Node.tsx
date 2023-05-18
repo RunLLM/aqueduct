@@ -64,7 +64,7 @@ const checkNodeStatusLabels = {
   [ExecutionStatus.Unknown]: 'Unknown',
 };
 
-const artifactTypeToIconMapping = {
+export const artifactTypeToIconMapping = {
   [ArtifactType.String]: faFileText,
   [ArtifactType.Bool]: faCircleCheck,
   [ArtifactType.Numeric]: faHashtag,
@@ -82,7 +82,7 @@ const artifactTypeToIconMapping = {
   [ArtifactType.Untyped]: faPencil,
 };
 
-const operatorTypeToIconMapping = {
+export const operatorTypeToIconMapping = {
   [OperatorType.Param]: faSliders,
   [OperatorType.Function]: faCode,
   [OperatorType.Extract]: faDatabase,

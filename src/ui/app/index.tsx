@@ -38,14 +38,14 @@ const App = () => {
       <Route path={`/${pathPrefix}/workflow/:workflowId`} element={<RequireAuth user={user}><WorkflowPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/workflow/:workflowId/dag/:dagId`} element={<RequireAuth user={user}><WorkflowPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/workflow/:workflowId/result:dagResultId`} element={<RequireAuth user={user}><WorkflowPage user={user} /> </RequireAuth>} />
-      <Route path={`/${pathPrefix}/workflow/:workflowId/result/:dagResultId/operator/:operatorId`} element={<RequireAuth user={user}><OperatorDetailsPage user={user} /> </RequireAuth>} />
-      <Route path={`/${pathPrefix}/workflow/:workflowId/result/:dagResultId/artifact/:artifactId`} element={<RequireAuth user={user}><ArtifactDetailsPage user={user} /> </RequireAuth>} />
-      <Route path={`/${pathPrefix}/workflow/:workflowId/result/:dagResultId/metric/:operatorId`} element={<RequireAuth user={user}><MetricDetailsPage user={user} /> </RequireAuth>} />
-      <Route path={`/${pathPrefix}/workflow/:workflowId/result/:dagResultId/check/:operatorId`} element={<RequireAuth user={user}><CheckDetailsPage user={user} /> </RequireAuth>} />
-      <Route path={`/${pathPrefix}/workflow/:workflowId/dag/:dagId/operator/:operatorId`} element={<RequireAuth user={user}><OperatorDetailsPage user={user} /> </RequireAuth>} />
-      <Route path={`/${pathPrefix}/workflow/:workflowId/dag/:dagId/artifact/:artifactId`} element={<RequireAuth user={user}><ArtifactDetailsPage user={user} /> </RequireAuth>} />
-      <Route path={`/${pathPrefix}/workflow/:workflowId/dag/:dagId/metric/:operatorId`} element={<RequireAuth user={user}><MetricDetailsPage user={user} /> </RequireAuth>} />
-      <Route path={`/${pathPrefix}/workflow/:workflowId/dag/:dagId/check/:operatorId`} element={<RequireAuth user={user}><CheckDetailsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflow/:workflowId/result/:dagResultId/operator/:nodeId`} element={<RequireAuth user={user}><OperatorDetailsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflow/:workflowId/result/:dagResultId/artifact/:nodeId`} element={<RequireAuth user={user}><ArtifactDetailsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflow/:workflowId/result/:dagResultId/metric/:nodeId`} element={<RequireAuth user={user}><MetricDetailsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflow/:workflowId/result/:dagResultId/check/:nodeId`} element={<RequireAuth user={user}><CheckDetailsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflow/:workflowId/dag/:dagId/operator/:nodeId`} element={<RequireAuth user={user}><OperatorDetailsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflow/:workflowId/dag/:dagId/artifact/:nodeId`} element={<RequireAuth user={user}><ArtifactDetailsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflow/:workflowId/dag/:dagId/metric/:nodeId`} element={<RequireAuth user={user}><MetricDetailsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflow/:workflowId/dag/:dagId/check/:nodeId`} element={<RequireAuth user={user}><CheckDetailsPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/404`} element={user && user.apiKey ? <RequireAuth user={user}><ErrorPage user={user} /> </RequireAuth> : <ErrorPage />} />
       <Route path="*" element={<Navigate replace to={`/404`} />} />
     </Routes>

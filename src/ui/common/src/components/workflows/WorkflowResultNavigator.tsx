@@ -6,8 +6,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Box, Tooltip } from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDagResultsGetQuery } from 'src/handlers/AqueductApi';
 
+import { useDagResultsGetQuery } from '../../handlers/AqueductApi';
 import { useWorkflowIds } from '../pages/workflow/id/hook';
 import { Button } from '../primitives/Button.styles';
 
