@@ -57,13 +57,13 @@ class APIClient:
     HTTPS_PREFIX = "https://"
 
     GET_VERSION_ROUTE = "/api/version"
-    CONNECT_INTEGRATION_ROUTE = "/api/integration/connect"
-    DELETE_INTEGRATION_ROUTE_TEMPLATE = "/api/integration/%s/delete"
+    CONNECT_RESOURCE_ROUTE = "/api/resource/connect"
+    DELETE_RESOURCE_ROUTE_TEMPLATE = "/api/resource/%s/delete"
     PREVIEW_ROUTE = "/api/preview"
     REGISTER_WORKFLOW_ROUTE = "/api/workflow/register"
     REGISTER_AIRFLOW_WORKFLOW_ROUTE = "/api/workflow/register/airflow"
-    LIST_INTEGRATIONS_ROUTE = "/api/integrations"
-    LIST_INTEGRATION_OBJECTS_ROUTE_TEMPLATE = "/api/integration/%s/objects"
+    LIST_RESOURCES_ROUTE = "/api/resources"
+    LIST_RESOURCE_OBJECTS_ROUTE_TEMPLATE = "/api/resource/%s/objects"
     GET_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s"
     GET_WORKFLOW_DAG_RESULT_TEMPLATE = "/api/workflow/%s/result/%s"
     LIST_WORKFLOW_SAVED_OBJECTS_ROUTE = "/api/workflow/%s/objects"
@@ -77,10 +77,10 @@ class APIClient:
     NODE_POSITION_ROUTE = "/api/positioning"
     EXPORT_FUNCTION_ROUTE = "/api/function/%s/export"
 
-    GET_DYNAMIC_ENGINE_STATUS_ROUTE = "/api/integration/dynamic-engine/status"
+    GET_DYNAMIC_ENGINE_STATUS_ROUTE = "/api/resource/dynamic-engine/status"
     EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE = "/api/integration/dynamic-engine/%s/edit"
 
-    GET_IMAGE_URL_ROUTE = "/api/integration/container-registry/url"
+    GET_IMAGE_URL_ROUTE = "/api/resourece/container-registry/url"
 
     # Auth header
     API_KEY_HEADER = "api-key"
@@ -224,7 +224,7 @@ class APIClient:
         return self.HTTPS_PREFIX if self.use_https else self.HTTP_PREFIX
 
     def list_resources(self) -> Dict[str, ResourceInfo]:
-        url = self.construct_full_url(self.LIST_INTEGRATIONS_ROUTE)
+        url = self.construct_full_url(self.LIST_RESOURCES_ROUTE)
         headers = self._generate_auth_headers()
         resp = requests.get(url, headers=headers)
         self.raise_errors(resp)
@@ -257,7 +257,7 @@ class APIClient:
         """Returns a list of the tables in the specified integration.
         If the integration is not a relational database, it will throw an error.
         """
-        url = self.construct_full_url(self.LIST_INTEGRATION_OBJECTS_ROUTE_TEMPLATE % integration_id)
+        url = self.construct_full_url(self.LIST_RESOURCE_OBJECTS_ROUTE_TEMPLATE % integration_id)
         headers = self._generate_auth_headers()
         resp = requests.get(url, headers=headers)
         self.raise_errors(resp)
@@ -275,15 +275,15 @@ class APIClient:
         headers = self._generate_auth_headers()
         headers.update(
             {
-                "integration-name": name,
-                "integration-service": integration_service,
+                "resource-name": name,
+                "resource-service": integration_service,
                 # `by_alias` is necessary to get this to use `schema` as a key for SnowflakeConfig.
                 # `exclude_none` is necessary to exclude `role` when None as SnowflakeConfig.
-                "integration-config": config.json(exclude_none=True, by_alias=True),
+                "resource-config": config.json(exclude_none=True, by_alias=True),
             }
         )
         url = self.construct_full_url(
-            self.CONNECT_INTEGRATION_ROUTE,
+            self.CONNECT_RESOURCE_ROUTE,
         )
         resp = requests.post(url, url, headers=headers)
         self.raise_errors(resp)
@@ -335,7 +335,7 @@ class APIClient:
             A DynamicEngineStatusResponse object, parsed from the backend endpoint's response.
         """
         headers = self._generate_auth_headers()
-        headers["integration-ids"] = json.dumps(engine_integration_ids)
+        headers["resource-ids"] = json.dumps(engine_integration_ids)
 
         url = self.construct_full_url(self.GET_DYNAMIC_ENGINE_STATUS_ROUTE)
         resp = requests.get(url, headers=headers)
@@ -390,7 +390,7 @@ class APIClient:
         self,
         integration_id: uuid.UUID,
     ) -> None:
-        url = self.construct_full_url(self.DELETE_INTEGRATION_ROUTE_TEMPLATE % integration_id)
+        url = self.construct_full_url(self.DELETE_RESOURCE_ROUTE_TEMPLATE % integration_id)
         headers = self._generate_auth_headers()
         resp = requests.post(url, headers=headers)
         self.raise_errors(resp)
@@ -602,7 +602,7 @@ class APIClient:
             GetImageURLResponse that contains the URL to the image.
         """
         headers = self._generate_auth_headers()
-        headers["integration-id"] = integration_id
+        headers["resource-id"] = integration_id
         headers["service"] = service.value
         headers["image-name"] = image_name
 

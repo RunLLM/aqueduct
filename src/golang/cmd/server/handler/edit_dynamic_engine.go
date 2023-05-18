@@ -21,11 +21,11 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-// Route: /api/integration/dynamic-engine/{resourceID}/edit
+// Route: /api/resource/dynamic-engine/{resourceID}/edit
 // Method: POST
 // Params:
 //
-//	`resourceID`: ID of the dynamic engine integration
+//	`resourceID`: ID of the dynamic engine resource
 //
 // Request:
 //
@@ -84,10 +84,10 @@ func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, err
 		return nil, statusCode, err
 	}
 
-	integrationIdStr := chi.URLParam(r, routes.ResourceIDUrlParam)
-	integrationId, err := uuid.Parse(integrationIdStr)
+	resourceIdStr := chi.URLParam(r, routes.ResourceIDUrlParam)
+	resourceId, err := uuid.Parse(resourceIdStr)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed dynamic engine integration ID.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed dynamic engine resource ID.")
 	}
 
 	action := r.Header.Get("action")
@@ -117,7 +117,7 @@ func (*EditDynamicEngineHandler) Prepare(r *http.Request) (interface{}, int, err
 	return &editDynamicEngineArgs{
 		AqContext:   aqContext,
 		action:      dynamicEngineAction(action),
-		resourceID:  integrationId,
+		resourceID:  resourceId,
 		configDelta: &configDelta,
 	}, http.StatusOK, nil
 }
@@ -126,17 +126,17 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 	args := interfaceArgs.(*editDynamicEngineArgs)
 	emptyResponse := response.EmptyResponse{}
 
-	dynamicEngineIntegration, err := h.ResourceRepo.Get(
+	dynamicEngineResource, err := h.ResourceRepo.Get(
 		ctx,
 		args.resourceID,
 		h.Database,
 	)
 	if err != nil {
-		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get dynamic engine integration.")
+		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get dynamic engine resource.")
 	}
 
-	if _, ok := dynamicEngineIntegration.Config[shared.K8sDynamicKey]; !ok {
-		return emptyResponse, http.StatusBadRequest, errors.New("This is not a dynamic engine integration.")
+	if _, ok := dynamicEngineResource.Config[shared.K8sDynamicKey]; !ok {
+		return emptyResponse, http.StatusBadRequest, errors.New("This is not a dynamic engine resource.")
 	}
 
 	storageConfig := config.Storage()
@@ -166,12 +166,12 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 			return emptyResponse, http.StatusBadRequest, errors.New("Empty config delta provided.")
 		}
 
-		if dynamicEngineIntegration.Config[shared.K8sStatusKey] != string(shared.K8sClusterActiveStatus) {
+		if dynamicEngineResource.Config[shared.K8sStatusKey] != string(shared.K8sClusterActiveStatus) {
 			return emptyResponse, http.StatusUnprocessableEntity, errors.Newf(
 				"Action %s is only applicable when the cluster is in %s status, but it is now in %s status.",
 				updateAction,
 				shared.K8sClusterActiveStatus,
-				dynamicEngineIntegration.Config[shared.K8sStatusKey],
+				dynamicEngineResource.Config[shared.K8sStatusKey],
 			)
 		}
 
@@ -179,7 +179,7 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 			ctx,
 			args.configDelta,
 			dynamic.K8sClusterUpdateAction,
-			dynamicEngineIntegration,
+			dynamicEngineResource,
 			h.ResourceRepo,
 			vaultObject,
 			h.Database,
@@ -196,12 +196,12 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 		}
 
 		for {
-			if dynamicEngineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
+			if dynamicEngineResource.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
 				log.Info("Tearing down the Kubernetes cluster...")
 				if err = dynamic.DeleteK8sCluster(
 					ctx,
 					forceDelete,
-					dynamicEngineIntegration,
+					dynamicEngineResource,
 					h.ResourceRepo,
 					vaultObject,
 					h.Database,
@@ -210,10 +210,10 @@ func (h *EditDynamicEngineHandler) Perform(ctx context.Context, interfaceArgs in
 				}
 
 				return emptyResponse, http.StatusOK, nil
-			} else if dynamicEngineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
+			} else if dynamicEngineResource.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
 				return emptyResponse, http.StatusOK, nil
 			} else {
-				dynamicEngineIntegration, err = dynamic.PollClusterStatus(ctx, dynamicEngineIntegration, h.ResourceRepo, vaultObject, h.Database)
+				dynamicEngineResource, err = dynamic.PollClusterStatus(ctx, dynamicEngineResource, h.ResourceRepo, vaultObject, h.Database)
 				if err != nil {
 					return emptyResponse, http.StatusInternalServerError, err
 				}

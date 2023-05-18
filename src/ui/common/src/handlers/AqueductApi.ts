@@ -27,12 +27,12 @@ import {
   integrationsWorkflowsGetQuery,
   IntegrationsWorkflowsGetRequest,
   IntegrationsWorkflowsGetResponse,
-} from './v2/IntegrationsWorkflowsGet';
+} from './v2/ResourcesWorkflowsGet';
 import {
   integrationWorkflowsGetQuery,
   IntegrationWorkflowsGetRequest,
   IntegrationWorkflowsGetResponse,
-} from './v2/IntegrationWorkflowsGet';
+} from './v2/ResourceWorkflowsGet';
 import {
   storageMigrationListQuery,
   storageMigrationListRequest,

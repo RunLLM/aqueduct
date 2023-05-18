@@ -49,15 +49,15 @@ var pathConfigKeys = map[string]bool{
 	"database":            true, // SQLite database path
 }
 
-// Route: /integration/connect
+// Route: /resource/connect
 // Method: POST
 // Request:
 //
 //	Headers:
 //		`api-key`: user's API Key
-//		`integration-name`: the name for the integration
-//		`integration-service`: the service type for the integration
-//		`integration-config`: the json-serialized integration config
+//		`resource-name`: the name for the resource
+//		`resource-service`: the service type for the resource
+//		`resource-config`: the json-serialized resource config
 //
 // Response: none
 //
@@ -82,9 +82,9 @@ type ConnectResourceHandler struct {
 
 func (*ConnectResourceHandler) Headers() []string {
 	return []string{
-		routes.IntegrationNameHeader,
-		routes.IntegrationServiceHeader,
-		routes.IntegrationConfigHeader,
+		routes.ResourceNameHeader,
+		routes.ResourceServiceHeader,
+		routes.ResourceConfigHeader,
 	}
 }
 

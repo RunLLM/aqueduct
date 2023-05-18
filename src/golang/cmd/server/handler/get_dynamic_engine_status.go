@@ -15,14 +15,14 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /api/integration/dynamic-engine/status
+// Route: /api/resource/dynamic-engine/status
 // Method: GET
 // Params: None
 // Request:
 //
 //	Headers:
 //		`api-key`: user's API Key
-//		`integration_ids`: json serialized list of dynamic engine integration IDs
+//		`resource_ids`: json serialized list of dynamic engine resource IDs
 //
 // Response: serialized `getDynamicEngineStatusResponse` which contains one entry per dynamic engine.
 type GetDynamicEngineStatusHandler struct {
@@ -57,7 +57,7 @@ func (*GetDynamicEngineStatusHandler) Prepare(r *http.Request) (interface{}, int
 	}
 
 	var resourceIdsStr []string
-	resourceIdsJson := r.Header.Get(routes.IntegrationIDsHeader)
+	resourceIdsJson := r.Header.Get(routes.ResourceIDsHeader)
 	err = json.Unmarshal([]byte(resourceIdsJson), &resourceIdsStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Error unmarshalling resource IDs.")

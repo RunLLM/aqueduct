@@ -14,16 +14,16 @@ import (
 )
 
 // This file should map directly to
-// src/ui/common/src/handlers/v2/IntegrationWorkflowsGet.ts
+// src/ui/common/src/handlers/v2/ResourceWorkflowsGet.ts
 //
-// Route: /v2/integration/{integrationID}/workflows
+// Route: /v2/resource/{resourceID}/workflows
 // Method: GET
 // Request:
 //	Headers:
 //		`api-key`: user's API Key
 // Response:
 //	Body:
-//   	A list of `response.WorkflowAndDagID` that use the given integration.
+//   	A list of `response.WorkflowAndDagID` that use the given resource.
 
 type resourceWorkflowsGetArgs struct {
 	*aq_context.AqContext
@@ -42,7 +42,7 @@ type ResourceWorkflowsGetHandler struct {
 }
 
 func (*ResourceWorkflowsGetHandler) Name() string {
-	return "IntegrationWorkflowsGet"
+	return "ResourceWorkflowsGet"
 }
 
 func (h *ResourceWorkflowsGetHandler) Prepare(r *http.Request) (interface{}, int, error) {

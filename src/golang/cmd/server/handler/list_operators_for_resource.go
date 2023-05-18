@@ -15,7 +15,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /integration/{resourceID}/operators
+// Route: /resource/{resourceID}/operators
 // Method: GET
 // Params: resourceID
 // Request:
@@ -25,8 +25,8 @@ import (
 //	Body:
 //		serialized `listOperatorsForResourceResponse`
 //
-// `listOperatorsForIntegration` lists all operators associated with
-// the given integration. Together we provide the following information for
+// `listOperatorsForResource` lists all operators associated with
+// the given resource. Together we provide the following information for
 // each associated operator:
 //  `workflow_id`: the workflow associated with this operator
 //	`workflow_dag_id`: the workflow dag associated with this operator
@@ -60,7 +60,7 @@ type ListOperatorsResourecHandler struct {
 }
 
 func (*ListOperatorsResourecHandler) Name() string {
-	return "ListOperatorsForIntegration"
+	return "ListOperatorsForResource"
 }
 
 func (h *ListOperatorsResourecHandler) Prepare(r *http.Request) (interface{}, int, error) {

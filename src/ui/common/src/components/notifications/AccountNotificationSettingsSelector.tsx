@@ -51,7 +51,7 @@ const AccountNotificationSettingsSelector: React.FC<Props> = ({
       <Typography variant="body1">
         You do not have any notification configured. You can add new
         notifications from the{' '}
-        <Link href={`${getPathPrefix()}/integrations`} target="_blank">
+        <Link href={`${getPathPrefix()}/resources`} target="_blank">
           integrations
         </Link>{' '}
         page.

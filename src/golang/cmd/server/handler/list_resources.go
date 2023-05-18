@@ -15,7 +15,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /integrations
+// Route: /resources
 // Method: GET
 // Params: None
 // Request:
@@ -23,9 +23,9 @@ import (
 //	Headers:
 //		`api-key`: user's API Key
 //
-// Response: serialized `listResourceResponse` containing all integrations accessible by the user.
+// Response: serialized `listResourcesResponse` containing all resources accessible by the user.
 //
-// The caller must read the "exec_state" field on the result to determine if the integration was successfully
+// The caller must read the "exec_state" field on the result to determine if the resource was successfully
 // registered.
 
 type ListResourcesHandler struct {
@@ -36,11 +36,11 @@ type ListResourcesHandler struct {
 	ResourceRepo repos.Resource
 }
 
-type listResourceArgs struct {
+type listResourcesArgs struct {
 	*aq_context.AqContext
 }
 
-type listResourceResponse []resourceResponse
+type listResourcesResponse []resourceResponse
 
 type resourceResponse struct {
 	ID        uuid.UUID              `json:"id"`
@@ -52,7 +52,7 @@ type resourceResponse struct {
 }
 
 func (*ListResourcesHandler) Name() string {
-	return "ListIntegrations"
+	return "ListResources"
 }
 
 func (*ListResourcesHandler) Prepare(r *http.Request) (interface{}, int, error) {
@@ -61,15 +61,15 @@ func (*ListResourcesHandler) Prepare(r *http.Request) (interface{}, int, error) 
 		return nil, statusCode, err
 	}
 
-	return &listResourceArgs{
+	return &listResourcesArgs{
 		AqContext: aqContext,
 	}, http.StatusOK, nil
 }
 
 func (h *ListResourcesHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*listResourceArgs)
+	args := interfaceArgs.(*listResourcesArgs)
 
-	emptyResponse := listResourceResponse{}
+	emptyResponse := listResourcesResponse{}
 
 	resources, err := h.ResourceRepo.GetByUser(
 		ctx,

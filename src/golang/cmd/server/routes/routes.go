@@ -5,7 +5,7 @@ const (
 	// V2 routes
 	ResourceOperatorsRoute         = "/api/v2/resource/{resourceID}/nodes/operators"
 	ResourcesWorkflowsRoute        = "/api/v2/resources/workflows"
-	IntegrationWorkflowsRoute      = "/api/v2/integration/{integrationID}/workflows"
+	ResourceWorkflowsRoute         = "/api/v2/resource/{resourceID}/workflows"
 	ListStorageMigrationRoute      = "/api/v2/storage-migrations"
 	WorkflowsRoute                 = "/api/v2/workflows"
 	WorkflowRoute                  = "/api/v2/workflow/{workflowID}"
@@ -30,19 +30,19 @@ const (
 
 	ExportFunctionRoute = "/api/function/{operatorId}/export"
 
-	ListIntegrationsRoute            = "/api/integrations"
-	ConnectIntegrationRoute          = "/api/integration/connect"
-	CreateTableRoute                 = "/api/integration/{resourceID}/create"
-	DeleteIntegrationRoute           = "/api/integration/{resourceID}/delete"
-	DiscoverRoute                    = "/api/integration/{resourceID}/discover"
-	EditIntegrationRoute             = "/api/integration/{resourceID}/edit"
-	ListIntegrationObjectsRoute      = "/api/integration/{resourceID}/objects"
-	PreviewTableRoute                = "/api/integration/{resourceID}/preview"
-	ListOperatorsForIntegrationRoute = "/api/integration/{resourceID}/operators"
-	TestIntegrationRoute             = "/api/integration/{resourceID}/test"
-	GetDynamicEngineStatusRoute      = "/api/integration/dynamic-engine/status"
-	EditDynamicEngineRoute           = "/api/integration/dynamic-engine/{resourceID}/edit"
-	GetImageURLRoute                 = "/api/integration/container-registry/url"
+	ListResourcesRoute            = "/api/resources"
+	ConnectResourceRoute          = "/api/resource/connect"
+	CreateTableRoute              = "/api/resource/{resourceID}/create"
+	DeleteResourceRoute           = "/api/resource/{resourceID}/delete"
+	DiscoverRoute                 = "/api/resource/{resourceID}/discover"
+	EditResourceRoute             = "/api/resource/{resourceID}/edit"
+	ListResourceObjectsRoute      = "/api/resource/{resourceID}/objects"
+	PreviewTableRoute             = "/api/resource/{resourceID}/preview"
+	ListOperatorsForResourceRoute = "/api/resource/{resourceID}/operators"
+	TestResourceRoute             = "/api/resource/{resourceID}/test"
+	GetDynamicEngineStatusRoute   = "/api/resource/dynamic-engine/status"
+	EditDynamicEngineRoute        = "/api/resource/dynamic-engine/{resourceID}/edit"
+	GetImageURLRoute              = "/api/resource/container-registry/url"
 
 	ResetApiKeyRoute = "/api/keys/reset" // nolint:gosec
 

@@ -12,7 +12,7 @@ import (
 // ParseResourceServiceFromRequest parses the resource service, and whether the
 // service is user only.
 func ParseResourceServiceFromRequest(r *http.Request) (shared.Service, bool, error) {
-	serviceStr := r.Header.Get(routes.IntegrationServiceHeader)
+	serviceStr := r.Header.Get(routes.ResourceServiceHeader)
 	service, err := shared.ParseService(serviceStr)
 	if err != nil {
 		return "", false, err
@@ -24,7 +24,7 @@ func ParseResourceServiceFromRequest(r *http.Request) (shared.Service, bool, err
 // ParseResourceConfigFromRequest parses the resource name and configuration,
 // from the request
 func ParseResourceConfigFromRequest(r *http.Request) (string, map[string]string, error) {
-	configHeader := r.Header.Get(routes.IntegrationConfigHeader)
+	configHeader := r.Header.Get(routes.ResourceConfigHeader)
 	var configuration map[string]string
 	if len(configHeader) > 0 {
 		err := json.Unmarshal([]byte(configHeader), &configuration)
@@ -33,7 +33,7 @@ func ParseResourceConfigFromRequest(r *http.Request) (string, map[string]string,
 		}
 	}
 
-	resourceName := r.Header.Get(routes.IntegrationNameHeader)
+	resourceName := r.Header.Get(routes.ResourceNameHeader)
 	if resourceName == "" {
 		return "", nil, errors.New("Resource name was not provided.")
 	}

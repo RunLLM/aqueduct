@@ -1,5 +1,5 @@
 // This file should map exactly to
-// src/golang/cmd/server/handler/v2/integration_workflows.go
+// src/golang/cmd/server/handler/v2/resource_workflows_get.go
 
 import { APIKeyParameter } from '../parameters/Header';
 import { IntegrationIdParameter } from '../parameters/Path';
@@ -14,6 +14,6 @@ export type IntegrationWorkflowsGetResponse = WorkflowAndDagIDResponse[];
 export const integrationWorkflowsGetQuery = (
   req: IntegrationWorkflowsGetRequest
 ) => ({
-  url: `integration/${req.integrationId}/workflows`,
+  url: `resource/${req.integrationId}/workflows`,
   headers: { 'api-key': req.apiKey },
 });

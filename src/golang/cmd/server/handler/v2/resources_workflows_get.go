@@ -27,7 +27,7 @@ import (
 //		`api-key`: user's API Key
 // Response:
 //	Body:
-//		Map of integration ID to list of `response.WorkflowAndDagID` that use that integration.
+//		Map of resource ID to list of `response.WorkflowAndDagID` that use that resource.
 
 type resourcesWorkflowsGetArgs struct {
 	*aq_context.AqContext

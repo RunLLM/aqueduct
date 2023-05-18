@@ -375,7 +375,7 @@ export async function addTable(
   config: CSVConfig
 ): Promise<void> {
   const res = await fetch(
-    `${apiAddress}/api/integration/${integrationId}/create`,
+    `${apiAddress}/api/resource/${integrationId}/create`,
     {
       method: 'POST',
       headers: {

@@ -19,15 +19,15 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /integration/{resourceID}/delete
+// Route: /resource/{resourceID}/delete
 // Method: POST
 // Params:
-//	`resourceID`: ID for `integration` object
+//	`resourceID`: ID for `resource` object
 // Request:
 //	Headers:
 //		`api-key`: user's API Key
 
-// The `DeleteResourceHandler` does a best effort at deleting an integration.
+// The `DeleteResourceHandler` does a best effort at deleting an resource.
 type deleteResourceArgs struct {
 	*aq_context.AqContext
 	resourceObject               *models.Resource
@@ -50,7 +50,7 @@ type DeleteResourceHandler struct {
 }
 
 func (*DeleteResourceHandler) Name() string {
-	return "DeleteIntegration"
+	return "DeleteResource"
 }
 
 func (h *DeleteResourceHandler) Prepare(r *http.Request) (interface{}, int, error) {

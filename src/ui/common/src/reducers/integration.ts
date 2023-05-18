@@ -82,7 +82,7 @@ export const handleLoadIntegrationOperators = createAsyncThunk<
   ) => {
     const { apiKey, integrationId } = args;
     const response = await fetch(
-      `${apiAddress}/api/integration/${integrationId}/operators`,
+      `${apiAddress}/api/resource/${integrationId}/operators`,
       {
         method: 'GET',
         headers: {
@@ -135,7 +135,7 @@ export const handleLoadIntegrationObject = createAsyncThunk<
     }
 
     const objectResponse = await fetch(
-      `${apiAddress}/api/integration/${integrationId}/preview`,
+      `${apiAddress}/api/resource/${integrationId}/preview`,
       {
         method: 'GET',
         headers: {
@@ -199,7 +199,7 @@ export const handleListIntegrationObjects = createAsyncThunk<
 
     const { apiKey, integrationId } = args;
     const response = await fetch(
-      `${apiAddress}/api/integration/${integrationId}/discover`,
+      `${apiAddress}/api/resource/${integrationId}/discover`,
       {
         method: 'GET',
         headers: {
@@ -231,7 +231,7 @@ export const handleDeleteIntegration = createAsyncThunk<
   ) => {
     const { apiKey, integrationId } = args;
     const response = await fetch(
-      `${apiAddress}/api/integration/${integrationId}/delete`,
+      `${apiAddress}/api/resource/${integrationId}/delete`,
       {
         method: 'POST',
         headers: {
@@ -262,7 +262,7 @@ export const handleTestConnectIntegration = createAsyncThunk<
   ) => {
     const { apiKey, integrationId } = args;
     const response = await fetch(
-      `${apiAddress}/api/integration/${integrationId}/test`,
+      `${apiAddress}/api/resource/${integrationId}/test`,
       {
         method: 'POST',
         headers: {
@@ -305,13 +305,13 @@ export const handleConnectToNewIntegration = createAsyncThunk<
       }
     });
 
-    const res = await fetch(`${apiAddress}/api/integration/connect`, {
+    const res = await fetch(`${apiAddress}/api/resource/connect`, {
       method: 'POST',
       headers: {
         'api-key': apiKey,
-        'integration-name': name,
-        'integration-service': service,
-        'integration-config': JSON.stringify(config),
+        'resource-name': name,
+        'resource-service': service,
+        'resource-config': JSON.stringify(config),
       },
     });
 
@@ -351,13 +351,13 @@ export const handleEditIntegration = createAsyncThunk<
     });
 
     const res = await fetch(
-      `${apiAddress}/api/integration/${integrationId}/edit`,
+      `${apiAddress}/api/resource/${integrationId}/edit`,
       {
         method: 'POST',
         headers: {
           'api-key': apiKey,
-          'integration-name': name,
-          'integration-config': JSON.stringify(config),
+          'resource-name': name,
+          'resource-config': JSON.stringify(config),
         },
       }
     );

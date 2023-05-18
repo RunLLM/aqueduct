@@ -27,10 +27,10 @@ const (
 	pollDiscoverTimeout  = 60 * time.Second
 )
 
-// Route: /{resourceID}/tables
+// Route: /resource/{resourceID}/discover
 // Method: GET
 // Params:
-//	`resourceID`: ID of the relational database integration
+//	`resourceID`: ID of the relational database resource
 // Request:
 //	Headers:
 //		`api-key`: user's API Key

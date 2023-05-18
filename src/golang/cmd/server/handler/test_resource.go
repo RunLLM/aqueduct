@@ -18,7 +18,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /integration/{resourceID}/test
+// Route: /resource/{resourceID}/test
 // Method: POST
 // Params: resourceID
 // Request:
@@ -29,7 +29,7 @@ import (
 // Response: none, we expect caller to determine success / failure based on
 // http status in addition to error message.
 //
-// TestResourceHandler tries to connect to an existing integration.
+// TestResourceHandler tries to connect to an existing resource.
 type TestResourceHandler struct {
 	PostHandler
 

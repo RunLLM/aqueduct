@@ -40,7 +40,7 @@ export const handleLoadIntegrations = createAsyncThunk<
     }
 
     const { apiKey } = args;
-    const response = await fetch(`${apiAddress}/api/integrations`, {
+    const response = await fetch(`${apiAddress}/api/resources`, {
       method: 'GET',
       headers: {
         'api-key': apiKey,

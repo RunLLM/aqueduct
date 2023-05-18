@@ -20,15 +20,15 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /integration/{resourceID}/edit
+// Route: /resource/{resourceID}/edit
 // Method: POST
 // Params: resourceID
 // Request:
 //
 //	Headers:
 //		`api-key`: user's API Key
-//		`integration-name`: the updated name for the integration. Empty if no updates.
-//		`integration-config`: the json-serialized integration config.
+//		`resource-name`: the updated name for the resource. Empty if no updates.
+//		`resource-config`: the json-serialized resource config.
 //							Could contain only updated fields. This field
 //							can be empty if there's no config updates.
 //
@@ -79,8 +79,8 @@ var serviceToReadOnlyFields = map[shared.Service]map[string]bool{
 
 func (*EditResourceHandler) Headers() []string {
 	return []string{
-		routes.IntegrationNameHeader,
-		routes.IntegrationConfigHeader,
+		routes.ResourceNameHeader,
+		routes.ResourceConfigHeader,
 	}
 }
 
