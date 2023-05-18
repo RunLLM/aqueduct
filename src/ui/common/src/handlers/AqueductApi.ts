@@ -95,6 +95,11 @@ import {
   NodesResultsGetResponse,
 } from './v2/NodesResultsGet';
 import {
+  workflowDeletePostQuery,
+  WorkflowDeletePostRequest,
+  WorkflowDeletePostResponse,
+} from './v2/WorkflowDeletePost';
+import {
   workflowEditPostQuery,
   WorkflowEditPostRequest,
   WorkflowEditPostResponse,
@@ -104,6 +109,11 @@ import {
   WorkflowGetRequest,
   WorkflowGetResponse,
 } from './v2/WorkflowGet';
+import {
+  workflowObjectsGetQuery,
+  WorkflowObjectsGetRequest,
+  WorkflowObjectsGetResponse,
+} from './v2/WorkflowObjectsGet';
 import {
   workflowsGetQuery,
   WorkflowsGetRequest,
@@ -245,6 +255,13 @@ export const aqueductApi = createApi({
       query: (req) => storageMigrationListQuery(req),
       transformErrorResponse,
     }),
+    workflowDeletePost: builder.mutation<
+      WorkflowDeletePostResponse,
+      WorkflowDeletePostRequest
+    >({
+      query: (req) => workflowDeletePostQuery(req),
+      transformErrorResponse: transformErrorResponse,
+    }),
     workflowEditPost: builder.mutation<
       WorkflowEditPostResponse,
       WorkflowEditPostRequest
@@ -258,6 +275,13 @@ export const aqueductApi = createApi({
     >({
       query: (req) => workflowTriggerPostQuery(req),
       transformErrorResponse: transformErrorResponse,
+    }),
+    workflowObjectsGet: builder.query<
+      WorkflowObjectsGetResponse,
+      WorkflowObjectsGetRequest
+    >({
+      query: (req) => workflowObjectsGetQuery(req),
+      transformErrorResponse,
     }),
     workflowsGet: builder.query<WorkflowsGetResponse, WorkflowsGetRequest>({
       query: (req) => workflowsGetQuery(req),
@@ -292,7 +316,9 @@ export const {
   useNodesGetQuery,
   useNodesResultsGetQuery,
   useWorkflowGetQuery,
+  useWorkflowObjectsGetQuery,
   useWorkflowsGetQuery,
+  useWorkflowDeletePostMutation,
   useWorkflowEditPostMutation,
   useWorkflowTriggerPostMutation,
 } = aqueductApi;
