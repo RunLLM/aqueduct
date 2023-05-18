@@ -209,7 +209,7 @@ func (*operatorReader) GetDistinctLoadOPsByWorkflow(
 	workflowID uuid.UUID,
 	DB database.Database,
 ) ([]views.LoadOperator, error) {
-	// Get all unique load operator (defined as a unique combination of operator name, integration,
+	// Get all unique load operator (defined as a unique combination of operator name, resource,
 	// and operator spec) that has an edge (in `from_id` or `to_id`) in a DAG
 	// belonging to the specified workflow in order of when the operator was last modified.
 	query := `
@@ -244,9 +244,9 @@ func (*operatorReader) GetDistinctLoadOPsByWorkflow(
 	return operators, err
 }
 
-func (*operatorReader) GetExtractAndLoadOPsByIntegration(
+func (*operatorReader) GetExtractAndLoadOPsByResource(
 	ctx context.Context,
-	integrationID uuid.UUID,
+	resourceID uuid.UUID,
 	DB database.Database,
 ) ([]models.Operator, error) {
 	query := fmt.Sprintf(
@@ -257,16 +257,16 @@ func (*operatorReader) GetExtractAndLoadOPsByIntegration(
 			OR json_extract(spec, '$.extract.integration_id') = $2`,
 		models.OperatorCols(),
 	)
-	args := []interface{}{integrationID, integrationID}
+	args := []interface{}{resourceID, resourceID}
 
 	return getOperators(ctx, DB, query, args...)
 }
 
 // This currently only works with relational and S3 loads!
-func (*operatorReader) GetLoadOPsByWorkflowAndIntegration(
+func (*operatorReader) GetLoadOPsByWorkflowAndResource(
 	ctx context.Context,
 	workflowID uuid.UUID,
-	integrationID uuid.UUID,
+	resourceID uuid.UUID,
 	objectName string,
 	DB database.Database,
 ) ([]models.Operator, error) {
@@ -299,14 +299,14 @@ func (*operatorReader) GetLoadOPsByWorkflowAndIntegration(
 		models.OperatorCols(),
 		operator.LoadType,
 	)
-	args := []interface{}{objectName, integrationID, workflowID}
+	args := []interface{}{objectName, resourceID, workflowID}
 
 	return getOperators(ctx, DB, query, args...)
 }
 
-func (*operatorReader) GetLoadOPsByIntegration(
+func (*operatorReader) GetLoadOPsByResource(
 	ctx context.Context,
-	integrationID uuid.UUID,
+	resourceID uuid.UUID,
 	objectName string,
 	DB database.Database,
 ) ([]models.Operator, error) {
@@ -317,7 +317,7 @@ func (*operatorReader) GetLoadOPsByIntegration(
 			OR json_extract(spec, '$.extract.integration_id') = $2`,
 		models.OperatorCols(),
 	)
-	args := []interface{}{integrationID, integrationID}
+	args := []interface{}{resourceID, resourceID}
 
 	return getOperators(ctx, DB, query, args...)
 }
@@ -406,9 +406,9 @@ func (*operatorReader) GetRelationBatch(
 	return relations, err
 }
 
-func (*operatorReader) GetByEngineIntegrationID(
+func (*operatorReader) GetByEngineResourceID(
 	ctx context.Context,
-	integrationID uuid.UUID,
+	resourceID uuid.UUID,
 	DB database.Database,
 ) ([]models.Operator, error) {
 	workflow_condition_fragments := make([]string, 0, len(shared.ServiceToEngineConfigField))
@@ -458,7 +458,7 @@ func (*operatorReader) GetByEngineIntegrationID(
 		workflow_condition,
 		operator_condition,
 	)
-	args := []interface{}{integrationID}
+	args := []interface{}{resourceID}
 
 	var results []models.Operator
 	err := DB.Query(ctx, &results, query, args...)

@@ -151,10 +151,10 @@ func (h *PreviewHandler) Prepare(r *http.Request) (interface{}, int, error) {
 		h.Database,
 	)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during integration ownership validation.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during resource ownership validation.")
 	}
 	if !ok {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own the integrations defined in the Dag.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own the resources defined in the Dag.")
 	}
 
 	removeLoadOperators(dagSummary)
@@ -311,7 +311,7 @@ func setupCondaEnv(
 	ctx context.Context,
 	userID uuid.UUID,
 	dagSummary *request.DagSummary,
-	integrationRepo repos.Resource,
+	resourceRepo repos.Resource,
 	envByOperator map[uuid.UUID]exec_env.ExecutionEnvironment,
 	DB database.Database,
 ) (status int, err error) {
@@ -322,17 +322,17 @@ func setupCondaEnv(
 		}
 	}()
 
-	condaIntegration, err := exec_env.GetCondaResource(ctx, userID, integrationRepo, DB)
+	condaResource, err := exec_env.GetCondaResource(ctx, userID, resourceRepo, DB)
 	if err != nil {
-		return http.StatusInternalServerError, errors.Wrap(err, "error getting conda integration.")
+		return http.StatusInternalServerError, errors.Wrap(err, "error getting conda resource.")
 	}
 
 	// For now, do nothing if conda is not connected.
-	if condaIntegration == nil {
+	if condaResource == nil {
 		return http.StatusOK, nil
 	}
 
-	condaConnectionState, err := exec_state.ExtractConnectionState(condaIntegration)
+	condaConnectionState, err := exec_state.ExtractConnectionState(condaResource)
 	if err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve Conda connection state.")
 	}
@@ -364,7 +364,7 @@ func setupCondaEnv(
 	for opId, env := range envByOperator {
 		err = exec_env.CreateCondaEnvIfNotExists(
 			&env,
-			condaIntegration.Config[exec_env.CondaPathKey],
+			condaResource.Config[exec_env.CondaPathKey],
 			existingEnvs,
 		)
 		if err != nil {

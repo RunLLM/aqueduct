@@ -879,7 +879,7 @@ func onFinishExecution(
 	dag dag_utils.WorkflowDag,
 	execMode operator.ExecutionMode,
 	vaultObject vault.Vault,
-	integrationRepo repos.Resource,
+	resourceRepo repos.Resource,
 	DB database.Database,
 ) {
 	// Wait a little bit for all active operators to finish before exiting on failure.
@@ -898,7 +898,7 @@ func onFinishExecution(
 			dag,
 			notificationContent,
 			vaultObject,
-			integrationRepo,
+			resourceRepo,
 			DB,
 		)
 		if err != nil {
@@ -970,7 +970,7 @@ func (eng *aqEngine) execute(
 				err = dynamic.PrepareCluster(
 					ctx,
 					&shared.DynamicK8sConfig{}, // empty configDelta map
-					op.GetDynamicProperties().GetEngineIntegrationId(),
+					op.GetDynamicProperties().GetEngineResourceID(),
 					eng.ResourceRepo,
 					vaultObject,
 					eng.Database,
@@ -1067,7 +1067,7 @@ func (eng *aqEngine) execute(
 			if op.Dynamic() {
 				err = dynamic.UpdateClusterLastUsedTimestamp(
 					ctx,
-					op.GetDynamicProperties().GetEngineIntegrationId(),
+					op.GetDynamicProperties().GetEngineResourceID(),
 					eng.ResourceRepo,
 					eng.Database,
 				)

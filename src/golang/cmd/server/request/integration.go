@@ -9,7 +9,7 @@ import (
 	"github.com/dropbox/godropbox/errors"
 )
 
-// ParseResourceServiceFromRequest parses the integration service, and whether the
+// ParseResourceServiceFromRequest parses the resource service, and whether the
 // service is user only.
 func ParseResourceServiceFromRequest(r *http.Request) (shared.Service, bool, error) {
 	serviceStr := r.Header.Get(routes.IntegrationServiceHeader)
@@ -18,10 +18,10 @@ func ParseResourceServiceFromRequest(r *http.Request) (shared.Service, bool, err
 		return "", false, err
 	}
 
-	return service, isUserOnlyIntegration(service), nil
+	return service, isUserOnlyResource(service), nil
 }
 
-// ParseResourceConfigFromRequest parses the integration name and configuration,
+// ParseResourceConfigFromRequest parses the resource name and configuration,
 // from the request
 func ParseResourceConfigFromRequest(r *http.Request) (string, map[string]string, error) {
 	configHeader := r.Header.Get(routes.IntegrationConfigHeader)
@@ -29,20 +29,20 @@ func ParseResourceConfigFromRequest(r *http.Request) (string, map[string]string,
 	if len(configHeader) > 0 {
 		err := json.Unmarshal([]byte(configHeader), &configuration)
 		if err != nil {
-			return "", nil, errors.Wrap(err, "Unable to parse integration configuration: %v")
+			return "", nil, errors.Wrap(err, "Unable to parse resource configuration: %v")
 		}
 	}
 
-	integrationName := r.Header.Get(routes.IntegrationNameHeader)
-	if integrationName == "" {
+	resourceName := r.Header.Get(routes.IntegrationNameHeader)
+	if resourceName == "" {
 		return "", nil, errors.New("Resource name was not provided.")
 	}
 
-	return integrationName, configuration, nil
+	return resourceName, configuration, nil
 }
 
-// isUserOnlyIntegration returns whether the specified service is only accessible by the user.
-func isUserOnlyIntegration(svc shared.Service) bool {
+// isUserOnlyResource returns whether the specified service is only accessible by the user.
+func isUserOnlyResource(svc shared.Service) bool {
 	userSpecific := []shared.Service{
 		shared.GoogleSheets,
 		shared.Github,

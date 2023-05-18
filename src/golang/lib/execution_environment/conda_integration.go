@@ -47,10 +47,10 @@ func InitializeConda() (string, string, error) {
 func GetCondaResource(
 	ctx context.Context,
 	userID uuid.UUID,
-	integrationRepo repos.Resource,
+	resourceRepo repos.Resource,
 	DB database.Database,
 ) (*models.Resource, error) {
-	integrations, err := integrationRepo.GetByServiceAndUser(
+	resources, err := resourceRepo.GetByServiceAndUser(
 		ctx,
 		shared.Conda,
 		userID,
@@ -60,9 +60,9 @@ func GetCondaResource(
 		return nil, err
 	}
 
-	if len(integrations) == 0 {
+	if len(resources) == 0 {
 		return nil, nil
 	}
 
-	return &integrations[0], nil
+	return &resources[0], nil
 }

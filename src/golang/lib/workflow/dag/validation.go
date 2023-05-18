@@ -86,22 +86,22 @@ func ValidateDagOperatorResourceOwnership(
 	operators map[uuid.UUID]models.Operator,
 	orgID string,
 	userID uuid.UUID,
-	integrationRepo repos.Resource,
+	resourceRepo repos.Resource,
 	DB database.Database,
 ) (bool, error) {
 	for _, operator := range operators {
-		var integrationID uuid.UUID
+		var resourceID uuid.UUID
 		if operator.Spec.IsExtract() {
-			integrationID = operator.Spec.Extract().ResourceId
+			resourceID = operator.Spec.Extract().ResourceId
 		} else if operator.Spec.IsLoad() {
-			integrationID = operator.Spec.Load().ResourceId
+			resourceID = operator.Spec.Load().ResourceId
 		} else {
 			continue
 		}
 
-		ok, err := integrationRepo.ValidateOwnership(
+		ok, err := resourceRepo.ValidateOwnership(
 			ctx,
-			integrationID,
+			resourceID,
 			orgID,
 			userID,
 			DB,

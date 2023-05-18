@@ -33,7 +33,7 @@ func Perform(
 	artifactRepo repos.Artifact,
 	artifactResultRepo repos.ArtifactResult,
 	DAGRepo repos.DAG,
-	integrationRepo repos.Resource,
+	resourceRepo repos.Resource,
 	operatorRepo repos.Operator,
 	storageMigrationRepo repos.StorageMigration,
 	DB database.Database,
@@ -76,7 +76,7 @@ func Perform(
 					// This can be a system error too. But no one cares right now.
 					shared.UserFatalFailure,
 					&shared.Error{
-						Tip:     fmt.Sprintf("Failure occurred when migrating to the new storage integration `%s`.", destResourceName),
+						Tip:     fmt.Sprintf("Failure occurred when migrating to the new storage resource `%s`.", destResourceName),
 						Context: err.Error(),
 					},
 				)
@@ -122,7 +122,7 @@ func Perform(
 			artifactRepo,
 			artifactResultRepo,
 			operatorRepo,
-			integrationRepo,
+			resourceRepo,
 			DB,
 		)
 		// We let the defer() handle the failure case appropriately.
@@ -242,7 +242,7 @@ type StorageCleanupConfig struct {
 // This includes:
 //   - artifact result content
 //   - operator (function, check) code
-//   - vault content (integration credentials)
+//   - vault content (resource credentials)
 //
 // The keys to all the contents that were copied are also returned, so that the caller can perform best-effort
 // cleanup the old storage layer.
@@ -255,7 +255,7 @@ func MigrateStorageAndVault(
 	artifactRepo repos.Artifact,
 	artifactResultRepo repos.ArtifactResult,
 	operatorRepo repos.Operator,
-	integrationRepo repos.Resource,
+	resourceRepo repos.Resource,
 	DB database.Database,
 ) (*StorageCleanupConfig, error) {
 	log.Infof("Migrating from %v to %v", *oldConf, *newConf)
@@ -399,7 +399,7 @@ func MigrateStorageAndVault(
 		oldVault,
 		newVault,
 		orgID,
-		integrationRepo,
+		resourceRepo,
 		txn,
 	)
 	if err != nil {

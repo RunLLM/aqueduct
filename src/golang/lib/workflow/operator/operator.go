@@ -76,7 +76,7 @@ type Operator interface {
 	Dynamic() bool
 
 	// GetDynamicProperties retrieves the dynamic properties of an operator, which includes its
-	// engine integration ID and its `prepared` flag.
+	// engine resource ID and its `prepared` flag.
 	GetDynamicProperties() *dynamicProperties
 	// FetchExecutionEnvironment retrieves the environment of the operator.
 	FetchExecutionEnvironment(ctx context.Context) *exec_env.ExecutionEnvironment
@@ -84,7 +84,7 @@ type Operator interface {
 
 // This should only be used within the boundaries of the execution engine.
 // Specifies what we will do with the operator's results.
-// Preview: *does not* persist workflow results or write to third-party integrations.
+// Preview: *does not* persist workflow results or write to third-party resources.
 // Publish *does* both.
 type ExecutionMode int
 
@@ -146,8 +146,8 @@ func NewOperator(
 	var dProperties *dynamicProperties
 
 	if opEngineConfig.Type == shared.K8sEngineType {
-		k8sIntegrationId := opEngineConfig.K8sConfig.ResourceID
-		config, err := auth.ReadConfigFromSecret(ctx, k8sIntegrationId, vaultObject)
+		k8sResourceId := opEngineConfig.K8sConfig.ResourceID
+		config, err := auth.ReadConfigFromSecret(ctx, k8sResourceId, vaultObject)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to read k8s config from vault.")
 		}
@@ -158,8 +158,8 @@ func NewOperator(
 
 		if k8sConfig.Dynamic {
 			dProperties = &dynamicProperties{
-				engineIntegrationId: k8sIntegrationId,
-				prepared:            false,
+				engineResourceId: k8sResourceId,
+				prepared:         false,
 			}
 		}
 	}

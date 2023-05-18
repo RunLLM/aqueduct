@@ -80,27 +80,27 @@ func SerializedSuccess(runningAt *time.Time) string {
 
 func UpdateOnSuccess(
 	ctx context.Context,
-	integrationType string,
-	integrationConfig *shared.ResourceConfig,
+	resourceType string,
+	resourceConfig *shared.ResourceConfig,
 	runningAt *time.Time,
-	integrationID uuid.UUID,
-	integrationRepo repos.Resource,
+	resourceID uuid.UUID,
+	resourceRepo repos.Resource,
 	DB database.Database,
 ) error {
-	integrationConfigMap := (map[string]string)(*integrationConfig)
-	integrationConfigMap[ExecStateKey] = SerializedSuccess(runningAt)
-	updatedIntegrationConfig := (*shared.ResourceConfig)(&integrationConfigMap)
+	resourceConfigMap := (map[string]string)(*resourceConfig)
+	resourceConfigMap[ExecStateKey] = SerializedSuccess(runningAt)
+	updatedResourceConfig := (*shared.ResourceConfig)(&resourceConfigMap)
 
-	_, err := integrationRepo.Update(
+	_, err := resourceRepo.Update(
 		ctx,
-		integrationID,
+		resourceID,
 		map[string]interface{}{
-			models.ResourceConfig: updatedIntegrationConfig,
+			models.ResourceConfig: updatedResourceConfig,
 		},
 		DB,
 	)
 	if err != nil {
-		log.Errorf("Failed to update %s integration: %v", integrationType, err)
+		log.Errorf("Failed to update %s resource: %v", resourceType, err)
 		return err
 	}
 	return nil
@@ -110,38 +110,38 @@ func UpdateOnFailure(
 	ctx context.Context,
 	outputs string,
 	msg string,
-	integrationType string,
-	integrationConfig *shared.ResourceConfig,
+	resourceType string,
+	resourceConfig *shared.ResourceConfig,
 	runningAt *time.Time,
-	integrationID uuid.UUID,
-	integrationRepo repos.Resource,
+	resourceID uuid.UUID,
+	resourceRepo repos.Resource,
 	DB database.Database,
 ) {
-	integrationConfigMap := (map[string]string)(*integrationConfig)
-	integrationConfigMap[ExecStateKey] = SerializedFailure(outputs, msg, runningAt)
-	updatedIntegrationConfig := (*shared.ResourceConfig)(&integrationConfigMap)
+	resourceConfigMap := (map[string]string)(*resourceConfig)
+	resourceConfigMap[ExecStateKey] = SerializedFailure(outputs, msg, runningAt)
+	updatedResourceConfig := (*shared.ResourceConfig)(&resourceConfigMap)
 
-	_, err := integrationRepo.Update(
+	_, err := resourceRepo.Update(
 		ctx,
-		integrationID,
+		resourceID,
 		map[string]interface{}{
-			models.ResourceConfig: updatedIntegrationConfig,
+			models.ResourceConfig: updatedResourceConfig,
 		},
 		DB,
 	)
 	if err != nil {
-		log.Errorf("Failed to update %s integration: %v", integrationType, err)
+		log.Errorf("Failed to update %s resource: %v", resourceType, err)
 	}
 }
 
 // ExtractConnectionState retrieves the current connection state from
-// the given integration object. If the execution state is not present,
+// the given resource object. If the execution state is not present,
 // we can assume that this is a legacy entry from before we always wrote
 // an execution state. In this case, we always return success.
 func ExtractConnectionState(
-	integrationObject *models.Resource,
+	resourceObject *models.Resource,
 ) (*shared.ExecutionState, error) {
-	stateSerialized, ok := integrationObject.Config[ExecStateKey]
+	stateSerialized, ok := resourceObject.Config[ExecStateKey]
 	if !ok {
 		// TODO(ENG-2813): Remove this success logic. An execution state key should always exist.
 		return &shared.ExecutionState{

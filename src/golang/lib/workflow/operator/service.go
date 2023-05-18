@@ -19,23 +19,23 @@ import (
 func GetOperatorsOnResource(
 	ctx context.Context,
 	orgID string,
-	integration *models.Resource,
-	integrationRepo repos.Resource,
+	resource *models.Resource,
+	resourceRepo repos.Resource,
 	operatorRepo repos.Operator,
 	DB database.Database,
 ) ([]models.Operator, error) {
-	if shared.IsNotificationResource(integration.Service) {
+	if shared.IsNotificationResource(resource.Service) {
 		return []models.Operator{}, nil
 	}
 
-	integrationID := integration.ID
+	resourceID := resource.ID
 
-	// If the requested integration is a cloud integration, substitute the cloud integration ID
-	// with the ID of the dynamic k8s integration.
-	if integration.Service == shared.AWS {
-		k8sIntegration, err := integrationRepo.GetByNameAndUser(
+	// If the requested resource is a cloud resource, substitute the cloud resource ID
+	// with the ID of the dynamic k8s resource.
+	if resource.Service == shared.AWS {
+		k8sResource, err := resourceRepo.GetByNameAndUser(
 			ctx,
-			fmt.Sprintf("%s:%s", integration.Name, dynamic.K8sResourceNameSuffix),
+			fmt.Sprintf("%s:%s", resource.Name, dynamic.K8sResourceNameSuffix),
 			uuid.Nil,
 			orgID,
 			DB,
@@ -44,29 +44,29 @@ func GetOperatorsOnResource(
 			return nil, err
 		}
 
-		integrationID = k8sIntegration.ID
+		resourceID = k8sResource.ID
 	}
 
-	integrationObject, err := integrationRepo.Get(ctx, integrationID, DB)
+	resourceObject, err := resourceRepo.Get(ctx, resourceID, DB)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to retrieve integration.")
+		return nil, errors.Wrap(err, "Unable to retrieve resource.")
 	}
 
-	if shared.IsDataResource(integrationObject.Service) {
-		return operatorRepo.GetExtractAndLoadOPsByIntegration(ctx, integrationID, DB)
+	if shared.IsDataResource(resourceObject.Service) {
+		return operatorRepo.GetExtractAndLoadOPsByResource(ctx, resourceID, DB)
 	}
 
-	// If the integration is the native Aqueduct compute engine, we need a separate query.
-	if integrationObject.Service == shared.Aqueduct {
+	// If the resource is the native Aqueduct compute engine, we need a separate query.
+	if resourceObject.Service == shared.Aqueduct {
 		return operatorRepo.GetForAqueductEngine(ctx, DB)
 	}
 
-	if _, ok := shared.ServiceToEngineConfigField[integrationObject.Service]; ok {
-		return operatorRepo.GetByEngineIntegrationID(ctx, integrationID, DB)
+	if _, ok := shared.ServiceToEngineConfigField[resourceObject.Service]; ok {
+		return operatorRepo.GetByEngineResourceID(ctx, resourceID, DB)
 	}
 
 	// Other eligible cases
-	if integrationObject.Service == shared.Conda {
+	if resourceObject.Service == shared.Conda {
 		return operatorRepo.GetByEngineType(ctx, shared.AqueductCondaEngineType, DB)
 	}
 
@@ -77,13 +77,13 @@ func GetOperatorsOnResource(
 // GetWorkflowIDsUsingNotification returns the list of all workflow IDs using the given notification resource.
 func GetWorkflowIDsUsingNotification(
 	ctx context.Context,
-	integrationObject *models.Resource,
+	resourceObject *models.Resource,
 	workflowRepo repos.Workflow,
 	DB database.Database,
 ) ([]uuid.UUID, error) {
 	// First we look at the globally set level on the notification resource.
 	// A nil level means that the default notification setting is disabled.
-	defaultLevel, err := lib_utils.ExtractNotificationLevel(integrationObject)
+	defaultLevel, err := lib_utils.ExtractNotificationLevel(resourceObject)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +103,7 @@ func GetWorkflowIDsUsingNotification(
 	for _, workflowObj := range workflowObjects {
 		if workflowObj.NotificationSettings.Settings != nil &&
 			len(workflowObj.NotificationSettings.Settings) > 0 {
-			if _, ok := workflowObj.NotificationSettings.Settings[integrationObject.ID]; ok {
+			if _, ok := workflowObj.NotificationSettings.Settings[resourceObject.ID]; ok {
 				customNotificationWorkflowIDs = append(customNotificationWorkflowIDs, workflowObj.ID)
 			} else {
 				disabledWorkflowIDs[workflowObj.ID] = true

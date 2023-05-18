@@ -94,17 +94,17 @@ func (ts *TestSuite) TestOperator_GetDistinctLoadOPsByWorkflow() {
 	for _, expectedLoadOperator := range expectedOperators {
 		load := expectedLoadOperator.Spec.Load()
 		loadParams := load.Parameters
-		integration, err := ts.resource.Get(ts.ctx, load.ResourceId, ts.DB)
+		resource, err := ts.resource.Get(ts.ctx, load.ResourceId, ts.DB)
 		require.Nil(ts.T(), err)
 
 		expectedLoadOperators = append(expectedLoadOperators, views.LoadOperator{
 			OperatorID:   expectedLoadOperator.ID,
 			OperatorName: expectedLoadOperator.Name,
 			ModifiedAt:   dag.CreatedAt,
-			ResourceName: integration.Name,
+			ResourceName: resource.Name,
 			Spec: connector.Load{
 				Service:    testResourceService,
-				ResourceId: integration.ID,
+				ResourceId: resource.ID,
 				Parameters: loadParams,
 			},
 		})
@@ -116,7 +116,7 @@ func (ts *TestSuite) TestOperator_GetDistinctLoadOPsByWorkflow() {
 	requireDeepEqualLoadOperators(ts.T(), expectedLoadOperators, actualOperators)
 }
 
-func (ts *TestSuite) TestOperator_GetLoadOPsByWorkflowAndIntegration() {
+func (ts *TestSuite) TestOperator_GetLoadOPsByWorkflowAndResource() {
 	users := ts.seedUser(1)
 	user := users[0]
 	dags := ts.seedDAGWithUser(1, user)
@@ -128,16 +128,16 @@ func (ts *TestSuite) TestOperator_GetLoadOPsByWorkflowAndIntegration() {
 	loadParams := load.Parameters
 	relationalLoad, ok := connector.CastToRelationalDBLoadParams(loadParams)
 	require.True(ts.T(), ok)
-	integration, err := ts.resource.Get(ts.ctx, load.ResourceId, ts.DB)
+	resource, err := ts.resource.Get(ts.ctx, load.ResourceId, ts.DB)
 	require.Nil(ts.T(), err)
 
-	actualOperators, err := ts.operator.GetLoadOPsByWorkflowAndIntegration(ts.ctx, dag.WorkflowID, integration.ID, relationalLoad.Table, ts.DB)
+	actualOperators, err := ts.operator.GetLoadOPsByWorkflowAndResource(ts.ctx, dag.WorkflowID, resource.ID, relationalLoad.Table, ts.DB)
 	require.Nil(ts.T(), err)
 	require.Equal(ts.T(), 1, len(actualOperators))
 	requireDeepEqualOperators(ts.T(), []models.Operator{operators[0]}, actualOperators)
 }
 
-func (ts *TestSuite) TestOperator_GetLoadOPsByIntegration() {
+func (ts *TestSuite) TestOperator_GetLoadOPsByResource() {
 	users := ts.seedUser(1)
 	user := users[0]
 	dags := ts.seedDAGWithUser(1, user)
@@ -149,16 +149,16 @@ func (ts *TestSuite) TestOperator_GetLoadOPsByIntegration() {
 	loadParams := load.Parameters
 	relationalLoad, ok := connector.CastToRelationalDBLoadParams(loadParams)
 	require.True(ts.T(), ok)
-	integration, err := ts.resource.Get(ts.ctx, load.ResourceId, ts.DB)
+	resource, err := ts.resource.Get(ts.ctx, load.ResourceId, ts.DB)
 	require.Nil(ts.T(), err)
 
-	actualOperators, err := ts.operator.GetLoadOPsByIntegration(ts.ctx, integration.ID, relationalLoad.Table, ts.DB)
+	actualOperators, err := ts.operator.GetLoadOPsByResource(ts.ctx, resource.ID, relationalLoad.Table, ts.DB)
 	require.Nil(ts.T(), err)
 	require.Equal(ts.T(), 1, len(actualOperators))
 	requireDeepEqualOperators(ts.T(), []models.Operator{operators[0]}, actualOperators)
 }
 
-func (ts *TestSuite) TestOperator_GetByEngineIntegrationID() {
+func (ts *TestSuite) TestOperator_GetByEngineResourceID() {
 	users := ts.seedUser(1)
 	user := users[0]
 	dags := ts.seedDAGWithUser(1, user)
@@ -168,8 +168,8 @@ func (ts *TestSuite) TestOperator_GetByEngineIntegrationID() {
 	k8sOperator := operators[0]
 	lambdaOperator := operators[1]
 
-	lambdaIntegrationID := uuid.New()
-	k8sIntegrationID := uuid.New()
+	lambdaResourceID := uuid.New()
+	k8sResourceID := uuid.New()
 	_, err := ts.dag.Update(
 		ts.ctx,
 		dag.ID,
@@ -177,7 +177,7 @@ func (ts *TestSuite) TestOperator_GetByEngineIntegrationID() {
 			models.DagEngineConfig: &shared.EngineConfig{
 				Type: shared.LambdaEngineType,
 				LambdaConfig: &shared.LambdaConfig{
-					ResourceID: lambdaIntegrationID,
+					ResourceID: lambdaResourceID,
 				},
 			},
 		},
@@ -189,7 +189,7 @@ func (ts *TestSuite) TestOperator_GetByEngineIntegrationID() {
 		&shared.EngineConfig{
 			Type: shared.K8sEngineType,
 			K8sConfig: &shared.K8sConfig{
-				ResourceID: k8sIntegrationID,
+				ResourceID: k8sResourceID,
 			},
 		},
 	)
@@ -204,15 +204,15 @@ func (ts *TestSuite) TestOperator_GetByEngineIntegrationID() {
 	)
 	require.Nil(ts.T(), err)
 
-	operators, err = ts.operator.GetByEngineIntegrationID(
-		ts.ctx, lambdaIntegrationID, ts.DB,
+	operators, err = ts.operator.GetByEngineResourceID(
+		ts.ctx, lambdaResourceID, ts.DB,
 	)
 	require.Nil(ts.T(), err)
 	require.Equal(ts.T(), 1, len(operators))
 	require.Equal(ts.T(), lambdaOperator.ID, operators[0].ID)
 
-	operators, err = ts.operator.GetByEngineIntegrationID(
-		ts.ctx, k8sIntegrationID, ts.DB,
+	operators, err = ts.operator.GetByEngineResourceID(
+		ts.ctx, k8sResourceID, ts.DB,
 	)
 	require.Nil(ts.T(), err)
 	require.Equal(ts.T(), 1, len(operators))

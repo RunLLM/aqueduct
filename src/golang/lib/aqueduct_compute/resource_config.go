@@ -27,10 +27,10 @@ const (
 func ConstructAqueductComputeResourceConfig(
 	ctx context.Context,
 	userID uuid.UUID,
-	integrationRepo repos.Resource,
+	resourceRepo repos.Resource,
 	db database.Database,
 ) (shared.ResourceConfig, error) {
-	condaResource, err := execution_environment.GetCondaResource(ctx, userID, integrationRepo, db)
+	condaResource, err := execution_environment.GetCondaResource(ctx, userID, resourceRepo, db)
 	if err != nil {
 		return nil, err
 	}
