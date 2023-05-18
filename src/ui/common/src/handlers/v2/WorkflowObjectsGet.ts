@@ -8,7 +8,7 @@ import { WorkflowIdParameter } from '../parameters/Path';
 
 export type WorkflowObjectsGetRequest = APIKeyParameter & WorkflowIdParameter;
 
-export type WorkflowObjectsGetResponse = { [id: string]: SavedObject };
+export type WorkflowObjectsGetResponse = { object_details: SavedObject[] };
 
 export const workflowObjectsGetQuery = (req: WorkflowObjectsGetRequest) => ({
   url: `workflow/${req.workflowId}/objects`,
