@@ -1,4 +1,4 @@
-package handler
+package v2
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -37,7 +38,11 @@ type SavedObjectResult struct {
 	Result shared.ExecutionState `json:"exec_state"`
 }
 
-// Route: /workflow/{workflowId}/delete
+// Route:
+//
+//	v2/workflow/{workflowId}/delete
+//	workflow/{workflowId}/delete
+//
 // Method: POST
 // Params: workflowId
 // Request:
@@ -45,20 +50,20 @@ type SavedObjectResult struct {
 //	Headers:
 //		`api-key`: user's API Key
 //	Body:
-//		json-serialized `deleteWorkflowInput` object.
+//		json-serialized `workflowDeleteInput` object.
 //
-// Response: json-serialized `deleteWorkflowResponse` object.
+// Response: json-serialized `workflowDeleteResponse` object.
 //
-// The `DeleteWorkflowHandler` does a best effort at deleting a workflow and its dependencies, such as
+// The `WorkflowDeleteHandler` does a best effort at deleting a workflow and its dependencies, such as
 // k8s resources, Postgres state, and output objects in the user's data warehouse.
-type deleteWorkflowArgs struct {
+type workflowDeleteArgs struct {
 	*aq_context.AqContext
 	WorkflowID     uuid.UUID
 	ExternalDelete map[string][]string
 	Force          bool
 }
 
-type deleteWorkflowInput struct {
+type workflowDeleteInput struct {
 	// This is a map from integration_id to the serialized load spec we want to delete.
 	ExternalDeleteLoadParams map[string][]string `json:"external_delete"`
 	// `Force` serve as a safe-guard for client to confirm the deletion.
@@ -67,14 +72,14 @@ type deleteWorkflowInput struct {
 	Force bool `json:"force"`
 }
 
-type deleteWorkflowResponse struct {
+type workflowDeleteResponse struct {
 	// This is a map from integration_id to a list of `SavedObjectResult`
 	// implying if each object is successfully deleted.
 	SavedObjectDeletionResults map[string][]SavedObjectResult `json:"saved_object_deletion_results"`
 }
 
-type DeleteWorkflowHandler struct {
-	PostHandler
+type WorkflowDeleteHandler struct {
+	handler.PostHandler
 
 	Database   database.Database
 	Engine     engine.Engine
@@ -88,11 +93,11 @@ type DeleteWorkflowHandler struct {
 	ArtifactResultRepo       repos.ArtifactResult
 }
 
-func (*DeleteWorkflowHandler) Name() string {
-	return "DeleteWorkflow"
+func (*WorkflowDeleteHandler) Name() string {
+	return "WorkflowDelete"
 }
 
-func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *WorkflowDeleteHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statuscode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statuscode, err
@@ -117,7 +122,7 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 		return nil, http.StatusBadRequest, errors.New("The organization does not own this workflow.")
 	}
 
-	var input deleteWorkflowInput
+	var input workflowDeleteInput
 	err = json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to parse JSON input.")
@@ -143,7 +148,7 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 		}
 	}
 
-	return &deleteWorkflowArgs{
+	return &workflowDeleteArgs{
 		AqContext:      aqContext,
 		WorkflowID:     workflowID,
 		ExternalDelete: externalDelete,
@@ -151,10 +156,10 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 	}, http.StatusOK, nil
 }
 
-func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*deleteWorkflowArgs)
+func (h *WorkflowDeleteHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*workflowDeleteArgs)
 
-	resp := deleteWorkflowResponse{}
+	resp := workflowDeleteResponse{}
 	resp.SavedObjectDeletionResults = map[string][]SavedObjectResult{}
 
 	nameToID := make(map[string]uuid.UUID, len(args.ExternalDelete))
@@ -285,7 +290,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 
 func DeleteSavedObject(
 	ctx context.Context,
-	args *deleteWorkflowArgs,
+	args *workflowDeleteArgs,
 	integrationNameToID map[string]uuid.UUID,
 	vaultObject vault.Vault,
 	storageConfig *shared.StorageConfig,

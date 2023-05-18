@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/aqueducthq/aqueduct/cmd/server/handler"
+	v2 "github.com/aqueducthq/aqueduct/cmd/server/handler/v2"
 	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/engine"
@@ -40,14 +40,14 @@ func (s *AqServer) triggerMissedCronJobs(
 	if lastExpectedTriggerTime > referenceTime.Unix() {
 		// This means that the workflow should have been triggered, but it wasn't.
 		// So we manually trigger the workflow here.
-		_, _, err := (&handler.RefreshWorkflowHandler{
+		_, _, err := (&v2.WorkflowPostHandler{
 			Database: s.Database,
 			Engine:   s.AqEngine,
 
 			WorkflowRepo: s.WorkflowRepo,
 		}).Perform(
 			ctx,
-			&handler.RefreshWorkflowArgs{
+			&v2.WorkflowPostArgs{
 				WorkflowId: workflowId,
 			},
 		)
