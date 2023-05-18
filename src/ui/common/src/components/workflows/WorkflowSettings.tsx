@@ -69,6 +69,7 @@ import { LoadingButton } from '../primitives/LoadingButton.styles';
 import StorageSelector from './storageSelector';
 import TriggerSourceSelector from './triggerSourceSelector';
 import WorkflowNotificationSettings from './WorkflowNotificationSettings';
+import { useWorkflowObjectsGetQuery, useWorkflowsGetQuery } from 'src/handlers/AqueductApi';
 
 type PeriodicScheduleSelectorProps = {
   cronString: string;
@@ -266,34 +267,11 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const navigate = useNavigate();
 
   const dispatch: AppDispatch = useDispatch();
-
-  useCallback(() => {
-    dispatch(
-      handleListWorkflowSavedObjects({
-        apiKey: user.apiKey,
-        workflowId: workflow.id,
-      })
-    );
-    dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
-  }, [dispatch, user.apiKey, workflow.id]);
-
-  const savedObjectsResponse = useSelector(
-    (state: RootState) => state.workflowReducer.savedObjects
-  );
-
-  const savedObjects = savedObjectsResponse.result;
-  const savedObjectsStatus = savedObjectsResponse.loadingStatus.loading;
+  const { data: workflows } = useWorkflowsGetQuery({ apiKey: user.apiKey })
+  const { data: savedObjects } = useWorkflowObjectsGetQuery({ apiKey: user.apiKey, workflowId: workflow.id })
 
   const [selectedObjects, setSelectedObjects] = useState(
     new Set<SavedObject>()
-  );
-
-  const dagResults = useSelector(
-    (state: RootState) => state.workflowReducer.dagResults
-  );
-
-  const workflows = useSelector(
-    (state: RootState) => state.listWorkflowReducer.workflows
   );
 
   const integrations = useSelector(
@@ -797,7 +775,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
                   <ListItem key={`${integrationName}-${objectResult.name}`}>
                     <ListItemIcon style={{ minWidth: '30px' }}>
                       {objectResult.exec_state.status ===
-                      ExecutionStatus.Succeeded ? (
+                        ExecutionStatus.Succeeded ? (
                         <FontAwesomeIcon
                           icon={faCircleCheck}
                           style={{
@@ -823,13 +801,13 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
                   </ListItem>
                   {objectResult.exec_state.status ===
                     ExecutionStatus.Failed && (
-                    <Alert icon={false} severity="error">
-                      <AlertTitle>
-                        Failed to delete {objectResult.name}.
-                      </AlertTitle>
-                      <pre>{objectResult.exec_state.error.context}</pre>
-                    </Alert>
-                  )}
+                      <Alert icon={false} severity="error">
+                        <AlertTitle>
+                          Failed to delete {objectResult.name}.
+                        </AlertTitle>
+                        <pre>{objectResult.exec_state.error.context}</pre>
+                      </Alert>
+                    )}
                 </>
               ))
             )
