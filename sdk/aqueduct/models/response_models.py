@@ -30,6 +30,11 @@ class GetDagResponse(BaseModel):
     engine_config: EngineConfig
 
 
+class GetNodeResultContentResponse(BaseModel):
+    is_downsampled: bool
+    content: str
+
+
 class GetDagResultResponse(BaseModel):
     """Represents the result of a single workflow run.
 
