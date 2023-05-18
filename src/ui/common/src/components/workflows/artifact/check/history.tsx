@@ -2,19 +2,20 @@ import { AlertTitle } from '@mui/material';
 import { Alert, Box, CircularProgress, Typography } from '@mui/material';
 import React from 'react';
 
-import { ArtifactResultsWithLoadingStatus } from '../../../../reducers/artifactResults';
+import { NodeArtifactResultsGetResponse } from '../../../../handlers/v2/NodeArtifactResultsGet';
 import { theme } from '../../../../styles/theme/theme';
 import { Data, DataSchema } from '../../../../utils/data';
 import { CheckLevel } from '../../../../utils/operators';
 import ExecutionStatus, {
-  getArtifactExecStateAsTableRow,
+  getArtifactResultTableRow,
   stringToExecutionStatus,
 } from '../../../../utils/shared';
-import { isFailed, isInitial, isLoading } from '../../../../utils/shared';
 import { StatusIndicator } from '../../workflowStatus';
 
 type CheckHistoryProps = {
-  historyWithLoadingStatus?: ArtifactResultsWithLoadingStatus;
+  history: NodeArtifactResultsGetResponse;
+  isLoading: boolean;
+  error: string;
   checkLevel?: string;
 };
 
@@ -29,35 +30,31 @@ const checkHistorySchema: DataSchema = {
 };
 
 const CheckHistory: React.FC<CheckHistoryProps> = ({
-  historyWithLoadingStatus,
+  history,
+  isLoading,
+  error,
   checkLevel,
 }) => {
-  if (
-    !historyWithLoadingStatus ||
-    isInitial(historyWithLoadingStatus.status) ||
-    isLoading(historyWithLoadingStatus.status)
-  ) {
+  if (isLoading) {
     return <CircularProgress />;
   }
 
-  if (isFailed(historyWithLoadingStatus.status)) {
+  if (error) {
     return (
       <Alert style={{ marginTop: '10px' }} severity="error">
         <AlertTitle>Failed to load historical data.</AlertTitle>
-        <pre>{historyWithLoadingStatus.status.err}</pre>
+        <pre>{error}</pre>
       </Alert>
     );
   }
 
   const historicalData: Data = {
     schema: checkHistorySchema,
-    data: (historyWithLoadingStatus.results?.results ?? []).map(
-      (artifactStatusResult) => {
-        const resultRow = getArtifactExecStateAsTableRow(artifactStatusResult);
-        resultRow.level = checkLevel ? checkLevel : 'undefined';
-        return resultRow;
-      }
-    ),
+    data: history.map((result) => {
+      const resultRow = getArtifactResultTableRow(result);
+      resultRow.level = checkLevel ?? 'undefined';
+      return resultRow;
+    }),
   };
 
   const dataSortedByLatest = historicalData.data.sort(

@@ -7,7 +7,7 @@ import React, { useEffect, useState } from 'react';
 
 import MultiFileViewer from '../../../components/MultiFileViewer';
 import { InfoTooltip } from '../../../components/pages/components/InfoTooltip';
-import { OperatorResultResponse } from '../../../handlers/responses/operatorDeprecated';
+import { OperatorResponse } from '../../../handlers/responses/node';
 import UserProfile from '../../../utils/auth';
 import {
   exportFunction,
@@ -26,7 +26,7 @@ const MAX_FILE_RENDER_SIZE = 100000000; // 100M
 
 type Props = {
   user: UserProfile;
-  operator: OperatorResultResponse;
+  operator: OperatorResponse;
 };
 
 // Checked with file size=313285391 and handles that smoothly once loaded. However, takes a while to load.
