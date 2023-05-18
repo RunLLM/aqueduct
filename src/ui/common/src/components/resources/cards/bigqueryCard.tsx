@@ -1,10 +1,10 @@
 import React from 'react';
 
-import { BigQueryConfig, Integration } from '../../../utils/resources';
+import { BigQueryConfig, Resource } from '../../../utils/resources';
 import { ResourceCardText } from './text';
 
 type Props = {
-  resource: Integration;
+  resource: Resource;
 };
 
 export const BigQueryCard: React.FC<Props> = ({ resource }) => {

@@ -1,10 +1,10 @@
 import React from 'react';
 
-import { Integration, SnowflakeConfig } from '../../../utils/resources';
+import { Resource, SnowflakeConfig } from '../../../utils/resources';
 import { ResourceCardText } from './text';
 
 type Props = {
-  resource: Integration;
+  resource: Resource;
   detailedView: boolean;
 };
 

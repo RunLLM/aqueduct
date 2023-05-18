@@ -4,24 +4,24 @@ import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
 import {
-  IntegrationDialogProps,
+  ResourceDialogProps,
   SQLiteConfig,
 } from '../../../utils/resources';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { ResourceTextInputField } from './ResourceTextInputField';
 
 const Placeholders: SQLiteConfig = {
   database: '/path/to/sqlite.db',
 };
 
-export const SQLiteDialog: React.FC<IntegrationDialogProps> = ({
+export const SQLiteDialog: React.FC<ResourceDialogProps> = ({
   editMode = false,
 }) => {
   const { setValue } = useFormContext();
 
   return (
     <Box sx={{ mt: 2 }}>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="database"
         spellCheck={false}
         required={true}

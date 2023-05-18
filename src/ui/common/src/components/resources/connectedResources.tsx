@@ -4,81 +4,81 @@ import Link from '@mui/material/Link';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { IntegrationCard } from '../../components/resources/cards/card';
-import { useIntegrationsWorkflowsGetQuery } from '../../handlers/AqueductApi';
-import { handleLoadIntegrations } from '../../reducers/resources';
+import { ResourceCard } from '../../components/resources/cards/card';
+import { useResourcesWorkflowsGetQuery } from '../../handlers/AqueductApi';
+import { handleLoadResources } from '../../reducers/resources';
 import { AppDispatch, RootState } from '../../stores/store';
 import { UserProfile } from '../../utils/auth';
 import { getPathPrefix } from '../../utils/getPathPrefix';
-import { Integration, IntegrationCategories } from '../../utils/resources';
-import SupportedIntegrations from '../../utils/SupportedIntegrations';
+import { Resource, ResourceCategories } from '../../utils/resources';
+import SupportedResources from '../../utils/SupportedResources';
 import { Card } from '../layouts/card';
-import { ConnectedIntegrationType } from './connectedIntegrationType';
+import { ConnectedResourceType } from './connectedResourceType';
 import { ErrorSnackbar } from './errorSnackbar';
 import { getNumWorkflowsUsingMessage } from './numWorkflowsUsingMsg';
 
-type ConnectedIntegrationsProps = {
+type ConnectedResourcesProps = {
   user: UserProfile;
   forceLoad: boolean;
 
   // This filters the displayed resources to only those of the given type.
-  connectedIntegrationType: ConnectedIntegrationType;
+  connectedResourceType: ConnectedResourceType;
 };
 
-export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
+export const ConnectedResources: React.FC<ConnectedResourcesProps> = ({
   user,
   forceLoad,
-  connectedIntegrationType,
+  connectedResourceType,
 }) => {
   const dispatch: AppDispatch = useDispatch();
 
   useEffect(() => {
     dispatch(
-      handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: forceLoad })
+      handleLoadResources({ apiKey: user.apiKey, forceLoad: forceLoad })
     );
   }, [dispatch, forceLoad, user.apiKey]);
 
-  const resourceToConnectedIntegrationType = (resource: Integration) => {
+  const resourceToConnectedResourceType = (resource: Resource) => {
     if (
-      SupportedIntegrations[resource.service].category ===
-      IntegrationCategories.DATA
+      SupportedResources[resource.service].category ===
+      ResourceCategories.DATA
     ) {
-      return ConnectedIntegrationType.Data;
+      return ConnectedResourceType.Data;
     } else if (
-      SupportedIntegrations[resource.service].category ===
-        IntegrationCategories.COMPUTE ||
-      SupportedIntegrations[resource.service].category ===
-        IntegrationCategories.CLOUD
+      SupportedResources[resource.service].category ===
+        ResourceCategories.COMPUTE ||
+      SupportedResources[resource.service].category ===
+        ResourceCategories.CLOUD
     ) {
-      return ConnectedIntegrationType.Compute;
+      return ConnectedResourceType.Compute;
 
       // The "Artifact Storage" is currently only used to filter out the 'Filesystem' resource
       // from the connected resources.
     } else if (
-      SupportedIntegrations[resource.service].category ===
-      IntegrationCategories.ARTIFACT_STORAGE
+      SupportedResources[resource.service].category ===
+      ResourceCategories.ARTIFACT_STORAGE
     ) {
-      return ConnectedIntegrationType.ArtifactStorage;
+      return ConnectedResourceType.ArtifactStorage;
     } else {
-      return ConnectedIntegrationType.Other;
+      return ConnectedResourceType.Other;
     }
   };
 
   const resources = useSelector((state: RootState) =>
     Object.values(state.resourcesReducer.resources).filter(
-      (resource: Integration) =>
-        resourceToConnectedIntegrationType(resource) ===
-        connectedIntegrationType
+      (resource: Resource) =>
+        resourceToConnectedResourceType(resource) ===
+        connectedResourceType
     )
   );
 
   // For each resource, count the number of workflows that use it.
   // Fetch the number of workflows for each resource.
   const {
-    data: workflowAndDagIDsByIntegration,
+    data: workflowAndDagIDsByResource,
     error: fetchWorkflowsError,
     isLoading,
-  } = useIntegrationsWorkflowsGetQuery({ apiKey: user.apiKey });
+  } = useResourcesWorkflowsGetQuery({ apiKey: user.apiKey });
 
   if (isLoading) {
     return <CircularProgress />;
@@ -93,7 +93,7 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
   // Do not show the "Other" section if there are no "Other" resources.
   if (
     resources.length === 0 &&
-    connectedIntegrationType === ConnectedIntegrationType.Other
+    connectedResourceType === ConnectedResourceType.Other
   ) {
     return null;
   }
@@ -107,7 +107,7 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
         }
       />
 
-      <Typography variant="h6">{connectedIntegrationType}</Typography>
+      <Typography variant="h6">{connectedResourceType}</Typography>
       <Box
         sx={{
           display: 'flex',
@@ -128,10 +128,10 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
             let numWorkflowsUsingMsg = '';
             if (
               !fetchWorkflowsError &&
-              resource.id in workflowAndDagIDsByIntegration
+              resource.id in workflowAndDagIDsByResource
             ) {
               numWorkflowsUsingMsg = getNumWorkflowsUsingMessage(
-                workflowAndDagIDsByIntegration[resource.id].length
+                workflowAndDagIDsByResource[resource.id].length
               );
             }
 
@@ -143,7 +143,7 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
                   href={`${getPathPrefix()}/resource/${resource.id}`}
                 >
                   <Card>
-                    <IntegrationCard
+                    <ResourceCard
                       resource={resource}
                       numWorkflowsUsingMsg={numWorkflowsUsingMsg}
                     />

@@ -4,11 +4,11 @@ import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
 import {
-  IntegrationDialogProps,
+  ResourceDialogProps,
   RedshiftConfig,
 } from '../../../utils/resources';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { ResourceTextInputField } from './ResourceTextInputField';
 
 const Placeholders: RedshiftConfig = {
   host: 'aqueduct.us-east-2.redshift.amazonaws.com',
@@ -18,14 +18,14 @@ const Placeholders: RedshiftConfig = {
   password: '********',
 };
 
-export const RedshiftDialog: React.FC<IntegrationDialogProps> = ({
+export const RedshiftDialog: React.FC<ResourceDialogProps> = ({
   editMode = false,
 }) => {
   const { setValue } = useFormContext();
 
   return (
     <Box sx={{ mt: 2 }}>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="host"
         spellCheck={false}
         required={true}
@@ -38,7 +38,7 @@ export const RedshiftDialog: React.FC<IntegrationDialogProps> = ({
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="port"
         spellCheck={false}
         required={true}
@@ -51,7 +51,7 @@ export const RedshiftDialog: React.FC<IntegrationDialogProps> = ({
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="database"
         spellCheck={false}
         required={true}
@@ -64,7 +64,7 @@ export const RedshiftDialog: React.FC<IntegrationDialogProps> = ({
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="username"
         spellCheck={false}
         required={true}
@@ -74,7 +74,7 @@ export const RedshiftDialog: React.FC<IntegrationDialogProps> = ({
         onChange={(event) => setValue('username', event.target.value)}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="password"
         spellCheck={false}
         required={true}

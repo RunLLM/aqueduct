@@ -5,8 +5,8 @@ import React, { useEffect, useState } from 'react';
 import { inferSchema, TableRow } from '../../../utils/data';
 import { CSVConfig, FileData } from '../../../utils/resources';
 import PaginatedTable from '../../tables/PaginatedTable';
-import { IntegrationFileUploadField } from './IntegrationFileUploadField';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { ResourceFileUploadField } from './ResourceFileUploadField';
+import { ResourceTextInputField } from './ResourceTextInputField';
 
 type Props = {
   setDialogConfig: (config: CSVConfig) => void;
@@ -89,7 +89,7 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
   return (
     <Box sx={{ mt: 2 }}>
       <Typography>Upload a CSV file to the demo database.</Typography>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="name"
         label={'Table Name*'}
         description={'The name of the table to create.'}
@@ -99,7 +99,7 @@ export const CSVDialog: React.FC<Props> = ({ setDialogConfig, setErrMsg }) => {
         onChange={(event) => setName(event.target.value)}
       />
 
-      <IntegrationFileUploadField
+      <ResourceFileUploadField
         name="csv"
         label={'CSV File*'}
         description={'The CSV file to populate the table in the demo database.'}

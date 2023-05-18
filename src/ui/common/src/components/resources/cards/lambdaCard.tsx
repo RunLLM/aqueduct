@@ -1,13 +1,13 @@
 import Box from '@mui/material/Box';
 import React from 'react';
 
-import { Integration, LambdaConfig } from '../../../utils/resources';
+import { Resource, LambdaConfig } from '../../../utils/resources';
 import { ExecState, ExecutionStatus } from '../../../utils/shared';
 import LambdaConnectionStatus from '../lambda/lambdaConnectionStatus';
 import { ResourceCardText, TruncatedText } from './text';
 
 type Props = {
-  resource: Integration;
+  resource: Resource;
 };
 
 export const LambdaCard: React.FC<Props> = ({ resource }) => {

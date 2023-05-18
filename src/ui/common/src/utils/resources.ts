@@ -1,13 +1,13 @@
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
 import ExecutionStatus, { AWSCredentialType, ExecState } from './shared';
-import { AqueductComputeConfig } from './SupportedIntegrations';
+import { AqueductComputeConfig } from './SupportedResources';
 
 export const aqueductDemoName = 'Demo';
 export const aqueductComputeName = 'Aqueduct Server';
 export const aqueductStorageName = 'Filesystem';
 
-export function isBuiltinIntegration(resource: Integration): boolean {
+export function isBuiltinResource(resource: Resource): boolean {
   return (
     resource.name === aqueductDemoName ||
     resource.name == aqueductComputeName ||
@@ -15,11 +15,11 @@ export function isBuiltinIntegration(resource: Integration): boolean {
   );
 }
 
-export function isNotificationIntegration(resource: Integration): boolean {
+export function isNotificationResource(resource: Resource): boolean {
   return resource?.service == 'Email' || resource?.service == 'Slack';
 }
 
-export function resourceExecState(resource: Integration): ExecState {
+export function resourceExecState(resource: Resource): ExecState {
   // If an exec_state doesn't exist, we currently assume that it is a legacy resource that has succeeded.
   const status = resource.exec_state?.status || ExecutionStatus.Succeeded;
 
@@ -46,7 +46,7 @@ export function resourceExecState(resource: Integration): ExecState {
 
 // The only resource that does not necessarily display the same service type as
 // on the resource itself is Conda.
-export function resolveDisplayService(resource: Integration): Service {
+export function resolveDisplayService(resource: Resource): Service {
   if (resource.service === 'Aqueduct') {
     const aqConfig = resource.config as AqueductComputeConfig;
     if (aqConfig.conda_config_serialized) {
@@ -56,16 +56,16 @@ export function resolveDisplayService(resource: Integration): Service {
   return resource.service;
 }
 
-export function isCondaRegistered(resource: Integration): boolean {
+export function isCondaRegistered(resource: Resource): boolean {
   const aqConfig = resource.config as AqueductComputeConfig;
   return aqConfig?.conda_config_serialized != undefined;
 }
 
-export type Integration = {
+export type Resource = {
   id: string;
   service: Service;
   name: string;
-  config: IntegrationConfig;
+  config: ResourceConfig;
   createdAt: number;
   exec_state: ExecState;
 };
@@ -229,7 +229,7 @@ export type DatabricksConfig = {
   instance_pool_id: string;
 };
 
-export type NotificationIntegrationConfig = {
+export type NotificationResourceConfig = {
   level: string;
   enabled: 'true' | 'false'; // this has to be string to fit backend requirements.
 };
@@ -240,12 +240,12 @@ export type EmailConfig = {
   user: string;
   password: string;
   targets_serialized: string; // This should be a serialized list
-} & NotificationIntegrationConfig;
+} & NotificationResourceConfig;
 
 export type SlackConfig = {
   token: string;
   channels_serialized: string;
-} & NotificationIntegrationConfig;
+} & NotificationResourceConfig;
 
 export type SparkConfig = {
   livy_server_url: string;
@@ -284,7 +284,7 @@ export type FilesystemConfig = {
   location: string;
 };
 
-export type IntegrationConfig =
+export type ResourceConfig =
   | PostgresConfig
   | SnowflakeConfig
   | RedshiftConfig
@@ -345,7 +345,7 @@ export type Info = {
   activated: boolean;
   category: string;
   docs: string;
-  dialog?: React.FC<IntegrationDialogProps>;
+  dialog?: React.FC<ResourceDialogProps>;
   // TODO: figure out typescript type for yup schema
   // This may be useful: https://stackoverflow.com/questions/66171196/how-to-use-yups-object-shape-with-typescript
   validationSchema: any;
@@ -396,11 +396,11 @@ export async function addTable(
 const logoBucket =
   'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos';
 
-// S3 bucket folder for Integration logos.
+// S3 bucket folder for Resource logos.
 const resourceLogosBucket =
-  'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/resources';
+  'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations';
 
-export const IntegrationCategories = {
+export const ResourceCategories = {
   DATA: 'data',
   COMPUTE: 'compute',
   CLOUD: 'cloud',
@@ -440,7 +440,7 @@ export const ServiceLogos: ServiceLogo = {
   ['ECR']: `${resourceLogosBucket}/ecr.png`,
 };
 
-export type IntegrationDialogProps = {
+export type ResourceDialogProps = {
   user: UserProfile;
   editMode?: boolean;
   onCloseDialog?: () => void;

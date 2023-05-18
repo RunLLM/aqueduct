@@ -1,10 +1,10 @@
 import React from 'react';
 
-import { GCSConfig, Integration } from '../../../utils/resources';
+import { GCSConfig, Resource } from '../../../utils/resources';
 import { ResourceCardText } from './text';
 
 type Props = {
-  resource: Integration;
+  resource: Resource;
 };
 
 export const GCSCard: React.FC<Props> = ({ resource }) => {

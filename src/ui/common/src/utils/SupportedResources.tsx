@@ -91,19 +91,19 @@ import {
 } from '../components/resources/dialogs/sqliteDialog';
 import { AqueductDocsLink } from './docs';
 import {
-  IntegrationCategories,
+  ResourceCategories,
   ServiceInfoMap,
   ServiceLogos,
 } from './resources';
 
-const addingIntegrationLink = `${AqueductDocsLink}/resources/adding-an-resource`;
+const addingResourceLink = `${AqueductDocsLink}/resources/adding-an-resource`;
 
-export const SupportedIntegrations: ServiceInfoMap = {
+export const SupportedResources: ServiceInfoMap = {
   ['Postgres']: {
     logo: ServiceLogos['Postgres'],
     activated: true,
-    category: IntegrationCategories.DATA,
-    docs: addingIntegrationLink,
+    category: ResourceCategories.DATA,
+    docs: addingResourceLink,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <PostgresDialog
         user={user}
@@ -118,8 +118,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['Snowflake']: {
     logo: ServiceLogos['Snowflake'],
     activated: true,
-    category: IntegrationCategories.DATA,
-    docs: addingIntegrationLink,
+    category: ResourceCategories.DATA,
+    docs: addingResourceLink,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <SnowflakeDialog
         user={user}
@@ -134,8 +134,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['Redshift']: {
     logo: ServiceLogos['Redshift'],
     activated: true,
-    category: IntegrationCategories.DATA,
-    docs: addingIntegrationLink,
+    category: ResourceCategories.DATA,
+    docs: addingResourceLink,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <RedshiftDialog
         user={user}
@@ -150,8 +150,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['BigQuery']: {
     logo: ServiceLogos['BigQuery'],
     activated: true,
-    category: IntegrationCategories.DATA,
-    docs: `${addingIntegrationLink}/connecting-to-google-bigquery`,
+    category: ResourceCategories.DATA,
+    docs: `${addingResourceLink}/connecting-to-google-bigquery`,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <BigQueryDialog
         user={user}
@@ -166,8 +166,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['MySQL']: {
     logo: ServiceLogos['MySQL'],
     activated: true,
-    category: IntegrationCategories.DATA,
-    docs: addingIntegrationLink,
+    category: ResourceCategories.DATA,
+    docs: addingResourceLink,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <MysqlDialog
         user={user}
@@ -182,8 +182,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['MariaDB']: {
     logo: ServiceLogos['MariaDB'],
     activated: true,
-    category: IntegrationCategories.DATA,
-    docs: addingIntegrationLink,
+    category: ResourceCategories.DATA,
+    docs: addingResourceLink,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <MariaDbDialog
         user={user}
@@ -198,8 +198,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['S3']: {
     logo: ServiceLogos['S3'],
     activated: true,
-    category: IntegrationCategories.DATA,
-    docs: `${addingIntegrationLink}/connecting-to-aws-s3`,
+    category: ResourceCategories.DATA,
+    docs: `${addingResourceLink}/connecting-to-aws-s3`,
     dialog: ({
       user,
       editMode,
@@ -222,8 +222,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['GCS']: {
     logo: ServiceLogos['GCS'],
     activated: true,
-    category: IntegrationCategories.DATA,
-    docs: `${addingIntegrationLink}/connecting-to-google-cloud-storage`,
+    category: ResourceCategories.DATA,
+    docs: `${addingResourceLink}/connecting-to-google-cloud-storage`,
     dialog: ({
       user,
       editMode,
@@ -246,8 +246,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['Aqueduct']: {
     logo: ServiceLogos['Aqueduct'],
     activated: true,
-    category: IntegrationCategories.COMPUTE,
-    docs: addingIntegrationLink,
+    category: ResourceCategories.COMPUTE,
+    docs: addingResourceLink,
     // TODO: Figure out what to show here.
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => <div />,
     validationSchema: null,
@@ -255,16 +255,16 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['Filesystem']: {
     logo: ServiceLogos['Aqueduct'],
     activated: true,
-    category: IntegrationCategories.ARTIFACT_STORAGE,
-    docs: addingIntegrationLink,
+    category: ResourceCategories.ARTIFACT_STORAGE,
+    docs: addingResourceLink,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => null,
     validationSchema: getSQLiteValidationSchema(),
   },
   ['SQLite']: {
     logo: ServiceLogos['SQLite'],
     activated: true,
-    category: IntegrationCategories.DATA,
-    docs: addingIntegrationLink,
+    category: ResourceCategories.DATA,
+    docs: addingResourceLink,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <SQLiteDialog
         user={user}
@@ -279,8 +279,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['Athena']: {
     logo: ServiceLogos['Athena'],
     activated: true,
-    category: IntegrationCategories.DATA,
-    docs: addingIntegrationLink,
+    category: ResourceCategories.DATA,
+    docs: addingResourceLink,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <AthenaDialog
         user={user}
@@ -295,8 +295,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['Airflow']: {
     logo: ServiceLogos['Airflow'],
     activated: true,
-    category: IntegrationCategories.COMPUTE,
-    docs: addingIntegrationLink,
+    category: ResourceCategories.COMPUTE,
+    docs: addingResourceLink,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <AirflowDialog
         user={user}
@@ -311,8 +311,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['Kubernetes']: {
     logo: ServiceLogos['Kubernetes'],
     activated: true,
-    category: IntegrationCategories.COMPUTE,
-    docs: addingIntegrationLink,
+    category: ResourceCategories.COMPUTE,
+    docs: addingResourceLink,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <OnDemandKubernetesDialog
         user={user}
@@ -327,8 +327,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
   // ['Kubernetes']: {
   //   logo: ServiceLogos['Kubernetes'],
   //   activated: true,
-  //   category: IntegrationCategories.COMPUTE,
-  //   docs: `${addingIntegrationLink}/connecting-to-k8s-cluster`,
+  //   category: ResourceCategories.COMPUTE,
+  //   docs: `${addingResourceLink}/connecting-to-k8s-cluster`,
   //   dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
   //     <KubernetesDialog
   //       editMode={editMode}
@@ -342,8 +342,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['Lambda']: {
     logo: ServiceLogos['Lambda'],
     activated: true,
-    category: IntegrationCategories.COMPUTE,
-    docs: `${addingIntegrationLink}/connecting-to-aws-lambda`,
+    category: ResourceCategories.COMPUTE,
+    docs: `${addingResourceLink}/connecting-to-aws-lambda`,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <LambdaDialog
         user={user}
@@ -358,8 +358,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['MongoDB']: {
     logo: ServiceLogos['MongoDB'],
     activated: true,
-    category: IntegrationCategories.DATA,
-    docs: addingIntegrationLink,
+    category: ResourceCategories.DATA,
+    docs: addingResourceLink,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <MongoDBDialog
         user={user}
@@ -374,8 +374,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['Conda']: {
     logo: ServiceLogos['Conda'],
     activated: true,
-    category: IntegrationCategories.COMPUTE,
-    docs: `${addingIntegrationLink}/connecting-to-conda`,
+    category: ResourceCategories.COMPUTE,
+    docs: `${addingResourceLink}/connecting-to-conda`,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <CondaDialog
         user={user}
@@ -390,8 +390,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['Databricks']: {
     logo: ServiceLogos['Databricks'],
     activated: true,
-    category: IntegrationCategories.COMPUTE,
-    docs: `${addingIntegrationLink}/connecting-to-databricks`,
+    category: ResourceCategories.COMPUTE,
+    docs: `${addingResourceLink}/connecting-to-databricks`,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <DatabricksDialog
         user={user}
@@ -406,7 +406,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['Email']: {
     logo: ServiceLogos['Email'],
     activated: true,
-    category: IntegrationCategories.NOTIFICATION,
+    category: ResourceCategories.NOTIFICATION,
     docs: `${AqueductDocsLink}/notifications/connecting-to-email`,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <EmailDialog
@@ -422,7 +422,7 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['Slack']: {
     logo: ServiceLogos['Slack'],
     activated: true,
-    category: IntegrationCategories.NOTIFICATION,
+    category: ResourceCategories.NOTIFICATION,
     docs: `${AqueductDocsLink}/notifications/connecting-to-slack`,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <SlackDialog
@@ -438,8 +438,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['Spark']: {
     logo: ServiceLogos['Spark'],
     activated: true,
-    category: IntegrationCategories.COMPUTE,
-    docs: addingIntegrationLink,
+    category: ResourceCategories.COMPUTE,
+    docs: addingResourceLink,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <SparkDialog
         user={user}
@@ -455,8 +455,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['AWS']: {
     logo: ServiceLogos['Kubernetes'],
     activated: true,
-    category: IntegrationCategories.CLOUD,
-    docs: addingIntegrationLink,
+    category: ResourceCategories.CLOUD,
+    docs: addingResourceLink,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <AWSDialog
         user={user}
@@ -471,8 +471,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['Amazon']: {
     logo: ServiceLogos['AWS'],
     activated: true,
-    category: IntegrationCategories.CLOUD,
-    docs: addingIntegrationLink,
+    category: ResourceCategories.CLOUD,
+    docs: addingResourceLink,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <AWSDialog
         user={user}
@@ -487,8 +487,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['GCP']: {
     logo: ServiceLogos['GCP'],
     activated: false,
-    category: IntegrationCategories.CLOUD,
-    docs: addingIntegrationLink,
+    category: ResourceCategories.CLOUD,
+    docs: addingResourceLink,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <GCPDialog
         user={user}
@@ -503,8 +503,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['Azure']: {
     logo: ServiceLogos['Azure'],
     activated: false,
-    category: IntegrationCategories.CLOUD,
-    docs: addingIntegrationLink,
+    category: ResourceCategories.CLOUD,
+    docs: addingResourceLink,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <AzureDialog
         user={user}
@@ -519,8 +519,8 @@ export const SupportedIntegrations: ServiceInfoMap = {
   ['ECR']: {
     logo: ServiceLogos['ECR'],
     activated: true,
-    category: IntegrationCategories.CONTAINER_REGISTRY,
-    docs: addingIntegrationLink,
+    category: ResourceCategories.CONTAINER_REGISTRY,
+    docs: addingResourceLink,
     dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
       <ECRDialog
         user={user}
@@ -534,4 +534,4 @@ export const SupportedIntegrations: ServiceInfoMap = {
   },
 };
 
-export default SupportedIntegrations;
+export default SupportedResources;

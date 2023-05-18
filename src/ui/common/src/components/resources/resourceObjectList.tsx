@@ -12,25 +12,25 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import {
-  handleLoadIntegrationObject,
+  handleLoadResourceObject,
   objectKeyFn,
 } from '../../reducers/resource';
 import { AppDispatch, RootState } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
-import { Integration } from '../../utils/resources';
+import { Resource } from '../../utils/resources';
 import { isLoading } from '../../utils/shared';
-import IntegrationObjectPreview from './resourceObjectPreview';
+import ResourceObjectPreview from './resourceObjectPreview';
 
 type Props = {
   user: UserProfile;
-  resource: Integration;
+  resource: Resource;
   onUploadCsv?: () => void;
 };
 
 const DefaultTableListLimit = 5;
 
-const IntegrationObjectList: React.FC<Props> = ({ user, resource }) => {
+const ResourceObjectList: React.FC<Props> = ({ user, resource }) => {
   const listObjectNamesState = useSelector(
     (state: RootState) => state.resourceReducer.objectNames
   );
@@ -46,7 +46,7 @@ const IntegrationObjectList: React.FC<Props> = ({ user, resource }) => {
 
   useEffect(() => {
     dispatch(
-      handleLoadIntegrationObject({
+      handleLoadResourceObject({
         apiKey: user.apiKey,
         resourceId: resource.id,
         object: selectedObject,
@@ -114,7 +114,7 @@ const IntegrationObjectList: React.FC<Props> = ({ user, resource }) => {
           {listObjectNamesState.names[i]}{' '}
         </AccordionSummary>
         <AccordionDetails>
-          <IntegrationObjectPreview
+          <ResourceObjectPreview
             objectName={selectedObject}
             object={objectsState[objectKeyFn(selectedObject)]}
           />
@@ -169,4 +169,4 @@ const IntegrationObjectList: React.FC<Props> = ({ user, resource }) => {
   );
 };
 
-export default IntegrationObjectList;
+export default ResourceObjectList;

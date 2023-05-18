@@ -7,17 +7,17 @@ import * as Yup from 'yup';
 import {
   BigQueryConfig,
   FileData,
-  IntegrationDialogProps,
+  ResourceDialogProps,
 } from '../../../utils/resources';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
-import { IntegrationFileUploadField } from './IntegrationFileUploadField';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { ResourceFileUploadField } from './ResourceFileUploadField';
+import { ResourceTextInputField } from './ResourceTextInputField';
 
 const Placeholders: BigQueryConfig = {
   project_id: 'aqueduct_1234',
 };
 
-export const BigQueryDialog: React.FC<IntegrationDialogProps> = ({
+export const BigQueryDialog: React.FC<ResourceDialogProps> = ({
   editMode = false,
 }) => {
   const { setValue } = useFormContext();
@@ -43,7 +43,7 @@ export const BigQueryDialog: React.FC<IntegrationDialogProps> = ({
 
   return (
     <Box sx={{ mt: 2 }}>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="project_id"
         spellCheck={false}
         required={true}
@@ -56,7 +56,7 @@ export const BigQueryDialog: React.FC<IntegrationDialogProps> = ({
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
-      <IntegrationFileUploadField
+      <ResourceFileUploadField
         name="service_account_credentials"
         label={'Service Account Credentials*'}
         description={fileUploadDescription}

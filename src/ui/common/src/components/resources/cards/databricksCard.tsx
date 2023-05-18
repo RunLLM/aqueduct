@@ -1,10 +1,10 @@
 import React from 'react';
 
-import { DatabricksConfig, Integration } from '../../../utils/resources';
+import { DatabricksConfig, Resource } from '../../../utils/resources';
 import { ResourceCardText } from './text';
 
 type DatabricksCardProps = {
-  resource: Integration;
+  resource: Resource;
   detailedView: boolean;
 };
 

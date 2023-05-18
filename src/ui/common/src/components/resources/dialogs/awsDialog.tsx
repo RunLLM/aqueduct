@@ -8,11 +8,11 @@ import {
   AWSConfig,
   DynamicEngineType,
   DynamicK8sConfig,
-  IntegrationDialogProps,
+  ResourceDialogProps,
 } from '../../../utils/resources';
 import { AWSCredentialType } from '../../../utils/shared';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { ResourceTextInputField } from './ResourceTextInputField';
 
 const Placeholders: AWSConfig = {
   type: AWSCredentialType.AccessKey,
@@ -34,7 +34,7 @@ const K8sPlaceholders: DynamicK8sConfig = {
   max_gpu_node: '1',
 };
 
-export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
+export const AWSDialog: React.FC<ResourceDialogProps> = () => {
   const { register, getValues, setValue } = useFormContext();
 
   // Need state variable to change tabs, as the formContext doesn't change as readily.
@@ -51,7 +51,7 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
   };
 
   const configProfileInput = (
-    <IntegrationTextInputField
+    <ResourceTextInputField
       name="config_file_profile"
       spellCheck={false}
       required={true}
@@ -67,7 +67,7 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
       <Typography variant="body2" color="gray.700">
         Manually enter your AWS credentials.
       </Typography>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="access_key_id"
         spellCheck={false}
         required={true}
@@ -77,7 +77,7 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
         onChange={(event) => setValue('access_key_id', event.target.value)}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="secret_access_key"
         spellCheck={false}
         required={true}
@@ -87,7 +87,7 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
         onChange={(event) => setValue('secret_access_key', event.target.value)}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="region"
         spellCheck={false}
         required={true}
@@ -109,7 +109,7 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
         credentials file. Once connected, any updates to the file content will
         automatically apply to this resource.
       </Typography>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="config_file_path"
         spellCheck={false}
         required={true}
@@ -128,7 +128,7 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
       <Typography variant="body2" color="gray.700">
         Optionally configure on-demand Kubernetes cluster parameters.
       </Typography>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="keepalive"
         spellCheck={false}
         required={false}
@@ -141,7 +141,7 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
           setValue('k8s_serialized', JSON.stringify(k8sConfigs));
         }}
       />
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="cpu_node_type"
         spellCheck={false}
         required={false}
@@ -155,7 +155,7 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
         }}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="gpu_node_type"
         spellCheck={false}
         required={false}
@@ -169,7 +169,7 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
         }}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="min_cpu_node"
         spellCheck={false}
         required={false}
@@ -183,7 +183,7 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
         }}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="max_cpu_node"
         spellCheck={false}
         required={false}
@@ -197,7 +197,7 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
         }}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="min_gpu_node"
         spellCheck={false}
         required={false}
@@ -211,7 +211,7 @@ export const AWSDialog: React.FC<IntegrationDialogProps> = () => {
         }}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="max_gpu_node"
         spellCheck={false}
         required={false}

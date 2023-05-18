@@ -10,12 +10,12 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { handleGetServerConfig } from '../../../handlers/getServerConfig';
-import { handleLoadIntegrations } from '../../../reducers/resources';
+import { handleLoadResources } from '../../../reducers/resources';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import {
-  Integration,
-  IntegrationCategories,
+  Resource,
+  ResourceCategories,
 } from '../../../utils/resources';
 import {
   isFailed,
@@ -23,7 +23,7 @@ import {
   isLoading,
   isSucceeded,
 } from '../../../utils/shared';
-import SupportedIntegrations from '../../../utils/SupportedIntegrations';
+import SupportedResources from '../../../utils/SupportedResources';
 import CodeBlock from '../../CodeBlock';
 import { useAqueductConsts } from '../../hooks/useAqueductConsts';
 import DefaultLayout from '../../layouts/default';
@@ -45,7 +45,7 @@ type AccountPageProps = {
 async function UpdateNotifications(
   apiAddress: string,
   apiKey: string,
-  resources: { [id: string]: Integration },
+  resources: { [id: string]: Resource },
   configs: NotificationConfigsMap
 ): Promise<string> {
   const promiseResults = Object.entries(configs).map(async ([id, config]) => {
@@ -105,8 +105,8 @@ client = aqueduct.Client(
   );
   const notifications = Object.values(resourcesReducer.resources).filter(
     (x) =>
-      SupportedIntegrations[x.service].category ===
-      IntegrationCategories.NOTIFICATION
+      SupportedResources[x.service].category ===
+      ResourceCategories.NOTIFICATION
   );
 
   const [updatingNotifications, setUpdatingNotifications] = useState(false);
@@ -125,7 +125,7 @@ client = aqueduct.Client(
   useEffect(() => {
     if (!updatingNotifications) {
       dispatch(
-        handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: true })
+        handleLoadResources({ apiKey: user.apiKey, forceLoad: true })
       );
     }
   }, [updatingNotifications, dispatch, user.apiKey]);

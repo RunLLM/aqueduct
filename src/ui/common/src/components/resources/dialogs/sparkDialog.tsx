@@ -4,22 +4,22 @@ import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
 import {
-  IntegrationDialogProps,
+  ResourceDialogProps,
   SparkConfig,
 } from '../../../utils/resources';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { ResourceTextInputField } from './ResourceTextInputField';
 
 const Placeholders: SparkConfig = {
   livy_server_url: 'http://cluster-url.com:8998',
 };
 
-export const SparkDialog: React.FC<IntegrationDialogProps> = ({ editMode }) => {
+export const SparkDialog: React.FC<ResourceDialogProps> = ({ editMode }) => {
   const { setValue } = useFormContext();
 
   return (
     <Box sx={{ mt: 2 }}>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="livy_server_url"
         label={'Livy Server URL*'}
         description={'URL of Livy Server.'}

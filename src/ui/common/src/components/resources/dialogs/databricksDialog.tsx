@@ -7,10 +7,10 @@ import * as Yup from 'yup';
 
 import {
   DatabricksConfig,
-  IntegrationDialogProps,
+  ResourceDialogProps,
 } from '../../../utils/resources';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { ResourceTextInputField } from './ResourceTextInputField';
 
 const Placeholders: DatabricksConfig = {
   workspace_url: 'https://dbc-your-workspace.cloud.databricks.com',
@@ -20,7 +20,7 @@ const Placeholders: DatabricksConfig = {
   instance_pool_id: '123-456-789',
 };
 
-export const DatabricksDialog: React.FC<IntegrationDialogProps> = ({
+export const DatabricksDialog: React.FC<ResourceDialogProps> = ({
   editMode = false,
 }) => {
   const { setValue } = useFormContext();
@@ -34,7 +34,7 @@ export const DatabricksDialog: React.FC<IntegrationDialogProps> = ({
         </Link>
         .
       </Typography>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="workspace_url"
         label={'Workspace URL*'}
         description={'URL of Databricks Workspace.'}
@@ -47,7 +47,7 @@ export const DatabricksDialog: React.FC<IntegrationDialogProps> = ({
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="access_token"
         label={'Access Token*'}
         description={
@@ -70,7 +70,7 @@ export const DatabricksDialog: React.FC<IntegrationDialogProps> = ({
         .
       </Typography>
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="s3_instance_profile_arn"
         label={'S3 Instance Profile ARN*'}
         description={
@@ -95,7 +95,7 @@ export const DatabricksDialog: React.FC<IntegrationDialogProps> = ({
         .
       </Typography>
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="instance_pool_id"
         label={'Instance Pool ID'}
         description={

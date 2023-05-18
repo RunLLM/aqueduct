@@ -5,11 +5,11 @@ import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
-import { IntegrationDialogProps } from '../../../utils/resources';
+import { ResourceDialogProps } from '../../../utils/resources';
 import { NotificationLogLevel } from '../../../utils/notifications';
 import CheckboxEntry from '../../notifications/CheckboxEntry';
 import NotificationLevelSelector from '../../notifications/NotificationLevelSelector';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { ResourceTextInputField } from './ResourceTextInputField';
 
 // Placeholders are example values not filled for users, but
 // may show up in textbox as hint if user don't fill the form field.
@@ -39,7 +39,7 @@ type Props = {
   value?: EmailConfig;
 };
 
-export const EmailDialog: React.FC<IntegrationDialogProps> = ({
+export const EmailDialog: React.FC<ResourceDialogProps> = ({
   editMode = false,
 }) => {
   // Retrieve the form context.
@@ -57,7 +57,7 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
 
   return (
     <Box sx={{ mt: 2 }}>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="host"
         spellCheck={false}
         required={true}
@@ -67,7 +67,7 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
         onChange={(event) => setValue('host', event.target.value)}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="port"
         spellCheck={false}
         required={true}
@@ -77,7 +77,7 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
         onChange={(event) => setValue('port', event.target.value)}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="user"
         spellCheck={false}
         required={true}
@@ -87,7 +87,7 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
         onChange={(event) => setValue('user', event.target.value)}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="password"
         spellCheck={false}
         required={false}
@@ -100,7 +100,7 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
         }}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="receivers"
         spellCheck={false}
         required={true}

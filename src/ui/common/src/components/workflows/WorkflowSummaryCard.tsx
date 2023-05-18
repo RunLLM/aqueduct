@@ -4,7 +4,7 @@ import { Box, Link, Typography } from '@mui/material';
 import React from 'react';
 
 import { OperatorResponse } from '../../handlers/responses/node';
-import { Integration } from '../../utils/resources';
+import { Resource } from '../../utils/resources';
 import { ListWorkflowSummary } from '../../utils/workflows';
 import { TruncatedText } from '../resources/cards/text';
 import { StatusIndicator } from './workflowStatus';
@@ -12,7 +12,7 @@ import { StatusIndicator } from './workflowStatus';
 export type WorkflowSummaryCardProps = {
   workflow?: ListWorkflowSummary;
   operators: OperatorResponse[];
-  resource: Integration;
+  resource: Resource;
 };
 
 // If the operator list is empty, we don't display the `<num> operators using <resource` message

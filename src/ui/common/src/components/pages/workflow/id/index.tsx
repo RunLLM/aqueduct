@@ -18,7 +18,7 @@ import { ReactFlowProvider } from 'reactflow';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import { handleGetWorkflowHistory } from '../../../../handlers/getWorkflowHistory';
-import { handleLoadIntegrations } from '../../../../reducers/resources';
+import { handleLoadResources } from '../../../../reducers/resources';
 import {
   NodeType,
   resetSelectedNode,
@@ -134,7 +134,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   // in order to populate the UI.
   useEffect(() => {
     dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
-    dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
+    dispatch(handleLoadResources({ apiKey: user.apiKey }));
   }, [dispatch, user.apiKey, workflowId]);
 
   // EFFECT 4: Gather selected workflow index.

@@ -17,7 +17,7 @@ type Props = {
   object: ObjectState;
 };
 
-const IntegrationObjectPreview: React.FC<Props> = ({ objectName, object }) => {
+const ResourceObjectPreview: React.FC<Props> = ({ objectName, object }) => {
   if (!object || isInitial(object.status)) {
     return null;
   }
@@ -62,4 +62,4 @@ const IntegrationObjectPreview: React.FC<Props> = ({ objectName, object }) => {
   return <Box sx={{ mt: 3 }}>{content}</Box>;
 };
 
-export default IntegrationObjectPreview;
+export default ResourceObjectPreview;

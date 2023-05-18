@@ -12,8 +12,8 @@ import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 
 import {
-  Integration,
-  isBuiltinIntegration,
+  Resource,
+  isBuiltinResource,
   isCondaRegistered,
   resourceExecState,
 } from '../../utils/resources';
@@ -21,24 +21,24 @@ import ExecutionStatus from '../../utils/shared';
 import { Button } from '../primitives/Button.styles';
 
 type Props = {
-  resource: Integration;
+  resource: Resource;
 
   // Currently unused.
   onUploadCsv?: () => void;
   onTestConnection?: () => void;
   onEdit?: () => void;
-  onDeleteIntegration?: () => void;
+  onDeleteResource?: () => void;
   allowDeletion: boolean;
 };
 
-export const IntegrationOptionsButtonWidth = '120px';
+export const ResourceOptionsButtonWidth = '120px';
 
-const IntegrationOptions: React.FC<Props> = ({
+const ResourceOptions: React.FC<Props> = ({
   resource,
   onUploadCsv,
   onTestConnection,
   onEdit,
-  onDeleteIntegration,
+  onDeleteResource,
   allowDeletion,
 }) => {
   // Menu control based on
@@ -49,7 +49,7 @@ const IntegrationOptions: React.FC<Props> = ({
 
   // Disallow any deletion for the built-in resources, unless Conda has completed registration.
   let deletionMenuItem = 'Delete Resource';
-  if (isBuiltinIntegration(resource)) {
+  if (isBuiltinResource(resource)) {
     allowDeletion = false;
   }
 
@@ -72,7 +72,7 @@ const IntegrationOptions: React.FC<Props> = ({
           setAnchorEl(event.currentTarget);
         }}
         endIcon={<FontAwesomeIcon icon={faCaretDown} size="sm" />}
-        sx={{ width: { IntegrationOptionsButtonWidth } }}
+        sx={{ width: { ResourceOptionsButtonWidth } }}
       >
         Options
       </Button>
@@ -106,7 +106,7 @@ const IntegrationOptions: React.FC<Props> = ({
         </MenuItem>
 
         {resource.service !== 'AWS' &&
-          !isBuiltinIntegration(resource) && (
+          !isBuiltinResource(resource) && (
             <MenuItem
               onClick={() => {
                 setAnchorEl(null);
@@ -127,7 +127,7 @@ const IntegrationOptions: React.FC<Props> = ({
           <MenuItem
             onClick={() => {
               setAnchorEl(null);
-              onDeleteIntegration();
+              onDeleteResource();
             }}
           >
             <FontAwesomeIcon color="gray.800" icon={faTrash} />
@@ -141,4 +141,4 @@ const IntegrationOptions: React.FC<Props> = ({
   );
 };
 
-export default IntegrationOptions;
+export default ResourceOptions;

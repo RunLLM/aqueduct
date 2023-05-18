@@ -3,19 +3,19 @@ import React, { useState } from 'react';
 
 import { getPathPrefix } from '../../utils/getPathPrefix';
 import {
-  Integration,
-  NotificationIntegrationConfig,
+  Resource,
+  NotificationResourceConfig,
 } from '../../utils/resources';
 import { NotificationLogLevel } from '../../utils/notifications';
 import { Button } from '../primitives/Button.styles';
 import NotificationLevelSelector from './NotificationLevelSelector';
 
 export type NotificationConfigsMap = {
-  [resourceId: string]: NotificationIntegrationConfig;
+  [resourceId: string]: NotificationResourceConfig;
 };
 
 type Props = {
-  notifications: Integration[];
+  notifications: Resource[];
   onSave: (updatedConfigs: NotificationConfigsMap) => void;
   isSaving: boolean;
 };
@@ -41,7 +41,7 @@ const AccountNotificationSettingsSelector: React.FC<Props> = ({
   isSaving,
 }) => {
   const initialConfigs = Object.fromEntries(
-    notifications.map((x) => [x.id, x.config as NotificationIntegrationConfig])
+    notifications.map((x) => [x.id, x.config as NotificationResourceConfig])
   );
   const [configs, setConfigs] =
     useState<NotificationConfigsMap>(initialConfigs);

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Integration } from 'src/utils/resources';
+import { Resource } from 'src/utils/resources';
 
 import { AirflowCard } from './airflowCard';
 import { AqueductCard } from './aqueductCard';
@@ -22,7 +22,7 @@ import SparkCard from './sparkCard';
 import SQLiteCard from './sqliteCard';
 
 type ResourceFieldsDetailsCardProps = {
-  resource: Integration;
+  resource: Resource;
 
   // Controls what fields about the resource are shown. When set to true, more fields will be shown.
   detailedView: boolean;

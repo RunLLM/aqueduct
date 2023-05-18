@@ -2,23 +2,23 @@ import Box from '@mui/material/Box';
 import React from 'react';
 
 import {
-  Integration,
+  Resource,
   resolveDisplayService,
   resourceExecState,
 } from '../../../utils/resources';
 import { StatusIndicator } from '../../workflows/workflowStatus';
-import IntegrationLogo from '../logo';
+import ResourceLogo from '../logo';
 import { ResourceFieldsDetailsCard } from './resourceFieldsDetailsCard';
 import { TruncatedText } from './text';
 
-type IntegrationProps = {
-  resource: Integration;
+type ResourceProps = {
+  resource: Resource;
 
   // Eg: "Used by 2 workflows"
   numWorkflowsUsingMsg: string;
 };
 
-export const IntegrationCard: React.FC<IntegrationProps> = ({
+export const ResourceCard: React.FC<ResourceProps> = ({
   resource,
   numWorkflowsUsingMsg,
 }) => {
@@ -38,7 +38,7 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
             {resource.name}
           </TruncatedText>
         </Box>
-        <IntegrationLogo
+        <ResourceLogo
           service={resolveDisplayService(resource)}
           size="small"
           activated

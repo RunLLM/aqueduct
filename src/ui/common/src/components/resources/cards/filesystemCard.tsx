@@ -1,10 +1,10 @@
 import React from 'react';
 
-import { FilesystemConfig, Integration } from '../../../utils/resources';
+import { FilesystemConfig, Resource } from '../../../utils/resources';
 import { ResourceCardText } from './text';
 
 type FilesystemCardProps = {
-  resource: Integration;
+  resource: Resource;
 };
 
 export const FilesystemCard: React.FC<FilesystemCardProps> = ({

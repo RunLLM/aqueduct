@@ -2,11 +2,11 @@ import { Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React from 'react';
 
-import { AWSConfig, Integration } from '../../../utils/resources';
+import { AWSConfig, Resource } from '../../../utils/resources';
 import { ResourceCardText } from './text';
 
 type AWSCardProps = {
-  resource: Integration;
+  resource: Resource;
 };
 
 export const AWSCard: React.FC<AWSCardProps> = ({ resource }) => {

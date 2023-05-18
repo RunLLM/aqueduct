@@ -4,11 +4,11 @@ import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
 import {
-  IntegrationDialogProps,
+  ResourceDialogProps,
   MariaDbConfig,
 } from '../../../utils/resources';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { ResourceTextInputField } from './ResourceTextInputField';
 
 const Placeholders: MariaDbConfig = {
   host: '127.0.0.1',
@@ -18,14 +18,14 @@ const Placeholders: MariaDbConfig = {
   password: '********',
 };
 
-export const MariaDbDialog: React.FC<IntegrationDialogProps> = ({
+export const MariaDbDialog: React.FC<ResourceDialogProps> = ({
   editMode = false,
 }) => {
   const { setValue } = useFormContext();
 
   return (
     <Box sx={{ mt: 2 }}>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="host"
         label={'Host*'}
         description={'The hostname or IP address of the MariaDB server.'}
@@ -38,7 +38,7 @@ export const MariaDbDialog: React.FC<IntegrationDialogProps> = ({
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="port"
         label={'Port*'}
         description={'The port number of the MariaDB server.'}
@@ -51,7 +51,7 @@ export const MariaDbDialog: React.FC<IntegrationDialogProps> = ({
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="database"
         label={'Database*'}
         description={'The name of the specific database to connect to.'}
@@ -64,7 +64,7 @@ export const MariaDbDialog: React.FC<IntegrationDialogProps> = ({
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="username"
         spellCheck={false}
         required={true}
@@ -74,7 +74,7 @@ export const MariaDbDialog: React.FC<IntegrationDialogProps> = ({
         onChange={(event) => setValue('username', event.target.value)}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="password"
         spellCheck={false}
         required={true}

@@ -51,10 +51,10 @@ import {
   getNextUpdateTime,
   PeriodUnit,
 } from '../../utils/cron';
-import { IntegrationCategories } from '../../utils/resources';
+import { ResourceCategories } from '../../utils/resources';
 import { UpdateMode } from '../../utils/operators';
 import ExecutionStatus, { LoadingStatusEnum } from '../../utils/shared';
-import { SupportedIntegrations } from '../../utils/SupportedIntegrations';
+import { SupportedResources } from '../../utils/SupportedResources';
 import {
   getSavedObjectIdentifier,
   NotificationSettingsMap,
@@ -300,10 +300,10 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     (state: RootState) => state.resourcesReducer.resources
   );
 
-  const notificationIntegrations = Object.values(resources).filter(
+  const notificationResources = Object.values(resources).filter(
     (x) =>
-      SupportedIntegrations[x.service].category ===
-      IntegrationCategories.NOTIFICATION
+      SupportedResources[x.service].category ===
+      ResourceCategories.NOTIFICATION
   );
 
   const [name, setName] = useState(workflowDag.metadata?.name);
@@ -934,12 +934,12 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         </Box>
       </Box>
 
-      {notificationIntegrations.length > 0 && (
+      {notificationResources.length > 0 && (
         <Box sx={{ my: 2 }}>
           <Typography style={{ fontWeight: 'bold' }}>Notifications</Typography>
 
           <WorkflowNotificationSettings
-            notificationIntegrations={notificationIntegrations}
+            notificationResources={notificationResources}
             curSettingsMap={notificationSettingsMap}
             onSelect={(id, level, replacingID) => {
               const newSettings = { ...notificationSettingsMap };

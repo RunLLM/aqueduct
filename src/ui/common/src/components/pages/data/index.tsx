@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { BreadcrumbLink } from '../../../components/layouts/NavBar';
 import { getDataArtifactPreview } from '../../../reducers/dataPreview';
-import { handleLoadIntegrations } from '../../../reducers/resources';
+import { handleLoadResources } from '../../../reducers/resources';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import getPathPrefix from '../../../utils/getPathPrefix';
@@ -31,14 +31,14 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    const fetchDataArtifactsAndIntegrations = async () => {
+    const fetchDataArtifactsAndResources = async () => {
       setIsLoading(true);
       await dispatch(getDataArtifactPreview({ apiKey }));
-      await dispatch(handleLoadIntegrations({ apiKey }));
+      await dispatch(handleLoadResources({ apiKey }));
       setIsLoading(false);
     };
 
-    fetchDataArtifactsAndIntegrations();
+    fetchDataArtifactsAndResources();
   }, [apiKey, dispatch]);
 
   const dataCardsInfo = useSelector(

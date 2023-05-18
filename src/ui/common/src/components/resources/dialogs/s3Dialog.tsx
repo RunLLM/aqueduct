@@ -7,15 +7,15 @@ import * as Yup from 'yup';
 
 import {
   FileData,
-  IntegrationDialogProps,
+  ResourceDialogProps,
   S3Config,
 } from '../../../utils/resources';
 import { AWSCredentialType } from '../../../utils/shared';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';
 import { readCredentialsFile } from './bigqueryDialog';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
-import { IntegrationFileUploadField } from './IntegrationFileUploadField';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { ResourceFileUploadField } from './ResourceFileUploadField';
+import { ResourceTextInputField } from './ResourceTextInputField';
 
 const Placeholders: S3Config = {
   type: AWSCredentialType.AccessKey,
@@ -30,7 +30,7 @@ const Placeholders: S3Config = {
   use_as_storage: '',
 };
 
-interface S3DialogProps extends IntegrationDialogProps {
+interface S3DialogProps extends ResourceDialogProps {
   setMigrateStorage: (value: boolean) => void;
 }
 
@@ -58,7 +58,7 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
   };
 
   const configProfileInput = (
-    <IntegrationTextInputField
+    <ResourceTextInputField
       name="config_file_profile"
       spellCheck={false}
       required={true}
@@ -74,7 +74,7 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
       <Typography variant="body2" color="gray.700">
         Manually enter your AWS credentials.
       </Typography>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="access_key_id"
         spellCheck={false}
         required={true}
@@ -84,7 +84,7 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
         onChange={(event) => setValue('access_key_id', event.target.value)}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="secret_access_key"
         spellCheck={false}
         required={true}
@@ -106,7 +106,7 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
         credentials file. Once connected, any updates to the file content will
         automatically apply to this resource.
       </Typography>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="config_file_path"
         spellCheck={false}
         required={true}
@@ -132,7 +132,7 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
       {/* TODO: add these message once resource edit is ready:
         Once connected, you would need to re-upload the file to update the credentials.
       */}
-      <IntegrationFileUploadField
+      <ResourceFileUploadField
         name="config_file_content"
         label={'AWS Credentials File*'}
         description={'Upload your credentials file here.'}
@@ -155,7 +155,7 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
 
   return (
     <Box sx={{ mt: 2 }}>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="bucket"
         spellCheck={false}
         required={true}
@@ -168,7 +168,7 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="region"
         spellCheck={false}
         required={true}
@@ -181,7 +181,7 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="root_dir"
         spellCheck={false}
         required={false}

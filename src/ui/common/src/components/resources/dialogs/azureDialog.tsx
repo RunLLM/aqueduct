@@ -1,15 +1,15 @@
 import React from 'react';
 import * as Yup from 'yup';
 
-import { IntegrationDialogProps } from '../../../utils/resources';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { ResourceDialogProps } from '../../../utils/resources';
+import { ResourceTextInputField } from './ResourceTextInputField';
 
 // Placeholder component for the Azure dialog.
-export const AzureDialog: React.FC<IntegrationDialogProps> = ({
+export const AzureDialog: React.FC<ResourceDialogProps> = ({
   editMode = false,
 }) => {
   return (
-    <IntegrationTextInputField
+    <ResourceTextInputField
       name="cluster_name"
       spellCheck={false}
       required={!(use_same_cluster === 'true')}

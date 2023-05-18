@@ -4,15 +4,15 @@
 import { APIKeyParameter } from '../parameters/Header';
 import { WorkflowAndDagIDResponse } from '../responses/workflow';
 
-export type IntegrationsWorkflowsGetRequest = APIKeyParameter;
+export type ResourcesWorkflowsGetRequest = APIKeyParameter;
 
-// IntegrationID -> list of workflows that use this resource.
-export type IntegrationsWorkflowsGetResponse = {
+// ResourceID -> list of workflows that use this resource.
+export type ResourcesWorkflowsGetResponse = {
   [resourceID: string]: WorkflowAndDagIDResponse[];
 };
 
 export const resourcesWorkflowsGetQuery = (
-  req: IntegrationsWorkflowsGetRequest
+  req: ResourcesWorkflowsGetRequest
 ) => ({
   url: `resources/workflows`,
   headers: { 'api-key': req.apiKey },

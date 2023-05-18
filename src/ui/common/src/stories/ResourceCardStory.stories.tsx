@@ -2,7 +2,7 @@ import { Box } from '@mui/material';
 import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
-import { IntegrationCard } from '../components/resources/cards/card';
+import { ResourceCard } from '../components/resources/cards/card';
 import { Card } from '../components/layouts/card';
 import {
   AqueductComputeConfig,
@@ -10,7 +10,7 @@ import {
   DatabricksConfig,
   EmailConfig,
   GCSConfig,
-  Integration,
+  Resource,
   KubernetesConfig,
   LambdaConfig,
   MariaDbConfig,
@@ -25,7 +25,7 @@ import {
 import ExecutionStatus, { AWSCredentialType } from '../utils/shared';
 
 const ResourceCard: React.FC = () => {
-  const resources: Integration[] = [
+  const resources: Resource[] = [
     {
       id: '1',
       service: 'Postgres',
@@ -383,7 +383,7 @@ const ResourceCard: React.FC = () => {
           return (
             <Box key={idx} sx={{ mx: 1, my: 1 }}>
               <Card>
-                <IntegrationCard
+                <ResourceCard
                   resource={resource}
                   numWorkflowsUsingMsg={
                     numWorkflowsUsingMsgs[idx % numWorkflowsUsingMsgs.length]

@@ -2,11 +2,11 @@ import { Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React from 'react';
 
-import { Integration, SlackConfig } from '../../../utils/resources';
+import { Resource, SlackConfig } from '../../../utils/resources';
 import { ResourceCardText } from './text';
 
 type Props = {
-  resource: Integration;
+  resource: Resource;
 };
 
 export const SlackCard: React.FC<Props> = ({ resource }) => {

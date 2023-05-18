@@ -4,23 +4,23 @@ import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
 import {
-  IntegrationDialogProps,
+  ResourceDialogProps,
   LambdaConfig,
 } from '../../../utils/resources';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { ResourceTextInputField } from './ResourceTextInputField';
 
 const Placeholders: LambdaConfig = {
   role_arn: 'arn:aws:iam::123:role/lambda-function-role-arn',
   exec_state: '',
 };
 
-export const LambdaDialog: React.FC<IntegrationDialogProps> = ({
+export const LambdaDialog: React.FC<ResourceDialogProps> = ({
   editMode = false,
 }) => {
   const { setValue } = useFormContext();
   return (
     <Box sx={{ mt: 2 }}>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="role_arn"
         spellCheck={false}
         required={true}

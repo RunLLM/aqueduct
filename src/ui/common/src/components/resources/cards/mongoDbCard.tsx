@@ -1,10 +1,10 @@
 import React from 'react';
 
-import { Integration, MongoDBConfig } from '../../../utils/resources';
+import { Resource, MongoDBConfig } from '../../../utils/resources';
 import { ResourceCardText } from './text';
 
 type Props = {
-  resource: Integration;
+  resource: Resource;
 };
 
 export const MongoDBCard: React.FC<Props> = ({ resource }) => {

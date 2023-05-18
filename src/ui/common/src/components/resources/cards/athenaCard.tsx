@@ -1,10 +1,10 @@
 import React from 'react';
 
-import { AthenaConfig, Integration } from '../../../utils/resources';
+import { AthenaConfig, Resource } from '../../../utils/resources';
 import { ResourceCardText } from './text';
 
 type AthenaCardProps = {
-  resource: Integration;
+  resource: Resource;
   detailedView: boolean;
 };
 

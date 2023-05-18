@@ -4,10 +4,10 @@ import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
-import { ECRConfig, IntegrationDialogProps } from '../../../utils/resources';
+import { ECRConfig, ResourceDialogProps } from '../../../utils/resources';
 import { AWSCredentialType } from '../../../utils/shared';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { ResourceTextInputField } from './ResourceTextInputField';
 
 const Placeholders: ECRConfig = {
   type: AWSCredentialType.AccessKey,
@@ -18,7 +18,7 @@ const Placeholders: ECRConfig = {
   config_file_profile: '',
 };
 
-export const ECRDialog: React.FC<IntegrationDialogProps> = ({
+export const ECRDialog: React.FC<ResourceDialogProps> = ({
   editMode = false,
 }) => {
   const { register, setValue } = useFormContext();
@@ -29,7 +29,7 @@ export const ECRDialog: React.FC<IntegrationDialogProps> = ({
   register('type', { value: AWSCredentialType.AccessKey });
 
   const configProfileInput = (
-    <IntegrationTextInputField
+    <ResourceTextInputField
       name="config_file_profile"
       spellCheck={false}
       required={true}
@@ -45,7 +45,7 @@ export const ECRDialog: React.FC<IntegrationDialogProps> = ({
       <Typography variant="body2" color="gray.700">
         Manually enter your AWS credentials.
       </Typography>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="access_key_id"
         spellCheck={false}
         required={true}
@@ -55,7 +55,7 @@ export const ECRDialog: React.FC<IntegrationDialogProps> = ({
         onChange={(event) => setValue('access_key_id', event.target.value)}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="secret_access_key"
         spellCheck={false}
         required={true}
@@ -65,7 +65,7 @@ export const ECRDialog: React.FC<IntegrationDialogProps> = ({
         onChange={(event) => setValue('secret_access_key', event.target.value)}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="region"
         spellCheck={false}
         required={true}
@@ -87,7 +87,7 @@ export const ECRDialog: React.FC<IntegrationDialogProps> = ({
         credentials file. Once connected, any updates to the file content will
         automatically apply to this resource.
       </Typography>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="config_file_path"
         spellCheck={false}
         required={true}

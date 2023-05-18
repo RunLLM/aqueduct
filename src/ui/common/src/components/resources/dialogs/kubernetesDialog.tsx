@@ -6,11 +6,11 @@ import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
 import {
-  IntegrationDialogProps,
+  ResourceDialogProps,
   KubernetesConfig,
 } from '../../../utils/resources';
 import { apiAddress } from '../../hooks/useAqueductConsts';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { ResourceTextInputField } from './ResourceTextInputField';
 
 const Placeholders: KubernetesConfig = {
   kubeconfig_path: '/home/ubuntu/.kube/config',
@@ -18,7 +18,7 @@ const Placeholders: KubernetesConfig = {
   use_same_cluster: 'false',
 };
 
-export const KubernetesDialog: React.FC<IntegrationDialogProps> = ({
+export const KubernetesDialog: React.FC<ResourceDialogProps> = ({
   editMode = false,
   user,
 }) => {
@@ -71,7 +71,7 @@ export const KubernetesDialog: React.FC<IntegrationDialogProps> = ({
         />
       )}
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="kubeconfig_path"
         spellCheck={false}
         required={!(use_same_cluster === 'true')}
@@ -82,7 +82,7 @@ export const KubernetesDialog: React.FC<IntegrationDialogProps> = ({
         disabled={use_same_cluster === 'true'}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="cluster_name"
         spellCheck={false}
         required={!(use_same_cluster === 'true')}

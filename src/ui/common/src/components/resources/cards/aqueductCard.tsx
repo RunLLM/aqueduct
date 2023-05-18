@@ -4,13 +4,13 @@ import React from 'react';
 import {
   AqueductComputeConfig,
   CondaConfig,
-  Integration,
+  Resource,
 } from '../../../utils/resources';
 import { ExecState, ExecutionStatus } from '../../../utils/shared';
 import { ResourceCardText } from './text';
 
 type Props = {
-  resource: Integration;
+  resource: Resource;
   detailedView: boolean;
 };
 

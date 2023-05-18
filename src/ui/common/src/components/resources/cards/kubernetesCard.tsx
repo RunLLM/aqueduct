@@ -1,10 +1,10 @@
 import React from 'react';
 
-import { Integration, KubernetesConfig } from '../../../utils/resources';
+import { Resource, KubernetesConfig } from '../../../utils/resources';
 import { ResourceCardText } from './text';
 
 type Props = {
-  resource: Integration;
+  resource: Resource;
 };
 
 export const KubernetesCard: React.FC<Props> = ({ resource }) => {

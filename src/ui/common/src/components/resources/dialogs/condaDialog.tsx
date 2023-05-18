@@ -4,10 +4,10 @@ import React, { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
-import { IntegrationDialogProps } from '../../../utils/resources';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { ResourceDialogProps } from '../../../utils/resources';
+import { ResourceTextInputField } from './ResourceTextInputField';
 
-export const CondaDialog: React.FC<IntegrationDialogProps> = ({
+export const CondaDialog: React.FC<ResourceDialogProps> = ({
   editMode = false,
 }) => {
   const { setValue } = useFormContext();
@@ -18,7 +18,7 @@ export const CondaDialog: React.FC<IntegrationDialogProps> = ({
 
   return (
     <>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="name"
         spellCheck={false}
         required={true}

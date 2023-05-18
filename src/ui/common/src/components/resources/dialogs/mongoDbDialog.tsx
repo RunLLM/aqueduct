@@ -4,25 +4,25 @@ import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
 import {
-  IntegrationDialogProps,
+  ResourceDialogProps,
   MongoDBConfig,
 } from '../../../utils/resources';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { ResourceTextInputField } from './ResourceTextInputField';
 
 const Placeholders: MongoDBConfig = {
   auth_uri: '********',
   database: 'aqueduct-db',
 };
 
-export const MongoDBDialog: React.FC<IntegrationDialogProps> = ({
+export const MongoDBDialog: React.FC<ResourceDialogProps> = ({
   editMode = false,
 }) => {
   const { setValue } = useFormContext();
 
   return (
     <Box sx={{ mt: 2 }}>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="auth_uri"
         label={'URI*'}
         description={'The connection URI to your MongoDB server.'}
@@ -32,7 +32,7 @@ export const MongoDBDialog: React.FC<IntegrationDialogProps> = ({
         onChange={(event) => setValue('auth_uri', event.target.value)}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="database"
         label={'Database*'}
         description={'The name of the specific database to connect to.'}

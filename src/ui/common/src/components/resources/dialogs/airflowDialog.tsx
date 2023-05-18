@@ -5,10 +5,10 @@ import * as Yup from 'yup';
 
 import {
   AirflowConfig,
-  IntegrationDialogProps,
+  ResourceDialogProps,
 } from '../../../utils/resources';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { ResourceTextInputField } from './ResourceTextInputField';
 
 const Placeholders: AirflowConfig = {
   host: 'http://localhost/api/v1',
@@ -18,7 +18,7 @@ const Placeholders: AirflowConfig = {
   s3_credentials_profile: 'default',
 };
 
-export const AirflowDialog: React.FC<IntegrationDialogProps> = ({
+export const AirflowDialog: React.FC<ResourceDialogProps> = ({
   editMode = false,
 }) => {
   const { register, setValue } = useFormContext();
@@ -27,7 +27,7 @@ export const AirflowDialog: React.FC<IntegrationDialogProps> = ({
 
   return (
     <Box sx={{ mt: 2 }}>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="airflow_host" // this value is ignored, host is the value that we're using
         spellCheck={false}
         required={true}
@@ -51,7 +51,7 @@ export const AirflowDialog: React.FC<IntegrationDialogProps> = ({
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="username"
         spellCheck={false}
         required={true}
@@ -61,7 +61,7 @@ export const AirflowDialog: React.FC<IntegrationDialogProps> = ({
         onChange={(event) => setValue('username', event.target.value)}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="password"
         autoComplete="airflow-password"
         spellCheck={false}
@@ -73,7 +73,7 @@ export const AirflowDialog: React.FC<IntegrationDialogProps> = ({
         onChange={(event) => setValue('password', event.target.value)}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="s3_credentials_path"
         spellCheck={false}
         required={true}
@@ -85,7 +85,7 @@ export const AirflowDialog: React.FC<IntegrationDialogProps> = ({
         }
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="s3_credentials_profile"
         spellCheck={false}
         required={false}

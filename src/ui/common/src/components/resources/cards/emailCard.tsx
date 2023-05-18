@@ -1,11 +1,11 @@
 import Box from '@mui/material/Box';
 import React from 'react';
 
-import { EmailConfig, Integration } from '../../../utils/resources';
+import { EmailConfig, Resource } from '../../../utils/resources';
 import { ResourceCardText, TruncatedText } from './text';
 
 type Props = {
-  resource: Integration;
+  resource: Resource;
   detailedView: boolean;
 };
 

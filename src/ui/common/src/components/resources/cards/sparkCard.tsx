@@ -1,10 +1,10 @@
 import React from 'react';
 
-import { Integration, SparkConfig } from '../../../utils/resources';
+import { Resource, SparkConfig } from '../../../utils/resources';
 import { ResourceCardText } from './text';
 
 type SparkCardProps = {
-  resource: Integration;
+  resource: Resource;
 };
 
 export const SparkCard: React.FC<SparkCardProps> = ({ resource }) => {

@@ -3,24 +3,24 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import { RootState } from '../stores/store';
 import { Data, inferSchema, TableRow } from '../utils/data';
-import { IntegrationConfig, Service } from '../utils/resources';
+import { ResourceConfig, Service } from '../utils/resources';
 import { Operator } from '../utils/operators';
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 
-export type OperatorsForIntegrationItem = {
+export type OperatorsForResourceItem = {
   operator: Operator;
   workflow_id: string;
   workflow_dag_id: string;
   is_active: boolean;
 };
 
-type OperatorsForIntegrationResponse = {
-  operator_with_ids: OperatorsForIntegrationItem[];
+type OperatorsForResourceResponse = {
+  operator_with_ids: OperatorsForResourceItem[];
 };
 
-type IntegrationOperatorsState = {
+type ResourceOperatorsState = {
   status: LoadingStatus;
-  operators: OperatorsForIntegrationItem[];
+  operators: OperatorsForResourceItem[];
 };
 
 type ObjectPreviewResponse = {
@@ -41,17 +41,17 @@ type DiscoverResponse = {
   table_names: string[];
 };
 
-export interface IntegrationState {
+export interface ResourceState {
   connectNewStatus: LoadingStatus;
   editStatus: LoadingStatus;
   testConnectStatus: LoadingStatus;
   deletionStatus: LoadingStatus;
-  operators: IntegrationOperatorsState;
+  operators: ResourceOperatorsState;
   objectNames: ListObjectsState;
   objects: Record<string, ObjectState>;
 }
 
-const initialState: IntegrationState = {
+const initialState: ResourceState = {
   connectNewStatus: { loading: LoadingStatusEnum.Initial, err: '' },
   editStatus: { loading: LoadingStatusEnum.Initial, err: '' },
   testConnectStatus: { loading: LoadingStatusEnum.Initial, err: '' },
@@ -67,8 +67,8 @@ const initialState: IntegrationState = {
   objects: {},
 };
 
-export const handleLoadIntegrationOperators = createAsyncThunk<
-  OperatorsForIntegrationItem[],
+export const handleLoadResourceOperators = createAsyncThunk<
+  OperatorsForResourceItem[],
   { apiKey: string; resourceId: string },
   { state: RootState }
 >(
@@ -95,12 +95,12 @@ export const handleLoadIntegrationOperators = createAsyncThunk<
     if (!response.ok) {
       return thunkAPI.rejectWithValue(responseBody.error);
     }
-    return (responseBody as OperatorsForIntegrationResponse).operator_with_ids;
+    return (responseBody as OperatorsForResourceResponse).operator_with_ids;
   }
 );
 
 export const objectKeyFn = (object: string): string => `object${object}`;
-export const handleLoadIntegrationObject = createAsyncThunk<
+export const handleLoadResourceObject = createAsyncThunk<
   Data,
   {
     apiKey: string;
@@ -176,7 +176,7 @@ export const handleLoadIntegrationObject = createAsyncThunk<
   }
 );
 
-export const handleListIntegrationObjects = createAsyncThunk<
+export const handleListResourceObjects = createAsyncThunk<
   string[],
   { apiKey: string; resourceId: string; forceLoad?: boolean },
   { state: RootState }
@@ -216,7 +216,7 @@ export const handleListIntegrationObjects = createAsyncThunk<
   }
 );
 
-export const handleDeleteIntegration = createAsyncThunk<
+export const handleDeleteResource = createAsyncThunk<
   void,
   { apiKey: string; resourceId: string }
 >(
@@ -248,7 +248,7 @@ export const handleDeleteIntegration = createAsyncThunk<
   }
 );
 
-export const handleTestConnectIntegration = createAsyncThunk<
+export const handleTestConnectResource = createAsyncThunk<
   void,
   { apiKey: string; resourceId: string }
 >(
@@ -279,13 +279,13 @@ export const handleTestConnectIntegration = createAsyncThunk<
   }
 );
 
-export const handleConnectToNewIntegration = createAsyncThunk<
+export const handleConnectToNewResource = createAsyncThunk<
   void,
   {
     apiKey: string;
     service: Service;
     name: string;
-    config: IntegrationConfig;
+    config: ResourceConfig;
   }
 >(
   'resource/connect',
@@ -294,7 +294,7 @@ export const handleConnectToNewIntegration = createAsyncThunk<
       apiKey: string;
       service: Service;
       name: string;
-      config: IntegrationConfig;
+      config: ResourceConfig;
     },
     thunkAPI
   ) => {
@@ -323,13 +323,13 @@ export const handleConnectToNewIntegration = createAsyncThunk<
   }
 );
 
-export const handleEditIntegration = createAsyncThunk<
+export const handleEditResource = createAsyncThunk<
   void,
   {
     apiKey: string;
     resourceId: string;
     name: string;
-    config: IntegrationConfig;
+    config: ResourceConfig;
   }
 >(
   'resource/edit',
@@ -338,7 +338,7 @@ export const handleEditIntegration = createAsyncThunk<
       apiKey: string;
       resourceId: string;
       name: string;
-      config: IntegrationConfig;
+      config: ResourceConfig;
     },
     thunkAPI
   ) => {
@@ -388,7 +388,7 @@ export const resourceSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    builder.addCase(handleLoadIntegrationObject.pending, (state, { meta }) => {
+    builder.addCase(handleLoadResourceObject.pending, (state, { meta }) => {
       const object = meta.arg.object;
       const objectKey = objectKeyFn(object);
       state.objects[objectKey] = {
@@ -396,7 +396,7 @@ export const resourceSlice = createSlice({
       };
     });
     builder.addCase(
-      handleLoadIntegrationObject.rejected,
+      handleLoadResourceObject.rejected,
       (state, { meta, payload }) => {
         const object = meta.arg.object;
         const objectKey = objectKeyFn(object);
@@ -407,7 +407,7 @@ export const resourceSlice = createSlice({
       }
     );
     builder.addCase(
-      handleLoadIntegrationObject.fulfilled,
+      handleLoadResourceObject.fulfilled,
       (state, { meta, payload }) => {
         const object = meta.arg.object;
         const objectKey = objectKeyFn(object);
@@ -418,12 +418,12 @@ export const resourceSlice = createSlice({
         };
       }
     );
-    builder.addCase(handleLoadIntegrationOperators.pending, (state) => {
+    builder.addCase(handleLoadResourceOperators.pending, (state) => {
       state.operators.status = { loading: LoadingStatusEnum.Loading, err: '' };
     });
     builder.addCase(
-      handleLoadIntegrationOperators.fulfilled,
-      (state, { payload }: PayloadAction<OperatorsForIntegrationItem[]>) => {
+      handleLoadResourceOperators.fulfilled,
+      (state, { payload }: PayloadAction<OperatorsForResourceItem[]>) => {
         state.operators.status = {
           loading: LoadingStatusEnum.Succeeded,
           err: '',
@@ -432,7 +432,7 @@ export const resourceSlice = createSlice({
       }
     );
     builder.addCase(
-      handleLoadIntegrationOperators.rejected,
+      handleLoadResourceOperators.rejected,
       (state, { payload }) => {
         state.operators.status = {
           loading: LoadingStatusEnum.Failed,
@@ -440,14 +440,14 @@ export const resourceSlice = createSlice({
         };
       }
     );
-    builder.addCase(handleListIntegrationObjects.pending, (state) => {
+    builder.addCase(handleListResourceObjects.pending, (state) => {
       state.objectNames.status = {
         loading: LoadingStatusEnum.Loading,
         err: '',
       };
     });
     builder.addCase(
-      handleListIntegrationObjects.rejected,
+      handleListResourceObjects.rejected,
       (state, { payload }) => {
         state.objectNames.status = {
           loading: LoadingStatusEnum.Failed,
@@ -456,7 +456,7 @@ export const resourceSlice = createSlice({
       }
     );
     builder.addCase(
-      handleListIntegrationObjects.fulfilled,
+      handleListResourceObjects.fulfilled,
       (state, { payload }) => {
         state.objectNames.status = {
           loading: LoadingStatusEnum.Succeeded,
@@ -466,32 +466,32 @@ export const resourceSlice = createSlice({
       }
     );
 
-    builder.addCase(handleDeleteIntegration.pending, (state) => {
+    builder.addCase(handleDeleteResource.pending, (state) => {
       state.deletionStatus = { loading: LoadingStatusEnum.Loading, err: '' };
     });
-    builder.addCase(handleDeleteIntegration.rejected, (state, { payload }) => {
+    builder.addCase(handleDeleteResource.rejected, (state, { payload }) => {
       state.deletionStatus = {
         loading: LoadingStatusEnum.Failed,
         err: payload as string,
       };
     });
-    builder.addCase(handleDeleteIntegration.fulfilled, (state) => {
+    builder.addCase(handleDeleteResource.fulfilled, (state) => {
       state.deletionStatus = {
         loading: LoadingStatusEnum.Succeeded,
         err: '',
       };
     });
-    builder.addCase(handleTestConnectIntegration.pending, (state) => {
+    builder.addCase(handleTestConnectResource.pending, (state) => {
       state.testConnectStatus = { loading: LoadingStatusEnum.Loading, err: '' };
     });
-    builder.addCase(handleTestConnectIntegration.fulfilled, (state) => {
+    builder.addCase(handleTestConnectResource.fulfilled, (state) => {
       state.testConnectStatus = {
         loading: LoadingStatusEnum.Succeeded,
         err: '',
       };
     });
     builder.addCase(
-      handleTestConnectIntegration.rejected,
+      handleTestConnectResource.rejected,
       (state, { payload }) => {
         state.testConnectStatus = {
           loading: LoadingStatusEnum.Failed,
@@ -499,17 +499,17 @@ export const resourceSlice = createSlice({
         };
       }
     );
-    builder.addCase(handleConnectToNewIntegration.pending, (state) => {
+    builder.addCase(handleConnectToNewResource.pending, (state) => {
       state.connectNewStatus = { loading: LoadingStatusEnum.Loading, err: '' };
     });
-    builder.addCase(handleConnectToNewIntegration.fulfilled, (state) => {
+    builder.addCase(handleConnectToNewResource.fulfilled, (state) => {
       state.connectNewStatus = {
         loading: LoadingStatusEnum.Succeeded,
         err: '',
       };
     });
     builder.addCase(
-      handleConnectToNewIntegration.rejected,
+      handleConnectToNewResource.rejected,
       (state, { payload }) => {
         state.connectNewStatus = {
           loading: LoadingStatusEnum.Failed,
@@ -517,16 +517,16 @@ export const resourceSlice = createSlice({
         };
       }
     );
-    builder.addCase(handleEditIntegration.pending, (state) => {
+    builder.addCase(handleEditResource.pending, (state) => {
       state.editStatus = { loading: LoadingStatusEnum.Loading, err: '' };
     });
-    builder.addCase(handleEditIntegration.fulfilled, (state) => {
+    builder.addCase(handleEditResource.fulfilled, (state) => {
       state.editStatus = {
         loading: LoadingStatusEnum.Succeeded,
         err: '',
       };
     });
-    builder.addCase(handleEditIntegration.rejected, (state, { payload }) => {
+    builder.addCase(handleEditResource.rejected, (state, { payload }) => {
       state.editStatus = {
         loading: LoadingStatusEnum.Failed,
         err: payload as string,

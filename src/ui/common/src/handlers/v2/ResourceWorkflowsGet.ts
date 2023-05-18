@@ -2,17 +2,17 @@
 // src/golang/cmd/server/handler/v2/resource_workflows_get.go
 
 import { APIKeyParameter } from '../parameters/Header';
-import { IntegrationIdParameter } from '../parameters/Path';
+import { ResourceIdParameter } from '../parameters/Path';
 import { WorkflowAndDagIDResponse } from '../responses/workflow';
 
-export type IntegrationWorkflowsGetRequest = APIKeyParameter &
-  IntegrationIdParameter;
+export type ResourceWorkflowsGetRequest = APIKeyParameter &
+  ResourceIdParameter;
 
 // A list of workflow IDs that use this resource.
-export type IntegrationWorkflowsGetResponse = WorkflowAndDagIDResponse[];
+export type ResourceWorkflowsGetResponse = WorkflowAndDagIDResponse[];
 
 export const resourceWorkflowsGetQuery = (
-  req: IntegrationWorkflowsGetRequest
+  req: ResourceWorkflowsGetRequest
 ) => ({
   url: `resource/${req.resourceId}/workflows`,
   headers: { 'api-key': req.apiKey },

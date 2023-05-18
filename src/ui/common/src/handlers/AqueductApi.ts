@@ -20,18 +20,18 @@ import {
 } from './v2/DagResultsGet';
 import {
   resourceOperatorsGetQuery,
-  IntegrationOperatorsGetRequest,
-  IntegrationOperatorsGetResponse,
+  ResourceOperatorsGetRequest,
+  ResourceOperatorsGetResponse,
 } from './v2/ResourceOperatorsGet';
 import {
   resourcesWorkflowsGetQuery,
-  IntegrationsWorkflowsGetRequest,
-  IntegrationsWorkflowsGetResponse,
+  ResourcesWorkflowsGetRequest,
+  ResourcesWorkflowsGetResponse,
 } from './v2/ResourcesWorkflowsGet';
 import {
   resourceWorkflowsGetQuery,
-  IntegrationWorkflowsGetRequest,
-  IntegrationWorkflowsGetResponse,
+  ResourceWorkflowsGetRequest,
+  ResourceWorkflowsGetResponse,
 } from './v2/ResourceWorkflowsGet';
 import {
   storageMigrationListQuery,
@@ -115,22 +115,22 @@ export const aqueductApi = createApi({
       transformErrorResponse,
     }),
     resourceOperatorsGet: builder.query<
-      IntegrationOperatorsGetResponse,
-      IntegrationOperatorsGetRequest
+      ResourceOperatorsGetResponse,
+      ResourceOperatorsGetRequest
     >({
       query: (req) => resourceOperatorsGetQuery(req),
       transformErrorResponse,
     }),
     resourceWorkflowsGet: builder.query<
-      IntegrationWorkflowsGetResponse,
-      IntegrationWorkflowsGetRequest
+      ResourceWorkflowsGetResponse,
+      ResourceWorkflowsGetRequest
     >({
       query: (req) => resourceWorkflowsGetQuery(req),
       transformErrorResponse,
     }),
     resourcesWorkflowsGet: builder.query<
-      IntegrationsWorkflowsGetResponse,
-      IntegrationsWorkflowsGetRequest
+      ResourcesWorkflowsGetResponse,
+      ResourcesWorkflowsGetRequest
     >({
       query: (req) => resourcesWorkflowsGetQuery(req),
       transformErrorResponse,
@@ -204,9 +204,9 @@ export const {
   useDagOperatorsGetQuery,
   useDagResultGetQuery,
   useDagResultsGetQuery,
-  useIntegrationOperatorsGetQuery,
-  useIntegrationWorkflowsGetQuery,
-  useIntegrationsWorkflowsGetQuery,
+  useResourceOperatorsGetQuery,
+  useResourceWorkflowsGetQuery,
+  useResourcesWorkflowsGetQuery,
   useStorageMigrationListQuery,
   useNodeArtifactGetQuery,
   useNodeArtifactResultContentGetQuery,

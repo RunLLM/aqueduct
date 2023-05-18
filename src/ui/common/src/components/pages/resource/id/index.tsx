@@ -11,57 +11,57 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 
 import AddTableDialog from '../../../../components/resources/dialogs/addTableDialog';
-import DeleteIntegrationDialog from '../../../../components/resources/dialogs/deleteIntegrationDialog';
-import IntegrationDialog from '../../../../components/resources/dialogs/dialog';
-import IntegrationObjectList from '../../../../components/resources/resourceObjectList';
+import DeleteResourceDialog from '../../../../components/resources/dialogs/deleteResourceDialog';
+import ResourceDialog from '../../../../components/resources/dialogs/dialog';
+import ResourceObjectList from '../../../../components/resources/resourceObjectList';
 import DefaultLayout from '../../../../components/layouts/default';
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import {
-  useIntegrationOperatorsGetQuery,
-  useIntegrationWorkflowsGetQuery,
+  useResourceOperatorsGetQuery,
+  useResourceWorkflowsGetQuery,
 } from '../../../../handlers/AqueductApi';
 import { handleGetServerConfig } from '../../../../handlers/getServerConfig';
 import { OperatorResponse } from '../../../../handlers/responses/node';
 import {
-  handleListIntegrationObjects,
-  handleLoadIntegrationOperators,
-  handleTestConnectIntegration,
+  handleListResourceObjects,
+  handleLoadResourceOperators,
+  handleTestConnectResource,
   resetEditStatus,
   resetTestConnectStatus,
 } from '../../../../reducers/resource';
-import { handleLoadIntegrations } from '../../../../reducers/resources';
+import { handleLoadResources } from '../../../../reducers/resources';
 import { handleFetchAllWorkflowSummaries } from '../../../../reducers/listWorkflowSummaries';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
 import {
-  IntegrationCategories,
-  isNotificationIntegration,
+  ResourceCategories,
+  isNotificationResource,
   resourceExecState,
-  SupportedIntegrations,
+  SupportedResources,
 } from '../../../../utils/resources';
 import ExecutionStatus, {
   isFailed,
   isLoading,
   isSucceeded,
 } from '../../../../utils/shared';
-import SupportedIntegrations from '../../../../utils/SupportedIntegrations';
+import SupportedResources from '../../../../utils/SupportedResources';
 import { ResourceHeaderDetailsCard } from '../../../resources/cards/headerDetailsCard';
 import { ResourceFieldsDetailsCard } from '../../../resources/cards/resourceFieldsDetailsCard';
 import { ErrorSnackbar } from '../../../resources/errorSnackbar';
-import IntegrationWorkflowSummaryCards from '../../../resources/resourceWorkflowSummaryCards';
+import ResourceWorkflowSummaryCards from '../../../resources/resourceWorkflowSummaryCards';
 import { getNumWorkflowsUsingMessage } from '../../../resources/numWorkflowsUsingMsg';
-import IntegrationOptions, {
-  IntegrationOptionsButtonWidth,
+import ResourceOptions, {
+  ResourceOptionsButtonWidth,
 } from '../../../resources/options';
 import { LayoutProps } from '../../types';
 
-type IntegrationDetailsPageProps = {
+type ResourceDetailsPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
 };
 
-const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
+const ResourceDetailsPage: React.FC<ResourceDetailsPageProps> = ({
   user,
   Layout = DefaultLayout,
 }) => {
@@ -106,15 +106,15 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     (state: RootState) => state.serverConfigReducer
   );
 
-  const selectedIntegration = resources[resourceId];
+  const selectedResource = resources[resourceId];
 
-  // Using the ListIntegrationsRoute.
+  // Using the ListResourcesRoute.
   // ENG-1036: We should create a route where we can pass in the resourceId and get the associated metadata and switch to using that.
   useEffect(() => {
-    dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
+    dispatch(handleLoadResources({ apiKey: user.apiKey }));
     dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
     dispatch(
-      handleLoadIntegrationOperators({
+      handleLoadResourceOperators({
         apiKey: user.apiKey,
         resourceId: resourceId,
       })
@@ -133,25 +133,25 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
   }, [dispatch, testConnectStatus]);
 
   useEffect(() => {
-    if (selectedIntegration && selectedIntegration.name) {
-      document.title = `Integration Details: ${selectedIntegration.name} | Aqueduct`;
+    if (selectedResource && selectedResource.name) {
+      document.title = `Resource Details: ${selectedResource.name} | Aqueduct`;
     } else {
-      document.title = `Integration Details | Aqueduct`;
+      document.title = `Resource Details | Aqueduct`;
     }
 
     if (
-      selectedIntegration &&
-      SupportedIntegrations[selectedIntegration.service].category ===
-        IntegrationCategories.DATA
+      selectedResource &&
+      SupportedResources[selectedResource.service].category ===
+        ResourceCategories.DATA
     ) {
       dispatch(
-        handleListIntegrationObjects({
+        handleListResourceObjects({
           apiKey: user.apiKey,
           resourceId: resourceId,
         })
       );
     }
-  }, [selectedIntegration]);
+  }, [selectedResource]);
 
   // Load the server config to check if the selected resource is currently being used as storage.
   // If that is the case, we hide the option to delete the resource from the user.
@@ -171,7 +171,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
 
     // Needed to rename this since we're importing an `isLoading` is that was causing problems.
     isLoading: fetchWorkflowsIsLoading,
-  } = useIntegrationWorkflowsGetQuery({
+  } = useResourceWorkflowsGetQuery({
     apiKey: user.apiKey,
     resourceId: resourceId,
   });
@@ -180,7 +180,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     data: resourceOperators,
     error: testOpsErr,
     isLoading: testOpsIsLoading,
-  } = useIntegrationOperatorsGetQuery({
+  } = useResourceOperatorsGetQuery({
     apiKey: user.apiKey,
     resourceId: resourceId,
   });
@@ -203,7 +203,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     workflowAndDagIDs.forEach((workflowAndDagID) => {
       // If we're displaying a notification, there won't be only operators, but we
       // want to include the workflows.
-      if (isNotificationIntegration(selectedIntegration)) {
+      if (isNotificationResource(selectedResource)) {
         workflowIDToLatestOperators[workflowAndDagID.id] = [];
       } else if (operatorsByDagID[workflowAndDagID.dag_id]) {
         workflowIDToLatestOperators[workflowAndDagID.id] =
@@ -224,18 +224,18 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
     );
   }
 
-  if (!resources || !selectedIntegration) {
+  if (!resources || !selectedResource) {
     return null;
   }
 
-  const selectedIntegrationExecState = resourceExecState(selectedIntegration);
+  const selectedResourceExecState = resourceExecState(selectedResource);
 
   return (
     <Layout
       breadcrumbs={[
         BreadcrumbLink.HOME,
         BreadcrumbLink.INTEGRATIONS,
-        new BreadcrumbLink(path, selectedIntegration.name),
+        new BreadcrumbLink(path, selectedResource.name),
       ]}
       user={user}
     >
@@ -251,12 +251,12 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           <Box
             sx={{
               flex: 1,
-              width: `calc(100% - ${IntegrationOptionsButtonWidth})`,
+              width: `calc(100% - ${ResourceOptionsButtonWidth})`,
             }}
           >
             <Box display="flex" flexDirection="row" alignContent="bottom">
               <ResourceHeaderDetailsCard
-                resource={selectedIntegration}
+                resource={selectedResource}
                 numWorkflowsUsingMsg={numWorkflowsUsingMsg}
               />
 
@@ -286,30 +286,30 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             </Box>
           </Box>
 
-          <IntegrationOptions
-            resource={selectedIntegration}
+          <ResourceOptions
+            resource={selectedResource}
             onUploadCsv={() => setShowAddTableDialog(true)}
             onTestConnection={() => {
               dispatch(
-                handleTestConnectIntegration({
+                handleTestConnectResource({
                   apiKey: user.apiKey,
-                  resourceId: selectedIntegration.id,
+                  resourceId: selectedResource.id,
                 })
               );
               setShowTestConnectToast(true);
             }}
             onEdit={() => setShowEditDialog(true)}
-            onDeleteIntegration={() => {
+            onDeleteResource={() => {
               setShowDeleteTableDialog(true);
             }}
             allowDeletion={
               serverConfig.config?.storageConfig.resource_name !==
-              selectedIntegration.name
+              selectedResource.name
             }
           />
         </Box>
 
-        {selectedIntegrationExecState.status === ExecutionStatus.Failed && (
+        {selectedResourceExecState.status === ExecutionStatus.Failed && (
           <Box
             sx={{
               backgroundColor: theme.palette.red[100],
@@ -322,13 +322,13 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             }}
           >
             <Typography variant="body2" style={{ whiteSpace: 'pre-wrap' }}>
-              {`${selectedIntegrationExecState.error.tip}\n\n${selectedIntegrationExecState?.error.context}`}
+              {`${selectedResourceExecState.error.tip}\n\n${selectedResourceExecState?.error.context}`}
             </Typography>
           </Box>
         )}
 
         {serverConfig.config?.storageConfig.resource_name ===
-          selectedIntegration.name && (
+          selectedResource.name && (
           <Alert severity="info" sx={{ marginTop: 2 }}>
             This resource cannot be deleted because it is currently being
             used as artifact storage. To delete this resource, please migrate
@@ -337,12 +337,12 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
         )}
 
         {showDeleteTableDialog && (
-          <DeleteIntegrationDialog
+          <DeleteResourceDialog
             user={user}
-            resourceId={selectedIntegration.id}
-            resourceName={selectedIntegration.name}
-            resourceType={selectedIntegration.service}
-            config={selectedIntegration.config}
+            resourceId={selectedResource.id}
+            resourceName={selectedResource.name}
+            resourceType={selectedResource.service}
+            config={selectedResource.config}
             onCloseDialog={() => setShowDeleteTableDialog(false)}
           />
         )}
@@ -355,8 +355,8 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           </Alert>
         )}
 
-        {selectedIntegration.name === 'Demo' &&
-          selectedIntegration.service == 'SQLite' && (
+        {selectedResource.name === 'Demo' &&
+          selectedResource.service == 'SQLite' && (
             <Typography variant="body1" sx={{ my: 1 }}>
               You can see the documentation for the Aqueduct Demo database{' '}
               <Link href="https://docs.aqueducthq.com/resources/aqueduct-demo-resource">
@@ -369,17 +369,17 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
         {showResourceDetails && (
           <Box sx={{ my: 1 }}>
             <ResourceFieldsDetailsCard
-              resource={selectedIntegration}
+              resource={selectedResource}
               detailedView={true}
             />
           </Box>
         )}
 
-        {SupportedIntegrations[selectedIntegration.service].category ===
-          IntegrationCategories.DATA && (
-          <IntegrationObjectList
+        {SupportedResources[selectedResource.service].category ===
+          ResourceCategories.DATA && (
+          <ResourceObjectList
             user={user}
-            resource={selectedIntegration}
+            resource={selectedResource}
           />
         )}
 
@@ -388,8 +388,8 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
             Workflows
           </Typography>
 
-          <IntegrationWorkflowSummaryCards
-            resource={selectedIntegration}
+          <ResourceWorkflowSummaryCards
+            resource={selectedResource}
             workflowIDToLatestOperators={workflowIDToLatestOperators}
           />
         </Box>
@@ -398,12 +398,12 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
       {showAddTableDialog && (
         <AddTableDialog
           user={user}
-          resourceId={selectedIntegration.id}
+          resourceId={selectedResource.id}
           onCloseDialog={() => setShowAddTableDialog(false)}
           onConnect={() => {
             if (!isListObjectsLoading) {
               dispatch(
-                handleListIntegrationObjects({
+                handleListResourceObjects({
                   apiKey: user.apiKey,
                   resourceId: resourceId,
                   forceLoad: true,
@@ -417,15 +417,15 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
       )}
 
       {showEditDialog && (
-        <IntegrationDialog
+        <ResourceDialog
           user={user}
-          service={selectedIntegration.service}
+          service={selectedResource.service}
           onSuccess={() => setShowEditSuccessToast(true)}
           onCloseDialog={() => {
             setShowEditDialog(false);
             dispatch(resetEditStatus());
           }}
-          resourceToEdit={selectedIntegration}
+          resourceToEdit={selectedResource}
         />
       )}
 
@@ -441,7 +441,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           severity="info"
           sx={{ width: '100%' }}
         >
-          {`Attempting to connect to ${selectedIntegration.name}`}
+          {`Attempting to connect to ${selectedResource.name}`}
         </Alert>
       </Snackbar>
 
@@ -457,7 +457,7 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           severity="success"
           sx={{ width: '100%' }}
         >
-          {`Successfully connected to ${selectedIntegration.name}`}
+          {`Successfully connected to ${selectedResource.name}`}
         </Alert>
       </Snackbar>
 
@@ -473,11 +473,11 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
           severity="success"
           sx={{ width: '100%' }}
         >
-          {`Successfully updated ${selectedIntegration.name}`}
+          {`Successfully updated ${selectedResource.name}`}
         </Alert>
       </Snackbar>
     </Layout>
   );
 };
 
-export default IntegrationDetailsPage;
+export default ResourceDetailsPage;

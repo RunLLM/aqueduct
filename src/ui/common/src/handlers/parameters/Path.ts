@@ -18,6 +18,6 @@ export type WorkflowIdParameter = {
   workflowId: string;
 };
 
-export type IntegrationIdParameter = {
+export type ResourceIdParameter = {
   resourceId: string;
 };

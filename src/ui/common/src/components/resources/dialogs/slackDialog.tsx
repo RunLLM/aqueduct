@@ -5,11 +5,11 @@ import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
-import { IntegrationDialogProps } from '../../../utils/resources';
+import { ResourceDialogProps } from '../../../utils/resources';
 import { NotificationLogLevel } from '../../../utils/notifications';
 import CheckboxEntry from '../../notifications/CheckboxEntry';
 import NotificationLevelSelector from '../../notifications/NotificationLevelSelector';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { ResourceTextInputField } from './ResourceTextInputField';
 
 // Placeholders are example values not filled for users, but
 // may show up in textbox as hint if user don't fill the form field.
@@ -28,7 +28,7 @@ export const SlackDefaultsOnCreate = {
   enabled: 'false',
 };
 
-export const SlackDialog: React.FC<IntegrationDialogProps> = ({
+export const SlackDialog: React.FC<ResourceDialogProps> = ({
   editMode = false,
 }) => {
   const [selectedLevel, setSelectedLevel] = useState(
@@ -53,7 +53,7 @@ export const SlackDialog: React.FC<IntegrationDialogProps> = ({
 
   return (
     <Box sx={{ mt: 2 }}>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="token"
         spellCheck={false}
         required={false}
@@ -66,7 +66,7 @@ export const SlackDialog: React.FC<IntegrationDialogProps> = ({
         }}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="channels"
         spellCheck={false}
         required={true}

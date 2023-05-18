@@ -11,12 +11,12 @@ import { StorageMigrationResponse } from '../../../handlers/responses/storageMig
 import { RootState } from '../../../stores/store';
 import { theme } from '../../../styles/theme/theme';
 import UserProfile from '../../../utils/auth';
-import { IntegrationCategories } from '../../../utils/resources';
+import { ResourceCategories } from '../../../utils/resources';
 import { LoadingStatus, LoadingStatusEnum } from '../../../utils/shared';
-import SupportedIntegrations from '../../../utils/SupportedIntegrations';
-import AddIntegrations from '../../resources/addIntegrations';
-import { ConnectedIntegrations } from '../../resources/connectedIntegrations';
-import { ConnectedIntegrationType } from '../../resources/connectedIntegrationType';
+import SupportedResources from '../../../utils/SupportedResources';
+import AddResources from '../../resources/addResources';
+import { ConnectedResources } from '../../resources/connectedResources';
+import { ConnectedResourceType } from '../../resources/connectedResourceType';
 import DefaultLayout from '../../layouts/default';
 import { BreadcrumbLink } from '../../layouts/NavBar';
 import MetadataStorageInfo from '../account/MetadataStorageInfo';
@@ -28,11 +28,11 @@ type Props = {
 };
 
 type resourcesNavigateState = {
-  deleteIntegrationStatus: LoadingStatus;
-  deleteIntegrationName: string;
+  deleteResourceStatus: LoadingStatus;
+  deleteResourceName: string;
 };
 
-const IntegrationsPage: React.FC<Props> = ({
+const ResourcesPage: React.FC<Props> = ({
   user,
   Layout = DefaultLayout,
 }) => {
@@ -56,20 +56,20 @@ const IntegrationsPage: React.FC<Props> = ({
     document.title = 'Resources | Aqueduct';
   }, []);
 
-  let deleteIntegrationName = '';
+  let deleteResourceName = '';
   let forceLoad = false;
 
   const [
-    showDeleteIntegrationSuccessToast,
-    setShowDeleteIntegrationSuccessToast,
+    showDeleteResourceSuccessToast,
+    setShowDeleteResourceSuccessToast,
   ] = useState(false);
 
   if (location.state && location.state !== undefined) {
     const navState = location.state as resourcesNavigateState;
-    deleteIntegrationName = navState.deleteIntegrationName;
-    if (!showDeleteIntegrationSuccessToast) {
-      setShowDeleteIntegrationSuccessToast(
-        navState.deleteIntegrationStatus.loading === LoadingStatusEnum.Succeeded
+    deleteResourceName = navState.deleteResourceName;
+    if (!showDeleteResourceSuccessToast) {
+      setShowDeleteResourceSuccessToast(
+        navState.deleteResourceStatus.loading === LoadingStatusEnum.Succeeded
       );
     }
 
@@ -100,20 +100,20 @@ const IntegrationsPage: React.FC<Props> = ({
         <Typography variant="h5" marginBottom={2}>
           Available Resources
         </Typography>
-        <ConnectedIntegrations
+        <ConnectedResources
           user={user}
           forceLoad={forceLoad}
-          connectedIntegrationType={ConnectedIntegrationType.Compute}
+          connectedResourceType={ConnectedResourceType.Compute}
         />
-        <ConnectedIntegrations
+        <ConnectedResources
           user={user}
           forceLoad={forceLoad}
-          connectedIntegrationType={ConnectedIntegrationType.Data}
+          connectedResourceType={ConnectedResourceType.Data}
         />
-        <ConnectedIntegrations
+        <ConnectedResources
           user={user}
           forceLoad={forceLoad}
-          connectedIntegrationType={ConnectedIntegrationType.Other}
+          connectedResourceType={ConnectedResourceType.Other}
         />
 
         <Box>
@@ -164,54 +164,54 @@ const IntegrationsPage: React.FC<Props> = ({
         <Typography variant="h6" marginY={2}>
           Compute
         </Typography>
-        <AddIntegrations
+        <AddResources
           user={user}
-          category={IntegrationCategories.COMPUTE}
-          supportedIntegrations={SupportedIntegrations}
+          category={ResourceCategories.COMPUTE}
+          supportedResources={SupportedResources}
         />
         <Typography variant="h6" marginY={2}>
           Data
         </Typography>
-        <AddIntegrations
+        <AddResources
           user={user}
-          category={IntegrationCategories.DATA}
-          supportedIntegrations={SupportedIntegrations}
+          category={ResourceCategories.DATA}
+          supportedResources={SupportedResources}
         />
         <Typography variant="h6" marginY={2}>
           Container Registry
         </Typography>
-        <AddIntegrations
+        <AddResources
           user={user}
-          category={IntegrationCategories.CONTAINER_REGISTRY}
-          supportedIntegrations={SupportedIntegrations}
+          category={ResourceCategories.CONTAINER_REGISTRY}
+          supportedResources={SupportedResources}
         />
 
         <Typography variant="h6" marginY={2}>
           Notifications
         </Typography>
-        <AddIntegrations
+        <AddResources
           user={user}
-          category={IntegrationCategories.NOTIFICATION}
-          supportedIntegrations={SupportedIntegrations}
+          category={ResourceCategories.NOTIFICATION}
+          supportedResources={SupportedResources}
         />
       </Box>
 
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        open={showDeleteIntegrationSuccessToast}
+        open={showDeleteResourceSuccessToast}
         key={'workflowheader-delete-success-error-snackbar'}
         autoHideDuration={6000}
         onClose={() => {
-          setShowDeleteIntegrationSuccessToast(false);
+          setShowDeleteResourceSuccessToast(false);
           location.state = undefined;
         }}
       >
         <Alert severity="success" sx={{ width: '100%' }}>
-          {`Successfully deleted ${deleteIntegrationName}`}
+          {`Successfully deleted ${deleteResourceName}`}
         </Alert>
       </Snackbar>
     </Layout>
   );
 };
 
-export default IntegrationsPage;
+export default ResourcesPage;

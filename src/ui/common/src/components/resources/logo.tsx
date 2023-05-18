@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { Service } from '../../utils/resources';
-import { SupportedIntegrations } from '../../utils/SupportedIntegrations';
+import { SupportedResources } from '../../utils/SupportedResources';
 
 const sizeMap = {
   large: '85px',
@@ -15,8 +15,8 @@ type Props = {
   activated: boolean;
 };
 
-const IntegrationLogo: React.FC<Props> = ({ service, size, activated }) => {
-  const logo = SupportedIntegrations[service]?.logo;
+const ResourceLogo: React.FC<Props> = ({ service, size, activated }) => {
+  const logo = SupportedResources[service]?.logo;
   if (!logo) {
     return null;
   }
@@ -38,4 +38,4 @@ const IntegrationLogo: React.FC<Props> = ({ service, size, activated }) => {
   );
 };
 
-export default IntegrationLogo;
+export default ResourceLogo;

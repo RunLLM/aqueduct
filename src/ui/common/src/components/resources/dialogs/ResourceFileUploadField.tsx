@@ -14,7 +14,7 @@ import { readCredentialsFile } from './bigqueryDialog';
 
 export type FileEventTarget = EventTarget & { files: FileList };
 
-type IntegrationFileUploadFieldProps = {
+type ResourceFileUploadFieldProps = {
   name: string;
   label: string;
   description: string | JSX.Element;
@@ -26,8 +26,8 @@ type IntegrationFileUploadFieldProps = {
   onReset: MouseEventHandler<HTMLAnchorElement>;
 };
 
-export const IntegrationFileUploadField: React.FC<
-  IntegrationFileUploadFieldProps
+export const ResourceFileUploadField: React.FC<
+  ResourceFileUploadFieldProps
 > = ({
   name,
   label,

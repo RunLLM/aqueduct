@@ -1,10 +1,10 @@
 import React from 'react';
 
-import { ECRConfig, Integration } from '../../../utils/resources';
+import { ECRConfig, Resource } from '../../../utils/resources';
 import { ResourceCardText } from './text';
 
 type ECRCardProps = {
-  resource: Integration;
+  resource: Resource;
 };
 
 export const ECRCard: React.FC<ECRCardProps> = ({ resource }) => {

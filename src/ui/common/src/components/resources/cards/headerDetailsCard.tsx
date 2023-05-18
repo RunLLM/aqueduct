@@ -3,15 +3,15 @@ import Typography from '@mui/material/Typography';
 import React from 'react';
 
 import {
-  Integration,
+  Resource,
   resolveDisplayService,
   resourceExecState,
 } from '../../../utils/resources';
 import { StatusIndicator } from '../../workflows/workflowStatus';
-import IntegrationLogo from '../logo';
+import ResourceLogo from '../logo';
 
 type ResourceHeaderDetailsCardProps = {
-  resource: Integration;
+  resource: Resource;
 
   // Eg: "Used by 2 workflows"
   numWorkflowsUsingMsg: string;
@@ -28,7 +28,7 @@ export const ResourceHeaderDetailsCard: React.FC<
       }}
     >
       <Box display="flex" flexDirection="row" alignItems="center">
-        <IntegrationLogo
+        <ResourceLogo
           service={resolveDisplayService(resource)}
           size="medium"
           activated

@@ -10,18 +10,18 @@ import { AppDispatch, RootState } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
 import { Info, Service, ServiceInfoMap } from '../../utils/resources';
-import IntegrationDialog from './dialogs/dialog';
-import IntegrationLogo from './logo';
+import ResourceDialog from './dialogs/dialog';
+import ResourceLogo from './logo';
 
 type Props = {
   user: UserProfile;
-  supportedIntegrations: ServiceInfoMap;
+  supportedResources: ServiceInfoMap;
   category: string;
 };
 
-const AddIntegrations: React.FC<Props> = ({
+const AddResources: React.FC<Props> = ({
   user,
-  supportedIntegrations,
+  supportedResources,
   category,
 }) => {
   const [showSuccessToast, setShowSuccessToast] = useState<Service>(null);
@@ -44,12 +44,12 @@ const AddIntegrations: React.FC<Props> = ({
         </Alert>
       )}
       <Box sx={{ width: '100%', display: 'flex', flexWrap: 'wrap' }}>
-        {Object.entries(supportedIntegrations)
+        {Object.entries(supportedResources)
           .filter(([svc]) => svc !== 'Aqueduct')
           .sort(([name1], [name2]) => name1.localeCompare(name2))
           .map(([svc, resource]) => {
             return (
-              <AddIntegrationListItem
+              <AddResourceListItem
                 key={svc as string}
                 svc={svc}
                 dialog={resource.dialog}
@@ -68,7 +68,7 @@ const AddIntegrations: React.FC<Props> = ({
   );
 };
 
-interface AddIntegrationListItemProps {
+interface AddResourceListItemProps {
   svc: string;
   resource: Info;
   category: string;
@@ -81,7 +81,7 @@ interface AddIntegrationListItemProps {
   dialog: React.FC;
 }
 
-const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
+const AddResourceListItem: React.FC<AddResourceListItemProps> = ({
   svc,
   resource,
   category,
@@ -143,7 +143,7 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
         flexDirection="column"
         alignItems="center"
       >
-        <IntegrationLogo
+        <ResourceLogo
           service={service}
           activated={resource.activated}
           size="medium"
@@ -174,7 +174,7 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
       <Box>
         {iconWrapper}
         {showDialog && (
-          <IntegrationDialog
+          <ResourceDialog
             validationSchema={resource.validationSchema}
             dialogContent={resource.dialog}
             user={user}
@@ -210,4 +210,4 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
   );
 };
 
-export default AddIntegrations;
+export default AddResources;

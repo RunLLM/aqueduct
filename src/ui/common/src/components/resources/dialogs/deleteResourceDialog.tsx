@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { handleGetServerConfig } from '../../../handlers/getServerConfig';
 import {
-  handleDeleteIntegration,
+  handleDeleteResource,
   resetDeletionStatus,
 } from '../../../reducers/resource';
 import { AppDispatch, RootState } from '../../../stores/store';
@@ -16,11 +16,11 @@ import UserProfile from '../../../utils/auth';
 import {
   AqueductComputeConfig,
   aqueductComputeName,
-  IntegrationConfig,
+  ResourceConfig,
   Service,
 } from '../../../utils/resources';
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
-import { convertIntegrationConfigToServerConfig } from '../../../utils/storage';
+import { convertResourceConfigToServerConfig } from '../../../utils/storage';
 
 const isEqual = function (x, y) {
   if (x === y) {
@@ -55,11 +55,11 @@ type Props = {
   resourceId: string;
   resourceName: string;
   resourceType: Service;
-  config: IntegrationConfig;
+  config: ResourceConfig;
   onCloseDialog: () => void;
 };
 
-const DeleteIntegrationDialog: React.FC<Props> = ({
+const DeleteResourceDialog: React.FC<Props> = ({
   user,
   resourceId,
   resourceName,
@@ -94,29 +94,29 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
     fetchServerConfig();
   }, []);
 
-  const deleteIntegrationStatus = useSelector(
+  const deleteResourceStatus = useSelector(
     (state: RootState) => state.resourceReducer.deletionStatus
   );
 
   useEffect(() => {
-    if (!isLoading(deleteIntegrationStatus)) {
+    if (!isLoading(deleteResourceStatus)) {
       setIsConnecting(false);
     }
 
-    if (isSucceeded(deleteIntegrationStatus)) {
+    if (isSucceeded(deleteResourceStatus)) {
       navigate('/resources', {
         state: {
-          deleteIntegrationStatus: deleteIntegrationStatus,
-          deleteIntegrationName: resourceName,
+          deleteResourceStatus: deleteResourceStatus,
+          deleteResourceName: resourceName,
         },
       });
     }
-  }, [deleteIntegrationStatus, resourceName, navigate]);
+  }, [deleteResourceStatus, resourceName, navigate]);
 
   const confirmConnect = () => {
     setIsConnecting(true);
     dispatch(
-      handleDeleteIntegration({
+      handleDeleteResource({
         apiKey: user.apiKey,
         resourceId: resourceId,
       })
@@ -130,7 +130,7 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
   const isStorage = config.use_as_storage === 'true';
   let isCurrentStorage = isStorage;
   if (isStorage && serverConfig) {
-    const storageConfig = convertIntegrationConfigToServerConfig(
+    const storageConfig = convertResourceConfigToServerConfig(
       config,
       serverConfig.config,
       resourceType
@@ -142,7 +142,7 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
   if (isCurrentStorage) {
     return (
       <Dialog
-        open={!deleteIntegrationStatus || !isFailed(deleteIntegrationStatus)}
+        open={!deleteResourceStatus || !isFailed(deleteResourceStatus)}
         onClose={onCloseDialog}
         maxWidth="lg"
       >
@@ -162,7 +162,7 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
     return (
       <>
         <Dialog
-          open={!deleteIntegrationStatus || !isFailed(deleteIntegrationStatus)}
+          open={!deleteResourceStatus || !isFailed(deleteResourceStatus)}
           onClose={onCloseDialog}
           maxWidth="lg"
         >
@@ -181,15 +181,15 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
           </DialogActions>
         </Dialog>
         <Dialog
-          open={isFailed(deleteIntegrationStatus)}
+          open={isFailed(deleteResourceStatus)}
           onClose={onCloseDialog}
           maxWidth="lg"
         >
-          {deleteIntegrationStatus && isFailed(deleteIntegrationStatus) && (
+          {deleteResourceStatus && isFailed(deleteResourceStatus) && (
             <Alert severity="error" sx={{ margin: 2 }}>
-              Integration deletion failed with error:
+              Resource deletion failed with error:
               <br></br>
-              <pre>{deleteIntegrationStatus.err}</pre>
+              <pre>{deleteResourceStatus.err}</pre>
             </Alert>
           )}
           <DialogActions>
@@ -208,7 +208,7 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
   } else {
     return (
       <Dialog
-        open={!deleteIntegrationStatus || !isFailed(deleteIntegrationStatus)}
+        open={!deleteResourceStatus || !isFailed(deleteResourceStatus)}
         onClose={onCloseDialog}
         maxWidth="lg"
       >
@@ -224,4 +224,4 @@ const DeleteIntegrationDialog: React.FC<Props> = ({
   }
 };
 
-export default DeleteIntegrationDialog;
+export default DeleteResourceDialog;

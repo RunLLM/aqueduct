@@ -6,18 +6,18 @@ import { useSelector } from 'react-redux';
 
 import { OperatorResponse } from '../../handlers/responses/node';
 import { RootState } from '../../stores/store';
-import { Integration } from '../../utils/resources';
+import { Resource } from '../../utils/resources';
 import { isFailed, isInitial } from '../../utils/shared';
 import { ListWorkflowSummary } from '../../utils/workflows';
 import WorkflowSummaryCard from '../workflows/WorkflowSummaryCard';
 
-type IntegrationWorkflowSummaryCardsProps = {
-  resource: Integration;
+type ResourceWorkflowSummaryCardsProps = {
+  resource: Resource;
   workflowIDToLatestOperators: { [workflowID: string]: OperatorResponse[] };
 };
 
-const IntegrationWorkflowSummaryCards: React.FC<
-  IntegrationWorkflowSummaryCardsProps
+const ResourceWorkflowSummaryCards: React.FC<
+  ResourceWorkflowSummaryCardsProps
 > = ({ resource, workflowIDToLatestOperators }) => {
   const listWorkflowState = useSelector(
     (state: RootState) => state.listWorkflowReducer
@@ -67,4 +67,4 @@ const IntegrationWorkflowSummaryCards: React.FC<
   return <Box>This resource is not used by any workflows.</Box>;
 };
 
-export default IntegrationWorkflowSummaryCards;
+export default ResourceWorkflowSummaryCards;

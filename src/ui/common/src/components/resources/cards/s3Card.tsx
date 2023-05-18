@@ -1,10 +1,10 @@
 import React from 'react';
 
-import { Integration, S3Config } from '../../../utils/resources';
+import { Resource, S3Config } from '../../../utils/resources';
 import { ResourceCardText } from './text';
 
 type Props = {
-  resource: Integration;
+  resource: Resource;
 };
 
 export const S3Card: React.FC<Props> = ({ resource }) => {

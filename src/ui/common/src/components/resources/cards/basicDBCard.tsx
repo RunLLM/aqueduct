@@ -1,10 +1,10 @@
 import React from 'react';
 
-import { Integration } from '../../../utils/resources';
+import { Resource } from '../../../utils/resources';
 import { ResourceCardText } from './text';
 
 type Props = {
-  resource: Integration;
+  resource: Resource;
   detailedView: boolean;
 };
 

@@ -3,7 +3,7 @@ import TextField from '@mui/material/TextField';
 import React, { ChangeEvent } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-type IntegrationTextFieldProps = {
+type ResourceTextFieldProps = {
   label: string;
   description: string;
   warning?: string;
@@ -20,7 +20,7 @@ type IntegrationTextFieldProps = {
   name: string;
 };
 
-export const IntegrationTextInputField: React.FC<IntegrationTextFieldProps> = ({
+export const ResourceTextInputField: React.FC<ResourceTextFieldProps> = ({
   label,
   description,
   warning,

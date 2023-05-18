@@ -9,14 +9,14 @@ import { useFormContext } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
 import * as Yup from 'yup';
 
-import { handleConnectToNewIntegration } from '../../../reducers/resource';
+import { handleConnectToNewResource } from '../../../reducers/resource';
 import { AppDispatch } from '../../../stores/store';
-import { IntegrationDialogProps } from '../../../utils/resources';
-import SupportedIntegrations from '../../../utils/SupportedIntegrations';
-import IntegrationLogo from '../logo';
+import { ResourceDialogProps } from '../../../utils/resources';
+import SupportedResources from '../../../utils/SupportedResources';
+import ResourceLogo from '../logo';
 import { AWSDialog } from './awsDialog';
 import { DialogActionButtons, DialogHeader } from './dialog';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { ResourceTextInputField } from './ResourceTextInputField';
 import { KubernetesDialog } from './kubernetesDialog';
 
 const K8S_TYPES = {
@@ -35,7 +35,7 @@ const K8S_TYPES = {
   ONDEMAND_K8S_AZURE: 'ONDEMAND_K8S_AZURE',
 };
 
-export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
+export const OnDemandKubernetesDialog: React.FC<ResourceDialogProps> = ({
   user,
   editMode = false,
   disabled,
@@ -67,7 +67,7 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
     setValue('k8s_type', K8S_TYPES.ONDEMAND_K8S_AWS);
   };
 
-  const InitialStepLayout: React.FC<IntegrationDialogProps> = ({
+  const InitialStepLayout: React.FC<ResourceDialogProps> = ({
     user,
     editMode = false,
     onCloseDialog,
@@ -94,7 +94,7 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
             }}
             onClick={handleRegularK8s}
           >
-            <IntegrationLogo
+            <ResourceLogo
               service={`Kubernetes`}
               activated={true}
               size="small"
@@ -115,9 +115,9 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
             }}
             onClick={handleOndemandK8s}
           >
-            <IntegrationLogo
+            <ResourceLogo
               service={'Aqueduct'}
-              activated={SupportedIntegrations['Aqueduct'].activated}
+              activated={SupportedResources['Aqueduct'].activated}
               size="small"
             />
             <Typography
@@ -139,7 +139,7 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
 
   // We're going to need to share some more info with the dialogs, as they're not all just forms that we can
   // register anymore in the case of this layout.
-  const RegularK8sStepLayout: React.FC<IntegrationDialogProps> = ({
+  const RegularK8sStepLayout: React.FC<ResourceDialogProps> = ({
     user,
     editMode,
     onCloseDialog,
@@ -152,7 +152,7 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
     return (
       <>
         <DialogHeader resourceToEdit={undefined} service={'Kubernetes'} />
-        <IntegrationTextInputField
+        <ResourceTextInputField
           name="name"
           spellCheck={false}
           required={true}
@@ -186,7 +186,7 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
               delete data.type;
 
               dispatch(
-                handleConnectToNewIntegration({
+                handleConnectToNewResource({
                   apiKey: user.apiKey,
                   service: 'Kubernetes',
                   name: name,
@@ -200,7 +200,7 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
     );
   };
 
-  const OnDemandK8sStep: React.FC<IntegrationDialogProps> = ({
+  const OnDemandK8sStep: React.FC<ResourceDialogProps> = ({
     user,
     editMode,
     onCloseDialog,
@@ -210,9 +210,9 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
     return (
       <>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <IntegrationLogo
+          <ResourceLogo
             service={'Aqueduct'}
-            activated={SupportedIntegrations['Aqueduct'].activated}
+            activated={SupportedResources['Aqueduct'].activated}
             size="small"
           />
           <div>
@@ -220,9 +220,9 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
               +
             </Typography>
           </div>
-          <IntegrationLogo
+          <ResourceLogo
             service={'Kubernetes'}
-            activated={SupportedIntegrations['Kubernetes'].activated}
+            activated={SupportedResources['Kubernetes'].activated}
             size="small"
           />
           <div>
@@ -242,23 +242,23 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
           }}
         >
           <Button onClick={handleAWSClick}>
-            <IntegrationLogo
+            <ResourceLogo
               service={'Amazon'}
-              activated={SupportedIntegrations['Amazon'].activated}
+              activated={SupportedResources['Amazon'].activated}
               size="large"
             />
           </Button>
           <Button disabled={true}>
-            <IntegrationLogo
+            <ResourceLogo
               service={'GCP'}
-              activated={SupportedIntegrations['GCP'].activated}
+              activated={SupportedResources['GCP'].activated}
               size="large"
             />
           </Button>
           <Button disabled={true}>
-            <IntegrationLogo
+            <ResourceLogo
               service={'Azure'}
-              activated={SupportedIntegrations['Azure'].activated}
+              activated={SupportedResources['Azure'].activated}
               size="large"
             />
           </Button>
@@ -275,7 +275,7 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
     );
   };
 
-  const OnDemandK8sAWSStep: React.FC<IntegrationDialogProps> = ({
+  const OnDemandK8sAWSStep: React.FC<ResourceDialogProps> = ({
     user,
     editMode,
     onCloseDialog,
@@ -288,9 +288,9 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
     return (
       <>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
-          <IntegrationLogo
+          <ResourceLogo
             service={'Aqueduct'}
-            activated={SupportedIntegrations['Aqueduct'].activated}
+            activated={SupportedResources['Aqueduct'].activated}
             size="small"
           />
           <div>
@@ -298,9 +298,9 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
               +
             </Typography>
           </div>
-          <IntegrationLogo
+          <ResourceLogo
             service={'AWS'}
-            activated={SupportedIntegrations['Kubernetes'].activated}
+            activated={SupportedResources['Kubernetes'].activated}
             size="small"
           />
           <div>
@@ -309,7 +309,7 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
             </Typography>
           </div>
         </DialogTitle>
-        <IntegrationTextInputField
+        <ResourceTextInputField
           name="name"
           spellCheck={false}
           required={true}
@@ -343,7 +343,7 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
               delete data.type;
 
               dispatch(
-                handleConnectToNewIntegration({
+                handleConnectToNewResource({
                   apiKey: user.apiKey,
                   service: 'Kubernetes',
                   name: name,

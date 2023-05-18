@@ -1,10 +1,10 @@
 import React from 'react';
 
-import { AirflowConfig, Integration } from '../../../utils/resources';
+import { AirflowConfig, Resource } from '../../../utils/resources';
 import { ResourceCardText } from './text';
 
 type Props = {
-  resource: Integration;
+  resource: Resource;
 };
 
 export const AirflowCard: React.FC<Props> = ({ resource }) => {

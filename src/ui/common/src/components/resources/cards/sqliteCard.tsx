@@ -1,10 +1,10 @@
 import React from 'react';
 
-import { Integration, SQLiteConfig } from '../../../utils/resources';
+import { Resource, SQLiteConfig } from '../../../utils/resources';
 import { ResourceCardText } from './text';
 
 type SQLiteCardProps = {
-  resource: Integration;
+  resource: Resource;
 };
 
 export const SQLiteCard: React.FC<SQLiteCardProps> = ({ resource }) => {

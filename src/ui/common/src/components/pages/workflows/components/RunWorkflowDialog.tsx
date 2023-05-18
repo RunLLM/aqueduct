@@ -13,7 +13,7 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
-import { handleLoadIntegrations } from '../../../../reducers/resources';
+import { handleLoadResources } from '../../../../reducers/resources';
 import {
   handleGetWorkflow,
   selectResultIdx,
@@ -64,7 +64,7 @@ const RunWorkflowDialog: React.FC<RunWorkflowDialogProps> = ({
 
     try {
       await dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
-      await dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
+      await dispatch(handleLoadResources({ apiKey: user.apiKey }));
       dispatch(selectResultIdx(0));
       navigate(`/workflow/${workflowId}`, { replace: true });
     } catch (error) {

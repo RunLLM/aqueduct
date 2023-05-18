@@ -19,21 +19,21 @@ import { useDispatch, useSelector } from 'react-redux';
 import * as Yup from 'yup';
 
 import {
-  handleConnectToNewIntegration,
-  handleEditIntegration,
+  handleConnectToNewResource,
+  handleEditResource,
 } from '../../../reducers/resource';
-import { handleLoadIntegrations } from '../../../reducers/resources';
+import { handleLoadResources } from '../../../reducers/resources';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import {
   formatService,
-  Integration,
-  IntegrationConfig,
+  Resource,
+  ResourceConfig,
   Service,
 } from '../../../utils/resources';
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
-import SupportedIntegrations from '../../../utils/SupportedIntegrations';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
+import SupportedResources from '../../../utils/SupportedResources';
+import { ResourceTextInputField } from './ResourceTextInputField';
 
 type Props = {
   user: UserProfile;
@@ -41,12 +41,12 @@ type Props = {
   onCloseDialog: () => void;
   onSuccess: () => void;
   showMigrationDialog?: () => void;
-  resourceToEdit?: Integration;
+  resourceToEdit?: Resource;
   dialogContent: React.FC;
   validationSchema: Yup.ObjectSchema<any>;
 };
 
-const IntegrationDialog: React.FC<Props> = ({
+const ResourceDialog: React.FC<Props> = ({
   user,
   service,
   onCloseDialog,
@@ -91,7 +91,7 @@ const IntegrationDialog: React.FC<Props> = ({
   const connectStatus = editMode ? editStatus : connectNewStatus;
 
   const onConfirmDialog = (
-    data: IntegrationConfig,
+    data: ResourceConfig,
     user: UserProfile,
     editMode = false,
     resourceId?: string
@@ -112,7 +112,7 @@ const IntegrationDialog: React.FC<Props> = ({
 
     return editMode
       ? dispatch(
-          handleEditIntegration({
+          handleEditResource({
             apiKey: user.apiKey,
             resourceId: resourceId,
             name: name,
@@ -120,7 +120,7 @@ const IntegrationDialog: React.FC<Props> = ({
           })
         )
       : dispatch(
-          handleConnectToNewIntegration({
+          handleConnectToNewResource({
             apiKey: user.apiKey,
             service: service,
             name: name,
@@ -153,7 +153,7 @@ const IntegrationDialog: React.FC<Props> = ({
   useEffect(() => {
     if (isSucceeded(connectStatus)) {
       dispatch(
-        handleLoadIntegrations({ apiKey: user.apiKey, forceLoad: true })
+        handleLoadResources({ apiKey: user.apiKey, forceLoad: true })
       );
       onSuccess();
       if (showMigrationDialog && migrateStorage) {
@@ -179,7 +179,7 @@ const IntegrationDialog: React.FC<Props> = ({
   };
 
   const nameInput = (
-    <IntegrationTextInputField
+    <ResourceTextInputField
       name="name"
       spellCheck={false}
       required={true}
@@ -225,7 +225,7 @@ const IntegrationDialog: React.FC<Props> = ({
               <Typography variant="body1" color="gray.700">
                 To learn more about how to set up {service}, see our{' '}
                 <Link
-                  href={SupportedIntegrations[service].docs}
+                  href={SupportedResources[service].docs}
                   target="_blank"
                 >
                   documentation
@@ -333,7 +333,7 @@ const getConnectionMessage = (service: Service) => {
 };
 
 type DialogHeaderProps = {
-  resourceToEdit: Integration | undefined;
+  resourceToEdit: Resource | undefined;
   service: Service;
 };
 export const DialogHeader: React.FC<DialogHeaderProps> = ({
@@ -357,10 +357,10 @@ export const DialogHeader: React.FC<DialogHeaderProps> = ({
             ? `Edit ${resourceToEdit.name}`
             : `${connectionMessage}`}
         </Typography>
-        <img height="45px" src={SupportedIntegrations[service].logo} />
+        <img height="45px" src={SupportedResources[service].logo} />
       </Box>
     </DialogTitle>
   );
 };
 
-export default IntegrationDialog;
+export default ResourceDialog;

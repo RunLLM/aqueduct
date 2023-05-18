@@ -9,18 +9,18 @@ import * as Yup from 'yup';
 import {
   FileData,
   GCSConfig,
-  IntegrationDialogProps,
+  ResourceDialogProps,
 } from '../../../utils/resources';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
-import { IntegrationFileUploadField } from './IntegrationFileUploadField';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { ResourceFileUploadField } from './ResourceFileUploadField';
+import { ResourceTextInputField } from './ResourceTextInputField';
 
 const Placeholders: GCSConfig = {
   bucket: 'aqueduct',
   use_as_storage: '',
 };
 
-interface GCSDialogProps extends IntegrationDialogProps {
+interface GCSDialogProps extends ResourceDialogProps {
   setMigrateStorage: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
@@ -65,7 +65,7 @@ export const GCSDialog: React.FC<GCSDialogProps> = ({
 
   return (
     <Box sx={{ mt: 2 }}>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="bucket"
         spellCheck={false}
         required={true}
@@ -78,7 +78,7 @@ export const GCSDialog: React.FC<GCSDialogProps> = ({
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
-      <IntegrationFileUploadField
+      <ResourceFileUploadField
         name="service_account_credentials"
         label={'Service Account Credentials*'}
         description={fileUploadDescription}

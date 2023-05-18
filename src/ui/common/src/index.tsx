@@ -3,10 +3,10 @@ import { CodeBlock } from './components/CodeBlock';
 import ExecutionChip from './components/execution/chip';
 import { useAqueductConsts } from './components/hooks/useAqueductConsts';
 import useUser from './components/hooks/useUser';
-import AddIntegrations from './components/resources/addIntegrations';
+import AddResources from './components/resources/addResources';
 import { AWSCard } from './components/resources/cards/awsCard';
 import { BigQueryCard } from './components/resources/cards/bigqueryCard';
-import { IntegrationCard } from './components/resources/cards/card';
+import { ResourceCard } from './components/resources/cards/card';
 import { DatabricksCard } from './components/resources/cards/databricksCard';
 import { EmailCard } from './components/resources/cards/emailCard';
 import { MongoDBCard } from './components/resources/cards/mongoDbCard';
@@ -14,18 +14,18 @@ import { S3Card } from './components/resources/cards/s3Card';
 import { SlackCard } from './components/resources/cards/slackCard';
 import { SnowflakeCard } from './components/resources/cards/snowflakeCard';
 import { SparkCard } from './components/resources/cards/sparkCard';
-import { ConnectedIntegrations } from './components/resources/connectedIntegrations';
+import { ConnectedResources } from './components/resources/connectedResources';
 import AddTableDialog from './components/resources/dialogs/addTableDialog';
 import { AWSDialog } from './components/resources/dialogs/awsDialog';
 import { BigQueryDialog } from './components/resources/dialogs/bigqueryDialog';
 import { CondaDialog } from './components/resources/dialogs/condaDialog';
 import { CSVDialog } from './components/resources/dialogs/csvDialog';
 import { DatabricksDialog } from './components/resources/dialogs/databricksDialog';
-import DeleteIntegrationDialog from './components/resources/dialogs/deleteIntegrationDialog';
-import IntegrationDialog from './components/resources/dialogs/dialog';
+import DeleteResourceDialog from './components/resources/dialogs/deleteResourceDialog';
+import ResourceDialog from './components/resources/dialogs/dialog';
 import { EmailDialog } from './components/resources/dialogs/emailDialog';
-import { IntegrationFileUploadField } from './components/resources/dialogs/IntegrationFileUploadField';
-import { IntegrationTextInputField } from './components/resources/dialogs/IntegrationTextInputField';
+import { ResourceFileUploadField } from './components/resources/dialogs/ResourceFileUploadField';
+import { ResourceTextInputField } from './components/resources/dialogs/ResourceTextInputField';
 import { MariaDbDialog } from './components/resources/dialogs/mariadbDialog';
 import { MongoDBDialog } from './components/resources/dialogs/mongoDbDialog';
 import { MysqlDialog } from './components/resources/dialogs/mysqlDialog';
@@ -56,8 +56,8 @@ import CheckDetailsPage from './components/pages/check/id';
 import DataPage from './components/pages/data';
 import ErrorPage from './components/pages/ErrorPage';
 import HomePage from './components/pages/HomePage';
-import IntegrationDetailsPage from './components/pages/resource/id';
-import IntegrationsPage from './components/pages/resources';
+import ResourceDetailsPage from './components/pages/resource/id';
+import ResourcesPage from './components/pages/resources';
 import LoginPage from './components/pages/LoginPage';
 import MetricDetailsPage from './components/pages/metric/id';
 import OperatorDetailsPage from './components/pages/operator/id';
@@ -92,19 +92,19 @@ import artifactResults from './reducers/artifactResults';
 import dataPreview, { dataPreviewSlice } from './reducers/dataPreview';
 import { getDataArtifactPreview } from './reducers/dataPreview';
 import resource, {
-  handleConnectToNewIntegration,
-  handleEditIntegration,
-  handleListIntegrationObjects,
-  handleLoadIntegrationObject,
-  handleLoadIntegrationOperators,
-  handleTestConnectIntegration,
+  handleConnectToNewResource,
+  handleEditResource,
+  handleListResourceObjects,
+  handleLoadResourceObject,
+  handleLoadResourceOperators,
+  handleTestConnectResource,
   resourceSlice,
   objectKeyFn,
   resetConnectNewStatus,
   resetTestConnectStatus,
 } from './reducers/resource';
 import resources, {
-  handleLoadIntegrations,
+  handleLoadResources,
   resourcesSlice,
 } from './reducers/resources';
 import workflowSummaries, {
@@ -176,7 +176,7 @@ import ExecutionStatus, {
   WidthTransition,
 } from './utils/shared';
 import { getDataSideSheetContent, sideSheetSwitcher } from './utils/sidesheets';
-import SupportedIntegrations from './utils/SupportedIntegrations';
+import SupportedResources from './utils/SupportedResources';
 import {
   normalizeGetWorkflowResponse,
   normalizeWorkflowDag,
@@ -185,7 +185,7 @@ import {
 export {
   AccountNotificationSettingsSelector,
   AccountPage,
-  AddIntegrations,
+  AddResources,
   addTable,
   AddTableDialog,
   aqueductApi,
@@ -210,7 +210,7 @@ export {
   CheckStatus,
   CodeBlock,
   CondaDialog,
-  ConnectedIntegrations,
+  ConnectedResources,
   createCronString,
   CSVDialog,
   DatabricksCard,
@@ -223,7 +223,7 @@ export {
   DayOfWeek,
   deconstructCronString,
   DefaultLayout,
-  DeleteIntegrationDialog,
+  DeleteResourceDialog,
   EdgeTypes,
   EmailCard,
   EmailDialog,
@@ -242,8 +242,8 @@ export {
   GettingStartedTutorial,
   handleArchiveAllNotifications,
   handleArchiveNotification,
-  handleConnectToNewIntegration,
-  handleEditIntegration,
+  handleConnectToNewResource,
+  handleEditResource,
   handleExportFunction,
   handleFetchAllWorkflowSummaries,
   handleFetchNotifications,
@@ -255,23 +255,23 @@ export {
   handleGetWorkflowDag,
   handleGetWorkflowDagResult,
   handleListArtifactResults,
-  handleListIntegrationObjects,
+  handleListResourceObjects,
   handleListWorkflowSavedObjects,
-  handleLoadIntegrationObject,
-  handleLoadIntegrationOperators,
-  handleLoadIntegrations,
-  handleTestConnectIntegration,
+  handleLoadResourceObject,
+  handleLoadResourceOperators,
+  handleLoadResources,
+  handleTestConnectResource,
   HomePage,
   resource,
-  IntegrationCard,
-  IntegrationDetailsPage,
-  IntegrationDialog,
-  IntegrationFileUploadField,
+  ResourceCard,
+  ResourceDetailsPage,
+  ResourceDialog,
+  ResourceFileUploadField,
   resources,
   resourceSlice,
-  IntegrationsPage,
+  ResourcesPage,
   resourcesSlice,
-  IntegrationTextInputField,
+  ResourceTextInputField,
   listNotifications,
   listWorkflowSlice,
   LoadingButton,
@@ -332,7 +332,7 @@ export {
   SparkCard,
   SparkDialog,
   store,
-  SupportedIntegrations,
+  SupportedResources,
   Tab,
   Tabs,
   theme,

@@ -4,11 +4,11 @@ import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
 import {
-  IntegrationDialogProps,
+  ResourceDialogProps,
   SnowflakeConfig,
 } from '../../../utils/resources';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
-import { IntegrationTextInputField } from './IntegrationTextInputField';
+import { ResourceTextInputField } from './ResourceTextInputField';
 
 const Placeholders: SnowflakeConfig = {
   account_identifier: '123456',
@@ -20,14 +20,14 @@ const Placeholders: SnowflakeConfig = {
   role: '',
 };
 
-export const SnowflakeDialog: React.FC<IntegrationDialogProps> = ({
+export const SnowflakeDialog: React.FC<ResourceDialogProps> = ({
   editMode,
 }) => {
   const { setValue } = useFormContext();
 
   return (
     <Box sx={{ mt: 2 }}>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="account_identifier"
         spellCheck={false}
         required={true}
@@ -40,7 +40,7 @@ export const SnowflakeDialog: React.FC<IntegrationDialogProps> = ({
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="warehouse"
         spellCheck={false}
         required={true}
@@ -53,7 +53,7 @@ export const SnowflakeDialog: React.FC<IntegrationDialogProps> = ({
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="database"
         spellCheck={false}
         required={true}
@@ -66,7 +66,7 @@ export const SnowflakeDialog: React.FC<IntegrationDialogProps> = ({
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="schema"
         spellCheck={false}
         required={false}
@@ -79,7 +79,7 @@ export const SnowflakeDialog: React.FC<IntegrationDialogProps> = ({
         disableReason={editMode ? readOnlyFieldDisableReason : undefined}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="username"
         spellCheck={false}
         required={true}
@@ -89,7 +89,7 @@ export const SnowflakeDialog: React.FC<IntegrationDialogProps> = ({
         onChange={(event) => setValue('username', event.target.value)}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="password"
         spellCheck={false}
         required={true}
@@ -100,7 +100,7 @@ export const SnowflakeDialog: React.FC<IntegrationDialogProps> = ({
         onChange={(event) => setValue('password', event.target.value)}
       />
 
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="role"
         spellCheck={false}
         required={false}
