@@ -6,10 +6,10 @@ extract (should succeed) -> bad_op (should fail) -> bad_op_downstream (should ca
 """
 
 
-def setup_flow_with_failure(client: aqueduct.Client, integration_name: str) -> str:
+def setup_flow_with_failure(client: aqueduct.Client, resource_name: str) -> str:
     name = "Test: Flow with Failure"
     n_runs = 1
-    integration = client.resource(name=integration_name)
+    resource = client.resource(name=resource_name)
 
     @aqueduct.op
     def bad_op(df):
@@ -20,7 +20,7 @@ def setup_flow_with_failure(client: aqueduct.Client, integration_name: str) -> s
     def bad_op_downstream(df):
         return df
 
-    reviews = integration.sql("SELECT * FROM hotel_reviews")
+    reviews = resource.sql("SELECT * FROM hotel_reviews")
     # use lazy mode to avoid previewing of bad_op
     # so that we can publish the flow
     bad_op_artf = bad_op.lazy(reviews)

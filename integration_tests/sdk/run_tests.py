@@ -33,11 +33,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "--data-integration",
-        dest="data_integration_tests",
+        "--data",
+        dest="data_resource_tests",
         default=False,
         action="store_true",
-        help="Run the SDK Data Integration tests.",
+        help="Run the SDK Data Resource tests.",
     )
 
     parser.add_argument(
@@ -66,13 +66,13 @@ if __name__ == "__main__":
     )
 
     args, unknown_args = parser.parse_known_args()
-    if not (args.aqueduct_tests or args.data_integration_tests):
+    if not (args.aqueduct_tests or args.data_resource_tests):
         args.aqueduct_tests = True
-        args.data_integration_tests = True
+        args.data_resource_tests = True
 
     cwd = os.getcwd()
-    if not cwd.endswith("integratioLn_tests/sdk"):
-        print("Current directory should be the SDK integratioLn test directory.")
+    if not cwd.endswith("integration_tests/sdk"):
+        print("Current directory should be the SDK integration test directory.")
         print("Your working directory is %s" % cwd)
         exit(1)
 
@@ -85,10 +85,10 @@ if __name__ == "__main__":
             unknown_args,
         )
 
-    if args.data_integration_tests:
-        print("Running Data Integration Tests...")
+    if args.data_resource_tests:
+        print("Running Data Resource Tests...")
         _run_tests(
-            "data_integration_tests/",
+            "data_resource_tests/",
             args.file,
             args.concurrency,
             unknown_args,

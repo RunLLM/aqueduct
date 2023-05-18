@@ -10,10 +10,10 @@ from aqueduct.resources.s3 import S3Resource
 from PIL import Image
 
 from aqueduct import op
-from sdk.data_integration_tests.flow_manager import FlowManager
-from sdk.data_integration_tests.s3_data_validator import S3DataValidator
-from sdk.data_integration_tests.save import save
-from sdk.data_integration_tests.validation_helpers import (
+from sdk.data_resource_tests.flow_manager import FlowManager
+from sdk.data_resource_tests.s3_data_validator import S3DataValidator
+from sdk.data_resource_tests.save import save
+from sdk.data_resource_tests.validation_helpers import (
     check_hotel_reviews_table_artifact,
     check_hotel_reviews_table_data,
 )
@@ -23,13 +23,13 @@ from sdk.shared.validation import check_artifact_was_computed
 
 
 @pytest.fixture(autouse=True)
-def assert_data_integration_is_s3(data_integration):
-    assert isinstance(data_integration, S3Resource)
+def assert_data_resource_is_s3(data_resource):
+    assert isinstance(data_resource, S3Resource)
 
 
 def _save_artifact_and_check(
     flow_manager: FlowManager,
-    data_integration: S3Resource,
+    data_resource: S3Resource,
     artifact: BaseArtifact,
     format: Optional[str],
     object_identifier: Optional[str] = None,
@@ -40,11 +40,11 @@ def _save_artifact_and_check(
 
     if object_identifier is None:
         object_identifier = generate_table_name() if format is not None else generate_object_name()
-    save(data_integration, artifact, object_identifier, format)
+    save(data_resource, artifact, object_identifier, format)
 
     flow = flow_manager.publish_flow_test(artifact)
 
-    S3DataValidator(flow_manager._client, data_integration).check_saved_artifact_data(
+    S3DataValidator(flow_manager._client, data_resource).check_saved_artifact_data(
         flow,
         artifact.id(),
         artifact.type(),
@@ -56,16 +56,16 @@ def _save_artifact_and_check(
     return flow
 
 
-def test_s3_table_fetch_and_save(flow_manager, data_integration):
-    hotel_reviews = data_integration.file(
+def test_s3_table_fetch_and_save(flow_manager, data_resource):
+    hotel_reviews = data_resource.file(
         "hotel_reviews", artifact_type=ArtifactType.TABLE, format="parquet"
     )
     check_hotel_reviews_table_artifact(hotel_reviews)
-    _save_artifact_and_check(flow_manager, data_integration, artifact=hotel_reviews, format="csv")
+    _save_artifact_and_check(flow_manager, data_resource, artifact=hotel_reviews, format="csv")
 
 
-def test_s3_list_of_tables_fetch_and_save(client, flow_manager, data_integration):
-    hotel_reviews = data_integration.file(
+def test_s3_list_of_tables_fetch_and_save(client, flow_manager, data_resource):
+    hotel_reviews = data_resource.file(
         "hotel_reviews", artifact_type=ArtifactType.TABLE, format="parquet"
     )
 
@@ -77,20 +77,20 @@ def test_s3_list_of_tables_fetch_and_save(client, flow_manager, data_integration
     name = generate_object_name()
     _save_artifact_and_check(
         flow_manager,
-        data_integration,
+        data_resource,
         artifact=list_output,
         format=None,
         object_identifier=name,
     )
 
-    extracted_list_of_tables = data_integration.file(
+    extracted_list_of_tables = data_resource.file(
         name,
         ArtifactType.LIST,
     )
     assert all(elem.equals(hotel_reviews.get()) for elem in extracted_list_of_tables.get())
 
 
-def test_s3_custom_pickled_dictionaries_fetch_and_save(client, flow_manager, data_integration):
+def test_s3_custom_pickled_dictionaries_fetch_and_save(client, flow_manager, data_resource):
     # Current working directory is one level above.
     image_data = Image.open("data/aqueduct.jpg", "r")
 
@@ -106,7 +106,7 @@ def test_s3_custom_pickled_dictionaries_fetch_and_save(client, flow_manager, dat
 
     _save_artifact_and_check(
         flow_manager,
-        data_integration,
+        data_resource,
         artifact=img_tuple_param,
         format=None,
         object_identifier=img_tuple_identifier,
@@ -114,7 +114,7 @@ def test_s3_custom_pickled_dictionaries_fetch_and_save(client, flow_manager, dat
     )
     _save_artifact_and_check(
         flow_manager,
-        data_integration,
+        data_resource,
         artifact=img_list_artifact,
         format=None,
         object_identifier=img_list_identifier,
@@ -122,7 +122,7 @@ def test_s3_custom_pickled_dictionaries_fetch_and_save(client, flow_manager, dat
     )
 
     # Check that can smoothly extract these types of objects back.
-    extracted_img_tuple = data_integration.file(
+    extracted_img_tuple = data_resource.file(
         img_tuple_identifier,
         ArtifactType.TUPLE,
     )
@@ -133,7 +133,7 @@ def test_s3_custom_pickled_dictionaries_fetch_and_save(client, flow_manager, dat
         for elem in extracted_img_tuple.get()
     )
 
-    extracted_img_list = data_integration.file(
+    extracted_img_list = data_resource.file(
         img_list_identifier,
         ArtifactType.LIST,
     )
@@ -146,7 +146,7 @@ def test_s3_custom_pickled_dictionaries_fetch_and_save(client, flow_manager, dat
 
     # As a trick, we can check that we serialized these objects in the appropriate dictionary format by deserializing them
     # as bytes and manually unpickling in this test case.
-    img_tuple_as_bytes = data_integration.file(
+    img_tuple_as_bytes = data_resource.file(
         img_tuple_identifier,
         ArtifactType.BYTES,
     )
@@ -158,33 +158,33 @@ def test_s3_custom_pickled_dictionaries_fetch_and_save(client, flow_manager, dat
     assert "is_tuple" in custom_dict
 
 
-def test_s3_table_formats(flow_manager, data_integration):
-    hotel_reviews = data_integration.file(
+def test_s3_table_formats(flow_manager, data_resource):
+    hotel_reviews = data_resource.file(
         "hotel_reviews",
         artifact_type=ArtifactType.TABLE,
         format="parquet",
     )
 
     # Save the table with each of the other different formats.
-    _save_artifact_and_check(flow_manager, data_integration, artifact=hotel_reviews, format="csv")
-    _save_artifact_and_check(flow_manager, data_integration, artifact=hotel_reviews, format="json")
+    _save_artifact_and_check(flow_manager, data_resource, artifact=hotel_reviews, format="csv")
+    _save_artifact_and_check(flow_manager, data_resource, artifact=hotel_reviews, format="json")
     _save_artifact_and_check(
-        flow_manager, data_integration, artifact=hotel_reviews, format="parquet"
+        flow_manager, data_resource, artifact=hotel_reviews, format="parquet"
     )
 
 
-def test_s3_table_fetch_with_merge(client, data_integration):
-    hotel_reviews = data_integration.file(
+def test_s3_table_fetch_with_merge(client, data_resource):
+    hotel_reviews = data_resource.file(
         "hotel_reviews", artifact_type=ArtifactType.TABLE, format="parquet"
     )
-    customers = data_integration.file(
+    customers = data_resource.file(
         "customers",
         artifact_type=ArtifactType.TABLE,
         format="parquet",
     )
     expected_merged_data = pd.concat([hotel_reviews.get(), customers.get()], ignore_index=True)
 
-    merged = data_integration.file(
+    merged = data_resource.file(
         ["hotel_reviews", "customers"],
         artifact_type=ArtifactType.TABLE,
         format="parquet",
@@ -194,7 +194,7 @@ def test_s3_table_fetch_with_merge(client, data_integration):
     assert merged.get().equals(expected_merged_data)
 
 
-def test_s3_fetch_directory_mixed(flow_manager, data_integration):
+def test_s3_fetch_directory_mixed(flow_manager, data_resource):
     """Create a random directory name and save a table and non-tabular artifact into it, and
     check that a directory fetch will return a tuple of the contents."""
     dir_name = generate_object_name()
@@ -205,19 +205,19 @@ def test_s3_fetch_directory_mixed(flow_manager, data_integration):
     )
 
     # Write a tabular artifact into the directory.
-    hotel_reviews = data_integration.file(
+    hotel_reviews = data_resource.file(
         "hotel_reviews", artifact_type=ArtifactType.TABLE, format="parquet"
     )
     _save_artifact_and_check(
         flow_manager,
-        data_integration,
+        data_resource,
         artifact=hotel_reviews,
         format="parquet",
         object_identifier="%s/%s" % (dir_name, hotel_reviews_table_name),
     )
 
     # Check that the artifact can be fetched by directory search.
-    dir_contents = data_integration.file(
+    dir_contents = data_resource.file(
         dir_name + "/",
         artifact_type=ArtifactType.TABLE,
         format="parquet",
@@ -225,21 +225,21 @@ def test_s3_fetch_directory_mixed(flow_manager, data_integration):
     assert dir_contents.type() == ArtifactType.TUPLE
     assert dir_contents.get()[0].equals(hotel_reviews.get())
 
-    customers = data_integration.file(
+    customers = data_resource.file(
         "customers",
         artifact_type=ArtifactType.TABLE,
         format="parquet",
     )
     _save_artifact_and_check(
         flow_manager,
-        data_integration,
+        data_resource,
         artifact=customers,
         format="parquet",
         object_identifier="%s/%s" % (dir_name, customers_table_name),
     )
 
     # Check that both artifacts can be fetched by directory search.
-    dir_contents = data_integration.file(
+    dir_contents = data_resource.file(
         dir_name + "/",
         artifact_type=ArtifactType.TABLE,
         format="parquet",
@@ -253,7 +253,7 @@ def test_s3_fetch_directory_mixed(flow_manager, data_integration):
     )
 
 
-def test_s3_fetch_directory_with_merge(flow_manager, data_integration):
+def test_s3_fetch_directory_with_merge(flow_manager, data_resource):
     dir_name = generate_object_name()
 
     # Order hotel_reviews to be listed before customers by ordering the paths alphabetically.
@@ -262,30 +262,30 @@ def test_s3_fetch_directory_with_merge(flow_manager, data_integration):
     )
 
     # Write two tables into the directory.
-    hotel_reviews = data_integration.file(
+    hotel_reviews = data_resource.file(
         "hotel_reviews", artifact_type=ArtifactType.TABLE, format="parquet"
     )
     _save_artifact_and_check(
         flow_manager,
-        data_integration,
+        data_resource,
         artifact=hotel_reviews,
         format="parquet",
         object_identifier="%s/%s" % (dir_name, hotel_reviews_table_name),
     )
 
-    customers = data_integration.file(
+    customers = data_resource.file(
         "customers", artifact_type=ArtifactType.TABLE, format="parquet"
     )
     _save_artifact_and_check(
         flow_manager,
-        data_integration,
+        data_resource,
         artifact=customers,
         format="parquet",
         object_identifier="%s/%s" % (dir_name, customers_table_name),
     )
 
     expected_merged_data = pd.concat([hotel_reviews.get(), customers.get()], ignore_index=True)
-    dir_contents_merged = data_integration.file(
+    dir_contents_merged = data_resource.file(
         dir_name + "/",
         artifact_type=ArtifactType.TABLE,
         format="parquet",
@@ -295,7 +295,7 @@ def test_s3_fetch_directory_with_merge(flow_manager, data_integration):
     assert expected_merged_data.equals(dir_contents_merged.get())
 
 
-def test_s3_fetch_directory_with_delete(flow_manager, data_integration):
+def test_s3_fetch_directory_with_delete(flow_manager, data_resource):
     """Create a random directory name and save a table artifact into it. Delete the workflow,
     and include that object in the deletion. After that check if the directory is empty."""
     dir_name = generate_object_name()
@@ -304,19 +304,19 @@ def test_s3_fetch_directory_with_delete(flow_manager, data_integration):
     hotel_reviews_table_name = generate_table_name()
 
     # Write a tabular artifact into the directory.
-    hotel_reviews = data_integration.file(
+    hotel_reviews = data_resource.file(
         "hotel_reviews", artifact_type=ArtifactType.TABLE, format="parquet"
     )
     flow = _save_artifact_and_check(
         flow_manager,
-        data_integration,
+        data_resource,
         artifact=hotel_reviews,
         format="parquet",
         object_identifier="%s/%s" % (dir_name, hotel_reviews_table_name),
     )
 
     # Check that the artifact can be fetched by directory search.
-    dir_contents = data_integration.file(
+    dir_contents = data_resource.file(
         dir_name + "/",
         artifact_type=ArtifactType.TABLE,
         format="parquet",
@@ -335,39 +335,39 @@ def test_s3_fetch_directory_with_delete(flow_manager, data_integration):
     with pytest.raises(
         AqueductError, match="Given path to S3 directory '%s/' does not exist." % dir_name
     ):
-        dir_contents = data_integration.file(
+        dir_contents = data_resource.file(
             dir_name + "/",
             artifact_type=ArtifactType.TABLE,
             format="parquet",
         )
 
 
-def test_s3_non_tabular_fetch(client, flow_manager, data_integration):
+def test_s3_non_tabular_fetch(client, flow_manager, data_resource):
     string_data = "This is a string."
     non_tabular_artifact = client.create_param("Non-Tabular Data", default=string_data)
     assert non_tabular_artifact.type() == ArtifactType.STRING
 
     _save_artifact_and_check(
         flow_manager,
-        data_integration,
+        data_resource,
         artifact=non_tabular_artifact,
         format=None,
     )
 
 
-def test_s3_fetch_multiple_files(client, flow_manager, data_integration):
-    hotel_reviews = data_integration.file(
+def test_s3_fetch_multiple_files(client, flow_manager, data_resource):
+    hotel_reviews = data_resource.file(
         "hotel_reviews",
         artifact_type=ArtifactType.TABLE,
         format="parquet",
     )
-    customers = data_integration.file(
+    customers = data_resource.file(
         "customers",
         artifact_type=ArtifactType.TABLE,
         format="parquet",
     )
 
-    multi_table_artifact = data_integration.file(
+    multi_table_artifact = data_resource.file(
         ["hotel_reviews", "customers"], artifact_type=ArtifactType.TABLE, format="parquet"
     )
     assert multi_table_artifact.type() == ArtifactType.TUPLE
@@ -381,18 +381,18 @@ def test_s3_fetch_multiple_files(client, flow_manager, data_integration):
     non_tabular_data_list_2 = client.create_param("List Param 2", default=[4, 5, 6])
     _save_artifact_and_check(
         flow_manager,
-        data_integration,
+        data_resource,
         artifact=non_tabular_data_list_1,
         format=None,
     )
     _save_artifact_and_check(
         flow_manager,
-        data_integration,
+        data_resource,
         artifact=non_tabular_data_list_2,
         format=None,
     )
 
-    multi_data_artifact = data_integration.file(
+    multi_data_artifact = data_resource.file(
         [
             artifact_id_to_saved_identifier[str(non_tabular_data_list_1.id())],
             artifact_id_to_saved_identifier[str(non_tabular_data_list_2.id())],
@@ -404,9 +404,9 @@ def test_s3_fetch_multiple_files(client, flow_manager, data_integration):
     assert multi_data_artifact.get() == ([1, 2, 3], [4, 5, 6])
 
 
-def test_s3_fetch_single_file_as_list(data_integration):
+def test_s3_fetch_single_file_as_list(data_resource):
     """Check that fetching a single file as a list of paths will return a Tuple artifact."""
-    hotel_reviews = data_integration.file(
+    hotel_reviews = data_resource.file(
         ["hotel_reviews"],
         artifact_type=ArtifactType.TABLE,
         format="parquet",
@@ -417,10 +417,10 @@ def test_s3_fetch_single_file_as_list(data_integration):
 
 def test_s3_artifact_with_custom_metadata(
     flow_manager,
-    data_integration,
+    data_resource,
 ):
     # TODO: validate custom descriptions once we can fetch descriptions easily.
-    artifact = data_integration.file(
+    artifact = data_resource.file(
         "hotel_reviews",
         artifact_type=ArtifactType.TABLE,
         format="parquet",
@@ -433,11 +433,11 @@ def test_s3_artifact_with_custom_metadata(
     check_artifact_was_computed(flow, "Test Artifact artifact")
 
 
-def test_s3_save_with_overwrite(flow_manager, data_integration):
+def test_s3_save_with_overwrite(flow_manager, data_resource):
     """Check that we always replace objects that already exist at the filepath."""
     path = generate_table_name()
 
-    hotel_reviews = data_integration.file(
+    hotel_reviews = data_resource.file(
         "hotel_reviews",
         artifact_type=ArtifactType.TABLE,
         format="parquet",
@@ -445,14 +445,14 @@ def test_s3_save_with_overwrite(flow_manager, data_integration):
     assert hotel_reviews.type() == ArtifactType.TABLE
     _save_artifact_and_check(
         flow_manager,
-        data_integration,
+        data_resource,
         artifact=hotel_reviews,
         format="csv",
         object_identifier=path,
     )
 
     # Customers will overwrite the existing hotel_reviews data.
-    customers = data_integration.file(
+    customers = data_resource.file(
         "customers",
         artifact_type=ArtifactType.TABLE,
         format="parquet",
@@ -460,45 +460,45 @@ def test_s3_save_with_overwrite(flow_manager, data_integration):
     assert customers.type() == ArtifactType.TABLE
     _save_artifact_and_check(
         flow_manager,
-        data_integration,
+        data_resource,
         artifact=customers,
         format="csv",
         object_identifier=path,
     )
 
 
-def test_s3_basic_fetch_failure(client, data_integration):
+def test_s3_basic_fetch_failure(client, data_resource):
     # Fetch a path that does not exist will fail.
     with pytest.raises(AqueductError, match="The specified key does not exist."):
-        data_integration.file("asdlkf", artifact_type=ArtifactType.TABLE, format="parquet")
+        data_resource.file("asdlkf", artifact_type=ArtifactType.TABLE, format="parquet")
 
     # Fetch a path to directory that does not exist will fail.
     with pytest.raises(AqueductError, match="Given path to S3 directory 'asdlkf/' does not exist."):
-        data_integration.file("asdlkf/", artifact_type="bytes")
+        data_resource.file("asdlkf/", artifact_type="bytes")
 
     # Fetch an artifact with the wrong artifact type.
     with pytest.raises(
         AqueductError, match="The file at path `.*` is not a valid ArtifactType.DICT object."
     ):
-        data_integration.file("hotel_reviews", artifact_type=ArtifactType.DICT)
+        data_resource.file("hotel_reviews", artifact_type=ArtifactType.DICT)
 
     # Fetch a table artifact with the wrong format.
     with pytest.raises(
         AqueductError,
         match="The file at path `hotel_reviews` is not a valid ArtifactType.TABLE object. \\(with S3 file format `CSV`\\)",
     ):
-        data_integration.file("hotel_reviews", artifact_type=ArtifactType.TABLE, format="csv")
+        data_resource.file("hotel_reviews", artifact_type=ArtifactType.TABLE, format="csv")
 
     # Fetch a table artifact with an invalid format.
     with pytest.raises(
         InvalidUserArgumentException, match="Unsupported S3 file format `different format`."
     ):
-        data_integration.file(
+        data_resource.file(
             "hotel_reviews", artifact_type=ArtifactType.TABLE, format="different format"
         )
 
 
-def test_s3_multi_fetch_failure(client, flow_manager, data_integration):
+def test_s3_multi_fetch_failure(client, flow_manager, data_resource):
     # Save a non-tabular artifact.
     non_tabular_path = generate_object_name()
     string_data = "This is a string."
@@ -506,7 +506,7 @@ def test_s3_multi_fetch_failure(client, flow_manager, data_integration):
     assert non_tabular_artifact.type() == ArtifactType.STRING
     _save_artifact_and_check(
         flow_manager,
-        data_integration,
+        data_resource,
         artifact=non_tabular_artifact,
         format=None,
         object_identifier=non_tabular_path,
@@ -517,7 +517,7 @@ def test_s3_multi_fetch_failure(client, flow_manager, data_integration):
         AqueductError,
         match="The file at path `.*` is not a valid ArtifactType.TABLE object. \\(with S3 file format `Parquet`\\)",
     ):
-        data_integration.file(
+        data_resource.file(
             ["hotel_reviews", non_tabular_path], artifact_type=ArtifactType.TABLE, format="parquet"
         )
 
@@ -526,7 +526,7 @@ def test_s3_multi_fetch_failure(client, flow_manager, data_integration):
         AqueductError,
         match="The file at path `.*` is not a valid ArtifactType.TABLE object. \\(with S3 file format `Parquet`\\)",
     ):
-        data_integration.file(
+        data_resource.file(
             ["hotel_reviews", non_tabular_path],
             artifact_type=ArtifactType.TABLE,
             format="parquet",
@@ -537,12 +537,12 @@ def test_s3_multi_fetch_failure(client, flow_manager, data_integration):
     with pytest.raises(
         AqueductError, match="Each key in the list must not be a directory, found dir_name/."
     ):
-        data_integration.file(
+        data_resource.file(
             ["hotel_reviews", "dir_name/"], artifact_type=ArtifactType.TABLE, format="parquet"
         )
 
 
-def test_s3_save_failure(client, data_integration):
+def test_s3_save_failure(client, data_resource):
     # Save a non-tabular artifact with a table format field.
     string_data = "This is a string."
     non_tabular_artifact = client.create_param("Non-Tabular Data", default=string_data)
@@ -550,22 +550,22 @@ def test_s3_save_failure(client, data_integration):
         InvalidUserArgumentException,
         match="A `format` argument should only be supplied for saving table artifacts.",
     ):
-        save(data_integration, non_tabular_artifact, generate_object_name(), format="json")
+        save(data_resource, non_tabular_artifact, generate_object_name(), format="json")
 
     # Save a table artifact without a format field.
-    hotel_reviews = data_integration.file(
+    hotel_reviews = data_resource.file(
         "hotel_reviews",
         artifact_type=ArtifactType.TABLE,
         format="parquet",
     )
     with pytest.raises(
         InvalidUserArgumentException,
-        match="You must supply a file format when saving tabular data into S3 integration",
+        match="You must supply a file format when saving tabular data into S3 resource",
     ):
-        save(data_integration, hotel_reviews, generate_table_name(), format=None)
+        save(data_resource, hotel_reviews, generate_table_name(), format=None)
 
     # Save an artifact with a completely wrong format.
     with pytest.raises(
         InvalidUserArgumentException, match="Unsupported S3 file format `wrong format`."
     ):
-        save(data_integration, hotel_reviews, generate_table_name(), format="wrong format")
+        save(data_resource, hotel_reviews, generate_table_name(), format="wrong format")

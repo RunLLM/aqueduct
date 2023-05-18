@@ -10,7 +10,7 @@ from sdk.shared.flow_helpers import publish_flow_test, trigger_flow_test
 class FlowManager:
     """This is a convenience class that packages a couple of flow-specific fields together.
 
-    It abstracts away the publishing of flows from data integration test cases, which usually
+    It abstracts away the publishing of flows from data resource test cases, which usually
     don't care about things like flow name and engine, and just want to publish flows as the
     only mechanism for saving data. It is imported into test cases as a fixture, to simplify
     the test signature.
@@ -33,7 +33,7 @@ class FlowManager:
         ] = ExecutionStatus.SUCCEEDED,
         existing_flow: Optional[Flow] = None,
     ) -> Flow:
-        """This is a simplified wrapper around `publish_flow_test()`, built with data integration test in mind."""
+        """This is a simplified wrapper around `publish_flow_test()`, built with data resource test in mind."""
         if existing_flow is not None:
             return publish_flow_test(
                 self._client,

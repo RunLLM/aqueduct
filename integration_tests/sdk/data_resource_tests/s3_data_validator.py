@@ -12,11 +12,11 @@ from sdk.shared.validation import fetch_and_validate_saved_object_identifier
 
 class S3DataValidator:
     _client: Client
-    _integration: S3Resource
+    _resource: S3Resource
 
-    def __init__(self, client: Client, integration: S3Resource):
+    def __init__(self, client: Client, resource: S3Resource):
         self._client = client
-        self._integration = integration
+        self._resource = resource
 
     def check_saved_artifact_data(
         self,
@@ -30,10 +30,10 @@ class S3DataValidator:
         assert expected_data is not None
 
         saved_object_identifier = fetch_and_validate_saved_object_identifier(
-            self._integration, flow, artifact_id
+            self._resource, flow, artifact_id
         )
 
-        saved_artifact = self._integration.file(saved_object_identifier, artifact_type, format)
+        saved_artifact = self._resource.file(saved_object_identifier, artifact_type, format)
         assert saved_artifact.type() == artifact_type
         saved_data = saved_artifact.get()
         assert type(saved_data) == type(expected_data), "Expected data type %s, get type %s." % (

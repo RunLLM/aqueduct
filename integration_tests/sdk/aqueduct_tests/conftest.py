@@ -9,31 +9,31 @@ from .data_validator import DataValidator
 
 
 @pytest.fixture(scope="function")
-def data_validator(client, data_integration):
-    return DataValidator(client, data_integration)
+def data_validator(client, data_resource):
+    return DataValidator(client, data_resource)
 
 
 @pytest.fixture(autouse=True)
-def enable_only_for_data_integration_type(request, client, data_integration):
+def enable_only_for_data_resource_type(request, client, data_resource):
     """When a test is marked with this, it is enabled for particular ServiceType(s)!
 
     Eg.
-    @pytest.mark.enable_only_for_data_integration_type(*relational_dbs())
-    def test_relational_data_integrations_only(data_integration):
+    @pytest.mark.enable_only_for_data_resource_type(*relational_dbs())
+    def test_relational_data_resources_only(data_resource):
         ...
     """
-    if request.node.get_closest_marker("enable_only_for_data_integration_type"):
-        enabled_data_integration_types = request.node.get_closest_marker(
-            "enable_only_for_data_integration_type"
+    if request.node.get_closest_marker("enable_only_for_data_resource_type"):
+        enabled_data_resource_types = request.node.get_closest_marker(
+            "enable_only_for_data_resource_type"
         ).args
         assert all(
-            isinstance(data_type, ServiceType) for data_type in enabled_data_integration_types
-        ), "Arguments to `enable_only_for_data_integration_type()` must be of type ServiceType"
+            isinstance(data_type, ServiceType) for data_type in enabled_data_resource_types
+        ), "Arguments to `enable_only_for_data_resource_type()` must be of type ServiceType"
 
-        if data_integration.type() not in enabled_data_integration_types:
+        if data_resource.type() not in enabled_data_resource_types:
             pytest.skip(
-                "Skipped for data integration `%s`, since it is not of type `%s`."
-                % (data_integration.name(), ",".join(enabled_data_integration_types))
+                "Skipped for data resource `%s`, since it is not of type `%s`."
+                % (data_resource.name(), ",".join(enabled_data_resource_types))
             )
 
 

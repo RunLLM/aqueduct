@@ -69,7 +69,7 @@ def deploy_flow(name, deploy_fn, api_key, address, data_integration) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--addr", default="localhost:8080")
-    parser.add_argument("--data-integration", default="Demo")
+    parser.add_argument("--data-resource", default="Demo")
     parser.add_argument("--api-key", default="")
     # parser.add_argument("-q", "--quiet", action="store_true")
     parser.add_argument("--example-notebooks", action="store_true")
@@ -123,7 +123,7 @@ if __name__ == "__main__":
     if not args.example_notebooks_only and not args.demo_container_notebooks_only:
         for pkg in WORKFLOW_PKGS:
             if args.single_threaded:
-                deploy_flow(pkg.NAME, pkg.deploy, api_key, args.addr, args.data_integration)
+                deploy_flow(pkg.NAME, pkg.deploy, api_key, args.addr, args.data_resource)
             else:
                 p = Process(
                     target=deploy_flow,

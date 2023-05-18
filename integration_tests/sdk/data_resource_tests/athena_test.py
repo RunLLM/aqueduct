@@ -10,12 +10,12 @@ from .save import save
 
 
 @pytest.fixture(autouse=True)
-def assert_data_integration_is_relational(client, data_integration):
-    assert isinstance(data_integration, RelationalDBResource)
+def assert_data_resource_is_relational(client, data_resource):
+    assert isinstance(data_resource, RelationalDBResource)
 
 
-def test_athena_integration_table_retrieval(client, data_integration):
-    df = data_integration.table(name="hotel_reviews")
+def test_athena_resource_table_retrieval(client, data_resource):
+    df = data_resource.table(name="hotel_reviews")
     assert len(df) == 100
     assert list(df) == [
         "hotel_name",
@@ -25,18 +25,18 @@ def test_athena_integration_table_retrieval(client, data_integration):
     ]
 
 
-def test_athena_integration_list_tables(client, data_integration):
+def test_athena_resource_list_tables(client, data_resource):
     expected_tables = [
         "customers",
         "hotel_reviews",
     ]
-    tables = data_integration.list_tables()
+    tables = data_resource.list_tables()
 
     for expected_table in expected_tables:
         assert tables["tablename"].str.contains(expected_table, case=False).sum() > 0
 
 
-def test_athena_save(client, data_integration):
+def test_athena_save(client, data_resource):
     @op
     def generate_table():
         return pd.DataFrame()
@@ -45,23 +45,23 @@ def test_athena_save(client, data_integration):
         InvalidUserActionException,
         match="Save operation not supported for Athena.",
     ):
-        save(data_integration, generate_table(), generate_table_name(), LoadUpdateMode.REPLACE)
+        save(data_resource, generate_table(), generate_table_name(), LoadUpdateMode.REPLACE)
 
 
-def test_athena_query_with_parameter(client, data_integration):
+def test_athena_query_with_parameter(client, data_resource):
     # Missing parameters.
     with pytest.raises(InvalidUserArgumentException):
-        _ = data_integration.sql(query="select * from {{missing_parameter}}")
+        _ = data_resource.sql(query="select * from {{missing_parameter}}")
 
     # The parameter is not a string type.
     _ = client.create_param("table_name", default=1234)
     with pytest.raises(InvalidUserArgumentException):
-        _ = data_integration.sql(query="select * from {{ table_name }}")
+        _ = data_resource.sql(query="select * from {{ table_name }}")
 
     client.create_param("table_name", default="hotel_reviews")
-    table_artifact = data_integration.sql(query="select * from {{ table_name }}")
+    table_artifact = data_resource.sql(query="select * from {{ table_name }}")
 
-    expected_table_artifact = data_integration.sql(query="select * from hotel_reviews")
+    expected_table_artifact = data_resource.sql(query="select * from hotel_reviews")
     assert table_artifact.get().equals(expected_table_artifact.get())
 
     # Trigger the parameter with invalid values.
@@ -71,19 +71,19 @@ def test_athena_query_with_parameter(client, data_integration):
         _ = table_artifact.get(parameters={"non-existant parameter": "blah"})
 
 
-def test_athena_query_with_multiple_parameters(client, flow_manager, data_integration):
+def test_athena_query_with_multiple_parameters(client, flow_manager, data_resource):
     _ = client.create_param("table_name", default="hotel_reviews")
     nationality = client.create_param(
         "reviewer-nationality", default="United Kingdom"
     )  # check that dashes work.
-    table_artifact = data_integration.sql(
+    table_artifact = data_resource.sql(
         query="select * from {{ table_name }} where reviewer_nationality='{{ reviewer-nationality }}' and review_date < {{ today}}"
     )
-    expected_table_artifact = data_integration.sql(
+    expected_table_artifact = data_resource.sql(
         "select * from hotel_reviews where reviewer_nationality='United Kingdom' and review_date < {{today}}"
     )
     assert table_artifact.get().equals(expected_table_artifact.get())
-    expected_table_artifact = data_integration.sql(
+    expected_table_artifact = data_resource.sql(
         "select * from hotel_reviews where reviewer_nationality='Australia' and review_date < {{today}}"
     )
     assert table_artifact.get(parameters={"reviewer-nationality": "Australia"}).equals(

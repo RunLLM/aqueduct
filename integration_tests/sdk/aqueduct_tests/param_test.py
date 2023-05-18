@@ -148,8 +148,8 @@ def append_row_to_df(df, row):
 
 
 @pytest.mark.skip_for_spark_engines(reason="append_row_to_df doesn't work for Spark Dataframes")
-def test_parameter_in_basic_flow(client, data_integration):
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+def test_parameter_in_basic_flow(client, data_resource):
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
     row_to_add = ["new hotel", "09-28-1996", "US", "It was new."]
     new_row_param = client.create_param(name="new row", default=row_to_add)
     output = append_row_to_df(table_artifact, new_row_param)
@@ -162,8 +162,8 @@ def test_parameter_in_basic_flow(client, data_integration):
 
 
 @pytest.mark.skip_for_spark_engines(reason="append_row_to_df doesn't work for Spark Dataframes")
-def test_edit_param_for_flow(client, flow_name, data_integration, engine):
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+def test_edit_param_for_flow(client, flow_name, data_resource, engine):
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
     row_to_add = ["new hotel", "09-28-1996", "US", "It was new."]
     new_row_param = client.create_param(name="new row", default=row_to_add)
     output = append_row_to_df(table_artifact, new_row_param)
@@ -209,8 +209,8 @@ def add_numbers(sql, num1, num2):
     return num1 + num2
 
 
-def test_trigger_flow_with_different_param(client, flow_name, data_integration, engine):
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+def test_trigger_flow_with_different_param(client, flow_name, data_resource, engine):
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
 
     num1 = client.create_param(name="num1", default=5)
     num2 = client.create_param(name="num2", default=5)
@@ -250,10 +250,10 @@ def test_trigger_flow_with_different_param(client, flow_name, data_integration, 
     assert num2_artifact.get() == 5
 
 
-@pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
-def test_trigger_flow_with_different_sql_param(client, flow_name, data_integration, engine):
+@pytest.mark.enable_only_for_data_resource_type(*all_relational_DBs())
+def test_trigger_flow_with_different_sql_param(client, flow_name, data_resource, engine):
     table_name_param = client.create_param("table_name", default="hotel_reviews")
-    table_artifact = data_integration.sql(query="select * from $1", parameters=[table_name_param])
+    table_artifact = data_resource.sql(query="select * from $1", parameters=[table_name_param])
 
     flow = publish_flow_test(
         client,
@@ -660,14 +660,14 @@ def test_local_tf_keras_data(client, flow_name, engine):
     )
 
 
-@pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
-def test_save_table_name_parameterized(client, data_validator, data_integration, flow_name, engine):
-    table_to_save = extract(data_integration, DataObject.SENTIMENT)
+@pytest.mark.enable_only_for_data_resource_type(*all_relational_DBs())
+def test_save_table_name_parameterized(client, data_validator, data_resource, flow_name, engine):
+    table_to_save = extract(data_resource, DataObject.SENTIMENT)
 
     initial_table_name = "output_" + str(uuid.uuid4()).replace("-", "_")
     table_name_param = client.create_param("table name param", default=initial_table_name)
     save(
-        data_integration, table_to_save, table_name_param, update_mode=LoadUpdateMode.FAIL
+        data_resource, table_to_save, table_name_param, update_mode=LoadUpdateMode.FAIL
     )  # must create a new table.
     flow = publish_flow_test(client, table_to_save, engine=engine, name=flow_name())
 
@@ -698,7 +698,7 @@ def test_save_table_name_parameterized(client, data_validator, data_integration,
         match="A parameter value for `table_name` must be of string type",
     ):
         numeric_param = client.create_param("number", default=123)
-        save(data_integration, table_to_save, numeric_param, update_mode=LoadUpdateMode.FAIL)
+        save(data_resource, table_to_save, numeric_param, update_mode=LoadUpdateMode.FAIL)
     trigger_flow_test(
         client, flow, parameters={"table name param": 123}, expected_status=ExecutionStatus.FAILED
     )
