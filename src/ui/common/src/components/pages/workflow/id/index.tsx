@@ -38,7 +38,9 @@ import WorkflowHeader, {
   WorkflowPageContentId,
 } from '../../../workflows/WorkflowHeader';
 import WorkflowNodeSidesheetActions from '../../../workflows/WorkflowNodeSidesheetActions';
+import WorkflowSettings from '../../../workflows/WorkflowSettings';
 import { LayoutProps } from '../../types';
+import RunWorkflowDialog from '../../workflows/components/RunWorkflowDialog';
 import {
   useWorkflowBreadcrumbs,
   useWorkflowIds,
@@ -106,8 +108,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
   const selectedNode =
     nodes[selectedNodeState.nodeType][selectedNodeState.nodeId];
-  const selectedNodeResult =
-    nodeResults[selectedNodeState.nodeType][selectedNodeState.nodeId];
 
   const drawerIsOpen = !!selectedNode;
 
@@ -232,11 +232,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
               </Box>
             )}
 
-            {/*currentTab === 'Settings' && workflow.selectedDag && (
+            {currentTab === 'Settings' && !!workflow && (
               <Box sx={{ paddingBottom: '24px' }}>
                 <WorkflowSettings
                   user={user}
-                  workflowDag={workflow.selectedDag}
+                  workflow={workflow}
                   onSettingsSave={() => {
                     setShowUpdateMessage(true);
                     // Show toast message for a few seconds and then update the current tab.
@@ -256,7 +256,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                   }
                 />
               </Box>
-                )*/}
+            )}
           </Box>
 
           {/* These controls are automatically hidden when the side sheet is open. */}
@@ -326,13 +326,16 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Box>
         </Box>
 
-        {/*<RunWorkflowDialog
-          user={user}
-          workflowDag={workflow.selectedDag}
-          workflowId={workflowId}
-          open={showRunWorkflowDialog}
-          setOpen={setShowRunWorkflowDialog}
-              />*/}
+        {!!nodes && !!workflow && (
+          <RunWorkflowDialog
+            user={user}
+            nodes={nodes}
+            workflowId={workflowId}
+            open={showRunWorkflowDialog}
+            setOpen={setShowRunWorkflowDialog}
+            name={workflow.name}
+          />
+        )}
       </Box>
 
       <Drawer

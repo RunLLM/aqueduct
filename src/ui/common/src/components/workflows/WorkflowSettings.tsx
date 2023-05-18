@@ -36,6 +36,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
+import { WorkflowResponse } from '../../handlers/responses/workflow';
 import { handleFetchAllWorkflowSummaries } from '../../reducers/listWorkflowSummaries';
 import {
   handleDeleteWorkflow,
@@ -60,7 +61,6 @@ import {
   NotificationSettingsMap,
   RetentionPolicy,
   SavedObject,
-  WorkflowDag,
   WorkflowUpdateTrigger,
 } from '../../utils/workflows';
 import { useAqueductConsts } from '../hooks/useAqueductConsts';
@@ -225,7 +225,7 @@ const RetentionPolicySelector: React.FC<RetentionPolicyProps> = ({
 
 type WorkflowSettingsProps = {
   user: UserProfile;
-  workflowDag: WorkflowDag;
+  workflow: WorkflowResponse;
   onSettingsSave: () => void;
   onSetShowUpdateMessage: (shouldShow: boolean) => void;
   onSetUpdateSucceeded: (isSuccessful: boolean) => void;
@@ -256,7 +256,7 @@ function IsNotificationSettingsMapUpdated(
 
 const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   user,
-  workflowDag,
+  workflow,
   onSettingsSave,
   onSetShowUpdateMessage,
   onSetUpdateSucceeded,
@@ -271,11 +271,11 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     dispatch(
       handleListWorkflowSavedObjects({
         apiKey: user.apiKey,
-        workflowId: workflowDag.workflow_id,
+        workflowId: workflow.id,
       })
     );
     dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
-  }, [dispatch, user.apiKey, workflowDag.workflow_id]);
+  }, [dispatch, user.apiKey, workflow.id]);
 
   const savedObjectsResponse = useSelector(
     (state: RootState) => state.workflowReducer.savedObjects
@@ -306,26 +306,18 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
       IntegrationCategories.NOTIFICATION
   );
 
-  const [name, setName] = useState(workflowDag.metadata?.name);
-  const [description, setDescription] = useState(
-    workflowDag.metadata?.description
-  );
-  const [triggerType, setTriggerType] = useState(
-    workflowDag.metadata.schedule.trigger
-  );
-  const [schedule, setSchedule] = useState(
-    workflowDag.metadata.schedule.cron_schedule
-  );
-  const [sourceId, setSourceId] = useState(
-    workflowDag.metadata?.schedule?.source_id
-  );
-  const [paused, setPaused] = useState(workflowDag.metadata.schedule.paused);
+  const [name, setName] = useState(workflow.name);
+  const [description, setDescription] = useState(workflow?.description);
+  const [triggerType, setTriggerType] = useState(workflow.schedule.trigger);
+  const [schedule, setSchedule] = useState(workflow.schedule.cron_schedule);
+  const [sourceId, setSourceId] = useState(workflow.schedule?.source_id);
+  const [paused, setPaused] = useState(workflow.schedule.paused);
   const [retentionPolicy, setRetentionPolicy] = useState(
-    workflowDag.metadata?.retention_policy
+    workflow.retention_policy
   );
   const [notificationSettingsMap, setNotificationSettingsMap] =
     useState<NotificationSettingsMap>(
-      workflowDag.metadata?.notification_settings?.settings ?? {}
+      workflow.notification_settings?.settings ?? {}
     );
 
   // filter out empty key / values
@@ -333,20 +325,18 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     Object.entries(notificationSettingsMap).filter(([k, v]) => !!k && !!v)
   );
   const initialSettings = {
-    name: workflowDag.metadata?.name,
-    description: workflowDag.metadata?.description,
-    triggerType: workflowDag.metadata.schedule.trigger,
-    schedule: workflowDag.metadata.schedule.cron_schedule,
-    paused: workflowDag.metadata.schedule.paused,
-    retentionPolicy: workflowDag.metadata?.retention_policy,
-    sourceId: workflowDag.metadata?.schedule?.source_id,
-    notificationSettingsMap:
-      workflowDag.metadata?.notification_settings?.settings ?? {},
+    name: workflow.name,
+    description: workflow.description,
+    triggerType: workflow.schedule.trigger,
+    schedule: workflow.schedule.cron_schedule,
+    paused: workflow.schedule.paused,
+    retentionPolicy: workflow.retention_policy,
+    sourceId: workflow.schedule?.source_id,
+    notificationSettingsMap: workflow.notification_settings?.settings ?? {},
   };
 
   const retentionPolicyUpdated =
-    retentionPolicy.k_latest_runs !==
-    workflowDag.metadata?.retention_policy?.k_latest_runs;
+    retentionPolicy.k_latest_runs !== workflow.retention_policy?.k_latest_runs;
 
   const isNotificationSettingsUpdated = IsNotificationSettingsMapUpdated(
     initialSettings.notificationSettingsMap,
@@ -354,14 +344,14 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   );
 
   const settingsChanged =
-    name !== workflowDag.metadata?.name || // The workflow name has been changed.
-    description !== workflowDag.metadata?.description || // The workflow description has changed.
-    triggerType !== workflowDag.metadata.schedule.trigger || // The type of the trigger has changed.
+    name !== workflow.name || // The workflow name has been changed.
+    description !== workflow.description || // The workflow description has changed.
+    triggerType !== workflow.schedule.trigger || // The type of the trigger has changed.
     (triggerType === WorkflowUpdateTrigger.Periodic && // The trigger type is still periodic but the schedule itself has changed.
-      schedule !== workflowDag.metadata.schedule.cron_schedule) ||
+      schedule !== workflow.schedule.cron_schedule) ||
     (triggerType === WorkflowUpdateTrigger.Cascade && // The trigger type is still cascade but the source has changed.
-      sourceId !== workflowDag.metadata?.schedule?.source_id) ||
-    paused !== workflowDag.metadata.schedule.paused || // The schedule type is periodic and we've changed the pausedness of the workflow.
+      sourceId !== workflow.schedule?.source_id) ||
+    paused !== workflow.schedule.paused || // The schedule type is periodic and we've changed the pausedness of the workflow.
     retentionPolicyUpdated ||
     isNotificationSettingsUpdated; // retention policy has changed.
 
@@ -430,13 +420,10 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
   let nextUpdateComponent;
   if (
-    workflowDag.metadata?.schedule?.trigger ===
-      WorkflowUpdateTrigger.Periodic &&
-    !workflowDag.metadata?.schedule?.paused
+    workflow.schedule?.trigger === WorkflowUpdateTrigger.Periodic &&
+    !workflow.schedule?.paused
   ) {
-    const nextUpdateTime = getNextUpdateTime(
-      workflowDag.metadata?.schedule?.cron_schedule
-    );
+    const nextUpdateTime = getNextUpdateTime(workflow.schedule?.cron_schedule);
     nextUpdateComponent = (
       <Box sx={{ fontSize: '10px' }}>
         <Typography variant="body2">
@@ -520,9 +507,8 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     setIsUpdating(true);
 
     const changes = {
-      name: name === workflowDag.metadata?.name ? '' : name,
-      description:
-        name === workflowDag.metadata?.description ? '' : description,
+      name: name === workflow.name ? '' : name,
+      description: name === workflow.description ? '' : description,
       schedule: {
         trigger: triggerType, // We always set the trigger type to be safe because it's stored as a single JSON blob.
         cron_schedule:
@@ -539,7 +525,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         : undefined,
     };
 
-    fetch(`${apiAddress}/api/workflow/${workflowDag.workflow_id}/edit`, {
+    fetch(`${apiAddress}/api/workflow/${workflow.id}/edit`, {
       method: 'POST',
       headers: {
         'api-key': user.apiKey,
@@ -664,10 +650,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
               {' '}
               {/* We don't use the `name` state here because it will update when the user is mid-changes, which is awkward. */}
               Delete{' '}
-              <span style={{ fontFamily: 'Monospace' }}>
-                {workflowDag.metadata?.name}
-              </span>
-              ?{' '}
+              <span style={{ fontFamily: 'Monospace' }}>{workflow.name}</span>?{' '}
             </Typography>
           </Box>
 
@@ -683,10 +666,8 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         {hasSavedObjects && (
           <Typography variant="body1">
             The following objects had been saved by{' '}
-            <span style={{ fontFamily: 'Monospace' }}>
-              {workflowDag.metadata?.name}
-            </span>{' '}
-            and can be removed when deleting the workflow:
+            <span style={{ fontFamily: 'Monospace' }}>{workflow.name}</span> and
+            can be removed when deleting the workflow:
           </Typography>
         )}
 
@@ -751,7 +732,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
             dispatch(
               handleDeleteWorkflow({
                 apiKey: user.apiKey,
-                workflowId: workflowDag.workflow_id,
+                workflowId: workflow.id,
                 selectedObjects: selectedObjects,
               })
             );
@@ -788,9 +769,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
             <Typography variant="h5">
               {' '}
               {/* We don't use the `name` state here because it will update when the user is mid-changes, which is awkward. */}
-              <span style={{ fontFamily: 'Monospace' }}>
-                {workflowDag.metadata?.name}
-              </span>{' '}
+              <span style={{ fontFamily: 'Monospace' }}>{workflow.name}</span>{' '}
               successfully deleted{' '}
             </Typography>
           </Box>
@@ -805,11 +784,9 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
       <DialogContent>
         <Typography>
-          <span style={{ fontFamily: 'Monospace' }}>
-            {workflowDag.metadata?.name}
-          </span>{' '}
-          has been successfully deleted. Here are the results of the saved
-          object deletion.
+          <span style={{ fontFamily: 'Monospace' }}>{workflow.name}</span> has
+          been successfully deleted. Here are the results of the saved object
+          deletion.
         </Typography>
 
         <List dense={true}>
@@ -882,7 +859,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           <Typography sx={{ fontWeight: 'bold' }} component="span">
             ID:
           </Typography>
-          <Typography component="span"> {workflowDag.workflow_id}</Typography>
+          <Typography component="span"> {workflow.id}</Typography>
         </Box>
       </Box>
 
