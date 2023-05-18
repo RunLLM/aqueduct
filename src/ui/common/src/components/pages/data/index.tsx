@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { BreadcrumbLink } from '../../../components/layouts/NavBar';
 import { getDataArtifactPreview } from '../../../reducers/dataPreview';
-import { handleLoadIntegrations } from '../../../reducers/integrations';
+import { handleLoadIntegrations } from '../../../reducers/resources';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import getPathPrefix from '../../../utils/getPathPrefix';

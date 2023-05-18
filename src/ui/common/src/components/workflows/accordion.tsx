@@ -9,7 +9,7 @@ import { styled } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 
-import { OperatorsForIntegrationItem } from '../../reducers/integration';
+import { OperatorsForIntegrationItem } from '../../reducers/resource';
 import { ListWorkflowSummary } from '../../utils/workflows';
 import OperatorsTable from '../tables/operatorsTable';
 

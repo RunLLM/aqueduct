@@ -217,13 +217,13 @@ func (*operatorReader) GetDistinctLoadOPsByWorkflow(
 		operator.id AS operator_id,
 		operator.name AS operator_name, 
 		workflow_dag.created_at AS modified_at,
-		resource.name AS integration_name,
+		resource.name AS resource_name,
 		CAST(json_extract(operator.spec, '$.load') AS BLOB) AS spec 	
 	FROM 
 		operator, resource, workflow_dag_edge, workflow_dag
 	WHERE (
 		json_extract(operator.spec, '$.type')='load' AND 
-		resource.id = json_extract(operator.spec, '$.load.integration_id') AND
+		resource.id = json_extract(operator.spec, '$.load.resource_id') AND
 		( 
 			workflow_dag_edge.from_id = operator.id OR 
 			workflow_dag_edge.to_id = operator.id 
@@ -253,8 +253,8 @@ func (*operatorReader) GetExtractAndLoadOPsByResource(
 		`SELECT %s 
 		FROM operator
 		WHERE 
-			json_extract(spec, '$.load.integration_id') = $1
-			OR json_extract(spec, '$.extract.integration_id') = $2`,
+			json_extract(spec, '$.load.resource_id') = $1
+			OR json_extract(spec, '$.extract.resource_id') = $2`,
 		models.OperatorCols(),
 	)
 	args := []interface{}{resourceID, resourceID}
@@ -270,7 +270,7 @@ func (*operatorReader) GetLoadOPsByWorkflowAndResource(
 	objectName string,
 	DB database.Database,
 ) ([]models.Operator, error) {
-	// Get all load operators where table=objectName & integration_id=integrationId
+	// Get all load operators where table=objectName & resource_id=resourceId
 	// and has an edge (in `from_id` or `to_id`) in a DAG belonging to the specified
 	// workflow.
 	query := fmt.Sprintf(`
@@ -282,7 +282,7 @@ func (*operatorReader) GetLoadOPsByWorkflowAndResource(
 			json_extract(spec, '$.load.parameters.table') = $1 OR
 			json_extract(spec, '$.load.parameters.filepath') = $1
 		) AND
-		json_extract(spec, '$.load.integration_id') = $2 AND
+		json_extract(spec, '$.load.resource_id') = $2 AND
 		EXISTS 
 		(
 			SELECT 1 
@@ -313,8 +313,8 @@ func (*operatorReader) GetLoadOPsByResource(
 	query := fmt.Sprintf(
 		`SELECT %s FROM operator
 		WHERE 
-			json_extract(spec, '$.load.integration_id') = $1
-			OR json_extract(spec, '$.extract.integration_id') = $2`,
+			json_extract(spec, '$.load.resource_id') = $1
+			OR json_extract(spec, '$.extract.resource_id') = $2`,
 		models.OperatorCols(),
 	)
 	args := []interface{}{resourceID, resourceID}
@@ -326,7 +326,7 @@ func (*operatorReader) GetLoadOPSpecsByOrg(ctx context.Context, orgID string, DB
 	// Get the artifact id, artifact name, operator id, workflow name, workflow id,
 	// and operator spec of all load operators (`to_id`s) and the artifact(s) going to
 	// that operator (`from_id`s; these artifacts are the objects that will be saved
-	// by the operator to the integration) in the workflows owned by the specified
+	// by the operator to the resource) in the workflows owned by the specified
 	// organization.
 	query := fmt.Sprintf(
 		`SELECT DISTINCT 
@@ -419,7 +419,7 @@ func (*operatorReader) GetByEngineResourceID(
 			fmt.Sprintf(
 				`json_extract(
 					workflow_dag.engine_config,
-					'$.%s.integration_id'
+					'$.%s.resource_id'
 				) = $1`,
 				field),
 		)
@@ -429,7 +429,7 @@ func (*operatorReader) GetByEngineResourceID(
 			fmt.Sprintf(
 				`json_extract(
 					operator.spec,
-					'$.engine_config.%s.integration_id'
+					'$.engine_config.%s.resource_id'
 				) = $1`,
 				field),
 		)

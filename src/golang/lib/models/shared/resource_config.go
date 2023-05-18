@@ -54,7 +54,7 @@ const (
 	K8sKubeconfigPathKey    string = "kubeconfig_path"
 	K8sClusterNameKey       string = "cluster_name"
 	K8sDynamicKey           string = "dynamic"
-	K8sCloudResourceIdKey   string = "cloud_integration_id"
+	K8sCloudResourceIdKey   string = "cloud_resource_id"
 	K8sUseSameClusterKey    string = "use_same_cluster"
 	K8sStatusKey            string = "status"
 	K8sLastUsedTimestampKey string = "last_used_timestamp"
@@ -90,7 +90,7 @@ type K8sResourceConfig struct {
 	ClusterName     string     `json:"cluster_name"  yaml:"clusterName"`
 	UseSameCluster  ConfigBool `json:"use_same_cluster"  yaml:"useSameCluster"`
 	Dynamic         ConfigBool `json:"dynamic"  yaml:"dynamic"`
-	CloudResourceId string     `json:"cloud_integration_id"  yaml:"cloud_integration_id"`
+	CloudResourceId string     `json:"cloud_resource_id"  yaml:"cloud_resource_id"`
 }
 
 type LambdaResourceConfig struct {

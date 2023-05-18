@@ -4,15 +4,15 @@ import { Box, Link, Typography } from '@mui/material';
 import React from 'react';
 
 import { OperatorResponse } from '../../handlers/responses/node';
-import { Integration } from '../../utils/integrations';
+import { Integration } from '../../utils/resources';
 import { ListWorkflowSummary } from '../../utils/workflows';
-import { TruncatedText } from '../integrations/cards/text';
+import { TruncatedText } from '../resources/cards/text';
 import { StatusIndicator } from './workflowStatus';
 
 export type WorkflowSummaryCardProps = {
   workflow?: ListWorkflowSummary;
   operators: OperatorResponse[];
-  integration: Integration;
+  resource: Integration;
 };
 
 // If the operator list is empty, we don't display the `<num> operators using <resource` message
@@ -20,7 +20,7 @@ export type WorkflowSummaryCardProps = {
 export const WorkflowSummaryCard: React.FC<WorkflowSummaryCardProps> = ({
   workflow,
   operators,
-  integration,
+  resource,
 }) => {
   if (!workflow) {
     return null;
@@ -97,7 +97,7 @@ export const WorkflowSummaryCard: React.FC<WorkflowSummaryCardProps> = ({
         >
           <TruncatedText variant="caption" sx={{ fontWeight: 300 }}>
             {operators.length} {operators.length > 1 ? 'operators' : 'operator'}{' '}
-            using {integration.name}
+            using {resource.name}
           </TruncatedText>
         </Box>
       )}

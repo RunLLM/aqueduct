@@ -10,13 +10,13 @@ import { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { handleGetServerConfig } from '../../../handlers/getServerConfig';
-import { handleLoadIntegrations } from '../../../reducers/integrations';
+import { handleLoadIntegrations } from '../../../reducers/resources';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import {
   Integration,
   IntegrationCategories,
-} from '../../../utils/integrations';
+} from '../../../utils/resources';
 import {
   isFailed,
   isInitial,
@@ -39,23 +39,23 @@ type AccountPageProps = {
   Layout?: React.FC<LayoutProps>;
 };
 
-// `UpdateNotifications` attempts to update all notification integration by calling
-// `integration/<id>/edit` route separately. It returns an error message if any error occurs.
+// `UpdateNotifications` attempts to update all notification resource by calling
+// `resource/<id>/edit` route separately. It returns an error message if any error occurs.
 // Otherwise, the message will be empty.
 async function UpdateNotifications(
   apiAddress: string,
   apiKey: string,
-  integrations: { [id: string]: Integration },
+  resources: { [id: string]: Integration },
   configs: NotificationConfigsMap
 ): Promise<string> {
   const promiseResults = Object.entries(configs).map(async ([id, config]) => {
     try {
-      const res = await fetch(`${apiAddress}/api/integration/${id}/edit`, {
+      const res = await fetch(`${apiAddress}/api/resource/${id}/edit`, {
         method: 'POST',
         headers: {
           'api-key': apiKey,
-          'integration-name': integrations[id]?.name ?? '',
-          'integration-config': JSON.stringify(config),
+          'resource-name': resources[id]?.name ?? '',
+          'resource-config': JSON.stringify(config),
         },
       });
 
@@ -96,14 +96,14 @@ client = aqueduct.Client(
 )`;
   const dispatch: AppDispatch = useDispatch();
   const maxContentWidth = '600px';
-  const integrationsReducer = useSelector(
-    (state: RootState) => state.integrationsReducer
+  const resourcesReducer = useSelector(
+    (state: RootState) => state.resourcesReducer
   );
 
   const serverConfig = useSelector(
     (state: RootState) => state.serverConfigReducer
   );
-  const notifications = Object.values(integrationsReducer.integrations).filter(
+  const notifications = Object.values(resourcesReducer.resources).filter(
     (x) =>
       SupportedIntegrations[x.service].category ===
       IntegrationCategories.NOTIFICATION
@@ -132,19 +132,19 @@ client = aqueduct.Client(
 
   let notificationSection = null;
   if (
-    isLoading(integrationsReducer.status) ||
-    isInitial(integrationsReducer.status)
+    isLoading(resourcesReducer.status) ||
+    isInitial(resourcesReducer.status)
   ) {
     notificationSection = <CircularProgress />;
   }
 
-  if (isFailed(integrationsReducer.status)) {
+  if (isFailed(resourcesReducer.status)) {
     notificationSection = (
-      <Alert title={integrationsReducer.status.err} severity="error" />
+      <Alert title={resourcesReducer.status.err} severity="error" />
     );
   }
 
-  if (isSucceeded(integrationsReducer.status)) {
+  if (isSucceeded(resourcesReducer.status)) {
     notificationSection = (
       <AccountNotificationSettingsSelector
         notifications={notifications}
@@ -153,7 +153,7 @@ client = aqueduct.Client(
           const err = await UpdateNotifications(
             apiAddress,
             user.apiKey,
-            integrationsReducer.integrations,
+            resourcesReducer.resources,
             configs
           );
           setNotificationUpdateError(err);

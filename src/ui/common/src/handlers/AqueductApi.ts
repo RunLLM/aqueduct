@@ -19,17 +19,17 @@ import {
   DagResultsGetResponse,
 } from './v2/DagResultsGet';
 import {
-  integrationOperatorsGetQuery,
+  resourceOperatorsGetQuery,
   IntegrationOperatorsGetRequest,
   IntegrationOperatorsGetResponse,
 } from './v2/ResourceOperatorsGet';
 import {
-  integrationsWorkflowsGetQuery,
+  resourcesWorkflowsGetQuery,
   IntegrationsWorkflowsGetRequest,
   IntegrationsWorkflowsGetResponse,
 } from './v2/ResourcesWorkflowsGet';
 import {
-  integrationWorkflowsGetQuery,
+  resourceWorkflowsGetQuery,
   IntegrationWorkflowsGetRequest,
   IntegrationWorkflowsGetResponse,
 } from './v2/ResourceWorkflowsGet';
@@ -114,25 +114,25 @@ export const aqueductApi = createApi({
       query: (req) => dagResultsGetQuery(req),
       transformErrorResponse,
     }),
-    integrationOperatorsGet: builder.query<
+    resourceOperatorsGet: builder.query<
       IntegrationOperatorsGetResponse,
       IntegrationOperatorsGetRequest
     >({
-      query: (req) => integrationOperatorsGetQuery(req),
+      query: (req) => resourceOperatorsGetQuery(req),
       transformErrorResponse,
     }),
-    integrationWorkflowsGet: builder.query<
+    resourceWorkflowsGet: builder.query<
       IntegrationWorkflowsGetResponse,
       IntegrationWorkflowsGetRequest
     >({
-      query: (req) => integrationWorkflowsGetQuery(req),
+      query: (req) => resourceWorkflowsGetQuery(req),
       transformErrorResponse,
     }),
-    integrationsWorkflowsGet: builder.query<
+    resourcesWorkflowsGet: builder.query<
       IntegrationsWorkflowsGetResponse,
       IntegrationsWorkflowsGetRequest
     >({
-      query: (req) => integrationsWorkflowsGetQuery(req),
+      query: (req) => resourcesWorkflowsGetQuery(req),
       transformErrorResponse,
     }),
     nodeArtifactGet: builder.query<

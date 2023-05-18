@@ -37,7 +37,7 @@ func setupCloudResource(
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve cloud resource.")
 	}
 
-	terraformPath := filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "cloud_integration", args.Name, "eks")
+	terraformPath := filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "cloud_resource", args.Name, "eks")
 	if err = setupTerraformDirectory(terraformPath); err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to create Terraform directory.")
 	}
@@ -118,7 +118,7 @@ func setupCloudResource(
 }
 
 // setupTerraformDirectory copies all files and folders in the Terraform template directory to the
-// cloud resource's destination directory, which is ~/.aqueduct/server/cloud_integration/<name>/eks.
+// cloud resource's destination directory, which is ~/.aqueduct/server/cloud_resource/<name>/eks.
 func setupTerraformDirectory(dst string) error {
 	// Create the destination directory if it doesn't exist.
 	if err := os.MkdirAll(dst, 0o755); err != nil {

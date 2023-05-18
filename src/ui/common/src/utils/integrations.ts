@@ -7,29 +7,29 @@ export const aqueductDemoName = 'Demo';
 export const aqueductComputeName = 'Aqueduct Server';
 export const aqueductStorageName = 'Filesystem';
 
-export function isBuiltinIntegration(integration: Integration): boolean {
+export function isBuiltinIntegration(resource: Integration): boolean {
   return (
-    integration.name === aqueductDemoName ||
-    integration.name == aqueductComputeName ||
-    integration.name == aqueductStorageName
+    resource.name === aqueductDemoName ||
+    resource.name == aqueductComputeName ||
+    resource.name == aqueductStorageName
   );
 }
 
-export function isNotificationIntegration(integration: Integration): boolean {
-  return integration?.service == 'Email' || integration?.service == 'Slack';
+export function isNotificationIntegration(resource: Integration): boolean {
+  return resource?.service == 'Email' || resource?.service == 'Slack';
 }
 
-export function resourceExecState(integration: Integration): ExecState {
+export function resourceExecState(resource: Integration): ExecState {
   // If an exec_state doesn't exist, we currently assume that it is a legacy resource that has succeeded.
-  const status = integration.exec_state?.status || ExecutionStatus.Succeeded;
+  const status = resource.exec_state?.status || ExecutionStatus.Succeeded;
 
   // For Aqueduct compute, we'll also need to look at the status of any registered Conda.
   if (
-    integration.service == 'Aqueduct' &&
-    isCondaRegistered(integration) &&
-    integration.exec_state.status == ExecutionStatus.Succeeded
+    resource.service == 'Aqueduct' &&
+    isCondaRegistered(resource) &&
+    resource.exec_state.status == ExecutionStatus.Succeeded
   ) {
-    const aqConfig = integration.config as AqueductComputeConfig;
+    const aqConfig = resource.config as AqueductComputeConfig;
     if (aqConfig.conda_config_serialized) {
       const serialized_conda_exec_state = JSON.parse(
         aqConfig.conda_config_serialized
@@ -41,23 +41,23 @@ export function resourceExecState(integration: Integration): ExecState {
     }
   }
 
-  return integration.exec_state || { status: ExecutionStatus.Succeeded };
+  return resource.exec_state || { status: ExecutionStatus.Succeeded };
 }
 
 // The only resource that does not necessarily display the same service type as
-// on the integration itself is Conda.
-export function resolveDisplayService(integration: Integration): Service {
-  if (integration.service === 'Aqueduct') {
-    const aqConfig = integration.config as AqueductComputeConfig;
+// on the resource itself is Conda.
+export function resolveDisplayService(resource: Integration): Service {
+  if (resource.service === 'Aqueduct') {
+    const aqConfig = resource.config as AqueductComputeConfig;
     if (aqConfig.conda_config_serialized) {
       return 'Conda';
     }
   }
-  return integration.service;
+  return resource.service;
 }
 
-export function isCondaRegistered(integration: Integration): boolean {
-  const aqConfig = integration.config as AqueductComputeConfig;
+export function isCondaRegistered(resource: Integration): boolean {
+  const aqConfig = resource.config as AqueductComputeConfig;
   return aqConfig?.conda_config_serialized != undefined;
 }
 
@@ -371,11 +371,11 @@ export type CSVConfig = {
 
 export async function addTable(
   user: UserProfile,
-  integrationId: string,
+  resourceId: string,
   config: CSVConfig
 ): Promise<void> {
   const res = await fetch(
-    `${apiAddress}/api/resource/${integrationId}/create`,
+    `${apiAddress}/api/resource/${resourceId}/create`,
     {
       method: 'POST',
       headers: {
@@ -397,8 +397,8 @@ const logoBucket =
   'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos';
 
 // S3 bucket folder for Integration logos.
-const integrationLogosBucket =
-  'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations';
+const resourceLogosBucket =
+  'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/resources';
 
 export const IntegrationCategories = {
   DATA: 'data',
@@ -411,33 +411,33 @@ export const IntegrationCategories = {
 
 export const ServiceLogos: ServiceLogo = {
   ['Aqueduct']: `${logoBucket}/aqueduct-logo-two-tone/small/2x/aqueduct-logo-two-tone-small%402x.png`,
-  ['Postgres']: `${integrationLogosBucket}/440px-Postgresql_elephant.svg.png`,
-  ['Snowflake']: `${integrationLogosBucket}/51-513957_periscope-data-partners-snowflake-computing-logo.png`,
-  ['Redshift']: `${integrationLogosBucket}/amazon-redshift.png`,
-  ['BigQuery']: `${integrationLogosBucket}/google-bigquery-logo-1.svg`,
-  ['MySQL']: `${integrationLogosBucket}/mysql.png`,
-  ['MariaDB']: `${integrationLogosBucket}/mariadb.png`,
-  ['S3']: `${integrationLogosBucket}/s3.png`,
-  ['GCS']: `${integrationLogosBucket}/google-cloud-storage.png`,
-  ['SQLite']: `${integrationLogosBucket}/sqlite-square-icon-256x256.png`,
-  ['Athena']: `${integrationLogosBucket}/athena.png`,
-  ['Airflow']: `${integrationLogosBucket}/airflow.png`,
-  ['Kubernetes']: `${integrationLogosBucket}/kubernetes.png`,
-  ['Lambda']: `${integrationLogosBucket}/Lambda.png`,
-  ['MongoDB']: `${integrationLogosBucket}/mongo.png`,
-  ['Conda']: `${integrationLogosBucket}/conda.png`,
-  ['Databricks']: `${integrationLogosBucket}/databricks_logo.png`,
-  ['Email']: `${integrationLogosBucket}/email.png`,
-  ['Slack']: `${integrationLogosBucket}/slack.png`,
-  ['Spark']: `${integrationLogosBucket}/spark-logo-trademark.png`,
-  ['AWS']: `${integrationLogosBucket}/aws-logo-trademark.png`,
-  ['GCP']: `${integrationLogosBucket}/gcp.png`,
-  ['Azure']: `${integrationLogosBucket}/azure.png`,
+  ['Postgres']: `${resourceLogosBucket}/440px-Postgresql_elephant.svg.png`,
+  ['Snowflake']: `${resourceLogosBucket}/51-513957_periscope-data-partners-snowflake-computing-logo.png`,
+  ['Redshift']: `${resourceLogosBucket}/amazon-redshift.png`,
+  ['BigQuery']: `${resourceLogosBucket}/google-bigquery-logo-1.svg`,
+  ['MySQL']: `${resourceLogosBucket}/mysql.png`,
+  ['MariaDB']: `${resourceLogosBucket}/mariadb.png`,
+  ['S3']: `${resourceLogosBucket}/s3.png`,
+  ['GCS']: `${resourceLogosBucket}/google-cloud-storage.png`,
+  ['SQLite']: `${resourceLogosBucket}/sqlite-square-icon-256x256.png`,
+  ['Athena']: `${resourceLogosBucket}/athena.png`,
+  ['Airflow']: `${resourceLogosBucket}/airflow.png`,
+  ['Kubernetes']: `${resourceLogosBucket}/kubernetes.png`,
+  ['Lambda']: `${resourceLogosBucket}/Lambda.png`,
+  ['MongoDB']: `${resourceLogosBucket}/mongo.png`,
+  ['Conda']: `${resourceLogosBucket}/conda.png`,
+  ['Databricks']: `${resourceLogosBucket}/databricks_logo.png`,
+  ['Email']: `${resourceLogosBucket}/email.png`,
+  ['Slack']: `${resourceLogosBucket}/slack.png`,
+  ['Spark']: `${resourceLogosBucket}/spark-logo-trademark.png`,
+  ['AWS']: `${resourceLogosBucket}/aws-logo-trademark.png`,
+  ['GCP']: `${resourceLogosBucket}/gcp.png`,
+  ['Azure']: `${resourceLogosBucket}/azure.png`,
 
   // TODO(ENG-2301): Once task is addressed, remove this duplicate entry.
-  ['K8s']: `${integrationLogosBucket}/kubernetes.png`,
+  ['K8s']: `${resourceLogosBucket}/kubernetes.png`,
 
-  ['ECR']: `${integrationLogosBucket}/ecr.png`,
+  ['ECR']: `${resourceLogosBucket}/ecr.png`,
 };
 
 export type IntegrationDialogProps = {
@@ -449,7 +449,7 @@ export type IntegrationDialogProps = {
   setMigrateStorage?: (migrate: boolean) => void;
 };
 
-// Helper function to format integration service
+// Helper function to format resource service
 export function formatService(service: string): string {
   service = service.toLowerCase();
   return service.replace(/ /g, '_');

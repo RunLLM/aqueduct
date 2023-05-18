@@ -1,4 +1,4 @@
-import { Service } from './integrations';
+import { Service } from './resources';
 
 export enum EngineType {
   AqueductConda = 'aqueduct_conda',
@@ -32,7 +32,7 @@ export type EngineConfig = {
 };
 
 export type EngineWithIntegration = {
-  integration_id: string;
+  resource_id: string;
 };
 
 export type AqueductConfig = Record<string, never>;

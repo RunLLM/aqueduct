@@ -10,9 +10,9 @@ export type IntegrationOperatorsGetRequest = APIKeyParameter &
 
 export type IntegrationOperatorsGetResponse = OperatorResponse[];
 
-export const integrationOperatorsGetQuery = (
+export const resourceOperatorsGetQuery = (
   req: IntegrationOperatorsGetRequest
 ) => ({
-  url: `resource/${req.integrationId}/nodes/operators`,
+  url: `resource/${req.resourceId}/nodes/operators`,
   headers: { 'api-key': req.apiKey },
 });

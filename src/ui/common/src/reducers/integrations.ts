@@ -2,16 +2,16 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import { RootState } from '../stores/store';
-import { Integration } from '../utils/integrations';
+import { Integration } from '../utils/resources';
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 
 export interface IntegrationState {
   status: LoadingStatus;
-  integrations: { [id: string]: Integration };
+  resources: { [id: string]: Integration };
 }
 
 const initialState: IntegrationState = {
-  integrations: {},
+  resources: {},
   status: { loading: LoadingStatusEnum.Initial, err: '' },
 };
 
@@ -20,7 +20,7 @@ export const handleLoadIntegrations = createAsyncThunk<
   { apiKey: string; forceLoad?: boolean },
   { state: RootState }
 >(
-  'integrations/load',
+  'resources/load',
   async (
     args: {
       apiKey: string;
@@ -28,15 +28,15 @@ export const handleLoadIntegrations = createAsyncThunk<
     },
     thunkAPI
   ) => {
-    // The integrations are already defined, so just ignore this call if not force load.
+    // The resources are already defined, so just ignore this call if not force load.
     const state = thunkAPI.getState();
-    const integrations = state.integrationsReducer.integrations;
+    const resources = state.resourcesReducer.resources;
     if (
-      integrations &&
-      Object.values(integrations).length > 0 &&
+      resources &&
+      Object.values(resources).length > 0 &&
       !args.forceLoad
     ) {
-      return integrations;
+      return resources;
     }
 
     const { apiKey } = args;
@@ -52,17 +52,17 @@ export const handleLoadIntegrations = createAsyncThunk<
       return thunkAPI.rejectWithValue(responseBody.error);
     }
 
-    const integrationList = responseBody as Integration[];
+    const resourceList = responseBody as Integration[];
     const result: { [id: string]: Integration } = {};
-    integrationList.forEach(
-      (integration) => (result[integration.id] = integration)
+    resourceList.forEach(
+      (resource) => (result[resource.id] = resource)
     );
     return result;
   }
 );
 
-export const integrationsSlice = createSlice({
-  name: 'integrationsReducer',
+export const resourcesSlice = createSlice({
+  name: 'resourcesReducer',
   initialState,
   reducers: {},
   extraReducers: (builder) => {
@@ -70,7 +70,7 @@ export const integrationsSlice = createSlice({
       state.status = { loading: LoadingStatusEnum.Loading, err: '' };
     });
     builder.addCase(handleLoadIntegrations.fulfilled, (state, { payload }) => {
-      state.integrations = payload;
+      state.resources = payload;
       state.status = { loading: LoadingStatusEnum.Succeeded, err: '' };
     });
     builder.addCase(handleLoadIntegrations.rejected, (state, { payload }) => {
@@ -82,4 +82,4 @@ export const integrationsSlice = createSlice({
   },
 });
 
-export default integrationsSlice.reducer;
+export default resourcesSlice.reducer;

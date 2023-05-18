@@ -24,7 +24,7 @@ export const WorkflowSummaryCardStory: React.FC = () => {
         checks: [],
       },
       operators: [],
-      integration: {
+      resource: {
         id: '1',
         service: 'Postgres',
         name: 'Postgres Resource',

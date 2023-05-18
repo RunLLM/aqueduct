@@ -1,8 +1,8 @@
 import { ComponentMeta } from '@storybook/react';
 import React from 'react';
 
-import { ResourceHeaderDetailsCard } from '../components/integrations/cards/headerDetailsCard';
-import { Integration, SlackConfig } from '../utils/integrations';
+import { ResourceHeaderDetailsCard } from '../components/resources/cards/headerDetailsCard';
+import { Integration, SlackConfig } from '../utils/resources';
 import ExecutionStatus from '../utils/shared';
 
 export const ResourceHeaderDetailsCardStory: React.FC = () => {
@@ -24,7 +24,7 @@ export const ResourceHeaderDetailsCardStory: React.FC = () => {
 
   return (
     <ResourceHeaderDetailsCard
-      integration={testIntegration}
+      resource={testIntegration}
       numWorkflowsUsingMsg="Not currently in use"
     />
   );

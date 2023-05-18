@@ -3,7 +3,7 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import { RootState } from '../stores/store';
 import { Data, inferSchema, TableRow } from '../utils/data';
-import { IntegrationConfig, Service } from '../utils/integrations';
+import { IntegrationConfig, Service } from '../utils/resources';
 import { Operator } from '../utils/operators';
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 
@@ -69,20 +69,20 @@ const initialState: IntegrationState = {
 
 export const handleLoadIntegrationOperators = createAsyncThunk<
   OperatorsForIntegrationItem[],
-  { apiKey: string; integrationId: string },
+  { apiKey: string; resourceId: string },
   { state: RootState }
 >(
-  'integration/loadOperators',
+  'resource/loadOperators',
   async (
     args: {
       apiKey: string;
-      integrationId: string;
+      resourceId: string;
     },
     thunkAPI
   ) => {
-    const { apiKey, integrationId } = args;
+    const { apiKey, resourceId } = args;
     const response = await fetch(
-      `${apiAddress}/api/resource/${integrationId}/operators`,
+      `${apiAddress}/api/resource/${resourceId}/operators`,
       {
         method: 'GET',
         headers: {
@@ -104,38 +104,38 @@ export const handleLoadIntegrationObject = createAsyncThunk<
   Data,
   {
     apiKey: string;
-    integrationId: string;
+    resourceId: string;
     object: string;
     forceLoad?: boolean;
   },
   { state: RootState }
 >(
-  'integration/loadObject',
+  'resource/loadObject',
   async (
     args: {
       apiKey: string;
-      integrationId: string;
+      resourceId: string;
       object: string;
       forceLoad?: boolean;
     },
     thunkAPI
   ) => {
-    const { apiKey, integrationId, object } = args;
+    const { apiKey, resourceId, object } = args;
 
-    // The integrations are already defined, so just ignore this call if not force load.
+    // The resources are already defined, so just ignore this call if not force load.
     const state = thunkAPI.getState();
     const objectKey = objectKeyFn(object);
     if (
       !args.forceLoad &&
       (object === '' ||
-        (state.integrationReducer.objects.hasOwnProperty(objectKey) &&
-          state.integrationReducer.objects[objectKey].data))
+        (state.resourceReducer.objects.hasOwnProperty(objectKey) &&
+          state.resourceReducer.objects[objectKey].data))
     ) {
-      return state.integrationReducer.objects[objectKey].data;
+      return state.resourceReducer.objects[objectKey].data;
     }
 
     const objectResponse = await fetch(
-      `${apiAddress}/api/resource/${integrationId}/preview`,
+      `${apiAddress}/api/resource/${resourceId}/preview`,
       {
         method: 'GET',
         headers: {
@@ -178,28 +178,28 @@ export const handleLoadIntegrationObject = createAsyncThunk<
 
 export const handleListIntegrationObjects = createAsyncThunk<
   string[],
-  { apiKey: string; integrationId: string; forceLoad?: boolean },
+  { apiKey: string; resourceId: string; forceLoad?: boolean },
   { state: RootState }
 >(
-  'integration/loadObjects',
+  'resource/loadObjects',
   async (
     args: {
       apiKey: string;
-      integrationId: string;
+      resourceId: string;
       forceLoad?: boolean;
     },
     thunkAPI
   ) => {
-    // The integrations are already defined, so just ignore this call if not force load.
+    // The resources are already defined, so just ignore this call if not force load.
     const state = thunkAPI.getState();
-    const objects = state.integrationReducer.objectNames.names;
+    const objects = state.resourceReducer.objectNames.names;
     if (objects && objects.length > 0 && !args.forceLoad) {
       return objects;
     }
 
-    const { apiKey, integrationId } = args;
+    const { apiKey, resourceId } = args;
     const response = await fetch(
-      `${apiAddress}/api/resource/${integrationId}/discover`,
+      `${apiAddress}/api/resource/${resourceId}/discover`,
       {
         method: 'GET',
         headers: {
@@ -218,20 +218,20 @@ export const handleListIntegrationObjects = createAsyncThunk<
 
 export const handleDeleteIntegration = createAsyncThunk<
   void,
-  { apiKey: string; integrationId: string }
+  { apiKey: string; resourceId: string }
 >(
-  'integration/delete',
+  'resource/delete',
   async (
     args: {
       apiKey: string;
-      integrationId: string;
+      resourceId: string;
       forceLoad?: boolean;
     },
     thunkAPI
   ) => {
-    const { apiKey, integrationId } = args;
+    const { apiKey, resourceId } = args;
     const response = await fetch(
-      `${apiAddress}/api/resource/${integrationId}/delete`,
+      `${apiAddress}/api/resource/${resourceId}/delete`,
       {
         method: 'POST',
         headers: {
@@ -250,19 +250,19 @@ export const handleDeleteIntegration = createAsyncThunk<
 
 export const handleTestConnectIntegration = createAsyncThunk<
   void,
-  { apiKey: string; integrationId: string }
+  { apiKey: string; resourceId: string }
 >(
-  'integration/testConnect',
+  'resource/testConnect',
   async (
     args: {
       apiKey: string;
-      integrationId: string;
+      resourceId: string;
     },
     thunkAPI
   ) => {
-    const { apiKey, integrationId } = args;
+    const { apiKey, resourceId } = args;
     const response = await fetch(
-      `${apiAddress}/api/resource/${integrationId}/test`,
+      `${apiAddress}/api/resource/${resourceId}/test`,
       {
         method: 'POST',
         headers: {
@@ -288,7 +288,7 @@ export const handleConnectToNewIntegration = createAsyncThunk<
     config: IntegrationConfig;
   }
 >(
-  'integration/connect',
+  'resource/connect',
   async (
     args: {
       apiKey: string;
@@ -327,22 +327,22 @@ export const handleEditIntegration = createAsyncThunk<
   void,
   {
     apiKey: string;
-    integrationId: string;
+    resourceId: string;
     name: string;
     config: IntegrationConfig;
   }
 >(
-  'integration/edit',
+  'resource/edit',
   async (
     args: {
       apiKey: string;
-      integrationId: string;
+      resourceId: string;
       name: string;
       config: IntegrationConfig;
     },
     thunkAPI
   ) => {
-    const { apiKey, integrationId, name, config } = args;
+    const { apiKey, resourceId, name, config } = args;
 
     Object.keys(config).forEach((k) => {
       if (!config[k]) {
@@ -351,7 +351,7 @@ export const handleEditIntegration = createAsyncThunk<
     });
 
     const res = await fetch(
-      `${apiAddress}/api/resource/${integrationId}/edit`,
+      `${apiAddress}/api/resource/${resourceId}/edit`,
       {
         method: 'POST',
         headers: {
@@ -370,8 +370,8 @@ export const handleEditIntegration = createAsyncThunk<
   }
 );
 
-export const integrationSlice = createSlice({
-  name: 'integrationTablesReducer',
+export const resourceSlice = createSlice({
+  name: 'resourceTablesReducer',
   initialState: initialState,
   reducers: {
     resetTestConnectStatus: (state) => {
@@ -540,6 +540,6 @@ export const {
   resetConnectNewStatus,
   resetDeletionStatus,
   resetEditStatus,
-} = integrationSlice.actions;
+} = resourceSlice.actions;
 
-export default integrationSlice.reducer;
+export default resourceSlice.reducer;

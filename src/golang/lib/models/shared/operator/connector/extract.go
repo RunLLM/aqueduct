@@ -11,7 +11,7 @@ import (
 // Extract defines the spec for an Extract operator.
 type Extract struct {
 	Service    shared.Service `json:"service"`
-	ResourceId uuid.UUID      `json:"integration_id"`
+	ResourceId uuid.UUID      `json:"resource_id"`
 	Parameters ExtractParams  `json:"parameters"`
 }
 
@@ -22,7 +22,7 @@ func (e *Extract) UnmarshalJSON(data []byte) error {
 	// Parameters, since it is defined as a *json.RawMessage.
 	var extractAlias struct {
 		Service    shared.Service   `json:"service"`
-		ResourceId uuid.UUID        `json:"integration_id"`
+		ResourceId uuid.UUID        `json:"resource_id"`
 		Parameters *json.RawMessage `json:"parameters"`
 	}
 	if err := json.Unmarshal(data, &extractAlias); err != nil {

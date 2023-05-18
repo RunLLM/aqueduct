@@ -1,0 +1,20 @@
+import React from 'react';
+
+import { FilesystemConfig, Integration } from '../../../utils/resources';
+import { ResourceCardText } from './text';
+
+type FilesystemCardProps = {
+  resource: Integration;
+};
+
+export const FilesystemCard: React.FC<FilesystemCardProps> = ({
+  resource,
+}) => {
+  const config = resource.config as FilesystemConfig;
+
+  const labels = ['location'];
+  const values = [config.location];
+  return <ResourceCardText labels={labels} values={values} />;
+};
+
+export default FilesystemCard;

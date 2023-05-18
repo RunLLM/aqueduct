@@ -8,12 +8,12 @@ import { WorkflowAndDagIDResponse } from '../responses/workflow';
 export type IntegrationWorkflowsGetRequest = APIKeyParameter &
   IntegrationIdParameter;
 
-// A list of workflow IDs that use this integration.
+// A list of workflow IDs that use this resource.
 export type IntegrationWorkflowsGetResponse = WorkflowAndDagIDResponse[];
 
-export const integrationWorkflowsGetQuery = (
+export const resourceWorkflowsGetQuery = (
   req: IntegrationWorkflowsGetRequest
 ) => ({
-  url: `resource/${req.integrationId}/workflows`,
+  url: `resource/${req.resourceId}/workflows`,
   headers: { 'api-key': req.apiKey },
 });

@@ -3,100 +3,100 @@ import React from 'react';
 import {
   AirflowDialog,
   getAirflowValidationSchema,
-} from '../components/integrations/dialogs/airflowDialog';
+} from '../components/resources/dialogs/airflowDialog';
 import {
   AthenaDialog,
   getAthenaValidationSchema,
-} from '../components/integrations/dialogs/athenaDialog';
+} from '../components/resources/dialogs/athenaDialog';
 import {
   AWSDialog,
   getAWSValidationSchema,
-} from '../components/integrations/dialogs/awsDialog';
+} from '../components/resources/dialogs/awsDialog';
 import AzureDialog, {
   getAzureValidationSchema,
-} from '../components/integrations/dialogs/azureDialog';
+} from '../components/resources/dialogs/azureDialog';
 import {
   BigQueryDialog,
   getBigQueryValidationSchema,
-} from '../components/integrations/dialogs/bigqueryDialog';
+} from '../components/resources/dialogs/bigqueryDialog';
 import {
   CondaDialog,
   getCondaValidationSchema,
-} from '../components/integrations/dialogs/condaDialog';
+} from '../components/resources/dialogs/condaDialog';
 import {
   DatabricksDialog,
   getDatabricksValidationSchema,
-} from '../components/integrations/dialogs/databricksDialog';
+} from '../components/resources/dialogs/databricksDialog';
 import {
   ECRDialog,
   getECRValidationSchema,
-} from '../components/integrations/dialogs/ecrDialog';
+} from '../components/resources/dialogs/ecrDialog';
 import {
   EmailDialog,
   getEmailValidationSchema,
-} from '../components/integrations/dialogs/emailDialog';
+} from '../components/resources/dialogs/emailDialog';
 import GCPDialog, {
   getGCPValidationSchema,
-} from '../components/integrations/dialogs/gcpDialog';
+} from '../components/resources/dialogs/gcpDialog';
 import {
   GCSDialog,
   getGCSValidationSchema,
-} from '../components/integrations/dialogs/gcsDialog';
+} from '../components/resources/dialogs/gcsDialog';
 import {
   getLambdaValidationSchema,
   LambdaDialog,
-} from '../components/integrations/dialogs/lambdaDialog';
+} from '../components/resources/dialogs/lambdaDialog';
 import {
   getMariaDBValidationSchema,
   MariaDbDialog,
-} from '../components/integrations/dialogs/mariadbDialog';
+} from '../components/resources/dialogs/mariadbDialog';
 import {
   getMongoDBValidationSchema,
   MongoDBDialog,
-} from '../components/integrations/dialogs/mongoDbDialog';
+} from '../components/resources/dialogs/mongoDbDialog';
 import {
   getMySQLValidationSchema,
   MysqlDialog,
-} from '../components/integrations/dialogs/mysqlDialog';
+} from '../components/resources/dialogs/mysqlDialog';
 import OnDemandKubernetesDialog, {
   getOnDemandKubernetesValidationSchema,
-} from '../components/integrations/dialogs/onDemandKubernetesDialog';
+} from '../components/resources/dialogs/onDemandKubernetesDialog';
 import {
   getPostgresValidationSchema,
   PostgresDialog,
-} from '../components/integrations/dialogs/postgresDialog';
+} from '../components/resources/dialogs/postgresDialog';
 import {
   getRedshiftValidationSchema,
   RedshiftDialog,
-} from '../components/integrations/dialogs/redshiftDialog';
+} from '../components/resources/dialogs/redshiftDialog';
 import {
   getS3ValidationSchema,
   S3Dialog,
-} from '../components/integrations/dialogs/s3Dialog';
+} from '../components/resources/dialogs/s3Dialog';
 import {
   getSlackValidationSchema,
   SlackDialog,
-} from '../components/integrations/dialogs/slackDialog';
+} from '../components/resources/dialogs/slackDialog';
 import {
   getSnowflakeValidationSchema,
   SnowflakeDialog,
-} from '../components/integrations/dialogs/snowflakeDialog';
+} from '../components/resources/dialogs/snowflakeDialog';
 import {
   getSparkValidationSchema,
   SparkDialog,
-} from '../components/integrations/dialogs/sparkDialog';
+} from '../components/resources/dialogs/sparkDialog';
 import {
   getSQLiteValidationSchema,
   SQLiteDialog,
-} from '../components/integrations/dialogs/sqliteDialog';
+} from '../components/resources/dialogs/sqliteDialog';
 import { AqueductDocsLink } from './docs';
 import {
   IntegrationCategories,
   ServiceInfoMap,
   ServiceLogos,
-} from './integrations';
+} from './resources';
 
-const addingIntegrationLink = `${AqueductDocsLink}/integrations/adding-an-integration`;
+const addingIntegrationLink = `${AqueductDocsLink}/resources/adding-an-resource`;
 
 export const SupportedIntegrations: ServiceInfoMap = {
   ['Postgres']: {

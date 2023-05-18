@@ -10,8 +10,8 @@ import {
   GCSConfig,
   Integration,
   S3Config,
-} from '../../../utils/integrations';
-import { IntegrationCard } from '../../integrations/cards/card';
+} from '../../../utils/resources';
+import { IntegrationCard } from '../../resources/cards/card';
 import { Card } from '../../layouts/card';
 
 interface MetadataPreviewProps {
@@ -31,13 +31,13 @@ export const FileMetadataStorageInfo: React.FC<MetadataPreviewProps> = ({
   const filesystem: Integration = {
     id: '', // This is unused.
     service: 'Filesystem',
-    name: serverConfig?.storageConfig?.integration_name,
+    name: serverConfig?.storageConfig?.resource_name,
     config: filesystemConfig as FilesystemConfig,
     createdAt: serverConfig?.storageConfig?.connected_at,
     exec_state: serverConfig?.storageConfig?.exec_state,
   };
 
-  return <IntegrationCard integration={filesystem} numWorkflowsUsingMsg="" />;
+  return <IntegrationCard resource={filesystem} numWorkflowsUsingMsg="" />;
 };
 
 export const GCSMetadataStorageInfo: React.FC<MetadataPreviewProps> = ({
@@ -54,14 +54,14 @@ export const GCSMetadataStorageInfo: React.FC<MetadataPreviewProps> = ({
   const gcs: Integration = {
     id: '', // This is unused.
     service: 'GCS',
-    name: serverConfig?.storageConfig?.integration_name,
+    name: serverConfig?.storageConfig?.resource_name,
     config: gcsConfig as GCSConfig,
 
     createdAt: serverConfig?.storageConfig?.connected_at,
     exec_state: serverConfig?.storageConfig?.exec_state,
   };
 
-  return <IntegrationCard integration={gcs} numWorkflowsUsingMsg="" />;
+  return <IntegrationCard resource={gcs} numWorkflowsUsingMsg="" />;
 };
 
 export const S3MetadataStorageInfo: React.FC<MetadataPreviewProps> = ({
@@ -82,7 +82,7 @@ export const S3MetadataStorageInfo: React.FC<MetadataPreviewProps> = ({
   const s3: Integration = {
     id: '', // This is unused.
     service: 'S3',
-    name: serverConfig?.storageConfig?.integration_name,
+    name: serverConfig?.storageConfig?.resource_name,
     config: s3Config as S3Config,
 
     // This is really "connected at" for storage migration.
@@ -90,7 +90,7 @@ export const S3MetadataStorageInfo: React.FC<MetadataPreviewProps> = ({
     exec_state: serverConfig?.storageConfig?.exec_state,
   };
 
-  return <IntegrationCard integration={s3} numWorkflowsUsingMsg="" />;
+  return <IntegrationCard resource={s3} numWorkflowsUsingMsg="" />;
 };
 
 interface MetadataStorageInfoProps {
@@ -125,7 +125,7 @@ export const MetadataStorageInfo: React.FC<MetadataStorageInfoProps> = ({
         underline="none"
         color="inherit"
         href={`${getPathPrefix()}/resource/${
-          serverConfig?.storageConfig?.integration_id
+          serverConfig?.storageConfig?.resource_id
         }`}
       >
         <Card>{storageInfo}</Card>

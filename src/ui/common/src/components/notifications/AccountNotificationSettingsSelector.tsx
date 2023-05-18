@@ -5,13 +5,13 @@ import { getPathPrefix } from '../../utils/getPathPrefix';
 import {
   Integration,
   NotificationIntegrationConfig,
-} from '../../utils/integrations';
+} from '../../utils/resources';
 import { NotificationLogLevel } from '../../utils/notifications';
 import { Button } from '../primitives/Button.styles';
 import NotificationLevelSelector from './NotificationLevelSelector';
 
 export type NotificationConfigsMap = {
-  [integrationId: string]: NotificationIntegrationConfig;
+  [resourceId: string]: NotificationIntegrationConfig;
 };
 
 type Props = {
@@ -52,7 +52,7 @@ const AccountNotificationSettingsSelector: React.FC<Props> = ({
         You do not have any notification configured. You can add new
         notifications from the{' '}
         <Link href={`${getPathPrefix()}/resources`} target="_blank">
-          integrations
+          resources
         </Link>{' '}
         page.
       </Typography>

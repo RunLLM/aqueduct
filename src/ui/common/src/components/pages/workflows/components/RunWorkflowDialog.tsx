@@ -13,7 +13,7 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
-import { handleLoadIntegrations } from '../../../../reducers/integrations';
+import { handleLoadIntegrations } from '../../../../reducers/resources';
 import {
   handleGetWorkflow,
   selectResultIdx,

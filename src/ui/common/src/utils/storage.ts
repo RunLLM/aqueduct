@@ -1,4 +1,4 @@
-import { IntegrationConfig, Service } from './integrations';
+import { IntegrationConfig, Service } from './resources';
 
 export enum StorageType {
   S3 = 's3',

@@ -19,5 +19,5 @@ export type WorkflowIdParameter = {
 };
 
 export type IntegrationIdParameter = {
-  integrationId: string;
+  resourceId: string;
 };

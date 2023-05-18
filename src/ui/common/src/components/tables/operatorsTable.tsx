@@ -9,7 +9,7 @@ import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 
-import { OperatorsForIntegrationItem } from '../../reducers/integration';
+import { OperatorsForIntegrationItem } from '../../reducers/resource';
 import { getPathPrefix } from '../../utils/getPathPrefix';
 import { ListWorkflowSummary } from '../../utils/workflows';
 import OperatorParametersOverview from '../operators/operatorParametersOverview';

@@ -51,7 +51,7 @@ import {
   getNextUpdateTime,
   PeriodUnit,
 } from '../../utils/cron';
-import { IntegrationCategories } from '../../utils/integrations';
+import { IntegrationCategories } from '../../utils/resources';
 import { UpdateMode } from '../../utils/operators';
 import ExecutionStatus, { LoadingStatusEnum } from '../../utils/shared';
 import { SupportedIntegrations } from '../../utils/SupportedIntegrations';
@@ -296,11 +296,11 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     (state: RootState) => state.listWorkflowReducer.workflows
   );
 
-  const integrations = useSelector(
-    (state: RootState) => state.integrationsReducer.integrations
+  const resources = useSelector(
+    (state: RootState) => state.resourcesReducer.resources
   );
 
-  const notificationIntegrations = Object.values(integrations).filter(
+  const notificationIntegrations = Object.values(resources).filter(
     (x) =>
       SupportedIntegrations[x.service].category ===
       IntegrationCategories.NOTIFICATION
@@ -582,10 +582,10 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     }
   };
 
-  const displayObject = (integration, name, sortedObjects) => (
+  const displayObject = (resource, name, sortedObjects) => (
     <>
       <Typography variant="body1">
-        [{integration}] <b>{name}</b>
+        [{resource}] <b>{name}</b>
       </Typography>
 
       {/* Objects saved into S3 are currently expected to have update_mode === UpdateMode.replace */}
@@ -614,7 +614,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
   const listSavedObjects = (
     <FormGroup>
       {Object.entries(savedObjects).map(
-        ([integrationTableKey, savedObjectsList]) => {
+        ([resourceTableKey, savedObjectsList]) => {
           const sortedObjects = [...savedObjectsList].sort((object) =>
             Date.parse(object.modified_at)
           );
@@ -624,17 +624,17 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
           return (
             <FormControlLabel
               sx={{ marginTop: '-24px' }}
-              key={integrationTableKey}
+              key={resourceTableKey}
               control={
                 <Checkbox
-                  id={integrationTableKey}
+                  id={resourceTableKey}
                   onChange={updateSelectedObjects}
                 />
               }
               label={
                 <Box sx={{ paddingTop: '24px' }}>
                   {displayObject(
-                    savedObjectsList[0].integration_name,
+                    savedObjectsList[0].resource_name,
                     getSavedObjectIdentifier(savedObjectsList[0]),
                     sortedObjects
                   )}
@@ -814,10 +814,10 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
         <List dense={true}>
           {Object.entries(deleteWorkflowResults)
-            .map(([integrationName, objectResults]) =>
+            .map(([resourceName, objectResults]) =>
               objectResults.map((objectResult) => (
                 <>
-                  <ListItem key={`${integrationName}-${objectResult.name}`}>
+                  <ListItem key={`${resourceName}-${objectResult.name}`}>
                     <ListItemIcon style={{ minWidth: '30px' }}>
                       {objectResult.exec_state.status ===
                       ExecutionStatus.Succeeded ? (
@@ -838,7 +838,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
                     </ListItemIcon>
                     <ListItemText
                       primary={displayObject(
-                        integrationName,
+                        resourceName,
                         objectResult.name,
                         null
                       )}

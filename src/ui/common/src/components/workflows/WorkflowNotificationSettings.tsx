@@ -5,7 +5,7 @@ import React, { useState } from 'react';
 
 import { theme } from '../../styles/theme/theme';
 import { getPathPrefix } from '../../utils/getPathPrefix';
-import { Integration } from '../../utils/integrations';
+import { Integration } from '../../utils/resources';
 import { NotificationLogLevel } from '../../utils/notifications';
 import { NotificationSettingsMap } from '../../utils/workflows';
 import CheckboxEntry from '../notifications/CheckboxEntry';
@@ -91,14 +91,14 @@ const WorkflowNotificationSettings: React.FC<Props> = ({
   const remainingIntegrations = notificationIntegrations.filter(
     (x) => !selectedIDs.includes(x.id)
   );
-  const integrationsByID: { [id: string]: Integration } = {};
-  notificationIntegrations.forEach((x) => (integrationsByID[x.id] = x));
+  const resourcesByID: { [id: string]: Integration } = {};
+  notificationIntegrations.forEach((x) => (resourcesByID[x.id] = x));
 
   const selectedEntries = Object.entries(curSettingsMap).map(([id, level]) => (
     <Box key={id} mt={1}>
       <SelectedNotificationEntry
         remainingNotificationIntegrations={remainingIntegrations}
-        selected={integrationsByID[id]}
+        selected={resourcesByID[id]}
         level={level}
         onSelect={onSelect}
         onRemove={onRemove}
