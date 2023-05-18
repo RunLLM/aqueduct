@@ -67,7 +67,7 @@ def test_sqlite_with_k8s(data_integration, engine):
 def test_compute_integration_without_cloud_storage(client):
     with pytest.raises(
         InvalidRequestError,
-        match="You need to setup cloud storage as metadata store before registering compute integration of type Kubernetes.",
+        match="You need to setup cloud storage as metadata store before registering compute resource of type Kubernetes.",
     ):
         client.connect_resource(
             name="compute integration without cloud storage",

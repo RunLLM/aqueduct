@@ -191,7 +191,7 @@ type DeleteSavedObjectsSpec struct {
 	BasePythonSpec
 	ConnectorName     map[string]shared.Service `json:"connector_name"  yaml:"connector_name"`
 	ConnectorConfig   map[string]auth.Config    `json:"connector_config"  yaml:"connector_config"`
-	ResourceToObject  map[string][]string       `json:"resource_to_object"  yaml:"resource_to_object"`
+	ResourceToObject  map[string][]string       `json:"integration_to_object"  yaml:"integration_to_object"`
 	OutputContentPath string                    `json:"output_content_path"  yaml:"output_content_path"`
 }
 
