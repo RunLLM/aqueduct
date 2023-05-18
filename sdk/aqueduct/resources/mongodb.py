@@ -7,7 +7,6 @@ from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionMode, LoadUpdateMode
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
-from aqueduct.models.resource import BaseResource, ResourceInfo
 from aqueduct.models.operators import (
     ExtractSpec,
     MongoExtractParams,
@@ -15,6 +14,7 @@ from aqueduct.models.operators import (
     OperatorSpec,
     RelationalDBLoadParams,
 )
+from aqueduct.models.resource import BaseResource, ResourceInfo
 from aqueduct.resources.parameters import _validate_parameters
 from aqueduct.resources.save import _save_artifact
 from aqueduct.resources.validation import validate_is_connected

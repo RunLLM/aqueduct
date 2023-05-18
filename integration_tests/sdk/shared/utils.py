@@ -203,9 +203,7 @@ def extract(
     if isinstance(resource, RelationalDBResource):
         return resource.sql(query="SELECT * from %s" % obj_identifier, name=op_name, lazy=lazy)
     elif isinstance(resource, S3Resource):
-        return resource.file(
-            obj_identifier, ArtifactType.TABLE, "parquet", name=op_name, lazy=lazy
-        )
+        return resource.file(obj_identifier, ArtifactType.TABLE, "parquet", name=op_name, lazy=lazy)
     raise Exception("Unexpected data resource type provided in test: %s", type(resource))
 
 

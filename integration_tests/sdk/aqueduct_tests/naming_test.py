@@ -261,9 +261,7 @@ def _run_noop_check(input):
 @pytest.mark.skip_for_spark_engines(
     reason="Spark converts column names to capital, .equals doesn't work."
 )
-def test_artifact_name_collisions_across_operator_types(
-    client, data_resource, engine, flow_name
-):
+def test_artifact_name_collisions_across_operator_types(client, data_resource, engine, flow_name):
     """Tests that the same naming policy holds regardless of the operator type."""
     extract_output = extract(data_resource, DataObject.SENTIMENT, output_name="foo artifact")
     op_output = _run_noop_op(extract_output)

@@ -83,9 +83,7 @@ def test_sql_resource_query_and_save(client, flow_manager, data_resource):
         )
 
 
-def test_sql_resource_query_and_save_relationaldbextractparams(
-    client, flow_manager, data_resource
-):
+def test_sql_resource_query_and_save_relationaldbextractparams(client, flow_manager, data_resource):
     artifacts = _create_successful_sql_artifacts(
         client, data_resource, wrap_query_in_extract_params_struct=True
     )

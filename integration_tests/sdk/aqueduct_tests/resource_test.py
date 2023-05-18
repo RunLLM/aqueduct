@@ -2,8 +2,8 @@ import pytest
 from aqueduct.constants.enums import ServiceType
 from aqueduct.error import (
     AqueductError,
-    InvalidResourceException,
     InvalidRequestError,
+    InvalidResourceException,
     InvalidUserActionException,
     InvalidUserArgumentException,
 )

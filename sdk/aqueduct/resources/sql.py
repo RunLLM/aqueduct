@@ -8,7 +8,6 @@ from aqueduct.constants.enums import ArtifactType, ExecutionMode, LoadUpdateMode
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
-from aqueduct.models.resource import BaseResource, ResourceInfo
 from aqueduct.models.operators import (
     ExtractSpec,
     Operator,
@@ -16,6 +15,7 @@ from aqueduct.models.operators import (
     RelationalDBExtractParams,
     RelationalDBLoadParams,
 )
+from aqueduct.models.resource import BaseResource, ResourceInfo
 from aqueduct.resources.parameters import _validate_builtin_expansions, _validate_parameters
 from aqueduct.resources.save import _save_artifact
 from aqueduct.resources.validation import validate_is_connected

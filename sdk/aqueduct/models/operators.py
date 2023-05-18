@@ -136,8 +136,7 @@ class LoadSpec(BaseModel):
         elif isinstance(self.parameters, S3LoadParams):
             return self.parameters.filepath
         raise UnsupportedFeatureException(
-            "identifier() is currently unsupported for data resource type %s."
-            % self.service.value
+            "identifier() is currently unsupported for data resource type %s." % self.service.value
         )
 
     def set_identifier(self, new_obj_identifier: str) -> None:

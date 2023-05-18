@@ -12,8 +12,8 @@ from aqueduct.models.config import (
     SparkEngineConfig,
 )
 from aqueduct.models.dag import Schedule
-from aqueduct.models.resource import ResourceInfo
 from aqueduct.models.operators import ParamSpec
+from aqueduct.models.resource import ResourceInfo
 from aqueduct.resources.dynamic_k8s import DynamicK8sResource
 from aqueduct.utils.resource_validation import validate_resource_is_connected
 from croniter import croniter
@@ -161,9 +161,7 @@ def generate_engine_config(
         return None
 
     if resource_name not in resources.keys():
-        raise InvalidResourceException(
-            "Not connected to compute resource `%s`!" % resource_name
-        )
+        raise InvalidResourceException("Not connected to compute resource `%s`!" % resource_name)
 
     resource = resources[resource_name]
     validate_resource_is_connected(resource_name, resource.exec_state)

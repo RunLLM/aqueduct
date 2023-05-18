@@ -3,8 +3,8 @@ from typing import Any, List, Tuple
 
 import pandas as pd
 from aqueduct.constants.enums import LoadUpdateMode
-from aqueduct.models.resource import BaseResource
 from aqueduct.models.operators import RelationalDBLoadParams
+from aqueduct.models.resource import BaseResource
 from aqueduct.resources.sql import RelationalDBResource
 
 from aqueduct import Client, Flow

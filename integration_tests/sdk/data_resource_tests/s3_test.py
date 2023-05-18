@@ -168,9 +168,7 @@ def test_s3_table_formats(flow_manager, data_resource):
     # Save the table with each of the other different formats.
     _save_artifact_and_check(flow_manager, data_resource, artifact=hotel_reviews, format="csv")
     _save_artifact_and_check(flow_manager, data_resource, artifact=hotel_reviews, format="json")
-    _save_artifact_and_check(
-        flow_manager, data_resource, artifact=hotel_reviews, format="parquet"
-    )
+    _save_artifact_and_check(flow_manager, data_resource, artifact=hotel_reviews, format="parquet")
 
 
 def test_s3_table_fetch_with_merge(client, data_resource):
@@ -273,9 +271,7 @@ def test_s3_fetch_directory_with_merge(flow_manager, data_resource):
         object_identifier="%s/%s" % (dir_name, hotel_reviews_table_name),
     )
 
-    customers = data_resource.file(
-        "customers", artifact_type=ArtifactType.TABLE, format="parquet"
-    )
+    customers = data_resource.file("customers", artifact_type=ArtifactType.TABLE, format="parquet")
     _save_artifact_and_check(
         flow_manager,
         data_resource,

@@ -5,8 +5,8 @@ from aqueduct.constants.enums import OperatorType
 from aqueduct.error import InvalidResourceException
 from aqueduct.globals import __GLOBAL_API_CLIENT__ as global_api_client
 from aqueduct.models.dag import DAG
-from aqueduct.models.resource import ResourceInfo
 from aqueduct.models.operators import LoadSpec, Operator, OperatorSpec, UnionLoadParams
+from aqueduct.models.resource import ResourceInfo
 from aqueduct.utils.dag_deltas import (
     AddOperatorDelta,
     DAGDelta,
@@ -49,9 +49,7 @@ def _save_artifact(
 
     resources_map = global_api_client.list_resources()
     if resource_info.name not in resources_map:
-        raise InvalidResourceException(
-            "Not connected to resource %s!" % resource_info.name
-        )
+        raise InvalidResourceException("Not connected to resource %s!" % resource_info.name)
 
     # We currently do not allow multiple save operators on the same artifact to the same resource.
     # We do allow multiple artifacts to write to the same resource, as well as a single artifact

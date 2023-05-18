@@ -17,8 +17,8 @@ from aqueduct.error import (
 )
 from aqueduct.logger import logger
 from aqueduct.models.dag import DAG
-from aqueduct.models.resource import BaseResource, ResourceInfo
 from aqueduct.models.operators import ParamSpec
+from aqueduct.models.resource import BaseResource, ResourceInfo
 from aqueduct.models.response_models import (
     DeleteWorkflowResponse,
     DynamicEngineStatusResponse,
@@ -234,8 +234,7 @@ class APIClient:
             )
 
         return {
-            resource_info["name"]: ResourceInfo(**resource_info)
-            for resource_info in resp.json()
+            resource_info["name"]: ResourceInfo(**resource_info) for resource_info in resp.json()
         }
 
     def list_github_repos(self) -> List[str]:

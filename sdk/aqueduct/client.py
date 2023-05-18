@@ -28,8 +28,8 @@ from aqueduct.flow import Flow
 from aqueduct.github import Github
 from aqueduct.logger import logger
 from aqueduct.models.dag import Metadata, RetentionPolicy
-from aqueduct.models.resource import BaseResource, ResourceInfo
 from aqueduct.models.operators import ParamSpec
+from aqueduct.models.resource import BaseResource, ResourceInfo
 from aqueduct.models.response_models import SavedObjectUpdate
 from aqueduct.resources.airflow import AirflowResource
 from aqueduct.resources.aws import AWSResource
@@ -233,7 +233,7 @@ class Client:
             is_local_data=use_local,
         )
 
-    def connect_resource(
+    def connect_integration(
         self,
         name: str,
         service: Union[str, ServiceType],
@@ -289,7 +289,7 @@ class Client:
         logger().info("Connecting to new %s resource `%s`..." % (service, name))
         globals.__GLOBAL_API_CLIENT__.connect_resource(name, service, config)
 
-    def delete_resource(
+    def delete_integration(
         self,
         name: str,
     ) -> None:
@@ -325,7 +325,7 @@ class Client:
         globals.__GLOBAL_API_CLIENT__.delete_resource(existing_resources[name].id)
         self._connected_resources = globals.__GLOBAL_API_CLIENT__.list_resources()
 
-    def list_resources(self) -> Dict[str, ResourceInfo]:
+    def list_integrations(self) -> Dict[str, ResourceInfo]:
         """Deprecated. Use `client.list_resources()` instead."""
         logger().warning(
             "client.list_resources() will be deprecated soon. Use `client.list_resources() instead."
@@ -341,7 +341,7 @@ class Client:
         self._connected_resources = globals.__GLOBAL_API_CLIENT__.list_resources()
         return self._connected_resources
 
-    def resource(
+    def integration(
         self,
         name: str,
     ) -> Union[
@@ -459,9 +459,7 @@ class Client:
             )
         elif resource_info.service == ServiceType.AWS:
             dynamic_k8s_resource_name = "%s:aqueduct_ondemand_k8s" % name
-            dynamic_k8s_resource_info = self._connected_resources[
-                dynamic_k8s_resource_name
-            ]
+            dynamic_k8s_resource_info = self._connected_resources[dynamic_k8s_resource_name]
             return AWSResource(
                 metadata=resource_info,
                 k8s_resource_metadata=dynamic_k8s_resource_info,
@@ -472,8 +470,7 @@ class Client:
             )
         else:
             raise InvalidResourceException(
-                "This method does not support loading resource of type %s"
-                % resource_info.service
+                "This method does not support loading resource of type %s" % resource_info.service
             )
 
     def list_flows(self) -> List[Dict[str, str]]:

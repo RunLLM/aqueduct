@@ -454,7 +454,5 @@ def get_artifact_store_name() -> Optional[str]:
     if "storage" not in test_config:
         return None
 
-    assert (
-        len(test_config["storage"]) == 1
-    ), "Only one data resource can be set as storage layer."
+    assert len(test_config["storage"]) == 1, "Only one data resource can be set as storage layer."
     return list(test_config["storage"].keys())[0]

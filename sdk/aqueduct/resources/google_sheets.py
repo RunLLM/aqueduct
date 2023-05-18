@@ -5,7 +5,6 @@ from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, GoogleSheetsSaveMode
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
-from aqueduct.models.resource import BaseResource, ResourceInfo
 from aqueduct.models.operators import (
     ExtractSpec,
     GoogleSheetsExtractParams,
@@ -13,6 +12,7 @@ from aqueduct.models.operators import (
     Operator,
     OperatorSpec,
 )
+from aqueduct.models.resource import BaseResource, ResourceInfo
 from aqueduct.resources.validation import validate_is_connected
 from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import generate_uuid
