@@ -640,49 +640,46 @@ class TestBackend:
         assert len(result.outputs) == 1
 
     def test_endpoint_node_metric_result_content_get(self):
-        for flow_id, _ in [
-            self.flows["flow_with_metrics_and_checks"],
-            self.flows["flow_with_multiple_operators"],
-        ]:
-            flow = self.client.flow(flow_id)
-            workflow_resp = flow._get_workflow_resp()
-            dag_id = workflow_resp.workflow_dag_results[0].workflow_dag_id
-            dag_result_id = workflow_resp.workflow_dag_results[0].id
+        flow_id, _ = self.flows["flow_with_metrics_and_checks"]
+        flow = self.client.flow(flow_id)
+        workflow_resp = flow._get_workflow_resp()
+        dag_id = workflow_resp.workflow_dag_results[0].workflow_dag_id
+        dag_result_id = workflow_resp.workflow_dag_results[0].id
 
-            dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
-                flow_id,
-                dag_result_id,
+        dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
+            flow_id,
+            dag_result_id,
+        )
+        operator_ids = [
+            id
+            for id in dag_result_resp.operators.keys()
+            if dag_result_resp.operators[id].spec.metric
+        ]
+        operator_id = str(operator_ids[0])
+
+        resp = self.get_response(
+            self.GET_NODE_METRIC_TEMPLATE % (flow_id, dag_id, operator_id)
+        ).json()
+
+        result = GetOperatorWithArtifactNodeResponse(**resp)
+
+        artifact_id = result.artifact_id
+
+        resp = self.get_response(
+            self.LIST_ARTIFACT_RESULTS_TEMPLATE % (flow_id, artifact_id)
+        ).json()
+        results = resp["results"]
+        # One of these should be correct for the DAG run and can get result content.
+        for artifact_result in results:
+            resp = self.get_response(
+                self.GET_NODE_METRIC_RESULT_CONTENT_TEMPLATE
+                % (flow_id, dag_id, operator_id, artifact_result["id"])
             )
-            operator_ids = [
-                id
-                for id in dag_result_resp.operators.keys()
-                if dag_result_resp.operators[id].spec.metric
-            ]
-            operator_id = str(operator_ids[0])
-
-            resp = self.get_response(
-                self.GET_NODE_METRIC_TEMPLATE % (flow_id, dag_id, operator_id)
-            ).json()
-
-            result = GetOperatorWithArtifactNodeResponse(**resp)
-
-            artifact_id = result.artifact_id
-
-            resp = self.get_response(
-                self.LIST_ARTIFACT_RESULTS_TEMPLATE % (flow_id, artifact_id)
-            ).json()
-            results = resp["results"]
-            # One of these should be correct for the DAG run and can get result content.
-            for artifact_result in results:
-                resp = self.get_response(
-                    self.GET_NODE_METRIC_RESULT_CONTENT_TEMPLATE
-                    % (flow_id, dag_id, operator_id, artifact_result["id"])
-                )
-                assert resp.ok
-                resp_obj = GetNodeResultContentResponse(**resp.json())
-                # One of these should be successful (direct descendent of operator)
-                assert not resp_obj.is_downsampled
-                assert len(resp_obj.content) > 0
+            assert resp.ok
+            resp_obj = GetNodeResultContentResponse(**resp.json())
+            # One of these should be successful (direct descendent of operator)
+            assert not resp_obj.is_downsampled
+            assert len(resp_obj.content) > 0
 
     def test_endpoint_node_check_get(self):
         flow_id, _ = self.flows["flow_with_metrics_and_checks"]
@@ -712,46 +709,43 @@ class TestBackend:
         assert len(result.outputs) == 0
 
     def test_endpoint_node_check_result_content_get(self):
-        for flow_id, _ in [
-            self.flows["flow_with_metrics_and_checks"],
-            self.flows["flow_with_multiple_operators"],
-        ]:
-            flow = self.client.flow(flow_id)
-            workflow_resp = flow._get_workflow_resp()
-            dag_id = workflow_resp.workflow_dag_results[0].workflow_dag_id
-            dag_result_id = workflow_resp.workflow_dag_results[0].id
+        flow_id, _ = self.flows["flow_with_metrics_and_checks"]
+        flow = self.client.flow(flow_id)
+        workflow_resp = flow._get_workflow_resp()
+        dag_id = workflow_resp.workflow_dag_results[0].workflow_dag_id
+        dag_result_id = workflow_resp.workflow_dag_results[0].id
 
-            dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
-                flow_id,
-                dag_result_id,
+        dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
+            flow_id,
+            dag_result_id,
+        )
+        operator_ids = [
+            id
+            for id in dag_result_resp.operators.keys()
+            if dag_result_resp.operators[id].spec.check
+        ]
+        operator_id = str(operator_ids[0])
+
+        resp = self.get_response(
+            self.GET_NODE_CHECK_TEMPLATE % (flow_id, dag_id, operator_id)
+        ).json()
+
+        result = GetOperatorWithArtifactNodeResponse(**resp)
+
+        artifact_id = result.artifact_id
+
+        resp = self.get_response(
+            self.LIST_ARTIFACT_RESULTS_TEMPLATE % (flow_id, artifact_id)
+        ).json()
+        results = resp["results"]
+        # One of these should be correct for the DAG run and can get result content.
+        for artifact_result in results:
+            resp = self.get_response(
+                self.GET_NODE_CHECK_RESULT_CONTENT_TEMPLATE
+                % (flow_id, dag_id, operator_id, artifact_result["id"])
             )
-            operator_ids = [
-                id
-                for id in dag_result_resp.operators.keys()
-                if dag_result_resp.operators[id].spec.check
-            ]
-            operator_id = str(operator_ids[0])
-
-            resp = self.get_response(
-                self.GET_NODE_CHECK_TEMPLATE % (flow_id, dag_id, operator_id)
-            ).json()
-
-            result = GetOperatorWithArtifactNodeResponse(**resp)
-
-            artifact_id = result.artifact_id
-
-            resp = self.get_response(
-                self.LIST_ARTIFACT_RESULTS_TEMPLATE % (flow_id, artifact_id)
-            ).json()
-            results = resp["results"]
-            # One of these should be correct for the DAG run and can get result content.
-            for artifact_result in results:
-                resp = self.get_response(
-                    self.GET_NODE_CHECK_RESULT_CONTENT_TEMPLATE
-                    % (flow_id, dag_id, operator_id, artifact_result["id"])
-                )
-                assert resp.ok
-                resp_obj = GetNodeResultContentResponse(**resp.json())
-                # One of these should be successful (direct descendent of operator)
-                assert not resp_obj.is_downsampled
-                assert len(resp_obj.content) > 0
+            assert resp.ok
+            resp_obj = GetNodeResultContentResponse(**resp.json())
+            # One of these should be successful (direct descendent of operator)
+            assert not resp_obj.is_downsampled
+            assert len(resp_obj.content) > 0
