@@ -120,6 +120,7 @@ func NewArtifactFromDBObject(dbArtifactNode *views.ArtifactNode) *Artifact {
 type ArtifactResult struct {
 	// Contains only the `result`. It mostly mirrors 'artifact_result' schema.
 	ID                uuid.UUID                        `json:"id"`
+	ArtifactID        uuid.UUID                        `json:"artifact_id"`
 	SerializationType shared.ArtifactSerializationType `json:"serialization_type"`
 
 	// If `ContentSerialized` is set, the content is small and we directly send
@@ -140,6 +141,7 @@ func NewArtifactResultFromDBObject(
 ) *ArtifactResult {
 	result := &ArtifactResult{
 		ID:                dbArtifactResult.ID,
+		ArtifactID:        dbArtifactResult.ArtifactID,
 		SerializationType: dbArtifactResult.Metadata.SerializationType,
 		ContentPath:       dbArtifactResult.ContentPath,
 		ContentSerialized: content,
@@ -179,14 +181,19 @@ func NewOperatorFromDBObject(dbOperatorNode *views.OperatorNode) *Operator {
 
 type OperatorResult struct {
 	// Contains only the `result`. It mostly mirrors 'operator_result' schema.
-	ID        uuid.UUID              `json:"id"`
-	ExecState *shared.ExecutionState `json:"exec_state"`
+	ID         uuid.UUID              `json:"id"`
+	OperatorID uuid.UUID              `json:"operator_id"`
+	ExecState  *shared.ExecutionState `json:"exec_state"`
 }
 
 func NewOperatorResultFromDBObject(
 	dbOperatorResult *models.OperatorResult,
 ) *OperatorResult {
-	result := &OperatorResult{ID: dbOperatorResult.ID}
+	result := &OperatorResult{
+		ID:         dbOperatorResult.ID,
+		OperatorID: dbOperatorResult.OperatorID,
+	}
+
 	if !dbOperatorResult.ExecState.IsNull {
 		// make a copy of execState's value
 		execStateVal := dbOperatorResult.ExecState.ExecutionState

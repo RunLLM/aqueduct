@@ -3,8 +3,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
+import {
+  useNodesGetQuery,
+  useNodesResultsGetQuery,
+} from '../../../../handlers/AqueductApi';
 import { handleGetWorkflowDag } from '../../../../handlers/getWorkflowDag';
 import { handleGetWorkflowDagResult } from '../../../../handlers/getWorkflowDagResult';
+import { NodeResultsMap, NodesMap } from '../../../../handlers/responses/node';
 import { WorkflowDagResultWithLoadingStatus } from '../../../../reducers/workflowDagResults';
 import { WorkflowDagWithLoadingStatus } from '../../../../reducers/workflowDags';
 import { AppDispatch, RootState } from '../../../../stores/store';
@@ -105,5 +110,42 @@ export default function useWorkflow(
     workflowDagResultId,
     workflowDagWithLoadingStatus,
     workflowDagResultWithLoadingStatus,
+  };
+}
+
+export function useWorkflowNodes(
+  apiKey: string,
+  workflowId: string,
+  dagId: string | undefined
+): NodesMap {
+  const { data: nodes } = useNodesGetQuery(
+    { apiKey, workflowId, dagId },
+    { skip: !workflowId || !dagId }
+  );
+  return {
+    operators: Object.fromEntries(
+      (nodes?.operators ?? []).map((op) => [op.id, op])
+    ),
+    artifacts: Object.fromEntries(
+      (nodes?.artifacts ?? []).map((artf) => [artf.id, artf])
+    ),
+  };
+}
+export function useWorkflowNodesResults(
+  apiKey: string,
+  workflowId: string,
+  dagResultId: string | undefined
+): NodeResultsMap {
+  const { data: nodeResults } = useNodesResultsGetQuery(
+    { apiKey, workflowId, dagResultId },
+    { skip: !workflowId || !dagResultId }
+  );
+  return {
+    operators: Object.fromEntries(
+      (nodeResults?.operators ?? []).map((op) => [op.operator_id, op])
+    ),
+    artifacts: Object.fromEntries(
+      (nodeResults?.artifacts ?? []).map((artf) => [artf.artifact_id, artf])
+    ),
   };
 }
