@@ -1,9 +1,10 @@
-package handler
+package v2
 
 import (
 	"context"
 	"net/http"
 
+	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	"github.com/aqueducthq/aqueduct/cmd/server/request"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -17,12 +18,16 @@ import (
 	"github.com/google/uuid"
 )
 
-type RefreshWorkflowArgs struct {
+type WorkflowPostArgs struct {
 	WorkflowId uuid.UUID
 	Parameters map[string]param.Param
 }
 
-// Route: /workflow/{workflowId}/refresh
+// Route:
+//
+//	workflow/{workflowId}/refresh
+//	v2/workflow/{workflowId}/refresh
+//
 // Method: POST
 // Params: workflowId
 // Request:
@@ -34,8 +39,8 @@ type RefreshWorkflowArgs struct {
 //
 // Refresh workflow creates a new workflow version by
 // triggering running a workflow run.
-type RefreshWorkflowHandler struct {
-	PostHandler
+type WorkflowPostHandler struct {
+	handler.PostHandler
 
 	Database database.Database
 	Engine   engine.Engine
@@ -43,11 +48,11 @@ type RefreshWorkflowHandler struct {
 	WorkflowRepo repos.Workflow
 }
 
-func (*RefreshWorkflowHandler) Name() string {
-	return "RefreshWorkflow"
+func (*WorkflowPostHandler) Name() string {
+	return "WorkflowPost"
 }
 
-func (h *RefreshWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *WorkflowPostHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statusCode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statusCode, err
@@ -81,14 +86,14 @@ func (h *RefreshWorkflowHandler) Prepare(r *http.Request) (interface{}, int, err
 		return nil, http.StatusBadRequest, errors.Wrap(err, "The user-defined parameters could not be extracted in current format.")
 	}
 
-	return &RefreshWorkflowArgs{
+	return &WorkflowPostArgs{
 		WorkflowId: workflowID,
 		Parameters: parameters,
 	}, http.StatusOK, nil
 }
 
-func (h *RefreshWorkflowHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*RefreshWorkflowArgs)
+func (h *WorkflowPostHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*WorkflowPostArgs)
 
 	emptyResp := struct{}{}
 
