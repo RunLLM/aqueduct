@@ -1,4 +1,4 @@
-package handler
+package v2
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	"github.com/aqueducthq/aqueduct/config"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -16,6 +17,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/job"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/connector"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/vault"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
@@ -36,7 +38,11 @@ type SavedObjectResult struct {
 	Result shared.ExecutionState `json:"exec_state"`
 }
 
-// Route: /workflow/{workflowId}/delete
+// Route:
+//
+//	v2/workflow/{workflowId}/delete
+//	workflow/{workflowId}/delete
+//
 // Method: POST
 // Params: workflowId
 // Request:
@@ -44,20 +50,20 @@ type SavedObjectResult struct {
 //	Headers:
 //		`api-key`: user's API Key
 //	Body:
-//		json-serialized `deleteWorkflowInput` object.
+//		json-serialized `workflowDeleteInput` object.
 //
-// Response: json-serialized `deleteWorkflowResponse` object.
+// Response: json-serialized `workflowDeleteResponse` object.
 //
-// The `DeleteWorkflowHandler` does a best effort at deleting a workflow and its dependencies, such as
+// The `WorkflowDeleteHandler` does a best effort at deleting a workflow and its dependencies, such as
 // k8s resources, Postgres state, and output objects in the user's data warehouse.
-type deleteWorkflowArgs struct {
+type workflowDeleteArgs struct {
 	*aq_context.AqContext
 	WorkflowID     uuid.UUID
 	ExternalDelete map[string][]string
 	Force          bool
 }
 
-type deleteWorkflowInput struct {
+type workflowDeleteInput struct {
 	// This is a map from integration_id to the serialized load spec we want to delete.
 	ExternalDeleteLoadParams map[string][]string `json:"external_delete"`
 	// `Force` serve as a safe-guard for client to confirm the deletion.
@@ -66,14 +72,14 @@ type deleteWorkflowInput struct {
 	Force bool `json:"force"`
 }
 
-type deleteWorkflowResponse struct {
+type workflowDeleteResponse struct {
 	// This is a map from integration_id to a list of `SavedObjectResult`
 	// implying if each object is successfully deleted.
 	SavedObjectDeletionResults map[string][]SavedObjectResult `json:"saved_object_deletion_results"`
 }
 
-type DeleteWorkflowHandler struct {
-	PostHandler
+type WorkflowDeleteHandler struct {
+	handler.PostHandler
 
 	Database   database.Database
 	Engine     engine.Engine
@@ -83,13 +89,15 @@ type DeleteWorkflowHandler struct {
 	IntegrationRepo          repos.Integration
 	OperatorRepo             repos.Operator
 	WorkflowRepo             repos.Workflow
+	DagRepo                  repos.DAG
+	ArtifactResultRepo       repos.ArtifactResult
 }
 
-func (*DeleteWorkflowHandler) Name() string {
-	return "DeleteWorkflow"
+func (*WorkflowDeleteHandler) Name() string {
+	return "WorkflowDelete"
 }
 
-func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (h *WorkflowDeleteHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	aqContext, statuscode, err := aq_context.ParseAqContext(r.Context())
 	if err != nil {
 		return nil, statuscode, err
@@ -114,7 +122,7 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 		return nil, http.StatusBadRequest, errors.New("The organization does not own this workflow.")
 	}
 
-	var input deleteWorkflowInput
+	var input workflowDeleteInput
 	err = json.NewDecoder(r.Body).Decode(&input)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to parse JSON input.")
@@ -140,7 +148,7 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 		}
 	}
 
-	return &deleteWorkflowArgs{
+	return &workflowDeleteArgs{
 		AqContext:      aqContext,
 		WorkflowID:     workflowID,
 		ExternalDelete: externalDelete,
@@ -148,10 +156,10 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 	}, http.StatusOK, nil
 }
 
-func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
-	args := interfaceArgs.(*deleteWorkflowArgs)
+func (h *WorkflowDeleteHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+	args := interfaceArgs.(*workflowDeleteArgs)
 
-	resp := deleteWorkflowResponse{}
+	resp := workflowDeleteResponse{}
 	resp.SavedObjectDeletionResults = map[string][]SavedObjectResult{}
 
 	nameToID := make(map[string]uuid.UUID, len(args.ExternalDelete))
@@ -171,38 +179,55 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 
 	// Check objects in list are valid
 	objCount := 0
+
+	// These fetched save operators have any parameterized values filled in.
+	saveOpsByIntegrationName := make(map[string][]views.LoadOperator, 1)
+	saveOpsList, err := GetDistinctLoadOpsByWorkflow(
+		ctx,
+		args.WorkflowID,
+		h.OperatorRepo,
+		h.DagRepo,
+		h.ArtifactResultRepo,
+		h.Database,
+	)
+	if err != nil {
+		return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
+	}
+	for _, saveOp := range saveOpsList {
+		saveOpsByIntegrationName[saveOp.IntegrationName] = append(saveOpsByIntegrationName[saveOp.IntegrationName], saveOpsList...)
+	}
+
 	for integrationName, savedObjectList := range args.ExternalDelete {
 		for _, name := range savedObjectList {
-			touchedOperators, err := h.OperatorRepo.GetLoadOPsByWorkflowAndIntegration(
-				ctx,
-				args.WorkflowID,
-				nameToID[integrationName],
-				name,
-				h.Database,
-			)
-			if err != nil {
-				return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
+			var touchedOperatorLoadParams []connector.LoadParams
+
+			// Check for existence in the parameter-expanded list.
+			for _, saveOp := range saveOpsByIntegrationName[integrationName] {
+				relationalLoad, ok := connector.CastToRelationalDBLoadParams(saveOp.Spec.Parameters)
+				if ok && relationalLoad.Table == name {
+					touchedOperatorLoadParams = append(touchedOperatorLoadParams, saveOp.Spec.Parameters)
+				}
+
+				nonRelationalLoad, ok := connector.CastToNonRelationalLoadParams(saveOp.Spec.Parameters)
+				if ok && nonRelationalLoad.Filepath == name {
+					touchedOperatorLoadParams = append(touchedOperatorLoadParams, saveOp.Spec.Parameters)
+				}
 			}
-			// No operator had touched the object at the specified integration.
-			if len(touchedOperators) == 0 {
+
+			if len(touchedOperatorLoadParams) == 0 {
 				return resp, http.StatusBadRequest, errors.New("Object list not valid. Make sure all objects are touched by the workflow.")
 			}
+
 			if !args.Force {
 				// Check none have UpdateMode=append.
-				for _, touchedOperator := range touchedOperators {
-					load := touchedOperator.Spec.Load()
-					if load == nil {
-						return resp, http.StatusBadRequest, errors.New("Unexpected error occurred while validating objects.")
-					}
-					loadParams := load.Parameters
-
-					relationalLoad, ok := connector.CastToRelationalDBLoadParams(loadParams)
+				for _, touchedLoadParams := range touchedOperatorLoadParams {
+					relationalLoad, ok := connector.CastToRelationalDBLoadParams(touchedLoadParams)
 					// Check not updating anything in the integration.
 					if ok {
 						if relationalLoad.UpdateMode == "append" {
 							return resp, http.StatusBadRequest, errors.New("Some objects(s) in list were updated in append mode. If you are sure you want to delete everything, set `force=True`.")
 						}
-					} else if googleSheets, ok := loadParams.(*connector.GoogleSheetsLoadParams); ok {
+					} else if googleSheets, ok := touchedLoadParams.(*connector.GoogleSheetsLoadParams); ok {
 						if googleSheets.SaveMode == "NEWSHEET" {
 							return resp, http.StatusBadRequest, errors.New("Some objects(s) in list were updated in append mode. If you are sure you want to delete everything, set `force=True`.")
 						}
@@ -265,7 +290,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 
 func DeleteSavedObject(
 	ctx context.Context,
-	args *deleteWorkflowArgs,
+	args *workflowDeleteArgs,
 	integrationNameToID map[string]uuid.UUID,
 	vaultObject vault.Vault,
 	storageConfig *shared.StorageConfig,

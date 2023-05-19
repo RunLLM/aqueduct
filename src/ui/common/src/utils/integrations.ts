@@ -1,6 +1,6 @@
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
-import { AWSCredentialType, ExecState } from './shared';
+import ExecutionStatus, { AWSCredentialType, ExecState } from './shared';
 
 export const aqueductDemoName = 'Demo';
 export const aqueductComputeName = 'Aqueduct Server';
@@ -15,14 +15,49 @@ export function isBuiltinIntegration(integration: Integration): boolean {
 }
 
 export function isNotificationIntegration(integration: Integration): boolean {
-  return integration.service == 'Email' || integration.service == 'Slack';
+  return integration?.service == 'Email' || integration?.service == 'Slack';
 }
 
-// Certain integrations have no configuration fields to show.
-export function hasConfigFieldsToShow(integration: Integration): boolean {
-  return (
-    integration.service !== 'Conda' && integration.name !== aqueductComputeName
-  );
+export function resourceExecState(integration: Integration): ExecState {
+  // If an exec_state doesn't exist, we currently assume that it is a legacy resource that has succeeded.
+  const status = integration.exec_state?.status || ExecutionStatus.Succeeded;
+
+  // For Aqueduct compute, we'll also need to look at the status of any registered Conda.
+  if (
+    integration.service == 'Aqueduct' &&
+    isCondaRegistered(integration) &&
+    integration.exec_state.status == ExecutionStatus.Succeeded
+  ) {
+    const aqConfig = integration.config as AqueductComputeConfig;
+    if (aqConfig.conda_config_serialized) {
+      const serialized_conda_exec_state = JSON.parse(
+        aqConfig.conda_config_serialized
+      )['exec_state'];
+      const conda_exec_state = JSON.parse(
+        serialized_conda_exec_state
+      ) as ExecState;
+      return conda_exec_state;
+    }
+  }
+
+  return integration.exec_state || { status: ExecutionStatus.Succeeded };
+}
+
+// The only resource that does not necessarily display the same service type as
+// on the integration itself is Conda.
+export function resolveDisplayService(integration: Integration): Service {
+  if (integration.service === 'Aqueduct') {
+    const aqConfig = integration.config as AqueductComputeConfig;
+    if (aqConfig.conda_config_serialized) {
+      return 'Conda';
+    }
+  }
+  return integration.service;
+}
+
+export function isCondaRegistered(integration: Integration): boolean {
+  const aqConfig = integration.config as AqueductComputeConfig;
+  return aqConfig?.conda_config_serialized != undefined;
 }
 
 export type Integration = {
@@ -32,6 +67,17 @@ export type Integration = {
   config: IntegrationConfig;
   createdAt: number;
   exec_state: ExecState;
+};
+
+export type AqueductComputeConfig = {
+  // Either the python version of the server or the conda fields should be set,
+  // but not both.
+  python_version?: string;
+
+  // Deserialize this to obtain the `CondaConfig`.
+  conda_config_serialized?: string;
+  conda_resource_id?: string;
+  conda_resource_name?: string;
 };
 
 export type CondaConfig = {
@@ -250,6 +296,7 @@ export type IntegrationConfig =
   | S3Config
   | AthenaConfig
   | GCSConfig
+  | AqueductComputeConfig
   | AqueductDemoConfig
   | AirflowConfig
   | KubernetesConfig
@@ -350,7 +397,7 @@ const logoBucket =
 
 // S3 bucket folder for Integration logos.
 const integrationLogosBucket =
-  'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations';
+  'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/resources';
 
 export const IntegrationCategories = {
   DATA: 'data',
@@ -375,13 +422,13 @@ export const ServiceLogos: ServiceLogo = {
   ['Athena']: `${integrationLogosBucket}/athena.png`,
   ['Airflow']: `${integrationLogosBucket}/airflow.png`,
   ['Kubernetes']: `${integrationLogosBucket}/kubernetes.png`,
-  ['Lambda']: `${integrationLogosBucket}/Lambda.png`,
+  ['Lambda']: `${integrationLogosBucket}/lambda.png`,
   ['MongoDB']: `${integrationLogosBucket}/mongo.png`,
   ['Conda']: `${integrationLogosBucket}/conda.png`,
   ['Databricks']: `${integrationLogosBucket}/databricks_logo.png`,
   ['Email']: `${integrationLogosBucket}/email.png`,
   ['Slack']: `${integrationLogosBucket}/slack.png`,
-  ['Spark']: `${integrationLogosBucket}/spark-logo-trademark.png`,
+  ['Spark']: `${integrationLogosBucket}/spark-logo-only.png`,
   ['AWS']: `${integrationLogosBucket}/aws-logo-trademark.png`,
   ['GCP']: `${integrationLogosBucket}/gcp.png`,
   ['Azure']: `${integrationLogosBucket}/azure.png`,

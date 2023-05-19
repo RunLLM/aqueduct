@@ -265,6 +265,7 @@ func (*operatorReader) GetDistinctLoadOPsByWorkflow(
 	// belonging to the specified workflow in order of when the operator was last modified.
 	query := `
 	SELECT
+		operator.id AS operator_id,
 		operator.name AS operator_name, 
 		workflow_dag.created_at AS modified_at,
 		integration.name AS integration_name,
@@ -384,7 +385,9 @@ func (*operatorReader) GetLoadOPSpecsByOrg(ctx context.Context, orgID string, DB
 			artifact.name AS artifact_name, 
 		 	operator.id AS load_operator_id, 
 			workflow.name AS workflow_name, 
-			workflow.id AS workflow_id, operator.spec 
+			workflow.id AS workflow_id, 
+			workflow_dag_edge.workflow_dag_id AS workflow_dag_id,
+			operator.spec 
 		 FROM 
 		 	app_user, workflow, workflow_dag, 
 			workflow_dag_edge, operator, artifact

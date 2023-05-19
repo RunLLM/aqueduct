@@ -19,7 +19,7 @@ then
       if [ $EXIT_CODE != "0" ]; then exit $(($EXIT_CODE)); fi
 fi
 
-conda run --no-capture-output -n $CONDA_ENV python3 -m aqueduct_executor.operators.function_executor.main --spec "$JOB_SPEC"
+conda run --no-capture-output -n $CONDA_ENV python3 -m aqueduct_executor.operators.function_executor.main --spec "$JOB_SPEC" --version-tag "$VERSION_TAG"
 EXIT_CODE=$?
 
 # Exit after cleanup, regardless of execution success / failure.

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -18,7 +19,8 @@ import (
 )
 
 const (
-	jobSpecEnvVarKey = "JOB_SPEC"
+	jobSpecEnvVarKey    = "JOB_SPEC"
+	versionTagEnvVarKey = "VERSION_TAG"
 )
 
 type k8sJobManager struct {
@@ -93,6 +95,11 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobE
 	}
 
 	environmentVariables := map[string]string{}
+	versionTag := config.VersionTag()
+	if versionTag != "" {
+		environmentVariables[versionTagEnvVarKey] = versionTag
+	}
+
 	var image *operator.ImageConfig
 
 	if spec.Type() == FunctionJobType {

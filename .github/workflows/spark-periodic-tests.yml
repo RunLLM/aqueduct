@@ -2,19 +2,84 @@ name: Spark Periodic Integration Tests
 
 on:
   schedule:
-    - cron: "0 4 * * 5" # Run at 4AM PST on every Friday
+    - cron: "0 21 * * 4" # Run at 9PM PST on every Thursday
   workflow_dispatch:
 
 jobs:
+  publish-pypi:
+    # similar to release scripts, but publish to test pypi:
+    # rm -rf dist && rm -rf build
+    # python3 -m build && twine check dist/*
+    # twine upload --repository testpypi dist/*
+    # pip3 install -i https://test.pypi.org/simple/ aqueduct-ml
+    name: Publish Test Pypi Packages
+    runs-on: [ubuntu-latest]
+    timeout-minutes: 20
+    outputs:
+      version: ${{ steps.inject_version.outputs.version }}
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: install missing dependencies
+        run: pip install build twine
+
+      - name: inject dev version
+        id: inject_version
+        run: |
+          export VERSION=0.1.dev$(date +%s)
+          rm sdk/version
+          echo $VERSION >> sdk/version
+          rm src/python/version
+          echo $VERSION >> src/python/version
+          echo version=$VERSION >> $GITHUB_OUTPUT
+
+      - name: build sdk
+        working-directory: sdk
+        run: |
+          rm -rf dist
+          rm -rf build
+          python3 -m build
+          twine check dist/*
+
+      - name: publish sdk
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: sdk/dist
+          password: ${{ secrets.PYPI_API_TOKEN_SDK }}
+
+      - name: build executor
+        working-directory: src/python
+        run: |
+          rm -rf dist
+          rm -rf build
+          python3 -m build
+          twine check dist/*
+
+      - name: publish executor
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: src/python/dist
+          password: ${{ secrets.PYPI_API_TOKEN_EXECUTOR }}
+
   run-databricks-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 480
+    needs: publish-pypi
     name: SDK Integration Tests against Databricks Compute
     steps:
       - uses: actions/checkout@v2
 
       - uses: ./.github/actions/setup-server
-        timeout-minutes: 5
+        timeout-minutes: 7
+        with:
+          python-pkg-version: ${{ needs.publish-pypi.outputs.version }}
 
       # TODO(ENG-2537): Use our separate GH actions credentials.
       - uses: ./.github/actions/fetch-test-config
@@ -36,7 +101,7 @@ jobs:
         if: always()
         with:
           prefix: Databricks Compute
-      
+
       # Sets it as an environmental variable.
       - name: Get the Slack ID for the current oncall
         if: always()
@@ -56,16 +121,19 @@ jobs:
           mention_users: ${{ env.ONCALL_SLACK_MEMBER_ID }}
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
-  
+
   run-spark-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 480
+    needs: publish-pypi
     name: SDK Integration Tests against Spark EMR
     steps:
       - uses: actions/checkout@v2
 
       - uses: ./.github/actions/setup-server
-        timeout-minutes: 5
+        timeout-minutes: 7
+        with:
+          python-pkg-version: ${{ needs.publish-pypi.outputs.version }}
 
       # TODO(ENG-2537): Use our separate GH actions credentials.
       - uses: ./.github/actions/fetch-test-config
@@ -106,7 +174,7 @@ jobs:
         run: |
           livy_server_url=$(aws emr describe-cluster --cluster-id ${{ env.cluster_id }} --query 'Cluster.MasterPublicDnsName' --output text):8998
           echo "livy_server_url=http://$livy_server_url" >> $GITHUB_ENV
-      
+
       - name: Update the test-credentials file with the appropriate livy server url
         working-directory: integration_tests/sdk
         run: sed -i "s#\(livy_server_url:\s*\).*#\1$(echo "${{ env.livy_server_url }}")#" test-credentials.yml
@@ -114,18 +182,18 @@ jobs:
       - name: Run the SDK Integration Tests
         working-directory: integration_tests/sdk
         run: pytest aqueduct_tests/ -rP -vv -n 2
-      
+
       - name: Tear Down EMR cluster
         id: tear-down-emr-cluster
         if: always()
         run: |
           aws emr terminate-clusters --cluster-ids ${{ env.cluster_id }}
-      
+
       - uses: ./.github/actions/upload-artifacts
         if: always()
         with:
           prefix: Spark Compute
-      
+
       # Sets it as an environmental variable.
       - name: Get the Slack ID for the current oncall
         if: always()

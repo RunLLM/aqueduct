@@ -7,7 +7,7 @@ import {
   NodeIdParameter,
   WorkflowIdParameter,
 } from '../parameters/Path';
-import { OperatorResponse } from '../responses/Node';
+import { OperatorResponse } from '../responses/node';
 
 export type NodeOperatorGetRequest = APIKeyParameter &
   DagIdParameter &

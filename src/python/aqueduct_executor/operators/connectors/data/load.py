@@ -5,6 +5,7 @@ from pydantic import validator
 
 
 class RelationalParams(models.BaseParams):
+    # The table name is expected to be unset if it is being parameterized.
     table: str
     update_mode: common.UpdateMode = common.UpdateMode.REPLACE
 

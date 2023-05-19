@@ -9,7 +9,7 @@ from aqueduct.constants.enums import (
     SerializationType,
 )
 from aqueduct.models.artifact import ArtifactMetadata
-from aqueduct.models.dag import Metadata, RetentionPolicy, Schedule
+from aqueduct.models.dag import EngineConfig, Metadata, RetentionPolicy, Schedule
 from aqueduct.models.execution_state import ExecutionState
 from aqueduct.models.operators import LoadSpec, Operator, OperatorSpec
 from aqueduct.models.utils import human_readable_timestamp
@@ -23,6 +23,18 @@ class ArtifactResult(BaseModel):
 
 
 # V2 Responses
+class GetDagResponse(BaseModel):
+    id: uuid.UUID
+    workflow_id: uuid.UUID
+    created_at: str
+    engine_config: EngineConfig
+
+
+class GetNodeResultContentResponse(BaseModel):
+    is_downsampled: bool
+    content: str
+
+
 class GetDagResultResponse(BaseModel):
     """Represents the result of a single workflow run.
 
@@ -174,6 +186,10 @@ class GetOperatorWithArtifactNodeResponse(BaseModel):
     inputs: List[uuid.UUID]
     outputs: List[uuid.UUID]
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 52ad1258eb8084018de394390c4cc2250e14ed57
 # V1 Responses
 class PreviewResponse(BaseModel):
     """This is the response object returned by api_client.preview().

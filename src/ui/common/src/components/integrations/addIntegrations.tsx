@@ -3,10 +3,10 @@ import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Snackbar from '@mui/material/Snackbar';
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { resetConnectNewStatus } from '../../reducers/integration';
-import { AppDispatch } from '../../stores/store';
+import { AppDispatch, RootState } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
 import { Info, Service, ServiceInfoMap } from '../../utils/integrations';
@@ -96,6 +96,18 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
   const service = svc as Service;
   const [showDialog, setShowDialog] = useState(false);
 
+  // If this is a conda integration, check if it has already been registered.
+  // If it has, disable the new Conda button.
+  const resources = useSelector(
+    (state: RootState) => state.integrationsReducer.integrations
+  );
+  if (svc === 'Conda') {
+    const existingConda = Object.values(resources).find(
+      (item) => item.name === 'Conda'
+    );
+    integration.activated = existingConda === undefined;
+  }
+
   if (integration.category !== category) {
     return null;
   }
@@ -120,7 +132,7 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
             : 'white',
         },
         boxSizing: 'initial',
-        backgroundColor: '#F8F8F8', // gray/light2
+        backgroundColor: theme.palette.gray['25'],
       }}
     >
       <Box
@@ -150,6 +162,12 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
       </Typography>
     </Box>
   );
+
+  // For services that require asynchronous connection steps, we show a more realistic message.
+  let successMsg = `Successfully connected to ${service}!`;
+  if (service === 'Conda' || service === 'Lambda') {
+    successMsg = `Connecting to ${service}...`;
+  }
 
   return (
     <Box key={service}>
@@ -185,7 +203,7 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
           severity="success"
           sx={{ width: '100%' }}
         >
-          {`Successfully connected to ${service}!`}
+          {successMsg}
         </Alert>
       </Snackbar>
     </Box>

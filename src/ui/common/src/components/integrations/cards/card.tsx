@@ -1,8 +1,11 @@
 import Box from '@mui/material/Box';
 import React from 'react';
 
-import { Integration } from '../../../utils/integrations';
-import ExecutionStatus from '../../../utils/shared';
+import {
+  Integration,
+  resolveDisplayService,
+  resourceExecState,
+} from '../../../utils/integrations';
 import { StatusIndicator } from '../../workflows/workflowStatus';
 import IntegrationLogo from '../logo';
 import { ResourceFieldsDetailsCard } from './resourceFieldsDetailsCard';
@@ -22,9 +25,8 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
-        {/*If the execution state doesn't exist, we assume the integration succeeded.*/}
         <StatusIndicator
-          status={integration.exec_state?.status || ExecutionStatus.Succeeded}
+          status={resourceExecState(integration).status}
           size="16px"
         />
 
@@ -36,7 +38,11 @@ export const IntegrationCard: React.FC<IntegrationProps> = ({
             {integration.name}
           </TruncatedText>
         </Box>
-        <IntegrationLogo service={integration.service} size="small" activated />
+        <IntegrationLogo
+          service={resolveDisplayService(integration)}
+          size="small"
+          activated
+        />
       </Box>
 
       {/*Leave this empty if integration.createdAt isn't set.*/}
