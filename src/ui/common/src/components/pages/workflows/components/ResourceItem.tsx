@@ -25,7 +25,7 @@ const ResourceItemIcons = {
   [EngineType.Databricks]:
     'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/databricks-white.png',
   [EngineType.Spark]:
-    'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/spark-logo-only.png',
+    'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/resources/spark-logo-only.png',
   [EngineType.K8s]:
     'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/kubernetes-white.png',
   [EngineType.Lambda]:
