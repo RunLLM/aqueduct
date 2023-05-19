@@ -198,7 +198,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
       return;
     }
 
-    const sortedRows = [...rows].sort((r1, r2) => {
+    const sortedRows = [...rowData].sort((r1, r2) => {
       const col = sortConfig.sortColumn;
       let v1: PaginatedSearchTableRow | PaginatedSearchTableElement = r1;
       let v2: PaginatedSearchTableRow | PaginatedSearchTableElement = r2;
