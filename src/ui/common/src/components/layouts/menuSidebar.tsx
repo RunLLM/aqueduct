@@ -122,9 +122,12 @@ const MenuSidebar: React.FC<{
   const [currentPage, setCurrentPage] = useState(undefined);
   const location = useLocation();
 
-  const { data } = useEnvironmentGetQuery({ apiKey: user.apiKey }, {
-    skip: !user?.apiKey,
-  });
+  const { data } = useEnvironmentGetQuery(
+    { apiKey: user.apiKey },
+    {
+      skip: !user?.apiKey,
+    }
+  );
 
   console.log('data: ', data);
 
