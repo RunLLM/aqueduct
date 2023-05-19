@@ -12,7 +12,6 @@ import {
 import { apiAddress } from '../../hooks/useAqueductConsts';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 import { useEnvironmentGetQuery } from '../../../handlers/AqueductApi';
-import { APIKeyParameter } from '../../../handlers/parameters/Header';
 
 const Placeholders: KubernetesConfig = {
   kubeconfig_path: '/home/ubuntu/.kube/config',
@@ -26,12 +25,6 @@ export const KubernetesDialog: React.FC<IntegrationDialogProps> = ({
 }) => {
   const { register, setValue, getValues } = useFormContext();
   const use_same_cluster = getValues('use_same_cluster');
-  // if (user) {
-  //   const { data, error, isLoading } = useEnvironmentGetQuery({ apiKey: user.apiKey });
-  //   console.log('error: ', error);
-  //   console.log('isLoading: ', isLoading);
-  //   console.log('data: ', data);
-  // }
 
 
   register('use_same_cluster');
@@ -42,6 +35,8 @@ export const KubernetesDialog: React.FC<IntegrationDialogProps> = ({
 
   const [inK8sCluster, setInK8sCluster] = useState(false);
 
+  // NOTE: Having an issue turning this into an RTKQuery, as it's causing an infinite loop here.
+  // const { data, error, isLoading } = useEnvironmentGetQuery({ apiKey: user.apiKey } as any, { skip: !user?.apiKey });
   // TODO: https://linear.app/aqueducthq/issue/ENG-2964/move-k8s-use-same-cluster-request-to-rtkquery
   useEffect(() => {
     const fetchEnvironment = async () => {

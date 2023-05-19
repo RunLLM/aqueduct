@@ -27,6 +27,7 @@ import {
   menuSidebarLogoLink,
   notificationAlert,
 } from './menuSidebar.styles';
+import { useEnvironmentGetQuery } from '../../handlers/AqueductApi';
 
 // Left padding = 8px
 // Right padding = 8px
@@ -123,22 +124,17 @@ const MenuSidebar: React.FC<{
   const [versionNumber, setVersionNumber] = useState('');
   const location = useLocation();
 
+  const { data } = useEnvironmentGetQuery({ apiKey: user.apiKey } as any, { skip: !user?.apiKey });
+
   useEffect(() => {
     setCurrentPage(location.pathname);
   }, [dispatch, location.pathname]);
 
   useEffect(() => {
-    async function fetchVersionNumber() {
-      const res = await fetch(`${apiAddress}/api/version`, {
-        method: 'GET',
-        headers: { 'api-key': user.apiKey },
-      });
-      const versionNumberResponse = await res.json();
-      setVersionNumber(versionNumberResponse.version);
+    if (data) {
+      setVersionNumber(data.version);
     }
-
-    fetchVersionNumber();
-  }, [user.apiKey]);
+  }, [user.apiKey, data]);
 
   const pathPrefix = getPathPrefix();
   return (
