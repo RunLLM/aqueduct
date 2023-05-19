@@ -397,7 +397,7 @@ const logoBucket =
 
 // S3 bucket folder for Integration logos.
 const integrationLogosBucket =
-  'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/pages/integrations';
+  'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/resources';
 
 export const IntegrationCategories = {
   DATA: 'data',
@@ -422,13 +422,13 @@ export const ServiceLogos: ServiceLogo = {
   ['Athena']: `${integrationLogosBucket}/athena.png`,
   ['Airflow']: `${integrationLogosBucket}/airflow.png`,
   ['Kubernetes']: `${integrationLogosBucket}/kubernetes.png`,
-  ['Lambda']: `${integrationLogosBucket}/Lambda.png`,
+  ['Lambda']: `${integrationLogosBucket}/lambda.png`,
   ['MongoDB']: `${integrationLogosBucket}/mongo.png`,
   ['Conda']: `${integrationLogosBucket}/conda.png`,
   ['Databricks']: `${integrationLogosBucket}/databricks_logo.png`,
   ['Email']: `${integrationLogosBucket}/email.png`,
   ['Slack']: `${integrationLogosBucket}/slack.png`,
-  ['Spark']: `${logoBucket}/spark-logo-only.png`,
+  ['Spark']: `${integrationLogosBucket}/spark-logo-only.png`,
   ['AWS']: `${integrationLogosBucket}/aws-logo-trademark.png`,
   ['GCP']: `${integrationLogosBucket}/gcp.png`,
   ['Azure']: `${integrationLogosBucket}/azure.png`,
