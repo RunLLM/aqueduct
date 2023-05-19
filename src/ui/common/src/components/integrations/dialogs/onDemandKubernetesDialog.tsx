@@ -9,6 +9,7 @@ import { useFormContext } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
 import * as Yup from 'yup';
 
+import { useEnvironmentGetQuery } from '../../../handlers/AqueductApi';
 import { handleConnectToNewIntegration } from '../../../reducers/integration';
 import { AppDispatch } from '../../../stores/store';
 import { IntegrationDialogProps } from '../../../utils/integrations';
@@ -42,6 +43,11 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
   loading,
   onCloseDialog,
 }) => {
+  const {
+    data: environment,
+    error,
+    isLoading,
+  } = useEnvironmentGetQuery({ apiKey: user.apiKey });
   const { register, setValue } = useFormContext();
 
   const [currentStep, setCurrentStep] = useState('INITIAL');
@@ -137,14 +143,19 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
     );
   };
 
+  interface RegularK8sStepLayoutProps extends IntegrationDialogProps {
+    inK8sCluster?: boolean;
+  }
+
   // We're going to need to share some more info with the dialogs, as they're not all just forms that we can
   // register anymore in the case of this layout.
-  const RegularK8sStepLayout: React.FC<IntegrationDialogProps> = ({
+  const RegularK8sStepLayout: React.FC<RegularK8sStepLayoutProps> = ({
     user,
     editMode,
     onCloseDialog,
     loading,
     disabled,
+    inK8sCluster = false,
   }) => {
     const methods = useFormContext();
     const dispatch: AppDispatch = useDispatch();
@@ -170,6 +181,7 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
           onCloseDialog={onCloseDialog}
           loading={loading}
           disabled={disabled}
+          inK8sCluster={inK8sCluster}
         />
         <DialogActionButtons
           onCloseDialog={onCloseDialog}
@@ -376,6 +388,7 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
           loading={loading}
           onCloseDialog={onCloseDialog}
           editMode={editMode}
+          inK8sCluster={environment?.inK8sCluster}
         />
       );
     case 'ONDEMAND_K8S':

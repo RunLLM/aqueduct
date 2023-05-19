@@ -15,9 +15,9 @@ import { useDispatch } from 'react-redux';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import UserProfile from 'src/utils/auth';
 
+import { useEnvironmentGetQuery } from '../../handlers/AqueductApi';
 import { AppDispatch } from '../../stores/store';
 import { getPathPrefix } from '../../utils/getPathPrefix';
-import { apiAddress } from '../hooks/useAqueductConsts';
 import {
   menuSidebar,
   menuSidebarContent,
@@ -27,7 +27,6 @@ import {
   menuSidebarLogoLink,
   notificationAlert,
 } from './menuSidebar.styles';
-import { useEnvironmentGetQuery } from '../../handlers/AqueductApi';
 
 // Left padding = 8px
 // Right padding = 8px
@@ -124,7 +123,9 @@ const MenuSidebar: React.FC<{
   const [versionNumber, setVersionNumber] = useState('');
   const location = useLocation();
 
-  const { data } = useEnvironmentGetQuery({ apiKey: user.apiKey } as any, { skip: !user?.apiKey });
+  const { data } = useEnvironmentGetQuery({ apiKey: user.apiKey } as any, {
+    skip: !user?.apiKey,
+  });
 
   useEffect(() => {
     setCurrentPage(location.pathname);

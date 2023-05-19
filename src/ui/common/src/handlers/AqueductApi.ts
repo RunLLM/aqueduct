@@ -138,7 +138,10 @@ export const aqueductApi = createApi({
       query: (req) => dagResultsGetQuery(req),
       transformErrorResponse,
     }),
-    environmentGet: builder.query<EnvironmentGetResponse, EnvironmentGetRequest>({
+    environmentGet: builder.query<
+      EnvironmentGetResponse,
+      EnvironmentGetRequest
+    >({
       query: (req) => environmentGetQuery(req),
       transformErrorResponse,
     }),
