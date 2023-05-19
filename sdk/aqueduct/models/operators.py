@@ -17,8 +17,7 @@ from aqueduct.constants.enums import (
 )
 from aqueduct.error import AqueductError, UnsupportedFeatureException
 from aqueduct.models.config import EngineConfig
-from aqueduct.models.resource import ResourceInfo
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel, Extra, Field
 
 
 class GithubMetadata(BaseModel):
@@ -90,8 +89,15 @@ UnionExtractParams = Union[
 
 class ExtractSpec(BaseModel):
     service: ServiceType
-    resource_id: uuid.UUID
-    parameters: UnionExtractParams
+
+    # TODO(ENG-2994): This spec is parsed into a golang struct that still expects
+    #  the "integration" terminology.
+    resource_id: uuid.UUID = Field(alias="integration_id")
+    parameters: Union[str, UnionExtractParams]
+
+    class Config:
+        # Prevents any validation errors due to the alias when setting the `resource_id` field.
+        allow_population_by_field_name = True
 
 
 class RelationalDBLoadParams(BaseModel):
@@ -127,8 +133,15 @@ UnionLoadParams = Union[
 # Class expected by backend for a load operator.
 class LoadSpec(BaseModel):
     service: ServiceType
-    resource_id: uuid.UUID
+
+    # TODO(ENG-2994): This spec is parsed into a golang struct that still expects
+    #  the "integration" terminology.
+    resource_id: uuid.UUID = Field(alias="integration_id")
     parameters: UnionLoadParams
+
+    class Config:
+        # Prevents any validation errors due to the alias when setting the `resource_id` field.
+        allow_population_by_field_name = True
 
     def identifier(self) -> str:
         if isinstance(self.parameters, RelationalDBLoadParams):

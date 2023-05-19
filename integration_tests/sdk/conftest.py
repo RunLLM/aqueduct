@@ -119,8 +119,6 @@ def data_resource(request, pytestconfig, client):
     The requested data resources are all in the test configuration file, but can be overwritten
     by the `--data-resource` command line flag.
     """
-    print(dir(pytestconfig))
-
     cmdline_data_flag = pytestconfig.getoption("data_resource")
     if cmdline_data_flag is not None:
         if request.param != cmdline_data_flag:

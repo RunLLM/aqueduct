@@ -409,8 +409,10 @@ class APIClient:
             A PreviewResponse object, parsed from the preview endpoint's response.
         """
         headers = self._generate_auth_headers()
+
+        # TODO(ENG-2994): `by_alias` is required until this naming inconsistency is resolved.
         body = {
-            "dag": dag.json(exclude_none=True),
+            "dag": dag.json(exclude_none=True, by_alias=True),
         }
 
         if len(body["dag"]) > MAX_REQUEST_BODY_SIZE and any(
@@ -466,8 +468,9 @@ class APIClient:
         headers = self._generate_auth_headers()
         # This header value will be string "True" or "False"
         headers.update({"run-now": str(run_now)})
+        # TODO(ENG-2994): `by_alias` is required until this naming inconsistency is resolved.
         body = {
-            "dag": dag.json(exclude_none=True),
+            "dag": dag.json(exclude_none=True, by_alias=True),
         }
 
         if len(body["dag"]) > MAX_REQUEST_BODY_SIZE and any(
