@@ -223,7 +223,7 @@ func (*operatorReader) GetDistinctLoadOPsByWorkflow(
 		operator, resource, workflow_dag_edge, workflow_dag
 	WHERE (
 		json_extract(operator.spec, '$.type')='load' AND 
-		resource.id = json_extract(operator.spec, '$.load.resource_id') AND
+		resource.id = json_extract(operator.spec, '$.load.integration_id') AND
 		( 
 			workflow_dag_edge.from_id = operator.id OR 
 			workflow_dag_edge.to_id = operator.id 
@@ -253,8 +253,8 @@ func (*operatorReader) GetExtractAndLoadOPsByResource(
 		`SELECT %s 
 		FROM operator
 		WHERE 
-			json_extract(spec, '$.load.resource_id') = $1
-			OR json_extract(spec, '$.extract.resource_id') = $2`,
+			json_extract(spec, '$.load.integration_id') = $1
+			OR json_extract(spec, '$.extract.integration_id') = $2`,
 		models.OperatorCols(),
 	)
 	args := []interface{}{resourceID, resourceID}
@@ -270,7 +270,7 @@ func (*operatorReader) GetLoadOPsByWorkflowAndResource(
 	objectName string,
 	DB database.Database,
 ) ([]models.Operator, error) {
-	// Get all load operators where table=objectName & resource_id=resourceId
+	// Get all load operators where table=objectName & integration_id=resourceId
 	// and has an edge (in `from_id` or `to_id`) in a DAG belonging to the specified
 	// workflow.
 	query := fmt.Sprintf(`
@@ -282,7 +282,7 @@ func (*operatorReader) GetLoadOPsByWorkflowAndResource(
 			json_extract(spec, '$.load.parameters.table') = $1 OR
 			json_extract(spec, '$.load.parameters.filepath') = $1
 		) AND
-		json_extract(spec, '$.load.resource_id') = $2 AND
+		json_extract(spec, '$.load.integration_id') = $2 AND
 		EXISTS 
 		(
 			SELECT 1 
@@ -313,8 +313,8 @@ func (*operatorReader) GetLoadOPsByResource(
 	query := fmt.Sprintf(
 		`SELECT %s FROM operator
 		WHERE 
-			json_extract(spec, '$.load.resource_id') = $1
-			OR json_extract(spec, '$.extract.resource_id') = $2`,
+			json_extract(spec, '$.load.integration_id') = $1
+			OR json_extract(spec, '$.extract.integration_id') = $2`,
 		models.OperatorCols(),
 	)
 	args := []interface{}{resourceID, resourceID}
@@ -419,7 +419,7 @@ func (*operatorReader) GetByEngineResourceID(
 			fmt.Sprintf(
 				`json_extract(
 					workflow_dag.engine_config,
-					'$.%s.resource_id'
+					'$.%s.integration_id'
 				) = $1`,
 				field),
 		)
@@ -429,7 +429,7 @@ func (*operatorReader) GetByEngineResourceID(
 			fmt.Sprintf(
 				`json_extract(
 					operator.spec,
-					'$.engine_config.%s.resource_id'
+					'$.engine_config.%s.integration_id'
 				) = $1`,
 				field),
 		)
