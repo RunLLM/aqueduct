@@ -65,7 +65,7 @@ func (h *GetConfigHandler) Perform(ctx context.Context, interfaceArgs interface{
 	// the config file. These include resource name, connected-at timestamp, and execution state.
 	currStorageMigrationObj, err := h.StorageMigrationRepo.Current(ctx, h.Database)
 	if err != nil && !errors.Is(err, database.ErrNoRows()) {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error when fetchin current storage resource.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error when fetching current storage resource.")
 	}
 	if err != nil {
 		// If there was no previous storage migration, we must be using the local filesystem.
