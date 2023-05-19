@@ -1,31 +1,30 @@
 import { Link, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 
-import { handleFetchAllWorkflowSummaries } from '../../../reducers/listWorkflowSummaries';
-import { AppDispatch, RootState } from '../../../stores/store';
+import {
+  useDagGetQuery,
+  useDagResultsGetQuery,
+  useWorkflowsGetQuery,
+} from '../../../handlers/AqueductApi';
+import { AppDispatch } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
-import { CheckLevel } from '../../../utils/operators';
-import ExecutionStatus, { LoadingStatusEnum } from '../../../utils/shared';
-import { DagResultResponse, WorkflowResponse } from '../../../handlers/responses/Workflow';
-import { getWorkflowEngineTypes, reduceEngineTypes } from '../../../utils/workflows';
+import getPathPrefix from '../../../utils/getPathPrefix';
+import ExecutionStatus from '../../../utils/shared';
+import { getWorkflowEngineTypes } from '../../../utils/workflows';
 import DefaultLayout from '../../layouts/default';
 import { BreadcrumbLink } from '../../layouts/NavBar';
 import {
   PaginatedSearchTable,
-  PaginatedSearchTableData,
-  PaginatedSearchTableRow,
   SortType,
 } from '../../tables/PaginatedSearchTable';
 import { LayoutProps } from '../types';
+import { useWorkflowNodes, useWorkflowNodesResults } from '../workflow/id/hook';
 import CheckItem from './components/CheckItem';
 import ExecutionStatusLink from './components/ExecutionStatusLink';
 import MetricItem from './components/MetricItem';
 import ResourceItem from './components/ResourceItem';
-import { useWorkflowsGetQuery, useDagResultsGetQuery, useNodesGetQuery, useNodesResultsGetQuery, useDagGetQuery } from '../../../handlers/AqueductApi';
-import getPathPrefix from '../../../utils/getPathPrefix';
-import { useWorkflowNodes, useWorkflowNodesResults } from '../workflow/id/hook';
 
 type Props = {
   user: UserProfile;
@@ -39,11 +38,13 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     document.title = 'Workflows | Aqueduct';
   }, []);
 
-  const { data: workflowData, error: workflowError, isLoading: workflowLoading } = useWorkflowsGetQuery(
-    {
-      apiKey: user.apiKey,
-    }
-  );
+  const {
+    data: workflowData,
+    error: workflowError,
+    isLoading: workflowLoading,
+  } = useWorkflowsGetQuery({
+    apiKey: user.apiKey,
+  });
 
   // If we are still loading the workflows, don't return a page at all.
   // Otherwise, we briefly return a page saying there are no workflows before
@@ -61,7 +62,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       <span>!</span>
     </Typography>
   );
- 
+
   const sortColumns = [
     {
       name: 'Last Run',
@@ -73,7 +74,16 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     },
     {
       name: 'Engine',
-      sortAccessPath: ['Engines', 'props', 'children', 0, 'props', 'children', 'props', 'resource'],
+      sortAccessPath: [
+        'Engines',
+        'props',
+        'children',
+        0,
+        'props',
+        'children',
+        'props',
+        'resource',
+      ],
     },
     {
       name: 'Status',
@@ -81,20 +91,64 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     },
   ];
 
-  const getLatestDagResult = (dagResults) => dagResults.reduce((prev, curr) => curr.exec_state?.timestamps?.pending_at? (new Date(prev.exec_state?.timestamps?.pending_at) < new Date(curr.exec_state?.timestamps?.pending_at)? curr : prev) : curr, {exec_state:{status:ExecutionStatus.Registered, timestamps:{pending_at:0}}});
+  const getLatestDagResult = (dagResults) =>
+    dagResults.reduce(
+      (prev, curr) =>
+        curr.exec_state?.timestamps?.pending_at
+          ? new Date(prev.exec_state?.timestamps?.pending_at) <
+            new Date(curr.exec_state?.timestamps?.pending_at)
+            ? curr
+            : prev
+          : curr,
+      {
+        exec_state: {
+          status: ExecutionStatus.Registered,
+          timestamps: { pending_at: 0 },
+        },
+      }
+    );
+  const LastRunComponent = (row) => {
+    const workflowId = row.id;
+
+    const {
+      data: dagResults,
+      error: dagResultsError,
+      isLoading: dagResultsLoading,
+    } = useDagResultsGetQuery({
+      apiKey: user.apiKey,
+      workflowId: workflowId,
+    });
+
+    let runTime = 'Not run yet.';
+    let time = 0;
+
+    if (!dagResultsLoading && !dagResultsError && dagResults.length > 0) {
+      const latestDagResult = getLatestDagResult(dagResults);
+      time = new Date(
+        latestDagResult.exec_state?.timestamps?.pending_at
+      ).getTime();
+      runTime = new Date(
+        latestDagResult.exec_state?.timestamps?.pending_at
+      ).toLocaleString();
+    }
+
+    return <Typography time={time}>{runTime}</Typography>;
+  };
 
   const columnAction = {
-    "Name": (row) => {
+    Name: (row) => {
       const workflowId = row.id;
       const url = `${getPathPrefix()}/workflow/${workflowId}`;
 
-      const { data: dagResults, error: dagResultsError, isLoading: dagResultsLoading } = useDagResultsGetQuery(
-        {
-          apiKey: user.apiKey,
-          workflowId: workflowId
-        }
-      );
-      var status = ExecutionStatus.Unknown;
+      const {
+        data: dagResults,
+        error: dagResultsError,
+        isLoading: dagResultsLoading,
+      } = useDagResultsGetQuery({
+        apiKey: user.apiKey,
+        workflowId: workflowId,
+      });
+      let status = ExecutionStatus.Unknown;
 
       if (!dagResultsLoading && !dagResultsError && dagResults.length > 0) {
         const latestDagResult = getLatestDagResult(dagResults);
@@ -102,46 +156,32 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           status = latestDagResult.exec_state.status;
         }
       }
-      
+
       return <ExecutionStatusLink name={row.name} url={url} status={status} />;
     },
-    "Last Run": (row) => {
+    'Last Run': LastRunComponent,
+    Engines: (row) => {
       const workflowId = row.id;
 
-      const { data: dagResults, error: dagResultsError, isLoading: dagResultsLoading } = useDagResultsGetQuery(
-        {
-          apiKey: user.apiKey,
-          workflowId: workflowId
-        }
-      );
+      const {
+        data: dagResults,
+        error: dagResultsError,
+        isLoading: dagResultsLoading,
+      } = useDagResultsGetQuery({
+        apiKey: user.apiKey,
+        workflowId: workflowId,
+      });
 
-      var runTime = "Not run yet.";
-      var time = 0;
-
-      if (!dagResultsLoading && !dagResultsError && dagResults.length > 0) {
-        const latestDagResult = getLatestDagResult(dagResults);
-        time = new Date(latestDagResult.exec_state?.timestamps?.pending_at).getTime();
-        runTime = new Date(latestDagResult.exec_state?.timestamps?.pending_at).toLocaleString();
-      }
-
-      return <Typography time={time}>{runTime}</Typography>; 
-    },
-    "Engines": (row) => {
-      const workflowId = row.id;
-
-      const { data: dagResults, error: dagResultsError, isLoading: dagResultsLoading } = useDagResultsGetQuery(
-        {
-          apiKey: user.apiKey,
-          workflowId: workflowId
-        }
-      );
-
-      var latestDagId;
+      let latestDagId;
       if (!dagResultsLoading && !dagResultsError && dagResults.length > 0) {
         const latestDagResult = getLatestDagResult(dagResults);
         latestDagId = latestDagResult.dag_id;
       }
-      const { data: dag, error: dagError, isLoading: dagLoading } = useDagGetQuery(
+      const {
+        data: dag,
+        error: dagError,
+        isLoading: dagLoading,
+      } = useDagGetQuery(
         {
           apiKey: user.apiKey,
           workflowId: workflowId,
@@ -154,9 +194,9 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
 
       const nodes = useWorkflowNodes(user.apiKey, workflowId, latestDagId);
 
-      var engines = ['Unknown'];
+      let engines = ['Unknown'];
       if (!dagLoading && !dagError && dag) {
-        let workflowDag = structuredClone(dag);
+        const workflowDag = structuredClone(dag);
         workflowDag.operators = nodes.operators;
         engines = getWorkflowEngineTypes(workflowDag);
       }
@@ -175,18 +215,20 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         </Box>
       );
     },
-    "Metrics": (row) => {
+    Metrics: (row) => {
       const workflowId = row.id;
 
-      const { data: dagResults, error: dagResultsError, isLoading: dagResultsLoading } = useDagResultsGetQuery(
-        {
-          apiKey: user.apiKey,
-          workflowId: workflowId
-        }
-      );
+      const {
+        data: dagResults,
+        error: dagResultsError,
+        isLoading: dagResultsLoading,
+      } = useDagResultsGetQuery({
+        apiKey: user.apiKey,
+        workflowId: workflowId,
+      });
 
-      var latestDagResultId;
-      var latestDagId;
+      let latestDagResultId;
+      let latestDagId;
       if (!dagResultsLoading && !dagResultsError && dagResults.length > 0) {
         const latestDagResult = getLatestDagResult(dagResults);
         latestDagResultId = latestDagResult.id;
@@ -194,31 +236,39 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       }
 
       const nodes = useWorkflowNodes(user.apiKey, workflowId, latestDagId);
-      const nodesResults = useWorkflowNodesResults(user.apiKey, workflowId, latestDagResultId);
+      const nodesResults = useWorkflowNodesResults(
+        user.apiKey,
+        workflowId,
+        latestDagResultId
+      );
 
-      let metricNodes = Object.values(nodes.operators).filter((op) => op.spec.type === "metric").map((op) => {
-        const artifactId = op.outputs[0] // Assuming there is only one output artifact
-        return {
-          metricId: op.id,
-          name: op.name,
-          value: nodesResults.artifacts[artifactId]?.content_serialized,
-          status: nodesResults.artifacts[artifactId]?.exec_state?.status,
-        }
-      })
-      return <MetricItem metrics={metricNodes} />; 
+      const metricNodes = Object.values(nodes.operators)
+        .filter((op) => op.spec.type === 'metric')
+        .map((op) => {
+          const artifactId = op.outputs[0]; // Assuming there is only one output artifact
+          return {
+            metricId: op.id,
+            name: op.name,
+            value: nodesResults.artifacts[artifactId]?.content_serialized,
+            status: nodesResults.artifacts[artifactId]?.exec_state?.status,
+          };
+        });
+      return <MetricItem metrics={metricNodes} />;
     },
-    "Checks": (row) => {
+    Checks: (row) => {
       const workflowId = row.id;
 
-      const { data: dagResults, error: dagResultsError, isLoading: dagResultsLoading } = useDagResultsGetQuery(
-        {
-          apiKey: user.apiKey,
-          workflowId: workflowId
-        }
-      );
+      const {
+        data: dagResults,
+        error: dagResultsError,
+        isLoading: dagResultsLoading,
+      } = useDagResultsGetQuery({
+        apiKey: user.apiKey,
+        workflowId: workflowId,
+      });
 
-      var latestDagResultId;
-      var latestDagId;
+      let latestDagResultId;
+      let latestDagId;
       if (!dagResultsLoading && !dagResultsError && dagResults.length > 0) {
         const latestDagResult = getLatestDagResult(dagResults);
         latestDagResultId = latestDagResult.id;
@@ -226,20 +276,28 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       }
 
       const nodes = useWorkflowNodes(user.apiKey, workflowId, latestDagId);
-      const nodesResults = useWorkflowNodesResults(user.apiKey, workflowId, latestDagResultId);
+      const nodesResults = useWorkflowNodesResults(
+        user.apiKey,
+        workflowId,
+        latestDagResultId
+      );
 
-      let checkNodes = Object.values(nodes.operators).filter((op) => op.spec.type === "check").map((op) => {
-        const artifactId = op.outputs[0] // Assuming there is only one output artifact
-        return {
-          checkId: op.id,
-          name: op.name,
-          status: nodesResults.artifacts[artifactId]?.exec_state?.status,
-          level: op.spec.check.level,
-          value: nodesResults.artifacts[artifactId]?.content_serialized,
-          timestamp: nodesResults.artifacts[artifactId]?.exec_state?.timestamps?.finished_at,
-        }
-      })
-      return <CheckItem checks={checkNodes} />; 
+      const checkNodes = Object.values(nodes.operators)
+        .filter((op) => op.spec.type === 'check')
+        .map((op) => {
+          const artifactId = op.outputs[0]; // Assuming there is only one output artifact
+          return {
+            checkId: op.id,
+            name: op.name,
+            status: nodesResults.artifacts[artifactId]?.exec_state?.status,
+            level: op.spec.check.level,
+            value: nodesResults.artifacts[artifactId]?.content_serialized,
+            timestamp:
+              nodesResults.artifacts[artifactId]?.exec_state?.timestamps
+                ?.finished_at,
+          };
+        });
+      return <CheckItem checks={checkNodes} />;
     },
   };
   const columns = Object.keys(columnAction);

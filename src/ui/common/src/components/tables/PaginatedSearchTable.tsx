@@ -21,9 +21,7 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 
 import { theme } from '../../styles/theme/theme';
-import { DataSchema } from '../../utils/data';
 import { Button } from '../primitives/Button.styles';
-import { WorkflowResponse } from '../../handlers/responses/workflow';
 
 export type PaginatedSearchTableElement =
   | string
@@ -52,9 +50,9 @@ export enum SortType {
 }
 
 type SortConfig = {
-  name: SortColumn,
-  sortType: SortType,
-}
+  name: SortColumn;
+  sortType: SortType;
+};
 
 export interface PaginatedSearchTableProps {
   data: object[];
@@ -99,18 +97,18 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
     Returns the value to be inserted at row, column.
     If a callback is passed in, uses the onGetColumnValue to support things like rendering arbitrary react components.
   */
-    const getColumnValue = (row, column) => {
-      if (onGetColumnValue) {
-        return onGetColumnValue(row, column);
-      }
-      const value = row[column.name];
-      return value;
-    };
+  const getColumnValue = (row, column) => {
+    if (onGetColumnValue) {
+      return onGetColumnValue(row, column);
+    }
+    const value = row[column.name];
+    return value;
+  };
 
-  var rowData = [...data].map((row) => {
-    var rowData = {};
+  const rowData = [...data].map((row) => {
+    const rowData = {};
     columns.forEach((column) => {
-      rowData[column] = getColumnValue(row, column)
+      rowData[column] = getColumnValue(row, column);
     });
     return rowData;
   });
@@ -147,7 +145,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
             }
             shouldInclude = v.toLowerCase().includes(searchQuery.toLowerCase());
           }
-        })
+        });
         break;
       }
       default: {
@@ -177,7 +175,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
 
   useEffect(() => {
     if (searchQuery.length > 0) {
-      const filteredRows = rowData.filter((rowItem) => {
+      const filteredRows = rows.filter((rowItem) => {
         return shouldInclude(rowItem, searchQuery, searchColumn);
       });
       setRows(filteredRows);
@@ -235,7 +233,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
   // Need to slice (.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)) after map because we do the API calls in the GetColumnValue function.
   // As a result, if there are less than rowsPerPage number of rows, less hooks are rendered than expected. Thus, we render all hooks.
   // Can investigate optimization as a future step.
-  var displayRows = rows
+  const displayRows = rows
     .map((row, rowIndex) => {
       return (
         <TableRow
@@ -258,9 +256,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
                   fontSize: '16px', // This is needed for consistency.
                 }}
               >
-                <Box padding="8px">
-                  {row[column]}
-                </Box>
+                <Box padding="8px">{row[column]}</Box>
               </TableCell>
             );
           })}
@@ -452,9 +448,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
                 })}
               </TableRow>
             </TableHead>
-            <TableBody>
-              {displayRows}
-            </TableBody>
+            <TableBody>{displayRows}</TableBody>
           </Table>
         </TableContainer>
         <TablePagination
