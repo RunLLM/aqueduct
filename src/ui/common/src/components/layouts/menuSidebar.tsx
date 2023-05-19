@@ -120,22 +120,17 @@ const MenuSidebar: React.FC<{
 }> = ({ onSidebarItemClicked, user }) => {
   const dispatch: AppDispatch = useDispatch();
   const [currentPage, setCurrentPage] = useState(undefined);
-  const [versionNumber, setVersionNumber] = useState('');
   const location = useLocation();
 
-  const { data } = useEnvironmentGetQuery({ apiKey: user.apiKey } as any, {
+  const { data } = useEnvironmentGetQuery({ apiKey: user.apiKey }, {
     skip: !user?.apiKey,
   });
+
+  console.log('data: ', data);
 
   useEffect(() => {
     setCurrentPage(location.pathname);
   }, [dispatch, location.pathname]);
-
-  useEffect(() => {
-    if (data) {
-      setVersionNumber(data.version);
-    }
-  }, [user.apiKey, data]);
 
   const pathPrefix = getPathPrefix();
   return (
@@ -267,7 +262,7 @@ const MenuSidebar: React.FC<{
         </Box>
         <Box marginLeft="14px" marginBottom="16px">
           <Typography variant="caption" sx={{ color: 'white' }}>
-            {versionNumber.length > 0 ? `v${versionNumber}` : ''}
+            {data?.version ? `v${data.version}` : ''}
           </Typography>
         </Box>
       </Box>

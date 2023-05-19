@@ -11,7 +11,7 @@ import (
 
 const inK8sClusterEnvVarName = "AQUEDUCT_IN_K8S_CLUSTER"
 
-type getServerEnvironmentResponse struct {
+type getEnvironmentResponse struct {
 	// Whether the server is running within a k8s cluster.
 	InK8sCluster bool   `json:"inK8sCluster"`
 	Version      string `json:"version"`
@@ -20,6 +20,7 @@ type getServerEnvironmentResponse struct {
 // Route: /api/v2/environment
 // This file should map directly to
 // src/ui/common/src/handlers/v2/EnvironmentGet.tsx
+//
 // Method: GET
 // Request:
 //
@@ -27,25 +28,25 @@ type getServerEnvironmentResponse struct {
 //		`api-key`: user's API Key
 //
 // Response: Aqueduct server's environment variables.
-type GetServerEnvironmentHandler struct {
+type EnvironmentHandler struct {
 	handler.GetHandler
 }
 
-func (*GetServerEnvironmentHandler) Name() string {
-	return "GetServerEnvironment"
+func (*EnvironmentHandler) Name() string {
+	return "GetEnvironment"
 }
 
-func (*GetServerEnvironmentHandler) Prepare(r *http.Request) (interface{}, int, error) {
+func (*EnvironmentHandler) Prepare(r *http.Request) (interface{}, int, error) {
 	return nil, http.StatusOK, nil
 }
 
-func (h *GetServerEnvironmentHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
+func (h *EnvironmentHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	inCluster := false
 	if os.Getenv(inK8sClusterEnvVarName) == "1" {
 		inCluster = true
 	}
 
-	return getServerEnvironmentResponse{
+	return getEnvironmentResponse{
 		InK8sCluster: inCluster,
 		Version:      lib.ServerVersionNumber,
 	}, http.StatusOK, nil
