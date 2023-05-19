@@ -88,15 +88,9 @@ func (h *NodeMetricResultContentGetHandler) Perform(ctx context.Context, interfa
 	args := interfaceArgs.(*nodeResultGetArgs)
 	emptyResp := &nodeResultGetResponse{}
 
-<<<<<<< HEAD
-	dag, err := h.DAGRepo.GetByDAGResult(
-		ctx,
-		args.nodeResultID,
-=======
 	dag, err := h.DAGRepo.Get(
 		ctx,
 		args.dagID,
->>>>>>> 52ad1258eb8084018de394390c4cc2250e14ed57
 		h.Database,
 	)
 	if err != nil {
@@ -155,16 +149,7 @@ func (h *NodeMetricResultContentGetHandler) Perform(ctx context.Context, interfa
 		}
 
 		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve data for the artifact result.")
-<<<<<<< HEAD
-	} else if !errors.Is(err, storage.ErrObjectDoesNotExist()) {
-		return emptyResp, http.StatusInternalServerError, errors.Wrap(err, "Failed to retrieve data for the artifact result.")
 	}
 
 	return &nodeResultGetResponse{IsDownsampled: isDownsampled, Content: data}, http.StatusOK, nil
 }
-=======
-	}
-
-	return &nodeResultGetResponse{IsDownsampled: isDownsampled, Content: data}, http.StatusOK, nil
-}
->>>>>>> 52ad1258eb8084018de394390c4cc2250e14ed57
