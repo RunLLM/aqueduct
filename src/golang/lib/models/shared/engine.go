@@ -37,7 +37,7 @@ type AqueductCondaConfig struct {
 }
 
 type AirflowConfig struct {
-	ResourceID uuid.UUID `json:"resource_id"  yaml:"resource_id"`
+	ResourceID uuid.UUID `json:"integration_id"  yaml:"integration_id"`
 	DagID      string    `json:"dag_id"  yaml:"dag_id"`
 	// MatchesAirflow indicates whether this DAG matches the current DAG registered with Airflow
 	MatchesAirflow             bool                 `json:"matches_airflow"  yaml:"matches_airflow"`
@@ -48,19 +48,19 @@ type AirflowConfig struct {
 }
 
 type K8sConfig struct {
-	ResourceID uuid.UUID `json:"resource_id"  yaml:"resource_id"`
+	ResourceID uuid.UUID `json:"integration_id"  yaml:"integration_id"`
 }
 
 type LambdaConfig struct {
-	ResourceID uuid.UUID `json:"resource_id"  yaml:"resource_id"`
+	ResourceID uuid.UUID `json:"integration_id"  yaml:"integration_id"`
 }
 
 type DatabricksConfig struct {
-	ResourceID uuid.UUID `json:"resource_id"  yaml:"resource_id"`
+	ResourceID uuid.UUID `json:"integration_id"  yaml:"integration_id"`
 }
 
 type SparkConfig struct {
-	ResourceID uuid.UUID `json:"resource_id"  yaml:"resource_id"`
+	ResourceID uuid.UUID `json:"integration_id"  yaml:"integration_id"`
 	// URI to the packaged environment. This is passed when creating and uploading the
 	// environment during execution.
 	EnvironmentPathURI string `yaml:"environmentPathUri" json:"environment_path_uri"`
