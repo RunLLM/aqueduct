@@ -136,7 +136,7 @@ export const ConnectedIntegrations: React.FC<ConnectedIntegrationsProps> = ({
             }
 
             return (
-              <Box key={idx} sx={{ mx: 1, my: 1 }}>
+              <Box key={idx} sx={{ mr: 1, my: 1 }}>
                 <Link
                   underline="none"
                   color="inherit"

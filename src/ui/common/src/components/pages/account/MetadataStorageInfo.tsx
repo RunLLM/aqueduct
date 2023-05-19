@@ -120,7 +120,7 @@ export const MetadataStorageInfo: React.FC<MetadataStorageInfoProps> = ({
   }
 
   return (
-    <Box sx={{ mx: 1, my: 1, display: 'flex', alignItems: 'flex-start' }}>
+    <Box sx={{ my: 1, display: 'flex', alignItems: 'flex-start' }}>
       <Link
         underline="none"
         color="inherit"
