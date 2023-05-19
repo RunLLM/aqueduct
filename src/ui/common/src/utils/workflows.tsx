@@ -210,6 +210,7 @@ export type ListWorkflowResponse = {
   workflows: ListWorkflowSummary[];
 };
 
+// TODO Eunice: refactor
 export function getWorkflowEngineTypes(dag: WorkflowDag): EngineType[] {
   const dagType = dag.engine_config.type;
   const allOpTypes = Array.from(

@@ -23,7 +23,7 @@ import React, { useEffect, useState } from 'react';
 import { theme } from '../../styles/theme/theme';
 import { DataSchema } from '../../utils/data';
 import { Button } from '../primitives/Button.styles';
-import { WorkflowsGetResponse } from '../../handlers/v2/WorkflowsGet';
+import { WorkflowResponse } from '../../handlers/responses/workflow';
 
 export type PaginatedSearchTableElement =
   | string
@@ -45,40 +45,32 @@ export type SortColumn = {
   sortAccessPath: string[];
 };
 
-enum SortType {
+export enum SortType {
   None,
   Ascending,
   Descending,
 }
 
-interface PaginatedSearchTableRowProps {
-  data: WorkflowsGetResponse;
-  show: boolean;
+type SortConfig = {
+  name: SortColumn,
+  sortType: SortType,
 }
 
-const PaginatedSearchTableRow: React.FC<PaginatedSearchTableRowProps> = ({
-  data,
-  show = true,
-}) => {
-  if (show) {
-    return <TableRow>
-      
-    </TableRow>
-  }
-};
-
 export interface PaginatedSearchTableProps {
-  data: WorkflowsGetResponse;
+  data: object[];
+  columns: string[];
   searchEnabled?: boolean;
   onGetColumnValue?: (row, column) => PaginatedSearchTableElement;
   onShouldInclude?: (rowItem, searchQuery, searchColumn) => boolean;
   onChangeRowsPerPage?: (rowsPerPage) => void;
   savedRowsPerPage?: number;
   sortColumns?: SortColumn[];
+  defaultSortConfig?: SortConfig;
 }
 
 export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
   data,
+  columns = [],
   onGetColumnValue,
   searchEnabled = false,
   onShouldInclude,
@@ -93,7 +85,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   // TODO: Add dropdown to select which column to search the table on.
   // TODO: add setSearchColumn to the array below.
-  const [searchColumn] = useState('name');
+  const [searchColumn] = useState('Name');
 
   const [sortMenuAnchor, setSortMenuAnchor] = useState<HTMLButtonElement>(null);
   const [sortTypeMenuAnchor, setSortTypeMenuAnchor] =
@@ -102,16 +94,29 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
     sortColumn: { name: null, sortAccessPath: [] as string[] },
     sortType: SortType.None,
   });
-  data = {
-    data:[],
-    schema: {
-      fields:[],
-    },
-  };
-  // TODO EUNICE: Filter WorkflowsGetResponse then for each row in the filtered WorkflowsGetResponse make row
-  const [rows, setRows] = useState([...data.data]);
 
-  const columns = data.schema.fields;
+  /*
+    Returns the value to be inserted at row, column.
+    If a callback is passed in, uses the onGetColumnValue to support things like rendering arbitrary react components.
+  */
+    const getColumnValue = (row, column) => {
+      if (onGetColumnValue) {
+        return onGetColumnValue(row, column);
+      }
+      const value = row[column.name];
+      return value;
+    };
+
+  var rowData = [...data].map((row) => {
+    var rowData = {};
+    columns.forEach((column) => {
+      rowData[column] = getColumnValue(row, column)
+    });
+    return rowData;
+  });
+
+  const [rows, setRows] = useState(rowData);
+  const [orderedRows, setOrderedRows] = useState(rowData);
 
   /**
    * Function used to test whether a row should be included in search results.
@@ -133,9 +138,16 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
     // filter rows by name, which is our default filter column.
     let shouldInclude = false;
     switch (searchColumn) {
-      case 'name': {
-        const name = rowItem.name.name as string;
-        shouldInclude = name.toLowerCase().includes(searchQuery.toLowerCase());
+      case 'Name': {
+        sortColumns.forEach((column) => {
+          if (column.name === searchColumn) {
+            let v = rowItem;
+            for (const path of column.sortAccessPath) {
+              v = v[path];
+            }
+            shouldInclude = v.toLowerCase().includes(searchQuery.toLowerCase());
+          }
+        })
         break;
       }
       default: {
@@ -163,30 +175,20 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
     setPage(0);
   };
 
-  /*
-    Returns the value to be inserted at row, column.
-    If a callback is passed in, uses the onGetColumnValue to support things like rendering arbitrary react components.
-  */
-  const getColumnValue = (row, column) => {
-    if (onGetColumnValue) {
-      return onGetColumnValue(row, column);
-    }
-
-    const value = row[column.name];
-    return value;
-  };
-
   useEffect(() => {
     if (searchQuery.length > 0) {
-      const filteredRows = data.data.filter((rowItem) => {
+      const filteredRows = rowData.filter((rowItem) => {
         return shouldInclude(rowItem, searchQuery, searchColumn);
       });
-
       setRows(filteredRows);
     } else {
-      setRows(data.data);
+      if (sortConfig.sortType !== SortType.None) {
+        setRows(orderedRows);
+      } else {
+        setRows(rowData);
+      }
     }
-  }, [searchQuery, data]);
+  }, [searchQuery, rowData]);
 
   useEffect(() => {
     if (
@@ -194,7 +196,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
       !sortConfig.sortColumn.name ||
       sortConfig.sortType === SortType.None
     ) {
-      setRows(data.data);
+      setRows(rowData);
       return;
     }
 
@@ -226,9 +228,46 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
         }
       }
     });
-
     setRows(sortedRows);
+    setOrderedRows(sortedRows);
   }, [sortConfig]);
+
+  // Need to slice (.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)) after map because we do the API calls in the GetColumnValue function.
+  // As a result, if there are less than rowsPerPage number of rows, less hooks are rendered than expected. Thus, we render all hooks.
+  // Can investigate optimization as a future step.
+  var displayRows = rows
+    .map((row, rowIndex) => {
+      return (
+        <TableRow
+          hover
+          role="checkbox"
+          tabIndex={-1}
+          key={`table-row-${rowIndex}`}
+        >
+          {columns.map((column, columnIndex) => {
+            return (
+              <TableCell
+                key={`table-col-${columnIndex}`}
+                align={'left'}
+                padding="none"
+                sx={{
+                  borderRight:
+                    columnIndex < columns.length - 1
+                      ? '1px solid rgba(224, 224, 224, 1);'
+                      : 'none',
+                  fontSize: '16px', // This is needed for consistency.
+                }}
+              >
+                <Box padding="8px">
+                  {row[column]}
+                </Box>
+              </TableCell>
+            );
+          })}
+        </TableRow>
+      );
+    })
+    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
     <>
@@ -378,10 +417,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
           <Table stickyHeader aria-label="sticky table">
             <TableHead>
               <TableRow>
-                {columns.map((column, columnIndex) => {
-                  const columnName = column.displayName
-                    ? column.displayName
-                    : column.name;
+                {columns.map((columnName, columnIndex) => {
                   return (
                     <TableCell
                       padding="none"
@@ -417,39 +453,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {rows
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((row, rowIndex) => {
-                  return (
-                    <TableRow
-                      hover
-                      role="checkbox"
-                      tabIndex={-1}
-                      key={`table-row-${rowIndex}`}
-                    >
-                      {columns.map((column, columnIndex) => {
-                        return (
-                          <TableCell
-                            key={`table-col-${columnIndex}`}
-                            align={'left'}
-                            padding="none"
-                            sx={{
-                              borderRight:
-                                columnIndex < columns.length - 1
-                                  ? '1px solid rgba(224, 224, 224, 1);'
-                                  : 'none',
-                              fontSize: '16px', // This is needed for consistency.
-                            }}
-                          >
-                            <Box padding="8px">
-                              {getColumnValue(row, column)}
-                            </Box>
-                          </TableCell>
-                        );
-                      })}
-                    </TableRow>
-                  );
-                })}
+              {displayRows}
             </TableBody>
           </Table>
         </TableContainer>
