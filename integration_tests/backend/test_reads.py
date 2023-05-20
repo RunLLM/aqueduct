@@ -8,7 +8,6 @@ import requests
 import utils
 from aqueduct.constants.enums import RuntimeType
 from aqueduct.models.response_models import (
-    GetOperatorWithArtifactNodeResponse,
     GetArtifactResultResponse,
     GetDagResponse,
     GetDagResultResponse,
