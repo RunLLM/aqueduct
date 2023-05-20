@@ -52,10 +52,10 @@ const WithOperatorHeader: React.FC<Props> = ({
   const operatorStatus = operatorResult?.exec_state?.status;
   const mapArtifacts = (artfIds: string[]) =>
     artfIds
-      .map((artifactId) => (nodes ?? {})[artifactId])
+      .map((artifactId) => (nodes?.artifacts ?? {})[artifactId])
       .filter((artf) => !!artf);
-  const inputs = mapArtifacts(operator.inputs);
-  const outputs = mapArtifacts(operator.outputs);
+  const inputs = mapArtifacts(operator.inputs ?? []);
+  const outputs = mapArtifacts(operator.outputs ?? []);
 
   let checkLevelDisplay = null;
   if (operator?.spec?.check?.level) {

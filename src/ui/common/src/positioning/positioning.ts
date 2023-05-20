@@ -88,7 +88,7 @@ function layerNodes(operators: { [id: string]: OperatorResponse }): Layer[] {
       }
     });
 
-    layers[layers.length - 2].numActiveEdges = activeEdges;
+    layers[layers.length - 1].numActiveEdges = activeEdges;
   }
 
   return layers;
@@ -270,7 +270,7 @@ export function visualizeDag(
 ): VisualizedDag {
   const nodePositions = positionNodes(nodes.operators);
   const opNodeComponents = Object.values(nodes.operators)
-    .filter((op) => op.spec?.type === OperatorType.Param)
+    .filter((op) => op.spec?.type !== OperatorType.Param)
     .map((op) => {
       const pos = nodePositions[op.id];
       if (!pos) {

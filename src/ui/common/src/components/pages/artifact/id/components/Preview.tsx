@@ -3,13 +3,13 @@ import React from 'react';
 
 import ArtifactContent from '../../../../../components/workflows/artifact/content';
 import { ArtifactResultResponse } from '../../../../../handlers/responses/node';
-import { ArtifactResultContent } from '../../../../../utils/artifacts';
+import { NodeArtifactResultContentGetResponse } from '../../../../../handlers/v2/NodeArtifactResultContentGet';
 
 type PreviewProps = {
   upstreamPending: boolean;
   previewAvailable: boolean;
   artifactResult?: ArtifactResultResponse;
-  content: ArtifactResultContent;
+  content?: NodeArtifactResultContentGetResponse;
   contentLoading: boolean;
   contentError: string;
 };
