@@ -249,9 +249,9 @@ def run_extract(
 def run_delete_saved_objects(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
     results = {}
     assert isinstance(spec.connector_name, dict)
-    for integration in spec.connector_name:
-        op = setup_connector(spec.connector_name[integration], spec.connector_config[integration])
-        results[integration] = op.delete(spec.integration_to_object[integration])
+    for resource in spec.connector_name:
+        op = setup_connector(spec.connector_name[resource], spec.connector_config[resource])
+        results[resource] = op.delete(spec.resource_to_object[resource])
     utils.write_delete_saved_objects_results(storage, spec.output_content_path, results)
 
 

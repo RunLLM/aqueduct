@@ -28,10 +28,10 @@ const (
 	PollPreviewTableTimeout  = 60 * time.Second
 )
 
-// Route: /integration/{resourceID}/preview
+// Route: /resource/{resourceID}/preview
 // Method: GET
 // Params:
-//	`resourceID`: ID of the relational database integration
+//	`resourceID`: ID of the relational database resource
 // Request:
 //	Headers:
 //		`api-key`: user's API Key
@@ -73,7 +73,7 @@ func (h *PreviewTableHandler) Prepare(r *http.Request) (interface{}, int, error)
 		return nil, statusCode, err
 	}
 
-	resourceIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
+	resourceIDStr := chi.URLParam(r, routes.ResourceIDUrlParam)
 	resourceID, err := uuid.Parse(resourceIDStr)
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed resource ID.")

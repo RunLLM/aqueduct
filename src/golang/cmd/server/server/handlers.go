@@ -85,12 +85,12 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			OperatorResultRepo: s.OperatorResultRepo,
 			ArtifactResultRepo: s.ArtifactResultRepo,
 		},
-		routes.IntegrationOperatorsRoute: &v2.ResourceOperatorsGetHandler{
+		routes.ResourceOperatorsRoute: &v2.ResourceOperatorsGetHandler{
 			Database:     s.Database,
 			ResourceRepo: s.ResourceRepo,
 			OperatorRepo: s.OperatorRepo,
 		},
-		routes.IntegrationsWorkflowsRoute: &v2.ResourcesWorkflowsGetHandler{
+		routes.ResourcesWorkflowsRoute: &v2.ResourcesWorkflowsGetHandler{
 			Database:      s.Database,
 			ResourceRepo:  s.ResourceRepo,
 			WorkflowRepo:  s.WorkflowRepo,
@@ -98,7 +98,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			DAGResultRepo: s.DAGResultRepo,
 			OperatorRepo:  s.OperatorRepo,
 		},
-		routes.IntegrationWorkflowsRoute: &v2.ResourceWorkflowsGetHandler{
+		routes.ResourceWorkflowsRoute: &v2.ResourceWorkflowsGetHandler{
 			Database:      s.Database,
 			ResourceRepo:  s.ResourceRepo,
 			WorkflowRepo:  s.WorkflowRepo,
@@ -114,7 +114,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 
 			NotificationRepo: s.NotificationRepo,
 		},
-		routes.ConnectIntegrationRoute: &handler.ConnectResourceHandler{
+		routes.ConnectResourceRoute: &handler.ConnectResourceHandler{
 			Database:   s.Database,
 			JobManager: s.JobManager,
 
@@ -128,7 +128,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			PauseServer:   s.Pause,
 			RestartServer: s.Restart,
 		},
-		routes.DeleteIntegrationRoute: &handler.DeleteResourceHandler{
+		routes.DeleteResourceRoute: &handler.DeleteResourceHandler{
 			Database: s.Database,
 
 			DAGRepo:                  s.DAGRepo,
@@ -150,7 +150,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			DagRepo:                  s.DAGRepo,
 			ArtifactResultRepo:       s.ArtifactResultRepo,
 		},
-		routes.EditIntegrationRoute: &handler.EditResourceHandler{
+		routes.EditResourceRoute: &handler.EditResourceHandler{
 			Database:   s.Database,
 			JobManager: s.JobManager,
 
@@ -271,7 +271,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			ArtifactResultRepo: s.ArtifactResultRepo,
 			DAGRepo:            s.DAGRepo,
 		},
-		routes.ListIntegrationsRoute: &handler.ListResourcesHandler{
+		routes.ListResourcesRoute: &handler.ListResourcesHandler{
 			Database: s.Database,
 
 			ResourceRepo: s.ResourceRepo,
@@ -297,7 +297,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			DAGResultRepo:    s.DAGResultRepo,
 			NotificationRepo: s.NotificationRepo,
 		},
-		routes.ListOperatorsForIntegrationRoute: &handler.ListOperatorsResourecHandler{
+		routes.ListOperatorsForResourceRoute: &handler.ListOperatorsResourecHandler{
 			Database: s.Database,
 
 			DAGRepo:      s.DAGRepo,
@@ -337,7 +337,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			ResourceRepo: s.ResourceRepo,
 			OperatorRepo: s.OperatorRepo,
 		},
-		routes.ListIntegrationObjectsRoute: &handler.ListResourceObjectsHandler{
+		routes.ListResourceObjectsRoute: &handler.ListResourceObjectsHandler{
 			Database:   s.Database,
 			JobManager: s.JobManager,
 
@@ -393,7 +393,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			Database: s.Database,
 			UserRepo: s.UserRepo,
 		},
-		routes.TestIntegrationRoute: &handler.TestResourceHandler{
+		routes.TestResourceRoute: &handler.TestResourceHandler{
 			Database:   s.Database,
 			JobManager: s.JobManager,
 

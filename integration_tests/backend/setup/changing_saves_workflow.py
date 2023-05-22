@@ -8,35 +8,35 @@ import aqueduct
 ###
 
 
-def setup_changing_saves(client: aqueduct.Client, integration_name: str) -> str:
+def setup_changing_saves(client: aqueduct.Client, resource_name: str) -> str:
     name = "Test: Changing Saves"
     n_runs = 4
-    integration = client.resource(name=integration_name)
+    resource = client.resource(name=resource_name)
 
     ###
-    table = integration.sql(query="SELECT * FROM wine;")
-    integration.save(table, "table_1", "replace")
+    table = resource.sql(query="SELECT * FROM wine;")
+    resource.save(table, "table_1", "replace")
     flow = client.publish_flow(
         name=name,
         artifacts=[table],
     )
 
     ### update
-    integration.save(table, "table_1", "append")
+    resource.save(table, "table_1", "append")
     flow = client.publish_flow(
         name=name,
         artifacts=[table],
     )
 
     ### update
-    integration.save(table, "table_1", "append")
+    resource.save(table, "table_1", "append")
     flow = client.publish_flow(
         name=name,
         artifacts=[table],
     )
 
     ### update
-    integration.save(table, "table_2", "replace")
+    resource.save(table, "table_2", "replace")
     flow = client.publish_flow(
         name=name,
         artifacts=[table],

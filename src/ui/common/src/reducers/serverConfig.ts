@@ -9,8 +9,8 @@ export type ServerConfig = {
   apiKey: string;
   storageConfig: {
     type: string;
-    integration_id?: string;
-    integration_name: string;
+    resource_id?: string;
+    resource_name: string;
     connected_at?: number;
     exec_state: ExecState;
     fileConfig?: {

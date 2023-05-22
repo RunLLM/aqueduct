@@ -1,4 +1,4 @@
-import { Service } from './integrations';
+import { Service } from './resources';
 import ExecutionStatus from './shared';
 
 export const DataColumnTypeNames = [
@@ -47,7 +47,7 @@ export type Data = {
 
 export type DataPreviewLoadSpec = {
   service: Service;
-  integration_id: string;
+  resource_id: string;
   parameters: Record<string, string>;
 };
 

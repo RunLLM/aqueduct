@@ -25,24 +25,24 @@ import (
 	"github.com/google/uuid"
 )
 
-// Route: /integration/{resourceID}/create
+// Route: /resource/{resourceID}/create
 // Method: POST
 // Params:
-//	`resourceID`: ID for `integration` object
+//	`resourceID`: ID for `resource` object
 //	** ONLY SUPPORTS CREATING TABLES FOR THE DEMO DB **
 // Request:
 //	Headers:
 //		`table-name`: name of table to create
 //		`api-key`: user's API Key
 // Body:
-//		the CSV file to upload to the integration.
+//		the CSV file to upload to the resource.
 
 const (
 	pollCreateInterval = 500 * time.Millisecond
 	pollCreateTimeout  = 2 * time.Minute
 )
 
-// Creates a table in the specified integration.
+// Creates a table in the specified resource.
 type CreateTableHandler struct {
 	PostHandler
 
@@ -54,9 +54,9 @@ type CreateTableHandler struct {
 
 type CreateTableArgs struct {
 	*aq_context.AqContext
-	tableName     string
-	integrationId uuid.UUID
-	csv           []byte
+	tableName  string
+	resourceId uuid.UUID
+	csv        []byte
 }
 
 type CreateTableResponse struct{}
@@ -71,10 +71,10 @@ func (h *CreateTableHandler) Prepare(r *http.Request) (interface{}, int, error) 
 		return nil, statusCode, errors.Wrap(err, "Unable to parse arguments.")
 	}
 	tableName := r.Header.Get(routes.TableNameHeader)
-	integrationIdStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
-	integrationId, err := uuid.Parse(integrationIdStr)
+	resourceIdStr := chi.URLParam(r, routes.ResourceIDUrlParam)
+	resourceId, err := uuid.Parse(resourceIdStr)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed resource ID.")
 	}
 
 	csv, err := io.ReadAll(r.Body)
@@ -83,23 +83,23 @@ func (h *CreateTableHandler) Prepare(r *http.Request) (interface{}, int, error) 
 	}
 
 	return &CreateTableArgs{
-		AqContext:     aqContext,
-		tableName:     tableName,
-		integrationId: integrationId,
-		csv:           csv,
+		AqContext:  aqContext,
+		tableName:  tableName,
+		resourceId: resourceId,
+		csv:        csv,
 	}, http.StatusOK, nil
 }
 
 func (h *CreateTableHandler) Perform(ctx context.Context, interfaceArgs interface{}) (interface{}, int, error) {
 	args := interfaceArgs.(*CreateTableArgs)
 
-	integrationObject, err := h.ResourceRepo.Get(
+	resourceObject, err := h.ResourceRepo.Get(
 		ctx,
-		args.integrationId,
+		args.resourceId,
 		h.Database,
 	)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Cannot get integration.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Cannot get resource.")
 	}
 
 	// Save CSV
@@ -127,7 +127,7 @@ func (h *CreateTableHandler) Perform(ctx context.Context, interfaceArgs interfac
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
 	}
 
-	if statusCode, err := CreateTable(ctx, args, contentPath, integrationObject, vaultObject, args.StorageConfig, h.JobManager); err != nil {
+	if statusCode, err := CreateTable(ctx, args, contentPath, resourceObject, vaultObject, args.StorageConfig, h.JobManager); err != nil {
 		return emptyResp, statusCode, err
 	}
 
@@ -140,7 +140,7 @@ func CreateTable(
 	ctx context.Context,
 	args *CreateTableArgs,
 	contentPath string,
-	integrationObject *models.Resource,
+	resourceObject *models.Resource,
 	vaultObject vault.Vault,
 	storageConfig *shared.StorageConfig,
 	jobManager job.JobManager,
@@ -150,7 +150,7 @@ func CreateTable(
 
 	jobName := fmt.Sprintf("create-table-operator-%s", uuid.New().String())
 
-	config, err := auth.ReadConfigFromSecret(ctx, integrationObject.ID, vaultObject)
+	config, err := auth.ReadConfigFromSecret(ctx, resourceObject.ID, vaultObject)
 	if err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to launch create table job.")
 	}
@@ -168,7 +168,7 @@ func CreateTable(
 		contentPath,
 		storageConfig,
 		jobMetadataPath,
-		integrationObject.Service,
+		resourceObject.Service,
 		config,
 		loadParameters,
 		"",

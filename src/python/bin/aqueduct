@@ -191,7 +191,7 @@ def download_server_binaries(architecture):
     with open(os.path.join(server_directory, "bin/migrator"), "wb") as f:
         _download_file(os.path.join(s3_server_prefix, f"bin/{architecture}/migrator"), f, "Migrator")
 
-    print("Downloading integration set up scripts...")
+    print("Downloading resource set up scripts...")
     with open(os.path.join(server_directory, "bin/start-function-executor.sh"), "wb") as f:
         _download_file(os.path.join(s3_server_prefix, f"bin/start-function-executor.sh"), f)
     with open(os.path.join(server_directory, "bin/dag.template"), "wb") as f:
@@ -701,7 +701,7 @@ if __name__ == "__main__":
     install_args.add_argument(
         "system",
         nargs=1,
-        help="Supported integrations: postgres, redshift, mysql, mariadb, sqlserver, azuresql, s3, athena, snowflake, bigquery.",
+        help="Supported resources: postgres, redshift, mysql, mariadb, sqlserver, azuresql, s3, athena, snowflake, bigquery.",
     )
 
     apikey_args = subparsers.add_parser(
