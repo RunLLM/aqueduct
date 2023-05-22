@@ -48,7 +48,6 @@ class Metadata(BaseModel):
 
 
 class DAG(BaseModel):
-
     # We use an OrderedDict here to preserve insertion order of operators. This is helpful
     # any case where we have multiple choices, but can resolve the ambiguity by picking the
     # latest added, for example. This is relevant for parameter string interpolation.
@@ -411,7 +410,9 @@ class DAG(BaseModel):
         found_op: Optional[Operator] = None
         for op in self.operators.values():
             if found_op is not None:
-                raise InternalAqueductError("Unexpectedly found multiple parameters with the same name: %s" % name)
+                raise InternalAqueductError(
+                    "Unexpectedly found multiple parameters with the same name: %s" % name
+                )
 
             if op.name == name and get_operator_type(op) == OperatorType.PARAM:
                 found_op = op

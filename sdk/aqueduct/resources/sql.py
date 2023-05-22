@@ -16,8 +16,11 @@ from aqueduct.models.operators import (
     RelationalDBExtractParams,
     RelationalDBLoadParams,
 )
-from aqueduct.resources.parameters import _validate_builtin_expansions, _validate_parameters, \
-    _validate_artifact_is_string
+from aqueduct.resources.parameters import (
+    _validate_artifact_is_string,
+    _validate_builtin_expansions,
+    _validate_parameters,
+)
 from aqueduct.resources.save import _save_artifact
 from aqueduct.resources.validation import validate_is_connected
 from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag

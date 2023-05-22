@@ -62,6 +62,7 @@ def _validate_parameters(queries: List[str], parameters: List[BaseArtifact]) -> 
                 % (parameters[i].name(), concatenated_queries, placeholder)
             )
 
+
 # Regular Expression that matches any substring appearance with "{ }" and a word inside
 # with optional space in front or after. Example string match: "{directory_path}/{file_name}".
 #
@@ -69,7 +70,9 @@ def _validate_parameters(queries: List[str], parameters: List[BaseArtifact]) -> 
 USER_TAG_PATTERN = r"{{\s*[\w-]+\s*}}"
 
 
-def _fetch_param_artifact_ids_embedded_in_string(dag: DAG, user_supplied_str: str) -> List[uuid.UUID]:
+def _fetch_param_artifact_ids_embedded_in_string(
+    dag: DAG, user_supplied_str: str
+) -> List[uuid.UUID]:
     """Looks for any user-defined parameters in the string, looks up those parameters and returns
     them in the order they appear in the string.
     """
@@ -83,7 +86,9 @@ def _fetch_param_artifact_ids_embedded_in_string(dag: DAG, user_supplied_str: st
         found_artifact: Optional[ArtifactMetadata] = None
         if len(param_ops) > 0:
             # Use the first explicitly-named parameter artifact we find.
-            param_artifacts = dag.must_get_artifacts([param_op.outputs[0] for param_op in param_ops])
+            param_artifacts = dag.must_get_artifacts(
+                [param_op.outputs[0] for param_op in param_ops]
+            )
             for param_artifact in param_artifacts:
                 if param_artifact.explicitly_named:
                     found_artifact = param_artifact
@@ -91,7 +96,8 @@ def _fetch_param_artifact_ids_embedded_in_string(dag: DAG, user_supplied_str: st
 
         if not found_artifact:
             raise InvalidUserArgumentException(
-                "The parameter `%s` is not defined but is used in `%s`." % (param_name, user_supplied_str)
+                "The parameter `%s` is not defined but is used in `%s`."
+                % (param_name, user_supplied_str)
             )
         else:
             _validate_artifact_metadata_is_string(found_artifact)
@@ -100,12 +106,13 @@ def _fetch_param_artifact_ids_embedded_in_string(dag: DAG, user_supplied_str: st
     return param_artifact_ids
 
 
-def _validate_artifact_metadata_is_string(artifact: ArtifactMetadata):
+def _validate_artifact_metadata_is_string(artifact: ArtifactMetadata) -> None:
     if artifact.type != ArtifactType.STRING:
         raise InvalidUserArgumentException(
             "The parameter `%s` must be defined as a string. Instead, got type %s"
             % (artifact.name, artifact.type)
         )
+
 
 def _validate_artifact_is_string(artifact: BaseArtifact) -> None:
     if artifact.type() != ArtifactType.STRING:

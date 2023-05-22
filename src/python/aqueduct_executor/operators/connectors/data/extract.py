@@ -1,36 +1,15 @@
 import json
-import re
 import uuid
 from typing import Any, Dict, List, Optional, Union
 
-from aqueduct.resources.parameters import BUILT_IN_EXPANSIONS, BUILTIN_TAG_PATTERN
 from aqueduct_executor.operators.connectors.data import common, models
+from aqueduct_executor.operators.connectors.data.parameters import (
+    PREV_TABLE_TAG,
+    _replace_builtin_tags,
+    _replace_param_sql_placeholders,
+)
 from aqueduct_executor.operators.utils.enums import ArtifactType
 from pydantic import parse_obj_as
-
-# The TAG for 'previous table' when the user specifies a chained query.
-PREV_TABLE_TAG = "$"
-
-
-def _replace_builtin_tags(query: str) -> str:
-    """Expands any builtin tags found in the raw query, eg. {{ today }}."""
-    matches = re.findall(BUILTIN_TAG_PATTERN, query)
-    for match in matches:
-        tag_name = match.strip(" {}")
-        if tag_name in BUILT_IN_EXPANSIONS:
-            expansion_func = BUILT_IN_EXPANSIONS[tag_name]
-            query = query.replace(match, expansion_func())
-    return query
-
-
-def _replace_param_placeholders(query: str, parameter_vals: List[str]) -> str:
-    """Replaces any user-defined placeholders in the query with the corresponding parameter value.
-
-    Assumes that we've already validated that every parameter value has a corresponding placeholder in the query.
-    """
-    for i in range(len(parameter_vals)):
-        query = query.replace("$" + str(i + 1), parameter_vals[i])
-    return query
 
 
 class RelationalParams(models.BaseParams):
@@ -117,7 +96,7 @@ class RelationalParams(models.BaseParams):
 
         # Expand the placeholders first, before collapsing the query chain, since $ is broader than $1, $2, etc.
         for i, q in enumerate(queries):
-            q = _replace_param_placeholders(q, parameter_vals)
+            q = _replace_param_sql_placeholders(q, parameter_vals)
             queries[i] = _replace_builtin_tags(q)
         print(f"Expanded queries are `{queries}`.")
 
@@ -156,7 +135,7 @@ class MongoDBParams(models.BaseParams):
     query: Optional[MongoDBFindParams] = None
 
     def compile(self, parameters: List[str]) -> None:
-        expanded = _replace_param_placeholders(self.query_serialized, parameters)
+        expanded = _replace_param_sql_placeholders(self.query_serialized, parameters)
         self.query = parse_obj_as(MongoDBFindParams, json.loads(expanded))
 
     def usable(self) -> bool:
