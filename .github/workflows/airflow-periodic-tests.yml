@@ -6,15 +6,80 @@ on:
   workflow_dispatch:
 
 jobs:
+  publish-pypi:
+    # similar to release scripts, but publish to test pypi:
+    # rm -rf dist && rm -rf build
+    # python3 -m build && twine check dist/*
+    # twine upload --repository testpypi dist/*
+    # pip3 install -i https://test.pypi.org/simple/ aqueduct-ml
+    name: Publish Test Pypi Packages
+    runs-on: [ubuntu-latest]
+    timeout-minutes: 20
+    outputs:
+      version: ${{ steps.inject_version.outputs.version }}
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: install missing dependencies
+        run: pip install build twine
+
+      - name: inject dev version
+        id: inject_version
+        run: |
+          export VERSION=0.1.dev$(date +%s)
+          rm sdk/version
+          echo $VERSION >> sdk/version
+          rm src/python/version
+          echo $VERSION >> src/python/version
+          echo version=$VERSION >> $GITHUB_OUTPUT
+
+      - name: build sdk
+        working-directory: sdk
+        run: |
+          rm -rf dist
+          rm -rf build
+          python3 -m build
+          twine check dist/*
+
+      - name: publish sdk
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: sdk/dist
+          password: ${{ secrets.PYPI_API_TOKEN_SDK }}
+
+      - name: build executor
+        working-directory: src/python
+        run: |
+          rm -rf dist
+          rm -rf build
+          python3 -m build
+          twine check dist/*
+
+      - name: publish executor
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: src/python/dist
+          password: ${{ secrets.PYPI_API_TOKEN_EXECUTOR }}
+  
   run-airflow-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 480
+    needs: publish-pypi
     name: SDK Integration Tests against Airflow Compute
     steps:
       - uses: actions/checkout@v2
 
       - uses: ./.github/actions/setup-server
         timeout-minutes: 7
+        with:
+          python-pkg-version: ${{ needs.publish-pypi.outputs.version }}
 
       # TODO(ENG-2537): Use our separate GH actions credentials.
       - uses: ./.github/actions/fetch-test-config
