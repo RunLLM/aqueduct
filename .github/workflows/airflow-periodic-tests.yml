@@ -107,10 +107,6 @@ jobs:
         # in this test. Otherwise the logic gets more complicated.
         run: sed -i '/^compute:/,/^[^ ]/ s/^\(\s*password:\s*\).*/\1${{ env.airflow_password }}/' test-credentials.yml
 
-      - name: Copy latest Airflow DAG template
-        working-directory: src/python/aqueduct_executor/operators/airflow
-        run: cp dag.template ~/.aqueduct/server/bin/dag.template
-
       - name: Install any data connector packages
         run: |
           aqueduct install s3
