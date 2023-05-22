@@ -120,15 +120,18 @@ export const SupportedIntegrations: ServiceInfoMap = {
     activated: true,
     category: IntegrationCategories.DATA,
     docs: addingIntegrationLink,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
-      <SnowflakeDialog
-        user={user}
-        editMode={editMode}
-        onCloseDialog={onCloseDialog}
-        loading={loading}
-        disabled={disabled}
-      />
-    ),
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => {
+      console.log('rendering the snwoflake dialog');
+      return (
+        <SnowflakeDialog
+          user={user}
+          editMode={editMode}
+          onCloseDialog={onCloseDialog}
+          loading={loading}
+          disabled={disabled}
+        />
+      )
+    },
     validationSchema: getSnowflakeValidationSchema(),
   },
   ['Redshift']: {

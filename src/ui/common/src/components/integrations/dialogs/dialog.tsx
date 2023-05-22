@@ -14,7 +14,7 @@ import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import React, { MouseEventHandler, useEffect, useState } from 'react';
-import { FormProvider, useForm, useFormContext } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
 import * as Yup from 'yup';
 
@@ -59,6 +59,8 @@ const IntegrationDialog: React.FC<Props> = ({
   const [showDialog, setShowDialog] = useState<boolean>(true);
   const [submitDisabled, setSubmitDisabled] = useState<boolean>(true);
   const [migrateStorage, setMigrateStorage] = useState(false);
+
+  console.log('IntegrationDialog integrationToEdit', integrationToEdit);
 
   const methods = useForm({
     resolver: yupResolver(validationSchema),
@@ -297,14 +299,11 @@ type DialogActionButtonProps = {
 };
 
 export const DialogActionButtons: React.FC<DialogActionButtonProps> = ({
-  user,
-  editMode = false,
   onCloseDialog,
   loading,
   disabled,
   onSubmit,
 }) => {
-  const methods = useFormContext();
   return (
     <DialogActions>
       <Button autoFocus onClick={onCloseDialog}>
@@ -312,8 +311,8 @@ export const DialogActionButtons: React.FC<DialogActionButtonProps> = ({
       </Button>
       <LoadingButton
         autoFocus
-        onClick={() => {
-          onSubmit();
+        onClick={(e) => {
+          onSubmit(e);
         }}
         loading={loading}
         disabled={disabled}

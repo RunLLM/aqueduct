@@ -230,6 +230,8 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
 
   const selectedIntegrationExecState = resourceExecState(selectedIntegration);
 
+  console.log('selectedIntegration: ', selectedIntegration);
+
   return (
     <Layout
       breadcrumbs={[
@@ -298,7 +300,10 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
               );
               setShowTestConnectToast(true);
             }}
-            onEdit={() => setShowEditDialog(true)}
+            onEdit={() => {
+              console.log('inside onEdit()');
+              setShowEditDialog(true)
+            }}
             onDeleteIntegration={() => {
               setShowDeleteTableDialog(true);
             }}
@@ -416,6 +421,9 @@ const IntegrationDetailsPage: React.FC<IntegrationDetailsPageProps> = ({
         />
       )}
 
+      {/* TODO: Get the selectedIntegration from the map of integrations. Then figure out which dialog that we should be rendering. Then pass in the information.
+          Doing it this way is causing an infinite loop
+      */}
       {showEditDialog && (
         <IntegrationDialog
           user={user}
