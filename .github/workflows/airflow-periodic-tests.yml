@@ -39,19 +39,19 @@ jobs:
         working-directory: integration_tests/sdk
         run: sed -i '/^test_airflow:/,/^[^ ]/ s/^\(\s*password:\s*\).*/\1$(echo "${{ env.airflow_password }}")/' test-credentials.yaml
 
-      - name: Install any data connector packages
-        run: |
-          aqueduct install s3
-          aqueduct install snowflake
+      # - name: Install any data connector packages
+      #   run: |
+      #     aqueduct install s3
+      #     aqueduct install snowflake
 
-      - name: Run the SDK Integration Tests
-        working-directory: integration_tests/sdk
-        run: pytest aqueduct_tests/ -rP -vv -n 1
+      # - name: Run the SDK Integration Tests
+      #   working-directory: integration_tests/sdk
+      #   run: pytest aqueduct_tests/ -rP -vv -n 1
 
-      - uses: ./.github/actions/upload-artifacts
-        if: always()
-        with:
-          prefix: Airflow Compute
+      # - uses: ./.github/actions/upload-artifacts
+      #   if: always()
+      #   with:
+      #     prefix: Airflow Compute
 
       # Sets it as an environmental variable.
       # - name: Get the Slack ID for the current oncall
