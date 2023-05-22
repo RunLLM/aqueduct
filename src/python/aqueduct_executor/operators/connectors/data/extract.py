@@ -3,7 +3,7 @@ import re
 import uuid
 from typing import Any, Dict, List, Optional, Union
 
-from aqueduct.resources.parameters import BUILT_IN_EXPANSIONS, TAG_PATTERN
+from aqueduct.resources.parameters import BUILT_IN_EXPANSIONS, BUILTIN_TAG_PATTERN
 from aqueduct_executor.operators.connectors.data import common, models
 from aqueduct_executor.operators.utils.enums import ArtifactType
 from pydantic import parse_obj_as
@@ -14,7 +14,7 @@ PREV_TABLE_TAG = "$"
 
 def _replace_builtin_tags(query: str) -> str:
     """Expands any builtin tags found in the raw query, eg. {{ today }}."""
-    matches = re.findall(TAG_PATTERN, query)
+    matches = re.findall(BUILTIN_TAG_PATTERN, query)
     for match in matches:
         tag_name = match.strip(" {}")
         if tag_name in BUILT_IN_EXPANSIONS:

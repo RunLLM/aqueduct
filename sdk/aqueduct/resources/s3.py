@@ -19,6 +19,7 @@ from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import generate_uuid
 
 from aqueduct import globals
+from .parameters import _fetch_param_artifact_ids_embedded_in_string
 
 from ..artifacts.create import to_artifact_class
 from ..error import InvalidUserArgumentException
@@ -200,8 +201,12 @@ class S3Resource(BaseResource):
                 % artifact.type()
             )
 
+        # Prepend any parameters embedded in the filepath.
+        param_artifact_ids_in_filepath = _fetch_param_artifact_ids_embedded_in_string(self._dag, filepath)
+        artifacts = param_artifact_ids_in_filepath + [artifact.id()]
+
         _save_artifact(
-            artifact.id(),
+            artifacts,
             self._dag,
             self._metadata,
             save_params=S3LoadParams(filepath=filepath, format=_convert_to_s3_table_format(format)),
