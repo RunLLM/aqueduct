@@ -36,7 +36,7 @@ jobs:
       
       - name: Get Airflow password
         run: |
-          airflow_password=$(cat ~/airflow/standalone_admin_password.txt)
+          airflow_password=SauravCHH
           echo "airflow_password=$airflow_password" >> $GITHUB_ENV
       
       - name: Update Airflow password in test-credentials.yml
