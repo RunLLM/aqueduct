@@ -37,7 +37,7 @@ const App = () => {
       <Route path={`/${pathPrefix}/account`} element={<RequireAuth user={user}><AccountPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/workflow/:workflowId`} element={<RequireAuth user={user}><WorkflowPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/workflow/:workflowId/dag/:dagId`} element={<RequireAuth user={user}><WorkflowPage user={user} /> </RequireAuth>} />
-      <Route path={`/${pathPrefix}/workflow/:workflowId/result:dagResultId`} element={<RequireAuth user={user}><WorkflowPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/workflow/:workflowId/result/:dagResultId`} element={<RequireAuth user={user}><WorkflowPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/workflow/:workflowId/result/:dagResultId/operator/:nodeId`} element={<RequireAuth user={user}><OperatorDetailsPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/workflow/:workflowId/result/:dagResultId/artifact/:nodeId`} element={<RequireAuth user={user}><ArtifactDetailsPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/workflow/:workflowId/result/:dagResultId/metric/:nodeId`} element={<RequireAuth user={user}><MetricDetailsPage user={user} /> </RequireAuth>} />

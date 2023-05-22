@@ -1,33 +1,11 @@
-import {
-  faCircleCheck,
-  faCircleXmark,
-  faXmark,
-} from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import {
-  AlertTitle,
-  Checkbox,
-  FormGroup,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-} from '@mui/material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
-import Dialog from '@mui/material/Dialog';
-import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
-import DialogTitle from '@mui/material/DialogTitle';
 import Divider from '@mui/material/Divider';
-import FormControl from '@mui/material/FormControl';
 import FormControlLabel, {
   formControlLabelClasses,
 } from '@mui/material/FormControlLabel';
-import MenuItem from '@mui/material/MenuItem';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
-import Select from '@mui/material/Select';
 import Snackbar from '@mui/material/Snackbar';
 import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
@@ -39,7 +17,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   useWorkflowDeletePostMutation,
   useWorkflowEditPostMutation,
-  useWorkflowObjectsGetQuery,
   useWorkflowsGetQuery,
 } from '../../handlers/AqueductApi';
 import {
@@ -47,186 +24,25 @@ import {
   WorkflowResponse,
 } from '../../handlers/responses/workflow';
 import { RootState } from '../../stores/store';
-import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
-import {
-  createCronString,
-  DayOfWeek,
-  deconstructCronString,
-  getNextUpdateTime,
-  PeriodUnit,
-} from '../../utils/cron';
+import { getNextUpdateTime } from '../../utils/cron';
 import { IntegrationCategories } from '../../utils/integrations';
-import { UpdateMode } from '../../utils/operators';
-import ExecutionStatus from '../../utils/shared';
 import { SupportedIntegrations } from '../../utils/SupportedIntegrations';
 import {
-  getSavedObjectIdentifier,
   NotificationSettingsMap,
-  RetentionPolicy,
-  SavedObject,
   WorkflowUpdateTrigger,
 } from '../../utils/workflows';
 import { Button } from '../primitives/Button.styles';
 import { LoadingButton } from '../primitives/LoadingButton.styles';
+import DeleteWorkflowDialog from './DeleteWorkflowDialog';
+import PeriodicScheduleSelector from './PeriodicScheduleSelector';
+import RetentionPolicySelector from './RetentionPolicySelector';
+import SavedObjectDeletionResultDialog from './SavedObjectDeletionResultDialog';
 import StorageSelector from './storageSelector';
 import TriggerSourceSelector from './triggerSourceSelector';
 import WorkflowNotificationSettings from './WorkflowNotificationSettings';
 
-type PeriodicScheduleSelectorProps = {
-  cronString: string;
-  setSchedule: (string) => void;
-};
-
-const PeriodicScheduleSelector: React.FC<PeriodicScheduleSelectorProps> = ({
-  cronString,
-  setSchedule,
-}) => {
-  const schedule = deconstructCronString(cronString);
-
-  const [timeUnit, setTimeUnit] = useState(schedule.periodUnit);
-  const [minute, setMinute] = useState(schedule.minute);
-  const [time, setTime] = useState(schedule.time);
-  const [dayOfWeek, setDayOfWeek] = useState(schedule.dayOfWeek);
-  const [dayOfMonth, setDayOfMonth] = useState(schedule.dayOfMonth);
-
-  useEffect(() => {
-    // Don't try to update the cron schedule if the user enters an invalid
-    // input.
-    if (
-      (timeUnit === PeriodUnit.Hourly && (minute < 0 || minute > 59)) ||
-      (timeUnit === PeriodUnit.Monthly && (dayOfMonth < 1 || dayOfMonth > 31))
-    ) {
-      return;
-    }
-
-    setSchedule(
-      createCronString({
-        periodUnit: timeUnit,
-        minute,
-        time,
-        dayOfWeek,
-        dayOfMonth,
-      })
-    );
-  }, [timeUnit, minute, time, dayOfWeek, dayOfMonth, setSchedule]);
-
-  return (
-    <Box sx={{ display: 'flex' }}>
-      <FormControl size="small" sx={{ mr: 1 }}>
-        <Select
-          value={timeUnit}
-          onChange={(e) => setTimeUnit(e.target.value as PeriodUnit)}
-        >
-          {Object.values(PeriodUnit).map((option) => (
-            <MenuItem key={option} value={option}>
-              {option}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-
-      {timeUnit === 'Monthly' && (
-        <TextField
-          size="small"
-          label="Date"
-          sx={{ width: '100px' }}
-          type="number"
-          value={dayOfMonth}
-          onChange={(e) => setDayOfMonth(Number(e.target.value))}
-          error={dayOfMonth < 1 || dayOfMonth > 31}
-        />
-      )}
-
-      {timeUnit === 'Weekly' && (
-        <FormControl size="small" sx={{ mx: 1 }}>
-          <Select
-            value={dayOfWeek}
-            onChange={(e) => setDayOfWeek(e.target.value as DayOfWeek)}
-          >
-            {
-              // This is an ugly bit of code. Typescript creates
-              // reverse mappings (key->value, value=>key) for
-              // numerical enums, so we have to filter out the
-              // value->key mappings here before generating the
-              // options.
-              Object.keys(DayOfWeek)
-                .filter((key) => isNaN(Number(key)))
-                .map((day) => (
-                  <MenuItem key={day} value={DayOfWeek[day]}>
-                    {day}
-                  </MenuItem>
-                ))
-            }
-          </Select>
-        </FormControl>
-      )}
-
-      {timeUnit !== 'Hourly' && (
-        <TextField
-          label="Time"
-          sx={{ width: '150px', mx: 1 }}
-          size="small"
-          type="time"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
-        />
-      )}
-
-      {timeUnit === 'Hourly' && (
-        <TextField
-          label="Minute"
-          sx={{ width: '100px', mx: 1 }}
-          size="small"
-          type="number"
-          value={minute}
-          onChange={(e) => setMinute(Number(e.target.value))}
-        />
-      )}
-    </Box>
-  );
-};
-
-type RetentionPolicyProps = {
-  retentionPolicy?: RetentionPolicy;
-  setRetentionPolicy: (p?: RetentionPolicy) => void;
-};
-
-const RetentionPolicySelector: React.FC<RetentionPolicyProps> = ({
-  retentionPolicy,
-  setRetentionPolicy,
-}) => {
-  let value = '';
-  let helperText: string = undefined;
-  if (!retentionPolicy || retentionPolicy.k_latest_runs <= 0) {
-    helperText = 'Aqueduct will store all versions of this workflow.';
-  } else {
-    value = retentionPolicy.k_latest_runs.toString();
-  }
-
-  return (
-    <TextField
-      size="small"
-      label="The number of latest versions to keep. Older versions will be removed."
-      fullWidth
-      type="number"
-      value={value}
-      onChange={(e) => {
-        const kLatestRuns = parseInt(e.target.value);
-        if (kLatestRuns <= 0 || isNaN(kLatestRuns)) {
-          // Internal representation of no retention.
-          setRetentionPolicy({ k_latest_runs: -1 });
-          return;
-        }
-
-        setRetentionPolicy({ k_latest_runs: kLatestRuns });
-      }}
-      helperText={helperText}
-    />
-  );
-};
-
-type WorkflowSettingsProps = {
+type Props = {
   user: UserProfile;
   workflow: WorkflowResponse;
   dag: DagResponse;
@@ -254,39 +70,57 @@ function IsNotificationSettingsMapUpdated(
   return updated;
 }
 
-const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
-  user,
-  dag,
-  workflow,
-}) => {
+const WorkflowSettings: React.FC<Props> = ({ user, dag, workflow }) => {
   const navigate = useNavigate();
 
-  const { data: workflows } = useWorkflowsGetQuery({ apiKey: user.apiKey });
-  const {
-    data: savedObjects,
-    error: savedObjectsError,
-    isSuccess: savedObjectSuccess,
-  } = useWorkflowObjectsGetQuery({
+  const { data: workflows } = useWorkflowsGetQuery({
     apiKey: user.apiKey,
-    workflowId: workflow.id,
   });
   const [
-    deleteWorkflow,
+    _,
     {
       data: deleteWorkflowResponse,
-      isLoading: deleteWorkflowLoading,
       error: deleteWorkflowError,
       isSuccess: deleteWorkflowSuccess,
       reset: resetDeleteWorkflow,
     },
-  ] = useWorkflowDeletePostMutation();
+  ] = useWorkflowDeletePostMutation({ fixedCacheKey: `delete-${workflow.id}` });
 
   const [editWorkflow, { isLoading: isEditWorkflowLoading }] =
-    useWorkflowEditPostMutation();
+    useWorkflowEditPostMutation({ fixedCacheKey: `edit-${workflow.id}` });
 
-  const [selectedObjects, setSelectedObjects] = useState(
-    new Set<SavedObject>()
-  );
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [
+    showSavedObjectDeletionResultsDialog,
+    setShowSavedObjectDeletionResultsDialog,
+  ] = useState(false);
+
+  const handleDeleteClicked = (event) => {
+    event.preventDefault();
+    setShowDeleteDialog(true);
+  };
+
+  // State that controls the Snackbar for an attempted workflow deletion.
+  const deleteMessage = deleteWorkflowSuccess
+    ? 'Successfully deleted your workflow. Redirecting you to the workflows page...'
+    : deleteWorkflowError
+    ? `We were unable to delete your workflow: ${deleteWorkflowError}`
+    : '';
+
+  useEffect(() => {
+    if (deleteWorkflowSuccess || !!deleteWorkflowError) {
+      setShowDeleteDialog(false);
+
+      if (deleteWorkflowSuccess) {
+        if (Object.keys(deleteWorkflowResponse).length > 0) {
+          setShowSavedObjectDeletionResultsDialog(true);
+        } else {
+          console.log('???');
+          navigate('/workflows');
+        }
+      }
+    }
+  }, [deleteWorkflowSuccess, deleteWorkflowError, navigate]);
 
   const integrations = useSelector(
     (state: RootState) => state.integrationsReducer.integrations
@@ -426,44 +260,6 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
     );
   }
 
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [
-    showSavedObjectDeletionResultsDialog,
-    setShowSavedObjectDeletionResultsDialog,
-  ] = useState(false);
-  const [deleteValidation, setDeleteValidation] = useState('');
-  const handleDeleteClicked = (event) => {
-    event.preventDefault();
-    setShowDeleteDialog(true);
-  };
-
-  // State that controls the Snackbar for an attempted workflow deletion.
-  const deleteMessage = deleteWorkflowSuccess
-    ? 'Successfully deleted your workflow. Redirecting you to the workflows page...'
-    : deleteWorkflowError
-    ? `We were unable to delete your workflow: ${deleteWorkflowError}`
-    : '';
-
-  useEffect(() => {
-    if (deleteWorkflowSuccess || !!deleteWorkflowError) {
-      if (showDeleteDialog) {
-        setShowDeleteDialog(false);
-      }
-
-      if (deleteWorkflowSuccess) {
-        if (selectedObjects.size > 0) {
-          if (!showSavedObjectDeletionResultsDialog) {
-            setShowSavedObjectDeletionResultsDialog(true);
-          }
-        } else {
-          navigate('/workflows');
-        }
-      } else {
-        setDeleteValidation('');
-      }
-    }
-  }, [deleteWorkflowSuccess, deleteWorkflowError, navigate]);
-
   const updateSettings = (event) => {
     event.preventDefault();
 
@@ -488,318 +284,6 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         : undefined,
     });
   };
-
-  const updateSelectedObjects = (event) => {
-    if (event.target.checked) {
-      setSelectedObjects(
-        (prev) => new Set(prev.add(savedObjects[event.target.id][0]))
-      );
-    } else {
-      setSelectedObjects(
-        (prev) =>
-          new Set(
-            Array.from(prev).filter(
-              (x) => x !== savedObjects[event.target.id][0]
-            )
-          )
-      );
-    }
-  };
-
-  const displayObject = (integration, name, sortedObjects) => (
-    <>
-      <Typography variant="body1">
-        [{integration}] <b>{name}</b>
-      </Typography>
-
-      {/* Objects saved into S3 are currently expected to have update_mode === UpdateMode.replace */}
-      {sortedObjects && (
-        <Typography
-          style={{
-            color: theme.palette.gray[600],
-            paddingRight: '8px',
-          }}
-          variant="body2"
-          display="inline"
-        >
-          Update Mode:{' '}
-          {sortedObjects
-            .map(
-              (object) =>
-                `${object.spec.parameters.update_mode || UpdateMode.replace}`
-            )
-            .join(', ')}
-          {sortedObjects.length > 1 && ' (active)'}
-        </Typography>
-      )}
-    </>
-  );
-
-  const listSavedObjects = (
-    <FormGroup>
-      {Object.entries(savedObjects).map(
-        ([integrationTableKey, savedObjectsList]) => {
-          const sortedObjects = [...savedObjectsList].sort((object) =>
-            Date.parse(object.modified_at)
-          );
-
-          // Cannot align the checkbox to the top of a multi-line label.
-          // Using a weird marginTop workaround.
-          return (
-            <FormControlLabel
-              sx={{ marginTop: '-24px' }}
-              key={integrationTableKey}
-              control={
-                <Checkbox
-                  id={integrationTableKey}
-                  onChange={updateSelectedObjects}
-                />
-              }
-              label={
-                <Box sx={{ paddingTop: '24px' }}>
-                  {displayObject(
-                    savedObjectsList[0].integration_name,
-                    getSavedObjectIdentifier(savedObjectsList[0]),
-                    sortedObjects
-                  )}
-                </Box>
-              }
-            />
-          );
-        }
-      )}
-    </FormGroup>
-  );
-
-  const hasSavedObjects = Object.keys(savedObjects).length > 0;
-
-  const deleteDialog = (
-    <Dialog
-      open={showDeleteDialog}
-      onClose={() => {
-        setShowDeleteDialog(false);
-      }}
-      fullWidth
-    >
-      <DialogTitle>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="h5">
-              {' '}
-              {/* We don't use the `name` state here because it will update when the user is mid-changes, which is awkward. */}
-              Delete{' '}
-              <span style={{ fontFamily: 'Monospace' }}>{workflow.name}</span>?{' '}
-            </Typography>
-          </Box>
-
-          <FontAwesomeIcon
-            icon={faXmark}
-            onClick={() => setShowDeleteDialog(false)}
-            style={{ cursor: 'pointer' }}
-          />
-        </Box>
-      </DialogTitle>
-
-      <DialogContent>
-        {hasSavedObjects && (
-          <Typography variant="body1">
-            The following objects had been saved by{' '}
-            <span style={{ fontFamily: 'Monospace' }}>{workflow.name}</span> and
-            can be removed when deleting the workflow:
-          </Typography>
-        )}
-
-        <Box sx={{ my: 2 }}>
-          {savedObjectSuccess && listSavedObjects}
-          {savedObjectsError && (
-            <Alert severity="error" sx={{ marginTop: 2 }}>
-              {`Unable to retrieve list of saved objects. Failed with error: ${savedObjectsError}`}
-            </Alert>
-          )}
-        </Box>
-
-        {hasSavedObjects && (
-          <Typography variant="body1">
-            Deleting workflow{' '}
-            <span style={{ fontFamily: 'Monospace' }}>{name}</span> and the
-            associated <b>{selectedObjects.size}</b> objects is not reversible.
-            Please note that we cannot guarantee this will only delete data
-            created by Aqueduct. The workflow will be deleted even if the
-            underlying objects are not successfully deleted.
-          </Typography>
-        )}
-        {!hasSavedObjects && (
-          <Typography variant="body1">
-            Are you sure you want to delete{' '}
-            <span style={{ fontFamily: 'Monospace' }}>{name}</span>? This action
-            is not reversible.
-          </Typography>
-        )}
-
-        <Box sx={{ my: 2 }}>
-          <Typography variant="body1">
-            Type the name of your workflow below to confirm deletion:
-          </Typography>
-        </Box>
-
-        <TextField
-          placeholder={name}
-          value={deleteValidation}
-          size="small"
-          onChange={(e) => setDeleteValidation(e.target.value)}
-          fullWidth
-        />
-      </DialogContent>
-
-      <DialogActions>
-        <Button
-          variant="outlined"
-          color="secondary"
-          onClick={() => setShowDeleteDialog(false)}
-        >
-          Cancel
-        </Button>
-        <LoadingButton
-          variant="contained"
-          color="error"
-          loading={deleteWorkflowLoading}
-          disabled={deleteValidation !== name}
-          onClick={(event) => {
-            event.preventDefault();
-            const external_delete = {};
-
-            selectedObjects.forEach((object) => {
-              if (!external_delete[object.integration_name]) {
-                external_delete[object.integration_name] = [];
-              }
-
-              external_delete[object.integration_name].push(
-                JSON.stringify(object.spec)
-              );
-            });
-
-            deleteWorkflow({
-              apiKey: user.apiKey,
-              workflowId: workflow.id,
-              force: true,
-              external_delete,
-            });
-          }}
-        >
-          Delete
-        </LoadingButton>
-      </DialogActions>
-    </Dialog>
-  );
-
-  let successfullyDeleted = 0;
-  let unsuccessfullyDeleted = 0;
-
-  Object.entries(deleteWorkflowResponse).map((workflowResults) =>
-    workflowResults[1].map((objectResult) => {
-      if (objectResult.exec_state.status === ExecutionStatus.Succeeded) {
-        successfullyDeleted += 1;
-      } else {
-        unsuccessfullyDeleted += 1;
-      }
-    })
-  );
-
-  const savedObjectDeletionResultsDialog = (
-    <Dialog
-      open={deleteWorkflowSuccess}
-      onClose={() => navigate('/workflows')}
-      maxWidth="sm"
-      fullWidth
-    >
-      <DialogTitle>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="h5">
-              {' '}
-              {/* We don't use the `name` state here because it will update when the user is mid-changes, which is awkward. */}
-              <span style={{ fontFamily: 'Monospace' }}>{workflow.name}</span>{' '}
-              successfully deleted{' '}
-            </Typography>
-          </Box>
-
-          <FontAwesomeIcon
-            icon={faXmark}
-            onClick={() => navigate('/workflows')}
-            style={{ cursor: 'pointer' }}
-          />
-        </Box>
-      </DialogTitle>
-
-      <DialogContent>
-        <Typography>
-          <span style={{ fontFamily: 'Monospace' }}>{workflow.name}</span> has
-          been successfully deleted. Here are the results of the saved object
-          deletion.
-        </Typography>
-
-        <List dense={true}>
-          {Object.entries(deleteWorkflowResponse)
-            .map(([integrationName, objectResults]) =>
-              objectResults.map((objectResult) => (
-                <>
-                  <ListItem key={`${integrationName}-${objectResult.name}`}>
-                    <ListItemIcon style={{ minWidth: '30px' }}>
-                      {objectResult.exec_state.status ===
-                      ExecutionStatus.Succeeded ? (
-                        <FontAwesomeIcon
-                          icon={faCircleCheck}
-                          style={{
-                            color: theme.palette.green[500],
-                          }}
-                        />
-                      ) : (
-                        <FontAwesomeIcon
-                          icon={faCircleXmark}
-                          style={{
-                            color: theme.palette.red[500],
-                          }}
-                        />
-                      )}
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={displayObject(
-                        integrationName,
-                        objectResult.name,
-                        null
-                      )}
-                    />
-                  </ListItem>
-                  {objectResult.exec_state.status ===
-                    ExecutionStatus.Failed && (
-                    <Alert icon={false} severity="error">
-                      <AlertTitle>
-                        Failed to delete {objectResult.name}.
-                      </AlertTitle>
-                      <pre>{objectResult.exec_state.error.context}</pre>
-                    </Alert>
-                  )}
-                </>
-              ))
-            )
-            .flat()}
-        </List>
-
-        <Typography>
-          <b>Successfully Deleted</b>: {successfullyDeleted}
-        </Typography>
-        <Typography>
-          <b>Unable To Delete</b>: {unsuccessfullyDeleted}
-        </Typography>
-      </DialogContent>
-
-      <DialogActions>
-        <Button variant="contained" onClick={() => navigate('/workflows')}>
-          Close
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
 
   return (
     <>
@@ -925,8 +409,18 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
         Delete Workflow
       </Button>
 
-      {deleteDialog}
-      {savedObjectDeletionResultsDialog}
+      <DeleteWorkflowDialog
+        open={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        workflow={workflow}
+        user={user}
+      />
+      <SavedObjectDeletionResultDialog
+        open={showSavedObjectDeletionResultsDialog}
+        onClose={() => navigate('/workflows')}
+        workflowName={workflow.name}
+        workflowId={workflow.id}
+      />
 
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}

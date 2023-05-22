@@ -14,10 +14,10 @@ import { ReactFlowProvider } from 'reactflow';
 
 import WorkflowResultNavigator from '../../../../components/workflows/WorkflowResultNavigator';
 import {
-  aqueductApi,
   useDagGetQuery,
   useDagResultGetQuery,
   useDagResultsGetQuery,
+  useNodesResultsGetQuery,
   useWorkflowEditPostMutation,
   useWorkflowGetQuery,
 } from '../../../../handlers/AqueductApi';
@@ -43,6 +43,7 @@ import WorkflowSettings from '../../../workflows/WorkflowSettings';
 import { LayoutProps } from '../../types';
 import RunWorkflowDialog from '../../workflows/components/RunWorkflowDialog';
 import {
+  useSortedDagResults,
   useWorkflowBreadcrumbs,
   useWorkflowIds,
   useWorkflowNodes,
@@ -72,22 +73,29 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     data: workflow,
     isLoading: wfLoading,
     error: wfError,
+    refetch: refetchWorkflow,
   } = useWorkflowGetQuery(
     { apiKey: user.apiKey, workflowId },
     { skip: !workflowId }
   );
-  const { data: dag } = useDagGetQuery(
+  const { data: dag, isLoading: dagLoading } = useDagGetQuery(
     { apiKey: user.apiKey, workflowId, dagId },
     { skip: !workflowId || !dagId }
   );
-  const { data: dagResult } = useDagResultGetQuery(
+  const { data: dagResult, refetch: refetchDagResult } = useDagResultGetQuery(
     { apiKey: user.apiKey, workflowId, dagResultId },
     { skip: !workflowId || !dagResultId }
   );
-  const { data: dagResults } = useDagResultsGetQuery(
+  const dagResults = useSortedDagResults(user.apiKey, workflowId);
+  const { refetch: refetchDagResults } = useDagResultsGetQuery(
     { apiKey: user.apiKey, workflowId },
     { skip: !workflowId }
   );
+  const { refetch: refetchNodeResults } = useNodesResultsGetQuery(
+    { apiKey: user.apiKey, workflowId, dagResultId },
+    { skip: !workflowId || !dagResultId }
+  );
+
   const nodes = useWorkflowNodes(user.apiKey, workflowId, dagId);
   const nodeResults = useWorkflowNodesResults(
     user.apiKey,
@@ -105,7 +113,10 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       error: editWorkflowError,
       reset: resetEditWorkflow,
     },
-  ] = useWorkflowEditPostMutation();
+  ] = useWorkflowEditPostMutation({
+    fixedCacheKey: `edit-${workflowId}`,
+  });
+  console.log(editWorkflowSuccess);
 
   const editWorkflowMessage = editWorkflowSuccess
     ? 'Sucessfully updated your workflow.'
@@ -118,8 +129,9 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       state.workflowPageReducer.perWorkflowPageStates[workflowId]?.SelectedNode
   );
 
-  const selectedNode =
-    nodes[selectedNodeState.nodeType][selectedNodeState.nodeId];
+  const selectedNode = !!selectedNodeState
+    ? nodes[selectedNodeState.nodeType][selectedNodeState.nodeId]
+    : undefined;
 
   const drawerIsOpen = !!selectedNode;
 
@@ -134,19 +146,26 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
   }, [dispatch, user.apiKey, workflowId]);
 
+  useEffect(() => {
+    if (editWorkflowSuccess) {
+      refetchWorkflow();
+      setCurrentTab('Details');
+    }
+  }, [editWorkflowSuccess]);
+
   // This workflow doesn't exist.
   if (wfError) {
     navigate('/404');
     return null;
   }
 
-  if (wfLoading) {
+  if (wfLoading || dagLoading) {
     return null;
   }
 
   const nodeLabel =
-    selectedNode.name ??
-    (selectedNodeState.nodeType === 'operators'
+    selectedNode?.name ??
+    (selectedNodeState?.nodeType === 'operators'
       ? 'Operator Node'
       : 'Artifact Node');
 
@@ -287,29 +306,9 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 sx={{ width: '100%', py: 1, fontSize: '32px' }}
                 variant="text"
                 onClick={() => {
-                  // refresh node results, result history, and current result
-                  dispatch(
-                    aqueductApi.endpoints.nodesResultsGet.initiate({
-                      apiKey: user.apiKey,
-                      workflowId,
-                      dagResultId,
-                    })
-                  );
-
-                  dispatch(
-                    aqueductApi.endpoints.dagResultGet.initiate({
-                      apiKey: user.apiKey,
-                      workflowId,
-                      dagResultId,
-                    })
-                  );
-
-                  dispatch(
-                    aqueductApi.endpoints.dagResultsGet.initiate({
-                      apiKey: user.apiKey,
-                      workflowId,
-                    })
-                  );
+                  refetchDagResult();
+                  refetchDagResults();
+                  refetchNodeResults();
                 }}
               >
                 <FontAwesomeIcon icon={faArrowRotateRight} />
@@ -353,7 +352,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             sx={{ backgroundColor: theme.palette.gray[100] }}
             height={`${drawerHeaderHeightInPx}px`}
           >
-            <Box display="flex">
+            <Box display="flex" mr={3}>
               <Box
                 sx={{ cursor: 'pointer', m: 1, alignSelf: 'center' }}
                 onClick={() =>
@@ -373,17 +372,17 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                   {nodeLabel}
                 </Typography>
               </Box>
+              {/* This flex grown box right aligns the buttons below.*/}
+              <Box flex={1} />
 
               {dagResultId && !!selectedNode && !!selectedNodeState && (
-                <Box mr={3}>
-                  <WorkflowNodeSidesheetActions
-                    user={user}
-                    workflowId={workflowId}
-                    dagResultId={dagResultId}
-                    selectedNodeState={selectedNodeState}
-                    selectedNode={selectedNode}
-                  />
-                </Box>
+                <WorkflowNodeSidesheetActions
+                  user={user}
+                  workflowId={workflowId}
+                  dagResultId={dagResultId}
+                  selectedNodeState={selectedNodeState}
+                  selectedNode={selectedNode}
+                />
               )}
             </Box>
           </Box>

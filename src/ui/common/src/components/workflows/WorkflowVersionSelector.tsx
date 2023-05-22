@@ -14,10 +14,9 @@ import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useDagResultsGetQuery } from '../../handlers/AqueductApi';
 import { theme } from '../../styles/theme/theme';
 import ExecutionStatus from '../../utils/shared';
-import { useWorkflowIds } from '../pages/workflow/id/hook';
+import { useSortedDagResults, useWorkflowIds } from '../pages/workflow/id/hook';
 
 type Props = {
   apiKey: string;
@@ -27,7 +26,10 @@ export const VersionSelector: React.FC<Props> = ({ apiKey }) => {
   const navigate = useNavigate();
   const { workflowId, dagResultId } = useWorkflowIds(apiKey);
 
-  const { data: dagResults } = useDagResultsGetQuery({ apiKey, workflowId });
+  const dagResults = useSortedDagResults(apiKey, workflowId);
+  const selectedResult = (dagResults ?? []).filter(
+    (r) => r.id === dagResultId
+  )[0];
   const [menuAnchor, setMenuAnchor] = useState<HTMLButtonElement | null>(null);
 
   const getMenuItems = () => {
@@ -83,7 +85,10 @@ export const VersionSelector: React.FC<Props> = ({ apiKey }) => {
           value={idx}
           key={r.id}
           onClick={() => {
-            navigate(`result/${encodeURI(r.id)}`);
+            navigate(
+              `/workflow/${encodeURI(workflowId)}/result/${encodeURI(r.id)}`,
+              { replace: false }
+            );
           }}
           sx={{
             backgroundColor: selected ? selectedBackground : defaultBackground,
@@ -95,9 +100,9 @@ export const VersionSelector: React.FC<Props> = ({ apiKey }) => {
         >
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
             {menuItemIcon}
-            <Typography
-              ml={1}
-            >{`${r.exec_state.timestamps?.pending_at}`}</Typography>
+            <Typography ml={1}>{`${new Date(
+              r.exec_state.timestamps?.pending_at
+            ).toLocaleString()}`}</Typography>
           </Box>
         </MenuItem>
       );
@@ -125,7 +130,13 @@ export const VersionSelector: React.FC<Props> = ({ apiKey }) => {
         disableFocusRipple
       >
         <FontAwesomeIcon icon={faClock} color={theme.palette.gray[800]} />
-        <Box mx={1}>{r.exec_state.timestamps?.pending_at}</Box>
+        {selectedResult && (
+          <Box mx={1}>
+            {new Date(
+              selectedResult.exec_state.timestamps?.pending_at
+            ).toLocaleString()}
+          </Box>
+        )}
 
         <FontAwesomeIcon icon={faChevronDown} />
       </Button>

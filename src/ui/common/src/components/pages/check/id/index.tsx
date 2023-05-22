@@ -1,11 +1,13 @@
+import { CircularProgress } from '@mui/material';
 import Box from '@mui/material/Box';
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 
 import WithOperatorHeader from '../../../../components/operators/WithOperatorHeader';
 import { useNodeArtifactResultsGetQuery } from '../../../../handlers/AqueductApi';
 import UserProfile from '../../../../utils/auth';
 import DefaultLayout from '../../../layouts/default';
+import { BreadcrumbLink } from '../../../layouts/NavBar';
 import CheckHistory from '../../../workflows/artifact/check/history';
 import { LayoutProps } from '../../types';
 import {
@@ -35,6 +37,7 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
     nodeId = nodeIdParam;
   }
 
+  const path = useLocation().pathname;
   const breadcrumbs = useWorkflowBreadcrumbs(
     user.apiKey,
     workflowId,
@@ -64,6 +67,18 @@ const CheckDetailsPage: React.FC<CheckDetailsPageProps> = ({
     workflowId,
     dagId,
   });
+
+  breadcrumbs.push(
+    new BreadcrumbLink(path, node ? node.name : 'Check Details')
+  );
+
+  if (!node) {
+    return (
+      <Layout breadcrumbs={breadcrumbs} user={user}>
+        <CircularProgress />
+      </Layout>
+    );
+  }
 
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>

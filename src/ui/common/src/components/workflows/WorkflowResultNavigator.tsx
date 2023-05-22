@@ -7,8 +7,7 @@ import { Box, Tooltip } from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useDagResultsGetQuery } from '../../handlers/AqueductApi';
-import { useWorkflowIds } from '../pages/workflow/id/hook';
+import { useSortedDagResults, useWorkflowIds } from '../pages/workflow/id/hook';
 import { Button } from '../primitives/Button.styles';
 
 type Props = {
@@ -18,10 +17,7 @@ type Props = {
 const WorkflowResultNavigator: React.FC<Props> = ({ apiKey }) => {
   const navigate = useNavigate();
   const { workflowId, dagResultId } = useWorkflowIds(apiKey);
-  const { data: dagResults } = useDagResultsGetQuery(
-    { apiKey, workflowId },
-    { skip: !workflowId || !dagResultId }
-  );
+  const dagResults = useSortedDagResults(apiKey, workflowId);
 
   if (!dagResults) {
     return null;
