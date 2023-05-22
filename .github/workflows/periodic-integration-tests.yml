@@ -13,8 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # - uses: ./.github/actions/setup-server
-      #   timeout-minutes: 7
+      - uses: ./.github/actions/setup-server
+        timeout-minutes: 7
 
       # TODO(ENG-2537): Use our separate GH actions credentials.
       - uses: ./.github/actions/fetch-test-config
@@ -27,8 +27,8 @@ jobs:
         working-directory: scripts/compute
         run: ./airflow_test_setup.sh &
       
-      # - name: Wait for Airflow cluster to be ready
-      #   run: while ! echo exit | nc localhost 8000; do sleep 1; done
+      - name: Wait for Airflow cluster to be ready
+        run: while ! echo exit | nc localhost 8000; do sleep 1; done
       
       - name: Print the test-creds (1)
         working-directory: integration_tests/sdk
@@ -36,7 +36,7 @@ jobs:
       
       - name: Get Airflow password
         run: |
-          airflow_password=SauravCHH
+          airflow_password=$(cat ~/airflow/standalone_admin_password.txt)
           echo "airflow_password=$airflow_password" >> $GITHUB_ENV
       
       - name: Update Airflow password in test-credentials.yml
@@ -48,19 +48,19 @@ jobs:
         working-directory: integration_tests/sdk
         run: cat test-credentials.yml
 
-      # - name: Install any data connector packages
-      #   run: |
-      #     aqueduct install s3
-      #     aqueduct install snowflake
+      - name: Install any data connector packages
+        run: |
+          aqueduct install s3
+          aqueduct install snowflake
 
-      # - name: Run the SDK Integration Tests
-      #   working-directory: integration_tests/sdk
-      #   run: pytest aqueduct_tests/ -rP -vv -n 1
+      - name: Run the SDK Integration Tests
+        working-directory: integration_tests/sdk
+        run: pytest aqueduct_tests/ -rP -vv -n 1
 
-      # - uses: ./.github/actions/upload-artifacts
-      #   if: always()
-      #   with:
-      #     prefix: Airflow Compute
+      - uses: ./.github/actions/upload-artifacts
+        if: always()
+        with:
+          prefix: Airflow Compute
 
       # Sets it as an environmental variable.
       # - name: Get the Slack ID for the current oncall
