@@ -41,7 +41,9 @@ jobs:
       
       - name: Update Airflow password in test-credentials.yml
         working-directory: integration_tests/sdk
-        run: sed -i '/^compute:/,/^[^ ].*: *$/ { /^ *test_airflow:/,/^[^ ].*: *$/ s/^\(\s*password:\s*\).*/\1'"${{ env.airflow_password }}"'/ }' test-credentials.yml
+        run: |
+        airflow_password="${{ env.airflow_password }}"
+        sed -i '/^compute:/,/^[^ ].*: *$/ { /^ *test_airflow:/,/^[^ ].*: *$/ s/^\(\s*password:\s*\).*/\1'"$airflow_password"'/ }' test-credentials.yml
 
       - name: Print the test-creds (2)
         working-directory: integration_tests/sdk
