@@ -60,10 +60,10 @@ def deploy_example_notebook(deploy_fn, dir_path, notebook_name, api_key, address
     )
 
 
-def deploy_flow(name, deploy_fn, api_key, address, data_integration) -> None:
+def deploy_flow(name, deploy_fn, api_key, address, data_resource) -> None:
     print(f"Deploying {name}...")
     client = aq.Client(api_key, address)
-    deploy_fn(client, data_integration)
+    deploy_fn(client, data_resource)
 
 
 if __name__ == "__main__":
@@ -127,7 +127,7 @@ if __name__ == "__main__":
             else:
                 p = Process(
                     target=deploy_flow,
-                    args=(pkg.NAME, pkg.deploy, api_key, args.addr, args.data_integration),
+                    args=(pkg.NAME, pkg.deploy, api_key, args.addr, args.data_resource),
                 )
                 processes.append(p)
                 p.start()
