@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/apache/airflow-client-go/airflow"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
-	"github.com/sirupsen/logrus"
 )
 
 type client struct {
@@ -109,26 +109,6 @@ func (c *client) isDAGPaused(dagID string) (bool, error) {
 	return dag.GetIsPaused(), nil
 }
 
-// unpauseDAG unpauses the DAG specified.
-func (c *client) unpauseDAG(dagID string) error {
-	dag, err := c.getDag(dagID)
-	if err != nil {
-		return err
-	}
-
-	// Update the is_paused field for the DAG
-	dag.SetIsPaused(false)
-
-	request := c.apiClient.DAGApi.PatchDag(c.ctx, dagID)
-
-	// Update the request with the new DAG and name of changed field
-	request = request.DAG(*dag)
-	request = request.UpdateMask([]string{"is_paused"})
-
-	_, _, err = request.Execute()
-	return err
-}
-
 // trigerDAGRun triggers a new DAGRun for the dag specified.
 // It first ensures that the DAG is not paused.
 func (c *client) triggerDAGRun(dagID string) error {
@@ -138,13 +118,9 @@ func (c *client) triggerDAGRun(dagID string) error {
 		return err
 	}
 
-	logrus.Warnf("IsPaused: %v", paused)
-
 	if paused {
-		err := c.unpauseDAG(dagID)
-		if err != nil {
-			return err
-		}
+		// TODO ENG-3002: Automatically unpause the DAG instead of throwing an error
+		return errors.Newf("Unable to trigger a new DAG run for %v because it is currently paused. You must unpause it first!", dagID)
 	}
 
 	request := c.apiClient.DAGRunApi.PostDagRun(c.ctx, dagID)
