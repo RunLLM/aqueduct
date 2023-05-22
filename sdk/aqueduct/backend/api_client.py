@@ -552,9 +552,9 @@ class APIClient:
         headers = self._generate_auth_headers()
 
         url = self.construct_full_url(self.GET_WORKFLOW_TEMPLATE % flow_id)
-        resp_flow = requests.get(url, headers=headers)
-        self.raise_errors(resp_flow)
-        resp_flow = GetWorkflowResponse(**resp_flow.json())
+        flow_response = requests.get(url, headers=headers)
+        self.raise_errors(flow_response)
+        resp_flow = GetWorkflowResponse(**flow_response.json())
         metadata = Metadata(
             name=resp_flow.name,
             description=resp_flow.description,
@@ -563,16 +563,16 @@ class APIClient:
         )
 
         url = self.construct_full_url(self.GET_DAGS_TEMPLATE % flow_id)
-        resp_dags = requests.get(url, headers=headers)
-        self.raise_errors(resp_dags)
-        resp_dags = {dag["id"]: GetDagResponse(**dag) for dag in resp_dags.json()}
+        dags_response = requests.get(url, headers=headers)
+        self.raise_errors(dags_response)
+        resp_dags = {dag["id"]: GetDagResponse(**dag) for dag in dags_response.json()}
         # Metadata from WorkflowResponse so it is the same for all DAG.
         dags = {}
         for dag in resp_dags.values():
             url = self.construct_full_url(self.GET_NODES_TEMPLATE % (flow_id, dag.id))
-            resp_nodes = requests.get(url, headers=headers)
-            self.raise_errors(resp_nodes)
-            resp_nodes = resp_nodes.json()
+            nodes_resp = requests.get(url, headers=headers)
+            self.raise_errors(nodes_resp)
+            resp_nodes = nodes_resp.json()
 
             ops = {}
             for operator in resp_nodes["operators"]:
@@ -607,10 +607,10 @@ class APIClient:
             )
 
         url = self.construct_full_url(self.GET_DAG_RESULTS_TEMPLATE % flow_id)
-        resp_results = requests.get(url, headers=headers)
-        self.raise_errors(resp_results)
-        dag_results = [GetDagResultResponse(**dag_result) for dag_result in resp_results.json()]
-        dag_results = [
+        results_resp = requests.get(url, headers=headers)
+        self.raise_errors(results_resp)
+        dag_results = [GetDagResultResponse(**dag_result) for dag_result in results_resp.json()]
+        workflow_dag_results = [
             WorkflowDagResultResponse(
                 id=dag_result.id,
                 created_at=int(datetime.datetime.strptime(resp_dags[str(dag_result.dag_id)].created_at,'%Y-%m-%dT%H:%M:%S.%f%z').timestamp()),
@@ -619,7 +619,7 @@ class APIClient:
                 workflow_dag_id=dag_result.dag_id,
             )
         for dag_result in dag_results]
-        return GetWorkflowV1Response(workflow_dags=dags, workflow_dag_results=dag_results)
+        return GetWorkflowV1Response(workflow_dags=dags, workflow_dag_results=workflow_dag_results)
 
     def get_workflow_dag_result(self, flow_id: str, result_id: str) -> GetWorkflowDagResultResponse:
         headers = self._generate_auth_headers()
