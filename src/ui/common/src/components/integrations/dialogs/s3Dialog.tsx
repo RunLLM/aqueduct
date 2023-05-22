@@ -289,5 +289,12 @@ export function getS3ValidationSchema() {
         .required('Please upload a credentials file'),
       otherwise: null,
     }),
+    use_as_storage: Yup.string().transform((value) => {
+      if (value === 'true') {
+        return 'true';
+      }
+
+      return 'false';
+    }),
   });
 }
