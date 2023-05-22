@@ -6,7 +6,6 @@ from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, SalesforceExtractType
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
-from aqueduct.models.integration import BaseResource, ResourceInfo
 from aqueduct.models.operators import (
     ExtractSpec,
     Operator,
@@ -14,6 +13,7 @@ from aqueduct.models.operators import (
     SalesforceExtractParams,
     SalesforceLoadParams,
 )
+from aqueduct.models.resource import BaseResource, ResourceInfo
 from aqueduct.resources.validation import validate_is_connected
 from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import generate_uuid
@@ -24,7 +24,7 @@ from .save import _save_artifact
 
 class SalesforceResource(BaseResource):
     """
-    Class for Salesforce integration.
+    Class for Salesforce resource.
     """
 
     def __init__(self, dag: DAG, metadata: ResourceInfo):
@@ -40,7 +40,7 @@ class SalesforceResource(BaseResource):
         description: str = "",
     ) -> TableArtifact:
         """
-        Runs a search against the Salesforce integration.
+        Runs a search against the Salesforce resource.
 
         Args:
             search_query:
@@ -80,7 +80,7 @@ class SalesforceResource(BaseResource):
         description: str = "",
     ) -> TableArtifact:
         """
-        Runs a query against the Salesforce integration.
+        Runs a query against the Salesforce resource.
 
         Args:
             query:
@@ -130,7 +130,7 @@ class SalesforceResource(BaseResource):
         query: str,
         extract_type: SalesforceExtractType,
     ) -> uuid.UUID:
-        integration_info = self._metadata
+        resource_info = self._metadata
 
         artifact_name = output or default_artifact_name_from_op_name(op_name)
         operator_id = generate_uuid()
@@ -145,8 +145,8 @@ class SalesforceResource(BaseResource):
                         description=description,
                         spec=OperatorSpec(
                             extract=ExtractSpec(
-                                service=integration_info.service,
-                                integration_id=integration_info.id,
+                                service=resource_info.service,
+                                resource_id=resource_info.id,
                                 parameters=SalesforceExtractParams(type=extract_type, query=query),
                             )
                         ),
@@ -167,6 +167,6 @@ class SalesforceResource(BaseResource):
         return output_artifact_id
 
     def describe(self) -> None:
-        """Prints out a human-readable description of the Salesforce integration."""
+        """Prints out a human-readable description of the Salesforce resource."""
         print("==================== Salesforce Resource =============================")
         self._metadata.describe()

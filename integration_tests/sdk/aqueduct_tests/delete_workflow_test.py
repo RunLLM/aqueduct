@@ -14,9 +14,9 @@ from .extract import extract
 from .save import save
 
 
-def test_delete_source_workflow(client, flow_name, data_integration, engine):
+def test_delete_source_workflow(client, flow_name, data_resource, engine):
     """Tests deleting a flow that is the source of another flow that has a cascading trigger."""
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
 
     @op
     def noop(input):
@@ -48,10 +48,10 @@ def test_delete_source_workflow(client, flow_name, data_integration, engine):
     client.delete_flow(source_flow.id())
 
 
-def test_delete_workflow_invalid_saved_objects(client, flow_name, data_integration, engine):
+def test_delete_workflow_invalid_saved_objects(client, flow_name, data_resource, engine):
     """Check the flow cannot delete an object it had not saved."""
-    table = extract(data_integration, DataObject.SENTIMENT)
-    save(data_integration, table)
+    table = extract(data_resource, DataObject.SENTIMENT)
+    save(data_resource, table)
 
     flow = publish_flow_test(
         client,
@@ -61,9 +61,9 @@ def test_delete_workflow_invalid_saved_objects(client, flow_name, data_integrati
     )
 
     tables = client.flow(flow.id()).list_saved_objects()
-    table_saved_object_update = tables[data_integration][0]
+    table_saved_object_update = tables[data_resource][0]
     table_saved_object_update.spec.set_identifier("I_DONT_EXIST")
-    tables[data_integration] = [table_saved_object_update]
+    tables[data_resource] = [table_saved_object_update]
 
     # Cannot delete a flow if the saved objects specified had not been saved by the flow.
     with pytest.raises(InvalidRequestError):
@@ -73,16 +73,16 @@ def test_delete_workflow_invalid_saved_objects(client, flow_name, data_integrati
     client.flow(flow.id())
 
 
-@pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
+@pytest.mark.enable_only_for_data_resource_type(*all_relational_DBs())
 # TODO(ENG-2881)
 @pytest.mark.skip_for_spark_engines(reason="Need to investigate, TODO above.")
 def test_force_delete_workflow_saved_objects(
-    client, flow_name, data_integration, engine, data_validator
+    client, flow_name, data_resource, engine, data_validator
 ):
     """Check the flow with object(s) saved with update_mode=APPEND can only be deleted if in force mode."""
     table_name = generate_table_name()
-    table_artifact = data_integration.sql("select * from hotel_reviews limit 5")
-    save(data_integration, table_artifact, name=table_name, update_mode=LoadUpdateMode.REPLACE)
+    table_artifact = data_resource.sql("select * from hotel_reviews limit 5")
+    save(data_resource, table_artifact, name=table_name, update_mode=LoadUpdateMode.REPLACE)
 
     flow = publish_flow_test(
         client,
@@ -91,7 +91,7 @@ def test_force_delete_workflow_saved_objects(
         engine=engine,
     )
 
-    save(data_integration, table_artifact, name=table_name, update_mode=LoadUpdateMode.APPEND)
+    save(data_resource, table_artifact, name=table_name, update_mode=LoadUpdateMode.APPEND)
     flow = publish_flow_test(
         client,
         table_artifact,
@@ -107,7 +107,7 @@ def test_force_delete_workflow_saved_objects(
     )
 
     tables = flow.list_saved_objects()
-    assert table_name in [item.spec.identifier() for item in tables[data_integration]]
+    assert table_name in [item.spec.identifier() for item in tables[data_resource]]
 
     # Doesn't work if don't force because it is created in append mode.
     with pytest.raises(InvalidRequestError):
@@ -124,11 +124,11 @@ def test_force_delete_workflow_saved_objects(
     data_validator.check_saved_artifact_data_does_not_exist(table_artifact.id())
 
 
-@pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
+@pytest.mark.enable_only_for_data_resource_type(*all_relational_DBs())
 # TODO(ENG-2881)
 @pytest.mark.skip_for_spark_engines(reason="Need to investigate, TODO above.")
 def test_delete_workflow_saved_objects_twice(
-    client, flow_name, data_integration, engine, data_validator
+    client, flow_name, data_resource, engine, data_validator
 ):
     """Checking the successful deletion case and unsuccessful deletion case works as expected.
     To test this, I have two workflows that write to the same table. When I delete the table in the first workflow,
@@ -137,8 +137,8 @@ def test_delete_workflow_saved_objects_twice(
     """
     table_name = generate_table_name()
 
-    table_artifact = data_integration.sql("select * from hotel_reviews limit 5")
-    save(data_integration, table_artifact, name=table_name, update_mode=LoadUpdateMode.REPLACE)
+    table_artifact = data_resource.sql("select * from hotel_reviews limit 5")
+    save(data_resource, table_artifact, name=table_name, update_mode=LoadUpdateMode.REPLACE)
 
     # Workflow 1's name not specified, so given a random workflow name.
     flow1 = publish_flow_test(
@@ -149,7 +149,7 @@ def test_delete_workflow_saved_objects_twice(
     )
 
     # Workflow 2's name not specified, so given a random workflow name.
-    save(data_integration, table_artifact, name=table_name, update_mode=LoadUpdateMode.APPEND)
+    save(data_resource, table_artifact, name=table_name, update_mode=LoadUpdateMode.APPEND)
     flow2 = publish_flow_test(
         client,
         table_artifact,
@@ -165,11 +165,11 @@ def test_delete_workflow_saved_objects_twice(
     )
 
     tables = client.flow(flow1.id()).list_saved_objects()
-    tables_1 = set([item.spec.identifier() for item in tables[data_integration]])
+    tables_1 = set([item.spec.identifier() for item in tables[data_resource]])
     assert table_name in tables_1
 
     tables = client.flow(flow2.id()).list_saved_objects()
-    tables_2 = set([item.spec.identifier() for item in tables[data_integration]])
+    tables_2 = set([item.spec.identifier() for item in tables[data_resource]])
     assert table_name in tables_2
 
     assert tables_1 == tables_2

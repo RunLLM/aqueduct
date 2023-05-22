@@ -11,14 +11,14 @@ from aqueduct.error import (
     InternalServerError,
     InvalidRequestError,
     InvalidUserActionException,
-    NoConnectedIntegrationsException,
+    NoConnectedResourcesException,
     ResourceNotFoundError,
     UnprocessableEntityError,
 )
 from aqueduct.logger import logger
 from aqueduct.models.dag import DAG
-from aqueduct.models.integration import BaseResource, ResourceInfo
 from aqueduct.models.operators import ParamSpec
+from aqueduct.models.resource import BaseResource, ResourceInfo
 from aqueduct.models.response_models import (
     DeleteWorkflowResponse,
     DynamicEngineStatusResponse,
@@ -72,13 +72,13 @@ class APIClient:
     LIST_WORKFLOWS_ROUTE = "/api/workflows"
     REFRESH_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/refresh"
     DELETE_WORKFLOW_ROUTE_TEMPLATE = "/api/workflow/%s/delete"
-    LIST_GITHUB_REPO_ROUTE = "/api/integrations/github/repos"
-    LIST_GITHUB_BRANCH_ROUTE = "/api/integrations/github/branches"
+    LIST_GITHUB_REPO_ROUTE = "/api/resources/github/repos"
+    LIST_GITHUB_BRANCH_ROUTE = "/api/resources/github/branches"
     NODE_POSITION_ROUTE = "/api/positioning"
     EXPORT_FUNCTION_ROUTE = "/api/function/%s/export"
 
     GET_DYNAMIC_ENGINE_STATUS_ROUTE = "/api/resource/dynamic-engine/status"
-    EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE = "/api/integration/dynamic-engine/%s/edit"
+    EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE = "/api/resource/dynamic-engine/%s/edit"
 
     GET_IMAGE_URL_ROUTE = "/api/resourece/container-registry/url"
 
@@ -229,13 +229,12 @@ class APIClient:
         resp = requests.get(url, headers=headers)
         self.raise_errors(resp)
         if len(resp.json()) == 0:
-            raise NoConnectedIntegrationsException(
-                "Unable to create flow. Must be connected to at least one integration!"
+            raise NoConnectedResourcesException(
+                "Unable to create flow. Must be connected to at least one resource!"
             )
 
         return {
-            integration_info["name"]: ResourceInfo(**integration_info)
-            for integration_info in resp.json()
+            resource_info["name"]: ResourceInfo(**resource_info) for resource_info in resp.json()
         }
 
     def list_github_repos(self) -> List[str]:
@@ -253,30 +252,30 @@ class APIClient:
         resp = requests.get(url, headers=headers)
         return [x for x in resp.json()["branches"]]
 
-    def list_tables(self, integration_id: str) -> List[str]:
-        """Returns a list of the tables in the specified integration.
-        If the integration is not a relational database, it will throw an error.
+    def list_tables(self, resource_id: str) -> List[str]:
+        """Returns a list of the tables in the specified resource.
+        If the resource is not a relational database, it will throw an error.
         """
-        url = self.construct_full_url(self.LIST_RESOURCE_OBJECTS_ROUTE_TEMPLATE % integration_id)
+        url = self.construct_full_url(self.LIST_RESOURCE_OBJECTS_ROUTE_TEMPLATE % resource_id)
         headers = self._generate_auth_headers()
         resp = requests.get(url, headers=headers)
         self.raise_errors(resp)
 
         return [x for x in resp.json()["object_names"]]
 
-    def connect_integration(
+    def connect_resource(
         self, name: str, service: Union[str, ServiceType], config: ResourceConfig
     ) -> None:
-        integration_service = service
-        if isinstance(integration_service, ServiceType):
+        resource_service = service
+        if isinstance(resource_service, ServiceType):
             # The enum value needs to be used
-            integration_service = integration_service.value
+            resource_service = resource_service.value
 
         headers = self._generate_auth_headers()
         headers.update(
             {
                 "resource-name": name,
-                "resource-service": integration_service,
+                "resource-service": resource_service,
                 # `by_alias` is necessary to get this to use `schema` as a key for SnowflakeConfig.
                 # `exclude_none` is necessary to exclude `role` when None as SnowflakeConfig.
                 "resource-config": config.json(exclude_none=True, by_alias=True),
@@ -292,50 +291,50 @@ class APIClient:
         self,
         dag: DAG,
     ) -> Dict[str, DynamicEngineStatusResponse]:
-        """Makes a request against the /api/integration/dynamic-engine/status endpoint.
-           If an integration id does not correspond to a dynamic integration, the response won't
-           have an entry for that integration.
+        """Makes a request against the /api/resource/dynamic-engine/status endpoint.
+           If an resource id does not correspond to a dynamic resource, the response won't
+           have an entry for that resource.
 
         Args:
             dag:
-                The DAG object. We will extract the engine integration IDs and send them
+                The DAG object. We will extract the engine resource IDs and send them
                 to the backend to retrieve their status. Currently, we are only interested in
                 the status of dynamic engines.
 
         Returns:
             A DynamicEngineStatusResponse object, parsed from the backend endpoint's response.
         """
-        engine_integration_ids = set()
+        engine_resource_ids = set()
 
         dag_engine_config = dag.engine_config
         if dag_engine_config.type == RuntimeType.K8S:
             assert dag_engine_config.k8s_config is not None
-            engine_integration_ids.add(str(dag_engine_config.k8s_config.integration_id))
+            engine_resource_ids.add(str(dag_engine_config.k8s_config.resource_id))
         for op in dag.operators.values():
             if op.spec.engine_config and op.spec.engine_config.type == RuntimeType.K8S:
                 assert op.spec.engine_config.k8s_config is not None
-                engine_integration_ids.add(str(op.spec.engine_config.k8s_config.integration_id))
+                engine_resource_ids.add(str(op.spec.engine_config.k8s_config.resource_id))
 
-        return self.get_dynamic_engine_status(list(engine_integration_ids))
+        return self.get_dynamic_engine_status(list(engine_resource_ids))
 
     def get_dynamic_engine_status(
         self,
-        engine_integration_ids: List[str],
+        engine_resource_ids: List[str],
     ) -> Dict[str, DynamicEngineStatusResponse]:
-        """Makes a request against the /api/integration/dynamic-engine/status endpoint.
-           If an integration id does not correspond to a dynamic integration, the response won't
-           have an entry for that integration.
+        """Makes a request against the /api/resource/dynamic-engine/status endpoint.
+           If an resource id does not correspond to a dynamic resource, the response won't
+           have an entry for that resource.
 
         Args:
-            engine_integration_ids:
-                A list of engine integration IDs. Currently, we are only interested in
+            engine_resource_ids:
+                A list of engine resource IDs. Currently, we are only interested in
                 the status of dynamic engines.
 
         Returns:
             A DynamicEngineStatusResponse object, parsed from the backend endpoint's response.
         """
         headers = self._generate_auth_headers()
-        headers["resource-ids"] = json.dumps(engine_integration_ids)
+        headers["resource-ids"] = json.dumps(engine_resource_ids)
 
         url = self.construct_full_url(self.GET_DYNAMIC_ENGINE_STATUS_ROUTE)
         resp = requests.get(url, headers=headers)
@@ -349,14 +348,14 @@ class APIClient:
     def edit_dynamic_engine(
         self,
         action: K8sClusterActionType,
-        integration_id: str,
+        resource_id: str,
         config_delta: Optional[DynamicK8sConfig] = None,
     ) -> None:
-        """Makes a request against the /api/integration/dynamic-engine/{integrationId}/edit endpoint.
+        """Makes a request against the /api/resource/dynamic-engine/{resourceId}/edit endpoint.
 
         Args:
-            integration_id:
-                The engine integration ID.
+            resource_id:
+                The engine resource ID.
         """
         if action not in [
             K8sClusterActionType.CREATE,
@@ -376,7 +375,7 @@ class APIClient:
         headers = self._generate_auth_headers()
         headers["action"] = action.value
 
-        url = self.construct_full_url(self.EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE % integration_id)
+        url = self.construct_full_url(self.EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE % resource_id)
 
         body = {
             "config_delta": config_delta.json(exclude_none=True),
@@ -386,11 +385,11 @@ class APIClient:
 
         self.raise_errors(resp)
 
-    def delete_integration(
+    def delete_resource(
         self,
-        integration_id: uuid.UUID,
+        resource_id: uuid.UUID,
     ) -> None:
-        url = self.construct_full_url(self.DELETE_RESOURCE_ROUTE_TEMPLATE % integration_id)
+        url = self.construct_full_url(self.DELETE_RESOURCE_ROUTE_TEMPLATE % resource_id)
         headers = self._generate_auth_headers()
         resp = requests.post(url, headers=headers)
         self.raise_errors(resp)
@@ -410,8 +409,10 @@ class APIClient:
             A PreviewResponse object, parsed from the preview endpoint's response.
         """
         headers = self._generate_auth_headers()
+
+        # TODO(ENG-2994): `by_alias` is required until this naming inconsistency is resolved.
         body = {
-            "dag": dag.json(exclude_none=True),
+            "dag": dag.json(exclude_none=True, by_alias=True),
         }
 
         if len(body["dag"]) > MAX_REQUEST_BODY_SIZE and any(
@@ -467,8 +468,9 @@ class APIClient:
         headers = self._generate_auth_headers()
         # This header value will be string "True" or "False"
         headers.update({"run-now": str(run_now)})
+        # TODO(ENG-2994): `by_alias` is required until this naming inconsistency is resolved.
         body = {
-            "dag": dag.json(exclude_none=True),
+            "dag": dag.json(exclude_none=True, by_alias=True),
         }
 
         if len(body["dag"]) > MAX_REQUEST_BODY_SIZE and any(
@@ -517,8 +519,8 @@ class APIClient:
         url = self.construct_full_url(self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id)
         body = {
             "external_delete": {
-                str(integration): [obj.spec.json() for obj in saved_objects_to_delete[integration]]
-                for integration in saved_objects_to_delete
+                str(resource): [obj.spec.json() for obj in saved_objects_to_delete[resource]]
+                for resource in saved_objects_to_delete
             },
             "force": force,
         }
@@ -584,15 +586,15 @@ class APIClient:
 
     def get_image_url(
         self,
-        integration_id: str,
+        resource_id: str,
         service: ServiceType,
         image_name: str,
     ) -> GetImageURLResponse:
-        """Makes a request against the /api/integration/container-registry/url endpoint.
+        """Makes a request against the /api/resource/container-registry/url endpoint.
 
         Args:
-            integration_id:
-                Container registry integration ID.
+            resource_id:
+                Container registry resource ID.
             service:
                 Container registry service type.
             image_name:
@@ -602,7 +604,7 @@ class APIClient:
             GetImageURLResponse that contains the URL to the image.
         """
         headers = self._generate_auth_headers()
-        headers["resource-id"] = integration_id
+        headers["resource-id"] = resource_id
         headers["service"] = service.value
         headers["image-name"] = image_name
 

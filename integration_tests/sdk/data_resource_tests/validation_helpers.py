@@ -2,7 +2,7 @@ from aqueduct.constants.enums import ArtifactType
 
 
 def check_hotel_reviews_table_artifact(hotel_reviews_artifact):
-    """Use to validate hotel_reviews table data is correct across all data integrations."""
+    """Use to validate hotel_reviews table data is correct across all data resources."""
     assert hotel_reviews_artifact.type() == ArtifactType.TABLE
     check_hotel_reviews_table_data(hotel_reviews_artifact.get())
 

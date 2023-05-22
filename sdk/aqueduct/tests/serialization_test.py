@@ -169,7 +169,7 @@ def test_excluded_fields_cannot_be_compared():
 def test_extract_serialization():
     op_id = uuid.uuid4()
     other_ids = [uuid.uuid4(), uuid.uuid4()]
-    integration_id = uuid.uuid4()
+    resource_id = uuid.uuid4()
     extract_operator = Operator(
         id=op_id,
         name="Extract Operator",
@@ -177,7 +177,7 @@ def test_extract_serialization():
         spec=OperatorSpec(
             extract=ExtractSpec(
                 service=ServiceType.POSTGRES,
-                integration_id=integration_id,
+                resource_id=resource_id,
                 parameters=RelationalDBExtractParams(query="SELECT * FROM hotel_reviews;"),
             ),
         ),
@@ -191,7 +191,7 @@ def test_extract_serialization():
             "spec": {
                 "extract": {
                     "service": ServiceType.POSTGRES,
-                    "integration_id": str(integration_id),
+                    "resource_id": str(resource_id),
                     "parameters": {
                         "query": "SELECT * FROM hotel_reviews;",
                     },
@@ -209,7 +209,7 @@ def test_extract_serialization():
         spec=OperatorSpec(
             extract=ExtractSpec(
                 service=ServiceType.SALESFORCE,
-                integration_id=integration_id,
+                resource_id=resource_id,
                 parameters=SalesforceExtractParams(
                     type=SalesforceExtractType.SEARCH, query="FIND joe;"
                 ),
@@ -225,7 +225,7 @@ def test_extract_serialization():
             "spec": {
                 "extract": {
                     "service": ServiceType.SALESFORCE,
-                    "integration_id": str(integration_id),
+                    "resource_id": str(resource_id),
                     "parameters": {
                         "type": "search",
                         "query": "FIND joe;",
@@ -244,7 +244,7 @@ def test_extract_serialization():
         spec=OperatorSpec(
             extract=ExtractSpec(
                 service=ServiceType.GOOGLE_SHEETS,
-                integration_id=integration_id,
+                resource_id=resource_id,
                 parameters=GoogleSheetsExtractParams(spreadsheet_id="0"),
             ),
         ),
@@ -258,7 +258,7 @@ def test_extract_serialization():
             "spec": {
                 "extract": {
                     "service": ServiceType.GOOGLE_SHEETS,
-                    "integration_id": str(integration_id),
+                    "resource_id": str(resource_id),
                     "parameters": {
                         "spreadsheet_id": "0",
                     },
@@ -276,7 +276,7 @@ def test_extract_serialization():
         spec=OperatorSpec(
             extract=ExtractSpec(
                 service=ServiceType.S3,
-                integration_id=integration_id,
+                resource_id=resource_id,
                 parameters=S3ExtractParams(
                     filepath=json.dumps("test.csv"),
                     artifact_type=ArtifactType.TABLE,
@@ -294,7 +294,7 @@ def test_extract_serialization():
             "spec": {
                 "extract": {
                     "service": ServiceType.S3,
-                    "integration_id": str(integration_id),
+                    "resource_id": str(resource_id),
                     "parameters": {
                         "filepath": json.dumps("test.csv"),
                         "artifact_type": ArtifactType.TABLE,
@@ -311,7 +311,7 @@ def test_extract_serialization():
 def test_load_serialization():
     op_id = uuid.uuid4()
     other_ids = [uuid.uuid4(), uuid.uuid4()]
-    integration_id = uuid.uuid4()
+    resource_id = uuid.uuid4()
     load_operator = Operator(
         id=op_id,
         name="Load Operator",
@@ -319,7 +319,7 @@ def test_load_serialization():
         spec=OperatorSpec(
             load=LoadSpec(
                 service=ServiceType.POSTGRES,
-                integration_id=integration_id,
+                resource_id=resource_id,
                 parameters=RelationalDBLoadParams(
                     table="hotel_reviews", update_mode=LoadUpdateMode.REPLACE
                 ),
@@ -335,7 +335,7 @@ def test_load_serialization():
             "spec": {
                 "load": {
                     "service": ServiceType.POSTGRES,
-                    "integration_id": str(integration_id),
+                    "resource_id": str(resource_id),
                     "parameters": {
                         "table": "hotel_reviews",
                         "update_mode": "replace",
@@ -354,7 +354,7 @@ def test_load_serialization():
         spec=OperatorSpec(
             load=LoadSpec(
                 service=ServiceType.SALESFORCE,
-                integration_id=integration_id,
+                resource_id=resource_id,
                 parameters=SalesforceLoadParams(object="hotel_reviews"),
             ),
         ),
@@ -368,7 +368,7 @@ def test_load_serialization():
             "spec": {
                 "load": {
                     "service": ServiceType.SALESFORCE,
-                    "integration_id": str(integration_id),
+                    "resource_id": str(resource_id),
                     "parameters": {
                         "object": "hotel_reviews",
                     },
@@ -386,7 +386,7 @@ def test_load_serialization():
         spec=OperatorSpec(
             load=LoadSpec(
                 service=ServiceType.GOOGLE_SHEETS,
-                integration_id=integration_id,
+                resource_id=resource_id,
                 parameters=GoogleSheetsLoadParams(
                     filepath="test_sheet.csv",
                     save_mode=GoogleSheetsSaveMode.OVERWRITE,
@@ -403,7 +403,7 @@ def test_load_serialization():
             "spec": {
                 "load": {
                     "service": ServiceType.GOOGLE_SHEETS,
-                    "integration_id": str(integration_id),
+                    "resource_id": str(resource_id),
                     "parameters": {
                         "filepath": "test_sheet.csv",
                         "save_mode": "overwrite",
@@ -422,7 +422,7 @@ def test_load_serialization():
         spec=OperatorSpec(
             load=LoadSpec(
                 service=ServiceType.S3,
-                integration_id=integration_id,
+                resource_id=resource_id,
                 parameters=S3LoadParams(
                     filepath="test.json",
                     format=S3TableFormat.JSON,
@@ -439,7 +439,7 @@ def test_load_serialization():
             "spec": {
                 "load": {
                     "service": ServiceType.S3,
-                    "integration_id": str(integration_id),
+                    "resource_id": str(resource_id),
                     "parameters": {
                         "filepath": "test.json",
                         "format": S3TableFormat.JSON,
@@ -458,7 +458,7 @@ def test_load_serialization():
         spec=OperatorSpec(
             load=LoadSpec(
                 service=ServiceType.S3,
-                integration_id=integration_id,
+                resource_id=resource_id,
                 parameters=S3LoadParams(
                     filepath="test.json",
                 ),
@@ -474,7 +474,7 @@ def test_load_serialization():
             "spec": {
                 "load": {
                     "service": ServiceType.S3,
-                    "integration_id": str(integration_id),
+                    "resource_id": str(resource_id),
                     "parameters": {
                         "filepath": "test.json",
                     },

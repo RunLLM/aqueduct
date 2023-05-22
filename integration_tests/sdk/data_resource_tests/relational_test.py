@@ -21,13 +21,13 @@ from .validation_helpers import check_hotel_reviews_table_artifact
 
 
 @pytest.fixture(autouse=True)
-def assert_data_integration_is_relational(client, data_integration):
-    assert isinstance(data_integration, RelationalDBResource)
+def assert_data_resource_is_relational(client, data_resource):
+    assert isinstance(data_resource, RelationalDBResource)
 
 
 def _create_successful_sql_artifacts(
     client,
-    data_integration,
+    data_resource,
     wrap_query_in_extract_params_struct: bool = False,
 ) -> List[BaseArtifact]:
     """Tests and returns artifacts for two types of sql queries: basic and chained.
@@ -35,10 +35,10 @@ def _create_successful_sql_artifacts(
     Every artifact is saved to a random table with update_mode='replace'.
     """
     hotel_reviews_query = "SELECT * FROM %s" % format_table_name(
-        "hotel_reviews", data_integration.type()
+        "hotel_reviews", data_resource.type()
     )
     chained_query = [
-        "SELECT * FROM %s" % format_table_name("hotel_reviews", data_integration.type()),
+        "SELECT * FROM %s" % format_table_name("hotel_reviews", data_resource.type()),
         "SELECT review, review_date FROM $ WHERE reviewer_nationality = '$1'",
         "SELECT review FROM $",
     ]
@@ -48,60 +48,58 @@ def _create_successful_sql_artifacts(
         chained_query = RelationalDBExtractParams(queries=chained_query)
 
     # Test a successful basic sql query.
-    hotel_reviews_table = data_integration.sql(hotel_reviews_query)
+    hotel_reviews_table = data_resource.sql(hotel_reviews_query)
     check_hotel_reviews_table_artifact(hotel_reviews_table)
 
     # Test a successful chain query.
     nationality = client.create_param("nationality", default=" United Kingdom ")
-    chained_query_result = data_integration.sql(chained_query, parameters=[nationality])
-    expected_chained_query_result = data_integration.sql(
+    chained_query_result = data_resource.sql(chained_query, parameters=[nationality])
+    expected_chained_query_result = data_resource.sql(
         "SELECT review FROM %s WHERE reviewer_nationality=' United Kingdom '"
-        % format_table_name("hotel_reviews", data_integration.type()),
+        % format_table_name("hotel_reviews", data_resource.type()),
     )
     assert expected_chained_query_result.get().equals(chained_query_result.get())
 
     artifacts = [hotel_reviews_table, chained_query_result]
     for artifact in artifacts:
         save(
-            data_integration,
+            data_resource,
             artifact,
-            format_table_name(generate_table_name(), data_integration.type()),
+            format_table_name(generate_table_name(), data_resource.type()),
             LoadUpdateMode.REPLACE,
         )
     return artifacts
 
 
-def test_sql_integration_query_and_save(client, flow_manager, data_integration):
-    artifacts = _create_successful_sql_artifacts(client, data_integration)
+def test_sql_resource_query_and_save(client, flow_manager, data_resource):
+    artifacts = _create_successful_sql_artifacts(client, data_resource)
 
     flow = flow_manager.publish_flow_test(artifacts=artifacts)
 
-    relational_validator = RelationalDataValidator(client, data_integration)
+    relational_validator = RelationalDataValidator(client, data_resource)
     for artifact in artifacts:
         relational_validator.check_saved_artifact_data(
             flow, artifact.id(), expected_data=artifact.get()
         )
 
 
-def test_sql_integration_query_and_save_relationaldbextractparams(
-    client, flow_manager, data_integration
-):
+def test_sql_resource_query_and_save_relationaldbextractparams(client, flow_manager, data_resource):
     artifacts = _create_successful_sql_artifacts(
-        client, data_integration, wrap_query_in_extract_params_struct=True
+        client, data_resource, wrap_query_in_extract_params_struct=True
     )
     flow = flow_manager.publish_flow_test(artifacts=artifacts)
 
-    relational_validator = RelationalDataValidator(client, data_integration)
+    relational_validator = RelationalDataValidator(client, data_resource)
     for artifact in artifacts:
         relational_validator.check_saved_artifact_data(
             flow, artifact.id(), expected_data=artifact.get()
         )
 
 
-def test_sql_integration_artifact_with_custom_metadata(flow_manager, data_integration):
+def test_sql_resource_artifact_with_custom_metadata(flow_manager, data_resource):
     # TODO: validate custom descriptions once we can fetch descriptions easily.
-    artifact = data_integration.sql(
-        "SELECT * FROM %s" % format_table_name("hotel_reviews", data_integration.type()),
+    artifact = data_resource.sql(
+        "SELECT * FROM %s" % format_table_name("hotel_reviews", data_resource.type()),
         name="Test Artifact",
         description="This is a description",
     )
@@ -111,20 +109,20 @@ def test_sql_integration_artifact_with_custom_metadata(flow_manager, data_integr
     check_artifact_was_computed(flow, "Test Artifact artifact")
 
 
-def test_sql_integration_failed_query(client, data_integration):
+def test_sql_resource_failed_query(client, data_resource):
     # Sql query is malformed.
     with pytest.raises(AqueductError, match="Preview Execution Failed"):
-        data_integration.sql("SELECT * FROM ")
+        data_resource.sql("SELECT * FROM ")
 
     # SQL error happens at execution time (table missing).
     with pytest.raises(AqueductError, match="Preview Execution Failed"):
-        data_integration.sql(
-            "SELECT * FROM %s" % format_table_name("missing_table", data_integration.type())
+        data_resource.sql(
+            "SELECT * FROM %s" % format_table_name("missing_table", data_resource.type())
         )
 
 
-def test_sql_integration_table_retrieval(client, data_integration):
-    df = data_integration.table(name=format_table_name("hotel_reviews", data_integration.type()))
+def test_sql_resource_table_retrieval(client, data_resource):
+    df = data_resource.table(name=format_table_name("hotel_reviews", data_resource.type()))
     assert len(df) == 100
     assert list(df) == [
         "hotel_name",
@@ -134,45 +132,45 @@ def test_sql_integration_table_retrieval(client, data_integration):
     ]
 
 
-def test_sql_integration_list_tables(client, data_integration):
-    tables = data_integration.list_tables()
+def test_sql_resource_list_tables(client, data_resource):
+    tables = data_resource.list_tables()
 
     for expected_table in demo_db_tables():
         assert tables["tablename"].str.contains(expected_table, case=False).sum() > 0
 
 
-def test_sql_today_tag(client, data_integration):
-    table_artifact_today = data_integration.sql(
+def test_sql_today_tag(client, data_resource):
+    table_artifact_today = data_resource.sql(
         query="select * from %s where review_date = {{today}}"
-        % format_table_name("hotel_reviews", data_integration.type())
+        % format_table_name("hotel_reviews", data_resource.type())
     )
     assert table_artifact_today.get().empty
-    table_artifact_not_today = data_integration.sql(
+    table_artifact_not_today = data_resource.sql(
         query="select * from %s where review_date < {{today}}"
-        % format_table_name("hotel_reviews", data_integration.type())
+        % format_table_name("hotel_reviews", data_resource.type())
     )
     assert len(table_artifact_not_today.get()) == 100
 
 
-def test_sql_query_with_parameters(client, data_integration, flow_manager):
+def test_sql_query_with_parameters(client, data_resource, flow_manager):
     table_name = client.create_param(
-        "table name", default=format_table_name("hotel_reviews", data_integration.type())
+        "table name", default=format_table_name("hotel_reviews", data_resource.type())
     )
     column_name = client.create_param("column name", default="reviewer_nationality")
     column_value = client.create_param("column value", default=" United Kingdom ")
-    parameterized_output = data_integration.sql(
+    parameterized_output = data_resource.sql(
         query="Select * from $1 where $2 = '$3'", parameters=[table_name, column_name, column_value]
     )
-    expanded_output = data_integration.sql(
+    expanded_output = data_resource.sql(
         query="Select * from %s where reviewer_nationality = ' United Kingdom '"
-        % format_table_name("hotel_reviews", data_integration.type())
+        % format_table_name("hotel_reviews", data_resource.type())
     )
     assert parameterized_output.get().equals(expanded_output.get())
 
     # Test that .get(parameters={...}) works.
-    expanded_custom_output = data_integration.sql(
+    expanded_custom_output = data_resource.sql(
         query="Select * from %s where reviewer_nationality = ' Australia '"
-        % format_table_name("hotel_reviews", data_integration.type())
+        % format_table_name("hotel_reviews", data_resource.type())
     )
     assert parameterized_output.get(parameters={"column value": " Australia "}).equals(
         expanded_custom_output.get()
@@ -209,7 +207,7 @@ def test_sql_query_with_parameters(client, data_integration, flow_manager):
         return len(param)
 
 
-def test_sql_query_invalid_parameters(client, data_integration, flow_manager):
+def test_sql_query_invalid_parameters(client, data_resource, flow_manager):
     country = client.create_param("country", default=" United Kingdom ")
 
     # Error if provided parameters are not all used.
@@ -217,9 +215,9 @@ def test_sql_query_invalid_parameters(client, data_integration, flow_manager):
         InvalidUserArgumentException,
         match="Unused parameter `country`.* must contain the placeholder \$1",
     ):
-        data_integration.sql(
+        data_resource.sql(
             query="Select * from %s where reviewer_nationality = $2"
-            % format_table_name("hotel_reviews", data_integration.type()),
+            % format_table_name("hotel_reviews", data_resource.type()),
             parameters=[country],
         )
 
@@ -227,21 +225,21 @@ def test_sql_query_invalid_parameters(client, data_integration, flow_manager):
     with pytest.raises(
         InvalidUserActionException, match="`something` is not a valid Aqueduct placeholder"
     ):
-        data_integration.sql(query="Select * from {{something }}")
+        data_resource.sql(query="Select * from {{something }}")
 
     # Error if the parameter is not a string type.
     num = client.create_param("num", default=1234)
     with pytest.raises(InvalidUserArgumentException, match="must be defined as a string"):
-        data_integration.sql(
+        data_resource.sql(
             query="Select * from %s where reviewer_nationality = '$1'"
-            % format_table_name("hotel_reviews", data_integration.type()),
+            % format_table_name("hotel_reviews", data_resource.type()),
             parameters=[num],
         )
 
     # Error if the parameter we attempt to set a custom parameter that is not a string.
-    output = data_integration.sql(
+    output = data_resource.sql(
         query="Select * from %s where reviewer_nationality = '$1'"
-        % format_table_name("hotel_reviews", data_integration.type()),
+        % format_table_name("hotel_reviews", data_resource.type()),
         parameters=[country],
     )
     with pytest.raises(
@@ -260,14 +258,14 @@ def test_sql_query_invalid_parameters(client, data_integration, flow_manager):
         client.trigger(flow.id(), parameters={"country": 1234})
 
 
-def test_sql_integration_save_wrong_data_type(client, flow_manager, data_integration):
+def test_sql_resource_save_wrong_data_type(client, flow_manager, data_resource):
     # Try to save a numeric artifact.
     num_param = client.create_param("number", default=123)
     with pytest.raises(
         InvalidUserActionException,
         match="Unable to save non-relational data into relational data store",
     ):
-        save(data_integration, num_param, generate_table_name(), LoadUpdateMode.REPLACE)
+        save(data_resource, num_param, generate_table_name(), LoadUpdateMode.REPLACE)
 
     # Save a generic artifact that is actually a string. This won't fail at save() time,
     # but instead when the flow is published.
@@ -277,32 +275,32 @@ def test_sql_integration_save_wrong_data_type(client, flow_manager, data_integra
 
     string_artifact = foo.lazy()
     assert isinstance(string_artifact, GenericArtifact)
-    save(data_integration, string_artifact, generate_table_name(), LoadUpdateMode.REPLACE)
+    save(data_resource, string_artifact, generate_table_name(), LoadUpdateMode.REPLACE)
     flow_manager.publish_flow_test(
         artifacts=string_artifact,
         expected_statuses=ExecutionStatus.FAILED,
     )
 
 
-def test_sql_integration_save_with_different_update_modes(client, flow_manager, data_integration):
-    table_1_save_name = format_table_name(generate_table_name(), data_integration.type())
-    table_2_save_name = format_table_name(generate_table_name(), data_integration.type())
+def test_sql_resource_save_with_different_update_modes(client, flow_manager, data_resource):
+    table_1_save_name = format_table_name(generate_table_name(), data_resource.type())
+    table_2_save_name = format_table_name(generate_table_name(), data_resource.type())
 
-    table = data_integration.sql(
-        "select * from %s limit 5" % format_table_name("hotel_reviews", data_integration.type())
+    table = data_resource.sql(
+        "select * from %s limit 5" % format_table_name("hotel_reviews", data_resource.type())
     )
     extracted_table_data = table.get()
-    save(data_integration, table, table_1_save_name, LoadUpdateMode.REPLACE)
+    save(data_resource, table, table_1_save_name, LoadUpdateMode.REPLACE)
 
     # This will create the table.
-    relational_validator = RelationalDataValidator(client, data_integration)
+    relational_validator = RelationalDataValidator(client, data_resource)
     flow = flow_manager.publish_flow_test(artifacts=table)
     relational_validator.check_saved_artifact_data(
         flow, table.id(), expected_data=extracted_table_data
     )
 
     # Change to append mode.
-    save(data_integration, table, table_1_save_name, LoadUpdateMode.APPEND)
+    save(data_resource, table, table_1_save_name, LoadUpdateMode.APPEND)
     flow_manager.publish_flow_test(
         existing_flow=flow,
         artifacts=table,
@@ -314,7 +312,7 @@ def test_sql_integration_save_with_different_update_modes(client, flow_manager, 
     )
 
     # Redundant append mode change
-    save(data_integration, table, table_1_save_name, LoadUpdateMode.APPEND)
+    save(data_resource, table, table_1_save_name, LoadUpdateMode.APPEND)
     flow_manager.publish_flow_test(
         existing_flow=flow,
         artifacts=table,
@@ -328,7 +326,7 @@ def test_sql_integration_save_with_different_update_modes(client, flow_manager, 
     )
 
     # Create a different table from the same artifact.
-    save(data_integration, table, table_2_save_name, LoadUpdateMode.REPLACE)
+    save(data_resource, table, table_2_save_name, LoadUpdateMode.REPLACE)
     flow_manager.publish_flow_test(
         existing_flow=flow,
         artifacts=table,

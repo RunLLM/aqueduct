@@ -402,7 +402,7 @@ class DeleteWorkflowResponse(BaseModel):
         saved_object_deletion_results:
             Results of deleting saved objects.
             Key: Resource name
-            Value: List of SavedObjectDelete belonging to that integration
+            Value: List of SavedObjectDelete belonging to that resource
     """
 
     saved_object_deletion_results: Dict[str, List[SavedObjectDelete]]
@@ -413,7 +413,7 @@ class SavedObjectUpdate(BaseModel):
 
     operator_name: str
     modified_at: str
-    integration_name: str
+    resource_name: str
     spec: LoadSpec
 
 

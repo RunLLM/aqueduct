@@ -9,7 +9,7 @@ from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, ServiceType
 from aqueduct.error import AqueductError
-from aqueduct.models.integration import BaseResource
+from aqueduct.models.resource import BaseResource
 from aqueduct.resources.connect_config import AWSCredentialType
 from aqueduct.resources.mongodb import MongoDBResource
 from aqueduct.resources.s3 import S3Resource
@@ -68,10 +68,10 @@ def _fetch_demo_data(demo: RelationalDBResource, table_name: str) -> pd.DataFram
     return df
 
 
-def _generate_setup_flow_name(integration: BaseResource):
+def _generate_setup_flow_name(resource: BaseResource):
     return "Setup Data for %s Resource: %s" % (
-        integration.type(),
-        integration.name(),
+        resource.type(),
+        resource.name(),
     )
 
 
@@ -88,11 +88,11 @@ def _publish_missing_artifacts(
 
 def _add_missing_artifacts(
     client: Client,
-    integration: BaseResource,
+    resource: BaseResource,
     existing_names: Set[str],
 ) -> None:
-    """Given the names of all objects that already exists in an integration, computes
-    any objects that are missing and saves them into the integration.
+    """Given the names of all objects that already exists in an resource, computes
+    any objects that are missing and saves them into the resource.
 
 
     Publishes a workflow in order to do this. The workflow is immediately deleted after one
@@ -116,16 +116,16 @@ def _add_missing_artifacts(
         # We use the generic save() defined in Aqueduct Tests, which dictates
         # the data format.
         save(
-            integration,
+            resource,
             cast(TableArtifact, data_param),
-            name=format_table_name(table_name, integration.type()),
+            name=format_table_name(table_name, resource.type()),
         )
         artifacts.append(data_param)
 
     _publish_missing_artifacts(
         client,
         artifacts=artifacts,
-        flow_name=_generate_setup_flow_name(integration),
+        flow_name=_generate_setup_flow_name(resource),
     )
 
 
@@ -187,113 +187,113 @@ def _setup_s3_data(client: Client, s3: S3Resource):
     _add_missing_artifacts(client, s3, existing_names)
 
 
-def setup_data_integrations(client: Client, filter_to: Optional[str] = None) -> None:
-    """Connects to the given data integration(s) if the server hasn't yet.
+def setup_data_resources(client: Client, filter_to: Optional[str] = None) -> None:
+    """Connects to the given data resource(s) if the server hasn't yet.
 
-    If the data integration is not connected, we ensure that it is spun up properly
-    and that the appropriate starting data is populated. We assume that if the integration
+    If the data resource is not connected, we ensure that it is spun up properly
+    and that the appropriate starting data is populated. We assume that if the resource
     already exists, then all external resources have already been set up.
 
-    If `filter_to` is set, we only connect to that given integration name. Otherwise,
-    we attempt to connect to every integration listed in the test config file.
+    If `filter_to` is set, we only connect to that given resource name. Otherwise,
+    we attempt to connect to every resource listed in the test config file.
     """
     if filter_to is not None:
-        data_integrations = [filter_to]
+        data_resources = [filter_to]
     else:
-        data_integrations = list_data_integrations()
+        data_resources = list_data_resources()
 
     # No need to do any setup for the demo db.
-    if "aqueduct_demo" in data_integrations:
-        data_integrations.remove("aqueduct_demo")
-    if "Demo" in data_integrations:
-        data_integrations.remove("Demo")
+    if "aqueduct_demo" in data_resources:
+        data_resources.remove("aqueduct_demo")
+    if "Demo" in data_resources:
+        data_resources.remove("Demo")
 
-    if len(data_integrations) == 0:
+    if len(data_resources) == 0:
         return
 
-    connected_integrations = client.list_resources()
-    for integration_name in data_integrations:
-        # Only connect to integrations that don't already exist.
-        if integration_name not in connected_integrations.keys():
-            print(f"Connecting to {integration_name}")
-            integration_config = _fetch_integration_credentials("data", integration_name)
+    connected_resources = client.list_resources()
+    for resource_name in data_resources:
+        # Only connect to resources that don't already exist.
+        if resource_name not in connected_resources.keys():
+            print(f"Connecting to {resource_name}")
+            resource_config = _fetch_resource_credentials("data", resource_name)
 
-            # Stand up the external integration first.
-            if integration_config["type"] == ServiceType.SQLITE:
-                _setup_external_sqlite_db(integration_config["database"])
-            elif integration_config["type"] == ServiceType.POSTGRES:
+            # Stand up the external resource first.
+            if resource_config["type"] == ServiceType.SQLITE:
+                _setup_external_sqlite_db(resource_config["database"])
+            elif resource_config["type"] == ServiceType.POSTGRES:
                 _setup_postgres_db()
             elif (
-                integration_config["type"] == ServiceType.MYSQL
-                or integration_config["type"] == ServiceType.MARIADB
+                resource_config["type"] == ServiceType.MYSQL
+                or resource_config["type"] == ServiceType.MARIADB
             ):
                 _setup_mysql_db()
 
             client.connect_resource(
-                integration_name,
-                integration_config["type"],
-                _sanitize_integration_config_for_connect(integration_config),
+                resource_name,
+                resource_config["type"],
+                _sanitize_resource_config_for_connect(resource_config),
             )
 
-        # Setup the data in each of these integrations.
-        integration = client.resource(integration_name)
-        if isinstance(integration, RelationalDBResource):
-            _setup_relational_data(client, integration)
-        elif integration.type() == ServiceType.S3:
-            _setup_s3_data(client, integration)
-        elif integration.type() == ServiceType.MONGO_DB:
-            _setup_mongo_db_data(client, integration)
-        elif integration.type() == ServiceType.ATHENA:
+        # Setup the data in each of these resources.
+        resource = client.resource(resource_name)
+        if isinstance(resource, RelationalDBResource):
+            _setup_relational_data(client, resource)
+        elif resource.type() == ServiceType.S3:
+            _setup_s3_data(client, resource)
+        elif resource.type() == ServiceType.MONGO_DB:
+            _setup_mongo_db_data(client, resource)
+        elif resource.type() == ServiceType.ATHENA:
             # We only support reading from Athena, so no setup is necessary.
             pass
         else:
-            raise Exception("Test suite does not yet support %s." % integration.type())
+            raise Exception("Test suite does not yet support %s." % resource.type())
 
 
-def setup_compute_integrations(client: Client, filter_to: Optional[str] = None) -> None:
-    """Connects to the given compute integration(s) if the server hasn't yet. It *does not*
+def setup_compute_resources(client: Client, filter_to: Optional[str] = None) -> None:
+    """Connects to the given compute resource(s) if the server hasn't yet. It *does not*
     ensure that the compute resources are set up appropriately.
 
-    If `filter_to` is set, we only connect to that given integration name. Otherwise,
-    we attempt to connect to every integration listed in the test config file.
+    If `filter_to` is set, we only connect to that given resource name. Otherwise,
+    we attempt to connect to every resource listed in the test config file.
     """
     if filter_to is not None:
-        compute_integrations = [filter_to]
+        compute_resources = [filter_to]
     else:
-        compute_integrations = list_compute_integrations()
+        compute_resources = list_compute_resources()
 
-    if len(compute_integrations) == 0:
+    if len(compute_resources) == 0:
         return
 
-    connected_integrations = client.list_resources()
-    for integration_key in compute_integrations:
-        if integration_key == "aqueduct_engine":
+    connected_resources = client.list_resources()
+    for resource_key in compute_resources:
+        if resource_key == "aqueduct_engine":
             # Connect to conda if specified, otherwise, do nothing for aq engine.
-            aq_config = _parse_config_file()["compute"][integration_key]
+            aq_config = _parse_config_file()["compute"][resource_key]
             if aq_config and "conda" in aq_config:
-                integration_name = aq_config["conda"]
-                if integration_name not in connected_integrations.keys():
+                resource_name = aq_config["conda"]
+                if resource_name not in connected_resources.keys():
                     client.connect_resource(
-                        integration_name,
+                        resource_name,
                         ServiceType.CONDA,
-                        {},  # integration_config
+                        {},  # resource_config
                     )
-                    wait_for_conda_integration(client, integration_name)
-        # Only connect to integrations that don't already exist.
-        elif integration_key not in connected_integrations.keys():
-            integration_name = integration_key
-            print(f"Connecting to {integration_name}")
-            integration_config = _fetch_integration_credentials("compute", integration_name)
+                    wait_for_conda_resource(client, resource_name)
+        # Only connect to resources that don't already exist.
+        elif resource_key not in connected_resources.keys():
+            resource_name = resource_key
+            print(f"Connecting to {resource_name}")
+            resource_config = _fetch_resource_credentials("compute", resource_name)
 
             client.connect_resource(
-                integration_name,
-                integration_config["type"],
-                _sanitize_integration_config_for_connect(integration_config),
+                resource_name,
+                resource_config["type"],
+                _sanitize_resource_config_for_connect(resource_config),
             )
 
 
-def wait_for_conda_integration(client: Client, name: str):
-    # Try to preview a test function integration it completes successfully.
+def wait_for_conda_resource(client: Client, name: str):
+    # Try to preview a test function resource it completes successfully.
     from aqueduct import op
 
     @op(requirements=["pytest"])
@@ -314,28 +314,28 @@ def wait_for_conda_integration(client: Client, name: str):
 
 
 def setup_storage_layer(client: Client) -> None:
-    """If a storage data integration is specified, perform a migration if we aren't already connected to it."""
+    """If a storage data resource is specified, perform a migration if we aren't already connected to it."""
     name = get_artifact_store_name()
     if name is None:
         return
 
-    connected_integrations = client.list_resources()
-    if name not in connected_integrations.keys():
-        integration_config = _fetch_integration_credentials("data", name)
-        integration_config["use_as_storage"] = "true"
+    connected_resources = client.list_resources()
+    if name not in connected_resources.keys():
+        resource_config = _fetch_resource_credentials("data", name)
+        resource_config["use_as_storage"] = "true"
 
         # There is a naming collision between the "type" field in `test-credentials.yml`
         # and the "type" field on the S3Config.
-        service_type = integration_config["type"]
-        integration_config["type"] = AWSCredentialType.CONFIG_FILE_PATH
+        service_type = resource_config["type"]
+        resource_config["type"] = AWSCredentialType.CONFIG_FILE_PATH
 
         client.connect_resource(
             name,
             service_type,
-            integration_config,
+            resource_config,
         )
 
-        # Poll on the server until the integration is ready.
+        # Poll on the server until the resource is ready.
         while True:
             try:
                 _ = client.resource(name)
@@ -354,13 +354,13 @@ def has_storage_config() -> bool:
     return "storage" in test_config
 
 
-def _sanitize_integration_config_for_connect(config: Dict[str, Any]) -> Dict[str, Any]:
+def _sanitize_resource_config_for_connect(config: Dict[str, Any]) -> Dict[str, Any]:
     """WARNING: this modifies the configuration dict."""
     del config["type"]
     return config
 
 
-def _fetch_integration_credentials(section: str, name: str) -> Dict[str, Any]:
+def _fetch_resource_credentials(section: str, name: str) -> Dict[str, Any]:
     """
     `section` can be "data" or "compute".
     """
@@ -378,7 +378,7 @@ def _fetch_integration_credentials(section: str, name: str) -> Dict[str, Any]:
 
 def is_global_engine_set(name: str) -> bool:
     """
-    Returns whether or not the provided compute integration has `set_global_engine` set.
+    Returns whether or not the provided compute resource has `set_global_engine` set.
 
     If name is None (meaning we are using the Aqueduct Server), we return False.
     """
@@ -398,7 +398,7 @@ def is_global_engine_set(name: str) -> bool:
 
 def is_lazy_set(name: str) -> bool:
     """
-    Returns whether or not the provided compute integration has `set_global_lazy` set.
+    Returns whether or not the provided compute resource has `set_global_lazy` set.
 
     If name is None (meaning we are using the Aqueduct Server), we return False.
     """
@@ -416,16 +416,16 @@ def is_lazy_set(name: str) -> bool:
     return "set_global_lazy" in test_config["compute"][name].keys()
 
 
-def list_data_integrations() -> List[str]:
-    """Get the list of data integrations from the config file."""
+def list_data_resources() -> List[str]:
+    """Get the list of data resources from the config file."""
     test_config = _parse_config_file()
 
     assert "data" in test_config, "test-config.yml must have a data section."
     return list(test_config["data"].keys())
 
 
-def list_compute_integrations() -> List[str]:
-    """Get the list of compute integrations from the config file."""
+def list_compute_resources() -> List[str]:
+    """Get the list of compute resources from the config file."""
     test_config = _parse_config_file()
 
     assert "compute" in test_config, "test-config.yml must have a compute section."
@@ -454,7 +454,5 @@ def get_artifact_store_name() -> Optional[str]:
     if "storage" not in test_config:
         return None
 
-    assert (
-        len(test_config["storage"]) == 1
-    ), "Only one data integration can be set as storage layer."
+    assert len(test_config["storage"]) == 1, "Only one data resource can be set as storage layer."
     return list(test_config["storage"].keys())[0]
