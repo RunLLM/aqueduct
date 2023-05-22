@@ -94,20 +94,8 @@ def publish_flow_test(
 
     engine_type = type_from_engine_name(client, engine)
     if engine_type == ServiceType.AIRFLOW:
-        # Copy over the Airflow DAG file to the Airflow DAGs folder
-        dag_path = f"{name}_airflow.py"
-        assert os.path.exists(
-            dag_path
-        ), f"The expected Airflow DAG file was not found at {dag_path}"
-
-        folder_path = os.path.expanduser(AIRFLOW_DAGS_FOLDER)
-        shutil.move(dag_path, folder_path)
-
-        print("Sleeping for 30s to wait for Airflow scheduler to pick up new DAG file")
-        time.sleep(30)
-
-        # Manually trigger a run to match behavior of non-Airflow engines
-        client.trigger(flow_id=flow.id())
+        # Wait for flow to be published to Airflow
+        _publish_to_airflow(client, flow.id(), name)
 
     if should_block:
         wait_for_flow_runs(
@@ -119,6 +107,51 @@ def publish_flow_test(
             else expected_statuses,
         )
     return flow
+
+
+def _publish_to_airflow(
+        client: aqueduct.Client,
+        flow_id: uuid.UUID,
+        flow_name: str,
+) -> None:
+    """Publishes the flow to a local Airflow server by copying over the DAG file
+    to the ~/airflow/dags directory. This function assumes that the DAG file
+    exists. It also waits for up to 90s for the Airflow scheduler to pick up
+    the new DAG and register it. Once the DAG has been registered, we a trigger
+    a run.
+    """
+    # Copy over the Airflow DAG file to the Airflow DAGs folder
+    dag_path = f"{flow_name}_airflow.py"
+    assert os.path.exists(
+        dag_path
+    ), f"The expected Airflow DAG file was not found at {dag_path}"
+
+    folder_path = os.path.expanduser(AIRFLOW_DAGS_FOLDER)
+    shutil.move(dag_path, folder_path)
+
+    start_time = time.time()
+    max_duration = 120  # Number of seconds to wait for Airflow scheduler
+    sleep_interval = 5
+
+    while True:
+        if time.time() - start_time > max_duration:
+            raise TimeoutError("Reached timeout waiting for Airflow scheduler to register new DAG")
+        
+        try:
+            # Manually trigger a run to match behavior of non-Airflow engines
+            client.trigger(flow_id=flow_id)
+        except Exception as e:
+            if "404 NOT FOUND" in str(e):
+                # DAG has not bee registered yet, so we sleep and retry
+                print("Sleeping for 5s to wait for Airflow scheduler")
+                time.sleep(sleep_interval)
+                continue
+            else:
+                # This is a different exception
+                raise(e)
+
+        # Reaching this point means the flow was successfully triggered
+        break
 
 
 def trigger_flow_test(
