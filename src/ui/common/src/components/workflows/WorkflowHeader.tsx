@@ -39,7 +39,6 @@ const WorkflowHeader: React.FC<Props> = ({
   dagId,
   dagResultId,
 }) => {
-  // TODO: Refactor
   const nodeSelectionState = useSelector(
     (state: RootState) =>
       state.workflowPageReducer.perWorkflowPageStates[workflowId]?.SelectedNode
