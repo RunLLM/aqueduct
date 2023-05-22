@@ -67,7 +67,7 @@ def _validate_parameters(queries: List[str], parameters: List[BaseArtifact]) -> 
 # with optional space in front or after. Example string match: "{directory_path}/{file_name}".
 #
 # This is *not* expected to be used in SQL queries, but instead in table names, file paths, etc.
-USER_TAG_PATTERN = r"{{\s*[\w-]+\s*}}"
+USER_TAG_PATTERN = r"{\s*[\w-]+\s*}"
 
 
 def _fetch_param_artifact_ids_embedded_in_string(

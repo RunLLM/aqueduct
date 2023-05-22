@@ -205,10 +205,10 @@ class S3Resource(BaseResource):
         param_artifact_ids_in_filepath = _fetch_param_artifact_ids_embedded_in_string(
             self._dag, filepath
         )
-        artifacts = param_artifact_ids_in_filepath + [artifact.id()]
+        artifact_ids = param_artifact_ids_in_filepath + [artifact.id()]
 
         _save_artifact(
-            artifacts,
+            artifact_ids,
             self._dag,
             self._metadata,
             save_params=S3LoadParams(filepath=filepath, format=_convert_to_s3_table_format(format)),

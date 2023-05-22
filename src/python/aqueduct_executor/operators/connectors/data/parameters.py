@@ -31,6 +31,11 @@ def _replace_param_sql_placeholders(query: str, parameter_vals: List[str]) -> st
 def _replace_parameterized_user_strings(user_defined_string: str, parameter_vals: List[str]) -> str:
     """Expands any parameters interpolated in the given string with '{  }' syntax."""
     matches = re.findall(USER_TAG_PATTERN, user_defined_string)
+
+    if len(matches) != len(parameter_vals):
+        raise Exception(
+            "Mismatch between number of parameters (%s) and number of placeholders (%s) in the user-defined string. " % (len(parameter_vals), len(matches))
+        )
     for idx, match in enumerate(matches):
-        user_defined_string.replace(match, parameter_vals[idx])
+        user_defined_string = user_defined_string.replace(match, parameter_vals[idx])
     return user_defined_string

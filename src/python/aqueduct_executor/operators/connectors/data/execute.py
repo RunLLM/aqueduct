@@ -291,7 +291,7 @@ def run_load(
             ), "A parameterized relational save spec should have an empty table name."
             spec.parameters.table = param_input_vals[0]
         elif isinstance(spec.parameters, S3Params):
-            _replace_parameterized_user_strings(spec.parameters.filepath, param_input_vals)
+            spec.parameters.filepath = _replace_parameterized_user_strings(spec.parameters.filepath, param_input_vals)
         else:
             raise Exception("Parameters are only supported for S3 and Relational Data Resources.")
 
