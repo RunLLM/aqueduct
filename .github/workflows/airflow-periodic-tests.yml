@@ -30,6 +30,10 @@ jobs:
       - name: Wait for Airflow cluster to be ready
         run: while ! echo exit | nc localhost 8000; do sleep 1; done
       
+      - name: Print the test-creds (1)
+        working-directory: integration_tests/sdk
+        run: cat test-credentials.yml
+      
       - name: Get Airflow password
         run: |
           airflow_password=$(cat ~/airflow/standalone_admin_password.txt)
@@ -37,7 +41,11 @@ jobs:
       
       - name: Update Airflow password in test-credentials.yml
         working-directory: integration_tests/sdk
-        run: sed -i '/^test_airflow:/,/^[^ ]/ s/^\(\s*password:\s*\).*/\1$(echo "${{ env.airflow_password }}")/' test-credentials.yaml
+        run: sed -i '/^test_airflow:/,/^[^ ]/ s/^\(\s*password:\s*\).*/\1$(echo "${{ env.airflow_password }}")/' test-credentials.yml
+
+      - name: Print the test-creds (2)
+        working-directory: integration_tests/sdk
+        run: cat test-credentials.yml
 
       # - name: Install any data connector packages
       #   run: |
