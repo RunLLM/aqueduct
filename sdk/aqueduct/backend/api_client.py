@@ -613,7 +613,7 @@ class APIClient:
         workflow_dag_results = [
             WorkflowDagResultResponse(
                 id=dag_result.id,
-                created_at=int(datetime.datetime.strptime(resp_dags[str(dag_result.dag_id)].created_at,'%Y-%m-%dT%H:%M:%S.%f%z' if resp_dags[str(dag_result.dag_id)].created_at[-6] == "+" or resp_dags[str(dag_result.dag_id)].created_at[-6] == "-" else '%Y-%m-%dT%H:%M:%S.%f').timestamp()),
+                created_at=int(datetime.datetime.strptime(resp_dags[str(dag_result.dag_id)].created_at[:-4],'%Y-%m-%dT%H:%M:%S.%f' if resp_dags[str(dag_result.dag_id)].created_at[-1] == "Z" else '%Y-%m-%dT%H:%M:%S.%f%z').timestamp()),
                 status=dag_result.exec_state.status,
                 exec_state=dag_result.exec_state,
                 workflow_dag_id=dag_result.dag_id,
