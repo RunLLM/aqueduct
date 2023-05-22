@@ -18,7 +18,6 @@ import (
 	"github.com/dropbox/godropbox/errors"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 )
 
 // Doesn't currently work for S3 because it's too expensive to list.
@@ -85,8 +84,6 @@ func (h *ListIntegrationObjectsHandler) Perform(ctx context.Context, interfaceAr
 	if err != nil {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to retrieve integration.")
 	}
-
-	logrus.Warnf("Trying to list objects: %v", integrationObject.Name)
 
 	if !shared.IsRelationalDatabaseIntegration(integrationObject.Service) {
 		return nil, http.StatusBadRequest, errors.New("List objects request is only allowed for relational databases. (Too expensive to list objects for S3)")
