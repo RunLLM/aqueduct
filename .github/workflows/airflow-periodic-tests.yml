@@ -1,0 +1,74 @@
+name: Airflow Periodic Integration Tests
+
+on:
+  schedule:
+    - cron: "0 21 * * 4" # Run at 9PM PST on every Thursday
+  workflow_dispatch:
+
+jobs:
+  run-airflow-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 480
+    name: SDK Integration Tests against Airflow Compute
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: ./.github/actions/setup-server
+        timeout-minutes: 7
+
+      # TODO(ENG-2537): Use our separate GH actions credentials.
+      - uses: ./.github/actions/fetch-test-config
+        with:
+          aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
+          s3_test_config_path: periodic-airflow-test-config.yml
+      
+      - name: Start Airflow cluster
+        working-directory: scripts/compute
+        run: ./airflow_test_setup.sh &
+      
+      - name: Wait for Airflow cluster to be ready
+        run: while ! echo exit | nc localhost 8000; do sleep 1; done
+      
+      - name: Get Airflow password
+        run: |
+          airflow_password=$(cat ~/airflow/standalone_admin_password.txt)
+          echo "airflow_password=$airflow_password" >> $GITHUB_ENV
+      
+      - name: Update Airflow password in test-credentials.yml
+        working-directory: integration_tests/sdk
+        run: sed -i '/^test_airflow:/,/^[^ ]/ s/^\(\s*password:\s*\).*/\1$(echo "${{ env.airflow_password }}")/' test-credentials.yaml
+
+      - name: Install any data connector packages
+        run: |
+          aqueduct install s3
+          aqueduct install snowflake
+
+      - name: Run the SDK Integration Tests
+        working-directory: integration_tests/sdk
+        run: pytest aqueduct_tests/ -rP -vv -n 1
+
+      - uses: ./.github/actions/upload-artifacts
+        if: always()
+        with:
+          prefix: Airflow Compute
+
+      # Sets it as an environmental variable.
+      - name: Get the Slack ID for the current oncall
+        if: always()
+        run: |
+          aws s3 cp s3://aqueduct-assets/oncall.yml ./oncall.yml
+          echo "ONCALL_SLACK_MEMBER_ID=$(python3 scripts/get_current_oncall.py --file ./oncall.yml)" >> $GITHUB_ENV
+
+      - name: Report to Slack on Failure
+        if: always()
+        uses: ravsamhq/notify-slack-action@v1
+        with:
+          status: ${{ job.status }}
+          notification_title: ""
+          message_format: "{emoji} *{workflow}* has {status_message}"
+          footer: "{run_url}"
+          notify_when: "failure,warnings"
+          mention_users: ${{ env.ONCALL_SLACK_MEMBER_ID }}
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
