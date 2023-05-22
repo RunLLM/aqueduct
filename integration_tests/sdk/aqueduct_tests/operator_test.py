@@ -10,8 +10,8 @@ from ..shared.data_objects import DataObject
 from .extract import extract
 
 
-def test_to_operator_local_function(client, data_integration):
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+def test_to_operator_local_function(client, data_resource):
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
 
     @op()
     def dummy_sentiment_model(df):
@@ -42,9 +42,9 @@ def test_to_operator_local_function(client, data_integration):
     assert df_normal["POSITIVITY"].equals(df_func["POSITIVITY"])
 
 
-def test_operator_reuse_chain(data_integration):
+def test_operator_reuse_chain(data_resource):
     """Tests reusing the same operator when it is chained together by a dependency."""
-    wine_artifact = extract(data_integration, DataObject.WINE)
+    wine_artifact = extract(data_resource, DataObject.WINE)
 
     @op
     def noop_1(df):
@@ -73,8 +73,8 @@ def test_operator_reuse_chain(data_integration):
 
 
 # TODO(ENG-1470): This doesn't work in pytest, but is fine in a jupyter notebook.
-# def test_to_operator_imported_function(client, data_integration):
-#     table_artifact = extract(data_integration, DataObject.SENTIMENT)
+# def test_to_operator_imported_function(client, data_resource):
+#     table_artifact = extract(data_resource, DataObject.SENTIMENT)
 #
 #     @op(file_dependencies=["test_function.py"])
 #     def decorated_func(df):

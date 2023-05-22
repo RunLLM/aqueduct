@@ -59,7 +59,7 @@ type deleteWorkflowArgs struct {
 }
 
 type deleteWorkflowInput struct {
-	// This is a map from integration_id to the serialized load spec we want to delete.
+	// This is a map from resource id to the serialized load spec we want to delete.
 	ExternalDeleteLoadParams map[string][]string `json:"external_delete"`
 	// `Force` serve as a safe-guard for client to confirm the deletion.
 	// If `Force` is true, all objects specified in `ExternalDelete` field
@@ -68,7 +68,7 @@ type deleteWorkflowInput struct {
 }
 
 type deleteWorkflowResponse struct {
-	// This is a map from integration_id to a list of `SavedObjectResult`
+	// This is a map from resource_id to a list of `SavedObjectResult`
 	// implying if each object is successfully deleted.
 	SavedObjectDeletionResults map[string][]SavedObjectResult `json:"saved_object_deletion_results"`
 }
@@ -81,7 +81,7 @@ type DeleteWorkflowHandler struct {
 	JobManager job.JobManager
 
 	ExecutionEnvironmentRepo repos.ExecutionEnvironment
-	IntegrationRepo          repos.Integration
+	ResourceRepo             repos.Resource
 	OperatorRepo             repos.Operator
 	WorkflowRepo             repos.Workflow
 	DagRepo                  repos.DAG
@@ -125,7 +125,7 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 
 	// Convert the supplied load params into object identifiers (eg. object names for relational databases)
 	externalDelete := make(map[string][]string, len(input.ExternalDeleteLoadParams))
-	for integrationName, loadSpecStrList := range input.ExternalDeleteLoadParams {
+	for resourceName, loadSpecStrList := range input.ExternalDeleteLoadParams {
 		for _, loadSpecStr := range loadSpecStrList {
 			var loadSpec connector.Load
 			err = json.Unmarshal([]byte(loadSpecStr), &loadSpec)
@@ -134,11 +134,11 @@ func (h *DeleteWorkflowHandler) Prepare(r *http.Request) (interface{}, int, erro
 			}
 
 			if relationalLoadParams, ok := connector.CastToRelationalDBLoadParams(loadSpec.Parameters); ok {
-				externalDelete[integrationName] = append(externalDelete[integrationName], relationalLoadParams.Table)
+				externalDelete[resourceName] = append(externalDelete[resourceName], relationalLoadParams.Table)
 			} else if s3LoadParams, ok := loadSpec.Parameters.(*connector.S3LoadParams); ok {
-				externalDelete[integrationName] = append(externalDelete[integrationName], s3LoadParams.Filepath)
+				externalDelete[resourceName] = append(externalDelete[resourceName], s3LoadParams.Filepath)
 			} else {
-				return nil, http.StatusBadRequest, errors.Newf("Unsupported integration type for deleting objects: %s", integrationName)
+				return nil, http.StatusBadRequest, errors.Newf("Unsupported resource type for deleting objects: %s", resourceName)
 			}
 		}
 	}
@@ -158,25 +158,25 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 	resp.SavedObjectDeletionResults = map[string][]SavedObjectResult{}
 
 	nameToID := make(map[string]uuid.UUID, len(args.ExternalDelete))
-	for integrationName := range args.ExternalDelete {
-		integrationObject, err := h.IntegrationRepo.GetByNameAndUser(
+	for resourceName := range args.ExternalDelete {
+		resourceObject, err := h.ResourceRepo.GetByNameAndUser(
 			ctx,
-			integrationName,
+			resourceName,
 			args.AqContext.ID,
 			args.AqContext.OrgID,
 			h.Database,
 		)
 		if err != nil {
-			return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while getting integration.")
+			return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while getting resource.")
 		}
-		nameToID[integrationName] = integrationObject.ID
+		nameToID[resourceName] = resourceObject.ID
 	}
 
 	// Check objects in list are valid
 	objCount := 0
 
 	// These fetched save operators have any parameterized values filled in.
-	saveOpsByIntegrationName := make(map[string][]views.LoadOperator, 1)
+	saveOpsByResourceName := make(map[string][]views.LoadOperator, 1)
 	saveOpsList, err := GetDistinctLoadOpsByWorkflow(
 		ctx,
 		args.WorkflowID,
@@ -189,15 +189,15 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 		return resp, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error occurred while validating objects.")
 	}
 	for _, saveOp := range saveOpsList {
-		saveOpsByIntegrationName[saveOp.IntegrationName] = append(saveOpsByIntegrationName[saveOp.IntegrationName], saveOpsList...)
+		saveOpsByResourceName[saveOp.ResourceName] = append(saveOpsByResourceName[saveOp.ResourceName], saveOpsList...)
 	}
 
-	for integrationName, savedObjectList := range args.ExternalDelete {
+	for resourceName, savedObjectList := range args.ExternalDelete {
 		for _, name := range savedObjectList {
 			var touchedOperatorLoadParams []connector.LoadParams
 
 			// Check for existence in the parameter-expanded list.
-			for _, saveOp := range saveOpsByIntegrationName[integrationName] {
+			for _, saveOp := range saveOpsByResourceName[resourceName] {
 				relationalLoad, ok := connector.CastToRelationalDBLoadParams(saveOp.Spec.Parameters)
 				if ok && relationalLoad.Table == name {
 					touchedOperatorLoadParams = append(touchedOperatorLoadParams, saveOp.Spec.Parameters)
@@ -217,7 +217,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 				// Check none have UpdateMode=append.
 				for _, touchedLoadParams := range touchedOperatorLoadParams {
 					relationalLoad, ok := connector.CastToRelationalDBLoadParams(touchedLoadParams)
-					// Check not updating anything in the integration.
+					// Check not updating anything in the resource.
 					if ok {
 						if relationalLoad.UpdateMode == "append" {
 							return resp, http.StatusBadRequest, errors.New("Some objects(s) in list were updated in append mode. If you are sure you want to delete everything, set `force=True`.")
@@ -249,7 +249,7 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 			args.StorageConfig,
 			h.JobManager,
 			h.Database,
-			h.IntegrationRepo,
+			h.ResourceRepo,
 		)
 		if httpResponse != http.StatusOK {
 			return resp, httpResponse, err
@@ -286,12 +286,12 @@ func (h *DeleteWorkflowHandler) Perform(ctx context.Context, interfaceArgs inter
 func DeleteSavedObject(
 	ctx context.Context,
 	args *deleteWorkflowArgs,
-	integrationNameToID map[string]uuid.UUID,
+	resourceNameToID map[string]uuid.UUID,
 	vaultObject vault.Vault,
 	storageConfig *shared.StorageConfig,
 	jobManager job.JobManager,
 	DB database.Database,
-	integrationRepo repos.Integration,
+	resourceRepo repos.Resource,
 ) (map[string][]SavedObjectResult, int, error) {
 	emptySavedObjectDeletionResults := make(map[string][]SavedObjectResult, 0)
 
@@ -306,31 +306,31 @@ func DeleteSavedObject(
 		go workflow_utils.CleanupStorageFiles(context.Background(), storageConfig, []string{jobMetadataPath, contentPath})
 	}()
 
-	integrationConfigs := make(map[string]auth.Config, len(integrationNameToID))
-	integrationNames := make(map[string]shared.Service, len(integrationNameToID))
-	for integrationName := range args.ExternalDelete {
-		integrationId := integrationNameToID[integrationName]
-		config, err := auth.ReadConfigFromSecret(ctx, integrationId, vaultObject)
+	resourceConfigs := make(map[string]auth.Config, len(resourceNameToID))
+	resourceNames := make(map[string]shared.Service, len(resourceNameToID))
+	for resourceName := range args.ExternalDelete {
+		resourceId := resourceNameToID[resourceName]
+		config, err := auth.ReadConfigFromSecret(ctx, resourceId, vaultObject)
 		if err != nil {
-			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
+			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get resource configs.")
 		}
-		integrationConfigs[integrationName] = config
-		integrationObjects, err := integrationRepo.GetBatch(ctx, []uuid.UUID{integrationId}, DB)
+		resourceConfigs[resourceName] = config
+		resourceObjects, err := resourceRepo.GetBatch(ctx, []uuid.UUID{resourceId}, DB)
 		if err != nil {
-			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get integration configs.")
+			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.Wrap(err, "Unable to get resource configs.")
 		}
-		if len(integrationObjects) != 1 {
-			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.New("Unable to get integration configs.")
+		if len(resourceObjects) != 1 {
+			return emptySavedObjectDeletionResults, http.StatusInternalServerError, errors.New("Unable to get resource configs.")
 		}
-		integrationNames[integrationName] = integrationObjects[0].Service
+		resourceNames[resourceName] = resourceObjects[0].Service
 	}
 
 	jobSpec := job.NewDeleteSavedObjectsSpec(
 		jobName,
 		storageConfig,
 		jobMetadataPath,
-		integrationNames,
-		integrationConfigs,
+		resourceNames,
+		resourceConfigs,
 		args.ExternalDelete,
 		contentPath,
 	)

@@ -19,20 +19,20 @@ import {
   DagResultsGetResponse,
 } from './v2/DagResultsGet';
 import {
-  integrationOperatorsGetQuery,
-  IntegrationOperatorsGetRequest,
-  IntegrationOperatorsGetResponse,
-} from './v2/IntegrationOperatorsGet';
+  resourceOperatorsGetQuery,
+  ResourceOperatorsGetRequest,
+  ResourceOperatorsGetResponse,
+} from './v2/ResourceOperatorsGet';
 import {
-  integrationsWorkflowsGetQuery,
-  IntegrationsWorkflowsGetRequest,
-  IntegrationsWorkflowsGetResponse,
-} from './v2/IntegrationsWorkflowsGet';
+  resourcesWorkflowsGetQuery,
+  ResourcesWorkflowsGetRequest,
+  ResourcesWorkflowsGetResponse,
+} from './v2/ResourcesWorkflowsGet';
 import {
-  integrationWorkflowsGetQuery,
-  IntegrationWorkflowsGetRequest,
-  IntegrationWorkflowsGetResponse,
-} from './v2/IntegrationWorkflowsGet';
+  resourceWorkflowsGetQuery,
+  ResourceWorkflowsGetRequest,
+  ResourceWorkflowsGetResponse,
+} from './v2/ResourceWorkflowsGet';
 import {
   storageMigrationListQuery,
   storageMigrationListRequest,
@@ -114,25 +114,25 @@ export const aqueductApi = createApi({
       query: (req) => dagResultsGetQuery(req),
       transformErrorResponse,
     }),
-    integrationOperatorsGet: builder.query<
-      IntegrationOperatorsGetResponse,
-      IntegrationOperatorsGetRequest
+    resourceOperatorsGet: builder.query<
+      ResourceOperatorsGetResponse,
+      ResourceOperatorsGetRequest
     >({
-      query: (req) => integrationOperatorsGetQuery(req),
+      query: (req) => resourceOperatorsGetQuery(req),
       transformErrorResponse,
     }),
-    integrationWorkflowsGet: builder.query<
-      IntegrationWorkflowsGetResponse,
-      IntegrationWorkflowsGetRequest
+    resourceWorkflowsGet: builder.query<
+      ResourceWorkflowsGetResponse,
+      ResourceWorkflowsGetRequest
     >({
-      query: (req) => integrationWorkflowsGetQuery(req),
+      query: (req) => resourceWorkflowsGetQuery(req),
       transformErrorResponse,
     }),
-    integrationsWorkflowsGet: builder.query<
-      IntegrationsWorkflowsGetResponse,
-      IntegrationsWorkflowsGetRequest
+    resourcesWorkflowsGet: builder.query<
+      ResourcesWorkflowsGetResponse,
+      ResourcesWorkflowsGetRequest
     >({
-      query: (req) => integrationsWorkflowsGetQuery(req),
+      query: (req) => resourcesWorkflowsGetQuery(req),
       transformErrorResponse,
     }),
     nodeArtifactGet: builder.query<
@@ -204,9 +204,9 @@ export const {
   useDagOperatorsGetQuery,
   useDagResultGetQuery,
   useDagResultsGetQuery,
-  useIntegrationOperatorsGetQuery,
-  useIntegrationWorkflowsGetQuery,
-  useIntegrationsWorkflowsGetQuery,
+  useResourceOperatorsGetQuery,
+  useResourceWorkflowsGetQuery,
+  useResourcesWorkflowsGetQuery,
   useStorageMigrationListQuery,
   useNodeArtifactGetQuery,
   useNodeArtifactResultContentGetQuery,

@@ -27,10 +27,10 @@ func (sc *StaticConfig) PublicConfig() map[string]string {
 	publicConf := make(map[string]string, len(sc.Conf))
 
 	// TODO: This is hacky for now. This is a union of sensitive fields
-	// of configs over all integration types.
+	// of configs over all resource types.
 	sensitiveKeys := []string{
 		"auth_uri",                    // MongoDB config.
-		"password",                    // most integration configs have this field.
+		"password",                    // most resource configs have this field.
 		"token",                       // slack, ECR config
 		"service_account_credentials", // S3 config.
 		"config_file_content",         // S3 config.

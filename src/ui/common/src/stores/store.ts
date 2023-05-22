@@ -5,8 +5,8 @@ import { aqueductApi } from '../handlers/AqueductApi';
 import artifactResultContentsReducer from '../reducers/artifactResultContents';
 import artifactResultsReducer from '../reducers/artifactResults';
 import dataPreviewReducer from '../reducers/dataPreview';
-import integrationReducer from '../reducers/integration';
-import integrationsReducer from '../reducers/integrations';
+import resourceReducer from '../reducers/resource';
+import resourcesReducer from '../reducers/resources';
 import listWorkflowReducer from '../reducers/listWorkflowSummaries';
 import nodeSelectionReducer from '../reducers/nodeSelection';
 import notificationsReducer from '../reducers/notifications';
@@ -24,8 +24,8 @@ export const store = configureStore({
     notificationsReducer,
     listWorkflowReducer,
     dataPreviewReducer,
-    integrationsReducer,
-    integrationReducer,
+    resourcesReducer,
+    resourceReducer,
     serverConfigReducer,
     workflowReducer,
     workflowDagsReducer,

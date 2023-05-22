@@ -123,7 +123,7 @@ func NewAqServer(environment aq_context.ServerEnvironment, externalIP string, po
 	// Register server handlers
 	AddAllHandlers(s)
 
-	log.Infof("Creating a user account and a builtin SQLite integration.")
+	log.Infof("Creating a user account and a builtin SQLite resource.")
 	testUser, err := CreateTestAccount(
 		ctx,
 		s,
@@ -135,7 +135,7 @@ func NewAqServer(environment aq_context.ServerEnvironment, externalIP string, po
 		log.Fatal(err)
 	}
 
-	err = connectBuiltinResources(ctx, s, accountOrganizationId, testUser, s.IntegrationRepo, s.Database)
+	err = connectBuiltinResources(ctx, s, accountOrganizationId, testUser, s.ResourceRepo, s.Database)
 	if err != nil {
 		db.Close()
 		log.Fatal(err)
@@ -185,7 +185,7 @@ func (s *AqServer) Init() error {
 
 	if err := syncVaultWithStorage(
 		vault,
-		s.IntegrationRepo,
+		s.ResourceRepo,
 		s.Database,
 	); err != nil {
 		return err

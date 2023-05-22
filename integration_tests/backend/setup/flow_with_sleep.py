@@ -11,17 +11,17 @@ the delay retrieving its status is less than 60s.
 """
 
 
-def setup_flow_with_sleep(client: aqueduct.Client, integration_name: str) -> str:
+def setup_flow_with_sleep(client: aqueduct.Client, resource_name: str) -> str:
     name = "Test: Flow with Sleep"
     n_runs = 1
-    integration = client.resource(name=integration_name)
+    resource = client.resource(name=resource_name)
 
     @aqueduct.op
     def sleeping_op(df):
         time.sleep(60)
         return df
 
-    reviews = integration.sql("SELECT * FROM hotel_reviews")
+    reviews = resource.sql("SELECT * FROM hotel_reviews")
     # use lazy mode to avoid previewing of bad_op
     # so that we can publish the flow
     sleeping_artf = sleeping_op.lazy(reviews)

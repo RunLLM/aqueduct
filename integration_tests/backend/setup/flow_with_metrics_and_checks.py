@@ -10,12 +10,12 @@ import aqueduct
 
 def setup_flow_with_metrics_and_checks(
     client: aqueduct.Client,
-    integration_name: str,
+    resource_name: str,
     workflow_name: str = "",
 ) -> str:
     name = workflow_name if workflow_name else "Test: Flow with Metrics and Checks"
     n_runs = 2
-    integration = client.resource(name=integration_name)
+    resource = client.resource(name=resource_name)
 
     @aqueduct.metric
     def size(df):
@@ -25,7 +25,7 @@ def setup_flow_with_metrics_and_checks(
     def check(size):
         return size > 0
 
-    reviews = integration.sql("SELECT * FROM hotel_reviews")
+    reviews = resource.sql("SELECT * FROM hotel_reviews")
     rev_size = size(reviews)
     check_res = check(rev_size)
 

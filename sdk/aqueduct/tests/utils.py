@@ -85,7 +85,7 @@ def default_extract_spec() -> OperatorSpec:
     return OperatorSpec(
         extract=ExtractSpec(
             service=ServiceType.POSTGRES,
-            integration_id=generate_uuid(),
+            resource_id=generate_uuid(),
             parameters=RelationalDBExtractParams(query="This is a SQL Query"),
         )
     )
@@ -127,7 +127,7 @@ def default_load_spec() -> OperatorSpec:
     return OperatorSpec(
         load=LoadSpec(
             service=ServiceType.POSTGRES,
-            integration_id=generate_uuid(),
+            resource_id=generate_uuid(),
             parameters=RelationalDBLoadParams(table="output", update_mode=LoadUpdateMode.REPLACE),
         )
     )

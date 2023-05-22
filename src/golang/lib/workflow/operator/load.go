@@ -42,7 +42,7 @@ func newLoadOperator(
 	}
 
 	spec := base.dbOperator.Spec.Load()
-	config, err := auth.ReadConfigFromSecret(ctx, spec.IntegrationId, base.vaultObject)
+	config, err := auth.ReadConfigFromSecret(ctx, spec.ResourceId, base.vaultObject)
 	if err != nil {
 		return nil, err
 	}
