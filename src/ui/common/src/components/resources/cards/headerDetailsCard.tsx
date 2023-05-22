@@ -3,8 +3,8 @@ import Typography from '@mui/material/Typography';
 import React from 'react';
 
 import {
-  Resource,
   resolveDisplayService,
+  Resource,
   resourceExecState,
 } from '../../../utils/resources';
 import { StatusIndicator } from '../../workflows/workflowStatus';

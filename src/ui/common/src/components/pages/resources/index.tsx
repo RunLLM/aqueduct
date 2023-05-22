@@ -14,11 +14,11 @@ import UserProfile from '../../../utils/auth';
 import { ResourceCategories } from '../../../utils/resources';
 import { LoadingStatus, LoadingStatusEnum } from '../../../utils/shared';
 import SupportedResources from '../../../utils/SupportedResources';
+import DefaultLayout from '../../layouts/default';
+import { BreadcrumbLink } from '../../layouts/NavBar';
 import AddResources from '../../resources/addResources';
 import { ConnectedResources } from '../../resources/connectedResources';
 import { ConnectedResourceType } from '../../resources/connectedResourceType';
-import DefaultLayout from '../../layouts/default';
-import { BreadcrumbLink } from '../../layouts/NavBar';
 import MetadataStorageInfo from '../account/MetadataStorageInfo';
 import { LayoutProps } from '../types';
 
@@ -32,10 +32,7 @@ type resourcesNavigateState = {
   deleteResourceName: string;
 };
 
-const ResourcesPage: React.FC<Props> = ({
-  user,
-  Layout = DefaultLayout,
-}) => {
+const ResourcesPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   const location = useLocation();
 
   const serverConfig = useSelector(
@@ -59,10 +56,8 @@ const ResourcesPage: React.FC<Props> = ({
   let deleteResourceName = '';
   let forceLoad = false;
 
-  const [
-    showDeleteResourceSuccessToast,
-    setShowDeleteResourceSuccessToast,
-  ] = useState(false);
+  const [showDeleteResourceSuccessToast, setShowDeleteResourceSuccessToast] =
+    useState(false);
 
   if (location.state && location.state !== undefined) {
     const navState = location.state as resourcesNavigateState;

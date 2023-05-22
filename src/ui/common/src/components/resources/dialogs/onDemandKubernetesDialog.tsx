@@ -17,8 +17,8 @@ import SupportedResources from '../../../utils/SupportedResources';
 import ResourceLogo from '../logo';
 import { AWSDialog } from './awsDialog';
 import { DialogActionButtons, DialogHeader } from './dialog';
-import { ResourceTextInputField } from './ResourceTextInputField';
 import { KubernetesDialog } from './kubernetesDialog';
+import { ResourceTextInputField } from './ResourceTextInputField';
 
 const K8S_TYPES = {
   // INITIAL step is when user is choosing to connect to their own or aqueduct cluster.

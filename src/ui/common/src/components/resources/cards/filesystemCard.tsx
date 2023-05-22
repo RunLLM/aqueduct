@@ -7,9 +7,7 @@ type FilesystemCardProps = {
   resource: Resource;
 };
 
-export const FilesystemCard: React.FC<FilesystemCardProps> = ({
-  resource,
-}) => {
+export const FilesystemCard: React.FC<FilesystemCardProps> = ({ resource }) => {
   const config = resource.config as FilesystemConfig;
 
   const labels = ['location'];

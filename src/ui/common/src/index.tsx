@@ -3,38 +3,6 @@ import { CodeBlock } from './components/CodeBlock';
 import ExecutionChip from './components/execution/chip';
 import { useAqueductConsts } from './components/hooks/useAqueductConsts';
 import useUser from './components/hooks/useUser';
-import AddResources from './components/resources/addResources';
-import { AWSCard } from './components/resources/cards/awsCard';
-import { BigQueryCard } from './components/resources/cards/bigqueryCard';
-import { ResourceCard } from './components/resources/cards/card';
-import { DatabricksCard } from './components/resources/cards/databricksCard';
-import { EmailCard } from './components/resources/cards/emailCard';
-import { MongoDBCard } from './components/resources/cards/mongoDbCard';
-import { S3Card } from './components/resources/cards/s3Card';
-import { SlackCard } from './components/resources/cards/slackCard';
-import { SnowflakeCard } from './components/resources/cards/snowflakeCard';
-import { SparkCard } from './components/resources/cards/sparkCard';
-import { ConnectedResources } from './components/resources/connectedResources';
-import AddTableDialog from './components/resources/dialogs/addTableDialog';
-import { AWSDialog } from './components/resources/dialogs/awsDialog';
-import { BigQueryDialog } from './components/resources/dialogs/bigqueryDialog';
-import { CondaDialog } from './components/resources/dialogs/condaDialog';
-import { CSVDialog } from './components/resources/dialogs/csvDialog';
-import { DatabricksDialog } from './components/resources/dialogs/databricksDialog';
-import DeleteResourceDialog from './components/resources/dialogs/deleteResourceDialog';
-import ResourceDialog from './components/resources/dialogs/dialog';
-import { EmailDialog } from './components/resources/dialogs/emailDialog';
-import { ResourceFileUploadField } from './components/resources/dialogs/ResourceFileUploadField';
-import { ResourceTextInputField } from './components/resources/dialogs/ResourceTextInputField';
-import { MariaDbDialog } from './components/resources/dialogs/mariadbDialog';
-import { MongoDBDialog } from './components/resources/dialogs/mongoDbDialog';
-import { MysqlDialog } from './components/resources/dialogs/mysqlDialog';
-import { PostgresDialog } from './components/resources/dialogs/postgresDialog';
-import { RedshiftDialog } from './components/resources/dialogs/redshiftDialog';
-import { S3Dialog } from './components/resources/dialogs/s3Dialog';
-import { SlackDialog } from './components/resources/dialogs/slackDialog';
-import { SnowflakeDialog } from './components/resources/dialogs/snowflakeDialog';
-import { SparkDialog } from './components/resources/dialogs/sparkDialog';
 import { Card } from './components/layouts/card';
 import DefaultLayout from './components/layouts/default';
 import MenuSidebar, {
@@ -56,18 +24,50 @@ import CheckDetailsPage from './components/pages/check/id';
 import DataPage from './components/pages/data';
 import ErrorPage from './components/pages/ErrorPage';
 import HomePage from './components/pages/HomePage';
-import ResourceDetailsPage from './components/pages/resource/id';
-import ResourcesPage from './components/pages/resources';
 import LoginPage from './components/pages/LoginPage';
 import MetricDetailsPage from './components/pages/metric/id';
 import OperatorDetailsPage from './components/pages/operator/id';
 import useOpeartor from './components/pages/operator/id/hook';
+import ResourceDetailsPage from './components/pages/resource/id';
+import ResourcesPage from './components/pages/resources';
 import WorkflowPage from './components/pages/workflow/id';
 import useWorkflow from './components/pages/workflow/id/hook';
 import WorkflowsPage from './components/pages/workflows';
 import { Button } from './components/primitives/Button.styles';
 import { LoadingButton } from './components/primitives/LoadingButton.styles';
 import { Tab, Tabs } from './components/primitives/Tabs.styles';
+import AddResources from './components/resources/addResources';
+import { AWSCard } from './components/resources/cards/awsCard';
+import { BigQueryCard } from './components/resources/cards/bigqueryCard';
+import { ResourceCard } from './components/resources/cards/card';
+import { DatabricksCard } from './components/resources/cards/databricksCard';
+import { EmailCard } from './components/resources/cards/emailCard';
+import { MongoDBCard } from './components/resources/cards/mongoDbCard';
+import { S3Card } from './components/resources/cards/s3Card';
+import { SlackCard } from './components/resources/cards/slackCard';
+import { SnowflakeCard } from './components/resources/cards/snowflakeCard';
+import { SparkCard } from './components/resources/cards/sparkCard';
+import { ConnectedResources } from './components/resources/connectedResources';
+import AddTableDialog from './components/resources/dialogs/addTableDialog';
+import { AWSDialog } from './components/resources/dialogs/awsDialog';
+import { BigQueryDialog } from './components/resources/dialogs/bigqueryDialog';
+import { CondaDialog } from './components/resources/dialogs/condaDialog';
+import { CSVDialog } from './components/resources/dialogs/csvDialog';
+import { DatabricksDialog } from './components/resources/dialogs/databricksDialog';
+import DeleteResourceDialog from './components/resources/dialogs/deleteResourceDialog';
+import ResourceDialog from './components/resources/dialogs/dialog';
+import { EmailDialog } from './components/resources/dialogs/emailDialog';
+import { MariaDbDialog } from './components/resources/dialogs/mariadbDialog';
+import { MongoDBDialog } from './components/resources/dialogs/mongoDbDialog';
+import { MysqlDialog } from './components/resources/dialogs/mysqlDialog';
+import { PostgresDialog } from './components/resources/dialogs/postgresDialog';
+import { RedshiftDialog } from './components/resources/dialogs/redshiftDialog';
+import { ResourceFileUploadField } from './components/resources/dialogs/ResourceFileUploadField';
+import { ResourceTextInputField } from './components/resources/dialogs/ResourceTextInputField';
+import { S3Dialog } from './components/resources/dialogs/s3Dialog';
+import { SlackDialog } from './components/resources/dialogs/slackDialog';
+import { SnowflakeDialog } from './components/resources/dialogs/snowflakeDialog';
+import { SparkDialog } from './components/resources/dialogs/sparkDialog';
 import { OperatorExecStateTableType } from './components/tables/OperatorExecStateTable';
 import PaginatedTable from './components/tables/PaginatedTable';
 import AqueductBezier from './components/workflows/edges/AqueductBezier';
@@ -91,22 +91,6 @@ import artifactResultContents from './reducers/artifactResultContents';
 import artifactResults from './reducers/artifactResults';
 import dataPreview, { dataPreviewSlice } from './reducers/dataPreview';
 import { getDataArtifactPreview } from './reducers/dataPreview';
-import resource, {
-  handleConnectToNewResource,
-  handleEditResource,
-  handleListResourceObjects,
-  handleLoadResourceObject,
-  handleLoadResourceOperators,
-  handleTestConnectResource,
-  resourceSlice,
-  objectKeyFn,
-  resetConnectNewStatus,
-  resetTestConnectStatus,
-} from './reducers/resource';
-import resources, {
-  handleLoadResources,
-  resourcesSlice,
-} from './reducers/resources';
 import workflowSummaries, {
   handleFetchAllWorkflowSummaries,
   listWorkflowSlice,
@@ -124,6 +108,22 @@ import notifications, {
   handleFetchNotifications,
   notificationsSlice,
 } from './reducers/notifications';
+import resource, {
+  handleConnectToNewResource,
+  handleEditResource,
+  handleListResourceObjects,
+  handleLoadResourceObject,
+  handleLoadResourceOperators,
+  handleTestConnectResource,
+  objectKeyFn,
+  resetConnectNewStatus,
+  resetTestConnectStatus,
+  resourceSlice,
+} from './reducers/resource';
+import resources, {
+  handleLoadResources,
+  resourcesSlice,
+} from './reducers/resources';
 import serverConfig from './reducers/serverConfig';
 import workflow, {
   handleGetArtifactResults,
@@ -149,7 +149,6 @@ import {
 } from './utils/cron';
 import { DataColumnTypeNames } from './utils/data';
 import fetchUser from './utils/fetchUser';
-import { addTable, formatService, ServiceLogos } from './utils/resources';
 import { dateString } from './utils/metadata';
 import {
   archiveNotification,
@@ -170,6 +169,7 @@ import {
 } from './utils/operators';
 import { exportCsv } from './utils/preview';
 import { EdgeTypes, ReactflowNodeType } from './utils/reactflow';
+import { addTable, formatService, ServiceLogos } from './utils/resources';
 import ExecutionStatus, {
   CheckStatus,
   LoadingStatusEnum,
@@ -262,16 +262,6 @@ export {
   handleLoadResources,
   handleTestConnectResource,
   HomePage,
-  resource,
-  ResourceCard,
-  ResourceDetailsPage,
-  ResourceDialog,
-  ResourceFileUploadField,
-  resources,
-  resourceSlice,
-  ResourcesPage,
-  resourcesSlice,
-  ResourceTextInputField,
   listNotifications,
   listWorkflowSlice,
   LoadingButton,
@@ -317,6 +307,16 @@ export {
   resetConnectNewStatus,
   resetSelectedNode,
   resetTestConnectStatus,
+  resource,
+  ResourceCard,
+  ResourceDetailsPage,
+  ResourceDialog,
+  ResourceFileUploadField,
+  resources,
+  resourceSlice,
+  ResourcesPage,
+  resourcesSlice,
+  ResourceTextInputField,
   S3Card,
   S3Dialog,
   selectNode,

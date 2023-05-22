@@ -90,11 +90,7 @@ import {
   SQLiteDialog,
 } from '../components/resources/dialogs/sqliteDialog';
 import { AqueductDocsLink } from './docs';
-import {
-  ResourceCategories,
-  ServiceInfoMap,
-  ServiceLogos,
-} from './resources';
+import { ResourceCategories, ServiceInfoMap, ServiceLogos } from './resources';
 
 const addingResourceLink = `${AqueductDocsLink}/resources/adding-an-resource`;
 

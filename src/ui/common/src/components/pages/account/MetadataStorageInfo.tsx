@@ -11,8 +11,8 @@ import {
   Resource,
   S3Config,
 } from '../../../utils/resources';
-import { ResourceCard } from '../../resources/cards/card';
 import { Card } from '../../layouts/card';
+import { ResourceCard } from '../../resources/cards/card';
 
 interface MetadataPreviewProps {
   serverConfig: ServerConfig;

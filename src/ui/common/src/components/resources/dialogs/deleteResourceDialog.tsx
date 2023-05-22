@@ -213,8 +213,8 @@ const DeleteResourceDialog: React.FC<Props> = ({
         maxWidth="lg"
       >
         <DialogContent>
-          We cannot delete this resource because it is currently being used
-          by at least one workflow.
+          We cannot delete this resource because it is currently being used by
+          at least one workflow.
         </DialogContent>
         <DialogActions>
           <Button onClick={onCloseDialog}>Dismiss</Button>

@@ -5,8 +5,7 @@ import { APIKeyParameter } from '../parameters/Header';
 import { ResourceIdParameter } from '../parameters/Path';
 import { WorkflowAndDagIDResponse } from '../responses/workflow';
 
-export type ResourceWorkflowsGetRequest = APIKeyParameter &
-  ResourceIdParameter;
+export type ResourceWorkflowsGetRequest = APIKeyParameter & ResourceIdParameter;
 
 // A list of workflow IDs that use this resource.
 export type ResourceWorkflowsGetResponse = WorkflowAndDagIDResponse[];

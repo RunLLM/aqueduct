@@ -15,8 +15,8 @@ import ResourceItem from '../components/pages/workflows/components/ResourceItem'
 import PaginatedSearchTable, {
   PaginatedSearchTableData,
 } from '../components/tables/PaginatedSearchTable';
-import { ServiceLogos } from '../utils/resources';
 import { CheckLevel } from '../utils/operators';
+import { ServiceLogos } from '../utils/resources';
 import ExecutionStatus from '../utils/shared';
 
 const WorkflowsTable: React.FC = () => {

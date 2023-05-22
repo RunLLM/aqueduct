@@ -152,9 +152,7 @@ const ResourceDialog: React.FC<Props> = ({
 
   useEffect(() => {
     if (isSucceeded(connectStatus)) {
-      dispatch(
-        handleLoadResources({ apiKey: user.apiKey, forceLoad: true })
-      );
+      dispatch(handleLoadResources({ apiKey: user.apiKey, forceLoad: true }));
       onSuccess();
       if (showMigrationDialog && migrateStorage) {
         showMigrationDialog();
@@ -208,10 +206,7 @@ const ResourceDialog: React.FC<Props> = ({
       <FormProvider {...methods}>
         <form>
           {service !== 'Kubernetes' && (
-            <DialogHeader
-              resourceToEdit={resourceToEdit}
-              service={service}
-            />
+            <DialogHeader resourceToEdit={resourceToEdit} service={service} />
           )}
           <DialogContent>
             {editMode && numWorkflows > 0 && (
@@ -224,10 +219,7 @@ const ResourceDialog: React.FC<Props> = ({
             {(service === 'Email' || service === 'Slack') && (
               <Typography variant="body1" color="gray.700">
                 To learn more about how to set up {service}, see our{' '}
-                <Link
-                  href={SupportedResources[service].docs}
-                  target="_blank"
-                >
+                <Link href={SupportedResources[service].docs} target="_blank">
                   documentation
                 </Link>
                 .

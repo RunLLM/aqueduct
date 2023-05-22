@@ -3,10 +3,7 @@ import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
-import {
-  ResourceDialogProps,
-  RedshiftConfig,
-} from '../../../utils/resources';
+import { RedshiftConfig, ResourceDialogProps } from '../../../utils/resources';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { ResourceTextInputField } from './ResourceTextInputField';
 

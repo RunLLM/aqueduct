@@ -5,8 +5,7 @@ import { APIKeyParameter } from '../parameters/Header';
 import { ResourceIdParameter } from '../parameters/Path';
 import { OperatorResponse } from '../responses/node';
 
-export type ResourceOperatorsGetRequest = APIKeyParameter &
-  ResourceIdParameter;
+export type ResourceOperatorsGetRequest = APIKeyParameter & ResourceIdParameter;
 
 export type ResourceOperatorsGetResponse = OperatorResponse[];
 

@@ -10,18 +10,19 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 
+import DefaultLayout from '../../../../components/layouts/default';
+import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import AddTableDialog from '../../../../components/resources/dialogs/addTableDialog';
 import DeleteResourceDialog from '../../../../components/resources/dialogs/deleteResourceDialog';
 import ResourceDialog from '../../../../components/resources/dialogs/dialog';
 import ResourceObjectList from '../../../../components/resources/resourceObjectList';
-import DefaultLayout from '../../../../components/layouts/default';
-import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import {
   useResourceOperatorsGetQuery,
   useResourceWorkflowsGetQuery,
 } from '../../../../handlers/AqueductApi';
 import { handleGetServerConfig } from '../../../../handlers/getServerConfig';
 import { OperatorResponse } from '../../../../handlers/responses/node';
+import { handleFetchAllWorkflowSummaries } from '../../../../reducers/listWorkflowSummaries';
 import {
   handleListResourceObjects,
   handleLoadResourceOperators,
@@ -30,13 +31,12 @@ import {
   resetTestConnectStatus,
 } from '../../../../reducers/resource';
 import { handleLoadResources } from '../../../../reducers/resources';
-import { handleFetchAllWorkflowSummaries } from '../../../../reducers/listWorkflowSummaries';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
 import {
-  ResourceCategories,
   isNotificationResource,
+  ResourceCategories,
   resourceExecState,
   SupportedResources,
 } from '../../../../utils/resources';
@@ -49,11 +49,11 @@ import SupportedResources from '../../../../utils/SupportedResources';
 import { ResourceHeaderDetailsCard } from '../../../resources/cards/headerDetailsCard';
 import { ResourceFieldsDetailsCard } from '../../../resources/cards/resourceFieldsDetailsCard';
 import { ErrorSnackbar } from '../../../resources/errorSnackbar';
-import ResourceWorkflowSummaryCards from '../../../resources/resourceWorkflowSummaryCards';
 import { getNumWorkflowsUsingMessage } from '../../../resources/numWorkflowsUsingMsg';
 import ResourceOptions, {
   ResourceOptionsButtonWidth,
 } from '../../../resources/options';
+import ResourceWorkflowSummaryCards from '../../../resources/resourceWorkflowSummaryCards';
 import { LayoutProps } from '../../types';
 
 type ResourceDetailsPageProps = {
@@ -330,9 +330,9 @@ const ResourceDetailsPage: React.FC<ResourceDetailsPageProps> = ({
         {serverConfig.config?.storageConfig.resource_name ===
           selectedResource.name && (
           <Alert severity="info" sx={{ marginTop: 2 }}>
-            This resource cannot be deleted because it is currently being
-            used as artifact storage. To delete this resource, please migrate
-            your artifact storage elsewhere first.
+            This resource cannot be deleted because it is currently being used
+            as artifact storage. To delete this resource, please migrate your
+            artifact storage elsewhere first.
           </Alert>
         )}
 
@@ -377,10 +377,7 @@ const ResourceDetailsPage: React.FC<ResourceDetailsPageProps> = ({
 
         {SupportedResources[selectedResource.service].category ===
           ResourceCategories.DATA && (
-          <ResourceObjectList
-            user={user}
-            resource={selectedResource}
-          />
+          <ResourceObjectList user={user} resource={selectedResource} />
         )}
 
         <Box sx={{ mt: 4 }}>

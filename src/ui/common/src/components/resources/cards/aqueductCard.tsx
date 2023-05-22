@@ -14,10 +14,7 @@ type Props = {
   detailedView: boolean;
 };
 
-export const AqueductCard: React.FC<Props> = ({
-  resource,
-  detailedView,
-}) => {
+export const AqueductCard: React.FC<Props> = ({ resource, detailedView }) => {
   const config = resource.config as AqueductComputeConfig;
 
   if (config.python_version) {

@@ -13,10 +13,7 @@ import { handleGetServerConfig } from '../../../handlers/getServerConfig';
 import { handleLoadResources } from '../../../reducers/resources';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
-import {
-  Resource,
-  ResourceCategories,
-} from '../../../utils/resources';
+import { Resource, ResourceCategories } from '../../../utils/resources';
 import {
   isFailed,
   isInitial,
@@ -105,8 +102,7 @@ client = aqueduct.Client(
   );
   const notifications = Object.values(resourcesReducer.resources).filter(
     (x) =>
-      SupportedResources[x.service].category ===
-      ResourceCategories.NOTIFICATION
+      SupportedResources[x.service].category === ResourceCategories.NOTIFICATION
   );
 
   const [updatingNotifications, setUpdatingNotifications] = useState(false);
@@ -124,9 +120,7 @@ client = aqueduct.Client(
 
   useEffect(() => {
     if (!updatingNotifications) {
-      dispatch(
-        handleLoadResources({ apiKey: user.apiKey, forceLoad: true })
-      );
+      dispatch(handleLoadResources({ apiKey: user.apiKey, forceLoad: true }));
     }
   }, [updatingNotifications, dispatch, user.apiKey]);
 

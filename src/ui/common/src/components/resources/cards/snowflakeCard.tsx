@@ -8,10 +8,7 @@ type Props = {
   detailedView: boolean;
 };
 
-export const SnowflakeCard: React.FC<Props> = ({
-  resource,
-  detailedView,
-}) => {
+export const SnowflakeCard: React.FC<Props> = ({ resource, detailedView }) => {
   const config = resource.config as SnowflakeConfig;
 
   let labels = ['Account ID', 'Database', 'User'];

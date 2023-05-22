@@ -2,8 +2,8 @@ import Box from '@mui/material/Box';
 import React from 'react';
 
 import {
-  Resource,
   resolveDisplayService,
+  Resource,
   resourceExecState,
 } from '../../../utils/resources';
 import { StatusIndicator } from '../../workflows/workflowStatus';
@@ -56,10 +56,7 @@ export const ResourceCard: React.FC<ResourceProps> = ({
           : '  '}
       </TruncatedText>
 
-      <ResourceFieldsDetailsCard
-        resource={resource}
-        detailedView={false}
-      />
+      <ResourceFieldsDetailsCard resource={resource} detailedView={false} />
 
       <Box
         sx={{

@@ -2,11 +2,8 @@ import { Box, Link, Typography } from '@mui/material';
 import React, { useState } from 'react';
 
 import { getPathPrefix } from '../../utils/getPathPrefix';
-import {
-  Resource,
-  NotificationResourceConfig,
-} from '../../utils/resources';
 import { NotificationLogLevel } from '../../utils/notifications';
+import { NotificationResourceConfig, Resource } from '../../utils/resources';
 import { Button } from '../primitives/Button.styles';
 import NotificationLevelSelector from './NotificationLevelSelector';
 

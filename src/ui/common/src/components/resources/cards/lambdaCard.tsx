@@ -1,7 +1,7 @@
 import Box from '@mui/material/Box';
 import React from 'react';
 
-import { Resource, LambdaConfig } from '../../../utils/resources';
+import { LambdaConfig, Resource } from '../../../utils/resources';
 import { ExecState, ExecutionStatus } from '../../../utils/shared';
 import LambdaConnectionStatus from '../lambda/lambdaConnectionStatus';
 import { ResourceCardText, TruncatedText } from './text';

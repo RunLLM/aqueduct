@@ -3,10 +3,7 @@ import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
-import {
-  ResourceDialogProps,
-  LambdaConfig,
-} from '../../../utils/resources';
+import { LambdaConfig, ResourceDialogProps } from '../../../utils/resources';
 import { ResourceTextInputField } from './ResourceTextInputField';
 
 const Placeholders: LambdaConfig = {

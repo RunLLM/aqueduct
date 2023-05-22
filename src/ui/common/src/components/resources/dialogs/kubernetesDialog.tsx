@@ -6,9 +6,9 @@ import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
 import {
-  ResourceDialogProps,
   KubernetesConfig,
-} from '../../../utils/integrations';
+  ResourceDialogProps,
+} from '../../../utils/resources';
 import { ResourceTextInputField } from './ResourceTextInputField';
 
 const Placeholders: KubernetesConfig = {

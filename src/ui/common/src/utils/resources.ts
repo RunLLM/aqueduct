@@ -373,17 +373,14 @@ export async function addTable(
   resourceId: string,
   config: CSVConfig
 ): Promise<void> {
-  const res = await fetch(
-    `${apiAddress}/api/resource/${resourceId}/create`,
-    {
-      method: 'POST',
-      headers: {
-        'api-key': user.apiKey,
-        'table-name': config.name,
-      },
-      body: config.csv.data,
-    }
-  );
+  const res = await fetch(`${apiAddress}/api/resource/${resourceId}/create`, {
+    method: 'POST',
+    headers: {
+      'api-key': user.apiKey,
+      'table-name': config.name,
+    },
+    body: config.csv.data,
+  });
 
   if (!res.ok) {
     const body = await res.json();
@@ -396,7 +393,8 @@ const logoBucket =
   'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos';
 
 // S3 bucket folder for Resource logos.
-const resourceLogosBucket = 'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/resources';
+const resourceLogosBucket =
+  'https://aqueduct-public-assets-bucket.s3.us-east-2.amazonaws.com/webapp/logos/resources';
 
 export const ResourceCategories = {
   DATA: 'data',

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Resource, MongoDBConfig } from '../../../utils/resources';
+import { MongoDBConfig, Resource } from '../../../utils/resources';
 import { ResourceCardText } from './text';
 
 type Props = {

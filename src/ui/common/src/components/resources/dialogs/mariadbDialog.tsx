@@ -3,10 +3,7 @@ import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
-import {
-  ResourceDialogProps,
-  MariaDbConfig,
-} from '../../../utils/resources';
+import { MariaDbConfig, ResourceDialogProps } from '../../../utils/resources';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { ResourceTextInputField } from './ResourceTextInputField';
 

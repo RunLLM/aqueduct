@@ -2,15 +2,14 @@ import { Box } from '@mui/material';
 import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
-import { ResourceCard } from '../components/resources/cards/card';
 import { Card } from '../components/layouts/card';
+import { ResourceCard } from '../components/resources/cards/card';
 import {
   AqueductComputeConfig,
   BigQueryConfig,
   DatabricksConfig,
   EmailConfig,
   GCSConfig,
-  Resource,
   KubernetesConfig,
   LambdaConfig,
   MariaDbConfig,
@@ -18,6 +17,7 @@ import {
   MySqlConfig,
   PostgresConfig,
   RedshiftConfig,
+  Resource,
   S3Config,
   SlackConfig,
   SnowflakeConfig,

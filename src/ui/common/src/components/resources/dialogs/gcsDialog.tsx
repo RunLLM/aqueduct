@@ -112,8 +112,8 @@ export const GCSDialog: React.FC<GCSDialogProps> = ({
 
       <Typography>
         We currently only support using Google Cloud Storage as the Aqueduct
-        metadata storage. Support for using it as a data resource will be
-        added soon.
+        metadata storage. Support for using it as a data resource will be added
+        soon.
       </Typography>
     </Box>
   );

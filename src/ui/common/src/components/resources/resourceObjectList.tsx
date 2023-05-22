@@ -11,10 +11,7 @@ import Box from '@mui/material/Box';
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import {
-  handleLoadResourceObject,
-  objectKeyFn,
-} from '../../reducers/resource';
+import { handleLoadResourceObject, objectKeyFn } from '../../reducers/resource';
 import { AppDispatch, RootState } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import UserProfile from '../../utils/auth';
@@ -54,10 +51,7 @@ const ResourceObjectList: React.FC<Props> = ({ user, resource }) => {
     );
   }, [dispatch, resource.id, selectedObject, user.apiKey]);
 
-  if (
-    resource.service === 'Kubernetes' ||
-    resource.service === 'Lambda'
-  ) {
+  if (resource.service === 'Kubernetes' || resource.service === 'Lambda') {
     return null;
   }
 
@@ -153,8 +147,8 @@ const ResourceObjectList: React.FC<Props> = ({ user, resource }) => {
       </Typography>
 
       <Typography variant="body2" sx={{ mb: 1 }}>
-        These are the tables stored in {resource.name}. You can click into
-        any of the tables below to see a preview of the data.
+        These are the tables stored in {resource.name}. You can click into any
+        of the tables below to see a preview of the data.
       </Typography>
 
       <Box

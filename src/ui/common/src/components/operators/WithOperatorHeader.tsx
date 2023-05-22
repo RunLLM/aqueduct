@@ -95,8 +95,7 @@ const WithOperatorHeader: React.FC<Props> = ({
   const service =
     operator?.spec?.load?.service || operator?.spec?.extract?.service;
   const resourceId =
-    operator?.spec?.load?.resource_id ||
-    operator?.spec?.extract?.resource_id;
+    operator?.spec?.load?.resource_id || operator?.spec?.extract?.resource_id;
   const resourceName = resourceId
     ? resourcesState?.resources[resourceId]?.name
     : undefined;
@@ -122,9 +121,7 @@ const WithOperatorHeader: React.FC<Props> = ({
       {resourceName && (
         <ResourceItem
           resource={service}
-          resourceCustomName={
-            resourcesState?.resources[resourceId]?.name
-          }
+          resourceCustomName={resourcesState?.resources[resourceId]?.name}
         />
       )}
 

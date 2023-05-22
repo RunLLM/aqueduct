@@ -5,8 +5,8 @@ import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
-import { ResourceDialogProps } from '../../../utils/resources';
 import { NotificationLogLevel } from '../../../utils/notifications';
+import { ResourceDialogProps } from '../../../utils/resources';
 import CheckboxEntry from '../../notifications/CheckboxEntry';
 import NotificationLevelSelector from '../../notifications/NotificationLevelSelector';
 import { ResourceTextInputField } from './ResourceTextInputField';

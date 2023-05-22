@@ -18,11 +18,11 @@ import { ReactFlowProvider } from 'reactflow';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import { handleGetWorkflowHistory } from '../../../../handlers/getWorkflowHistory';
-import { handleLoadResources } from '../../../../reducers/resources';
 import {
   NodeType,
   resetSelectedNode,
 } from '../../../../reducers/nodeSelection';
+import { handleLoadResources } from '../../../../reducers/resources';
 import {
   handleGetArtifactResults,
   handleGetOperatorResults,

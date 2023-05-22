@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Resource, KubernetesConfig } from '../../../utils/resources';
+import { KubernetesConfig, Resource } from '../../../utils/resources';
 import { ResourceCardText } from './text';
 
 type Props = {

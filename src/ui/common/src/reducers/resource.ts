@@ -3,8 +3,8 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import { RootState } from '../stores/store';
 import { Data, inferSchema, TableRow } from '../utils/data';
-import { ResourceConfig, Service } from '../utils/resources';
 import { Operator } from '../utils/operators';
+import { ResourceConfig, Service } from '../utils/resources';
 import { LoadingStatus, LoadingStatusEnum } from '../utils/shared';
 
 export type OperatorsForResourceItem = {
@@ -350,17 +350,14 @@ export const handleEditResource = createAsyncThunk<
       }
     });
 
-    const res = await fetch(
-      `${apiAddress}/api/resource/${resourceId}/edit`,
-      {
-        method: 'POST',
-        headers: {
-          'api-key': apiKey,
-          'resource-name': name,
-          'resource-config': JSON.stringify(config),
-        },
-      }
-    );
+    const res = await fetch(`${apiAddress}/api/resource/${resourceId}/edit`, {
+      method: 'POST',
+      headers: {
+        'api-key': apiKey,
+        'resource-name': name,
+        'resource-config': JSON.stringify(config),
+      },
+    });
 
     const responseBody = await res.json();
 

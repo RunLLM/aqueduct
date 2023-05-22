@@ -40,15 +40,13 @@ export const ConnectedResources: React.FC<ConnectedResourcesProps> = ({
 
   const resourceToConnectedResourceType = (resource: Resource) => {
     if (
-      SupportedResources[resource.service].category ===
-      ResourceCategories.DATA
+      SupportedResources[resource.service].category === ResourceCategories.DATA
     ) {
       return ConnectedResourceType.Data;
     } else if (
       SupportedResources[resource.service].category ===
         ResourceCategories.COMPUTE ||
-      SupportedResources[resource.service].category ===
-        ResourceCategories.CLOUD
+      SupportedResources[resource.service].category === ResourceCategories.CLOUD
     ) {
       return ConnectedResourceType.Compute;
 
@@ -67,8 +65,7 @@ export const ConnectedResources: React.FC<ConnectedResourcesProps> = ({
   const resources = useSelector((state: RootState) =>
     Object.values(state.resourcesReducer.resources).filter(
       (resource: Resource) =>
-        resourceToConnectedResourceType(resource) ===
-        connectedResourceType
+        resourceToConnectedResourceType(resource) === connectedResourceType
     )
   );
 

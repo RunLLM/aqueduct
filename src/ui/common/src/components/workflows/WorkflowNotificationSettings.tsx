@@ -5,8 +5,8 @@ import React, { useState } from 'react';
 
 import { theme } from '../../styles/theme/theme';
 import { getPathPrefix } from '../../utils/getPathPrefix';
-import { Resource } from '../../utils/resources';
 import { NotificationLogLevel } from '../../utils/notifications';
+import { Resource } from '../../utils/resources';
 import { NotificationSettingsMap } from '../../utils/workflows';
 import CheckboxEntry from '../notifications/CheckboxEntry';
 import NotificationLevelSelector from '../notifications/NotificationLevelSelector';

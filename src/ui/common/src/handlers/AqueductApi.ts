@@ -100,6 +100,21 @@ import {
   NodesResultsGetResponse,
 } from './v2/NodesResultsGet';
 import {
+  resourceOperatorsGetQuery,
+  ResourceOperatorsGetRequest,
+  ResourceOperatorsGetResponse,
+} from './v2/ResourceOperatorsGet';
+import {
+  resourcesWorkflowsGetQuery,
+  ResourcesWorkflowsGetRequest,
+  ResourcesWorkflowsGetResponse,
+} from './v2/ResourcesWorkflowsGet';
+import {
+  resourceWorkflowsGetQuery,
+  ResourceWorkflowsGetRequest,
+  ResourceWorkflowsGetResponse,
+} from './v2/ResourceWorkflowsGet';
+import {
   workflowDeletePostQuery,
   WorkflowDeletePostRequest,
   WorkflowDeletePostResponse,

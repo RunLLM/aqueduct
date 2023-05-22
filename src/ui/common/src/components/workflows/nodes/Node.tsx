@@ -169,9 +169,7 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
       headerIcon = (
         <ResourceItem
           resource={spec.service}
-          resourceCustomName={
-            resourcesState.resources[spec.resource_id]?.name
-          }
+          resourceCustomName={resourcesState.resources[spec.resource_id]?.name}
           size={iconFontSize}
           defaultBackgroundColor={theme.palette.gray[200]}
           collapseName
@@ -185,9 +183,7 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
         <ResourceItem
           resource={engineSpec.type}
           resourceCustomName={
-            resourcesState.resources[
-              resourceConfig?.['resource_id']
-            ]?.name
+            resourcesState.resources[resourceConfig?.['resource_id']]?.name
           }
           size={iconFontSize}
           defaultBackgroundColor={theme.palette.gray[200]}

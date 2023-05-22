@@ -51,8 +51,8 @@ import {
   getNextUpdateTime,
   PeriodUnit,
 } from '../../utils/cron';
-import { ResourceCategories } from '../../utils/resources';
 import { UpdateMode } from '../../utils/operators';
+import { ResourceCategories } from '../../utils/resources';
 import ExecutionStatus, { LoadingStatusEnum } from '../../utils/shared';
 import { SupportedResources } from '../../utils/SupportedResources';
 import {
@@ -302,8 +302,7 @@ const WorkflowSettings: React.FC<WorkflowSettingsProps> = ({
 
   const notificationResources = Object.values(resources).filter(
     (x) =>
-      SupportedResources[x.service].category ===
-      ResourceCategories.NOTIFICATION
+      SupportedResources[x.service].category === ResourceCategories.NOTIFICATION
   );
 
   const [name, setName] = useState(workflowDag.metadata?.name);

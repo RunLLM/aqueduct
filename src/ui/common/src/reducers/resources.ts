@@ -31,11 +31,7 @@ export const handleLoadResources = createAsyncThunk<
     // The resources are already defined, so just ignore this call if not force load.
     const state = thunkAPI.getState();
     const resources = state.resourcesReducer.resources;
-    if (
-      resources &&
-      Object.values(resources).length > 0 &&
-      !args.forceLoad
-    ) {
+    if (resources && Object.values(resources).length > 0 && !args.forceLoad) {
       return resources;
     }
 
@@ -54,9 +50,7 @@ export const handleLoadResources = createAsyncThunk<
 
     const resourceList = responseBody as Resource[];
     const result: { [id: string]: Resource } = {};
-    resourceList.forEach(
-      (resource) => (result[resource.id] = resource)
-    );
+    resourceList.forEach((resource) => (result[resource.id] = resource));
     return result;
   }
 );
