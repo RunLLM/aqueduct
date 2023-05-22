@@ -5,16 +5,14 @@ import Image from 'mui-image';
 import React from 'react';
 
 import { ArtifactResultResponse } from '../../../handlers/responses/node';
-import {
-  ArtifactResultContent,
-  SerializationType,
-} from '../../../utils/artifacts';
+import { NodeArtifactResultContentGetResponse } from '../../../handlers/v2/NodeArtifactResultContentGet';
+import { SerializationType } from '../../../utils/artifacts';
 import { Data, inferSchema, TableRow } from '../../../utils/data';
 import PaginatedTable from '../../tables/PaginatedTable';
 
 type Props = {
   artifactResult?: ArtifactResultResponse;
-  content?: ArtifactResultContent;
+  content?: NodeArtifactResultContentGetResponse;
   contentLoading: boolean;
   contentError: string;
 };
@@ -56,11 +54,14 @@ const ArtifactContent: React.FC<Props> = ({
   }
 
   let contentComponent = null;
+  const decodedContent = Buffer.from(content.content, 'base64').toString(
+    'utf-8'
+  );
   switch (artifactResult.serialization_type) {
     case SerializationType.Table:
     case SerializationType.BsonTable:
       try {
-        const rawData = JSON.parse(content.data);
+        const rawData = JSON.parse(decodedContent);
         if (artifactResult.serialization_type === SerializationType.BsonTable) {
           const rows = rawData as TableRow[];
           // bson table does not include schema when serialized.
@@ -76,13 +77,13 @@ const ArtifactContent: React.FC<Props> = ({
       } catch (err) {
         return (
           <Alert severity="error" title="Cannot parse table data.">
-            {`${err.toString}\n${content.data}`}
+            {`${err.toString()}\n${content.content}`}
           </Alert>
         );
       }
     case SerializationType.Image:
       try {
-        const srcFromBase64 = 'data:image/png;base64,' + content.data;
+        const srcFromBase64 = 'data:image/png;base64,' + content.content;
         contentComponent = (
           <Image
             src={srcFromBase64}
@@ -102,7 +103,7 @@ const ArtifactContent: React.FC<Props> = ({
     case SerializationType.Json:
       try {
         // Convert to pretty-printed version.
-        const prettyJson = JSON.stringify(JSON.parse(content.data), null, 2);
+        const prettyJson = JSON.stringify(JSON.parse(decodedContent), null, 2);
         contentComponent = (
           <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
             {prettyJson}
@@ -119,7 +120,7 @@ const ArtifactContent: React.FC<Props> = ({
     case SerializationType.String:
       contentComponent = (
         <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
-          {content.data}
+          {decodedContent}
         </Typography>
       );
       break;

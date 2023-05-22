@@ -15,12 +15,14 @@ export const workflowTriggerPostQuery = (req: WorkflowTriggerPostRequest) => {
   const parameters = new FormData();
   parameters.append('parameters', req.serializedParams);
   return {
-    url: `workflow/${req.workflowId}/edit`,
+    url: `workflow/${req.workflowId}/trigger`,
     method: 'POST',
+    headers: {
+      'api-key': req.apiKey,
+    },
     // avoid built-in content-type override
     // ref: https://github.com/reduxjs/redux-toolkit/issues/2287
     prepareHeaders: (headers) => {
-      headers.set('api-key', req.apiKey);
       headers.set('Content-Type', 'multipart/form-data');
       return headers;
     },

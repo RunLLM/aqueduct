@@ -9,12 +9,12 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
 import {
-  aqueductApi,
+  useDagResultsGetQuery,
   useWorkflowTriggerPostMutation,
 } from '../../../../handlers/AqueductApi';
 import { NodesMap } from '../../../../handlers/responses/node';
@@ -56,23 +56,26 @@ const RunWorkflowDialog: React.FC<RunWorkflowDialogProps> = ({
     },
   ] = useWorkflowTriggerPostMutation();
 
+  const { refetch: refetchDagResults } = useDagResultsGetQuery({
+    apiKey: user.apiKey,
+    workflowId,
+  });
+
   const successMessage =
     'Successfully triggered a manual update for this workflow!';
   const errorMessage = 'Unable to update this workflow.';
 
-  const handleSuccessToastClose = async () => {
-    resetRunWorkflow();
-
-    {
-      await dispatch(
-        aqueductApi.endpoints.dagResultsGet.initiate({
-          apiKey: user.apiKey,
-          workflowId,
-        })
-      );
-      await dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
-      navigate(`/workflow/${workflowId}`, { replace: true });
+  useEffect(() => {
+    if (isRunWorkflowSuccess || !!runWorkflowError) {
+      refetchDagResults();
+      setOpen(false);
     }
+  });
+
+  const handleSuccessToastClose = () => {
+    resetRunWorkflow();
+    dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
+    navigate(`/workflow/${encodeURI(workflowId)}`, { replace: true });
   };
 
   const handleErrorToastClose = () => {
@@ -168,6 +171,36 @@ const RunWorkflowDialog: React.FC<RunWorkflowDialogProps> = ({
 
   return (
     <>
+      <Snackbar
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        open={isRunWorkflowSuccess}
+        onClose={handleSuccessToastClose}
+        key={'workflowheader-success-snackbar'}
+        autoHideDuration={4000}
+      >
+        <Alert
+          onClose={handleSuccessToastClose}
+          severity="success"
+          sx={{ width: '100%' }}
+        >
+          {successMessage}
+        </Alert>
+      </Snackbar>
+      <Snackbar
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        open={!!runWorkflowError}
+        onClose={handleErrorToastClose}
+        key={'workflowheader-error-snackbar'}
+        autoHideDuration={4000}
+      >
+        <Alert
+          onClose={handleErrorToastClose}
+          severity="error"
+          sx={{ width: '100%' }}
+        >
+          {errorMessage}
+        </Alert>
+      </Snackbar>
       <Dialog open={open} onClose={() => setOpen(false)}>
         <DialogTitle>Trigger a Workflow Run?</DialogTitle>
         <DialogContent>
@@ -218,36 +251,6 @@ const RunWorkflowDialog: React.FC<RunWorkflowDialogProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
-      <Snackbar
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        open={isRunWorkflowSuccess}
-        onClose={handleSuccessToastClose}
-        key={'workflowheader-success-snackbar'}
-        autoHideDuration={4000}
-      >
-        <Alert
-          onClose={handleSuccessToastClose}
-          severity="success"
-          sx={{ width: '100%' }}
-        >
-          {successMessage}
-        </Alert>
-      </Snackbar>
-      <Snackbar
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        open={!!runWorkflowError}
-        onClose={handleErrorToastClose}
-        key={'workflowheader-error-snackbar'}
-        autoHideDuration={4000}
-      >
-        <Alert
-          onClose={handleErrorToastClose}
-          severity="error"
-          sx={{ width: '100%' }}
-        >
-          {errorMessage}
-        </Alert>
-      </Snackbar>
     </>
   );
 };
