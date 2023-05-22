@@ -137,6 +137,7 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			DAGResultRepo:   s.DAGResultRepo,
 			OperatorRepo:    s.OperatorRepo,
 		},
+		routes.EnvironmentRoute: &v2.EnvironmentHandler{},
 
 		// V1 Handlers
 		// (ENG-2715) Remove deprecated ones
@@ -454,7 +455,6 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 
 			IntegrationRepo: s.IntegrationRepo,
 		},
-		routes.GetServerVersionRoute:     &handler.GetServerVersionHandler{},
-		routes.GetServerEnvironmentRoute: &handler.GetServerEnvironmentHandler{},
+		routes.GetServerVersionRoute: &handler.GetServerVersionHandler{},
 	}
 }

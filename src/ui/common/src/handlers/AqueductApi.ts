@@ -20,6 +20,10 @@ import {
 } from './v2/DagResultsGet';
 import { dagsGetQuery, DagsGetRequest, DagsGetResponse } from './v2/DagsGet';
 import {
+  environmentGetQuery,
+  EnvironmentGetRequest,
+} from './v2/EnvironmentGet';
+import {
   integrationOperatorsGetQuery,
   IntegrationOperatorsGetRequest,
   IntegrationOperatorsGetResponse,
@@ -179,6 +183,13 @@ export const aqueductApi = createApi({
       query: (req) => dagResultsGetQuery(req),
       transformErrorResponse,
     }),
+    environmentGet: builder.query<
+      EnvironmentGetResponse,
+      EnvironmentGetRequest
+    >({
+      query: (req) => environmentGetQuery(req),
+      transformErrorResponse,
+    }),
     integrationOperatorsGet: builder.query<
       IntegrationOperatorsGetResponse,
       IntegrationOperatorsGetRequest
@@ -320,6 +331,7 @@ export const {
   useDagOperatorsGetQuery,
   useDagResultGetQuery,
   useDagResultsGetQuery,
+  useEnvironmentGetQuery,
   useIntegrationOperatorsGetQuery,
   useIntegrationWorkflowsGetQuery,
   useIntegrationsWorkflowsGetQuery,

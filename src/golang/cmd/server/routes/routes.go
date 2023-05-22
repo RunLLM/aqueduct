@@ -26,6 +26,7 @@ const (
 	NodeDagOperatorsRoute          = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/operators"
 	NodeOperatorContentRoute       = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/operator/{nodeID}/content"
 	NodesResultsRoute              = "/api/v2/workflow/{workflowID}/result/{dagResultID}/nodes/results"
+	EnvironmentRoute               = "/api/v2/environment"
 
 	// V2 hacky routes
 	// These routes are supposed to be `v2/workflow/{workflowId}`
@@ -85,6 +86,5 @@ const (
 	GetWorkflowDagResultRoute    = "/api/workflow/{workflowId}/result/{workflowDagResultId}"
 	GetWorkflowHistoryRoute      = "/api/workflow/{workflowId}/history"
 
-	GetServerVersionRoute     = "/api/version"
-	GetServerEnvironmentRoute = "/api/environment"
+	GetServerVersionRoute = "/api/version"
 )

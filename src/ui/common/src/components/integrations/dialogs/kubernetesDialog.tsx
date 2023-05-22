@@ -1,7 +1,7 @@
 import { Checkbox, FormControlLabel } from '@mui/material';
 import Box from '@mui/material/Box';
 import React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
@@ -9,7 +9,6 @@ import {
   IntegrationDialogProps,
   KubernetesConfig,
 } from '../../../utils/integrations';
-import { apiAddress } from '../../hooks/useAqueductConsts';
 import { IntegrationTextInputField } from './IntegrationTextInputField';
 
 const Placeholders: KubernetesConfig = {
@@ -18,9 +17,14 @@ const Placeholders: KubernetesConfig = {
   use_same_cluster: 'false',
 };
 
-export const KubernetesDialog: React.FC<IntegrationDialogProps> = ({
+interface KuberentesDialogProps extends IntegrationDialogProps {
+  inK8sCluster: boolean;
+}
+
+export const KubernetesDialog: React.FC<KuberentesDialogProps> = ({
   editMode = false,
   user,
+  inK8sCluster = false,
 }) => {
   const { register, setValue, getValues } = useFormContext();
   const use_same_cluster = getValues('use_same_cluster');
@@ -30,27 +34,6 @@ export const KubernetesDialog: React.FC<IntegrationDialogProps> = ({
   useEffect(() => {
     setValue('use_same_cluster', 'false');
   }, []);
-
-  const [inK8sCluster, setInK8sCluster] = useState(false);
-
-  // TODO: https://linear.app/aqueducthq/issue/ENG-2964/move-k8s-use-same-cluster-request-to-rtkquery
-  useEffect(() => {
-    const fetchEnvironment = async () => {
-      const environmentResponse = await fetch(`${apiAddress}/api/environment`, {
-        method: 'GET',
-        headers: {
-          'api-key': user.apiKey,
-        },
-      });
-
-      const responseBody = await environmentResponse.json();
-      setInK8sCluster(responseBody['inK8sCluster']);
-    };
-
-    if (user) {
-      fetchEnvironment().catch(console.error);
-    }
-  }, [user]);
 
   return (
     <Box sx={{ mt: 2 }}>
