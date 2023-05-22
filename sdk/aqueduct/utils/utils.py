@@ -213,43 +213,25 @@ def generate_engine_config(
 
 
 def find_flow_with_user_supplied_id_and_name(
-    flows: List[Tuple[uuid.UUID, str]],
-    flow_id: Optional[Union[str, uuid.UUID]] = None,
-    flow_name: Optional[str] = None,
+    flows: List[Tuple[uuid.UUID, str]], flow_identifier: Optional[Union[str, uuid.UUID]] = None
 ) -> str:
-    """Verifies that the user supplied flow id and name correspond
-    to an actual flow in `flows`. Only one of `flow_id` and `flow_name` is necessary,
-    but if both are provided, they must match to the same flow. It returns the
-    string version of the matching flow's id.
+    """Verifies that the user supplied flow_identifier correspond
+    to an actual flow in `flows`. Must be either uuid or name that
+    must match to the same flow. It returns the string version of
+    the matching flow's id.
     """
-    if not flow_id and not flow_name:
+    if not flow_identifier:
         raise InvalidUserArgumentException(
-            "Must supply at least one of the following:`flow_id` or `flow_name`"
+            "Must supply a valid flow identifier, either name or uuid"
         )
 
-    if flow_id:
-        flow_id_str = parse_user_supplied_id(flow_id)
+    flow_id_str = parse_user_supplied_id(flow_identifier)
+
+    if isinstance(flow_identifier, uuid.UUID) or is_string_valid_uuid(flow_identifier):
         if all(uuid.UUID(flow_id_str) != flow[0] for flow in flows):
-            raise InvalidUserArgumentException("Unable to find a flow with id %s" % flow_id)
-
-    if flow_name:
-        flow_id_str_from_name = None
-        for flow in flows:
-            if flow[1] == flow_name:
-                flow_id_str_from_name = str(flow[0])
-                break
-
-        if not flow_id_str_from_name:
-            raise InvalidUserArgumentException("Unable to find a flow with name %s" % flow_name)
-
-        if flow_id and flow_id_str != flow_id_str_from_name:
-            # User supplied both flow_id and flow_name, but they do not
-            # correspond to the same flow
-            raise InvalidUserArgumentException(
-                "The flow with id %s does not correspond to the flow with name %s"
-                % (flow_id, flow_name)
-            )
-
-        return flow_id_str_from_name
+            raise InvalidUserArgumentException("Unable to find a flow with id %s" % flow_identifier)
+    elif isinstance(flow_identifier, str):
+        if all(flow_id_str != flow[1] for flow in flows):
+            raise InvalidUserArgumentException("Unable to find a flow with name %s" % flow_id_str)
 
     return flow_id_str

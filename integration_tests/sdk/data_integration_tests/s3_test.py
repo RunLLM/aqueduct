@@ -327,7 +327,7 @@ def test_s3_fetch_directory_with_delete(flow_manager, data_integration):
     # Delete the workflow and include artifact into deletion.
     tables = flow.list_saved_objects()
     flow_manager._client.delete_flow(
-        flow_id=str(flow.id()),
+        flow_identifier=str(flow.id()),
         saved_objects_to_delete=tables,
         force=True,
     )

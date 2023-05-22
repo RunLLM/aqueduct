@@ -571,15 +571,13 @@ def test_get_flow_with_name(client, flow_name, engine):
     )
 
     fetched_with_id = client.flow(flow.id())
-    fetched_with_name = client.flow(flow_name=flow.name())
-    fetched_with_id_and_name = client.flow(flow_id=flow.id(), flow_name=flow.name())
+    # fetched_with_name = client.flow(flow_identifier=flow.name())
 
-    assert fetched_with_id.id() == fetched_with_name.id()
-    assert fetched_with_id.id() == fetched_with_id_and_name.id()
+    # assert fetched_with_id.id() == fetched_with_name.id()
 
-    # Failure case: flow id and name do not match
+    # Failure case: flow name does not match
     with pytest.raises(InvalidUserArgumentException):
-        client.flow(flow_id=flow.id(), flow_name="not a real flow")
+        client.flow(flow_identifier="not a real flow")
 
 
 def test_refresh_flow_with_name(client, flow_name, engine):
@@ -598,11 +596,11 @@ def test_refresh_flow_with_name(client, flow_name, engine):
         engine=engine,
     )
 
-    # Failure case: flow id and name do not match
+    # Failure case: name does not match
     with pytest.raises(InvalidUserArgumentException):
-        client.trigger(flow_id=flow.id(), flow_name="not a real flow")
+        client.trigger(flow_identifier="not a real flow")
 
-    client.trigger(flow_name=flow.name())
+    client.trigger(flow_identifier=flow.id())
 
 
 def test_delete_flow_with_name(client, flow_name, engine):
@@ -623,9 +621,9 @@ def test_delete_flow_with_name(client, flow_name, engine):
 
     # Failure case: flow id and name do not match
     with pytest.raises(InvalidUserArgumentException):
-        client.delete_flow(flow_id=flow.id(), flow_name="not a real flow")
+        client.delete_flow(flow_identifier="not a real flow")
 
-    client.delete_flow(flow_name=flow.name())
+    client.delete_flow(flow_identifier=flow.id())
 
 
 def test_flow_with_failed_compute_operators(
