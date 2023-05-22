@@ -2,9 +2,6 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { NodesResponse } from '../../handlers/responses/node';
 
-// For now, this is an empty object.
-export type PerDagPageState = Record<string, never>;
-
 export type NodeSelection = {
   nodeType: keyof NodesResponse;
   nodeId: string;
@@ -12,9 +9,6 @@ export type NodeSelection = {
 
 type PerWorkflowPageState = {
   SelectedNode?: NodeSelection;
-  perDagPageStates: {
-    [dagOrResultId: string]: PerDagPageState;
-  };
 };
 
 export type WorkflowPageState = {
@@ -29,7 +23,7 @@ function initializePerWorkflowPageStateIfNotExists(
   workflowId: string
 ) {
   if (!state.perWorkflowPageStates[workflowId]) {
-    state.perWorkflowPageStates[workflowId] = { perDagPageStates: {} };
+    state.perWorkflowPageStates[workflowId] = {};
   }
 }
 
@@ -37,29 +31,6 @@ export const workflowPageSlice = createSlice({
   name: 'workflowPage',
   initialState,
   reducers: {
-    initializeDagOrResultPageIfNotExists: (
-      state,
-      {
-        payload,
-      }: PayloadAction<{
-        workflowId: string;
-        dagId: string;
-        dagResultId?: string;
-      }>
-    ) => {
-      initializePerWorkflowPageStateIfNotExists(state, payload.workflowId);
-      const pageKey = payload.dagResultId ?? payload.dagId;
-
-      if (
-        !state.perWorkflowPageStates[payload.workflowId].perDagPageStates[
-          pageKey
-        ]
-      ) {
-        state.perWorkflowPageStates[payload.workflowId].perDagPageStates[
-          pageKey
-        ] = {};
-      }
-    },
     selectNode: (
       state,
       {
@@ -73,6 +44,5 @@ export const workflowPageSlice = createSlice({
   },
 });
 
-export const { initializeDagOrResultPageIfNotExists, selectNode } =
-  workflowPageSlice.actions;
+export const { selectNode } = workflowPageSlice.actions;
 export default workflowPageSlice.reducer;

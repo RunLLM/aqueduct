@@ -96,13 +96,9 @@ const WorkflowNodeSidesheetActions: React.FC<Props> = ({
   );
 
   return (
-    <Box display="flex" alignItems="center" flex={1}>
-      {/* This flex grown box right aligns the two buttons below.*/}
-      <Box flex={1} />
-      <Box display="flex" alignItems="center">
-        {includeExportOpButton && exportOpButton}
-        {navigateButton}
-      </Box>
+    <Box display="flex" alignItems="center">
+      {includeExportOpButton && exportOpButton}
+      {navigateButton}
     </Box>
   );
 };

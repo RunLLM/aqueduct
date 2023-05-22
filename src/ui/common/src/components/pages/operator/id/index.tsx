@@ -1,13 +1,14 @@
-import { Divider } from '@mui/material';
+import { CircularProgress, Divider } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 
 import DefaultLayout from '../../../../components/layouts/default';
 import LogViewer from '../../../../components/LogViewer';
 import WithOperatorHeader from '../../../../components/operators/WithOperatorHeader';
 import UserProfile from '../../../../utils/auth';
+import { BreadcrumbLink } from '../../../layouts/NavBar';
 import OperatorSpecDetails from '../../../workflows/operator/specDetails';
 import { LayoutProps } from '../../types';
 import {
@@ -38,6 +39,7 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
     nodeId = nodeIdParam;
   }
 
+  const path = useLocation().pathname;
   const breadcrumbs = useWorkflowBreadcrumbs(
     user.apiKey,
     workflowId,
@@ -58,6 +60,18 @@ const OperatorDetailsPage: React.FC<OperatorDetailsPageProps> = ({
 
   const logs = nodeResult?.exec_state?.user_logs ?? {};
   const operatorError = nodeResult?.exec_state?.error;
+
+  breadcrumbs.push(
+    new BreadcrumbLink(path, node ? node.name : 'Operator Details')
+  );
+
+  if (!node) {
+    return (
+      <Layout breadcrumbs={breadcrumbs} user={user}>
+        <CircularProgress />
+      </Layout>
+    );
+  }
 
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>

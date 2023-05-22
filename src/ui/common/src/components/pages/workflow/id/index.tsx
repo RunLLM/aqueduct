@@ -14,10 +14,11 @@ import { ReactFlowProvider } from 'reactflow';
 
 import WorkflowResultNavigator from '../../../../components/workflows/WorkflowResultNavigator';
 import {
-  aqueductApi,
   useDagGetQuery,
   useDagResultGetQuery,
   useDagResultsGetQuery,
+  useNodesResultsGetQuery,
+  useWorkflowEditPostMutation,
   useWorkflowGetQuery,
 } from '../../../../handlers/AqueductApi';
 import { handleLoadIntegrations } from '../../../../reducers/integrations';
@@ -38,8 +39,11 @@ import WorkflowHeader, {
   WorkflowPageContentId,
 } from '../../../workflows/WorkflowHeader';
 import WorkflowNodeSidesheetActions from '../../../workflows/WorkflowNodeSidesheetActions';
+import WorkflowSettings from '../../../workflows/WorkflowSettings';
 import { LayoutProps } from '../../types';
+import RunWorkflowDialog from '../../workflows/components/RunWorkflowDialog';
 import {
+  useSortedDagResults,
   useWorkflowBreadcrumbs,
   useWorkflowIds,
   useWorkflowNodes,
@@ -69,22 +73,29 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     data: workflow,
     isLoading: wfLoading,
     error: wfError,
+    refetch: refetchWorkflow,
   } = useWorkflowGetQuery(
     { apiKey: user.apiKey, workflowId },
     { skip: !workflowId }
   );
-  const { data: dag } = useDagGetQuery(
+  const { data: dag, isLoading: dagLoading } = useDagGetQuery(
     { apiKey: user.apiKey, workflowId, dagId },
     { skip: !workflowId || !dagId }
   );
-  const { data: dagResult } = useDagResultGetQuery(
+  const { data: dagResult, refetch: refetchDagResult } = useDagResultGetQuery(
     { apiKey: user.apiKey, workflowId, dagResultId },
     { skip: !workflowId || !dagResultId }
   );
-  const { data: dagResults } = useDagResultsGetQuery(
+  const dagResults = useSortedDagResults(user.apiKey, workflowId);
+  const { refetch: refetchDagResults } = useDagResultsGetQuery(
     { apiKey: user.apiKey, workflowId },
     { skip: !workflowId }
   );
+  const { refetch: refetchNodeResults } = useNodesResultsGetQuery(
+    { apiKey: user.apiKey, workflowId, dagResultId },
+    { skip: !workflowId || !dagResultId }
+  );
+
   const nodes = useWorkflowNodes(user.apiKey, workflowId, dagId);
   const nodeResults = useWorkflowNodesResults(
     user.apiKey,
@@ -95,19 +106,32 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const [currentTab, setCurrentTab] = useState<string>('Details');
   const [showRunWorkflowDialog, setShowRunWorkflowDialog] = useState(false);
 
-  const [updateMessage, setUpdateMessage] = useState<string>('');
-  const [showUpdateMessage, setShowUpdateMessage] = useState<boolean>(false);
-  const [updateSucceeded, setUpdateSucceeded] = useState<boolean>(false);
+  const [
+    _,
+    {
+      isSuccess: editWorkflowSuccess,
+      error: editWorkflowError,
+      reset: resetEditWorkflow,
+    },
+  ] = useWorkflowEditPostMutation({
+    fixedCacheKey: `edit-${workflowId}`,
+  });
+  console.log(editWorkflowSuccess);
+
+  const editWorkflowMessage = editWorkflowSuccess
+    ? 'Sucessfully updated your workflow.'
+    : editWorkflowError
+    ? `There was an unexpected error while updating your workflow: ${editWorkflowError}`
+    : '';
 
   const selectedNodeState = useSelector(
     (state: RootState) =>
       state.workflowPageReducer.perWorkflowPageStates[workflowId]?.SelectedNode
   );
 
-  const selectedNode =
-    nodes[selectedNodeState.nodeType][selectedNodeState.nodeId];
-  const selectedNodeResult =
-    nodeResults[selectedNodeState.nodeType][selectedNodeState.nodeId];
+  const selectedNode = !!selectedNodeState
+    ? nodes[selectedNodeState.nodeType][selectedNodeState.nodeId]
+    : undefined;
 
   const drawerIsOpen = !!selectedNode;
 
@@ -122,19 +146,26 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
   }, [dispatch, user.apiKey, workflowId]);
 
+  useEffect(() => {
+    if (editWorkflowSuccess) {
+      refetchWorkflow();
+      setCurrentTab('Details');
+    }
+  }, [editWorkflowSuccess]);
+
   // This workflow doesn't exist.
   if (wfError) {
     navigate('/404');
     return null;
   }
 
-  if (wfLoading) {
+  if (wfLoading || dagLoading) {
     return null;
   }
 
   const nodeLabel =
-    selectedNode.name ??
-    (selectedNodeState.nodeType === 'operators'
+    selectedNode?.name ??
+    (selectedNodeState?.nodeType === 'operators'
       ? 'Operator Node'
       : 'Artifact Node');
 
@@ -232,31 +263,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
               </Box>
             )}
 
-            {/*currentTab === 'Settings' && workflow.selectedDag && (
+            {currentTab === 'Settings' && !!workflow && !!dag && (
               <Box sx={{ paddingBottom: '24px' }}>
-                <WorkflowSettings
-                  user={user}
-                  workflowDag={workflow.selectedDag}
-                  onSettingsSave={() => {
-                    setShowUpdateMessage(true);
-                    // Show toast message for a few seconds and then update the current tab.
-                    setTimeout(() => {
-                      // Refresh the page to send user to Details tab with latest information.
-                      window.location.reload();
-                    }, 3000);
-                  }}
-                  onSetShowUpdateMessage={(shouldShow) =>
-                    setShowUpdateMessage(shouldShow)
-                  }
-                  onSetUpdateSucceeded={(isSuccessful) =>
-                    setUpdateSucceeded(isSuccessful)
-                  }
-                  onSetUpdateMessage={(updateMessage) =>
-                    setUpdateMessage(updateMessage)
-                  }
-                />
+                <WorkflowSettings user={user} dag={dag} workflow={workflow} />
               </Box>
-                )*/}
+            )}
           </Box>
 
           {/* These controls are automatically hidden when the side sheet is open. */}
@@ -295,29 +306,9 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                 sx={{ width: '100%', py: 1, fontSize: '32px' }}
                 variant="text"
                 onClick={() => {
-                  // refresh node results, result history, and current result
-                  dispatch(
-                    aqueductApi.endpoints.nodesResultsGet.initiate({
-                      apiKey: user.apiKey,
-                      workflowId,
-                      dagResultId,
-                    })
-                  );
-
-                  dispatch(
-                    aqueductApi.endpoints.dagResultGet.initiate({
-                      apiKey: user.apiKey,
-                      workflowId,
-                      dagResultId,
-                    })
-                  );
-
-                  dispatch(
-                    aqueductApi.endpoints.dagResultsGet.initiate({
-                      apiKey: user.apiKey,
-                      workflowId,
-                    })
-                  );
+                  refetchDagResult();
+                  refetchDagResults();
+                  refetchNodeResults();
                 }}
               >
                 <FontAwesomeIcon icon={faArrowRotateRight} />
@@ -326,13 +317,16 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
           </Box>
         </Box>
 
-        {/*<RunWorkflowDialog
-          user={user}
-          workflowDag={workflow.selectedDag}
-          workflowId={workflowId}
-          open={showRunWorkflowDialog}
-          setOpen={setShowRunWorkflowDialog}
-              />*/}
+        {!!nodes && !!workflow && (
+          <RunWorkflowDialog
+            user={user}
+            nodes={nodes}
+            workflowId={workflowId}
+            open={showRunWorkflowDialog}
+            setOpen={setShowRunWorkflowDialog}
+            name={workflow.name}
+          />
+        )}
       </Box>
 
       <Drawer
@@ -358,7 +352,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
             sx={{ backgroundColor: theme.palette.gray[100] }}
             height={`${drawerHeaderHeightInPx}px`}
           >
-            <Box display="flex">
+            <Box display="flex" mr={3}>
               <Box
                 sx={{ cursor: 'pointer', m: 1, alignSelf: 'center' }}
                 onClick={() =>
@@ -378,17 +372,17 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
                   {nodeLabel}
                 </Typography>
               </Box>
+              {/* This flex grown box right aligns the buttons below.*/}
+              <Box flex={1} />
 
               {dagResultId && !!selectedNode && !!selectedNodeState && (
-                <Box mr={3}>
-                  <WorkflowNodeSidesheetActions
-                    user={user}
-                    workflowId={workflowId}
-                    dagResultId={dagResultId}
-                    selectedNodeState={selectedNodeState}
-                    selectedNode={selectedNode}
-                  />
-                </Box>
+                <WorkflowNodeSidesheetActions
+                  user={user}
+                  workflowId={workflowId}
+                  dagResultId={dagResultId}
+                  selectedNodeState={selectedNodeState}
+                  selectedNode={selectedNode}
+                />
               )}
             </Box>
           </Box>
@@ -408,17 +402,17 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        open={showUpdateMessage}
-        onClose={() => setShowUpdateMessage(false)}
+        open={!!editWorkflowMessage}
+        onClose={() => resetEditWorkflow()}
         key={'settingsupdate-snackbar'}
         autoHideDuration={3000}
       >
         <Alert
-          onClose={() => setShowUpdateMessage(false)}
-          severity={updateSucceeded ? 'success' : 'error'}
+          onClose={() => resetEditWorkflow()}
+          severity={editWorkflowSuccess ? 'success' : 'error'}
           sx={{ width: '100%' }}
         >
-          {updateMessage}
+          {editWorkflowMessage}
         </Alert>
       </Snackbar>
     </Layout>

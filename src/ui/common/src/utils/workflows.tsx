@@ -31,7 +31,7 @@ export enum WorkflowUpdateTrigger {
 export type WorkflowSchedule = {
   trigger: WorkflowUpdateTrigger;
   cron_schedule: string;
-  disable_manual_trigger: boolean;
+  disable_manual_trigger?: boolean;
   paused: boolean;
   source_id: string;
 };

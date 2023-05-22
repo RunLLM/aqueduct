@@ -96,10 +96,11 @@ const SummaryList: React.FC<Props> = ({
         >
           <Box display="flex" sx={{ alignItems: 'center' }}>
             <Box
-              sx={{
-                width: '16px',
-                height: '16px',
-              }}
+              width="16px"
+              height="16px"
+              alignItems="center"
+              display="flex"
+              flexDirection="column"
             >
               <FontAwesomeIcon
                 fontSize="16px"
