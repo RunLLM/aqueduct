@@ -88,7 +88,9 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
       }
     }
 
-    fetchVersionNumber();
+    if (user.apiKey) {
+      fetchVersionNumber();
+    }
   }, [user.apiKey]);
 
   // Make sure user is on appropriate pages and that the banner should be shown.
