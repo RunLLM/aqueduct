@@ -13,8 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: ./.github/actions/setup-server
-        timeout-minutes: 7
+      # - uses: ./.github/actions/setup-server
+      #   timeout-minutes: 7
 
       # TODO(ENG-2537): Use our separate GH actions credentials.
       - uses: ./.github/actions/fetch-test-config
