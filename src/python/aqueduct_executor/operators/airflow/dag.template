@@ -81,8 +81,8 @@ def invoke_task(spec, **kwargs):
     elif spec_type == enums.JobType.LOAD:
         spec = conn_spec.LoadSpec(**spec)
         spec.metadata_path = "{}_{}".format(spec.metadata_path, dag_run_id)
-        spec.input_content_path = "{}_{}".format(spec.input_content_path, dag_run_id)
-        spec.input_metadata_path = "{}_{}".format(spec.input_metadata_path, dag_run_id)
+        spec.input_content_paths = ["{}_{}".format(p, dag_run_id) for p in spec.input_content_paths]
+        spec.input_metadata_paths = ["{}_{}".format(p, dag_run_id) for p in spec.input_metadata_paths]
         conn_execute.run(spec)
     elif spec_type == enums.JobType.PARAM:
         spec = param_spec.ParamSpec(**spec)
@@ -111,6 +111,7 @@ with DAG(
     schedule_interval={{ schedule }},
     {% endif %}
     catchup=False,
+    is_paused_upon_creation=False,
     tags=['aqueduct', '{{ workflow_dag_id }}'],
 ) as dag:
     # Constants to handle JSON serialization
