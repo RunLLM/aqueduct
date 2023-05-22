@@ -492,6 +492,8 @@ class Client:
     def flow(
         self,
         flow_identifier: Optional[Union[str, uuid.UUID]] = None,
+        flow_id: Optional[Union[str, uuid.UUID]] = None,
+        flow_name: Optional[str] = None,
     ) -> Flow:
         """Fetches a flow corresponding to the given flow id.
 
@@ -500,16 +502,36 @@ class Client:
                 Used to identify the flow to fetch from the system.
                 Use either the flow name or id as identifier to fetch
                 from the system.
+            flow_id:
+                Used to identify the flow to fetch from the system.
+                Between `flow_id` and `flow_name`, at least one must be provided.
+                If both are specified, they must correspond to the same flow.
+            flow_name:
+                Used to identify the flow to fetch from the system.
+
+            flow_identifier takes precedence over flow_id or flow_name arguments
 
         Raises:
             InvalidUserArgumentException:
                 If the provided flow id or name does not correspond to a flow the client knows about.
         """
-        flows = [(flow.id, flow.name) for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()]
-        flow_id = find_flow_with_user_supplied_id_and_name(flows, flow_identifier)
+        # TODO(ENG-3013): Completely remove these optional parameters.
+        if flow_id or flow_name:
+            warnings.warn(
+                "flow_id and flow_name arguments will be deprecated. Please use flow_identifier.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if not flow_identifier:
+                if flow_id:
+                    flow_identifier = flow_id
+                elif flow_name:
+                    flow_identifier = flow_name
 
+        flows = [(flow.id, flow.name) for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()]
+        flow_id_key = find_flow_with_user_supplied_id_and_name(flows, flow_identifier)
         return Flow(
-            flow_id,
+            flow_id_key,
             self._in_notebook_or_console_context,
         )
 
@@ -769,6 +791,8 @@ class Client:
         self,
         flow_identifier: Optional[Union[str, uuid.UUID]] = None,
         parameters: Optional[Dict[str, Any]] = None,
+        flow_id: Optional[Union[str, uuid.UUID]] = None,
+        flow_name: Optional[str] = None,
     ) -> None:
         """Immediately triggers another run of the provided flow.
 
@@ -780,7 +804,14 @@ class Client:
                 is expected to be from parameter name to the custom value. These custom values
                 are not persisted to the workflow. To actually change the default parameter values
                 edit the workflow itself through `client.publish_flow()`.
+            flow_id:
+                Used to identify the flow to fetch from the system.
+                Between `flow_id` and `flow_name`, at least one must be provided.
+                If both are specified, they must correspond to the same flow.
+            flow_name:
+                Used to identify the flow to fetch from the system.
 
+            flow_identifier takes precedence over flow_id or flow_name arguments
         Raises:
             InvalidRequestError:
                 An error occurred when attempting to fetch the workflow to
@@ -788,6 +819,18 @@ class Client:
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
+        # TODO(ENG-3013): Completely remove these optional parameters.
+        if flow_id or flow_name:
+            warnings.warn(
+                "flow_id and flow_name arguments will be deprecated. Please use flow_identifier.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if not flow_identifier:
+                if flow_id:
+                    flow_identifier = flow_id
+                elif flow_name:
+                    flow_identifier = flow_name
         param_specs: Dict[str, ParamSpec] = {}
         if parameters is not None:
             flow = self.flow(flow_identifier)
@@ -806,12 +849,14 @@ class Client:
                 param_specs[name] = construct_param_spec(new_val, artifact_type)
 
         flows = [(flow.id, flow.name) for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()]
-        flow_id = find_flow_with_user_supplied_id_and_name(flows, flow_identifier)
-        globals.__GLOBAL_API_CLIENT__.refresh_workflow(flow_id, param_specs)
+        flow_id_key = find_flow_with_user_supplied_id_and_name(flows, flow_identifier)
+        globals.__GLOBAL_API_CLIENT__.refresh_workflow(flow_id_key, param_specs)
 
     def delete_flow(
         self,
         flow_identifier: Optional[Union[str, uuid.UUID]] = None,
+        flow_id: Optional[Union[str, uuid.UUID]] = None,
+        flow_name: Optional[str] = None,
         saved_objects_to_delete: Optional[
             DefaultDict[Union[str, BaseResource], List[SavedObjectUpdate]]
         ] = None,
@@ -822,6 +867,15 @@ class Client:
         Args:
             flow_identifier:
                 The id of the flow to delete. Must be name or uuid
+            flow_id:
+                Used to identify the flow to fetch from the system.
+                Between `flow_id` and `flow_name`, at least one must be provided.
+                If both are specified, they must correspond to the same flow.
+            flow_name:
+                Used to identify the flow to fetch from the system.
+
+            flow_identifier takes precedence over flow_id or flow_name arguments
+
             saved_objects_to_delete:
                 The tables or storage paths to delete grouped by integration name.
             force:
@@ -834,16 +888,29 @@ class Client:
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
         """
+        # TODO(ENG-3013): Completely remove these optional parameters.
+        if flow_id or flow_name:
+            warnings.warn(
+                "flow_id and flow_name arguments will be deprecated. Please use flow_identifier.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            if not flow_identifier:
+                if flow_id:
+                    flow_identifier = flow_id
+                elif flow_name:
+                    flow_identifier = flow_name
+
         if saved_objects_to_delete is None:
             saved_objects_to_delete = defaultdict()
 
         flows = [(flow.id, flow.name) for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()]
-        flow_id = find_flow_with_user_supplied_id_and_name(flows, flow_identifier)
+        flow_id_key = find_flow_with_user_supplied_id_and_name(flows, flow_identifier)
 
         # TODO(ENG-410): This method gives no indication as to whether the flow
         #  was successfully deleted.
         resp = globals.__GLOBAL_API_CLIENT__.delete_workflow(
-            flow_id, saved_objects_to_delete, force
+            flow_id_key, saved_objects_to_delete, force
         )
 
         failures = []
