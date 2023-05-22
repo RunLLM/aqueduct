@@ -111,6 +111,7 @@ with DAG(
     schedule_interval={{ schedule }},
     {% endif %}
     catchup=False,
+    is_paused_upon_creation=False,
     tags=['aqueduct', '{{ workflow_dag_id }}'],
 ) as dag:
     # Constants to handle JSON serialization

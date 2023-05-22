@@ -5,6 +5,7 @@ import (
 
 	"github.com/apache/airflow-client-go/airflow"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
+	"github.com/sirupsen/logrus"
 )
 
 type client struct {
@@ -98,11 +99,57 @@ func (c *client) getTaskStates(dagId string, dagRunId string) (map[string]airflo
 	return taskIdToState, nil
 }
 
+// isDAGPaused returns whether or not the specified DAG is paused.
+func (c *client) isDAGPaused(dagID string) (bool, error) {
+	dag, err := c.getDag(dagID)
+	if err != nil {
+		return false, err
+	}
+
+	return dag.GetIsPaused(), nil
+}
+
+// unpauseDAG unpauses the DAG specified.
+func (c *client) unpauseDAG(dagID string) error {
+	dag, err := c.getDag(dagID)
+	if err != nil {
+		return err
+	}
+
+	// Update the is_paused field for the DAG
+	dag.SetIsPaused(false)
+
+	request := c.apiClient.DAGApi.PatchDag(c.ctx, dagID)
+
+	// Update the request with the new DAG and name of changed field
+	request = request.DAG(*dag)
+	request = request.UpdateMask([]string{"is_paused"})
+
+	_, _, err = request.Execute()
+	return err
+}
+
 // trigerDAGRun triggers a new DAGRun for the dag specified.
-func (c *client) triggerDAGRun(dagId string) error {
-	request := c.apiClient.DAGRunApi.PostDagRun(c.ctx, dagId)
+// It first ensures that the DAG is not paused.
+func (c *client) triggerDAGRun(dagID string) error {
+	// Check if DAG is paused
+	paused, err := c.isDAGPaused(dagID)
+	if err != nil {
+		return err
+	}
+
+	logrus.Warnf("IsPaused: %v", paused)
+
+	if paused {
+		err := c.unpauseDAG(dagID)
+		if err != nil {
+			return err
+		}
+	}
+
+	request := c.apiClient.DAGRunApi.PostDagRun(c.ctx, dagID)
 	// The PostDagRun API requires the request to have a DAGRun initialized
 	request = request.DAGRun(*airflow.NewDAGRunWithDefaults())
-	_, _, err := request.Execute()
+	_, _, err = request.Execute()
 	return err
 }
