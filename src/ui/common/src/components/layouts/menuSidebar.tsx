@@ -129,8 +129,6 @@ const MenuSidebar: React.FC<{
     }
   );
 
-  console.log('data: ', data);
-
   useEffect(() => {
     setCurrentPage(location.pathname);
   }, [dispatch, location.pathname]);
