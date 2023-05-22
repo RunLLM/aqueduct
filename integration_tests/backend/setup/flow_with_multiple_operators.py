@@ -7,12 +7,12 @@ import aqueduct
 
 def setup_flow_with_multiple_operators(
     client: aqueduct.Client,
-    integration_name: str,
+    resource_name: str,
     workflow_name: str = "",
 ) -> str:
     name = workflow_name if workflow_name else "Test: Multiple Operators"
     n_runs = 1
-    integration = client.resource(name=integration_name)
+    resource = client.resource(name=resource_name)
 
     @aqueduct.op
     def op1(df):
@@ -30,7 +30,7 @@ def setup_flow_with_multiple_operators(
     def op4(df):
         return df
 
-    reviews = integration.sql("SELECT * FROM hotel_reviews")
+    reviews = resource.sql("SELECT * FROM hotel_reviews")
     df1 = op1(reviews)
     df2 = op2(df1)
     df3 = op3(df2)

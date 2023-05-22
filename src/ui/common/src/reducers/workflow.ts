@@ -293,12 +293,12 @@ export const handleDeleteWorkflow = createAsyncThunk<
     data['external_delete'] = {};
 
     selectedObjects.forEach((object) => {
-      if (data['external_delete'][object.integration_name]) {
-        data['external_delete'][object.integration_name].push(
+      if (data['external_delete'][object.resource_name]) {
+        data['external_delete'][object.resource_name].push(
           JSON.stringify(object.spec)
         );
       } else {
-        data['external_delete'][object.integration_name] = [
+        data['external_delete'][object.resource_name] = [
           JSON.stringify(object.spec),
         ];
       }
@@ -621,7 +621,7 @@ export const workflowSlice = createSlice({
         if (!!response.object_details) {
           response.object_details.map((object: SavedObject) => {
             const key = String([
-              object.integration_name,
+              object.resource_name,
               getSavedObjectIdentifier(object),
             ]);
             if (savedObjects[key]) {

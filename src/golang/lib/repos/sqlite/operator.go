@@ -217,7 +217,7 @@ func (*operatorReader) GetDistinctLoadOPsByWorkflow(
 		operator.id AS operator_id,
 		operator.name AS operator_name, 
 		workflow_dag.created_at AS modified_at,
-		resource.name AS integration_name,
+		resource.name AS resource_name,
 		CAST(json_extract(operator.spec, '$.load') AS BLOB) AS spec 	
 	FROM 
 		operator, resource, workflow_dag_edge, workflow_dag
@@ -270,7 +270,7 @@ func (*operatorReader) GetLoadOPsByWorkflowAndResource(
 	objectName string,
 	DB database.Database,
 ) ([]models.Operator, error) {
-	// Get all load operators where table=objectName & integration_id=integrationId
+	// Get all load operators where table=objectName & integration_id=resourceId
 	// and has an edge (in `from_id` or `to_id`) in a DAG belonging to the specified
 	// workflow.
 	query := fmt.Sprintf(`
@@ -326,7 +326,7 @@ func (*operatorReader) GetLoadOPSpecsByOrg(ctx context.Context, orgID string, DB
 	// Get the artifact id, artifact name, operator id, workflow name, workflow id,
 	// and operator spec of all load operators (`to_id`s) and the artifact(s) going to
 	// that operator (`from_id`s; these artifacts are the objects that will be saved
-	// by the operator to the integration) in the workflows owned by the specified
+	// by the operator to the resource) in the workflows owned by the specified
 	// organization.
 	query := fmt.Sprintf(
 		`SELECT DISTINCT 

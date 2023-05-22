@@ -1,4 +1,4 @@
-import { Service } from './integrations';
+import { Service } from './resources';
 
 export enum EngineType {
   AqueductConda = 'aqueduct_conda',
@@ -31,8 +31,8 @@ export type EngineConfig = {
   spark_config?: SparkConfig;
 };
 
-export type EngineWithIntegration = {
-  integration_id: string;
+export type EngineWithResource = {
+  resource_id: string;
 };
 
 export type AqueductConfig = Record<string, never>;
@@ -41,16 +41,16 @@ export type AqueductCondaConfig = {
   env: string;
 };
 
-export type AirflowConfig = EngineWithIntegration & {
+export type AirflowConfig = EngineWithResource & {
   matches_airflow: boolean;
 };
 
-export type DatabricksConfig = EngineWithIntegration;
+export type DatabricksConfig = EngineWithResource;
 
-export type SparkConfig = EngineWithIntegration & {
+export type SparkConfig = EngineWithResource & {
   environment_path_uri: string;
 };
 
-export type K8sConfig = EngineWithIntegration;
+export type K8sConfig = EngineWithResource;
 
-export type LambdaConfig = EngineWithIntegration;
+export type LambdaConfig = EngineWithResource;

@@ -24,10 +24,10 @@ from .test_functions.simple.model import (
 from .test_metrics.constant.model import constant_metric
 
 
-def test_basic_flow(client, flow_name, data_integration, engine, data_validator):
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+def test_basic_flow(client, flow_name, data_resource, engine, data_validator):
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
     output_artifact = dummy_sentiment_model(table_artifact)
-    save(data_integration, output_artifact)
+    save(data_resource, output_artifact)
 
     flow = publish_flow_test(
         client,
@@ -42,11 +42,11 @@ def test_basic_flow(client, flow_name, data_integration, engine, data_validator)
 
 
 @pytest.mark.skip_for_spark_engines(reason="Uses sentiment model with pandas-specific code.")
-def test_sentiment_flow(client, flow_name, data_integration, engine, data_validator):
+def test_sentiment_flow(client, flow_name, data_resource, engine, data_validator):
     """Actually run the full sentiment model (with nltk dependency)."""
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
     output_artifact = sentiment_model(table_artifact)
-    save(data_integration, output_artifact)
+    save(data_resource, output_artifact)
 
     flow = publish_flow_test(
         client,
@@ -59,13 +59,13 @@ def test_sentiment_flow(client, flow_name, data_integration, engine, data_valida
     )
 
 
-def test_complex_flow(client, flow_name, data_integration, engine, data_validator):
-    table_artifact1 = extract(data_integration, DataObject.SENTIMENT)
-    table_artifact2 = extract(data_integration, DataObject.SENTIMENT)
+def test_complex_flow(client, flow_name, data_resource, engine, data_validator):
+    table_artifact1 = extract(data_resource, DataObject.SENTIMENT)
+    table_artifact2 = extract(data_resource, DataObject.SENTIMENT)
 
     fn_artifact = dummy_sentiment_model_multiple_input(table_artifact1, table_artifact2)
     output_artifact = dummy_model(fn_artifact)
-    save(data_integration, output_artifact)
+    save(data_resource, output_artifact)
 
     @check()
     def successful_check(df):
@@ -119,10 +119,10 @@ def test_complex_flow(client, flow_name, data_integration, engine, data_validato
     assert flow_run.artifact("failing_check artifact") is None
 
 
-def test_publish_with_schedule(client, flow_name, data_integration, engine):
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+def test_publish_with_schedule(client, flow_name, data_resource, engine):
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
     output_artifact = dummy_sentiment_model(table_artifact)
-    save(data_integration, output_artifact)
+    save(data_resource, output_artifact)
 
     # Execute the flow 1 minute from now.
     execute_at = datetime.now() + timedelta(minutes=1)
@@ -140,9 +140,9 @@ def test_publish_with_schedule(client, flow_name, data_integration, engine):
 @pytest.mark.skip_for_spark_engines(
     reason="Multiple Databricks cluster spinup takes longer than timeout."
 )
-def test_publish_flow_with_cascading_trigger(client, flow_name, data_integration, engine):
+def test_publish_flow_with_cascading_trigger(client, flow_name, data_resource, engine):
     """Tests publishing a flow that is set to run on a cascading trigger."""
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
     output_artifact = dummy_sentiment_model(table_artifact)
 
     # Create a source flow
@@ -179,9 +179,9 @@ def test_publish_flow_with_cascading_trigger(client, flow_name, data_integration
     )
 
 
-def test_publish_with_schedule_and_source_flow(client, flow_name, data_integration, engine):
+def test_publish_with_schedule_and_source_flow(client, flow_name, data_resource, engine):
     """Tests publishing an invalid flow that has both a schedule and a source flow."""
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
     output_artifact = dummy_sentiment_model(table_artifact)
 
     with pytest.raises(InvalidUserArgumentException):
@@ -195,9 +195,9 @@ def test_publish_with_schedule_and_source_flow(client, flow_name, data_integrati
         )
 
 
-def test_publish_with_source_flow_cyclic(client, flow_name, data_integration, engine):
+def test_publish_with_source_flow_cyclic(client, flow_name, data_resource, engine):
     """Tests publishing an invalid flow, because it would cause a cycle amongst cascading workflows."""
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
 
     @op
     def noop(input):
@@ -254,9 +254,9 @@ def test_invalid_flow(client):
         )
 
 
-def test_publish_flow_with_same_name(client, flow_name, data_integration, engine):
+def test_publish_flow_with_same_name(client, flow_name, data_resource, engine):
     """Tests flow editing behavior."""
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
     output_artifact = dummy_sentiment_model(table_artifact)
 
     flow = publish_flow_test(
@@ -279,10 +279,10 @@ def test_publish_flow_with_same_name(client, flow_name, data_integration, engine
     )
 
 
-def test_refresh_flow(client, flow_name, data_integration, engine):
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+def test_refresh_flow(client, flow_name, data_resource, engine):
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
     output_artifact = dummy_sentiment_model(table_artifact)
-    save(data_integration, output_artifact)
+    save(data_resource, output_artifact)
 
     flow = publish_flow_test(
         client,
@@ -301,7 +301,7 @@ def test_refresh_flow(client, flow_name, data_integration, engine):
     )
 
 
-def test_publish_flow_without_triggering(client, flow_name, data_integration, engine):
+def test_publish_flow_without_triggering(client, flow_name, data_resource, engine):
     @op
     def foo():
         return "results"
@@ -325,10 +325,10 @@ def test_publish_flow_without_triggering(client, flow_name, data_integration, en
 @pytest.mark.skip_for_spark_engines(
     reason="Spark converts column names to capital, .equals doesn't work."
 )
-def test_get_artifact_from_flow(client, flow_name, data_integration, engine):
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+def test_get_artifact_from_flow(client, flow_name, data_resource, engine):
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
     output_artifact = dummy_sentiment_model(table_artifact)
-    save(data_integration, output_artifact)
+    save(data_resource, output_artifact)
 
     flow = publish_flow_test(
         client,
@@ -342,10 +342,10 @@ def test_get_artifact_from_flow(client, flow_name, data_integration, engine):
     assert artifact_return.get().equals(output_artifact.get())
 
 
-def test_get_artifact_reuse_for_computation(client, flow_name, data_integration, engine):
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+def test_get_artifact_reuse_for_computation(client, flow_name, data_resource, engine):
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
     output_artifact = dummy_sentiment_model(table_artifact)
-    save(data_integration, output_artifact)
+    save(data_resource, output_artifact)
 
     flow = publish_flow_test(
         client,
@@ -362,8 +362,8 @@ def test_get_artifact_reuse_for_computation(client, flow_name, data_integration,
 @pytest.mark.skip_for_spark_engines(
     reason="Wating for 4 workflows takes longer than timeout period."
 )
-def test_multiple_flows_with_same_schedule(client, flow_name, data_integration, engine):
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+def test_multiple_flows_with_same_schedule(client, flow_name, data_resource, engine):
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
     output_artifact = dummy_sentiment_model(table_artifact)
     output_artifact_2 = dummy_model(table_artifact)
 
@@ -398,8 +398,8 @@ def test_multiple_flows_with_same_schedule(client, flow_name, data_integration, 
 
 
 @pytest.mark.skip_for_spark_engines(reason="Requires implicit Pandas requirement.")
-def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integration, engine):
-    # Write a new table into the data integration.
+def test_fetching_historical_flows_uses_old_data(client, flow_name, data_resource, engine):
+    # Write a new table into the data resource.
     initial_table = pd.DataFrame([1, 2, 3, 4, 5, 6], columns=["numbers"])
 
     @op
@@ -410,7 +410,7 @@ def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integra
 
     table = generate_initial_table()
     saved_table_identifier = generate_table_name()
-    save(data_integration, table, name=saved_table_identifier)
+    save(data_resource, table, name=saved_table_identifier)
 
     setup_flow = publish_flow_test(
         client,
@@ -424,7 +424,7 @@ def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integra
         return df
 
     # Create a new flow that extracts this data.
-    output = extract(data_integration, saved_table_identifier, op_name="Test Table Query")
+    output = extract(data_resource, saved_table_identifier, op_name="Test Table Query")
     assert output.get().equals(initial_table)
 
     flow = publish_flow_test(
@@ -440,7 +440,7 @@ def test_fetching_historical_flows_uses_old_data(client, flow_name, data_integra
         return pd.DataFrame([9, 9, 9, 9, 9, 9], columns=["numbers"])
 
     table = generate_new_table()
-    save(data_integration, table, name=saved_table_identifier)
+    save(data_resource, table, name=saved_table_identifier)
     publish_flow_test(
         client,
         artifacts=table,
@@ -629,7 +629,7 @@ def test_delete_flow_with_name(client, flow_name, engine):
 
 
 def test_flow_with_failed_compute_operators(
-    client, flow_name, data_integration, engine, data_validator
+    client, flow_name, data_resource, engine, data_validator
 ):
     """
     Test if one or more compute operators fail, then the save/load operator does not succeed also.
@@ -645,9 +645,9 @@ def test_flow_with_failed_compute_operators(
         return arg
 
     table_name = generate_table_name()
-    result = data_integration.sql("select * from hotel_reviews limit 5")
+    result = data_resource.sql("select * from hotel_reviews limit 5")
     test_data = bar.lazy(baz.lazy(result))
-    save(data_integration, result, name=table_name, update_mode=LoadUpdateMode.REPLACE)
+    save(data_resource, result, name=table_name, update_mode=LoadUpdateMode.REPLACE)
 
     publish_flow_test(
         client,

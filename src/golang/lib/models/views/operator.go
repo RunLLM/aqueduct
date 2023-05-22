@@ -13,7 +13,7 @@ type LoadOperator struct {
 	OperatorID   uuid.UUID      `db:"operator_id" json:"operator_id"`
 	OperatorName string         `db:"operator_name" json:"operator_name"`
 	ModifiedAt   time.Time      `db:"modified_at" json:"modified_at"`
-	ResourceName string         `db:"integration_name" json:"integration_name"`
+	ResourceName string         `db:"resource_name" json:"resource_name"`
 	Spec         connector.Load `db:"spec" json:"spec"`
 }
 
