@@ -55,7 +55,7 @@ type baseOperator struct {
 	// This only applies to operators running with the Aqueduct engine.
 	execEnv *exec_env.ExecutionEnvironment
 
-	// Used for dynamic integration.
+	// Used for dynamic resource.
 	dynamicProperties *dynamicProperties
 }
 
@@ -80,13 +80,13 @@ func (bo *baseOperator) GetDynamicProperties() *dynamicProperties {
 }
 
 type dynamicProperties struct {
-	engineIntegrationId uuid.UUID
+	engineResourceId uuid.UUID
 	// prepared indicates whether the dynamic engine this operator relies on is ready.
 	prepared bool
 }
 
-func (dp *dynamicProperties) GetEngineIntegrationId() uuid.UUID {
-	return dp.engineIntegrationId
+func (dp *dynamicProperties) GetEngineResourceID() uuid.UUID {
+	return dp.engineResourceId
 }
 
 func (dp *dynamicProperties) Prepared() bool {

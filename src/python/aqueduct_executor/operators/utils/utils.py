@@ -198,11 +198,11 @@ def write_delete_saved_objects_results(
     # by `json.dumps.()`.
     results_str = json.dumps(
         {
-            integration: [
+            resource: [
                 {"name": result.name, "exec_state": json.loads(result.exec_state.json())}
-                for result in results[integration]
+                for result in results[resource]
             ]
-            for integration in results
+            for resource in results
         }
     )
     storage.put(path, bytes(results_str, encoding=DEFAULT_ENCODING))

@@ -5,7 +5,7 @@ from aqueduct_executor.operators.connectors.data import models
 from aqueduct_executor.operators.utils.enums import MetaEnum
 from pydantic import Field
 
-"""Duplicated at `aqueduct/integrations/connect_config.py` for now, please keep them in sync."""
+"""Duplicated at `aqueduct/resources/connect_config.py` for now, please keep them in sync."""
 
 
 class BigQueryConfig(models.BaseConfig):
@@ -56,7 +56,7 @@ class S3Config(models.BaseConfig):
     bucket: str = ""
     region: str = ""
 
-    # This is unused for data integrations. It is only used for storage.
+    # This is unused for data resources. It is only used for storage.
     root_dir: str = ""
 
     use_as_storage: str = ""

@@ -9,7 +9,7 @@ import { styled } from '@mui/material/styles';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 
-import { OperatorsForIntegrationItem } from '../../reducers/integration';
+import { OperatorsForResourceItem } from '../../reducers/resource';
 import { ListWorkflowSummary } from '../../utils/workflows';
 import OperatorsTable from '../tables/operatorsTable';
 
@@ -17,7 +17,7 @@ type Props = {
   expanded: boolean;
   handleExpand?: () => void;
   workflow?: ListWorkflowSummary;
-  operators: OperatorsForIntegrationItem[];
+  operators: OperatorsForResourceItem[];
 };
 
 const Accordion = styled((props: AccordionProps) => (

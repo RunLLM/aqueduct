@@ -16,8 +16,8 @@ from .extract import extract
 from .save import save
 
 
-def test_lazy_sql_extractor(client, data_integration):
-    table_artifact = extract(data_integration, DataObject.SENTIMENT, lazy=True)
+def test_lazy_sql_extractor(client, data_resource):
+    table_artifact = extract(data_resource, DataObject.SENTIMENT, lazy=True)
     assert table_artifact._get_content() is None
     assert isinstance(table_artifact.get(), pd.DataFrame)
     # After calling get(), artifact's content should be materialized.
@@ -77,8 +77,8 @@ def test_eager_operator_after_lazy(client):
 
 
 @pytest.mark.skip_for_spark_engines(reason="Built-in metrics don't work with Spark engines.")
-def test_table_artifact_lazy_syntax_sugar(client, data_integration):
-    table_artifact = extract(data_integration, DataObject.SENTIMENT, lazy=True)
+def test_table_artifact_lazy_syntax_sugar(client, data_resource):
+    table_artifact = extract(data_resource, DataObject.SENTIMENT, lazy=True)
     num_rows_artifact = table_artifact.number_of_rows(lazy=True)
     assert num_rows_artifact._get_content() is None
     assert isinstance(num_rows_artifact.get(), float)
@@ -116,7 +116,7 @@ def test_lazy_artifact_type(client):
 
 
 @pytest.mark.skip_for_spark_engines(reason="Built-in metrics don't work with Spark engines.")
-def test_lazy_global_config(client, data_integration):
+def test_lazy_global_config(client, data_resource):
     with pytest.raises(InvalidUserArgumentException):
         global_config({"lazy": 1234})
 
@@ -124,14 +124,14 @@ def test_lazy_global_config(client, data_integration):
         global_config({"lazy": True})
 
         # Basic SQL artifact that was lazily computed.
-        table_artifact = extract(data_integration, DataObject.SENTIMENT)
+        table_artifact = extract(data_resource, DataObject.SENTIMENT)
         assert table_artifact._get_content() is None
         assert isinstance(table_artifact.get(), pd.DataFrame)
         # After calling get(), artifact's content should be materialized.
         assert table_artifact._get_content() is not None
 
         # For a lazily-created metric used pre-defined functions.
-        table_artifact = extract(data_integration, DataObject.WINE)
+        table_artifact = extract(data_resource, DataObject.WINE)
         max_metric = table_artifact.max(column_id="fixed_acidity")
         assert max_metric._get_content() is None
         assert math.isclose(max_metric.get(), 15.899, rel_tol=1e-3)
@@ -224,8 +224,8 @@ def test_lazy_artifacts_with_custom_parameters(client):
     assert doubled._get_content() is None  # do not manifest the contents!
 
 
-def test_lazy_artifact_with_save(client, flow_name, data_integration, engine, data_validator):
-    reviews = extract(data_integration, DataObject.SENTIMENT)
+def test_lazy_artifact_with_save(client, flow_name, data_resource, engine, data_validator):
+    reviews = extract(data_resource, DataObject.SENTIMENT)
 
     @op()
     def copy_field(df):
@@ -238,7 +238,7 @@ def test_lazy_artifact_with_save(client, flow_name, data_integration, engine, da
         return df
 
     review_copied = copy_field.lazy(reviews)
-    save(data_integration, review_copied)
+    save(data_resource, review_copied)
 
     flow = publish_flow_test(
         client,

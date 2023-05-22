@@ -3,19 +3,19 @@ import React, { useState } from 'react';
 
 import { getPathPrefix } from '../../utils/getPathPrefix';
 import {
-  Integration,
-  NotificationIntegrationConfig,
-} from '../../utils/integrations';
+  Resource,
+  NotificationResourceConfig,
+} from '../../utils/resources';
 import { NotificationLogLevel } from '../../utils/notifications';
 import { Button } from '../primitives/Button.styles';
 import NotificationLevelSelector from './NotificationLevelSelector';
 
 export type NotificationConfigsMap = {
-  [integrationId: string]: NotificationIntegrationConfig;
+  [resourceId: string]: NotificationResourceConfig;
 };
 
 type Props = {
-  notifications: Integration[];
+  notifications: Resource[];
   onSave: (updatedConfigs: NotificationConfigsMap) => void;
   isSaving: boolean;
 };
@@ -41,7 +41,7 @@ const AccountNotificationSettingsSelector: React.FC<Props> = ({
   isSaving,
 }) => {
   const initialConfigs = Object.fromEntries(
-    notifications.map((x) => [x.id, x.config as NotificationIntegrationConfig])
+    notifications.map((x) => [x.id, x.config as NotificationResourceConfig])
   );
   const [configs, setConfigs] =
     useState<NotificationConfigsMap>(initialConfigs);
@@ -51,8 +51,8 @@ const AccountNotificationSettingsSelector: React.FC<Props> = ({
       <Typography variant="body1">
         You do not have any notification configured. You can add new
         notifications from the{' '}
-        <Link href={`${getPathPrefix()}/integrations`} target="_blank">
-          integrations
+        <Link href={`${getPathPrefix()}/resources`} target="_blank">
+          resources
         </Link>{' '}
         page.
       </Typography>

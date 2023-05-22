@@ -19,8 +19,8 @@ func AuthenticateK8sConfig(ctx context.Context, authConf auth.Config) error {
 	}
 
 	if conf.Dynamic {
-		if conf.CloudIntegrationId == "" {
-			return errors.New("Dynamic K8s integration must have a cloud integration ID attached.")
+		if conf.CloudResourceId == "" {
+			return errors.New("Dynamic K8s resource must have a cloud resource ID attached.")
 		} else {
 			return nil
 		}

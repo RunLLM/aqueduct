@@ -23,8 +23,8 @@ def bad_op_multiple_outputs(df):
 TIP_OP_EXECUTION = "Error executing operator. Please refer to the stack trace for fix."
 
 
-def test_handle_bad_op_error(client, data_integration):
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+def test_handle_bad_op_error(client, data_resource):
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
 
     with pytest.raises(AqueductError, match=TIP_OP_EXECUTION):
         output_artifact = bad_op(table_artifact)
@@ -34,8 +34,8 @@ def test_handle_bad_op_error(client, data_integration):
 @pytest.mark.skip_for_global_lazy_execution(
     reason="With lazy execution, the value of output_artifact is a list."
 )
-def test_handle_bad_op_with_multiple_outputs(client, data_integration):
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+def test_handle_bad_op_with_multiple_outputs(client, data_resource):
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
 
     with pytest.raises(AqueductError, match=TIP_OP_EXECUTION):
         output_artifact = bad_op_multiple_outputs(table_artifact)

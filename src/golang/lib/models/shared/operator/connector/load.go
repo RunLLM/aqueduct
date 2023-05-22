@@ -11,9 +11,9 @@ import (
 
 // Load defines the spec for a Load operator.
 type Load struct {
-	Service       shared.Service `json:"service"`
-	IntegrationId uuid.UUID      `json:"integration_id"`
-	Parameters    LoadParams     `json:"parameters"`
+	Service    shared.Service `json:"service"`
+	ResourceId uuid.UUID      `json:"integration_id"`
+	Parameters LoadParams     `json:"parameters"`
 }
 
 // UnmarshalJSON overrides the default unmarshalling, so that Load.Parameters
@@ -22,9 +22,9 @@ func (l *Load) UnmarshalJSON(data []byte) error {
 	// Unmarshal data to an alias of Load. Unmarshalling to loadAlias defers unmarshalling of
 	// Parameters, since it is defined as a *json.RawMessage.
 	var loadAlias struct {
-		Service       shared.Service   `json:"service"`
-		IntegrationId uuid.UUID        `json:"integration_id"`
-		Parameters    *json.RawMessage `json:"parameters"`
+		Service    shared.Service   `json:"service"`
+		ResourceId uuid.UUID        `json:"integration_id"`
+		Parameters *json.RawMessage `json:"parameters"`
 	}
 	if err := json.Unmarshal(data, &loadAlias); err != nil {
 		return err
@@ -32,7 +32,7 @@ func (l *Load) UnmarshalJSON(data []byte) error {
 
 	// Set fields that were not deferred when unmarshalling
 	l.Service = loadAlias.Service
-	l.IntegrationId = loadAlias.IntegrationId
+	l.ResourceId = loadAlias.ResourceId
 
 	// Initialize correct destination struct for this operator's Load.Parameters
 	var params LoadParams
