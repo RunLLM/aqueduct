@@ -1,21 +1,21 @@
 from typing import Dict
 
 from aqueduct.error import InvalidUserArgumentException
-from aqueduct.models.integration import BaseResource, ResourceInfo
+from aqueduct.models.resource import BaseResource, ResourceInfo
 
 from aqueduct import globals
 
 
 class ECRResource(BaseResource):
     """
-    Class for ECR integration.
+    Class for ECR resource.
     """
 
     def __init__(self, metadata: ResourceInfo):
         self._metadata = metadata
 
     def describe(self) -> None:
-        """Prints out a human-readable description of the ECR integration."""
+        """Prints out a human-readable description of the ECR resource."""
         print("==================== ECR Resource =============================")
         self._metadata.describe()
 
@@ -39,7 +39,7 @@ class ECRResource(BaseResource):
                 raise InvalidUserArgumentException("Image name must be of the form `image:tag`.")
 
         response = globals.__GLOBAL_API_CLIENT__.get_image_url(
-            integration_id=str(self._metadata.id),
+            resource_id=str(self._metadata.id),
             service=self._metadata.service,
             image_name=image_name,
         )

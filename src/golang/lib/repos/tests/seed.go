@@ -20,8 +20,8 @@ import (
 
 const (
 	// Defaults used for seeding database records
-	testOrgID              = "aqueduct-test"
-	testIntegrationService = shared.Sqlite
+	testOrgID           = "aqueduct-test"
+	testResourceService = shared.Sqlite
 )
 
 // seedStorageMigraton creates a 5 storage migration records, alternating between
@@ -30,14 +30,14 @@ func (ts *TestSuite) seedStorageMigration() []models.StorageMigration {
 	count := 5
 	storageMigrations := make([]models.StorageMigration, count)
 	for i := 0; i < count; i++ {
-		var destIntegrationID *uuid.UUID
+		var destResourceID *uuid.UUID
 		var err error
 		if i%2 == 0 {
 			rawID, err := uuid.NewUUID()
-			destIntegrationID = &rawID
+			destResourceID = &rawID
 			require.Nil(ts.T(), err)
 		}
-		entry, err := ts.storageMigration.Create(ts.ctx, destIntegrationID, ts.DB)
+		entry, err := ts.storageMigration.Create(ts.ctx, destResourceID, ts.DB)
 		require.Nil(ts.T(), err)
 
 		now := time.Now()
@@ -61,35 +61,35 @@ func (ts *TestSuite) seedStorageMigration() []models.StorageMigration {
 	return storageMigrations
 }
 
-// seedIntegration creates count integration records for the given user.
-func (ts *TestSuite) seedIntegrationWithUser(count int, userID uuid.UUID) []models.Resource {
-	integrations := make([]models.Resource, 0, count)
+// seedResource creates count resource records for the given user.
+func (ts *TestSuite) seedResourceWithUser(count int, userID uuid.UUID) []models.Resource {
+	resources := make([]models.Resource, 0, count)
 
 	for i := 0; i < count; i++ {
 		name := randString(10)
 		config := make(shared.ResourceConfig)
 		config[randString(10)] = randString(10)
-		integration, err := ts.integration.CreateForUser(
+		resource, err := ts.resource.CreateForUser(
 			ts.ctx,
 			testOrgID,
 			userID,
-			testIntegrationService,
+			testResourceService,
 			name,
 			&config,
 			ts.DB,
 		)
 		require.Nil(ts.T(), err)
 
-		integrations = append(integrations, *integration)
+		resources = append(resources, *resource)
 	}
 
-	return integrations
+	return resources
 }
 
-// seedIntegration creates count integration records and a new user that owns all of them.
-func (ts *TestSuite) seedIntegration(count int) []models.Resource {
+// seedResource creates count resource records and a new user that owns all of them.
+func (ts *TestSuite) seedResource(count int) []models.Resource {
 	users := ts.seedUser(1)
-	return ts.seedIntegrationWithUser(count, users[0].ID)
+	return ts.seedResourceWithUser(count, users[0].ID)
 }
 
 // seedNotification creates count notification records for a generated user.
@@ -466,12 +466,12 @@ func (ts *TestSuite) seedOperatorAndDAG(artifactID uuid.UUID, dagID uuid.UUID, u
 			},
 		)
 	case operator.LoadType:
-		loadIntegrations := ts.seedIntegrationWithUser(1, userID)
-		loadIntegration := loadIntegrations[0]
+		loadResources := ts.seedResourceWithUser(1, userID)
+		loadResource := loadResources[0]
 		spec = operator.NewSpecFromLoad(
 			connector.Load{
-				Service:    loadIntegration.Service,
-				ResourceId: loadIntegration.ID,
+				Service:    loadResource.Service,
+				ResourceId: loadResource.ID,
 				Parameters: &connector.PostgresLoadParams{
 					RelationalDBLoadParams: connector.RelationalDBLoadParams{
 						Table:      randString(10),

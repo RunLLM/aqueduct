@@ -12,10 +12,10 @@ from aqueduct.models.config import (
     SparkEngineConfig,
 )
 from aqueduct.models.dag import Schedule
-from aqueduct.models.integration import ResourceInfo
 from aqueduct.models.operators import ParamSpec
+from aqueduct.models.resource import ResourceInfo
 from aqueduct.resources.dynamic_k8s import DynamicK8sResource
-from aqueduct.utils.integration_validation import validate_integration_is_connected
+from aqueduct.utils.resource_validation import validate_resource_is_connected
 from croniter import croniter
 
 from ..models.execution_state import Logs
@@ -147,65 +147,63 @@ def construct_param_spec(
 
 
 def generate_engine_config(
-    integrations: Dict[str, ResourceInfo],
-    integration_name: Optional[Union[str, DynamicK8sResource]],
+    resources: Dict[str, ResourceInfo],
+    resource_name: Optional[Union[str, DynamicK8sResource]],
 ) -> Optional[EngineConfig]:
-    """Generates an EngineConfig from an integration info object.
+    """Generates an EngineConfig from an resource info object.
 
     Both None and "Aqueduct" (case-insensitive) map to the Aqueduct Engine.
     """
-    if isinstance(integration_name, DynamicK8sResource):
-        integration_name = integration_name.name()
+    if isinstance(resource_name, DynamicK8sResource):
+        resource_name = resource_name.name()
 
-    if integration_name is None or integration_name.lower() == "aqueduct":
+    if resource_name is None or resource_name.lower() == "aqueduct":
         return None
 
-    if integration_name not in integrations.keys():
-        raise InvalidIntegrationException(
-            "Not connected to compute integration `%s`!" % integration_name
-        )
+    if resource_name not in resources.keys():
+        raise InvalidResourceException("Not connected to compute resource `%s`!" % resource_name)
 
-    integration = integrations[integration_name]
-    validate_integration_is_connected(integration_name, integration.exec_state)
+    resource = resources[resource_name]
+    validate_resource_is_connected(resource_name, resource.exec_state)
 
-    if integration.service == ServiceType.AIRFLOW:
+    if resource.service == ServiceType.AIRFLOW:
         return EngineConfig(
             type=RuntimeType.AIRFLOW,
-            name=integration_name,
+            name=resource_name,
             airflow_config=AirflowEngineConfig(
-                integration_id=integration.id,
+                resource_id=resource.id,
             ),
         )
-    elif integration.service == ServiceType.K8S:
+    elif resource.service == ServiceType.K8S:
         return EngineConfig(
             type=RuntimeType.K8S,
-            name=integration_name,
+            name=resource_name,
             k8s_config=K8sEngineConfig(
-                integration_id=integration.id,
+                resource_id=resource.id,
             ),
         )
-    elif integration.service == ServiceType.LAMBDA:
+    elif resource.service == ServiceType.LAMBDA:
         return EngineConfig(
             type=RuntimeType.LAMBDA,
-            name=integration_name,
+            name=resource_name,
             lambda_config=LambdaEngineConfig(
-                integration_id=integration.id,
+                resource_id=resource.id,
             ),
         )
-    elif integration.service == ServiceType.DATABRICKS:
+    elif resource.service == ServiceType.DATABRICKS:
         return EngineConfig(
             type=RuntimeType.DATABRICKS,
-            name=integration_name,
+            name=resource_name,
             databricks_config=DatabricksEngineConfig(
-                integration_id=integration.id,
+                resource_id=resource.id,
             ),
         )
-    elif integration.service == ServiceType.SPARK:
+    elif resource.service == ServiceType.SPARK:
         return EngineConfig(
             type=RuntimeType.SPARK,
-            name=integration_name,
+            name=resource_name,
             spark_config=SparkEngineConfig(
-                integration_id=integration.id,
+                resource_id=resource.id,
             ),
         )
     else:

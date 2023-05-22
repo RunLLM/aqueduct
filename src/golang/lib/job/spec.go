@@ -189,10 +189,10 @@ type ExtractSpec struct {
 
 type DeleteSavedObjectsSpec struct {
 	BasePythonSpec
-	ConnectorName       map[string]shared.Service `json:"connector_name"  yaml:"connector_name"`
-	ConnectorConfig     map[string]auth.Config    `json:"connector_config"  yaml:"connector_config"`
-	IntegrationToObject map[string][]string       `json:"integration_to_object"  yaml:"integration_to_object"`
-	OutputContentPath   string                    `json:"output_content_path"  yaml:"output_content_path"`
+	ConnectorName     map[string]shared.Service `json:"connector_name"  yaml:"connector_name"`
+	ConnectorConfig   map[string]auth.Config    `json:"connector_config"  yaml:"connector_config"`
+	ResourceToObject  map[string][]string       `json:"resource_to_object"  yaml:"resource_to_object"`
+	OutputContentPath string                    `json:"output_content_path"  yaml:"output_content_path"`
 }
 
 type LoadSpec struct {
@@ -441,7 +441,7 @@ func NewDeleteSavedObjectsSpec(
 	metadataPath string,
 	connectorName map[string]shared.Service,
 	connectorConfig map[string]auth.Config,
-	integrationToObject map[string][]string,
+	resourceToObject map[string][]string,
 	outputContentPath string,
 ) Spec {
 	return &DeleteSavedObjectsSpec{
@@ -453,10 +453,10 @@ func NewDeleteSavedObjectsSpec(
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
 		},
-		ConnectorName:       connectorName,
-		ConnectorConfig:     connectorConfig,
-		IntegrationToObject: integrationToObject,
-		OutputContentPath:   outputContentPath,
+		ConnectorName:     connectorName,
+		ConnectorConfig:   connectorConfig,
+		ResourceToObject:  resourceToObject,
+		OutputContentPath: outputContentPath,
 	}
 }
 

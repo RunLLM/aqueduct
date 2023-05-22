@@ -27,7 +27,7 @@ func parseConfigType(cType string) (configType, error) {
 	}
 }
 
-// Config stores the authentication credentials needed by integration connectors.
+// Config stores the authentication credentials needed by resource connectors.
 type Config interface {
 	// getType returns the configType of the Config.
 	getType() configType

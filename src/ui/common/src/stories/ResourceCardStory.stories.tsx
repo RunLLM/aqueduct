@@ -2,7 +2,7 @@ import { Box } from '@mui/material';
 import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
-import { IntegrationCard } from '../components/integrations/cards/card';
+import { ResourceCard } from '../components/resources/cards/card';
 import { Card } from '../components/layouts/card';
 import {
   AqueductComputeConfig,
@@ -10,7 +10,7 @@ import {
   DatabricksConfig,
   EmailConfig,
   GCSConfig,
-  Integration,
+  Resource,
   KubernetesConfig,
   LambdaConfig,
   MariaDbConfig,
@@ -21,11 +21,11 @@ import {
   S3Config,
   SlackConfig,
   SnowflakeConfig,
-} from '../utils/integrations';
+} from '../utils/resources';
 import ExecutionStatus, { AWSCredentialType } from '../utils/shared';
 
 const ResourceCard: React.FC = () => {
-  const integrations: Integration[] = [
+  const resources: Resource[] = [
     {
       id: '1',
       service: 'Postgres',
@@ -140,7 +140,7 @@ const ResourceCard: React.FC = () => {
       name: 'S3 Resource',
       config: {
         type: AWSCredentialType.ConfigFilePath,
-        bucket: 'integration-test-bucket',
+        bucket: 'resource-test-bucket',
         region: 'us-east-2',
         root_dir: 'path/to/dir',
         config_file_path: '~/.aws/credentials',
@@ -157,7 +157,7 @@ const ResourceCard: React.FC = () => {
       name: 'ANother S3 Resource',
       config: {
         type: AWSCredentialType.ConfigFilePath,
-        bucket: 'integration-test-bucket',
+        bucket: 'resource-test-bucket',
         region: 'us-east-2',
         config_file_path: '~/.aws/credentials',
         config_file_profile: 'default',
@@ -172,7 +172,7 @@ const ResourceCard: React.FC = () => {
       service: 'GCS',
       name: 'GCS Resource',
       config: {
-        bucket: 'integration-test-bucket',
+        bucket: 'resource-test-bucket',
         service_account_credentials: 'These are service account credentials',
       } as GCSConfig,
       createdAt: Date.now() / 1000,
@@ -377,14 +377,14 @@ const ResourceCard: React.FC = () => {
         alignItems: 'flex-start',
       }}
     >
-      {[...integrations]
+      {[...resources]
         .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))
-        .map((integration, idx) => {
+        .map((resource, idx) => {
           return (
             <Box key={idx} sx={{ mx: 1, my: 1 }}>
               <Card>
-                <IntegrationCard
-                  integration={integration}
+                <ResourceCard
+                  resource={resource}
                   numWorkflowsUsingMsg={
                     numWorkflowsUsingMsgs[idx % numWorkflowsUsingMsgs.length]
                   }

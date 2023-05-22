@@ -43,24 +43,24 @@ func requireDeepEqualWorkflows(t *testing.T, expected, actual []models.Workflow)
 	}
 }
 
-// requireDeepEqualIntegration asserts that the expected and actual lists of Integrations
+// requireDeepEqualResource asserts that the expected and actual lists of Resources
 // contain the same elements.
-func requireDeepEqualIntegrations(t *testing.T, expected, actual []models.Resource) {
+func requireDeepEqualResources(t *testing.T, expected, actual []models.Resource) {
 	require.Equal(t, len(expected), len(actual))
 
-	for _, expectedIntegration := range expected {
+	for _, expectedResource := range expected {
 		found := false
-		var foundIntegration models.Resource
+		var foundResource models.Resource
 
-		for _, actualIntegration := range actual {
-			if expectedIntegration.ID == actualIntegration.ID {
+		for _, actualResource := range actual {
+			if expectedResource.ID == actualResource.ID {
 				found = true
-				foundIntegration = actualIntegration
+				foundResource = actualResource
 				break
 			}
 		}
-		require.True(t, found, "Unable to find integration: %v", expectedIntegration)
-		requireDeepEqual(t, expectedIntegration, foundIntegration)
+		require.True(t, found, "Unable to find resource: %v", expectedResource)
+		requireDeepEqual(t, expectedResource, foundResource)
 	}
 }
 

@@ -18,7 +18,7 @@ import (
 // storage. This operation will only need to happen once.
 func syncVaultWithStorage(
 	vaultObj vault.Vault,
-	integrationRepo repos.Integration,
+	resourceRepo repos.Resource,
 	DB database.Database,
 ) error {
 	oldVaultPath := path.Join(config.AqueductPath(), "vault")
@@ -49,7 +49,7 @@ func syncVaultWithStorage(
 		oldVault,
 		vaultObj,
 		accountOrganizationId,
-		integrationRepo,
+		resourceRepo,
 		DB,
 	); err != nil {
 		return err

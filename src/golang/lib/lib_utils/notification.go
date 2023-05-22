@@ -12,18 +12,18 @@ const (
 )
 
 // Returning a nil level means that `disabled` == true.
-func ExtractNotificationLevel(integrationObject *models.Resource) (*shared.NotificationLevel, error) {
-	enabledStr, ok := integrationObject.Config[notificationEnabledKey]
+func ExtractNotificationLevel(resourceObject *models.Resource) (*shared.NotificationLevel, error) {
+	enabledStr, ok := resourceObject.Config[notificationEnabledKey]
 	if !ok {
-		return nil, errors.Newf("Notification %s is missing 'enabled' key.", integrationObject.Name)
+		return nil, errors.Newf("Notification %s is missing 'enabled' key.", resourceObject.Name)
 	}
 	if enabledStr == "false" {
 		return nil, nil
 	}
 
-	levelStr, ok := integrationObject.Config[notificationLevelKey]
+	levelStr, ok := resourceObject.Config[notificationLevelKey]
 	if !ok {
-		return nil, errors.Newf("Notification %s is enabled but missing 'level' key.", integrationObject.Name)
+		return nil, errors.Newf("Notification %s is enabled but missing 'level' key.", resourceObject.Name)
 	}
 	level, err := shared.StrToNotificationLevel(levelStr)
 	if err != nil {

@@ -13,8 +13,8 @@ import (
 	"github.com/google/uuid"
 )
 
-func convertS3IntegrationtoStorageConfig(c *shared.S3ResourceConfig) (*shared.StorageConfig, error) {
-	// Users provide AWS credentials for an S3 integration via one of the following:
+func convertS3ResourcetoStorageConfig(c *shared.S3ResourceConfig) (*shared.StorageConfig, error) {
+	// Users provide AWS credentials for an S3 resource via one of the following:
 	//  1. AWS Access Key and Secret Key
 	//  2. Credentials file content
 	//  3. Credentials filepath and profile name
@@ -89,7 +89,7 @@ func convertS3IntegrationtoStorageConfig(c *shared.S3ResourceConfig) (*shared.St
 	return storageConfig, nil
 }
 
-func convertGCSIntegrationtoStorageConfig(c *shared.GCSResourceConfig) *shared.StorageConfig {
+func convertGCSResourcetoStorageConfig(c *shared.GCSResourceConfig) *shared.StorageConfig {
 	return &shared.StorageConfig{
 		Type: shared.GCSStorageType,
 		GCSConfig: &shared.GCSConfig{
@@ -99,7 +99,7 @@ func convertGCSIntegrationtoStorageConfig(c *shared.GCSResourceConfig) *shared.S
 	}
 }
 
-func ConvertIntegrationConfigToStorageConfig(
+func ConvertResourceConfigToStorageConfig(
 	svc shared.Service,
 	confData []byte,
 ) (*shared.StorageConfig, error) {
@@ -110,14 +110,14 @@ func ConvertIntegrationConfigToStorageConfig(
 			return nil, err
 		}
 
-		return convertS3IntegrationtoStorageConfig(&c)
+		return convertS3ResourcetoStorageConfig(&c)
 	case shared.GCS:
 		var c shared.GCSResourceConfig
 		if err := json.Unmarshal(confData, &c); err != nil {
 			return nil, err
 		}
 
-		return convertGCSIntegrationtoStorageConfig(&c), nil
+		return convertGCSResourcetoStorageConfig(&c), nil
 	default:
 		return nil, errors.Newf("%v cannot be used as the storage layer", svc)
 	}

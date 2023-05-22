@@ -3,7 +3,7 @@ import React from 'react';
 
 import { theme } from '../../../../styles/theme/theme';
 import { EngineType, EngineTypeToService } from '../../../../utils/engine';
-import { ServiceLogos } from '../../../../utils/integrations';
+import { ServiceLogos } from '../../../../utils/resources';
 
 export interface ResourceItemProps {
   resource: string;

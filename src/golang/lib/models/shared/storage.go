@@ -31,8 +31,8 @@ type StorageConfigPublic struct {
 
 	// These fields do not exist on the config file, but are pulled in from the database.
 	// Empty fields here mean that the local filesystem is being used as storage.
-	ResourceID   uuid.UUID       `json:"integration_id,omitempty"`
-	ResourceName string          `json:"integration_name,omitempty"`
+	ResourceID   uuid.UUID       `json:"resource_id,omitempty"`
+	ResourceName string          `json:"resource_name,omitempty"`
 	ConnectedAt  int64           `json:"connected_at,omitempty"`
 	ExecState    *ExecutionState `json:"exec_state,omitempty"`
 }
