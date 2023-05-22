@@ -107,7 +107,7 @@ def publish_flow_test(
         time.sleep(30)
 
         # Manually trigger a run to match behavior of non-Airflow engines
-        client.trigger(flow_id=flow.id())
+        client.trigger(flow_identifier=flow.id())
 
     if should_block:
         wait_for_flow_runs(
@@ -168,7 +168,7 @@ def wait_for_flow_runs(
         if all(str(flow_id) != flow_dict["flow_id"] for flow_dict in client.list_flows()):
             return False
 
-        flow = client.flow(flow_id)
+        flow = client.flow(flow_identifier=flow_id)
 
         # Last run is prepended to this list. We need to reverse it in order to compare with expected statuses,
         # which is sorted in chronologically ascending order.
@@ -227,20 +227,20 @@ def delete_flow(client: aqueduct.Client, workflow_id: uuid.UUID) -> None:
 def delete_all_flows(client: aqueduct.Client) -> None:
     flows = client.list_flows()
     for flow in flows:
-        flow_name = flow["name"]
+        flow_id = flow["flow_id"]
         try:
             client.delete_flow(
-                flow_name=flow_name,
-                saved_objects_to_delete=client.flow(flow_name=flow_name).list_saved_objects(),
+                flow_identifier=flow_id,
+                saved_objects_to_delete=client.flow(flow_identifier=flow_id).list_saved_objects(),
             )
         except Exception as e:
-            print("Error deleting workflow %s with exception: %s" % (flow_name, e))
+            print("Error deleting workflow %s with exception: %s" % (flow_id, e))
         else:
-            print("Successfully deleted workflow %s" % flow_name)
+            print("Successfully deleted workflow %s" % flow_id)
 
         # Try deleting Airflow DAG file if it exists
         # TODO ENG-2868 - Only do this for Airflow workflows
-        dag_path = f"{flow_name}_airflow.py"
+        dag_path = f"{flow_id}_airflow.py"
         if os.path.exists(dag_path):
             os.remove(dag_path)
 

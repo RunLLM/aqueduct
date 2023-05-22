@@ -60,6 +60,16 @@ import {
   NodeCheckGetResponse,
 } from './v2/NodeCheckGet';
 import {
+  nodeCheckGetQuery,
+  NodeCheckGetRequest,
+  NodeCheckGetResponse,
+} from './v2/NodeCheckGet';
+import {
+  nodeCheckResultContentGetQuery,
+  NodeCheckResultContentGetRequest,
+  NodeCheckResultContentGetResponse,
+} from './v2/NodeCheckResultContentGet';
+import {
   nodeCheckResultContentGetQuery,
   NodeCheckResultContentGetRequest,
   NodeCheckResultContentGetResponse,
@@ -69,6 +79,16 @@ import {
   NodeMetricGetRequest,
   NodeMetricGetResponse,
 } from './v2/NodeMetricGet';
+import {
+  nodeMetricGetQuery,
+  NodeMetricGetRequest,
+  NodeMetricGetResponse,
+} from './v2/NodeMetricGet';
+import {
+  nodeMetricResultContentGetQuery,
+  NodeMetricResultContentGetRequest,
+  NodeMetricResultContentGetResponse,
+} from './v2/NodeMetricResultContentGet';
 import {
   nodeMetricResultContentGetQuery,
   NodeMetricResultContentGetRequest,
@@ -285,7 +305,7 @@ export const aqueductApi = createApi({
     }),
     workflowsGet: builder.query<WorkflowsGetResponse, WorkflowsGetRequest>({
       query: (req) => workflowsGetQuery(req),
-      transformErrorResponse: transformErrorResponse,
+      transformErrorResponse,
     }),
     workflowGet: builder.query<WorkflowGetResponse, WorkflowGetRequest>({
       query: (req) => workflowGetQuery(req),

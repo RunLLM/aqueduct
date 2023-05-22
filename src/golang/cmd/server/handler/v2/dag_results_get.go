@@ -28,7 +28,7 @@ import (
 //		`api-key`: user's API Key
 //  Parameters:
 //		`order_by`:
-//			Optional single field that the query should be ordered. Requires the table prefix.
+//			Optional single field that the query should be ordered from the DAG Result table.
 //		`order_descending`:
 //			Optional boolean specifying whether order_by should be ascending or descending.
 //		`limit`:

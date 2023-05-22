@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/apache/airflow-client-go/airflow"
+	"github.com/aqueducthq/aqueduct/lib/errors"
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 )
 
@@ -98,11 +99,33 @@ func (c *client) getTaskStates(dagId string, dagRunId string) (map[string]airflo
 	return taskIdToState, nil
 }
 
+// isDAGPaused returns whether or not the specified DAG is paused.
+func (c *client) isDAGPaused(dagID string) (bool, error) {
+	dag, err := c.getDag(dagID)
+	if err != nil {
+		return false, err
+	}
+
+	return dag.GetIsPaused(), nil
+}
+
 // trigerDAGRun triggers a new DAGRun for the dag specified.
-func (c *client) triggerDAGRun(dagId string) error {
-	request := c.apiClient.DAGRunApi.PostDagRun(c.ctx, dagId)
+// It first ensures that the DAG is not paused.
+func (c *client) triggerDAGRun(dagID string) error {
+	// Check if DAG is paused
+	paused, err := c.isDAGPaused(dagID)
+	if err != nil {
+		return err
+	}
+
+	if paused {
+		// TODO ENG-3002: Automatically unpause the DAG instead of throwing an error
+		return errors.Newf("Unable to trigger a new DAG run for %v because it is currently paused. You must unpause it first!", dagID)
+	}
+
+	request := c.apiClient.DAGRunApi.PostDagRun(c.ctx, dagID)
 	// The PostDagRun API requires the request to have a DAGRun initialized
 	request = request.DAGRun(*airflow.NewDAGRunWithDefaults())
-	_, _, err := request.Execute()
+	_, _, err = request.Execute()
 	return err
 }

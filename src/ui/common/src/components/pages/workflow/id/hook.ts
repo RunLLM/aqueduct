@@ -35,7 +35,7 @@ export function useSortedDagResults(
   return [...dagResults]
     .sort((x, y) =>
       new Date(x.exec_state.timestamps?.pending_at) <
-      new Date(y.exec_state.timestamps?.pending_at)
+        new Date(y.exec_state.timestamps?.pending_at)
         ? -1
         : 1
     )
