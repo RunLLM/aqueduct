@@ -22,6 +22,7 @@ import { dagsGetQuery, DagsGetRequest, DagsGetResponse } from './v2/DagsGet';
 import {
   environmentGetQuery,
   EnvironmentGetRequest,
+  EnvironmentGetResponse,
 } from './v2/EnvironmentGet';
 import {
   integrationOperatorsGetQuery,
