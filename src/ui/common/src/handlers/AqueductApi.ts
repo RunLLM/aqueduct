@@ -20,6 +20,10 @@ import {
 } from './v2/DagResultsGet';
 import { dagsGetQuery, DagsGetRequest, DagsGetResponse } from './v2/DagsGet';
 import {
+  environmentGetQuery,
+  EnvironmentGetRequest,
+} from './v2/EnvironmentGet';
+import {
   integrationOperatorsGetQuery,
   IntegrationOperatorsGetRequest,
   IntegrationOperatorsGetResponse,
@@ -60,16 +64,6 @@ import {
   NodeCheckGetResponse,
 } from './v2/NodeCheckGet';
 import {
-  nodeCheckGetQuery,
-  NodeCheckGetRequest,
-  NodeCheckGetResponse,
-} from './v2/NodeCheckGet';
-import {
-  nodeCheckResultContentGetQuery,
-  NodeCheckResultContentGetRequest,
-  NodeCheckResultContentGetResponse,
-} from './v2/NodeCheckResultContentGet';
-import {
   nodeCheckResultContentGetQuery,
   NodeCheckResultContentGetRequest,
   NodeCheckResultContentGetResponse,
@@ -79,16 +73,6 @@ import {
   NodeMetricGetRequest,
   NodeMetricGetResponse,
 } from './v2/NodeMetricGet';
-import {
-  nodeMetricGetQuery,
-  NodeMetricGetRequest,
-  NodeMetricGetResponse,
-} from './v2/NodeMetricGet';
-import {
-  nodeMetricResultContentGetQuery,
-  NodeMetricResultContentGetRequest,
-  NodeMetricResultContentGetResponse,
-} from './v2/NodeMetricResultContentGet';
 import {
   nodeMetricResultContentGetQuery,
   NodeMetricResultContentGetRequest,
@@ -177,6 +161,13 @@ export const aqueductApi = createApi({
     }),
     dagResultsGet: builder.query<DagResultsGetResponse, DagResultsGetRequest>({
       query: (req) => dagResultsGetQuery(req),
+      transformErrorResponse,
+    }),
+    environmentGet: builder.query<
+      EnvironmentGetResponse,
+      EnvironmentGetRequest
+    >({
+      query: (req) => environmentGetQuery(req),
       transformErrorResponse,
     }),
     integrationOperatorsGet: builder.query<
@@ -320,6 +311,7 @@ export const {
   useDagOperatorsGetQuery,
   useDagResultGetQuery,
   useDagResultsGetQuery,
+  useEnvironmentGetQuery,
   useIntegrationOperatorsGetQuery,
   useIntegrationWorkflowsGetQuery,
   useIntegrationsWorkflowsGetQuery,

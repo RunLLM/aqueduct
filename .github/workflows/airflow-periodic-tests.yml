@@ -1,0 +1,142 @@
+name: Airflow Periodic Integration Tests
+
+on:
+  schedule:
+    - cron: "0 21 * * 4" # Run at 9PM PST on every Thursday
+  workflow_dispatch:
+
+jobs:
+  publish-pypi:
+    # similar to release scripts, but publish to test pypi:
+    # rm -rf dist && rm -rf build
+    # python3 -m build && twine check dist/*
+    # twine upload --repository testpypi dist/*
+    # pip3 install -i https://test.pypi.org/simple/ aqueduct-ml
+    name: Publish Test Pypi Packages
+    runs-on: [ubuntu-latest]
+    timeout-minutes: 20
+    outputs:
+      version: ${{ steps.inject_version.outputs.version }}
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9"
+      - name: install missing dependencies
+        run: pip install build twine
+
+      - name: inject dev version
+        id: inject_version
+        run: |
+          export VERSION=0.1.dev$(date +%s)
+          rm sdk/version
+          echo $VERSION >> sdk/version
+          rm src/python/version
+          echo $VERSION >> src/python/version
+          echo version=$VERSION >> $GITHUB_OUTPUT
+
+      - name: build sdk
+        working-directory: sdk
+        run: |
+          rm -rf dist
+          rm -rf build
+          python3 -m build
+          twine check dist/*
+
+      - name: publish sdk
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: sdk/dist
+          password: ${{ secrets.PYPI_API_TOKEN_SDK }}
+
+      - name: build executor
+        working-directory: src/python
+        run: |
+          rm -rf dist
+          rm -rf build
+          python3 -m build
+          twine check dist/*
+
+      - name: publish executor
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: src/python/dist
+          password: ${{ secrets.PYPI_API_TOKEN_EXECUTOR }}
+  
+  run-airflow-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 480
+    needs: publish-pypi
+    name: SDK Integration Tests against Airflow Compute
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: ./.github/actions/setup-server
+        timeout-minutes: 7
+        with:
+          python-pkg-version: ${{ needs.publish-pypi.outputs.version }}
+
+      # TODO(ENG-2537): Use our separate GH actions credentials.
+      - uses: ./.github/actions/fetch-test-config
+        with:
+          aws_access_key_id: ${{ secrets.KENNY_AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.KENNY_AWS_SECRET_ACCESS_KEY }}
+          s3_test_config_path: periodic-airflow-test-config.yml
+      
+      - name: Start Airflow cluster
+        working-directory: scripts/compute
+        run: ./airflow_test_setup.sh &
+      
+      - name: Wait for Airflow cluster to be ready
+        run: while ! echo exit | nc localhost 8000; do sleep 1; done
+      
+      - name: Get Airflow password
+        run: |
+          airflow_password=$(cat ~/airflow/standalone_admin_password.txt)
+          echo "airflow_password=$airflow_password" >> $GITHUB_ENV
+      
+      - name: Update Airflow password in test-credentials.yml
+        working-directory: integration_tests/sdk
+        # NOTE (Saurav): This replaces all password fields under the compute section.
+        # This is safe to do because only the test_airflow compute is being used
+        # in this test. Otherwise the logic gets more complicated.
+        run: sed -i '/^compute:/,/^[^ ]/ s/^\(\s*password:\s*\).*/\1${{ env.airflow_password }}/' test-credentials.yml
+
+      - name: Install any data connector packages
+        run: |
+          aqueduct install s3
+          aqueduct install snowflake
+
+      - name: Run the SDK Integration Tests
+        working-directory: integration_tests/sdk
+        run: pytest aqueduct_tests/ -rP -vv -n 1
+
+      - uses: ./.github/actions/upload-artifacts
+        if: always()
+        with:
+          prefix: Airflow Compute
+
+      # Sets it as an environmental variable.
+      # - name: Get the Slack ID for the current oncall
+      #   if: always()
+      #   run: |
+      #     aws s3 cp s3://aqueduct-assets/oncall.yml ./oncall.yml
+      #     echo "ONCALL_SLACK_MEMBER_ID=$(python3 scripts/get_current_oncall.py --file ./oncall.yml)" >> $GITHUB_ENV
+
+      # - name: Report to Slack on Failure
+      #   if: always()
+      #   uses: ravsamhq/notify-slack-action@v1
+      #   with:
+      #     status: ${{ job.status }}
+      #     notification_title: ""
+      #     message_format: "{emoji} *{workflow}* has {status_message}"
+      #     footer: "{run_url}"
+      #     notify_when: "failure,warnings"
+      #     mention_users: ${{ env.ONCALL_SLACK_MEMBER_ID }}
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.ACTION_MONITORING_SLACK }}
