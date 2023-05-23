@@ -409,13 +409,13 @@ class DAG(BaseModel):
         """
         found_op: Optional[Operator] = None
         for op in self.operators.values():
-            if found_op is not None:
-                raise InternalAqueductError(
-                    "Unexpectedly found multiple parameters with the same name: %s" % name
-                )
-
             if op.name == name and get_operator_type(op) == OperatorType.PARAM:
+                if found_op is not None:
+                    raise InternalAqueductError(
+                        "Unexpectedly found multiple parameters with the same name: %s" % name
+                    )
                 found_op = op
+
         return found_op
 
     def get_param_ops_by_name(self, name: str) -> List[Operator]:

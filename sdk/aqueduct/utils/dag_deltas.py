@@ -229,6 +229,7 @@ def validate_overwriting_parameters(dag: DAG, parameters: Dict[str, Any]) -> Non
         raise InvalidUserArgumentException("Parameters must be keyed by strings.")
 
     for param_name, param_val in parameters.items():
+        print("GETTING : ", param_name)
         param_op = dag.get_param_op_by_name(param_name)
         if param_op is None:
             raise InvalidUserArgumentException(
