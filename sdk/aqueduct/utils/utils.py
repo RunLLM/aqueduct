@@ -233,5 +233,11 @@ def find_flow_with_user_supplied_id_and_name(
     elif isinstance(flow_identifier, str):
         if all(flow_id_str != flow[1] for flow in flows):
             raise InvalidUserArgumentException("Unable to find a flow with name %s" % flow_id_str)
+        # You land here if found matching flow name, return corresponding uuid
+        # backend api's look for uuid instead of name
+        for flow in flows:
+            if flow_id_str == flow[1]:
+                flow_id_str = str(flow[0])
+                break
 
     return flow_id_str

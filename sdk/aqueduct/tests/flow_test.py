@@ -20,7 +20,7 @@ def test_find_flow_with_user_supplied_id_and_name():
     assert flow_id == str(flow_1_id)
 
     flow_id = find_flow_with_user_supplied_id_and_name(flows, flow_identifier="flow_2")
-    assert flow_id == "flow_2"
+    assert flow_id == str(flow_2_id)
 
     with pytest.raises(InvalidUserArgumentException):
         find_flow_with_user_supplied_id_and_name(flows, flow_identifier=flow_3_id)
