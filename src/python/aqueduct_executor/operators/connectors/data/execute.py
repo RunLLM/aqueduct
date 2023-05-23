@@ -356,6 +356,7 @@ def setup_connector(
     elif connector_name == common.Name.BIG_QUERY:
         try:
             from google.cloud import bigquery
+            import db_dtypes
         except:
             raise MissingConnectorDependencyException(
                 "Unable to initialize the BigQuery connector. Have you run `aqueduct install bigquery`?"

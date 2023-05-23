@@ -120,7 +120,8 @@ const AddIntegrationListItem: React.FC<AddIntegrationListItemProps> = ({
       sx={{
         width: '64px',
         height: '80px',
-        m: 1,
+        mr: 1,
+        my: 1,
         px: 1,
         py: 1,
         borderRadius: 2,
