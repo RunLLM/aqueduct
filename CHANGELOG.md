@@ -1,19 +1,5 @@
 # Changelog
 
-## 0.3.4
-Released on May 24, 2023.
-
-### Enhancements
-* Improves consistency of icon sizing on resources page.
-* Merges `flow_id` and `name` into a single argument when retrieving workflows
-    from the SDK.
-* Adds ability to parametrize save operators when using AWS S3.
-
-### Bugfixes
-* Fixes bug where race condition could occur when syncing Airflow workflows to
-    Aqueduct.
-* Fixes bug where listing Snowflake data objects would return an error.
-
 ## 0.3.3
 Released on May 17, 2023.
 
