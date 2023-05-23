@@ -29,10 +29,10 @@ export const KubernetesDialog: React.FC<KuberentesDialogProps> = ({
   const { register, setValue, getValues } = useFormContext();
   const use_same_cluster = getValues('use_same_cluster');
 
-  register('use_same_cluster');
-
   useEffect(() => {
-    setValue('use_same_cluster', 'false');
+    if (!use_same_cluster) {
+      setValue('use_same_cluster', 'false');
+    }
   }, []);
 
   return (
@@ -81,7 +81,14 @@ export const KubernetesDialog: React.FC<KuberentesDialogProps> = ({
 
 export function getKubernetesValidationSchema() {
   return Yup.object().shape({
-    use_same_cluster: Yup.string(),
+    name: Yup.string().required('Please enter a name.'),
+    use_same_cluster: Yup.string().transform((value) => {
+      if (value === 'true') {
+        return 'true';
+      }
+
+      return 'false';
+    }),
     kubeconfig_path: Yup.string().when('use_same_cluster', {
       is: 'false',
       then: Yup.string().required('Please enter a kubeconfig path'),
