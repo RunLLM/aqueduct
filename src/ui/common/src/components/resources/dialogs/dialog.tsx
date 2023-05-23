@@ -63,13 +63,15 @@ const ResourceDialog: React.FC<Props> = ({
   const [submitDisabled, setSubmitDisabled] = useState<boolean>(true);
   const [migrateStorage, setMigrateStorage] = useState(false);
 
-  let hasNameField = service !== 'Kubernetes' && service !== 'Conda';
+  const hasNameField = service !== 'Kubernetes' && service !== 'Conda';
 
-  const combinedSchema = !hasNameField ? validationSchema : Yup.object().shape({
-    // Kubernetes and Conda manage their own name fields, so we just return validation schema.
-    ...validationSchema.fields,
-    name: Yup.string().required('Please enter a name'),
-  });
+  const combinedSchema = !hasNameField
+    ? validationSchema
+    : Yup.object().shape({
+        // Kubernetes and Conda manage their own name fields, so we just return validation schema.
+        ...validationSchema.fields,
+        name: Yup.string().required('Please enter a name'),
+      });
 
   const methods = useForm({
     resolver: yupResolver(combinedSchema),
