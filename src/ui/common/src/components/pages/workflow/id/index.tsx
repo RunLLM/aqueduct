@@ -116,7 +116,6 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   ] = useWorkflowEditPostMutation({
     fixedCacheKey: `edit-${workflowId}`,
   });
-  console.log(editWorkflowSuccess);
 
   const editWorkflowMessage = editWorkflowSuccess
     ? 'Sucessfully updated your workflow.'

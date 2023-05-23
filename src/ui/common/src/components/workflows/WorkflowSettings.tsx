@@ -73,7 +73,7 @@ function IsNotificationSettingsMapUpdated(
 const WorkflowSettings: React.FC<Props> = ({ user, dag, workflow }) => {
   const navigate = useNavigate();
 
-  const { data: workflows } = useWorkflowsGetQuery({
+  const { data: workflows, refetch: refetchWorkflows } = useWorkflowsGetQuery({
     apiKey: user.apiKey,
   });
   const [
@@ -107,16 +107,27 @@ const WorkflowSettings: React.FC<Props> = ({ user, dag, workflow }) => {
     ? `We were unable to delete your workflow: ${deleteWorkflowError}`
     : '';
 
+  const handleDeleteMessageClose = () => {
+    if (deleteWorkflowSuccess) {
+      refetchWorkflows();
+      navigate('/workflows');
+      navigate(0); // force refresh the page.
+      return;
+    }
+
+    resetDeleteWorkflow();
+  };
+
   useEffect(() => {
     if (deleteWorkflowSuccess || !!deleteWorkflowError) {
       setShowDeleteDialog(false);
 
       if (deleteWorkflowSuccess) {
-        if (Object.keys(deleteWorkflowResponse).length > 0) {
+        if (
+          Object.keys(deleteWorkflowResponse.saved_object_deletion_results)
+            .length > 0
+        ) {
           setShowSavedObjectDeletionResultsDialog(true);
-        } else {
-          console.log('???');
-          navigate('/workflows');
         }
       }
     }
@@ -417,7 +428,7 @@ const WorkflowSettings: React.FC<Props> = ({ user, dag, workflow }) => {
       />
       <SavedObjectDeletionResultDialog
         open={showSavedObjectDeletionResultsDialog}
-        onClose={() => navigate('/workflows')}
+        onClose={handleDeleteMessageClose}
         workflowName={workflow.name}
         workflowId={workflow.id}
       />
@@ -425,12 +436,12 @@ const WorkflowSettings: React.FC<Props> = ({ user, dag, workflow }) => {
       <Snackbar
         anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
         open={!!deleteMessage}
-        onClose={() => resetDeleteWorkflow()}
+        onClose={handleDeleteMessageClose}
         key={'workflowdelete-snackbar'}
         autoHideDuration={6000}
       >
         <Alert
-          onClose={() => resetDeleteWorkflow()}
+          onClose={handleDeleteMessageClose}
           severity={deleteWorkflowSuccess ? 'success' : 'error'}
           sx={{ width: '100%' }}
         >

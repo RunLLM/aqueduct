@@ -30,11 +30,11 @@ export const VersionSelector: React.FC<Props> = ({ apiKey }) => {
   const selectedResult = (dagResults ?? []).filter(
     (r) => r.id === dagResultId
   )[0];
-  console.log(dagResults)
+  const [menuAnchor, setMenuAnchor] = useState<HTMLButtonElement | null>(null);
+
   if (!dagResults || dagResults.length === 0) {
     return null;
   }
-  const [menuAnchor, setMenuAnchor] = useState<HTMLButtonElement | null>(null);
 
   const getMenuItems = () => {
     if (!dagResults || dagResults.length === 0) {

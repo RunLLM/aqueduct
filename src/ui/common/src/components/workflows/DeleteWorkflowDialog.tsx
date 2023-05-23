@@ -36,33 +36,36 @@ const DeleteWorkflowDialog: React.FC<Props> = ({
   open,
   onClose,
 }) => {
-  const { data: savedObjects, error: savedObjectsError } =
+  const { data: savedObjectsResp, error: savedObjectsError } =
     useWorkflowObjectsGetQuery({
       apiKey: user.apiKey,
       workflowId: workflow.id,
     });
 
+  const savedObjects = savedObjectsResp?.object_details ?? [];
+
   const [deleteWorkflow, { isLoading: deleteWorkflowLoading }] =
-    useWorkflowDeletePostMutation({ fixedCacheKey: `edit-${workflow.id}` });
+    useWorkflowDeletePostMutation({ fixedCacheKey: `delete-${workflow.id}` });
 
-  const [selectedObjects, setSelectedObjects] = useState(
-    new Set<SavedObject>()
-  );
+  const [selectedObjects, setSelectedObjects] = useState<{
+    [idx: number]: SavedObject;
+  }>({});
 
-  const updateSelectedObjects = (isSelect: boolean, id: string) => {
+  const updateSelectedObjects = (isSelect: boolean, idx: number) => {
     if (isSelect) {
-      setSelectedObjects((prev) => new Set(prev.add(savedObjects[id][0])));
+      setSelectedObjects((prev) => {
+        prev[idx] = savedObjects[idx];
+        return prev;
+      });
     } else {
-      setSelectedObjects(
-        (prev) =>
-          new Set(Array.from(prev).filter((x) => x !== savedObjects[id][0]))
-      );
+      setSelectedObjects((prev) => {
+        delete prev[idx];
+        return prev;
+      });
     }
   };
 
-  const hasSavedObjects = savedObjects
-    ? Object.keys(savedObjects).length > 0
-    : false;
+  const hasSavedObjects = savedObjects.length > 0;
 
   const [deleteValidation, setDeleteValidation] = useState('');
 
@@ -99,9 +102,9 @@ const DeleteWorkflowDialog: React.FC<Props> = ({
         )}
 
         <Box sx={{ my: 2 }}>
-          {savedObjects?.object_details && (
+          {hasSavedObjects && (
             <SavedObjectsSelector
-              objects={savedObjects.object_details}
+              objects={savedObjects}
               onSelect={updateSelectedObjects}
             />
           )}
@@ -116,10 +119,10 @@ const DeleteWorkflowDialog: React.FC<Props> = ({
           <Typography variant="body1">
             Deleting workflow{' '}
             <span style={{ fontFamily: 'Monospace' }}>{workflow.name}</span> and
-            the associated <b>{selectedObjects.size}</b> objects is not
-            reversible. Please note that we cannot guarantee this will only
-            delete data created by Aqueduct. The workflow will be deleted even
-            if the underlying objects are not successfully deleted.
+            the associated <b>{Object.keys(selectedObjects).length}</b> objects
+            is not reversible. Please note that we cannot guarantee this will
+            only delete data created by Aqueduct. The workflow will be deleted
+            even if the underlying objects are not successfully deleted.
           </Typography>
         )}
         {!hasSavedObjects && (
@@ -158,7 +161,7 @@ const DeleteWorkflowDialog: React.FC<Props> = ({
             event.preventDefault();
             const external_delete = {};
 
-            selectedObjects.forEach((object) => {
+            Object.values(selectedObjects).forEach((object) => {
               if (!external_delete[object.integration_name]) {
                 external_delete[object.integration_name] = [];
               }

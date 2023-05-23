@@ -13,21 +13,20 @@ import { getSavedObjectIdentifier, SavedObject } from '../../utils/workflows';
 
 type Props = {
   objects: SavedObject[];
-  onSelect: (isSelect: boolean, id: string) => void;
+  onSelect: (isSelect: boolean, idx: number) => void;
 };
 
 export const displayObject = (
   integration_name: string,
-  object_name: string,
-  sortedObjects: SavedObject[]
+  identifier: string,
+  update_mode?: UpdateMode | undefined
 ) => (
   <>
     <Typography variant="body1">
-      [{integration_name}] <b>{object_name}</b>
+      [{integration_name}] <b>{identifier}</b>
     </Typography>
 
-    {/* Objects saved into S3 are currently expected to have update_mode === UpdateMode.replace */}
-    {sortedObjects && (
+    {update_mode && (
       <Typography
         style={{
           color: theme.palette.gray[600],
@@ -36,64 +35,51 @@ export const displayObject = (
         variant="body2"
         display="inline"
       >
-        Update Mode:{' '}
-        {sortedObjects
-          .map(
-            (object) =>
-              `${object.spec.parameters['update_mode'] || UpdateMode.replace}`
-          )
-          .join(', ')}
-        {sortedObjects.length > 1 && ' (active)'}
+        Update Mode: {update_mode}
       </Typography>
     )}
   </>
 );
 
 const SavedObjectsSelector: React.FC<Props> = ({ objects, onSelect }) => {
-  const objectsByIntegration: { [integrationName: string]: SavedObject[] } = {};
-  objects.forEach((obj) => {
-    if (objectsByIntegration[obj.integration_name] === undefined) {
-      objectsByIntegration[obj.integration_name] = [];
+  const sortedObjects = [...objects].sort((x, y) => {
+    if (x.integration_name !== y.integration_name) {
+      return x.integration_name < y.integration_name ? -1 : 1;
     }
 
-    objectsByIntegration[obj.integration_name].push(obj);
+    return new Date(x.modified_at) < new Date(y.modified_at) ? -1 : 1;
   });
 
   return (
     <FormGroup>
-      {Object.entries(objectsByIntegration).map(
-        ([integrationName, savedObjectList]) => {
-          const sortedObjects = [...savedObjectList].sort((object) =>
-            Date.parse(object.modified_at)
-          );
-
-          // Cannot align the checkbox to the top of a multi-line label.
-          // Using a weird marginTop workaround.
-          return (
-            <FormControlLabel
-              sx={{ marginTop: '-24px' }}
-              key={integrationName}
-              control={
-                <Checkbox
-                  id={integrationName}
-                  onChange={(event) =>
-                    onSelect(event.target.checked, event.target.id)
-                  }
-                />
-              }
-              label={
-                <Box sx={{ paddingTop: '24px' }}>
-                  {displayObject(
-                    integrationName,
-                    getSavedObjectIdentifier(sortedObjects[0]),
-                    sortedObjects
-                  )}
-                </Box>
-              }
-            />
-          );
-        }
-      )}
+      {sortedObjects.map((object, idx) => {
+        // Cannot align the checkbox to the top of a multi-line label.
+        // Using a weird marginTop workaround.
+        return (
+          <FormControlLabel
+            sx={{ marginTop: '-24px' }}
+            key={idx}
+            control={
+              <Checkbox
+                id={idx.toString()}
+                onChange={(event) =>
+                  onSelect(event.target.checked, parseInt(event.target.id))
+                }
+              />
+            }
+            label={
+              <Box sx={{ paddingTop: '24px' }}>
+                {displayObject(
+                  object.integration_name,
+                  getSavedObjectIdentifier(object),
+                  // update_mode doesn't exist for Googlesheet and will be undefined.
+                  object.spec.parameters['update_mode']
+                )}
+              </Box>
+            }
+          />
+        );
+      })}
     </FormGroup>
   );
 };

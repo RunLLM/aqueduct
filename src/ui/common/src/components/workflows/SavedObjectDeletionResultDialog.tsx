@@ -19,7 +19,6 @@ import {
   Typography,
 } from '@mui/material';
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import { useWorkflowDeletePostMutation } from '../../handlers/AqueductApi';
 import { theme } from '../../styles/theme/theme';
@@ -40,33 +39,29 @@ const SavedObjectDeletionResultDialog: React.FC<Props> = ({
   open,
   onClose,
 }) => {
-  const navigate = useNavigate();
-
   const [_, { data: deleteWorkflowResponse }] = useWorkflowDeletePostMutation({
     fixedCacheKey: `delete-${workflowId}`,
   });
 
+  const deletedObjectsStates =
+    deleteWorkflowResponse?.saved_object_deletion_results;
+
   let successfullyDeleted = 0;
   let unsuccessfullyDeleted = 0;
 
-  if (
-    !deleteWorkflowResponse ||
-    Object.keys(deleteWorkflowResponse).length === 0
-  ) {
+  if (!deletedObjectsStates || Object.keys(deletedObjectsStates).length === 0) {
     return null;
   }
 
-  if (deleteWorkflowResponse) {
-    Object.entries(deleteWorkflowResponse).map((workflowResults) =>
-      workflowResults[1].map((objectResult) => {
-        if (objectResult.exec_state.status === ExecutionStatus.Succeeded) {
-          successfullyDeleted += 1;
-        } else {
-          unsuccessfullyDeleted += 1;
-        }
-      })
-    );
-  }
+  Object.entries(deletedObjectsStates).map((workflowResults) =>
+    workflowResults[1].map((objectResult) => {
+      if (objectResult.exec_state.status === ExecutionStatus.Succeeded) {
+        successfullyDeleted += 1;
+      } else {
+        unsuccessfullyDeleted += 1;
+      }
+    })
+  );
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -83,7 +78,7 @@ const SavedObjectDeletionResultDialog: React.FC<Props> = ({
 
           <FontAwesomeIcon
             icon={faXmark}
-            onClick={() => navigate('/workflows')}
+            onClick={onClose}
             style={{ cursor: 'pointer' }}
           />
         </Box>
@@ -97,7 +92,7 @@ const SavedObjectDeletionResultDialog: React.FC<Props> = ({
         </Typography>
 
         <List dense={true}>
-          {Object.entries(deleteWorkflowResponse)
+          {Object.entries(deletedObjectsStates)
             .map(([integrationName, objectResults]) =>
               objectResults.map((objectResult) => (
                 <>
@@ -123,8 +118,7 @@ const SavedObjectDeletionResultDialog: React.FC<Props> = ({
                     <ListItemText
                       primary={displayObject(
                         integrationName,
-                        objectResult.name,
-                        null
+                        objectResult.name
                       )}
                     />
                   </ListItem>
@@ -152,7 +146,7 @@ const SavedObjectDeletionResultDialog: React.FC<Props> = ({
       </DialogContent>
 
       <DialogActions>
-        <Button variant="contained" onClick={() => navigate('/workflows')}>
+        <Button variant="contained" onClick={onClose}>
           Close
         </Button>
       </DialogActions>
