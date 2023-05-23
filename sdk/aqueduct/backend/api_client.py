@@ -593,9 +593,6 @@ class APIClient:
                     id=artf.id,
                     name=artf.name,
                     type=artf.type,
-                    # Hardcoded because not available from V2 routes
-                    explicitly_named=False,
-                    from_local_data=False,
                 )
 
             dags[dag.id] = WorkflowDagResponse(
