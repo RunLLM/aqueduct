@@ -75,11 +75,8 @@ import WorkflowHeader from './components/workflows/WorkflowHeader';
 import WorkflowSettings from './components/workflows/WorkflowSettings';
 import VersionSelector from './components/workflows/WorkflowVersionSelector';
 import { aqueductApi } from './handlers/AqueductApi';
-import { handleGetArtifactResultContent } from './handlers/getArtifactResultContent';
 import { handleGetServerConfig } from './handlers/getServerConfig';
 import { handleGetWorkflowDag } from './handlers/getWorkflowDag';
-import { handleGetWorkflowDagResult } from './handlers/getWorkflowDagResult';
-import { handleListArtifactResults } from './handlers/listArtifactResults';
 import dataPreview, { dataPreviewSlice } from './reducers/dataPreview';
 import { getDataArtifactPreview } from './reducers/dataPreview';
 import integration, {
@@ -216,11 +213,8 @@ export {
   handleExportFunction,
   handleFetchAllWorkflowSummaries,
   handleFetchNotifications,
-  handleGetArtifactResultContent,
   handleGetServerConfig,
   handleGetWorkflowDag,
-  handleGetWorkflowDagResult,
-  handleListArtifactResults,
   handleListIntegrationObjects,
   handleLoadIntegrationObject,
   handleLoadIntegrationOperators,
