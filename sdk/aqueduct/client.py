@@ -1,10 +1,11 @@
 import logging
 import os
 import platform
+import re
 import uuid
 import warnings
 from collections import defaultdict
-from typing import Any, DefaultDict, Dict, List, Optional, Union
+from typing import Any, DefaultDict, Dict, List, Optional, Tuple, Union
 
 import __main__ as main
 import yaml
@@ -29,7 +30,7 @@ from aqueduct.github import Github
 from aqueduct.logger import logger
 from aqueduct.models.dag import Metadata, RetentionPolicy
 from aqueduct.models.integration import BaseResource, ResourceInfo
-from aqueduct.models.operators import ParamSpec
+from aqueduct.models.operators import ParamSpec, S3LoadParams
 from aqueduct.models.response_models import SavedObjectUpdate
 from aqueduct.resources.airflow import AirflowResource
 from aqueduct.resources.aws import AWSResource
@@ -46,6 +47,7 @@ from aqueduct.resources.ecr import ECRResource
 from aqueduct.resources.google_sheets import GoogleSheetsResource
 from aqueduct.resources.k8s import K8sResource
 from aqueduct.resources.mongodb import MongoDBResource
+from aqueduct.resources.parameters import USER_TAG_PATTERN
 from aqueduct.resources.s3 import S3Resource
 from aqueduct.resources.salesforce import SalesforceResource
 from aqueduct.resources.spark import SparkResource
@@ -903,6 +905,30 @@ class Client:
 
         if saved_objects_to_delete is None:
             saved_objects_to_delete = defaultdict()
+
+        # TODO(ENG-3015): Until parameterized S3 filepath deletion is fixed, we prevent users from
+        #  deleting those objects.
+        s3_parameterized_filepaths: List[Tuple[str, str]] = []
+        for saved_obj_list in saved_objects_to_delete.values():
+            for saved_obj_to_delete in saved_obj_list:
+                if isinstance(saved_obj_to_delete.spec.parameters, S3LoadParams):
+                    filepath = saved_obj_to_delete.spec.parameters.filepath
+                    if len(re.findall(USER_TAG_PATTERN, filepath)) > 0:
+                        s3_parameterized_filepaths.append(
+                            (saved_obj_to_delete.integration_name, filepath)
+                        )
+
+        if len(s3_parameterized_filepaths) > 0:
+            raise InvalidUserArgumentException(
+                "Deleting objects at parameterized filepaths in S3 is currently unsupported. The following resource-filepath "
+                "combinations in `saved_objects_to_delete` are parameterized: \n"
+                + ", ".join(
+                    [
+                        f"{integration_name}: {filepath}"
+                        for integration_name, filepath in s3_parameterized_filepaths
+                    ]
+                )
+            )
 
         flows = [(flow.id, flow.name) for flow in globals.__GLOBAL_API_CLIENT__.list_workflows()]
         flow_id_key = find_flow_with_user_supplied_id_and_name(flows, flow_identifier)

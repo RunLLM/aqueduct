@@ -569,3 +569,36 @@ def test_s3_save_failure(client, data_integration):
         InvalidUserArgumentException, match="Unsupported S3 file format `wrong format`."
     ):
         save(data_integration, hotel_reviews, generate_table_name(), format="wrong format")
+
+
+def test_save_s3_filepath_parameterized(client, flow_manager, data_integration):
+    default_dir_name = generate_object_name()
+    default_file_name = generate_object_name()
+
+    client.create_param("dir_name", default=default_dir_name)
+    client.create_param("file_name", default=default_file_name)
+
+    # Save this table to {dir_name}/{file_name}.
+    hotel_reviews = data_integration.file(
+        "hotel_reviews",
+        artifact_type=ArtifactType.TABLE,
+        format="parquet",
+    )
+    data_integration.save(hotel_reviews, "{dir_name}/{file_name}", format="parquet")
+    flow = flow_manager.publish_flow_test(hotel_reviews)
+
+    # Check that the file was saved to the correct default filepath.
+    saved_table = data_integration.file(
+        f"{default_dir_name}/{default_file_name}",
+        artifact_type=ArtifactType.TABLE,
+        format="parquet",
+    )
+    assert saved_table.get().equals(hotel_reviews.get())
+
+    # Trigger a save to a different filepath.
+    new_file_name = generate_object_name()
+    flow_manager.trigger_flow_test(flow, parameters={"file_name": new_file_name})
+    saved_table = data_integration.file(
+        f"{default_dir_name}/{new_file_name}", artifact_type=ArtifactType.TABLE, format="parquet"
+    )
+    assert saved_table.get().equals(hotel_reviews.get())

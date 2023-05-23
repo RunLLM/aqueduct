@@ -661,7 +661,9 @@ def test_local_tf_keras_data(client, flow_name, engine):
 
 
 @pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
-def test_save_table_name_parameterized(client, data_validator, data_integration, flow_name, engine):
+def test_save_sql_table_name_parameterized(
+    client, data_validator, data_integration, flow_name, engine
+):
     table_to_save = extract(data_integration, DataObject.SENTIMENT)
 
     initial_table_name = "output_" + str(uuid.uuid4()).replace("-", "_")
@@ -695,7 +697,7 @@ def test_save_table_name_parameterized(client, data_validator, data_integration,
     # Check that a non-string parameter will fail.
     with pytest.raises(
         InvalidUserArgumentException,
-        match="A parameter value for `table_name` must be of string type",
+        match="The parameter `number` must be defined as a string",
     ):
         numeric_param = client.create_param("number", default=123)
         save(data_integration, table_to_save, numeric_param, update_mode=LoadUpdateMode.FAIL)

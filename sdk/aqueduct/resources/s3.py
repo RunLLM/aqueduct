@@ -23,6 +23,7 @@ from aqueduct import globals
 from ..artifacts.create import to_artifact_class
 from ..error import InvalidUserArgumentException
 from ..utils.naming import default_artifact_name_from_op_name, sanitize_artifact_name
+from .parameters import _fetch_param_artifact_ids_embedded_in_string
 from .save import _save_artifact
 
 
@@ -200,8 +201,14 @@ class S3Resource(BaseResource):
                 % artifact.type()
             )
 
+        # Prepend any parameters embedded in the filepath.
+        param_artifact_ids_in_filepath = _fetch_param_artifact_ids_embedded_in_string(
+            self._dag, filepath
+        )
+        artifact_ids = param_artifact_ids_in_filepath + [artifact.id()]
+
         _save_artifact(
-            artifact.id(),
+            artifact_ids,
             self._dag,
             self._metadata,
             save_params=S3LoadParams(filepath=filepath, format=_convert_to_s3_table_format(format)),

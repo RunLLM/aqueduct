@@ -16,7 +16,11 @@ from aqueduct.models.operators import (
     RelationalDBExtractParams,
     RelationalDBLoadParams,
 )
-from aqueduct.resources.parameters import _validate_builtin_expansions, _validate_parameters
+from aqueduct.resources.parameters import (
+    _validate_artifact_is_string,
+    _validate_builtin_expansions,
+    _validate_parameters,
+)
 from aqueduct.resources.save import _save_artifact
 from aqueduct.resources.validation import validate_is_connected
 from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
@@ -266,14 +270,18 @@ class RelationalDBResource(BaseResource):
                 "`table_name` must either be a string or a string parameter artifact."
             )
 
+        # Non-tabular data cannot be saved into relational data stores.
+        if artifact.type() not in [ArtifactType.UNTYPED, ArtifactType.TABLE]:
+            raise InvalidUserActionException(
+                "Unable to save non-relational data into relational data store `%s`." % self.name()
+            )
+
+        # Resolve the table name if it is parameterized.
         table_name_str = table_name
         artifact_ids = [artifact.id()]
         if isinstance(table_name, BaseArtifact):
             table_name_artifact = table_name
-            if table_name_artifact.type() != ArtifactType.STRING:
-                raise InvalidUserArgumentException(
-                    "A parameter value for `table_name` must be of string type."
-                )
+            _validate_artifact_is_string(table_name_artifact)
 
             # This is unset in the LoadParams, since we're parameterizing it.
             table_name_str = ""
@@ -283,12 +291,6 @@ class RelationalDBResource(BaseResource):
         else:
             if table_name_str == "":
                 raise InvalidUserArgumentException("Cannot save to an empty table name.")
-
-        # Non-tabular data cannot be saved into relational data stores.
-        if artifact.type() not in [ArtifactType.UNTYPED, ArtifactType.TABLE]:
-            raise InvalidUserActionException(
-                "Unable to save non-relational data into relational data store `%s`." % self.name()
-            )
 
         _save_artifact(
             artifact_ids,
