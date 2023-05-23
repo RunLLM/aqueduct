@@ -2,6 +2,8 @@ package v2
 
 import (
 	"context"
+	"net/http"
+
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
 	aq_context "github.com/aqueducthq/aqueduct/lib/context"
@@ -17,7 +19,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
-	"net/http"
 )
 
 // Route:
