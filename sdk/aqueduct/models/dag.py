@@ -428,7 +428,7 @@ class DAG(BaseModel):
         operator first.
         """
         found_ops: List[Operator] = []
-        for op in reversed(self.operators.values()):
+        for op in reversed(list(self.operators.values())):
             if op.name == name and get_operator_type(op) == OperatorType.PARAM:
                 found_ops.append(op)
         return found_ops
