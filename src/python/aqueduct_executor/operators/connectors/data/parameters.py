@@ -34,7 +34,8 @@ def _replace_parameterized_user_strings(user_defined_string: str, parameter_vals
 
     if len(matches) != len(parameter_vals):
         raise Exception(
-            "Mismatch between number of parameters (%s) and number of placeholders (%s) in the user-defined string. " % (len(parameter_vals), len(matches))
+            "Mismatch between number of parameters (%s) and number of placeholders (%s) in the user-defined string. "
+            % (len(parameter_vals), len(matches))
         )
     for idx, match in enumerate(matches):
         user_defined_string = user_defined_string.replace(match, parameter_vals[idx])

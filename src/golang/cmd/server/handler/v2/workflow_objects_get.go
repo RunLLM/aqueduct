@@ -3,6 +3,7 @@ package v2
 import (
 	"context"
 	"net/http"
+	"regexp"
 
 	"github.com/aqueducthq/aqueduct/cmd/server/handler"
 	"github.com/aqueducthq/aqueduct/cmd/server/routes"
@@ -109,6 +110,12 @@ func (h *WorkflowObjectsGetHandler) Perform(ctx context.Context, interfaceArgs i
 	}, http.StatusOK, nil
 }
 
+// stringHasBracketSyntaxInterpolation checks if a string contains at least one parameter defined with '{ }' syntax.
+func stringHasBracketSyntaxInterpolation(s string) bool {
+	pattern := `\{\s*[\w-]+\s*\}`
+	return regexp.MustCompile(pattern).MatchString(s)
+}
+
 // GetDistinctLoadOpsByWorkflow returns a definitive list of all distinct save operators for a given workflow.
 // Fills in any parameterized fields on the operator specs.
 func GetDistinctLoadOpsByWorkflow(
@@ -124,6 +131,20 @@ func GetDistinctLoadOpsByWorkflow(
 	if err != nil {
 		return nil, errors.Wrap(err, "Unexpected error occurred when retrieving workflow objects.")
 	}
+
+	// TODO(ENG-3015): Until this task is addressed, it's safest to exclude parameterized S3 file paths altogether.
+	//  This means that the returned list of objects may not be complete, but at least it will not error when the
+	//  user attempts to delete workflow objects.
+	filteredSaveOpList := make([]views.LoadOperator, 0, len(saveOpList))
+	for _, op := range saveOpList {
+		s3LoadParams, ok := op.Spec.Parameters.(*connector.S3LoadParams)
+		if ok {
+			if !stringHasBracketSyntaxInterpolation(s3LoadParams.Filepath) {
+				filteredSaveOpList = append(filteredSaveOpList, op)
+			}
+		}
+	}
+	saveOpList = filteredSaveOpList
 
 	// Now, we check the list of save operators for any that have parameterized table names.
 	// Since these parameterized names are not present on the operator spec, but are instead filled in on the fly at runtime,
