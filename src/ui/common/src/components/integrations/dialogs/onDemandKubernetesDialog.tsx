@@ -48,6 +48,7 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
     error,
     isLoading,
   } = useEnvironmentGetQuery({ apiKey: user.apiKey });
+  console.log('k8s dialog', environment);
   const { register, setValue } = useFormContext();
 
   const [currentStep, setCurrentStep] = useState('INITIAL');
@@ -73,302 +74,6 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
     setValue('k8s_type', K8S_TYPES.ONDEMAND_K8S_AWS);
   };
 
-  const InitialStepLayout: React.FC<IntegrationDialogProps> = ({
-    user,
-    editMode = false,
-    onCloseDialog,
-    loading,
-    disabled,
-  }) => {
-    return (
-      <Box>
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div>
-            <Typography variant="h5" sx={{ color: 'black' }}>
-              Connect to Kubernetes
-            </Typography>
-          </div>
-        </DialogTitle>
-        <DialogContent sx={{ marginTop: '8px' }}>
-          <Button
-            sx={{
-              textTransform: 'none',
-              marginBottom: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-            onClick={handleRegularK8s}
-          >
-            <IntegrationLogo
-              service={`Kubernetes`}
-              activated={true}
-              size="small"
-            />
-            <Typography
-              variant="body2"
-              sx={{ color: 'black', fontSize: '18px' }}
-            >
-              I have an existing Kubernetes cluster I&apos;d like to use
-            </Typography>
-          </Button>
-          <Button
-            sx={{
-              textTransform: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-            onClick={handleOndemandK8s}
-          >
-            <IntegrationLogo
-              service={'Aqueduct'}
-              activated={SupportedIntegrations['Aqueduct'].activated}
-              size="small"
-            />
-            <Typography
-              variant="body2"
-              sx={{ color: 'black', fontSize: '18px' }}
-            >
-              I&apos;d like Aqueduct to create & manage a cluster for me
-            </Typography>
-          </Button>
-        </DialogContent>
-        <DialogActions>
-          <Button autoFocus onClick={onCloseDialog}>
-            Cancel
-          </Button>
-        </DialogActions>
-      </Box>
-    );
-  };
-
-  interface RegularK8sStepLayoutProps extends IntegrationDialogProps {
-    inK8sCluster?: boolean;
-  }
-
-  // We're going to need to share some more info with the dialogs, as they're not all just forms that we can
-  // register anymore in the case of this layout.
-  const RegularK8sStepLayout: React.FC<RegularK8sStepLayoutProps> = ({
-    user,
-    editMode,
-    onCloseDialog,
-    loading,
-    disabled,
-    inK8sCluster = false,
-  }) => {
-    const methods = useFormContext();
-    const dispatch: AppDispatch = useDispatch();
-
-    return (
-      <>
-        <DialogHeader integrationToEdit={undefined} service={'Kubernetes'} />
-        <IntegrationTextInputField
-          name="name"
-          spellCheck={false}
-          required={true}
-          label="Name*"
-          description="Provide a unique name to refer to this integration."
-          placeholder={'my_kubernetes_integration'}
-          onChange={(event) => {
-            methods.setValue('name', event.target.value);
-          }}
-          disabled={false}
-        />
-        <KubernetesDialog
-          user={user}
-          editMode={false}
-          onCloseDialog={onCloseDialog}
-          loading={loading}
-          disabled={disabled}
-          inK8sCluster={inK8sCluster}
-        />
-        <DialogActionButtons
-          onCloseDialog={onCloseDialog}
-          loading={loading}
-          disabled={disabled}
-          onSubmit={async () => {
-            await methods.handleSubmit((data) => {
-              // Remove the name field from request body to avoid pydantic errors.
-              // Name needs to be passed in as a header instead. Dunno why it's not part of the body :shrug:
-              const name = data.name;
-              delete data.name;
-              // Remove extraneous fields if they are added when filling out the form.
-              delete data.k8s_type;
-              delete data.type;
-
-              dispatch(
-                handleConnectToNewIntegration({
-                  apiKey: user.apiKey,
-                  service: 'Kubernetes',
-                  name: name,
-                  config: data,
-                })
-              );
-            })(); // Remember the last two parens to call the function!
-          }}
-        />
-      </>
-    );
-  };
-
-  const OnDemandK8sStep: React.FC<IntegrationDialogProps> = ({
-    user,
-    editMode,
-    onCloseDialog,
-    loading,
-    disabled,
-  }) => {
-    return (
-      <>
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <IntegrationLogo
-            service={'Aqueduct'}
-            activated={SupportedIntegrations['Aqueduct'].activated}
-            size="small"
-          />
-          <div>
-            <Typography variant="h5" sx={{ color: 'black' }}>
-              +
-            </Typography>
-          </div>
-          <IntegrationLogo
-            service={'Kubernetes'}
-            activated={SupportedIntegrations['Kubernetes'].activated}
-            size="small"
-          />
-          <div>
-            <Typography variant="h5" sx={{ color: 'black' }}>
-              Aqueduct-managed Kubernetes
-            </Typography>
-          </div>
-        </DialogTitle>
-        <DialogContent
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            paddingLeft: '54px',
-            gap: '32px',
-            marginTop: '16px',
-            '& button': { backgroundColor: '#F8F8F8' },
-          }}
-        >
-          <Button onClick={handleAWSClick}>
-            <IntegrationLogo
-              service={'Amazon'}
-              activated={SupportedIntegrations['Amazon'].activated}
-              size="large"
-            />
-          </Button>
-          <Button disabled={true}>
-            <IntegrationLogo
-              service={'GCP'}
-              activated={SupportedIntegrations['GCP'].activated}
-              size="large"
-            />
-          </Button>
-          <Button disabled={true}>
-            <IntegrationLogo
-              service={'Azure'}
-              activated={SupportedIntegrations['Azure'].activated}
-              size="large"
-            />
-          </Button>
-        </DialogContent>
-        <DialogActions>
-          <Button autoFocus onClick={handlePrevious}>
-            Previous
-          </Button>
-          <Button autoFocus onClick={onCloseDialog}>
-            Cancel
-          </Button>
-        </DialogActions>
-      </>
-    );
-  };
-
-  const OnDemandK8sAWSStep: React.FC<IntegrationDialogProps> = ({
-    user,
-    editMode,
-    onCloseDialog,
-    loading,
-    disabled,
-  }) => {
-    const methods = useFormContext();
-    const dispatch: AppDispatch = useDispatch();
-
-    return (
-      <>
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
-          <IntegrationLogo
-            service={'Aqueduct'}
-            activated={SupportedIntegrations['Aqueduct'].activated}
-            size="small"
-          />
-          <div>
-            <Typography variant="h5" sx={{ color: 'black' }}>
-              +
-            </Typography>
-          </div>
-          <IntegrationLogo
-            service={'AWS'}
-            activated={SupportedIntegrations['Kubernetes'].activated}
-            size="small"
-          />
-          <div>
-            <Typography variant="h5" sx={{ color: 'black' }}>
-              Aqueduct-managed Kubernetes
-            </Typography>
-          </div>
-        </DialogTitle>
-        <IntegrationTextInputField
-          name="name"
-          spellCheck={false}
-          required={true}
-          label="Name*"
-          description="Provide a unique name to refer to this integration."
-          placeholder={'my_kubernetes_integration'}
-          onChange={(event) => {
-            methods.setValue('name', event.target.value);
-          }}
-          disabled={false}
-        />
-        <AWSDialog
-          user={user}
-          disabled={disabled}
-          loading={loading}
-          onCloseDialog={onCloseDialog}
-          editMode={false}
-        />
-        <DialogActionButtons
-          onCloseDialog={onCloseDialog}
-          loading={loading}
-          disabled={disabled}
-          onSubmit={async () => {
-            await methods.handleSubmit((data) => {
-              // Remove the name field from request body to avoid pydantic errors.
-              // Name needs to be passed in as a header instead. Dunno why it's not part of the body :shrug:
-              const name = data.name;
-              delete data.name;
-              // Remove extraneous fields if they are added when filling out the form.
-              delete data.k8s_type;
-              delete data.type;
-
-              dispatch(
-                handleConnectToNewIntegration({
-                  apiKey: user.apiKey,
-                  service: 'Kubernetes',
-                  name: name,
-                  config: data,
-                })
-              );
-            })(); // Remember the last two parens to call the function!
-          }}
-        />
-      </>
-    );
-  };
-
   switch (currentStep) {
     case 'INITIAL':
       return (
@@ -378,6 +83,8 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
           loading={loading}
           onCloseDialog={onCloseDialog}
           editMode={editMode}
+          handleOnDemandK8s={handleOndemandK8s}
+          handleRegularK8s={handleRegularK8s}
         />
       );
     case 'REGULAR_K8S':
@@ -399,6 +106,8 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
           loading={loading}
           onCloseDialog={onCloseDialog}
           editMode={editMode}
+          handlePrevious={handlePrevious}
+          handleAWSClick={handleAWSClick}
         />
       );
     case 'ONDEMAND_K8S_AWS':
@@ -419,9 +128,322 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
           loading={loading}
           onCloseDialog={onCloseDialog}
           editMode={editMode}
+          handleOnDemandK8s={handleOndemandK8s}
+          handleRegularK8s={handleRegularK8s}
         />
       );
   }
+};
+
+interface InitialStepLayoutProps extends IntegrationDialogProps {
+  handleRegularK8s: () => void;
+  handleOnDemandK8s: () => void;
+}
+
+const InitialStepLayout: React.FC<InitialStepLayoutProps> = ({
+  user,
+  editMode = false,
+  onCloseDialog,
+  loading,
+  disabled,
+  handleRegularK8s,
+  handleOnDemandK8s,
+}) => {
+  return (
+    <Box>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div>
+          <Typography variant="h5" sx={{ color: 'black' }}>
+            Connect to Kubernetes
+          </Typography>
+        </div>
+      </DialogTitle>
+      <DialogContent sx={{ marginTop: '8px' }}>
+        <Button
+          sx={{
+            textTransform: 'none',
+            marginBottom: '8px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+          onClick={handleRegularK8s}
+        >
+          <IntegrationLogo
+            service={`Kubernetes`}
+            activated={true}
+            size="small"
+          />
+          <Typography
+            variant="body2"
+            sx={{ color: 'black', fontSize: '18px' }}
+          >
+            I have an existing Kubernetes cluster I&apos;d like to use
+          </Typography>
+        </Button>
+        <Button
+          sx={{
+            textTransform: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+          }}
+          onClick={handleOnDemandK8s}
+        >
+          <IntegrationLogo
+            service={'Aqueduct'}
+            activated={SupportedIntegrations['Aqueduct'].activated}
+            size="small"
+          />
+          <Typography
+            variant="body2"
+            sx={{ color: 'black', fontSize: '18px' }}
+          >
+            I&apos;d like Aqueduct to create & manage a cluster for me
+          </Typography>
+        </Button>
+      </DialogContent>
+      <DialogActions>
+        <Button autoFocus onClick={onCloseDialog}>
+          Cancel
+        </Button>
+      </DialogActions>
+    </Box>
+  );
+};
+
+const OnDemandK8sAWSStep: React.FC<IntegrationDialogProps> = ({
+  user,
+  editMode,
+  onCloseDialog,
+  loading,
+  disabled,
+}) => {
+  const methods = useFormContext();
+  const dispatch: AppDispatch = useDispatch();
+
+  return (
+    <>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
+        <IntegrationLogo
+          service={'Aqueduct'}
+          activated={SupportedIntegrations['Aqueduct'].activated}
+          size="small"
+        />
+        <div>
+          <Typography variant="h5" sx={{ color: 'black' }}>
+            +
+          </Typography>
+        </div>
+        <IntegrationLogo
+          service={'AWS'}
+          activated={SupportedIntegrations['Kubernetes'].activated}
+          size="small"
+        />
+        <div>
+          <Typography variant="h5" sx={{ color: 'black' }}>
+            Aqueduct-managed Kubernetes
+          </Typography>
+        </div>
+      </DialogTitle>
+      <IntegrationTextInputField
+        name="name"
+        spellCheck={false}
+        required={true}
+        label="Name*"
+        description="Provide a unique name to refer to this integration."
+        placeholder={'my_kubernetes_integration'}
+        onChange={(event) => {
+          methods.setValue('name', event.target.value);
+        }}
+        disabled={false}
+      />
+      <AWSDialog
+        user={user}
+        disabled={disabled}
+        loading={loading}
+        onCloseDialog={onCloseDialog}
+        editMode={false}
+      />
+      <DialogActionButtons
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+        onSubmit={async () => {
+          await methods.handleSubmit((data) => {
+            // Remove the name field from request body to avoid pydantic errors.
+            // Name needs to be passed in as a header instead. Dunno why it's not part of the body :shrug:
+            const name = data.name;
+            delete data.name;
+            // Remove extraneous fields if they are added when filling out the form.
+            delete data.k8s_type;
+            delete data.type;
+
+            dispatch(
+              handleConnectToNewIntegration({
+                apiKey: user.apiKey,
+                service: 'Kubernetes',
+                name: name,
+                config: data,
+              })
+            );
+          })(); // Remember the last two parens to call the function!
+        }}
+      />
+    </>
+  );
+};
+
+interface OnDemandK8sStepProps extends IntegrationDialogProps {
+  handlePrevious: () => void;
+  handleAWSClick: () => void;
+}
+
+const OnDemandK8sStep: React.FC<OnDemandK8sStepProps> = ({
+  user,
+  editMode,
+  onCloseDialog,
+  loading,
+  disabled,
+  handlePrevious,
+  handleAWSClick
+}) => {
+  return (
+    <>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <IntegrationLogo
+          service={'Aqueduct'}
+          activated={SupportedIntegrations['Aqueduct'].activated}
+          size="small"
+        />
+        <div>
+          <Typography variant="h5" sx={{ color: 'black' }}>
+            +
+          </Typography>
+        </div>
+        <IntegrationLogo
+          service={'Kubernetes'}
+          activated={SupportedIntegrations['Kubernetes'].activated}
+          size="small"
+        />
+        <div>
+          <Typography variant="h5" sx={{ color: 'black' }}>
+            Aqueduct-managed Kubernetes
+          </Typography>
+        </div>
+      </DialogTitle>
+      <DialogContent
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          paddingLeft: '54px',
+          gap: '32px',
+          marginTop: '16px',
+          '& button': { backgroundColor: '#F8F8F8' },
+        }}
+      >
+        <Button onClick={handleAWSClick}>
+          <IntegrationLogo
+            service={'Amazon'}
+            activated={SupportedIntegrations['Amazon'].activated}
+            size="large"
+          />
+        </Button>
+        <Button disabled={true}>
+          <IntegrationLogo
+            service={'GCP'}
+            activated={SupportedIntegrations['GCP'].activated}
+            size="large"
+          />
+        </Button>
+        <Button disabled={true}>
+          <IntegrationLogo
+            service={'Azure'}
+            activated={SupportedIntegrations['Azure'].activated}
+            size="large"
+          />
+        </Button>
+      </DialogContent>
+      <DialogActions>
+        <Button autoFocus onClick={handlePrevious}>
+          Previous
+        </Button>
+        <Button autoFocus onClick={onCloseDialog}>
+          Cancel
+        </Button>
+      </DialogActions>
+    </>
+  );
+};
+
+interface RegularK8sStepLayoutProps extends IntegrationDialogProps {
+  inK8sCluster?: boolean;
+}
+// We're going to need to share some more info with the dialogs, as they're not all just forms that we can
+// register anymore in the case of this layout.
+const RegularK8sStepLayout: React.FC<RegularK8sStepLayoutProps> = ({
+  user,
+  editMode,
+  onCloseDialog,
+  loading,
+  disabled,
+  inK8sCluster = false,
+}) => {
+  const methods = useFormContext();
+  const dispatch: AppDispatch = useDispatch();
+
+  return (
+    <>
+      <DialogHeader integrationToEdit={undefined} service={'Kubernetes'} />
+      <IntegrationTextInputField
+        name="name"
+        spellCheck={false}
+        required={true}
+        label="Name*"
+        description="Provide a unique name to refer to this integration."
+        placeholder={'my_kubernetes_integration'}
+        onChange={(event) => {
+          methods.setValue('name', event.target.value);
+        }}
+        disabled={false}
+      />
+      <KubernetesDialog
+        user={user}
+        editMode={false}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+        inK8sCluster={inK8sCluster}
+      />
+      <DialogActionButtons
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+        onSubmit={async () => {
+          await methods.handleSubmit((data) => {
+            // Remove the name field from request body to avoid pydantic errors.
+            // Name needs to be passed in as a header instead. Dunno why it's not part of the body :shrug:
+            const name = data.name;
+            delete data.name;
+            // Remove extraneous fields if they are added when filling out the form.
+            delete data.k8s_type;
+            delete data.type;
+
+            console.log('handleSubmit data: ', data);
+
+            dispatch(
+              handleConnectToNewIntegration({
+                apiKey: user.apiKey,
+                service: 'Kubernetes',
+                name: name,
+                config: data,
+              })
+            );
+          })(); // Remember the last two parens to call the function!
+        }}
+      />
+    </>
+  );
 };
 
 export function getOnDemandKubernetesValidationSchema() {
