@@ -29,15 +29,12 @@ export const KubernetesDialog: React.FC<KuberentesDialogProps> = ({
   const { register, setValue, getValues } = useFormContext();
   const use_same_cluster = getValues('use_same_cluster');
 
-  //register('use_same_cluster');
-
   useEffect(() => {
     if (!use_same_cluster) {
       setValue('use_same_cluster', 'false');
     }
   }, []);
 
-  
   return (
     <Box sx={{ mt: 2 }}>
       {inK8sCluster && (
@@ -86,7 +83,6 @@ export function getKubernetesValidationSchema() {
   return Yup.object().shape({
     name: Yup.string().required('Please enter a name.'),
     use_same_cluster: Yup.string().transform((value) => {
-      console.log('usesamecluster transformer: ', value);
       if (value === 'true') {
         return 'true';
       }

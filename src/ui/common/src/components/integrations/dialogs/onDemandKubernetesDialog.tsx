@@ -48,7 +48,6 @@ export const OnDemandKubernetesDialog: React.FC<IntegrationDialogProps> = ({
     error,
     isLoading,
   } = useEnvironmentGetQuery({ apiKey: user.apiKey });
-  console.log('k8s dialog', environment);
   const { register, setValue } = useFormContext();
 
   const [currentStep, setCurrentStep] = useState('INITIAL');
@@ -174,10 +173,7 @@ const InitialStepLayout: React.FC<InitialStepLayoutProps> = ({
             activated={true}
             size="small"
           />
-          <Typography
-            variant="body2"
-            sx={{ color: 'black', fontSize: '18px' }}
-          >
+          <Typography variant="body2" sx={{ color: 'black', fontSize: '18px' }}>
             I have an existing Kubernetes cluster I&apos;d like to use
           </Typography>
         </Button>
@@ -195,10 +191,7 @@ const InitialStepLayout: React.FC<InitialStepLayoutProps> = ({
             activated={SupportedIntegrations['Aqueduct'].activated}
             size="small"
           />
-          <Typography
-            variant="body2"
-            sx={{ color: 'black', fontSize: '18px' }}
-          >
+          <Typography variant="body2" sx={{ color: 'black', fontSize: '18px' }}>
             I&apos;d like Aqueduct to create & manage a cluster for me
           </Typography>
         </Button>
@@ -306,7 +299,7 @@ const OnDemandK8sStep: React.FC<OnDemandK8sStepProps> = ({
   loading,
   disabled,
   handlePrevious,
-  handleAWSClick
+  handleAWSClick,
 }) => {
   return (
     <>
@@ -428,8 +421,6 @@ const RegularK8sStepLayout: React.FC<RegularK8sStepLayoutProps> = ({
             // Remove extraneous fields if they are added when filling out the form.
             delete data.k8s_type;
             delete data.type;
-
-            console.log('handleSubmit data: ', data);
 
             dispatch(
               handleConnectToNewIntegration({
