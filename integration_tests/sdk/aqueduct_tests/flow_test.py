@@ -13,6 +13,7 @@ from aqueduct import check, metric, op
 from ..shared.data_objects import DataObject
 from ..shared.flow_helpers import publish_flow_test, trigger_flow_test, wait_for_flow_runs
 from ..shared.naming import generate_new_flow_name, generate_table_name
+from ..shared.relational import all_relational_DBs
 from .extract import extract
 from .save import save
 from .test_functions.sentiment.model import sentiment_model
@@ -626,6 +627,7 @@ def test_delete_flow_with_name(client, flow_name, engine):
     client.delete_flow(flow_identifier=flow.id())
 
 
+@pytest.mark.enable_only_for_data_integration_type(*all_relational_DBs())
 def test_flow_with_failed_compute_operators(
     client, flow_name, data_integration, engine, data_validator
 ):
