@@ -2,7 +2,23 @@
 
 ## Related issue number (if any)
 
-## Loom demo (if any)
+## Test Plans
+- [ ] This PR involves UI changes
+- [ ] This PR involves SDK changes
+  - [ ] Have integration test that covers my change
+  - [ ] Added 'run_integration_test' label to this PR
+  - [ ] If you are changing user-facing APIs, the change is backward compatible
+- [ ] This PR involves backend (go and executor changes)
+  - [ ] Have integration test that covers my change
+  - [ ] If changing REST endpoint, have backend test that covers this change
+  - [ ] Added 'run_integration_test' label to this PR
+  - [ ] This PR involves changes in database layer
+    - [ ] There's a database unit test covering this change
+- [ ] This PR involves engine-specific changes
+  - [ ] All manual_qa_tests workflows works with this change
+- [ ] This PR involves UI change
+  - [ ] All manual_aq_tests workflows works with this feature
+  - [ ] If changing a component, all callers to this component are updated
 
 ## Checklist before requesting a review
 - [ ] I have created a descriptive PR title. The PR title should complete the sentence "This PR...".
