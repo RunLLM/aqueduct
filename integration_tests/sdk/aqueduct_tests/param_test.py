@@ -661,7 +661,9 @@ def test_local_tf_keras_data(client, flow_name, engine):
 
 
 @pytest.mark.enable_only_for_data_resource_type(*all_relational_DBs())
-def test_save_sql_table_name_parameterized(client, data_validator, data_resource, flow_name, engine):
+def test_save_sql_table_name_parameterized(
+    client, data_validator, data_resource, flow_name, engine
+):
     table_to_save = extract(data_resource, DataObject.SENTIMENT)
 
     initial_table_name = "output_" + str(uuid.uuid4()).replace("-", "_")

@@ -29,8 +29,8 @@ from aqueduct.flow import Flow
 from aqueduct.github import Github
 from aqueduct.logger import logger
 from aqueduct.models.dag import Metadata, RetentionPolicy
-from aqueduct.models.resource import BaseResource, ResourceInfo
 from aqueduct.models.operators import ParamSpec, S3LoadParams
+from aqueduct.models.resource import BaseResource, ResourceInfo
 from aqueduct.models.response_models import SavedObjectUpdate
 from aqueduct.resources.airflow import AirflowResource
 from aqueduct.resources.aws import AWSResource
@@ -912,7 +912,7 @@ class Client:
                     filepath = saved_obj_to_delete.spec.parameters.filepath
                     if len(re.findall(USER_TAG_PATTERN, filepath)) > 0:
                         s3_parameterized_filepaths.append(
-                            (saved_obj_to_delete.integration_name, filepath)
+                            (saved_obj_to_delete.resource_name, filepath)
                         )
 
         if len(s3_parameterized_filepaths) > 0:
@@ -921,8 +921,8 @@ class Client:
                 "combinations in `saved_objects_to_delete` are parameterized: \n"
                 + ", ".join(
                     [
-                        f"{integration_name}: {filepath}"
-                        for integration_name, filepath in s3_parameterized_filepaths
+                        f"{resource_name}: {filepath}"
+                        for resource_name, filepath in s3_parameterized_filepaths
                     ]
                 )
             )
