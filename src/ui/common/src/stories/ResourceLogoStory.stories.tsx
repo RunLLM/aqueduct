@@ -3,10 +3,10 @@ import { styled } from '@mui/material/styles';
 import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
-import IntegrationLogo from '../components/integrations/logo';
+import IntegrationLogo from '../components/resources/logo';
 import { theme } from '../styles/theme/theme';
-import { Service } from '../utils/integrations';
-import SupportedIntegrations from '../utils/SupportedIntegrations';
+import { Service } from '../utils/resources';
+import SupportedIntegrations from '../utils/SupportedResources';
 
 // Darken the background so that we can see the component's bounding box.
 const BackgroundHighlighter = styled(Box)(() => {
