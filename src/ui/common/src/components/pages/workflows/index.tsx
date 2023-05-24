@@ -6,6 +6,7 @@ import { useDispatch } from 'react-redux';
 import {
   useDagGetQuery,
   useDagResultsGetQuery,
+  useDagsGetQuery,
   useWorkflowsGetQuery,
 } from '../../../handlers/AqueductApi';
 import { AppDispatch } from '../../../stores/store';
@@ -148,6 +149,17 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         apiKey: user.apiKey,
         workflowId: workflowId,
       });
+
+
+      const {
+        data: dags,
+        error: dagsError,
+        isLoading: dagsLoading,
+      } = useDagsGetQuery({
+        apiKey: user.apiKey,
+        workflowId: workflowId,
+      });
+
       let status = ExecutionStatus.Unknown;
 
       if (!dagResultsLoading && !dagResultsError && dagResults.length > 0) {
@@ -155,6 +167,8 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         if (latestDagResult) {
           status = latestDagResult.exec_state.status;
         }
+      } else if (!dagsLoading && !dagsError && dags.length > 0) {
+        status = ExecutionStatus.Registered;
       }
 
       return <ExecutionStatusLink name={row.name} url={url} status={status} />;
@@ -172,12 +186,23 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         workflowId: workflowId,
       });
 
+      const {
+        data: dags,
+        error: dagsError,
+        isLoading: dagsLoading,
+      } = useDagsGetQuery({
+        apiKey: user.apiKey,
+        workflowId: workflowId,
+      });
+
       let latestDagId;
       if (!dagResultsLoading && !dagResultsError && dagResults.length > 0) {
         const latestDagResult = getLatestDagResult(dagResults);
         latestDagId = latestDagResult.dag_id;
+      } else if (!dagsLoading && !dagsError && dags.length > 0) {
+        latestDagId = dags[0].id;
       }
-      const {
+      let {
         data: dag,
         error: dagError,
         isLoading: dagLoading,
@@ -191,8 +216,8 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           skip: dagResultsLoading && latestDagId,
         }
       );
+      let nodes = useWorkflowNodes(user.apiKey, workflowId, latestDagId);
 
-      const nodes = useWorkflowNodes(user.apiKey, workflowId, latestDagId);
 
       let engines = ['Unknown'];
       if (!dagLoading && !dagError && dag) {
@@ -227,12 +252,23 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         workflowId: workflowId,
       });
 
+      const {
+        data: dags,
+        error: dagsError,
+        isLoading: dagsLoading,
+      } = useDagsGetQuery({
+        apiKey: user.apiKey,
+        workflowId: workflowId,
+      });
+
       let latestDagResultId;
       let latestDagId;
       if (!dagResultsLoading && !dagResultsError && dagResults.length > 0) {
         const latestDagResult = getLatestDagResult(dagResults);
         latestDagResultId = latestDagResult.id;
         latestDagId = latestDagResult.dag_id;
+      } else if (!dagsLoading && !dagsError && dags.length > 0) {
+        latestDagId = dags[0].id;
       }
 
       const nodes = useWorkflowNodes(user.apiKey, workflowId, latestDagId);
@@ -250,7 +286,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
             metricId: op.id,
             name: op.name,
             value: nodesResults.artifacts[artifactId]?.content_serialized,
-            status: nodesResults.artifacts[artifactId]?.exec_state?.status,
+            status: nodesResults.artifacts[artifactId]?.exec_state?.status ?? ExecutionStatus.Registered,
           };
         });
       return <MetricItem metrics={metricNodes} />;
@@ -267,12 +303,23 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         workflowId: workflowId,
       });
 
+      const {
+        data: dags,
+        error: dagsError,
+        isLoading: dagsLoading,
+      } = useDagsGetQuery({
+        apiKey: user.apiKey,
+        workflowId: workflowId,
+      });
+
       let latestDagResultId;
       let latestDagId;
       if (!dagResultsLoading && !dagResultsError && dagResults.length > 0) {
         const latestDagResult = getLatestDagResult(dagResults);
         latestDagResultId = latestDagResult.id;
         latestDagId = latestDagResult.dag_id;
+      } else if (!dagsLoading && !dagsError && dags.length > 0) {
+        latestDagId = dags[0].id;
       }
 
       const nodes = useWorkflowNodes(user.apiKey, workflowId, latestDagId);
@@ -289,7 +336,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           return {
             checkId: op.id,
             name: op.name,
-            status: nodesResults.artifacts[artifactId]?.exec_state?.status,
+            status: nodesResults.artifacts[artifactId]?.exec_state?.status ?? ExecutionStatus.Registered,
             level: op.spec.check.level,
             value: nodesResults.artifacts[artifactId]?.content_serialized,
             timestamp:
