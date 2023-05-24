@@ -41,7 +41,7 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
   const [fileData, setFileData] = useState<FileData | null>(null);
 
   const { register, setValue } = useFormContext();
-  register('use_as_storage');
+  register('use_as_storage', { value: 'false' });
   const [useAsMetadataStorage, setUseAsMetadataStorage] =
     useState<string>('false');
 
@@ -251,6 +251,13 @@ export function getS3ValidationSchema() {
     type: Yup.string().required('Please select a credential type'),
     bucket: Yup.string().required('Please enter a bucket name'),
     region: Yup.string().required('Please enter a region'),
+    use_as_storage: Yup.string().transform((value) => {
+      if (value === 'true') {
+        return 'true';
+      }
+
+      return 'false';
+    }),
     access_key_id: Yup.string().when('type', {
       is: 'access_key',
       then: Yup.string().required('Please enter an access key id'),
@@ -288,13 +295,6 @@ export function getS3ValidationSchema() {
         })
         .required('Please upload a credentials file'),
       otherwise: null,
-    }),
-    use_as_storage: Yup.string().transform((value) => {
-      if (value === 'true') {
-        return 'true';
-      }
-
-      return 'false';
     }),
   });
 }
