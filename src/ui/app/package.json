@@ -5,8 +5,8 @@
   "scripts": {
     "start": "parcel --no-cache index.html",
     "build": "parcel build --public-url /dist --dist-dir dist/default index.html",
-    "lint": "eslint '*/**/*.{js,ts,tsx}' --format table",
-    "lint:fix": "eslint '*/**/*.{js,ts,tsx}' --format table --fix"
+    "lint": "npx eslint *.ts* **/*.ts */**.js *.js --format table",
+    "lint:fix": "npx eslint *.ts* **/*.ts */**.js *.js --format table --fix"
   },
   "dependencies": {
     "@aqueducthq/common": "0.3.3",
