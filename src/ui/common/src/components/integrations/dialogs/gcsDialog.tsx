@@ -49,7 +49,7 @@ export const GCSDialog: React.FC<GCSDialogProps> = ({
       <Link
         sx={{ fontSize: 'inherit' }}
         target="_blank"
-        href="https://cloud.google.com/docs/authentication/client-libraries#creating_a_service_account"
+        href="https://cloud.google.com/iam/docs/service-accounts-create"
       >
         here
       </Link>
