@@ -170,6 +170,8 @@ export function getEmailValidationSchema() {
       'Please enter at least one receiver'
     ),
     level: Yup.string().required('Please select a notification level'),
-    enabled: Yup.string().transform((value) => { value ? value : EmailDefaultsOnCreate.enabled }),
+    enabled: Yup.string().transform((value) => {
+      value ? value : EmailDefaultsOnCreate.enabled;
+    }),
   });
 }
