@@ -21,7 +21,7 @@ interface KuberentesDialogProps extends ResourceDialogProps {
   inK8sCluster: boolean;
 }
 
-export const KubernetesDialog: React.FC<ResourceDialogProps> = ({
+export const KubernetesDialog: React.FC<KuberentesDialogProps> = ({
   editMode = false,
   user,
   inK8sCluster = false,

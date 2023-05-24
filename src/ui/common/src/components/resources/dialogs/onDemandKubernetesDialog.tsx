@@ -168,11 +168,7 @@ const InitialStepLayout: React.FC<InitialStepLayoutProps> = ({
           }}
           onClick={handleRegularK8s}
         >
-          <IntegrationLogo
-            service={`Kubernetes`}
-            activated={true}
-            size="small"
-          />
+          <ResourceLogo service={`Kubernetes`} activated={true} size="small" />
           <Typography variant="body2" sx={{ color: 'black', fontSize: '18px' }}>
             I have an existing Kubernetes cluster I&apos;d like to use
           </Typography>
@@ -186,9 +182,9 @@ const InitialStepLayout: React.FC<InitialStepLayoutProps> = ({
           }}
           onClick={handleOnDemandK8s}
         >
-          <IntegrationLogo
+          <ResourceLogo
             service={'Aqueduct'}
-            activated={SupportedIntegrations['Aqueduct'].activated}
+            activated={SupportedResources['Aqueduct'].activated}
             size="small"
           />
           <Typography variant="body2" sx={{ color: 'black', fontSize: '18px' }}>
@@ -205,7 +201,7 @@ const InitialStepLayout: React.FC<InitialStepLayoutProps> = ({
   );
 };
 
-const OnDemandK8sAWSStep: React.FC<IntegrationDialogProps> = ({
+const OnDemandK8sAWSStep: React.FC<ResourceDialogProps> = ({
   user,
   editMode,
   onCloseDialog,
@@ -218,9 +214,9 @@ const OnDemandK8sAWSStep: React.FC<IntegrationDialogProps> = ({
   return (
     <>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
-        <IntegrationLogo
+        <ResourceLogo
           service={'Aqueduct'}
-          activated={SupportedIntegrations['Aqueduct'].activated}
+          activated={SupportedResources['Aqueduct'].activated}
           size="small"
         />
         <div>
@@ -228,9 +224,9 @@ const OnDemandK8sAWSStep: React.FC<IntegrationDialogProps> = ({
             +
           </Typography>
         </div>
-        <IntegrationLogo
+        <ResourceLogo
           service={'AWS'}
-          activated={SupportedIntegrations['Kubernetes'].activated}
+          activated={SupportedResources['Kubernetes'].activated}
           size="small"
         />
         <div>
@@ -239,13 +235,13 @@ const OnDemandK8sAWSStep: React.FC<IntegrationDialogProps> = ({
           </Typography>
         </div>
       </DialogTitle>
-      <IntegrationTextInputField
+      <ResourceTextInputField
         name="name"
         spellCheck={false}
         required={true}
         label="Name*"
-        description="Provide a unique name to refer to this integration."
-        placeholder={'my_kubernetes_integration'}
+        description="Provide a unique name to refer to this resource."
+        placeholder={'my_kubernetes_resource'}
         onChange={(event) => {
           methods.setValue('name', event.target.value);
         }}
@@ -273,7 +269,7 @@ const OnDemandK8sAWSStep: React.FC<IntegrationDialogProps> = ({
             delete data.type;
 
             dispatch(
-              handleConnectToNewIntegration({
+              handleConnectToNewResource({
                 apiKey: user.apiKey,
                 service: 'Kubernetes',
                 name: name,
@@ -287,7 +283,7 @@ const OnDemandK8sAWSStep: React.FC<IntegrationDialogProps> = ({
   );
 };
 
-interface OnDemandK8sStepProps extends IntegrationDialogProps {
+interface OnDemandK8sStepProps extends ResourceDialogProps {
   handlePrevious: () => void;
   handleAWSClick: () => void;
 }
@@ -304,9 +300,9 @@ const OnDemandK8sStep: React.FC<OnDemandK8sStepProps> = ({
   return (
     <>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <IntegrationLogo
+        <ResourceLogo
           service={'Aqueduct'}
-          activated={SupportedIntegrations['Aqueduct'].activated}
+          activated={SupportedResources['Aqueduct'].activated}
           size="small"
         />
         <div>
@@ -314,9 +310,9 @@ const OnDemandK8sStep: React.FC<OnDemandK8sStepProps> = ({
             +
           </Typography>
         </div>
-        <IntegrationLogo
+        <ResourceLogo
           service={'Kubernetes'}
-          activated={SupportedIntegrations['Kubernetes'].activated}
+          activated={SupportedResources['Kubernetes'].activated}
           size="small"
         />
         <div>
@@ -336,23 +332,23 @@ const OnDemandK8sStep: React.FC<OnDemandK8sStepProps> = ({
         }}
       >
         <Button onClick={handleAWSClick}>
-          <IntegrationLogo
+          <ResourceLogo
             service={'Amazon'}
-            activated={SupportedIntegrations['Amazon'].activated}
+            activated={SupportedResources['Amazon'].activated}
             size="large"
           />
         </Button>
         <Button disabled={true}>
-          <IntegrationLogo
+          <ResourceLogo
             service={'GCP'}
-            activated={SupportedIntegrations['GCP'].activated}
+            activated={SupportedResources['GCP'].activated}
             size="large"
           />
         </Button>
         <Button disabled={true}>
-          <IntegrationLogo
+          <ResourceLogo
             service={'Azure'}
-            activated={SupportedIntegrations['Azure'].activated}
+            activated={SupportedResources['Azure'].activated}
             size="large"
           />
         </Button>
@@ -369,7 +365,7 @@ const OnDemandK8sStep: React.FC<OnDemandK8sStepProps> = ({
   );
 };
 
-interface RegularK8sStepLayoutProps extends IntegrationDialogProps {
+interface RegularK8sStepLayoutProps extends ResourceDialogProps {
   inK8sCluster?: boolean;
 }
 // We're going to need to share some more info with the dialogs, as they're not all just forms that we can
@@ -387,14 +383,14 @@ const RegularK8sStepLayout: React.FC<RegularK8sStepLayoutProps> = ({
 
   return (
     <>
-      <DialogHeader integrationToEdit={undefined} service={'Kubernetes'} />
-      <IntegrationTextInputField
+      <DialogHeader resourceToEdit={undefined} service={'Kubernetes'} />
+      <ResourceTextInputField
         name="name"
         spellCheck={false}
         required={true}
         label="Name*"
-        description="Provide a unique name to refer to this integration."
-        placeholder={'my_kubernetes_integration'}
+        description="Provide a unique name to refer to this resource."
+        placeholder={'my_kubernetes_resource'}
         onChange={(event) => {
           methods.setValue('name', event.target.value);
         }}
@@ -423,7 +419,7 @@ const RegularK8sStepLayout: React.FC<RegularK8sStepLayoutProps> = ({
             delete data.type;
 
             dispatch(
-              handleConnectToNewIntegration({
+              handleConnectToNewResource({
                 apiKey: user.apiKey,
                 service: 'Kubernetes',
                 name: name,
