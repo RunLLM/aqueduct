@@ -397,9 +397,9 @@ const ResourceSummaryStorybookCard: React.FC = () => {
   );
 };
 
-const ResourceSummaryCardTemplate: ComponentStory<typeof ResourceSummaryStorybookCard> = (args) => (
-  <ResourceSummaryStorybookCard {...args} />
-);
+const ResourceSummaryCardTemplate: ComponentStory<
+  typeof ResourceSummaryStorybookCard
+> = (args) => <ResourceSummaryStorybookCard {...args} />;
 
 export const ResourceSummaryCardStory = ResourceSummaryCardTemplate.bind({});
 
