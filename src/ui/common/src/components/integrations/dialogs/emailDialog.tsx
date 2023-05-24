@@ -162,7 +162,7 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
 export function getEmailValidationSchema() {
   return Yup.object().shape({
     host: Yup.string().required('Please enter a host'),
-    port: Yup.number().required('Please enter a port'),
+    port: Yup.string().required('Please enter a port'),
     user: Yup.string().required('Please enter a sender address'),
     password: Yup.string().required('Please enter a sender password'),
     targets_serialized: Yup.string().required(
