@@ -22,8 +22,8 @@
     "prepare": "vite build",
     "size": "size-limit",
     "analyze": "size-limit --why",
-    "lint": "eslint '*/**/*.{js,ts,tsx}'",
-    "lint:fix": "eslint '*/**/*.{js,ts,tsx}' --format table --fix",
+    "lint": "npx eslint src --format table",
+    "lint:fix": "npx eslint src --format table --fix",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },

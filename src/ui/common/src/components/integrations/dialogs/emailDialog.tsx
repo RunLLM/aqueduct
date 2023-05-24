@@ -34,11 +34,6 @@ export const EmailDefaultsOnCreate = {
   enabled: 'false',
 };
 
-type Props = {
-  onUpdateField: (field: keyof EmailConfig, value: string) => void;
-  value?: EmailConfig;
-};
-
 export const EmailDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
 }) => {
