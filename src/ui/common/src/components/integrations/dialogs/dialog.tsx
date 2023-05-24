@@ -108,7 +108,8 @@ const IntegrationDialog: React.FC<Props> = ({
     // We do this so we can collect name form inputs inside the same form context.
     const name = data.name;
     // remove the name key from data so pydantic doesn't throw error.
-    delete data.name;
+    const config = { ...data };
+    delete config.name;
 
     return editMode
       ? dispatch(
@@ -116,7 +117,7 @@ const IntegrationDialog: React.FC<Props> = ({
             apiKey: user.apiKey,
             integrationId: integrationId,
             name: name,
-            config: data,
+            config: config,
           })
         )
       : dispatch(
@@ -124,7 +125,7 @@ const IntegrationDialog: React.FC<Props> = ({
             apiKey: user.apiKey,
             service: service,
             name: name,
-            config: data,
+            config: config,
           })
         );
   };

@@ -1,7 +1,7 @@
 import { Divider } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React from 'react';
+import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
@@ -34,15 +34,13 @@ export const EmailDefaultsOnCreate = {
   enabled: 'false',
 };
 
-type Props = {
-  onUpdateField: (field: keyof EmailConfig, value: string) => void;
-  value?: EmailConfig;
-};
-
 export const EmailDialog: React.FC<IntegrationDialogProps> = ({
   editMode = false,
 }) => {
   // Retrieve the form context.
+  const [level, setLevel] = useState(EmailDefaultsOnCreate.level);
+  const [enabled, setEnabled] = useState(EmailDefaultsOnCreate.enabled);
+
   const { register, setValue, getValues } = useFormContext();
 
   // Register forms with custom logic.
@@ -51,9 +49,6 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
   register('targets_serialized', {
     value: EmailDefaultsOnCreate.targets_serialized,
   });
-
-  const enabled = getValues('enabled');
-  const level = getValues('level');
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -123,7 +118,9 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
           checked={enabled === 'true'}
           disabled={false}
           onChange={(checked) => {
-            setValue('enabled', checked ? 'true' : 'false');
+            const enabledStr = checked ? 'true' : 'false';
+            setEnabled(enabledStr);
+            setValue('enabled', enabledStr);
           }}
         >
           Enable this notification for all workflows.
@@ -149,6 +146,7 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
           <NotificationLevelSelector
             level={level as NotificationLogLevel}
             onSelectLevel={(level) => {
+              setLevel(level);
               setValue('level', level);
             }}
             enabled={enabled === 'true'}
@@ -162,7 +160,7 @@ export const EmailDialog: React.FC<IntegrationDialogProps> = ({
 export function getEmailValidationSchema() {
   return Yup.object().shape({
     host: Yup.string().required('Please enter a host'),
-    port: Yup.number().required('Please enter a port'),
+    port: Yup.string().required('Please enter a port'),
     user: Yup.string().required('Please enter a sender address'),
     password: Yup.string().required('Please enter a sender password'),
     targets_serialized: Yup.string().required(
