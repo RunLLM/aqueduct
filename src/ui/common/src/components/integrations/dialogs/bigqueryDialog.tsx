@@ -33,7 +33,7 @@ export const BigQueryDialog: React.FC<IntegrationDialogProps> = ({
       <Link
         sx={{ fontSize: 'inherit' }}
         target="_blank"
-        href="https://cloud.google.com/docs/authentication/getting-started#creating_a_service_account"
+        href="https://cloud.google.com/docs/authentication/client-libraries#creating_a_service_account"
       >
         here
       </Link>
