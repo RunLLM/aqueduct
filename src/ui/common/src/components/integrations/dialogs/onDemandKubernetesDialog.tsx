@@ -275,7 +275,7 @@ const OnDemandK8sAWSStep: React.FC<IntegrationDialogProps> = ({
             dispatch(
               handleConnectToNewIntegration({
                 apiKey: user.apiKey,
-                service: 'Kubernetes',
+                service: 'AWS',
                 name: name,
                 config: data,
               })
