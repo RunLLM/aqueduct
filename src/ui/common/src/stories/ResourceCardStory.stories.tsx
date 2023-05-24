@@ -24,7 +24,7 @@ import {
 } from '../utils/resources';
 import ExecutionStatus, { AWSCredentialType } from '../utils/shared';
 
-const ResourceCard: React.FC = () => {
+const ResourceSummaryStorybookCard: React.FC = () => {
   const resources: Resource[] = [
     {
       id: '1',
@@ -397,14 +397,14 @@ const ResourceCard: React.FC = () => {
   );
 };
 
-const ResourceCardTemplate: ComponentStory<typeof ResourceCard> = (args) => (
-  <ResourceCard {...args} />
+const ResourceSummaryCardTemplate: ComponentStory<typeof ResourceSummaryStorybookCard> = (args) => (
+  <ResourceSummaryStorybookCard {...args} />
 );
 
-export const ResourceCardStory = ResourceCardTemplate.bind({});
+export const ResourceSummaryCardStory = ResourceSummaryCardTemplate.bind({});
 
 export default {
-  title: 'Test/ResourceCard',
-  component: ResourceCard,
+  title: 'Test/ResourceSummaryCard',
+  component: ResourceSummaryStorybookCard,
   argTypes: {},
-} as ComponentMeta<typeof ResourceCard>;
+} as ComponentMeta<typeof ResourceSummaryStorybookCard>;

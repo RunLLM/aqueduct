@@ -90,25 +90,10 @@ import {
   ResourceOperatorsGetResponse,
 } from './v2/ResourceOperatorsGet';
 import {
-  resourceOperatorsGetQuery,
-  ResourceOperatorsGetRequest,
-  ResourceOperatorsGetResponse,
-} from './v2/ResourceOperatorsGet';
-import {
   resourcesWorkflowsGetQuery,
   ResourcesWorkflowsGetRequest,
   ResourcesWorkflowsGetResponse,
 } from './v2/ResourcesWorkflowsGet';
-import {
-  resourcesWorkflowsGetQuery,
-  ResourcesWorkflowsGetRequest,
-  ResourcesWorkflowsGetResponse,
-} from './v2/ResourcesWorkflowsGet';
-import {
-  resourceWorkflowsGetQuery,
-  ResourceWorkflowsGetRequest,
-  ResourceWorkflowsGetResponse,
-} from './v2/ResourceWorkflowsGet';
 import {
   resourceWorkflowsGetQuery,
   ResourceWorkflowsGetRequest,
