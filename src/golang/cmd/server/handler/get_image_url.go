@@ -160,9 +160,11 @@ func (h *GetImageURLHandler) Perform(ctx context.Context, interfaceArgs interfac
 				Url: args.imageName,
 			}, http.StatusOK, nil
 		} else if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
-			return emptyResponse, resp.StatusCode, errors.New("Unable to access the requested image. Please double check you have the correct permissions and the image exists")
+			return emptyResponse, resp.StatusCode, errors.New("Unable to access the requested image. Please double check you have the correct permissions.")
+		} else if resp.StatusCode == http.StatusNotFound {
+			return emptyResponse, resp.StatusCode, errors.New("The requested image was not found.")
 		} else {
-			return emptyResponse, resp.StatusCode, errors.Newf("Received unexpected status:", resp.StatusCode)
+			return emptyResponse, resp.StatusCode, errors.Newf("Received unexpected status: %d", resp.StatusCode)
 		}
 	} else {
 		return emptyResponse, http.StatusBadRequest, errors.Newf("Container registry service %s is not supported.", args.service)
