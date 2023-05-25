@@ -72,7 +72,6 @@ export const ResourceItem: React.FC<ResourceItemProps> = ({
     <Box
       display="flex"
       alignItems="center"
-      px={1}
       py="4px"
       width="fit-content"
       sx={{
