@@ -20,20 +20,10 @@ import {
 } from './v2/DagResultsGet';
 import { dagsGetQuery, DagsGetRequest, DagsGetResponse } from './v2/DagsGet';
 import {
-  integrationOperatorsGetQuery,
-  IntegrationOperatorsGetRequest,
-  IntegrationOperatorsGetResponse,
-} from './v2/IntegrationOperatorsGet';
-import {
-  integrationsWorkflowsGetQuery,
-  IntegrationsWorkflowsGetRequest,
-  IntegrationsWorkflowsGetResponse,
-} from './v2/IntegrationsWorkflowsGet';
-import {
-  integrationWorkflowsGetQuery,
-  IntegrationWorkflowsGetRequest,
-  IntegrationWorkflowsGetResponse,
-} from './v2/IntegrationWorkflowsGet';
+  environmentGetQuery,
+  EnvironmentGetRequest,
+  EnvironmentGetResponse,
+} from './v2/EnvironmentGet';
 import {
   storageMigrationListQuery,
   storageMigrationListRequest,
@@ -60,16 +50,6 @@ import {
   NodeCheckGetResponse,
 } from './v2/NodeCheckGet';
 import {
-  nodeCheckGetQuery,
-  NodeCheckGetRequest,
-  NodeCheckGetResponse,
-} from './v2/NodeCheckGet';
-import {
-  nodeCheckResultContentGetQuery,
-  NodeCheckResultContentGetRequest,
-  NodeCheckResultContentGetResponse,
-} from './v2/NodeCheckResultContentGet';
-import {
   nodeCheckResultContentGetQuery,
   NodeCheckResultContentGetRequest,
   NodeCheckResultContentGetResponse,
@@ -79,16 +59,6 @@ import {
   NodeMetricGetRequest,
   NodeMetricGetResponse,
 } from './v2/NodeMetricGet';
-import {
-  nodeMetricGetQuery,
-  NodeMetricGetRequest,
-  NodeMetricGetResponse,
-} from './v2/NodeMetricGet';
-import {
-  nodeMetricResultContentGetQuery,
-  NodeMetricResultContentGetRequest,
-  NodeMetricResultContentGetResponse,
-} from './v2/NodeMetricResultContentGet';
 import {
   nodeMetricResultContentGetQuery,
   NodeMetricResultContentGetRequest,
@@ -114,6 +84,21 @@ import {
   NodesResultsGetRequest,
   NodesResultsGetResponse,
 } from './v2/NodesResultsGet';
+import {
+  resourceOperatorsGetQuery,
+  ResourceOperatorsGetRequest,
+  ResourceOperatorsGetResponse,
+} from './v2/ResourceOperatorsGet';
+import {
+  resourcesWorkflowsGetQuery,
+  ResourcesWorkflowsGetRequest,
+  ResourcesWorkflowsGetResponse,
+} from './v2/ResourcesWorkflowsGet';
+import {
+  resourceWorkflowsGetQuery,
+  ResourceWorkflowsGetRequest,
+  ResourceWorkflowsGetResponse,
+} from './v2/ResourceWorkflowsGet';
 import {
   workflowDeletePostQuery,
   WorkflowDeletePostRequest,
@@ -179,25 +164,32 @@ export const aqueductApi = createApi({
       query: (req) => dagResultsGetQuery(req),
       transformErrorResponse,
     }),
-    integrationOperatorsGet: builder.query<
-      IntegrationOperatorsGetResponse,
-      IntegrationOperatorsGetRequest
+    environmentGet: builder.query<
+      EnvironmentGetResponse,
+      EnvironmentGetRequest
     >({
-      query: (req) => integrationOperatorsGetQuery(req),
+      query: (req) => environmentGetQuery(req),
       transformErrorResponse,
     }),
-    integrationWorkflowsGet: builder.query<
-      IntegrationWorkflowsGetResponse,
-      IntegrationWorkflowsGetRequest
+    resourceOperatorsGet: builder.query<
+      ResourceOperatorsGetResponse,
+      ResourceOperatorsGetRequest
     >({
-      query: (req) => integrationWorkflowsGetQuery(req),
+      query: (req) => resourceOperatorsGetQuery(req),
       transformErrorResponse,
     }),
-    integrationsWorkflowsGet: builder.query<
-      IntegrationsWorkflowsGetResponse,
-      IntegrationsWorkflowsGetRequest
+    resourceWorkflowsGet: builder.query<
+      ResourceWorkflowsGetResponse,
+      ResourceWorkflowsGetRequest
     >({
-      query: (req) => integrationsWorkflowsGetQuery(req),
+      query: (req) => resourceWorkflowsGetQuery(req),
+      transformErrorResponse,
+    }),
+    resourcesWorkflowsGet: builder.query<
+      ResourcesWorkflowsGetResponse,
+      ResourcesWorkflowsGetRequest
+    >({
+      query: (req) => resourcesWorkflowsGetQuery(req),
       transformErrorResponse,
     }),
     nodeArtifactGet: builder.query<
@@ -320,9 +312,10 @@ export const {
   useDagOperatorsGetQuery,
   useDagResultGetQuery,
   useDagResultsGetQuery,
-  useIntegrationOperatorsGetQuery,
-  useIntegrationWorkflowsGetQuery,
-  useIntegrationsWorkflowsGetQuery,
+  useEnvironmentGetQuery,
+  useResourceOperatorsGetQuery,
+  useResourceWorkflowsGetQuery,
+  useResourcesWorkflowsGetQuery,
   useStorageMigrationListQuery,
   useNodeArtifactGetQuery,
   useNodeArtifactResultContentGetQuery,

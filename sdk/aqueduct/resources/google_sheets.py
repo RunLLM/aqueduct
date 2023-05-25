@@ -5,7 +5,6 @@ from aqueduct.artifacts.table_artifact import TableArtifact
 from aqueduct.constants.enums import ArtifactType, GoogleSheetsSaveMode
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
-from aqueduct.models.integration import BaseResource, ResourceInfo
 from aqueduct.models.operators import (
     ExtractSpec,
     GoogleSheetsExtractParams,
@@ -13,6 +12,7 @@ from aqueduct.models.operators import (
     Operator,
     OperatorSpec,
 )
+from aqueduct.models.resource import BaseResource, ResourceInfo
 from aqueduct.resources.validation import validate_is_connected
 from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.utils import generate_uuid
@@ -23,7 +23,7 @@ from .save import _save_artifact
 
 class GoogleSheetsResource(BaseResource):
     """
-    Class for Google Sheets integration.
+    Class for Google Sheets resource.
     """
 
     def __init__(self, dag: DAG, metadata: ResourceInfo):
@@ -39,7 +39,7 @@ class GoogleSheetsResource(BaseResource):
         description: str = "",
     ) -> TableArtifact:
         """
-        Retrieves a spreadsheet from the Google Sheets integration.
+        Retrieves a spreadsheet from the Google Sheets resource.
 
         Args:
             spreadsheet_id:
@@ -55,7 +55,7 @@ class GoogleSheetsResource(BaseResource):
         Returns:
             TableArtifact representing the Google Sheet.
         """
-        integration_info = self._metadata
+        resource_info = self._metadata
 
         op_name = name or "%s query" % self.name()
         artifact_name = output or default_artifact_name_from_op_name(op_name)
@@ -72,8 +72,8 @@ class GoogleSheetsResource(BaseResource):
                         description=description,
                         spec=OperatorSpec(
                             extract=ExtractSpec(
-                                service=integration_info.service,
-                                integration_id=integration_info.id,
+                                service=resource_info.service,
+                                resource_id=resource_info.id,
                                 parameters=GoogleSheetsExtractParams(
                                     spreadsheet_id=spreadsheet_id,
                                 ),
@@ -128,6 +128,6 @@ class GoogleSheetsResource(BaseResource):
         )
 
     def describe(self) -> None:
-        """Prints out a human-readable description of the google sheets integration."""
+        """Prints out a human-readable description of the google sheets resource."""
         print("==================== Google Sheets Resource =============================")
         self._metadata.describe()

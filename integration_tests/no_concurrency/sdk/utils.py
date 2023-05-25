@@ -1,5 +1,5 @@
 SENTIMENT_SQL_QUERY = "select * from hotel_reviews"
 
 
-def get_integration_name() -> str:
+def get_resource_name() -> str:
     return "Demo"

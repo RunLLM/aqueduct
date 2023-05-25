@@ -1,36 +1,26 @@
 import React from 'react';
 
-import { ArtifactResultResponse } from '../../../handlers/responses/artifactDeprecated';
-import { ContentWithLoadingStatus } from '../../../reducers/artifactResultContents';
+import { ArtifactResponse } from '../../../handlers/responses/node';
+import { NodeArtifactResultContentGetResponse } from '../../../handlers/v2/NodeArtifactResultContentGet';
 import { ArtifactType } from '../../../utils/artifacts';
 import { exportCsv } from '../../../utils/preview';
-import { isFailed, isInitial, isLoading } from '../../../utils/shared';
 import { Button } from '../../primitives/Button.styles';
 import { LoadingButton } from '../../primitives/LoadingButton.styles';
 
 type Props = {
-  artifact: ArtifactResultResponse;
-  contentWithLoadingStatus?: ContentWithLoadingStatus;
+  artifact: ArtifactResponse;
+  content?: NodeArtifactResultContentGetResponse;
+  isLoading: boolean;
 };
 
 // CsvExporter returns a CSV download button if the artifact is exportable.
 // Otherwise it returns `null`.
-const CsvExporter: React.FC<Props> = ({
-  artifact,
-  contentWithLoadingStatus,
-}) => {
+const CsvExporter: React.FC<Props> = ({ artifact, content, isLoading }) => {
   if (artifact.type !== ArtifactType.Table) {
     return null;
   }
 
-  if (!contentWithLoadingStatus) {
-    return null;
-  }
-
-  if (
-    isInitial(contentWithLoadingStatus.status) ||
-    isLoading(contentWithLoadingStatus.status)
-  ) {
+  if (isLoading) {
     return (
       <LoadingButton
         variant="contained"
@@ -43,10 +33,7 @@ const CsvExporter: React.FC<Props> = ({
     );
   }
 
-  if (
-    isFailed(contentWithLoadingStatus.status) ||
-    !contentWithLoadingStatus.data
-  ) {
+  if (!content) {
     return (
       <Button variant="contained" sx={{ maxHeight: '32px' }} disabled>
         Export
@@ -60,7 +47,7 @@ const CsvExporter: React.FC<Props> = ({
       sx={{ maxHeight: '32px' }}
       onClick={() => {
         exportCsv(
-          JSON.parse(contentWithLoadingStatus.data),
+          JSON.parse(content.content),
           artifact.name ? artifact.name.replaceAll(' ', '_') : 'data'
         );
       }}

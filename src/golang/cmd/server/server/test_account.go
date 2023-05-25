@@ -45,83 +45,43 @@ func CreateTestAccount(
 	return testUser, nil
 }
 
-// CheckBuiltinIntegrations returns whether the builtin demo and compute integrations already exist.
-// If we notice that the deprecated demo integration exists, we delete it. We expect the caller to add
-// the appropriate demo integration with `connectBuiltinDemoDBIntegration()` next.
-func CheckBuiltinIntegrations(ctx context.Context, s *AqServer, orgID string) (bool, bool, error) {
-	integrations, err := s.IntegrationRepo.GetByOrg(
-		context.Background(),
-		orgID,
-		s.Database,
-	)
-	if err != nil {
-		return false, false, errors.Newf("Unable to get connected integrations: %v", err)
-	}
-
-	demoConnected := false
-	engineConnected := false
-	for _, integrationObject := range integrations {
-		if integrationObject.Name == shared.DeprecatedDemoDBResourceName && integrationObject.Service == shared.Sqlite {
-			if err := s.IntegrationRepo.Delete(
-				ctx,
-				integrationObject.ID,
-				s.Database,
-			); err != nil {
-				return false, false, errors.Newf("Unable to delete deprecated demo integration: %v", err)
-			}
-			continue
-		} else if integrationObject.Name == shared.DemoDbIntegrationName {
-			demoConnected = true
-		} else if integrationObject.Name == shared.AqueductComputeIntegrationName {
-			engineConnected = true
-		}
-
-		if demoConnected && engineConnected {
-			// Builtin integrations already connected
-			return true, true, nil
-		}
-	}
-
-	return demoConnected, engineConnected, nil
-}
-
-// connectBuiltinResources checks for any missing built-in integrations, and connects them if they are missing.
+// connectBuiltinResources checks for any missing built-in resources, and connects them if they are missing.
 // If the deprecated demo db name still exists in the database, we delete it before connecting the new one.
 func connectBuiltinResources(
 	ctx context.Context,
 	s *AqServer,
 	orgID string,
 	user *models.User,
-	integrationRepo repos.Integration,
+	resourceRepo repos.Resource,
 	db database.Database,
 ) error {
-	integrations, err := s.IntegrationRepo.GetByOrg(
+	resources, err := s.ResourceRepo.GetByOrg(
 		context.Background(),
 		orgID,
 		s.Database,
 	)
 	if err != nil {
-		return errors.Newf("Unable to get connected integrations: %v", err)
+		return errors.Newf("Unable to get connected resources: %v", err)
 	}
 
 	demoConnected := false
 	engineConnected := false
 	filesystemConnected := false
-	for _, integrationObject := range integrations {
-		if integrationObject.Name == shared.DeprecatedDemoDBResourceName && integrationObject.Service == shared.Sqlite {
-			if err := s.IntegrationRepo.Delete(
+	for _, resourceObject := range resources {
+		if resourceObject.Name == shared.DeprecatedDemoDBResourceName && resourceObject.Service == shared.Sqlite {
+			if err := s.ResourceRepo.Delete(
 				ctx,
-				integrationObject.ID,
+				resourceObject.ID,
 				s.Database,
 			); err != nil {
-				return errors.Newf("Unable to delete deprecated demo integration: %v", err)
+				return errors.Newf("Unable to delete deprecated demo resource: %v", err)
 			}
 			continue
-		} else if integrationObject.Name == shared.DemoDbIntegrationName {
+		} else if resourceObject.Name == shared.DemoDbName {
 			demoConnected = true
-		} else if integrationObject.Name == shared.AqueductComputeIntegrationName {
+		} else if resourceObject.Name == shared.AqueductComputeName {
 			engineConnected = true
-		} else if integrationObject.Name == shared.ArtifactStorageIntegrationName {
+		} else if resourceObject.Name == shared.ArtifactStorageResourceName {
 			filesystemConnected = true
 		}
 
@@ -132,20 +92,20 @@ func connectBuiltinResources(
 	}
 
 	if !demoConnected {
-		err = connectBuiltinDemoDBIntegration(ctx, user, integrationRepo, db)
+		err = connectBuiltinDemoDBResource(ctx, user, resourceRepo, db)
 		if err != nil {
 			return err
 		}
 	}
 
 	if !engineConnected {
-		err = connectBuiltinComputeIntegration(ctx, user, integrationRepo, db)
+		err = connectBuiltinComputeResource(ctx, user, resourceRepo, db)
 		if err != nil {
 			return err
 		}
 	}
 	if !filesystemConnected {
-		err = connectBuiltinArtifactStorageIntegration(ctx, user, integrationRepo, db)
+		err = connectBuiltinArtifactStorageResource(ctx, user, resourceRepo, db)
 		if err != nil {
 			return err
 		}
@@ -153,29 +113,29 @@ func connectBuiltinResources(
 	return nil
 }
 
-// connectBuiltinDemoDBIntegration adds the builtin demo data integrations for the specified
+// connectBuiltinDemoDBResource adds the builtin demo data resources for the specified
 // user's organization. It returns an error, if any.
-func connectBuiltinDemoDBIntegration(
+func connectBuiltinDemoDBResource(
 	ctx context.Context,
 	user *models.User,
-	integrationRepo repos.Integration,
+	resourceRepo repos.Resource,
 	db database.Database,
 ) error {
-	builtinConfig := demo.GetSqliteIntegrationConfig()
-	if _, _, err := handler.ConnectIntegration(
+	builtinConfig := demo.GetSqliteResourceConfig()
+	if _, _, err := handler.ConnectResource(
 		ctx,
-		nil, // Not registering an AWS integration.
-		&handler.ConnectIntegrationArgs{
+		nil, // Not registering an AWS resource.
+		&handler.ConnectResourceArgs{
 			AqContext: &aq_context.AqContext{
 				User:      *user,
 				RequestID: uuid.New().String(),
 			},
-			Name:     shared.DemoDbIntegrationName,
+			Name:     shared.DemoDbName,
 			Service:  shared.Sqlite,
 			Config:   builtinConfig,
 			UserOnly: false,
 		},
-		integrationRepo,
+		resourceRepo,
 		db,
 	); err != nil {
 		return err
@@ -184,26 +144,26 @@ func connectBuiltinDemoDBIntegration(
 	return nil
 }
 
-func connectBuiltinComputeIntegration(
+func connectBuiltinComputeResource(
 	ctx context.Context,
 	user *models.User,
-	integrationRepo repos.Integration,
+	resourceRepo repos.Resource,
 	db database.Database,
 ) error {
-	if _, _, err := handler.ConnectIntegration(
+	if _, _, err := handler.ConnectResource(
 		ctx,
-		nil, // Not registering an AWS integration.
-		&handler.ConnectIntegrationArgs{
+		nil, // Not registering an AWS resource.
+		&handler.ConnectResourceArgs{
 			AqContext: &aq_context.AqContext{
 				User:      *user,
 				RequestID: uuid.New().String(),
 			},
-			Name:     shared.AqueductComputeIntegrationName,
+			Name:     shared.AqueductComputeName,
 			Service:  shared.Aqueduct,
 			Config:   auth.NewStaticConfig(map[string]string{}),
 			UserOnly: false,
 		},
-		integrationRepo,
+		resourceRepo,
 		db,
 	); err != nil {
 		return err
@@ -211,31 +171,31 @@ func connectBuiltinComputeIntegration(
 	return nil
 }
 
-func connectBuiltinArtifactStorageIntegration(
+func connectBuiltinArtifactStorageResource(
 	ctx context.Context,
 	user *models.User,
-	integrationRepo repos.Integration,
+	resourceRepo repos.Resource,
 	db database.Database,
 ) error {
 	// TODO(ENG-2941): This is currently duplicated in src/golang/config/config.go.
 	defaultStoragePath := path.Join(os.Getenv("HOME"), ".aqueduct", "server", "storage")
 
-	if _, _, err := handler.ConnectIntegration(
+	if _, _, err := handler.ConnectResource(
 		ctx,
-		nil, // Not registering an AWS integration.
-		&handler.ConnectIntegrationArgs{
+		nil, // Not registering an AWS resource.
+		&handler.ConnectResourceArgs{
 			AqContext: &aq_context.AqContext{
 				User:      *user,
 				RequestID: uuid.New().String(),
 			},
-			Name:    shared.ArtifactStorageIntegrationName,
+			Name:    shared.ArtifactStorageResourceName,
 			Service: shared.Filesystem,
 			Config: auth.NewStaticConfig(map[string]string{
 				"location": defaultStoragePath,
 			}),
 			UserOnly: false,
 		},
-		integrationRepo,
+		resourceRepo,
 		db,
 	); err != nil {
 		return err

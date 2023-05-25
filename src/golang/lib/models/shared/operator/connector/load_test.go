@@ -13,9 +13,9 @@ import (
 func TestMarshalAndUnmarshallLoad(t *testing.T) {
 	postgresParams := generateLoadPostgresParams()
 	originalLoad := Load{
-		Service:       shared.Postgres,
-		IntegrationId: uuid.New(),
-		Parameters:    postgresParams,
+		Service:    shared.Postgres,
+		ResourceId: uuid.New(),
+		Parameters: postgresParams,
 	}
 
 	data, err := json.Marshal(&originalLoad)

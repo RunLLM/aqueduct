@@ -50,7 +50,7 @@ type RegisterWorkflowHandler struct {
 	DAGRepo                  repos.DAG
 	DAGEdgeRepo              repos.DAGEdge
 	ExecutionEnvironmentRepo repos.ExecutionEnvironment
-	IntegrationRepo          repos.Integration
+	ResourceRepo             repos.Resource
 	OperatorRepo             repos.Operator
 	WatcherRepo              repos.Watcher
 	WorkflowRepo             repos.Workflow
@@ -105,19 +105,19 @@ func (h *RegisterWorkflowHandler) Prepare(r *http.Request) (interface{}, int, er
 		return nil, statusCode, errors.Wrap(err, "Unable to register workflow.")
 	}
 
-	ok, err := dag_utils.ValidateDagOperatorIntegrationOwnership(
+	ok, err := dag_utils.ValidateDagOperatorResourceOwnership(
 		r.Context(),
 		dagSummary.Dag.Operators,
 		aqContext.OrgID,
 		aqContext.ID,
-		h.IntegrationRepo,
+		h.ResourceRepo,
 		h.Database,
 	)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during integration ownership validation.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during resource ownership validation.")
 	}
 	if !ok {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own the integrations defined in the Dag.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own the resources defined in the Dag.")
 	}
 
 	isUpdate := true
@@ -195,7 +195,7 @@ func (h *RegisterWorkflowHandler) Perform(ctx context.Context, interfaceArgs int
 		ctx,
 		args.ID,
 		args.dagSummary,
-		h.IntegrationRepo,
+		h.ResourceRepo,
 		execEnvByOpId,
 		txn,
 	)

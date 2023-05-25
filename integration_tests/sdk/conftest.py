@@ -5,16 +5,16 @@ from aqueduct.constants.enums import ServiceType
 from aqueduct.models.dag import DAG, Metadata
 
 from aqueduct import Client, global_config, globals
-from sdk.setup_integration import (
+from sdk.setup_resource import (
     get_aqueduct_config,
     get_artifact_store_name,
     has_storage_config,
     is_global_engine_set,
     is_lazy_set,
-    list_compute_integrations,
-    list_data_integrations,
-    setup_compute_integrations,
-    setup_data_integrations,
+    list_compute_resources,
+    list_data_resources,
+    setup_compute_resources,
+    setup_data_resources,
     setup_storage_layer,
 )
 from sdk.shared import globals as test_globals
@@ -24,14 +24,14 @@ from sdk.shared.validator import Validator
 
 
 def pytest_addoption(parser):
-    parser.addoption(f"--data", action="store", default=None)
+    parser.addoption(f"--data-resource", action="store", default=None)
     parser.addoption(f"--engine", action="store", default=None)
     parser.addoption(f"--keep-flows", action="store_true", default=False)
 
     # Sets a global flag that can be toggled if we want to check that a deprecated code path still works.
     parser.addoption(f"--deprecated", action="store_true", default=False)
 
-    # Skips the setup of data/compute integrations for faster testing. Best used as an optimization after first
+    # Skips the setup of data/compute resources for faster testing. Best used as an optimization after first
     # test run of a debugging session.
     parser.addoption(f"--skip-data-setup", action="store_true", default=False)
     parser.addoption(f"--skip-engine-setup", action="store_true", default=False)
@@ -51,11 +51,11 @@ def pytest_configure(config):
     )
     config.addinivalue_line(
         "markers",
-        "enable_only_for_data_integration_type: runs the test only for the supplied data integrations.",
+        "enable_only_for_data_resource_type: runs the test only for the supplied data resources.",
     )
     config.addinivalue_line(
         "markers",
-        "must_have_gpu: the K8s integration is expected to have access to a GPU.",
+        "must_have_gpu: the K8s resource is expected to have access to a GPU.",
     )
     config.addinivalue_line(
         "markers",
@@ -72,36 +72,36 @@ def pytest_configure(config):
 
 
 def pytest_cmdline_main(config):
-    """Gets all the integrations ready for the tests to run. Should only run once, before we even collect any tests."""
+    """Gets all the resources ready for the tests to run. Should only run once, before we even collect any tests."""
     client = Client(*get_aqueduct_config())
     setup_storage_layer(client)
 
-    _parse_flags_and_setup_data_integrations(config, client)
-    _parse_flags_and_setup_compute_integrations(config, client)
+    _parse_flags_and_setup_data_resources(config, client)
+    _parse_flags_and_setup_compute_resources(config, client)
 
 
-def _parse_flags_and_setup_data_integrations(config, client: Client):
+def _parse_flags_and_setup_data_resources(config, client: Client):
     should_skip = config.getoption(f"--skip-data-setup")
     if should_skip:
         return
 
-    data_integration = config.getoption(f"--data")
-    if data_integration is not None:
-        setup_data_integrations(client, filter_to=data_integration)
+    data_resource = config.getoption(f"--data-resource")
+    if data_resource is not None:
+        setup_data_resources(client, filter_to=data_resource)
     else:
-        setup_data_integrations(client)
+        setup_data_resources(client)
 
 
-def _parse_flags_and_setup_compute_integrations(config, client: Client):
+def _parse_flags_and_setup_compute_resources(config, client: Client):
     should_skip = config.getoption(f"--skip-engine-setup")
     if should_skip:
         return
 
     engine = config.getoption(f"--engine")
     if engine is not None:
-        setup_compute_integrations(client, filter_to=engine)
+        setup_compute_resources(client, filter_to=engine)
     else:
-        setup_compute_integrations(client)
+        setup_compute_resources(client)
 
 
 @pytest.fixture(scope="function")
@@ -112,28 +112,28 @@ def client(pytestconfig):
     return Client(*get_aqueduct_config())
 
 
-@pytest.fixture(scope="function", params=list_data_integrations())
-def data_integration(request, pytestconfig, client):
-    """This fixture is parameterized to run every test case against every requested data integration.
+@pytest.fixture(scope="function", params=list_data_resources())
+def data_resource(request, pytestconfig, client):
+    """This fixture is parameterized to run every test case against every requested data resource.
 
-    The requested data integrations are all in the test configuration file, but can be overwritten
-    by the `--data` command line flag.
+    The requested data resources are all in the test configuration file, but can be overwritten
+    by the `--data-resource` command line flag.
     """
-    cmdline_data_flag = pytestconfig.getoption("data")
+    cmdline_data_flag = pytestconfig.getoption("data_resource")
     if cmdline_data_flag is not None:
         if request.param != cmdline_data_flag:
             pytest.skip(
-                "Skipped. Tests are only running against data integration %s." % cmdline_data_flag
+                "Skipped. Tests are only running against data resource %s." % cmdline_data_flag
             )
 
-    # Translate aqueduct_demo -> Demo integration.
+    # Translate aqueduct_demo -> Demo resource.
     if request.param == "aqueduct_demo":
         return client.resource("Demo")
 
     return client.resource(request.param)
 
 
-@pytest.fixture(scope="function", params=list_compute_integrations())
+@pytest.fixture(scope="function", params=list_compute_resources())
 def engine(request, pytestconfig):
     cmdline_compute_flag = pytestconfig.getoption("engine")
     if cmdline_compute_flag is not None:
@@ -207,7 +207,7 @@ def enable_only_for_engine_type(request, client, engine):
 
         if type_from_engine_name(client, engine) not in enabled_engine_types:
             pytest.skip(
-                "Skipped for engine integration `%s`, since it is not of type `%s`."
+                "Skipped for engine resource `%s`, since it is not of type `%s`."
                 % (engine, ",".join(enabled_engine_types))
             )
 
@@ -223,7 +223,7 @@ def skip_for_spark_engines(request, client, engine, reason=None):
             ServiceType.SPARK,
         ]:
             pytest.skip(
-                "Skipped for engine integration `%s`, since it is a spark-based engine." % engine
+                "Skipped for engine resource `%s`, since it is a spark-based engine." % engine
             )
 
 
@@ -249,7 +249,7 @@ def enable_only_for_external_compute(request, client, engine):
     """When a test is marked with this, it will run for all engine types EXCEPT Aqueduct!"""
     if request.node.get_closest_marker("enable_only_for_external_compute"):
         if engine is None:
-            pytest.skip("Skipped. This test only runs against external compute integrations.")
+            pytest.skip("Skipped. This test only runs against external compute resources.")
 
 
 @pytest.fixture(autouse=True)
@@ -257,7 +257,7 @@ def must_have_gpu(pytestconfig, request, client, engine):
     """When a test is marked with this, all it means that it will only be executed if the --gpu flag is
     passed into command line.
 
-    The user is responsible for supplying a K8s integration with an available GPU.
+    The user is responsible for supplying a K8s resource with an available GPU.
     """
     if not request.node.get_closest_marker("must_have_gpu"):
         return
@@ -292,8 +292,8 @@ def flow_name(client, request, pytestconfig):
 
 
 @pytest.fixture(scope="function")
-def validator(client, data_integration):
-    return Validator(client, data_integration)
+def validator(client, data_resource):
+    return Validator(client, data_resource)
 
 
 @pytest.fixture(scope="function", autouse=True)

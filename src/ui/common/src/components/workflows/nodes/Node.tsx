@@ -1,4 +1,18 @@
-import { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import {
+  faCheck,
+  faCircleCheck,
+  faCode,
+  faDatabase,
+  faFileCode,
+  faFileText,
+  faHashtag,
+  faImage,
+  faList,
+  faPencil,
+  faSliders,
+  faTableColumns,
+  faTemperatureHalf,
+} from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Tooltip } from '@mui/material';
 import Box from '@mui/material/Box';
@@ -7,21 +21,76 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import { Handle, Position } from 'reactflow';
 
+import { ReactFlowNodeData } from '../../../positioning/positioning';
 import { RootState } from '../../../stores/store';
 import { theme } from '../../../styles/theme/theme';
+import { ArtifactType } from '../../../utils/artifacts';
 import { OperatorType } from '../../../utils/operators';
-import { ReactFlowNodeData, ReactflowNodeType } from '../../../utils/reactflow';
 import ExecutionStatus, { ExecState, FailureType } from '../../../utils/shared';
 import ResourceItem from '../../pages/workflows/components/ResourceItem';
 import { StatusIndicator } from '../workflowStatus';
 import { BaseNode } from './BaseNode.styles';
-import {
-  artifactNodeStatusLabels,
-  artifactTypeToIconMapping,
-  checkNodeStatusLabels,
-  operatorNodeStatusLabels,
-  operatorTypeToIconMapping,
-} from './nodeTypes';
+
+const artifactNodeStatusLabels = {
+  [ExecutionStatus.Succeeded]: 'Created',
+  [ExecutionStatus.Failed]: 'Failed',
+  [ExecutionStatus.Pending]: 'Pending',
+  [ExecutionStatus.Canceled]: 'Canceled',
+  [ExecutionStatus.Registered]: 'Registered',
+  [ExecutionStatus.Running]: 'Running',
+  [ExecutionStatus.Warning]: 'Warning',
+  [ExecutionStatus.Unknown]: 'Unknown',
+};
+
+const operatorNodeStatusLabels = {
+  [ExecutionStatus.Succeeded]: 'Succeeded',
+  [ExecutionStatus.Failed]: 'Errored',
+  [ExecutionStatus.Pending]: 'Pending',
+  [ExecutionStatus.Canceled]: 'Canceled',
+  [ExecutionStatus.Registered]: 'Registered',
+  [ExecutionStatus.Running]: 'Running',
+  [ExecutionStatus.Warning]: 'Warning',
+  [ExecutionStatus.Unknown]: 'Unknown',
+};
+
+const checkNodeStatusLabels = {
+  [ExecutionStatus.Succeeded]: 'Passed',
+  [ExecutionStatus.Failed]: 'Failed',
+  [ExecutionStatus.Pending]: 'Pending',
+  [ExecutionStatus.Canceled]: 'Canceled',
+  [ExecutionStatus.Registered]: 'Registered',
+  [ExecutionStatus.Running]: 'Running',
+  [ExecutionStatus.Warning]: 'Warning',
+  [ExecutionStatus.Unknown]: 'Unknown',
+};
+
+export const artifactTypeToIconMapping = {
+  [ArtifactType.String]: faFileText,
+  [ArtifactType.Bool]: faCircleCheck,
+  [ArtifactType.Numeric]: faHashtag,
+  [ArtifactType.Dict]: faFileCode,
+  // TODO: figure out if we should use other icon for tuple
+  [ArtifactType.Tuple]: faFileCode,
+  [ArtifactType.List]: faList,
+  [ArtifactType.Table]: faTableColumns,
+  [ArtifactType.Json]: faPencil,
+  // TODO: figure out what to show for bytes.
+  [ArtifactType.Bytes]: faFileCode,
+  [ArtifactType.Image]: faImage,
+  // TODO: Figure out what to show for Picklable
+  [ArtifactType.Picklable]: faFileCode,
+  [ArtifactType.Untyped]: faPencil,
+};
+
+export const operatorTypeToIconMapping = {
+  [OperatorType.Param]: faSliders,
+  [OperatorType.Function]: faCode,
+  [OperatorType.Extract]: faDatabase,
+  [OperatorType.Load]: faDatabase,
+  [OperatorType.Metric]: faTemperatureHalf,
+  [OperatorType.Check]: faCheck,
+  [OperatorType.SystemMetric]: faTemperatureHalf,
+};
 
 export const parseMetricResult = (
   metricValue: string,
@@ -38,32 +107,27 @@ export const parseMetricResult = (
 
 type Props = {
   data: ReactFlowNodeData;
-  defaultLabel: string;
   isConnectable: boolean;
-  icon?: IconDefinition;
-  statusLabels: { [key: string]: string };
-  // The preview is only shown if the status of this node is succeeded.
-  // If it is, then we replace the label with the preview. If the preview
-  // is null or the status is not succeeded, then we show the regular label.
-  preview?: string;
 };
 
 const iconFontSize = '32px';
 
 export const Node: React.FC<Props> = ({ data, isConnectable }) => {
-  const currentNode = useSelector(
-    (state: RootState) => state.nodeSelectionReducer.selected
+  const selectedNodeId = useSelector(
+    (state: RootState) =>
+      state.workflowPageReducer.perWorkflowPageStates[data.dag.workflow_id]
+        ?.SelectedNode?.nodeId
   );
-  const workflowState = useSelector(
-    (state: RootState) => state.workflowReducer
-  );
-
+  const isSelected = selectedNodeId === data.nodeId;
+  const operatorType = data.operator?.spec?.type;
+  const label =
+    data.nodeType == 'operators' ? data.operator?.name : data.artifact?.name;
   let statusLabels;
-  if (data.nodeType === ReactflowNodeType.Artifact) {
+  if (data.nodeType === 'artifacts') {
     statusLabels = artifactNodeStatusLabels;
   } else if (
-    data.nodeType === ReactflowNodeType.Operator &&
-    data.spec.type === OperatorType.Check
+    data.nodeType === 'operators' &&
+    operatorType === OperatorType.Check
   ) {
     statusLabels = checkNodeStatusLabels;
   } else {
@@ -72,20 +136,18 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
   }
 
   // This is loaded at the top level of the workflow details page.
-  const integrationsState = useSelector(
-    (state: RootState) => state.integrationsReducer
+  const resourcesState = useSelector(
+    (state: RootState) => state.resourcesReducer
   );
 
-  const selected = currentNode.id === data.nodeId;
-
   let execState: ExecState;
-  if (data.nodeType === ReactflowNodeType.Operator) {
-    execState = workflowState.operatorResults[data.nodeId]?.result?.exec_state;
+  if (data.nodeType === 'operators') {
+    execState = data.operatorResult?.exec_state;
   } else {
-    execState = workflowState.artifactResults[data.nodeId]?.result?.exec_state;
+    execState = data.artifactResult?.exec_state;
   }
 
-  const textColor = selected
+  const textColor = isSelected
     ? theme.palette.DarkContrast50
     : theme.palette.DarkContrast;
   const borderColor = textColor;
@@ -149,10 +211,10 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
          * show the label that we're given. The reason for this is (eg) for a metric,
          * if the status is either pending or failed/canceled/etc., the preview will be
          * NaN. This only applies to metric operators. */}
-        {!!data.result &&
-        data.spec?.type === OperatorType.Metric &&
+        {!!data.artifactResult?.content_serialized &&
+        data.operator?.spec?.type === OperatorType.Metric &&
         status === ExecutionStatus.Succeeded
-          ? parseMetricResult(data.result, 3)
+          ? parseMetricResult(data.artifactResult?.content_serialized, 3)
           : statusLabels[status]}
       </Typography>
     </Box>
@@ -160,34 +222,35 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
 
   // Based on whether this is an operator or an artifact, select what icon to show in the header.
   let headerIcon;
-  if (data.nodeType === ReactflowNodeType.Operator) {
+  if (data.nodeType === 'operators') {
     if (
-      data.spec.type === OperatorType.Extract ||
-      data.spec.type === OperatorType.Load
+      operatorType === OperatorType.Extract ||
+      operatorType === OperatorType.Load
     ) {
-      const spec = data.spec.extract ?? data.spec.load; // One of these two must be set.
-      headerIcon = (
-        <ResourceItem
-          resource={spec.service}
-          resourceCustomName={
-            integrationsState.integrations[spec.integration_id]?.name
-          }
-          size={iconFontSize}
-          defaultBackgroundColor={theme.palette.gray[200]}
-          collapseName
-        />
-      );
+      const spec = data.operator?.spec?.extract ?? data.operator?.spec?.load; // One of these two must be set.
+      if (!!spec) {
+        headerIcon = (
+          <ResourceItem
+            resource={spec.service}
+            resourceCustomName={
+              resourcesState.resources[spec.resource_id]?.name
+            }
+            size={iconFontSize}
+            defaultBackgroundColor={theme.palette.gray[200]}
+            collapseName
+          />
+        );
+      }
     } else {
-      const engineSpec = data.spec?.engine_config ?? data.dagEngineConfig;
-      const integrationConfig = engineSpec[`${engineSpec.type}_config`];
+      const engineSpec =
+        data.operator?.spec?.engine_config ?? data.dag.engine_config;
+      const resourceConfig = engineSpec[`${engineSpec.type}_config`];
 
       headerIcon = (
         <ResourceItem
           resource={engineSpec.type}
           resourceCustomName={
-            integrationsState.integrations[
-              integrationConfig?.['integration_id']
-            ]?.name
+            resourcesState.resources[resourceConfig?.['resource_id']]?.name
           }
           size={iconFontSize}
           defaultBackgroundColor={theme.palette.gray[200]}
@@ -199,7 +262,7 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
     // This is an artifact.
     headerIcon = (
       <FontAwesomeIcon
-        icon={artifactTypeToIconMapping[data.artifactType]}
+        icon={artifactTypeToIconMapping[data.artifact?.type]}
         fontSize={iconFontSize}
       />
     );
@@ -208,13 +271,13 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
   // This is only used for metrics and checks to signify extra detail.
   let headerEndIcon;
   if (
-    data.nodeType === ReactflowNodeType.Operator &&
-    (data.spec?.type === OperatorType.Check ||
-      data.spec?.type === OperatorType.Metric)
+    data.nodeType === 'operators' &&
+    (operatorType === OperatorType.Check ||
+      operatorType === OperatorType.Metric)
   ) {
     headerEndIcon = (
       <FontAwesomeIcon
-        icon={operatorTypeToIconMapping[data.spec.type]}
+        icon={operatorTypeToIconMapping[operatorType]}
         fontSize={iconFontSize}
       />
     );
@@ -264,7 +327,7 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
                 fontSize: '32px',
               }}
             >
-              {data.label}
+              {label}
             </Typography>
 
             {headerEndIcon && (
@@ -272,9 +335,7 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
                 <Box justifySelf="end" ml={1} mr={2}>
                   <Tooltip
                     title={
-                      data.spec?.type === OperatorType.Check
-                        ? 'Check'
-                        : 'Metric'
+                      operatorType === OperatorType.Check ? 'Check' : 'Metric'
                     }
                     arrow
                   >

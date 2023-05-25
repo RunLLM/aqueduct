@@ -4,10 +4,10 @@ import (
 	"github.com/dropbox/godropbox/errors"
 )
 
-// Service specifies the name of the integration.
+// Service specifies the name of the resource.
 type Service string
 
-// Supported integrations
+// Supported resources
 const (
 	Postgres     Service = "Postgres"
 	Snowflake    Service = "Snowflake"
@@ -33,10 +33,10 @@ const (
 	Slack        Service = "Slack"
 	Spark        Service = "Spark"
 
-	// Cloud integrations
+	// Cloud resources
 	AWS Service = "AWS"
 
-	// Container registry integrations
+	// Container registry resources
 	ECR Service = "ECR"
 
 	// Service types for our built-in, Aqueduct-specific resources.
@@ -44,18 +44,18 @@ const (
 	Filesystem Service = "Filesystem"
 
 	// Built-in resource names
-	AqueductComputeIntegrationName = "Aqueduct Server"
-	DemoDbIntegrationName          = "Demo"
-	ArtifactStorageIntegrationName = "Filesystem"
+	AqueductComputeName         = "Aqueduct Server"
+	DemoDbName                  = "Demo"
+	ArtifactStorageResourceName = "Filesystem"
 
 	// This is what the demo DB resource used to be called, during release v0.3.1 and before.
 	// If we detect a SQLite resource with this name, we will delete it on startup and
 	// make sure that the new resource name is being used. This means that we prevent anyone
-	// from registering any new SQLite integrations with this name.
+	// from registering any new SQLite resources with this name.
 	DeprecatedDemoDBResourceName = "aqueduct_demo"
 )
 
-var relationalDatabaseIntegrations map[Service]bool = map[Service]bool{
+var relationalDatabaseResources map[Service]bool = map[Service]bool{
 	Postgres:  true,
 	Snowflake: true,
 	MySql:     true,
@@ -68,7 +68,7 @@ var relationalDatabaseIntegrations map[Service]bool = map[Service]bool{
 	MongoDB:   true,
 }
 
-var dataIntegrations map[Service]bool = map[Service]bool{
+var dataResources map[Service]bool = map[Service]bool{
 	Postgres:     true,
 	Snowflake:    true,
 	MySql:        true,
@@ -84,7 +84,7 @@ var dataIntegrations map[Service]bool = map[Service]bool{
 	MongoDB:      true,
 }
 
-var computeIntegrations map[Service]bool = map[Service]bool{
+var computeResources map[Service]bool = map[Service]bool{
 	Airflow:    true,
 	Lambda:     true,
 	Conda:      true,
@@ -96,12 +96,12 @@ var computeIntegrations map[Service]bool = map[Service]bool{
 }
 
 // ServiceToEngineConfigField contains
-// all services with `integration_id` in its 'engine_config' field.
+// all services with `resource_id` in its 'engine_config' field.
 // This is used in SQL queries to retrieve engine configs (workflow or operator)
-// based on integration ID.
+// based on resource ID.
 //
 // The key should be the service type, and value should be the json tag
-// for the corresponding field that contains the integration ID.
+// for the corresponding field that contains the resource ID.
 var ServiceToEngineConfigField map[Service]string = map[Service]string{
 	Lambda:     "lambda_config",
 	Airflow:    "airflow_config",
@@ -144,22 +144,22 @@ func ParseService(s string) (Service, error) {
 	}
 }
 
-func IsBuiltinIntegration(name string, service Service) bool {
-	return (service == Aqueduct || service == Filesystem || (name == DemoDbIntegrationName && service == Sqlite))
+func IsBuiltinResource(name string, service Service) bool {
+	return (service == Aqueduct || service == Filesystem || (name == DemoDbName && service == Sqlite))
 }
 
-func IsRelationalDatabaseIntegration(service Service) bool {
-	_, ok := relationalDatabaseIntegrations[service]
+func IsRelationalDatabaseResource(service Service) bool {
+	_, ok := relationalDatabaseResources[service]
 	return ok
 }
 
-func IsDataIntegration(service Service) bool {
-	_, ok := dataIntegrations[service]
+func IsDataResource(service Service) bool {
+	_, ok := dataResources[service]
 	return ok
 }
 
-func IsComputeIntegration(service Service) bool {
-	_, ok := computeIntegrations[service]
+func IsComputeResource(service Service) bool {
+	_, ok := computeResources[service]
 	return ok
 }
 
@@ -167,8 +167,8 @@ func IsNotificationResource(service Service) bool {
 	return service == Email || service == Slack
 }
 
-// IsUserOnlyIntegration returns whether the specified service is only accessible by the user.
-func IsUserOnlyIntegration(svc Service) bool {
+// IsUserOnlyResource returns whether the specified service is only accessible by the user.
+func IsUserOnlyResource(svc Service) bool {
 	userSpecific := []Service{GoogleSheets, Github}
 	for _, s := range userSpecific {
 		if s == svc {

@@ -5,16 +5,14 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import { BreadcrumbLink } from '../../../components/layouts/NavBar';
 import { getDataArtifactPreview } from '../../../reducers/dataPreview';
-import { handleLoadIntegrations } from '../../../reducers/integrations';
+import { handleLoadResources } from '../../../reducers/resources';
 import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import getPathPrefix from '../../../utils/getPathPrefix';
 import { CheckLevel } from '../../../utils/operators';
 import ExecutionStatus from '../../../utils/shared';
 import DefaultLayout from '../../layouts/default';
-import PaginatedSearchTable, {
-  PaginatedSearchTableData,
-} from '../../tables/PaginatedSearchTable';
+import PaginatedSearchTable from '../../tables/PaginatedSearchTable';
 import { LayoutProps } from '../types';
 import CheckItem from '../workflows/components/CheckItem';
 import ExecutionStatusLink from '../workflows/components/ExecutionStatusLink';
@@ -31,14 +29,14 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    const fetchDataArtifactsAndIntegrations = async () => {
+    const fetchDataArtifactsAndResources = async () => {
       setIsLoading(true);
       await dispatch(getDataArtifactPreview({ apiKey }));
-      await dispatch(handleLoadIntegrations({ apiKey }));
+      await dispatch(handleLoadResources({ apiKey }));
       setIsLoading(false);
     };
 
-    fetchDataArtifactsAndIntegrations();
+    fetchDataArtifactsAndResources();
   }, [apiKey, dispatch]);
 
   const dataCardsInfo = useSelector(
@@ -50,38 +48,27 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   }, []);
 
   const onGetColumnValue = (row, column) => {
-    let value = row[column.name];
-
-    switch (column.name) {
+    const value = row[column];
+    switch (column) {
       case 'workflow':
       case 'name':
         const { name, url, status } = value;
-        value = <ExecutionStatusLink name={name} url={url} status={status} />;
-        break;
+        return <ExecutionStatusLink name={name} url={url} status={status} />;
       case 'created_at':
-        value = row[column.name].toLocaleString();
-        break;
+        return value.toLocaleString();
       case 'metrics': {
-        value = <MetricItem metrics={value} />;
-        break;
+        return <MetricItem metrics={value} />;
       }
       case 'checks': {
-        value = <CheckItem checks={value} />;
-        break;
+        return <CheckItem checks={value} />;
       }
       case 'type': {
-        value = (
-          <Typography fontFamily="monospace">{row[column.name]}</Typography>
-        );
-        break;
+        return <Typography fontFamily="monospace">{value}</Typography>;
       }
       default: {
-        value = row[column.name];
-        break;
+        return value;
       }
     }
-
-    return value;
   };
 
   let tableData = [];
@@ -184,21 +171,6 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     },
   ];
 
-  const artifactList: PaginatedSearchTableData = {
-    schema: {
-      fields: [
-        { name: 'name', type: 'varchar' },
-        { name: 'created_at', displayName: 'Created At', type: 'varchar' },
-        { name: 'workflow', type: 'varchar' },
-        { name: 'type', type: 'varchar' },
-        { name: 'metrics', type: 'varchar' },
-        { name: 'checks', type: 'varchar' },
-      ],
-      pandas_version: '1.5.1',
-    },
-    data: tableData,
-  };
-
   const noItemsMessage = (
     <Typography variant="h5">
       There are no data artifacts created yet. Create one right by running a
@@ -252,9 +224,17 @@ const DataPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       breadcrumbs={[BreadcrumbLink.HOME, BreadcrumbLink.DATA]}
       user={user}
     >
-      {artifactList.data?.length && artifactList.data?.length > 0 ? (
+      {tableData?.length && tableData?.length > 0 ? (
         <PaginatedSearchTable
-          data={artifactList}
+          data={tableData}
+          columns={[
+            'name',
+            'created_at',
+            'workflow',
+            'type',
+            'metrics',
+            'checks',
+          ]}
           searchEnabled={true}
           onGetColumnValue={onGetColumnValue}
           onChangeRowsPerPage={onChangeRowsPerPage}

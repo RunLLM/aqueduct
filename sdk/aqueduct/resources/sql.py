@@ -8,7 +8,6 @@ from aqueduct.constants.enums import ArtifactType, ExecutionMode, LoadUpdateMode
 from aqueduct.error import InvalidUserActionException, InvalidUserArgumentException
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
-from aqueduct.models.integration import BaseResource, ResourceInfo
 from aqueduct.models.operators import (
     ExtractSpec,
     Operator,
@@ -16,7 +15,12 @@ from aqueduct.models.operators import (
     RelationalDBExtractParams,
     RelationalDBLoadParams,
 )
-from aqueduct.resources.parameters import _validate_builtin_expansions, _validate_parameters
+from aqueduct.models.resource import BaseResource, ResourceInfo
+from aqueduct.resources.parameters import (
+    _validate_artifact_is_string,
+    _validate_builtin_expansions,
+    _validate_parameters,
+)
 from aqueduct.resources.save import _save_artifact
 from aqueduct.resources.validation import validate_is_connected
 from aqueduct.utils.dag_deltas import AddOperatorDelta, apply_deltas_to_dag
@@ -40,7 +44,7 @@ LIST_TABLES_QUERY_ATHENA = "AQUEDUCT_ATHENA_LIST_TABLE"
 
 class RelationalDBResource(BaseResource):
     """
-    Class for Relational integrations.
+    Class for Relational resources.
     """
 
     def __init__(self, dag: DAG, metadata: ResourceInfo):
@@ -50,14 +54,14 @@ class RelationalDBResource(BaseResource):
     @validate_is_connected()
     def list_tables(self) -> pd.DataFrame:
         """
-        Lists the tables available in the RelationalDB integration.
+        Lists the tables available in the RelationalDB resource.
 
         Returns:
             pd.DataFrame of available tables.
         """
 
         if self.type() in [ServiceType.BIGQUERY, ServiceType.SNOWFLAKE]:
-            # Use the list integration objects endpoint instead of
+            # Use the list resource objects endpoint instead of
             # providing a hardcoded SQL query to execute
             tables = globals.__GLOBAL_API_CLIENT__.list_tables(str(self.id()))
             return pd.DataFrame(tables, columns=["tablename"])
@@ -84,7 +88,7 @@ class RelationalDBResource(BaseResource):
     @validate_is_connected()
     def table(self, name: str) -> pd.DataFrame:
         """
-        Retrieves a table from a RelationalDB integration.
+        Retrieves a table from a RelationalDB resource.
 
         Args:
             name:
@@ -107,7 +111,7 @@ class RelationalDBResource(BaseResource):
         lazy: bool = False,
     ) -> TableArtifact:
         """
-        Runs a SQL query against the RelationalDB integration.
+        Runs a SQL query against the RelationalDB resource.
 
         Args:
             query:
@@ -208,7 +212,7 @@ class RelationalDBResource(BaseResource):
                         spec=OperatorSpec(
                             extract=ExtractSpec(
                                 service=self.type(),
-                                integration_id=self.id(),
+                                resource_id=self.id(),
                                 parameters=extract_params,
                             )
                         ),
@@ -247,7 +251,7 @@ class RelationalDBResource(BaseResource):
 
         Args:
             artifact:
-                The artifact to save into this sql integration.
+                The artifact to save into this sql resource.
             table_name:
                 The table to save the artifact to. You can also parameterize this field by passing
                 a string parameter here. When this save is parameterized, the table name parameter
@@ -266,14 +270,18 @@ class RelationalDBResource(BaseResource):
                 "`table_name` must either be a string or a string parameter artifact."
             )
 
+        # Non-tabular data cannot be saved into relational data stores.
+        if artifact.type() not in [ArtifactType.UNTYPED, ArtifactType.TABLE]:
+            raise InvalidUserActionException(
+                "Unable to save non-relational data into relational data store `%s`." % self.name()
+            )
+
+        # Resolve the table name if it is parameterized.
         table_name_str = table_name
         artifact_ids = [artifact.id()]
         if isinstance(table_name, BaseArtifact):
             table_name_artifact = table_name
-            if table_name_artifact.type() != ArtifactType.STRING:
-                raise InvalidUserArgumentException(
-                    "A parameter value for `table_name` must be of string type."
-                )
+            _validate_artifact_is_string(table_name_artifact)
 
             # This is unset in the LoadParams, since we're parameterizing it.
             table_name_str = ""
@@ -284,12 +292,6 @@ class RelationalDBResource(BaseResource):
             if table_name_str == "":
                 raise InvalidUserArgumentException("Cannot save to an empty table name.")
 
-        # Non-tabular data cannot be saved into relational data stores.
-        if artifact.type() not in [ArtifactType.UNTYPED, ArtifactType.TABLE]:
-            raise InvalidUserActionException(
-                "Unable to save non-relational data into relational data store `%s`." % self.name()
-            )
-
         _save_artifact(
             artifact_ids,
             self._dag,
@@ -299,13 +301,13 @@ class RelationalDBResource(BaseResource):
 
     def describe(self) -> None:
         """
-        Prints out a human-readable description of the SQL integration.
+        Prints out a human-readable description of the SQL resource.
         """
         print("==================== SQL Resource =============================")
         print("Resource Information:")
         self._metadata.describe()
 
-        # Only list the tables if the integration is connected.
+        # Only list the tables if the resource is connected.
         try:
             print("Resource Table List Preview:")
             print(self.list_tables()["name"].head().to_string())

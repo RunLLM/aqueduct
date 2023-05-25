@@ -177,8 +177,8 @@ func GenerateJobManagerConfig(
 			awsSecretAccessKey = secretKey
 		}
 
-		k8sIntegrationId := engineConfig.K8sConfig.IntegrationID
-		config, err := auth.ReadConfigFromSecret(ctx, k8sIntegrationId, vault)
+		k8sResourceID := engineConfig.K8sConfig.ResourceID
+		config, err := auth.ReadConfigFromSecret(ctx, k8sResourceID, vault)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to read k8s config from vault.")
 		}
@@ -199,14 +199,14 @@ func GenerateJobManagerConfig(
 		if storageConfig.Type != shared.S3StorageType {
 			return nil, errors.New("Must use S3 for Lambda engine.")
 		}
-		lambdaIntegrationId := engineConfig.LambdaConfig.IntegrationID
-		config, err := auth.ReadConfigFromSecret(ctx, lambdaIntegrationId, vault)
+		lambdaResourceID := engineConfig.LambdaConfig.ResourceID
+		config, err := auth.ReadConfigFromSecret(ctx, lambdaResourceID, vault)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to read config from vault.")
 		}
 		lambdaConfig, err := lib_utils.ParseLambdaConfig(config)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to get integration.")
+			return nil, errors.Wrap(err, "Unable to get resource.")
 		}
 
 		var awsAccessKeyId, awsSecretAccessKey string
@@ -229,14 +229,14 @@ func GenerateJobManagerConfig(
 		if storageConfig.Type != shared.S3StorageType {
 			return nil, errors.New("Must use S3 storage config for Databricks engine.")
 		}
-		databricksIntegrationId := engineConfig.DatabricksConfig.IntegrationID
-		config, err := auth.ReadConfigFromSecret(ctx, databricksIntegrationId, vault)
+		databricksResourceID := engineConfig.DatabricksConfig.ResourceID
+		config, err := auth.ReadConfigFromSecret(ctx, databricksResourceID, vault)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to read config from vault.")
 		}
 		databricksConfig, err := lib_utils.ParseDatabricksConfig(config)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to get integration.")
+			return nil, errors.Wrap(err, "Unable to get resource.")
 		}
 
 		var awsAccessKeyId, awsSecretAccessKey string
@@ -261,14 +261,14 @@ func GenerateJobManagerConfig(
 		if storageConfig.Type != shared.S3StorageType {
 			return nil, errors.New("Must use S3 storage config for Databricks engine.")
 		}
-		sparkIntegrationID := engineConfig.SparkConfig.IntegrationId
-		config, err := auth.ReadConfigFromSecret(ctx, sparkIntegrationID, vault)
+		sparkResourceID := engineConfig.SparkConfig.ResourceID
+		config, err := auth.ReadConfigFromSecret(ctx, sparkResourceID, vault)
 		if err != nil {
 			return nil, errors.Wrap(err, "Unable to read config from vault.")
 		}
 		sparkConfig, err := lib_utils.ParseSparkConfig(config)
 		if err != nil {
-			return nil, errors.Wrap(err, "Unable to get integration.")
+			return nil, errors.Wrap(err, "Unable to get resource.")
 		}
 
 		var awsAccessKeyId, awsSecretAccessKey string

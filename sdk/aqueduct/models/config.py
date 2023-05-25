@@ -19,23 +19,23 @@ class AqueductCondaEngineConfig(BaseModel):
 
 
 class AirflowEngineConfig(BaseModel):
-    integration_id: uuid.UUID
+    resource_id: uuid.UUID
 
 
 class K8sEngineConfig(BaseModel):
-    integration_id: uuid.UUID
+    resource_id: uuid.UUID
 
 
 class LambdaEngineConfig(BaseModel):
-    integration_id: uuid.UUID
+    resource_id: uuid.UUID
 
 
 class DatabricksEngineConfig(BaseModel):
-    integration_id: uuid.UUID
+    resource_id: uuid.UUID
 
 
 class SparkEngineConfig(BaseModel):
-    integration_id: uuid.UUID
+    resource_id: uuid.UUID
 
 
 class EngineConfig(BaseModel):
@@ -50,7 +50,7 @@ class EngineConfig(BaseModel):
     databricks_config: Optional[DatabricksEngineConfig]
     spark_config: Optional[SparkEngineConfig]
 
-    # The name of the compute integration. This not consumed by the backend,
+    # The name of the compute resource. This not consumed by the backend,
     # but is instead only used for logging purposes in the SDK.
     name: str = "Aqueduct"
 

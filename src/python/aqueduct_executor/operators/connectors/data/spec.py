@@ -50,9 +50,9 @@ def unwrap_connector_config(cls, connector_config, values):  # type: ignore
         raise ValueError("connector_config is not a dictionary.")
 
     if type(values["connector_name"]) == dict:
-        for integration in connector_config:
-            if "conf" in connector_config[integration]:
-                connector_config[integration] = connector_config[integration]["conf"]
+        for resource in connector_config:
+            if "conf" in connector_config[resource]:
+                connector_config[resource] = connector_config[resource]["conf"]
 
         return connector_config
     else:
@@ -140,7 +140,7 @@ class DeleteSavedObjectsSpec(models.BaseSpec):
     metadata_path: str
     connector_name: Dict[str, common.Name]
     connector_config: Dict[str, config.Config]
-    integration_to_object: Dict[str, List[str]]
+    resource_to_object: Dict[str, List[str]]
     output_content_path: str
 
     # validators

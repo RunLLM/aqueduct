@@ -7,12 +7,14 @@ import { WorkflowIdParameter } from '../parameters/Path';
 
 export type WorkflowDeletePostRequest = APIKeyParameter &
   WorkflowIdParameter & {
-    external_delete: { [integration_id: string]: string[] };
+    external_delete: { [resource_id: string]: string[] };
     force: boolean;
   };
 
 export type WorkflowDeletePostResponse = {
-  [id: string]: SavedObjectDeletion;
+  saved_object_deletion_results: {
+    [id: string]: SavedObjectDeletion[];
+  };
 };
 
 export const workflowDeletePostQuery = (req: WorkflowDeletePostRequest) => ({

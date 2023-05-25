@@ -29,6 +29,7 @@ import (
 	_000024 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000024_migrate_exec_env_to_conda_engine"
 	_000025 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000025_add_storage_migration_table"
 	_000026 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000026_drop_integration_validated_column"
+	_000027 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000027_rename_integrations_table"
 	"github.com/aqueducthq/aqueduct/lib/database"
 )
 
@@ -191,5 +192,10 @@ func init() {
 		upPostgres: _000026.UpPostgres, upSqlite: _000026.UpSqlite,
 		downPostgres: _000026.DownPostgres,
 		name:         "remove validated column from integration table",
+	}
+	registeredMigrations[27] = &migration{
+		upPostgres: _000027.UpPostgres, upSqlite: _000027.UpSqlite,
+		downPostgres: _000027.DownPostgres,
+		name:         "rename integration table to resource",
 	}
 }

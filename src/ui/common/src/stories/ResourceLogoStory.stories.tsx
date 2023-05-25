@@ -3,10 +3,10 @@ import { styled } from '@mui/material/styles';
 import { ComponentMeta, ComponentStory } from '@storybook/react';
 import React from 'react';
 
-import IntegrationLogo from '../components/integrations/logo';
+import ResourceLogo from '../components/resources/logo';
 import { theme } from '../styles/theme/theme';
-import { Service } from '../utils/integrations';
-import SupportedIntegrations from '../utils/SupportedIntegrations';
+import { Service } from '../utils/resources';
+import SupportedResources from '../utils/SupportedResources';
 
 // Darken the background so that we can see the component's bounding box.
 const BackgroundHighlighter = styled(Box)(() => {
@@ -25,10 +25,10 @@ const ResourceLogos: React.FC = () => {
         alignItems: 'flex-start',
       }}
     >
-      {Object.keys(SupportedIntegrations).map((service, idx) => (
+      {Object.keys(SupportedResources).map((service, idx) => (
         <Box key={idx}>
           <BackgroundHighlighter sx={{ ml: 2, mt: 2, padding: 1 }}>
-            <IntegrationLogo
+            <ResourceLogo
               service={service as Service}
               size="large"
               activated={true}

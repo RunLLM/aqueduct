@@ -29,7 +29,7 @@ const pathPrefix = getPathPrefix();
 export class BreadcrumbLink {
   static readonly HOME = new BreadcrumbLink(`${pathPrefix}/`, 'Home');
   static readonly DATA = new BreadcrumbLink(`${pathPrefix}/data`, 'Data');
-  static readonly INTEGRATIONS = new BreadcrumbLink(
+  static readonly RESOURCES = new BreadcrumbLink(
     `${pathPrefix}/resources`,
     'Resources'
   );
