@@ -150,7 +150,6 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         workflowId: workflowId,
       });
 
-
       const {
         data: dags,
         error: dagsError,
@@ -202,7 +201,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       } else if (!dagsLoading && !dagsError && dags.length > 0) {
         latestDagId = dags[0].id;
       }
-      let {
+      const {
         data: dag,
         error: dagError,
         isLoading: dagLoading,
@@ -216,8 +215,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           skip: dagResultsLoading && latestDagId,
         }
       );
-      let nodes = useWorkflowNodes(user.apiKey, workflowId, latestDagId);
-
+      const nodes = useWorkflowNodes(user.apiKey, workflowId, latestDagId);
 
       let engines = ['Unknown'];
       if (!dagLoading && !dagError && dag) {
@@ -286,7 +284,9 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
             metricId: op.id,
             name: op.name,
             value: nodesResults.artifacts[artifactId]?.content_serialized,
-            status: nodesResults.artifacts[artifactId]?.exec_state?.status ?? ExecutionStatus.Registered,
+            status:
+              nodesResults.artifacts[artifactId]?.exec_state?.status ??
+              ExecutionStatus.Registered,
           };
         });
       return <MetricItem metrics={metricNodes} />;
@@ -336,7 +336,9 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           return {
             checkId: op.id,
             name: op.name,
-            status: nodesResults.artifacts[artifactId]?.exec_state?.status ?? ExecutionStatus.Registered,
+            status:
+              nodesResults.artifacts[artifactId]?.exec_state?.status ??
+              ExecutionStatus.Registered,
             level: op.spec.check.level,
             value: nodesResults.artifacts[artifactId]?.content_serialized,
             timestamp:
