@@ -267,7 +267,7 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 		// and not the status of the pod.
 		return status, nil
 	} else {
-		_, err := k8s.GetPod(ctx, name, j.k8sClient)
+		pod, err := k8s.GetPod(ctx, name, j.k8sClient)
 		if err != nil {
 			if err == k8s.ErrNoPodExists {
 				status = shared.PendingExecutionStatus
@@ -279,7 +279,7 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 		}
 
 		// Check if the pod is in "ErrImagePull" or "ImagePullBackOff" state
-		/*for _, containerStatus := range pod.Status.ContainerStatuses {
+		for _, containerStatus := range pod.Status.ContainerStatuses {
 			if containerStatus.State.Waiting != nil && (containerStatus.State.Waiting.Reason == "ErrImagePull" || containerStatus.State.Waiting.Reason == "ImagePullBackOff") {
 				if err := k8s.DeleteJob(ctx, name, j.k8sClient); err != nil {
 					status = shared.FailedExecutionStatus
@@ -289,7 +289,7 @@ func (j *k8sJobManager) Poll(ctx context.Context, name string) (shared.Execution
 				status = shared.FailedExecutionStatus
 				return status, userError(errors.Newf("Kubernetes container failed due to error %s. If you are using a custom image, please make sure the container registry resource has access to the image.", containerStatus.State.Waiting.Reason))
 			}
-		}*/
+		}
 
 		status = shared.PendingExecutionStatus
 	}

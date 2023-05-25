@@ -7,9 +7,13 @@ import (
 )
 
 func AuthenticateGARConfig(authConf auth.Config) error {
-	_, err := lib_utils.ParseGARConfig(authConf)
+	conf, err := lib_utils.ParseGARConfig(authConf)
 	if err != nil {
 		return errors.Wrap(err, "Unable to parse configuration.")
+	}
+
+	if conf.ServiceAccountKey == "" {
+		return errors.New("Service account key is empty.")
 	}
 
 	return nil

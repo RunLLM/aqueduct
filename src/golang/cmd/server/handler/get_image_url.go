@@ -133,14 +133,15 @@ func (h *GetImageURLHandler) Perform(ctx context.Context, interfaceArgs interfac
 		// Create a new HTTP client
 		client := &http.Client{}
 
-		fullUrl := strings.Split(args.imageName, ":")[0]
+		fullImageUrl := strings.Split(args.imageName, ":")[0]
 		tag := strings.Split(args.imageName, ":")[1]
-		host := strings.Split(fullUrl, "/")[0]
-		projectID := strings.Split(fullUrl, "/")[1]
-		repo := strings.Split(fullUrl, "/")[2]
-		image := strings.Split(fullUrl, "/")[3]
 
-		// Create a new HTTP request
+		host := strings.Split(fullImageUrl, "/")[0]
+		projectID := strings.Split(fullImageUrl, "/")[1]
+		repo := strings.Split(fullImageUrl, "/")[2]
+		image := strings.Split(fullImageUrl, "/")[3]
+
+		// Create a new HTTP request against the Google Artifact Registry API
 		req, err := http.NewRequest("GET", fmt.Sprintf("https://%s/v2/%s/%s/%s/manifests/%s", host, projectID, repo, image, tag), nil)
 		if err != nil {
 			return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to create HTTP request.")
@@ -149,13 +150,11 @@ func (h *GetImageURLHandler) Perform(ctx context.Context, interfaceArgs interfac
 		// Add the Authorization header to the request
 		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
 
-		// Send the HTTP request
 		resp, err := client.Do(req)
 		if err != nil {
 			return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to send request.")
 		}
 
-		// Check the HTTP status code
 		if resp.StatusCode == http.StatusOK {
 			return getImageURLResponse{
 				Url: args.imageName,
