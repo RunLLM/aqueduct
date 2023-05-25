@@ -1,7 +1,7 @@
 from typing import Dict
 
 from aqueduct.error import InvalidUserArgumentException
-from aqueduct.models.integration import BaseResource, ResourceInfo
+from aqueduct.models.resource import BaseResource, ResourceInfo
 
 from aqueduct import globals
 
