@@ -271,7 +271,7 @@ const OnDemandK8sAWSStep: React.FC<ResourceDialogProps> = ({
             dispatch(
               handleConnectToNewResource({
                 apiKey: user.apiKey,
-                service: 'Kubernetes',
+                service: 'AWS',
                 name: name,
                 config: data,
               })

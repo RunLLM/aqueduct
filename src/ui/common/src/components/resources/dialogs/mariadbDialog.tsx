@@ -88,7 +88,7 @@ export const MariaDbDialog: React.FC<ResourceDialogProps> = ({
 export function getMariaDBValidationSchema() {
   return Yup.object().shape({
     host: Yup.string().required('Please enter a host'),
-    port: Yup.number().required('Please enter a port'),
+    port: Yup.string().required('Please enter a port'),
     database: Yup.string().required('Please enter a database'),
     username: Yup.string().required('Please enter a username'),
     password: Yup.string().required('Please enter a password'),
