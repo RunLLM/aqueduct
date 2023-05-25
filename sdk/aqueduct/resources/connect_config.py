@@ -210,6 +210,11 @@ class ECRConfig(BaseConnectionConfig):
     config_file_profile: str = ""
 
 
+class GARConfig(BaseConnectionConfig):
+    service_account_key_path: str = ""
+    service_account_key: str = ""
+
+
 class _AWSConfigWithSerializedConfig(BaseConnectionConfig):
     access_key_id: str = ""
     secret_access_key: str = ""
@@ -287,6 +292,7 @@ ResourceConfig = Union[
     SlackConfig,
     AWSConfig,
     ECRConfig,
+    GARConfig,
     _AWSConfigWithSerializedConfig,
     _SlackConfigWithStringField,
     AirflowConfig,
@@ -338,6 +344,8 @@ def convert_dict_to_integration_connect_config(
         return K8sConfig(**config_dict)
     elif service == ServiceType.ECR:
         return ECRConfig(**config_dict)
+    elif service == ServiceType.GAR:
+        return GARConfig(**config_dict)
     raise InternalAqueductError("Unexpected Service Type: %s" % service)
 
 
@@ -358,6 +366,9 @@ def prepare_integration_config(
 
     if service == ServiceType.AWS:
         return _prepare_aws_config(cast(AWSConfig, config))
+    
+    if service == ServiceType.GAR:
+        return _prepare_gar_config(cast(GARConfig, config))
 
     return config
 
@@ -392,6 +403,13 @@ def _prepare_aws_config(config: AWSConfig) -> _AWSConfigWithSerializedConfig:
         config_file_profile=config.config_file_profile,
         k8s_serialized=(None if config.k8s is None else config.k8s.json(exclude_none=True)),
     )
+
+
+def _prepare_gar_config(config: GARConfig) -> GARConfig:
+    if config.service_account_key_path is not None:
+        with open(config.service_account_key_path, "r") as f:
+            config.service_account_key = f.read()
+    return config
 
 
 def _prepare_big_query_config(config: BigQueryConfig) -> BigQueryConfig:

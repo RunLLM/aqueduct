@@ -6,29 +6,30 @@ from aqueduct.models.integration import BaseResource, ResourceInfo
 from aqueduct import globals
 
 
-class ECRResource(BaseResource):
+class GARResource(BaseResource):
     """
-    Class for ECR resource.
+    Class for GAR resource.
     """
 
     def __init__(self, metadata: ResourceInfo):
         self._metadata = metadata
 
     def describe(self) -> None:
-        """Prints out a human-readable description of the ECR resource."""
-        print("==================== ECR Resource =============================")
+        """Prints out a human-readable description of the GAR resource."""
+        print("==================== GAR Resource =============================")
         self._metadata.describe()
 
     def image(self, image_name: str) -> Dict[str, str]:
         """
-        Returns a dictionary with the name of the ECR resource and the image URL, which can be
+        Returns a dictionary with the name of the GAR resource and the image URL, which can be
         used as input to the `image` field of an operator's decorator. This method also verifies
-        that the image exists in the ECR repository.
+        that the image exists in the GAR repository.
 
         Args:
             image_name: The name of the image to retrieve. Should be in the form of `image:tag`.
             No need to include the endpoint URL prefix such as `123456789012.dkr.ecr.us-east-1.amazonaws.com`.
         """
+        # TODO: verify the comment above!
         if len(image_name.split("/")) == 2:
             image_name = image_name.split("/")[1]
 

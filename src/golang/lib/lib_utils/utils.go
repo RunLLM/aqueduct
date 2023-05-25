@@ -305,6 +305,20 @@ func ParseECRConfig(conf auth.Config) (*shared.ECRConfig, error) {
 	return &c, nil
 }
 
+func ParseGARConfig(conf auth.Config) (*shared.GARConfig, error) {
+	data, err := conf.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	var c shared.GARConfig
+	if err := json.Unmarshal(data, &c); err != nil {
+		return nil, err
+	}
+
+	return &c, nil
+}
+
 func ExtractAwsCredentials(config *shared.S3Config) (string, string, error) {
 	var awsAccessKeyId string
 	var awsSecretAccessKey string

@@ -533,6 +533,10 @@ func ValidateConfig(
 		return validateECRConfig(config)
 	}
 
+	if service == shared.GAR {
+		return validateGARConfig(config)
+	}
+
 	jobName := fmt.Sprintf("authenticate-operator-%s", uuid.New().String())
 	if service == shared.Conda {
 		return validateConda()
@@ -715,6 +719,16 @@ func validateECRConfig(
 	return http.StatusOK, nil
 }
 
+func validateGARConfig(
+	config auth.Config,
+) (int, error) {
+	if err := container_registry.AuthenticateGARConfig(config); err != nil {
+		return http.StatusBadRequest, err
+	}
+
+	return http.StatusOK, nil
+}
+
 // ValidatePrerequisites validates if the integration for the given service can be connected at all.
 // 1) Checks if an integration already exists for unique integrations including conda, email, and slack.
 // 2) Checks if the name has already been taken.
@@ -823,6 +837,14 @@ func ValidatePrerequisites(
 		requiredVersion, _ := version.NewVersion("2.11.5")
 		if awsVersion.LessThan(requiredVersion) {
 			return http.StatusUnprocessableEntity, errors.Wrapf(err, "AWS CLI version 2.11.5 and above is required, but you got %s. Please update!", awsVersion.String())
+		}
+	}
+
+	// For GAR integration, we require the user to have gcloud installed.
+	if svc == shared.GAR {
+		_, _, err := lib_utils.RunCmd("gcloud", []string{"--version"}, "", false)
+		if err != nil {
+			return http.StatusNotFound, errors.Wrap(err, "gcloud executable not found. Please go to https://cloud.google.com/sdk/docs/install to install gcloud")
 		}
 	}
 

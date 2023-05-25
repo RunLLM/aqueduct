@@ -44,6 +44,7 @@ from aqueduct.resources.connect_config import (
 from aqueduct.resources.databricks import DatabricksResource
 from aqueduct.resources.dynamic_k8s import DynamicK8sResource
 from aqueduct.resources.ecr import ECRResource
+from aqueduct.resources.gar import GARResource
 from aqueduct.resources.google_sheets import GoogleSheetsResource
 from aqueduct.resources.k8s import K8sResource
 from aqueduct.resources.mongodb import MongoDBResource
@@ -359,6 +360,7 @@ class Client:
         SparkResource,
         AWSResource,
         ECRResource,
+        GARResource,
     ]:
         """Deprecated. Use `client.resource()` instead."""
         logger().warning(
@@ -381,6 +383,7 @@ class Client:
         SparkResource,
         AWSResource,
         ECRResource,
+        GARResource,
     ]:
         """Retrieves a connected integration object.
 
@@ -470,6 +473,10 @@ class Client:
             )
         elif integration_info.service == ServiceType.ECR:
             return ECRResource(
+                metadata=integration_info,
+            )
+        elif integration_info.service == ServiceType.GAR:
+            return GARResource(
                 metadata=integration_info,
             )
         else:

@@ -38,6 +38,7 @@ const (
 
 	// Container registry integrations
 	ECR Service = "ECR"
+	GAR Service = "GAR"
 
 	// Service types for our built-in, Aqueduct-specific resources.
 	Aqueduct   Service = "Aqueduct"
@@ -137,7 +138,8 @@ func ParseService(s string) (Service, error) {
 		Slack,
 		Spark,
 		AWS,
-		ECR:
+		ECR,
+		GAR:
 		return svc, nil
 	default:
 		return "", errors.Newf("Unknown service: %s", s)
