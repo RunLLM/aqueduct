@@ -80,7 +80,7 @@ class APIClient:
     GET_DYNAMIC_ENGINE_STATUS_ROUTE = "/api/resource/dynamic-engine/status"
     EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE = "/api/resource/dynamic-engine/%s/edit"
 
-    GET_IMAGE_URL_ROUTE = "/api/resourece/container-registry/url"
+    GET_IMAGE_URL_ROUTE = "/api/resource/container-registry/url"
 
     # Auth header
     API_KEY_HEADER = "api-key"

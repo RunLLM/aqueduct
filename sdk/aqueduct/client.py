@@ -473,9 +473,9 @@ class Client:
             return ECRResource(
                 metadata=resource_info,
             )
-        elif integration_info.service == ServiceType.GAR:
+        elif resource_info.service == ServiceType.GAR:
             return GARResource(
-                metadata=integration_info,
+                metadata=resource_info,
             )
         else:
             raise InvalidResourceException(

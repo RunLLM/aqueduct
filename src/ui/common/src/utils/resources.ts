@@ -279,10 +279,6 @@ export type ECRConfig = {
   config_file_profile: string;
 };
 
-export type GARConfig = {
-  service_account_key?: string;
-};
-
 export type FilesystemConfig = {
   location: string;
 };

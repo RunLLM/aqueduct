@@ -26,10 +26,8 @@ class GARResource(BaseResource):
         that the image exists in the GAR repository.
 
         Args:
-            image_name: The name of the image to retrieve. Should be in the form of `image:tag`.
-            No need to include the endpoint URL prefix such as `123456789012.dkr.ecr.us-east-1.amazonaws.com`.
+            image_name: The name of the image to retrieve. Should be in the form of `location/project_id/repo/image:tag`.
         """
-        # TODO: verify the comment above!
         if len(image_name.split("/")) == 2:
             image_name = image_name.split("/")[1]
 
@@ -40,7 +38,7 @@ class GARResource(BaseResource):
                 raise InvalidUserArgumentException("Image name must be of the form `image:tag`.")
 
         response = globals.__GLOBAL_API_CLIENT__.get_image_url(
-            integration_id=str(self._metadata.id),
+            resource_id=str(self._metadata.id),
             service=self._metadata.service,
             image_name=image_name,
         )

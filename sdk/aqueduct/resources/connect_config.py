@@ -366,7 +366,7 @@ def prepare_resource_config(
 
     if service == ServiceType.AWS:
         return _prepare_aws_config(cast(AWSConfig, config))
-    
+
     if service == ServiceType.GAR:
         return _prepare_gar_config(cast(GARConfig, config))
 

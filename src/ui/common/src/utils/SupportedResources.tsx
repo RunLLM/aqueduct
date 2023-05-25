@@ -32,13 +32,13 @@ import {
   getECRValidationSchema,
 } from '../components/resources/dialogs/ecrDialog';
 import {
-  GARDialog,
-  getGARValidationSchema,
-} from '../components/resources/dialogs/garDialog';
-import {
   EmailDialog,
   getEmailValidationSchema,
 } from '../components/resources/dialogs/emailDialog';
+import {
+  GARDialog,
+  getGARValidationSchema,
+} from '../components/resources/dialogs/garDialog';
 import GCPDialog, {
   getGCPValidationSchema,
 } from '../components/resources/dialogs/gcpDialog';

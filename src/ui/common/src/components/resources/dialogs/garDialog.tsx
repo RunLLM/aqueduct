@@ -4,10 +4,7 @@ import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
-import {
-  FileData,
-  ResourceDialogProps,
-} from '../../../utils/resources';
+import { FileData, ResourceDialogProps } from '../../../utils/resources';
 import { ResourceFileUploadField } from './ResourceFileUploadField';
 
 export const GARDialog: React.FC<ResourceDialogProps> = () => {
@@ -69,7 +66,7 @@ export function readCredentialsFile(
 export function getGARValidationSchema() {
   return Yup.object().shape({
     name: Yup.string().required('Please enter a name'),
-    service_account_credentials: Yup.string()
+    service_account_key: Yup.string()
       .transform((value) => {
         if (!value?.data) {
           return null;
