@@ -234,7 +234,7 @@ const ResourceDetailsPage: React.FC<ResourceDetailsPageProps> = ({
     <Layout
       breadcrumbs={[
         BreadcrumbLink.HOME,
-        BreadcrumbLink.INTEGRATIONS,
+        BreadcrumbLink.RESOURCES,
         new BreadcrumbLink(path, selectedResource.name),
       ]}
       user={user}

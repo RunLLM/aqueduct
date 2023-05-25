@@ -104,8 +104,8 @@ const WorkflowSettings: React.FC<Props> = ({ user, dag, workflow }) => {
   const deleteMessage = deleteWorkflowSuccess
     ? 'Successfully deleted your workflow. Redirecting you to the workflows page...'
     : deleteWorkflowError
-      ? `We were unable to delete your workflow: ${deleteWorkflowError}`
-      : '';
+    ? `We were unable to delete your workflow: ${deleteWorkflowError}`
+    : '';
 
   const handleDeleteMessageClose = () => {
     if (deleteWorkflowSuccess) {

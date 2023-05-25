@@ -162,11 +162,11 @@ const DeleteWorkflowDialog: React.FC<Props> = ({
             const external_delete = {};
 
             Object.values(selectedObjects).forEach((object) => {
-              if (!external_delete[object.integration_name]) {
-                external_delete[object.integration_name] = [];
+              if (!external_delete[object.resource_name]) {
+                external_delete[object.resource_name] = [];
               }
 
-              external_delete[object.integration_name].push(
+              external_delete[object.resource_name].push(
                 JSON.stringify(object.spec)
               );
             });

@@ -22,6 +22,7 @@ import {
   useWorkflowGetQuery,
 } from '../../../../handlers/AqueductApi';
 import { selectNode } from '../../../../reducers/pages/Workflow';
+import { handleLoadResources } from '../../../../reducers/resources';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import { theme } from '../../../../styles/theme/theme';
 import UserProfile from '../../../../utils/auth';
@@ -48,7 +49,6 @@ import {
   useWorkflowNodes,
   useWorkflowNodesResults,
 } from './hook';
-import { handleLoadResources } from '../../../../reducers/resources';
 
 type WorkflowPageProps = {
   user: UserProfile;
@@ -120,8 +120,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const editWorkflowMessage = editWorkflowSuccess
     ? 'Sucessfully updated your workflow.'
     : editWorkflowError
-      ? `There was an unexpected error while updating your workflow: ${editWorkflowError}`
-      : '';
+    ? `There was an unexpected error while updating your workflow: ${editWorkflowError}`
+    : '';
 
   const selectedNodeState = useSelector(
     (state: RootState) =>

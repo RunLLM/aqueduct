@@ -88,7 +88,7 @@ const ResourcesPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
 
   return (
     <Layout
-      breadcrumbs={[BreadcrumbLink.HOME, BreadcrumbLink.INTEGRATIONS]}
+      breadcrumbs={[BreadcrumbLink.HOME, BreadcrumbLink.RESOURCES]}
       user={user}
     >
       <Box paddingBottom={4}>

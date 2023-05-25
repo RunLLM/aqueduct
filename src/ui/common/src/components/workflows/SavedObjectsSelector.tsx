@@ -17,13 +17,13 @@ type Props = {
 };
 
 export const displayObject = (
-  integration_name: string,
+  resource_name: string,
   identifier: string,
   update_mode?: UpdateMode | undefined
 ) => (
   <>
     <Typography variant="body1">
-      [{integration_name}] <b>{identifier}</b>
+      [{resource_name}] <b>{identifier}</b>
     </Typography>
 
     {update_mode && (
@@ -43,8 +43,8 @@ export const displayObject = (
 
 const SavedObjectsSelector: React.FC<Props> = ({ objects, onSelect }) => {
   const sortedObjects = [...objects].sort((x, y) => {
-    if (x.integration_name !== y.integration_name) {
-      return x.integration_name < y.integration_name ? -1 : 1;
+    if (x.resource_name !== y.resource_name) {
+      return x.resource_name < y.resource_name ? -1 : 1;
     }
 
     return new Date(x.modified_at) < new Date(y.modified_at) ? -1 : 1;
@@ -70,7 +70,7 @@ const SavedObjectsSelector: React.FC<Props> = ({ objects, onSelect }) => {
             label={
               <Box sx={{ paddingTop: '24px' }}>
                 {displayObject(
-                  object.integration_name,
+                  object.resource_name,
                   getSavedObjectIdentifier(object),
                   // update_mode doesn't exist for Googlesheet and will be undefined.
                   object.spec.parameters['update_mode']

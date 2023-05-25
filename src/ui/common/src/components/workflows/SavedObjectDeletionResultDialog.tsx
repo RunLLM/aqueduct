@@ -93,10 +93,10 @@ const SavedObjectDeletionResultDialog: React.FC<Props> = ({
 
         <List dense={true}>
           {Object.entries(deletedObjectsStates)
-            .map(([integrationName, objectResults]) =>
+            .map(([resourceName, objectResults]) =>
               objectResults.map((objectResult) => (
                 <>
-                  <ListItem key={`${integrationName}-${objectResult.name}`}>
+                  <ListItem key={`${resourceName}-${objectResult.name}`}>
                     <ListItemIcon style={{ minWidth: '30px' }}>
                       {objectResult.exec_state.status ===
                       ExecutionStatus.Succeeded ? (
@@ -116,10 +116,7 @@ const SavedObjectDeletionResultDialog: React.FC<Props> = ({
                       )}
                     </ListItemIcon>
                     <ListItemText
-                      primary={displayObject(
-                        integrationName,
-                        objectResult.name
-                      )}
+                      primary={displayObject(resourceName, objectResult.name)}
                     />
                   </ListItem>
                   {objectResult.exec_state.status ===

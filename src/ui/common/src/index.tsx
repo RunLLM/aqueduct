@@ -23,6 +23,8 @@ import HomePage from './components/pages/HomePage';
 import LoginPage from './components/pages/LoginPage';
 import MetricDetailsPage from './components/pages/metric/id';
 import OperatorDetailsPage from './components/pages/operator/id';
+import ResourceDetailsPage from './components/pages/resource/id';
+import ResourcesPage from './components/pages/resources';
 import WorkflowPage from './components/pages/workflow/id';
 import WorkflowsPage from './components/pages/workflows';
 import { Button } from './components/primitives/Button.styles';
@@ -88,6 +90,21 @@ import notifications, {
   notificationsSlice,
 } from './reducers/notifications';
 import workflowPage from './reducers/pages/Workflow';
+import resource, {
+  handleConnectToNewResource,
+  handleEditResource,
+  handleListResourceObjects,
+  handleLoadResourceObject,
+  handleLoadResourceOperators,
+  handleTestConnectResource,
+  resetConnectNewStatus,
+  resetTestConnectStatus,
+  resourceSlice,
+} from './reducers/resource';
+import resources, {
+  handleLoadResources,
+  resourcesSlice,
+} from './reducers/resources';
 import serverConfig from './reducers/serverConfig';
 import { store } from './stores/store';
 import { theme } from './styles/theme/theme';
@@ -120,12 +137,8 @@ import {
   OperatorType,
   ServiceType,
 } from './utils/operators';
-import resource, { handleConnectToNewResource, handleEditResource, handleDeleteResource, handleListResourceObjects, handleLoadResourceObject, handleLoadResourceOperators, handleTestConnectResource, resetConnectNewStatus, resetEditStatus, resetTestConnectStatus, resetDeletionStatus, resourceSlice } from './reducers/resource';
-import resources, { handleLoadResources, resourcesSlice } from './reducers/resources';
-import { ServiceLogos } from './utils/resources';
-import ResourceDetailsPage from './components/pages/resource/id';
-import ResourcesPage from './components/pages/resources';
 import { exportCsv } from './utils/preview';
+import { ServiceLogos } from './utils/resources';
 import ExecutionStatus, {
   CheckStatus,
   LoadingStatusEnum,
