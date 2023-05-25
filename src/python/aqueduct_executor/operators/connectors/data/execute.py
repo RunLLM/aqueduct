@@ -3,7 +3,10 @@ import sys
 from typing import Any
 
 from aqueduct_executor.operators.connectors.data import common, config, connector, extract
-from aqueduct_executor.operators.connectors.data.load import RelationalParams
+from aqueduct_executor.operators.connectors.data.load import RelationalParams, S3Params
+from aqueduct_executor.operators.connectors.data.parameters import (
+    _replace_parameterized_user_strings,
+)
 from aqueduct_executor.operators.connectors.data.spec import (
     AQUEDUCT_DEMO_NAME,
     AuthenticateSpec,
@@ -249,9 +252,9 @@ def run_extract(
 def run_delete_saved_objects(spec: Spec, storage: Storage, exec_state: ExecutionState) -> None:
     results = {}
     assert isinstance(spec.connector_name, dict)
-    for integration in spec.connector_name:
-        op = setup_connector(spec.connector_name[integration], spec.connector_config[integration])
-        results[integration] = op.delete(spec.integration_to_object[integration])
+    for resource in spec.connector_name:
+        op = setup_connector(spec.connector_name[resource], spec.connector_config[resource])
+        results[resource] = op.delete(spec.resource_to_object[resource])
     utils.write_delete_saved_objects_results(storage, spec.output_content_path, results)
 
 
@@ -272,20 +275,27 @@ def run_load(
     )
     if len(inputs) == 0:
         raise Exception("Expected at least one input artifact!")
-    if len(inputs) > 2:
-        raise Exception("Unexpected number of inputs to save operator: %v.", len(inputs))
 
-    # Handle any parameterization of the save queries here. Currently, we only support
-    # the parameterization of the `table_name` for SQL connectors.
+    # Handle any parameterization of the save queries here.
     if len(inputs) > 1:
-        if not isinstance(spec.parameters, RelationalParams):
-            raise Exception("Only relational database resources support parameterized saves.")
+        for idx, input in enumerate(inputs[:-1]):
+            if not isinstance(input, str):
+                raise Exception(
+                    "Unexpected input type %s to save at %s-th index." % (type(input), idx)
+                )
 
-        assert (
-            len(spec.parameters.table) == 0
-        ), "A parameterized relational save spec should have an empty table name."
-        assert isinstance(inputs[0], str), "Relational saves can only have string parameters."
-        spec.parameters.table = inputs[0]
+        param_input_vals = [str(input) for input in inputs[:-1]]
+        if isinstance(spec.parameters, RelationalParams):
+            assert (
+                len(spec.parameters.table) == 0
+            ), "A parameterized relational save spec should have an empty table name."
+            spec.parameters.table = param_input_vals[0]
+        elif isinstance(spec.parameters, S3Params):
+            spec.parameters.filepath = _replace_parameterized_user_strings(
+                spec.parameters.filepath, param_input_vals
+            )
+        else:
+            raise Exception("Parameters are only supported for S3 and Relational Data Resources.")
 
     # Any parameters are expected to have been resolved by the time we get here.
     @exec_state.user_fn_redirected(failure_tip=TIP_LOAD)
@@ -346,6 +356,7 @@ def setup_connector(
     elif connector_name == common.Name.BIG_QUERY:
         try:
             from google.cloud import bigquery
+            import db_dtypes
         except:
             raise MissingConnectorDependencyException(
                 "Unable to initialize the BigQuery connector. Have you run `aqueduct install bigquery`?"

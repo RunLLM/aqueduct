@@ -131,7 +131,7 @@ func (ts *TestSuite) TestWorkflow_ValidateOrg() {
 func (ts *TestSuite) TestWorkflow_Create() {
 	users := ts.seedUser(1)
 	user := users[0]
-	notificationIntegrationID := uuid.New()
+	notificationResourceID := uuid.New()
 
 	expectedWorkflow := &models.Workflow{
 		UserID:      user.ID,
@@ -148,7 +148,7 @@ func (ts *TestSuite) TestWorkflow_Create() {
 		},
 		NotificationSettings: shared.NotificationSettings{
 			Settings: map[uuid.UUID]shared.NotificationLevel{
-				notificationIntegrationID: shared.ErrorNotificationLevel,
+				notificationResourceID: shared.ErrorNotificationLevel,
 			},
 		},
 	}
@@ -183,7 +183,7 @@ func (ts *TestSuite) TestWorkflow_Delete() {
 func (ts *TestSuite) TestWorkflow_Update() {
 	workflows := ts.seedWorkflow(1)
 	oldWorkflow := workflows[0]
-	notificationIntegrationID := uuid.New()
+	notificationResourceID := uuid.New()
 
 	newName := "new_workflow_name"
 	newSchedule := shared.Schedule{
@@ -195,7 +195,7 @@ func (ts *TestSuite) TestWorkflow_Update() {
 
 	newNotificationSettings := shared.NotificationSettings{
 		Settings: map[uuid.UUID]shared.NotificationLevel{
-			notificationIntegrationID: shared.ErrorNotificationLevel,
+			notificationResourceID: shared.ErrorNotificationLevel,
 		},
 	}
 

@@ -98,7 +98,6 @@ sdk/docs/build/
 
 # Integration Configuration Files - which may have sensitive credentials.
 integration_tests/sdk/test-credentials.yml
-integration_tests/sdk/test-config.yml
-integration_tests/sdk/test-config-run.yml
+integration_tests/sdk/*test-config.yml
 
 **/.devcontainer/

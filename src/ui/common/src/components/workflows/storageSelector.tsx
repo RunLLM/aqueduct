@@ -5,14 +5,15 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
 import React from 'react';
-import { useSelector } from 'react-redux';
 
-import { RootState } from '../../stores/store';
+import { DagResponse } from '../../handlers/responses/workflow';
 import { StorageType, StorageTypeNames } from '../../utils/storage';
 
-export const StorageSelector: React.FC = () => {
-  const workflow = useSelector((state: RootState) => state.workflowReducer);
-  const dag = workflow.selectedDag;
+type Props = {
+  dag: DagResponse;
+};
+
+export const StorageSelector: React.FC<Props> = ({ dag }) => {
   let selected = 'file';
   if (dag) {
     selected = dag.storage_config.type;

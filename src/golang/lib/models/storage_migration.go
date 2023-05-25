@@ -13,9 +13,9 @@ const (
 	// StorageMigration table column names
 	StorageMigrationID = "id"
 
-	// If null, the integration should be interpreted as the local filesystem.
-	StorageMigrationDestIntegrationID = "dest_integration_id"
-	StorageMigrationExecutionState    = "execution_state"
+	// If null, the resource should be interpreted as the local filesystem.
+	StorageMigrationDestResourceID = "dest_integration_id"
+	StorageMigrationExecutionState = "execution_state"
 
 	// This column must have at most one of these rows set to true.
 	// Indicates what storage layer the server is currently using.
@@ -25,10 +25,10 @@ const (
 
 // A StorageMigration maps to the storage_migration table.
 type StorageMigration struct {
-	ID                uuid.UUID             `db:"id" json:"id"`
-	DestIntegrationID uuid.UUID             `db:"dest_integration_id" json:"dest_integration_id"`
-	ExecState         shared.ExecutionState `db:"execution_state" json:"execution_state"`
-	Current           bool                  `db:"current" json:"current"`
+	ID             uuid.UUID             `db:"id" json:"id"`
+	DestResourceID uuid.UUID             `db:"dest_integration_id" json:"dest_integration_id"`
+	ExecState      shared.ExecutionState `db:"execution_state" json:"execution_state"`
+	Current        bool                  `db:"current" json:"current"`
 }
 
 func StorageMigrationCols() string {
@@ -38,7 +38,7 @@ func StorageMigrationCols() string {
 func allStorageMigrationCols() []string {
 	return []string{
 		StorageMigrationID,
-		StorageMigrationDestIntegrationID,
+		StorageMigrationDestResourceID,
 		StorageMigrationExecutionState,
 		StorageMigrationCurrent,
 	}

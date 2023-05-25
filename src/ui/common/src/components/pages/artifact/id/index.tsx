@@ -1,79 +1,85 @@
 import { CircularProgress } from '@mui/material';
 import Box from '@mui/material/Box';
 import React from 'react';
+import { useLocation, useParams } from 'react-router-dom';
 
-import {
-  DagResultResponse,
-  getMetricsAndChecksOnArtifact,
-} from '../../../../handlers/responses/dagDeprecated';
+import { getMetricsAndChecksOnArtifact } from '../../../..//handlers/responses/node';
+import { useNodeArtifactResultContentGetQuery } from '../../../../handlers/AqueductApi';
 import UserProfile from '../../../../utils/auth';
-import { OperatorType } from '../../../../utils/operators';
 import ExecutionStatus from '../../../../utils/shared';
 import DefaultLayout, { SidesheetContentWidth } from '../../../layouts/default';
+import { BreadcrumbLink } from '../../../layouts/NavBar';
 import CsvExporter from '../../../workflows/artifact/csvExporter';
 import {
   ChecksOverview,
   MetricsOverview,
 } from '../../../workflows/artifact/metricsAndChecksOverview';
 import OperatorSummaryList from '../../../workflows/operator/summaryList';
-import RequireDagOrResult from '../../../workflows/RequireDagOrResult';
 import DetailsPageHeader from '../../components/DetailsPageHeader';
 import { LayoutProps } from '../../types';
-import useWorkflow from '../../workflow/id/hook';
+import {
+  useWorkflowBreadcrumbs,
+  useWorkflowIds,
+  useWorkflowNodes,
+  useWorkflowNodesResults,
+} from '../../workflow/id/hook';
 import Preview from './components/Preview';
-import useArtifact from './hook';
 
 type ArtifactDetailsPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
-  workflowIdProp?: string;
-  workflowDagIdProp?: string;
-  workflowDagResultIdProp?: string;
-  artifactIdProp?: string;
+  nodeId?: string;
   sideSheetMode?: boolean;
 };
 
 const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
   user,
   Layout = DefaultLayout,
-  workflowIdProp,
-  workflowDagIdProp,
-  workflowDagResultIdProp,
-  artifactIdProp,
+  nodeId,
   sideSheetMode = false,
 }) => {
-  const {
-    breadcrumbs: wfBreadcrumbs,
+  const { workflowId, dagId, dagResultId } = useWorkflowIds(user.apiKey);
+
+  const { nodeId: nodeIdParam } = useParams();
+  if (!nodeId) {
+    nodeId = nodeIdParam;
+  }
+
+  const path = useLocation().pathname;
+  const breadcrumbs = useWorkflowBreadcrumbs(
+    user.apiKey,
     workflowId,
-    workflowDagId,
-    workflowDagResultId,
-    workflowDagWithLoadingStatus,
-    workflowDagResultWithLoadingStatus,
-  } = useWorkflow(
-    user.apiKey,
-    workflowIdProp,
-    workflowDagIdProp,
-    workflowDagResultIdProp
+    dagId,
+    dagResultId,
+    'Operator'
   );
 
-  const { breadcrumbs, artifact, contentWithLoadingStatus } = useArtifact(
+  const nodes = useWorkflowNodes(user.apiKey, workflowId, dagId);
+  const nodeResults = useWorkflowNodesResults(
     user.apiKey,
-    artifactIdProp,
-    wfBreadcrumbs,
-    workflowDagResultId,
-    workflowDagWithLoadingStatus,
-    workflowDagResultWithLoadingStatus,
-    !sideSheetMode
+    workflowId,
+    dagResultId
   );
 
-  const dagResult =
-    workflowDagResultWithLoadingStatus?.result ??
-    (workflowDagWithLoadingStatus?.result as DagResultResponse);
-  const { metrics, checks } = dagResult
-    ? getMetricsAndChecksOnArtifact(dagResult, artifact?.id)
-    : { metrics: [], checks: [] };
+  const node = nodes.artifacts[nodeId];
+  const nodeResult = nodeResults.artifacts[nodeId];
 
-  if (!artifact) {
+  const {
+    data: content,
+    isLoading: contentLoading,
+    error: contentError,
+  } = useNodeArtifactResultContentGetQuery(
+    {
+      apiKey: user.apiKey,
+      workflowId,
+      dagId,
+      nodeId,
+      nodeResultId: nodeResult?.id,
+    },
+    { skip: !nodeResult }
+  );
+
+  if (!node) {
     return (
       <Layout breadcrumbs={breadcrumbs} user={user}>
         <CircularProgress />
@@ -81,96 +87,76 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
     );
   }
 
-  const mapOperators = (opIds: string[]) =>
-    opIds
-      .map((opId) => (dagResult?.operators ?? {})[opId])
-      .filter((op) => !!op && op.spec?.type !== OperatorType.Param);
+  const upstreamPending =
+    (nodeResults?.operators ?? {})[node.input]?.exec_state?.status ===
+    ExecutionStatus.Pending;
 
-  const inputs = mapOperators([artifact.from]);
-  const outputs = mapOperators(artifact.to ? artifact.to : []);
-
-  let upstreamPending = false;
-  inputs.some((operator) => {
-    const operator_pending =
-      operator?.result?.exec_state?.status === ExecutionStatus.Pending;
-    if (operator_pending) {
-      upstreamPending = operator_pending;
-    }
-    return operator_pending;
-  });
-
-  const artifactStatus = artifact?.result?.exec_state?.status;
+  const artifactStatus = nodeResult?.exec_state?.status;
   const previewAvailable =
     artifactStatus && artifactStatus !== ExecutionStatus.Canceled;
 
+  const { metrics, checks } = getMetricsAndChecksOnArtifact(nodes, nodeId);
+  breadcrumbs.push(
+    new BreadcrumbLink(path, node ? node.name : 'Artifact Details')
+  );
+
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
-      <RequireDagOrResult
-        dagWithLoadingStatus={workflowDagWithLoadingStatus}
-        dagResultWithLoadingStatus={workflowDagResultWithLoadingStatus}
-      >
-        <Box width={sideSheetMode ? SidesheetContentWidth : '100%'}>
-          <Box width="100%">
-            {!sideSheetMode && (
-              <Box width="100%" display="flex" alignItems="center">
-                <DetailsPageHeader
-                  name={artifact ? artifact.name : 'Artifact'}
-                  status={artifactStatus}
-                />
-                <CsvExporter
-                  artifact={artifact}
-                  contentWithLoadingStatus={contentWithLoadingStatus}
+      <Box width={sideSheetMode ? SidesheetContentWidth : '100%'}>
+        <Box width="100%">
+          {!sideSheetMode && (
+            <Box width="100%" display="flex" alignItems="center">
+              <DetailsPageHeader name={node.name} status={artifactStatus} />
+              <CsvExporter
+                artifact={node}
+                content={content}
+                isLoading={contentLoading}
+              />
+            </Box>
+          )}
+
+          <Box display="flex" width="100%" mt={sideSheetMode ? '16px' : '64px'}>
+            <Box width="100%" mr="32px">
+              <OperatorSummaryList
+                title={'Generated By'}
+                workflowId={workflowId}
+                dagId={dagId}
+                dagResultId={dagResultId}
+                nodes={nodes}
+                operatorIds={[node.input]}
+              />
+            </Box>
+
+            {node.outputs.length > 0 && (
+              <Box width="100%">
+                <OperatorSummaryList
+                  title={'Consumed By'}
+                  workflowId={workflowId}
+                  dagId={dagId}
+                  dagResultId={dagResultId}
+                  nodes={nodes}
+                  operatorIds={node.outputs}
                 />
               </Box>
             )}
+          </Box>
 
-            <Box
-              display="flex"
-              width="100%"
-              mt={sideSheetMode ? '16px' : '64px'}
-            >
-              {inputs.length > 0 && (
-                <Box width="100%" mr="32px">
-                  <OperatorSummaryList
-                    title={'Generated By'}
-                    workflowId={workflowId}
-                    dagId={workflowDagId}
-                    dagResultId={workflowDagResultId}
-                    operatorResults={inputs}
-                  />
-                </Box>
-              )}
+          <Preview
+            upstreamPending={upstreamPending}
+            previewAvailable={previewAvailable}
+            artifactResult={nodeResult}
+            content={content}
+            contentLoading={contentLoading}
+            contentError={contentError ? (contentError as string) : ''}
+          />
 
-              {outputs.length > 0 && (
-                <Box width="100%">
-                  <OperatorSummaryList
-                    title={'Consumed By'}
-                    workflowId={workflowId}
-                    dagId={workflowDagId}
-                    dagResultId={workflowDagResultId}
-                    operatorResults={outputs}
-                  />
-                </Box>
-              )}
-            </Box>
-
-            {workflowDagResultWithLoadingStatus && (
-              <Preview
-                upstreamPending={upstreamPending}
-                previewAvailable={previewAvailable}
-                artifact={artifact}
-                contentWithLoadingStatus={contentWithLoadingStatus}
-              />
-            )}
-
-            <Box display="flex" width="100%">
-              <MetricsOverview metrics={metrics} />
-              <Box width="96px" />
-              <ChecksOverview checks={checks} />
-            </Box>
+          <Box display="flex" width="100%">
+            <MetricsOverview metrics={metrics} nodeResults={nodeResults} />
+            <Box width="96px" />
+            <ChecksOverview checks={checks} nodeResults={nodeResults} />
           </Box>
         </Box>
-      </RequireDagOrResult>
+      </Box>
     </Layout>
   );
 };

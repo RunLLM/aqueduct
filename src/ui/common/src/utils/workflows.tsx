@@ -31,7 +31,7 @@ export enum WorkflowUpdateTrigger {
 export type WorkflowSchedule = {
   trigger: WorkflowUpdateTrigger;
   cron_schedule: string;
-  disable_manual_trigger: boolean;
+  disable_manual_trigger?: boolean;
   paused: boolean;
   source_id: string;
 };
@@ -172,7 +172,7 @@ export function getSavedObjectIdentifier(savedObject: SavedObject): string {
 export type SavedObject = {
   operator_name: string;
   modified_at: string;
-  integration_name: string;
+  resource_name: string;
   spec: Load;
 };
 

@@ -2,7 +2,7 @@ from aqueduct_executor.operators.utils.enums import FailureType
 
 
 class MissingConnectorDependencyException(Exception):
-    """Exception raised due to the connector integration's dependencies aren't installed."""
+    """Exception raised due to the connector resource's dependencies aren't installed."""
 
     pass
 

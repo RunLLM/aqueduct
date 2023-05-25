@@ -1,110 +1,122 @@
+import { CircularProgress } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import React from 'react';
+import { useLocation, useParams } from 'react-router-dom';
 
 import WithOperatorHeader from '../../../../components/operators/WithOperatorHeader';
+import { useNodeArtifactResultsGetQuery } from '../../../../handlers/AqueductApi';
 import UserProfile from '../../../../utils/auth';
 import DefaultLayout from '../../../layouts/default';
+import { BreadcrumbLink } from '../../../layouts/NavBar';
 import LogViewer from '../../../LogViewer';
-import RequireOperator from '../../../operators/RequireOperator';
 import MetricsHistory from '../../../workflows/artifact/metric/history';
-import RequireDagOrResult from '../../../workflows/RequireDagOrResult';
-import { useArtifactHistory } from '../../artifact/id/hook';
-import useOpeartor from '../../operator/id/hook';
 import { LayoutProps } from '../../types';
-import useWorkflow from '../../workflow/id/hook';
+import {
+  useWorkflowBreadcrumbs,
+  useWorkflowIds,
+  useWorkflowNodes,
+  useWorkflowNodesResults,
+} from '../../workflow/id/hook';
 
 type MetricDetailsPageProps = {
   user: UserProfile;
   Layout?: React.FC<LayoutProps>;
-  workflowIdProp?: string;
-  workflowDagIdProp?: string;
-  workflowDagResultIdProp?: string;
-  operatorIdProp?: string;
-  // true if shown as a sidesheet instead of a page.
+  nodeId?: string;
   sideSheetMode?: boolean;
 };
 
 const MetricDetailsPage: React.FC<MetricDetailsPageProps> = ({
   user,
   Layout = DefaultLayout,
-  workflowIdProp,
-  workflowDagIdProp,
-  workflowDagResultIdProp,
-  operatorIdProp,
+  nodeId,
   sideSheetMode = false,
 }) => {
+  const { workflowId, dagId, dagResultId } = useWorkflowIds(user.apiKey);
+
+  const { nodeId: nodeIdParam } = useParams();
+  if (!nodeId) {
+    nodeId = nodeIdParam;
+  }
+
+  const path = useLocation().pathname;
+  const breadcrumbs = useWorkflowBreadcrumbs(
+    user.apiKey,
+    workflowId,
+    dagId,
+    dagResultId,
+    'Operator'
+  );
+
+  const nodes = useWorkflowNodes(user.apiKey, workflowId, dagId);
+  const nodeResults = useWorkflowNodesResults(
+    user.apiKey,
+    workflowId,
+    dagResultId
+  );
+
+  const node = nodes.operators[nodeId];
+  const nodeResult = nodeResults.operators[nodeId];
+
+  const artifactId = node?.outputs[0];
   const {
-    breadcrumbs: wfBreadcrumbs,
+    data: history,
+    isLoading,
+    error,
+  } = useNodeArtifactResultsGetQuery({
+    apiKey: user.apiKey,
+    nodeId: artifactId,
     workflowId,
-    workflowDagId,
-    workflowDagResultId,
-    workflowDagWithLoadingStatus,
-    workflowDagResultWithLoadingStatus,
-  } = useWorkflow(
-    user.apiKey,
-    workflowIdProp,
-    workflowDagIdProp,
-    workflowDagResultIdProp
+    dagId,
+  });
+
+  const logs = nodeResult?.exec_state?.user_logs ?? {};
+  const operatorError = nodeResult?.exec_state?.error;
+  breadcrumbs.push(
+    new BreadcrumbLink(path, node ? node.name : 'Metric Details')
   );
 
-  const { breadcrumbs, operator } = useOpeartor(
-    operatorIdProp,
-    wfBreadcrumbs,
-    workflowDagWithLoadingStatus,
-    workflowDagResultWithLoadingStatus,
-    !sideSheetMode,
-    'Metric'
-  );
-
-  const artifactId = operator?.outputs[0];
-  const artifactHistoryWithLoadingStatus = useArtifactHistory(
-    user.apiKey,
-    artifactId,
-    workflowId,
-    workflowDagResultWithLoadingStatus
-  );
-
-  const logs = operator?.result?.exec_state?.user_logs ?? {};
-  const operatorError = operator?.result?.exec_state?.error;
+  if (!node) {
+    return (
+      <Layout breadcrumbs={breadcrumbs} user={user}>
+        <CircularProgress />
+      </Layout>
+    );
+  }
 
   return (
     <Layout breadcrumbs={breadcrumbs} user={user}>
-      <RequireDagOrResult
-        dagWithLoadingStatus={workflowDagWithLoadingStatus}
-        dagResultWithLoadingStatus={workflowDagResultWithLoadingStatus}
+      <WithOperatorHeader
+        workflowId={workflowId}
+        dagId={dagId}
+        dagResultId={dagResultId}
+        nodes={nodes}
+        nodeResults={nodeResults}
+        operator={node}
+        operatorResult={nodeResult}
+        sideSheetMode={sideSheetMode}
       >
-        <RequireOperator operator={operator}>
-          <WithOperatorHeader
-            workflowId={workflowId}
-            dagId={workflowDagId}
-            dagResultId={workflowDagResultId}
-            dagWithLoadingStatus={workflowDagWithLoadingStatus}
-            dagResultWithLoadingStatus={workflowDagResultWithLoadingStatus}
-            operator={operator}
-            sideSheetMode={sideSheetMode}
+        {!!logs && (
+          <Box>
+            <Typography variant="h6" fontWeight="normal">
+              Logs
+            </Typography>
+            <LogViewer logs={logs} err={operatorError} />
+          </Box>
+        )}
+        {!!history && (
+          <Box
+            width={sideSheetMode ? 'auto' : '49.2%'}
+            marginTop={sideSheetMode ? '16px' : '40px'}
           >
-            {workflowDagResultWithLoadingStatus && (
-              <>
-                <Box>
-                  <Typography variant="h6" fontWeight="normal">
-                    Logs
-                  </Typography>
-                  {logs !== {} && <LogViewer logs={logs} err={operatorError} />}
-                </Box>
-                <Box
-                  width={sideSheetMode ? 'auto' : '49.2%'}
-                  marginTop={sideSheetMode ? '16px' : '40px'}
-                >
-                  <MetricsHistory
-                    historyWithLoadingStatus={artifactHistoryWithLoadingStatus}
-                  />
-                </Box>
-              </>
-            )}
-          </WithOperatorHeader>
-        </RequireOperator>
-      </RequireDagOrResult>
+            <MetricsHistory
+              history={history}
+              isLoading={isLoading}
+              error={error as string}
+            />
+          </Box>
+        )}
+      </WithOperatorHeader>
     </Layout>
   );
 };

@@ -111,7 +111,7 @@ class Flow:
         """Get everything saved by the flow.
 
         Returns:
-            A dictionary mapping the integration id to the list of table names/storage path.
+            A dictionary mapping the resource id to the list of table names/storage path.
         """
         object_mapping: DefaultDict[str, List[SavedObjectUpdate]] = defaultdict(list)
 
@@ -121,7 +121,7 @@ class Flow:
 
         object_mapping = defaultdict(list)
         for item in workflow_objects:
-            object_mapping[item.integration_name].append(item)
+            object_mapping[item.resource_name].append(item)
         return object_mapping
 
     def describe(self) -> None:

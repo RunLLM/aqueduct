@@ -1,5 +1,4 @@
-import { ArtifactResultMetadataResponse } from 'src/handlers/responses/artifactDeprecated';
-
+import { ArtifactResultResponse } from '../handlers/responses/node';
 import { TableRow } from './data';
 
 export enum AWSCredentialType {
@@ -48,14 +47,14 @@ export enum ExecutionStatus {
   Warning = 'warning',
 }
 
-export const getArtifactExecStateAsTableRow = (
-  artifactStatusResult: ArtifactResultMetadataResponse
+export const getArtifactResultTableRow = (
+  artifactResult: ArtifactResultResponse
 ): TableRow => {
   const all_times = [
-    artifactStatusResult.exec_state?.timestamps?.finished_at,
-    artifactStatusResult.exec_state?.timestamps?.pending_at,
-    artifactStatusResult.exec_state?.timestamps?.registered_at,
-    artifactStatusResult.exec_state?.timestamps?.running_at,
+    artifactResult.exec_state?.timestamps?.finished_at,
+    artifactResult.exec_state?.timestamps?.pending_at,
+    artifactResult.exec_state?.timestamps?.registered_at,
+    artifactResult.exec_state?.timestamps?.running_at,
   ];
 
   const times = all_times
@@ -70,8 +69,8 @@ export const getArtifactExecStateAsTableRow = (
 
   return {
     timestamp,
-    status: artifactStatusResult.exec_state?.status ?? 'Unknown',
-    value: artifactStatusResult.content_serialized,
+    status: artifactResult.exec_state?.status ?? 'Unknown',
+    value: artifactResult.content_serialized,
   };
 };
 

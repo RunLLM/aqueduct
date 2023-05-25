@@ -60,10 +60,10 @@ class TestBackend:
 
     # V1
     LIST_WORKFLOW_SAVED_OBJECTS_TEMPLATE = "/api/workflow/%s/objects"
-    GET_TEST_INTEGRATION_TEMPLATE = "/api/integration/%s/test"
-    LIST_INTEGRATIONS_TEMPLATE = "/api/integrations"
-    CONNECT_INTEGRATION_TEMPLATE = "/api/integration/connect"
-    DELETE_INTEGRATION_TEMPLATE = "/api/integration/%s/delete"
+    GET_TEST_INTEGRATION_TEMPLATE = "/api/resource/%s/test"
+    LIST_INTEGRATIONS_TEMPLATE = "/api/resources"
+    CONNECT_INTEGRATION_TEMPLATE = "/api/resource/connect"
+    DELETE_INTEGRATION_TEMPLATE = "/api/resource/%s/delete"
     GET_WORKFLOW_RESULT_TEMPLATE = "/api/workflow/%s/result/%s"
     LIST_ARTIFACT_RESULTS_TEMPLATE = "/api/workflow/%s/artifact/%s/results"
 
@@ -73,29 +73,29 @@ class TestBackend:
     @classmethod
     def setup_class(cls):
         cls.client = aqueduct.Client()
-        cls.integration = cls.client.resource(name=pytest.integration)
+        cls.resource = cls.client.resource(name=pytest.resource)
         cls.flows = {
-            "changing_saves": setup_changing_saves(cls.client, pytest.integration),
+            "changing_saves": setup_changing_saves(cls.client, pytest.resource),
             "flow_with_multiple_operators": setup_flow_with_multiple_operators(
-                cls.client, pytest.integration
+                cls.client, pytest.resource
             ),
-            "flow_with_failure": setup_flow_with_failure(cls.client, pytest.integration),
+            "flow_with_failure": setup_flow_with_failure(cls.client, pytest.resource),
             "flow_with_metrics_and_checks": setup_flow_with_metrics_and_checks(
                 cls.client,
-                pytest.integration,
+                pytest.resource,
             ),
             # this flow is intended to provide 'noise' of op / artf with the same name,
             # but under different flow.
             "another_flow_with_metrics_and_checks": setup_flow_with_metrics_and_checks(
                 cls.client,
-                pytest.integration,
+                pytest.resource,
                 workflow_name="another_flow_with_metrics_and_checks",
             ),
         }
 
         # we do not call `wait_for_flow_runs` on these flows
         cls.running_flows = {
-            "flow_with_sleep": setup_flow_with_sleep(cls.client, pytest.integration),
+            "flow_with_sleep": setup_flow_with_sleep(cls.client, pytest.resource),
         }
         for flow_id, n_runs in cls.flows.values():
             utils.wait_for_flow_runs(cls.client, flow_id, n_runs)
@@ -153,45 +153,45 @@ class TestBackend:
             == data_set
         )
 
-        # Check all in same integration
-        assert len(set([item["integration_name"] for item in data])) == 1
+        # Check all in same resource
+        assert len(set([item["resource_name"] for item in data])) == 1
         assert len(set([item["spec"]["service"] for item in data])) == 1
 
-    def test_endpoint_delete_integration(self):
-        integration_name = f"test_delete_integration_{uuid.uuid4().hex[:8]}"
+    def test_endpoint_delete_resource(self):
+        resource_name = f"test_delete_resource_{uuid.uuid4().hex[:8]}"
 
-        # Check integration did not exist
+        # Check resource did not exist
         data = self.get_response(self.LIST_INTEGRATIONS_TEMPLATE).json()
-        assert integration_name not in set([integration["name"] for integration in data])
+        assert resource_name not in set([resource["name"] for resource in data])
 
-        # Create integration
+        # Create resource
         status = self.post_response(
             self.CONNECT_INTEGRATION_TEMPLATE,
             additional_headers={
-                "integration-name": integration_name,
-                "integration-service": "SQLite",
-                "integration-config": json.dumps({"database": self.DEMO_DB_PATH}),
+                "resource-name": resource_name,
+                "resource-service": "SQLite",
+                "resource-config": json.dumps({"database": self.DEMO_DB_PATH}),
             },
         ).status_code
         assert status == 200
 
-        # Check integration created
+        # Check resource created
         data = self.get_response(self.LIST_INTEGRATIONS_TEMPLATE).json()
-        integration_data = {integration["name"]: integration["id"] for integration in data}
-        assert integration_name in set(integration_data.keys())
+        resource_data = {resource["name"]: resource["id"] for resource in data}
+        assert resource_name in set(resource_data.keys())
 
-        # Delete integration
+        # Delete resource
         status = self.post_response(
-            self.DELETE_INTEGRATION_TEMPLATE % integration_data[integration_name]
+            self.DELETE_INTEGRATION_TEMPLATE % resource_data[resource_name]
         ).status_code
         assert status == 200
 
-        # Check integration does not exist
+        # Check resource does not exist
         data = self.get_response(self.LIST_INTEGRATIONS_TEMPLATE).json()
-        assert integration_name not in set([integration["name"] for integration in data])
+        assert resource_name not in set([resource["name"] for resource in data])
 
-    def test_endpoint_test_integration(self):
-        resp = self.get_response(self.GET_TEST_INTEGRATION_TEMPLATE % self.integration.id())
+    def test_endpoint_test_resource(self):
+        resp = self.get_response(self.GET_TEST_INTEGRATION_TEMPLATE % self.resource.id())
         assert resp.ok
 
     def test_endpoint_get_workflow_dag_result_with_failure(self):
