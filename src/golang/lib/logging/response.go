@@ -20,7 +20,7 @@ const (
 // We register an obfuscation function to alter the header value before logging it
 // the key is the header name whose value is the func to apply to the header value.
 var HeaderObfuscationFunctionMap map[string](func([]string) ([]string, error)) = map[string](func([]string) ([]string, error)){
-	"Integration-Config": ObscurePasswordFromIntegrationConfig,
+	"Resource-Config": ObscurePasswordFromResourceConfig,
 }
 
 func LogRoute(
@@ -106,24 +106,24 @@ func LogAsyncEvent(
 	}
 }
 
-// Replaces the password in an integration config string into the equivalent * string.
-func ObscurePasswordFromIntegrationConfig(integrationConfigHeader []string) ([]string, error) {
-	integrationConfigString := integrationConfigHeader[0]
-	integrationConfig := map[string]string{}
-	err := json.Unmarshal([]byte(integrationConfigString), &integrationConfig)
+// Replaces the password in an resource config string into the equivalent * string.
+func ObscurePasswordFromResourceConfig(resourceConfigHeader []string) ([]string, error) {
+	resourceConfigString := resourceConfigHeader[0]
+	resourceConfig := map[string]string{}
+	err := json.Unmarshal([]byte(resourceConfigString), &resourceConfig)
 	if err != nil {
 		return nil, err
 	}
-	if _, exists := integrationConfig["password"]; !exists {
-		return integrationConfigHeader, nil
+	if _, exists := resourceConfig["password"]; !exists {
+		return resourceConfigHeader, nil
 	}
 
-	passwordLength := len(integrationConfig["password"])
-	integrationConfig["password"] = strings.Repeat("*", passwordLength)
-	newIntegrationConfigString, err := json.Marshal(integrationConfig)
+	passwordLength := len(resourceConfig["password"])
+	resourceConfig["password"] = strings.Repeat("*", passwordLength)
+	newResourceConfigString, err := json.Marshal(resourceConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	return []string{string(newIntegrationConfigString)}, nil
+	return []string{string(newResourceConfigString)}, nil
 }

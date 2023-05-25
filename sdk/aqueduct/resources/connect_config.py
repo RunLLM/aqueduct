@@ -21,7 +21,7 @@ class BaseConnectionConfig(BaseModel):
 
 class BigQueryConfig(BaseConnectionConfig):
     """
-    BigQueryConfig defines the Pydantic Config for a BigQuery integration.
+    BigQueryConfig defines the Pydantic Config for a BigQuery resource.
     One of the following between `service_account_credentials` and
     `service_account_credentials_path` must be specified. If `service_account_credentials_path`
     is specified, it takes priority.
@@ -86,7 +86,7 @@ class S3Config(BaseConnectionConfig):
     bucket: str
     region: str
 
-    # When connecting a new integration, we allow both leading or trailing slashes here.
+    # When connecting a new resource, we allow both leading or trailing slashes here.
     # The path will be sanitized before being stored in the database.
     root_dir: str = ""
 
@@ -274,7 +274,7 @@ class K8sConfig(BaseConnectionConfig):
     cluster_name: str
     use_same_cluster: str = "false"
     dynamic: str = "false"
-    cloud_integration_id: str = ""
+    cloud_resource_id: str = ""
 
 
 ResourceConfig = Union[
@@ -303,7 +303,7 @@ ResourceConfig = Union[
 ]
 
 
-def convert_dict_to_integration_connect_config(
+def convert_dict_to_resource_connect_config(
     service: Union[str, ServiceType], config_dict: Dict[str, str]
 ) -> ResourceConfig:
     if service == ServiceType.BIGQUERY:
@@ -349,11 +349,11 @@ def convert_dict_to_integration_connect_config(
     raise InternalAqueductError("Unexpected Service Type: %s" % service)
 
 
-def prepare_integration_config(
+def prepare_resource_config(
     service: Union[str, ServiceType], config: ResourceConfig
 ) -> ResourceConfig:
     """Prepares the ResourceConfig object to be sent to the backend
-    as part of a request to connect a new integration.
+    as part of a request to connect a new resource.
     """
     if service == ServiceType.BIGQUERY:
         return _prepare_big_query_config(cast(BigQueryConfig, config))

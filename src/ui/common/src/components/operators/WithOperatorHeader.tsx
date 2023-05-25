@@ -7,10 +7,12 @@ import { Box, Divider, Typography } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { DagResultResponse } from '../../handlers/responses/dagDeprecated';
-import { OperatorResultResponse } from '../../handlers/responses/operatorDeprecated';
-import { WorkflowDagResultWithLoadingStatus } from '../../reducers/workflowDagResults';
-import { WorkflowDagWithLoadingStatus } from '../../reducers/workflowDags';
+import {
+  NodeResultsMap,
+  NodesMap,
+  OperatorResponse,
+  OperatorResultResponse,
+} from '../../handlers/responses/node';
 import { RootState } from '../../stores/store';
 import { theme } from '../../styles/theme/theme';
 import { OperatorType } from '../../utils/operators';
@@ -23,10 +25,11 @@ import ArtifactSummaryList from '../workflows/artifact/summaryList';
 type Props = {
   workflowId: string;
   dagId: string;
-  dagResultId: string;
-  dagWithLoadingStatus?: WorkflowDagWithLoadingStatus;
-  dagResultWithLoadingStatus?: WorkflowDagResultWithLoadingStatus;
-  operator?: OperatorResultResponse;
+  dagResultId?: string;
+  nodes: NodesMap;
+  operator: OperatorResponse;
+  operatorResult?: OperatorResultResponse;
+  nodeResults?: NodeResultsMap;
   sideSheetMode?: boolean;
   children?: React.ReactElement | React.ReactElement[];
 };
@@ -35,35 +38,24 @@ const WithOperatorHeader: React.FC<Props> = ({
   workflowId,
   dagId,
   dagResultId,
-  dagWithLoadingStatus,
-  dagResultWithLoadingStatus,
+  nodes,
   operator,
+  operatorResult,
+  nodeResults,
   sideSheetMode,
   children,
 }) => {
-  const integrationsState = useSelector(
-    (state: RootState) => state.integrationsReducer
+  const resourcesState = useSelector(
+    (state: RootState) => state.resourcesReducer
   );
 
-  if (!operator) {
-    return null;
-  }
-
-  if (!dagWithLoadingStatus && !dagResultWithLoadingStatus) {
-    return null;
-  }
-
-  const dagResult =
-    dagResultWithLoadingStatus?.result ??
-    (dagWithLoadingStatus?.result as DagResultResponse);
-
-  const operatorStatus = operator?.result?.exec_state?.status;
+  const operatorStatus = operatorResult?.exec_state?.status;
   const mapArtifacts = (artfIds: string[]) =>
     artfIds
-      .map((artifactId) => (dagResult?.artifacts ?? {})[artifactId])
+      .map((artifactId) => (nodes?.artifacts ?? {})[artifactId])
       .filter((artf) => !!artf);
-  const inputs = mapArtifacts(operator.inputs);
-  const outputs = mapArtifacts(operator.outputs);
+  const inputs = mapArtifacts(operator.inputs ?? []);
+  const outputs = mapArtifacts(operator.outputs ?? []);
 
   let checkLevelDisplay = null;
   if (operator?.spec?.check?.level) {
@@ -94,11 +86,10 @@ const WithOperatorHeader: React.FC<Props> = ({
 
   const service =
     operator?.spec?.load?.service || operator?.spec?.extract?.service;
-  const integrationId =
-    operator?.spec?.load?.integration_id ||
-    operator?.spec?.extract?.integration_id;
-  const integrationName = integrationId
-    ? integrationsState?.integrations[integrationId]?.name
+  const resourceId =
+    operator?.spec?.load?.resource_id || operator?.spec?.extract?.resource_id;
+  const resourceName = resourceId
+    ? resourcesState?.resources[resourceId]?.name
     : undefined;
 
   return (
@@ -119,12 +110,10 @@ const WithOperatorHeader: React.FC<Props> = ({
         {checkLevelDisplay}
       </Box>
 
-      {integrationName && (
+      {resourceName && (
         <ResourceItem
           resource={service}
-          resourceCustomName={
-            integrationsState?.integrations[integrationId]?.name
-          }
+          resourceCustomName={resourcesState?.resources[resourceId]?.name}
         />
       )}
 
@@ -149,7 +138,9 @@ const WithOperatorHeader: React.FC<Props> = ({
                 workflowId={workflowId}
                 dagId={dagId}
                 dagResultId={dagResultId}
-                artifactResults={inputs}
+                nodes={nodes}
+                nodeResults={nodeResults}
+                artifactIds={operator.inputs}
                 collapsePrimitives={operator.spec?.type !== OperatorType.Check}
                 appearance={
                   operator.spec?.type === OperatorType.Metric ? 'value' : 'link'
@@ -165,7 +156,9 @@ const WithOperatorHeader: React.FC<Props> = ({
                 workflowId={workflowId}
                 dagId={dagId}
                 dagResultId={dagResultId}
-                artifactResults={outputs}
+                nodes={nodes}
+                nodeResults={nodeResults}
+                artifactIds={operator.outputs}
                 appearance={
                   operator.spec?.type === OperatorType.Metric ? 'value' : 'link'
                 }

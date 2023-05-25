@@ -5,18 +5,19 @@ import Typography from '@mui/material/Typography';
 import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
-import { OperatorResultResponse } from '../../../handlers/responses/operatorDeprecated';
+import { NodesMap } from '../../../handlers/responses/node';
 import { theme } from '../../../styles/theme/theme';
 import { getPathPrefix } from '../../../utils/getPathPrefix';
 import { OperatorType } from '../../../utils/operators';
-import { operatorTypeToIconMapping } from '../nodes/nodeTypes';
+import { operatorTypeToIconMapping } from '../nodes/Node';
 
 type Props = {
   title: string;
-  workflowId: string;
   dagId: string;
-  dagResultId: string;
-  operatorResults: OperatorResultResponse[];
+  dagResultId?: string;
+  workflowId: string;
+  nodes: NodesMap;
+  operatorIds: string[];
 };
 
 const SummaryList: React.FC<Props> = ({
@@ -24,29 +25,25 @@ const SummaryList: React.FC<Props> = ({
   workflowId,
   dagId,
   dagResultId,
-  operatorResults,
+  nodes,
+  operatorIds,
 }) => {
   const dagLinkSegment = dagResultId ? `result/${dagResultId}` : `dag/${dagId}`;
-  const items = operatorResults.map((opResult, index) => {
-    let link = `${getPathPrefix()}/workflow/${workflowId}/${dagLinkSegment}/operator/${
-      opResult.id
-    }`;
+  const items = operatorIds.map((id, index) => {
+    let link = `${getPathPrefix()}/workflow/${workflowId}/${dagLinkSegment}/operator/${id}`;
 
-    const opType = opResult.spec?.type;
+    const op = nodes.operators[id];
+    const opType = op.spec?.type;
     if (opType === OperatorType.SystemMetric || opType == OperatorType.Metric) {
-      link = `${getPathPrefix()}/workflow/${workflowId}/${dagLinkSegment}/metric/${
-        opResult.id
-      }`;
+      link = `${getPathPrefix()}/workflow/${workflowId}/${dagLinkSegment}/metric/${id}`;
     }
 
     if (opType === OperatorType.Check) {
-      link = `${getPathPrefix()}/workflow/${workflowId}/${dagLinkSegment}/check/${
-        opResult.id
-      }`;
+      link = `${getPathPrefix()}/workflow/${workflowId}/${dagLinkSegment}/check/${id}`;
     }
 
     return (
-      <Link to={link} component={RouterLink} underline="none" key={opResult.id}>
+      <Link to={link} component={RouterLink} underline="none" key={id}>
         <Box
           display="flex"
           p={1}
@@ -54,12 +51,12 @@ const SummaryList: React.FC<Props> = ({
             alignItems: 'center',
             '&:hover': { backgroundColor: 'gray.100' },
             borderBottom:
-              index === operatorResults.length - 1
+              index === operatorIds.length - 1
                 ? ''
                 : `1px solid ${theme.palette.gray[400]}`,
           }}
         >
-          {!!opResult.spec?.type && (
+          {!!opType && (
             <Box
               width="16px"
               height="16px"
@@ -70,12 +67,12 @@ const SummaryList: React.FC<Props> = ({
               <FontAwesomeIcon
                 fontSize="16px"
                 color={`${theme.palette.gray[700]}`}
-                icon={operatorTypeToIconMapping[opResult.spec.type]}
+                icon={operatorTypeToIconMapping[opType]}
               />
             </Box>
           )}
 
-          <Typography ml="16px">{opResult.name}</Typography>
+          <Typography ml="16px">{op.name}</Typography>
         </Box>
       </Link>
     );

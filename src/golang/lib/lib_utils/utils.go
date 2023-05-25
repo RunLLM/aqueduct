@@ -136,13 +136,13 @@ func RunCmd(command string, args []string, dir string, stream bool) (string, str
 
 // ParseK8sConfig takes in an auth.Config and parses into a K8s config.
 // It also returns an error, if any.
-func ParseK8sConfig(conf auth.Config) (*shared.K8sIntegrationConfig, error) {
+func ParseK8sConfig(conf auth.Config) (*shared.K8sResourceConfig, error) {
 	data, err := conf.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	var c shared.K8sIntegrationConfig
+	var c shared.K8sResourceConfig
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
 	}
@@ -150,13 +150,13 @@ func ParseK8sConfig(conf auth.Config) (*shared.K8sIntegrationConfig, error) {
 	return &c, nil
 }
 
-func ParseLambdaConfig(conf auth.Config) (*shared.LambdaIntegrationConfig, error) {
+func ParseLambdaConfig(conf auth.Config) (*shared.LambdaResourceConfig, error) {
 	data, err := conf.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	var c shared.LambdaIntegrationConfig
+	var c shared.LambdaResourceConfig
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
 	}
@@ -164,13 +164,13 @@ func ParseLambdaConfig(conf auth.Config) (*shared.LambdaIntegrationConfig, error
 	return &c, nil
 }
 
-func ParseDatabricksConfig(conf auth.Config) (*shared.DatabricksIntegrationConfig, error) {
+func ParseDatabricksConfig(conf auth.Config) (*shared.DatabricksResourceConfig, error) {
 	data, err := conf.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	var c shared.DatabricksIntegrationConfig
+	var c shared.DatabricksResourceConfig
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
 	}
@@ -242,13 +242,13 @@ func ParseSlackConfig(conf auth.Config) (*shared.SlackConfig, error) {
 	}, nil
 }
 
-func ParseSparkConfig(conf auth.Config) (*shared.SparkIntegrationConfig, error) {
+func ParseSparkConfig(conf auth.Config) (*shared.SparkResourceConfig, error) {
 	data, err := conf.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	var c shared.SparkIntegrationConfig
+	var c shared.SparkResourceConfig
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
 	}

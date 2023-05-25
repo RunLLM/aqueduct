@@ -5,15 +5,15 @@ import React, { useState } from 'react';
 
 import { theme } from '../../styles/theme/theme';
 import { getPathPrefix } from '../../utils/getPathPrefix';
-import { Integration } from '../../utils/integrations';
 import { NotificationLogLevel } from '../../utils/notifications';
+import { Resource } from '../../utils/resources';
 import { NotificationSettingsMap } from '../../utils/workflows';
 import CheckboxEntry from '../notifications/CheckboxEntry';
 import NotificationLevelSelector from '../notifications/NotificationLevelSelector';
 
 type SelectedNotificationEntryProps = {
-  remainingNotificationIntegrations: Integration[];
-  selected: Integration;
+  remainingNotificationResources: Resource[];
+  selected: Resource;
   level: NotificationLogLevel | undefined;
   onSelect: (
     id: string,
@@ -24,7 +24,7 @@ type SelectedNotificationEntryProps = {
 };
 
 type Props = {
-  notificationIntegrations: Integration[];
+  notificationResources: Resource[];
   curSettingsMap: NotificationSettingsMap;
   onSelect: (
     id: string,
@@ -37,7 +37,7 @@ type Props = {
 export const SelectedNotificationEntry: React.FC<
   SelectedNotificationEntryProps
 > = ({
-  remainingNotificationIntegrations,
+  remainingNotificationResources,
   selected,
   level,
   onSelect,
@@ -48,7 +48,7 @@ export const SelectedNotificationEntry: React.FC<
       <Box display="flex" flexDirection="row" alignItems="center">
         <Select autoWidth sx={{ height: 36 }} value={selected.id}>
           {[selected]
-            .concat(remainingNotificationIntegrations) // show current + remaining as options
+            .concat(remainingNotificationResources) // show current + remaining as options
             .sort((x, y) => (x.name > y.name ? 1 : -1)) // sort to ensure items are stable
             .map((x) => (
               <MenuItem
@@ -81,24 +81,24 @@ export const SelectedNotificationEntry: React.FC<
 };
 
 const WorkflowNotificationSettings: React.FC<Props> = ({
-  notificationIntegrations,
+  notificationResources,
   curSettingsMap,
   onSelect,
   onRemove,
 }) => {
   const selectedIDs = Object.keys(curSettingsMap);
   const [usingDefault, setUsingDefault] = useState(selectedIDs.length === 0);
-  const remainingIntegrations = notificationIntegrations.filter(
+  const remainingResources = notificationResources.filter(
     (x) => !selectedIDs.includes(x.id)
   );
-  const integrationsByID: { [id: string]: Integration } = {};
-  notificationIntegrations.forEach((x) => (integrationsByID[x.id] = x));
+  const resourcesByID: { [id: string]: Resource } = {};
+  notificationResources.forEach((x) => (resourcesByID[x.id] = x));
 
   const selectedEntries = Object.entries(curSettingsMap).map(([id, level]) => (
     <Box key={id} mt={1}>
       <SelectedNotificationEntry
-        remainingNotificationIntegrations={remainingIntegrations}
-        selected={integrationsByID[id]}
+        remainingNotificationResources={remainingResources}
+        selected={resourcesByID[id]}
         level={level}
         onSelect={onSelect}
         onRemove={onRemove}
@@ -127,7 +127,7 @@ const WorkflowNotificationSettings: React.FC<Props> = ({
     <Box display="flex" flexDirection="column" alignContent="left">
       {<Box marginY={1}>{usingDefaultCheckbox}</Box>}
       {!usingDefault && selectedEntries}
-      {!usingDefault && remainingIntegrations.length > 0 && (
+      {!usingDefault && remainingResources.length > 0 && (
         <Box mt={selectedEntries.length > 0 ? 2 : 1}>
           <FontAwesomeIcon
             icon={faPlusSquare}
@@ -135,7 +135,7 @@ const WorkflowNotificationSettings: React.FC<Props> = ({
             width="24px"
             fontSize="24px"
             style={{ cursor: 'pointer' }}
-            onClick={() => onSelect(remainingIntegrations[0].id, undefined)}
+            onClick={() => onSelect(remainingResources[0].id, undefined)}
           />
         </Box>
       )}

@@ -4,23 +4,48 @@ import Typography from '@mui/material/Typography';
 import Image from 'mui-image';
 import React from 'react';
 
-import { ArtifactResultResponse } from '../../../handlers/responses/artifactDeprecated';
-import { ContentWithLoadingStatus } from '../../../reducers/artifactResultContents';
+import { ArtifactResultResponse } from '../../../handlers/responses/node';
+import { NodeArtifactResultContentGetResponse } from '../../../handlers/v2/NodeArtifactResultContentGet';
 import { SerializationType } from '../../../utils/artifacts';
 import { Data, inferSchema, TableRow } from '../../../utils/data';
-import { isFailed, isInitial, isLoading } from '../../../utils/shared';
 import PaginatedTable from '../../tables/PaginatedTable';
 
 type Props = {
-  artifact: ArtifactResultResponse;
-  contentWithLoadingStatus?: ContentWithLoadingStatus;
+  artifactResult?: ArtifactResultResponse;
+  content?: NodeArtifactResultContentGetResponse;
+  contentLoading: boolean;
+  contentError: string;
 };
 
 const ArtifactContent: React.FC<Props> = ({
-  artifact,
-  contentWithLoadingStatus,
+  artifactResult,
+  content,
+  contentLoading,
+  contentError,
 }) => {
-  if (!artifact.result) {
+  // intentional '!=' check for null or undefined.
+  if (artifactResult?.content_serialized != null) {
+    return (
+      <Typography variant="body1" component="div" marginBottom="8px">
+        <code>{artifactResult.content_serialized}</code>
+      </Typography>
+    );
+  }
+
+  if (contentLoading) {
+    return <CircularProgress />;
+  }
+
+  if (contentError) {
+    return (
+      <Alert severity="error">
+        <AlertTitle>Failed to load artifact contents.</AlertTitle>
+        {contentError}
+      </Alert>
+    );
+  }
+
+  if (!content || !artifactResult) {
     return (
       <Typography variant="h5" component="div" marginBottom="8px">
         No result to show for this artifact.
@@ -28,43 +53,16 @@ const ArtifactContent: React.FC<Props> = ({
     );
   }
 
-  // intentional '!=' check for null or undefined.
-  if (artifact.result.content_serialized != null) {
-    return (
-      <Typography variant="body1" component="div" marginBottom="8px">
-        <code>{artifact.result.content_serialized}</code>
-      </Typography>
-    );
-  }
-
-  if (!contentWithLoadingStatus) {
-    return <CircularProgress />;
-  }
-  if (
-    isInitial(contentWithLoadingStatus.status) ||
-    isLoading(contentWithLoadingStatus.status)
-  ) {
-    return <CircularProgress />;
-  }
-
-  if (isFailed(contentWithLoadingStatus.status)) {
-    return (
-      <Alert severity="error">
-        <AlertTitle>Failed to load artifact contents.</AlertTitle>
-        {contentWithLoadingStatus.status.err}
-      </Alert>
-    );
-  }
-
   let contentComponent = null;
-  switch (artifact.result.serialization_type) {
+  const decodedContent = Buffer.from(content.content, 'base64').toString(
+    'utf-8'
+  );
+  switch (artifactResult.serialization_type) {
     case SerializationType.Table:
     case SerializationType.BsonTable:
       try {
-        const rawData = JSON.parse(contentWithLoadingStatus.data);
-        if (
-          artifact.result.serialization_type === SerializationType.BsonTable
-        ) {
+        const rawData = JSON.parse(decodedContent);
+        if (artifactResult.serialization_type === SerializationType.BsonTable) {
           const rows = rawData as TableRow[];
           // bson table does not include schema when serialized.
           const schema = inferSchema(rows);
@@ -79,14 +77,13 @@ const ArtifactContent: React.FC<Props> = ({
       } catch (err) {
         return (
           <Alert severity="error" title="Cannot parse table data.">
-            {`${err.toString}\n${contentWithLoadingStatus.data}`}
+            {`${err.toString()}\n${content.content}`}
           </Alert>
         );
       }
     case SerializationType.Image:
       try {
-        const srcFromBase64 =
-          'data:image/png;base64,' + contentWithLoadingStatus.data;
+        const srcFromBase64 = 'data:image/png;base64,' + content.content;
         contentComponent = (
           <Image
             src={srcFromBase64}
@@ -106,11 +103,7 @@ const ArtifactContent: React.FC<Props> = ({
     case SerializationType.Json:
       try {
         // Convert to pretty-printed version.
-        const prettyJson = JSON.stringify(
-          JSON.parse(contentWithLoadingStatus.data),
-          null,
-          2
-        );
+        const prettyJson = JSON.stringify(JSON.parse(decodedContent), null, 2);
         contentComponent = (
           <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
             {prettyJson}
@@ -127,7 +120,7 @@ const ArtifactContent: React.FC<Props> = ({
     case SerializationType.String:
       contentComponent = (
         <Typography sx={{ fontFamily: 'Monospace', whiteSpace: 'pre-wrap' }}>
-          {contentWithLoadingStatus.data}
+          {decodedContent}
         </Typography>
       );
       break;
@@ -145,13 +138,13 @@ const ArtifactContent: React.FC<Props> = ({
         <Alert severity="error">
           <Typography sx={{ whiteSpace: 'pre-wrap' }}>
             Cannot show preview due to unexpected serialization type:{' '}
-            {artifact.result.serialization_type}.
+            {artifactResult.serialization_type}.
           </Typography>
         </Alert>
       );
   }
 
-  if (!contentWithLoadingStatus.is_downsampled) {
+  if (!content.is_downsampled) {
     return contentComponent;
   }
 

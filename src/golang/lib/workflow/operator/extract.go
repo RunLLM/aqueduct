@@ -41,7 +41,7 @@ func newExtractOperator(
 	}
 
 	spec := base.dbOperator.Spec.Extract()
-	config, err := auth.ReadConfigFromSecret(ctx, spec.IntegrationId, base.vaultObject)
+	config, err := auth.ReadConfigFromSecret(ctx, spec.ResourceId, base.vaultObject)
 	if err != nil {
 		return nil, err
 	}

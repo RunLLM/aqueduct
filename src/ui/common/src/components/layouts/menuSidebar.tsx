@@ -13,10 +13,10 @@ import Divider from '@mui/material/Divider';
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
-import UserProfile from 'src/utils/auth';
 
 import { useEnvironmentGetQuery } from '../../handlers/AqueductApi';
 import { AppDispatch } from '../../stores/store';
+import UserProfile from '../../utils/auth';
 import { getPathPrefix } from '../../utils/getPathPrefix';
 import {
   menuSidebar,
@@ -112,7 +112,7 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
 /**
  * The `MenuSidebar` is the core sidebar that we include throughout our UI. It
  * is pinned on the left-hand side of every page in our UI, and it includes
- * quick links to core abstractions in our system (workflows, integrations, etc).
+ * quick links to core abstractions in our system (workflows, resources, etc).
  */
 const MenuSidebar: React.FC<{
   onSidebarItemClicked?: (name: string) => void;

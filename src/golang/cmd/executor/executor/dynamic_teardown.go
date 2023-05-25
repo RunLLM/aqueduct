@@ -21,47 +21,47 @@ func NewDynamicTeardownExecutor(base *BaseExecutor) *DynamicTeardownExecutor {
 	return &DynamicTeardownExecutor{BaseExecutor: base}
 }
 
-// Run inspects each dynamic integration and tears down the cluster if it has been idle for a while.
+// Run inspects each dynamic resource and tears down the cluster if it has been idle for a while.
 // This check is performed by subtracting the last-updated-timestamp from the current timestamp and
 // comparing it with the keepalive threshold. The last-used-timestamp is updated whenever an operator
-// makes uses of the dynamic integration.
+// makes uses of the dynamic resource.
 func (ex *DynamicTeardownExecutor) Run(ctx context.Context) error {
-	log.Info("Starting dynamic integration teardown.")
+	log.Info("Starting dynamic resource teardown.")
 
-	dynamicIntegrations, err := ex.IntegrationRepo.GetByConfigField(ctx, shared.K8sDynamicKey, strconv.FormatBool(true), ex.Database)
+	dynamicResources, err := ex.ResourceRepo.GetByConfigField(ctx, shared.K8sDynamicKey, strconv.FormatBool(true), ex.Database)
 	if err != nil {
-		return errors.Wrap(err, "Unable to get dynamic integration.")
+		return errors.Wrap(err, "Unable to get dynamic resource.")
 	}
 
-	if len(dynamicIntegrations) == 0 {
-		log.Info("No dynamic integration detected, exiting...")
+	if len(dynamicResources) == 0 {
+		log.Info("No dynamic resource detected, exiting...")
 		return nil
 	}
 
 	var wg sync.WaitGroup
 
-	for i := range dynamicIntegrations {
+	for i := range dynamicResources {
 		wg.Add(1) // increment the WaitGroup counter
 		// We use go routines to delete the clusters in parallel.
 		// Terraform has timeout built in so we won't run forever even during the error case.
-		go func(dynamicIntegration *models.Integration) {
-			log.Infof("Checking dynamic integration %s, whose terraform directory is %s", dynamicIntegration.Name, dynamicIntegration.Config[shared.K8sTerraformPathKey])
+		go func(dynamicResource *models.Resource) {
+			log.Infof("Checking dynamic resource %s, whose terraform directory is %s", dynamicResource.Name, dynamicResource.Config[shared.K8sTerraformPathKey])
 			defer wg.Done() // decrement the WaitGroup counter when the goroutine completes
 
-			if err := dynamic.ResyncClusterState(ctx, dynamicIntegration, ex.IntegrationRepo, ex.Vault, ex.Database); err != nil {
+			if err := dynamic.ResyncClusterState(ctx, dynamicResource, ex.ResourceRepo, ex.Vault, ex.Database); err != nil {
 				log.Error(errors.Wrap(err, "Failed to resync cluster state"))
 				return
 			}
 
-			if dynamicIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
-				lastUsedTimestampStr := dynamicIntegration.Config[shared.K8sLastUsedTimestampKey]
+			if dynamicResource.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
+				lastUsedTimestampStr := dynamicResource.Config[shared.K8sLastUsedTimestampKey]
 				lastUsedTimestamp, err := strconv.ParseInt(lastUsedTimestampStr, 10, 64)
 				if err != nil {
 					log.Error(errors.Wrap(err, "Unable to cast last used timestamp to int64"))
 					return
 				}
 
-				keepaliveStr := dynamicIntegration.Config["keepalive"]
+				keepaliveStr := dynamicResource.Config["keepalive"]
 				keepalive, err := strconv.ParseInt(keepaliveStr, 10, 64)
 				if err != nil {
 					log.Error(errors.Wrap(err, "Unable to cast keepalive period to int64"))
@@ -76,19 +76,19 @@ func (ex *DynamicTeardownExecutor) Run(ctx context.Context) error {
 						// Perform pods status check because in case there are still pods running, we don't
 						// want them to be killed by the teardown cron job.
 						false,
-						dynamicIntegration,
-						ex.IntegrationRepo,
+						dynamicResource,
+						ex.ResourceRepo,
 						ex.Vault,
 						ex.Database,
 					); err != nil {
-						log.Error(errors.Wrap(err, "Unable to delete dynamic k8s integration"))
+						log.Error(errors.Wrap(err, "Unable to delete dynamic k8s resource"))
 						return
 					}
 				} else {
 					log.Info("Have not reached keepalive threshold, not tearing down the cluster.")
 				}
 			}
-		}(&dynamicIntegrations[i])
+		}(&dynamicResources[i])
 	}
 
 	wg.Wait() // wait for all the goroutines to complete

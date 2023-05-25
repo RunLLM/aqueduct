@@ -10,15 +10,15 @@ from .extract import extract
 from .test_metrics.constant.model import constant_metric
 
 
-def test_basic_metric(client, data_integration):
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+def test_basic_metric(client, data_resource):
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
 
     metric = constant_metric(table_artifact)
     assert metric.get() == 17.5
 
 
-def test_metric_bound(client, data_integration):
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+def test_metric_bound(client, data_resource):
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
 
     metric = constant_metric(table_artifact)
     check_artifact = metric.bound(upper=100)
@@ -40,8 +40,8 @@ def test_metric_bound(client, data_integration):
     assert not check_artifact.get()
 
 
-def test_register_metric(client, flow_name, data_integration, engine):
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+def test_register_metric(client, flow_name, data_resource, engine):
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
 
     metric_artifact = constant_metric(table_artifact)
     publish_flow_test(
@@ -67,9 +67,9 @@ def metric_with_multiple_inputs(df1, m, df2):
     return m + 10
 
 
-def test_metric_mixed_inputs(client, flow_name, data_integration, engine):
-    sql1 = extract(data_integration, DataObject.SENTIMENT)
-    sql2 = extract(data_integration, DataObject.SENTIMENT)
+def test_metric_mixed_inputs(client, flow_name, data_resource, engine):
+    sql1 = extract(data_resource, DataObject.SENTIMENT)
+    sql2 = extract(data_resource, DataObject.SENTIMENT)
     metric_input = constant_metric(sql1)
 
     metric_output = metric_with_multiple_inputs(sql1, metric_input, sql2)
@@ -83,9 +83,9 @@ def test_metric_mixed_inputs(client, flow_name, data_integration, engine):
     )
 
 
-def test_edit_metric(client, data_integration, engine, flow_name):
+def test_edit_metric(client, data_resource, engine, flow_name):
     """Test that running the same metric (by name) twice on the same artifact will result in last-run-wins behavior."""
-    table = extract(data_integration, DataObject.SENTIMENT)
+    table = extract(data_resource, DataObject.SENTIMENT)
 
     @metric
     def foo(table):
@@ -111,7 +111,7 @@ def test_edit_metric(client, data_integration, engine, flow_name):
 
     # We do not overwrite metrics with the same name that run on other artifacts.
     # Instead, we deduplicate with suffix (1).
-    table2 = extract(data_integration, DataObject.WINE)
+    table2 = extract(data_resource, DataObject.WINE)
     output3 = foo(table2)
     assert output2.get() == 100  # the previous metric with the same name still exists.
     assert output3.get() == 6497

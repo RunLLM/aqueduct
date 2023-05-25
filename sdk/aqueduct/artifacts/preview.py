@@ -64,12 +64,12 @@ def preview_artifacts(
         engine_status = engine_statuses[name]
         if engine_status.status != K8sClusterStatusType.ACTIVE:
             print(
-                "Your preview request makes use of dynamic k8s integration %s, but the k8s cluster is in %s state. It could take 12-15 minutes for the cluster to be ready..."
+                "Your preview request makes use of dynamic k8s resource %s, but the k8s cluster is in %s state. It could take 12-15 minutes for the cluster to be ready..."
                 % (engine_status.name, engine_status.status.value)
             )
         else:
             print(
-                "Your preview request makes use of dynamic k8s integration %s and the k8s cluster is in %s state, so you are good to go!"
+                "Your preview request makes use of dynamic k8s resource %s and the k8s cluster is in %s state, so you are good to go!"
                 % (engine_status.name, engine_status.status.value)
             )
 

@@ -46,9 +46,9 @@ def success_on_multiple_mixed_inputs(metric, df):
     return True
 
 
-def test_check_on_table(client, flow_name, data_integration, engine):
+def test_check_on_table(client, flow_name, data_resource, engine):
     """Test check on a function operator."""
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
     check_artifact = success_on_single_table_input(table_artifact)
     assert check_artifact.get()
 
@@ -60,9 +60,9 @@ def test_check_on_table(client, flow_name, data_integration, engine):
     )
 
 
-def test_check_on_metric(client, flow_name, data_integration, engine):
+def test_check_on_metric(client, flow_name, data_resource, engine):
     """Test check on a metric operator."""
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
     metric = constant_metric(table_artifact)
 
     check_artifact = success_on_single_metric_input(metric)
@@ -76,12 +76,12 @@ def test_check_on_metric(client, flow_name, data_integration, engine):
     )
 
 
-def test_check_on_multiple_mixed_inputs(client, flow_name, data_integration, engine):
+def test_check_on_multiple_mixed_inputs(client, flow_name, data_resource, engine):
     """Test check on multiple tables and metrics."""
-    table_artifact1 = extract(data_integration, DataObject.SENTIMENT)
+    table_artifact1 = extract(data_resource, DataObject.SENTIMENT)
     metric = constant_metric(table_artifact1)
 
-    table_artifact2 = extract(data_integration, DataObject.SENTIMENT)
+    table_artifact2 = extract(data_resource, DataObject.SENTIMENT)
     table = dummy_sentiment_model(table_artifact2)
 
     check_artifact = success_on_multiple_mixed_inputs(metric, table)
@@ -95,12 +95,12 @@ def test_check_on_multiple_mixed_inputs(client, flow_name, data_integration, eng
     )
 
 
-def test_edit_check(client, data_integration, engine, flow_name):
+def test_edit_check(client, data_resource, engine, flow_name):
     """Test that running the same check (by name) twice on the same artifact will result in last-run-wins behavior."""
 
     # NOTE: we explicitly name these extracts operators so that the check on the sentiment table
     # always claims names before the wine table, since we sort alphabetically!
-    table = extract(data_integration, DataObject.SENTIMENT, op_name="sentiment query")
+    table = extract(data_resource, DataObject.SENTIMENT, op_name="sentiment query")
 
     @check
     def foo(table):
@@ -123,7 +123,7 @@ def test_edit_check(client, data_integration, engine, flow_name):
 
     # We do not overwrite check with the same name that run on other artifacts.
     # Instead, we deduplicate with suffix (1).
-    table2 = extract(data_integration, DataObject.WINE, op_name="wine query")
+    table2 = extract(data_resource, DataObject.WINE, op_name="wine query")
     fail = foo(table2)
     assert pass2.get()  # the previous check with the same name still exists.
     assert not fail.get()
@@ -134,9 +134,9 @@ def test_edit_check(client, data_integration, engine, flow_name):
     assert not flow_run.artifact("foo artifact (1)").get()
 
 
-def test_delete_check(client, data_integration):
+def test_delete_check(client, data_resource):
     """Test that checks can be deleted by name."""
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
 
     with pytest.raises(InvalidUserActionException):
         table_artifact.remove_check(name="nonexistant_check")
@@ -153,8 +153,8 @@ def test_delete_check(client, data_integration):
         check_artifact_on_metric.get()
 
 
-def test_check_wrong_input_type(client, data_integration):
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+def test_check_wrong_input_type(client, data_resource):
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
 
     # User function receives a dataframe when it's expecting a metric.
     with pytest.raises(AqueductError):
@@ -169,9 +169,9 @@ def test_check_wrong_input_type(client, data_integration):
         dummy_sentiment_model(check_artifact)
 
 
-def test_check_wrong_number_of_inputs(client, data_integration):
-    table_artifact1 = extract(data_integration, DataObject.SENTIMENT)
-    table_artifact2 = extract(data_integration, DataObject.SENTIMENT)
+def test_check_wrong_number_of_inputs(client, data_resource):
+    table_artifact1 = extract(data_resource, DataObject.SENTIMENT)
+    table_artifact2 = extract(data_resource, DataObject.SENTIMENT)
 
     # TODO(ENG-863): Do we want a more specific error here?
     with pytest.raises(AqueductError):
@@ -179,8 +179,8 @@ def test_check_wrong_number_of_inputs(client, data_integration):
         check_artifact.get()
 
 
-def test_check_with_numpy_bool_output(client, data_integration):
-    table_artifact = extract(data_integration, DataObject.CHURN)
+def test_check_with_numpy_bool_output(client, data_resource):
+    table_artifact = extract(data_resource, DataObject.CHURN)
 
     @check()
     def success_check_return_numpy_bool(df):
@@ -195,8 +195,8 @@ def test_check_with_numpy_bool_output(client, data_integration):
     assert check_artifact.get()
 
 
-def test_check_with_series_output(client, flow_name, data_integration, engine):
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+def test_check_with_series_output(client, flow_name, data_resource, engine):
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
 
     @check()
     def success_check_return_series_of_booleans(df):
@@ -220,8 +220,8 @@ def test_check_with_series_output(client, flow_name, data_integration, engine):
     )
 
 
-def test_check_failure_with_varying_severity(client, flow_name, data_integration, engine):
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+def test_check_failure_with_varying_severity(client, flow_name, data_resource, engine):
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
 
     # An error check will fail the workflow, but a warning check will not.
     @check(severity=CheckSeverity.WARNING)

@@ -15,10 +15,10 @@ const (
 )
 
 // WriteConfigToSecret takes a Config and stores it.
-// The name of the secret is integrationId.
+// The name of the secret is resourceId.
 func WriteConfigToSecret(
 	ctx context.Context,
-	integrationId uuid.UUID,
+	resourceId uuid.UUID,
 	config Config,
 	vaultObject vault.Vault,
 ) error {
@@ -44,17 +44,17 @@ func WriteConfigToSecret(
 	}
 	secrets[secretConfigKey] = string(data)
 
-	return vaultObject.Put(ctx, integrationId.String(), secrets)
+	return vaultObject.Put(ctx, resourceId.String(), secrets)
 }
 
-// ReadConfigFromSecret reads a Config from the vault keyed by integrationId.
+// ReadConfigFromSecret reads a Config from the vault keyed by resourceId.
 // It also refreshes the Config if necessary, and writes the updated Config back.
 func ReadConfigFromSecret(
 	ctx context.Context,
-	integrationId uuid.UUID,
+	resourceId uuid.UUID,
 	vaultObject vault.Vault,
 ) (Config, error) {
-	secrets, err := vaultObject.Get(ctx, integrationId.String())
+	secrets, err := vaultObject.Get(ctx, resourceId.String())
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func ReadConfigFromSecret(
 
 	if refresh {
 		// The Config was refreshed, so the secret needs to be updated
-		if err := WriteConfigToSecret(ctx, integrationId, config, vaultObject); err != nil {
+		if err := WriteConfigToSecret(ctx, resourceId, config, vaultObject); err != nil {
 			return nil, err
 		}
 	}

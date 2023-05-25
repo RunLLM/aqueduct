@@ -290,7 +290,7 @@ func prepareStorageConfig(
 ) (shared.StorageConfig, error) {
 	emptyStorageConf := shared.StorageConfig{}
 
-	authConf, err := auth.ReadConfigFromSecret(ctx, dag.EngineConfig.AirflowConfig.IntegrationID, vault)
+	authConf, err := auth.ReadConfigFromSecret(ctx, dag.EngineConfig.AirflowConfig.ResourceID, vault)
 	if err != nil {
 		return emptyStorageConf, err
 	}

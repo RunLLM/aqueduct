@@ -9,7 +9,7 @@ import TableRow from '@mui/material/TableRow';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 
-import { OperatorsForIntegrationItem } from '../../reducers/integration';
+import { OperatorsForResourceItem } from '../../reducers/resource';
 import { getPathPrefix } from '../../utils/getPathPrefix';
 import { ListWorkflowSummary } from '../../utils/workflows';
 import OperatorParametersOverview from '../operators/operatorParametersOverview';
@@ -17,7 +17,7 @@ import { Button } from '../primitives/Button.styles';
 
 type Props = {
   workflow?: ListWorkflowSummary;
-  operators: OperatorsForIntegrationItem[];
+  operators: OperatorsForResourceItem[];
 };
 
 const OperatorsTable: React.FC<Props> = ({ workflow, operators }) => {

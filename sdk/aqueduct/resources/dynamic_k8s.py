@@ -1,8 +1,8 @@
 from typing import Dict, Union
 
 from aqueduct.constants.enums import K8sClusterActionType, K8sClusterStatusType
-from aqueduct.error import InvalidIntegrationException, InvalidUserArgumentException
-from aqueduct.models.integration import BaseResource, ResourceInfo
+from aqueduct.error import InvalidResourceException, InvalidUserArgumentException
+from aqueduct.models.resource import BaseResource, ResourceInfo
 from aqueduct.models.response_models import DynamicEngineStatusResponse
 from aqueduct.resources.connect_config import DynamicK8sConfig
 from aqueduct.resources.validation import validate_is_connected
@@ -26,15 +26,15 @@ def validate_engine_record(
     name: str, engine_statuses: Dict[str, DynamicEngineStatusResponse]
 ) -> None:
     if len(engine_statuses) == 0:
-        raise InvalidIntegrationException("Dynamic engine %s does not exist!" % name)
+        raise InvalidResourceException("Dynamic engine %s does not exist!" % name)
 
     if len(engine_statuses) > 1:
-        raise InvalidIntegrationException("Duplicate dynamic engine with name %s!" % name)
+        raise InvalidResourceException("Duplicate dynamic engine with name %s!" % name)
 
 
 class DynamicK8sResource(BaseResource):
     """
-    Class for Dynamic K8s integration.
+    Class for Dynamic K8s resource.
     """
 
     def __init__(self, metadata: ResourceInfo):
@@ -46,7 +46,7 @@ class DynamicK8sResource(BaseResource):
         from aqueduct import globals
 
         engine_statuses = globals.__GLOBAL_API_CLIENT__.get_dynamic_engine_status(
-            engine_integration_ids=[str(self._metadata.id)]
+            engine_resource_ids=[str(self._metadata.id)]
         )
 
         validate_engine_record(self._metadata.name, engine_statuses)
@@ -66,7 +66,7 @@ class DynamicK8sResource(BaseResource):
                 that are identical to the current ones do not need to be included in config_delta.
 
         Raises:
-            InvalidIntegrationException:
+            InvalidResourceException:
                 An error occurred when the dynamic engine doesn't exist.
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
@@ -76,7 +76,7 @@ class DynamicK8sResource(BaseResource):
         from aqueduct import globals
 
         engine_statuses = globals.__GLOBAL_API_CLIENT__.get_dynamic_engine_status(
-            engine_integration_ids=[str(self._metadata.id)]
+            engine_resource_ids=[str(self._metadata.id)]
         )
 
         validate_engine_record(self._metadata.name, engine_statuses)
@@ -94,7 +94,7 @@ class DynamicK8sResource(BaseResource):
         )
         globals.__GLOBAL_API_CLIENT__.edit_dynamic_engine(
             action=K8sClusterActionType.CREATE,
-            integration_id=str(self._metadata.id),
+            resource_id=str(self._metadata.id),
             config_delta=config_delta,
         )
 
@@ -110,7 +110,7 @@ class DynamicK8sResource(BaseResource):
                 that are identical to the current ones do not need to be included in config_delta.
 
         Raises:
-            InvalidIntegrationException:
+            InvalidResourceException:
                 An error occurred when the dynamic engine doesn't exist.
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
@@ -120,7 +120,7 @@ class DynamicK8sResource(BaseResource):
         from aqueduct import globals
 
         engine_statuses = globals.__GLOBAL_API_CLIENT__.get_dynamic_engine_status(
-            engine_integration_ids=[str(self._metadata.id)]
+            engine_resource_ids=[str(self._metadata.id)]
         )
 
         validate_engine_record(self._metadata.name, engine_statuses)
@@ -139,7 +139,7 @@ class DynamicK8sResource(BaseResource):
         )
         globals.__GLOBAL_API_CLIENT__.edit_dynamic_engine(
             action=K8sClusterActionType.UPDATE,
-            integration_id=str(self._metadata.id),
+            resource_id=str(self._metadata.id),
             config_delta=config_delta,
         )
 
@@ -154,7 +154,7 @@ class DynamicK8sResource(BaseResource):
                 will be skipped, allowing the cluster to be deleted despite the presence of such pods.
 
         Raises:
-            InvalidIntegrationException:
+            InvalidResourceException:
                 An error occurred when the dynamic engine doesn't exist.
             InternalServerError:
                 An unexpected error occurred within the Aqueduct cluster.
@@ -162,7 +162,7 @@ class DynamicK8sResource(BaseResource):
         from aqueduct import globals
 
         engine_statuses = globals.__GLOBAL_API_CLIENT__.get_dynamic_engine_status(
-            engine_integration_ids=[str(self._metadata.id)]
+            engine_resource_ids=[str(self._metadata.id)]
         )
 
         validate_engine_record(self._metadata.name, engine_statuses)
@@ -182,10 +182,10 @@ class DynamicK8sResource(BaseResource):
             action = K8sClusterActionType.FORCE_DELETE
 
         globals.__GLOBAL_API_CLIENT__.edit_dynamic_engine(
-            action=action, integration_id=str(self._metadata.id)
+            action=action, resource_id=str(self._metadata.id)
         )
 
     def describe(self) -> None:
-        """Prints out a human-readable description of the K8s integration."""
+        """Prints out a human-readable description of the K8s resource."""
         print("==================== Dynamic K8s Resource =============================")
         self._metadata.describe()

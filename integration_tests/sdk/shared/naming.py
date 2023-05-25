@@ -10,5 +10,5 @@ def generate_table_name() -> str:
 
 
 def generate_object_name() -> str:
-    """For non-relational data integrations."""
+    """For non-relational data resources."""
     return "test_object_" + uuid.uuid4().hex[:24]

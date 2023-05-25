@@ -21,7 +21,7 @@ from aqueduct.constants.enums import (
     ServiceType,
 )
 from aqueduct.error import (
-    InvalidIntegrationException,
+    InvalidResourceException,
     InvalidUserActionException,
     InvalidUserArgumentException,
 )
@@ -29,8 +29,8 @@ from aqueduct.flow import Flow
 from aqueduct.github import Github
 from aqueduct.logger import logger
 from aqueduct.models.dag import Metadata, RetentionPolicy
-from aqueduct.models.integration import BaseResource, ResourceInfo
 from aqueduct.models.operators import ParamSpec, S3LoadParams
+from aqueduct.models.resource import BaseResource, ResourceInfo
 from aqueduct.models.response_models import SavedObjectUpdate
 from aqueduct.resources.airflow import AirflowResource
 from aqueduct.resources.aws import AWSResource
@@ -38,8 +38,8 @@ from aqueduct.resources.aws_lambda import LambdaResource
 from aqueduct.resources.connect_config import (
     BaseConnectionConfig,
     ResourceConfig,
-    convert_dict_to_integration_connect_config,
-    prepare_integration_config,
+    convert_dict_to_resource_connect_config,
+    prepare_resource_config,
 )
 from aqueduct.resources.databricks import DatabricksResource
 from aqueduct.resources.dynamic_k8s import DynamicK8sResource
@@ -83,7 +83,7 @@ def global_config(config_dict: Dict[str, Any]) -> None:
         "lazy":
             A boolean indicating whether any new functions will be constructed lazily (True) or eagerly (False).
         "engine":
-            The name of the default compute integration to run all functions against.
+            The name of the default compute resource to run all functions against.
             This can still be overriden by the `engine` argument in `client.publish_flow()` or
             on the @op spec. To set this to run against the Aqueduct engine, use "aqueduct" (case-insensitive).
     """
@@ -98,7 +98,7 @@ def global_config(config_dict: Dict[str, Any]) -> None:
         engine_name = config_dict[globals.GLOBAL_ENGINE_KEY]
         if not isinstance(engine_name, str):
             raise InvalidUserArgumentException(
-                "Engine should be the string name of your compute integration."
+                "Engine should be the string name of your compute resource."
             )
         globals.__GLOBAL_CONFIG__.engine = engine_name
 
@@ -160,7 +160,7 @@ class Client:
             api_key = get_apikey()
 
         globals.__GLOBAL_API_CLIENT__.configure(api_key, aqueduct_address)
-        self._connected_integrations: Dict[
+        self._connected_resources: Dict[
             str, ResourceInfo
         ] = globals.__GLOBAL_API_CLIENT__.list_resources()
         self._dag = globals.__GLOBAL_DAG__
@@ -183,7 +183,7 @@ class Client:
                 Optional branch name. The default main branch will be used if not specified.
 
         Returns:
-            A github integration object linked to the repo and branch.
+            A github resource object linked to the repo and branch.
 
         """
         return Github(repo_url=repo, branch=branch)
@@ -244,7 +244,7 @@ class Client:
     ) -> None:
         """Deprecated. Use `client.connect_resource()` instead."""
         logger().warning(
-            "client.connect_integration() will be deprecated soon. Use `client.connect_resource() instead."
+            "client.connect_resource() will be deprecated soon. Use `client.connect_resource() instead."
         )
         return self.connect_resource(name, service, config)
 
@@ -254,16 +254,16 @@ class Client:
         service: Union[str, ServiceType],
         config: Union[Dict[str, str], ResourceConfig],
     ) -> None:
-        """Connects the Aqueduct server to an integration.
+        """Connects the Aqueduct server to an resource.
 
         Args:
             name:
-                The name to assign this integration. Will error if an integration with that name
+                The name to assign this resource. Will error if an resource with that name
                 already exists.
             service:
-                The type of integration to connect to.
+                The type of resource to connect to.
             config:
-                Either a dictionary or an IntegrationConnectConfig object that contains the
+                Either a dictionary or an ResourceConnectConfig object that contains the
                 configuration credentials needed to connect.
         """
         if service not in ServiceType:
@@ -271,26 +271,26 @@ class Client:
                 "Service argument must match exactly one of the enum values in ServiceType (case-sensitive)."
             )
 
-        self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_resources()
-        if name in self._connected_integrations.keys():
+        self._connected_resources = globals.__GLOBAL_API_CLIENT__.list_resources()
+        if name in self._connected_resources.keys():
             raise InvalidUserActionException(
-                "Cannot connect a new integration with name `%s`. An integration with this name already exists."
+                "Cannot connect a new resource with name `%s`. An resource with this name already exists."
                 % name
             )
 
         if not isinstance(config, dict) and not isinstance(config, BaseConnectionConfig):
             raise InvalidUserArgumentException(
-                "`config` argument must be either a dict or IntegrationConnectConfig."
+                "`config` argument must be either a dict or ResourceConnectConfig."
             )
 
         if isinstance(config, dict):
-            config = convert_dict_to_integration_connect_config(service, config)
+            config = convert_dict_to_resource_connect_config(service, config)
         assert isinstance(config, BaseConnectionConfig)
 
-        config = prepare_integration_config(service, config)
+        config = prepare_resource_config(service, config)
 
-        logger().info("Connecting to new %s integration `%s`..." % (service, name))
-        globals.__GLOBAL_API_CLIENT__.connect_integration(name, service, config)
+        logger().info("Connecting to new %s resource `%s`..." % (service, name))
+        globals.__GLOBAL_API_CLIENT__.connect_resource(name, service, config)
 
     def delete_integration(
         self,
@@ -298,7 +298,7 @@ class Client:
     ) -> None:
         """Deprecated. Use `client.delete_resource()` instead."""
         logger().warning(
-            "client.delete_integration() will be deprecated soon. Use `client.delete_resource() instead."
+            "client.delete_resource() will be deprecated soon. Use `client.delete_resource() instead."
         )
         return self.delete_resource(name)
 
@@ -306,43 +306,43 @@ class Client:
         self,
         name: str,
     ) -> None:
-        """Deletes the integration from Aqueduct.
+        """Deletes the resource from Aqueduct.
 
         Args:
             name:
-                The name of the integration to delete.
+                The name of the resource to delete.
         """
-        existing_integrations = globals.__GLOBAL_API_CLIENT__.list_resources()
+        existing_resources = globals.__GLOBAL_API_CLIENT__.list_resources()
 
         # If the user uses the deprecated demo name, and there isn't a resource for this, that means they actually
         # want to use the new demo name.
         if (
             name == DEPRECATED_AQUEDUCT_DEMO_DB_NAME
-            and DEPRECATED_AQUEDUCT_DEMO_DB_NAME not in existing_integrations.keys()
+            and DEPRECATED_AQUEDUCT_DEMO_DB_NAME not in existing_resources.keys()
         ) or name == AQUEDUCT_DEMO_DB_NAME:
             raise InvalidUserActionException("Cannot delete the Aqueduct demo database: %s" % name)
-        if name not in existing_integrations.keys():
-            raise InvalidIntegrationException("Not connected to integration %s!" % name)
+        if name not in existing_resources.keys():
+            raise InvalidResourceException("Not connected to resource %s!" % name)
 
-        # Update the connected integrations cached on this object.
-        globals.__GLOBAL_API_CLIENT__.delete_integration(existing_integrations[name].id)
-        self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_resources()
+        # Update the connected resources cached on this object.
+        globals.__GLOBAL_API_CLIENT__.delete_resource(existing_resources[name].id)
+        self._connected_resources = globals.__GLOBAL_API_CLIENT__.list_resources()
 
     def list_integrations(self) -> Dict[str, ResourceInfo]:
         """Deprecated. Use `client.list_resources()` instead."""
         logger().warning(
-            "client.list_integrations() will be deprecated soon. Use `client.list_resources() instead."
+            "client.list_resources() will be deprecated soon. Use `client.list_resources() instead."
         )
         return self.list_resources()
 
     def list_resources(self) -> Dict[str, ResourceInfo]:
-        """Retrieves a dictionary of integrations the client can use.
+        """Retrieves a dictionary of resources the client can use.
 
         Returns:
-            A dictionary mapping from integration name to additional info.
+            A dictionary mapping from resource name to additional info.
         """
-        self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_resources()
-        return self._connected_integrations
+        self._connected_resources = globals.__GLOBAL_API_CLIENT__.list_resources()
+        return self._connected_resources
 
     def integration(
         self,
@@ -364,7 +364,7 @@ class Client:
     ]:
         """Deprecated. Use `client.resource()` instead."""
         logger().warning(
-            "client.integration() will be deprecated soon. Use `client.resource() instead."
+            "client.resource() will be deprecated soon. Use `client.resource() instead."
         )
         return self.resource(name)
 
@@ -385,23 +385,23 @@ class Client:
         ECRResource,
         GARResource,
     ]:
-        """Retrieves a connected integration object.
+        """Retrieves a connected resource object.
 
         Args:
             name:
-                The name of the integration
+                The name of the resource
 
         Returns:
-            The integration object with the given name.
+            The resource object with the given name.
 
         Raises:
-            InvalidIntegrationException:
+            InvalidResourceException:
                 An error occurred because the cluster is not connected to the
-                provided integration or the provided integration is of an
+                provided resource or the provided resource is of an
                 incompatible type.
         """
-        self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_resources()
-        connected_names = self._connected_integrations.keys()
+        self._connected_resources = globals.__GLOBAL_API_CLIENT__.list_resources()
+        connected_names = self._connected_resources.keys()
 
         if name == DEPRECATED_AQUEDUCT_DEMO_DB_NAME:
             # If the user uses the deprecated demo name, and there isn't a resource for this, that means they actually
@@ -414,75 +414,72 @@ class Client:
                 name = AQUEDUCT_DEMO_DB_NAME
 
         if name not in connected_names:
-            raise InvalidIntegrationException("Not connected to integration %s!" % name)
+            raise InvalidResourceException("Not connected to resource %s!" % name)
 
-        integration_info = self._connected_integrations[name]
-        if integration_info.service in RelationalDBServices:
+        resource_info = self._connected_resources[name]
+        if resource_info.service in RelationalDBServices:
             return RelationalDBResource(
                 dag=self._dag,
-                metadata=integration_info,
+                metadata=resource_info,
             )
-        elif integration_info.service == ServiceType.SALESFORCE:
+        elif resource_info.service == ServiceType.SALESFORCE:
             return SalesforceResource(
                 dag=self._dag,
-                metadata=integration_info,
+                metadata=resource_info,
             )
-        elif integration_info.service == ServiceType.GOOGLE_SHEETS:
+        elif resource_info.service == ServiceType.GOOGLE_SHEETS:
             return GoogleSheetsResource(
                 dag=self._dag,
-                metadata=integration_info,
+                metadata=resource_info,
             )
-        elif integration_info.service == ServiceType.S3:
+        elif resource_info.service == ServiceType.S3:
             return S3Resource(
                 dag=self._dag,
-                metadata=integration_info,
+                metadata=resource_info,
             )
-        elif integration_info.service == ServiceType.AIRFLOW:
+        elif resource_info.service == ServiceType.AIRFLOW:
             return AirflowResource(
-                metadata=integration_info,
+                metadata=resource_info,
             )
-        elif integration_info.service == ServiceType.K8S:
+        elif resource_info.service == ServiceType.K8S:
             return K8sResource(
-                metadata=integration_info,
+                metadata=resource_info,
             )
-        elif integration_info.service == ServiceType.LAMBDA:
+        elif resource_info.service == ServiceType.LAMBDA:
             return LambdaResource(
-                metadata=integration_info,
+                metadata=resource_info,
             )
-        elif integration_info.service == ServiceType.MONGO_DB:
+        elif resource_info.service == ServiceType.MONGO_DB:
             return MongoDBResource(
                 dag=self._dag,
-                metadata=integration_info,
+                metadata=resource_info,
             )
-        elif integration_info.service == ServiceType.DATABRICKS:
+        elif resource_info.service == ServiceType.DATABRICKS:
             return DatabricksResource(
-                metadata=integration_info,
+                metadata=resource_info,
             )
-        elif integration_info.service == ServiceType.SPARK:
+        elif resource_info.service == ServiceType.SPARK:
             return SparkResource(
-                metadata=integration_info,
+                metadata=resource_info,
             )
-        elif integration_info.service == ServiceType.AWS:
-            dynamic_k8s_integration_name = "%s:aqueduct_ondemand_k8s" % name
-            dynamic_k8s_integration_info = self._connected_integrations[
-                dynamic_k8s_integration_name
-            ]
+        elif resource_info.service == ServiceType.AWS:
+            dynamic_k8s_resource_name = "%s:aqueduct_ondemand_k8s" % name
+            dynamic_k8s_resource_info = self._connected_resources[dynamic_k8s_resource_name]
             return AWSResource(
-                metadata=integration_info,
-                k8s_integration_metadata=dynamic_k8s_integration_info,
+                metadata=resource_info,
+                k8s_resource_metadata=dynamic_k8s_resource_info,
             )
-        elif integration_info.service == ServiceType.ECR:
+        elif resource_info.service == ServiceType.ECR:
             return ECRResource(
-                metadata=integration_info,
+                metadata=resource_info,
             )
         elif integration_info.service == ServiceType.GAR:
             return GARResource(
                 metadata=integration_info,
             )
         else:
-            raise InvalidIntegrationException(
-                "This method does not support loading integration of type %s"
-                % integration_info.service
+            raise InvalidResourceException(
+                "This method does not support loading resource of type %s" % resource_info.service
             )
 
     def list_flows(self) -> List[Dict[str, str]]:
@@ -568,7 +565,7 @@ class Client:
         >>> flow = client.publish_flow(
         >>>     name="k8s_example",
         >>>     artifacts=[output],
-        >>>     engine="k8s_integration",
+        >>>     engine="k8s_resource",
         >>> )
 
         Args:
@@ -583,7 +580,7 @@ class Client:
 
                 >> schedule = aqueduct.hourly(minute: 0)
             engine:
-                The name of the compute integration (eg. "my_lambda_integration") this the flow will
+                The name of the compute resource (eg. "my_lambda_resource") this the flow will
                 be computed on.
             artifacts:
                 All the artifacts that you care about computing. These artifacts are guaranteed
@@ -730,10 +727,10 @@ class Client:
         )
         dag.set_engine_config(
             global_engine_config=generate_engine_config(
-                self._connected_integrations,
+                self._connected_resources,
                 globals.__GLOBAL_CONFIG__.engine,
             ),
-            publish_flow_engine_config=generate_engine_config(self._connected_integrations, engine),
+            publish_flow_engine_config=generate_engine_config(self._connected_resources, engine),
         )
 
         dag.validate_and_resolve_artifact_names()
@@ -886,7 +883,7 @@ class Client:
             flow_identifier takes precedence over flow_id or flow_name arguments
 
             saved_objects_to_delete:
-                The tables or storage paths to delete grouped by integration name.
+                The tables or storage paths to delete grouped by resource name.
             force:
                 Force the deletion even though some workflow-written objects in the writes_to_delete argument had UpdateMode=append
 
@@ -922,7 +919,7 @@ class Client:
                     filepath = saved_obj_to_delete.spec.parameters.filepath
                     if len(re.findall(USER_TAG_PATTERN, filepath)) > 0:
                         s3_parameterized_filepaths.append(
-                            (saved_obj_to_delete.integration_name, filepath)
+                            (saved_obj_to_delete.resource_name, filepath)
                         )
 
         if len(s3_parameterized_filepaths) > 0:
@@ -931,8 +928,8 @@ class Client:
                 "combinations in `saved_objects_to_delete` are parameterized: \n"
                 + ", ".join(
                     [
-                        f"{integration_name}: {filepath}"
-                        for integration_name, filepath in s3_parameterized_filepaths
+                        f"{resource_name}: {filepath}"
+                        for resource_name, filepath in s3_parameterized_filepaths
                     ]
                 )
             )
@@ -947,14 +944,14 @@ class Client:
         )
 
         failures = []
-        for integration in resp.saved_object_deletion_results:
-            for obj in resp.saved_object_deletion_results[integration]:
+        for resource in resp.saved_object_deletion_results:
+            for obj in resp.saved_object_deletion_results[resource]:
                 if obj.exec_state.status == ExecutionStatus.FAILED:
                     trace = ""
                     if obj.exec_state.error:
                         context = obj.exec_state.error.context.strip().replace("\n", "\n>\t")
                         trace = f">\t{context}\n{obj.exec_state.error.tip}"
-                    failure_string = f"[{integration}] {obj.name}\n{trace}"
+                    failure_string = f"[{resource}] {obj.name}\n{trace}"
                     failures.append(failure_string)
         if len(failures) > 0:
             failures_string = "\n".join(failures)
@@ -967,7 +964,7 @@ class Client:
         print("============================= Aqueduct Client =============================")
         print("Connected endpoint: %s" % globals.__GLOBAL_API_CLIENT__.aqueduct_address)
         print("Log Level: %s" % logging.getLevelName(logging.root.level))
-        self._connected_integrations = globals.__GLOBAL_API_CLIENT__.list_resources()
-        print("Current Integrations:")
-        for integrations in self._connected_integrations:
-            print("\t -" + integrations)
+        self._connected_resources = globals.__GLOBAL_API_CLIENT__.list_resources()
+        print("Current Resources:")
+        for resources in self._connected_resources:
+            print("\t -" + resources)
