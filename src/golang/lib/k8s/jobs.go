@@ -187,13 +187,15 @@ func generateImagePullSecret(image *operator.ImageConfig, k8sClient *kubernetes.
 
 	imagePullSecretName := uid.String()
 
+	var secret *corev1.Secret
+
 	if image.Service == shared.ECR {
 		ecrConfig, err := container_registry.RefreshECRCredentialsIfNeeded(config, registryID, vaultObject)
 		if err != nil {
 			return "", errors.Wrap(err, "Unable to get ECR config.")
 		}
 
-		secret := &corev1.Secret{
+		secret = &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      imagePullSecretName,
 				Namespace: namespace,
@@ -203,15 +205,6 @@ func generateImagePullSecret(image *operator.ImageConfig, k8sClient *kubernetes.
 				".dockerconfigjson": []byte(fmt.Sprintf(`{"auths": {"%s": {"username": "AWS", "password": "%s", "email": "none"}}}`, ecrConfig.ProxyEndpoint, ecrConfig.Token)),
 			},
 		}
-
-		// Create a secret with ECR credentials
-		_, err = k8sClient.CoreV1().Secrets(namespace).Create(context.Background(), secret, metav1.CreateOptions{})
-		if err != nil {
-			// Double-check that we didn't race against another process to create this secret.
-			if _, secretExistsErr := GetSecret(context.Background(), imagePullSecretName, k8sClient); secretExistsErr != nil {
-				return "", errors.Wrap(err, "Error while creating ECR Secrets")
-			}
-		}
 	} else {
 		// If we reach here, we are using GAR service.
 		garConfig, err := lib_utils.ParseGARConfig(config)
@@ -219,7 +212,7 @@ func generateImagePullSecret(image *operator.ImageConfig, k8sClient *kubernetes.
 			return "", errors.Wrap(err, "Unable to parse ECR config.")
 		}
 
-		secret := &corev1.Secret{
+		secret = &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
 				Name:      imagePullSecretName,
 				Namespace: namespace,
@@ -229,17 +222,14 @@ func generateImagePullSecret(image *operator.ImageConfig, k8sClient *kubernetes.
 				".dockerconfigjson": []byte(fmt.Sprintf(`{"auths": {"%s": {"auth": "%s"}}}`, strings.Split(*image.Url, "/")[0], base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("_json_key:%s", garConfig.ServiceAccountKey))))),
 			},
 		}
+	}
 
-		// Create a secret with GAR credentials
-		_, err = k8sClient.CoreV1().Secrets(namespace).Create(context.Background(), secret, metav1.CreateOptions{})
-		if err != nil {
-			// Double-check that we didn't race against another process to create this secret.
-			if _, secretExistsErr := GetSecret(context.Background(), imagePullSecretName, k8sClient); secretExistsErr != nil {
-				return "", errors.Wrap(err, "Error while creating GAR Secrets")
-			}
+	_, err = k8sClient.CoreV1().Secrets(namespace).Create(context.Background(), secret, metav1.CreateOptions{})
+	if err != nil {
+		// Double-check that we didn't race against another process to create this secret.
+		if _, secretExistsErr := GetSecret(context.Background(), imagePullSecretName, k8sClient); secretExistsErr != nil {
+			return "", errors.Wrapf(err, "Error while creating %s Secrets", image.Service)
 		}
-
-		log.Errorf("GAR secret created with service account key: %s", strings.ReplaceAll(garConfig.ServiceAccountKey, "\n", " "))
 	}
 
 	return imagePullSecretName, nil
