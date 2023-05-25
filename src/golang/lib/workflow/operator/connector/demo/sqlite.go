@@ -13,7 +13,7 @@ const (
 
 var sqliteDatabasePath = path.Join(os.Getenv("HOME"), ".aqueduct/server/db/demo.db")
 
-func GetSqliteIntegrationConfig() auth.Config {
+func GetSqliteResourceConfig() auth.Config {
 	configMap := map[string]string{
 		databasePathKey: sqliteDatabasePath,
 	}

@@ -18,11 +18,11 @@ import { ReactFlowProvider } from 'reactflow';
 
 import { BreadcrumbLink } from '../../../../components/layouts/NavBar';
 import { handleGetWorkflowHistory } from '../../../../handlers/getWorkflowHistory';
-import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import {
   NodeType,
   resetSelectedNode,
 } from '../../../../reducers/nodeSelection';
+import { handleLoadResources } from '../../../../reducers/resources';
 import {
   handleGetArtifactResults,
   handleGetOperatorResults,
@@ -130,11 +130,11 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
 
   // EFFECT 3: Load workflow metadata.
   // This useEffect is effectively only called on component mount. It loads
-  // the base workflow metadata as well as metadata about any integrations
+  // the base workflow metadata as well as metadata about any resources
   // in order to populate the UI.
   useEffect(() => {
     dispatch(handleGetWorkflow({ apiKey: user.apiKey, workflowId }));
-    dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
+    dispatch(handleLoadResources({ apiKey: user.apiKey }));
   }, [dispatch, user.apiKey, workflowId]);
 
   // EFFECT 4: Gather selected workflow index.

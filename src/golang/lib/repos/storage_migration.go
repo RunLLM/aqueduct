@@ -30,10 +30,10 @@ type storageMigrationReader interface {
 
 type storageMigrationWriter interface {
 	// Create inserts a new storage migration entry with all the starter fields.
-	// A nil integration id refers to the local filesystem.
+	// A nil resource id refers to the local filesystem.
 	Create(
 		ctx context.Context,
-		destIntegrationID *uuid.UUID,
+		destResourceID *uuid.UUID,
 		DB database.Database,
 	) (*models.StorageMigration, error)
 

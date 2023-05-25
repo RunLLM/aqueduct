@@ -10,7 +10,7 @@ Simply run from your root `aqueduct` directory with `python3 manual_ui_tests/ini
 ## Usage
 To run with more flexibility, configure the following commandline flags:
 * `--addr`: the server address
-* `--data-integration`: the data integration name. The data integration need to be pre-configured before running the script.
+* `--data-resource`: the data integration name. The data integration need to be pre-configured before running the script.
 * `--api-key`: the API key if different from `aqueduct.api_key()` by any reason.
 * `--example-notebooks`: also run all example notebooks
 * `--slack-token`: The Slack App bot token to integrate with slack notifications.

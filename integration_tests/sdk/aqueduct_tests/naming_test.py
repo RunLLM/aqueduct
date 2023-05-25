@@ -14,12 +14,12 @@ from .test_functions.simple.model import (
 )
 
 
-def test_artifact_name_sanitization(client, data_integration):
+def test_artifact_name_sanitization(client, data_resource):
     "Checks that whitespace in the beginning or end of artifact names is removed."
     param = client.create_param("   whitespace around me  ", default=123)
     assert param.name() == "whitespace around me"
 
-    table = extract(data_integration, DataObject.SENTIMENT, output_name="   whitespace around me  ")
+    table = extract(data_resource, DataObject.SENTIMENT, output_name="   whitespace around me  ")
     assert table.name() == "whitespace around me"
 
     @op(outputs=["  whitespace around me  "])
@@ -49,14 +49,14 @@ def test_artifact_name_sanitization(client, data_integration):
 @pytest.mark.skip_for_spark_engines(
     reason="Spark converts column names to capital, .equals doesn't work."
 )
-def test_extract_with_default_name_collision(client, flow_name, engine, data_integration):
+def test_extract_with_default_name_collision(client, flow_name, engine, data_resource):
     # In the case where no explicit name is supplied, we expect new extract
     # operators to always be created.
-    table_artifact_1 = extract(data_integration, DataObject.SENTIMENT)
-    table_artifact_2 = extract(data_integration, DataObject.SENTIMENT)
+    table_artifact_1 = extract(data_resource, DataObject.SENTIMENT)
+    table_artifact_2 = extract(data_resource, DataObject.SENTIMENT)
 
-    assert table_artifact_1.name() == "%s query artifact" % data_integration.name()
-    assert table_artifact_2.name() == "%s query artifact" % data_integration.name()
+    assert table_artifact_1.name() == "%s query artifact" % data_resource.name()
+    assert table_artifact_2.name() == "%s query artifact" % data_resource.name()
 
     fn_artifact = dummy_sentiment_model_multiple_input(table_artifact_1, table_artifact_2)
     fn_df = fn_artifact.get()
@@ -82,13 +82,13 @@ def test_extract_with_default_name_collision(client, flow_name, engine, data_int
 @pytest.mark.skip_for_spark_engines(
     reason="Spark converts column names to capital, .equals doesn't work."
 )
-def test_extract_with_op_name_collision(client, data_integration, engine, flow_name):
+def test_extract_with_op_name_collision(client, data_resource, engine, flow_name):
     """Artifact names are the only collisions we care about. We will deduplicate them, but allow
     for operator name duplicates."""
-    table_artifact_1 = extract(data_integration, DataObject.SENTIMENT, op_name="sql query")
+    table_artifact_1 = extract(data_resource, DataObject.SENTIMENT, op_name="sql query")
     assert table_artifact_1.name() == "sql query artifact"
 
-    table_artifact_2 = extract(data_integration, DataObject.SENTIMENT, op_name="sql query")
+    table_artifact_2 = extract(data_resource, DataObject.SENTIMENT, op_name="sql query")
     assert table_artifact_2.name() == "sql query artifact"
 
     # Check that the old operator still exists and works.
@@ -114,8 +114,8 @@ def test_extract_with_op_name_collision(client, data_integration, engine, flow_n
 @pytest.mark.skip_for_spark_engines(
     reason="Spark converts column names to capital, .equals doesn't work."
 )
-def test_extract_with_artifact_name_collision(client, data_integration, engine, flow_name):
-    output = extract(data_integration, DataObject.SENTIMENT, output_name="hotel reviews")
+def test_extract_with_artifact_name_collision(client, data_resource, engine, flow_name):
+    output = extract(data_resource, DataObject.SENTIMENT, output_name="hotel reviews")
     assert output.name() == "hotel reviews"
 
     # Test that custom artifact naming works.
@@ -123,7 +123,7 @@ def test_extract_with_artifact_name_collision(client, data_integration, engine, 
     assert flow.latest().artifact("hotel reviews").get().equals(output.get())
 
     # We can name another output artifact the same, but we can't publish the two together.
-    output2 = extract(data_integration, DataObject.SENTIMENT, output_name="hotel reviews")
+    output2 = extract(data_resource, DataObject.SENTIMENT, output_name="hotel reviews")
     with pytest.raises(
         InvalidUserActionException,
         match="Unable to publish flow. You are attempting to publish multiple artifacts explicitly named",
@@ -261,11 +261,9 @@ def _run_noop_check(input):
 @pytest.mark.skip_for_spark_engines(
     reason="Spark converts column names to capital, .equals doesn't work."
 )
-def test_artifact_name_collisions_across_operator_types(
-    client, data_integration, engine, flow_name
-):
+def test_artifact_name_collisions_across_operator_types(client, data_resource, engine, flow_name):
     """Tests that the same naming policy holds regardless of the operator type."""
-    extract_output = extract(data_integration, DataObject.SENTIMENT, output_name="foo artifact")
+    extract_output = extract(data_resource, DataObject.SENTIMENT, output_name="foo artifact")
     op_output = _run_noop_op(extract_output)
     metric_output = _run_noop_metric(op_output)
     check_output = _run_noop_check(metric_output)

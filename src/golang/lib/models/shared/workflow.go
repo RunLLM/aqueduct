@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// `NotificationSettings` maps IntegrationID to NotificationLevel
+// `NotificationSettings` maps ResourceID to NotificationLevel
 // This has to be a struct since sql driver does not support map type.
 type NotificationSettings struct {
 	Settings map[uuid.UUID]NotificationLevel `json:"settings"`

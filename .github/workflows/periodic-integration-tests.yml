@@ -216,7 +216,7 @@ jobs:
         with:
           prefix: Conda
 
-  run-data-integration-tests:
+  run-data-resource-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     name: SDK Integration Tests against Data Connectors
@@ -291,7 +291,7 @@ jobs:
 
       - name: Run the SDK Data Integration Tests
         working-directory: integration_tests/sdk
-        run: python3 run_tests.py --data-integration -n 2
+        run: python3 run_tests.py --data -n 2
 
       - uses: ./.github/actions/upload-artifacts
         if: always()

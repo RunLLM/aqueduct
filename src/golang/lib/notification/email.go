@@ -14,16 +14,16 @@ import (
 )
 
 type EmailNotification struct {
-	integration *models.Integration
-	conf        *shared.EmailConfig
+	resource *models.Resource
+	conf     *shared.EmailConfig
 }
 
-func newEmailNotification(integration *models.Integration, conf *shared.EmailConfig) *EmailNotification {
-	return &EmailNotification{integration: integration, conf: conf}
+func newEmailNotification(resource *models.Resource, conf *shared.EmailConfig) *EmailNotification {
+	return &EmailNotification{resource: resource, conf: conf}
 }
 
 func (e *EmailNotification) ID() uuid.UUID {
-	return e.integration.ID
+	return e.resource.ID
 }
 
 func (e *EmailNotification) Level() shared.NotificationLevel {

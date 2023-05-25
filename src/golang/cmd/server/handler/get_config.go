@@ -28,7 +28,7 @@ type getConfigResponse struct {
 type GetConfigHandler struct {
 	GetHandler
 
-	IntegrationRepo      repos.Integration
+	ResourceRepo         repos.Resource
 	StorageMigrationRepo repos.StorageMigration
 	Database             database.Database
 }
@@ -59,36 +59,36 @@ func (h *GetConfigHandler) Perform(ctx context.Context, interfaceArgs interface{
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve storage config.")
 	}
 
-	var integrationObj *models.Integration
+	var resourceObj *models.Resource
 
 	// There are a number of fields we need to augment the response with, which aren't directly fetched from
 	// the config file. These include resource name, connected-at timestamp, and execution state.
 	currStorageMigrationObj, err := h.StorageMigrationRepo.Current(ctx, h.Database)
 	if err != nil && !errors.Is(err, database.ErrNoRows()) {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error when fetchin current storage integration.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error when fetching current storage resource.")
 	}
 	if err != nil {
 		// If there was no previous storage migration, we must be using the local filesystem.
-		integrationObj, err = h.IntegrationRepo.GetByNameAndUser(ctx, shared.ArtifactStorageIntegrationName, args.ID, args.OrgID, h.Database)
+		resourceObj, err = h.ResourceRepo.GetByNameAndUser(ctx, shared.ArtifactStorageResourceName, args.ID, args.OrgID, h.Database)
 		if err != nil {
-			return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error when fetching current storage integration.")
+			return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error when fetching current storage resource.")
 		}
-		execState, err := execution_state.ExtractConnectionState(integrationObj)
+		execState, err := execution_state.ExtractConnectionState(resourceObj)
 		if err != nil {
 			return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to fetch status of Filesystem storage resource.")
 		}
-		storageConfigPublic.ConnectedAt = integrationObj.CreatedAt.Unix()
+		storageConfigPublic.ConnectedAt = resourceObj.CreatedAt.Unix()
 		storageConfigPublic.ExecState = execState
 	} else {
-		integrationObj, err = h.IntegrationRepo.Get(ctx, currStorageMigrationObj.DestIntegrationID, h.Database)
+		resourceObj, err = h.ResourceRepo.Get(ctx, currStorageMigrationObj.DestResourceID, h.Database)
 		if err != nil {
-			return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error when fetching current storage integration.")
+			return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error when fetching current storage resource.")
 		}
 		storageConfigPublic.ConnectedAt = currStorageMigrationObj.ExecState.Timestamps.RegisteredAt.Unix()
 		storageConfigPublic.ExecState = &currStorageMigrationObj.ExecState
 	}
-	storageConfigPublic.IntegrationID = integrationObj.ID
-	storageConfigPublic.IntegrationName = integrationObj.Name
+	storageConfigPublic.ResourceID = resourceObj.ID
+	storageConfigPublic.ResourceName = resourceObj.Name
 
 	return getConfigResponse{
 		AqPath:              config.AqueductPath(),

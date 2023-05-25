@@ -3,7 +3,7 @@ import React from 'react';
 
 import { theme } from '../../../../styles/theme/theme';
 import { EngineType, EngineTypeToService } from '../../../../utils/engine';
-import { ServiceLogos } from '../../../../utils/integrations';
+import { ServiceLogos } from '../../../../utils/resources';
 
 export interface ResourceItemProps {
   resource: string;
@@ -72,7 +72,6 @@ export const ResourceItem: React.FC<ResourceItemProps> = ({
     <Box
       display="flex"
       alignItems="center"
-      px={1}
       py="4px"
       width="fit-content"
       sx={{
