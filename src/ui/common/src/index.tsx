@@ -14,12 +14,8 @@ import AccountNotificationSettingsSelector from './components/notifications/Acco
 import NotificationLevelSelector from './components/notifications/NotificationLevelSelector';
 import { NotificationListItem } from './components/notifications/NotificationListItem';
 import NotificationsPopover from './components/notifications/NotificationsPopover';
-import RequireOperator from './components/operators/RequireOperator';
 import AccountPage from './components/pages/account/AccountPage';
 import ArtifactDetailsPage from './components/pages/artifact/id';
-import useArtifact, {
-  useArtifactHistory,
-} from './components/pages/artifact/id/hook';
 import CheckDetailsPage from './components/pages/check/id';
 import DataPage from './components/pages/data';
 import ErrorPage from './components/pages/ErrorPage';
@@ -27,11 +23,9 @@ import HomePage from './components/pages/HomePage';
 import LoginPage from './components/pages/LoginPage';
 import MetricDetailsPage from './components/pages/metric/id';
 import OperatorDetailsPage from './components/pages/operator/id';
-import useOpeartor from './components/pages/operator/id/hook';
 import ResourceDetailsPage from './components/pages/resource/id';
 import ResourcesPage from './components/pages/resources';
 import WorkflowPage from './components/pages/workflow/id';
-import useWorkflow from './components/pages/workflow/id/hook';
 import WorkflowsPage from './components/pages/workflows';
 import { Button } from './components/primitives/Button.styles';
 import { LoadingButton } from './components/primitives/LoadingButton.styles';
@@ -75,39 +69,27 @@ import AqueductQuadratic from './components/workflows/edges/AqueductQuadratic';
 import AqueductStraight from './components/workflows/edges/AqueductStraight';
 import { BaseNode } from './components/workflows/nodes/BaseNode.styles';
 import Node from './components/workflows/nodes/Node';
-import nodeTypes from './components/workflows/nodes/nodeTypes';
 import ReactFlowCanvas from './components/workflows/ReactFlowCanvas';
 import RequireDagOrResult from './components/workflows/RequireDagOrResult';
-import VersionSelector from './components/workflows/version_selector';
-import WorkflowHeader from './components/workflows/workflowHeader';
+import WorkflowHeader from './components/workflows/WorkflowHeader';
 import WorkflowSettings from './components/workflows/WorkflowSettings';
+import VersionSelector from './components/workflows/WorkflowVersionSelector';
 import { aqueductApi } from './handlers/AqueductApi';
-import { handleGetArtifactResultContent } from './handlers/getArtifactResultContent';
 import { handleGetServerConfig } from './handlers/getServerConfig';
 import { handleGetWorkflowDag } from './handlers/getWorkflowDag';
-import { handleGetWorkflowDagResult } from './handlers/getWorkflowDagResult';
-import { handleListArtifactResults } from './handlers/listArtifactResults';
-import artifactResultContents from './reducers/artifactResultContents';
-import artifactResults from './reducers/artifactResults';
 import dataPreview, { dataPreviewSlice } from './reducers/dataPreview';
 import { getDataArtifactPreview } from './reducers/dataPreview';
 import workflowSummaries, {
   handleFetchAllWorkflowSummaries,
   listWorkflowSlice,
 } from './reducers/listWorkflowSummaries';
-import nodeSelection, {
-  ArtifactTypeToNodeTypeMap,
-  NodeType,
-  OperatorTypeToNodeTypeMap,
-  resetSelectedNode,
-  selectNode,
-} from './reducers/nodeSelection';
 import notifications, {
   handleArchiveAllNotifications,
   handleArchiveNotification,
   handleFetchNotifications,
   notificationsSlice,
 } from './reducers/notifications';
+import workflowPage from './reducers/pages/Workflow';
 import resource, {
   handleConnectToNewResource,
   handleEditResource,
@@ -115,7 +97,6 @@ import resource, {
   handleLoadResourceObject,
   handleLoadResourceOperators,
   handleTestConnectResource,
-  objectKeyFn,
   resetConnectNewStatus,
   resetTestConnectStatus,
   resourceSlice,
@@ -125,17 +106,6 @@ import resources, {
   resourcesSlice,
 } from './reducers/resources';
 import serverConfig from './reducers/serverConfig';
-import workflow, {
-  handleGetArtifactResults,
-  handleGetOperatorResults,
-  handleGetWorkflow,
-  handleListWorkflowSavedObjects,
-  selectResultIdx,
-  workflowSlice,
-} from './reducers/workflow';
-import workflowDagResults from './reducers/workflowDagResults';
-import workflowDags from './reducers/workflowDags';
-import workflowHistory from './reducers/workflowHistory';
 import { store } from './stores/store';
 import { theme } from './styles/theme/theme';
 import { ArtifactType } from './utils/artifacts';
@@ -168,14 +138,13 @@ import {
   ServiceType,
 } from './utils/operators';
 import { exportCsv } from './utils/preview';
-import { EdgeTypes, ReactflowNodeType } from './utils/reactflow';
-import { addTable, formatService, ServiceLogos } from './utils/resources';
+import { ServiceLogos } from './utils/resources';
 import ExecutionStatus, {
   CheckStatus,
   LoadingStatusEnum,
   WidthTransition,
 } from './utils/shared';
-import { getDataSideSheetContent, sideSheetSwitcher } from './utils/sidesheets';
+import { getDataSideSheetContent } from './utils/sidesheets';
 import SupportedResources from './utils/SupportedResources';
 import {
   normalizeGetWorkflowResponse,
@@ -186,7 +155,6 @@ export {
   AccountNotificationSettingsSelector,
   AccountPage,
   AddResources,
-  addTable,
   AddTableDialog,
   aqueductApi,
   AqueductBezier,
@@ -194,10 +162,7 @@ export {
   AqueductStraight,
   archiveNotification,
   ArtifactDetailsPage,
-  artifactResultContents,
-  artifactResults,
   ArtifactType,
-  ArtifactTypeToNodeTypeMap,
   AWSCard,
   AWSDialog,
   BaseNode,
@@ -224,7 +189,6 @@ export {
   deconstructCronString,
   DefaultLayout,
   DeleteResourceDialog,
-  EdgeTypes,
   EmailCard,
   EmailDialog,
   ErrorPage,
@@ -233,7 +197,6 @@ export {
   exportCsv,
   exportFunction,
   fetchUser,
-  formatService,
   FunctionGranularity,
   FunctionType,
   getDataArtifactPreview,
@@ -247,16 +210,9 @@ export {
   handleExportFunction,
   handleFetchAllWorkflowSummaries,
   handleFetchNotifications,
-  handleGetArtifactResultContent,
-  handleGetArtifactResults,
-  handleGetOperatorResults,
   handleGetServerConfig,
-  handleGetWorkflow,
   handleGetWorkflowDag,
-  handleGetWorkflowDagResult,
-  handleListArtifactResults,
   handleListResourceObjects,
-  handleListWorkflowSavedObjects,
   handleLoadResourceObject,
   handleLoadResourceOperators,
   handleLoadResources,
@@ -277,9 +233,6 @@ export {
   MultiFileViewer,
   MysqlDialog,
   Node,
-  nodeSelection,
-  NodeType,
-  nodeTypes,
   normalizeGetWorkflowResponse,
   normalizeOperator,
   normalizeWorkflowDag,
@@ -291,21 +244,16 @@ export {
   NotificationsPopover,
   notificationsSlice,
   NotificationStatus,
-  objectKeyFn,
   OperatorDetailsPage,
   OperatorExecStateTableType,
   OperatorType,
-  OperatorTypeToNodeTypeMap,
   PaginatedTable,
   PeriodUnit,
   PostgresDialog,
   ReactFlowCanvas,
-  ReactflowNodeType,
   RedshiftDialog,
   RequireDagOrResult,
-  RequireOperator,
   resetConnectNewStatus,
-  resetSelectedNode,
   resetTestConnectStatus,
   resource,
   ResourceCard,
@@ -319,12 +267,9 @@ export {
   ResourceTextInputField,
   S3Card,
   S3Dialog,
-  selectNode,
-  selectResultIdx,
   serverConfig,
   ServiceLogos,
   ServiceType,
-  sideSheetSwitcher,
   SlackCard,
   SlackDialog,
   SnowflakeCard,
@@ -337,22 +282,14 @@ export {
   Tabs,
   theme,
   useAqueductConsts,
-  useArtifact,
-  useArtifactHistory,
-  useOpeartor,
   UserProfile,
   useUser,
-  useWorkflow,
   VersionSelector,
   WidthTransition,
-  workflow,
-  workflowDagResults,
-  workflowDags,
   WorkflowHeader,
-  workflowHistory,
   WorkflowPage,
+  workflowPage,
   WorkflowSettings,
-  workflowSlice,
   WorkflowsPage,
   workflowSummaries,
   WorkflowUpdateTrigger,

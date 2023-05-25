@@ -12,7 +12,9 @@ export type WorkflowDeletePostRequest = APIKeyParameter &
   };
 
 export type WorkflowDeletePostResponse = {
-  [id: string]: SavedObjectDeletion;
+  saved_object_deletion_results: {
+    [id: string]: SavedObjectDeletion[];
+  };
 };
 
 export const workflowDeletePostQuery = (req: WorkflowDeletePostRequest) => ({

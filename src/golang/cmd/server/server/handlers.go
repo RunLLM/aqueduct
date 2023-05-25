@@ -182,6 +182,18 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			DagRepo:                  s.DAGRepo,
 			ArtifactResultRepo:       s.ArtifactResultRepo,
 		},
+		routes.WorkflowDeletePostRoute: &v2.WorkflowDeleteHandler{
+			Database:   s.Database,
+			Engine:     s.AqEngine,
+			JobManager: s.JobManager,
+
+			ResourceRepo:             s.ResourceRepo,
+			ExecutionEnvironmentRepo: s.ExecutionEnvironmentRepo,
+			OperatorRepo:             s.OperatorRepo,
+			WorkflowRepo:             s.WorkflowRepo,
+			DagRepo:                  s.DAGRepo,
+			ArtifactResultRepo:       s.ArtifactResultRepo,
+		},
 		routes.EditResourceRoute: &handler.EditResourceHandler{
 			Database:   s.Database,
 			JobManager: s.JobManager,

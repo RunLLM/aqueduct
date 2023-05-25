@@ -5,12 +5,12 @@ import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 
-import { ListWorkflowSummary } from '../../utils/workflows';
+import { WorkflowResponse } from '../../handlers/responses/workflow';
 
 type Props = {
   sourceId: string;
   setSourceId: (string) => void;
-  workflows: ListWorkflowSummary[];
+  workflows: WorkflowResponse[];
 };
 
 export const TriggerSourceSelector: React.FC<Props> = ({

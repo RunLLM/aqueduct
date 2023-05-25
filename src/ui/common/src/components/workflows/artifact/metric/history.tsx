@@ -5,19 +5,18 @@ import Box from '@mui/material/Box';
 import React from 'react';
 import Plot from 'react-plotly.js';
 
-import { ArtifactResultsWithLoadingStatus } from '../../../../reducers/artifactResults';
+import { NodeArtifactResultsGetResponse } from '../../../../handlers/v2/NodeArtifactResultsGet';
 import { theme } from '../../../../styles/theme/theme';
 import { Data, DataSchema } from '../../../../utils/data';
 import ExecutionStatus, {
-  getArtifactExecStateAsTableRow,
-  isFailed,
-  isInitial,
-  isLoading,
+  getArtifactResultTableRow,
 } from '../../../../utils/shared';
 import { StatusIndicator } from '../../workflowStatus';
 
 type Props = {
-  historyWithLoadingStatus?: ArtifactResultsWithLoadingStatus;
+  history: NodeArtifactResultsGetResponse;
+  isLoading: boolean;
+  error: string;
 };
 
 const metricHistorySchema: DataSchema = {
@@ -29,30 +28,24 @@ const metricHistorySchema: DataSchema = {
   pandas_version: '',
 };
 
-const MetricsHistory: React.FC<Props> = ({ historyWithLoadingStatus }) => {
-  if (
-    !historyWithLoadingStatus ||
-    isInitial(historyWithLoadingStatus.status) ||
-    isLoading(historyWithLoadingStatus.status)
-  ) {
+const MetricsHistory: React.FC<Props> = ({ history, isLoading, error }) => {
+  if (isLoading) {
     return <CircularProgress />;
   }
-  if (isFailed(historyWithLoadingStatus.status)) {
+  if (error) {
     return (
       <Alert style={{ marginTop: '10px' }} severity="error">
         <AlertTitle>Failed to load historical data.</AlertTitle>
-        <pre>{historyWithLoadingStatus.status.err}</pre>
+        <pre>{error}</pre>
       </Alert>
     );
   }
 
   const historicalData: Data = {
     schema: metricHistorySchema,
-    data: (historyWithLoadingStatus.results?.results ?? []).map(
-      (artifactStatusResult) => {
-        return getArtifactExecStateAsTableRow(artifactStatusResult);
-      }
-    ),
+    data: history.map((result) => {
+      return getArtifactResultTableRow(result);
+    }),
   };
 
   const dataSortedByLatest = historicalData.data.sort(
