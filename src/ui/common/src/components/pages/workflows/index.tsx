@@ -25,6 +25,7 @@ import CheckItem from './components/CheckItem';
 import ExecutionStatusLink from './components/ExecutionStatusLink';
 import MetricItem from './components/MetricItem';
 import ResourceItem from './components/ResourceItem';
+import { CheckLevel } from '../../../utils/operators';
 
 type Props = {
   user: UserProfile;
@@ -149,13 +150,38 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         workflowId: workflowId,
       });
       let status = ExecutionStatus.Unknown;
-
+      let latestDagId;
+      let latestDagResultId;
       if (!dagResultsLoading && !dagResultsError && dagResults.length > 0) {
         const latestDagResult = getLatestDagResult(dagResults);
         if (latestDagResult) {
           status = latestDagResult.exec_state.status;
+          latestDagId = latestDagResult.dag_id;
+          latestDagResultId = latestDagResult.id;
         }
       }
+
+      const nodes = useWorkflowNodes(user.apiKey, workflowId, latestDagId);
+      const nodesResults = useWorkflowNodesResults(
+        user.apiKey,
+        workflowId,
+        latestDagResultId
+      );
+
+      Object.values(nodes.operators)
+        .filter((op) => op.spec.type === 'check')
+        .forEach((op) => {
+          const artifactId = op.outputs[0]; // Assuming there is only one output artifact
+          const level = op.spec.check.level;
+          const value = nodesResults.artifacts[artifactId]?.exec_state?.status;
+          if (value === ExecutionStatus.Failed) {
+            if (level === CheckLevel.Error) {
+              status = ExecutionStatus.Failed;
+            } else if (status !== ExecutionStatus.Failed) { // CheckLevel.Warning & status !== Failed
+              status = ExecutionStatus.Warning;
+            }
+          }
+        });
 
       return <ExecutionStatusLink name={row.name} url={url} status={status} />;
     },
