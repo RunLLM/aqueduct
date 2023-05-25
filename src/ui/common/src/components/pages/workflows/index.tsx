@@ -11,6 +11,7 @@ import {
 import { AppDispatch } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import getPathPrefix from '../../../utils/getPathPrefix';
+import { CheckLevel } from '../../../utils/operators';
 import ExecutionStatus from '../../../utils/shared';
 import { getWorkflowEngineTypes } from '../../../utils/workflows';
 import DefaultLayout from '../../layouts/default';
@@ -25,7 +26,6 @@ import CheckItem from './components/CheckItem';
 import ExecutionStatusLink from './components/ExecutionStatusLink';
 import MetricItem from './components/MetricItem';
 import ResourceItem from './components/ResourceItem';
-import { CheckLevel } from '../../../utils/operators';
 
 type Props = {
   user: UserProfile;
@@ -177,7 +177,8 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           if (value === ExecutionStatus.Failed) {
             if (level === CheckLevel.Error) {
               status = ExecutionStatus.Failed;
-            } else if (status !== ExecutionStatus.Failed) { // CheckLevel.Warning & status !== Failed
+            } else if (status !== ExecutionStatus.Failed) {
+              // CheckLevel.Warning & status !== Failed
               status = ExecutionStatus.Warning;
             }
           }
