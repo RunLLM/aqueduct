@@ -24,13 +24,13 @@ func getNotifications(
 	ctx context.Context,
 	wfDag dag.WorkflowDag,
 	vaultObject vault.Vault,
-	integrationRepo repos.Integration,
+	resourceRepo repos.Resource,
 	DB database.Database,
 ) ([]notification.Notification, error) {
 	return notification.GetNotificationsFromUser(
 		ctx,
 		wfDag.UserID(),
-		integrationRepo,
+		resourceRepo,
 		vaultObject,
 		DB,
 	)
@@ -41,14 +41,14 @@ func sendNotifications(
 	wfDag dag.WorkflowDag,
 	content *notificationContentStruct,
 	vaultObject vault.Vault,
-	integrationRepo repos.Integration,
+	resourceRepo repos.Resource,
 	DB database.Database,
 ) error {
 	if content == nil {
 		return nil
 	}
 
-	notifications, err := getNotifications(ctx, wfDag, vaultObject, integrationRepo, DB)
+	notifications, err := getNotifications(ctx, wfDag, vaultObject, resourceRepo, DB)
 	if err != nil {
 		return err
 	}

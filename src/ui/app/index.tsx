@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { HomePage, DataPage, IntegrationsPage, IntegrationDetailsPage, WorkflowPage, WorkflowsPage, LoginPage, ErrorPage, AccountPage, OperatorDetailsPage, ArtifactDetailsPage, MetricDetailsPage, CheckDetailsPage } from '@aqueducthq/common';
+import { HomePage, DataPage, ResourcesPage, ResourceDetailsPage, WorkflowPage, WorkflowsPage, LoginPage, ErrorPage, AccountPage, OperatorDetailsPage, ArtifactDetailsPage, MetricDetailsPage, CheckDetailsPage } from '@aqueducthq/common';
 import { store } from './stores/store';
 import { Provider } from 'react-redux';
 import { useUser, UserProfile } from '@aqueducthq/common';
@@ -30,8 +30,8 @@ const App = () => {
     <Routes>
       <Route path={`${pathPrefix ?? "/"}`} element={<RequireAuth user={user}><HomePage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/data`} element={<RequireAuth user={user}><DataPage user={user} /> </RequireAuth>} />
-      <Route path={`/${pathPrefix}/resources`} element={<RequireAuth user={user}><IntegrationsPage user={user} /> </RequireAuth>} />
-      <Route path={`/${pathPrefix}/resource/:id`} element={<RequireAuth user={user}><IntegrationDetailsPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/resources`} element={<RequireAuth user={user}><ResourcesPage user={user} /> </RequireAuth>} />
+      <Route path={`/${pathPrefix}/resource/:id`} element={<RequireAuth user={user}><ResourceDetailsPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/workflows`} element={<RequireAuth user={user}><WorkflowsPage user={user} /> </RequireAuth>} />
       <Route path={`/${pathPrefix}/login`} element={user && user.apiKey ? <Navigate to="/" replace /> : <LoginPage />} />
       <Route path={`/${pathPrefix}/account`} element={<RequireAuth user={user}><AccountPage user={user} /> </RequireAuth>} />

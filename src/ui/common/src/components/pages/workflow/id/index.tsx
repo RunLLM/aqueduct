@@ -21,7 +21,6 @@ import {
   useWorkflowEditPostMutation,
   useWorkflowGetQuery,
 } from '../../../../handlers/AqueductApi';
-import { handleLoadIntegrations } from '../../../../reducers/integrations';
 import { selectNode } from '../../../../reducers/pages/Workflow';
 import { AppDispatch, RootState } from '../../../../stores/store';
 import { theme } from '../../../../styles/theme/theme';
@@ -49,6 +48,7 @@ import {
   useWorkflowNodes,
   useWorkflowNodesResults,
 } from './hook';
+import { handleLoadResources } from '../../../../reducers/resources';
 
 type WorkflowPageProps = {
   user: UserProfile;
@@ -120,8 +120,8 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const editWorkflowMessage = editWorkflowSuccess
     ? 'Sucessfully updated your workflow.'
     : editWorkflowError
-    ? `There was an unexpected error while updating your workflow: ${editWorkflowError}`
-    : '';
+      ? `There was an unexpected error while updating your workflow: ${editWorkflowError}`
+      : '';
 
   const selectedNodeState = useSelector(
     (state: RootState) =>
@@ -140,9 +140,9 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
     }
   }, [workflow]);
 
-  // Load Integrations
+  // Load Resources
   useEffect(() => {
-    dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
+    dispatch(handleLoadResources({ apiKey: user.apiKey }));
   }, [dispatch, user.apiKey, workflowId]);
 
   useEffect(() => {

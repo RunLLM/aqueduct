@@ -39,10 +39,10 @@ class DataConnector(ABC):
         # TODO (ENG-1285): Revisit the typing issue that araises from inheritence
         objects,  # List[str]
     ) -> List[SavedObjectDelete]:
-        """Delete objects from integration.
+        """Delete objects from resource.
 
         Args:
-            objects: List of objects to delete from this integration.
+            objects: List of objects to delete from this resource.
         """
 
     @abstractmethod
@@ -53,7 +53,7 @@ class DataConnector(ABC):
         data: Any,
         artifact_type: ArtifactType,
     ) -> None:
-        """Loads data into destination storage integration.
+        """Loads data into destination storage resource.
 
         Args:
             params: Load parameters for the connector.

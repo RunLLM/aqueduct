@@ -20,13 +20,14 @@ import yaml
 from packaging.version import parse as parse_version
 from tqdm import tqdm
 
-SCHEMA_VERSION = "26"
+SCHEMA_VERSION = "27"
 CHUNK_SIZE = 4096
 
 # Connector Package Version Bounds
 PYMONGO_VERSION_BOUND = "<=4.3.3"
 PSYCOPG2_VERSION_BOUND = "<=2.9.5"
 BIGQUERY_VERSION_BOUND = "<=3.5.0"
+DB_DTYPES_VERSION_BOUND = "<=1.1.1"
 SNOWFLAKE_VERSION_BOUND = "<=1.4.4"
 PYARROW_VERSION_BOUND = "<=11.0.0"
 AWS_WRANGLER_VERSION_BOUND = "<=2.19.0"
@@ -191,7 +192,7 @@ def download_server_binaries(architecture):
     with open(os.path.join(server_directory, "bin/migrator"), "wb") as f:
         _download_file(os.path.join(s3_server_prefix, f"bin/{architecture}/migrator"), f, "Migrator")
 
-    print("Downloading integration set up scripts...")
+    print("Downloading resource set up scripts...")
     with open(os.path.join(server_directory, "bin/start-function-executor.sh"), "wb") as f:
         _download_file(os.path.join(s3_server_prefix, f"bin/start-function-executor.sh"), f)
     with open(os.path.join(server_directory, "bin/dag.template"), "wb") as f:
@@ -475,6 +476,7 @@ def install_postgres():
 
 def install_bigquery():
     execute_command([sys.executable, "-m", "pip", "install", "google-cloud-bigquery%s" % BIGQUERY_VERSION_BOUND])
+    execute_command([sys.executable, "-m", "pip", "install", "db-dtypes%s" % DB_DTYPES_VERSION_BOUND])
 
 
 def install_snowflake():
@@ -701,7 +703,7 @@ if __name__ == "__main__":
     install_args.add_argument(
         "system",
         nargs=1,
-        help="Supported integrations: postgres, redshift, mysql, mariadb, sqlserver, azuresql, s3, athena, snowflake, bigquery.",
+        help="Supported resources: postgres, redshift, mysql, mariadb, sqlserver, azuresql, s3, athena, snowflake, bigquery.",
     )
 
     apikey_args = subparsers.add_parser(

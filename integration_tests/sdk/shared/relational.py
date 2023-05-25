@@ -12,7 +12,7 @@ def all_relational_DBs() -> List[ServiceType]:
 
 def format_table_name(table_name: str, service: ServiceType) -> str:
     """
-    Returns the table name so it is formatted according to the integration
+    Returns the table name so it is formatted according to the resource
     service specified.
     """
     if service == ServiceType.BIGQUERY:

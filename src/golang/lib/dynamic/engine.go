@@ -34,8 +34,8 @@ const (
 )
 
 const (
-	stateLockErrMsg          = "Error acquiring the state lock"
-	K8sIntegrationNameSuffix = "aqueduct_ondemand_k8s"
+	stateLockErrMsg       = "Error acquiring the state lock"
+	K8sResourceNameSuffix = "aqueduct_ondemand_k8s"
 )
 
 var TerraformTemplateDir = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "template", "aws", "eks")
@@ -44,33 +44,33 @@ var TerraformTemplateDir = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server
 func PrepareCluster(
 	ctx context.Context,
 	configDelta *shared.DynamicK8sConfig,
-	engineIntegrationId uuid.UUID,
-	integrationRepo repos.Integration,
+	engineResourceId uuid.UUID,
+	resourceRepo repos.Resource,
 	vaultObject vault.Vault,
 	db database.Database,
 ) error {
-	engineIntegration, err := integrationRepo.Get(
+	engineResource, err := resourceRepo.Get(
 		ctx,
-		engineIntegrationId,
+		engineResourceId,
 		db,
 	)
 	if err != nil {
-		return errors.Wrap(err, "Failed to retrieve engine integration")
+		return errors.Wrap(err, "Failed to retrieve engine resource")
 	}
 
 	for {
-		if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
+		if engineResource.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
 			log.Info("Kubernetes cluster is currently terminated, starting...")
 			return CreateOrUpdateK8sCluster(
 				ctx,
 				configDelta,
 				K8sClusterCreateAction,
-				engineIntegration,
-				integrationRepo,
+				engineResource,
+				resourceRepo,
 				vaultObject,
 				db,
 			)
-		} else if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
+		} else if engineResource.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) {
 			if len(configDelta.ToMap()) == 0 {
 				log.Info("Kubernetes cluster is currently active, proceeding...")
 				return nil
@@ -80,14 +80,14 @@ func PrepareCluster(
 					ctx,
 					configDelta,
 					K8sClusterUpdateAction,
-					engineIntegration,
-					integrationRepo,
+					engineResource,
+					resourceRepo,
 					vaultObject,
 					db,
 				)
 			}
 		} else {
-			engineIntegration, err = PollClusterStatus(ctx, engineIntegration, integrationRepo, vaultObject, db)
+			engineResource, err = PollClusterStatus(ctx, engineResource, resourceRepo, vaultObject, db)
 			if err != nil {
 				return err
 			}
@@ -96,11 +96,11 @@ func PrepareCluster(
 }
 
 // CreateOrUpdateK8sCluster does the following:
-//  1. If configDelta is not empty, apply the delta to engineIntegration.Config.
-//  2. Update the dynamic integration's DB record: set config["status"] to "Creating" or "Updating".
+//  1. If configDelta is not empty, apply the delta to engineResourceConfig.
+//  2. Update the dynamic resource's DB record: set config["status"] to "Creating" or "Updating".
 //  3. Run terraform apply to create the cluster.
 //  4. Update the kubeconfig file (only for "create" action).
-//  5. Update the dynamic integration's DB record: set config["status"] to "Active", update
+//  5. Update the dynamic resource's DB record: set config["status"] to "Active", update
 //     config["last_used_timestamp"] and update config to include the configDelta.
 //
 // If any step fails, it returns an error.
@@ -108,8 +108,8 @@ func CreateOrUpdateK8sCluster(
 	ctx context.Context,
 	configDelta *shared.DynamicK8sConfig,
 	action k8sClusterActionType, // can either be k8sClusterCreateAction or k8sClusterUpdateAction
-	engineIntegration *models.Integration,
-	integrationRepo repos.Integration,
+	engineResource *models.Resource,
+	resourceRepo repos.Resource,
 	vaultObject vault.Vault,
 	db database.Database,
 ) error {
@@ -126,11 +126,11 @@ func CreateOrUpdateK8sCluster(
 	if len(configDeltaMap) > 0 {
 		// Update config to reflect the new values.
 		for key, value := range configDeltaMap {
-			engineIntegration.Config[key] = value
+			engineResource.Config[key] = value
 		}
 	}
 
-	if err := CheckIfValidConfig(action, engineIntegration.Config); err != nil {
+	if err := CheckIfValidConfig(action, engineResource.Config); err != nil {
 		return err
 	}
 
@@ -141,16 +141,16 @@ func CreateOrUpdateK8sCluster(
 		clusterStatus = shared.K8sClusterUpdatingStatus
 	}
 
-	if err := updateClusterStatus(ctx, clusterStatus, engineIntegration.ID, integrationRepo, db); err != nil {
+	if err := updateClusterStatus(ctx, clusterStatus, engineResource.ID, resourceRepo, db); err != nil {
 		return err
 	}
 
-	awsConfig, err := fetchAWSCredential(ctx, engineIntegration, vaultObject)
+	awsConfig, err := fetchAWSCredential(ctx, engineResource, vaultObject)
 	if err != nil {
 		return err
 	}
 
-	if err := runTerraformApply(awsConfig, engineIntegration); err != nil {
+	if err := runTerraformApply(awsConfig, engineResource); err != nil {
 		return err
 	}
 
@@ -178,17 +178,17 @@ func CreateOrUpdateK8sCluster(
 				"eks",
 				"update-kubeconfig",
 				"--name",
-				engineIntegration.Config[shared.K8sClusterNameKey],
+				engineResource.Config[shared.K8sClusterNameKey],
 				"--kubeconfig",
-				engineIntegration.Config[shared.K8sKubeconfigPathKey],
+				engineResource.Config[shared.K8sKubeconfigPathKey],
 			),
-			engineIntegration.Config[shared.K8sTerraformPathKey],
+			engineResource.Config[shared.K8sTerraformPathKey],
 			true,
 		); err != nil {
 			return errors.Wrap(err, "Failed to update Kubeconfig")
 		}
 
-		config, err := clientcmd.LoadFromFile(engineIntegration.Config[shared.K8sKubeconfigPathKey])
+		config, err := clientcmd.LoadFromFile(engineResource.Config[shared.K8sKubeconfigPathKey])
 		if err != nil {
 			return errors.Wrap(err, "Failed to load Kubeconfig")
 		}
@@ -219,7 +219,7 @@ func CreateOrUpdateK8sCluster(
 			}
 		}
 
-		err = clientcmd.WriteToFile(*config, engineIntegration.Config[shared.K8sKubeconfigPathKey])
+		err = clientcmd.WriteToFile(*config, engineResource.Config[shared.K8sKubeconfigPathKey])
 		if err != nil {
 			return errors.Wrap(err, "Failed to update Kubeconfig with environment variables")
 		}
@@ -228,19 +228,19 @@ func CreateOrUpdateK8sCluster(
 	// We initialize the last used timestamp after the creation succeeded.
 	if err := UpdateClusterLastUsedTimestamp(
 		ctx,
-		engineIntegration.ID,
-		integrationRepo,
+		engineResource.ID,
+		resourceRepo,
 		db,
 	); err != nil {
 		return err
 	}
 
-	if err := updateClusterStatus(ctx, shared.K8sClusterActiveStatus, engineIntegration.ID, integrationRepo, db); err != nil {
+	if err := updateClusterStatus(ctx, shared.K8sClusterActiveStatus, engineResource.ID, resourceRepo, db); err != nil {
 		return err
 	}
 
 	// Finally, we update the database record to reflect the new config.
-	if err := updateClusterConfig(ctx, action, configDeltaMap, engineIntegration.ID, integrationRepo, db); err != nil {
+	if err := updateClusterConfig(ctx, action, configDeltaMap, engineResource.ID, resourceRepo, db); err != nil {
 		return err
 	}
 
@@ -248,28 +248,28 @@ func CreateOrUpdateK8sCluster(
 }
 
 // DeleteK8sCluster does the following:
-// 1. Update the dynamic integration's DB record: set config["status"] to "Terminating".
+// 1. Update the dynamic resource's DB record: set config["status"] to "Terminating".
 // 2. Run Terraform to delete the cluster.
 // 3. Remove the kubeconfig file.
-// 4. Update the dynamic integration's DB record: set config["status"] to "Terminated".
+// 4. Update the dynamic resource's DB record: set config["status"] to "Terminated".
 // If any step fails, it returns an error.
 // If skipPodsStatusCheck is set to false, it checks whether there are pods in Running or ContainerCreating
 // status and if so, reject the deletion request.
 func DeleteK8sCluster(
 	ctx context.Context,
 	skipPodsStatusCheck bool,
-	engineIntegration *models.Integration,
-	integrationRepo repos.Integration,
+	engineResource *models.Resource,
+	resourceRepo repos.Resource,
 	vaultObject vault.Vault,
 	db database.Database,
 ) error {
 	if !skipPodsStatusCheck {
-		useSameCluster, err := strconv.ParseBool(engineIntegration.Config[shared.K8sUseSameClusterKey])
+		useSameCluster, err := strconv.ParseBool(engineResource.Config[shared.K8sUseSameClusterKey])
 		if err != nil {
 			return errors.Wrap(err, "Error parsing use_same_cluster flag")
 		}
 
-		safe, err := k8s.SafeToDeleteCluster(ctx, useSameCluster, engineIntegration.Config[shared.K8sKubeconfigPathKey])
+		safe, err := k8s.SafeToDeleteCluster(ctx, useSameCluster, engineResource.Config[shared.K8sKubeconfigPathKey])
 		if err != nil {
 			return err
 		}
@@ -279,18 +279,18 @@ func DeleteK8sCluster(
 		}
 	}
 
-	if err := updateClusterStatus(ctx, shared.K8sClusterTerminatingStatus, engineIntegration.ID, integrationRepo, db); err != nil {
+	if err := updateClusterStatus(ctx, shared.K8sClusterTerminatingStatus, engineResource.ID, resourceRepo, db); err != nil {
 		return err
 	}
 
 	// Even for deletion, we need to specify the AWS region, so we need to pass in the actual AWS
 	// config instead of a dummy one to generateTerraformVariables.
-	awsConfig, err := fetchAWSCredential(ctx, engineIntegration, vaultObject)
+	awsConfig, err := fetchAWSCredential(ctx, engineResource, vaultObject)
 	if err != nil {
 		return err
 	}
 
-	terraformArgs, err := generateTerraformVariables(awsConfig, engineIntegration.Config)
+	terraformArgs, err := generateTerraformVariables(awsConfig, engineResource.Config)
 	if err != nil {
 		return err
 	}
@@ -298,13 +298,13 @@ func DeleteK8sCluster(
 	if _, _, err := lib_utils.RunCmd(
 		"terraform",
 		append([]string{"destroy", "-auto-approve"}, terraformArgs...),
-		engineIntegration.Config[shared.K8sTerraformPathKey],
+		engineResource.Config[shared.K8sTerraformPathKey],
 		true,
 	); err != nil {
 		return errors.Wrap(err, "Unable to destroy k8s cluster")
 	}
 
-	kubeconfigFile := engineIntegration.Config[shared.K8sKubeconfigPathKey]
+	kubeconfigFile := engineResource.Config[shared.K8sKubeconfigPathKey]
 	if _, err := os.Stat(kubeconfigFile); !os.IsNotExist(err) {
 		if _, _, err := lib_utils.RunCmd(
 			"rm",
@@ -316,37 +316,37 @@ func DeleteK8sCluster(
 		}
 	}
 
-	if err := updateClusterStatus(ctx, shared.K8sClusterTerminatedStatus, engineIntegration.ID, integrationRepo, db); err != nil {
+	if err := updateClusterStatus(ctx, shared.K8sClusterTerminatedStatus, engineResource.ID, resourceRepo, db); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// UpdateClusterLastUsedTimestamp updates the dynamic integration's DB record:
+// UpdateClusterLastUsedTimestamp updates the dynamic resource's DB record:
 // set config["last_used_timestamp"] to the current timestamp.
 func UpdateClusterLastUsedTimestamp(
 	ctx context.Context,
-	engineIntegrationId uuid.UUID,
-	integrationRepo repos.Integration,
+	engineResourceID uuid.UUID,
+	resourceRepo repos.Resource,
 	db database.Database,
 ) error {
-	engineIntegration, err := integrationRepo.Get(
+	engineResource, err := resourceRepo.Get(
 		ctx,
-		engineIntegrationId,
+		engineResourceID,
 		db,
 	)
 	if err != nil {
-		return errors.Wrap(err, "Failed to retrieve engine integration")
+		return errors.Wrap(err, "Failed to retrieve engine resource")
 	}
 
 	currTimestamp := time.Now().Unix()
-	engineIntegration.Config[shared.K8sLastUsedTimestampKey] = strconv.FormatInt(currTimestamp, 10)
-	_, err = integrationRepo.Update(
+	engineResource.Config[shared.K8sLastUsedTimestampKey] = strconv.FormatInt(currTimestamp, 10)
+	_, err = resourceRepo.Update(
 		ctx,
-		engineIntegration.ID,
+		engineResource.ID,
 		map[string]interface{}{
-			models.IntegrationConfig: &(engineIntegration.Config),
+			models.ResourceConfig: &(engineResource.Config),
 		},
 		db,
 	)
@@ -357,79 +357,79 @@ func UpdateClusterLastUsedTimestamp(
 	return nil
 }
 
-// updateClusterStatus updates the dynamic integration's DB record:
+// updateClusterStatus updates the dynamic resource's DB record:
 // set config["status"] to the specified status.
 func updateClusterStatus(
 	ctx context.Context,
 	status shared.K8sClusterStatusType,
-	engineIntegrationId uuid.UUID,
-	integrationRepo repos.Integration,
+	engineResourceID uuid.UUID,
+	resourceRepo repos.Resource,
 	db database.Database,
 ) error {
-	engineIntegration, err := integrationRepo.Get(
+	engineResource, err := resourceRepo.Get(
 		ctx,
-		engineIntegrationId,
+		engineResourceID,
 		db,
 	)
 	if err != nil {
-		return errors.Wrap(err, "Failed to retrieve engine integration")
+		return errors.Wrap(err, "Failed to retrieve engine resource")
 	}
 
-	engineIntegration.Config[shared.K8sStatusKey] = string(status)
-	_, err = integrationRepo.Update(
+	engineResource.Config[shared.K8sStatusKey] = string(status)
+	_, err = resourceRepo.Update(
 		ctx,
-		engineIntegration.ID,
+		engineResource.ID,
 		map[string]interface{}{
-			models.IntegrationConfig: &(engineIntegration.Config),
+			models.ResourceConfig: &(engineResource.Config),
 		},
 		db,
 	)
 	if err != nil {
-		return errors.Wrapf(err, "Failed to update Kubernetes cluster status to %s", engineIntegration.Config[shared.K8sStatusKey])
+		return errors.Wrapf(err, "Failed to update Kubernetes cluster status to %s", engineResource.Config[shared.K8sStatusKey])
 	}
 
 	return nil
 }
 
-// updateClusterConfig updates the dynamic integration's DB record:
+// updateClusterConfig updates the dynamic resource's DB record:
 // set config according to the config delta.
 func updateClusterConfig(
 	ctx context.Context,
 	action k8sClusterActionType,
 	configDeltaMap map[string]string,
-	engineIntegrationId uuid.UUID,
-	integrationRepo repos.Integration,
+	engineResourceID uuid.UUID,
+	resourceRepo repos.Resource,
 	db database.Database,
 ) error {
 	if len(configDeltaMap) == 0 {
 		return nil
 	}
 
-	engineIntegration, err := integrationRepo.Get(
+	engineResource, err := resourceRepo.Get(
 		ctx,
-		engineIntegrationId,
+		engineResourceID,
 		db,
 	)
 	if err != nil {
-		return errors.Wrap(err, "Failed to retrieve engine integration")
+		return errors.Wrap(err, "Failed to retrieve engine resource")
 	}
 
 	// Update config to include the new values.
 	for key, value := range configDeltaMap {
-		engineIntegration.Config[key] = value
+		engineResource.Config[key] = value
 	}
 
 	if action == K8sClusterCreateAction {
 		// If this is a request to create a new cluster, we need to refresh the desired node counts.
-		engineIntegration.Config[shared.K8sDesiredCpuNodeKey] = engineIntegration.Config[shared.K8sMinCpuNodeKey]
-		engineIntegration.Config[shared.K8sDesiredGpuNodeKey] = engineIntegration.Config[shared.K8sMinGpuNodeKey]
+		engineResource.Config[shared.K8sDesiredCpuNodeKey] = engineResource.Config[shared.K8sMinCpuNodeKey]
+		engineResource.Config[shared.K8sDesiredGpuNodeKey] = engineResource.Config[shared.K8sMinGpuNodeKey]
 	}
 
-	_, err = integrationRepo.Update(
+	_, err = resourceRepo.Update(
 		ctx,
-		engineIntegration.ID,
+		engineResource.ID,
 		map[string]interface{}{
-			models.IntegrationConfig: &(engineIntegration.Config),
+			models.ResourceConfig: &(engineResource.Config),
 		},
 		db,
 	)
@@ -447,13 +447,13 @@ func updateClusterConfig(
 // Terminated.
 func ResyncClusterState(
 	ctx context.Context,
-	engineIntegration *models.Integration,
-	integrationRepo repos.Integration,
+	engineResource *models.Resource,
+	resourceRepo repos.Resource,
 	vaultObject vault.Vault,
 	db database.Database,
 ) error {
-	if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) || engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
-		log.Infof("No need to resync state because the cluster status is %s", engineIntegration.Config[shared.K8sStatusKey])
+	if engineResource.Config[shared.K8sStatusKey] == string(shared.K8sClusterActiveStatus) || engineResource.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
+		log.Infof("No need to resync state because the cluster status is %s", engineResource.Config[shared.K8sStatusKey])
 		return nil
 	}
 
@@ -466,7 +466,7 @@ func ResyncClusterState(
 		[]string{
 			"plan",
 		},
-		engineIntegration.Config[shared.K8sTerraformPathKey],
+		engineResource.Config[shared.K8sTerraformPathKey],
 		false,
 	); err != nil {
 		if strings.Contains(stderr, stateLockErrMsg) {
@@ -482,8 +482,8 @@ func ResyncClusterState(
 	return DeleteK8sCluster(
 		ctx,
 		true, // skipPodsStatusCheck
-		engineIntegration,
-		integrationRepo,
+		engineResource,
+		resourceRepo,
 		vaultObject,
 		db,
 	)
@@ -491,42 +491,42 @@ func ResyncClusterState(
 
 func PollClusterStatus(
 	ctx context.Context,
-	engineIntegration *models.Integration,
-	integrationRepo repos.Integration,
+	engineResource *models.Resource,
+	resourceRepo repos.Resource,
 	vaultObject vault.Vault,
 	db database.Database,
-) (*models.Integration, error) {
-	if err := ResyncClusterState(ctx, engineIntegration, integrationRepo, vaultObject, db); err != nil {
+) (*models.Resource, error) {
+	if err := ResyncClusterState(ctx, engineResource, resourceRepo, vaultObject, db); err != nil {
 		return nil, errors.Wrap(err, "Failed to resync cluster state")
 	}
 
-	engineIntegration, err := integrationRepo.Get(
+	engineResource, err := resourceRepo.Get(
 		ctx,
-		engineIntegration.ID,
+		engineResource.ID,
 		db,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to retrieve engine integration")
+		return nil, errors.Wrap(err, "Failed to retrieve engine resource")
 	}
 
-	if engineIntegration.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
+	if engineResource.Config[shared.K8sStatusKey] == string(shared.K8sClusterTerminatedStatus) {
 		// This means the cluster state is resynced to Terminated, so no need to wait.
-		return engineIntegration, nil
+		return engineResource, nil
 	}
 
-	log.Infof("Kubernetes cluster is currently in %s status. Waiting for %d seconds before checking again...", engineIntegration.Config[shared.K8sStatusKey], shared.DynamicK8sClusterStatusPollPeriod)
+	log.Infof("Kubernetes cluster is currently in %s status. Waiting for %d seconds before checking again...", engineResource.Config[shared.K8sStatusKey], shared.DynamicK8sClusterStatusPollPeriod)
 	time.Sleep(shared.DynamicK8sClusterStatusPollPeriod * time.Second)
 
-	engineIntegration, err = integrationRepo.Get(
+	engineResource, err = resourceRepo.Get(
 		ctx,
-		engineIntegration.ID,
+		engineResource.ID,
 		db,
 	)
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to retrieve engine integration")
+		return nil, errors.Wrap(err, "Failed to retrieve engine resource")
 	}
 
-	return engineIntegration, nil
+	return engineResource, nil
 }
 
 func generateTerraformVariables(
@@ -592,9 +592,9 @@ func generateTerraformVariables(
 
 func runTerraformApply(
 	awsConfig *shared.AWSConfig,
-	engineIntegration *models.Integration,
+	engineResource *models.Resource,
 ) error {
-	terraformArgs, err := generateTerraformVariables(awsConfig, engineIntegration.Config)
+	terraformArgs, err := generateTerraformVariables(awsConfig, engineResource.Config)
 	if err != nil {
 		return err
 	}
@@ -602,7 +602,7 @@ func runTerraformApply(
 	if _, _, err := lib_utils.RunCmd(
 		"terraform",
 		append([]string{"apply", "-auto-approve"}, terraformArgs...),
-		engineIntegration.Config[shared.K8sTerraformPathKey],
+		engineResource.Config[shared.K8sTerraformPathKey],
 		true,
 	); err != nil {
 		errMsg := "Terraform apply failed. Note that if the error has to do with insufficient " +
@@ -719,20 +719,20 @@ func GenerateClusterName() (string, error) {
 
 func fetchAWSCredential(
 	ctx context.Context,
-	engineIntegration *models.Integration,
+	engineResource *models.Resource,
 	vaultObject vault.Vault,
 ) (*shared.AWSConfig, error) {
-	if _, ok := engineIntegration.Config[shared.K8sCloudIntegrationIdKey]; !ok {
-		return nil, errors.New("No cloud integration ID found in the engine integration object.")
+	if _, ok := engineResource.Config[shared.K8sCloudResourceIdKey]; !ok {
+		return nil, errors.New("No cloud resource ID found in the engine resource object.")
 	}
-	cloudIntegrationId, err := uuid.Parse(engineIntegration.Config[shared.K8sCloudIntegrationIdKey])
+	cloudResourceID, err := uuid.Parse(engineResource.Config[shared.K8sCloudResourceIdKey])
 	if err != nil {
-		return nil, errors.Wrap(err, "Failed to parse cloud integration ID")
+		return nil, errors.Wrap(err, "Failed to parse cloud resource ID")
 	}
 
-	config, err := auth.ReadConfigFromSecret(ctx, cloudIntegrationId, vaultObject)
+	config, err := auth.ReadConfigFromSecret(ctx, cloudResourceID, vaultObject)
 	if err != nil {
-		return nil, errors.Wrap(err, "Unable to read cloud integration config from vault.")
+		return nil, errors.Wrap(err, "Unable to read cloud resource config from vault.")
 	}
 
 	awsConfig, err := lib_utils.ParseAWSConfig(config)

@@ -136,8 +136,8 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
   }
 
   // This is loaded at the top level of the workflow details page.
-  const integrationsState = useSelector(
-    (state: RootState) => state.integrationsReducer
+  const resourcesState = useSelector(
+    (state: RootState) => state.resourcesReducer
   );
 
   let execState: ExecState;
@@ -212,8 +212,8 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
          * if the status is either pending or failed/canceled/etc., the preview will be
          * NaN. This only applies to metric operators. */}
         {!!data.artifactResult?.content_serialized &&
-        data.operator?.spec?.type === OperatorType.Metric &&
-        status === ExecutionStatus.Succeeded
+          data.operator?.spec?.type === OperatorType.Metric &&
+          status === ExecutionStatus.Succeeded
           ? parseMetricResult(data.artifactResult?.content_serialized, 3)
           : statusLabels[status]}
       </Typography>
@@ -233,7 +233,7 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
           <ResourceItem
             resource={spec.service}
             resourceCustomName={
-              integrationsState.integrations[spec.integration_id]?.name
+              resourcesState.resources[spec.resource_id]?.name
             }
             size={iconFontSize}
             defaultBackgroundColor={theme.palette.gray[200]}
@@ -244,15 +244,13 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
     } else {
       const engineSpec =
         data.operator?.spec?.engine_config ?? data.dag.engine_config;
-      const integrationConfig = engineSpec[`${engineSpec.type}_config`];
+      const resourceConfig = engineSpec[`${engineSpec.type}_config`];
 
       headerIcon = (
         <ResourceItem
           resource={engineSpec.type}
           resourceCustomName={
-            integrationsState.integrations[
-              integrationConfig?.['integration_id']
-            ]?.name
+            resourcesState.resources[resourceConfig?.['resource_id']]?.name
           }
           size={iconFontSize}
           defaultBackgroundColor={theme.palette.gray[200]}

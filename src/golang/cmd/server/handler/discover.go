@@ -27,10 +27,10 @@ const (
 	pollDiscoverTimeout  = 60 * time.Second
 )
 
-// Route: /{integrationId}/tables
+// Route: /resource/{resourceID}/discover
 // Method: GET
 // Params:
-//	`integrationId`: ID of the relational database integration
+//	`resourceID`: ID of the relational database resource
 // Request:
 //	Headers:
 //		`api-key`: user's API Key
@@ -40,7 +40,7 @@ const (
 
 type discoverArgs struct {
 	*aq_context.AqContext
-	integrationID uuid.UUID
+	resourceID uuid.UUID
 }
 
 type discoverResponse struct {
@@ -53,8 +53,8 @@ type DiscoverHandler struct {
 	Database   database.Database
 	JobManager job.JobManager
 
-	IntegrationRepo repos.Integration
-	OperatorRepo    repos.Operator
+	ResourceRepo repos.Resource
+	OperatorRepo repos.Operator
 }
 
 func (*DiscoverHandler) Name() string {
@@ -67,29 +67,29 @@ func (h *DiscoverHandler) Prepare(r *http.Request) (interface{}, int, error) {
 		return nil, statusCode, err
 	}
 
-	integrationIDStr := chi.URLParam(r, routes.IntegrationIdUrlParam)
-	integrationID, err := uuid.Parse(integrationIDStr)
+	resourceIDStr := chi.URLParam(r, routes.ResourceIDUrlParam)
+	resourceID, err := uuid.Parse(resourceIDStr)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed integration ID.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Malformed resource ID.")
 	}
 
-	ok, err := h.IntegrationRepo.ValidateOwnership(
+	ok, err := h.ResourceRepo.ValidateOwnership(
 		r.Context(),
-		integrationID,
+		resourceID,
 		aqContext.OrgID,
 		aqContext.ID,
 		h.Database,
 	)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during integration ownership validation.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error during resource ownership validation.")
 	}
 	if !ok {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this integration.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "The organization does not own this resource.")
 	}
 
 	return &discoverArgs{
-		AqContext:     aqContext,
-		integrationID: integrationID,
+		AqContext:  aqContext,
+		resourceID: resourceID,
 	}, http.StatusOK, nil
 }
 
@@ -99,16 +99,16 @@ func (h *DiscoverHandler) Perform(
 ) (interface{}, int, error) {
 	args := interfaceArgs.(*discoverArgs)
 
-	integrationObject, err := h.IntegrationRepo.Get(
+	resourceObject, err := h.ResourceRepo.Get(
 		ctx,
-		args.integrationID,
+		args.resourceID,
 		h.Database,
 	)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to retrieve integration.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Unable to retrieve resource.")
 	}
 
-	if !shared.IsRelationalDatabaseIntegration(integrationObject.Service) {
+	if !shared.IsRelationalDatabaseResource(resourceObject.Service) {
 		return nil, http.StatusBadRequest, errors.Wrap(err, "List tables request is only allowed for relational databases.")
 	}
 
@@ -126,9 +126,9 @@ func (h *DiscoverHandler) Perform(
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
 	}
 
-	config, err := auth.ReadConfigFromSecret(ctx, integrationObject.ID, vaultObject)
+	config, err := auth.ReadConfigFromSecret(ctx, resourceObject.ID, vaultObject)
 	if err != nil {
-		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to parse integration config.")
+		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unable to parse resource config.")
 	}
 
 	jobName := fmt.Sprintf("discover-operator-%s", uuid.New().String())
@@ -136,7 +136,7 @@ func (h *DiscoverHandler) Perform(
 		jobName,
 		args.StorageConfig,
 		jobMetadataPath,
-		integrationObject.Service,
+		resourceObject.Service,
 		config,
 		jobResultPath,
 	)

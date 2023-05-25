@@ -49,7 +49,7 @@ class SparkS3Connector(s3.S3Connector):
                 raise Exception(
                     "Unknown S3 file format `%s` for file at path `%s`." % (params.format, key)
                 )
-        # Non-table artifacts use same serialization as regular S3 integration.
+        # Non-table artifacts use same serialization as regular S3 resource.
         else:
             return self.fetch_object(key, params)
 
@@ -106,7 +106,7 @@ class SparkS3Connector(s3.S3Connector):
             else:
                 raise Exception("Unknown S3 file format %s." % params.format)
         else:
-            # data is not a Spark DataFrame, use normal S3 integration's load.
+            # data is not a Spark DataFrame, use normal S3 resource's load.
             self.load(params, data, artifact_type)
 
     def unionAll(self, dfs: Any) -> Any:

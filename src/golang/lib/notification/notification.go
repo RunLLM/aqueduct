@@ -20,10 +20,10 @@ import (
 
 const localHostIP = "localhost"
 
-var ErrIntegrationTypeIsNotNotification = errors.New("Resource type is not a notification.")
+var ErrResourceTypeIsNotNotification = errors.New("Resource type is not a notification.")
 
 type Notification interface {
-	// `ID()` is the unique identifier, typically mapped to the integration ID.
+	// `ID()` is the unique identifier, typically mapped to the resource ID.
 	ID() uuid.UUID
 
 	// `Level()` is the global default severity level threshold beyond which a notification should send.
@@ -53,27 +53,27 @@ type Notification interface {
 func GetNotificationsFromUser(
 	ctx context.Context,
 	userID uuid.UUID,
-	integrationRepo repos.Integration,
+	resourceRepo repos.Resource,
 	vaultObject vault.Vault,
 	DB database.Database,
 ) ([]Notification, error) {
-	emailIntegrations, err := integrationRepo.GetByServiceAndUser(ctx, shared.Email, userID, DB)
+	emailResources, err := resourceRepo.GetByServiceAndUser(ctx, shared.Email, userID, DB)
 	if err != nil {
 		return nil, err
 	}
 
-	slackIntegrations, err := integrationRepo.GetByServiceAndUser(ctx, shared.Slack, userID, DB)
+	slackResources, err := resourceRepo.GetByServiceAndUser(ctx, shared.Slack, userID, DB)
 	if err != nil {
 		return nil, err
 	}
 
-	allIntegrations := make([]models.Integration, 0, len(emailIntegrations)+len(slackIntegrations))
-	allIntegrations = append(allIntegrations, emailIntegrations...)
-	allIntegrations = append(allIntegrations, slackIntegrations...)
-	notifications := make([]Notification, 0, len(allIntegrations))
-	for _, integrationObj := range allIntegrations {
-		integrationCopied := integrationObj
-		notification, err := NewNotificationFromIntegration(ctx, &integrationCopied, vaultObject)
+	allResources := make([]models.Resource, 0, len(emailResources)+len(slackResources))
+	allResources = append(allResources, emailResources...)
+	allResources = append(allResources, slackResources...)
+	notifications := make([]Notification, 0, len(allResources))
+	for _, resourceObj := range allResources {
+		resourceCopied := resourceObj
+		notification, err := NewNotificationFromResource(ctx, &resourceCopied, vaultObject)
 		if err != nil {
 			return nil, err
 		}
@@ -84,13 +84,13 @@ func GetNotificationsFromUser(
 	return notifications, nil
 }
 
-func NewNotificationFromIntegration(
+func NewNotificationFromResource(
 	ctx context.Context,
-	integrationObject *models.Integration,
+	resourceObject *models.Resource,
 	vaultObject vault.Vault,
 ) (Notification, error) {
-	if integrationObject.Service == shared.Email {
-		conf, err := auth.ReadConfigFromSecret(ctx, integrationObject.ID, vaultObject)
+	if resourceObject.Service == shared.Email {
+		conf, err := auth.ReadConfigFromSecret(ctx, resourceObject.ID, vaultObject)
 		if err != nil {
 			return nil, err
 		}
@@ -100,11 +100,11 @@ func NewNotificationFromIntegration(
 			return nil, err
 		}
 
-		return newEmailNotification(integrationObject, emailConf), nil
+		return newEmailNotification(resourceObject, emailConf), nil
 	}
 
-	if integrationObject.Service == shared.Slack {
-		conf, err := auth.ReadConfigFromSecret(ctx, integrationObject.ID, vaultObject)
+	if resourceObject.Service == shared.Slack {
+		conf, err := auth.ReadConfigFromSecret(ctx, resourceObject.ID, vaultObject)
 		if err != nil {
 			return nil, err
 		}
@@ -114,10 +114,10 @@ func NewNotificationFromIntegration(
 			return nil, err
 		}
 
-		return newSlackNotification(integrationObject, slackConf), nil
+		return newSlackNotification(resourceObject, slackConf), nil
 	}
 
-	return nil, ErrIntegrationTypeIsNotNotification
+	return nil, ErrResourceTypeIsNotNotification
 }
 
 // constructDisplayedOperatorType returns the 'user facing' message included

@@ -13,9 +13,9 @@ import (
 func TestMarshalAndUnmarshallExtract(t *testing.T) {
 	postgresParams := generateExtractPostgresParams()
 	originalExtract := Extract{
-		Service:       shared.Postgres,
-		IntegrationId: uuid.New(),
-		Parameters:    postgresParams,
+		Service:    shared.Postgres,
+		ResourceId: uuid.New(),
+		Parameters: postgresParams,
 	}
 
 	data, err := json.Marshal(&originalExtract)

@@ -7,13 +7,13 @@ const (
 	SdkClientVersionHeader = "sdk-client-version"
 
 	// Resource headers
-	IntegrationNameHeader    = "integration-name"
-	IntegrationServiceHeader = "integration-service"
-	IntegrationConfigHeader  = "integration-config"
-	IntegrationIDHeader      = "integration-id"
-	IntegrationIDsHeader     = "integration-ids"
-	ServiceHeader            = "service"
-	ImageNameHeader          = "image-name"
+	ResourceNameHeader    = "resource-name"
+	ResourceServiceHeader = "resource-service"
+	ResourceConfigHeader  = "resource-config"
+	ResourceIDHeader      = "resource-id"
+	ResourceIDsHeader     = "resource-ids"
+	ServiceHeader         = "service"
+	ImageNameHeader       = "image-name"
 
 	// Storage Migration Headers
 	StorageMigrationFilterStatusHeader   = "status"

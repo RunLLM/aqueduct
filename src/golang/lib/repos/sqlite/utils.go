@@ -75,10 +75,10 @@ func validateNodeOwnership(
 // generateUpdateExecStateSnippet returns a query fragment that updates exec state blob
 // with the given status and timestamp.
 // This is useful to update the state without deserializing the content.
-// Example: generateUpdateExecStateSnippet('integration.execution_state', 'succeeded', time.Now())
-// -> '`integration.execution_state = CAST(
+// Example: generateUpdateExecStateSnippet('resource.execution_state', 'succeeded', time.Now())
+// -> '`resource.execution_state = CAST(
 //
-//	json_set(json_set(integration.execution_state, '$.status', 'succeeded'),
+//	json_set(json_set(resource.execution_state, '$.status', 'succeeded'),
 //	  '$.timestamps.finished_at', '2023-03-27 14:13PM'
 //	) AS BLOB)`
 func generateUpdateExecStateSnippet(

@@ -26,8 +26,8 @@ import {
 import { RootState } from '../../stores/store';
 import UserProfile from '../../utils/auth';
 import { getNextUpdateTime } from '../../utils/cron';
-import { IntegrationCategories } from '../../utils/integrations';
-import { SupportedIntegrations } from '../../utils/SupportedIntegrations';
+import { ResourceCategories } from '../../utils/resources';
+import { SupportedResources } from '../../utils/SupportedResources';
 import {
   NotificationSettingsMap,
   WorkflowUpdateTrigger,
@@ -104,8 +104,8 @@ const WorkflowSettings: React.FC<Props> = ({ user, dag, workflow }) => {
   const deleteMessage = deleteWorkflowSuccess
     ? 'Successfully deleted your workflow. Redirecting you to the workflows page...'
     : deleteWorkflowError
-    ? `We were unable to delete your workflow: ${deleteWorkflowError}`
-    : '';
+      ? `We were unable to delete your workflow: ${deleteWorkflowError}`
+      : '';
 
   const handleDeleteMessageClose = () => {
     if (deleteWorkflowSuccess) {
@@ -133,14 +133,13 @@ const WorkflowSettings: React.FC<Props> = ({ user, dag, workflow }) => {
     }
   }, [deleteWorkflowSuccess, deleteWorkflowError, navigate]);
 
-  const integrations = useSelector(
-    (state: RootState) => state.integrationsReducer.integrations
+  const resources = useSelector(
+    (state: RootState) => state.resourcesReducer.resources
   );
 
-  const notificationIntegrations = Object.values(integrations).filter(
+  const notificationResources = Object.values(resources).filter(
     (x) =>
-      SupportedIntegrations[x.service].category ===
-      IntegrationCategories.NOTIFICATION
+      SupportedResources[x.service].category === ResourceCategories.NOTIFICATION
   );
 
   const [name, setName] = useState(workflow.name);
@@ -355,12 +354,12 @@ const WorkflowSettings: React.FC<Props> = ({ user, dag, workflow }) => {
         </Box>
       </Box>
 
-      {notificationIntegrations.length > 0 && (
+      {notificationResources.length > 0 && (
         <Box sx={{ my: 2 }}>
           <Typography style={{ fontWeight: 'bold' }}>Notifications</Typography>
 
           <WorkflowNotificationSettings
-            notificationIntegrations={notificationIntegrations}
+            notificationResources={notificationResources}
             curSettingsMap={notificationSettingsMap}
             onSelect={(id, level, replacingID) => {
               const newSettings = { ...notificationSettingsMap };

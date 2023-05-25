@@ -45,8 +45,8 @@ const WithOperatorHeader: React.FC<Props> = ({
   sideSheetMode,
   children,
 }) => {
-  const integrationsState = useSelector(
-    (state: RootState) => state.integrationsReducer
+  const resourcesState = useSelector(
+    (state: RootState) => state.resourcesReducer
   );
 
   const operatorStatus = operatorResult?.exec_state?.status;
@@ -86,11 +86,10 @@ const WithOperatorHeader: React.FC<Props> = ({
 
   const service =
     operator?.spec?.load?.service || operator?.spec?.extract?.service;
-  const integrationId =
-    operator?.spec?.load?.integration_id ||
-    operator?.spec?.extract?.integration_id;
-  const integrationName = integrationId
-    ? integrationsState?.integrations[integrationId]?.name
+  const resourceId =
+    operator?.spec?.load?.resource_id || operator?.spec?.extract?.resource_id;
+  const resourceName = resourceId
+    ? resourcesState?.resources[resourceId]?.name
     : undefined;
 
   return (
@@ -111,12 +110,10 @@ const WithOperatorHeader: React.FC<Props> = ({
         {checkLevelDisplay}
       </Box>
 
-      {integrationName && (
+      {resourceName && (
         <ResourceItem
           resource={service}
-          resourceCustomName={
-            integrationsState?.integrations[integrationId]?.name
-          }
+          resourceCustomName={resourcesState?.resources[resourceId]?.name}
         />
       )}
 

@@ -112,7 +112,7 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
 /**
  * The `MenuSidebar` is the core sidebar that we include throughout our UI. It
  * is pinned on the left-hand side of every page in our UI, and it includes
- * quick links to core abstractions in our system (workflows, integrations, etc).
+ * quick links to core abstractions in our system (workflows, resources, etc).
  */
 const MenuSidebar: React.FC<{
   onSidebarItemClicked?: (name: string) => void;

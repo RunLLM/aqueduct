@@ -18,7 +18,7 @@ import {
   useWorkflowTriggerPostMutation,
 } from '../../../../handlers/AqueductApi';
 import { NodesMap } from '../../../../handlers/responses/node';
-import { handleLoadIntegrations } from '../../../../reducers/integrations';
+import { handleLoadResources } from '../../../../reducers/resources';
 import { AppDispatch } from '../../../../stores/store';
 import {
   Artifact,
@@ -74,7 +74,7 @@ const RunWorkflowDialog: React.FC<RunWorkflowDialogProps> = ({
 
   const handleSuccessToastClose = () => {
     resetRunWorkflow();
-    dispatch(handleLoadIntegrations({ apiKey: user.apiKey }));
+    dispatch(handleLoadResources({ apiKey: user.apiKey }));
     navigate(`/workflow/${encodeURI(workflowId)}`, { replace: true });
   };
 

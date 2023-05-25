@@ -1,8 +1,8 @@
 import { aqueductApi } from '@aqueducthq/common';
 import { dataPreview as dataPreviewReducer } from '@aqueducthq/common';
-import { integrations as integrationsReducer } from '@aqueducthq/common';
+import { resource as resourceReducer } from '@aqueducthq/common';
+import { resources as resourcesReducer } from '@aqueducthq/common';
 import { workflowSummaries as listWorkflowReducer } from '@aqueducthq/common';
-import { integration as integrationReducer } from '@aqueducthq/common';
 import { notifications as notificationsReducer } from '@aqueducthq/common';
 import { serverConfig as serverConfigReducer } from '@aqueducthq/common';
 import { workflowPage as workflowPageReducer } from '@aqueducthq/common';
@@ -15,8 +15,8 @@ export const store = configureStore({
         notificationsReducer,
         listWorkflowReducer,
         dataPreviewReducer,
-        integrationReducer,
-        integrationsReducer,
+        resourceReducer,
+        resourcesReducer,
         serverConfigReducer,
         workflowPageReducer,
     },

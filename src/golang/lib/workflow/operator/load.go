@@ -33,8 +33,7 @@ func newLoadOperator(
 	inputs := base.inputs
 	outputs := base.outputs
 
-	// We currently support a single optional parameter.
-	if len(inputs) == 0 || len(inputs) > 2 {
+	if len(inputs) == 0 {
 		return nil, errWrongNumInputs
 	}
 	if len(outputs) != 0 {
@@ -42,7 +41,7 @@ func newLoadOperator(
 	}
 
 	spec := base.dbOperator.Spec.Load()
-	config, err := auth.ReadConfigFromSecret(ctx, spec.IntegrationId, base.vaultObject)
+	config, err := auth.ReadConfigFromSecret(ctx, spec.ResourceId, base.vaultObject)
 	if err != nil {
 		return nil, err
 	}

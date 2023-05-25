@@ -20,11 +20,11 @@ from .test_functions.simple.model import (
 )
 
 
-def test_basic_get(client, data_integration, engine):
+def test_basic_get(client, data_resource, engine):
     if engine is not None:
         global_config({"engine": engine})
 
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
     sql_df = table_artifact.get()
     assert [col.lower() for col in list(sql_df)] == [
         "hotel_name",
@@ -46,9 +46,9 @@ def test_basic_get(client, data_integration, engine):
     assert output_df.shape[0] == 100
 
 
-def test_multiple_input_get(client, data_integration):
-    table_artifact1 = extract(data_integration, DataObject.SENTIMENT, op_name="Query 1")
-    table_artifact2 = extract(data_integration, DataObject.SENTIMENT, op_name="Query 2")
+def test_multiple_input_get(client, data_resource):
+    table_artifact1 = extract(data_resource, DataObject.SENTIMENT, op_name="Query 1")
+    table_artifact2 = extract(data_resource, DataObject.SENTIMENT, op_name="Query 2")
 
     fn_artifact = dummy_sentiment_model_multiple_input(table_artifact1, table_artifact2)
     fn_df = fn_artifact.get()
@@ -77,8 +77,8 @@ def test_multiple_input_get(client, data_integration):
     assert fn_df.shape[0] == 100
 
 
-def test_basic_file_dependencies(client, data_integration):
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+def test_basic_file_dependencies(client, data_resource):
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
 
     output_artifact = model_with_file_dependency(table_artifact)
     output_df = output_artifact.get()
@@ -92,8 +92,8 @@ def test_basic_file_dependencies(client, data_integration):
     assert output_df.shape[0] == 100
 
 
-def test_invalid_file_dependencies(client, data_integration):
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+def test_invalid_file_dependencies(client, data_resource):
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
 
     with pytest.raises(AqueductError):
         output_artifact = model_with_invalid_dependencies(table_artifact)

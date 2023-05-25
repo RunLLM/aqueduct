@@ -3,11 +3,11 @@ import { setupListeners } from '@reduxjs/toolkit/dist/query';
 
 import { aqueductApi } from '../handlers/AqueductApi';
 import dataPreviewReducer from '../reducers/dataPreview';
-import integrationReducer from '../reducers/integration';
-import integrationsReducer from '../reducers/integrations';
 import listWorkflowReducer from '../reducers/listWorkflowSummaries';
 import notificationsReducer from '../reducers/notifications';
 import workflowPageReducer from '../reducers/pages/Workflow';
+import resourceReducer from '../reducers/resource';
+import resourcesReducer from '../reducers/resources';
 import serverConfigReducer from '../reducers/serverConfig';
 
 export const store = configureStore({
@@ -16,8 +16,8 @@ export const store = configureStore({
     notificationsReducer,
     listWorkflowReducer,
     dataPreviewReducer,
-    integrationsReducer,
-    integrationReducer,
+    resourcesReducer,
+    resourceReducer,
     serverConfigReducer,
     workflowPageReducer,
   },
