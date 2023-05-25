@@ -24,7 +24,7 @@ jobs:
       - run: |
           exit 0
 
-  run-tests-data-integrations:
+  run-tests-data-resources:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     name: SDK Data Integration Tests

@@ -62,19 +62,19 @@ BELOW: Errors that are raised by the Python SDK code, not the backend.
 """
 
 
-# Exception raised when trying to create flow without connecting to integration
-class NoConnectedIntegrationsException(Error):
+# Exception raised when trying to create flow without connecting to resource
+class NoConnectedResourcesException(Error):
     pass
 
 
-# Exception raised when referencing an integration that doesn't exist or the wrong
-# integration type.
-class InvalidIntegrationException(Error):
+# Exception raised when referencing an resource that doesn't exist or the wrong
+# resource type.
+class InvalidResourceException(Error):
     pass
 
 
 # Exception raised when checking a flow that doesn't write to any destination store.
-class NoDestinationIntegrationException(Error):
+class NoDestinationResourceException(Error):
     pass
 
 
@@ -137,11 +137,11 @@ class RequirementsMissingError(Error):
     pass
 
 
-# Exception raised when the user attempts to use an integration that has failed to connected.
-class IntegrationFailedToConnect(Error):
+# Exception raised when the user attempts to use an resource that has failed to connected.
+class ResourceFailedToConnect(Error):
     pass
 
 
-# Exception raised when the user attempts to use an integration that is still connecting.
-class IntegrationConnectionInProgress(Error):
+# Exception raised when the user attempts to use an resource that is still connecting.
+class ResourceConnectionInProgress(Error):
     pass

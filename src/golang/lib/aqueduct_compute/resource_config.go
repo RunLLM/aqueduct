@@ -27,15 +27,15 @@ const (
 func ConstructAqueductComputeResourceConfig(
 	ctx context.Context,
 	userID uuid.UUID,
-	integrationRepo repos.Integration,
+	resourceRepo repos.Resource,
 	db database.Database,
-) (shared.IntegrationConfig, error) {
-	condaResource, err := execution_environment.GetCondaIntegration(ctx, userID, integrationRepo, db)
+) (shared.ResourceConfig, error) {
+	condaResource, err := execution_environment.GetCondaResource(ctx, userID, resourceRepo, db)
 	if err != nil {
 		return nil, err
 	}
 
-	config := make(shared.IntegrationConfig, 1)
+	config := make(shared.ResourceConfig, 1)
 	if condaResource != nil {
 		condaSerialized, err := json.Marshal(condaResource.Config)
 		if err != nil {

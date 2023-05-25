@@ -1,15 +1,15 @@
-from aqueduct.models.integration import BaseResource, ResourceInfo
+from aqueduct.models.resource import BaseResource, ResourceInfo
 
 
 class LambdaResource(BaseResource):
     """
-    Class for K8s integration.
+    Class for K8s resource.
     """
 
     def __init__(self, metadata: ResourceInfo):
         self._metadata = metadata
 
     def describe(self) -> None:
-        """Prints out a human-readable description of the K8s integration."""
+        """Prints out a human-readable description of the K8s resource."""
         print("==================== Lambda Resource =============================")
         self._metadata.describe()

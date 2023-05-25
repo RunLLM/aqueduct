@@ -172,7 +172,7 @@ export function getSavedObjectIdentifier(savedObject: SavedObject): string {
 export type SavedObject = {
   operator_name: string;
   modified_at: string;
-  integration_name: string;
+  resource_name: string;
   spec: Load;
 };
 

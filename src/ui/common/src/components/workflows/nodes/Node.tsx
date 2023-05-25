@@ -72,8 +72,8 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
   }
 
   // This is loaded at the top level of the workflow details page.
-  const integrationsState = useSelector(
-    (state: RootState) => state.integrationsReducer
+  const resourcesState = useSelector(
+    (state: RootState) => state.resourcesReducer
   );
 
   const selected = currentNode.id === data.nodeId;
@@ -169,9 +169,7 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
       headerIcon = (
         <ResourceItem
           resource={spec.service}
-          resourceCustomName={
-            integrationsState.integrations[spec.integration_id]?.name
-          }
+          resourceCustomName={resourcesState.resources[spec.resource_id]?.name}
           size={iconFontSize}
           defaultBackgroundColor={theme.palette.gray[200]}
           collapseName
@@ -179,15 +177,13 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
       );
     } else {
       const engineSpec = data.spec?.engine_config ?? data.dagEngineConfig;
-      const integrationConfig = engineSpec[`${engineSpec.type}_config`];
+      const resourceConfig = engineSpec[`${engineSpec.type}_config`];
 
       headerIcon = (
         <ResourceItem
           resource={engineSpec.type}
           resourceCustomName={
-            integrationsState.integrations[
-              integrationConfig?.['integration_id']
-            ]?.name
+            resourcesState.resources[resourceConfig?.['resource_id']]?.name
           }
           size={iconFontSize}
           defaultBackgroundColor={theme.palette.gray[200]}

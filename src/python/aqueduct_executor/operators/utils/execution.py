@@ -18,14 +18,14 @@ _TIP_CREATE_BUG_REPORT = (
 )
 TIP_UNKNOWN_ERROR = f"Sorry, we've run into an unexpected error! {_TIP_CREATE_BUG_REPORT}"
 TIP_INTEGRATION_CONNECTION = (
-    "We were unable to connect to this integration. "
-    "If the stack trace is not helpful, please check your credentials or contact your integration's provider."
+    "We were unable to connect to this resource. "
+    "If the stack trace is not helpful, please check your credentials or contact your resource's provider."
 )
 TIP_DEMO_CONNECTION = f"We have trouble connecting to demo DB. {_TIP_CREATE_BUG_REPORT}"
 
 TIP_EXTRACT = "We couldn't execute the provided query. Please double check your query is correct."
-TIP_LOAD = "We couldn't load to the integration. Please make sure the target exists, or you have the right permission."
-TIP_DISCOVER = "We couldn't list items in the integration. Please make sure your credentials have the right permission."
+TIP_LOAD = "We couldn't load to the resource. Please make sure the target exists, or you have the right permission."
+TIP_DISCOVER = "We couldn't list items in the resource. Please make sure your credentials have the right permission."
 
 # Assumption: only check operators will use this tip.
 TIP_CHECK_DID_NOT_PASS = "The check did not pass (returned False)."

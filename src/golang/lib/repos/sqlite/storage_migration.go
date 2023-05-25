@@ -37,12 +37,12 @@ func (*storageMigrationReader) List(
 
 func (*storageMigrationWriter) Create(
 	ctx context.Context,
-	destIntegrationID *uuid.UUID,
+	destResourceID *uuid.UUID,
 	DB database.Database,
 ) (*models.StorageMigration, error) {
 	cols := []string{
 		models.StorageMigrationID,
-		models.StorageMigrationDestIntegrationID,
+		models.StorageMigrationDestResourceID,
 		models.StorageMigrationExecutionState,
 		models.StorageMigrationCurrent,
 	}
@@ -56,7 +56,7 @@ func (*storageMigrationWriter) Create(
 
 	args := []interface{}{
 		id,
-		destIntegrationID,
+		destResourceID,
 		createPendingExecState(),
 		false, // current
 	}

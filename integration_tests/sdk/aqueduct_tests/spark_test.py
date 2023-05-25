@@ -13,7 +13,7 @@ from .save import save
 
 
 @pytest.mark.enable_only_for_engine_type(ServiceType.DATABRICKS)
-def test_spark_function(client, flow_name, data_integration, engine):
+def test_spark_function(client, flow_name, data_resource, engine):
     """Test against PySpark code on Spark-based compute engine."""
     global_config({"engine": engine, "lazy": True})
 
@@ -47,9 +47,9 @@ def test_spark_function(client, flow_name, data_integration, engine):
 
         return features.drop("cust_id")
 
-    table_artifact = extract(data_integration, DataObject.CUSTOMERS)
+    table_artifact = extract(data_resource, DataObject.CUSTOMERS)
     output_artifact = _log_featurize_spark(table_artifact)
-    save(data_integration, output_artifact)
+    save(data_resource, output_artifact)
 
     spark_flow = publish_flow_test(
         client,
