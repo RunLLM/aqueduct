@@ -179,7 +179,7 @@ def generate_engine_config(
             type=RuntimeType.K8S,
             name=resource_name,
             k8s_config=K8sEngineConfig(
-                resource_id=resource.id,
+                integration_id=resource.id,
             ),
         )
     elif resource.service == ServiceType.LAMBDA:

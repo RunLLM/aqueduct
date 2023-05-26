@@ -23,7 +23,7 @@ class AirflowEngineConfig(BaseModel):
 
 
 class K8sEngineConfig(BaseModel):
-    resource_id: uuid.UUID
+    integration_id: uuid.UUID
 
 
 class LambdaEngineConfig(BaseModel):
