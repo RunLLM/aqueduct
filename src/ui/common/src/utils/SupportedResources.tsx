@@ -35,6 +35,10 @@ import {
   EmailDialog,
   getEmailValidationSchema,
 } from '../components/resources/dialogs/emailDialog';
+import {
+  GARDialog,
+  getGARValidationSchema,
+} from '../components/resources/dialogs/garDialog';
 import GCPDialog, {
   getGCPValidationSchema,
 } from '../components/resources/dialogs/gcpDialog';
@@ -518,6 +522,22 @@ export const SupportedResources: ServiceInfoMap = {
       />
     ),
     validationSchema: (editMode) => getECRValidationSchema(editMode),
+  },
+  ['GAR']: {
+    logo: ServiceLogos['GAR'],
+    activated: true,
+    category: ResourceCategories.CONTAINER_REGISTRY,
+    docs: addingResourceLink,
+    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+      <GARDialog
+        user={user}
+        editMode={editMode}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
+    validationSchema: getGARValidationSchema(),
   },
 };
 

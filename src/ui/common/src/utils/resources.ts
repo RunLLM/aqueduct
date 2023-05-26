@@ -338,6 +338,7 @@ export type Service =
   | 'GCP'
   | 'Azure'
   | 'ECR'
+  | 'GAR'
   | 'Filesystem';
 
 export type Info = {
@@ -435,6 +436,7 @@ export const ServiceLogos: ServiceLogo = {
   ['K8s']: `${resourceLogosBucket}/kubernetes.png`,
 
   ['ECR']: `${resourceLogosBucket}/ecr.png`,
+  ['GAR']: `${resourceLogosBucket}/gar.png`,
 };
 
 export type ResourceDialogProps<ResourceType> = {
