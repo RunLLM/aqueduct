@@ -37,6 +37,7 @@ func (sc *StaticConfig) PublicConfig() map[string]string {
 		"access_key_id",               // AWS config.
 		"secret_access_key",           // AWS config.
 		"expire_at",                   // ECR config.
+		"service_account_key",         // GAR config.
 	}
 
 	for key, val := range sc.Conf {
