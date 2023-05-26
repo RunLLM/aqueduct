@@ -309,11 +309,11 @@ class APIClient:
         dag_engine_config = dag.engine_config
         if dag_engine_config.type == RuntimeType.K8S:
             assert dag_engine_config.k8s_config is not None
-            engine_resource_ids.add(str(dag_engine_config.k8s_config.resource_id))
+            engine_resource_ids.add(str(dag_engine_config.k8s_config.integration_id))
         for op in dag.operators.values():
             if op.spec.engine_config and op.spec.engine_config.type == RuntimeType.K8S:
                 assert op.spec.engine_config.k8s_config is not None
-                engine_resource_ids.add(str(op.spec.engine_config.k8s_config.resource_id))
+                engine_resource_ids.add(str(op.spec.engine_config.k8s_config.integration_id))
 
         return self.get_dynamic_engine_status(list(engine_resource_ids))
 
