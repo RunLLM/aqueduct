@@ -6,10 +6,11 @@ import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
 import { NotificationLogLevel } from '../../../utils/notifications';
-import { ResourceDialogProps } from '../../../utils/resources';
+import { EmailConfig, ResourceDialogProps } from '../../../utils/resources';
 import CheckboxEntry from '../../notifications/CheckboxEntry';
 import NotificationLevelSelector from '../../notifications/NotificationLevelSelector';
 import { ResourceTextInputField } from './ResourceTextInputField';
+import { requiredAtCreate } from './schema';
 
 // Placeholders are example values not filled for users, but
 // may show up in textbox as hint if user don't fill the form field.
@@ -34,26 +35,33 @@ export const EmailDefaultsOnCreate = {
   enabled: 'false',
 };
 
-export const EmailDialog: React.FC<ResourceDialogProps> = ({
-  editMode = false,
+export const EmailDialog: React.FC<ResourceDialogProps<EmailConfig>> = ({
+  resourceToEdit,
 }) => {
-  const [selectedLevel, setSelectedLevel] = useState(
-    EmailDefaultsOnCreate.level
-  );
+  const initialLevel = resourceToEdit
+    ? resourceToEdit.level
+    : EmailDefaultsOnCreate.level;
+  const initialEnabled = resourceToEdit
+    ? resourceToEdit.enabled
+    : EmailDefaultsOnCreate.enabled;
+  const [selectedLevel, setSelectedLevel] = useState(initialLevel);
 
-  const [notificationsEnabled, setNotificationsEnabled] = useState(
-    EmailDefaultsOnCreate.enabled
-  );
+  const [notificationsEnabled, setNotificationsEnabled] =
+    useState(initialEnabled);
 
-  const { register, setValue, getValues } = useFormContext();
-  register('enabled', { value: EmailDefaultsOnCreate.enabled });
-  register('level', { value: EmailDefaultsOnCreate.level });
-  register('targets_serialized', {
-    value: EmailDefaultsOnCreate.targets_serialized,
-  });
+  const { register, setValue } = useFormContext();
 
-  const enabled = getValues('enabled');
-  const level = getValues('level');
+  if (resourceToEdit) {
+    Object.entries(resourceToEdit).forEach(([k, v]) => {
+      register(k, { value: v });
+    });
+  } else {
+    register('enabled', { value: EmailDefaultsOnCreate.enabled });
+    register('level', { value: EmailDefaultsOnCreate.level });
+    register('targets_serialized', {
+      value: EmailDefaultsOnCreate.targets_serialized,
+    });
+  }
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -160,12 +168,16 @@ export const EmailDialog: React.FC<ResourceDialogProps> = ({
   );
 };
 
-export function getEmailValidationSchema() {
+export function getEmailValidationSchema(editMode: boolean) {
   return Yup.object().shape({
     host: Yup.string().required('Please enter a host'),
     port: Yup.string().required('Please enter a port'),
     user: Yup.string().required('Please enter a sender address'),
-    password: Yup.string().required('Please enter a sender password'),
+    password: requiredAtCreate(
+      Yup.string(),
+      editMode,
+      'Please enter a sender password'
+    ),
     targets_serialized: Yup.string().required(
       'Please enter at least one receiver'
     ),

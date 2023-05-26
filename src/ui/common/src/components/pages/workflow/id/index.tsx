@@ -107,7 +107,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
   const [showRunWorkflowDialog, setShowRunWorkflowDialog] = useState(false);
 
   const [
-    _,
+    {},
     {
       isSuccess: editWorkflowSuccess,
       error: editWorkflowError,

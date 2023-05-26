@@ -1,6 +1,7 @@
 import { TextField } from '@mui/material';
 import React from 'react';
-import { RetentionPolicy } from 'src/utils/workflows';
+
+import { RetentionPolicy } from '../../utils/workflows';
 
 type Props = {
   retentionPolicy?: RetentionPolicy;

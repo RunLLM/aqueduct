@@ -35,7 +35,6 @@ export const ResourceOptionsButtonWidth = '120px';
 
 const ResourceOptions: React.FC<Props> = ({
   resource,
-  onUploadCsv,
   onTestConnection,
   onEdit,
   onDeleteResource,

@@ -77,7 +77,7 @@ const WorkflowSettings: React.FC<Props> = ({ user, dag, workflow }) => {
     apiKey: user.apiKey,
   });
   const [
-    _,
+    {},
     {
       data: deleteWorkflowResponse,
       error: deleteWorkflowError,

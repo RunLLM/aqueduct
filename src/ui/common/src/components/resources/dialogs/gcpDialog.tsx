@@ -1,6 +1,10 @@
 import React from 'react';
 import * as Yup from 'yup';
 
+export const GCPDialog: React.FC = () => null;
+
+// TODO: Uncomment these lines when actually implementing it.
+/*
 import { ResourceDialogProps } from '../../../utils/resources';
 import { ResourceTextInputField } from './ResourceTextInputField';
 
@@ -20,7 +24,7 @@ export const GCPDialog: React.FC<ResourceDialogProps> = ({
       disabled={use_same_cluster === 'true'}
     />
   );
-};
+};*/
 
 export function getGCPValidationSchema() {
   return Yup.object().shape({
