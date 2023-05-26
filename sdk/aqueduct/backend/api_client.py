@@ -309,11 +309,11 @@ class APIClient:
         dag_engine_config = dag.engine_config
         if dag_engine_config.type == RuntimeType.K8S:
             assert dag_engine_config.k8s_config is not None
-            engine_resource_ids.add(str(dag_engine_config.k8s_config.integration_id))
+            engine_resource_ids.add(str(dag_engine_config.k8s_config.resource_id))
         for op in dag.operators.values():
             if op.spec.engine_config and op.spec.engine_config.type == RuntimeType.K8S:
                 assert op.spec.engine_config.k8s_config is not None
-                engine_resource_ids.add(str(op.spec.engine_config.k8s_config.integration_id))
+                engine_resource_ids.add(str(op.spec.engine_config.k8s_config.resource_id))
 
         return self.get_dynamic_engine_status(list(engine_resource_ids))
 
@@ -519,7 +519,10 @@ class APIClient:
         url = self.construct_full_url(self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id)
         body = {
             "external_delete": {
-                str(resource): [obj.spec.json() for obj in saved_objects_to_delete[resource]]
+                # TODO(ENG-2994): `by_alias` is required until this naming inconsistency is resolved.
+                str(resource): [
+                    obj.spec.json(by_alias=True) for obj in saved_objects_to_delete[resource]
+                ]
                 for resource in saved_objects_to_delete
             },
             "force": force,
