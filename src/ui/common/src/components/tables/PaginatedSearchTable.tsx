@@ -40,7 +40,7 @@ export type SortColumn = {
 
   // The sequence of keys in the row object to access in order to get the
   // value which should be compared for sort purposes.
-  sortAccessPath: (string|number)[];
+  sortAccessPath: (string | number)[];
 };
 
 export enum SortType {
@@ -89,7 +89,10 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
   const [sortMenuAnchor, setSortMenuAnchor] = useState<HTMLButtonElement>(null);
   const [sortTypeMenuAnchor, setSortTypeMenuAnchor] =
     useState<HTMLLIElement>(null);
-  const [sortConfig, setSortConfig] = useState({sortColumn:null, sortType:SortType.None});
+  const [sortConfig, setSortConfig] = useState({
+    sortColumn: null,
+    sortType: SortType.None,
+  });
 
   /*
     Returns the value to be inserted at row, column.
@@ -121,7 +124,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
         v1 = v1[path];
         v2 = v2[path];
       }
-  
+
       if (defaultSortConfig.sortType === SortType.Ascending) {
         if (v1 > v2) {
           return 1;

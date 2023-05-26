@@ -1,4 +1,5 @@
 import { ArtifactResultResponse } from '../handlers/responses/node';
+import { DagResultResponse } from '../handlers/responses/workflow';
 import { TableRow } from './data';
 
 export enum AWSCredentialType {
@@ -73,6 +74,29 @@ export const getArtifactResultTableRow = (
     value: artifactResult.content_serialized,
   };
 };
+
+export function getLatestDagResult(
+  dagResults: DagResultResponse[]
+): DagResultResponse {
+  const emptyDagResult: DagResultResponse = {
+    id: null,
+    dag_id: null,
+    exec_state: {
+      status: ExecutionStatus.Registered,
+      timestamps: { pending_at: new Date(0).toLocaleString() },
+    },
+  };
+  return dagResults.reduce(
+    (prev, curr) =>
+      curr.exec_state?.timestamps?.pending_at
+        ? new Date(prev.exec_state?.timestamps?.pending_at) <
+          new Date(curr.exec_state?.timestamps?.pending_at)
+          ? curr
+          : prev
+        : curr,
+    emptyDagResult
+  );
+}
 
 export const stringToExecutionStatus = (status: string): ExecutionStatus => {
   let executionStatus = ExecutionStatus.Unknown;

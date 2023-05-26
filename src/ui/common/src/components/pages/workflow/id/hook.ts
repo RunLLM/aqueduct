@@ -12,7 +12,7 @@ import {
 import { NodeResultsMap, NodesMap } from '../../../../handlers/responses/node';
 import { DagResultResponse } from '../../../../handlers/responses/workflow';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
-import ExecutionStatus from '../../../../utils/shared';
+import { getLatestDagResult } from '../../../../utils/shared';
 
 export type useWorkflowIdsOutputs = {
   workflowId: string;
@@ -189,33 +189,7 @@ export function useWorkflowNodesResults(
   };
 }
 
-export function useLatestDagResult(
-  dagResults: DagResultResponse[]
-): DagResultResponse {
-  const emptyDagResult: DagResultResponse = {
-    id: null,
-    dag_id: null,
-    exec_state: {
-      status: ExecutionStatus.Registered,
-      timestamps: { pending_at: new Date(0).toLocaleString() },
-    },
-  };
-  return dagResults.reduce(
-    (prev, curr) =>
-      curr.exec_state?.timestamps?.pending_at
-        ? new Date(prev.exec_state?.timestamps?.pending_at) <
-          new Date(curr.exec_state?.timestamps?.pending_at)
-          ? curr
-          : prev
-        : curr,
-        emptyDagResult
-  );
-}
-
-export function useLatestDagResultOrDag(
-  apiKey: string, 
-  workflowId: string
-) {
+export function useLatestDagResultOrDag(apiKey: string, workflowId: string) {
   const {
     data: dagResults,
     error: dagResultsError,
@@ -225,30 +199,33 @@ export function useLatestDagResultOrDag(
     workflowId: workflowId,
   });
 
-  const hasRuns = (!dagResultsLoading && !dagResultsError && dagResults.length > 0);
+  const hasRuns =
+    !dagResultsLoading && !dagResultsError && dagResults.length > 0;
 
   const {
     data: dags,
     error: dagsError,
     isLoading: dagsLoading,
-  } = useDagsGetQuery({
-    apiKey: apiKey,
-    workflowId: workflowId,
-  },
-  {
-    skip: hasRuns,
-  });
+  } = useDagsGetQuery(
+    {
+      apiKey: apiKey,
+      workflowId: workflowId,
+    },
+    {
+      skip: hasRuns,
+    }
+  );
 
   let latestDagResult;
   let dag;
   if (hasRuns) {
-    latestDagResult = useLatestDagResult(dagResults);
+    latestDagResult = getLatestDagResult(dagResults);
   } else if (!dagsLoading && !dagsError && dags.length > 0) {
     dag = dags[0];
   }
 
   return {
     latestDagResult,
-    dag
-  }; 
-};
+    dag,
+  };
+}

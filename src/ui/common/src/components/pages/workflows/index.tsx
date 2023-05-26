@@ -1,18 +1,15 @@
 import { Link, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
 
 import {
   useDagGetQuery,
   useDagResultsGetQuery,
-  useDagsGetQuery,
   useWorkflowsGetQuery,
 } from '../../../handlers/AqueductApi';
-import { AppDispatch } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import getPathPrefix from '../../../utils/getPathPrefix';
-import ExecutionStatus from '../../../utils/shared';
+import ExecutionStatus, { getLatestDagResult } from '../../../utils/shared';
 import { getWorkflowEngineTypes } from '../../../utils/workflows';
 import DefaultLayout from '../../layouts/default';
 import { BreadcrumbLink } from '../../layouts/NavBar';
@@ -21,7 +18,11 @@ import {
   SortType,
 } from '../../tables/PaginatedSearchTable';
 import { LayoutProps } from '../types';
-import { useLatestDagResult, useLatestDagResultOrDag, useWorkflowNodes, useWorkflowNodesResults } from '../workflow/id/hook';
+import {
+  useLatestDagResultOrDag,
+  useWorkflowNodes,
+  useWorkflowNodesResults,
+} from '../workflow/id/hook';
 import CheckItem from './components/CheckItem';
 import ExecutionStatusLink from './components/ExecutionStatusLink';
 import MetricItem from './components/MetricItem';
@@ -33,8 +34,6 @@ type Props = {
 };
 
 const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
-  const dispatch: AppDispatch = useDispatch();
-
   useEffect(() => {
     document.title = 'Workflows | Aqueduct';
   }, []);
@@ -91,6 +90,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       sortAccessPath: ['Name', 'props', 'status'],
     },
   ];
+
   const LastRunComponent = (row) => {
     const workflowId = row.id;
 
@@ -107,7 +107,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     let time = 0;
 
     if (!dagResultsLoading && !dagResultsError && dagResults.length > 0) {
-      const latestDagResult = useLatestDagResult(dagResults);
+      const latestDagResult = getLatestDagResult(dagResults);
       time = new Date(
         latestDagResult.exec_state?.timestamps?.pending_at
       ).getTime();
@@ -124,9 +124,12 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       const workflowId = row.id;
       const url = `${getPathPrefix()}/workflow/${workflowId}`;
 
-      const {latestDagResult, dag} = useLatestDagResultOrDag(user.apiKey, workflowId);
+      const { latestDagResult, dag } = useLatestDagResultOrDag(
+        user.apiKey,
+        workflowId
+      );
       let status = ExecutionStatus.Unknown;
-      
+
       if (latestDagResult) {
         status = latestDagResult.exec_state.status;
       } else if (dag) {
@@ -138,9 +141,12 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     Engines: (row) => {
       const workflowId = row.id;
 
-      const {latestDagResult, dag: noRunDag} = useLatestDagResultOrDag(user.apiKey, workflowId);
+      const { latestDagResult, dag: noRunDag } = useLatestDagResultOrDag(
+        user.apiKey,
+        workflowId
+      );
       let latestDagId;
-      
+
       if (latestDagResult) {
         latestDagId = latestDagResult.dag_id;
       } else if (noRunDag) {
@@ -187,10 +193,13 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     Metrics: (row) => {
       const workflowId = row.id;
 
-      const {latestDagResult, dag: noRunDag} = useLatestDagResultOrDag(user.apiKey, workflowId);
+      const { latestDagResult, dag: noRunDag } = useLatestDagResultOrDag(
+        user.apiKey,
+        workflowId
+      );
       let latestDagId;
       let latestDagResultId;
-      
+
       if (latestDagResult) {
         latestDagResultId = latestDagResult.id;
         latestDagId = latestDagResult.dag_id;
@@ -223,10 +232,13 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     Checks: (row) => {
       const workflowId = row.id;
 
-      const {latestDagResult, dag: noRunDag} = useLatestDagResultOrDag(user.apiKey, workflowId);
+      const { latestDagResult, dag: noRunDag } = useLatestDagResultOrDag(
+        user.apiKey,
+        workflowId
+      );
       let latestDagId;
       let latestDagResultId;
-      
+
       if (latestDagResult) {
         latestDagResultId = latestDagResult.id;
         latestDagId = latestDagResult.dag_id;
