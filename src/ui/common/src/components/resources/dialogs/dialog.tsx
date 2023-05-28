@@ -107,8 +107,9 @@ const ResourceDialog: React.FC<Props> = ({
 
     // We do this so we can collect name form inputs inside the same form context.
     const name = data.name;
+    const config = Object.assign({}, data);
     // remove the name key from data so pydantic doesn't throw error.
-    delete data.name;
+    delete config.name;
 
     return editMode
       ? dispatch(
@@ -116,7 +117,7 @@ const ResourceDialog: React.FC<Props> = ({
             apiKey: user.apiKey,
             resourceId: resourceId,
             name: name,
-            config: data,
+            config: config,
           })
         )
       : dispatch(
