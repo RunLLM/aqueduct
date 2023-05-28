@@ -9,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 import { handleGetServerConfig } from '../../../handlers/getServerConfig';
 import {
   handleDeleteResource,
+  handleLoadResourceOperators,
   resetDeletionStatus,
 } from '../../../reducers/resource';
 import { AppDispatch, RootState } from '../../../stores/store';
@@ -91,7 +92,17 @@ const DeleteResourceDialog: React.FC<Props> = ({
       await dispatch(handleGetServerConfig({ apiKey: user.apiKey }));
     }
 
+    async function fetchLoadResourceOperators() {
+      await dispatch(
+        handleLoadResourceOperators({
+          apiKey: user.apiKey,
+          resourceId: resourceId,
+        })
+      );
+    }
+
     fetchServerConfig();
+    fetchLoadResourceOperators();
   }, []);
 
   const deleteResourceStatus = useSelector(
@@ -138,7 +149,6 @@ const DeleteResourceDialog: React.FC<Props> = ({
     // Check deep equality
     isCurrentStorage = isEqual(storageConfig, serverConfig.config);
   }
-
   if (isCurrentStorage) {
     return (
       <Dialog
@@ -208,7 +218,7 @@ const DeleteResourceDialog: React.FC<Props> = ({
   } else {
     return (
       <Dialog
-        open={!deleteResourceStatus || !isFailed(deleteResourceStatus)}
+        open={!deleteResourceStatus || isFailed(deleteResourceStatus)}
         onClose={onCloseDialog}
         maxWidth="lg"
       >
