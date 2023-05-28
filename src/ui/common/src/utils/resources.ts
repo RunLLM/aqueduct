@@ -282,6 +282,10 @@ export type FilesystemConfig = {
   location: string;
 };
 
+export type GarConfig = {
+  service_account_key: string;
+};
+
 export type ResourceConfig =
   | PostgresConfig
   | SnowflakeConfig
@@ -307,7 +311,8 @@ export type ResourceConfig =
   | SparkConfig
   | AWSConfig
   | MongoDBConfig
-  | FilesystemConfig;
+  | FilesystemConfig
+  | GarConfig;
 
 export type FullResourceConfig = { name: string } & ResourceConfig;
 

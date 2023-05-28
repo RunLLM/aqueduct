@@ -18,7 +18,7 @@ const Placeholders = {
   token: '*****',
   channel: 'my_channel',
   level: 'succeeded',
-  enabled: 'true',
+  enabled: 'false',
 };
 
 // Default fields are actual filled form values on 'create' dialog.
@@ -32,12 +32,9 @@ export const SlackDefaultsOnCreate: SlackConfig = {
 export const SlackDialog: React.FC<ResourceDialogProps<SlackConfig>> = ({
   resourceToEdit,
 }) => {
-  const initialLevel = resourceToEdit
-    ? resourceToEdit.level
-    : SlackDefaultsOnCreate.level;
-  const initialEnabled = resourceToEdit
-    ? resourceToEdit.enabled
-    : SlackDefaultsOnCreate.enabled;
+  const initialLevel = resourceToEdit?.level ?? SlackDefaultsOnCreate.level;
+  const initialEnabled =
+    resourceToEdit?.enabled ?? SlackDefaultsOnCreate.enabled;
   const [selectedLevel, setSelectedLevel] = useState(initialLevel);
 
   const [notificationsEnabled, setNotificationsEnabled] =
@@ -137,11 +134,10 @@ export const SlackDialog: React.FC<ResourceDialogProps<SlackConfig>> = ({
 export function getSlackValidationSchema(editMode: boolean) {
   return Yup.object().shape({
     token: requiredAtCreate(Yup.string(), editMode, 'Please enter a token'),
-    channels: Yup.string().required('Please enter at least one channel name'),
     channels_serialized: Yup.string().required(
       'Please enter at least one channel name'
     ),
     level: Yup.string().required('Please select a notification level'),
-    enabled: Yup.string(),
+    enabled: Yup.string().required(),
   });
 }

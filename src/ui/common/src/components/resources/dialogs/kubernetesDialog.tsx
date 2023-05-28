@@ -34,6 +34,7 @@ export const KubernetesDialog: React.FC<KuberentesDialogProps> = ({
 
   const initialUseSameCluster = resourceToEdit?.use_same_cluster ?? 'false';
   const [useSameCluster, setUseSameCluster] = useState(initialUseSameCluster);
+  register('use_same_cluster', { value: initialUseSameCluster });
 
   return (
     <Box sx={{ mt: 2 }}>

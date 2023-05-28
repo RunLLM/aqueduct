@@ -4,10 +4,15 @@ import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
-import { FileData, ResourceDialogProps } from '../../../utils/resources';
+import {
+  FileData,
+  GarConfig,
+  ResourceDialogProps,
+} from '../../../utils/resources';
 import { ResourceFileUploadField } from './ResourceFileUploadField';
+import { requiredAtCreate } from './schema';
 
-export const GARDialog: React.FC<ResourceDialogProps> = () => {
+export const GARDialog: React.FC<ResourceDialogProps<GarConfig>> = () => {
   const { setValue } = useFormContext();
   const [fileData, setFileData] = useState<FileData | null>(null);
   const setFile = (fileData: FileData | null) => {
@@ -63,16 +68,18 @@ export function readCredentialsFile(
   reader.readAsText(file);
 }
 
-export function getGARValidationSchema() {
+export function getGARValidationSchema(editMode: boolean) {
   return Yup.object().shape({
     name: Yup.string().required('Please enter a name'),
-    service_account_key: Yup.string()
-      .transform((value) => {
+    service_account_key: requiredAtCreate(
+      Yup.string().transform((value) => {
         if (!value?.data) {
           return null;
         }
         return value.data;
-      })
-      .required('Please upload a service account key file'),
+      }),
+      editMode,
+      'Please upload a service account key file'
+    ),
   });
 }

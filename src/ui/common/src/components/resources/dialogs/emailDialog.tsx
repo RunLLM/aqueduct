@@ -38,17 +38,12 @@ export const EmailDefaultsOnCreate = {
 export const EmailDialog: React.FC<ResourceDialogProps<EmailConfig>> = ({
   resourceToEdit,
 }) => {
-  const initialLevel = resourceToEdit
-    ? resourceToEdit.level
-    : EmailDefaultsOnCreate.level;
-  const initialEnabled = resourceToEdit
-    ? resourceToEdit.enabled
-    : EmailDefaultsOnCreate.enabled;
+  const initialLevel = resourceToEdit?.level ?? EmailDefaultsOnCreate.level;
+  const initialEnabled =
+    resourceToEdit?.enabled ?? EmailDefaultsOnCreate.enabled;
   const [selectedLevel, setSelectedLevel] = useState(initialLevel);
-
   const [notificationsEnabled, setNotificationsEnabled] =
     useState(initialEnabled);
-
   const { register, setValue } = useFormContext();
 
   if (resourceToEdit) {
@@ -182,8 +177,6 @@ export function getEmailValidationSchema(editMode: boolean) {
       'Please enter at least one receiver'
     ),
     level: Yup.string().required('Please select a notification level'),
-    enabled: Yup.string().transform((value) => {
-      value ? value : EmailDefaultsOnCreate.enabled;
-    }),
+    enabled: Yup.string().required(),
   });
 }
