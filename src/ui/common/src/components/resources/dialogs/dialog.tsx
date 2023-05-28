@@ -107,6 +107,7 @@ const ResourceDialog: React.FC<Props> = ({
 
     // We do this so we can collect name form inputs inside the same form context.
     const name = data.name;
+    // Make copy so we can reuse `data`.
     const config = Object.assign({}, data);
     // remove the name key from data so pydantic doesn't throw error.
     delete config.name;
