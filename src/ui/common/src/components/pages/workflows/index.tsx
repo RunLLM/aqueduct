@@ -145,13 +145,9 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         user.apiKey,
         workflowId
       );
-      let latestDagId;
 
-      if (latestDagResult) {
-        latestDagId = latestDagResult.dag_id;
-      } else if (noRunDag) {
-        latestDagId = noRunDag.id;
-      }
+      const latestDagId = latestDagResult?.dag_id ?? noRunDag?.id
+
 
       const {
         data: dag,
@@ -164,14 +160,15 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           dagId: latestDagId,
         },
         {
-          skip: !latestDagId,
+          skip: !latestDagId || noRunDag,
         }
       );
+
       const nodes = useWorkflowNodes(user.apiKey, workflowId, latestDagId);
 
       let engines = ['Unknown'];
-      if (!dagLoading && !dagError && dag) {
-        const workflowDag = structuredClone(dag);
+      if (dag || noRunDag) {
+        const workflowDag = noRunDag? structuredClone(noRunDag) : structuredClone(dag);
         workflowDag.operators = nodes.operators;
         engines = getWorkflowEngineTypes(workflowDag);
       }
@@ -193,19 +190,13 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     Metrics: (row) => {
       const workflowId = row.id;
 
-      const { latestDagResult, dag: noRunDag } = useLatestDagResultOrDag(
+      const { latestDagResult, dag } = useLatestDagResultOrDag(
         user.apiKey,
         workflowId
       );
-      let latestDagId;
-      let latestDagResultId;
 
-      if (latestDagResult) {
-        latestDagResultId = latestDagResult.id;
-        latestDagId = latestDagResult.dag_id;
-      } else if (noRunDag) {
-        latestDagId = noRunDag.id;
-      }
+      const latestDagResultId = latestDagResult?.id 
+      const latestDagId = latestDagResult?.dag_id ?? dag?.id
 
       const nodes = useWorkflowNodes(user.apiKey, workflowId, latestDagId);
       const nodesResults = useWorkflowNodesResults(
@@ -232,19 +223,13 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     Checks: (row) => {
       const workflowId = row.id;
 
-      const { latestDagResult, dag: noRunDag } = useLatestDagResultOrDag(
+      const { latestDagResult, dag } = useLatestDagResultOrDag(
         user.apiKey,
         workflowId
       );
-      let latestDagId;
-      let latestDagResultId;
 
-      if (latestDagResult) {
-        latestDagResultId = latestDagResult.id;
-        latestDagId = latestDagResult.dag_id;
-      } else if (noRunDag) {
-        latestDagId = noRunDag.id;
-      }
+      const latestDagResultId = latestDagResult?.id 
+      const latestDagId = latestDagResult?.dag_id ?? dag?.id
 
       const nodes = useWorkflowNodes(user.apiKey, workflowId, latestDagId);
       const nodesResults = useWorkflowNodesResults(

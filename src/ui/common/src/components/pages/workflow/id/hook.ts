@@ -198,10 +198,11 @@ export function useLatestDagResultOrDag(apiKey: string, workflowId: string) {
     apiKey: apiKey,
     workflowId: workflowId,
   });
-
-  const hasRuns =
-    !dagResultsLoading && !dagResultsError && dagResults.length > 0;
-
+  
+  const latestDagResult = getLatestDagResult(dagResults ?? []) // undefined if not available
+ 
+  const dagIdFromLatestDagResult = latestDagResult?.dag_id;
+  
   const {
     data: dags,
     error: dagsError,
@@ -212,20 +213,9 @@ export function useLatestDagResultOrDag(apiKey: string, workflowId: string) {
       workflowId: workflowId,
     },
     {
-      skip: hasRuns,
+      skip: dagIdFromLatestDagResult,
     }
   );
 
-  let latestDagResult;
-  let dag;
-  if (hasRuns) {
-    latestDagResult = getLatestDagResult(dagResults);
-  } else if (!dagsLoading && !dagsError && dags.length > 0) {
-    dag = dags[0];
-  }
-
-  return {
-    latestDagResult,
-    dag,
-  };
+  return { latestDagResult, dag: (dags ?? [])[0] };
 }

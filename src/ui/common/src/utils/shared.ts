@@ -78,24 +78,17 @@ export const getArtifactResultTableRow = (
 export function getLatestDagResult(
   dagResults: DagResultResponse[]
 ): DagResultResponse {
-  const emptyDagResult: DagResultResponse = {
-    id: null,
-    dag_id: null,
-    exec_state: {
-      status: ExecutionStatus.Registered,
-      timestamps: { pending_at: new Date(0).toLocaleString() },
-    },
-  };
-  return dagResults.reduce(
-    (prev, curr) =>
-      curr.exec_state?.timestamps?.pending_at
-        ? new Date(prev.exec_state?.timestamps?.pending_at) <
-          new Date(curr.exec_state?.timestamps?.pending_at)
-          ? curr
-          : prev
-        : curr,
-    emptyDagResult
-  );
+  if (dagResults && dagResults.length > 0) {
+    return dagResults.reduce(
+      (prev, curr) =>
+        curr.exec_state?.timestamps?.pending_at
+          ? new Date(prev.exec_state?.timestamps?.pending_at) <
+            new Date(curr.exec_state?.timestamps?.pending_at)
+            ? curr
+            : prev
+          : curr
+    );
+  }
 }
 
 export const stringToExecutionStatus = (status: string): ExecutionStatus => {
