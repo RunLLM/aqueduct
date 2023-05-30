@@ -70,7 +70,6 @@ export function readCredentialsFile(
 
 export function getGARValidationSchema(editMode: boolean) {
   return Yup.object().shape({
-    name: Yup.string().required('Please enter a name'),
     service_account_key: requiredAtCreate(
       Yup.string().transform((value) => {
         if (!value?.data) {
