@@ -214,6 +214,7 @@ export type KubernetesConfig = {
   kubeconfig_path: string;
   cluster_name: string;
   use_same_cluster: string;
+  cloud_provider?: string;
 };
 
 export type LambdaConfig = {
