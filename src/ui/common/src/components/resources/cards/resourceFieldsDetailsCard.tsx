@@ -1,6 +1,6 @@
 import React from 'react';
-import { Resource } from 'src/utils/resources';
 
+import { Resource } from '../../../utils/resources';
 import { AirflowCard } from './airflowCard';
 import { AqueductCard } from './aqueductCard';
 import { AthenaCard } from './athenaCard';

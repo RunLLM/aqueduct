@@ -6,6 +6,7 @@ import * as Yup from 'yup';
 import { ResourceDialogProps, SnowflakeConfig } from '../../../utils/resources';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { ResourceTextInputField } from './ResourceTextInputField';
+import { requiredAtCreate } from './schema';
 
 const Placeholders: SnowflakeConfig = {
   account_identifier: '123456',
@@ -17,10 +18,16 @@ const Placeholders: SnowflakeConfig = {
   role: '',
 };
 
-export const SnowflakeDialog: React.FC<ResourceDialogProps> = ({
-  editMode,
-}) => {
-  const { setValue } = useFormContext();
+export const SnowflakeDialog: React.FC<
+  ResourceDialogProps<SnowflakeConfig>
+> = ({ resourceToEdit }) => {
+  const { register, setValue } = useFormContext();
+  const editMode = !!resourceToEdit;
+  if (resourceToEdit) {
+    Object.entries(resourceToEdit).forEach(([k, v]) => {
+      register(k, { value: v });
+    });
+  }
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -110,7 +117,7 @@ export const SnowflakeDialog: React.FC<ResourceDialogProps> = ({
   );
 };
 
-export function getSnowflakeValidationSchema() {
+export function getSnowflakeValidationSchema(editMode: boolean) {
   return Yup.object().shape({
     account_identifier: Yup.string().required(
       'Please enter an account identifier'
@@ -119,7 +126,11 @@ export function getSnowflakeValidationSchema() {
     database: Yup.string().required('Please enter a database'),
     schema: Yup.string().transform((value) => value || 'public'),
     username: Yup.string().required('Please enter a username'),
-    password: Yup.string().required('Please enter a password'),
+    password: requiredAtCreate(
+      Yup.string(),
+      editMode,
+      'Please enter a password'
+    ),
     role: Yup.string(),
   });
 }

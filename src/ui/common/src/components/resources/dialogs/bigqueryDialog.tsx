@@ -12,15 +12,23 @@ import {
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { ResourceFileUploadField } from './ResourceFileUploadField';
 import { ResourceTextInputField } from './ResourceTextInputField';
+import { requiredAtCreate } from './schema';
 
 const Placeholders: BigQueryConfig = {
   project_id: 'aqueduct_1234',
 };
 
-export const BigQueryDialog: React.FC<ResourceDialogProps> = ({
-  editMode = false,
+export const BigQueryDialog: React.FC<ResourceDialogProps<BigQueryConfig>> = ({
+  resourceToEdit,
 }) => {
-  const { setValue } = useFormContext();
+  const { register, setValue } = useFormContext();
+  const editMode = !!resourceToEdit;
+  if (resourceToEdit) {
+    Object.entries(resourceToEdit).forEach(([k, v]) => {
+      register(k, { value: v });
+    });
+  }
+
   const [fileData, setFileData] = useState<FileData | null>(null);
   const setFile = (fileData: FileData | null) => {
     setValue('service_account_credentials', fileData?.data);
@@ -88,17 +96,19 @@ export function readCredentialsFile(
   reader.readAsText(file);
 }
 
-export function getBigQueryValidationSchema() {
+export function getBigQueryValidationSchema(editMode: boolean) {
   return Yup.object().shape({
     name: Yup.string().required('Please enter a name'),
     project_id: Yup.string().required('Please enter a project ID'),
-    service_account_credentials: Yup.string()
-      .transform((value) => {
+    service_account_credentials: requiredAtCreate(
+      Yup.string().transform((value) => {
         if (!value?.data) {
           return null;
         }
         return value.data;
-      })
-      .required('Please upload a service account key file'),
+      }),
+      editMode,
+      'Please upload a service account key file'
+    ),
   });
 }

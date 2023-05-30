@@ -8,6 +8,7 @@ import { ECRConfig, ResourceDialogProps } from '../../../utils/resources';
 import { AWSCredentialType } from '../../../utils/shared';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';
 import { ResourceTextInputField } from './ResourceTextInputField';
+import { requiredAtCreate } from './schema';
 
 const Placeholders: ECRConfig = {
   type: AWSCredentialType.AccessKey,
@@ -18,15 +19,24 @@ const Placeholders: ECRConfig = {
   config_file_profile: '',
 };
 
-export const ECRDialog: React.FC<ResourceDialogProps> = ({
-  editMode = false,
+export const ECRDialog: React.FC<ResourceDialogProps<ECRConfig>> = ({
+  resourceToEdit,
 }) => {
   const { register, setValue } = useFormContext();
-  const [currentTab, setCurrentTab] = useState<AWSCredentialType>(
-    AWSCredentialType.AccessKey
-  );
+  const initialAccessKeyType = resourceToEdit?.config_file_path
+    ? AWSCredentialType.ConfigFilePath
+    : AWSCredentialType.AccessKey;
 
-  register('type', { value: AWSCredentialType.AccessKey });
+  if (resourceToEdit) {
+    Object.entries(resourceToEdit).forEach(([k, v]) => {
+      register(k, { value: v });
+    });
+  }
+
+  const [currentTab, setCurrentTab] =
+    useState<AWSCredentialType>(initialAccessKeyType);
+
+  register('type', { value: initialAccessKeyType });
 
   const configProfileInput = (
     <ResourceTextInputField
@@ -126,16 +136,24 @@ export const ECRDialog: React.FC<ResourceDialogProps> = ({
 
 // NOTE: This is the same validationschema as that of awsDialog.tsx.
 // Should we consolidate the two into one? I'm not sure if we wish to support other fields in the future.
-export function getECRValidationSchema() {
+export function getECRValidationSchema(editMode: boolean) {
   return Yup.object().shape({
     type: Yup.string().required('Please select a credential type'),
     access_key_id: Yup.string().when('type', {
       is: 'access_key',
-      then: Yup.string().required('Please enter an access key id'),
+      then: requiredAtCreate(
+        Yup.string(),
+        editMode,
+        'Please enter an access key id'
+      ),
     }),
     secret_access_key: Yup.string().when('type', {
       is: 'access_key',
-      then: Yup.string().required('Please enter a secret access key'),
+      then: requiredAtCreate(
+        Yup.string(),
+        editMode,
+        'Please enter a secret access key'
+      ),
     }),
     region: Yup.string().when('type', {
       is: 'access_key',
@@ -143,11 +161,19 @@ export function getECRValidationSchema() {
     }),
     config_file_profile: Yup.string().when('type', {
       is: 'config_file_path',
-      then: Yup.string().required('Please enter a config file profile'),
+      then: requiredAtCreate(
+        Yup.string(),
+        editMode,
+        'Please enter a config file profile'
+      ),
     }),
     config_file_path: Yup.string().when('type', {
       is: 'config_file_path',
-      then: Yup.string().required('Please enter a profile path'),
+      then: requiredAtCreate(
+        Yup.string(),
+        editMode,
+        'Please enter a profile path'
+      ),
     }),
   });
 }

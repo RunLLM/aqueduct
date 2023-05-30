@@ -13,6 +13,7 @@ import {
 import { AWSCredentialType } from '../../../utils/shared';
 import { Tab, Tabs } from '../../primitives/Tabs.styles';
 import { ResourceTextInputField } from './ResourceTextInputField';
+import { requiredAtCreate } from './schema';
 
 const Placeholders: AWSConfig = {
   type: AWSCredentialType.AccessKey,
@@ -34,21 +35,33 @@ const K8sPlaceholders: DynamicK8sConfig = {
   max_gpu_node: '1',
 };
 
-export const AWSDialog: React.FC<ResourceDialogProps> = () => {
-  const { register, getValues, setValue } = useFormContext();
+export const AWSDialog: React.FC<ResourceDialogProps<AWSConfig>> = ({
+  resourceToEdit,
+}) => {
+  const editMode = !!resourceToEdit;
+  const { register, setValue } = useFormContext();
+  const initialAccessKeyType = resourceToEdit?.config_file_path
+    ? AWSCredentialType.ConfigFilePath
+    : AWSCredentialType.AccessKey;
+  const initialK8sConfigsSerialized = resourceToEdit?.k8s_serialized ?? '{}';
+  const initialK8sConfig = JSON.parse(
+    initialK8sConfigsSerialized
+  ) as DynamicK8sConfig;
+  const [k8sConfig, setK8sConfig] =
+    useState<DynamicK8sConfig>(initialK8sConfig);
+
+  if (resourceToEdit) {
+    Object.entries(resourceToEdit).forEach(([k, v]) => {
+      register(k, { value: v });
+    });
+  }
 
   // Need state variable to change tabs, as the formContext doesn't change as readily.
-  const [currentTab, setCurrentTab] = useState(AWSCredentialType.AccessKey);
+  const [currentTab, setCurrentTab] = useState(initialAccessKeyType);
   const [engineTypeTab, setEngineTypeTab] = useState(DynamicEngineType.K8s);
 
   register('engineType', { value: DynamicEngineType.K8s });
-  register('type', { value: AWSCredentialType.AccessKey });
-  register('k8s_serialized', { value: '{}' });
-
-  const k8s_serialized = getValues('k8s_serialized');
-  const k8sConfigs = JSON.parse(k8s_serialized ?? '{}') as {
-    [key: string]: string;
-  };
+  register('type', { value: initialAccessKeyType });
 
   const configProfileInput = (
     <ResourceTextInputField
@@ -56,6 +69,7 @@ export const AWSDialog: React.FC<ResourceDialogProps> = () => {
       spellCheck={false}
       required={true}
       label="AWS Profile*"
+      disabled={editMode}
       description="The name of the profile specified in brackets in your credential file."
       placeholder={Placeholders.config_file_profile}
       onChange={(event) => setValue('config_file_profile', event.target.value)}
@@ -71,6 +85,7 @@ export const AWSDialog: React.FC<ResourceDialogProps> = () => {
         name="access_key_id"
         spellCheck={false}
         required={true}
+        disabled={editMode}
         label="AWS Access Key ID*"
         description="The access key ID of your AWS account."
         placeholder={Placeholders.access_key_id}
@@ -81,6 +96,7 @@ export const AWSDialog: React.FC<ResourceDialogProps> = () => {
         name="secret_access_key"
         spellCheck={false}
         required={true}
+        disabled={editMode}
         label="AWS Secret Access Key*"
         description="The secret access key of your AWS account."
         placeholder={Placeholders.secret_access_key}
@@ -91,6 +107,7 @@ export const AWSDialog: React.FC<ResourceDialogProps> = () => {
         name="region"
         spellCheck={false}
         required={true}
+        disabled={editMode}
         label="AWS Region*"
         description="The region of your AWS account."
         placeholder={Placeholders.region}
@@ -113,6 +130,7 @@ export const AWSDialog: React.FC<ResourceDialogProps> = () => {
         name="config_file_path"
         spellCheck={false}
         required={true}
+        disabled={editMode}
         label="AWS Credentials File Path*"
         description={'The path to the credentials file'}
         placeholder={Placeholders.config_file_path}
@@ -132,26 +150,34 @@ export const AWSDialog: React.FC<ResourceDialogProps> = () => {
         name="keepalive"
         spellCheck={false}
         required={false}
+        disabled={editMode}
         label="Keepalive period"
         description="How long (in seconds) does the cluster need to remain idle before it is deleted."
         placeholder={K8sPlaceholders.keepalive}
         onChange={(event) => {
           setValue('keepalive', event.target.value);
-          k8sConfigs['keepalive'] = event.target.value;
-          setValue('k8s_serialized', JSON.stringify(k8sConfigs));
+          setK8sConfig((prevConfig) => {
+            prevConfig.keepalive = event.target.value;
+            return prevConfig;
+          });
+          setValue('k8s_serialized', JSON.stringify(k8sConfig));
         }}
       />
       <ResourceTextInputField
         name="cpu_node_type"
         spellCheck={false}
         required={false}
+        disabled={editMode}
         label="CPU node type"
         description="The EC2 instance type of the CPU node group."
         placeholder={K8sPlaceholders.cpu_node_type}
         onChange={(event) => {
           setValue('cpu_node_type', event.target.value);
-          k8sConfigs['cpu_node_type'] = event.target.value;
-          setValue('k8s_serialized', JSON.stringify(k8sConfigs));
+          setK8sConfig((prevConfig) => {
+            prevConfig.cpu_node_type = event.target.value;
+            return prevConfig;
+          });
+          setValue('k8s_serialized', JSON.stringify(k8sConfig));
         }}
       />
 
@@ -159,13 +185,17 @@ export const AWSDialog: React.FC<ResourceDialogProps> = () => {
         name="gpu_node_type"
         spellCheck={false}
         required={false}
+        disabled={editMode}
         label="GPU node type"
         description="The EC2 instance type of the GPU node group."
         placeholder={K8sPlaceholders.gpu_node_type}
         onChange={(event) => {
           setValue('gpu_node_type', event.target.value);
-          k8sConfigs['gpu_node_type'] = event.target.value;
-          setValue('k8s_serialized', JSON.stringify(k8sConfigs));
+          setK8sConfig((prevConfig) => {
+            prevConfig.gpu_node_type = event.target.value;
+            return prevConfig;
+          });
+          setValue('k8s_serialized', JSON.stringify(k8sConfig));
         }}
       />
 
@@ -173,13 +203,17 @@ export const AWSDialog: React.FC<ResourceDialogProps> = () => {
         name="min_cpu_node"
         spellCheck={false}
         required={false}
+        disabled={editMode}
         label="Min CPU node"
         description="Minimum number of nodes in the CPU node group."
         placeholder={K8sPlaceholders.min_cpu_node}
         onChange={(event) => {
           setValue('min_cpu_node', event.target.value);
-          k8sConfigs['min_cpu_node'] = event.target.value;
-          setValue('k8s_serialized', JSON.stringify(k8sConfigs));
+          setK8sConfig((prevConfig) => {
+            prevConfig.min_cpu_node = event.target.value;
+            return prevConfig;
+          });
+          setValue('k8s_serialized', JSON.stringify(k8sConfig));
         }}
       />
 
@@ -187,13 +221,17 @@ export const AWSDialog: React.FC<ResourceDialogProps> = () => {
         name="max_cpu_node"
         spellCheck={false}
         required={false}
+        disabled={editMode}
         label="Max CPU node"
         description="Maximum number of nodes in the CPU node group."
         placeholder={K8sPlaceholders.max_cpu_node}
         onChange={(event) => {
           setValue('max_cpu_node', event.target.value);
-          k8sConfigs['max_cpu_node'] = event.target.value;
-          setValue('k8s_serialized', JSON.stringify(k8sConfigs));
+          setK8sConfig((prevConfig) => {
+            prevConfig.max_cpu_node = event.target.value;
+            return prevConfig;
+          });
+          setValue('k8s_serialized', JSON.stringify(k8sConfig));
         }}
       />
 
@@ -206,8 +244,11 @@ export const AWSDialog: React.FC<ResourceDialogProps> = () => {
         placeholder={K8sPlaceholders.min_gpu_node}
         onChange={(event) => {
           setValue('min_gpu_node', event.target.value);
-          k8sConfigs['min_gpu_node'] = event.target.value;
-          setValue('k8s_serialized', JSON.stringify(k8sConfigs));
+          setK8sConfig((prevConfig) => {
+            prevConfig.min_gpu_node = event.target.value;
+            return prevConfig;
+          });
+          setValue('k8s_serialized', JSON.stringify(k8sConfig));
         }}
       />
 
@@ -215,13 +256,17 @@ export const AWSDialog: React.FC<ResourceDialogProps> = () => {
         name="max_gpu_node"
         spellCheck={false}
         required={false}
+        disabled={editMode}
         label="Max GPU node"
         description="Maximum number of nodes in the GPU node group."
         placeholder={K8sPlaceholders.max_gpu_node}
         onChange={(event) => {
           setValue('max_gpu_node', event.target.value);
-          k8sConfigs['max_gpu_node'] = event.target.value;
-          setValue('k8s_serialized', JSON.stringify(k8sConfigs));
+          setK8sConfig((prevConfig) => {
+            prevConfig.max_gpu_node = event.target.value;
+            return prevConfig;
+          });
+          setValue('k8s_serialized', JSON.stringify(k8sConfig));
         }}
       />
     </Box>
@@ -265,16 +310,24 @@ export const AWSDialog: React.FC<ResourceDialogProps> = () => {
   );
 };
 
-export function getAWSValidationSchema() {
+export function getAWSValidationSchema(editMode: boolean) {
   return Yup.object().shape({
     type: Yup.string().required('Please select a credential type'),
     access_key_id: Yup.string().when('type', {
       is: 'access_key',
-      then: Yup.string().required('Please enter an access key id'),
+      then: requiredAtCreate(
+        Yup.string(),
+        editMode,
+        'Please enter an access key id'
+      ),
     }),
     secret_access_key: Yup.string().when('type', {
       is: 'access_key',
-      then: Yup.string().required('Please enter a secret access key'),
+      then: requiredAtCreate(
+        Yup.string(),
+        editMode,
+        'Please enter a secret access key'
+      ),
     }),
     region: Yup.string().when('type', {
       is: 'access_key',
@@ -282,11 +335,19 @@ export function getAWSValidationSchema() {
     }),
     config_file_profile: Yup.string().when('type', {
       is: 'config_file_path',
-      then: Yup.string().required('Please enter a config file profile'),
+      then: requiredAtCreate(
+        Yup.string(),
+        editMode,
+        'Please enter a config file profile'
+      ),
     }),
     config_file_path: Yup.string().when('type', {
       is: 'config_file_path',
-      then: Yup.string().required('Please enter a profile path'),
+      then: requiredAtCreate(
+        Yup.string(),
+        editMode,
+        'Please enter a profile path'
+      ),
     }),
   });
 }

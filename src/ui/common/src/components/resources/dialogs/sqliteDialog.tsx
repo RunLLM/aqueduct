@@ -11,10 +11,16 @@ const Placeholders: SQLiteConfig = {
   database: '/path/to/sqlite.db',
 };
 
-export const SQLiteDialog: React.FC<ResourceDialogProps> = ({
-  editMode = false,
+export const SQLiteDialog: React.FC<ResourceDialogProps<SQLiteConfig>> = ({
+  resourceToEdit,
 }) => {
-  const { setValue } = useFormContext();
+  const { register, setValue } = useFormContext();
+  const editMode = !!resourceToEdit;
+  if (resourceToEdit) {
+    Object.entries(resourceToEdit).forEach(([k, v]) => {
+      register(k, { value: v });
+    });
+  }
 
   return (
     <Box sx={{ mt: 2 }}>

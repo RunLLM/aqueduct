@@ -38,13 +38,10 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     document.title = 'Workflows | Aqueduct';
   }, []);
 
-  const {
-    data: workflowData,
-    error: workflowError,
-    isLoading: workflowLoading,
-  } = useWorkflowsGetQuery({
-    apiKey: user.apiKey,
-  });
+  const { data: workflowData, isLoading: workflowLoading } =
+    useWorkflowsGetQuery({
+      apiKey: user.apiKey,
+    });
 
   // If we are still loading the workflows, don't return a page at all.
   // Otherwise, we briefly return a page saying there are no workflows before
