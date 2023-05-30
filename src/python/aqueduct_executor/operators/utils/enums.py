@@ -34,6 +34,7 @@ class ExecutionStatus(str, Enum, metaclass=MetaEnum):
     SUCCEEDED = "succeeded"
     FAILED = "failed"
 
+
 class FailureType(Enum, metaclass=MetaEnum):
     SYSTEM = 1
     USER_FATAL = 2

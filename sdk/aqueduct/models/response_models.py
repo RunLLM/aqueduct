@@ -6,8 +6,8 @@ from aqueduct.constants.enums import (
     ArtifactType,
     ExecutionStatus,
     K8sClusterStatusType,
-    SerializationType,
     NotificationLogLevel,
+    SerializationType,
 )
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import EngineConfig, Metadata, RetentionPolicy, Schedule
@@ -15,6 +15,7 @@ from aqueduct.models.execution_state import ExecutionState
 from aqueduct.models.operators import LoadSpec, Operator, OperatorSpec
 from aqueduct.models.utils import human_readable_timestamp
 from pydantic import BaseModel
+
 
 class ArtifactResult(BaseModel):
     serialization_type: SerializationType
@@ -24,10 +25,10 @@ class ArtifactResult(BaseModel):
 
 # V2 Responses
 class NotificationSettings(BaseModel):
-    """Represents the notification settings associated with a workflow.
+    """Represents the notification settings associated with a workflow."""
 
-    """
     settings: Optional[Dict[str, NotificationLogLevel]]
+
 
 class GetWorkflowResponse(BaseModel):
     """Represents a single workflow.
@@ -60,6 +61,7 @@ class GetWorkflowResponse(BaseModel):
     created_at: str
     retention_policy: RetentionPolicy
     notification_settings: NotificationSettings
+
 
 class GetDagResponse(BaseModel):
     id: uuid.UUID

@@ -1,8 +1,8 @@
+import datetime
 import io
 import json
 import uuid
 from typing import IO, Any, DefaultDict, Dict, List, Optional, Tuple, Union
-import datetime
 
 import requests
 from aqueduct.constants.enums import ExecutionStatus, K8sClusterActionType, RuntimeType, ServiceType
@@ -17,36 +17,30 @@ from aqueduct.error import (
     UnprocessableEntityError,
 )
 from aqueduct.logger import logger
-from aqueduct.models.dag import (
-    DAG,
-    Metadata,
-)
-from aqueduct.models.resource import BaseResource, ResourceInfo
-from aqueduct.models.operators import (
-    ParamSpec,
-    Operator,
-)
 from aqueduct.models.artifact import ArtifactMetadata
+from aqueduct.models.dag import DAG, Metadata
+from aqueduct.models.operators import Operator, ParamSpec
+from aqueduct.models.resource import BaseResource, ResourceInfo
 from aqueduct.models.response_models import (
     DeleteWorkflowResponse,
     DynamicEngineStatusResponse,
+    GetDagResponse,
+    GetDagResultResponse,
     GetImageURLResponse,
+    GetNodeArtifactResponse,
+    GetNodeOperatorResponse,
     GetVersionResponse,
     GetWorkflowDagResultResponse,
-    GetWorkflowV1Response,
     GetWorkflowResponse,
+    GetWorkflowV1Response,
     ListWorkflowResponseEntry,
     ListWorkflowSavedObjectsResponse,
     PreviewResponse,
     RegisterAirflowWorkflowResponse,
     RegisterWorkflowResponse,
     SavedObjectUpdate,
-    GetDagResponse,
-    GetDagResultResponse,
-    WorkflowDagResultResponse,
     WorkflowDagResponse,
-    GetNodeArtifactResponse, 
-    GetNodeOperatorResponse,
+    WorkflowDagResultResponse,
 )
 from aqueduct.utils.serialization import deserialize
 from pkg_resources import get_distribution, parse_version
@@ -615,12 +609,20 @@ class APIClient:
         workflow_dag_results = [
             WorkflowDagResultResponse(
                 id=dag_result.id,
-                created_at=int(datetime.datetime.strptime(resp_dags[str(dag_result.dag_id)].created_at[:-4],'%Y-%m-%dT%H:%M:%S.%f' if resp_dags[str(dag_result.dag_id)].created_at[-1] == "Z" else '%Y-%m-%dT%H:%M:%S.%f%z').timestamp()),
+                created_at=int(
+                    datetime.datetime.strptime(
+                        resp_dags[str(dag_result.dag_id)].created_at[:-4],
+                        "%Y-%m-%dT%H:%M:%S.%f"
+                        if resp_dags[str(dag_result.dag_id)].created_at[-1] == "Z"
+                        else "%Y-%m-%dT%H:%M:%S.%f%z",
+                    ).timestamp()
+                ),
                 status=dag_result.exec_state.status,
                 exec_state=dag_result.exec_state,
                 workflow_dag_id=dag_result.dag_id,
             )
-        for dag_result in dag_results]
+            for dag_result in dag_results
+        ]
         return GetWorkflowV1Response(workflow_dags=dags, workflow_dag_results=workflow_dag_results)
 
     def get_workflow_dag_result(self, flow_id: str, result_id: str) -> GetWorkflowDagResultResponse:
