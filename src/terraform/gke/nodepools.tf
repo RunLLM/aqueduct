@@ -1,9 +1,9 @@
 resource "google_container_node_pool" "primary_nodes" {
   name       = "${var.cluster_name}-cpu-node-pool"
-  location   = local.location
+  location = var.region
   cluster    = google_container_cluster.primary.name
-  initial_node_count = var.initial_node_count
-  node_locations = local.node_locations
+  node_locations = [var.zone]
+  node_count = var.min_cpu_node
 
   autoscaling {
     location_policy = "BALANCED"	
@@ -25,35 +25,25 @@ resource "google_container_node_pool" "primary_nodes" {
       env = var.project_id
     }
 
+    disk_size_gb = var.disk_size_in_gb
     preemptible  = true
     machine_type = var.cpu_node_type
-    service_account = var.compute_engine_service_account
     tags         = ["gke-node", "${var.project_id}-gke"]
-
-    disk_size_gb = var.disk_size_in_gb
-    disk_type = var.disk_type
-    metadata = {
-      disable-legacy-endpoints = "true"
     }
-    reservation_affinity {
-        consume_reservation_type = "ANY_RESERVATION"
-        values = []
+    upgrade_settings {
+      max_surge = 1
+      max_unavailable = 0
+      strategy = "SURGE"
     }
-  }
-  upgrade_settings {
-    max_surge = 1
-    max_unavailable = 0
-    strategy = "SURGE"
-  }
 }
 
 resource "google_container_node_pool" "gpu_nodes" {
   count = var.create_gpu_node_pool ? 1 : 0
   name       = "${var.cluster_name}-gpu-node-pool"
-  location   = local.location
+  location   = var.region
   cluster    = google_container_cluster.primary.name
-  initial_node_count = var.initial_node_count
-  node_locations = local.node_locations
+  node_locations = [var.zone]
+  node_count = var.min_gpu_node
 
   autoscaling {
     location_policy = "BALANCED"
@@ -77,6 +67,7 @@ resource "google_container_node_pool" "gpu_nodes" {
       accelerator = var.gpu_node_type
     }
 
+    disk_size_gb = var.disk_size_in_gb
     preemptible  = true
     machine_type = var.gpu_node_type
     tags         = ["gke-node", "${var.project_id}-gke"]
