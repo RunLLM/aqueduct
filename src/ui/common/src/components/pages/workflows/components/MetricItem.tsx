@@ -23,7 +23,6 @@ const showMoreStyles = {
 
 export const ShowMore: React.FC<ShowMoreProps> = ({
   totalItems,
-  numPreviewItems,
   expanded,
   onClick,
 }) => {

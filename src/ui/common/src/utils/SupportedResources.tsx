@@ -94,7 +94,31 @@ import {
   SQLiteDialog,
 } from '../components/resources/dialogs/sqliteDialog';
 import { AqueductDocsLink } from './docs';
-import { ResourceCategories, ServiceInfoMap, ServiceLogos } from './resources';
+import {
+  AirflowConfig,
+  AthenaConfig,
+  AWSConfig,
+  BigQueryConfig,
+  DatabricksConfig,
+  ECRConfig,
+  EmailConfig,
+  GarConfig,
+  GCSConfig,
+  LambdaConfig,
+  MariaDbConfig,
+  MongoDBConfig,
+  MySqlConfig,
+  PostgresConfig,
+  RedshiftConfig,
+  ResourceCategories,
+  S3Config,
+  ServiceInfoMap,
+  ServiceLogos,
+  SlackConfig,
+  SnowflakeConfig,
+  SparkConfig,
+  SQLiteConfig,
+} from './resources';
 
 const addingResourceLink = `${AqueductDocsLink}/resources/adding-an-resource`;
 
@@ -104,96 +128,96 @@ export const SupportedResources: ServiceInfoMap = {
     activated: true,
     category: ResourceCategories.DATA,
     docs: addingResourceLink,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, resourceToEdit, onCloseDialog, loading, disabled }) => (
       <PostgresDialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit as PostgresConfig}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
       />
     ),
-    validationSchema: getPostgresValidationSchema(),
+    validationSchema: (editMode) => getPostgresValidationSchema(editMode),
   },
   ['Snowflake']: {
     logo: ServiceLogos['Snowflake'],
     activated: true,
     category: ResourceCategories.DATA,
     docs: addingResourceLink,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, resourceToEdit, onCloseDialog, loading, disabled }) => (
       <SnowflakeDialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit as SnowflakeConfig}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
       />
     ),
-    validationSchema: getSnowflakeValidationSchema(),
+    validationSchema: (editMode) => getSnowflakeValidationSchema(editMode),
   },
   ['Redshift']: {
     logo: ServiceLogos['Redshift'],
     activated: true,
     category: ResourceCategories.DATA,
     docs: addingResourceLink,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, resourceToEdit, onCloseDialog, loading, disabled }) => (
       <RedshiftDialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit as RedshiftConfig}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
       />
     ),
-    validationSchema: getRedshiftValidationSchema(),
+    validationSchema: (editMode) => getRedshiftValidationSchema(editMode),
   },
   ['BigQuery']: {
     logo: ServiceLogos['BigQuery'],
     activated: true,
     category: ResourceCategories.DATA,
     docs: `${addingResourceLink}/connecting-to-google-bigquery`,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, resourceToEdit, onCloseDialog, loading, disabled }) => (
       <BigQueryDialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit as BigQueryConfig}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
       />
     ),
-    validationSchema: getBigQueryValidationSchema(),
+    validationSchema: (editMode) => getBigQueryValidationSchema(editMode),
   },
   ['MySQL']: {
     logo: ServiceLogos['MySQL'],
     activated: true,
     category: ResourceCategories.DATA,
     docs: addingResourceLink,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, resourceToEdit, onCloseDialog, loading, disabled }) => (
       <MysqlDialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit as MySqlConfig}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
       />
     ),
-    validationSchema: getMySQLValidationSchema(),
+    validationSchema: (editMode) => getMySQLValidationSchema(editMode),
   },
   ['MariaDB']: {
     logo: ServiceLogos['MariaDB'],
     activated: true,
     category: ResourceCategories.DATA,
     docs: addingResourceLink,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, resourceToEdit, onCloseDialog, loading, disabled }) => (
       <MariaDbDialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit as MariaDbConfig}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
       />
     ),
-    validationSchema: getMariaDBValidationSchema(),
+    validationSchema: (editMode) => getMariaDBValidationSchema(editMode),
   },
   ['S3']: {
     logo: ServiceLogos['S3'],
@@ -202,7 +226,7 @@ export const SupportedResources: ServiceInfoMap = {
     docs: `${addingResourceLink}/connecting-to-aws-s3`,
     dialog: ({
       user,
-      editMode,
+      resourceToEdit,
       onCloseDialog,
       loading,
       disabled,
@@ -210,14 +234,14 @@ export const SupportedResources: ServiceInfoMap = {
     }) => (
       <S3Dialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit as S3Config}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
         setMigrateStorage={setMigrateStorage}
       />
     ),
-    validationSchema: getS3ValidationSchema(),
+    validationSchema: (editMode) => getS3ValidationSchema(editMode),
   },
   ['GCS']: {
     logo: ServiceLogos['GCS'],
@@ -226,7 +250,7 @@ export const SupportedResources: ServiceInfoMap = {
     docs: `${addingResourceLink}/connecting-to-google-cloud-storage`,
     dialog: ({
       user,
-      editMode,
+      resourceToEdit,
       onCloseDialog,
       loading,
       disabled,
@@ -234,22 +258,21 @@ export const SupportedResources: ServiceInfoMap = {
     }) => (
       <GCSDialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit as GCSConfig}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
         setMigrateStorage={setMigrateStorage}
       />
     ),
-    validationSchema: getGCSValidationSchema(),
+    validationSchema: (editMode) => getGCSValidationSchema(editMode),
   },
   ['Aqueduct']: {
     logo: ServiceLogos['Aqueduct'],
     activated: true,
     category: ResourceCategories.COMPUTE,
     docs: addingResourceLink,
-    // TODO: Figure out what to show here.
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => <div />,
+    dialog: ({}) => null,
     validationSchema: null,
   },
   ['Filesystem']: {
@@ -257,296 +280,265 @@ export const SupportedResources: ServiceInfoMap = {
     activated: true,
     category: ResourceCategories.ARTIFACT_STORAGE,
     docs: addingResourceLink,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => null,
-    validationSchema: getSQLiteValidationSchema(),
+    dialog: ({}) => null,
+    validationSchema: null,
   },
   ['SQLite']: {
     logo: ServiceLogos['SQLite'],
     activated: true,
     category: ResourceCategories.DATA,
     docs: addingResourceLink,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, resourceToEdit, onCloseDialog, loading, disabled }) => (
       <SQLiteDialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit as SQLiteConfig}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
       />
     ),
-    validationSchema: getSQLiteValidationSchema(),
+    validationSchema: ({}) => getSQLiteValidationSchema(),
   },
   ['Athena']: {
     logo: ServiceLogos['Athena'],
     activated: true,
     category: ResourceCategories.DATA,
     docs: addingResourceLink,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, resourceToEdit, onCloseDialog, loading, disabled }) => (
       <AthenaDialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit as AthenaConfig}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
       />
     ),
-    validationSchema: getAthenaValidationSchema(),
+    validationSchema: (editMode) => getAthenaValidationSchema(editMode),
   },
   ['Airflow']: {
     logo: ServiceLogos['Airflow'],
     activated: true,
     category: ResourceCategories.COMPUTE,
     docs: addingResourceLink,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, resourceToEdit, onCloseDialog, loading, disabled }) => (
       <AirflowDialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit as AirflowConfig}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
       />
     ),
-    validationSchema: getAirflowValidationSchema(),
+    validationSchema: (editMode) => getAirflowValidationSchema(editMode),
   },
   ['Kubernetes']: {
     logo: ServiceLogos['Kubernetes'],
     activated: true,
     category: ResourceCategories.COMPUTE,
     docs: addingResourceLink,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, resourceToEdit, onCloseDialog, loading, disabled }) => (
       <OnDemandKubernetesDialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
       />
     ),
-    validationSchema: getOnDemandKubernetesValidationSchema(),
+    validationSchema: (editMode) =>
+      getOnDemandKubernetesValidationSchema(editMode),
   },
-  // ['Kubernetes']: {
-  //   logo: ServiceLogos['Kubernetes'],
-  //   activated: true,
-  //   category: ResourceCategories.COMPUTE,
-  //   docs: `${addingResourceLink}/connecting-to-k8s-cluster`,
-  //   dialog: ({ editMode, onCloseDialog, loading, disabled }) => (
-  //     <KubernetesDialog
-  //       editMode={editMode}
-  //       onCloseDialog={onCloseDialog}
-  //       loading={loading}
-  //       disabled={disabled}
-  //     />
-  //   ),
-  //   validationSchema: getKubernetesValidationSchema(),
-  // },
   ['Lambda']: {
     logo: ServiceLogos['Lambda'],
     activated: true,
     category: ResourceCategories.COMPUTE,
     docs: `${addingResourceLink}/connecting-to-aws-lambda`,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, resourceToEdit, onCloseDialog, loading, disabled }) => (
       <LambdaDialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit as LambdaConfig}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
       />
     ),
-    validationSchema: getLambdaValidationSchema(),
+    validationSchema: ({}) => getLambdaValidationSchema(),
   },
   ['MongoDB']: {
     logo: ServiceLogos['MongoDB'],
     activated: true,
     category: ResourceCategories.DATA,
     docs: addingResourceLink,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, resourceToEdit, onCloseDialog, loading, disabled }) => (
       <MongoDBDialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit as MongoDBConfig}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
       />
     ),
-    validationSchema: getMongoDBValidationSchema(),
+    validationSchema: (editMode) => getMongoDBValidationSchema(editMode),
   },
   ['Conda']: {
     logo: ServiceLogos['Conda'],
     activated: true,
     category: ResourceCategories.COMPUTE,
     docs: `${addingResourceLink}/connecting-to-conda`,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, onCloseDialog, loading, disabled }) => (
       <CondaDialog
         user={user}
-        editMode={editMode}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
       />
     ),
-    validationSchema: getCondaValidationSchema(),
+    validationSchema: ({}) => getCondaValidationSchema(),
   },
   ['Databricks']: {
     logo: ServiceLogos['Databricks'],
     activated: true,
     category: ResourceCategories.COMPUTE,
     docs: `${addingResourceLink}/connecting-to-databricks`,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, resourceToEdit, onCloseDialog, loading, disabled }) => (
       <DatabricksDialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit as DatabricksConfig}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
       />
     ),
-    validationSchema: getDatabricksValidationSchema(),
+    validationSchema: (editMode) => getDatabricksValidationSchema(editMode),
   },
   ['Email']: {
     logo: ServiceLogos['Email'],
     activated: true,
     category: ResourceCategories.NOTIFICATION,
     docs: `${AqueductDocsLink}/notifications/connecting-to-email`,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, resourceToEdit, onCloseDialog, loading, disabled }) => (
       <EmailDialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit as EmailConfig}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
       />
     ),
-    validationSchema: getEmailValidationSchema(),
+    validationSchema: (editMode) => getEmailValidationSchema(editMode),
   },
   ['Slack']: {
     logo: ServiceLogos['Slack'],
     activated: true,
     category: ResourceCategories.NOTIFICATION,
     docs: `${AqueductDocsLink}/notifications/connecting-to-slack`,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, resourceToEdit, onCloseDialog, loading, disabled }) => (
       <SlackDialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit as SlackConfig}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
       />
     ),
-    validationSchema: getSlackValidationSchema(),
+    validationSchema: (editMode) => getSlackValidationSchema(editMode),
   },
   ['Spark']: {
     logo: ServiceLogos['Spark'],
     activated: true,
     category: ResourceCategories.COMPUTE,
     docs: addingResourceLink,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, resourceToEdit, onCloseDialog, loading, disabled }) => (
       <SparkDialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit as SparkConfig}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
       />
     ),
-    validationSchema: getSparkValidationSchema(),
+    validationSchema: ({}) => getSparkValidationSchema(),
   },
   // Not sure the difference between this one and the Amazon one below.
   ['AWS']: {
-    logo: ServiceLogos['Kubernetes'],
+    logo: ServiceLogos['AWS'],
     activated: true,
     category: ResourceCategories.CLOUD,
     docs: addingResourceLink,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, resourceToEdit, onCloseDialog, loading, disabled }) => (
       <AWSDialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit as AWSConfig}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
       />
     ),
-    validationSchema: getAWSValidationSchema(),
+    validationSchema: (editMode) => getAWSValidationSchema(editMode),
   },
   ['Amazon']: {
     logo: ServiceLogos['AWS'],
     activated: true,
     category: ResourceCategories.CLOUD,
     docs: addingResourceLink,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, resourceToEdit, onCloseDialog, loading, disabled }) => (
       <AWSDialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit as AWSConfig}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
       />
     ),
-    validationSchema: getAWSValidationSchema(),
+    validationSchema: (editMode) => getAWSValidationSchema(editMode),
   },
   ['GCP']: {
     logo: ServiceLogos['GCP'],
     activated: false,
     category: ResourceCategories.CLOUD,
     docs: addingResourceLink,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
-      <GCPDialog
-        user={user}
-        editMode={editMode}
-        onCloseDialog={onCloseDialog}
-        loading={loading}
-        disabled={disabled}
-      />
-    ),
-    validationSchema: getGCPValidationSchema(),
+    dialog: ({}) => <GCPDialog />,
+    validationSchema: ({}) => getGCPValidationSchema(),
   },
   ['Azure']: {
     logo: ServiceLogos['Azure'],
     activated: false,
     category: ResourceCategories.CLOUD,
     docs: addingResourceLink,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
-      <AzureDialog
-        user={user}
-        editMode={editMode}
-        onCloseDialog={onCloseDialog}
-        loading={loading}
-        disabled={disabled}
-      />
-    ),
-    validationSchema: getAzureValidationSchema(),
+    dialog: ({}) => <AzureDialog />,
+    validationSchema: ({}) => getAzureValidationSchema(),
   },
   ['ECR']: {
     logo: ServiceLogos['ECR'],
     activated: true,
     category: ResourceCategories.CONTAINER_REGISTRY,
     docs: addingResourceLink,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, resourceToEdit, onCloseDialog, loading, disabled }) => (
       <ECRDialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit as ECRConfig}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
       />
     ),
-    validationSchema: getECRValidationSchema(),
+    validationSchema: (editMode) => getECRValidationSchema(editMode),
   },
   ['GAR']: {
     logo: ServiceLogos['GAR'],
     activated: true,
     category: ResourceCategories.CONTAINER_REGISTRY,
     docs: addingResourceLink,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, resourceToEdit, onCloseDialog, loading, disabled }) => (
       <GARDialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit as GarConfig}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
       />
     ),
-    validationSchema: getGARValidationSchema(),
+    validationSchema: (editMode) => getGARValidationSchema(editMode),
   },
 };
 

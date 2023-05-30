@@ -1,8 +1,7 @@
 // This file should map exactly to
 // src/golang/cmd/server/handler/v2/workflow_objects_get.go
 
-import { SavedObject } from 'src/utils/workflows';
-
+import { SavedObject } from '../../utils/workflows';
 import { APIKeyParameter } from '../parameters/Header';
 import { WorkflowIdParameter } from '../parameters/Path';
 

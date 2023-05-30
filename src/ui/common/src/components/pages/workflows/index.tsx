@@ -1,14 +1,12 @@
 import { Link, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useEffect } from 'react';
-import { useDispatch } from 'react-redux';
 
 import {
   useDagGetQuery,
   useDagResultsGetQuery,
   useWorkflowsGetQuery,
 } from '../../../handlers/AqueductApi';
-import { AppDispatch } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import getPathPrefix from '../../../utils/getPathPrefix';
 import ExecutionStatus from '../../../utils/shared';
@@ -32,19 +30,14 @@ type Props = {
 };
 
 const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
-  const dispatch: AppDispatch = useDispatch();
-
   useEffect(() => {
     document.title = 'Workflows | Aqueduct';
   }, []);
 
-  const {
-    data: workflowData,
-    error: workflowError,
-    isLoading: workflowLoading,
-  } = useWorkflowsGetQuery({
-    apiKey: user.apiKey,
-  });
+  const { data: workflowData, isLoading: workflowLoading } =
+    useWorkflowsGetQuery({
+      apiKey: user.apiKey,
+    });
 
   // If we are still loading the workflows, don't return a page at all.
   // Otherwise, we briefly return a page saying there are no workflows before

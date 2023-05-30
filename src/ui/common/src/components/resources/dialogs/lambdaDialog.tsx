@@ -11,10 +11,17 @@ const Placeholders: LambdaConfig = {
   exec_state: '',
 };
 
-export const LambdaDialog: React.FC<ResourceDialogProps> = ({
-  editMode = false,
+export const LambdaDialog: React.FC<ResourceDialogProps<LambdaConfig>> = ({
+  resourceToEdit,
 }) => {
-  const { setValue } = useFormContext();
+  const { register, setValue } = useFormContext();
+
+  if (resourceToEdit) {
+    Object.entries(resourceToEdit).forEach(([k, v]) => {
+      register(k, { value: v });
+    });
+  }
+
   return (
     <Box sx={{ mt: 2 }}>
       <ResourceTextInputField

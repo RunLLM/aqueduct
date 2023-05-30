@@ -25,7 +25,6 @@ import { OperatorResponse } from '../../../../handlers/responses/node';
 import { handleFetchAllWorkflowSummaries } from '../../../../reducers/listWorkflowSummaries';
 import {
   handleListResourceObjects,
-  handleLoadResourceOperators,
   handleTestConnectResource,
   resetEditStatus,
   resetTestConnectStatus,
@@ -38,7 +37,6 @@ import {
   isNotificationResource,
   ResourceCategories,
   resourceExecState,
-  SupportedResources,
 } from '../../../../utils/resources';
 import ExecutionStatus, {
   isFailed,
@@ -107,18 +105,13 @@ const ResourceDetailsPage: React.FC<ResourceDetailsPageProps> = ({
   );
 
   const selectedResource = resources[resourceId];
+  const resourceClass = SupportedResources[selectedResource?.service];
 
   // Using the ListResourcesRoute.
   // ENG-1036: We should create a route where we can pass in the resourceId and get the associated metadata and switch to using that.
   useEffect(() => {
     dispatch(handleLoadResources({ apiKey: user.apiKey }));
     dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
-    dispatch(
-      handleLoadResourceOperators({
-        apiKey: user.apiKey,
-        resourceId: resourceId,
-      })
-    );
   }, [dispatch, resourceId, user.apiKey]);
 
   useEffect(() => {
@@ -176,11 +169,7 @@ const ResourceDetailsPage: React.FC<ResourceDetailsPageProps> = ({
     resourceId: resourceId,
   });
 
-  const {
-    data: resourceOperators,
-    error: testOpsErr,
-    isLoading: testOpsIsLoading,
-  } = useResourceOperatorsGetQuery({
+  const { data: resourceOperators } = useResourceOperatorsGetQuery({
     apiKey: user.apiKey,
     resourceId: resourceId,
   });
@@ -212,7 +201,7 @@ const ResourceDetailsPage: React.FC<ResourceDetailsPageProps> = ({
     });
   }
 
-  if (fetchWorkflowsIsLoading) {
+  if (fetchWorkflowsIsLoading || !selectedResource || !resourceClass) {
     return null;
   }
 
@@ -229,7 +218,6 @@ const ResourceDetailsPage: React.FC<ResourceDetailsPageProps> = ({
   }
 
   const selectedResourceExecState = resourceExecState(selectedResource);
-
   return (
     <Layout
       breadcrumbs={[
@@ -423,6 +411,8 @@ const ResourceDetailsPage: React.FC<ResourceDetailsPageProps> = ({
             dispatch(resetEditStatus());
           }}
           resourceToEdit={selectedResource}
+          dialogContent={resourceClass.dialog}
+          validationSchema={resourceClass.validationSchema(!!selectedResource)}
         />
       )}
 

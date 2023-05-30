@@ -1,7 +1,7 @@
 import { Checkbox, FormControlLabel } from '@mui/material';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
@@ -16,6 +16,7 @@ import { readCredentialsFile } from './bigqueryDialog';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { ResourceFileUploadField } from './ResourceFileUploadField';
 import { ResourceTextInputField } from './ResourceTextInputField';
+import { requiredAtCreate } from './schema';
 
 const Placeholders: S3Config = {
   type: AWSCredentialType.AccessKey,
@@ -30,25 +31,32 @@ const Placeholders: S3Config = {
   use_as_storage: '',
 };
 
-interface S3DialogProps extends ResourceDialogProps {
+interface S3DialogProps extends ResourceDialogProps<S3Config> {
   setMigrateStorage: (value: boolean) => void;
 }
 
 export const S3Dialog: React.FC<S3DialogProps> = ({
-  editMode = false,
+  resourceToEdit,
   setMigrateStorage,
 }) => {
   const [fileData, setFileData] = useState<FileData | null>(null);
 
   const { register, setValue } = useFormContext();
-  register('use_as_storage', { value: 'false' });
-  const [useAsMetadataStorage, setUseAsMetadataStorage] =
-    useState<string>('false');
+  const initialUseAsStorage = resourceToEdit?.use_as_storage ?? 'false';
+  // Decide current credential type based on config, and default to access key.
+  const initialAccessKeyType = resourceToEdit?.config_file_path
+    ? AWSCredentialType.ConfigFilePath
+    : resourceToEdit?.config_file_content
+    ? AWSCredentialType.ConfigFileContent
+    : AWSCredentialType.AccessKey;
 
-  const [currentTab, setCurrentTab] = useState<AWSCredentialType>(
-    AWSCredentialType['AccessKey']
-  );
-  register('type', { value: currentTab, required: true });
+  register('use_as_storage', { value: initialUseAsStorage });
+  const [useAsMetadataStorage, setUseAsMetadataStorage] =
+    useState<string>(initialUseAsStorage);
+
+  const [currentTab, setCurrentTab] =
+    useState<AWSCredentialType>(initialAccessKeyType);
+  register('type', { value: initialAccessKeyType, required: true });
 
   const setFile = (fileData: FileData | null) => {
     // Update the react-hook-form value
@@ -56,6 +64,20 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
     // Set state to trigger re-render of file upload field.
     setFileData(fileData);
   };
+
+  const editMode = !!resourceToEdit;
+
+  if (resourceToEdit) {
+    Object.entries(resourceToEdit).forEach(([k, v]) => {
+      register(k, { value: v });
+    });
+  }
+
+  useEffect(() => {
+    if (setMigrateStorage) {
+      setMigrateStorage(initialUseAsStorage === 'true');
+    }
+  }, [setMigrateStorage]);
 
   const configProfileInput = (
     <ResourceTextInputField
@@ -246,7 +268,7 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
   );
 };
 
-export function getS3ValidationSchema() {
+export function getS3ValidationSchema(editMode: boolean) {
   return Yup.object().shape({
     type: Yup.string().required('Please select a credential type'),
     bucket: Yup.string().required('Please enter a bucket name'),
@@ -260,29 +282,45 @@ export function getS3ValidationSchema() {
     }),
     access_key_id: Yup.string().when('type', {
       is: 'access_key',
-      then: Yup.string().required('Please enter an access key id'),
+      then: requiredAtCreate(
+        Yup.string(),
+        editMode,
+        'Please enter an access key id'
+      ),
       otherwise: null,
     }),
     secret_access_key: Yup.string().when('type', {
       is: 'access_key',
-      then: Yup.string().required('Please enter a secret access key'),
+      then: requiredAtCreate(
+        Yup.string(),
+        editMode,
+        'Please enter a secret access key'
+      ),
       otherwise: null,
     }),
     config_file_path: Yup.string().when('type', {
       is: 'config_file_path',
-      then: Yup.string().required('Please enter a profile path'),
+      then: requiredAtCreate(
+        Yup.string(),
+        editMode,
+        'Please enter a profile path'
+      ),
       otherwise: null,
     }),
     config_file_profile: Yup.string().when('type', {
       is: (value) =>
         value === 'config_file_path' || value === 'config_file_content',
-      then: Yup.string().required('Please enter a config file profile'),
+      then: requiredAtCreate(
+        Yup.string(),
+        editMode,
+        'Please enter a config file profile'
+      ),
       otherwise: null,
     }),
     config_file_content: Yup.string().when('type', {
       is: (value) => value === 'config_file_content',
-      then: Yup.string()
-        .transform((value) => {
+      then: requiredAtCreate(
+        Yup.string().transform((value) => {
           // Depending on if dragged and dropped or uploaded via file picker, we can get two different things.
           if (typeof value === 'object') {
             return value.data;
@@ -292,8 +330,10 @@ export function getS3ValidationSchema() {
           }
 
           return value;
-        })
-        .required('Please upload a credentials file'),
+        }),
+        editMode,
+        'Please upload a credentials file'
+      ),
       otherwise: null,
     }),
   });

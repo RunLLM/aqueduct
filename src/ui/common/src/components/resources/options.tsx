@@ -35,7 +35,6 @@ export const ResourceOptionsButtonWidth = '120px';
 
 const ResourceOptions: React.FC<Props> = ({
   resource,
-  onUploadCsv,
   onTestConnection,
   onEdit,
   onDeleteResource,
@@ -105,19 +104,25 @@ const ResourceOptions: React.FC<Props> = ({
           </Typography>
         </MenuItem>
 
-        {resource.service !== 'AWS' && !isBuiltinResource(resource) && (
-          <MenuItem
-            onClick={() => {
-              setAnchorEl(null);
-              onEdit();
-            }}
-          >
-            <FontAwesomeIcon color="gray.800" icon={faPen} width="16px" />
-            <Typography color="gray.800" variant="body2" sx={{ marginLeft: 1 }}>
-              Edit Resource
-            </Typography>
-          </MenuItem>
-        )}
+        {resource.service !== 'AWS' &&
+          resource.service !== 'Kubernetes' &&
+          !isBuiltinResource(resource) && (
+            <MenuItem
+              onClick={() => {
+                setAnchorEl(null);
+                onEdit();
+              }}
+            >
+              <FontAwesomeIcon color="gray.800" icon={faPen} width="16px" />
+              <Typography
+                color="gray.800"
+                variant="body2"
+                sx={{ marginLeft: 1 }}
+              >
+                Edit Resource
+              </Typography>
+            </MenuItem>
+          )}
         {allowDeletion && (
           <MenuItem
             onClick={() => {
