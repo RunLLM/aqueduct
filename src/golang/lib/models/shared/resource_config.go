@@ -203,6 +203,10 @@ type ECRConfig struct {
 	ProxyEndpoint     string `json:"proxy_endpoint"`
 }
 
+type GARConfig struct {
+	ServiceAccountKey string `json:"service_account_key"`
+}
+
 type SparkResourceConfig struct {
 	// LivyServerURL is the URL of the Livy server that sits in front of the Spark cluster.
 	// This URL is assumed to be accessible by the machine running the Aqueduct server.

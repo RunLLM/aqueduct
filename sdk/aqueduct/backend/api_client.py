@@ -102,7 +102,7 @@ class APIClient:
     GET_DYNAMIC_ENGINE_STATUS_ROUTE = "/api/resource/dynamic-engine/status"
     EDIT_DYNAMIC_ENGINE_ROUTE_TEMPLATE = "/api/resource/dynamic-engine/%s/edit"
 
-    GET_IMAGE_URL_ROUTE = "/api/resourece/container-registry/url"
+    GET_IMAGE_URL_ROUTE = "/api/resource/container-registry/url"
 
     # Auth header
     API_KEY_HEADER = "api-key"
@@ -541,7 +541,10 @@ class APIClient:
         url = self.construct_full_url(self.DELETE_WORKFLOW_ROUTE_TEMPLATE % flow_id)
         body = {
             "external_delete": {
-                str(resource): [obj.spec.json() for obj in saved_objects_to_delete[resource]]
+                # TODO(ENG-2994): `by_alias` is required until this naming inconsistency is resolved.
+                str(resource): [
+                    obj.spec.json(by_alias=True) for obj in saved_objects_to_delete[resource]
+                ]
                 for resource in saved_objects_to_delete
             },
             "force": force,

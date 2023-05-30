@@ -11,6 +11,7 @@ import {
 } from '../../../utils/resources';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { ResourceTextInputField } from './ResourceTextInputField';
+import { requiredAtCreate } from './schema';
 
 const Placeholders: DatabricksConfig = {
   workspace_url: 'https://dbc-your-workspace.cloud.databricks.com',
@@ -20,10 +21,18 @@ const Placeholders: DatabricksConfig = {
   instance_pool_id: '123-456-789',
 };
 
-export const DatabricksDialog: React.FC<ResourceDialogProps> = ({
-  editMode = false,
-}) => {
-  const { setValue } = useFormContext();
+export const DatabricksDialog: React.FC<
+  ResourceDialogProps<DatabricksConfig>
+> = ({ resourceToEdit }) => {
+  const { register, setValue } = useFormContext();
+
+  if (resourceToEdit) {
+    Object.entries(resourceToEdit).forEach(([k, v]) => {
+      register(k, { value: v });
+    });
+  }
+
+  const editMode = !!resourceToEdit;
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -110,10 +119,14 @@ export const DatabricksDialog: React.FC<ResourceDialogProps> = ({
   );
 };
 
-export function getDatabricksValidationSchema() {
+export function getDatabricksValidationSchema(editMode: boolean) {
   return Yup.object().shape({
     workspace_url: Yup.string().required('Please enter a workspace URL'),
-    access_token: Yup.string().required('Please enter an access token'),
+    access_token: requiredAtCreate(
+      Yup.string(),
+      editMode,
+      'Please enter an access token'
+    ),
     s3_instance_profile_arn: Yup.string().required(
       'Please enter an instance profile ARN'
     ),

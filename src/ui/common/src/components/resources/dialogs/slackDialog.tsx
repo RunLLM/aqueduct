@@ -6,10 +6,11 @@ import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
 import { NotificationLogLevel } from '../../../utils/notifications';
-import { ResourceDialogProps } from '../../../utils/resources';
+import { ResourceDialogProps, SlackConfig } from '../../../utils/resources';
 import CheckboxEntry from '../../notifications/CheckboxEntry';
 import NotificationLevelSelector from '../../notifications/NotificationLevelSelector';
 import { ResourceTextInputField } from './ResourceTextInputField';
+import { requiredAtCreate } from './schema';
 
 // Placeholders are example values not filled for users, but
 // may show up in textbox as hint if user don't fill the form field.
@@ -17,39 +18,41 @@ const Placeholders = {
   token: '*****',
   channel: 'my_channel',
   level: 'succeeded',
-  enabled: true,
+  enabled: 'false',
 };
 
 // Default fields are actual filled form values on 'create' dialog.
-export const SlackDefaultsOnCreate = {
+export const SlackDefaultsOnCreate: SlackConfig = {
   token: '',
   channels_serialized: '',
   level: NotificationLogLevel.Success,
   enabled: 'false',
 };
 
-export const SlackDialog: React.FC<ResourceDialogProps> = ({
-  editMode = false,
+export const SlackDialog: React.FC<ResourceDialogProps<SlackConfig>> = ({
+  resourceToEdit,
 }) => {
-  const [selectedLevel, setSelectedLevel] = useState(
-    SlackDefaultsOnCreate.level
-  );
-  const [notificationsEnabled, setNotificationsEnabled] = useState(
-    SlackDefaultsOnCreate.enabled
-  );
+  const initialLevel = resourceToEdit?.level ?? SlackDefaultsOnCreate.level;
+  const initialEnabled =
+    resourceToEdit?.enabled ?? SlackDefaultsOnCreate.enabled;
+  const [selectedLevel, setSelectedLevel] = useState(initialLevel);
 
-  const { register, setValue, getValues } = useFormContext();
-  register('level', { value: SlackDefaultsOnCreate.level });
-  register('enabled', { value: SlackDefaultsOnCreate.enabled });
-  register('channels_serialized', {
-    value: SlackDefaultsOnCreate.channels_serialized,
-  });
-  const channels_serialized = getValues('channels_serialized');
-  register('channels', {
-    value: channels_serialized
-      ? (JSON.parse(channels_serialized) as string[]).join(',')
-      : '',
-  });
+  const [notificationsEnabled, setNotificationsEnabled] =
+    useState(initialEnabled);
+
+  const { register, setValue } = useFormContext();
+
+  if (resourceToEdit) {
+    Object.entries(resourceToEdit).forEach(([k, v]) => {
+      register(k, { value: v });
+    });
+  } else {
+    register('enabled', { value: SlackDefaultsOnCreate.enabled });
+    register('level', { value: SlackDefaultsOnCreate.level });
+    register('channels_serialized', {
+      value: SlackDefaultsOnCreate.channels_serialized,
+    });
+  }
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -74,7 +77,6 @@ export const SlackDialog: React.FC<ResourceDialogProps> = ({
         description="The channel(s) to send notifications. Use comma to separate different channels."
         placeholder={Placeholders.channel}
         onChange={(event) => {
-          setValue('channels', event.target.value);
           const channelsList = event.target.value
             .split(',')
             .map((r) => r.trim());
@@ -129,14 +131,13 @@ export const SlackDialog: React.FC<ResourceDialogProps> = ({
   );
 };
 
-export function getSlackValidationSchema() {
+export function getSlackValidationSchema(editMode: boolean) {
   return Yup.object().shape({
-    token: Yup.string().required('Please enter a token'),
-    channels: Yup.string().required('Please enter at least one channel name'),
+    token: requiredAtCreate(Yup.string(), editMode, 'Please enter a token'),
     channels_serialized: Yup.string().required(
       'Please enter at least one channel name'
     ),
     level: Yup.string().required('Please select a notification level'),
-    enabled: Yup.string(),
+    enabled: Yup.string().required(),
   });
 }

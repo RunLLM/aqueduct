@@ -5,33 +5,18 @@ import { useFormContext } from 'react-hook-form';
 import * as Yup from 'yup';
 
 import {
-  BigQueryConfig,
   FileData,
+  GarConfig,
   ResourceDialogProps,
 } from '../../../utils/resources';
-import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { ResourceFileUploadField } from './ResourceFileUploadField';
-import { ResourceTextInputField } from './ResourceTextInputField';
 import { requiredAtCreate } from './schema';
 
-const Placeholders: BigQueryConfig = {
-  project_id: 'aqueduct_1234',
-};
-
-export const BigQueryDialog: React.FC<ResourceDialogProps<BigQueryConfig>> = ({
-  resourceToEdit,
-}) => {
-  const { register, setValue } = useFormContext();
-  const editMode = !!resourceToEdit;
-  if (resourceToEdit) {
-    Object.entries(resourceToEdit).forEach(([k, v]) => {
-      register(k, { value: v });
-    });
-  }
-
+export const GARDialog: React.FC<ResourceDialogProps<GarConfig>> = () => {
+  const { setValue } = useFormContext();
   const [fileData, setFileData] = useState<FileData | null>(null);
   const setFile = (fileData: FileData | null) => {
-    setValue('service_account_credentials', fileData?.data);
+    setValue('service_account_key', fileData?.data);
     setFileData(fileData);
   };
 
@@ -51,22 +36,9 @@ export const BigQueryDialog: React.FC<ResourceDialogProps<BigQueryConfig>> = ({
 
   return (
     <Box sx={{ mt: 2 }}>
-      <ResourceTextInputField
-        name="project_id"
-        spellCheck={false}
-        required={true}
-        label="Project ID*"
-        description="The BigQuery project ID."
-        placeholder={Placeholders.project_id}
-        onChange={(event) => setValue('project_id', event.target.value)}
-        disabled={editMode}
-        warning={editMode ? undefined : readOnlyFieldWarning}
-        disableReason={editMode ? readOnlyFieldDisableReason : undefined}
-      />
-
       <ResourceFileUploadField
-        name="service_account_credentials"
-        label={'Service Account Credentials*'}
+        name="service_account_key"
+        label={'Service Account Key*'}
         description={fileUploadDescription}
         required={true}
         file={fileData}
@@ -96,11 +68,10 @@ export function readCredentialsFile(
   reader.readAsText(file);
 }
 
-export function getBigQueryValidationSchema(editMode: boolean) {
+export function getGARValidationSchema(editMode: boolean) {
   return Yup.object().shape({
     name: Yup.string().required('Please enter a name'),
-    project_id: Yup.string().required('Please enter a project ID'),
-    service_account_credentials: requiredAtCreate(
+    service_account_key: requiredAtCreate(
       Yup.string().transform((value) => {
         if (!value?.data) {
           return null;

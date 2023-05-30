@@ -16,6 +16,7 @@ require (
 	github.com/google/go-github/v40 v40.0.0
 	github.com/google/uuid v1.3.0
 	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75
+	github.com/hashicorp/go-version v1.6.0
 	github.com/hashicorp/golang-lru v0.5.1
 	github.com/jackc/pgx/v4 v4.13.0
 	github.com/justinas/alice v1.2.0
@@ -57,7 +58,6 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.2.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.7.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
-	github.com/hashicorp/go-version v1.6.0 // indirect
 	github.com/imdario/mergo v0.3.6 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.10.0 // indirect

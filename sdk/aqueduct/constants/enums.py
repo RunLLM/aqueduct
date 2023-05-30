@@ -81,6 +81,7 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     AWS = "AWS"
     ECR = "ECR"
     FILESYSTEM = "Filesystem"
+    GAR = "GAR"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
