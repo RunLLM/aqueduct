@@ -6,6 +6,7 @@ from aqueduct.constants.enums import (
     ArtifactType,
     ExecutionStatus,
     K8sClusterStatusType,
+    NotificationLogLevel,
     SerializationType,
 )
 from aqueduct.models.artifact import ArtifactMetadata
@@ -23,6 +24,45 @@ class ArtifactResult(BaseModel):
 
 
 # V2 Responses
+class NotificationSettings(BaseModel):
+    """Represents the notification settings associated with a workflow."""
+
+    settings: Optional[Dict[str, NotificationLogLevel]]
+
+
+class GetWorkflowResponse(BaseModel):
+    """Represents a single workflow.
+
+    Attributes:
+        id:
+            The id of the artifact node.
+        user_id:
+            The user id of the owner.
+        name:
+            The name of the workflow.
+        description:
+            The description of the workflow.
+        schedule:
+            The schedule of the workflow.
+        created_at:
+            When the workflow is created.
+        retention_policy:
+            Workflow retention policy regarding number of DAGs to save.
+        notification_settings:
+            Notification setting of workflow.
+
+    """
+
+    id: uuid.UUID
+    user_id: uuid.UUID
+    name: str
+    description: str
+    schedule: Schedule
+    created_at: str
+    retention_policy: RetentionPolicy
+    notification_settings: NotificationSettings
+
+
 class GetDagResponse(BaseModel):
     id: uuid.UUID
     workflow_id: uuid.UUID
@@ -336,7 +376,7 @@ class WorkflowDagResultResponse(BaseModel):
         return readable
 
 
-class GetWorkflowResponse(BaseModel):
+class GetWorkflowV1Response(BaseModel):
     """This is the response object returned by api_client.get_workflow().
 
     Attributes:
