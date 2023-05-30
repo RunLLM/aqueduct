@@ -17,6 +17,7 @@ import React, { MouseEventHandler, useEffect, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
 import * as Yup from 'yup';
+import { ObjectShape } from 'yup/lib/object';
 
 import { useResourceWorkflowsGetQuery } from '../../../handlers/AqueductApi';
 import {
@@ -46,7 +47,7 @@ type Props = {
   showMigrationDialog?: () => void;
   resourceToEdit?: Resource;
   dialogContent: React.FC<ResourceDialogProps<ResourceConfig>>;
-  validationSchema: Yup.ObjectSchema<any>;
+  validationSchema: Yup.ObjectSchema<ObjectShape>;
 };
 
 const ResourceDialog: React.FC<Props> = ({
@@ -156,7 +157,7 @@ const ResourceDialog: React.FC<Props> = ({
 
     // Unsubscribe and handle lifecycle changes.
     return () => subscription.unsubscribe();
-  }, [methods.watch]);
+  }, [methods, submitDisabled]);
 
   useEffect(() => {
     if (isSucceeded(connectStatus)) {

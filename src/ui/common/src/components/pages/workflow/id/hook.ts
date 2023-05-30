@@ -99,7 +99,7 @@ export function useWorkflowIds(apiKey: string): useWorkflowIdsOutputs {
       });
       return;
     }
-  }, [wfIdParam, dagResultIdParam, dagResult, dagIdParam, dag]);
+  }, [navigate, wfIdParam, dagResultIdParam, dagResult, dagIdParam, dag]);
 
   return {
     workflowId: wfIdParam,

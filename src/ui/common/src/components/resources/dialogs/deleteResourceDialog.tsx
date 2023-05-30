@@ -92,7 +92,7 @@ const DeleteResourceDialog: React.FC<Props> = ({
     }
 
     fetchServerConfig();
-  }, []);
+  }, [dispatch, user]);
 
   const deleteResourceStatus = useSelector(
     (state: RootState) => state.resourceReducer.deletionStatus

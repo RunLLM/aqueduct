@@ -77,7 +77,7 @@ export const S3Dialog: React.FC<S3DialogProps> = ({
     if (setMigrateStorage) {
       setMigrateStorage(initialUseAsStorage === 'true');
     }
-  }, [setMigrateStorage]);
+  }, [setMigrateStorage, initialUseAsStorage]);
 
   const configProfileInput = (
     <ResourceTextInputField

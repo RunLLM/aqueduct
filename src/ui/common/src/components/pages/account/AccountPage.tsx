@@ -116,7 +116,7 @@ client = aqueduct.Client(
     }
 
     fetchServerConfig();
-  }, []);
+  }, [dispatch, user]);
 
   useEffect(() => {
     if (!updatingNotifications) {

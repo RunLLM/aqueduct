@@ -1,4 +1,5 @@
 import { ObjectSchema } from 'yup';
+import { ObjectShape } from 'yup/lib/object';
 
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
@@ -354,7 +355,7 @@ export type Info = {
   dialog?: React.FC<ResourceDialogProps<ResourceConfig>>;
   // TODO: figure out typescript type for yup schema
   // This may be useful: https://stackoverflow.com/questions/66171196/how-to-use-yups-object-shape-with-typescript
-  validationSchema: (editMode: boolean) => ObjectSchema<any>;
+  validationSchema: (editMode: boolean) => ObjectSchema<ObjectShape>;
 };
 
 export type ServiceInfoMap = {
