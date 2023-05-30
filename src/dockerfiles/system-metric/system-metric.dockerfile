@@ -14,4 +14,4 @@ RUN apt-get update && \
 
 ENV PYTHONUNBUFFERED 1
 
-CMD python3 -m aqueduct_executor.operators.system_metric_executor.main --spec "$JOB_SPEC"
+CMD python3 -m aqueduct_executor.operators.system_metric_executor.main --spec "$JOB_SPEC" --version-tag "$VERSION_TAG"

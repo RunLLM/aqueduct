@@ -32,9 +32,9 @@ def regular_function(args):
     return "Hello World"
 
 
-def test_check_artifact_restriction(client, data_integration):
+def test_check_artifact_restriction(client, data_resource):
     """Test that an artifact produced by a check operator cannot be used as an argument to any operator types."""
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
 
     check_artifact = produce_check_artifact(table_artifact)
     with pytest.raises(InvalidUserActionException):
@@ -45,9 +45,9 @@ def test_check_artifact_restriction(client, data_integration):
         regular_function(check_artifact)
 
 
-def test_metric_artifact_restriction(client, data_integration):
+def test_metric_artifact_restriction(client, data_resource):
     """Test that an artifact produced by a metric operator cannot be used as an argument to function operator."""
-    table_artifact = extract(data_integration, DataObject.SENTIMENT)
+    table_artifact = extract(data_resource, DataObject.SENTIMENT)
 
     metric_artifact = produce_metric_artifact(table_artifact)
     with pytest.raises(InvalidUserActionException):

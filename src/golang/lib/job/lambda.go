@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/aqueducthq/aqueduct/config"
 	lambda_utils "github.com/aqueducthq/aqueduct/lib/lambda"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/models/shared/operator/function"
@@ -159,7 +160,10 @@ func (j *lambdaJobManager) Launch(ctx context.Context, name string, spec Spec) J
 		return systemError(err)
 	}
 
-	lambdaFunctionRequest := map[string]string{"Spec": encodedSpec}
+	lambdaFunctionRequest := map[string]string{
+		"Spec":       encodedSpec,
+		"VersionTag": config.VersionTag(),
+	}
 	payload, err := json.Marshal(lambdaFunctionRequest)
 	if err != nil {
 		return systemError(errors.Wrap(err, "Unable to marshal request payload."))
@@ -235,16 +239,16 @@ func mapJobTypeToLambdaFunction(spec Spec) (string, error) {
 		}
 	case AuthenticateJobType:
 		authenticateSpec := spec.(*AuthenticateSpec)
-		return mapIntegrationServiceToLambdaFunction(authenticateSpec.ConnectorName)
+		return mapResourceServiceToLambdaFunction(authenticateSpec.ConnectorName)
 	case ExtractJobType:
 		extractSpec := spec.(*ExtractSpec)
-		return mapIntegrationServiceToLambdaFunction(extractSpec.ConnectorName)
+		return mapResourceServiceToLambdaFunction(extractSpec.ConnectorName)
 	case LoadJobType:
 		loadSpec := spec.(*LoadSpec)
-		return mapIntegrationServiceToLambdaFunction(loadSpec.ConnectorName)
+		return mapResourceServiceToLambdaFunction(loadSpec.ConnectorName)
 	case DiscoverJobType:
 		discoverSpec := spec.(*DiscoverSpec)
-		return mapIntegrationServiceToLambdaFunction(discoverSpec.ConnectorName)
+		return mapResourceServiceToLambdaFunction(discoverSpec.ConnectorName)
 	case ParamJobType:
 		return lambda_utils.ParameterLambdaFunction, nil
 	case SystemMetricJobType:
@@ -254,7 +258,7 @@ func mapJobTypeToLambdaFunction(spec Spec) (string, error) {
 	}
 }
 
-func mapIntegrationServiceToLambdaFunction(service shared.Service) (string, error) {
+func mapResourceServiceToLambdaFunction(service shared.Service) (string, error) {
 	switch service {
 	case shared.Snowflake:
 		return lambda_utils.SnowflakeLambdaFunction, nil
@@ -267,6 +271,6 @@ func mapIntegrationServiceToLambdaFunction(service shared.Service) (string, erro
 	case shared.Athena:
 		return lambda_utils.AthenaLambdaFunction, nil
 	default:
-		return "", errors.Newf("Unknown integration service provided %v", service)
+		return "", errors.Newf("Unknown resource service provided %v", service)
 	}
 }

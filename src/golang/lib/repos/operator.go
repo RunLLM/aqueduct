@@ -27,8 +27,14 @@ type operatorReader interface {
 	// GetNode returns the OperatorNode view given the operator ID.
 	GetNode(ctx context.Context, ID uuid.UUID, DB database.Database) (*views.OperatorNode, error)
 
-	// GetNodeBatch returns the OperatorNodes the operator IDs.
+	// GetNodeBatch returns the OperatorNode views given the operator IDs.
 	GetNodeBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]views.OperatorNode, error)
+
+	// GetOperatorWithArtifactNode returns the OperatorWithArtifactNode view given the operator ID.
+	GetOperatorWithArtifactNode(ctx context.Context, ID uuid.UUID, DB database.Database) (*views.OperatorWithArtifactNode, error)
+
+	// GetOperatorWithArtifactNodeBatch returns the OperatorWithArtifactNode views given the operator IDs.
+	GetOperatorWithArtifactNodeBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]views.OperatorWithArtifactNode, error)
 
 	// GetBatch returns the Operators with IDs.
 	GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.Operator, error)
@@ -43,15 +49,15 @@ type operatorReader interface {
 
 	// GetDistinctLoadOPsByWorkflow returns the distinct Load Operators in a workflow.
 	// Load Operators are distinct if they have a unique combination of
-	// the integration they are saving an Artifact to, the name of the object (i.e. table)
+	// the resource they are saving an Artifact to, the name of the object (i.e. table)
 	// the Artifact is being saved to, and the update mode used to save the Artifact.
 	GetDistinctLoadOPsByWorkflow(ctx context.Context, workflowID uuid.UUID, DB database.Database) ([]views.LoadOperator, error)
 
-	// GetExtractAndLoadOPsByIntegration returns all Extract and Load Operators
-	// using the Integration specified.
-	GetExtractAndLoadOPsByIntegration(
+	// GetExtractAndLoadOPsByResource returns all Extract and Load Operators
+	// using the Resource specified.
+	GetExtractAndLoadOPsByResource(
 		ctx context.Context,
-		integrationID uuid.UUID,
+		resourceID uuid.UUID,
 		DB database.Database,
 	) ([]models.Operator, error)
 
@@ -63,19 +69,19 @@ type operatorReader interface {
 		DB database.Database,
 	) (map[uuid.UUID][]shared.EngineType, error)
 
-	// GetLoadOPsByWorkflowAndIntegration returns the Operators in a Workflow related to an Integration.
-	GetLoadOPsByWorkflowAndIntegration(
+	// GetLoadOPsByWorkflowAndResource returns the Operators in a Workflow related to an Resource.
+	GetLoadOPsByWorkflowAndResource(
 		ctx context.Context,
 		workflowID uuid.UUID,
-		integrationID uuid.UUID,
+		resourceID uuid.UUID,
 		objectName string,
 		DB database.Database,
 	) ([]models.Operator, error)
 
-	// GetLoadOPsByIntegration returns the Operators related to an integration.
-	GetLoadOPsByIntegration(
+	// GetLoadOPsByResource returns the Operators related to an resource.
+	GetLoadOPsByResource(
 		ctx context.Context,
-		integrationID uuid.UUID,
+		resourceID uuid.UUID,
 		objectName string,
 		DB database.Database,
 	) ([]models.Operator, error)
@@ -94,11 +100,11 @@ type operatorReader interface {
 	// if the engine type is AqueductConda.
 	GetUnusedCondaEnvNames(ctx context.Context, DB database.Database) ([]string, error)
 
-	// GetByEngineIntegrationID returns all operators executing on the given engine ID.
+	// GetByEngineResourceID returns all operators executing on the given engine ID.
 	// This includes all operators with engine_config field to be this ID,
 	// or those who inherit workflow's engine_config that uses this ID.
 	// This does not work with the Aqueduct Engine resource. For that, use `GetForAqueductEngine`.
-	GetByEngineIntegrationID(ctx context.Context, integrationID uuid.UUID, DB database.Database) ([]models.Operator, error)
+	GetByEngineResourceID(ctx context.Context, resourceID uuid.UUID, DB database.Database) ([]models.Operator, error)
 
 	// GetForAqueductEngine returns all operators executed on the native Aqueduct Engine.
 	GetForAqueductEngine(ctx context.Context, DB database.Database) ([]models.Operator, error)

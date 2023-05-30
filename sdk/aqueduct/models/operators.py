@@ -17,13 +17,12 @@ from aqueduct.constants.enums import (
 )
 from aqueduct.error import AqueductError, UnsupportedFeatureException
 from aqueduct.models.config import EngineConfig
-from aqueduct.models.integration import ResourceInfo
-from pydantic import BaseModel, Extra
+from pydantic import BaseModel, Extra, Field
 
 
 class GithubMetadata(BaseModel):
     """
-    Specifies a destination in github integration.
+    Specifies a destination in github resource.
     There are two ways to specify the content:
     -   by `path`, which points to a file or dir in the github repo.
     -   from `repo_config_content_type` and `repo_config_content_name`, which points to
@@ -90,11 +89,20 @@ UnionExtractParams = Union[
 
 class ExtractSpec(BaseModel):
     service: ServiceType
-    integration_id: uuid.UUID
-    parameters: UnionExtractParams
+
+    # TODO(ENG-2994): This spec is parsed into a golang struct that still expects
+    #  the "integration" terminology.
+    resource_id: uuid.UUID = Field(alias="integration_id")
+    parameters: Union[str, UnionExtractParams]
+
+    class Config:
+        # Prevents any validation errors due to the alias when setting the `resource_id` field.
+        allow_population_by_field_name = True
 
 
 class RelationalDBLoadParams(BaseModel):
+    # If this field is parameterized, then it is expected to be empty.
+    # Instead, we will feed the parameter artifact into the save operator.
     table: str
     update_mode: LoadUpdateMode
 
@@ -125,8 +133,15 @@ UnionLoadParams = Union[
 # Class expected by backend for a load operator.
 class LoadSpec(BaseModel):
     service: ServiceType
-    integration_id: uuid.UUID
+
+    # TODO(ENG-2994): This spec is parsed into a golang struct that still expects
+    #  the "integration" terminology.
+    resource_id: uuid.UUID = Field(alias="integration_id")
     parameters: UnionLoadParams
+
+    class Config:
+        # Prevents any validation errors due to the alias when setting the `resource_id` field.
+        allow_population_by_field_name = True
 
     def identifier(self) -> str:
         if isinstance(self.parameters, RelationalDBLoadParams):
@@ -134,8 +149,7 @@ class LoadSpec(BaseModel):
         elif isinstance(self.parameters, S3LoadParams):
             return self.parameters.filepath
         raise UnsupportedFeatureException(
-            "identifier() is currently unsupported for data integration type %s."
-            % self.service.value
+            "identifier() is currently unsupported for data resource type %s." % self.service.value
         )
 
     def set_identifier(self, new_obj_identifier: str) -> None:
@@ -145,7 +159,7 @@ class LoadSpec(BaseModel):
             self.parameters.filepath = new_obj_identifier
         else:
             raise UnsupportedFeatureException(
-                "set_identifier() is currently unsupported for data integration type %s."
+                "set_identifier() is currently unsupported for data resource type %s."
                 % self.service.value
             )
 

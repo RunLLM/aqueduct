@@ -1,5 +1,52 @@
 # Changelog
 
+## 0.3.4
+Released on May 24, 2023.
+
+### Enhancements
+* Improves consistency of icon sizing on resources page.
+* Merges `flow_id` and `name` into a single argument when retrieving workflows
+    from the SDK.
+* Adds ability to parametrize save operators when using AWS S3.
+
+### Bugfixes
+* Fixes bug where race condition could occur when syncing Airflow workflows to
+    Aqueduct.
+* Fixes bug where listing Snowflake data objects would return an error.
+
+## 0.3.3
+Released on May 17, 2023.
+
+### Enhancements
+* Adds ability to use a parameter in save operators to dynamically name saves.
+* Updates the artifact storage card on the resources page to be consistent with
+    other resource cards.
+* Shows how many workflows are using notification resources.
+* Improves form validation with `react-hook-forms`.
+* Replaces the icon that signifies a workflow that has been registered but not
+    executed.
+* On the resouces page, displays the Conda integration as modifying the Aqueduct
+    server execution layer rather than as a separate execution layer.
+* Improves BigQuery error checking to ensure that a dataset exists before
+    accessing it.
+
+### Bugfixes
+* Fixes bug where documentation links on the home page were broken.
+* Fixes bug where the SDK's generated docstrings were broken.
+
+## 0.3.2
+Released on May 10, 2023.
+
+### Enhancements
+* Improves error handling when the user attempts to take an action without
+    connecting to the Aqueduct server.
+* When connecting an S3 resource to Aqueduct, if the specified subdirectory
+    does not exist, it is now automatically created.
+
+### Bugfixes
+* Replaces outdated integration terminology on the UI.
+* Fixes bug where previously created resource names were not editable.
+
 ## 0.3.1
 Released on May 4, 2023.
 
@@ -38,6 +85,9 @@ Released on May 4, 2023.
 ### Bugfixes
 * Fixes bug where installing pre-requisites for using Aqueduct-managed
     Kubernetes clusters would fail on an M1 Mac with certain configurations.
+
+## 0.3.0
+Note: Due to a technical issue, v0.3.0 was immediately replaced by v0.3.1.
 
 ## 0.2.12
 Released on April 25, 2023.

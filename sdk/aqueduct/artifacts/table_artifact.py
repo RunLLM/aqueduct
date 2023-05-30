@@ -49,7 +49,7 @@ class TableArtifact(BaseArtifact, system_metric.SystemMetricMixin):
         >>> output_artifact = predict(input_artifact)
 
         The contents of these artifacts can be manifested locally or written to an
-        integration:
+        resource:
 
         >>> df = output_artifact.get()
         >>> print(df.head())

@@ -131,6 +131,7 @@ func (j *SparkJobManager) mapJobTypeToScript(spec Spec) (string, error) {
 	storageConfig.S3Config.AWSSecretAccessKey = j.conf.AwsSecretAccessKey
 	var scriptString string
 	log.Infof("JobType : %s", spec.Type())
+
 	if spec.Type() == FunctionJobType {
 		functionSpec, ok := spec.(*FunctionSpec)
 		if !ok {

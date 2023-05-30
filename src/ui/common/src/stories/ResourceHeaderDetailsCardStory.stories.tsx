@@ -1,11 +1,12 @@
+import { ComponentMeta } from '@storybook/react';
 import React from 'react';
 
-import { ResourceHeaderDetailsCard } from '../components/integrations/cards/headerDetailsCard';
-import { Integration, SlackConfig } from '../utils/integrations';
+import { ResourceHeaderDetailsCard } from '../components/resources/cards/headerDetailsCard';
+import { Resource, SlackConfig } from '../utils/resources';
 import ExecutionStatus from '../utils/shared';
 
 export const ResourceHeaderDetailsCardStory: React.FC = () => {
-  const testIntegration: Integration = {
+  const testResource: Resource = {
     id: '20',
     service: 'Slack',
     name: 'Another Slack Longer Name',
@@ -23,10 +24,14 @@ export const ResourceHeaderDetailsCardStory: React.FC = () => {
 
   return (
     <ResourceHeaderDetailsCard
-      integration={testIntegration}
+      resource={testResource}
       numWorkflowsUsingMsg="Not currently in use"
     />
   );
 };
 
-export default ResourceHeaderDetailsCardStory;
+export default {
+  title: 'Components/Resource Header Details Card',
+  component: ResourceHeaderDetailsCard,
+  argTypes: {},
+} as ComponentMeta<typeof ResourceHeaderDetailsCard>;

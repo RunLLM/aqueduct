@@ -1,4 +1,5 @@
 import { Box } from '@mui/material';
+import { ComponentMeta } from '@storybook/react';
 import React from 'react';
 
 import WorkflowSummaryCard, {
@@ -23,7 +24,7 @@ export const WorkflowSummaryCardStory: React.FC = () => {
         checks: [],
       },
       operators: [],
-      integration: {
+      resource: {
         id: '1',
         service: 'Postgres',
         name: 'Postgres Resource',
@@ -50,4 +51,8 @@ export const WorkflowSummaryCardStory: React.FC = () => {
   );
 };
 
-export default WorkflowSummaryCardStory;
+export default {
+  title: 'Components/Workflow Summary Card',
+  component: WorkflowSummaryCard,
+  argTypes: {},
+} as ComponentMeta<typeof WorkflowSummaryCard>;

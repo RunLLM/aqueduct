@@ -140,20 +140,20 @@ func (bs *BasePythonSpec) GetStorageConfig() (*shared.StorageConfig, error) {
 
 type FunctionSpec struct {
 	BasePythonSpec
-	FunctionPath                string                   `json:"function_path"  yaml:"function_path"`
-	FunctionExtractPath         string                   `json:"function_extract_path" yaml:"function_extract_path"`
-	EntryPointFile              string                   `json:"entry_point_file"  yaml:"entry_point_file"`
-	EntryPointClass             string                   `json:"entry_point_class"  yaml:"entry_point_class"`
-	EntryPointMethod            string                   `json:"entry_point_method"  yaml:"entry_point_method"`
-	CustomArgs                  string                   `json:"custom_args"  yaml:"custom_args"`
-	InputContentPaths           []string                 `json:"input_content_paths"  yaml:"input_content_paths"`
-	InputMetadataPaths          []string                 `json:"input_metadata_paths"  yaml:"input_metadata_paths"`
-	OutputContentPaths          []string                 `json:"output_content_paths"  yaml:"output_content_paths"`
-	OutputMetadataPaths         []string                 `json:"output_metadata_paths"  yaml:"output_metadata_paths"`
-	ExpectedOutputArtifactTypes []string                 `json:"expected_output_artifact_types" yaml:"expected_output_artifact_types"`
-	OperatorType                operator.Type            `json:"operator_type" yaml:"operator_type"`
-	Resources                   *operator.ResourceConfig `json:"resources" yaml:"resources"`
-	Image                       *operator.ImageConfig    `json:"image,omitempty" yaml:"image,omitempty"`
+	FunctionPath                string                           `json:"function_path"  yaml:"function_path"`
+	FunctionExtractPath         string                           `json:"function_extract_path" yaml:"function_extract_path"`
+	EntryPointFile              string                           `json:"entry_point_file"  yaml:"entry_point_file"`
+	EntryPointClass             string                           `json:"entry_point_class"  yaml:"entry_point_class"`
+	EntryPointMethod            string                           `json:"entry_point_method"  yaml:"entry_point_method"`
+	CustomArgs                  string                           `json:"custom_args"  yaml:"custom_args"`
+	InputContentPaths           []string                         `json:"input_content_paths"  yaml:"input_content_paths"`
+	InputMetadataPaths          []string                         `json:"input_metadata_paths"  yaml:"input_metadata_paths"`
+	OutputContentPaths          []string                         `json:"output_content_paths"  yaml:"output_content_paths"`
+	OutputMetadataPaths         []string                         `json:"output_metadata_paths"  yaml:"output_metadata_paths"`
+	ExpectedOutputArtifactTypes []string                         `json:"expected_output_artifact_types" yaml:"expected_output_artifact_types"`
+	OperatorType                operator.Type                    `json:"operator_type" yaml:"operator_type"`
+	Resources                   *operator.ComputeResourcesConfig `json:"resources" yaml:"resources"`
+	Image                       *operator.ImageConfig            `json:"image,omitempty" yaml:"image,omitempty"`
 
 	// Specific to the check operator. This is left unset by any other function type.
 	CheckSeverity *check.Level `json:"check_severity" yaml:"check_severity"`
@@ -189,19 +189,19 @@ type ExtractSpec struct {
 
 type DeleteSavedObjectsSpec struct {
 	BasePythonSpec
-	ConnectorName       map[string]shared.Service `json:"connector_name"  yaml:"connector_name"`
-	ConnectorConfig     map[string]auth.Config    `json:"connector_config"  yaml:"connector_config"`
-	IntegrationToObject map[string][]string       `json:"integration_to_object"  yaml:"integration_to_object"`
-	OutputContentPath   string                    `json:"output_content_path"  yaml:"output_content_path"`
+	ConnectorName     map[string]shared.Service `json:"connector_name"  yaml:"connector_name"`
+	ConnectorConfig   map[string]auth.Config    `json:"connector_config"  yaml:"connector_config"`
+	ResourceToObject  map[string][]string       `json:"resource_to_object"  yaml:"resource_to_object"`
+	OutputContentPath string                    `json:"output_content_path"  yaml:"output_content_path"`
 }
 
 type LoadSpec struct {
 	BasePythonSpec
-	ConnectorName     shared.Service       `json:"connector_name"  yaml:"connector_name"`
-	ConnectorConfig   auth.Config          `json:"connector_config"  yaml:"connector_config"`
-	Parameters        connector.LoadParams `json:"parameters"  yaml:"parameters"`
-	InputContentPath  string               `json:"input_content_path"  yaml:"input_content_path"`
-	InputMetadataPath string               `json:"input_metadata_path"  yaml:"input_metadata_path"`
+	ConnectorName      shared.Service       `json:"connector_name"  yaml:"connector_name"`
+	ConnectorConfig    auth.Config          `json:"connector_config"  yaml:"connector_config"`
+	Parameters         connector.LoadParams `json:"parameters"  yaml:"parameters"`
+	InputContentPaths  []string             `json:"input_content_paths"  yaml:"input_content_paths"`
+	InputMetadataPaths []string             `json:"input_metadata_paths"  yaml:"input_metadata_paths"`
 }
 
 type LoadTableSpec struct {
@@ -441,7 +441,7 @@ func NewDeleteSavedObjectsSpec(
 	metadataPath string,
 	connectorName map[string]shared.Service,
 	connectorConfig map[string]auth.Config,
-	integrationToObject map[string][]string,
+	resourceToObject map[string][]string,
 	outputContentPath string,
 ) Spec {
 	return &DeleteSavedObjectsSpec{
@@ -453,10 +453,10 @@ func NewDeleteSavedObjectsSpec(
 			StorageConfig: *storageConfig,
 			MetadataPath:  metadataPath,
 		},
-		ConnectorName:       connectorName,
-		ConnectorConfig:     connectorConfig,
-		IntegrationToObject: integrationToObject,
-		OutputContentPath:   outputContentPath,
+		ConnectorName:     connectorName,
+		ConnectorConfig:   connectorConfig,
+		ResourceToObject:  resourceToObject,
+		OutputContentPath: outputContentPath,
 	}
 }
 
@@ -493,11 +493,11 @@ func NewLoadTableSpec(
 				StorageConfig: *storageConfig,
 				MetadataPath:  metadataPath,
 			},
-			ConnectorName:     connectorName,
-			ConnectorConfig:   connectorConfig,
-			Parameters:        parameters,
-			InputContentPath:  inputContentPath,
-			InputMetadataPath: inputMetadataPath,
+			ConnectorName:      connectorName,
+			ConnectorConfig:    connectorConfig,
+			Parameters:         parameters,
+			InputContentPaths:  []string{inputContentPath},
+			InputMetadataPaths: []string{inputMetadataPath},
 		},
 	}
 }

@@ -33,7 +33,7 @@ func newLoadOperator(
 	inputs := base.inputs
 	outputs := base.outputs
 
-	if len(inputs) != 1 {
+	if len(inputs) == 0 {
 		return nil, errWrongNumInputs
 	}
 	if len(outputs) != 0 {
@@ -41,7 +41,7 @@ func newLoadOperator(
 	}
 
 	spec := base.dbOperator.Spec.Load()
-	config, err := auth.ReadConfigFromSecret(ctx, spec.IntegrationId, base.vaultObject)
+	config, err := auth.ReadConfigFromSecret(ctx, spec.ResourceId, base.vaultObject)
 	if err != nil {
 		return nil, err
 	}
@@ -55,6 +55,8 @@ func newLoadOperator(
 func (lo *loadOperatorImpl) JobSpec() (returnedSpec job.Spec) {
 	spec := lo.dbOperator.Spec.Load()
 
+	inputContentPaths, inputMetadataPaths := unzipExecPathsToRawPaths(lo.inputExecPaths)
+
 	return &job.LoadSpec{
 		BasePythonSpec: job.NewBasePythonSpec(
 			job.LoadJobType,
@@ -62,11 +64,11 @@ func (lo *loadOperatorImpl) JobSpec() (returnedSpec job.Spec) {
 			*lo.storageConfig,
 			lo.metadataPath,
 		),
-		ConnectorName:     spec.Service,
-		ConnectorConfig:   lo.config,
-		Parameters:        spec.Parameters,
-		InputContentPath:  lo.inputExecPaths[0].ArtifactContentPath,
-		InputMetadataPath: lo.inputExecPaths[0].ArtifactMetadataPath,
+		ConnectorName:      spec.Service,
+		ConnectorConfig:    lo.config,
+		Parameters:         spec.Parameters,
+		InputContentPaths:  inputContentPaths,
+		InputMetadataPaths: inputMetadataPaths,
 	}
 }
 

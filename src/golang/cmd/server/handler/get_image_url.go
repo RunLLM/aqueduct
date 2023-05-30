@@ -18,16 +18,17 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/workflow/operator/connector/auth"
 	"github.com/dropbox/godropbox/errors"
 	"github.com/google/uuid"
+	"golang.org/x/oauth2/google"
 )
 
-// Route: /api/integration/container-registry/url
+// Route: /api/resource/container-registry/url
 // Method: GET
 // Params: None
 // Request:
 //
 //		Headers:
 //			`api-key`: user's API Key
-//			`integration_id`: container registry integration ID
+//			`resource_id`: container registry resource ID
 //	     `service`: name of the service to get the URL for
 //	     `image_name`: name of the image to get the URL for
 //
@@ -37,14 +38,14 @@ type GetImageURLHandler struct {
 
 	Database database.Database
 
-	IntegrationRepo repos.Integration
+	ResourceRepo repos.Resource
 }
 
 type getImageURLArgs struct {
 	*aq_context.AqContext
-	integrationID uuid.UUID
-	service       shared.Service
-	imageName     string
+	resourceID uuid.UUID
+	service    shared.Service
+	imageName  string
 }
 
 type getImageURLResponse struct {
@@ -56,7 +57,7 @@ func (*GetImageURLHandler) Name() string {
 }
 
 func (*GetImageURLHandler) Headers() []string {
-	return []string{routes.IntegrationIDHeader, routes.ServiceHeader, routes.ImageNameHeader}
+	return []string{routes.ResourceIDHeader, routes.ServiceHeader, routes.ImageNameHeader}
 }
 
 func (*GetImageURLHandler) Prepare(r *http.Request) (interface{}, int, error) {
@@ -65,17 +66,17 @@ func (*GetImageURLHandler) Prepare(r *http.Request) (interface{}, int, error) {
 		return nil, statusCode, err
 	}
 
-	integrationIdStr := r.Header.Get(routes.IntegrationIDHeader)
-	integrationId, err := uuid.Parse(integrationIdStr)
+	resourceIdStr := r.Header.Get(routes.ResourceIDHeader)
+	resourceId, err := uuid.Parse(resourceIdStr)
 	if err != nil {
-		return nil, http.StatusBadRequest, errors.Wrap(err, "Error parsing integration ID.")
+		return nil, http.StatusBadRequest, errors.Wrap(err, "Error parsing resource ID.")
 	}
 
 	return &getImageURLArgs{
-		AqContext:     aqContext,
-		integrationID: integrationId,
-		service:       shared.Service(r.Header.Get(routes.ServiceHeader)),
-		imageName:     r.Header.Get(routes.ImageNameHeader),
+		AqContext:  aqContext,
+		resourceID: resourceId,
+		service:    shared.Service(r.Header.Get(routes.ServiceHeader)),
+		imageName:  r.Header.Get(routes.ImageNameHeader),
 	}, http.StatusOK, nil
 }
 
@@ -84,7 +85,7 @@ func (h *GetImageURLHandler) Perform(ctx context.Context, interfaceArgs interfac
 
 	emptyResponse := getImageURLResponse{}
 
-	if args.service != shared.ECR {
+	if !(args.service == shared.ECR || args.service == shared.GAR) {
 		return emptyResponse, http.StatusBadRequest, errors.Newf("Container registry service %s is not supported.", args.service)
 	}
 
@@ -94,22 +95,84 @@ func (h *GetImageURLHandler) Perform(ctx context.Context, interfaceArgs interfac
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to initialize vault.")
 	}
 
-	authConf, err := auth.ReadConfigFromSecret(context.Background(), args.integrationID, vaultObject)
+	authConf, err := auth.ReadConfigFromSecret(context.Background(), args.resourceID, vaultObject)
 	if err != nil {
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to read container registry config from vault.")
 	}
 
-	conf, err := lib_utils.ParseECRConfig(authConf)
-	if err != nil {
-		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to parse configuration.")
+	if args.service == shared.ECR {
+		conf, err := lib_utils.ParseECRConfig(authConf)
+		if err != nil {
+			return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to parse configuration.")
+		}
+
+		err = container_registry.ValidateECRImage(conf, args.imageName)
+		if err != nil {
+			return emptyResponse, http.StatusUnauthorized, err
+		}
+
+		return getImageURLResponse{
+			Url: fmt.Sprintf("%s/%s", strings.TrimPrefix(conf.ProxyEndpoint, "https://"), args.imageName),
+		}, http.StatusOK, nil
 	}
 
-	err = container_registry.ValidateECRImage(conf, args.imageName)
-	if err != nil {
-		return emptyResponse, http.StatusUnprocessableEntity, err
+	if args.service == shared.GAR {
+		conf, err := lib_utils.ParseGARConfig(authConf)
+		if err != nil {
+			return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to parse configuration.")
+		}
+
+		// Obtain an OAuth2 token
+		creds, err := google.CredentialsFromJSON(ctx, []byte(conf.ServiceAccountKey), "https://www.googleapis.com/auth/cloud-platform")
+		if err != nil {
+			return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get credential from service account key.")
+		}
+		token, err := creds.TokenSource.Token()
+		if err != nil {
+			return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to get oauth token.")
+		}
+
+		// Create a new HTTP client
+		client := &http.Client{}
+
+		fullImageUrl := strings.Split(args.imageName, ":")[0]
+		tag := strings.Split(args.imageName, ":")[1]
+
+		host := strings.Split(fullImageUrl, "/")[0]
+		projectID := strings.Split(fullImageUrl, "/")[1]
+		repo := strings.Split(fullImageUrl, "/")[2]
+		image := strings.Split(fullImageUrl, "/")[3]
+
+		// Create a new HTTP request against the Google Artifact Registry API
+		req, err := http.NewRequest("GET", fmt.Sprintf("https://%s/v2/%s/%s/%s/manifests/%s", host, projectID, repo, image, tag), nil)
+		if err != nil {
+			return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to create HTTP request.")
+		}
+
+		// Add the Authorization header to the request
+		req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", token.AccessToken))
+
+		resp, err := client.Do(req)
+		if err != nil {
+			return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to send request.")
+		}
+
+		if resp.StatusCode == http.StatusOK {
+			return getImageURLResponse{
+				Url: args.imageName,
+			}, http.StatusOK, nil
+		}
+
+		if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
+			return emptyResponse, resp.StatusCode, errors.New("Unable to access the requested image. Please double check you have the correct permissions.")
+		}
+
+		if resp.StatusCode == http.StatusNotFound {
+			return emptyResponse, resp.StatusCode, errors.New("The requested image was not found.")
+		}
+
+		return emptyResponse, resp.StatusCode, errors.Newf("Received unexpected status: %d", resp.StatusCode)
 	}
 
-	return getImageURLResponse{
-		Url: fmt.Sprintf("%s/%s", strings.TrimPrefix(conf.ProxyEndpoint, "https://"), args.imageName),
-	}, http.StatusOK, nil
+	return emptyResponse, http.StatusBadRequest, errors.Newf("Container registry service %s is not supported.", args.service)
 }

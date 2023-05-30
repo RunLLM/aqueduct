@@ -1,5 +1,6 @@
 import copy
 import uuid
+from collections import OrderedDict
 from typing import Any, Callable, Dict, List, Optional, Set
 
 from aqueduct.constants.enums import (
@@ -47,7 +48,13 @@ class Metadata(BaseModel):
 
 
 class DAG(BaseModel):
-    operators: Dict[str, Operator] = {}
+    # We use an OrderedDict here to preserve insertion order of operators. This is helpful
+    # any case where we have multiple choices, but can resolve the ambiguity by picking the
+    # latest added, for example. This is relevant for parameter string interpolation.
+    #
+    # Although as of Python3.7, a regular python dict also preserves insertion order, we use an
+    # OrderedDict as future-proofing against any expansion of Aqueduct to Python<=3.7.
+    operators: Dict[str, Operator] = OrderedDict()
     artifacts: Dict[str, ArtifactMetadata] = {}
 
     # The field must be set when publishing the workflow.
@@ -344,7 +351,6 @@ class DAG(BaseModel):
         for artifact in self.list_artifacts():
             if artifact.name == name:
                 return artifact
-
         return None
 
     def list_artifacts(
@@ -396,10 +402,36 @@ class DAG(BaseModel):
         return check_operators
 
     def get_param_op_by_name(self, name: str) -> Optional[Operator]:
+        """Use this in the case where multiple parameters with the same name are not allowed.
+
+        This uniqueness is guaranteed after sanitizing the names with `validate_and_resolve_artifact_names()`,
+        typically for preview or publish.
+        """
+        found_op: Optional[Operator] = None
         for op in self.operators.values():
             if op.name == name and get_operator_type(op) == OperatorType.PARAM:
-                return op
-        return None
+                if found_op is not None:
+                    raise InternalAqueductError(
+                        "Unexpectedly found multiple parameters with the same name: %s" % name
+                    )
+                found_op = op
+
+        return found_op
+
+    def get_param_ops_by_name(self, name: str) -> List[Operator]:
+        """Use this in the case where multiple parameters with the same name are allowed.
+
+        This typically happens when the DAG is not ready to preview/publish, but we need to fetch
+        parameters by name, for situations like string interpolation with "{param_name}".
+
+        The returned operators are ordered in descending insertion order, with the latest-added
+        operator first.
+        """
+        found_ops: List[Operator] = []
+        for op in reversed(list(self.operators.values())):
+            if op.name == name and get_operator_type(op) == OperatorType.PARAM:
+                found_ops.append(op)
+        return found_ops
 
     ######################## DAG WRITES #############################
 

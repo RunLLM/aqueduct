@@ -117,7 +117,7 @@ export type GoogleSheetsExtractParams = {
 
 export type Extract = {
   service: ServiceType;
-  integration_id: string;
+  resource_id: string;
   // This is a json serialized string of ExtractParams structs.
   // For now, we will dangerously assume the serialized string is always
   // consistent with the `service` field.
@@ -179,7 +179,7 @@ export const getLoadParametersType = (
 
 export type Load = {
   service: ServiceType;
-  integration_id: string;
+  resource_id: string;
   // This is a json serialized string of ExtractParams structs.
   // For now, we will dangerously assume the serialized string is always
   // consistent with the `service` field.

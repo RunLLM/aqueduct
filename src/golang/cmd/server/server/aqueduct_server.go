@@ -123,7 +123,7 @@ func NewAqServer(environment aq_context.ServerEnvironment, externalIP string, po
 	// Register server handlers
 	AddAllHandlers(s)
 
-	log.Infof("Creating a user account and a builtin SQLite integration.")
+	log.Infof("Creating a user account and a builtin SQLite resource.")
 	testUser, err := CreateTestAccount(
 		ctx,
 		s,
@@ -135,25 +135,10 @@ func NewAqServer(environment aq_context.ServerEnvironment, externalIP string, po
 		log.Fatal(err)
 	}
 
-	// If the deprecated demo db name still exists in the database, we delete it in this check too.
-	demoDBConnected, aqEngineConnected, err := CheckBuiltinIntegrations(ctx, s, accountOrganizationId)
+	err = connectBuiltinResources(ctx, s, accountOrganizationId, testUser, s.ResourceRepo, s.Database)
 	if err != nil {
 		db.Close()
 		log.Fatal(err)
-	}
-	if !demoDBConnected {
-		err = ConnectBuiltinDemoDBIntegration(ctx, testUser, s.IntegrationRepo, s.Database)
-		if err != nil {
-			db.Close()
-			log.Fatal(err)
-		}
-	}
-	if !aqEngineConnected {
-		err = ConnectBuiltinComputeIntegration(ctx, testUser, s.IntegrationRepo, s.Database)
-		if err != nil {
-			db.Close()
-			log.Fatal(err)
-		}
 	}
 
 	err = s.initializeWorkflowCronJobs(ctx)
@@ -200,7 +185,7 @@ func (s *AqServer) Init() error {
 
 	if err := syncVaultWithStorage(
 		vault,
-		s.IntegrationRepo,
+		s.ResourceRepo,
 		s.Database,
 	); err != nil {
 		return err

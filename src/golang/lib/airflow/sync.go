@@ -83,10 +83,16 @@ func syncWorkflowDag(
 	vault vault.Vault,
 	DB database.Database,
 ) error {
+	txn, err := DB.BeginTx(ctx)
+	if err != nil {
+		return err
+	}
+	defer database.TxnRollbackIgnoreErr(ctx, txn)
+
 	// Read Airflow credentials from vault
 	authConf, err := auth.ReadConfigFromSecret(
 		ctx,
-		dag.EngineConfig.AirflowConfig.IntegrationID,
+		dag.EngineConfig.AirflowConfig.ResourceID,
 		vault,
 	)
 	if err != nil {
@@ -104,7 +110,7 @@ func syncWorkflowDag(
 		cli,
 		dag,
 		dagRepo,
-		DB,
+		txn,
 	)
 	if err != nil {
 		return err
@@ -123,7 +129,7 @@ func syncWorkflowDag(
 
 	// Default values to not have an order and not have a limit: Empty string for order_by, -1 for limit
 	// Set true for order_by order (desc/asc) because doesn't matter.
-	dagResults, err := dagResultRepo.GetByWorkflow(ctx, dag.WorkflowID, "", -1, true, DB)
+	dagResults, err := dagResultRepo.GetByWorkflow(ctx, dag.WorkflowID, "", -1, true, txn)
 	if err != nil {
 		return err
 	}
@@ -160,10 +166,14 @@ func syncWorkflowDag(
 			dagResultRepo,
 			operatorResultRepo,
 			artifactResultRepo,
-			DB,
+			txn,
 		); err != nil {
 			return err
 		}
+	}
+
+	if err := txn.Commit(ctx); err != nil {
+		return err
 	}
 
 	return nil
@@ -182,18 +192,12 @@ func syncWorkflowDagResult(
 	artifactResultRepo repos.ArtifactResult,
 	DB database.Database,
 ) error {
-	txn, err := DB.BeginTx(ctx)
-	if err != nil {
-		return err
-	}
-	defer database.TxnRollbackIgnoreErr(ctx, txn)
-
 	dagResult, err := createDAGResult(
 		ctx,
 		dag,
 		run,
 		dagResultRepo,
-		txn,
+		DB,
 	)
 	if err != nil {
 		return err
@@ -228,14 +232,10 @@ func syncWorkflowDagResult(
 			dagResult.ID,
 			operatorResultRepo,
 			artifactResultRepo,
-			txn,
+			DB,
 		); err != nil {
 			return err
 		}
-	}
-
-	if err := txn.Commit(ctx); err != nil {
-		return err
 	}
 
 	return nil

@@ -136,7 +136,7 @@ func RunCmd(command string, args []string, dir string, stream bool) (string, str
 
 // ParseK8sConfig takes in an auth.Config and parses into a K8s config.
 // It also returns an error, if any.
-func ParseK8sConfig(conf auth.Config) (*shared.K8sIntegrationConfig, error) {
+func ParseK8sConfig(conf auth.Config) (*shared.K8sResourceConfig, error) {
 	data, err := conf.Marshal()
 	if err != nil {
 		return nil, err
@@ -147,7 +147,7 @@ func ParseK8sConfig(conf auth.Config) (*shared.K8sIntegrationConfig, error) {
 		ClusterName         string                   `json:"cluster_name"`
 		UseSameCluster      shared.ConfigBool        `json:"use_same_cluster"`
 		Dynamic             shared.ConfigBool        `json:"dynamic"`
-		CloudIntegrationId  string                   `json:"cloud_integration_id"`
+		CloudResourceId     string                   `json:"cloud_integration_id"`
 		CloudProvider       shared.CloudProviderType `json:"cloud_provider"`
 		GCPConfigSerialized string                   `json:"gcp_config_serialized"`
 	}
@@ -162,24 +162,24 @@ func ParseK8sConfig(conf auth.Config) (*shared.K8sIntegrationConfig, error) {
 		}
 	}
 
-	return &shared.K8sIntegrationConfig{
-		KubeconfigPath:     c.KubeconfigPath,
-		ClusterName:        c.ClusterName,
-		UseSameCluster:     c.UseSameCluster,
-		Dynamic:            c.Dynamic,
-		CloudIntegrationId: c.CloudIntegrationId,
-		CloudProvider:      c.CloudProvider,
-		GCPConfig:          &gcpConfig,
+	return &shared.K8sResourceConfig{
+		KubeconfigPath:  c.KubeconfigPath,
+		ClusterName:     c.ClusterName,
+		UseSameCluster:  c.UseSameCluster,
+		Dynamic:         c.Dynamic,
+		CloudResourceId: c.CloudResourceId,
+		CloudProvider:   c.CloudProvider,
+		GCPConfig:       &gcpConfig,
 	}, nil
 }
 
-func ParseLambdaConfig(conf auth.Config) (*shared.LambdaIntegrationConfig, error) {
+func ParseLambdaConfig(conf auth.Config) (*shared.LambdaResourceConfig, error) {
 	data, err := conf.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	var c shared.LambdaIntegrationConfig
+	var c shared.LambdaResourceConfig
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
 	}
@@ -187,13 +187,13 @@ func ParseLambdaConfig(conf auth.Config) (*shared.LambdaIntegrationConfig, error
 	return &c, nil
 }
 
-func ParseDatabricksConfig(conf auth.Config) (*shared.DatabricksIntegrationConfig, error) {
+func ParseDatabricksConfig(conf auth.Config) (*shared.DatabricksResourceConfig, error) {
 	data, err := conf.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	var c shared.DatabricksIntegrationConfig
+	var c shared.DatabricksResourceConfig
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
 	}
@@ -265,13 +265,13 @@ func ParseSlackConfig(conf auth.Config) (*shared.SlackConfig, error) {
 	}, nil
 }
 
-func ParseSparkConfig(conf auth.Config) (*shared.SparkIntegrationConfig, error) {
+func ParseSparkConfig(conf auth.Config) (*shared.SparkResourceConfig, error) {
 	data, err := conf.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	var c shared.SparkIntegrationConfig
+	var c shared.SparkResourceConfig
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
 	}
@@ -321,6 +321,20 @@ func ParseECRConfig(conf auth.Config) (*shared.ECRConfig, error) {
 	}
 
 	var c shared.ECRConfig
+	if err := json.Unmarshal(data, &c); err != nil {
+		return nil, err
+	}
+
+	return &c, nil
+}
+
+func ParseGARConfig(conf auth.Config) (*shared.GARConfig, error) {
+	data, err := conf.Marshal()
+	if err != nil {
+		return nil, err
+	}
+
+	var c shared.GARConfig
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
 	}

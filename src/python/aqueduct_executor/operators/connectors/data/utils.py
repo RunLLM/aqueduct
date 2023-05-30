@@ -69,7 +69,7 @@ def construct_boto_session(config: Union[S3Config, AthenaConfig]) -> boto3.sessi
     elif config.type == AWSCredentialType.ACCESS_KEY:
         return _session_from_access_key(config)
     else:
-        raise Exception("Unsupported integration config type: %s" % config.type)
+        raise Exception("Unsupported resource config type: %s" % config.type)
 
 
 def url_encode(value: str) -> str:

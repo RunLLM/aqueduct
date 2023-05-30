@@ -7,10 +7,10 @@ address: <SERVER_ADDRESS>
 storage:
   test_s3:
     # If included, will wait until migration is completed before starting the test.
-    # Will be ignored if the server is already connected to an integration with the same name.
+    # Will be ignored if the server is already connected to an resource with the same name.
     use_as_storage:
 
-# REQUIRED: All the data integrations to run the test suite against.
+# REQUIRED: All the data resources to run the test suite against.
 # All entries here must be present in `test-credentials.yml`, except
 # `aqueduct_demo`, which is built-in.
 data:
@@ -26,7 +26,7 @@ data:
   test_snowflake:
   test_sqlite:
 
-# REQUIRED: All the compute integrations to run the test suite against.
+# REQUIRED: All the compute resources to run the test suite against.
 # All entries here must be present in `test-credentials.yml`, except
 # `aqueduct_engine`, which is our native orchestration engine.
 compute:

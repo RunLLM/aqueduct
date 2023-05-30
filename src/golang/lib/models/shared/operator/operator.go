@@ -42,7 +42,7 @@ const (
 	Cuda11_8_0 CudaVersionNumber = "11.8.0"
 )
 
-type ResourceConfig struct {
+type ComputeResourcesConfig struct {
 	NumCPU          *int               `json:"num_cpus,omitempty"`
 	MemoryMB        *int               `json:"memory_mb,omitempty"`
 	GPUResourceName *string            `json:"gpu_resource_name,omitempty"`
@@ -68,8 +68,8 @@ type specUnion struct {
 
 	// These can currently only be set for operators that has function,
 	// including function, metric, and check.
-	Resources *ResourceConfig `json:"resources,omitempty"`
-	Image     *ImageConfig    `json:"image,omitempty"`
+	Resources *ComputeResourcesConfig `json:"resources,omitempty"`
+	Image     *ImageConfig            `json:"image,omitempty"`
 
 	EngineConfig *shared.EngineConfig `json:"engine_config,omitempty"`
 }
@@ -125,7 +125,7 @@ func (s Spec) HasFunction() bool {
 	return s.IsFunction() || s.IsCheck() || s.IsMetric()
 }
 
-func (s Spec) Resources() *ResourceConfig {
+func (s Spec) Resources() *ComputeResourcesConfig {
 	return s.spec.Resources
 }
 

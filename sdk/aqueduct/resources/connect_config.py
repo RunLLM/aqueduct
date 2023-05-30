@@ -21,7 +21,7 @@ class BaseConnectionConfig(BaseModel):
 
 class BigQueryConfig(BaseConnectionConfig):
     """
-    BigQueryConfig defines the Pydantic Config for a BigQuery integration.
+    BigQueryConfig defines the Pydantic Config for a BigQuery resource.
     One of the following between `service_account_credentials` and
     `service_account_credentials_path` must be specified. If `service_account_credentials_path`
     is specified, it takes priority.
@@ -86,7 +86,7 @@ class S3Config(BaseConnectionConfig):
     bucket: str
     region: str
 
-    # When connecting a new integration, we allow both leading or trailing slashes here.
+    # When connecting a new resource, we allow both leading or trailing slashes here.
     # The path will be sanitized before being stored in the database.
     root_dir: str = ""
 
@@ -217,6 +217,11 @@ class ECRConfig(BaseConnectionConfig):
     config_file_profile: str = ""
 
 
+class GARConfig(BaseConnectionConfig):
+    service_account_key_path: str = ""
+    service_account_key: str = ""
+
+
 class _AWSConfigWithSerializedConfig(BaseConnectionConfig):
     access_key_id: str = ""
     secret_access_key: str = ""
@@ -290,7 +295,19 @@ class _K8sConfigWithSerializedConfig(BaseConnectionConfig):
     # cloud_integration_id: str = ""
     cloud_provider: Optional[CloudProviderType]
     gcp_config_serialized: Optional[str]  # this is a json-serialized string of GCPConfig
-    cluster_config_serialized: Optional[str] # this is a json-serialized string of cluster configuration
+    # add fields from DynamicK8sConfig
+    keepalive: Optional[Union[str, int]]
+    cpu_node_type: Optional[str]
+    gpu_node_type: Optional[str]
+    min_cpu_node: Optional[Union[str, int]]
+    max_cpu_node: Optional[Union[str, int]]
+    min_gpu_node: Optional[Union[str, int]]
+    max_gpu_node: Optional[Union[str, int]]
+
+    # This converts all int fields to string during json serialization. We need to do this becasue our
+    # backend assumes all config fields must be string.
+    class Config:
+        json_encoders = {int: str}
 
 
 ResourceConfig = Union[
@@ -308,6 +325,7 @@ ResourceConfig = Union[
     SlackConfig,
     AWSConfig,
     ECRConfig,
+    GARConfig,
     _AWSConfigWithSerializedConfig,
     _SlackConfigWithStringField,
     AirflowConfig,
@@ -319,7 +337,7 @@ ResourceConfig = Union[
 ]
 
 
-def convert_dict_to_integration_connect_config(
+def convert_dict_to_resource_connect_config(
     service: Union[str, ServiceType], config_dict: Dict[str, str]
 ) -> ResourceConfig:
     if service == ServiceType.BIGQUERY:
@@ -360,14 +378,16 @@ def convert_dict_to_integration_connect_config(
         return K8sConfig(**config_dict)
     elif service == ServiceType.ECR:
         return ECRConfig(**config_dict)
+    elif service == ServiceType.GAR:
+        return GARConfig(**config_dict)
     raise InternalAqueductError("Unexpected Service Type: %s" % service)
 
 
-def prepare_integration_config(
+def prepare_resource_config(
     service: Union[str, ServiceType], config: ResourceConfig
 ) -> ResourceConfig:
     """Prepares the ResourceConfig object to be sent to the backend
-    as part of a request to connect a new integration.
+    as part of a request to connect a new resource.
     """
     if service == ServiceType.BIGQUERY:
         return _prepare_big_query_config(cast(BigQueryConfig, config))
@@ -383,6 +403,9 @@ def prepare_integration_config(
 
     if service == ServiceType.K8S:
         return _prepare_k8s_config(cast(K8sConfig, config))
+
+    if service == ServiceType.GAR:
+        return _prepare_gar_config(cast(GARConfig, config))
 
     return config
 
@@ -434,10 +457,22 @@ def _prepare_k8s_config(config: K8sConfig) -> _K8sConfigWithSerializedConfig:
         gcp_config_serialized=(
             None if config.gcp_config is None else config.gcp_config.json(exclude_none=True)
         ),
-        cluster_config_serialized=(
-            None if config.cluster_config is None else config.cluster_config.json(exclude_none=True)
-        )
+        # add fields from DynamicK8sConfig
+        keepalive=config.cluster_config.keepalive if config.cluster_config else None,
+        cpu_node_type=config.cluster_config.cpu_node_type if config.cluster_config else None,
+        gpu_node_type=config.cluster_config.gpu_node_type if config.cluster_config else None,
+        min_cpu_node=config.cluster_config.min_cpu_node if config.cluster_config else None,
+        max_cpu_node=config.cluster_config.max_cpu_node if config.cluster_config else None,
+        min_gpu_node=config.cluster_config.min_gpu_node if config.cluster_config else None,
+        max_gpu_node=config.cluster_config.max_gpu_node if config.cluster_config else None,
     )
+
+
+def _prepare_gar_config(config: GARConfig) -> GARConfig:
+    if config.service_account_key_path is not None:
+        with open(config.service_account_key_path, "r") as f:
+            config.service_account_key = f.read()
+    return config
 
 
 def _prepare_big_query_config(config: BigQueryConfig) -> BigQueryConfig:

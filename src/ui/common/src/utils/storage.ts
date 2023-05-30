@@ -1,4 +1,4 @@
-import { IntegrationConfig, Service } from './integrations';
+import { ResourceConfig, Service } from './resources';
 
 export enum StorageType {
   S3 = 's3',
@@ -51,7 +51,7 @@ export type ServerConfig = {
   storageConfig: MetadataStorageConfig;
 };
 
-function convertS3IntegrationtoMetadataStorageConfig(
+function convertS3ResourcetoMetadataStorageConfig(
   storage: S3Config
 ): MetadataStorageConfig {
   return {
@@ -63,7 +63,7 @@ function convertS3IntegrationtoMetadataStorageConfig(
   };
 }
 
-function convertGCSIntegrationtoMetadataStorageConfig(
+function convertGCSResourcetoMetadataStorageConfig(
   storage: GCSConfig
 ): MetadataStorageConfig {
   return {
@@ -74,20 +74,20 @@ function convertGCSIntegrationtoMetadataStorageConfig(
   };
 }
 
-export function convertIntegrationConfigToServerConfig(
-  storage: IntegrationConfig,
+export function convertResourceConfigToServerConfig(
+  storage: ResourceConfig,
   metadataStorage: ServerConfig,
   service: Service
 ): ServerConfig {
   let storageConfig;
   switch (service) {
     case 'S3':
-      storageConfig = convertS3IntegrationtoMetadataStorageConfig(
+      storageConfig = convertS3ResourcetoMetadataStorageConfig(
         storage as S3Config
       );
       break;
     case 'GCS':
-      storageConfig = convertGCSIntegrationtoMetadataStorageConfig(
+      storageConfig = convertGCSResourcetoMetadataStorageConfig(
         storage as GCSConfig
       );
       break;

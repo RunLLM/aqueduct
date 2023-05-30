@@ -93,6 +93,31 @@ const operatorNodeViewSubQuery = `
 	WHERE op_with_outputs.outputs IS NULL
 `
 
+var mergedNodeViewSubQuery = fmt.Sprintf(`
+	WITH
+		operator_node AS (%s), 
+		artifact_node AS (%s)
+	SELECT 
+		operator_node.id AS id,
+		operator_node.name AS name,
+		operator_node.description AS description,
+		operator_node.spec AS spec,
+		operator_node.execution_environment_id AS execution_environment_id,
+		operator_node.dag_id AS dag_id,
+		operator_node.inputs AS inputs,
+		artifact_node.id AS artifact_id,
+		artifact_node.type AS type,
+		artifact_node.outputs AS outputs
+	FROM 
+		operator_node LEFT JOIN 
+		artifact_node 
+	ON
+		artifact_node.input = operator_node.id
+`,
+	operatorNodeViewSubQuery,
+	artifactNodeViewSubQuery,
+)
+
 type operatorRepo struct {
 	operatorReader
 	operatorWriter
@@ -147,6 +172,32 @@ func (*operatorReader) GetNodeBatch(ctx context.Context, IDs []uuid.UUID, DB dat
 	)
 	args := stmt_preparers.CastIdsListToInterfaceList(IDs)
 	return getOperatorNodes(ctx, DB, query, args...)
+}
+
+func (r *operatorReader) GetOperatorWithArtifactNode(ctx context.Context, ID uuid.UUID, DB database.Database) (*views.OperatorWithArtifactNode, error) {
+	nodes, err := r.GetOperatorWithArtifactNodeBatch(ctx, []uuid.UUID{ID}, DB)
+	if err != nil {
+		return nil, err
+	}
+	return &nodes[0], nil
+}
+
+func (*operatorReader) GetOperatorWithArtifactNodeBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]views.OperatorWithArtifactNode, error) {
+	if len(IDs) == 0 {
+		return nil, errors.New("Provided empty IDs list.")
+	}
+
+	query := fmt.Sprintf(
+		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s IN (%s)",
+		views.OperatorWithArtifactNodeView,
+		mergedNodeViewSubQuery,
+		views.OperatorWithArtifactNodeCols(),
+		views.OperatorWithArtifactNodeView,
+		views.OperatorWithArtifactNodeID,
+		stmt_preparers.GenerateArgsList(len(IDs), 1),
+	)
+	args := stmt_preparers.CastIdsListToInterfaceList(IDs)
+	return getOperatorWithArtifactNodes(ctx, DB, query, args...)
 }
 
 func (*operatorReader) GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.Operator, error) {
@@ -209,20 +260,21 @@ func (*operatorReader) GetDistinctLoadOPsByWorkflow(
 	workflowID uuid.UUID,
 	DB database.Database,
 ) ([]views.LoadOperator, error) {
-	// Get all unique load operator (defined as a unique combination of operator name, integration,
+	// Get all unique load operator (defined as a unique combination of operator name, resource,
 	// and operator spec) that has an edge (in `from_id` or `to_id`) in a DAG
 	// belonging to the specified workflow in order of when the operator was last modified.
 	query := `
 	SELECT
+		operator.id AS operator_id,
 		operator.name AS operator_name, 
 		workflow_dag.created_at AS modified_at,
-		integration.name AS integration_name,
+		resource.name AS resource_name,
 		CAST(json_extract(operator.spec, '$.load') AS BLOB) AS spec 	
 	FROM 
-		operator, integration, workflow_dag_edge, workflow_dag
+		operator, resource, workflow_dag_edge, workflow_dag
 	WHERE (
 		json_extract(operator.spec, '$.type')='load' AND 
-		integration.id = json_extract(operator.spec, '$.load.integration_id') AND
+		resource.id = json_extract(operator.spec, '$.load.integration_id') AND
 		( 
 			workflow_dag_edge.from_id = operator.id OR 
 			workflow_dag_edge.to_id = operator.id 
@@ -232,7 +284,7 @@ func (*operatorReader) GetDistinctLoadOPsByWorkflow(
 	)
 	GROUP BY
 		operator.name,
-		integration.name,
+		resource.name,
 		json_extract(operator.spec, '$.load')	
 	ORDER BY modified_at DESC;
 	`
@@ -243,9 +295,9 @@ func (*operatorReader) GetDistinctLoadOPsByWorkflow(
 	return operators, err
 }
 
-func (*operatorReader) GetExtractAndLoadOPsByIntegration(
+func (*operatorReader) GetExtractAndLoadOPsByResource(
 	ctx context.Context,
-	integrationID uuid.UUID,
+	resourceID uuid.UUID,
 	DB database.Database,
 ) ([]models.Operator, error) {
 	query := fmt.Sprintf(
@@ -256,20 +308,20 @@ func (*operatorReader) GetExtractAndLoadOPsByIntegration(
 			OR json_extract(spec, '$.extract.integration_id') = $2`,
 		models.OperatorCols(),
 	)
-	args := []interface{}{integrationID, integrationID}
+	args := []interface{}{resourceID, resourceID}
 
 	return getOperators(ctx, DB, query, args...)
 }
 
 // This currently only works with relational and S3 loads!
-func (*operatorReader) GetLoadOPsByWorkflowAndIntegration(
+func (*operatorReader) GetLoadOPsByWorkflowAndResource(
 	ctx context.Context,
 	workflowID uuid.UUID,
-	integrationID uuid.UUID,
+	resourceID uuid.UUID,
 	objectName string,
 	DB database.Database,
 ) ([]models.Operator, error) {
-	// Get all load operators where table=objectName & integration_id=integrationId
+	// Get all load operators where table=objectName & integration_id=resourceId
 	// and has an edge (in `from_id` or `to_id`) in a DAG belonging to the specified
 	// workflow.
 	query := fmt.Sprintf(`
@@ -298,14 +350,14 @@ func (*operatorReader) GetLoadOPsByWorkflowAndIntegration(
 		models.OperatorCols(),
 		operator.LoadType,
 	)
-	args := []interface{}{objectName, integrationID, workflowID}
+	args := []interface{}{objectName, resourceID, workflowID}
 
 	return getOperators(ctx, DB, query, args...)
 }
 
-func (*operatorReader) GetLoadOPsByIntegration(
+func (*operatorReader) GetLoadOPsByResource(
 	ctx context.Context,
-	integrationID uuid.UUID,
+	resourceID uuid.UUID,
 	objectName string,
 	DB database.Database,
 ) ([]models.Operator, error) {
@@ -316,7 +368,7 @@ func (*operatorReader) GetLoadOPsByIntegration(
 			OR json_extract(spec, '$.extract.integration_id') = $2`,
 		models.OperatorCols(),
 	)
-	args := []interface{}{integrationID, integrationID}
+	args := []interface{}{resourceID, resourceID}
 
 	return getOperators(ctx, DB, query, args...)
 }
@@ -325,7 +377,7 @@ func (*operatorReader) GetLoadOPSpecsByOrg(ctx context.Context, orgID string, DB
 	// Get the artifact id, artifact name, operator id, workflow name, workflow id,
 	// and operator spec of all load operators (`to_id`s) and the artifact(s) going to
 	// that operator (`from_id`s; these artifacts are the objects that will be saved
-	// by the operator to the integration) in the workflows owned by the specified
+	// by the operator to the resource) in the workflows owned by the specified
 	// organization.
 	query := fmt.Sprintf(
 		`SELECT DISTINCT 
@@ -333,7 +385,9 @@ func (*operatorReader) GetLoadOPSpecsByOrg(ctx context.Context, orgID string, DB
 			artifact.name AS artifact_name, 
 		 	operator.id AS load_operator_id, 
 			workflow.name AS workflow_name, 
-			workflow.id AS workflow_id, operator.spec 
+			workflow.id AS workflow_id, 
+			workflow_dag_edge.workflow_dag_id AS workflow_dag_id,
+			operator.spec 
 		 FROM 
 		 	app_user, workflow, workflow_dag, 
 			workflow_dag_edge, operator, artifact
@@ -403,9 +457,9 @@ func (*operatorReader) GetRelationBatch(
 	return relations, err
 }
 
-func (*operatorReader) GetByEngineIntegrationID(
+func (*operatorReader) GetByEngineResourceID(
 	ctx context.Context,
-	integrationID uuid.UUID,
+	resourceID uuid.UUID,
 	DB database.Database,
 ) ([]models.Operator, error) {
 	workflow_condition_fragments := make([]string, 0, len(shared.ServiceToEngineConfigField))
@@ -455,7 +509,7 @@ func (*operatorReader) GetByEngineIntegrationID(
 		workflow_condition,
 		operator_condition,
 	)
-	args := []interface{}{integrationID}
+	args := []interface{}{resourceID}
 
 	var results []models.Operator
 	err := DB.Query(ctx, &results, query, args...)
@@ -700,6 +754,12 @@ func getOperatorNodes(ctx context.Context, DB database.Database, query string, a
 	var operatorNodes []views.OperatorNode
 	err := DB.Query(ctx, &operatorNodes, query, args...)
 	return operatorNodes, err
+}
+
+func getOperatorWithArtifactNodes(ctx context.Context, DB database.Database, query string, args ...interface{}) ([]views.OperatorWithArtifactNode, error) {
+	var mergedNodes []views.OperatorWithArtifactNode
+	err := DB.Query(ctx, &mergedNodes, query, args...)
+	return mergedNodes, err
 }
 
 func getOperator(ctx context.Context, DB database.Database, query string, args ...interface{}) (*models.Operator, error) {

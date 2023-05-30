@@ -2,7 +2,7 @@ import uuid
 from typing import Any
 
 import pandas as pd
-from aqueduct.models.integration import BaseResource
+from aqueduct.models.resource import BaseResource
 
 from aqueduct import Client, Flow
 
@@ -15,30 +15,30 @@ class DataValidator:
     """Tests can request an instance of this class as a fixture, and use it to validate published flow runs."""
 
     _client: Client
-    _integration: BaseResource
+    _resource: BaseResource
 
-    def __init__(self, client: Client, integration: BaseResource):
+    def __init__(self, client: Client, resource: BaseResource):
         self._client = client
-        self._integration = integration
+        self._resource = resource
 
     def check_saved_artifact_data(
         self, flow: Flow, artifact_id: uuid.UUID, expected_data: Any
     ) -> None:
-        """Checks that the given artifact was saved by the flow, and the data integration has the expected data.
+        """Checks that the given artifact was saved by the flow, and the data resource has the expected data.
 
         The exact destination of the artifact is tracked internally by the test suite.
         """
         assert expected_data is not None
         saved_object_identifier = fetch_and_validate_saved_object_identifier(
-            self._integration, flow, artifact_id
+            self._resource, flow, artifact_id
         )
 
-        # Verify the artifact's actual data state in the data integration.
-        saved_data = extract(self._integration, saved_object_identifier).get()
+        # Verify the artifact's actual data state in the data resource.
+        saved_data = extract(self._resource, saved_object_identifier).get()
         if not isinstance(saved_data, pd.DataFrame):
             raise Exception(
                 "This method is expected to only deal with pandas Dataframe types."
-                "For more extensive third-party type coverage, please write data integration "
+                "For more extensive third-party type coverage, please write data resource "
                 "tests instead."
             )
         assert isinstance(saved_data, pd.DataFrame)
@@ -48,10 +48,10 @@ class DataValidator:
             raise Exception("Mismatch between expected and actual saved data.")
 
     def check_saved_artifact_data_does_not_exist(self, artifact_id: uuid.UUID) -> None:
-        """Checks that the data integration no longer has the artifact's data stored."""
+        """Checks that the data resource no longer has the artifact's data stored."""
         saved_object_identifier = artifact_id_to_saved_identifier[str(artifact_id)]
         try:
-            extract(self._integration, saved_object_identifier)
+            extract(self._resource, saved_object_identifier)
         except Exception:
             return
 

@@ -80,6 +80,8 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     SPARK = "Spark"
     AWS = "AWS"
     ECR = "ECR"
+    FILESYSTEM = "Filesystem"
+    GAR = "GAR"
 
 
 class CloudProviderType(str, Enum, metaclass=MetaEnum):

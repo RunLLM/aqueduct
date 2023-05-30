@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib"
 	databricks_sdk "github.com/databricks/databricks-sdk-go"
 	"github.com/databricks/databricks-sdk-go/service/clusters"
@@ -72,7 +73,7 @@ func CreateJob(
 			InstanceProfileArn: s3InstanceProfileArn,
 		},
 	}
-	if instancePoolID != nil {
+	if instancePoolID != nil && *instancePoolID != "" {
 		jobCluster.InstancePoolId = *instancePoolID
 	} else {
 		jobCluster.NodeTypeId = DefaultNodeTypeID
@@ -117,7 +118,10 @@ func CreateTask(
 		DependsOn:     taskDependenciesList,
 		SparkPythonTask: &jobs.SparkPythonTask{
 			PythonFile: pythonFilePath,
-			Parameters: []string{"--spec", specStr},
+			Parameters: []string{
+				"--spec", specStr,
+				"--version-tag", config.VersionTag(),
+			},
 		},
 		Libraries: []libraries.Library{
 			{

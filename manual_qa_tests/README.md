@@ -10,7 +10,7 @@ Simply run from your root `aqueduct` directory with `python3 manual_ui_tests/ini
 ## Usage
 To run with more flexibility, configure the following commandline flags:
 * `--addr`: the server address
-* `--data-integration`: the data integration name. The data integration need to be pre-configured before running the script.
+* `--data-resource`: the data integration name. The data integration need to be pre-configured before running the script.
 * `--api-key`: the API key if different from `aqueduct.api_key()` by any reason.
 * `--example-notebooks`: also run all example notebooks
 * `--slack-token`: The Slack App bot token to integrate with slack notifications.
@@ -23,12 +23,12 @@ To run with more flexibility, configure the following commandline flags:
     * There should be **9** workflows. **4** Succeeded, **2** Warning, **2** Failed, and **1** Registered if **not** using `-example-notebooks`
 * **Notifications**: There should be **2** notifications for failed workflow.
 * **Workflow Details** Page: Each page should reflect the **workflow description**. Pay attention to any noted **sidesheets** behaviors in the description.
-* **Integration** Page:
-    * There should be **1** *Cloud* integration, **11** *Data* integrations, **6** *Compute* integrations, and **2** *Notifications* integrations.
-    * If you are not using additional integration, `Demo` should be the only available one. If you have passed in slack arguments to `initialize.py`, there should be two.
-* **Integration Details** Page:
+* **Resource** Page:
+    * There should be **1** *Container Registry* integration, **11** *Data* integrations, **6** *Compute* integrations, and **2** *Notifications* integrations.
+    * If you are not using additional integration, `Demo`, `Aqueduct Server`, and `Filesystem` should be the only available ones. If you have passed in slack arguments to `initialize.py`, there should be four (`test_slack_notification`).
+* **Resource Details** Page:
     * In the **Workflows** section of the `Demo` page:
-        * There should be **13** workflows if using `--example-notebooks`
+        * There should be **12** workflows if using `--example-notebooks`
         * There should be **7** workflows if **not** using `--example-notebooks`
     * If you are using `Demo`, there should be **8** tables in **Data** section.
 * **Data** Page: There should be **7** data rows available.

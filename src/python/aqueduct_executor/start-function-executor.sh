@@ -2,6 +2,7 @@
 # NOTE: Keep this in sync with the `start-function-executor.sh` in `/src/dockerfiles/function`.
 
 JOB_SPEC=$1
+VERSION_TAG=$2
 FUNCTION_EXTRACT_PATH=$(python3 -m aqueduct_executor.operators.function_executor.get_extract_path --spec "$JOB_SPEC")
 EXIT_CODE=$?
 if [ $EXIT_CODE != "0" ]; then exit $(($EXIT_CODE)); fi
@@ -18,7 +19,7 @@ then
       if [ $EXIT_CODE != "0" ]; then exit $(($EXIT_CODE)); fi
 fi
 
-python3 -m aqueduct_executor.operators.function_executor.main --spec "$JOB_SPEC"
+python3 -m aqueduct_executor.operators.function_executor.main --spec "$JOB_SPEC" --version-tag "$VERSION_TAG"
 EXIT_CODE=$?
 
 # Exit after cleanup, regardless of execution success / failure.

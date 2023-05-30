@@ -1,22 +1,26 @@
 import { Link, Typography } from '@mui/material';
 import Box from '@mui/material/Box';
 import React, { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 
-import { handleFetchAllWorkflowSummaries } from '../../../reducers/listWorkflowSummaries';
-import { AppDispatch, RootState } from '../../../stores/store';
+import {
+  useDagGetQuery,
+  useDagResultsGetQuery,
+  useWorkflowsGetQuery,
+} from '../../../handlers/AqueductApi';
+import { AppDispatch } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
-import { CheckLevel } from '../../../utils/operators';
-import ExecutionStatus, { LoadingStatusEnum } from '../../../utils/shared';
-import { reduceEngineTypes } from '../../../utils/workflows';
+import getPathPrefix from '../../../utils/getPathPrefix';
+import ExecutionStatus from '../../../utils/shared';
+import { getWorkflowEngineTypes } from '../../../utils/workflows';
 import DefaultLayout from '../../layouts/default';
 import { BreadcrumbLink } from '../../layouts/NavBar';
 import {
   PaginatedSearchTable,
-  PaginatedSearchTableData,
-  PaginatedSearchTableRow,
+  SortType,
 } from '../../tables/PaginatedSearchTable';
 import { LayoutProps } from '../types';
+import { useWorkflowNodes, useWorkflowNodesResults } from '../workflow/id/hook';
 import CheckItem from './components/CheckItem';
 import ExecutionStatusLink from './components/ExecutionStatusLink';
 import MetricItem from './components/MetricItem';
@@ -34,21 +38,18 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     document.title = 'Workflows | Aqueduct';
   }, []);
 
-  useEffect(() => {
-    dispatch(handleFetchAllWorkflowSummaries({ apiKey: user.apiKey }));
-  }, [dispatch, user.apiKey]);
-
-  const allWorkflows = useSelector(
-    (state: RootState) => state.listWorkflowReducer
-  );
+  const {
+    data: workflowData,
+    error: workflowError,
+    isLoading: workflowLoading,
+  } = useWorkflowsGetQuery({
+    apiKey: user.apiKey,
+  });
 
   // If we are still loading the workflows, don't return a page at all.
   // Otherwise, we briefly return a page saying there are no workflows before
   // the workflows snap into place.
-  if (
-    allWorkflows.loadingStatus.loading === LoadingStatusEnum.Loading ||
-    allWorkflows.loadingStatus.loading === LoadingStatusEnum.Initial
-  ) {
+  if (workflowLoading) {
     return null;
   }
 
@@ -62,151 +63,247 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     </Typography>
   );
 
-  const workflows = allWorkflows.workflows;
-
-  /**
-   * Iterate through workflows array and map each element to a WorkflowTableRow object.
-   */
-  const workflowElements: PaginatedSearchTableRow[] = workflows.map(
-    (workflow) => {
-      const engines = reduceEngineTypes(
-        workflow.engine,
-        workflow.operator_engines.map((x) => (x ? x : workflow.engine))
-      );
-
-      let metrics = [];
-      if (workflow?.metrics) {
-        metrics = workflow.metrics.map((metric) => {
-          return {
-            metricId: metric.id,
-            name: metric.name,
-            value: metric.result?.content_serialized ?? '',
-            status:
-              metric.result?.exec_state?.status ?? ExecutionStatus.Unknown,
-          };
-        });
-      }
-
-      let containsWarning = false;
-      let checks = [];
-      if (workflow.checks) {
-        checks = workflow.checks.map((check) => {
-          const value =
-            check.result?.exec_state.status === 'succeeded' ? 'True' : 'False';
-          const level = check.spec?.check?.level ?? CheckLevel.Warning;
-          const status =
-            check.result?.exec_state?.status ?? ExecutionStatus.Unknown;
-
-          if (
-            status === ExecutionStatus.Failed &&
-            level === CheckLevel.Warning
-          ) {
-            containsWarning = true;
-          }
-
-          return {
-            checkId: check.id,
-            name: check.name,
-            level,
-            timestamp: check.result?.exec_state?.timestamps?.finished_at ?? '',
-            value,
-            status,
-          };
-        });
-      }
-
-      const workflowTableRow: PaginatedSearchTableRow = {
-        name: {
-          name: workflow.name,
-          url: `/workflow/${workflow.id}`,
-          // Show warning badge if there is a warning check
-          status: containsWarning ? ExecutionStatus.Warning : workflow.status,
-        },
-        last_run: new Date(workflow.last_run_at * 1000),
-        engines,
-        metrics,
-        checks,
-      };
-
-      return workflowTableRow;
-    }
-  );
-
   const sortColumns = [
     {
       name: 'Last Run',
-      sortAccessPath: ['last_run'],
+      sortAccessPath: ['Last Run', 'props', 'time'],
     },
     {
       name: 'Name',
-      sortAccessPath: ['name', 'name'],
+      sortAccessPath: ['Name', 'props', 'name'],
     },
     {
       name: 'Engine',
-      sortAccessPath: ['engines', 'engineName'],
+      sortAccessPath: [
+        'Engines',
+        'props',
+        'children',
+        0,
+        'props',
+        'children',
+        'props',
+        'resource',
+      ],
     },
     {
       name: 'Status',
-      sortAccessPath: ['name', 'status'],
+      sortAccessPath: ['Name', 'props', 'status'],
     },
   ];
 
-  const workflowTableData: PaginatedSearchTableData = {
-    schema: {
-      fields: [
-        { name: 'name', type: 'varchar' },
-        { name: 'last_run', displayName: 'Last Run', type: 'varchar' },
-        { name: 'engines', type: 'varchar' },
-        { name: 'metrics', type: 'varchar' },
-        { name: 'checks', type: 'varchar' },
-      ],
-      pandas_version: '1.5.1',
-    },
-    data: workflowElements,
-  };
+  const getLatestDagResult = (dagResults) =>
+    dagResults.reduce(
+      (prev, curr) =>
+        curr.exec_state?.timestamps?.pending_at
+          ? new Date(prev.exec_state?.timestamps?.pending_at) <
+            new Date(curr.exec_state?.timestamps?.pending_at)
+            ? curr
+            : prev
+          : curr,
+      {
+        exec_state: {
+          status: ExecutionStatus.Registered,
+          timestamps: { pending_at: 0 },
+        },
+      }
+    );
+  const LastRunComponent = (row) => {
+    const workflowId = row.id;
 
-  const onGetColumnValue = (row, column) => {
-    let value = row[column.name];
+    const {
+      data: dagResults,
+      error: dagResultsError,
+      isLoading: dagResultsLoading,
+    } = useDagResultsGetQuery({
+      apiKey: user.apiKey,
+      workflowId: workflowId,
+    });
 
-    switch (column.name) {
-      case 'name':
-        const { name, url, status } = value;
-        value = <ExecutionStatusLink name={name} url={url} status={status} />;
-        break;
-      case 'last_run':
-        value = row[column.name].toLocaleString();
-        break;
-      case 'engines': {
-        value = (
-          <Box>
-            {value.map((v, idx) => (
-              <Box
-                mb={value.length > 1 && idx < value.length - 1 ? 1 : 0}
-                key={idx}
-              >
-                {/* We need a box with margins so the chips have space between them. */}
-                <ResourceItem resource={v} />
-              </Box>
-            ))}
-          </Box>
-        );
-        break;
-      }
-      case 'metrics': {
-        value = <MetricItem metrics={value} />;
-        break;
-      }
-      case 'checks': {
-        value = <CheckItem checks={value} />;
-        break;
-      }
-      default: {
-        value = row[column.name];
-        break;
-      }
+    let runTime = 'Not run yet.';
+    let time = 0;
+
+    if (!dagResultsLoading && !dagResultsError && dagResults.length > 0) {
+      const latestDagResult = getLatestDagResult(dagResults);
+      time = new Date(
+        latestDagResult.exec_state?.timestamps?.pending_at
+      ).getTime();
+      runTime = new Date(
+        latestDagResult.exec_state?.timestamps?.pending_at
+      ).toLocaleString();
     }
 
-    return value;
+    return <Typography time={time}>{runTime}</Typography>;
+  };
+
+  const columnAction = {
+    Name: (row) => {
+      const workflowId = row.id;
+      const url = `${getPathPrefix()}/workflow/${workflowId}`;
+
+      const {
+        data: dagResults,
+        error: dagResultsError,
+        isLoading: dagResultsLoading,
+      } = useDagResultsGetQuery({
+        apiKey: user.apiKey,
+        workflowId: workflowId,
+      });
+      let status = ExecutionStatus.Unknown;
+
+      if (!dagResultsLoading && !dagResultsError && dagResults.length > 0) {
+        const latestDagResult = getLatestDagResult(dagResults);
+        if (latestDagResult) {
+          status = latestDagResult.exec_state.status;
+        }
+      }
+
+      return <ExecutionStatusLink name={row.name} url={url} status={status} />;
+    },
+    'Last Run': LastRunComponent,
+    Engines: (row) => {
+      const workflowId = row.id;
+
+      const {
+        data: dagResults,
+        error: dagResultsError,
+        isLoading: dagResultsLoading,
+      } = useDagResultsGetQuery({
+        apiKey: user.apiKey,
+        workflowId: workflowId,
+      });
+
+      let latestDagId;
+      if (!dagResultsLoading && !dagResultsError && dagResults.length > 0) {
+        const latestDagResult = getLatestDagResult(dagResults);
+        latestDagId = latestDagResult.dag_id;
+      }
+      const {
+        data: dag,
+        error: dagError,
+        isLoading: dagLoading,
+      } = useDagGetQuery(
+        {
+          apiKey: user.apiKey,
+          workflowId: workflowId,
+          dagId: latestDagId,
+        },
+        {
+          skip: dagResultsLoading && latestDagId,
+        }
+      );
+
+      const nodes = useWorkflowNodes(user.apiKey, workflowId, latestDagId);
+
+      let engines = ['Unknown'];
+      if (!dagLoading && !dagError && dag) {
+        const workflowDag = structuredClone(dag);
+        workflowDag.operators = nodes.operators;
+        engines = getWorkflowEngineTypes(workflowDag);
+      }
+
+      return (
+        <Box>
+          {engines.map((v, idx) => (
+            <Box
+              mb={engines.length > 1 && idx < engines.length - 1 ? 1 : 0}
+              key={idx}
+            >
+              {/* We need a box with margins so the chips have space between them. */}
+              <ResourceItem resource={v} />
+            </Box>
+          ))}
+        </Box>
+      );
+    },
+    Metrics: (row) => {
+      const workflowId = row.id;
+
+      const {
+        data: dagResults,
+        error: dagResultsError,
+        isLoading: dagResultsLoading,
+      } = useDagResultsGetQuery({
+        apiKey: user.apiKey,
+        workflowId: workflowId,
+      });
+
+      let latestDagResultId;
+      let latestDagId;
+      if (!dagResultsLoading && !dagResultsError && dagResults.length > 0) {
+        const latestDagResult = getLatestDagResult(dagResults);
+        latestDagResultId = latestDagResult.id;
+        latestDagId = latestDagResult.dag_id;
+      }
+
+      const nodes = useWorkflowNodes(user.apiKey, workflowId, latestDagId);
+      const nodesResults = useWorkflowNodesResults(
+        user.apiKey,
+        workflowId,
+        latestDagResultId
+      );
+
+      const metricNodes = Object.values(nodes.operators)
+        .filter((op) => op.spec.type === 'metric')
+        .map((op) => {
+          const artifactId = op.outputs[0]; // Assuming there is only one output artifact
+          return {
+            metricId: op.id,
+            name: op.name,
+            value: nodesResults.artifacts[artifactId]?.content_serialized,
+            status: nodesResults.artifacts[artifactId]?.exec_state?.status,
+          };
+        });
+      return <MetricItem metrics={metricNodes} />;
+    },
+    Checks: (row) => {
+      const workflowId = row.id;
+
+      const {
+        data: dagResults,
+        error: dagResultsError,
+        isLoading: dagResultsLoading,
+      } = useDagResultsGetQuery({
+        apiKey: user.apiKey,
+        workflowId: workflowId,
+      });
+
+      let latestDagResultId;
+      let latestDagId;
+      if (!dagResultsLoading && !dagResultsError && dagResults.length > 0) {
+        const latestDagResult = getLatestDagResult(dagResults);
+        latestDagResultId = latestDagResult.id;
+        latestDagId = latestDagResult.dag_id;
+      }
+
+      const nodes = useWorkflowNodes(user.apiKey, workflowId, latestDagId);
+      const nodesResults = useWorkflowNodesResults(
+        user.apiKey,
+        workflowId,
+        latestDagResultId
+      );
+
+      const checkNodes = Object.values(nodes.operators)
+        .filter((op) => op.spec.type === 'check')
+        .map((op) => {
+          const artifactId = op.outputs[0]; // Assuming there is only one output artifact
+          return {
+            checkId: op.id,
+            name: op.name,
+            status: nodesResults.artifacts[artifactId]?.exec_state?.status,
+            level: op.spec.check.level,
+            value: nodesResults.artifacts[artifactId]?.content_serialized,
+            timestamp:
+              nodesResults.artifacts[artifactId]?.exec_state?.timestamps
+                ?.finished_at,
+          };
+        });
+      return <CheckItem checks={checkNodes} />;
+    },
+  };
+  const columns = Object.keys(columnAction);
+
+  const onGetColumnValue = (row, column) => {
+    return columnAction[column](row);
   };
 
   const onChangeRowsPerPage = (rowsPerPage) => {
@@ -228,14 +325,19 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       breadcrumbs={[BreadcrumbLink.HOME, BreadcrumbLink.WORKFLOWS]}
       user={user}
     >
-      {workflowTableData.data.length > 0 ? (
+      {workflowData && workflowData.length > 0 ? (
         <PaginatedSearchTable
-          data={workflowTableData}
+          data={workflowData}
+          columns={columns}
           searchEnabled={true}
           onGetColumnValue={onGetColumnValue}
           onChangeRowsPerPage={onChangeRowsPerPage}
           savedRowsPerPage={getRowsPerPage()}
           sortColumns={sortColumns}
+          defaultSortConfig={{
+            sortColumn: sortColumns[0],
+            sortType: SortType.Descending,
+          }}
         />
       ) : (
         <Box>{noItemsMessage}</Box>

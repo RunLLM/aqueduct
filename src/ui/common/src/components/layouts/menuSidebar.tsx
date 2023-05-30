@@ -13,11 +13,11 @@ import Divider from '@mui/material/Divider';
 import React, { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
-import UserProfile from 'src/utils/auth';
 
+import { useEnvironmentGetQuery } from '../../handlers/AqueductApi';
 import { AppDispatch } from '../../stores/store';
+import UserProfile from '../../utils/auth';
 import { getPathPrefix } from '../../utils/getPathPrefix';
-import { apiAddress } from '../hooks/useAqueductConsts';
 import {
   menuSidebar,
   menuSidebarContent,
@@ -112,7 +112,7 @@ const SidebarButton: React.FC<SidebarButtonProps> = ({
 /**
  * The `MenuSidebar` is the core sidebar that we include throughout our UI. It
  * is pinned on the left-hand side of every page in our UI, and it includes
- * quick links to core abstractions in our system (workflows, integrations, etc).
+ * quick links to core abstractions in our system (workflows, resources, etc).
  */
 const MenuSidebar: React.FC<{
   onSidebarItemClicked?: (name: string) => void;
@@ -120,25 +120,18 @@ const MenuSidebar: React.FC<{
 }> = ({ onSidebarItemClicked, user }) => {
   const dispatch: AppDispatch = useDispatch();
   const [currentPage, setCurrentPage] = useState(undefined);
-  const [versionNumber, setVersionNumber] = useState('');
   const location = useLocation();
+
+  const { data } = useEnvironmentGetQuery(
+    { apiKey: user.apiKey },
+    {
+      skip: !user?.apiKey,
+    }
+  );
 
   useEffect(() => {
     setCurrentPage(location.pathname);
   }, [dispatch, location.pathname]);
-
-  useEffect(() => {
-    async function fetchVersionNumber() {
-      const res = await fetch(`${apiAddress}/api/version`, {
-        method: 'GET',
-        headers: { 'api-key': user.apiKey },
-      });
-      const versionNumberResponse = await res.json();
-      setVersionNumber(versionNumberResponse.version);
-    }
-
-    fetchVersionNumber();
-  }, [user.apiKey]);
 
   const pathPrefix = getPathPrefix();
   return (
@@ -270,7 +263,7 @@ const MenuSidebar: React.FC<{
         </Box>
         <Box marginLeft="14px" marginBottom="16px">
           <Typography variant="caption" sx={{ color: 'white' }}>
-            {versionNumber.length > 0 ? `v${versionNumber}` : ''}
+            {data?.version ? `v${data.version}` : ''}
           </Typography>
         </Box>
       </Box>

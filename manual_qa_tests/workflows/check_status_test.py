@@ -8,12 +8,6 @@ DESCRIPTION = """
         * warning_level_fail which shows warning icon.
         * error_level_pass which shows success icon.
     * Workflow Details Page:
-        * Error message should appear below workflow header:
-            A workflow-level error occurred!
-            Error executing workflow
-            Operator execution failed due to user error.
-
-            <stack trace>
         * Two DAGs should appear - one for success and one for failure cases.
             * Success Test Dag:
                 - test_pass operator (succeeded) -> test_pass_artifact (created) -> warning_level_pass (passed)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/aqueducthq/aqueduct/lib/models/utils"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/google/uuid"
 )
 
 type StorageType string
@@ -28,8 +29,12 @@ type StorageConfigPublic struct {
 	FileConfig      *FileConfig      `json:"fileConfig,omitempty"`
 	GCSConfigPublic *GCSConfigPublic `json:"gcsConfig,omitempty"`
 
-	// Empty means that the local filesystem is being used as storage.
-	IntegrationName string `json:"integration_name,omitempty"`
+	// These fields do not exist on the config file, but are pulled in from the database.
+	// Empty fields here mean that the local filesystem is being used as storage.
+	ResourceID   uuid.UUID       `json:"resource_id,omitempty"`
+	ResourceName string          `json:"resource_name,omitempty"`
+	ConnectedAt  int64           `json:"connected_at,omitempty"`
+	ExecState    *ExecutionState `json:"exec_state,omitempty"`
 }
 
 type S3Config struct {

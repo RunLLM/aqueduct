@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 	"strconv"
-	"time"
 
+	"github.com/aqueducthq/aqueduct/config"
 	"github.com/aqueducthq/aqueduct/lib"
 	"github.com/aqueducthq/aqueduct/lib/k8s"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
@@ -19,14 +19,15 @@ import (
 )
 
 const (
-	jobSpecEnvVarKey = "JOB_SPEC"
+	jobSpecEnvVarKey    = "JOB_SPEC"
+	versionTagEnvVarKey = "VERSION_TAG"
 )
 
 type k8sJobManager struct {
 	// When we initialize k8sJobManager, k8sClient is always set to nil. This is because
-	// in case of dynamic k8s integration, when we initialize the job manager, the k8s
+	// in case of dynamic k8s resource, when we initialize the job manager, the k8s
 	// cluster may not exist yet, so k8s client creation will fail. We defer the initialization
-	// to Launch and Poll, at which point regardless of dynamic or static k8s integration, we expect
+	// to Launch and Poll, at which point regardless of dynamic or static k8s resource, we expect
 	// the k8s client creation to succeed.
 	k8sClient *kubernetes.Clientset
 	conf      *K8sJobManagerConfig
@@ -47,9 +48,6 @@ func setupNamespaceAndSecrets(k8sClient *kubernetes.Clientset, conf *K8sJobManag
 		if _, secretExistsErr := k8s.GetSecret(context.Background(), k8s.AwsCredentialsSecretName, k8sClient); secretExistsErr != nil {
 			return errors.Wrap(err, "Error while creating K8s Secrets")
 		}
-	} else {
-		log.Error("Successfully created K8s Secrets, waiting 10 seconds before proceeding...")
-		time.Sleep(10 * time.Second)
 	}
 
 	return nil
@@ -97,6 +95,11 @@ func (j *k8sJobManager) Launch(ctx context.Context, name string, spec Spec) JobE
 	}
 
 	environmentVariables := map[string]string{}
+	versionTag := config.VersionTag()
+	if versionTag != "" {
+		environmentVariables[versionTagEnvVarKey] = versionTag
+	}
+
 	var image *operator.ImageConfig
 
 	if spec.Type() == FunctionJobType {
@@ -347,16 +350,16 @@ func mapJobTypeToDockerImage(spec Spec, launchGpu bool, cudaVersion operator.Cud
 
 	case AuthenticateJobType:
 		authenticateSpec := spec.(*AuthenticateSpec)
-		return mapIntegrationServiceToDockerImage(authenticateSpec.ConnectorName)
+		return mapResourceServiceToDockerImage(authenticateSpec.ConnectorName)
 	case ExtractJobType:
 		extractSpec := spec.(*ExtractSpec)
-		return mapIntegrationServiceToDockerImage(extractSpec.ConnectorName)
+		return mapResourceServiceToDockerImage(extractSpec.ConnectorName)
 	case LoadJobType:
 		loadSpec := spec.(*LoadSpec)
-		return mapIntegrationServiceToDockerImage(loadSpec.ConnectorName)
+		return mapResourceServiceToDockerImage(loadSpec.ConnectorName)
 	case DiscoverJobType:
 		discoverSpec := spec.(*DiscoverSpec)
-		return mapIntegrationServiceToDockerImage(discoverSpec.ConnectorName)
+		return mapResourceServiceToDockerImage(discoverSpec.ConnectorName)
 	case ParamJobType:
 		return ParameterDockerImage, nil
 	case SystemMetricJobType:
@@ -366,7 +369,7 @@ func mapJobTypeToDockerImage(spec Spec, launchGpu bool, cudaVersion operator.Cud
 	}
 }
 
-func mapIntegrationServiceToDockerImage(service shared.Service) (string, error) {
+func mapResourceServiceToDockerImage(service shared.Service) (string, error) {
 	switch service {
 	case shared.Postgres, shared.Redshift:
 		return PostgresConnectorDockerImage, nil
@@ -381,7 +384,7 @@ func mapIntegrationServiceToDockerImage(service shared.Service) (string, error) 
 	case shared.S3:
 		return S3ConnectorDockerImage, nil
 	default:
-		return "", errors.Newf("Unknown integration service provided %v", service)
+		return "", errors.Newf("Unknown resource service provided %v", service)
 	}
 }
 

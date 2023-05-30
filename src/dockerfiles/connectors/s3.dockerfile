@@ -1,4 +1,4 @@
-FROM aqueducthq/base_connector:0.3.1
+FROM aqueducthq/base_connector:0.3.4
 
 MAINTAINER Aqueduct <hello@aqueducthq.com> version: 0.1
 
@@ -9,4 +9,4 @@ RUN pip3 install pyarrow tensorflow
 
 ENV PYTHONUNBUFFERED 1
 
-CMD python3 -m aqueduct_executor.operators.connectors.data.main --spec "$JOB_SPEC"
+CMD python3 -m aqueduct_executor.operators.connectors.data.main --spec "$JOB_SPEC" --version-tag "$VERSION_TAG"
