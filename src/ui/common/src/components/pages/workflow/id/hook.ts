@@ -198,11 +198,11 @@ export function useLatestDagResultOrDag(apiKey: string, workflowId: string) {
     apiKey: apiKey,
     workflowId: workflowId,
   });
-  
-  const latestDagResult = getLatestDagResult(dagResults ?? []) // undefined if not available
- 
+
+  const latestDagResult = getLatestDagResult(dagResults ?? []); // undefined if not available
+
   const dagIdFromLatestDagResult = latestDagResult?.dag_id;
-  
+
   const {
     data: dags,
     error: dagsError,

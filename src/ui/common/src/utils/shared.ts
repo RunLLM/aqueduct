@@ -79,14 +79,13 @@ export function getLatestDagResult(
   dagResults: DagResultResponse[]
 ): DagResultResponse {
   if (dagResults && dagResults.length > 0) {
-    return dagResults.reduce(
-      (prev, curr) =>
-        curr.exec_state?.timestamps?.pending_at
-          ? new Date(prev.exec_state?.timestamps?.pending_at) <
-            new Date(curr.exec_state?.timestamps?.pending_at)
-            ? curr
-            : prev
-          : curr
+    return dagResults.reduce((prev, curr) =>
+      curr.exec_state?.timestamps?.pending_at
+        ? new Date(prev.exec_state?.timestamps?.pending_at) <
+          new Date(curr.exec_state?.timestamps?.pending_at)
+          ? curr
+          : prev
+        : curr
     );
   }
 }

@@ -143,8 +143,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         workflowId
       );
 
-      const latestDagId = latestDagResult?.dag_id ?? noRunDag?.id
-
+      const latestDagId = latestDagResult?.dag_id ?? noRunDag?.id;
 
       const {
         data: dag,
@@ -165,7 +164,9 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
 
       let engines = ['Unknown'];
       if (dag || noRunDag) {
-        const workflowDag = noRunDag? structuredClone(noRunDag) : structuredClone(dag);
+        const workflowDag = noRunDag
+          ? structuredClone(noRunDag)
+          : structuredClone(dag);
         workflowDag.operators = nodes.operators;
         engines = getWorkflowEngineTypes(workflowDag);
       }
@@ -192,8 +193,8 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         workflowId
       );
 
-      const latestDagResultId = latestDagResult?.id 
-      const latestDagId = latestDagResult?.dag_id ?? dag?.id
+      const latestDagResultId = latestDagResult?.id;
+      const latestDagId = latestDagResult?.dag_id ?? dag?.id;
 
       const nodes = useWorkflowNodes(user.apiKey, workflowId, latestDagId);
       const nodesResults = useWorkflowNodesResults(
@@ -225,8 +226,8 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         workflowId
       );
 
-      const latestDagResultId = latestDagResult?.id 
-      const latestDagId = latestDagResult?.dag_id ?? dag?.id
+      const latestDagResultId = latestDagResult?.id;
+      const latestDagId = latestDagResult?.dag_id ?? dag?.id;
 
       const nodes = useWorkflowNodes(user.apiKey, workflowId, latestDagId);
       const nodesResults = useWorkflowNodesResults(
