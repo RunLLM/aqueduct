@@ -126,7 +126,7 @@ func (dag *workflowDagImpl) Link() string {
 
 func (dag *workflowDagImpl) ResultLink() string {
 	return fmt.Sprintf(
-		"%s/workflow/%s?workflowDagResultId=%s",
+		"%s/workflow/%s/result/%s",
 		dag.displayIP,
 		dag.ID(),
 		dag.ResultID(),
