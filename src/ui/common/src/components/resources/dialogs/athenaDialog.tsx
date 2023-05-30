@@ -14,6 +14,7 @@ import { readCredentialsFile } from './bigqueryDialog';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { ResourceFileUploadField } from './ResourceFileUploadField';
 import { ResourceTextInputField } from './ResourceTextInputField';
+import { requiredAtCreate } from './schema';
 
 enum AWSCredentialType {
   AccessKey = 'access_key',
@@ -33,15 +34,27 @@ const Placeholders: AthenaConfig = {
   output_location: 's3://bucket/path/to/folder/',
 };
 
-export const AthenaDialog: React.FC<ResourceDialogProps> = ({
-  editMode = false,
+export const AthenaDialog: React.FC<ResourceDialogProps<AthenaConfig>> = ({
+  resourceToEdit,
 }) => {
+  const initialAccessKeyType = resourceToEdit?.config_file_path
+    ? AWSCredentialType.ConfigFilePath
+    : resourceToEdit?.config_file_content
+    ? AWSCredentialType.ConfigFileContent
+    : AWSCredentialType.AccessKey;
   const [fileData, setFileData] = useState<FileData | null>(null);
   // Need state variable to change tabs, as the formContext doesn't change as readily.
-  const [currentTab, setCurrentTab] = useState(AWSCredentialType.AccessKey);
+  const [currentTab, setCurrentTab] = useState(initialAccessKeyType);
   const { setValue, register } = useFormContext();
+  if (resourceToEdit) {
+    Object.entries(resourceToEdit).forEach(([k, v]) => {
+      register(k, { value: v });
+    });
+  }
 
-  register('type', { value: currentTab, required: true });
+  const editMode = !!resourceToEdit;
+
+  register('type', { value: initialAccessKeyType, required: true });
 
   const setFile = (fileData: FileData | null) => {
     // Update the react-hook-form value
@@ -225,18 +238,26 @@ export const AthenaDialog: React.FC<ResourceDialogProps> = ({
 // When using credentials file, also need:
 // - file path and file content
 // - config_file_profile
-export function getAthenaValidationSchema() {
+export function getAthenaValidationSchema(editMode: boolean) {
   return Yup.object().shape({
     type: Yup.string().required('Please select a credential type'),
     database: Yup.string().required('Please enter a database name'),
     output_location: Yup.string().required('Please enter an output location'),
     access_key_id: Yup.string().when('type', {
       is: 'access_key',
-      then: Yup.string().required('Please enter an access key id'),
+      then: requiredAtCreate(
+        Yup.string(),
+        editMode,
+        'Please enter an access key id'
+      ),
     }),
     secret_access_key: Yup.string().when('type', {
       is: 'access_key',
-      then: Yup.string().required('Please enter a secret access key'),
+      then: requiredAtCreate(
+        Yup.string(),
+        editMode,
+        'Please enter a secret access key'
+      ),
     }),
     region: Yup.string().when('type', {
       is: 'access_key',
@@ -248,11 +269,15 @@ export function getAthenaValidationSchema() {
     }),
     config_file_path: Yup.string().when('type', {
       is: 'config_file_path',
-      then: Yup.string().required('Please enter a config'),
+      then: requiredAtCreate(Yup.string(), editMode, 'Please enter a config'),
     }),
     config_file_content: Yup.string().when('type', {
       is: 'config_file_content',
-      then: Yup.string().required('Please upload a config file.'),
+      then: requiredAtCreate(
+        Yup.string(),
+        editMode,
+        'Please upload a config file.'
+      ),
     }),
   });
 }

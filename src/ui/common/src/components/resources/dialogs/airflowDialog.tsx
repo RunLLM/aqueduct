@@ -6,6 +6,7 @@ import * as Yup from 'yup';
 import { AirflowConfig, ResourceDialogProps } from '../../../utils/resources';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { ResourceTextInputField } from './ResourceTextInputField';
+import { requiredAtCreate } from './schema';
 
 const Placeholders: AirflowConfig = {
   host: 'http://localhost/api/v1',
@@ -15,12 +16,20 @@ const Placeholders: AirflowConfig = {
   s3_credentials_profile: 'default',
 };
 
-export const AirflowDialog: React.FC<ResourceDialogProps> = ({
-  editMode = false,
+export const AirflowDialog: React.FC<ResourceDialogProps<AirflowConfig>> = ({
+  resourceToEdit,
 }) => {
   const { register, setValue } = useFormContext();
   // we need two different values so we can strip the protocol from the host
   register('host');
+
+  if (resourceToEdit) {
+    Object.entries(resourceToEdit).forEach(([k, v]) => {
+      register(k, { value: v });
+    });
+  }
+
+  const editMode = !!resourceToEdit;
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -97,13 +106,19 @@ export const AirflowDialog: React.FC<ResourceDialogProps> = ({
   );
 };
 
-export function getAirflowValidationSchema() {
+export function getAirflowValidationSchema(editMode: boolean) {
   const validationSchema = Yup.object().shape({
     name: Yup.string().required('Please enter a name.'),
     host: Yup.string().required('Please enter a host url.'),
     username: Yup.string().required('Please enter a username'),
-    password: Yup.string().required('Please enter a password.'),
-    s3_credentials_path: Yup.string().required(
+    password: requiredAtCreate(
+      Yup.string(),
+      editMode,
+      'Please enter a password.'
+    ),
+    s3_credentials_path: requiredAtCreate(
+      Yup.string(),
+      editMode,
       'Please enter an S3 credentials path.'
     ),
     s3_credentials_profile: Yup.string(),

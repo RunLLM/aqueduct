@@ -78,7 +78,6 @@ interface AddResourceListItemProps {
   handleSuccessToastClose: () => void;
   setShowSuccessToast: React.Dispatch<React.SetStateAction<Service>>;
   setShowMigrationDialog: React.Dispatch<React.SetStateAction<boolean>>;
-  dialog: React.FC;
 }
 
 const AddResourceListItem: React.FC<AddResourceListItemProps> = ({
@@ -90,7 +89,6 @@ const AddResourceListItem: React.FC<AddResourceListItemProps> = ({
   handleSuccessToastClose,
   showSuccessToast,
   setShowSuccessToast,
-  dialog,
 }) => {
   const dispatch: AppDispatch = useDispatch();
   const service = svc as Service;
@@ -176,7 +174,7 @@ const AddResourceListItem: React.FC<AddResourceListItemProps> = ({
         {iconWrapper}
         {showDialog && (
           <ResourceDialog
-            validationSchema={resource.validationSchema}
+            validationSchema={resource.validationSchema(false)}
             dialogContent={resource.dialog}
             user={user}
             service={service}

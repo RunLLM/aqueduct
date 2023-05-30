@@ -14,10 +14,11 @@ import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import React, { MouseEventHandler, useEffect, useState } from 'react';
-import { FormProvider, useForm, useFormContext } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import { useDispatch, useSelector } from 'react-redux';
 import * as Yup from 'yup';
 
+import { useResourceWorkflowsGetQuery } from '../../../handlers/AqueductApi';
 import {
   handleConnectToNewResource,
   handleEditResource,
@@ -27,10 +28,12 @@ import { AppDispatch, RootState } from '../../../stores/store';
 import UserProfile from '../../../utils/auth';
 import {
   formatService,
+  FullResourceConfig,
   Resource,
-  ResourceConfig,
   Service,
 } from '../../../utils/resources';
+import { ResourceDialogProps } from '../../../utils/resources';
+import { ResourceConfig } from '../../../utils/resources';
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
 import SupportedResources from '../../../utils/SupportedResources';
 import { ResourceTextInputField } from './ResourceTextInputField';
@@ -42,7 +45,7 @@ type Props = {
   onSuccess: () => void;
   showMigrationDialog?: () => void;
   resourceToEdit?: Resource;
-  dialogContent: React.FC;
+  dialogContent: React.FC<ResourceDialogProps<ResourceConfig>>;
   validationSchema: Yup.ObjectSchema<any>;
 };
 
@@ -78,27 +81,31 @@ const ResourceDialog: React.FC<Props> = ({
     (state: RootState) => state.resourceReducer.editStatus
   );
 
-  const operators = useSelector(
-    (state: RootState) => state.resourceReducer.operators.operators
+  const { data: workflows } = useResourceWorkflowsGetQuery(
+    { apiKey: user.apiKey, resourceId: resourceToEdit?.id },
+    { skip: !resourceToEdit?.id }
   );
 
   const resources = useSelector((state: RootState) =>
     Object.values(state.resourcesReducer.resources)
   );
 
-  const numWorkflows = new Set(operators.map((x) => x.workflow_id)).size;
+  const numWorkflows = workflows?.length ?? 0;
 
   const connectStatus = editMode ? editStatus : connectNewStatus;
 
+  const defaultName = resourceToEdit?.name ?? '';
+  methods.register('name', { value: defaultName });
+
   const onConfirmDialog = (
-    data: ResourceConfig,
+    data: FullResourceConfig,
     user: UserProfile,
     editMode = false,
     resourceId?: string
   ) => {
-    if (!editMode) {
-      for (let i = 0; i < resources.length; i++) {
-        if (data.name === resources[i].name) {
+    for (let i = 0; i < resources.length; i++) {
+      if (data.name === resources[i].name) {
+        if (resourceToEdit?.id && resourceToEdit.id !== resources[i].id) {
           setShouldShowNameError(true);
           return;
         }
@@ -110,6 +117,9 @@ const ResourceDialog: React.FC<Props> = ({
     // Make copy so we can reuse `data`.
     const config = { ...data };
     // remove the name key from data so pydantic doesn't throw error.
+
+    const config = { ...data };
+
     delete config.name;
 
     return editMode
@@ -118,7 +128,7 @@ const ResourceDialog: React.FC<Props> = ({
             apiKey: user.apiKey,
             resourceId: resourceId,
             name: name,
-            config: config,
+              config,
           })
         )
       : dispatch(
@@ -126,7 +136,7 @@ const ResourceDialog: React.FC<Props> = ({
             apiKey: user.apiKey,
             service: service,
             name: name,
-            config: data,
+            config,
           })
         );
   };
@@ -232,7 +242,7 @@ const ResourceDialog: React.FC<Props> = ({
 
             {dialogContent({
               user,
-              editMode,
+              resourceToEdit: resourceToEdit?.config,
               onCloseDialog: handleCloseDialog,
               loading: isLoading(connectStatus),
               disabled: submitDisabled,
@@ -264,9 +274,9 @@ const ResourceDialog: React.FC<Props> = ({
               loading={isLoading(connectStatus)}
               disabled={submitDisabled}
               onSubmit={async () => {
-                await methods.handleSubmit((data, event) => {
+                await methods.handleSubmit((data) => {
                   return onConfirmDialog(
-                    data,
+                    data as FullResourceConfig,
                     user,
                     editMode,
                     resourceToEdit?.id
@@ -291,14 +301,11 @@ type DialogActionButtonProps = {
 };
 
 export const DialogActionButtons: React.FC<DialogActionButtonProps> = ({
-  user,
-  editMode = false,
   onCloseDialog,
   loading,
   disabled,
   onSubmit,
 }) => {
-  const methods = useFormContext();
   return (
     <DialogActions>
       <Button autoFocus onClick={onCloseDialog}>
@@ -306,9 +313,7 @@ export const DialogActionButtons: React.FC<DialogActionButtonProps> = ({
       </Button>
       <LoadingButton
         autoFocus
-        onClick={() => {
-          onSubmit();
-        }}
+        onClick={onSubmit}
         loading={loading}
         disabled={disabled}
       >

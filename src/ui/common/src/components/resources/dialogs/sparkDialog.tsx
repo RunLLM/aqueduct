@@ -11,8 +11,17 @@ const Placeholders: SparkConfig = {
   livy_server_url: 'http://cluster-url.com:8998',
 };
 
-export const SparkDialog: React.FC<ResourceDialogProps> = ({ editMode }) => {
-  const { setValue } = useFormContext();
+export const SparkDialog: React.FC<ResourceDialogProps<SparkConfig>> = ({
+  resourceToEdit,
+}) => {
+  const { register, setValue } = useFormContext();
+  if (resourceToEdit) {
+    Object.entries(resourceToEdit).forEach(([k, v]) => {
+      register(k, { value: v });
+    });
+  }
+
+  const editMode = !!resourceToEdit;
 
   return (
     <Box sx={{ mt: 2 }}>
