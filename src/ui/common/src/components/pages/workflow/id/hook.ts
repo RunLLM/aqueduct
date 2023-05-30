@@ -128,20 +128,11 @@ export function useWorkflowBreadcrumbs(
 
   const pathPrefix = getPathPrefix();
   let workflowLink = `${pathPrefix}/workflow/${workflowId}`;
-  if (dagId || dagResultId) {
-    workflowLink += '?';
-  }
-
-  if (dagId) {
-    workflowLink += `workflowDagId=${dagId}`;
-  }
-
-  if (dagId && dagResultId) {
-    workflowLink += '&';
-  }
 
   if (dagResultId) {
-    workflowLink += `workflowDagResultId=${dagResultId}`;
+    workflowLink += `/result/${dagResultId}`;
+  } else if (dagId) {
+    workflowLink += `/dag/${dagId}`;
   }
 
   return [
