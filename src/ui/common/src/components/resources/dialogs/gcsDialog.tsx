@@ -14,27 +14,37 @@ import {
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { ResourceFileUploadField } from './ResourceFileUploadField';
 import { ResourceTextInputField } from './ResourceTextInputField';
+import { requiredAtCreate } from './schema';
 
 const Placeholders: GCSConfig = {
   bucket: 'aqueduct',
-  use_as_storage: '',
+  use_as_storage: 'true',
 };
 
-interface GCSDialogProps extends ResourceDialogProps {
+interface GCSDialogProps extends ResourceDialogProps<GCSConfig> {
   setMigrateStorage: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 export const GCSDialog: React.FC<GCSDialogProps> = ({
-  editMode,
+  resourceToEdit,
   setMigrateStorage,
 }) => {
   // Setup for the checkbox component.
-  const { control, setValue } = useFormContext();
+  const { control, register, setValue } = useFormContext();
+  const editMode = !!resourceToEdit;
+  if (resourceToEdit) {
+    Object.entries(resourceToEdit).forEach(([k, v]) => {
+      register(k, { value: v });
+    });
+  }
+
+  const initialUseAsStorage = resourceToEdit?.use_as_storage ?? 'true';
+
   const [fileData, setFileData] = useState<FileData | null>(null);
   const { field } = useController({
     control,
     name: 'use_as_storage',
-    defaultValue: 'true',
+    defaultValue: initialUseAsStorage,
     rules: { required: true },
   });
 
@@ -59,7 +69,7 @@ export const GCSDialog: React.FC<GCSDialogProps> = ({
 
   useEffect(() => {
     if (setMigrateStorage) {
-      setMigrateStorage(true);
+      setMigrateStorage(initialUseAsStorage === 'true');
     }
   }, [setMigrateStorage]);
 
@@ -131,18 +141,20 @@ export function readCredentialsFile(
   reader.readAsText(file);
 }
 
-export function getGCSValidationSchema() {
+export function getGCSValidationSchema(editMode: boolean) {
   return Yup.object().shape({
     name: Yup.string().required('Please enter a name'),
     bucket: Yup.string().required('Please enter a bucket name'),
-    service_account_credentials: Yup.string()
-      .transform((value) => {
+    service_account_credentials: requiredAtCreate(
+      Yup.string().transform((value) => {
         if (!value?.data) {
           return null;
         }
 
         return value.data;
-      })
-      .required('Please upload a service account key file.'),
+      }),
+      editMode,
+      'Please upload a service account key file.'
+    ),
   });
 }

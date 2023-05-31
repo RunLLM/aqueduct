@@ -6,16 +6,25 @@ import * as Yup from 'yup';
 import { MongoDBConfig, ResourceDialogProps } from '../../../utils/resources';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { ResourceTextInputField } from './ResourceTextInputField';
+import { requiredAtCreate } from './schema';
 
 const Placeholders: MongoDBConfig = {
   auth_uri: '********',
   database: 'aqueduct-db',
 };
 
-export const MongoDBDialog: React.FC<ResourceDialogProps> = ({
-  editMode = false,
+export const MongoDBDialog: React.FC<ResourceDialogProps<MongoDBConfig>> = ({
+  resourceToEdit,
 }) => {
-  const { setValue } = useFormContext();
+  const { register, setValue } = useFormContext();
+
+  if (resourceToEdit) {
+    Object.entries(resourceToEdit).forEach(([k, v]) => {
+      register(k, { value: v });
+    });
+  }
+
+  const editMode = !!resourceToEdit;
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -45,9 +54,9 @@ export const MongoDBDialog: React.FC<ResourceDialogProps> = ({
   );
 };
 
-export function getMongoDBValidationSchema() {
+export function getMongoDBValidationSchema(editMode: boolean) {
   return Yup.object().shape({
-    auth_uri: Yup.string().required('Please enter a URI.'),
+    auth_uri: requiredAtCreate(Yup.string(), editMode, 'Please enter a URI.'),
     database: Yup.string().required('Please enter a database name.'),
   });
 }

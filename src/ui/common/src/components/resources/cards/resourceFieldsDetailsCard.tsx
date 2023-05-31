@@ -1,6 +1,6 @@
 import React from 'react';
-import { Resource } from 'src/utils/resources';
 
+import { Resource } from '../../../utils/resources';
 import { AirflowCard } from './airflowCard';
 import { AqueductCard } from './aqueductCard';
 import { AthenaCard } from './athenaCard';
@@ -11,6 +11,7 @@ import { DatabricksCard } from './databricksCard';
 import ECRCard from './ecrCard';
 import { EmailCard } from './emailCard';
 import FilesystemCard from './filesystemCard';
+import GARCard from './garCard';
 import { GCSCard } from './gcsCard';
 import { KubernetesCard } from './kubernetesCard';
 import { LambdaCard } from './lambdaCard';
@@ -101,6 +102,9 @@ export const ResourceFieldsDetailsCard: React.FC<
       break;
     case 'ECR':
       serviceCard = <ECRCard resource={resource} />;
+      break;
+    case 'GAR':
+      serviceCard = <GARCard resource={resource} />;
       break;
     case 'Filesystem':
       serviceCard = <FilesystemCard resource={resource} />;

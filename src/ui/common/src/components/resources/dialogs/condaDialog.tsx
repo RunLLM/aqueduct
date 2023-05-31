@@ -7,9 +7,9 @@ import * as Yup from 'yup';
 import { ResourceDialogProps } from '../../../utils/resources';
 import { ResourceTextInputField } from './ResourceTextInputField';
 
-export const CondaDialog: React.FC<ResourceDialogProps> = ({
-  editMode = false,
-}) => {
+export const CondaDialog: React.FC<
+  ResourceDialogProps<Record<string, never>>
+> = () => {
   const { setValue } = useFormContext();
 
   useEffect(() => {

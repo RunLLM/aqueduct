@@ -6,6 +6,7 @@ import * as Yup from 'yup';
 import { PostgresConfig, ResourceDialogProps } from '../../../utils/resources';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { ResourceTextInputField } from './ResourceTextInputField';
+import { requiredAtCreate } from './schema';
 
 const Placeholders: PostgresConfig = {
   host: '127.0.0.1',
@@ -15,10 +16,17 @@ const Placeholders: PostgresConfig = {
   password: '********',
 };
 
-export const PostgresDialog: React.FC<ResourceDialogProps> = ({
-  editMode = false,
+export const PostgresDialog: React.FC<ResourceDialogProps<PostgresConfig>> = ({
+  resourceToEdit,
 }) => {
-  const { setValue } = useFormContext();
+  const { register, setValue } = useFormContext();
+  const editMode = !!resourceToEdit;
+
+  if (resourceToEdit) {
+    Object.entries(resourceToEdit).forEach(([k, v]) => {
+      register(k, { value: v });
+    });
+  }
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -88,7 +96,7 @@ export const PostgresDialog: React.FC<ResourceDialogProps> = ({
   );
 };
 
-export function getPostgresValidationSchema() {
+export function getPostgresValidationSchema(editMode: boolean) {
   return Yup.object().shape({
     host: Yup.string().required('Please enter a host'),
     // NOTE: we don't yet ahve enforcement to make sure port is number on backend, so we leave as string for now.
@@ -100,6 +108,10 @@ export function getPostgresValidationSchema() {
     //   .typeError('Port must be a number'),
     database: Yup.string().required('Please enter a database'),
     username: Yup.string().required('Please enter a username'),
-    password: Yup.string().required('Please enter a password'),
+    password: requiredAtCreate(
+      Yup.string(),
+      editMode,
+      'Please enter a password'
+    ),
   });
 }

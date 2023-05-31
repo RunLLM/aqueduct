@@ -1,3 +1,5 @@
+import { ObjectSchema } from 'yup';
+
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
 import ExecutionStatus, { AWSCredentialType, ExecState } from './shared';
@@ -19,9 +21,6 @@ export function isNotificationResource(resource: Resource): boolean {
 }
 
 export function resourceExecState(resource: Resource): ExecState {
-  // If an exec_state doesn't exist, we currently assume that it is a legacy resource that has succeeded.
-  const status = resource.exec_state?.status || ExecutionStatus.Succeeded;
-
   // For Aqueduct compute, we'll also need to look at the status of any registered Conda.
   if (
     resource.service == 'Aqueduct' &&
@@ -43,15 +42,22 @@ export function resourceExecState(resource: Resource): ExecState {
   return resource.exec_state || { status: ExecutionStatus.Succeeded };
 }
 
-// The only resource that does not necessarily display the same service type as
-// on the resource itself is Conda.
-export function resolveDisplayService(resource: Resource): Service {
+// The resolve the service logo to display.
+// This can be different from the actual service. For example:
+// Aq with conda should display conda.
+// AWS, GCP using on-demand K8s should display K8s.
+export function resolveLogoService(resource: Resource): Service {
   if (resource.service === 'Aqueduct') {
     const aqConfig = resource.config as AqueductComputeConfig;
     if (aqConfig.conda_config_serialized) {
       return 'Conda';
     }
   }
+
+  if (resource.service === 'AWS' || resource.service === 'GCP') {
+    return 'Kubernetes';
+  }
+
   return resource.service;
 }
 
@@ -283,6 +289,10 @@ export type FilesystemConfig = {
   location: string;
 };
 
+export type GarConfig = {
+  service_account_key: string;
+};
+
 export type ResourceConfig =
   | PostgresConfig
   | SnowflakeConfig
@@ -308,7 +318,10 @@ export type ResourceConfig =
   | SparkConfig
   | AWSConfig
   | MongoDBConfig
-  | FilesystemConfig;
+  | FilesystemConfig
+  | GarConfig;
+
+export type FullResourceConfig = { name: string } & ResourceConfig;
 
 export type Service =
   | 'Aqueduct'
@@ -337,6 +350,7 @@ export type Service =
   | 'GCP'
   | 'Azure'
   | 'ECR'
+  | 'GAR'
   | 'Filesystem';
 
 export type Info = {
@@ -344,10 +358,10 @@ export type Info = {
   activated: boolean;
   category: string;
   docs: string;
-  dialog?: React.FC<ResourceDialogProps>;
+  dialog?: React.FC<ResourceDialogProps<ResourceConfig>>;
   // TODO: figure out typescript type for yup schema
   // This may be useful: https://stackoverflow.com/questions/66171196/how-to-use-yups-object-shape-with-typescript
-  validationSchema: any;
+  validationSchema: (editMode: boolean) => ObjectSchema<any>;
 };
 
 export type ServiceInfoMap = {
@@ -434,11 +448,12 @@ export const ServiceLogos: ServiceLogo = {
   ['K8s']: `${resourceLogosBucket}/kubernetes.png`,
 
   ['ECR']: `${resourceLogosBucket}/ecr.png`,
+  ['GAR']: `${resourceLogosBucket}/gar.png`,
 };
 
-export type ResourceDialogProps = {
+export type ResourceDialogProps<ResourceType> = {
   user: UserProfile;
-  editMode?: boolean;
+  resourceToEdit?: ResourceType;
   onCloseDialog?: () => void;
   loading: boolean;
   disabled: boolean;

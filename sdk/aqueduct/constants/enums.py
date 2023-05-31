@@ -81,6 +81,7 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     AWS = "AWS"
     ECR = "ECR"
     FILESYSTEM = "Filesystem"
+    GAR = "GAR"
 
 
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
@@ -105,6 +106,14 @@ class ExecutionStatus(str, Enum, metaclass=MetaEnum):
     PENDING = "pending"
     REGISTERED = "registered"
     CANCELED = "canceled"
+
+
+class NotificationLogLevel(str, Enum, metaclass=MetaEnum):
+    SUCCESS = "success"
+    WARNING = "warning"
+    ERROR = "error"
+    INFO = "info"
+    NEUTRAL = "neutral"
 
 
 class FailureType(Enum, metaclass=MetaEnum):

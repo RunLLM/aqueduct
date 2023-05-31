@@ -8,7 +8,7 @@ import aqueduct as aq
 NAME = "succeed_complex"
 DESCRIPTION = """* Workflows Page: should succeed.
 * Workflow Details Page: everything should be green.
-* Data Page: pred_churn artifact should appears."""
+* Data Page: pred_ensemble artifact should appears."""
 
 
 @aq.op(requirements=["numpy"])

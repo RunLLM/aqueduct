@@ -1,8 +1,8 @@
 // This file should map exactly to
 // `src/golang/lib/response/node.go`
 import { ArtifactType, SerializationType } from '../../utils/artifacts';
-import { OperatorSpec, OperatorType } from '../../utils/operators';
-import { ExecState } from '../../utils/shared';
+import { CheckLevel, OperatorSpec, OperatorType } from '../../utils/operators';
+import ExecutionStatus, { ExecState } from '../../utils/shared';
 
 export type OperatorWithArtifactNodeResponse = {
   id: string;
@@ -92,6 +92,23 @@ export type NodeContentResponse = {
   name: string;
   data: string;
 };
+
+export function hasWarningCheck(workflowStatus: ExecutionStatus, nodes: NodesMap, nodesResults: NodeResultsMap): boolean {
+  if (workflowStatus && workflowStatus === ExecutionStatus.Succeeded) {
+    const ops = Object.values(nodes.operators);
+    for (let i = 0; i < ops.length; i++) {
+      const op = ops[i];
+      if (op.spec.type === 'check' && op.spec.check.level === CheckLevel.Warning) {
+        const artifactId = op.outputs[0]; // Assuming there is only one output artifact
+        const value = nodesResults.artifacts[artifactId]?.exec_state?.status;
+        if (value === ExecutionStatus.Failed) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
 
 export function getMetricsAndChecksOnArtifact(
   nodes: NodesMap,

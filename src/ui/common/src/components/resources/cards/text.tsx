@@ -86,7 +86,9 @@ export const ResourceCardText: React.FC<ResourceCardTextProps> = ({
         )}
       </Box>
     );
-  } else {
+  } else if (chunkedLabels.length === 1) {
     return labelAndValueColumn(chunkedLabels[0], 0);
+  } else {
+    return <></>;
   }
 };
