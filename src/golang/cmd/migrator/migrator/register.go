@@ -30,6 +30,7 @@ import (
 	_000025 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000025_add_storage_migration_table"
 	_000026 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000026_drop_integration_validated_column"
 	_000027 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000027_rename_integrations_table"
+	_000028 "github.com/aqueducthq/aqueduct/cmd/migrator/versions/000028_add_artifact_should_persist_column"
 	"github.com/aqueducthq/aqueduct/lib/database"
 )
 
@@ -197,5 +198,11 @@ func init() {
 		upPostgres: _000027.UpPostgres, upSqlite: _000027.UpSqlite,
 		downPostgres: _000027.DownPostgres,
 		name:         "rename integration table to resource",
+	}
+
+	registeredMigrations[28] = &migration{
+		upPostgres: _000028.UpPostgres, upSqlite: _000028.UpSqlite,
+		downPostgres: _000028.DownPostgres,
+		name:         "add should_persist column to artifact table",
 	}
 }

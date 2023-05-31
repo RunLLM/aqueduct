@@ -12,18 +12,20 @@ const (
 	ArtifactTable = "artifact"
 
 	// Artifact column names
-	ArtifactID          = "id"
-	ArtifactName        = "name"
-	ArtifactDescription = "description"
-	ArtifactType        = "type"
+	ArtifactID            = "id"
+	ArtifactName          = "name"
+	ArtifactDescription   = "description"
+	ArtifactType          = "type"
+	ArtifactShouldPersist = "should_persist"
 )
 
 // An Artifact maps to the artifact table.
 type Artifact struct {
-	ID          uuid.UUID           `db:"id" json:"id"`
-	Name        string              `db:"name" json:"name"`
-	Description string              `db:"description" json:"description"`
-	Type        shared.ArtifactType `db:"type" json:"type"`
+	ID            uuid.UUID           `db:"id" json:"id"`
+	Name          string              `db:"name" json:"name"`
+	Description   string              `db:"description" json:"description"`
+	Type          shared.ArtifactType `db:"type" json:"type"`
+	ShouldPersist bool                `db:"should_persist" json:"should_persist"`
 }
 
 // ArtifactCols returns a comma-separated string of all Artifact columns.
@@ -37,6 +39,7 @@ func AllArtifactCols() []string {
 		ArtifactName,
 		ArtifactDescription,
 		ArtifactType,
+		ArtifactShouldPersist,
 	}
 }
 

@@ -113,9 +113,10 @@ func (ts *TestSuite) TestArtifact_Create() {
 	artifactType := randArtifactType()
 
 	expectedArtifact := &models.Artifact{
-		Name:        name,
-		Description: description,
-		Type:        artifactType,
+		Name:          name,
+		Description:   description,
+		Type:          artifactType,
+		ShouldPersist: true,
 	}
 
 	actualArtifact, err := ts.artifact.Create(ts.ctx, name, description, artifactType, ts.DB)
