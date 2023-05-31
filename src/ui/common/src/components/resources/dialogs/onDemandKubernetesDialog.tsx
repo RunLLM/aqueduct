@@ -95,11 +95,6 @@ export const OnDemandKubernetesDialog: React.FC<
     return;
   };
 
-  const handleGCPClick = () => {
-    setCurrentStep(K8S_TYPES.ONDEMAND_K8S_GCP);
-    setValue('k8s_type', K8S_TYPES.ONDEMAND_K8S_GCP);
-  };
-
   switch (currentStep) {
     case 'INITIAL':
       return (

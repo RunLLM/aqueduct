@@ -153,13 +153,7 @@ const ResourceDialog: React.FC<Props> = ({
     const subscription = methods.watch(async () => {
       const checkIsFormValid = async () => {
         const isValidForm = await methods.trigger();
-        if (isValidForm && submitDisabled) {
-          // Form is valid, enable the submit button.
-          setSubmitDisabled(false);
-        } else {
-          // Form is still invalid, disable the submit button.
-          setSubmitDisabled(true);
-        }
+        setSubmitDisabled(!isValidForm);
       };
 
       checkIsFormValid();
@@ -167,7 +161,7 @@ const ResourceDialog: React.FC<Props> = ({
 
     // Unsubscribe and handle lifecycle changes.
     return () => subscription.unsubscribe();
-  }, [methods, submitDisabled]);
+  }, [methods]);
 
   useEffect(() => {
     if (isSucceeded(connectStatus)) {

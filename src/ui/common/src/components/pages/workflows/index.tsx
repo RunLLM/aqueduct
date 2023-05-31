@@ -145,18 +145,14 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
 
       const latestDagId = latestDagResult?.dag_id ?? noRunDag?.id;
 
-      const {
-        data: dag,
-        error: dagError,
-        isLoading: dagLoading,
-      } = useDagGetQuery(
+      const { data: dag } = useDagGetQuery(
         {
           apiKey: user.apiKey,
           workflowId: workflowId,
           dagId: latestDagId,
         },
         {
-          skip: !latestDagId || noRunDag,
+          skip: !latestDagId || !!noRunDag,
         }
       );
 
