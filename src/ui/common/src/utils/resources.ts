@@ -323,8 +323,6 @@ export type ResourceConfig =
 
 export type FullResourceConfig = { name: string } & ResourceConfig;
 
-export type FullResourceConfig = { name: string } & ResourceConfig;
-
 export type Service =
   | 'Aqueduct'
   | 'Postgres'
