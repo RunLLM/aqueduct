@@ -7,7 +7,7 @@ from typing import DefaultDict, Dict, List, Optional, Union
 from aqueduct.error import InvalidUserArgumentException
 from aqueduct.flow_run import FlowRun
 from aqueduct.models.response_models import (
-    GetWorkflowResponse,
+    GetWorkflowV1Response,
     SavedObjectUpdate,
     WorkflowDagResponse,
 )
@@ -35,7 +35,7 @@ class Flow:
         """Returns the id of the flow."""
         return uuid.UUID(self._id)
 
-    def _get_workflow_resp(self) -> GetWorkflowResponse:
+    def _get_workflow_resp(self) -> GetWorkflowV1Response:
         resp = globals.__GLOBAL_API_CLIENT__.get_workflow(self._id)
         return resp
 

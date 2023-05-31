@@ -46,7 +46,6 @@ from aqueduct.resources.dynamic_k8s import DynamicK8sResource
 from aqueduct.resources.ecr import ECRResource
 from aqueduct.resources.gar import GARResource
 from aqueduct.resources.google_sheets import GoogleSheetsResource
-from aqueduct.resources.k8s import K8sResource
 from aqueduct.resources.mongodb import MongoDBResource
 from aqueduct.resources.parameters import USER_TAG_PATTERN
 from aqueduct.resources.s3 import S3Resource
@@ -298,7 +297,7 @@ class Client:
     ) -> None:
         """Deprecated. Use `client.delete_resource()` instead."""
         logger().warning(
-            "client.delete_resource() will be deprecated soon. Use `client.delete_resource() instead."
+            "client.delete_integration() will be deprecated soon. Use `client.delete_resource() instead."
         )
         return self.delete_resource(name)
 
@@ -353,13 +352,13 @@ class Client:
         GoogleSheetsResource,
         RelationalDBResource,
         AirflowResource,
-        K8sResource,
         LambdaResource,
         MongoDBResource,
         DatabricksResource,
         SparkResource,
         AWSResource,
         ECRResource,
+        DynamicK8sResource,
         GARResource,
     ]:
         """Deprecated. Use `client.resource()` instead."""
@@ -376,13 +375,13 @@ class Client:
         GoogleSheetsResource,
         RelationalDBResource,
         AirflowResource,
-        K8sResource,
         LambdaResource,
         MongoDBResource,
         DatabricksResource,
         SparkResource,
         AWSResource,
         ECRResource,
+        DynamicK8sResource,
         GARResource,
     ]:
         """Retrieves a connected resource object.
@@ -442,7 +441,7 @@ class Client:
                 metadata=resource_info,
             )
         elif resource_info.service == ServiceType.K8S:
-            return K8sResource(
+            return DynamicK8sResource(
                 metadata=resource_info,
             )
         elif resource_info.service == ServiceType.LAMBDA:

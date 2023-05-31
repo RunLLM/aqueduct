@@ -39,7 +39,8 @@ import {
   GARDialog,
   getGARValidationSchema,
 } from '../components/resources/dialogs/garDialog';
-import GCPDialog, {
+import {
+  GCPDialog,
   getGCPValidationSchema,
 } from '../components/resources/dialogs/gcpDialog';
 import {
@@ -108,6 +109,7 @@ import {
   MariaDbConfig,
   MongoDBConfig,
   MySqlConfig,
+  OndemandGKEConfig,
   PostgresConfig,
   RedshiftConfig,
   ResourceCategories,
@@ -494,10 +496,18 @@ export const SupportedResources: ServiceInfoMap = {
   },
   ['GCP']: {
     logo: ServiceLogos['GCP'],
-    activated: false,
+    activated: true,
     category: ResourceCategories.CLOUD,
     docs: addingResourceLink,
-    dialog: ({}) => <GCPDialog />,
+    dialog: ({ user, resourceToEdit, onCloseDialog, loading, disabled }) => (
+      <GCPDialog
+        user={user}
+        resourceToEdit={resourceToEdit as OndemandGKEConfig}
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+      />
+    ),
     validationSchema: ({}) => getGCPValidationSchema(),
   },
   ['Azure']: {

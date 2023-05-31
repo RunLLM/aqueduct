@@ -18,7 +18,7 @@ import { requiredAtCreate } from './schema';
 
 const Placeholders: GCSConfig = {
   bucket: 'aqueduct',
-  use_as_storage: '',
+  use_as_storage: 'true',
 };
 
 interface GCSDialogProps extends ResourceDialogProps<GCSConfig> {
@@ -38,7 +38,7 @@ export const GCSDialog: React.FC<GCSDialogProps> = ({
     });
   }
 
-  const initialUseAsStorage = resourceToEdit?.use_as_storage ?? 'false';
+  const initialUseAsStorage = resourceToEdit?.use_as_storage ?? 'true';
 
   const [fileData, setFileData] = useState<FileData | null>(null);
   const { field } = useController({

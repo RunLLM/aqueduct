@@ -40,7 +40,7 @@ export type SortColumn = {
 
   // The sequence of keys in the row object to access in order to get the
   // value which should be compared for sort purposes.
-  sortAccessPath: string[];
+  sortAccessPath: (string | number)[];
 };
 
 export enum SortType {
@@ -50,7 +50,7 @@ export enum SortType {
 }
 
 type SortConfig = {
-  name: SortColumn;
+  sortColumn: SortColumn;
   sortType: SortType;
 };
 
@@ -75,6 +75,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
   onChangeRowsPerPage,
   savedRowsPerPage,
   sortColumns = [],
+  defaultSortConfig,
 }) => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(
@@ -89,7 +90,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
   const [sortTypeMenuAnchor, setSortTypeMenuAnchor] =
     useState<HTMLLIElement>(null);
   const [sortConfig, setSortConfig] = useState({
-    sortColumn: { name: null, sortAccessPath: [] as string[] },
+    sortColumn: null,
     sortType: SortType.None,
   });
 
@@ -105,13 +106,45 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
     return value;
   };
 
-  const rowData = [...data].map((row) => {
+  let rowData = [...data].map((row) => {
     const rowData = {};
     columns.forEach((column) => {
       rowData[column] = getColumnValue(row, column);
     });
     return rowData;
   });
+
+  // Default ordering
+  if (defaultSortConfig) {
+    rowData = rowData.sort((r1, r2) => {
+      const col = defaultSortConfig.sortColumn;
+      let v1: PaginatedSearchTableRow | PaginatedSearchTableElement = r1;
+      let v2: PaginatedSearchTableRow | PaginatedSearchTableElement = r2;
+      for (const path of col.sortAccessPath) {
+        v1 = v1[path];
+        v2 = v2[path];
+      }
+
+      if (defaultSortConfig.sortType === SortType.Ascending) {
+        if (v1 > v2) {
+          return 1;
+        } else if (v1 < v2) {
+          return -1;
+        } else {
+          return 0;
+        }
+      } else {
+        // sortType === SortType.Descending
+        if (v1 > v2) {
+          return -1;
+        } else if (v1 < v2) {
+          return 1;
+        } else {
+          return 0;
+        }
+      }
+    });
+  }
 
   const [rows, setRows] = useState(rowData);
   const [orderedRows, setOrderedRows] = useState(rowData);

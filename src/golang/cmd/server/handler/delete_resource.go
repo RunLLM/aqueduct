@@ -10,6 +10,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	aq_errors "github.com/aqueducthq/aqueduct/lib/errors"
 	exec_env "github.com/aqueducthq/aqueduct/lib/execution_environment"
+	"github.com/aqueducthq/aqueduct/lib/lib_utils"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
 	"github.com/aqueducthq/aqueduct/lib/repos"
@@ -135,6 +136,37 @@ func (h *DeleteResourceHandler) Perform(ctx context.Context, interfaceArgs inter
 		// Aqueduct-generated dynamic k8s resource.
 		if statusCode, err := deleteCloudResourceHelper(ctx, args, h); err != nil {
 			return emptyResp, statusCode, err
+		}
+	}
+
+	if args.resourceObject.Service == shared.Kubernetes {
+		if args.resourceObject.Config[shared.K8sCloudProviderKey] == string(shared.GCPProvider) {
+			// Delete the ondemand cluster
+			editDynamicEngineArgs := &editDynamicEngineArgs{
+				AqContext:   args.AqContext,
+				action:      forceDeleteAction,
+				resourceID:  args.resourceObject.ID,
+				configDelta: &shared.DynamicK8sConfig{},
+			}
+			_, statusCode, err := (&EditDynamicEngineHandler{
+				Database:     h.Database,
+				ResourceRepo: h.ResourceRepo,
+			}).Perform(ctx, editDynamicEngineArgs)
+			if err != nil {
+				return emptyResp, statusCode, errors.Wrap(err, "Failed to delete the dynamic k8s cluster.")
+			}
+
+			// Clean up the ondemand k8s directory
+			_, stdErr, err := lib_utils.RunCmd("rm", []string{
+				"-rf",
+				args.resourceObject.Config[shared.K8sTerraformPathKey],
+			},
+				"",
+				false,
+			)
+			if err != nil {
+				return emptyResp, http.StatusInternalServerError, errors.New(stdErr)
+			}
 		}
 	}
 

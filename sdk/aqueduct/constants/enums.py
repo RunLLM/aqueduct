@@ -84,6 +84,11 @@ class ServiceType(str, Enum, metaclass=MetaEnum):
     GAR = "GAR"
 
 
+class CloudProviderType(str, Enum, metaclass=MetaEnum):
+    AWS = "AWS"
+    GCP = "GCP"
+
+
 class RelationalDBServices(str, Enum, metaclass=MetaEnum):
     """Must match the corresponding entries in `ServiceType` exactly."""
 
@@ -106,6 +111,14 @@ class ExecutionStatus(str, Enum, metaclass=MetaEnum):
     PENDING = "pending"
     REGISTERED = "registered"
     CANCELED = "canceled"
+
+
+class NotificationLogLevel(str, Enum, metaclass=MetaEnum):
+    SUCCESS = "success"
+    WARNING = "warning"
+    ERROR = "error"
+    INFO = "info"
+    NEUTRAL = "neutral"
 
 
 class FailureType(Enum, metaclass=MetaEnum):

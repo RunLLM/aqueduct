@@ -26,6 +26,7 @@ import SupportedResources from '../../../utils/SupportedResources';
 import ResourceLogo from '../logo';
 import { AWSDialog } from './awsDialog';
 import { DialogActionButtons, DialogHeader } from './dialog';
+import { GCPDialog } from './gcpDialog';
 import { KubernetesDialog } from './kubernetesDialog';
 import { ResourceTextInputField } from './ResourceTextInputField';
 import { requiredAtCreate } from './schema';
@@ -39,7 +40,6 @@ const K8S_TYPES = {
   ONDEMAND_K8S: 'ONDEMAND_K8S',
   // ONDEMAND_K8S_AWS step is when user is connecting to aqueduct cluster on AWS.
   ONDEMAND_K8S_AWS: 'ONDEMAND_K8S_AWS',
-  // Coming soon ...
   // ONDEMAND_K8S_GCP step is when user is connecting to aqueduct cluster on GCP
   ONDEMAND_K8S_GCP: 'ONDEMAND_K8S_GCP',
   // ONDEMAND_K8S_AZURE step is when user is connecting to aqueduct cluster on Azure.
@@ -95,6 +95,11 @@ export const OnDemandKubernetesDialog: React.FC<
     return;
   };
 
+  const handleGCPClick = () => {
+    setCurrentStep(K8S_TYPES.ONDEMAND_K8S_GCP);
+    setValue('k8s_type', K8S_TYPES.ONDEMAND_K8S_GCP);
+  };
+
   switch (currentStep) {
     case 'INITIAL':
       return (
@@ -131,6 +136,15 @@ export const OnDemandKubernetesDialog: React.FC<
           loading={loading}
           onCloseDialog={onCloseDialog}
           resourceToEdit={resourceToEdit as AWSConfig}
+        />
+      );
+    case 'ONDEMAND_K8S_GCP':
+      return (
+        <OnDemandK8sGCPStep
+          user={user}
+          disabled={disabled}
+          loading={loading}
+          onCloseDialog={onCloseDialog}
         />
       );
     default:
@@ -217,7 +231,6 @@ const OndemandK8sAWSDialog: React.FC<ResourceDialogProps<ResourceConfig>> = ({
 }) => {
   const { register, setValue, handleSubmit } = useFormContext();
   const dispatch: AppDispatch = useDispatch();
-  console.log(resourceToEdit);
   const editMode = !!resourceToEdit;
   if (resourceToEdit) {
     Object.entries(resourceToEdit).forEach(([k, v]) => {
@@ -243,13 +256,13 @@ const OndemandK8sAWSDialog: React.FC<ResourceDialogProps<ResourceConfig>> = ({
           </Typography>
         </div>
         <ResourceLogo
-          service={'AWS'}
+          service={'Kubernetes'}
           activated={SupportedResources['Kubernetes'].activated}
           size="small"
         />
         <div>
           <Typography variant="h5" sx={{ color: 'black' }}>
-            Aqueduct-managed Kubernetes
+            Aqueduct-managed Kubernetes on AWS
           </Typography>
         </div>
       </DialogTitle>
@@ -311,6 +324,88 @@ const OndemandK8sAWSDialog: React.FC<ResourceDialogProps<ResourceConfig>> = ({
   );
 };
 
+const OnDemandK8sGCPStep: React.FC<ResourceDialogProps<ResourceConfig>> = ({
+  user,
+  onCloseDialog,
+  loading,
+  disabled,
+}) => {
+  const methods = useFormContext();
+  const dispatch: AppDispatch = useDispatch();
+
+  return (
+    <>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
+        <ResourceLogo
+          service={'Aqueduct'}
+          activated={SupportedResources['Aqueduct'].activated}
+          size="small"
+        />
+        <div>
+          <Typography variant="h5" sx={{ color: 'black' }}>
+            +
+          </Typography>
+        </div>
+        <ResourceLogo
+          service={'Kubernetes'}
+          activated={SupportedResources['Kubernetes'].activated}
+          size="small"
+        />
+        <div>
+          <Typography variant="h5" sx={{ color: 'black' }}>
+            Aqueduct-managed Kubernetes on GCP
+          </Typography>
+        </div>
+      </DialogTitle>
+      <ResourceTextInputField
+        name="name"
+        spellCheck={false}
+        required={true}
+        label="Name*"
+        description="Provide a unique name to refer to this resource."
+        placeholder={'my_kubernetes_resource'}
+        onChange={(event) => {
+          methods.setValue('name', event.target.value);
+        }}
+        disabled={false}
+      />
+      <GCPDialog
+        user={user}
+        disabled={disabled}
+        loading={loading}
+        onCloseDialog={onCloseDialog}
+      />
+      <DialogActionButtons
+        onCloseDialog={onCloseDialog}
+        loading={loading}
+        disabled={disabled}
+        onSubmit={async () => {
+          await methods.handleSubmit((data) => {
+            // Remove the name field from request body to avoid pydantic errors.
+            // Name needs to be passed in as a header instead. Dunno why it's not part of the body :shrug:
+            const name = data.name;
+            delete data.name;
+            // Remove extraneous fields if they are added when filling out the form.
+            delete data.k8s_type;
+            delete data.type;
+
+            data.cloud_provider = 'GCP';
+
+            dispatch(
+              handleConnectToNewResource({
+                apiKey: user.apiKey,
+                service: 'Kubernetes',
+                name: name,
+                config: data,
+              })
+            );
+          })(); // Remember the last two parens to call the function!
+        }}
+      />
+    </>
+  );
+};
+
 type SelectOnDemandCloudProviderDialogProps = {
   onCloseDialog: () => void;
   handleToPreviousStep: () => void;
@@ -361,7 +456,7 @@ const SelectOnDemandCloudProviderDialog: React.FC<
             size="large"
           />
         </Button>
-        <Button disabled={true} onClick={() => onSelectProvider('GCP')}>
+        <Button onClick={() => onSelectProvider('GCP')}>
           <ResourceLogo
             service={'GCP'}
             activated={SupportedResources['GCP'].activated}
@@ -459,6 +554,7 @@ const StaticK8sDialog: React.FC<StaticK8sDialogProps> = ({
 
 export function getOnDemandKubernetesValidationSchema(editMode: boolean) {
   return Yup.object().shape({
+    name: Yup.string().required('Please enter a name'),
     k8s_type: Yup.string(),
     // Check the fields from the kubernetes validation schema.
     use_same_cluster: Yup.string().when('k8s_type', {
@@ -504,8 +600,26 @@ export function getOnDemandKubernetesValidationSchema(editMode: boolean) {
     }),
     region: Yup.string().when(['k8s_type', 'type'], {
       is: (k8s_type, type) =>
-        k8s_type === K8S_TYPES.ONDEMAND_K8S_AWS && type === 'access_key',
+        k8s_type === K8S_TYPES.ONDEMAND_K8S_GCP ||
+        (k8s_type === K8S_TYPES.ONDEMAND_K8S_AWS && type === 'access_key'),
       then: Yup.string().required('Please enter a region'),
+      otherwise: null,
+    }),
+    zone: Yup.string().when('k8s_type', {
+      is: K8S_TYPES.ONDEMAND_K8S_GCP,
+      then: Yup.string().required('Please enter a zone'),
+      otherwise: null,
+    }),
+    service_account_key: Yup.string().when('k8s_type', {
+      is: K8S_TYPES.ONDEMAND_K8S_GCP,
+      then: Yup.string()
+        .transform((value) => {
+          if (!value?.data) {
+            return null;
+          }
+          return value.data;
+        })
+        .required('Please upload a service account key file'),
       otherwise: null,
     }),
     config_file_profile: Yup.string().when(['k8s_type', 'type'], {

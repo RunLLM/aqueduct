@@ -3,6 +3,7 @@ package dynamic
 import (
 	"context"
 	"crypto/rand"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"os"
@@ -38,7 +39,10 @@ const (
 	K8sResourceNameSuffix = "aqueduct_ondemand_k8s"
 )
 
-var TerraformTemplateDir = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "template", "aws", "eks")
+var (
+	EKSTerraformTemplateDir = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "template", "aws", "eks")
+	GKETerraformTemplateDir = filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "template", "gke")
+)
 
 // PrepareCluster blocks until the cluster is in status "Active".
 func PrepareCluster(
@@ -114,7 +118,7 @@ func CreateOrUpdateK8sCluster(
 	db database.Database,
 ) error {
 	if !(action == K8sClusterCreateAction || action == K8sClusterUpdateAction) {
-		return errors.Newf("Unsupport action %s.", action)
+		return errors.Newf("Unsupported action %s.", action)
 	}
 
 	configDeltaMap := configDelta.ToMap()
@@ -145,83 +149,169 @@ func CreateOrUpdateK8sCluster(
 		return err
 	}
 
-	awsConfig, err := fetchAWSCredential(ctx, engineResource, vaultObject)
-	if err != nil {
-		return err
+	var awsConfig *shared.AWSConfig
+	var gcpConfig *shared.GCPConfig
+	var err error
+
+	if engineResource.Config[shared.K8sCloudProviderKey] == string(shared.GCPProvider) {
+		gcpConfig, err = fetchGCPCredential(ctx, engineResource, vaultObject)
+		if err != nil {
+			return err
+		}
+	} else {
+		awsConfig, err = fetchAWSCredential(ctx, engineResource, vaultObject)
+		if err != nil {
+			return err
+		}
 	}
 
-	if err := runTerraformApply(awsConfig, engineResource); err != nil {
+	if err := runTerraformApply(awsConfig, gcpConfig, engineResource); err != nil {
 		return err
 	}
 
 	if action == K8sClusterCreateAction {
-		var envVars []string
-		if awsConfig.AccessKeyId != "" && awsConfig.SecretAccessKey != "" && awsConfig.Region != "" {
-			// If we enter here, it means the authentication mode is access key.
-			envVars = []string{
-				fmt.Sprintf("AWS_ACCESS_KEY_ID=%s", awsConfig.AccessKeyId),
-				fmt.Sprintf("AWS_SECRET_ACCESS_KEY=%s", awsConfig.SecretAccessKey),
-				fmt.Sprintf("AWS_REGION=%s", awsConfig.Region),
+		if awsConfig != nil {
+			var envVars []string
+			if awsConfig.AccessKeyId != "" && awsConfig.SecretAccessKey != "" && awsConfig.Region != "" {
+				// If we enter here, it means the authentication mode is access key.
+				envVars = []string{
+					fmt.Sprintf("AWS_ACCESS_KEY_ID=%s", awsConfig.AccessKeyId),
+					fmt.Sprintf("AWS_SECRET_ACCESS_KEY=%s", awsConfig.SecretAccessKey),
+					fmt.Sprintf("AWS_REGION=%s", awsConfig.Region),
+				}
+			} else {
+				// If we enter here, it means the authentication mode is credential file.
+				envVars = []string{
+					fmt.Sprintf("AWS_SHARED_CREDENTIALS_FILE=%s", awsConfig.ConfigFilePath),
+					fmt.Sprintf("AWS_PROFILE=%s", awsConfig.ConfigFileProfile),
+				}
+			}
+			if _, _, err := lib_utils.RunCmd(
+				"env",
+				append(
+					envVars,
+					"aws",
+					"eks",
+					"update-kubeconfig",
+					"--name",
+					engineResource.Config[shared.K8sClusterNameKey],
+					"--kubeconfig",
+					engineResource.Config[shared.K8sKubeconfigPathKey],
+				),
+				engineResource.Config[shared.K8sTerraformPathKey],
+				true,
+			); err != nil {
+				return errors.Wrap(err, "Failed to update Kubeconfig")
+			}
+
+			config, err := clientcmd.LoadFromFile(engineResource.Config[shared.K8sKubeconfigPathKey])
+			if err != nil {
+				return errors.Wrap(err, "Failed to load Kubeconfig")
+			}
+
+			for _, authInfo := range config.AuthInfos {
+				if awsConfig.AccessKeyId != "" && awsConfig.SecretAccessKey != "" && awsConfig.Region != "" {
+					authInfo.Exec.Env = append(authInfo.Exec.Env, api.ExecEnvVar{
+						Name:  "AWS_ACCESS_KEY_ID",
+						Value: awsConfig.AccessKeyId,
+					})
+					authInfo.Exec.Env = append(authInfo.Exec.Env, api.ExecEnvVar{
+						Name:  "AWS_SECRET_ACCESS_KEY",
+						Value: awsConfig.SecretAccessKey,
+					})
+					authInfo.Exec.Env = append(authInfo.Exec.Env, api.ExecEnvVar{
+						Name:  "AWS_REGION",
+						Value: awsConfig.Region,
+					})
+				} else {
+					authInfo.Exec.Env = append(authInfo.Exec.Env, api.ExecEnvVar{
+						Name:  "AWS_SHARED_CREDENTIALS_FILE",
+						Value: awsConfig.ConfigFilePath,
+					})
+					authInfo.Exec.Env = append(authInfo.Exec.Env, api.ExecEnvVar{
+						Name:  "AWS_PROFILE",
+						Value: awsConfig.ConfigFileProfile,
+					})
+				}
+			}
+
+			err = clientcmd.WriteToFile(*config, engineResource.Config[shared.K8sKubeconfigPathKey])
+			if err != nil {
+				return errors.Wrap(err, "Failed to update Kubeconfig with environment variables")
 			}
 		} else {
-			// If we enter here, it means the authentication mode is credential file.
-			envVars = []string{
-				fmt.Sprintf("AWS_SHARED_CREDENTIALS_FILE=%s", awsConfig.ConfigFilePath),
-				fmt.Sprintf("AWS_PROFILE=%s", awsConfig.ConfigFileProfile),
+			// GCP
+			var key struct {
+				ProjectID   string `json:"project_id"`
+				ClientEmail string `json:"client_email"`
 			}
-		}
-		if _, _, err := lib_utils.RunCmd(
-			"env",
-			append(
-				envVars,
-				"aws",
-				"eks",
-				"update-kubeconfig",
-				"--name",
-				engineResource.Config[shared.K8sClusterNameKey],
-				"--kubeconfig",
-				engineResource.Config[shared.K8sKubeconfigPathKey],
-			),
-			engineResource.Config[shared.K8sTerraformPathKey],
-			true,
-		); err != nil {
-			return errors.Wrap(err, "Failed to update Kubeconfig")
-		}
 
-		config, err := clientcmd.LoadFromFile(engineResource.Config[shared.K8sKubeconfigPathKey])
-		if err != nil {
-			return errors.Wrap(err, "Failed to load Kubeconfig")
-		}
-
-		for _, authInfo := range config.AuthInfos {
-			if awsConfig.AccessKeyId != "" && awsConfig.SecretAccessKey != "" && awsConfig.Region != "" {
-				authInfo.Exec.Env = append(authInfo.Exec.Env, api.ExecEnvVar{
-					Name:  "AWS_ACCESS_KEY_ID",
-					Value: awsConfig.AccessKeyId,
-				})
-				authInfo.Exec.Env = append(authInfo.Exec.Env, api.ExecEnvVar{
-					Name:  "AWS_SECRET_ACCESS_KEY",
-					Value: awsConfig.SecretAccessKey,
-				})
-				authInfo.Exec.Env = append(authInfo.Exec.Env, api.ExecEnvVar{
-					Name:  "AWS_REGION",
-					Value: awsConfig.Region,
-				})
-			} else {
-				authInfo.Exec.Env = append(authInfo.Exec.Env, api.ExecEnvVar{
-					Name:  "AWS_SHARED_CREDENTIALS_FILE",
-					Value: awsConfig.ConfigFilePath,
-				})
-				authInfo.Exec.Env = append(authInfo.Exec.Env, api.ExecEnvVar{
-					Name:  "AWS_PROFILE",
-					Value: awsConfig.ConfigFileProfile,
-				})
+			err := json.Unmarshal([]byte(gcpConfig.ServiceAccountKey), &key)
+			if err != nil {
+				return errors.Wrap(err, "Failed to parse project ID and client email from service account key")
 			}
-		}
 
-		err = clientcmd.WriteToFile(*config, engineResource.Config[shared.K8sKubeconfigPathKey])
-		if err != nil {
-			return errors.Wrap(err, "Failed to update Kubeconfig with environment variables")
+			// Write the service account key to a temporary file in the resource's Terraform directory.
+			// This is necessary because the gcloud CLI requires a file path to the service account key.
+			serviceAccountKeyPath := filepath.Join(engineResource.Config[shared.K8sTerraformPathKey], "service_account_key.json")
+			err = os.WriteFile(serviceAccountKeyPath, []byte(gcpConfig.ServiceAccountKey), 0o644)
+			if err != nil {
+				return errors.Wrap(err, "Failed to write service account key to temporary file")
+			}
+
+			if _, _, err := lib_utils.RunCmd(
+				"gcloud",
+				[]string{
+					"auth",
+					"activate-service-account",
+					"--key-file",
+					serviceAccountKeyPath,
+				},
+				"",
+				true,
+			); err != nil {
+				return errors.Wrap(err, "Failed to activate service account")
+			}
+
+			if _, _, err := lib_utils.RunCmd(
+				"gcloud",
+				[]string{
+					"config",
+					"set",
+					"account",
+					key.ClientEmail,
+				},
+				"",
+				true,
+			); err != nil {
+				return errors.Wrap(err, "Failed to set account")
+			}
+
+			kubeconfigEnv := fmt.Sprintf("KUBECONFIG=%s", engineResource.Config[shared.K8sKubeconfigPathKey])
+			if _, _, err := lib_utils.RunCmd(
+				"env",
+				[]string{
+					kubeconfigEnv,
+					"gcloud",
+					"container",
+					"clusters",
+					"get-credentials",
+					engineResource.Config[shared.K8sClusterNameKey],
+					"--region",
+					gcpConfig.Region,
+					"--project",
+					key.ProjectID,
+				},
+				"",
+				true,
+			); err != nil {
+				return errors.Wrap(err, "Failed to update Kubeconfig")
+			}
+
+			// Delete the temporary service account key file.
+			if err := os.Remove(serviceAccountKeyPath); err != nil {
+				return errors.Wrap(err, "Failed to remove temporary service account key file")
+			}
 		}
 	}
 
@@ -283,14 +373,25 @@ func DeleteK8sCluster(
 		return err
 	}
 
-	// Even for deletion, we need to specify the AWS region, so we need to pass in the actual AWS
+	// Even for deletion, we need to specify the AWS region, so we need to pass in the cloud provider
 	// config instead of a dummy one to generateTerraformVariables.
-	awsConfig, err := fetchAWSCredential(ctx, engineResource, vaultObject)
-	if err != nil {
-		return err
+	var awsConfig *shared.AWSConfig
+	var gcpConfig *shared.GCPConfig
+	var err error
+
+	if engineResource.Config[shared.K8sCloudProviderKey] == string(shared.GCPProvider) {
+		gcpConfig, err = fetchGCPCredential(ctx, engineResource, vaultObject)
+		if err != nil {
+			return err
+		}
+	} else {
+		awsConfig, err = fetchAWSCredential(ctx, engineResource, vaultObject)
+		if err != nil {
+			return err
+		}
 	}
 
-	terraformArgs, err := generateTerraformVariables(awsConfig, engineResource.Config)
+	terraformArgs, err := generateTerraformVariables(awsConfig, gcpConfig, engineResource.Config)
 	if err != nil {
 		return err
 	}
@@ -531,40 +632,9 @@ func PollClusterStatus(
 
 func generateTerraformVariables(
 	awsConfig *shared.AWSConfig,
+	gcpConfig *shared.GCPConfig,
 	engineConfig map[string]string,
 ) ([]string, error) {
-	accessKeyVar := fmt.Sprintf("-var=access_key=%s", awsConfig.AccessKeyId)
-	secretAccessKeyVar := fmt.Sprintf("-var=secret_key=%s", awsConfig.SecretAccessKey)
-	regionVar := fmt.Sprintf("-var=region=%s", awsConfig.Region)
-	credentialPathVar := fmt.Sprintf("-var=credentials_file=%s", awsConfig.ConfigFilePath)
-	profileVar := fmt.Sprintf("-var=profile=%s", awsConfig.ConfigFileProfile)
-
-	if awsConfig.ConfigFilePath != "" && awsConfig.ConfigFileProfile != "" {
-		// If the authentication mode is credential file, we need to retrieve the AWS region via
-		// `aws configure get region` and explicitly pass it to Terraform.
-		region, stderr, err := lib_utils.RunCmd(
-			"env",
-			[]string{
-				fmt.Sprintf("AWS_SHARED_CREDENTIALS_FILE=%s", awsConfig.ConfigFilePath),
-				fmt.Sprintf("AWS_PROFILE=%s", awsConfig.ConfigFileProfile),
-				"aws",
-				"configure",
-				"get",
-				"region",
-			},
-			"",
-			false,
-		)
-		// We need to check if stderr is empty because when the region is not specified in the
-		// profile, the cmd will error and it will produce an empty stdout and stderr. In this case,
-		// we should just set the region to an empty string, which means using the default region.
-		if err != nil && stderr != "" {
-			return nil, err
-		}
-
-		regionVar = fmt.Sprintf("-var=region=%s", strings.TrimRight(region, "\n"))
-	}
-
 	cpuNodeTypeVar := fmt.Sprintf("-var=cpu_node_type=%s", engineConfig[shared.K8sCpuNodeTypeKey])
 	gpuNodeTypeVar := fmt.Sprintf("-var=gpu_node_type=%s", engineConfig[shared.K8sGpuNodeTypeKey])
 	minCpuNodeVar := fmt.Sprintf("-var=min_cpu_node=%s", engineConfig[shared.K8sMinCpuNodeKey])
@@ -574,12 +644,7 @@ func generateTerraformVariables(
 
 	clusterNameVar := fmt.Sprintf("-var=cluster_name=%s", engineConfig[shared.K8sClusterNameKey])
 
-	return []string{
-		accessKeyVar,
-		secretAccessKeyVar,
-		regionVar,
-		credentialPathVar,
-		profileVar,
+	vars := []string{
 		cpuNodeTypeVar,
 		gpuNodeTypeVar,
 		minCpuNodeVar,
@@ -587,14 +652,80 @@ func generateTerraformVariables(
 		minGpuNodeVar,
 		maxGpuNodeVar,
 		clusterNameVar,
-	}, nil
+	}
+
+	if awsConfig != nil {
+		accessKeyVar := fmt.Sprintf("-var=access_key=%s", awsConfig.AccessKeyId)
+		secretAccessKeyVar := fmt.Sprintf("-var=secret_key=%s", awsConfig.SecretAccessKey)
+		regionVar := fmt.Sprintf("-var=region=%s", awsConfig.Region)
+		credentialPathVar := fmt.Sprintf("-var=credentials_file=%s", awsConfig.ConfigFilePath)
+		profileVar := fmt.Sprintf("-var=profile=%s", awsConfig.ConfigFileProfile)
+
+		if awsConfig.ConfigFilePath != "" && awsConfig.ConfigFileProfile != "" {
+			// If the authentication mode is credential file, we need to retrieve the AWS region via
+			// `aws configure get region` and explicitly pass it to Terraform.
+			region, stderr, err := lib_utils.RunCmd(
+				"env",
+				[]string{
+					fmt.Sprintf("AWS_SHARED_CREDENTIALS_FILE=%s", awsConfig.ConfigFilePath),
+					fmt.Sprintf("AWS_PROFILE=%s", awsConfig.ConfigFileProfile),
+					"aws",
+					"configure",
+					"get",
+					"region",
+				},
+				"",
+				false,
+			)
+			// We need to check if stderr is empty because when the region is not specified in the
+			// profile, the cmd will error and it will produce an empty stdout and stderr. In this case,
+			// we should just set the region to an empty string, which means using the default region.
+			if err != nil && stderr != "" {
+				return nil, err
+			}
+
+			regionVar = fmt.Sprintf("-var=region=%s", strings.TrimRight(region, "\n"))
+		}
+
+		vars = append(vars, []string{
+			accessKeyVar,
+			secretAccessKeyVar,
+			regionVar,
+			credentialPathVar,
+			profileVar,
+		}...)
+	} else {
+		var key struct {
+			ProjectID string `json:"project_id"`
+		}
+
+		err := json.Unmarshal([]byte(gcpConfig.ServiceAccountKey), &key)
+		if err != nil {
+			return nil, errors.Wrap(err, "Failed to parse project ID and client email from service account key")
+		}
+
+		regionVar := fmt.Sprintf("-var=region=%s", gcpConfig.Region)
+		zoneVar := fmt.Sprintf("-var=zone=%s", gcpConfig.Zone)
+		secretKeyVar := fmt.Sprintf("-var=secret_key=%s", gcpConfig.ServiceAccountKey)
+		projectIDVar := fmt.Sprintf("-var=project_id=%s", key.ProjectID)
+
+		vars = append(vars, []string{
+			regionVar,
+			zoneVar,
+			secretKeyVar,
+			projectIDVar,
+		}...)
+	}
+
+	return vars, nil
 }
 
 func runTerraformApply(
 	awsConfig *shared.AWSConfig,
+	gcpConfig *shared.GCPConfig,
 	engineResource *models.Resource,
 ) error {
-	terraformArgs, err := generateTerraformVariables(awsConfig, engineResource.Config)
+	terraformArgs, err := generateTerraformVariables(awsConfig, gcpConfig, engineResource.Config)
 	if err != nil {
 		return err
 	}
@@ -717,6 +848,39 @@ func GenerateClusterName() (string, error) {
 	return fmt.Sprintf("%s_%s", "aqueduct", string(b)), nil
 }
 
+func GenerateClusterNameGKE() (string, error) {
+	const letterBytes = "abcdefghijklmnopqrstuvwxyz0123456789"
+
+	b := make([]byte, 16)
+	for i := range b {
+		n, err := rand.Int(rand.Reader, big.NewInt(int64(len(letterBytes))))
+		if err != nil {
+			return "", err
+		}
+		b[i] = letterBytes[n.Int64()]
+	}
+
+	return fmt.Sprintf("%s-%s", "aqueduct", string(b)), nil
+}
+
+func fetchGCPCredential(
+	ctx context.Context,
+	engineResource *models.Resource,
+	vaultObject vault.Vault,
+) (*shared.GCPConfig, error) {
+	config, err := auth.ReadConfigFromSecret(ctx, engineResource.ID, vaultObject)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to read integration config from vault.")
+	}
+
+	k8sConfig, err := lib_utils.ParseK8sConfig(config)
+	if err != nil {
+		return nil, errors.Wrap(err, "Unable to parse Kubernetes config")
+	}
+
+	return k8sConfig.GCPConfig, nil
+}
+
 func fetchAWSCredential(
 	ctx context.Context,
 	engineResource *models.Resource,
@@ -741,4 +905,29 @@ func fetchAWSCredential(
 	}
 
 	return awsConfig, nil
+}
+
+// SetupTerraformDirectory copies all files and folders in the Terraform template directory to the
+// cloud integration's destination directory, which is ~/.aqueduct/server/cloud_integration/<name>/eks.
+func SetupTerraformDirectory(src, dst string) error {
+	// Create the destination directory if it doesn't exist.
+	if err := os.MkdirAll(dst, 0o755); err != nil {
+		return err
+	}
+
+	_, stdErr, err := lib_utils.RunCmd(
+		"cp",
+		[]string{
+			"-R", // we could have used -T to not create a directory if the source is a directory, but it's not supported on macOS
+			fmt.Sprintf("%s%s.", src, string(filepath.Separator)),
+			dst,
+		},
+		"",
+		false,
+	)
+	if err != nil {
+		return errors.New(stdErr)
+	}
+
+	return nil
 }

@@ -2,7 +2,7 @@ import json
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union, cast
 
-from aqueduct.constants.enums import MetaEnum, NotificationLevel, ServiceType
+from aqueduct.constants.enums import CloudProviderType, MetaEnum, NotificationLevel, ServiceType
 from aqueduct.error import InternalAqueductError, InvalidUserArgumentException
 from pydantic import BaseModel, Extra, Field
 
@@ -199,6 +199,13 @@ class AWSConfig(BaseConnectionConfig):
     k8s: Optional[DynamicK8sConfig]
 
 
+class GCPConfig(BaseConnectionConfig):
+    region: str
+    zone: str
+    service_account_key_path: str = ""
+    service_account_key: str = ""
+
+
 class ECRConfig(BaseConnectionConfig):
     # Either 1) all of access_key_id, secret_access_key, region, or 2) both config_file_path and
     # config_file_profile need to be specified. Any other cases will be rejected by the server's
@@ -270,11 +277,33 @@ class DatabricksConfig(BaseConnectionConfig):
 
 
 class K8sConfig(BaseConnectionConfig):
+    kubeconfig_path: str = ""
+    cluster_name: str = ""
+    use_same_cluster: str = "false"
+    cloud_provider: Optional[CloudProviderType]
+    gcp_config: Optional[GCPConfig]
+    cluster_config: Optional[DynamicK8sConfig]
+
+
+class _K8sConfigWithSerializedConfig(BaseConnectionConfig):
     kubeconfig_path: str
     cluster_name: str
     use_same_cluster: str = "false"
-    dynamic: str = "false"
-    cloud_resource_id: str = ""
+    cloud_provider: Optional[CloudProviderType]
+    gcp_config_serialized: Optional[str]  # this is a json-serialized string of GCPConfig
+    # add fields from DynamicK8sConfig
+    keepalive: Optional[Union[str, int]]
+    cpu_node_type: Optional[str]
+    gpu_node_type: Optional[str]
+    min_cpu_node: Optional[Union[str, int]]
+    max_cpu_node: Optional[Union[str, int]]
+    min_gpu_node: Optional[Union[str, int]]
+    max_gpu_node: Optional[Union[str, int]]
+
+    # This converts all int fields to string during json serialization. We need to do this becasue our
+    # backend assumes all config fields must be string.
+    class Config:
+        json_encoders = {int: str}
 
 
 ResourceConfig = Union[
@@ -300,6 +329,7 @@ ResourceConfig = Union[
     DatabricksConfig,
     K8sConfig,
     CondaConfig,
+    _K8sConfigWithSerializedConfig,
 ]
 
 
@@ -367,6 +397,9 @@ def prepare_resource_config(
     if service == ServiceType.AWS:
         return _prepare_aws_config(cast(AWSConfig, config))
 
+    if service == ServiceType.K8S:
+        return _prepare_k8s_config(cast(K8sConfig, config))
+
     if service == ServiceType.GAR:
         return _prepare_gar_config(cast(GARConfig, config))
 
@@ -402,6 +435,30 @@ def _prepare_aws_config(config: AWSConfig) -> _AWSConfigWithSerializedConfig:
         config_file_path=config.config_file_path,
         config_file_profile=config.config_file_profile,
         k8s_serialized=(None if config.k8s is None else config.k8s.json(exclude_none=True)),
+    )
+
+
+def _prepare_k8s_config(config: K8sConfig) -> _K8sConfigWithSerializedConfig:
+    if config.gcp_config is not None and config.gcp_config.service_account_key_path is not None:
+        with open(config.gcp_config.service_account_key_path, "r") as f:
+            config.gcp_config.service_account_key = f.read()
+
+    return _K8sConfigWithSerializedConfig(
+        kubeconfig_path=config.kubeconfig_path,
+        cluster_name=config.cluster_name,
+        use_same_cluster=config.use_same_cluster,
+        cloud_provider=config.cloud_provider,
+        gcp_config_serialized=(
+            None if config.gcp_config is None else config.gcp_config.json(exclude_none=True)
+        ),
+        # add fields from DynamicK8sConfig
+        keepalive=config.cluster_config.keepalive if config.cluster_config else None,
+        cpu_node_type=config.cluster_config.cpu_node_type if config.cluster_config else None,
+        gpu_node_type=config.cluster_config.gpu_node_type if config.cluster_config else None,
+        min_cpu_node=config.cluster_config.min_cpu_node if config.cluster_config else None,
+        max_cpu_node=config.cluster_config.max_cpu_node if config.cluster_config else None,
+        min_gpu_node=config.cluster_config.min_gpu_node if config.cluster_config else None,
+        max_gpu_node=config.cluster_config.max_gpu_node if config.cluster_config else None,
     )
 
 

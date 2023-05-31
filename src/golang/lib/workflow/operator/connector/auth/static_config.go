@@ -37,6 +37,7 @@ func (sc *StaticConfig) PublicConfig() map[string]string {
 		"access_key_id",               // AWS config.
 		"secret_access_key",           // AWS config.
 		"expire_at",                   // ECR config.
+		"gcp_config_serialized",       // GCP config.
 		"service_account_key",         // GAR config.
 	}
 
@@ -66,4 +67,9 @@ func (sc *StaticConfig) Refresh(ctx context.Context) (bool, error) {
 // Set sets a key-value pair in the Config.
 func (sc *StaticConfig) Set(key, value string) {
 	sc.Conf[key] = value
+}
+
+// GetConfigMap returns the config map.
+func (sc *StaticConfig) GetConfigMap() map[string]string {
+	return sc.Conf
 }
