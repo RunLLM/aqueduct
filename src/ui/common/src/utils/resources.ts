@@ -42,15 +42,22 @@ export function resourceExecState(resource: Resource): ExecState {
   return resource.exec_state || { status: ExecutionStatus.Succeeded };
 }
 
-// The only resource that does not necessarily display the same service type as
-// on the resource itself is Conda.
-export function resolveDisplayService(resource: Resource): Service {
+// The resolve the service logo to display.
+// This can be different from the actual service. For example:
+// Aq with conda should display conda.
+// AWS, GCP using on-demand K8s should display K8s.
+export function resolveLogoService(resource: Resource): Service {
   if (resource.service === 'Aqueduct') {
     const aqConfig = resource.config as AqueductComputeConfig;
     if (aqConfig.conda_config_serialized) {
       return 'Conda';
     }
   }
+
+  if (resource.service === 'AWS' || resource.service === 'GCP') {
+    return 'Kubernetes';
+  }
+
   return resource.service;
 }
 
