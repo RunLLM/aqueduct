@@ -1,0 +1,6 @@
+**./terraform
+*.terraform*
+gke_secret.json
+gke.plan
+terraform.tfstate
+terraform.tfstate.backup

@@ -220,6 +220,7 @@ export type KubernetesConfig = {
   kubeconfig_path: string;
   cluster_name: string;
   use_same_cluster: string;
+  cloud_provider?: string;
 };
 
 export type LambdaConfig = {
@@ -264,6 +265,20 @@ export type AWSConfig = {
   config_file_path: string;
   config_file_profile: string;
   k8s_serialized: string;
+};
+
+export type OndemandGKEConfig = {
+  gcp_config_serialized: string;
+  keepalive: string;
+  cpu_node_type: string;
+  min_cpu_node: string;
+  max_cpu_node: string;
+};
+
+export type GCPConfig = {
+  region: string;
+  zone: string;
+  service_account_key: string;
 };
 
 export type DynamicK8sConfig = {

@@ -142,12 +142,35 @@ func ParseK8sConfig(conf auth.Config) (*shared.K8sResourceConfig, error) {
 		return nil, err
 	}
 
-	var c shared.K8sResourceConfig
+	var c struct {
+		KubeconfigPath      string                   `json:"kubeconfig_path"`
+		ClusterName         string                   `json:"cluster_name"`
+		UseSameCluster      shared.ConfigBool        `json:"use_same_cluster"`
+		Dynamic             shared.ConfigBool        `json:"dynamic"`
+		CloudResourceId     string                   `json:"cloud_integration_id"`
+		CloudProvider       shared.CloudProviderType `json:"cloud_provider"`
+		GCPConfigSerialized string                   `json:"gcp_config_serialized"`
+	}
 	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, err
 	}
 
-	return &c, nil
+	var gcpConfig shared.GCPConfig
+	if len(c.GCPConfigSerialized) > 0 {
+		if err := json.Unmarshal([]byte(c.GCPConfigSerialized), &gcpConfig); err != nil {
+			return nil, err
+		}
+	}
+
+	return &shared.K8sResourceConfig{
+		KubeconfigPath:  c.KubeconfigPath,
+		ClusterName:     c.ClusterName,
+		UseSameCluster:  c.UseSameCluster,
+		Dynamic:         c.Dynamic,
+		CloudResourceId: c.CloudResourceId,
+		CloudProvider:   c.CloudProvider,
+		GCPConfig:       &gcpConfig,
+	}, nil
 }
 
 func ParseLambdaConfig(conf auth.Config) (*shared.LambdaResourceConfig, error) {
