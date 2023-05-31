@@ -149,48 +149,6 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
   const [rows, setRows] = useState(rowData);
   const [orderedRows, setOrderedRows] = useState(rowData);
 
-  /**
-   * Function used to test whether a row should be included in search results.
-   * This function allows for searching over arbitrary columns since it takes in a searchQuery and a column to search through.
-   * To allow for more control at the caller's level, this function calls onShouldInclude if there is a function passed in.
-   * This allows us to do things like search through a row item that is an array (assuming the callback implements the search for the column) for example.
-   * @param rowItem - Row item to test whether or not to include in search results.
-   * @param searchQuery - Query to search check e.g. rowItem[searchColumn] === searchQuery
-   * @param searchColumn - Column inside row item to use for search.
-   * @returns - true or false whether the rowItem[searchColumn] is a match for searchQuery
-   */
-  const shouldInclude = (rowItem, searchQuery, searchColumn): boolean => {
-    // Since table cells can contain complex objects, this implementation is up to the caller.
-    // Otherwise, we default to using 'name' (two fields currently in use by the Workflows list table and Data list tables) as the field to conduct the search on.
-    if (onShouldInclude) {
-      return onShouldInclude(rowItem, searchQuery, searchColumn);
-    }
-
-    // filter rows by name, which is our default filter column.
-    let shouldInclude = false;
-    switch (searchColumn) {
-      case 'Name': {
-        sortColumns.forEach((column) => {
-          if (column.name === searchColumn) {
-            let v = rowItem;
-            for (const path of column.sortAccessPath) {
-              v = v[path];
-            }
-            shouldInclude = v.toLowerCase().includes(searchQuery.toLowerCase());
-          }
-        });
-        break;
-      }
-      default: {
-        // no name column, return true for everything.
-        shouldInclude = true;
-        break;
-      }
-    }
-
-    return shouldInclude;
-  };
-
   const handleChangePage = (event: unknown, newPage: number) => {
     setPage(newPage);
   };
@@ -207,6 +165,49 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
   };
 
   useEffect(() => {
+    /**
+     * Function used to test whether a row should be included in search results.
+     * This function allows for searching over arbitrary columns since it takes in a searchQuery and a column to search through.
+     * To allow for more control at the caller's level, this function calls onShouldInclude if there is a function passed in.
+     * This allows us to do things like search through a row item that is an array (assuming the callback implements the search for the column) for example.
+     * @param rowItem - Row item to test whether or not to include in search results.
+     * @param searchQuery - Query to search check e.g. rowItem[searchColumn] === searchQuery
+     * @param searchColumn - Column inside row item to use for search.
+     * @returns - true or false whether the rowItem[searchColumn] is a match for searchQuery
+     */
+    const shouldInclude = (rowItem, searchQuery, searchColumn): boolean => {
+      // Since table cells can contain complex objects, this implementation is up to the caller.
+      // Otherwise, we default to using 'name' (two fields currently in use by the Workflows list table and Data list tables) as the field to conduct the search on.
+      if (onShouldInclude) {
+        return onShouldInclude(rowItem, searchQuery, searchColumn);
+      }
+
+      // filter rows by name, which is our default filter column.
+      let shouldInclude = false;
+      switch (searchColumn) {
+        case 'Name': {
+          sortColumns.forEach((column) => {
+            if (column.name === searchColumn) {
+              let v = rowItem;
+              for (const path of column.sortAccessPath) {
+                v = v[path];
+              }
+              shouldInclude = v
+                .toLowerCase()
+                .includes(searchQuery.toLowerCase());
+            }
+          });
+          break;
+        }
+        default: {
+          // no name column, return true for everything.
+          shouldInclude = true;
+          break;
+        }
+      }
+
+      return shouldInclude;
+    };
     if (searchQuery.length > 0) {
       const filteredRows = rows.filter((rowItem) => {
         return shouldInclude(rowItem, searchQuery, searchColumn);
@@ -219,7 +220,16 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
         setRows(rowData);
       }
     }
-  }, [searchQuery, rowData]);
+  }, [
+    searchQuery,
+    rowData,
+    orderedRows,
+    rows,
+    searchColumn,
+    sortConfig,
+    onShouldInclude,
+    sortColumns,
+  ]);
 
   useEffect(() => {
     if (
@@ -261,7 +271,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
     });
     setRows(sortedRows);
     setOrderedRows(sortedRows);
-  }, [sortConfig]);
+  }, [sortConfig, rowData]);
 
   // Need to slice (.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)) after map because we do the API calls in the GetColumnValue function.
   // As a result, if there are less than rowsPerPage number of rows, less hooks are rendered than expected. Thus, we render all hooks.

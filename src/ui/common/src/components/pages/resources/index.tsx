@@ -47,7 +47,7 @@ const ResourcesPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
     }
 
     fetchServerConfig();
-  }, [user]);
+  }, [dispatch, user]);
 
   useEffect(() => {
     document.title = 'Resources | Aqueduct';
@@ -73,7 +73,7 @@ const ResourcesPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
   }
 
   // If the last storage migration failed, display the error message.
-  const { data, error, isLoading } = useStorageMigrationListQuery({
+  const { data, isLoading } = useStorageMigrationListQuery({
     apiKey: user.apiKey,
     limit: '1', // only fetch the latest result.
   });

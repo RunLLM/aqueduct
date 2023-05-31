@@ -100,7 +100,7 @@ export function useWorkflowIds(apiKey: string): useWorkflowIdsOutputs {
       });
       return;
     }
-  }, [wfIdParam, dagResultIdParam, dagResult, dagIdParam, dag]);
+  }, [navigate, wfIdParam, dagResultIdParam, dagResult, dagIdParam, dag]);
 
   return {
     workflowId: wfIdParam,
@@ -181,11 +181,7 @@ export function useWorkflowNodesResults(
 }
 
 export function useLatestDagResultOrDag(apiKey: string, workflowId: string) {
-  const {
-    data: dagResults,
-    error: dagResultsError,
-    isLoading: dagResultsLoading,
-  } = useDagResultsGetQuery({
+  const { data: dagResults } = useDagResultsGetQuery({
     apiKey: apiKey,
     workflowId: workflowId,
   });
@@ -194,17 +190,13 @@ export function useLatestDagResultOrDag(apiKey: string, workflowId: string) {
 
   const dagIdFromLatestDagResult = latestDagResult?.dag_id;
 
-  const {
-    data: dags,
-    error: dagsError,
-    isLoading: dagsLoading,
-  } = useDagsGetQuery(
+  const { data: dags } = useDagsGetQuery(
     {
       apiKey: apiKey,
       workflowId: workflowId,
     },
     {
-      skip: dagIdFromLatestDagResult,
+      skip: !!dagIdFromLatestDagResult,
     }
   );
 

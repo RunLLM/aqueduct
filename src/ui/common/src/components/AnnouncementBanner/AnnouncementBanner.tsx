@@ -20,88 +20,92 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
   user,
 }) => {
   const location = useLocation();
-  const allowedBannerPages = ['/workflows', '/resources', '/data', '/'];
 
   // By default do not show banner until we know that we have an announcement to show.
   const [shouldShowAnnouncementBanner, setShouldShowAnnouncementBanner] =
     useState<boolean>(false);
-  const [versionNumber, setVersionNumber] = useState<string>('');
+  const [latestVersion, setLatestVersion] = useState<string>('');
+  const [currentVersion, setCurrentVersion] = useState<string>('');
 
   useEffect(() => {
-    async function fetchVersionNumber() {
+    async function fetchVersions() {
       const pypiRes = await fetch('https://pypi.org/pypi/aqueduct-ml/json', {
         method: 'GET',
       });
       const pyPiResponse = await pypiRes.json();
-      const pyPiVersionString = pyPiResponse.info.version;
+      const pyPiVersion = pyPiResponse.info.version;
+      setLatestVersion(pyPiVersion);
 
       const res = await fetch(`${apiAddress}/api/version`, {
         method: 'GET',
         headers: { 'api-key': user.apiKey },
       });
-      const aqueductVersionNumberResponse = await res.json();
 
-      const versionBannerDismissed = localStorage.getItem(
-        'versionBanner.dismissedVersion'
-      );
-
-      let showBanner = false;
-      if (aqueductVersionNumberResponse?.version) {
-        const pyPiVersionNumbers = pyPiVersionString?.split('.');
-
-        // compare strings to see if the two are equal.
-        // if equal, check if banner has been dismissed and return
-        const sameVersion =
-          aqueductVersionNumberResponse.version === pyPiVersionString;
-        const isDismissed = versionBannerDismissed === pyPiVersionString;
-
-        // First check if we should hide the banner.
-        if (isDismissed || sameVersion) {
-          showBanner = false;
-        } else if (pyPiVersionNumbers) {
-          const versionNumbersResponse =
-            aqueductVersionNumberResponse.version.split('.');
-          const majorResponse = parseInt(versionNumbersResponse[0]);
-          const minorResponse = parseInt(versionNumbersResponse[1]);
-          const patchResponse = parseInt(versionNumbersResponse[2]);
-
-          // compare the two version numbers that we have
-          const pyPiMajor = parseInt(pyPiVersionNumbers[0]);
-          const pyPiMinor = parseInt(pyPiVersionNumbers[1]);
-          const pyPiPatch = parseInt(pyPiVersionNumbers[2]);
-
-          // Finally check if there is in fact a new version and show banner if so.
-          if (
-            pyPiMajor > majorResponse ||
-            pyPiMinor > minorResponse ||
-            pyPiPatch > patchResponse
-          ) {
-            showBanner = true;
-          }
-        }
-      }
-
-      setVersionNumber(pyPiVersionString);
-      setShouldShowAnnouncementBanner(showBanner);
-      if (showBanner === true && onShow) {
-        onShow();
+      const aqueductVersionResponse = await res.json();
+      if (aqueductVersionResponse?.version) {
+        setCurrentVersion(aqueductVersionResponse?.version);
       }
     }
 
     if (user.apiKey) {
-      fetchVersionNumber();
+      fetchVersions();
     }
-  }, [user.apiKey]);
+  }, [user]);
 
-  // Make sure user is on appropriate pages and that the banner should be shown.
-  if (
-    !shouldShowAnnouncementBanner ||
-    allowedBannerPages.indexOf(location.pathname) < 0
-  ) {
-    if (onClose) {
+  useEffect(() => {
+    const allowedBannerPages = ['/workflows', '/resources', '/data', '/'];
+    const versionBannerDismissed = localStorage.getItem(
+      'versionBanner.dismissedVersion'
+    );
+
+    let showBanner = false;
+    if (currentVersion) {
+      const pyPiVersionNumbers = latestVersion?.split('.');
+
+      // compare strings to see if the two are equal.
+      // if equal, check if banner has been dismissed and return
+      const isSameVersion = currentVersion === latestVersion;
+      const isDismissed = versionBannerDismissed === latestVersion;
+
+      // First check if we should hide the banner.
+      if (isDismissed || isSameVersion) {
+        showBanner = false;
+      } else if (pyPiVersionNumbers) {
+        const versionNumbersResponse = currentVersion.split('.');
+        const majorResponse = parseInt(versionNumbersResponse[0]);
+        const minorResponse = parseInt(versionNumbersResponse[1]);
+        const patchResponse = parseInt(versionNumbersResponse[2]);
+
+        // compare the two version numbers that we have
+        const pyPiMajor = parseInt(pyPiVersionNumbers[0]);
+        const pyPiMinor = parseInt(pyPiVersionNumbers[1]);
+        const pyPiPatch = parseInt(pyPiVersionNumbers[2]);
+
+        // Finally check if there is in fact a new version and show banner if so.
+        if (
+          pyPiMajor > majorResponse ||
+          pyPiMinor > minorResponse ||
+          pyPiPatch > patchResponse
+        ) {
+          showBanner = true;
+        }
+      }
+    }
+
+    if (allowedBannerPages.indexOf(location.pathname) < 0) {
+      showBanner = false;
+    }
+
+    setShouldShowAnnouncementBanner(showBanner);
+    if (showBanner) {
+      onShow();
+    } else {
       onClose();
     }
+  }, [currentVersion, latestVersion, onShow, onClose, location]);
 
+  // Make sure user is on appropriate pages and that the banner should be shown.
+  if (!shouldShowAnnouncementBanner) {
     return null;
   }
 
@@ -121,7 +125,7 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
     >
       <Box>
         <Typography variant="body1" component={'span'}>
-          ✨ Aqueduct v{versionNumber} is out!{' '}
+          ✨ Aqueduct v{latestVersion} is out!{' '}
           <Link
             href={'https://github.com/aqueducthq/aqueduct/releases'}
             target="_blank"
@@ -149,7 +153,7 @@ export const AnnouncementBanner: React.FC<AnnouncementBannerProps> = ({
               onClose();
               localStorage.setItem(
                 'versionBanner.dismissedVersion',
-                versionNumber ?? ''
+                latestVersion ?? ''
               );
             }
           }}

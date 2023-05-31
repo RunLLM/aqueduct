@@ -71,7 +71,7 @@ export const GCSDialog: React.FC<GCSDialogProps> = ({
     if (setMigrateStorage) {
       setMigrateStorage(initialUseAsStorage === 'true');
     }
-  }, [setMigrateStorage]);
+  }, [setMigrateStorage, initialUseAsStorage]);
 
   return (
     <Box sx={{ mt: 2 }}>
