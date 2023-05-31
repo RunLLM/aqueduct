@@ -6,10 +6,10 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
+import { useResourceOperatorsGetQuery } from '../../../handlers/AqueductApi';
 import { handleGetServerConfig } from '../../../handlers/getServerConfig';
 import {
   handleDeleteResource,
-  handleLoadResourceOperators,
   resetDeletionStatus,
 } from '../../../reducers/resource';
 import { AppDispatch, RootState } from '../../../stores/store';
@@ -22,7 +22,6 @@ import {
 } from '../../../utils/resources';
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
 import { convertResourceConfigToServerConfig } from '../../../utils/storage';
-import { useResourceOperatorsGetQuery } from '../../../handlers/AqueductApi';
 
 const isEqual = function (x, y) {
   if (x === y) {
@@ -87,7 +86,6 @@ const DeleteResourceDialog: React.FC<Props> = ({
   const serverConfig = useSelector(
     (state: RootState) => state.serverConfigReducer
   );
-
 
   const {
     data: resourceOperators,
@@ -163,7 +161,9 @@ const DeleteResourceDialog: React.FC<Props> = ({
       </Dialog>
     );
   } else if (
-    !resourceOperatorsIsLoading && !resourceOperatorsError && resourceOperators.length === 0
+    !resourceOperatorsIsLoading &&
+    !resourceOperatorsError &&
+    resourceOperators.length === 0
   ) {
     return (
       <>
