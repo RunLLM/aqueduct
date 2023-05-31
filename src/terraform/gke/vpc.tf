@@ -4,7 +4,6 @@
 provider "google" {
   project = var.project_id
   region  = var.region
-  # credentials = file("./gke_secret.json")
   credentials = jsondecode(jsonencode(var.secret_key))
 }
 

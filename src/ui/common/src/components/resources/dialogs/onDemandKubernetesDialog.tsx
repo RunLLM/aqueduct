@@ -256,7 +256,7 @@ const OndemandK8sAWSDialog: React.FC<ResourceDialogProps<ResourceConfig>> = ({
           </Typography>
         </div>
         <ResourceLogo
-          service={'AWS'}
+          service={'Kubernetes'}
           activated={SupportedResources['Kubernetes'].activated}
           size="small"
         />
@@ -347,7 +347,7 @@ const OnDemandK8sGCPStep: React.FC<ResourceDialogProps<ResourceConfig>> = ({
           </Typography>
         </div>
         <ResourceLogo
-          service={'AWS'}
+          service={'Kubernetes'}
           activated={SupportedResources['Kubernetes'].activated}
           size="small"
         />

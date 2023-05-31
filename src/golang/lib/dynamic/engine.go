@@ -312,9 +312,6 @@ func CreateOrUpdateK8sCluster(
 			if err := os.Remove(serviceAccountKeyPath); err != nil {
 				return errors.Wrap(err, "Failed to remove temporary service account key file")
 			}
-
-			log.Info("Successfully created ondemand GKE cluster, waiting 10 seconds before proceeding...")
-			time.Sleep(10 * time.Second)
 		}
 	}
 

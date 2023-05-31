@@ -280,8 +280,6 @@ class K8sConfig(BaseConnectionConfig):
     kubeconfig_path: str = ""
     cluster_name: str = ""
     use_same_cluster: str = "false"
-    # dynamic: str = "false"
-    # cloud_integration_id: str = ""
     cloud_provider: Optional[CloudProviderType]
     gcp_config: Optional[GCPConfig]
     cluster_config: Optional[DynamicK8sConfig]
@@ -291,8 +289,6 @@ class _K8sConfigWithSerializedConfig(BaseConnectionConfig):
     kubeconfig_path: str
     cluster_name: str
     use_same_cluster: str = "false"
-    # dynamic: str = "false"
-    # cloud_integration_id: str = ""
     cloud_provider: Optional[CloudProviderType]
     gcp_config_serialized: Optional[str]  # this is a json-serialized string of GCPConfig
     # add fields from DynamicK8sConfig
@@ -451,8 +447,6 @@ def _prepare_k8s_config(config: K8sConfig) -> _K8sConfigWithSerializedConfig:
         kubeconfig_path=config.kubeconfig_path,
         cluster_name=config.cluster_name,
         use_same_cluster=config.use_same_cluster,
-        # dynamic=config.dynamic,
-        # cloud_integration_id=config.cloud_integration_id,
         cloud_provider=config.cloud_provider,
         gcp_config_serialized=(
             None if config.gcp_config is None else config.gcp_config.json(exclude_none=True)

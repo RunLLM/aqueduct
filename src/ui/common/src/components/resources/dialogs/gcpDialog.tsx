@@ -74,7 +74,7 @@ export const GCPDialog: React.FC<
         spellCheck={false}
         required={false}
         label="CPU node type"
-        description="The EC2 instance type of the CPU node group."
+        description="The instance type of the CPU node group."
         placeholder={Placeholders.cpu_node_type}
         onChange={(event) => {
           setValue('cpu_node_type', event.target.value);
