@@ -1,4 +1,5 @@
 import { ObjectSchema } from 'yup';
+import { ObjectShape } from 'yup/lib/object';
 
 import { apiAddress } from '../components/hooks/useAqueductConsts';
 import UserProfile from './auth';
@@ -42,15 +43,22 @@ export function resourceExecState(resource: Resource): ExecState {
   return resource.exec_state || { status: ExecutionStatus.Succeeded };
 }
 
-// The only resource that does not necessarily display the same service type as
-// on the resource itself is Conda.
-export function resolveDisplayService(resource: Resource): Service {
+// The resolve the service logo to display.
+// This can be different from the actual service. For example:
+// Aq with conda should display conda.
+// AWS, GCP using on-demand K8s should display K8s.
+export function resolveLogoService(resource: Resource): Service {
   if (resource.service === 'Aqueduct') {
     const aqConfig = resource.config as AqueductComputeConfig;
     if (aqConfig.conda_config_serialized) {
       return 'Conda';
     }
   }
+
+  if (resource.service === 'AWS' || resource.service === 'GCP') {
+    return 'Kubernetes';
+  }
+
   return resource.service;
 }
 
@@ -213,6 +221,7 @@ export type KubernetesConfig = {
   kubeconfig_path: string;
   cluster_name: string;
   use_same_cluster: string;
+  cloud_provider?: string;
 };
 
 export type LambdaConfig = {
@@ -257,6 +266,20 @@ export type AWSConfig = {
   config_file_path: string;
   config_file_profile: string;
   k8s_serialized: string;
+};
+
+export type OndemandGKEConfig = {
+  gcp_config_serialized: string;
+  keepalive: string;
+  cpu_node_type: string;
+  min_cpu_node: string;
+  max_cpu_node: string;
+};
+
+export type GCPConfig = {
+  region: string;
+  zone: string;
+  service_account_key: string;
 };
 
 export type DynamicK8sConfig = {
@@ -354,7 +377,7 @@ export type Info = {
   dialog?: React.FC<ResourceDialogProps<ResourceConfig>>;
   // TODO: figure out typescript type for yup schema
   // This may be useful: https://stackoverflow.com/questions/66171196/how-to-use-yups-object-shape-with-typescript
-  validationSchema: (editMode: boolean) => ObjectSchema<any>;
+  validationSchema: (editMode: boolean) => ObjectSchema<ObjectShape>;
 };
 
 export type ServiceInfoMap = {

@@ -144,7 +144,7 @@ const ResourceDetailsPage: React.FC<ResourceDetailsPageProps> = ({
         })
       );
     }
-  }, [selectedResource]);
+  }, [dispatch, selectedResource, resourceId, user]);
 
   // Load the server config to check if the selected resource is currently being used as storage.
   // If that is the case, we hide the option to delete the resource from the user.
@@ -156,7 +156,7 @@ const ResourceDetailsPage: React.FC<ResourceDetailsPageProps> = ({
     }
 
     fetchServerConfig();
-  }, [user.apiKey]);
+  }, [dispatch, user]);
 
   const {
     data: workflowAndDagIDs,

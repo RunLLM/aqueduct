@@ -131,7 +131,12 @@ const WorkflowSettings: React.FC<Props> = ({ user, dag, workflow }) => {
         }
       }
     }
-  }, [deleteWorkflowSuccess, deleteWorkflowError, navigate]);
+  }, [
+    deleteWorkflowSuccess,
+    deleteWorkflowError,
+    deleteWorkflowResponse,
+    navigate,
+  ]);
 
   const resources = useSelector(
     (state: RootState) => state.resourcesReducer.resources

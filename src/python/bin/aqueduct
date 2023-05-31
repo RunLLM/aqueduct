@@ -225,10 +225,19 @@ def setup_server_binaries():
 
 
 def download_terraform_template():
+    # EKS template
     terraform_folder = os.path.join(server_directory, "template", "aws", "eks")
     terraform_zip_path = os.path.join(terraform_folder, "eks_terraform.zip")
     with open(terraform_zip_path, "wb") as f:
         _download_file(os.path.join(s3_server_prefix, "template", "aws", "eks", "eks_terraform.zip"), f)
+    with zipfile.ZipFile(terraform_zip_path, "r") as zip:
+        zip.extractall(terraform_folder)
+    os.remove(terraform_zip_path)
+    # GKE template
+    terraform_folder = os.path.join(server_directory, "template", "gke")
+    terraform_zip_path = os.path.join(terraform_folder, "gke_terraform.zip")
+    with open(terraform_zip_path, "wb") as f:
+        _download_file(os.path.join(s3_server_prefix, "template", "gke", "gke_terraform.zip"), f)
     with zipfile.ZipFile(terraform_zip_path, "r") as zip:
         zip.extractall(terraform_folder)
     os.remove(terraform_zip_path)
@@ -345,6 +354,7 @@ def update():
         os.path.join(server_directory, "template"),
         os.path.join(server_directory, "template", "aws"),
         os.path.join(server_directory, "template", "aws", "eks"),
+        os.path.join(server_directory, "template", "gke"),
     ]
 
     for directory in template_directories:

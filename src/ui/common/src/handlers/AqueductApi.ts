@@ -130,7 +130,7 @@ import {
   WorkflowTriggerPostResponse,
 } from './v2/WorkflowTriggerPost';
 
-const { createApi, fetchBaseQuery } = ((rtkQueryRaw as any).default ??
+const { createApi, fetchBaseQuery } = (rtkQueryRaw['default'] ??
   rtkQueryRaw) as typeof rtkQueryRaw;
 
 const transformErrorResponse = (resp: FetchBaseQueryError) =>

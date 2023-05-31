@@ -38,7 +38,7 @@ func setupCloudResource(
 	}
 
 	terraformPath := filepath.Join(os.Getenv("HOME"), ".aqueduct", "server", "cloud_resource", args.Name, "eks")
-	if err = setupTerraformDirectory(terraformPath); err != nil {
+	if err = dynamic.SetupTerraformDirectory(dynamic.EKSTerraformTemplateDir, terraformPath); err != nil {
 		return http.StatusInternalServerError, errors.Wrap(err, "Unable to create Terraform directory.")
 	}
 
@@ -51,8 +51,8 @@ func setupCloudResource(
 
 	config := shared.DynamicK8sConfig{
 		Keepalive:   strconv.Itoa(shared.K8sDefaultKeepalive),
-		CpuNodeType: shared.K8sDefaultCpuNodeType,
-		GpuNodeType: shared.K8sDefaultGpuNodeType,
+		CpuNodeType: shared.EKSDefaultCpuNodeType,
+		GpuNodeType: shared.EKSDefaultGpuNodeType,
 		MinCpuNode:  strconv.Itoa(shared.K8sDefaultMinCpuNode),
 		MaxCpuNode:  strconv.Itoa(shared.K8sDefaultMaxCpuNode),
 		MinGpuNode:  strconv.Itoa(shared.K8sDefaultMinGpuNode),
@@ -117,33 +117,8 @@ func setupCloudResource(
 	return http.StatusOK, nil
 }
 
-// setupTerraformDirectory copies all files and folders in the Terraform template directory to the
-// cloud resource's destination directory, which is ~/.aqueduct/server/cloud_resource/<name>/eks.
-func setupTerraformDirectory(dst string) error {
-	// Create the destination directory if it doesn't exist.
-	if err := os.MkdirAll(dst, 0o755); err != nil {
-		return err
-	}
-
-	_, stdErr, err := lib_utils.RunCmd(
-		"cp",
-		[]string{
-			"-R", // we could have used -T to not create a directory if the source is a directory, but it's not supported on macOS
-			fmt.Sprintf("%s%s.", dynamic.TerraformTemplateDir, string(filepath.Separator)),
-			dst,
-		},
-		"",
-		false,
-	)
-	if err != nil {
-		return errors.New(stdErr)
-	}
-
-	return nil
-}
-
-// deleteCloudResourceHelper does the following:
-// 1. Verifies that there is no workflow using the dynamic k8s resource.
+// deleteCloudIntegrationHelper does the following:
+// 1. Verifies that there is no workflow using the dynamic k8s integration.
 // 2. Deletes the EKS cluster if it's running.
 // 3. Deletes the cloud resource directory.
 // 4. Deletes the Aqueduct-generated dynamic k8s resource.
