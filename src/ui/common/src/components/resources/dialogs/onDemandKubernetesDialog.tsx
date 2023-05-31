@@ -288,17 +288,17 @@ const OndemandK8sAWSDialog: React.FC<ResourceDialogProps<ResourceConfig>> = ({
 
             editMode
               ? dispatch(
-                  handleConnectToNewResource({
+                  handleEditResource({
                     apiKey: user.apiKey,
-                    service: 'AWS',
-                    name: name,
+                    resourceId,
+                    name,
                     config,
                   })
                 )
               : dispatch(
-                  handleEditResource({
+                  handleConnectToNewResource({
                     apiKey: user.apiKey,
-                    resourceId,
+                    service: 'AWS',
                     name,
                     config,
                   })
@@ -435,17 +435,18 @@ const StaticK8sDialog: React.FC<StaticK8sDialogProps> = ({
             // Remove the name field from request body to avoid pydantic errors.
             // Name needs to be passed in as a header instead. Dunno why it's not part of the body :shrug:
             const name = data.name;
-            delete data.name;
+            const config = { ...data };
+            delete config.name;
             // Remove extraneous fields if they are added when filling out the form.
-            delete data.k8s_type;
-            delete data.type;
+            delete config.k8s_type;
+            delete config.type;
 
             dispatch(
               handleConnectToNewResource({
                 apiKey: user.apiKey,
                 service: 'Kubernetes',
                 name: name,
-                config: data,
+                config,
               })
             );
           })(); // Remember the last two parens to call the function!

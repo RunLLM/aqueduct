@@ -102,6 +102,7 @@ import {
   DatabricksConfig,
   ECRConfig,
   EmailConfig,
+  GarConfig,
   GCSConfig,
   LambdaConfig,
   MariaDbConfig,
@@ -460,7 +461,7 @@ export const SupportedResources: ServiceInfoMap = {
   },
   // Not sure the difference between this one and the Amazon one below.
   ['AWS']: {
-    logo: ServiceLogos['Kubernetes'],
+    logo: ServiceLogos['AWS'],
     activated: true,
     category: ResourceCategories.CLOUD,
     docs: addingResourceLink,
@@ -528,16 +529,16 @@ export const SupportedResources: ServiceInfoMap = {
     activated: true,
     category: ResourceCategories.CONTAINER_REGISTRY,
     docs: addingResourceLink,
-    dialog: ({ user, editMode, onCloseDialog, loading, disabled }) => (
+    dialog: ({ user, resourceToEdit, onCloseDialog, loading, disabled }) => (
       <GARDialog
         user={user}
-        editMode={editMode}
+        resourceToEdit={resourceToEdit as GarConfig}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
       />
     ),
-    validationSchema: getGARValidationSchema(),
+    validationSchema: (editMode) => getGARValidationSchema(editMode),
   },
 };
 

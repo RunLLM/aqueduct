@@ -3,7 +3,7 @@ import Typography from '@mui/material/Typography';
 import React from 'react';
 
 import {
-  resolveDisplayService,
+  resolveLogoService,
   Resource,
   resourceExecState,
 } from '../../../utils/resources';
@@ -29,7 +29,7 @@ export const ResourceHeaderDetailsCard: React.FC<
     >
       <Box display="flex" flexDirection="row" alignItems="center">
         <ResourceLogo
-          service={resolveDisplayService(resource)}
+          service={resolveLogoService(resource)}
           size="medium"
           activated
         />

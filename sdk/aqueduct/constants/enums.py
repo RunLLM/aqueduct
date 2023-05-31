@@ -108,6 +108,14 @@ class ExecutionStatus(str, Enum, metaclass=MetaEnum):
     CANCELED = "canceled"
 
 
+class NotificationLogLevel(str, Enum, metaclass=MetaEnum):
+    SUCCESS = "success"
+    WARNING = "warning"
+    ERROR = "error"
+    INFO = "info"
+    NEUTRAL = "neutral"
+
+
 class FailureType(Enum, metaclass=MetaEnum):
     SYSTEM = 1
     USER_FATAL = 2

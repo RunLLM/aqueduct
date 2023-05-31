@@ -451,8 +451,8 @@ class TestBackend:
             resp = self.get_response(self.GET_NODES_TEMPLATE % (flow_id, dag_id)).json()
 
             all_output_counts = []
-            for artifact in resp["operators"]:
-                result = GetNodeOperatorResponse(**artifact)
+            for operator in resp["operators"]:
+                result = GetNodeOperatorResponse(**operator)
                 all_output_counts.append(len(result.outputs))
             assert sum(all_output_counts) == len(all_output_counts)
             assert set(all_output_counts) == set([1])
