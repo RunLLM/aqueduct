@@ -6,6 +6,7 @@ import * as Yup from 'yup';
 import { RedshiftConfig, ResourceDialogProps } from '../../../utils/resources';
 import { readOnlyFieldDisableReason, readOnlyFieldWarning } from './constants';
 import { ResourceTextInputField } from './ResourceTextInputField';
+import { requiredAtCreate } from './schema';
 
 const Placeholders: RedshiftConfig = {
   host: 'aqueduct.us-east-2.redshift.amazonaws.com',
@@ -15,10 +16,16 @@ const Placeholders: RedshiftConfig = {
   password: '********',
 };
 
-export const RedshiftDialog: React.FC<ResourceDialogProps> = ({
-  editMode = false,
+export const RedshiftDialog: React.FC<ResourceDialogProps<RedshiftConfig>> = ({
+  resourceToEdit,
 }) => {
-  const { setValue } = useFormContext();
+  const { register, setValue } = useFormContext();
+  const editMode = !!resourceToEdit;
+  if (resourceToEdit) {
+    Object.entries(resourceToEdit).forEach(([k, v]) => {
+      register(k, { value: v });
+    });
+  }
 
   return (
     <Box sx={{ mt: 2 }}>
@@ -85,12 +92,16 @@ export const RedshiftDialog: React.FC<ResourceDialogProps> = ({
   );
 };
 
-export function getRedshiftValidationSchema() {
+export function getRedshiftValidationSchema(editMode: boolean) {
   return Yup.object().shape({
     host: Yup.string().required('Please enter a host'),
     port: Yup.string().required('Please enter a port'),
     database: Yup.string().required('Please enter a database'),
     username: Yup.string().required('Please enter a username'),
-    password: Yup.string().required('Please enter a password'),
+    password: requiredAtCreate(
+      Yup.string(),
+      editMode,
+      'Please enter a password'
+    ),
   });
 }

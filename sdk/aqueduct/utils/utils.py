@@ -42,7 +42,7 @@ def generate_uuid() -> uuid.UUID:
 
 
 WORKFLOW_UI_ROUTE_TEMPLATE = "/workflow/%s"
-WORKFLOW_RUN_UI_ROUTE_TEMPLATE = "?workflowDagResultId=%s"
+WORKFLOW_RUN_UI_ROUTE_TEMPLATE = "/result/%s"
 
 
 def generate_ui_url(

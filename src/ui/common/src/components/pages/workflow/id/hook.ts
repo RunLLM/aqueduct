@@ -12,6 +12,7 @@ import {
 import { NodeResultsMap, NodesMap } from '../../../../handlers/responses/node';
 import { DagResultResponse } from '../../../../handlers/responses/workflow';
 import { getPathPrefix } from '../../../../utils/getPathPrefix';
+import { getLatestDagResult } from '../../../../utils/shared';
 
 export type useWorkflowIdsOutputs = {
   workflowId: string;
@@ -127,20 +128,11 @@ export function useWorkflowBreadcrumbs(
 
   const pathPrefix = getPathPrefix();
   let workflowLink = `${pathPrefix}/workflow/${workflowId}`;
-  if (dagId || dagResultId) {
-    workflowLink += '?';
-  }
-
-  if (dagId) {
-    workflowLink += `workflowDagId=${dagId}`;
-  }
-
-  if (dagId && dagResultId) {
-    workflowLink += '&';
-  }
 
   if (dagResultId) {
-    workflowLink += `workflowDagResultId=${dagResultId}`;
+    workflowLink += `/result/${dagResultId}`;
+  } else if (dagId) {
+    workflowLink += `/dag/${dagId}`;
   }
 
   return [
@@ -186,4 +178,35 @@ export function useWorkflowNodesResults(
       (nodeResults?.artifacts ?? []).map((artf) => [artf.artifact_id, artf])
     ),
   };
+}
+
+export function useLatestDagResultOrDag(apiKey: string, workflowId: string) {
+  const {
+    data: dagResults,
+    error: dagResultsError,
+    isLoading: dagResultsLoading,
+  } = useDagResultsGetQuery({
+    apiKey: apiKey,
+    workflowId: workflowId,
+  });
+
+  const latestDagResult = getLatestDagResult(dagResults ?? []); // undefined if not available
+
+  const dagIdFromLatestDagResult = latestDagResult?.dag_id;
+
+  const {
+    data: dags,
+    error: dagsError,
+    isLoading: dagsLoading,
+  } = useDagsGetQuery(
+    {
+      apiKey: apiKey,
+      workflowId: workflowId,
+    },
+    {
+      skip: dagIdFromLatestDagResult,
+    }
+  );
+
+  return { latestDagResult, dag: (dags ?? [])[0] };
 }

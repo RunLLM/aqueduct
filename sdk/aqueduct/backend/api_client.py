@@ -1,3 +1,4 @@
+import datetime
 import io
 import json
 import uuid
@@ -16,22 +17,30 @@ from aqueduct.error import (
     UnprocessableEntityError,
 )
 from aqueduct.logger import logger
-from aqueduct.models.dag import DAG
-from aqueduct.models.operators import ParamSpec
+from aqueduct.models.artifact import ArtifactMetadata
+from aqueduct.models.dag import DAG, Metadata
+from aqueduct.models.operators import Operator, ParamSpec
 from aqueduct.models.resource import BaseResource, ResourceInfo
 from aqueduct.models.response_models import (
     DeleteWorkflowResponse,
     DynamicEngineStatusResponse,
+    GetDagResponse,
+    GetDagResultResponse,
     GetImageURLResponse,
+    GetNodeArtifactResponse,
+    GetNodeOperatorResponse,
     GetVersionResponse,
     GetWorkflowDagResultResponse,
     GetWorkflowResponse,
+    GetWorkflowV1Response,
     ListWorkflowResponseEntry,
     ListWorkflowSavedObjectsResponse,
     PreviewResponse,
     RegisterAirflowWorkflowResponse,
     RegisterWorkflowResponse,
     SavedObjectUpdate,
+    WorkflowDagResponse,
+    WorkflowDagResultResponse,
 )
 from aqueduct.utils.serialization import deserialize
 from pkg_resources import get_distribution, parse_version
@@ -56,6 +65,13 @@ class APIClient:
     HTTP_PREFIX = "http://"
     HTTPS_PREFIX = "https://"
 
+    # V2
+    GET_WORKFLOW_TEMPLATE = "/api/v2/workflow/%s"
+    GET_DAGS_TEMPLATE = "/api/v2/workflow/%s/dags"
+    GET_DAG_RESULTS_TEMPLATE = "/api/v2/workflow/%s/results"
+    GET_NODES_TEMPLATE = "/api/v2/workflow/%s/dag/%s/nodes"
+
+    # V1
     GET_VERSION_ROUTE = "/api/version"
     CONNECT_RESOURCE_ROUTE = "/api/resource/connect"
     DELETE_RESOURCE_ROUTE_TEMPLATE = "/api/resource/%s/delete"
@@ -531,12 +547,83 @@ class APIClient:
         self.raise_errors(response)
         return DeleteWorkflowResponse(**response.json())
 
-    def get_workflow(self, flow_id: str) -> GetWorkflowResponse:
+    def get_workflow(self, flow_id: str) -> GetWorkflowV1Response:
         headers = self._generate_auth_headers()
-        url = self.construct_full_url(self.GET_WORKFLOW_ROUTE_TEMPLATE % flow_id)
-        resp = requests.get(url, headers=headers)
-        self.raise_errors(resp)
-        return GetWorkflowResponse(**resp.json())
+
+        url = self.construct_full_url(self.GET_WORKFLOW_TEMPLATE % flow_id)
+        flow_response = requests.get(url, headers=headers)
+        self.raise_errors(flow_response)
+        resp_flow = GetWorkflowResponse(**flow_response.json())
+        metadata = Metadata(
+            name=resp_flow.name,
+            description=resp_flow.description,
+            schedule=resp_flow.schedule,
+            retention_policy=resp_flow.retention_policy,
+        )
+
+        url = self.construct_full_url(self.GET_DAGS_TEMPLATE % flow_id)
+        dags_response = requests.get(url, headers=headers)
+        self.raise_errors(dags_response)
+        resp_dags = {dag["id"]: GetDagResponse(**dag) for dag in dags_response.json()}
+        # Metadata from WorkflowResponse so it is the same for all DAG.
+        dags = {}
+        for dag in resp_dags.values():
+            url = self.construct_full_url(self.GET_NODES_TEMPLATE % (flow_id, dag.id))
+            nodes_resp = requests.get(url, headers=headers)
+            self.raise_errors(nodes_resp)
+            resp_nodes = nodes_resp.json()
+
+            ops = {}
+            for operator in resp_nodes["operators"]:
+                op = GetNodeOperatorResponse(**operator)
+                ops[str(op.id)] = Operator(
+                    id=op.id,
+                    name=op.name,
+                    description=op.description,
+                    spec=op.spec,
+                    inputs=op.inputs,
+                    outputs=op.outputs,
+                )
+
+            artfs = {}
+            for artifact in resp_nodes["artifacts"]:
+                artf = GetNodeArtifactResponse(**artifact)
+                artfs[str(artf.id)] = ArtifactMetadata(
+                    id=artf.id,
+                    name=artf.name,
+                    type=artf.type,
+                )
+
+            dags[dag.id] = WorkflowDagResponse(
+                id=dag.id,
+                workflow_id=dag.workflow_id,
+                metadata=metadata,
+                operators=ops,
+                artifacts=artfs,
+            )
+
+        url = self.construct_full_url(self.GET_DAG_RESULTS_TEMPLATE % flow_id)
+        results_resp = requests.get(url, headers=headers)
+        self.raise_errors(results_resp)
+        dag_results = [GetDagResultResponse(**dag_result) for dag_result in results_resp.json()]
+        workflow_dag_results = [
+            WorkflowDagResultResponse(
+                id=dag_result.id,
+                created_at=int(
+                    datetime.datetime.strptime(
+                        resp_dags[str(dag_result.dag_id)].created_at[:-4],
+                        "%Y-%m-%dT%H:%M:%S.%f"
+                        if resp_dags[str(dag_result.dag_id)].created_at[-1] == "Z"
+                        else "%Y-%m-%dT%H:%M:%S.%f%z",
+                    ).timestamp()
+                ),
+                status=dag_result.exec_state.status,
+                exec_state=dag_result.exec_state,
+                workflow_dag_id=dag_result.dag_id,
+            )
+            for dag_result in dag_results
+        ]
+        return GetWorkflowV1Response(workflow_dags=dags, workflow_dag_results=workflow_dag_results)
 
     def get_workflow_dag_result(self, flow_id: str, result_id: str) -> GetWorkflowDagResultResponse:
         headers = self._generate_auth_headers()

@@ -7,12 +7,21 @@ import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { useDispatch } from 'react-redux';
+import { useParams } from 'react-router-dom';
 import * as Yup from 'yup';
 
 import { useEnvironmentGetQuery } from '../../../handlers/AqueductApi';
-import { handleConnectToNewResource } from '../../../reducers/resource';
+import {
+  handleConnectToNewResource,
+  handleEditResource,
+} from '../../../reducers/resource';
 import { AppDispatch } from '../../../stores/store';
-import { ResourceDialogProps } from '../../../utils/resources';
+import {
+  AWSConfig,
+  KubernetesConfig,
+  ResourceDialogProps,
+} from '../../../utils/resources';
+import { ResourceConfig } from '../../../utils/resources';
 import SupportedResources from '../../../utils/SupportedResources';
 import ResourceLogo from '../logo';
 import { AWSDialog } from './awsDialog';
@@ -20,6 +29,7 @@ import { DialogActionButtons, DialogHeader } from './dialog';
 import { GCPDialog } from './gcpDialog';
 import { KubernetesDialog } from './kubernetesDialog';
 import { ResourceTextInputField } from './ResourceTextInputField';
+import { requiredAtCreate } from './schema';
 
 const K8S_TYPES = {
   // INITIAL step is when user is choosing to connect to their own or aqueduct cluster.
@@ -36,22 +46,21 @@ const K8S_TYPES = {
   ONDEMAND_K8S_AZURE: 'ONDEMAND_K8S_AZURE',
 };
 
-export const OnDemandKubernetesDialog: React.FC<ResourceDialogProps> = ({
-  user,
-  editMode = false,
-  disabled,
-  loading,
-  onCloseDialog,
-}) => {
-  const {
-    data: environment,
-    error,
-    isLoading,
-  } = useEnvironmentGetQuery({ apiKey: user.apiKey });
+export const OnDemandKubernetesDialog: React.FC<
+  ResourceDialogProps<ResourceConfig>
+> = ({ user, resourceToEdit, disabled, loading, onCloseDialog }) => {
+  const { data: environment } = useEnvironmentGetQuery({ apiKey: user.apiKey });
   const { register, setValue } = useFormContext();
+  // This hack is rather hacky as we check the resource field rather than explicitly
+  // pass around its service type.
+  const initialStep = (resourceToEdit ?? {})['k8s_serialized']
+    ? K8S_TYPES.ONDEMAND_K8S_AWS
+    : (resourceToEdit ?? {})['cluster_name']
+    ? K8S_TYPES.REGULAR_K8S
+    : K8S_TYPES.INITIAL;
 
-  const [currentStep, setCurrentStep] = useState('INITIAL');
-  register('k8s_type', { value: 'INITIAL' });
+  const [currentStep, setCurrentStep] = useState(initialStep);
+  register('k8s_type', { value: initialStep });
 
   const handleRegularK8s = () => {
     setCurrentStep(K8S_TYPES.REGULAR_K8S);
@@ -63,14 +72,27 @@ export const OnDemandKubernetesDialog: React.FC<ResourceDialogProps> = ({
     setValue('k8s_type', K8S_TYPES.ONDEMAND_K8S);
   };
 
-  const handlePrevious = () => {
+  const handleToSelectK8sTypeStep = () => {
     setCurrentStep('INITIAL');
     setValue('k8s_type', K8S_TYPES.INITIAL);
   };
 
-  const handleAWSClick = () => {
-    setCurrentStep(K8S_TYPES.ONDEMAND_K8S_AWS);
-    setValue('k8s_type', K8S_TYPES.ONDEMAND_K8S_AWS);
+  const onSelectProvider = (provider: 'AWS' | 'GCP' | 'Azure') => {
+    if (provider === 'AWS') {
+      setCurrentStep(K8S_TYPES.ONDEMAND_K8S_AWS);
+      setValue('k8s_type', K8S_TYPES.ONDEMAND_K8S_AWS);
+      return;
+    }
+
+    if (provider === 'GCP') {
+      setCurrentStep(K8S_TYPES.ONDEMAND_K8S_GCP);
+      setValue('k8s_type', K8S_TYPES.ONDEMAND_K8S_GCP);
+      return;
+    }
+
+    setCurrentStep(K8S_TYPES.ONDEMAND_K8S_AZURE);
+    setValue('k8s_type', K8S_TYPES.ONDEMAND_K8S_AZURE);
+    return;
   };
 
   const handleGCPClick = () => {
@@ -81,48 +103,39 @@ export const OnDemandKubernetesDialog: React.FC<ResourceDialogProps> = ({
   switch (currentStep) {
     case 'INITIAL':
       return (
-        <InitialStepLayout
-          user={user}
-          disabled={disabled}
-          loading={loading}
+        <SelectK8sTypeDialog
           onCloseDialog={onCloseDialog}
-          editMode={editMode}
           handleOnDemandK8s={handleOndemandK8s}
           handleRegularK8s={handleRegularK8s}
         />
       );
     case 'REGULAR_K8S':
       return (
-        <RegularK8sStepLayout
+        <StaticK8sDialog
           user={user}
           disabled={disabled}
           loading={loading}
           onCloseDialog={onCloseDialog}
-          editMode={editMode}
+          resourceToEdit={resourceToEdit as KubernetesConfig}
           inK8sCluster={environment?.inK8sCluster}
         />
       );
     case 'ONDEMAND_K8S':
       return (
-        <OnDemandK8sStep
-          user={user}
-          disabled={disabled}
-          loading={loading}
+        <SelectOnDemandCloudProviderDialog
           onCloseDialog={onCloseDialog}
-          editMode={editMode}
-          handlePrevious={handlePrevious}
-          handleAWSClick={handleAWSClick}
-          handleGCPClick={handleGCPClick}
+          onSelectProvider={onSelectProvider}
+          handleToPreviousStep={handleToSelectK8sTypeStep}
         />
       );
     case 'ONDEMAND_K8S_AWS':
       return (
-        <OnDemandK8sAWSStep
+        <OndemandK8sAWSDialog
           user={user}
           disabled={disabled}
           loading={loading}
           onCloseDialog={onCloseDialog}
-          editMode={editMode}
+          resourceToEdit={resourceToEdit as AWSConfig}
         />
       );
     case 'ONDEMAND_K8S_GCP':
@@ -132,17 +145,12 @@ export const OnDemandKubernetesDialog: React.FC<ResourceDialogProps> = ({
           disabled={disabled}
           loading={loading}
           onCloseDialog={onCloseDialog}
-          editMode={editMode}
         />
       );
     default:
       return (
-        <InitialStepLayout
-          user={user}
-          disabled={disabled}
-          loading={loading}
+        <SelectK8sTypeDialog
           onCloseDialog={onCloseDialog}
-          editMode={editMode}
           handleOnDemandK8s={handleOndemandK8s}
           handleRegularK8s={handleRegularK8s}
         />
@@ -150,17 +158,14 @@ export const OnDemandKubernetesDialog: React.FC<ResourceDialogProps> = ({
   }
 };
 
-interface InitialStepLayoutProps extends ResourceDialogProps {
+type SelectK8sTypeDialogProps = {
+  onCloseDialog: () => void;
   handleRegularK8s: () => void;
   handleOnDemandK8s: () => void;
-}
+};
 
-const InitialStepLayout: React.FC<InitialStepLayoutProps> = ({
-  user,
-  editMode = false,
+const SelectK8sTypeDialog: React.FC<SelectK8sTypeDialogProps> = ({
   onCloseDialog,
-  loading,
-  disabled,
   handleRegularK8s,
   handleOnDemandK8s,
 }) => {
@@ -217,15 +222,25 @@ const InitialStepLayout: React.FC<InitialStepLayoutProps> = ({
   );
 };
 
-const OnDemandK8sAWSStep: React.FC<ResourceDialogProps> = ({
+const OndemandK8sAWSDialog: React.FC<ResourceDialogProps<ResourceConfig>> = ({
   user,
-  editMode,
+  resourceToEdit,
   onCloseDialog,
   loading,
   disabled,
 }) => {
-  const methods = useFormContext();
+  const { register, setValue, handleSubmit } = useFormContext();
   const dispatch: AppDispatch = useDispatch();
+  const editMode = !!resourceToEdit;
+  if (resourceToEdit) {
+    Object.entries(resourceToEdit).forEach(([k, v]) => {
+      register(k, { value: v });
+    });
+  }
+
+  // This is slightly hacky for now as we only pass around the config to edit to the dialog,
+  // rather than the entire resource.
+  const resourceId: string = useParams().id;
 
   return (
     <>
@@ -259,7 +274,7 @@ const OnDemandK8sAWSStep: React.FC<ResourceDialogProps> = ({
         description="Provide a unique name to refer to this resource."
         placeholder={'my_kubernetes_resource'}
         onChange={(event) => {
-          methods.setValue('name', event.target.value);
+          setValue('name', event.target.value);
         }}
         disabled={false}
       />
@@ -268,30 +283,40 @@ const OnDemandK8sAWSStep: React.FC<ResourceDialogProps> = ({
         disabled={disabled}
         loading={loading}
         onCloseDialog={onCloseDialog}
-        editMode={false}
+        resourceToEdit={resourceToEdit as AWSConfig}
       />
       <DialogActionButtons
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
         onSubmit={async () => {
-          await methods.handleSubmit((data) => {
+          await handleSubmit((data) => {
             // Remove the name field from request body to avoid pydantic errors.
             // Name needs to be passed in as a header instead. Dunno why it's not part of the body :shrug:
             const name = data.name;
-            delete data.name;
+            const config = { ...data };
+            delete config.name;
             // Remove extraneous fields if they are added when filling out the form.
-            delete data.k8s_type;
-            delete data.type;
+            delete config.k8s_type;
+            delete config.type;
 
-            dispatch(
-              handleConnectToNewResource({
-                apiKey: user.apiKey,
-                service: 'AWS',
-                name: name,
-                config: data,
-              })
-            );
+            editMode
+              ? dispatch(
+                  handleEditResource({
+                    apiKey: user.apiKey,
+                    resourceId,
+                    name,
+                    config,
+                  })
+                )
+              : dispatch(
+                  handleConnectToNewResource({
+                    apiKey: user.apiKey,
+                    service: 'AWS',
+                    name,
+                    config,
+                  })
+                );
           })(); // Remember the last two parens to call the function!
         }}
       />
@@ -299,9 +324,8 @@ const OnDemandK8sAWSStep: React.FC<ResourceDialogProps> = ({
   );
 };
 
-const OnDemandK8sGCPStep: React.FC<ResourceDialogProps> = ({
+const OnDemandK8sGCPStep: React.FC<ResourceDialogProps<ResourceConfig>> = ({
   user,
-  editMode,
   onCloseDialog,
   loading,
   disabled,
@@ -350,7 +374,6 @@ const OnDemandK8sGCPStep: React.FC<ResourceDialogProps> = ({
         disabled={disabled}
         loading={loading}
         onCloseDialog={onCloseDialog}
-        editMode={false}
       />
       <DialogActionButtons
         onCloseDialog={onCloseDialog}
@@ -383,22 +406,15 @@ const OnDemandK8sGCPStep: React.FC<ResourceDialogProps> = ({
   );
 };
 
-interface OnDemandK8sStepProps extends ResourceDialogProps {
-  handlePrevious: () => void;
-  handleAWSClick: () => void;
-  handleGCPClick: () => void;
-}
+type SelectOnDemandCloudProviderDialogProps = {
+  onCloseDialog: () => void;
+  handleToPreviousStep: () => void;
+  onSelectProvider: (provider: 'GCP' | 'AWS' | 'Azure') => void;
+};
 
-const OnDemandK8sStep: React.FC<OnDemandK8sStepProps> = ({
-  user,
-  editMode,
-  onCloseDialog,
-  loading,
-  disabled,
-  handlePrevious,
-  handleAWSClick,
-  handleGCPClick,
-}) => {
+const SelectOnDemandCloudProviderDialog: React.FC<
+  SelectOnDemandCloudProviderDialogProps
+> = ({ onCloseDialog, handleToPreviousStep, onSelectProvider }) => {
   return (
     <>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -433,21 +449,21 @@ const OnDemandK8sStep: React.FC<OnDemandK8sStepProps> = ({
           '& button': { backgroundColor: '#F8F8F8' },
         }}
       >
-        <Button onClick={handleAWSClick}>
+        <Button onClick={() => onSelectProvider('AWS')}>
           <ResourceLogo
-            service={'Amazon'}
+            service={'AWS'}
             activated={SupportedResources['Amazon'].activated}
             size="large"
           />
         </Button>
-        <Button onClick={handleGCPClick}>
+        <Button onClick={() => onSelectProvider('GCP')}>
           <ResourceLogo
             service={'GCP'}
             activated={SupportedResources['GCP'].activated}
             size="large"
           />
         </Button>
-        <Button disabled={true}>
+        <Button disabled={true} onClick={() => onSelectProvider('Azure')}>
           <ResourceLogo
             service={'Azure'}
             activated={SupportedResources['Azure'].activated}
@@ -456,7 +472,7 @@ const OnDemandK8sStep: React.FC<OnDemandK8sStepProps> = ({
         </Button>
       </DialogContent>
       <DialogActions>
-        <Button autoFocus onClick={handlePrevious}>
+        <Button autoFocus onClick={handleToPreviousStep}>
           Previous
         </Button>
         <Button autoFocus onClick={onCloseDialog}>
@@ -467,20 +483,20 @@ const OnDemandK8sStep: React.FC<OnDemandK8sStepProps> = ({
   );
 };
 
-interface RegularK8sStepLayoutProps extends ResourceDialogProps {
+interface StaticK8sDialogProps extends ResourceDialogProps<KubernetesConfig> {
   inK8sCluster?: boolean;
 }
 // We're going to need to share some more info with the dialogs, as they're not all just forms that we can
 // register anymore in the case of this layout.
-const RegularK8sStepLayout: React.FC<RegularK8sStepLayoutProps> = ({
+const StaticK8sDialog: React.FC<StaticK8sDialogProps> = ({
   user,
-  editMode,
+  resourceToEdit,
   onCloseDialog,
   loading,
   disabled,
   inK8sCluster = false,
 }) => {
-  const methods = useFormContext();
+  const { setValue, handleSubmit } = useFormContext();
   const dispatch: AppDispatch = useDispatch();
 
   return (
@@ -494,13 +510,13 @@ const RegularK8sStepLayout: React.FC<RegularK8sStepLayoutProps> = ({
         description="Provide a unique name to refer to this resource."
         placeholder={'my_kubernetes_resource'}
         onChange={(event) => {
-          methods.setValue('name', event.target.value);
+          setValue('name', event.target.value);
         }}
         disabled={false}
       />
       <KubernetesDialog
         user={user}
-        editMode={false}
+        resourceToEdit={resourceToEdit}
         onCloseDialog={onCloseDialog}
         loading={loading}
         disabled={disabled}
@@ -511,21 +527,22 @@ const RegularK8sStepLayout: React.FC<RegularK8sStepLayoutProps> = ({
         loading={loading}
         disabled={disabled}
         onSubmit={async () => {
-          await methods.handleSubmit((data) => {
+          await handleSubmit((data) => {
             // Remove the name field from request body to avoid pydantic errors.
             // Name needs to be passed in as a header instead. Dunno why it's not part of the body :shrug:
             const name = data.name;
-            delete data.name;
+            const config = { ...data };
+            delete config.name;
             // Remove extraneous fields if they are added when filling out the form.
-            delete data.k8s_type;
-            delete data.type;
+            delete config.k8s_type;
+            delete config.type;
 
             dispatch(
               handleConnectToNewResource({
                 apiKey: user.apiKey,
                 service: 'Kubernetes',
                 name: name,
-                config: data,
+                config,
               })
             );
           })(); // Remember the last two parens to call the function!
@@ -535,7 +552,7 @@ const RegularK8sStepLayout: React.FC<RegularK8sStepLayoutProps> = ({
   );
 };
 
-export function getOnDemandKubernetesValidationSchema() {
+export function getOnDemandKubernetesValidationSchema(editMode: boolean) {
   return Yup.object().shape({
     name: Yup.string().required('Please enter a name'),
     k8s_type: Yup.string(),
@@ -564,13 +581,21 @@ export function getOnDemandKubernetesValidationSchema() {
     access_key_id: Yup.string().when(['k8s_type', 'type'], {
       is: (k8s_type, type) =>
         k8s_type === K8S_TYPES.ONDEMAND_K8S_AWS && type === 'access_key',
-      then: Yup.string().required('Please enter an access key id'),
+      then: requiredAtCreate(
+        Yup.string(),
+        editMode,
+        'Please enter an access key id'
+      ),
       otherwise: null,
     }),
     secret_access_key: Yup.string().when(['k8s_type', 'type'], {
       is: (k8s_type, type) =>
         k8s_type === K8S_TYPES.ONDEMAND_K8S_AWS && type === 'access_key',
-      then: Yup.string().required('Please enter a secret access key'),
+      then: requiredAtCreate(
+        Yup.string(),
+        editMode,
+        'Please enter a secret access key'
+      ),
       otherwise: null,
     }),
     region: Yup.string().when(['k8s_type', 'type'], {
@@ -600,13 +625,21 @@ export function getOnDemandKubernetesValidationSchema() {
     config_file_profile: Yup.string().when(['k8s_type', 'type'], {
       is: (k8s_type, type) =>
         k8s_type === K8S_TYPES.ONDEMAND_K8S_AWS && type === 'config_file_path',
-      then: Yup.string().required('Please enter a config file profile'),
+      then: requiredAtCreate(
+        Yup.string(),
+        editMode,
+        'Please enter a config file profile'
+      ),
       otherwise: null,
     }),
     config_file_path: Yup.string().when(['k8s_type', 'type'], {
       is: (k8s_type, type) =>
         k8s_type === K8S_TYPES.ONDEMAND_K8S_AWS && type === 'config_file_path',
-      then: Yup.string().required('Please enter a profile path'),
+      then: requiredAtCreate(
+        Yup.string(),
+        editMode,
+        'Please enter a profile path'
+      ),
       otherwise: null,
     }),
   });

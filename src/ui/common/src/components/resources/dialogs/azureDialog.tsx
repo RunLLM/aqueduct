@@ -1,6 +1,9 @@
 import React from 'react';
 import * as Yup from 'yup';
 
+export const AzureDialog: React.FC = () => null;
+
+/*
 import { ResourceDialogProps } from '../../../utils/resources';
 import { ResourceTextInputField } from './ResourceTextInputField';
 
@@ -21,6 +24,7 @@ export const AzureDialog: React.FC<ResourceDialogProps> = ({
     />
   );
 };
+*/
 
 export function getAzureValidationSchema() {
   return Yup.object().shape({

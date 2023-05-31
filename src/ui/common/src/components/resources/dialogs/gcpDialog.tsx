@@ -33,7 +33,9 @@ const GCPPlaceholders: GCPConfig = {
   service_account_key: '',
 };
 
-export const GCPDialog: React.FC<ResourceDialogProps> = () => {
+export const GCPDialog: React.FC<
+  ResourceDialogProps<OndemandGKEConfig>
+> = () => {
   const { register, getValues, setValue } = useFormContext();
 
   const [fileData, setFileData] = useState<FileData | null>(null);

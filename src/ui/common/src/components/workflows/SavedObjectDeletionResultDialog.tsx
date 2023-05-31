@@ -39,7 +39,7 @@ const SavedObjectDeletionResultDialog: React.FC<Props> = ({
   open,
   onClose,
 }) => {
-  const [_, { data: deleteWorkflowResponse }] = useWorkflowDeletePostMutation({
+  const [{}, { data: deleteWorkflowResponse }] = useWorkflowDeletePostMutation({
     fixedCacheKey: `delete-${workflowId}`,
   });
 
