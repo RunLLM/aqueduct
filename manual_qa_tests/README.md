@@ -24,7 +24,7 @@ To run with more flexibility, configure the following commandline flags:
 * **Notifications**: There should be **2** notifications for failed workflow.
 * **Workflow Details** Page: Each page should reflect the **workflow description**. Pay attention to any noted **sidesheets** behaviors in the description.
 * **Resource** Page:
-    * There should be **1** *Container Registry* integration, **11** *Data* integrations, **6** *Compute* integrations, and **2** *Notifications* integrations.
+    * There should be **2** *Container Registry* integration, **11** *Data* integrations, **6** *Compute* integrations, and **2** *Notifications* integrations.
     * If you are not using additional integration, `Demo`, `Aqueduct Server`, and `Filesystem` should be the only available ones. If you have passed in slack arguments to `initialize.py`, there should be four (`test_slack_notification`).
 * **Resource Details** Page:
     * In the **Workflows** section of the `Demo` page:
