@@ -7,9 +7,9 @@ import {
   useDagResultsGetQuery,
   useWorkflowsGetQuery,
 } from '../../../handlers/AqueductApi';
+import { hasWarningCheck } from '../../../handlers/responses/node';
 import UserProfile from '../../../utils/auth';
 import getPathPrefix from '../../../utils/getPathPrefix';
-import { CheckLevel } from '../../../utils/operators';
 import ExecutionStatus, { getLatestDagResult } from '../../../utils/shared';
 import { getWorkflowEngineTypes } from '../../../utils/workflows';
 import DefaultLayout from '../../layouts/default';
@@ -28,7 +28,6 @@ import CheckItem from './components/CheckItem';
 import ExecutionStatusLink from './components/ExecutionStatusLink';
 import MetricItem from './components/MetricItem';
 import ResourceItem from './components/ResourceItem';
-import { hasWarningCheck } from '../../../handlers/responses/node';
 
 type Props = {
   user: UserProfile;
@@ -139,8 +138,24 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         latestDagResultId
       );
 
-      console.log(row.name, workflowStatus);
-      return <ExecutionStatusLink name={row.name} url={url} status={dag? ExecutionStatus.Registered : hasWarningCheck(workflowStatus, nodes, nodesResults)? ExecutionStatus.Warning : workflowStatus} />;
+      const ready =
+        Object.getOwnPropertyNames(nodes.operators).length !== 0 ? true : false;
+      // If not ready yet, use Unknown status icon. Otherwise, if there is not a workflow status, use the Registered status icon. Otherwise, if there is not a warning check, set the status as the workflow status otherwise set it as Warning.
+      return (
+        <ExecutionStatusLink
+          name={row.name}
+          url={url}
+          status={
+            ready
+              ? workflowStatus
+                ? hasWarningCheck(workflowStatus, nodes, nodesResults)
+                  ? ExecutionStatus.Warning
+                  : workflowStatus
+                : ExecutionStatus.Registered
+              : ExecutionStatus.Unknown
+          }
+        />
+      );
     },
     'Last Run': LastRunComponent,
     Engines: (row) => {

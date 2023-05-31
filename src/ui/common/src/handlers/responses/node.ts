@@ -93,12 +93,19 @@ export type NodeContentResponse = {
   data: string;
 };
 
-export function hasWarningCheck(workflowStatus: ExecutionStatus, nodes: NodesMap, nodesResults: NodeResultsMap): boolean {
+export function hasWarningCheck(
+  workflowStatus: ExecutionStatus,
+  nodes: NodesMap,
+  nodesResults: NodeResultsMap
+): boolean {
   if (workflowStatus && workflowStatus === ExecutionStatus.Succeeded) {
     const ops = Object.values(nodes.operators);
     for (let i = 0; i < ops.length; i++) {
       const op = ops[i];
-      if (op.spec.type === 'check' && op.spec.check.level === CheckLevel.Warning) {
+      if (
+        op.spec.type === 'check' &&
+        op.spec.check.level === CheckLevel.Warning
+      ) {
         const artifactId = op.outputs[0]; // Assuming there is only one output artifact
         const value = nodesResults.artifacts[artifactId]?.exec_state?.status;
         if (value === ExecutionStatus.Failed) {
