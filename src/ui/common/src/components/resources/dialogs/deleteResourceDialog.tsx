@@ -22,6 +22,7 @@ import {
 } from '../../../utils/resources';
 import { isFailed, isLoading, isSucceeded } from '../../../utils/shared';
 import { convertResourceConfigToServerConfig } from '../../../utils/storage';
+import { useResourceOperatorsGetQuery } from '../../../handlers/AqueductApi';
 
 const isEqual = function (x, y) {
   if (x === y) {
@@ -87,22 +88,22 @@ const DeleteResourceDialog: React.FC<Props> = ({
     (state: RootState) => state.serverConfigReducer
   );
 
+
+  const {
+    data: resourceOperators,
+    isLoading: resourceOperatorsIsLoading,
+    error: resourceOperatorsError,
+  } = useResourceOperatorsGetQuery({
+    apiKey: user.apiKey,
+    resourceId: resourceId,
+  });
+
   useEffect(() => {
     async function fetchServerConfig() {
       await dispatch(handleGetServerConfig({ apiKey: user.apiKey }));
     }
 
-    async function fetchLoadResourceOperators() {
-      await dispatch(
-        handleLoadResourceOperators({
-          apiKey: user.apiKey,
-          resourceId: resourceId,
-        })
-      );
-    }
-
     fetchServerConfig();
-    fetchLoadResourceOperators();
   }, []);
 
   const deleteResourceStatus = useSelector(
@@ -134,10 +135,6 @@ const DeleteResourceDialog: React.FC<Props> = ({
     );
   };
 
-  const operatorsState = useSelector((state: RootState) => {
-    return state.resourceReducer.operators;
-  });
-
   const isStorage = config.use_as_storage === 'true';
   let isCurrentStorage = isStorage;
   if (isStorage && serverConfig) {
@@ -166,8 +163,7 @@ const DeleteResourceDialog: React.FC<Props> = ({
       </Dialog>
     );
   } else if (
-    isSucceeded(operatorsState.status) &&
-    !operatorsState.operators.some((op) => op.is_active)
+    !resourceOperatorsIsLoading && !resourceOperatorsError && resourceOperators.length === 0
   ) {
     return (
       <>
