@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.3.5
+Released on May 31, 2023.
+
+### Key Features
+* Adds support for on-demand Kubernetes clusters on Google Cloud; you can now
+    select the Google Cloud option when asking Aqueduct to create a
+    Kubernetes cluster, and Aqueduct will automatically use the Google
+    Kubernetes Engine. See our documentation here. **TODO: Link the word
+    here**. 
+* Adds support for Google Artifact Registry as a conatiner registry in
+    Aqueduct. You can now use custom Docker images that are pushed to GAR. See
+    our documentation here. **TODO: Link the word here.**
+
+### Bugfixes
+* Fixes bug where editing certain resource configurations from the UI would
+    cause the resource edit dialog to error out.
+* Fixes bug where updating a workflow that has been previously registered but
+    not run would cause the workflow to be duplicated.
+* Fixes bug where certain resources could be registered without specifying a
+    name for the resource.
+
 ## 0.3.4
 Released on May 24, 2023.
 
