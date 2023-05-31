@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import React from 'react';
 
 import {
-  resolveDisplayService,
+  resolveLogoService,
   Resource,
   resourceExecState,
 } from '../../../utils/resources';
@@ -39,7 +39,7 @@ export const ResourceCard: React.FC<ResourceProps> = ({
           </TruncatedText>
         </Box>
         <ResourceLogo
-          service={resolveDisplayService(resource)}
+          service={resolveLogoService(resource)}
           size="small"
           activated
         />
