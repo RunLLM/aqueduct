@@ -19,7 +19,7 @@ type ExecutionState struct {
 }
 
 func (e ExecutionState) Terminated() bool {
-	return e.Status == FailedExecutionStatus || e.Status == SucceededExecutionStatus || e.Status == CanceledExecutionStatus
+	return e.Status == FailedExecutionStatus || e.Status == SucceededExecutionStatus || e.Status == CanceledExecutionStatus || e.Status == ErasedExecutionStatus
 }
 
 func (e *ExecutionState) HasBlockingFailure() bool {

@@ -23,7 +23,11 @@ const (
 	CanceledExecutionStatus   ExecutionStatus = "canceled"
 	FailedExecutionStatus     ExecutionStatus = "failed"
 	SucceededExecutionStatus  ExecutionStatus = "succeeded"
-	UnknownExecutionStatus    ExecutionStatus = "unknown"
+	// 'erased' refers to 'erased after success'.
+	// Caller should consider 'erased' as success for error handling,
+	// but should not expect any non-metadata content to be available.
+	ErasedExecutionStatus  ExecutionStatus = "erased"
+	UnknownExecutionStatus ExecutionStatus = "unknown"
 )
 
 type NullExecutionStatus struct {
