@@ -19,7 +19,7 @@ import (
 const sampleTableRow = 500
 
 // Artifact is an interface for managing and inspect the lifecycle of an artifact
-// produced by a workflow run.
+// produced by one single workflow run.
 type Artifact interface {
 	ID() uuid.UUID
 	Signature() uuid.UUID
@@ -27,7 +27,7 @@ type Artifact interface {
 	Name() string
 	ShouldPersistContent() bool
 
-	// DeleteContent removes the artifact content from storage.
+	// DeleteContent removes the artifact content from storage if it exists.
 	// This does not update the database, which should be handled
 	// by the caller.
 	DeleteContent(ctx context.Context) error

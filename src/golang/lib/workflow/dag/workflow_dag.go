@@ -21,6 +21,7 @@ import (
 )
 
 type WorkflowDag interface {
+	// WorkflowDag tracks the life cycle of ONE dag execution.
 	ID() uuid.UUID
 	UserID() uuid.UUID
 	ResultID() uuid.UUID
