@@ -20,7 +20,7 @@ echo "### package aqueduct
 * [\`constants.metrics\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.constants/aqueduct.constants.metrics)
 * [\`constants.enums\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.constants/aqueduct.constants.enums)
 ### package aqueduct.models
-* [\`models.integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.models/aqueduct.models.integration)
+* [\`models.resource\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.models/aqueduct.models.resource)
 * [\`models.operators\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.models/aqueduct.models.operators)
 ### package aqueduct.resources
 * [\`resources.airflow\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.airflow)
@@ -71,10 +71,10 @@ pydoc-markdown -I . --render-toc -m aqueduct.constants.enums > docs/package-aque
 mkdir docs/package-aqueduct.models
 
 echo "### package aqueduct.models
-* [\`models.integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.models/aqueduct.models.integration)
+* [\`models.resource\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.models/aqueduct.models.resource)
 * [\`models.operators\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.models/aqueduct.models.operators)" > docs/package-aqueduct.models/README.md
 
-pydoc-markdown -I . --render-toc -m aqueduct.models.integration > docs/package-aqueduct.models/aqueduct.models.integration.md
+pydoc-markdown -I . --render-toc -m aqueduct.models.resource > docs/package-aqueduct.models/aqueduct.models.resource.md
 pydoc-markdown -I . --render-toc -m aqueduct.models.operators > docs/package-aqueduct.models/aqueduct.models.operators.md
 
 mkdir docs/package-aqueduct.resources
