@@ -2,7 +2,10 @@ import aqueduct as aq
 
 NAME = "succeed_with_snapshots_disabled"
 DESCRIPTION = """* Workflows Page: should succeed.
-* Workflow Details Page: everything should succeed except for 'check_disabled_artf' and op_disabled_artf'."""
+* Workflow Details Page:
+  * There artifacts are shown deleted: op_disabled artf, Demo query artf
+  * Both checks should show 'passed'.
+"""
 
 
 @aq.op(requirements=[])
@@ -22,7 +25,7 @@ def check(count):
 
 @aq.check(requirements=[])
 def check_disabled(count):
-    return count < 10
+    return count > 10
 
 
 def deploy(client, resource_name):
