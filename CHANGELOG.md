@@ -7,11 +7,10 @@ Released on May 31, 2023.
 * Adds support for on-demand Kubernetes clusters on Google Cloud; you can now
     select the Google Cloud option when asking Aqueduct to create a
     Kubernetes cluster, and Aqueduct will automatically use the Google
-    Kubernetes Engine. See our documentation here. **TODO: Link the word
-    here**. 
+    Kubernetes Engine. See our documentation [here](https://docs.aqueducthq.com/resources/compute-systems/on-demand-resources/on-demand-gke-clusters).
 * Adds support for Google Artifact Registry as a conatiner registry in
     Aqueduct. You can now use custom Docker images that are pushed to GAR. See
-    our documentation here. **TODO: Link the word here.**
+    our documentation [here](https://docs.aqueducthq.com/resources/container-registries/gar).
 
 ### Bugfixes
 * Fixes bug where editing certain resource configurations from the UI would
