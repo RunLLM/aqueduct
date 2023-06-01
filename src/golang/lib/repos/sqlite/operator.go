@@ -200,6 +200,32 @@ func (*operatorReader) GetOperatorWithArtifactNodeBatch(ctx context.Context, IDs
 	return getOperatorWithArtifactNodes(ctx, DB, query, args...)
 }
 
+func (r *operatorReader) GetOperatorWithArtifactNodeByArtifactId(ctx context.Context, artifactID uuid.UUID, DB database.Database) (*views.OperatorWithArtifactNode, error) {
+	nodes, err := r.GetOperatorWithArtifactNodeBatch(ctx, []uuid.UUID{artifactID}, DB)
+	if err != nil {
+		return nil, err
+	}
+	return &nodes[0], nil
+}
+
+func (*operatorReader) GetOperatorWithArtifactNodeByArtifactIdBatch(ctx context.Context, artifactIDs []uuid.UUID, DB database.Database) ([]views.OperatorWithArtifactNode, error) {
+	if len(IDs) == 0 {
+		return nil, errors.New("Provided empty IDs list.")
+	}
+
+	query := fmt.Sprintf(
+		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s IN (%s)",
+		views.OperatorWithArtifactNodeView,
+		mergedNodeViewSubQuery,
+		views.OperatorWithArtifactNodeCols(),
+		views.OperatorWithArtifactNodeView,
+		views.OperatorWithArtifactNodeArtifactID,
+		stmt_preparers.GenerateArgsList(len(artifactIDs), 1),
+	)
+	args := stmt_preparers.CastIdsListToInterfaceList(IDs)
+	return getOperatorWithArtifactNodes(ctx, DB, query, args...)
+}
+
 func (*operatorReader) GetBatch(ctx context.Context, IDs []uuid.UUID, DB database.Database) ([]models.Operator, error) {
 	if len(IDs) == 0 {
 		return nil, errors.New("Provided empty IDs list.")

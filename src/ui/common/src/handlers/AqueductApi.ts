@@ -213,6 +213,20 @@ export const aqueductApi = createApi({
       query: (req) => nodeArtifactResultsGetQuery(req),
       transformErrorResponse,
     }),
+    nodeMetricResultsGet: builder.query<
+      NodeMetricResultsGetResponse,
+      NodeMetricResultsGetRequest
+    >({
+      query: (req) => nodeMetricResultsGetQuery(req),
+      transformErrorResponse,
+    }),
+    nodeCheckResultsGet: builder.query<
+      NodeCheckResultsGetResponse,
+      NodeCheckResultsGetRequest
+    >({
+      query: (req) => nodeCheckResultsGetQuery(req),
+      transformErrorResponse,
+    }),
     nodeOperatorGet: builder.query<
       NodeOperatorGetResponse,
       NodeOperatorGetRequest
@@ -320,6 +334,8 @@ export const {
   useNodeArtifactGetQuery,
   useNodeArtifactResultContentGetQuery,
   useNodeArtifactResultsGetQuery,
+  useNodeMetricResultsGetQuery,
+  useNodeCheckResultsGetQuery,
   useNodeOperatorGetQuery,
   useNodeOperatorContentGetQuery,
   useNodeMetricGetQuery,

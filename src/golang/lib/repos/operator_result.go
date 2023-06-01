@@ -30,6 +30,9 @@ type operatorResultReader interface {
 	// GetByDAGResultBatch returns all OperatorResults for the DAGResults specified.
 	GetByDAGResultBatch(ctx context.Context, dagResultIDs []uuid.UUID, DB database.Database) ([]models.OperatorResult, error)
 
+	// GetOperatorWithArtifactNodeByOperatorNameAndWorkflow returns the OperatorWithArtifactNode for the Workflow and Operator specified.
+	GetOperatorWithArtifactNodeByOperatorNameAndWorkflow(ctx context.Context, dagResultID, operatorName string, workflowID uuid.UUID, DB database.Database) (*models.OperatorWithArtifactNodeResult, error)
+
 	// GetCheckStatusByArtifactBatch returns an OperatorResultStatus for all OperatorResults
 	// associated with a Check Operator where the Operator has incoming DAGEdge
 	// from an Artifact in artifactIDs.
