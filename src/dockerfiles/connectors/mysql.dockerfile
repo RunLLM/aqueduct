@@ -1,4 +1,4 @@
-FROM aqueducthq/base_connector:0.3.4
+FROM aqueducthq/base_connector:0.3.5
 
 MAINTAINER Aqueduct <hello@spiralai.co> version: 0.1
 
