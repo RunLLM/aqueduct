@@ -20,8 +20,11 @@ const Placeholders: OndemandGKEConfig = {
   gcp_config_serialized: '',
   keepalive: '1200',
   cpu_node_type: 'n1-standard-4',
+  gpu_node_type: 'nvidia-tesla-t4',
   min_cpu_node: '1',
   max_cpu_node: '1',
+  min_gpu_node: '0',
+  max_gpu_node: '1',
 };
 
 const GCPPlaceholders: GCPConfig = {
@@ -82,6 +85,18 @@ export const GCPDialog: React.FC<
       />
 
       <ResourceTextInputField
+        name="gpu_node_type"
+        spellCheck={false}
+        required={false}
+        label="GPU Accelerator Type"
+        description="Type of compatible GPU accelarator for the compute node."
+        placeholder={Placeholders.gpu_node_type}
+        onChange={(event) => {
+          setValue('gpu_node_type', event.target.value);
+        }}
+      />
+
+      <ResourceTextInputField
         name="min_cpu_node"
         spellCheck={false}
         required={false}
@@ -102,6 +117,30 @@ export const GCPDialog: React.FC<
         placeholder={Placeholders.max_cpu_node}
         onChange={(event) => {
           setValue('max_cpu_node', event.target.value);
+        }}
+      />
+
+      <ResourceTextInputField
+        name="min_gpu_node"
+        spellCheck={false}
+        required={false}
+        label="Min GPU node"
+        description="Minimum number of nodes in the GPU node group."
+        placeholder={Placeholders.min_gpu_node}
+        onChange={(event) => {
+          setValue('min_gpu_node', event.target.value);
+        }}
+      />
+
+      <ResourceTextInputField
+        name="max_gpu_node"
+        spellCheck={false}
+        required={false}
+        label="Max GPU node"
+        description="Maximum number of nodes in the GPU node group."
+        placeholder={Placeholders.max_gpu_node}
+        onChange={(event) => {
+          setValue('max_gpu_node', event.target.value);
         }}
       />
     </Box>

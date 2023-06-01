@@ -63,13 +63,13 @@ variable "max_gpu_node" {
 variable "initial_node_count" {
   description = "Initial number of nodes in this pool"
   type        = number
-  default = 1
+  default     = 1
 }
 
 variable "create_gpu_node_pool" {
   description = "Decide if this resource pool has to be created"
   type        = bool
-  default = false
+  default = true
 }
 
 variable "disk_size_in_gb" {

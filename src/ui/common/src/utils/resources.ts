@@ -272,8 +272,11 @@ export type OndemandGKEConfig = {
   gcp_config_serialized: string;
   keepalive: string;
   cpu_node_type: string;
+  gpu_node_type: string;
   min_cpu_node: string;
   max_cpu_node: string;
+  min_gpu_node: string;
+  max_gpu_node: string;
 };
 
 export type GCPConfig = {
