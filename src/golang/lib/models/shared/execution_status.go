@@ -26,7 +26,7 @@ const (
 	// 'erased' refers to 'erased after success'.
 	// Caller should consider 'erased' as success for error handling,
 	// but should not expect any non-metadata content to be available.
-	ErasedExecutionStatus  ExecutionStatus = "erased"
+	DeletedExecutionStatus ExecutionStatus = "deleted"
 	UnknownExecutionStatus ExecutionStatus = "unknown"
 )
 

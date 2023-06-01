@@ -15,8 +15,9 @@ func CleanupStorageFile(ctx context.Context, storageConfig *shared.StorageConfig
 }
 
 func CleanupStorageFiles(ctx context.Context, storageConfig *shared.StorageConfig, keys []string) {
+	storageObj := storage.NewStorage(storageConfig)
 	for _, key := range keys {
-		err := storage.NewStorage(storageConfig).Delete(ctx, key)
+		err := storageObj.Delete(ctx, key)
 		if err != nil {
 			log.Errorf("Unable to clean up storage file with key: %s. %v. \n %s", key, err, errors.New("").GetStack())
 		}

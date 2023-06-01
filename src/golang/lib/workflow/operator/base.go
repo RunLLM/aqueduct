@@ -372,6 +372,10 @@ func (bo *baseOperator) PersistResult(ctx context.Context) error {
 			artifactExecState.Status = shared.CanceledExecutionStatus
 		}
 
+		if artifactExecState.Status == shared.SucceededExecutionStatus && !outputArtifact.ShouldPersistContent() {
+			artifactExecState.Status = shared.DeletedExecutionStatus
+		}
+
 		err := outputArtifact.PersistResult(ctx, &artifactExecState)
 		if err != nil {
 			log.Errorf("Error occurred when persisting artifact %s.", outputArtifact.Name())

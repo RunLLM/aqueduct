@@ -147,6 +147,15 @@ func (eng *aqEngine) ScheduleWorkflow(
 	return nil
 }
 
+func (eng *aqEngine) deleteTemporaryArtifactContents(ctx context.Context, dag dag_utils.WorkflowDag) {
+	for _, artf := range dag.Artifacts() {
+		if !artf.ShouldPersistContent() {
+			err := artf.DeleteContent(ctx)
+			log.Errorf("error deleting temporary artifact result. Artf: %s, Err: %v", artf.Name(), err)
+		}
+	}
+}
+
 func (eng *aqEngine) ExecuteWorkflow(
 	ctx context.Context,
 	workflowID uuid.UUID,
@@ -361,6 +370,8 @@ func (eng *aqEngine) ExecuteWorkflow(
 		now := time.Now()
 		execState.Timestamps.FinishedAt = &now
 	}
+
+	eng.deleteTemporaryArtifactContents(ctx, dag)
 
 	return shared.SucceededExecutionStatus, nil
 }

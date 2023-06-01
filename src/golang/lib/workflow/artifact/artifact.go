@@ -25,6 +25,12 @@ type Artifact interface {
 	Signature() uuid.UUID
 	Type() shared.ArtifactType
 	Name() string
+	ShouldPersistContent() bool
+
+	// DeleteContent removes the artifact content from storage.
+	// This does not update the database, which should be handled
+	// by the caller.
+	DeleteContent(ctx context.Context) error
 
 	// InitializeResult initializes the artifact in the database.
 	InitializeResult(ctx context.Context, dagResultID uuid.UUID) error
@@ -69,9 +75,10 @@ type ArtifactImpl struct {
 	// data, which is why it is used as the key in the preview artifact cache.
 	signature uuid.UUID
 
-	name         string
-	description  string
-	artifactType shared.ArtifactType
+	name                 string
+	description          string
+	artifactType         shared.ArtifactType
+	shouldPersistContent bool
 
 	execPaths *utils.ExecPaths
 
@@ -141,11 +148,12 @@ func NewArtifactFromDBObjects(
 	}
 
 	return &ArtifactImpl{
-		id:           dbArtifact.ID,
-		signature:    signature,
-		name:         dbArtifact.Name,
-		description:  dbArtifact.Description,
-		artifactType: dbArtifact.Type,
+		id:                   dbArtifact.ID,
+		signature:            signature,
+		name:                 dbArtifact.Name,
+		description:          dbArtifact.Description,
+		artifactType:         dbArtifact.Type,
+		shouldPersistContent: dbArtifact.ShouldPersist,
 		execPaths: &utils.ExecPaths{
 			ArtifactContentPath: contentPath,
 		},
@@ -184,6 +192,10 @@ func (a *ArtifactImpl) Computed(ctx context.Context) bool {
 		a.execPaths.ArtifactContentPath,
 	)
 	return res
+}
+
+func (a *ArtifactImpl) ShouldPersistContent() bool {
+	return a.shouldPersistContent
 }
 
 func (a *ArtifactImpl) InitializeResult(ctx context.Context, dagResultID uuid.UUID) error {
@@ -301,6 +313,15 @@ func (a *ArtifactImpl) PersistResult(ctx context.Context, execState *shared.Exec
 	return nil
 }
 
+func (a *ArtifactImpl) DeleteContent(ctx context.Context) error {
+	storageObj := storage.NewStorage(a.storageConfig)
+	if a.Computed(ctx) {
+		return storageObj.Delete(ctx, a.execPaths.ArtifactContentPath)
+	}
+
+	return nil
+}
+
 func (a *ArtifactImpl) Finish(ctx context.Context) {
 	// There is nothing to do if the artifact was never even computed.
 	if !a.Computed(ctx) {
@@ -323,11 +344,6 @@ func (a *ArtifactImpl) Finish(ctx context.Context) {
 
 func (a *ArtifactImpl) GetMetadata(ctx context.Context) (*shared.ArtifactResultMetadata, error) {
 	if a.resultMetadata == nil {
-		if !a.Computed(ctx) {
-			// metadata is not ready yet.
-			return nil, nil
-		}
-
 		// If the path is not available, we assume the data is not available.
 		if !utils.ObjectExistsInStorage(ctx, a.storageConfig, a.execPaths.ArtifactMetadataPath) {
 			return nil, nil
@@ -345,9 +361,6 @@ func (a *ArtifactImpl) GetMetadata(ctx context.Context) (*shared.ArtifactResultM
 }
 
 func (a *ArtifactImpl) GetContent(ctx context.Context) ([]byte, error) {
-	if !a.Computed(ctx) {
-		return nil, errors.Newf("Cannot get content of Artifact %s, it has not yet been computed.", a.Name())
-	}
 	content, err := storage.NewStorage(a.storageConfig).Get(ctx, a.execPaths.ArtifactContentPath)
 	if err != nil {
 		return nil, err
@@ -361,9 +374,7 @@ func (a *ArtifactImpl) SampleContent(ctx context.Context) ([]byte, bool, error) 
 		return nil, false, err
 	}
 
-	// Ignore if artifact is not computed.
-	// Ideally we should use a.Computed() but that involves a potential API call to storage.
-	// So here we use metadata which is also sufficient.
+	// Ignore if artifact metadata is not available.
 	if metadata == nil {
 		return nil, false, nil
 	}
