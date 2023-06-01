@@ -29,6 +29,9 @@ class BaseArtifact(ABC):
     def type(self) -> ArtifactType:
         return self._dag.must_get_artifact(artifact_id=self._artifact_id).type
 
+    def snapshot_enabled(self) -> bool:
+        return self._dag.must_get_artifact(artifact_id=self._artifact_id).should_persist
+
     def _get_content(self) -> Any:
         return self._content
 
@@ -40,6 +43,12 @@ class BaseArtifact(ABC):
 
     def set_name(self, name: str) -> None:
         self._dag.update_artifact_name(self._artifact_id, sanitize_artifact_name(name))
+
+    def enable_snapshot(self) -> None:
+        self._dag.update_artifact_should_persist(self._artifact_id, True)
+
+    def disable_snapshot(self) -> None:
+        self._dag.update_artifact_should_persist(self._artifact_id, False)
 
     def _describe(self) -> Dict[str, Any]:
         input_operator = self._dag.must_get_operator(with_output_artifact_id=self._artifact_id)

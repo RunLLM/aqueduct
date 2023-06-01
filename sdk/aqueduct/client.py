@@ -553,6 +553,7 @@ class Client:
         source_flow: Optional[Union[Flow, str, uuid.UUID]] = None,
         run_now: Optional[bool] = None,
         use_local: Optional[bool] = False,
+        disable_snapshots: Optional[bool] = False,
     ) -> Flow:
         """Uploads and kicks off the given flow in the system.
 
@@ -602,6 +603,9 @@ class Client:
                 behavior is 'True'.
             use_local:
                 Must be set if any artifact in the flow is derived from local data.
+            disable_snapshots:
+                If set 'True', disables snapshots for all artifacts not generating from params / metrics / checks
+                by calling `.disable_snapshot()` on each of these artifacts.
 
         Raises:
             InvalidUserArgumentException:
@@ -733,6 +737,9 @@ class Client:
         )
 
         dag.validate_and_resolve_artifact_names()
+
+        if disable_snapshots:
+            dag.disable_snapshots_from_non_params_metrics_checks()
 
         if dag.engine_config.type == RuntimeType.AIRFLOW:
             if run_now is not None:
