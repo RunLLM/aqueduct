@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
+import { useResourceOperatorsGetQuery } from '../../../handlers/AqueductApi';
 import { handleGetServerConfig } from '../../../handlers/getServerConfig';
 import {
   handleDeleteResource,
@@ -86,13 +87,22 @@ const DeleteResourceDialog: React.FC<Props> = ({
     (state: RootState) => state.serverConfigReducer
   );
 
+  const {
+    data: resourceOperators,
+    isLoading: resourceOperatorsIsLoading,
+    error: resourceOperatorsError,
+  } = useResourceOperatorsGetQuery({
+    apiKey: user.apiKey,
+    resourceId: resourceId,
+  });
+
   useEffect(() => {
     async function fetchServerConfig() {
       await dispatch(handleGetServerConfig({ apiKey: user.apiKey }));
     }
 
     fetchServerConfig();
-  }, []);
+  }, [dispatch, user]);
 
   const deleteResourceStatus = useSelector(
     (state: RootState) => state.resourceReducer.deletionStatus
@@ -123,10 +133,6 @@ const DeleteResourceDialog: React.FC<Props> = ({
     );
   };
 
-  const operatorsState = useSelector((state: RootState) => {
-    return state.resourceReducer.operators;
-  });
-
   const isStorage = config.use_as_storage === 'true';
   let isCurrentStorage = isStorage;
   if (isStorage && serverConfig) {
@@ -138,7 +144,6 @@ const DeleteResourceDialog: React.FC<Props> = ({
     // Check deep equality
     isCurrentStorage = isEqual(storageConfig, serverConfig.config);
   }
-
   if (isCurrentStorage) {
     return (
       <Dialog
@@ -156,8 +161,9 @@ const DeleteResourceDialog: React.FC<Props> = ({
       </Dialog>
     );
   } else if (
-    isSucceeded(operatorsState.status) &&
-    !operatorsState.operators.some((op) => op.is_active)
+    !resourceOperatorsIsLoading &&
+    !resourceOperatorsError &&
+    resourceOperators.length === 0
   ) {
     return (
       <>
@@ -208,7 +214,7 @@ const DeleteResourceDialog: React.FC<Props> = ({
   } else {
     return (
       <Dialog
-        open={!deleteResourceStatus || !isFailed(deleteResourceStatus)}
+        open={!deleteResourceStatus || isFailed(deleteResourceStatus)}
         onClose={onCloseDialog}
         maxWidth="lg"
       >

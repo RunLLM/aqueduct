@@ -20,7 +20,7 @@ echo "### package aqueduct
 * [\`constants.metrics\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.constants/aqueduct.constants.metrics)
 * [\`constants.enums\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.constants/aqueduct.constants.enums)
 ### package aqueduct.models
-* [\`models.integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.models/aqueduct.models.integration)
+* [\`models.resource\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.models/aqueduct.models.resource)
 * [\`models.operators\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.models/aqueduct.models.operators)
 ### package aqueduct.resources
 * [\`resources.airflow\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.airflow)
@@ -28,6 +28,7 @@ echo "### package aqueduct
 * [\`resources.databricks\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.databricks)
 * [\`resources.dynamic\_k8s\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.dynamic\_k8s)
 * [\`resources.ecr\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.ecr)
+* [\`resources.gar\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.gar)
 * [\`resources.k8s\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.k8s)
 * [\`resources.google\_sheets\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.google\_sheets)
 * [\`resources.mongodb\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.mongodb)
@@ -71,10 +72,10 @@ pydoc-markdown -I . --render-toc -m aqueduct.constants.enums > docs/package-aque
 mkdir docs/package-aqueduct.models
 
 echo "### package aqueduct.models
-* [\`models.integration\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.models/aqueduct.models.integration)
+* [\`models.resource\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.models/aqueduct.models.resource)
 * [\`models.operators\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.models/aqueduct.models.operators)" > docs/package-aqueduct.models/README.md
 
-pydoc-markdown -I . --render-toc -m aqueduct.models.integration > docs/package-aqueduct.models/aqueduct.models.integration.md
+pydoc-markdown -I . --render-toc -m aqueduct.models.resource > docs/package-aqueduct.models/aqueduct.models.resource.md
 pydoc-markdown -I . --render-toc -m aqueduct.models.operators > docs/package-aqueduct.models/aqueduct.models.operators.md
 
 mkdir docs/package-aqueduct.resources
@@ -85,6 +86,7 @@ echo "### package aqueduct.resources
 * [\`resources.databricks\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.databricks)
 * [\`resources.dynamic\_k8s\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.dynamic\_k8s)
 * [\`resources.ecr\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.ecr)
+* [\`resources.gar\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.gar)
 * [\`resources.k8s\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.k8s)
 * [\`resources.google\_sheets\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.google\_sheets)
 * [\`resources.mongodb\`](https://docs.aqueducthq.com/api-reference/sdk-reference/package-aqueduct/package-aqueduct.resources/aqueduct.resources.mongodb)
@@ -98,6 +100,7 @@ pydoc-markdown -I . --render-toc -m aqueduct.resources.aws_lambda > docs/package
 pydoc-markdown -I . --render-toc -m aqueduct.resources.databricks > docs/package-aqueduct.resources/aqueduct.resources.databricks.md
 pydoc-markdown -I . --render-toc -m aqueduct.resources.dynamic_k8s > docs/package-aqueduct.resources/aqueduct.resources.dynamic_k8s.md
 pydoc-markdown -I . --render-toc -m aqueduct.resources.ecr > docs/package-aqueduct.resources/aqueduct.resources.ecr.md
+pydoc-markdown -I . --render-toc -m aqueduct.resources.gar > docs/package-aqueduct.resources/aqueduct.resources.gar.md
 pydoc-markdown -I . --render-toc -m aqueduct.resources.k8s > docs/package-aqueduct.resources/aqueduct.resources.k8s.md
 pydoc-markdown -I . --render-toc -m aqueduct.resources.google_sheets > docs/package-aqueduct.resources/aqueduct.resources.google_sheets.md
 pydoc-markdown -I . --render-toc -m aqueduct.resources.mongodb > docs/package-aqueduct.resources/aqueduct.resources.mongodb.md

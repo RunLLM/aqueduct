@@ -150,7 +150,7 @@ const WorkflowPage: React.FC<WorkflowPageProps> = ({
       refetchWorkflow();
       setCurrentTab('Details');
     }
-  }, [editWorkflowSuccess]);
+  }, [refetchWorkflow, editWorkflowSuccess]);
 
   // This workflow doesn't exist.
   if (wfError) {

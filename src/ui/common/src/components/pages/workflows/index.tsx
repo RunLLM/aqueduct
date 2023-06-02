@@ -7,6 +7,7 @@ import {
   useDagResultsGetQuery,
   useWorkflowsGetQuery,
 } from '../../../handlers/AqueductApi';
+import { hasWarningCheck } from '../../../handlers/responses/node';
 import UserProfile from '../../../utils/auth';
 import getPathPrefix from '../../../utils/getPathPrefix';
 import ExecutionStatus, { getLatestDagResult } from '../../../utils/shared';
@@ -125,14 +126,35 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
         user.apiKey,
         workflowId
       );
-      let status = ExecutionStatus.Unknown;
 
-      if (latestDagResult) {
-        status = latestDagResult.exec_state.status;
-      } else if (dag) {
-        status = ExecutionStatus.Registered;
-      }
-      return <ExecutionStatusLink name={row.name} url={url} status={status} />;
+      const latestDagResultId = latestDagResult?.id;
+      const latestDagId = latestDagResult?.dag_id ?? dag?.id;
+      const workflowStatus = latestDagResult?.exec_state?.status;
+
+      const nodes = useWorkflowNodes(user.apiKey, workflowId, latestDagId);
+      const nodesResults = useWorkflowNodesResults(
+        user.apiKey,
+        workflowId,
+        latestDagResultId
+      );
+
+      const ready = Object.keys(nodes.operators).length !== 0;
+      // If not ready yet, use Unknown status icon. Otherwise, if there is not a workflow status, use the Registered status icon. Otherwise, if there is not a warning check, set the status as the workflow status otherwise set it as Warning.
+      return (
+        <ExecutionStatusLink
+          name={row.name}
+          url={url}
+          status={
+            ready
+              ? workflowStatus
+                ? hasWarningCheck(workflowStatus, nodes, nodesResults)
+                  ? ExecutionStatus.Warning
+                  : workflowStatus
+                : ExecutionStatus.Registered
+              : ExecutionStatus.Unknown
+          }
+        />
+      );
     },
     'Last Run': LastRunComponent,
     Engines: (row) => {
@@ -145,18 +167,14 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
 
       const latestDagId = latestDagResult?.dag_id ?? noRunDag?.id;
 
-      const {
-        data: dag,
-        error: dagError,
-        isLoading: dagLoading,
-      } = useDagGetQuery(
+      const { data: dag } = useDagGetQuery(
         {
           apiKey: user.apiKey,
           workflowId: workflowId,
           dagId: latestDagId,
         },
         {
-          skip: !latestDagId || noRunDag,
+          skip: !latestDagId || !!noRunDag,
         }
       );
 

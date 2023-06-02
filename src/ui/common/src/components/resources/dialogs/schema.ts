@@ -1,7 +1,10 @@
+import * as Yup from 'yup';
+import { ObjectShape } from 'yup/lib/object';
+
 export function requiredAtCreate(
-  schema,
+  schema: Yup.ObjectSchema<ObjectShape>,
   editMode: boolean,
   msg?: string | undefined
-): any {
+): Yup.ObjectSchema<ObjectShape> {
   return editMode ? schema : schema.required(msg);
 }
