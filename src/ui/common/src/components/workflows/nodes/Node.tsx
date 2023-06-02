@@ -173,6 +173,7 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
       break;
     case ExecutionStatus.Canceled:
     case ExecutionStatus.Pending:
+    case ExecutionStatus.Deleted:
     default:
       backgroundColor = theme.palette.gray[400];
   }

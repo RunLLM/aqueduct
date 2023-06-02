@@ -45,7 +45,7 @@ const ArtifactContent: React.FC<Props> = ({
     );
   }
 
-  if (!content || !artifactResult) {
+  if (!content || !content.content || !artifactResult) {
     return (
       <Typography variant="h5" component="div" marginBottom="8px">
         No result to show for this artifact.
