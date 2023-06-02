@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	OperatorWithArtifactNodeView        = "merged_node"
+	OperatorWithArtifactNodeView        = "operator_with_artifact_node"
 	OperatorWithArtifactNodeID          = "id"
 	OperatorWithArtifactNodeDagID       = "dag_id"
 	OperatorWithArtifactNodeArtifactID  = "artifact_id"

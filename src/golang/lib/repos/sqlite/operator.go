@@ -200,7 +200,7 @@ func (*operatorReader) GetOperatorWithArtifactNodeBatch(ctx context.Context, IDs
 	return getOperatorWithArtifactNodes(ctx, DB, query, args...)
 }
 
-func (r *operatorReader) GetOperatorWithArtifactNodeByArtifactId(ctx context.Context, artifactID uuid.UUID, DB database.Database) (*views.OperatorWithArtifactNode, error) {
+func (r *operatorReader) GetOperatorWithArtifactByArtifactIdNode(ctx context.Context, artifactID uuid.UUID, DB database.Database) (*views.OperatorWithArtifactNode, error) {
 	nodes, err := r.GetOperatorWithArtifactNodeBatch(ctx, []uuid.UUID{artifactID}, DB)
 	if err != nil {
 		return nil, err
@@ -208,9 +208,9 @@ func (r *operatorReader) GetOperatorWithArtifactNodeByArtifactId(ctx context.Con
 	return &nodes[0], nil
 }
 
-func (*operatorReader) GetOperatorWithArtifactNodeByArtifactIdBatch(ctx context.Context, artifactIDs []uuid.UUID, DB database.Database) ([]views.OperatorWithArtifactNode, error) {
-	if len(IDs) == 0 {
-		return nil, errors.New("Provided empty IDs list.")
+func (*operatorReader) GetOperatorWithArtifactByArtifactIdNodeBatch(ctx context.Context, artifactIDs []uuid.UUID, DB database.Database) ([]views.OperatorWithArtifactNode, error) {
+	if len(artifactIDs) == 0 {
+		return nil, errors.New("Provided empty artifact IDs list.")
 	}
 
 	query := fmt.Sprintf(
@@ -222,7 +222,7 @@ func (*operatorReader) GetOperatorWithArtifactNodeByArtifactIdBatch(ctx context.
 		views.OperatorWithArtifactNodeArtifactID,
 		stmt_preparers.GenerateArgsList(len(artifactIDs), 1),
 	)
-	args := stmt_preparers.CastIdsListToInterfaceList(IDs)
+	args := stmt_preparers.CastIdsListToInterfaceList(artifactIDs)
 	return getOperatorWithArtifactNodes(ctx, DB, query, args...)
 }
 

@@ -13,6 +13,7 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/response"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/dropbox/godropbox/errors"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
 
@@ -31,7 +32,7 @@ import (
 //		`api-key`: user's API Key
 // Response:
 //	Body:
-//		`[]response.OperatorWithArtifactNodeResult`
+//		`[]response.OperatorWithArtifactResultNode`
 
 type NodeMetricResultsGetHandler struct {
 	nodeGetHandler
@@ -59,14 +60,14 @@ func (h *NodeMetricResultsGetHandler) Perform(ctx context.Context, interfaceArgs
 	artfID := args.nodeID
 	wfID := args.workflowID
 
-	emptyResponse := []response.OperatorWithArtifactNodeResult{}
+	emptyResponse := []response.OperatorWithArtifactResultNode{}
 
-	dbOperatorWithArtifactNode, err := h.OperatorRepo.GetOperatorWithArtifactNodeByArtifactId(ctx, artfID, h.Database)
+	dbOperatorWithArtifactNode, err := h.OperatorRepo.GetOperatorWithArtifactByArtifactIdNode(ctx, artfID, h.Database)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading metric node.")
 	}
 
-	results, err := h.OperatorResultRepo.GetOperatorWithArtifactNodeByOperatorNameAndWorkflow(ctx, dbOperatorWithArtifactNode.Name, wfID, h.Database)
+	results, err := h.OperatorResultRepo.GetOperatorWithArtifactResultNodesByOperatorNameAndWorkflow(ctx, dbOperatorWithArtifactNode.Name, wfID, h.Database)
 	if err != nil {
 		return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, "Unable to retrieve metric results.")
 	}
@@ -87,7 +88,7 @@ func (h *NodeMetricResultsGetHandler) Perform(ctx context.Context, interfaceArgs
 
 	// maps from db dag Ids
 	dbDagByDagId := make(map[uuid.UUID]models.DAG, len(artfResultToDAG))
-	nodeResultByDagId := make(map[uuid.UUID][]models.OperatorWithArtifactResult, len(artfResultToDAG))
+	nodeResultByDagId := make(map[uuid.UUID][]views.OperatorWithArtifactResultNode, len(artfResultToDAG))
 	for _, artfResult := range results {
 		if dbDag, ok := artfResultToDAG[artfResult.ID]; ok {
 			if _, okDagsMap := dbDagByDagId[dbDag.ID]; !okDagsMap {
@@ -100,25 +101,24 @@ func (h *NodeMetricResultsGetHandler) Perform(ctx context.Context, interfaceArgs
 		}
 	}
 
-	responses := make([]response.OperatorWithArtifactResult, 0, len(results))
-	for dbDagId, artfResults := range nodeResultByDagId {
+	responses := make([]response.OperatorWithArtifactResultNode, 0, len(results))
+	for dbDagId, nodeResults := range nodeResultByDagId {
 		if dag, ok := dbDagByDagId[dbDagId]; ok {
 			storageObj := storage.NewStorage(&dag.StorageConfig)
 			if err != nil {
 				return emptyResponse, http.StatusInternalServerError, errors.New("Error retrieving artifact contents.")
 			}
 
-			for _, artfResult := range artfResults {
+			for _, nodeResult := range nodeResults {
 				var contentPtr *string = nil
-				if artf.Type.IsCompact() &&
-					!artfResult.ExecState.IsNull &&
-					(artfResult.ExecState.ExecutionState.Status == shared.FailedExecutionStatus ||
-						artfResult.ExecState.ExecutionState.Status == shared.SucceededExecutionStatus) {
-					exists := storageObj.Exists(ctx, artfResult.ContentPath)
+				if !nodeResult.ArtifactResultExecState.IsNull &&
+					(nodeResult.ArtifactResultExecState.ExecutionState.Status == shared.FailedExecutionStatus ||
+					 nodeResult.ArtifactResultExecState.ExecutionState.Status == shared.SucceededExecutionStatus) {
+					exists := storageObj.Exists(ctx, nodeResult.ContentPath)
 					if exists {
-						contentBytes, err := storageObj.Get(ctx, artfResult.ContentPath)
+						contentBytes, err := storageObj.Get(ctx, nodeResult.ContentPath)
 						if err != nil {
-							return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, fmt.Sprintf("Error retrieving artifact content for result %s", artfResult.ID))
+							return emptyResponse, http.StatusInternalServerError, errors.Wrap(err, fmt.Sprintf("Error retrieving artifact content for result %s", nodeResult.ArtifactID))
 						}
 
 						contentStr := string(contentBytes)
@@ -126,8 +126,8 @@ func (h *NodeMetricResultsGetHandler) Perform(ctx context.Context, interfaceArgs
 					}
 				}
 
-				responses = append(responses, *response.NewOperatorWithArtifactNodeResultFromDBObject(
-					&artfResult, contentPtr,
+				responses = append(responses, *response.NewOperatorWithArtifactResultNodeFromDBObject(
+					&nodeResult, contentPtr,
 				))
 			}
 		} else {
