@@ -139,7 +139,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
       );
 
       const ready =
-        Object.getOwnPropertyNames(nodes.operators).length !== 0 ? true : false;
+        Object.keys(nodes.operators).length !== 0;
       // If not ready yet, use Unknown status icon. Otherwise, if there is not a workflow status, use the Registered status icon. Otherwise, if there is not a warning check, set the status as the workflow status otherwise set it as Warning.
       return (
         <ExecutionStatusLink
