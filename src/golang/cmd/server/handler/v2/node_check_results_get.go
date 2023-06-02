@@ -64,9 +64,15 @@ func (h *NodeCheckResultsGetHandler) Perform(ctx context.Context, interfaceArgs 
 
 	emptyResponse := []response.OperatorWithArtifactResultNode{}
 
-	dbOperatorWithArtifactNode, err := h.OperatorRepo.GetOperatorWithArtifactByArtifactIdNode(ctx, artfID, h.Database)
+	dbOperatorWithArtifactNodes, err := h.OperatorRepo.GetOperatorWithArtifactByArtifactIdNodeBatch(ctx, []uuid.UUID{artfID}, h.Database)
 	if err != nil {
 		return nil, http.StatusInternalServerError, errors.Wrap(err, "Unexpected error reading check node.")
+	}
+	dbOperatorWithArtifactNode := views.OperatorWithArtifactNode{}
+	if len(dbOperatorWithArtifactNodes) == 0 {
+		return emptyResponse, http.StatusOK, nil
+	} else {
+		dbOperatorWithArtifactNode = dbOperatorWithArtifactNodes[0]
 	}
 
 	results, err := h.OperatorResultRepo.GetOperatorWithArtifactResultNodesByOperatorNameAndWorkflow(ctx, dbOperatorWithArtifactNode.Name, wfID, h.Database)
@@ -80,7 +86,7 @@ func (h *NodeCheckResultsGetHandler) Perform(ctx context.Context, interfaceArgs 
 
 	resultArtifactIds := make([]uuid.UUID, 0, len(results))
 	for _, result := range results {
-		resultArtifactIds = append(resultArtifactIds, result.ArtifactID)
+		resultArtifactIds = append(resultArtifactIds, result.ArtifactResultID)
 	}
 
 	artfResultToDAG, err := h.DAGRepo.GetByArtifactResultBatch(ctx, resultArtifactIds, h.Database)
@@ -91,15 +97,15 @@ func (h *NodeCheckResultsGetHandler) Perform(ctx context.Context, interfaceArgs 
 	// maps from db dag Ids
 	dbDagByDagId := make(map[uuid.UUID]models.DAG, len(artfResultToDAG))
 	nodeResultByDagId := make(map[uuid.UUID][]views.OperatorWithArtifactResultNode, len(artfResultToDAG))
-	for _, artfResult := range results {
-		if dbDag, ok := artfResultToDAG[artfResult.ID]; ok {
+	for _, nodeResult := range results {
+		if dbDag, ok := artfResultToDAG[nodeResult.ArtifactResultID]; ok {
 			if _, okDagsMap := dbDagByDagId[dbDag.ID]; !okDagsMap {
 				dbDagByDagId[dbDag.ID] = dbDag
 			}
 
-			nodeResultByDagId[dbDag.ID] = append(nodeResultByDagId[dbDag.ID], artfResult)
+			nodeResultByDagId[dbDag.ID] = append(nodeResultByDagId[dbDag.ID], nodeResult)
 		} else {
-			return emptyResponse, http.StatusInternalServerError, errors.Newf("Error retrieving dag associated with artifact result %s", artfResult.ID)
+			return emptyResponse, http.StatusInternalServerError, errors.Newf("Error retrieving dag associated with artifact result %s", nodeResult.ArtifactResultID)
 		}
 	}
 

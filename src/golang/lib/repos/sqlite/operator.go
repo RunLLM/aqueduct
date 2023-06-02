@@ -93,7 +93,7 @@ const operatorNodeViewSubQuery = `
 	WHERE op_with_outputs.outputs IS NULL
 `
 
-var mergedNodeViewSubQuery = fmt.Sprintf(`
+var operatorWithArtifactNodeViewSubQuery = fmt.Sprintf(`
 	WITH
 		operator_node AS (%s), 
 		artifact_node AS (%s)
@@ -190,7 +190,7 @@ func (*operatorReader) GetOperatorWithArtifactNodeBatch(ctx context.Context, IDs
 	query := fmt.Sprintf(
 		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s IN (%s)",
 		views.OperatorWithArtifactNodeView,
-		mergedNodeViewSubQuery,
+		operatorWithArtifactNodeViewSubQuery,
 		views.OperatorWithArtifactNodeCols(),
 		views.OperatorWithArtifactNodeView,
 		views.OperatorWithArtifactNodeID,
@@ -216,7 +216,7 @@ func (*operatorReader) GetOperatorWithArtifactByArtifactIdNodeBatch(ctx context.
 	query := fmt.Sprintf(
 		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s IN (%s)",
 		views.OperatorWithArtifactNodeView,
-		mergedNodeViewSubQuery,
+		operatorWithArtifactNodeViewSubQuery,
 		views.OperatorWithArtifactNodeCols(),
 		views.OperatorWithArtifactNodeView,
 		views.OperatorWithArtifactNodeArtifactID,

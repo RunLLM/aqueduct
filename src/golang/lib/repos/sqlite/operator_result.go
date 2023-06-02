@@ -204,13 +204,14 @@ func (*operatorResultReader) GetOperatorWithArtifactResultNodesByOperatorNameAnd
 			artifact_result.id AS artifact_result_id, 
 			artifact_result.metadata,
 			artifact_result.content_path,
-			artifact_result.execution_state AS artifact_result_exec_state,
-		FROM operator, operator_result, artifact_result, workflow_dag, workflow_dag_edge
+			artifact_result.execution_state AS artifact_result_exec_state
+		FROM operator, operator_result, artifact_result, workflow_dag, workflow_dag_edge, workflow_dag_result
 		WHERE 
 			workflow_dag.workflow_id = $1
 			AND workflow_dag_edge.workflow_dag_id = workflow_dag.id
+			AND workflow_dag_result.workflow_dag_id = workflow_dag.id
 			AND operator.name = $2
-			AND operator_result.id = operator.id
+			AND operator_result.operator_id = operator.id
 			AND workflow_dag_edge.from_id = operator.id
 			AND workflow_dag_edge.to_id = artifact_result.artifact_id
 			AND artifact_result.workflow_dag_result_id = workflow_dag_result.id;`

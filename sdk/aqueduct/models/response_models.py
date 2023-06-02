@@ -227,6 +227,57 @@ class GetOperatorWithArtifactNodeResponse(BaseModel):
     outputs: List[uuid.UUID]
 
 
+class GetOperatorWithArtifactNodeResultResponse(BaseModel):
+    """Represents a single merged node (metric or check) result in a workflow run.
+
+    Attributes:
+        id:
+            The id of the operator result node.
+        artifact_result_id:
+            The id of the artifact result node.
+        operator_id:
+            The id of the operator node.
+        artifact_id:
+            The id of the artifact node.
+        operator_result_exec_state:
+            The execution state of the run operator result.
+        artifact_result_exec_state:
+            The execution state of the run artifact result.
+        serialization_type:
+            What is being serialized.
+        content_path:
+            Path to get content.
+        content_serialized:
+            If the content is too big, none. Otherwise, the content.
+}
+        dag_id:
+            This id can be used to find the corresponding workflow dag version.
+        name:
+            The name of the operator.
+        description:
+            The description of the operator.
+        type:
+            The artifact type.
+        spec:
+            The operator spec.
+        inputs:
+            The id(s) of the input artifact(s) of the operator.
+        outputs:
+            The id(s) of the operator(s) that take this artifact as input.
+
+    """
+
+    id: uuid.UUID
+    artifact_result_id: uuid.UUID
+    operator_id: uuid.UUID
+    artifact_id: uuid.UUID
+    operator_result_exec_state: ExecutionState
+    artifact_result_exec_state: ExecutionState
+    serialization_type: SerializationType
+    content_path: str
+    content_serialized: Optional[str]
+
+
 # V1 Responses
 class PreviewResponse(BaseModel):
     """This is the response object returned by api_client.preview().
