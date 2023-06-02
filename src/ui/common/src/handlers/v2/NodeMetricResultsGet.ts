@@ -14,7 +14,8 @@ export type NodeMetricResultsGetRequest = APIKeyParameter &
   NodeIdParameter &
   WorkflowIdParameter;
 
-export type NodeMetricResultsGetResponse = OperatorWithArtifactNodeResultResponse[];
+export type NodeMetricResultsGetResponse =
+  OperatorWithArtifactNodeResultResponse[];
 
 export const nodeMetricResultsGetQuery = (
   req: NodeMetricResultsGetResponse

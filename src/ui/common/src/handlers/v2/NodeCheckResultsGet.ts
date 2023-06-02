@@ -14,11 +14,10 @@ export type NodeCheckResultsGetRequest = APIKeyParameter &
   NodeIdParameter &
   WorkflowIdParameter;
 
-export type NodeCheckResultsGetResponse = OperatorWithArtifactNodeResultResponse[];
+export type NodeCheckResultsGetResponse =
+  OperatorWithArtifactNodeResultResponse[];
 
-export const nodeCheckResultsGetQuery = (
-  req: NodeCheckResultsGetRequest
-) => ({
+export const nodeCheckResultsGetQuery = (req: NodeCheckResultsGetRequest) => ({
   url: `workflow/${req.workflowId}/dag/${req.dagId}/node/check/${req.nodeId}/results`,
   headers: { 'api-key': req.apiKey },
 });
