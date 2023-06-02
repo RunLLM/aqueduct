@@ -17,7 +17,7 @@ const (
 	NodesRoute                     = "/api/v2/workflow/{workflowID}/dag/{dagID}/nodes"
 	NodeArtifactRoute              = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/artifact/{nodeID}"
 	NodeArtifactResultContentRoute = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/artifact/{nodeID}/result/{nodeResultID}/content"
-	NodeArtifactResultsRoute       = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/artifact/{nodeID}/results"	
+	NodeArtifactResultsRoute       = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/artifact/{nodeID}/results"
 	NodeMetricRoute                = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/metric/{nodeID}"
 	NodeMetricResultContentRoute   = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/metric/{nodeID}/result/{nodeResultID}/content"
 	NodeMetricResultsRoute         = "/api/v2/workflow/{workflowID}/dag/{dagID}/node/metric/{nodeID}/results"

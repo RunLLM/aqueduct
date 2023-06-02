@@ -186,7 +186,7 @@ func (*operatorResultReader) GetStatusByDAGResultAndArtifactBatch(
 
 func (*operatorResultReader) GetOperatorWithArtifactResultNodesByOperatorNameAndWorkflow(
 	ctx context.Context,
-	operatorName string, 
+	operatorName string,
 	workflowID uuid.UUID,
 	DB database.Database,
 ) ([]views.OperatorWithArtifactResultNode, error) {

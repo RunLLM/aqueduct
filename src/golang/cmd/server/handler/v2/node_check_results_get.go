@@ -9,11 +9,11 @@ import (
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
 	"github.com/aqueducthq/aqueduct/lib/models/shared"
+	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/aqueducthq/aqueduct/lib/repos"
 	"github.com/aqueducthq/aqueduct/lib/response"
 	"github.com/aqueducthq/aqueduct/lib/storage"
 	"github.com/dropbox/godropbox/errors"
-	"github.com/aqueducthq/aqueduct/lib/models/views"
 	"github.com/google/uuid"
 )
 
@@ -121,7 +121,7 @@ func (h *NodeCheckResultsGetHandler) Perform(ctx context.Context, interfaceArgs 
 				var contentPtr *string = nil
 				if !nodeResult.ArtifactResultExecState.IsNull &&
 					(nodeResult.ArtifactResultExecState.ExecutionState.Status == shared.FailedExecutionStatus ||
-					 nodeResult.ArtifactResultExecState.ExecutionState.Status == shared.SucceededExecutionStatus) {
+						nodeResult.ArtifactResultExecState.ExecutionState.Status == shared.SucceededExecutionStatus) {
 					exists := storageObj.Exists(ctx, nodeResult.ContentPath)
 					if exists {
 						contentBytes, err := storageObj.Get(ctx, nodeResult.ContentPath)

@@ -45,13 +45,13 @@ func NewOperatorWithArtifactNodeFromDBObject(dbOperatorWithArtifactNode *views.O
 
 type OperatorWithArtifactResultNode struct {
 	// Operator Result ID
-	ID                uuid.UUID              `json:"id"`
+	ID                      uuid.UUID                        `json:"id"`
 	ArtifactResultID        uuid.UUID                        `json:"artifact_result_id"`
-	OperatorID        uuid.UUID                        `json:"operator_id"`
-	ArtifactID        uuid.UUID                        `json:"artifact_id"`
-	OperatorResultExecState *shared.ExecutionState `json:"operator_result_exec_state"`
-	ArtifactResultExecState *shared.ExecutionState `json:"artifact_result_exec_state"`
-	SerializationType shared.ArtifactSerializationType `json:"serialization_type"`
+	OperatorID              uuid.UUID                        `json:"operator_id"`
+	ArtifactID              uuid.UUID                        `json:"artifact_id"`
+	OperatorResultExecState *shared.ExecutionState           `json:"operator_result_exec_state"`
+	ArtifactResultExecState *shared.ExecutionState           `json:"artifact_result_exec_state"`
+	SerializationType       shared.ArtifactSerializationType `json:"serialization_type"`
 
 	// If `ContentSerialized` is set, the content is small and we directly send
 	// it as a part of response. It's consistent with the object stored in `ContentPath`.
@@ -69,7 +69,7 @@ func NewOperatorWithArtifactResultNodeFromDBObject(
 ) *OperatorWithArtifactResultNode {
 	result := &OperatorWithArtifactResultNode{
 		ID:                dbOperatorWithArtifactResultNode.ID,
-		ArtifactResultID:        dbOperatorWithArtifactResultNode.ArtifactResultID,
+		ArtifactResultID:  dbOperatorWithArtifactResultNode.ArtifactResultID,
 		OperatorID:        dbOperatorWithArtifactResultNode.OperatorID,
 		ArtifactID:        dbOperatorWithArtifactResultNode.ArtifactID,
 		SerializationType: dbOperatorWithArtifactResultNode.Metadata.SerializationType,
