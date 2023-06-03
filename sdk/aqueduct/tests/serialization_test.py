@@ -63,6 +63,7 @@ def test_artifact_serialization():
             "id": str(artifact_id),
             "name": artifact_name,
             "type": ArtifactType.TABLE,
+            "should_persist": True,
         }
     )
 
