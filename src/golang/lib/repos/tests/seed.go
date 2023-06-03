@@ -122,7 +122,14 @@ func (ts *TestSuite) seedArtifact(count int) []models.Artifact {
 		name := randString(10)
 		description := randString(15)
 		artifactType := randArtifactType()
-		artifact, err := ts.artifact.Create(ts.ctx, name, description, artifactType, ts.DB)
+		artifact, err := ts.artifact.Create(
+			ts.ctx,
+			name,
+			description,
+			artifactType,
+			true,
+			ts.DB,
+		)
 		require.Nil(ts.T(), err)
 
 		artifacts = append(artifacts, *artifact)
@@ -828,6 +835,7 @@ func (ts *TestSuite) seedComplexWorkflow() (
 					artfName,
 					randString(15),
 					shared.UntypedArtifact, // for now it's fine to have all artifacts untyped.
+					true,
 					ts.DB,
 				)
 				require.Nil(ts.T(), err)
