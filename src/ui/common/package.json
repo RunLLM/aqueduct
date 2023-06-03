@@ -114,6 +114,7 @@
     "@vitejs/plugin-react": "3.0.1",
     "autoprefixer": "10.4.13",
     "babel-loader": "9.1.2",
+    "buffer": "^5.5.0",
     "cssnano": "5.1.14",
     "eslint": "8.40.0",
     "eslint-config-prettier": "8.8.0",
@@ -138,8 +139,5 @@
     "vite": "4.0.4",
     "vite-plugin-externalize-deps": "0.4.0",
     "webpack": "5.74.0"
-  },
-  "dependencies": {
-    "buffer": "6.0.3"
   }
 }
