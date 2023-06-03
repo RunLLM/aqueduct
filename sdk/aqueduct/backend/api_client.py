@@ -19,6 +19,7 @@ from aqueduct.error import (
 from aqueduct.logger import logger
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG, Metadata
+from aqueduct.models.execution_state import ExecutionState
 from aqueduct.models.operators import Operator, ParamSpec
 from aqueduct.models.resource import BaseResource, ResourceInfo
 from aqueduct.models.response_models import (
@@ -43,6 +44,7 @@ from aqueduct.models.response_models import (
     WorkflowDagResultResponse,
 )
 from aqueduct.utils.serialization import deserialize
+from dateutil import parser as datetime_parser
 from pkg_resources import get_distribution, parse_version
 
 from ..resources.connect_config import DynamicK8sConfig, ResourceConfig
@@ -610,12 +612,7 @@ class APIClient:
             WorkflowDagResultResponse(
                 id=dag_result.id,
                 created_at=int(
-                    datetime.datetime.strptime(
-                        resp_dags[str(dag_result.dag_id)].created_at[:-4],
-                        "%Y-%m-%dT%H:%M:%S.%f"
-                        if resp_dags[str(dag_result.dag_id)].created_at[-1] == "Z"
-                        else "%Y-%m-%dT%H:%M:%S.%f%z",
-                    ).timestamp()
+                    datetime_parser.parse(resp_dags[str(dag_result.dag_id)].created_at).timestamp()
                 ),
                 status=dag_result.exec_state.status,
                 exec_state=dag_result.exec_state,
@@ -650,7 +647,7 @@ class APIClient:
 
     def get_artifact_result_data(
         self, dag_result_id: str, artifact_id: str
-    ) -> Tuple[Optional[Any], ExecutionStatus]:
+    ) -> Tuple[Optional[Any], Optional[ExecutionState]]:
         """Returns an empty string if the operator was not successfully executed."""
         headers = self._generate_auth_headers()
         url = self.construct_full_url(
@@ -660,7 +657,9 @@ class APIClient:
         self.raise_errors(resp)
 
         parsed_response = _parse_artifact_result_response(resp)
-        execution_status = parsed_response["metadata"]["exec_state"]["status"]
+        execution_state = None
+        if "exec_state" in parsed_response["metadata"]:
+            execution_state = ExecutionState(**parsed_response["metadata"]["exec_state"])
 
         serialization_type = parsed_response["metadata"]["serialization_type"]
         artifact_type = parsed_response["metadata"]["artifact_type"]
@@ -669,10 +668,10 @@ class APIClient:
         if "data" in parsed_response:
             return_value = deserialize(serialization_type, artifact_type, parsed_response["data"])
 
-        if execution_status != ExecutionStatus.SUCCEEDED:
+        if not execution_state or execution_state.status != ExecutionStatus.SUCCEEDED:
             logger().warning("Artifact result unavailable due to unsuccessful execution.")
 
-        return (return_value, execution_status)
+        return (return_value, execution_state)
 
     def get_image_url(
         self,

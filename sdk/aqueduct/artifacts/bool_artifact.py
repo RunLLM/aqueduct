@@ -10,6 +10,7 @@ from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import OperatorType
 from aqueduct.error import ArtifactNeverComputedException
 from aqueduct.models.dag import DAG
+from aqueduct.models.execution_state import ExecutionState
 from aqueduct.models.operators import get_operator_type
 from aqueduct.utils.describe import get_readable_description_for_check
 from aqueduct.utils.utils import format_header_for_print
@@ -43,13 +44,9 @@ class BoolArtifact(BaseArtifact):
         artifact_id: uuid.UUID,
         content: Optional[Union[bool, np.bool_]] = None,
         from_flow_run: bool = False,
+        execution_state: Optional[ExecutionState] = None,
     ):
-        self._dag = dag
-        self._artifact_id = artifact_id
-
-        # This parameter indicates whether the artifact is fetched from flow-run or not.
-        self._from_flow_run = from_flow_run
-        self._set_content(content)
+        super().__init__(dag, artifact_id, content, from_flow_run, execution_state)
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> Union[bool, np.bool_]:
         """Materializes a BoolArtifact into a boolean.

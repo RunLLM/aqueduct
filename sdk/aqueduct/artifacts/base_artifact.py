@@ -1,10 +1,13 @@
 import json
 import uuid
 from abc import ABC, abstractmethod
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Union
 
+import numpy as np
 from aqueduct.constants.enums import ArtifactType, OperatorType
 from aqueduct.models.dag import DAG
+from aqueduct.models.execution_state import ExecutionState
+from aqueduct.type_annotations import Number
 from aqueduct.utils.naming import sanitize_artifact_name
 
 
@@ -14,6 +17,26 @@ class BaseArtifact(ABC):
     _content: Any
     _from_flow_run: bool
     _from_operator_type: Optional[OperatorType] = None
+    _execution_state: Optional[ExecutionState] = None
+
+    def __init__(
+        self,
+        dag: DAG,
+        artifact_id: uuid.UUID,
+        content: Optional[Union[bool, np.bool_, Number]] = None,
+        from_flow_run: bool = False,
+        execution_state: Optional[ExecutionState] = None,
+    ) -> None:
+        self._dag = dag
+        self._artifact_id = artifact_id
+
+        # This parameter indicates whether the artifact is fetched from flow-run or not.
+        self._from_flow_run = from_flow_run
+        self._set_content(content)
+
+        # For now, the execution_state is only relevant when it's fetched from a flow run.
+        # It stays 'None' when the artifact runs in previews.
+        self._execution_state = execution_state
 
     def id(self) -> uuid.UUID:
         """Fetch the id associated with this artifact.
@@ -31,6 +54,9 @@ class BaseArtifact(ABC):
 
     def snapshot_enabled(self) -> bool:
         return self._dag.must_get_artifact(artifact_id=self._artifact_id).should_persist
+
+    def execution_state(self) -> Optional[ExecutionState]:
+        return self._execution_state
 
     def _get_content(self) -> Any:
         return self._content

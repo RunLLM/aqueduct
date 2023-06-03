@@ -11,6 +11,7 @@ from aqueduct.artifacts.base_artifact import BaseArtifact
 from aqueduct.constants.enums import ArtifactType, ExecutionStatus
 from aqueduct.error import ArtifactNeverComputedException
 from aqueduct.models.dag import DAG
+from aqueduct.models.execution_state import ExecutionState
 from aqueduct.utils.utils import format_header_for_print
 
 from aqueduct import globals
@@ -30,22 +31,13 @@ class GenericArtifact(BaseArtifact, system_metric.SystemMetricMixin):
         artifact_type: ArtifactType = ArtifactType.UNTYPED,
         content: Optional[Any] = None,
         from_flow_run: bool = False,
-        execution_status: Optional[ExecutionStatus] = None,
+        execution_state: Optional[ExecutionState] = None,
     ):
         # Cannot initialize a generic artifact's content without also setting its type.
         if content is not None:
             assert artifact_type != ArtifactType.UNTYPED
 
-        self._dag = dag
-        self._artifact_id = artifact_id
-
-        # This parameter indicates whether the artifact is fetched from flow-run or not.
-        self._from_flow_run = from_flow_run
-        self._set_content(content)
-        # This is only relevant to generic artifact produced from flow_run.artifact().
-        # We need this to distinguish between when an artifact's content is None versus
-        # when it fails to compute successfully.
-        self._execution_status = execution_status
+        super().__init__(dag, artifact_id, content, from_flow_run, execution_state)
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> Any:
         """Materializes the artifact.
@@ -62,7 +54,10 @@ class GenericArtifact(BaseArtifact, system_metric.SystemMetricMixin):
         self._dag.must_get_artifact(self._artifact_id)
 
         if self._from_flow_run:
-            if self._execution_status != ExecutionStatus.SUCCEEDED:
+            if (
+                not self._execution_state
+                or self._execution_state.status != ExecutionStatus.SUCCEEDED
+            ):
                 raise ArtifactNeverComputedException(
                     "This artifact was part of an existing flow run but was never computed successfully!",
                 )

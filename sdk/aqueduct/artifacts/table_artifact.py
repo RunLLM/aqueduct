@@ -20,6 +20,7 @@ from aqueduct.constants.enums import (
 )
 from aqueduct.error import AqueductError, ArtifactNeverComputedException
 from aqueduct.models.dag import DAG
+from aqueduct.models.execution_state import ExecutionState
 from aqueduct.models.operators import CheckSpec, FunctionSpec, MetricSpec, OperatorSpec
 from aqueduct.utils.dag_deltas import RemoveCheckOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.describe import (
@@ -62,13 +63,9 @@ class TableArtifact(BaseArtifact, system_metric.SystemMetricMixin):
         artifact_id: uuid.UUID,
         content: Optional[pd.DataFrame] = None,
         from_flow_run: bool = False,
+        execution_state: Optional[ExecutionState] = None,
     ):
-        self._dag = dag
-        self._artifact_id = artifact_id
-
-        # This parameter indicates whether the artifact is fetched from flow-run or not.
-        self._from_flow_run = from_flow_run
-        self._set_content(content)
+        super().__init__(dag, artifact_id, content, from_flow_run, execution_state)
 
     def get(self, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
         """Materializes TableArtifact into an actual dataframe.
