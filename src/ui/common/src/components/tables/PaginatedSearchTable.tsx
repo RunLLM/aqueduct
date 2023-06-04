@@ -22,6 +22,7 @@ import React, { useEffect, useState } from 'react';
 
 import { theme } from '../../styles/theme/theme';
 import { Button } from '../primitives/Button.styles';
+import Delayed from '../../utils/Delayed';
 
 export type PaginatedSearchTableElement =
   | string
@@ -309,7 +310,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
-    <>
+    <Delayed>
       {searchEnabled && (
         <Box mb="8px">
           <Box marginBottom="8px" display="flex">
@@ -504,7 +505,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </Paper>
-    </>
+    </Delayed>
   );
 };
 

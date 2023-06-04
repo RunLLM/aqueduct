@@ -118,7 +118,7 @@ const NavBar: React.FC<{
               );
             }
             return (
-              <Link
+              <RouterLink
                 key={link.name}
                 underline="hover"
                 color="inherit"
@@ -131,7 +131,7 @@ const NavBar: React.FC<{
                 }}
               >
                 {link.name}
-              </Link>
+              </RouterLink>
             );
           })}
         </Breadcrumbs>
