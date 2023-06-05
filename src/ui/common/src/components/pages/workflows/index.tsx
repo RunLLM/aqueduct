@@ -14,10 +14,7 @@ import ExecutionStatus, { getLatestDagResult } from '../../../utils/shared';
 import { getWorkflowEngineTypes } from '../../../utils/workflows';
 import DefaultLayout from '../../layouts/default';
 import { BreadcrumbLink } from '../../layouts/NavBar';
-import {
-  PaginatedSearchTable,
-  SortType,
-} from '../../tables/PaginatedSearchTable';
+import { PaginatedSearchTable } from '../../tables/PaginatedSearchTable';
 import { LayoutProps } from '../types';
 import {
   useLatestDagResultOrDag,
@@ -308,10 +305,11 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           onChangeRowsPerPage={onChangeRowsPerPage}
           savedRowsPerPage={getRowsPerPage()}
           sortColumns={sortColumns}
-          defaultSortConfig={{
-            sortColumn: sortColumns[0],
-            sortType: SortType.Descending,
-          }}
+          // Disabled until ENG-3096
+          // defaultSortConfig={{
+          //   sortColumn: sortColumns[0],
+          //   sortType: SortType.Descending,
+          // }}
         />
       ) : (
         <Box>{noItemsMessage}</Box>

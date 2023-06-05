@@ -21,7 +21,6 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 
 import { theme } from '../../styles/theme/theme';
-import Delayed from '../../utils/Delayed';
 import { Button } from '../primitives/Button.styles';
 
 export type PaginatedSearchTableElement =
@@ -310,7 +309,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
     .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   return (
-    <Delayed>
+    <>
       {searchEnabled && (
         <Box mb="8px">
           <Box marginBottom="8px" display="flex">
@@ -505,7 +504,7 @@ export const PaginatedSearchTable: React.FC<PaginatedSearchTableProps> = ({
           onRowsPerPageChange={handleChangeRowsPerPage}
         />
       </Paper>
-    </Delayed>
+    </>
   );
 };
 
