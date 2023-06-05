@@ -21,8 +21,8 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 
 import { theme } from '../../styles/theme/theme';
-import { Button } from '../primitives/Button.styles';
 import Delayed from '../../utils/Delayed';
+import { Button } from '../primitives/Button.styles';
 
 export type PaginatedSearchTableElement =
   | string

@@ -3,7 +3,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   AppBar,
   Breadcrumbs,
-  Link,
   Toolbar,
   Typography,
   useTheme,
