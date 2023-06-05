@@ -604,8 +604,9 @@ class Client:
             use_local:
                 Must be set if any artifact in the flow is derived from local data.
             disable_snapshots:
-                If set 'True', disables snapshots for all artifacts not generating from params / metrics / checks
-                by calling `.disable_snapshot()` on each of these artifacts.
+                If set to 'True', this option disables snapshots for all artifacts
+                that are not generated from parameters, metrics, or checks.
+                It achieves this by calling the `.disable_snapshot()` method on each of these artifacts.
 
         Raises:
             InvalidUserArgumentException:
@@ -739,7 +740,7 @@ class Client:
         dag.validate_and_resolve_artifact_names()
 
         if disable_snapshots:
-            dag.disable_snapshots_from_non_params_metrics_checks()
+            dag.disable_sensitive_snapshots()
 
         if dag.engine_config.type == RuntimeType.AIRFLOW:
             if run_now is not None:
