@@ -5,8 +5,8 @@
   "scripts": {
     "start": "parcel --no-cache index.html",
     "build": "parcel build --public-url /dist --dist-dir dist/default index.html",
-    "lint": "eslint '*/**/*.{js,ts,tsx}' --format table",
-    "lint:fix": "eslint '*/**/*.{js,ts,tsx}' --format table --fix"
+    "lint": "npx eslint . --format table",
+    "lint:fix": "eslint . --format table --fix"
   },
   "dependencies": {
     "@aqueducthq/common": "0.3.5",
@@ -51,6 +51,7 @@
     "eslint-formatter-table": "7.32.1",
     "eslint-plugin-prettier": "4.2.1",
     "eslint-plugin-react": "7.32.2",
+    "eslint-plugin-react-hooks": "4.6.0",
     "eslint-plugin-simple-import-sort": "10.0.0",
     "eslint-plugin-unused-imports": "2.0.0",
     "os-browserify": "0.3.0",
