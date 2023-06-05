@@ -14,6 +14,8 @@ class ArtifactMetadata(BaseModel):
     # If true, this artifact name is expected to be unique in the DAG.
     explicitly_named: bool = False
     from_local_data: bool = False
+    # Whether the content of this artifact will be persisted
+    # after workflow execution.
     should_persist: bool = True
 
     class Config:
