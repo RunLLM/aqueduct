@@ -305,7 +305,7 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
           onChangeRowsPerPage={onChangeRowsPerPage}
           savedRowsPerPage={getRowsPerPage()}
           sortColumns={sortColumns}
-          // Disabled until ENG-3096
+          // TODO: Disabled until ENG-3096
           // defaultSortConfig={{
           //   sortColumn: sortColumns[0],
           //   sortType: SortType.Descending,
