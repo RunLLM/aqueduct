@@ -262,6 +262,7 @@ func (*artifactWriter) Create(
 	name string,
 	description string,
 	artifactType shared.ArtifactType,
+	shouldPersist bool,
 	DB database.Database,
 ) (*models.Artifact, error) {
 	cols := []string{
@@ -283,7 +284,7 @@ func (*artifactWriter) Create(
 		name,
 		description,
 		artifactType,
-		true, // should_persist
+		shouldPersist,
 	}
 	return getArtifact(ctx, DB, query, args...)
 }

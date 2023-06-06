@@ -20,6 +20,7 @@ from aqueduct.constants.enums import (
 from aqueduct.error import AqueductError, ArtifactNeverComputedException
 from aqueduct.models.artifact import ArtifactMetadata
 from aqueduct.models.dag import DAG
+from aqueduct.models.execution_state import ExecutionState
 from aqueduct.models.operators import (
     CheckSpec,
     FunctionSpec,
@@ -68,15 +69,11 @@ class NumericArtifact(BaseArtifact):
         artifact_id: uuid.UUID,
         content: Optional[Number] = None,
         from_flow_run: bool = False,
+        execution_state: Optional[ExecutionState] = None,
     ):
-        self._dag = dag
-        self._artifact_id = artifact_id
+        super().__init__(dag, artifact_id, content, from_flow_run, execution_state)
 
-        # This parameter indicates whether the artifact is fetched from flow-run or not.
-        self._from_flow_run = from_flow_run
-        self._set_content(content)
-
-    def get(self, parameters: Optional[Dict[str, Any]] = None) -> Number:
+    def get(self, parameters: Optional[Dict[str, Any]] = None) -> Optional[Number]:
         """Materializes a NumericArtifact into its immediate float value.
 
         Returns:
@@ -89,9 +86,12 @@ class NumericArtifact(BaseArtifact):
                 An unexpected error occurred within the Aqueduct cluster.
         """
         self._dag.must_get_artifact(self._artifact_id)
+        if self._is_content_deleted():
+            return None
 
         if self._from_flow_run:
             if self._get_content() is None:
+                # DELETED case is already covered.
                 raise ArtifactNeverComputedException(
                     "This artifact was part of an existing flow run but was never computed successfully!",
                 )
