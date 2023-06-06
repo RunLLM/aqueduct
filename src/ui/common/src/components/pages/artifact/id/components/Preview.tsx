@@ -1,10 +1,10 @@
 import { Alert, Box, Typography } from '@mui/material';
 import React from 'react';
-import ExecutionStatus from '../../../../../utils/shared';
 
 import ArtifactContent from '../../../../../components/workflows/artifact/content';
 import { ArtifactResultResponse } from '../../../../../handlers/responses/node';
 import { NodeArtifactResultContentGetResponse } from '../../../../../handlers/v2/NodeArtifactResultContentGet';
+import ExecutionStatus from '../../../../../utils/shared';
 
 type PreviewProps = {
   upstreamPending: boolean;
