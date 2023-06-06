@@ -40,6 +40,7 @@ const artifactNodeStatusLabels = {
   [ExecutionStatus.Running]: 'Running',
   [ExecutionStatus.Warning]: 'Warning',
   [ExecutionStatus.Unknown]: 'Unknown',
+  [ExecutionStatus.Deleted]: 'Deleted',
 };
 
 const operatorNodeStatusLabels = {
@@ -51,6 +52,7 @@ const operatorNodeStatusLabels = {
   [ExecutionStatus.Running]: 'Running',
   [ExecutionStatus.Warning]: 'Warning',
   [ExecutionStatus.Unknown]: 'Unknown',
+  [ExecutionStatus.Deleted]: 'Deleted',
 };
 
 const checkNodeStatusLabels = {
@@ -62,6 +64,7 @@ const checkNodeStatusLabels = {
   [ExecutionStatus.Running]: 'Running',
   [ExecutionStatus.Warning]: 'Warning',
   [ExecutionStatus.Unknown]: 'Unknown',
+  [ExecutionStatus.Deleted]: 'Deleted',
 };
 
 export const artifactTypeToIconMapping = {
@@ -163,6 +166,7 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
   let backgroundColor;
   switch (status) {
     case ExecutionStatus.Succeeded:
+    case ExecutionStatus.Deleted:
       backgroundColor = theme.palette.green[100];
       break;
     case ExecutionStatus.Warning:
@@ -173,7 +177,6 @@ export const Node: React.FC<Props> = ({ data, isConnectable }) => {
       break;
     case ExecutionStatus.Canceled:
     case ExecutionStatus.Pending:
-    case ExecutionStatus.Deleted:
     default:
       backgroundColor = theme.palette.gray[400];
   }

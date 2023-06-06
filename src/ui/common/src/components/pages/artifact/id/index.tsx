@@ -1,4 +1,5 @@
 import { CircularProgress } from '@mui/material';
+import { Divider } from '@mui/material';
 import Box from '@mui/material/Box';
 import React from 'react';
 import { useLocation, useParams } from 'react-router-dom';
@@ -141,6 +142,8 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
             )}
           </Box>
 
+          <Divider sx={{ marginY: '32px' }} />
+
           <Preview
             upstreamPending={upstreamPending}
             previewAvailable={previewAvailable}
@@ -149,6 +152,8 @@ const ArtifactDetailsPage: React.FC<ArtifactDetailsPageProps> = ({
             contentLoading={contentLoading}
             contentError={contentError ? (contentError as string) : ''}
           />
+
+          <Divider sx={{ marginY: '32px' }} />
 
           <Box display="flex" width="100%">
             <MetricsOverview metrics={metrics} nodeResults={nodeResults} />
