@@ -460,7 +460,7 @@ class DAG(BaseModel):
     def update_artifact_should_persist(self, artifact_id: uuid.UUID, should_persist: bool) -> None:
         self.must_get_artifact(artifact_id).should_persist = should_persist
 
-    def disable_sensitive_snapshots(self) -> None:
+    def disable_op_output_snapshots(self) -> None:
         # Disable snapshots that may contain sensitive user data.
         # For now, this means snapshots not from param, check, and metrics.
         for op in self.list_operators():

@@ -740,7 +740,7 @@ class Client:
         dag.validate_and_resolve_artifact_names()
 
         if disable_snapshots:
-            dag.disable_sensitive_snapshots()
+            dag.disable_op_output_snapshots()
 
         if dag.engine_config.type == RuntimeType.AIRFLOW:
             if run_now is not None:
