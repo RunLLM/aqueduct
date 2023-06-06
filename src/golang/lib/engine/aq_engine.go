@@ -147,15 +147,6 @@ func (eng *aqEngine) ScheduleWorkflow(
 	return nil
 }
 
-func (eng *aqEngine) deleteTemporaryArtifactContents(ctx context.Context, dag dag_utils.WorkflowDag) {
-	for _, artf := range dag.Artifacts() {
-		if !artf.ShouldPersistContent() {
-			err := artf.DeleteContent(ctx)
-			log.Errorf("error deleting temporary artifact result. Artf: %s, Err: %v", artf.Name(), err)
-		}
-	}
-}
-
 func (eng *aqEngine) ExecuteWorkflow(
 	ctx context.Context,
 	workflowID uuid.UUID,
@@ -325,7 +316,7 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create NewWorkflowDag.")
 	}
 
-	defer eng.deleteTemporaryArtifactContents(ctx, dag)
+	defer dag_utils.DeleteTemporaryArtifactContents(ctx, dag)
 
 	opToDependencyCount := make(map[uuid.UUID]int, len(dag.Operators()))
 	for _, op := range dag.Operators() {

@@ -342,6 +342,8 @@ func (a *ArtifactImpl) DeleteContent(ctx context.Context) error {
 				},
 			})
 		} else {
+			// Ideally we can omit this by making SetExecState merge
+			// the current execState with the incoming one.
 			a.execState.Status = shared.DeletedExecutionStatus
 			a.execState.Timestamps.DeletedAt = &now
 		}
