@@ -93,7 +93,7 @@ const operatorNodeViewSubQuery = `
 	WHERE op_with_outputs.outputs IS NULL
 `
 
-var mergedNodeViewSubQuery = fmt.Sprintf(`
+var operatorWithArtifactNodeViewSubQuery = fmt.Sprintf(`
 	WITH
 		operator_node AS (%s), 
 		artifact_node AS (%s)
@@ -190,13 +190,39 @@ func (*operatorReader) GetOperatorWithArtifactNodeBatch(ctx context.Context, IDs
 	query := fmt.Sprintf(
 		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s IN (%s)",
 		views.OperatorWithArtifactNodeView,
-		mergedNodeViewSubQuery,
+		operatorWithArtifactNodeViewSubQuery,
 		views.OperatorWithArtifactNodeCols(),
 		views.OperatorWithArtifactNodeView,
 		views.OperatorWithArtifactNodeID,
 		stmt_preparers.GenerateArgsList(len(IDs), 1),
 	)
 	args := stmt_preparers.CastIdsListToInterfaceList(IDs)
+	return getOperatorWithArtifactNodes(ctx, DB, query, args...)
+}
+
+func (r *operatorReader) GetOperatorWithArtifactByArtifactIdNode(ctx context.Context, artifactID uuid.UUID, DB database.Database) (*views.OperatorWithArtifactNode, error) {
+	nodes, err := r.GetOperatorWithArtifactNodeBatch(ctx, []uuid.UUID{artifactID}, DB)
+	if err != nil {
+		return nil, err
+	}
+	return &nodes[0], nil
+}
+
+func (*operatorReader) GetOperatorWithArtifactByArtifactIdNodeBatch(ctx context.Context, artifactIDs []uuid.UUID, DB database.Database) ([]views.OperatorWithArtifactNode, error) {
+	if len(artifactIDs) == 0 {
+		return nil, errors.New("Provided empty artifact IDs list.")
+	}
+
+	query := fmt.Sprintf(
+		"WITH %s AS (%s) SELECT %s FROM %s WHERE %s IN (%s)",
+		views.OperatorWithArtifactNodeView,
+		operatorWithArtifactNodeViewSubQuery,
+		views.OperatorWithArtifactNodeCols(),
+		views.OperatorWithArtifactNodeView,
+		views.OperatorWithArtifactNodeArtifactID,
+		stmt_preparers.GenerateArgsList(len(artifactIDs), 1),
+	)
+	args := stmt_preparers.CastIdsListToInterfaceList(artifactIDs)
 	return getOperatorWithArtifactNodes(ctx, DB, query, args...)
 }
 

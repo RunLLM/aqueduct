@@ -84,6 +84,13 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			ArtifactRepo:       s.ArtifactRepo,
 			ArtifactResultRepo: s.ArtifactResultRepo,
 		},
+		routes.NodeMetricResultsRoute: &v2.NodeMetricResultsGetHandler{
+			Database:           s.Database,
+			WorkflowRepo:       s.WorkflowRepo,
+			DAGRepo:            s.DAGRepo,
+			OperatorRepo:       s.OperatorRepo,
+			OperatorResultRepo: s.OperatorResultRepo,
+		},
 		routes.NodeCheckRoute: &v2.NodeCheckGetHandler{
 			Database:     s.Database,
 			WorkflowRepo: s.WorkflowRepo,
@@ -102,6 +109,13 @@ func (s *AqServer) Handlers() map[string]handler.Handler {
 			WorkflowRepo: s.WorkflowRepo,
 			DAGRepo:      s.DAGRepo,
 			OperatorRepo: s.OperatorRepo,
+		},
+		routes.NodeCheckResultsRoute: &v2.NodeCheckResultsGetHandler{
+			Database:           s.Database,
+			WorkflowRepo:       s.WorkflowRepo,
+			DAGRepo:            s.DAGRepo,
+			OperatorRepo:       s.OperatorRepo,
+			OperatorResultRepo: s.OperatorResultRepo,
 		},
 		routes.NodeOperatorRoute: &v2.NodeOperatorGetHandler{
 			Database:     s.Database,

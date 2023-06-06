@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 import requests
+from aqueduct.constants.enums import ArtifactType
 import utils
 from aqueduct.constants.enums import RuntimeType
 from aqueduct.models.response_models import (
@@ -16,6 +17,7 @@ from aqueduct.models.response_models import (
     GetNodeResultContentResponse,
     GetOperatorResultResponse,
     GetOperatorWithArtifactNodeResponse,
+    GetOperatorWithArtifactNodeResultResponse,
 )
 from aqueduct_executor.operators.utils.enums import JobType
 from exec_state import assert_exec_state
@@ -52,11 +54,13 @@ class TestBackend:
     GET_NODE_METRIC_RESULT_CONTENT_TEMPLATE = (
         "/api/v2/workflow/%s/dag/%s/node/metric/%s/result/%s/content"
     )
+    GET_NODE_METRIC_RESULTS_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/metric/%s/results"
 
     GET_NODE_CHECK_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/check/%s"
     GET_NODE_CHECK_RESULT_CONTENT_TEMPLATE = (
         "/api/v2/workflow/%s/dag/%s/node/check/%s/result/%s/content"
     )
+    GET_NODE_CHECK_RESULTS_TEMPLATE = "/api/v2/workflow/%s/dag/%s/node/check/%s/results"
 
     # V1
     LIST_WORKFLOW_SAVED_OBJECTS_TEMPLATE = "/api/workflow/%s/objects"
@@ -142,7 +146,6 @@ class TestBackend:
             ]
         )
 
-        print(data)
         assert (
             set(
                 [
@@ -680,6 +683,28 @@ class TestBackend:
             # One of these should be successful (direct descendent of operator)
             assert not resp_obj.is_downsampled
             assert len(resp_obj.content) > 0
+            
+    def test_endpoint_node_metric_results_get(self):
+        flow_id = self.flows["flow_with_metrics_and_checks"][0]
+        flow = self.client.flow(flow_id)
+        workflow_resp = flow._get_workflow_resp()
+        dag_id = workflow_resp.workflow_dag_results[0].workflow_dag_id
+        dag_result_id = workflow_resp.workflow_dag_results[0].id
+
+        dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
+            flow_id,
+            dag_result_id,
+        )
+        metric_artifact_id = None
+        for artifact_id, artifact in dag_result_resp.artifacts.items():
+            if artifact.type == ArtifactType.NUMERIC:
+                metric_artifact_id = artifact_id
+                break
+        resp = self.get_response(
+            self.GET_NODE_METRIC_RESULTS_TEMPLATE % (flow_id, dag_id, metric_artifact_id)
+        ).json()
+        for result in resp:
+            result = GetOperatorWithArtifactNodeResultResponse(**result)
 
     def test_endpoint_node_check_get(self):
         flow_id, _ = self.flows["flow_with_metrics_and_checks"]
@@ -749,3 +774,25 @@ class TestBackend:
             # One of these should be successful (direct descendent of operator)
             assert not resp_obj.is_downsampled
             assert len(resp_obj.content) > 0
+
+    def test_endpoint_node_check_results_get(self):
+        flow_id = self.flows["flow_with_metrics_and_checks"][0]
+        flow = self.client.flow(flow_id)
+        workflow_resp = flow._get_workflow_resp()
+        dag_id = workflow_resp.workflow_dag_results[0].workflow_dag_id
+        dag_result_id = workflow_resp.workflow_dag_results[0].id
+
+        dag_result_resp = globals.__GLOBAL_API_CLIENT__.get_workflow_dag_result(
+            flow_id,
+            dag_result_id,
+        )
+        check_artifact_id = None
+        for artifact_id, artifact in dag_result_resp.artifacts.items():
+            if artifact.type == ArtifactType.BOOL:
+                check_artifact_id = artifact_id
+                break
+        resp = self.get_response(
+            self.GET_NODE_CHECK_RESULTS_TEMPLATE % (flow_id, dag_id, check_artifact_id)
+        ).json()
+        for result in resp:
+            result = GetOperatorWithArtifactNodeResultResponse(**result)

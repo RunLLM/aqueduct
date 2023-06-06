@@ -1,4 +1,4 @@
-import datetime
+from dateutil import parser
 import io
 import json
 import uuid
@@ -610,11 +610,8 @@ class APIClient:
             WorkflowDagResultResponse(
                 id=dag_result.id,
                 created_at=int(
-                    datetime.datetime.strptime(
-                        resp_dags[str(dag_result.dag_id)].created_at[:-4],
-                        "%Y-%m-%dT%H:%M:%S.%f"
-                        if resp_dags[str(dag_result.dag_id)].created_at[-1] == "Z"
-                        else "%Y-%m-%dT%H:%M:%S.%f%z",
+                    parser.parse(
+                        resp_dags[str(dag_result.dag_id)].created_at
                     ).timestamp()
                 ),
                 status=dag_result.exec_state.status,

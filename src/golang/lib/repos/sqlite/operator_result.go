@@ -184,6 +184,45 @@ func (*operatorResultReader) GetStatusByDAGResultAndArtifactBatch(
 	return statuses, err
 }
 
+func (*operatorResultReader) GetOperatorWithArtifactResultNodesByOperatorNameAndWorkflow(
+	ctx context.Context,
+	operatorName string,
+	workflowID uuid.UUID,
+	DB database.Database,
+) ([]views.OperatorWithArtifactResultNode, error) {
+	// For all workflow dags that belong to the workflow (identified by ID),
+	// get the workflow dag edges of the workflow dag.
+	// Get all operators with the operator name, get the operator ids and
+	// find the operator results of each operator (by id).
+	// Get all the artifact results by finding all workflow_dag_edges
+	// from operator by id to artifact result by artifact id.
+	query := `SELECT 
+			operator_result.id,
+			operator.id AS operator_id,
+			operator_result.execution_state AS operator_result_exec_state,
+			artifact_result.artifact_id, 
+			artifact_result.id AS artifact_result_id, 
+			artifact_result.metadata,
+			artifact_result.content_path,
+			artifact_result.execution_state AS artifact_result_exec_state
+		FROM operator, operator_result, artifact_result, workflow_dag, workflow_dag_edge, workflow_dag_result
+		WHERE 
+			workflow_dag.workflow_id = $1
+			AND workflow_dag_edge.workflow_dag_id = workflow_dag.id
+			AND workflow_dag_result.workflow_dag_id = workflow_dag.id
+			AND operator.name = $2
+			AND operator_result.operator_id = operator.id
+			AND workflow_dag_edge.from_id = operator.id
+			AND workflow_dag_edge.to_id = artifact_result.artifact_id
+			AND artifact_result.workflow_dag_result_id = workflow_dag_result.id;`
+
+	args := []interface{}{workflowID, operatorName}
+
+	var operatorWithArtifactResultNodes []views.OperatorWithArtifactResultNode
+	err := DB.Query(ctx, &operatorWithArtifactResultNodes, query, args...)
+	return operatorWithArtifactResultNodes, err
+}
+
 func (*operatorResultWriter) Create(
 	ctx context.Context,
 	dagResultID uuid.UUID,

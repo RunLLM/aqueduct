@@ -43,13 +43,15 @@ func NewOperatorWithArtifactNodeFromDBObject(dbOperatorWithArtifactNode *views.O
 	}
 }
 
-type OperatorWithArtifactNodeResult struct {
-	// Operator ID
-	ID                uuid.UUID              `json:"id"`
-	OperatorExecState *shared.ExecutionState `json:"operator_exec_state"`
-
-	ArtifactID        uuid.UUID                        `json:"artifact_id"`
-	SerializationType shared.ArtifactSerializationType `json:"serialization_type"`
+type OperatorWithArtifactResultNode struct {
+	// Operator Result ID
+	ID                      uuid.UUID                        `json:"id"`
+	ArtifactResultID        uuid.UUID                        `json:"artifact_result_id"`
+	OperatorID              uuid.UUID                        `json:"operator_id"`
+	ArtifactID              uuid.UUID                        `json:"artifact_id"`
+	OperatorResultExecState *shared.ExecutionState           `json:"operator_result_exec_state"`
+	ArtifactResultExecState *shared.ExecutionState           `json:"artifact_result_exec_state"`
+	SerializationType       shared.ArtifactSerializationType `json:"serialization_type"`
 
 	// If `ContentSerialized` is set, the content is small and we directly send
 	// it as a part of response. It's consistent with the object stored in `ContentPath`.
@@ -59,32 +61,32 @@ type OperatorWithArtifactNodeResult struct {
 	// one should send an additional request to fetch the content.
 	ContentPath       string  `json:"content_path"`
 	ContentSerialized *string `json:"content_serialized"`
-
-	ArtifactExecState *shared.ExecutionState `json:"artifact_exec_state"`
 }
 
-func NewOperatorWithArtifactNodeResultFromDBObject(
-	dbOperatorWithArtifactNodeResult *views.OperatorWithArtifactNodeResult,
+func NewOperatorWithArtifactResultNodeFromDBObject(
+	dbOperatorWithArtifactResultNode *views.OperatorWithArtifactResultNode,
 	content *string,
-) *OperatorWithArtifactNodeResult {
-	result := &OperatorWithArtifactNodeResult{
-		ID:                dbOperatorWithArtifactNodeResult.ID,
-		ArtifactID:        dbOperatorWithArtifactNodeResult.ArtifactID,
-		SerializationType: dbOperatorWithArtifactNodeResult.Metadata.SerializationType,
-		ContentPath:       dbOperatorWithArtifactNodeResult.ContentPath,
+) *OperatorWithArtifactResultNode {
+	result := &OperatorWithArtifactResultNode{
+		ID:                dbOperatorWithArtifactResultNode.ID,
+		ArtifactResultID:  dbOperatorWithArtifactResultNode.ArtifactResultID,
+		OperatorID:        dbOperatorWithArtifactResultNode.OperatorID,
+		ArtifactID:        dbOperatorWithArtifactResultNode.ArtifactID,
+		SerializationType: dbOperatorWithArtifactResultNode.Metadata.SerializationType,
+		ContentPath:       dbOperatorWithArtifactResultNode.ContentPath,
 		ContentSerialized: content,
 	}
 
-	if !dbOperatorWithArtifactNodeResult.OperatorExecState.IsNull {
+	if !dbOperatorWithArtifactResultNode.OperatorResultExecState.IsNull {
 		// make a copy of execState's value
-		execStateVal := dbOperatorWithArtifactNodeResult.OperatorExecState.ExecutionState
-		result.OperatorExecState = &execStateVal
+		execStateVal := dbOperatorWithArtifactResultNode.OperatorResultExecState.ExecutionState
+		result.OperatorResultExecState = &execStateVal
 	}
 
-	if !dbOperatorWithArtifactNodeResult.ArtifactExecState.IsNull {
+	if !dbOperatorWithArtifactResultNode.ArtifactResultExecState.IsNull {
 		// make a copy of execState's value
-		execStateVal := dbOperatorWithArtifactNodeResult.ArtifactExecState.ExecutionState
-		result.ArtifactExecState = &execStateVal
+		execStateVal := dbOperatorWithArtifactResultNode.ArtifactResultExecState.ExecutionState
+		result.ArtifactResultExecState = &execStateVal
 	}
 
 	return result
@@ -251,8 +253,8 @@ type NodeResults struct {
 	Operators []OperatorResult `json:"operators"`
 	Artifacts []ArtifactResult `json:"artifacts"`
 	// TODO: ENG-2987 Create separate sections for Metrics/Checks
-	// Metrics []OperatorWithArtifactNodeResult `json:"metrics"`
-	// Checks []OperatorWithArtifactNodeResult `json:"checks"`
+	// Metrics []OperatorWithArtifactResultNode `json:"metrics"`
+	// Checks []OperatorWithArtifactResultNode `json:"checks"`
 }
 
 func NewNodeResultsFromDBObjects(
