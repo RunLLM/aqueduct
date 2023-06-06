@@ -19,6 +19,7 @@ resource "google_container_node_pool" "primary_nodes" {
     oauth_scopes = [
       "https://www.googleapis.com/auth/logging.write",
       "https://www.googleapis.com/auth/monitoring",
+      "https://www.googleapis.com/auth/devstorage.read_only"
     ]
 
     labels = {
@@ -60,6 +61,7 @@ resource "google_container_node_pool" "gpu_nodes" {
     oauth_scopes = [
       "https://www.googleapis.com/auth/logging.write",
       "https://www.googleapis.com/auth/monitoring",
+      "https://www.googleapis.com/auth/devstorage.read_only"
     ]
 
     labels = {
@@ -69,7 +71,7 @@ resource "google_container_node_pool" "gpu_nodes" {
 
     disk_size_gb = var.disk_size_in_gb
     preemptible  = true
-    machine_type = var.gpu_node_type
+    machine_type = var.cpu_node_type
     tags         = ["gke-node", "${var.project_id}-gke"]
     metadata = {
       disable-legacy-endpoints = "true"
