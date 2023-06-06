@@ -44,6 +44,12 @@ const App = () => {
     const routesContent: React.ReactElement = (
         <Routes>
             <Route
+                path={`${pathPrefix ?? '/llm_welcome'}`}
+                element={
+                    <div>Hello World</div>
+                }
+            />
+            <Route
                 path={`${pathPrefix ?? '/'}`}
                 element={
                     <RequireAuth user={user}>

@@ -2,7 +2,7 @@ import Box from '@mui/material/Box';
 import TextField from '@mui/material/TextField';
 import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { useCookies } from 'react-cookie';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 
 import fetchUser from '../../utils/fetchUser';
 import { getPathPrefix } from '../../utils/getPathPrefix';
@@ -11,6 +11,13 @@ import { Button } from '../primitives/Button.styles';
 const apiKeyQueryParam = 'apiKey';
 
 export const LoginPage: React.FC = () => {
+  const navigate = useNavigate()
+  useEffect(() => {
+    navigate('https://5729345786.propelauthtest.com', { replace: true })
+  }, [])
+
+  return null;
+  /*
   useEffect(() => {
     document.title = 'Login | Aqueduct';
   }, []);
@@ -129,7 +136,7 @@ export const LoginPage: React.FC = () => {
         </Button>
       </Box>
     </Box>
-  );
+  );*/
 };
 
 export default LoginPage;
