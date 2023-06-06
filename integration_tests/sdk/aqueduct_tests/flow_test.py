@@ -495,6 +495,63 @@ def test_flow_list_saved_objects_none(client, flow_name, engine):
     assert len(flow.list_saved_objects()) == 0
 
 
+def test_flow_with_disabled_snapshots(client, flow_name, data_resource, engine):
+    @op
+    def op_disabled_by_wf(df):
+        return df
+
+    @metric
+    def metric_enabled(df):
+        return df.shape[0]
+
+    @metric
+    def metric_disabled(df):
+        return df.shape[0]
+
+    @check
+    def check_enabled(count):
+        return count > 10
+
+    reviews = extract(data_resource, DataObject.SENTIMENT, output_name="extract artifact")
+    op_artf = op_disabled_by_wf(reviews)
+    metric_enabled(op_artf)
+    metric_disabled_artf = metric_disabled(op_artf)
+    metric_disabled_artf.disable_snapshot()
+    check_enabled(metric_disabled_artf)
+
+    op_artf.enable_snapshot()
+    save(data_resource, op_artf)
+
+    flow = publish_flow_test(
+        client, op_artf, name=flow_name(), engine=engine, disable_snapshots=True
+    )
+    latest_run = flow.latest()
+    assert (
+        latest_run.artifact("extract artifact").execution_state().status == ExecutionStatus.DELETED
+    )
+    assert latest_run.artifact("extract artifact").get() is None
+    assert (
+        latest_run.artifact("op_disabled_by_wf artifact").execution_state().status
+        == ExecutionStatus.DELETED
+    )
+    assert latest_run.artifact("op_disabled_by_wf artifact").get() is None
+    assert (
+        latest_run.artifact("metric_enabled artifact").execution_state().status
+        == ExecutionStatus.SUCCEEDED
+    )
+    assert latest_run.artifact("metric_enabled artifact").get() == 100
+    assert (
+        latest_run.artifact("metric_disabled artifact").execution_state().status
+        == ExecutionStatus.DELETED
+    )
+    assert latest_run.artifact("metric_disabled artifact").get() is None
+    assert (
+        latest_run.artifact("check_enabled artifact").execution_state().status
+        == ExecutionStatus.SUCCEEDED
+    )
+    assert latest_run.artifact("check_enabled artifact").get()
+
+
 def test_artifact_set_name(client, flow_name, engine):
     @op
     def foo():

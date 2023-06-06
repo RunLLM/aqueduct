@@ -3,6 +3,7 @@ package artifact
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/aqueducthq/aqueduct/lib/database"
 	"github.com/aqueducthq/aqueduct/lib/models"
@@ -19,19 +20,25 @@ import (
 const sampleTableRow = 500
 
 // Artifact is an interface for managing and inspect the lifecycle of an artifact
-// produced by a workflow run.
+// produced by one single workflow run.
 type Artifact interface {
 	ID() uuid.UUID
 	Signature() uuid.UUID
 	Type() shared.ArtifactType
 	Name() string
+	ShouldPersistContent() bool
+
+	// DeleteContent removes the artifact content from storage if it exists.
+	// This does not update the database, which should be handled
+	// by the caller.
+	DeleteContent(ctx context.Context) error
 
 	// InitializeResult initializes the artifact in the database.
 	InitializeResult(ctx context.Context, dagResultID uuid.UUID) error
 
 	// PersistResult updates the artifact result in the database.
 	// Errors if InitializeResult() hasn't been called yet.
-	PersistResult(ctx context.Context, execState *shared.ExecutionState) error
+	PersistResult(ctx context.Context) error
 
 	// Finish is an end-of-lifecycle hook meant to do any final cleanup work.
 	Finish(ctx context.Context)
@@ -57,6 +64,13 @@ type Artifact interface {
 	// For now, it's primarily used for table artifact to limit
 	// the number of rows sent to client.
 	SampleContent(ctx context.Context) ([]byte, bool, error)
+
+	// SetExecState updates the execution state of the artifact.
+	// For now, it doesn't tries to 'merge' the incoming state with the current state
+	// e.g. if current exec state has a 'pending' status with 'PendingAt' timestamp,
+	// and the incoming state has a 'succeeded' status with 'SucceededAt' timestamp,
+	// the incoming state will completely replace the current state.
+	SetExecState(execState shared.ExecutionState)
 }
 
 type ArtifactImpl struct {
@@ -69,11 +83,13 @@ type ArtifactImpl struct {
 	// data, which is why it is used as the key in the preview artifact cache.
 	signature uuid.UUID
 
-	name         string
-	description  string
-	artifactType shared.ArtifactType
+	name                 string
+	description          string
+	artifactType         shared.ArtifactType
+	shouldPersistContent bool
 
 	execPaths *utils.ExecPaths
+	execState *shared.ExecutionState
 
 	repo           repos.Artifact
 	resultRepo     repos.ArtifactResult
@@ -103,21 +119,29 @@ func NewArtifact(
 		return nil, errors.Newf("An Artifact signature must be provided for a cache-aware artifact.")
 	}
 
+	now := time.Now()
 	return &ArtifactImpl{
-		id:                  dbArtifact.ID,
-		signature:           signature,
-		name:                dbArtifact.Name,
-		description:         dbArtifact.Description,
-		artifactType:        dbArtifact.Type,
-		execPaths:           execPaths,
-		repo:                artifactRepo,
-		resultRepo:          artifactResultRepo,
-		resultID:            uuid.Nil,
-		resultMetadata:      nil,
-		previewCacheManager: previewCacheManager,
-		resultsPersisted:    false,
-		storageConfig:       storageConfig,
-		db:                  db,
+		id:                   dbArtifact.ID,
+		signature:            signature,
+		name:                 dbArtifact.Name,
+		description:          dbArtifact.Description,
+		artifactType:         dbArtifact.Type,
+		execPaths:            execPaths,
+		repo:                 artifactRepo,
+		resultRepo:           artifactResultRepo,
+		resultID:             uuid.Nil,
+		resultMetadata:       nil,
+		previewCacheManager:  previewCacheManager,
+		resultsPersisted:     false,
+		storageConfig:        storageConfig,
+		shouldPersistContent: dbArtifact.ShouldPersist,
+		execState: &shared.ExecutionState{
+			Status: shared.RegisteredExecutionStatus,
+			Timestamps: &shared.ExecutionTimestamps{
+				RegisteredAt: &now,
+			},
+		},
+		db: db,
 	}, nil
 }
 
@@ -141,14 +165,16 @@ func NewArtifactFromDBObjects(
 	}
 
 	return &ArtifactImpl{
-		id:           dbArtifact.ID,
-		signature:    signature,
-		name:         dbArtifact.Name,
-		description:  dbArtifact.Description,
-		artifactType: dbArtifact.Type,
+		id:                   dbArtifact.ID,
+		signature:            signature,
+		name:                 dbArtifact.Name,
+		description:          dbArtifact.Description,
+		artifactType:         dbArtifact.Type,
+		shouldPersistContent: dbArtifact.ShouldPersist,
 		execPaths: &utils.ExecPaths{
 			ArtifactContentPath: contentPath,
 		},
+		execState:           &dbArtifactResult.ExecState.ExecutionState,
 		repo:                artifactRepo,
 		resultRepo:          artifactResultRepo,
 		resultID:            artifactResultId,
@@ -186,6 +212,10 @@ func (a *ArtifactImpl) Computed(ctx context.Context) bool {
 	return res
 }
 
+func (a *ArtifactImpl) ShouldPersistContent() bool {
+	return a.shouldPersistContent
+}
+
 func (a *ArtifactImpl) InitializeResult(ctx context.Context, dagResultID uuid.UUID) error {
 	if a.resultRepo == nil {
 		return errors.New("Artifact's result writer cannot be nil.")
@@ -206,14 +236,11 @@ func (a *ArtifactImpl) InitializeResult(ctx context.Context, dagResultID uuid.UU
 	return nil
 }
 
-func (a *ArtifactImpl) updateArtifactResultAfterComputation(
-	ctx context.Context,
-	execState *shared.ExecutionState,
-) {
+func (a *ArtifactImpl) updateArtifactResultAfterComputation(ctx context.Context) {
 	changes := map[string]interface{}{
 		models.ArtifactResultMetadata:  nil,
-		models.ArtifactResultStatus:    execState.Status,
-		models.ArtifactResultExecState: execState,
+		models.ArtifactResultStatus:    a.execState.Status,
+		models.ArtifactResultExecState: a.execState,
 	}
 
 	metadataExists := utils.ObjectExistsInStorage(ctx, a.storageConfig, a.execPaths.ArtifactMetadataPath)
@@ -282,7 +309,7 @@ func (a *ArtifactImpl) updateArtifactTypeAfterComputation(
 	}
 }
 
-func (a *ArtifactImpl) PersistResult(ctx context.Context, execState *shared.ExecutionState) error {
+func (a *ArtifactImpl) PersistResult(ctx context.Context) error {
 	if a.previewCacheManager != nil {
 		return errors.Newf("Artifact %s is cache-aware, so it cannot be persisted.", a.Name())
 	}
@@ -290,14 +317,54 @@ func (a *ArtifactImpl) PersistResult(ctx context.Context, execState *shared.Exec
 	if a.resultsPersisted {
 		return errors.Newf("Artifact %s was already persisted!", a.name)
 	}
-	if !execState.Terminated() {
-		return errors.Newf("Artifact %s has unexpected execution state: %s", a.Name(), execState.Status)
+
+	if a.execState == nil {
+		return errors.Newf("Artifact %s doesn't have an execution state.", a.name)
 	}
 
-	a.updateArtifactResultAfterComputation(ctx, execState)
+	a.updateArtifactResultAfterComputation(ctx)
 	a.updateArtifactTypeAfterComputation(ctx)
 
 	a.resultsPersisted = true
+	return nil
+}
+
+func (a *ArtifactImpl) DeleteContent(ctx context.Context) error {
+	storageObj := storage.NewStorage(a.storageConfig)
+
+	if a.Computed(ctx) {
+		now := time.Now()
+		if a.execState == nil {
+			a.SetExecState(shared.ExecutionState{
+				Status: shared.DeletedExecutionStatus,
+				Timestamps: &shared.ExecutionTimestamps{
+					DeletedAt: &now,
+				},
+			})
+		} else {
+			// Ideally we can omit this by making SetExecState merge
+			// the current execState with the incoming one.
+			a.execState.Status = shared.DeletedExecutionStatus
+			a.execState.Timestamps.DeletedAt = &now
+		}
+
+		err := storageObj.Delete(ctx, a.execPaths.ArtifactContentPath)
+		if err != nil {
+			return err
+		}
+
+		_, err = a.resultRepo.Update(
+			ctx,
+			a.resultID,
+			map[string]interface{}{
+				models.ArtifactResultStatus:    a.execState.Status,
+				models.ArtifactResultExecState: a.execState,
+			},
+			a.db,
+		)
+		return err
+	}
+
 	return nil
 }
 
@@ -323,11 +390,6 @@ func (a *ArtifactImpl) Finish(ctx context.Context) {
 
 func (a *ArtifactImpl) GetMetadata(ctx context.Context) (*shared.ArtifactResultMetadata, error) {
 	if a.resultMetadata == nil {
-		if !a.Computed(ctx) {
-			// metadata is not ready yet.
-			return nil, nil
-		}
-
 		// If the path is not available, we assume the data is not available.
 		if !utils.ObjectExistsInStorage(ctx, a.storageConfig, a.execPaths.ArtifactMetadataPath) {
 			return nil, nil
@@ -345,14 +407,15 @@ func (a *ArtifactImpl) GetMetadata(ctx context.Context) (*shared.ArtifactResultM
 }
 
 func (a *ArtifactImpl) GetContent(ctx context.Context) ([]byte, error) {
-	if !a.Computed(ctx) {
-		return nil, errors.Newf("Cannot get content of Artifact %s, it has not yet been computed.", a.Name())
-	}
 	content, err := storage.NewStorage(a.storageConfig).Get(ctx, a.execPaths.ArtifactContentPath)
 	if err != nil {
 		return nil, err
 	}
 	return content, nil
+}
+
+func (a *ArtifactImpl) SetExecState(execState shared.ExecutionState) {
+	a.execState = &execState
 }
 
 func (a *ArtifactImpl) SampleContent(ctx context.Context) ([]byte, bool, error) {
@@ -361,9 +424,7 @@ func (a *ArtifactImpl) SampleContent(ctx context.Context) ([]byte, bool, error) 
 		return nil, false, err
 	}
 
-	// Ignore if artifact is not computed.
-	// Ideally we should use a.Computed() but that involves a potential API call to storage.
-	// So here we use metadata which is also sufficient.
+	// Ignore if artifact metadata is not available.
 	if metadata == nil {
 		return nil, false, nil
 	}

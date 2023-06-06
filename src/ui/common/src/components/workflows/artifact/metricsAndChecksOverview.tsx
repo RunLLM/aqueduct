@@ -7,6 +7,8 @@ import {
   OperatorResponse,
 } from '../../../handlers/responses/node';
 import { DataSchema } from '../../../utils/data';
+import { CheckLevel } from '../../../utils/operators';
+import ExecutionStatus from '../../../utils/shared';
 import OperatorExecStateTable, {
   OperatorExecStateTableType,
 } from '../../tables/OperatorExecStateTable';
@@ -86,10 +88,19 @@ export const ChecksOverview: React.FC<ChecksOverviewProps> = ({
     schema: schema,
     data: checks.map((checkOp) => {
       const name = checkOp.name;
-      const artfResult = (nodeResults?.artifacts ?? {})[checkOp.outputs[0]];
+      const opResult = (nodeResults?.operators ?? {})[checkOp.id];
+      let status = opResult?.exec_state?.status;
+      if (
+        status === ExecutionStatus.Failed &&
+        checkOp.spec?.check?.level === CheckLevel.Warning
+      ) {
+        status = ExecutionStatus.Warning;
+      }
+
       return {
         title: name,
-        value: artfResult?.content_serialized,
+        value: status,
+        status: status,
       };
     }),
   };

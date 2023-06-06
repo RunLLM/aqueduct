@@ -15,15 +15,21 @@ const (
 type ExecutionStatus string
 
 const (
-	// Registered is a special state that indicates a object has been registered
-	// but has no runs yet. This is typically used in workflows.
+	// Typical lifecycle of an object:
+	// Registered -> Pending -> Running  -> Canceled
+	//                                  |-> Failed
+	//                                  |-> Succeeded -> (Optional) Deleted
 	RegisteredExecutionStatus ExecutionStatus = "registered"
 	PendingExecutionStatus    ExecutionStatus = "pending"
 	RunningExecutionStatus    ExecutionStatus = "running"
 	CanceledExecutionStatus   ExecutionStatus = "canceled"
 	FailedExecutionStatus     ExecutionStatus = "failed"
 	SucceededExecutionStatus  ExecutionStatus = "succeeded"
-	UnknownExecutionStatus    ExecutionStatus = "unknown"
+	// 'deleted' refers to 'erased after success'.
+	// Caller should consider 'deleted' as success for error handling,
+	// but should not expect any non-metadata content to be available.
+	DeletedExecutionStatus ExecutionStatus = "deleted"
+	UnknownExecutionStatus ExecutionStatus = "unknown"
 )
 
 type NullExecutionStatus struct {

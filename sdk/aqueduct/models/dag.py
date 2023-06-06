@@ -457,6 +457,22 @@ class DAG(BaseModel):
         artifact.name = new_name
         artifact.explicitly_named = True
 
+    def update_artifact_should_persist(self, artifact_id: uuid.UUID, should_persist: bool) -> None:
+        self.must_get_artifact(artifact_id).should_persist = should_persist
+
+    def disable_op_output_snapshots(self) -> None:
+        # Disable snapshots that may contain sensitive user data.
+        # For now, this means snapshots not from param, check, and metrics.
+        for op in self.list_operators():
+            if get_operator_type(op) not in [
+                OperatorType.CHECK,
+                OperatorType.METRIC,
+                OperatorType.SYSTEM_METRIC,
+                OperatorType.PARAM,
+            ]:
+                for artf_id in op.outputs:
+                    self.update_artifact_should_persist(artf_id, False)
+
     def update_param_spec(self, name: str, new_spec: OperatorSpec) -> None:
         """Checks that:
         1) The parameter already exists, and there is not more than one with the same name.

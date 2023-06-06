@@ -240,10 +240,9 @@ const WorkflowsPage: React.FC<Props> = ({ user, Layout = DefaultLayout }) => {
             checkId: op.id,
             name: op.name,
             status:
-              nodesResults.artifacts[artifactId]?.exec_state?.status ??
+              nodesResults.operators[op.id]?.exec_state?.status ??
               ExecutionStatus.Registered,
             level: op.spec.check.level,
-            value: nodesResults.artifacts[artifactId]?.content_serialized,
             timestamp:
               nodesResults.artifacts[artifactId]?.exec_state?.timestamps
                 ?.finished_at,

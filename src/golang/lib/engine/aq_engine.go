@@ -316,6 +316,8 @@ func (eng *aqEngine) ExecuteWorkflow(
 		return shared.FailedExecutionStatus, errors.Wrap(err, "Unable to create NewWorkflowDag.")
 	}
 
+	defer dag_utils.DeleteTemporaryArtifactContents(ctx, dag)
+
 	opToDependencyCount := make(map[uuid.UUID]int, len(dag.Operators()))
 	for _, op := range dag.Operators() {
 		inputs, err := dag.OperatorInputs(op)

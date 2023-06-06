@@ -61,7 +61,7 @@ export const OperatorExecStateTable: React.FC<OperatorExecStateTableProps> = ({
       // Send off to the MetricTableItem component.
       return <MetricTableItem metricValue={value as string} status={status} />;
     } else if (tableType === OperatorExecStateTableType.Check) {
-      return <CheckTableItem checkValue={value as string} status={status} />;
+      return <CheckTableItem value={value as string} status={status} />;
     }
 
     // Default case, code here shouldn't get hit assuming this table is just used to render metrics and cheecks.
@@ -103,19 +103,18 @@ export const OperatorExecStateTable: React.FC<OperatorExecStateTableProps> = ({
                 tabIndex={-1}
                 key={`tableBody-${rowIndex}`}
               >
-                {schema.fields.map((column, columnIndex) => {
-                  const columnName = column.name.toLowerCase();
-                  const value = row[columnName];
-
-                  return (
-                    <TableCell
-                      key={`cell-${rowIndex}-${columnIndex}`}
-                      align={tableAlign as TableCellProps['align']}
-                    >
-                      {getTableItem(tableType, columnName, value, row.status)}
-                    </TableCell>
-                  );
-                })}
+                <TableCell
+                  key={`cell-${rowIndex}-title`}
+                  align={tableAlign as TableCellProps['align']}
+                >
+                  {getTableItem(tableType, 'title', row['title'], undefined)}
+                </TableCell>
+                <TableCell
+                  key={`cell-${rowIndex}-status`}
+                  align={tableAlign as TableCellProps['align']}
+                >
+                  {getTableItem(tableType, 'status', '', row['status'])}
+                </TableCell>
               </TableRow>
             );
           })}

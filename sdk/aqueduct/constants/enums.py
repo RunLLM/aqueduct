@@ -111,6 +111,7 @@ class ExecutionStatus(str, Enum, metaclass=MetaEnum):
     PENDING = "pending"
     REGISTERED = "registered"
     CANCELED = "canceled"
+    DELETED = "deleted"
 
 
 class NotificationLogLevel(str, Enum, metaclass=MetaEnum):
