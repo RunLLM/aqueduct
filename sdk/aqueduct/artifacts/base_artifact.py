@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional, Union
 import numpy as np
 from aqueduct.constants.enums import ArtifactType, OperatorType
 from aqueduct.models.dag import DAG
-from aqueduct.models.execution_state import ExecutionState
+from aqueduct.models.execution_state import ExecutionState, ExecutionStatus
 from aqueduct.type_annotations import Number
 from aqueduct.utils.naming import sanitize_artifact_name
 
@@ -37,6 +37,13 @@ class BaseArtifact(ABC):
         # For now, the execution_state is only relevant when it's fetched from a flow run.
         # It stays 'None' when the artifact runs in previews.
         self._execution_state = execution_state
+
+    def _is_content_deleted(self) -> bool:
+        if self._from_flow_run:
+            if self._execution_state and self._execution_state.status == ExecutionStatus.DELETED:
+                return True
+
+        return False
 
     def id(self) -> uuid.UUID:
         """Fetch the id associated with this artifact.

@@ -48,7 +48,7 @@ class BoolArtifact(BaseArtifact):
     ):
         super().__init__(dag, artifact_id, content, from_flow_run, execution_state)
 
-    def get(self, parameters: Optional[Dict[str, Any]] = None) -> Union[bool, np.bool_]:
+    def get(self, parameters: Optional[Dict[str, Any]] = None) -> Optional[Union[bool, np.bool_]]:
         """Materializes a BoolArtifact into a boolean.
 
         Returns:
@@ -60,6 +60,9 @@ class BoolArtifact(BaseArtifact):
             InternalServerError:
                 An unexpected error occurred in the server.
         """
+        if self._is_content_deleted():
+            return None
+
         self._dag.must_get_artifact(self._artifact_id)
 
         if self._from_flow_run:

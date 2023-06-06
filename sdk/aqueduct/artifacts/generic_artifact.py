@@ -51,6 +51,9 @@ class GenericArtifact(BaseArtifact, system_metric.SystemMetricMixin):
             InternalServerError:
                 An unexpected error occurred in the server.
         """
+        if self._is_content_deleted():
+            return None
+
         self._dag.must_get_artifact(self._artifact_id)
 
         if self._from_flow_run:

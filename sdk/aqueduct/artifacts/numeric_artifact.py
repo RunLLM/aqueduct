@@ -73,7 +73,7 @@ class NumericArtifact(BaseArtifact):
     ):
         super().__init__(dag, artifact_id, content, from_flow_run, execution_state)
 
-    def get(self, parameters: Optional[Dict[str, Any]] = None) -> Number:
+    def get(self, parameters: Optional[Dict[str, Any]] = None) -> Optional[Number]:
         """Materializes a NumericArtifact into its immediate float value.
 
         Returns:
@@ -86,6 +86,8 @@ class NumericArtifact(BaseArtifact):
                 An unexpected error occurred within the Aqueduct cluster.
         """
         self._dag.must_get_artifact(self._artifact_id)
+        if self._is_content_deleted():
+            return None
 
         if self._from_flow_run:
             if self._get_content() is None:

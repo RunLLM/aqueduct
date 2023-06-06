@@ -67,7 +67,7 @@ class TableArtifact(BaseArtifact, system_metric.SystemMetricMixin):
     ):
         super().__init__(dag, artifact_id, content, from_flow_run, execution_state)
 
-    def get(self, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
+    def get(self, parameters: Optional[Dict[str, Any]] = None) -> Optional[pd.DataFrame]:
         """Materializes TableArtifact into an actual dataframe.
 
         Args:
@@ -85,6 +85,8 @@ class TableArtifact(BaseArtifact, system_metric.SystemMetricMixin):
                 An unexpected error occurred within the Aqueduct cluster.
         """
         self._dag.must_get_artifact(self._artifact_id)
+        if self._is_content_deleted():
+            return None
 
         if self._from_flow_run:
             if self._get_content() is None:
@@ -110,7 +112,9 @@ class TableArtifact(BaseArtifact, system_metric.SystemMetricMixin):
         assert isinstance(content, pd.DataFrame)
         return content
 
-    def head(self, n: int = 5, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
+    def head(
+        self, n: int = 5, parameters: Optional[Dict[str, Any]] = None
+    ) -> Optional[pd.DataFrame]:
         """Returns a preview of the table artifact.
 
         >>> db = client.resource(name="demo/")
@@ -125,6 +129,9 @@ class TableArtifact(BaseArtifact, system_metric.SystemMetricMixin):
             A dataframe containing the table contents of this artifact.
         """
         df = self.get(parameters=parameters)
+        if df is None:
+            return None
+
         return df.head(n)
 
     PRESET_METRIC_LIST = ["number_of_missing_values", "number_of_rows", "max", "min", "mean", "std"]

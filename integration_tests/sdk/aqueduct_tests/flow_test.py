@@ -529,22 +529,27 @@ def test_flow_with_disabled_snapshots(client, flow_name, data_resource, engine):
     assert (
         latest_run.artifact("extract artifact").execution_state().status == ExecutionStatus.DELETED
     )
+    assert latest_run.artifact("extract artifact").get() is None
     assert (
         latest_run.artifact("op_disabled_by_wf artifact").execution_state().status
         == ExecutionStatus.DELETED
     )
+    assert latest_run.artifact("op_disabled_by_wf artifact").get() is None
     assert (
         latest_run.artifact("metric_enabled artifact").execution_state().status
         == ExecutionStatus.SUCCEEDED
     )
+    assert latest_run.artifact("metric_enabled artifact").get() == 100
     assert (
         latest_run.artifact("metric_disabled artifact").execution_state().status
         == ExecutionStatus.DELETED
     )
+    assert latest_run.artifact("metric_disabled artifact").get() is None
     assert (
         latest_run.artifact("check_enabled artifact").execution_state().status
         == ExecutionStatus.SUCCEEDED
     )
+    assert latest_run.artifact("check_enabled artifact").get()
 
 
 def test_artifact_set_name(client, flow_name, engine):
