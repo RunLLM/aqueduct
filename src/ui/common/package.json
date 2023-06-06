@@ -45,6 +45,7 @@
     "@mui/lab": "5.0.0-alpha.117",
     "@mui/material": "5.11.6",
     "@mui/x-data-grid": "5.17.8",
+    "@propelauth/react": "2.0.9",
     "@reduxjs/toolkit": "1.9.3",
     "@tag0/use-text-width": "1.2.0",
     "@ungap/structured-clone": "1.0.2",

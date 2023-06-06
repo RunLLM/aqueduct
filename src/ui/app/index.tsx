@@ -1,7 +1,6 @@
 import '@aqueducthq/common/src/styles/globals.css';
 
-import {
-    AccountPage,
+import AccountPage, {
     ArtifactDetailsPage,
     CheckDetailsPage,
     DataPage,
@@ -21,9 +20,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { AuthProvider } from '@propelauth/react';
+import { AuthProvider, withRequiredAuthInfo } from '@propelauth/react';
 
 import { store } from './stores/store';
+import UserInfo from './UserInfo';
 
 function RequireAuth({ children, user }): { children: JSX.Element; user: UserProfile | undefined } {
     const pathPrefix = getPathPrefix();
@@ -102,6 +102,12 @@ const App = () => {
                     <RequireAuth user={user}>
                         <AccountPage user={user} />{' '}
                     </RequireAuth>
+                }
+            />
+            <Route
+                path={`/${pathPrefix}/propelAuthTest`}
+                element={
+                    <UserInfo />
                 }
             />
             <Route
@@ -215,9 +221,9 @@ const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 
 // TODO: Put authurl into an environment variable
 root.render(
-    <AuthProvider authUrl={"https://5729345786.propelauthtest.com"}>
         <Provider store={store}>
-            <App />
+            <AuthProvider authUrl={"https://5729345786.propelauthtest.com"}>
+                <App />
+            </AuthProvider>,
         </Provider>
-    </AuthProvider>,
 );
