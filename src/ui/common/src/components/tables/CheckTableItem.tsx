@@ -16,13 +16,9 @@ export const CheckTableItem: React.FC<CheckTableItemProps> = ({
     return <>{value}</>;
   }
 
-  if (status) {
-    return <StatusIndicator status={status} size={'16px'} monochrome={false} />;
-  }
-
   return (
     <StatusIndicator
-      status={ExecutionStatus.Unknown}
+      status={status ?? ExecutionStatus.Unknown}
       size={'16px'}
       monochrome={false}
     />
