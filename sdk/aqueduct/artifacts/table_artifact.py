@@ -90,6 +90,7 @@ class TableArtifact(BaseArtifact, system_metric.SystemMetricMixin):
 
         if self._from_flow_run:
             if self._get_content() is None:
+                # DELETED case is already covered.
                 raise ArtifactNeverComputedException(
                     "This artifact was part of an existing flow run but was never computed successfully!",
                 )
@@ -129,10 +130,8 @@ class TableArtifact(BaseArtifact, system_metric.SystemMetricMixin):
             A dataframe containing the table contents of this artifact.
         """
         df = self.get(parameters=parameters)
-        if df is None:
-            return None
 
-        return df.head(n)
+        return df.head(n) if df is not None else None
 
     PRESET_METRIC_LIST = ["number_of_missing_values", "number_of_rows", "max", "min", "mean", "std"]
 

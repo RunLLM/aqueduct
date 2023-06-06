@@ -91,6 +91,7 @@ class NumericArtifact(BaseArtifact):
 
         if self._from_flow_run:
             if self._get_content() is None:
+                # DELETED case is already covered.
                 raise ArtifactNeverComputedException(
                     "This artifact was part of an existing flow run but was never computed successfully!",
                 )

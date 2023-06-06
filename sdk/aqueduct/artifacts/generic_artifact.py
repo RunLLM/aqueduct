@@ -61,6 +61,7 @@ class GenericArtifact(BaseArtifact, system_metric.SystemMetricMixin):
                 not self._execution_state
                 or self._execution_state.status != ExecutionStatus.SUCCEEDED
             ):
+                # DELETED case is already covered.
                 raise ArtifactNeverComputedException(
                     "This artifact was part of an existing flow run but was never computed successfully!",
                 )
