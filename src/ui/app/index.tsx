@@ -21,6 +21,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Provider } from 'react-redux';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from '@propelauth/react';
 
 import { store } from './stores/store';
 
@@ -46,7 +47,9 @@ const App = () => {
             <Route
                 path={`${pathPrefix ?? '/llm_welcome'}`}
                 element={
-                    <div>Hello World</div>
+                    <div>
+                        <div>Hello World</div>
+                    </div>
                 }
             />
             <Route
@@ -210,8 +213,11 @@ const App = () => {
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 
+// TODO: Put authurl into an environment variable
 root.render(
-    <Provider store={store}>
-        <App />
-    </Provider>,
+    <AuthProvider authUrl={"https://5729345786.propelauthtest.com"}>
+        <Provider store={store}>
+            <App />
+        </Provider>
+    </AuthProvider>,
 );

@@ -13,7 +13,8 @@ const apiKeyQueryParam = 'apiKey';
 export const LoginPage: React.FC = () => {
   const navigate = useNavigate()
   useEffect(() => {
-    navigate('https://5729345786.propelauthtest.com', { replace: true })
+    //navigate('https://5729345786.propelauthtest.com', { replace: true })
+    window.location.href = 'https://5729345786.propelauthtest.com'
   }, [])
 
   return null;
