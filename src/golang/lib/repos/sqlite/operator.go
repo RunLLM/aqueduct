@@ -107,6 +107,7 @@ var mergedNodeViewSubQuery = fmt.Sprintf(`
 		operator_node.inputs AS inputs,
 		artifact_node.id AS artifact_id,
 		artifact_node.type AS type,
+		artifact_node.should_persist AS should_persist,
 		artifact_node.outputs AS outputs
 	FROM 
 		operator_node LEFT JOIN 

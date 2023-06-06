@@ -10,26 +10,28 @@ import (
 )
 
 const (
-	OperatorWithArtifactNodeView        = "merged_node"
-	OperatorWithArtifactNodeID          = "id"
-	OperatorWithArtifactNodeDagID       = "dag_id"
-	OperatorWithArtifactNodeArtifactID  = "artifact_id"
-	OperatorWithArtifactNodeName        = "name"
-	OperatorWithArtifactNodeDescription = "description"
-	OperatorWithArtifactNodeSpec        = "spec"
-	OperatorWithArtifactNodeType        = "type"
-	OperatorWithArtifactNodeInputs      = "inputs"
-	OperatorWithArtifactNodeOutputs     = "outputs"
+	OperatorWithArtifactNodeView          = "merged_node"
+	OperatorWithArtifactNodeID            = "id"
+	OperatorWithArtifactNodeDagID         = "dag_id"
+	OperatorWithArtifactNodeArtifactID    = "artifact_id"
+	OperatorWithArtifactNodeName          = "name"
+	OperatorWithArtifactNodeDescription   = "description"
+	OperatorWithArtifactNodeSpec          = "spec"
+	OperatorWithArtifactNodeType          = "type"
+	OperatorWithArtifactNodeInputs        = "inputs"
+	OperatorWithArtifactNodeOutputs       = "outputs"
+	OperatorWithArtifactNodeShouldPersist = "should_persist"
 )
 
 type OperatorWithArtifactNode struct {
-	ID          uuid.UUID           `db:"id" json:"id"`
-	DagID       uuid.UUID           `db:"dag_id" json:"dag_id"`
-	ArtifactID  uuid.UUID           `db:"artifact_id" json:"artifact_id"`
-	Name        string              `db:"name" json:"name"`
-	Description string              `db:"description" json:"description"`
-	Spec        operator.Spec       `db:"spec" json:"spec"`
-	Type        shared.ArtifactType `db:"type" json:"type"`
+	ID            uuid.UUID           `db:"id" json:"id"`
+	DagID         uuid.UUID           `db:"dag_id" json:"dag_id"`
+	ArtifactID    uuid.UUID           `db:"artifact_id" json:"artifact_id"`
+	Name          string              `db:"name" json:"name"`
+	Description   string              `db:"description" json:"description"`
+	Spec          operator.Spec       `db:"spec" json:"spec"`
+	Type          shared.ArtifactType `db:"type" json:"type"`
+	ShouldPersist bool                `db:"should_persist" json:"should_persist"`
 
 	Inputs  shared.NullableIndexedList[uuid.UUID] `db:"inputs" json:"inputs"`
 	Outputs shared.NullableIndexedList[uuid.UUID] `db:"outputs" json:"outputs"`
@@ -62,5 +64,6 @@ func allOperatorWithArtifactNodeCols() []string {
 		OperatorWithArtifactNodeType,
 		OperatorWithArtifactNodeInputs,
 		OperatorWithArtifactNodeOutputs,
+		OperatorWithArtifactNodeShouldPersist,
 	}
 }

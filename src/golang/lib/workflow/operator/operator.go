@@ -22,7 +22,7 @@ import (
 )
 
 // Operator is an interface for managing and inspecting the lifecycle of an operator
-// used by a workflow run.
+// used by one single workflow run.
 type Operator interface {
 	// Property getters. Retrieve property of the operator without making any changes.
 	Type() operator.Type

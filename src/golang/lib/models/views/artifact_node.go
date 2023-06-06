@@ -17,11 +17,12 @@ const (
 )
 
 type ArtifactNode struct {
-	ID          uuid.UUID           `db:"id" json:"id"`
-	DagID       uuid.UUID           `db:"dag_id" json:"dag_id"`
-	Name        string              `db:"name" json:"name"`
-	Description string              `db:"description" json:"description"`
-	Type        shared.ArtifactType `db:"type" json:"type"`
+	ID            uuid.UUID           `db:"id" json:"id"`
+	DagID         uuid.UUID           `db:"dag_id" json:"dag_id"`
+	Name          string              `db:"name" json:"name"`
+	Description   string              `db:"description" json:"description"`
+	Type          shared.ArtifactType `db:"type" json:"type"`
+	ShouldPersist bool                `db:"should_persist" json:"should_persist"`
 
 	Input   uuid.UUID                             `db:"input" json:"input"`
 	Outputs shared.NullableIndexedList[uuid.UUID] `db:"outputs" json:"outputs"`

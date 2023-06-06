@@ -113,12 +113,20 @@ func (ts *TestSuite) TestArtifact_Create() {
 	artifactType := randArtifactType()
 
 	expectedArtifact := &models.Artifact{
-		Name:        name,
-		Description: description,
-		Type:        artifactType,
+		Name:          name,
+		Description:   description,
+		Type:          artifactType,
+		ShouldPersist: true,
 	}
 
-	actualArtifact, err := ts.artifact.Create(ts.ctx, name, description, artifactType, ts.DB)
+	actualArtifact, err := ts.artifact.Create(
+		ts.ctx,
+		name,
+		description,
+		artifactType,
+		true,
+		ts.DB,
+	)
 	require.Nil(ts.T(), err)
 
 	require.NotEqual(ts.T(), uuid.Nil, actualArtifact.ID)

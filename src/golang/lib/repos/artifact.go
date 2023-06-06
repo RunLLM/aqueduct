@@ -66,6 +66,7 @@ type artifactWriter interface {
 		name string,
 		description string,
 		artifactType shared.ArtifactType,
+		shouldPersist bool,
 		DB database.Database,
 	) (*models.Artifact, error)
 

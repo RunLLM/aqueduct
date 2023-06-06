@@ -14,6 +14,7 @@ from workflows import (
     succeed_dag_layout_test,
     succeed_march_madness_dag_layout_test,
     succeed_parameters,
+    succeed_with_snapshots_disabled,
     warning_bad_check,
 )
 
@@ -31,6 +32,7 @@ WORKFLOW_PKGS = [
     succeed_march_madness_dag_layout_test,
     fail_bad_operator,
     no_run,
+    succeed_with_snapshots_disabled,
 ]
 
 DEMO_NOTEBOOKS_PATHS = [

@@ -22,6 +22,7 @@ const artifactNodeViewSubQuery = `
 			workflow_dag.id AS dag_id,
 			artifact.name AS name,
 			artifact.description AS description,
+			artifact.should_persist AS should_persist,
 			artifact.type as type,
 			CAST( json_group_array( -- Group to_ids and idx into one array
 				json_object(
@@ -43,6 +44,7 @@ const artifactNodeViewSubQuery = `
 			workflow_dag.id AS dag_id,
 			artifact.name AS name,
 			artifact.description AS description,
+			artifact.should_persist AS should_persist,
 			artifact.type as type,
 			workflow_dag_edge.from_id AS input
 		FROM
@@ -56,6 +58,7 @@ const artifactNodeViewSubQuery = `
 		artf_with_input.dag_id AS dag_id,
 		artf_with_input.name AS name,
 		artf_with_input.description AS description,
+		artf_with_input.should_persist AS should_persist,
 		artf_with_input.type AS type,
 		artf_with_outputs.outputs AS outputs,
 		artf_with_input.input AS input
@@ -209,11 +212,12 @@ func (*artifactReader) GetMetricsByUpstreamArtifactBatch(
 
 	type artifactWithUpstreamID struct {
 		// copy of artifact
-		ID          uuid.UUID           `db:"id"`
-		Name        string              `db:"name"`
-		Description string              `db:"description"`
-		Type        shared.ArtifactType `db:"type"`
-		UpstreamID  uuid.UUID           `db:"upstream_id"`
+		ID            uuid.UUID           `db:"id"`
+		Name          string              `db:"name"`
+		Description   string              `db:"description"`
+		Type          shared.ArtifactType `db:"type"`
+		ShouldPersist bool                `db:"should_persist"`
+		UpstreamID    uuid.UUID           `db:"upstream_id"`
 	}
 
 	var queryRows []artifactWithUpstreamID
@@ -225,10 +229,11 @@ func (*artifactReader) GetMetricsByUpstreamArtifactBatch(
 	results := make(map[uuid.UUID][]models.Artifact, len(queryRows))
 	for _, queryRow := range queryRows {
 		results[queryRow.UpstreamID] = append(results[queryRow.UpstreamID], models.Artifact{
-			ID:          queryRow.ID,
-			Name:        queryRow.Name,
-			Description: queryRow.Description,
-			Type:        queryRow.Type,
+			ID:            queryRow.ID,
+			Name:          queryRow.Name,
+			Description:   queryRow.Description,
+			Type:          queryRow.Type,
+			ShouldPersist: queryRow.ShouldPersist,
 		})
 	}
 
@@ -257,6 +262,7 @@ func (*artifactWriter) Create(
 	name string,
 	description string,
 	artifactType shared.ArtifactType,
+	shouldPersist bool,
 	DB database.Database,
 ) (*models.Artifact, error) {
 	cols := []string{
@@ -264,6 +270,7 @@ func (*artifactWriter) Create(
 		models.ArtifactName,
 		models.ArtifactDescription,
 		models.ArtifactType,
+		models.ArtifactShouldPersist,
 	}
 	query := DB.PrepareInsertWithReturnAllStmt(models.ArtifactTable, cols, models.ArtifactCols())
 
@@ -272,7 +279,13 @@ func (*artifactWriter) Create(
 		return nil, err
 	}
 
-	args := []interface{}{ID, name, description, artifactType}
+	args := []interface{}{
+		ID,
+		name,
+		description,
+		artifactType,
+		shouldPersist,
+	}
 	return getArtifact(ctx, DB, query, args...)
 }
 

@@ -32,6 +32,7 @@ def publish_flow_test(
     source_flow: Optional[Union[Flow, str, uuid.UUID]] = None,
     should_block: bool = True,
     use_local: bool = False,
+    disable_snapshots: bool = False,
 ) -> Flow:
     """Publishes a flow and waits for a specified number of runs with specified statuses to complete.
 
@@ -89,6 +90,7 @@ def publish_flow_test(
         engine=engine,
         source_flow=source_flow,
         use_local=use_local,
+        disable_snapshots=disable_snapshots,
     )
     print("Workflow registration succeeded. Workflow ID %s. Name: %s" % (flow.id(), name))
 

@@ -81,6 +81,7 @@ func WriteDAGToDatabase(
 				artifact.Name,
 				artifact.Description,
 				artifact.Type,
+				artifact.ShouldPersist,
 				DB,
 			)
 			if err != nil {
