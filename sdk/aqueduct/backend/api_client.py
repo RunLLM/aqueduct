@@ -648,7 +648,10 @@ class APIClient:
     def get_artifact_result_data(
         self, dag_result_id: str, artifact_id: str
     ) -> Tuple[Optional[Any], Optional[ExecutionState]]:
-        """Returns an empty string if the operator was not successfully executed."""
+        """
+        Returns the artifact's result and execution state if available.
+        Prints non-blocking warning if the value if either is not available.
+        """
         headers = self._generate_auth_headers()
         url = self.construct_full_url(
             self.GET_ARTIFACT_RESULT_TEMPLATE % (dag_result_id, artifact_id)
@@ -668,8 +671,11 @@ class APIClient:
         if "data" in parsed_response:
             return_value = deserialize(serialization_type, artifact_type, parsed_response["data"])
 
-        if not execution_state or execution_state.status != ExecutionStatus.SUCCEEDED:
-            logger().warning("Artifact result unavailable due to unsuccessful execution.")
+        if not execution_state:
+            logger().warning("Artifact execution state is unavailable.")
+
+        if return_value is None:
+            logger().warning("Artifact result is unavailable.")
 
         return (return_value, execution_state)
 
