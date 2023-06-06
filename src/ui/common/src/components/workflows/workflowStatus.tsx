@@ -7,6 +7,7 @@ import {
   faTriangleExclamation,
   faX,
 } from '@fortawesome/free-solid-svg-icons';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Tooltip } from '@mui/material';
 import Box from '@mui/material/Box';
@@ -128,6 +129,10 @@ export const StatusIndicator: React.FC<IndicatorProps> = ({
 
     case ExecutionStatus.Warning:
       icon = faTriangleExclamation;
+      break;
+
+    case ExecutionStatus.Deleted:
+      icon = faTrash;
       break;
 
     default:

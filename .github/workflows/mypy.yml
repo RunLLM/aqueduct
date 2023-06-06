@@ -28,7 +28,7 @@ jobs:
 
       - name: Install Type Stub Libraries
         run: |
-          python3 -m pip install types-croniter types-requests types-PyYAML types-setuptools types-PyMySQL
+          python3 -m pip install types-croniter types-requests types-PyYAML types-setuptools types-PyMySQL types-python-dateutil
 
       - name: mypy sdk
         working-directory: sdk

@@ -98,12 +98,12 @@ class FlowRun:
             for param_op in param_operators:
                 (
                     param_content,
-                    execution_status,
+                    execution_state,
                 ) = globals.__GLOBAL_API_CLIENT__.get_artifact_result_data(
                     self._id, str(param_op.outputs[0])
                 )
 
-                if execution_status != ExecutionStatus.SUCCEEDED:
+                if not execution_state or execution_state.status != ExecutionStatus.SUCCEEDED:
                     param_content = "Parameter not successfully initialized."
 
                 print("* " + param_op.name + ": " + str(param_content))
@@ -166,7 +166,7 @@ class FlowRun:
         if artifact_from_dag is None:
             return None
 
-        content, execution_status = globals.__GLOBAL_API_CLIENT__.get_artifact_result_data(
+        content, execution_state = globals.__GLOBAL_API_CLIENT__.get_artifact_result_data(
             self._id, str(artifact_from_dag.id)
         )
 
@@ -179,6 +179,7 @@ class FlowRun:
                 artifact_from_dag.id,
                 content=content,
                 from_flow_run=True,
+                execution_state=execution_state,
             )
         elif artifact_from_dag.type is ArtifactType.NUMERIC:
             return numeric_artifact.NumericArtifact(
@@ -186,6 +187,7 @@ class FlowRun:
                 artifact_from_dag.id,
                 content=content,
                 from_flow_run=True,
+                execution_state=execution_state,
             )
         elif artifact_from_dag.type is ArtifactType.BOOL:
             return bool_artifact.BoolArtifact(
@@ -193,6 +195,7 @@ class FlowRun:
                 artifact_from_dag.id,
                 content=content,
                 from_flow_run=True,
+                execution_state=execution_state,
             )
         else:
             return generic_artifact.GenericArtifact(
@@ -201,5 +204,5 @@ class FlowRun:
                 artifact_from_dag.type,
                 content=content,
                 from_flow_run=True,
-                execution_status=execution_status,
+                execution_state=execution_state,
             )

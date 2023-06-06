@@ -20,6 +20,7 @@ from aqueduct.constants.enums import (
 )
 from aqueduct.error import AqueductError, ArtifactNeverComputedException
 from aqueduct.models.dag import DAG
+from aqueduct.models.execution_state import ExecutionState
 from aqueduct.models.operators import CheckSpec, FunctionSpec, MetricSpec, OperatorSpec
 from aqueduct.utils.dag_deltas import RemoveCheckOperatorDelta, apply_deltas_to_dag
 from aqueduct.utils.describe import (
@@ -62,15 +63,11 @@ class TableArtifact(BaseArtifact, system_metric.SystemMetricMixin):
         artifact_id: uuid.UUID,
         content: Optional[pd.DataFrame] = None,
         from_flow_run: bool = False,
+        execution_state: Optional[ExecutionState] = None,
     ):
-        self._dag = dag
-        self._artifact_id = artifact_id
+        super().__init__(dag, artifact_id, content, from_flow_run, execution_state)
 
-        # This parameter indicates whether the artifact is fetched from flow-run or not.
-        self._from_flow_run = from_flow_run
-        self._set_content(content)
-
-    def get(self, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
+    def get(self, parameters: Optional[Dict[str, Any]] = None) -> Optional[pd.DataFrame]:
         """Materializes TableArtifact into an actual dataframe.
 
         Args:
@@ -88,9 +85,12 @@ class TableArtifact(BaseArtifact, system_metric.SystemMetricMixin):
                 An unexpected error occurred within the Aqueduct cluster.
         """
         self._dag.must_get_artifact(self._artifact_id)
+        if self._is_content_deleted():
+            return None
 
         if self._from_flow_run:
             if self._get_content() is None:
+                # DELETED case is already covered.
                 raise ArtifactNeverComputedException(
                     "This artifact was part of an existing flow run but was never computed successfully!",
                 )
@@ -113,7 +113,9 @@ class TableArtifact(BaseArtifact, system_metric.SystemMetricMixin):
         assert isinstance(content, pd.DataFrame)
         return content
 
-    def head(self, n: int = 5, parameters: Optional[Dict[str, Any]] = None) -> pd.DataFrame:
+    def head(
+        self, n: int = 5, parameters: Optional[Dict[str, Any]] = None
+    ) -> Optional[pd.DataFrame]:
         """Returns a preview of the table artifact.
 
         >>> db = client.resource(name="demo/")
@@ -128,7 +130,8 @@ class TableArtifact(BaseArtifact, system_metric.SystemMetricMixin):
             A dataframe containing the table contents of this artifact.
         """
         df = self.get(parameters=parameters)
-        return df.head(n)
+
+        return df.head(n) if df is not None else None
 
     PRESET_METRIC_LIST = ["number_of_missing_values", "number_of_rows", "max", "min", "mean", "std"]
 

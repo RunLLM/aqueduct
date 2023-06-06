@@ -46,6 +46,7 @@ export enum ExecutionStatus {
   Running = 'running',
   // Checks can have a warning status.
   Warning = 'warning',
+  Deleted = 'deleted',
 }
 
 export const getArtifactResultTableRow = (
@@ -116,6 +117,9 @@ export const stringToExecutionStatus = (status: string): ExecutionStatus => {
       break;
     case 'warning':
       executionStatus = ExecutionStatus.Warning;
+      break;
+    case 'deleted':
+      executionStatus = ExecutionStatus.Deleted;
       break;
     default:
       executionStatus = ExecutionStatus.Unknown;
