@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.3.6
+Released on June 6, 2023.
+
+### Key Features
+* Enables users to selectively or completely disable Aqueduct's artifact
+    snapshotting functionality. When defining a workflow, users can now decide
+    to disable snapshotting for an individual artifact or for all artifacts in
+    a workflow; if selected, these artifacts will only be generated during
+    computation time and then garbage collected. No data will be persisted
+    beyond any data that is explicilty `save`d. See our [documentation](https://docs.aqueducthq.com/workflows/creating-a-workflow#publishing-a-workflow)
+    for more details.
+
+### Enhancements
+* Enables on-demand Kubernetes clusters on Google Cloud to use GPU nodes in an
+    autoscaling capacity.
+
+### Bugfixes
+* Fixes bug where resources could not be deleted even when unused.
+* Fixes bug where workflows that succeeded with a warning check were shown in a
+    regular success state instead of a warning state.
+* Fixes page load jitter when a large number of workflows are present.
+
 ## 0.3.5
 Released on May 31, 2023.
 
