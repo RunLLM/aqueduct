@@ -9,8 +9,8 @@ Released on June 6, 2023.
     to disable snapshotting for an individual artifact or for all artifacts in
     a workflow; if selected, these artifacts will only be generated during
     computation time and then garbage collected. No data will be persisted
-    beyond any data that is explicilty `save`d. See our documentation for more
-    details. **TODO: Add link to documentation**
+    beyond any data that is explicilty `save`d. See our [documentation](https://docs.aqueducthq.com/workflows/creating-a-workflow#publishing-a-workflow)
+    for more details.
 
 ### Enhancements
 * Enables on-demand Kubernetes clusters on Google Cloud to use GPU nodes in an
